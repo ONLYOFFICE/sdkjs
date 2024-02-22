@@ -17186,9 +17186,6 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-
-
-
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};

@@ -15,7 +15,7 @@
  * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
- * The  leteractive user leterfaces in modified source and object code versions
+ * The  interactive user interfaces in modified source and object code versions
  * of the Program must display Appropriate Legal Notices, as required under
  * Section 5 of the GNU AGPL version 3.
  *
@@ -25,7 +25,7 @@
  *
  * All the Product's GUI elements, including illustrations and icon sets, as
  * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 leternational. See the License
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
@@ -334,7 +334,7 @@
         Drawing: 13,
         PageMargins: 14,
         PageSetup: 15,
-        PrletOptions: 16,
+        PrintOptions: 16,
         Autofilter: 17,
         TableParts: 18,
         Comments: 19,
@@ -481,7 +481,7 @@
         Theme: 5
     };
     /** @enum */
-    var c_oSer_CalcChaletype =
+    var c_oSer_CalcChainType =
     {
         CalcChainItem: 0,
         Array: 1,
@@ -521,11 +521,11 @@
         PaperUnits: 14,
         Scale: 15,
         UseFirstPageNumber: 16,
-        UsePrleterDefaults: 17,
+        UsePrinterDefaults: 17,
         VerticalDpi: 18
     };
     /** @enum */
-    var  c_oSer_PrletOptions =
+    var  c_oSer_PrintOptions =
     {
         GridLines: 0,
         Headings: 1,
@@ -696,7 +696,7 @@
 		FirstBackgroundRefresh: 13,
 		GrowShrinkType: 14,
 		Headers: 15,
-		letermediate: 16,
+		Intermediate: 16,
 		Name: 17,
 		PreserveFormatting: 18,
 		RefreshOnLoad: 19,
@@ -956,7 +956,7 @@
     var c_oSer_DrawingClientDataType =
     {
         fLocksWithSheet: 0,
-        fPrletsWithSheet: 1
+        fPrintsWithSheet: 1
     };
 
     /** @enum */
@@ -1698,7 +1698,7 @@
         atEnd: 2
     };
 
-    var ST_PrletError = {
+    var ST_PrintError = {
         displayed: 0,
         blank: 1,
         dash: 2,
@@ -1819,7 +1819,7 @@
         this.rgb = null;
         this.auto = null;
         this.theme = null;
-        this.tlet = null;
+        this.tint = null;
     }
 
 	function OpenFormula() {
@@ -1887,7 +1887,7 @@
 			return bcr.ReadColorSpreadsheet(t,l, color);
 		});
 		if(null != color.theme)
-			output = AscCommonExcel.g_oColorManager.getThemeColor(color.theme, color.tlet);
+			output = AscCommonExcel.g_oColorManager.getThemeColor(color.theme, color.tint);
 		else if(null != color.rgb)
 			output = new AscCommonExcel.RgbColor(0x00ffffff & color.rgb);
 		return output;
@@ -1901,7 +1901,7 @@
 		return refs.join(' ');
 	}
 
-    function getDisjoletMerged(wb, bboxes) {
+    function getDisjointMerged(wb, bboxes) {
         var res = [];
         var curY, elem;
         var error = false;
@@ -1911,7 +1911,7 @@
         var rangesBottom = bboxes.concat();
         rangesTop.sort(Asc.Range.prototype.compareByLeftTop);
         rangesBottom.sort(Asc.Range.prototype.compareByRightBottom);
-        var tree = new AscCommon.DataletervalTree();
+        var tree = new AscCommon.DataIntervalTree();
         while (indexBottom < rangesBottom.length) {
             //next curY
             if (indexTop < rangesTop.length) {
@@ -1936,7 +1936,7 @@
             }
         }
         if (error && wb.oApi && wb.oApi.CoAuthoringApi) {
-            var msg = 'Error: letersection of merged areas';
+            var msg = 'Error: intersection of merged areas';
             AscCommon.sendClientLog("error", "changesError: " + msg, wb.oApi);
         }
         return res;
@@ -1999,7 +1999,7 @@
                 if (this.isCopyPaste)
                     rangeTable = aTables[i].Ref;
 
-                if(!this.isCopyPaste || (this.isCopyPaste && rangeTable && this.isCopyPaste.isletersect(rangeTable) && !ws.bExcludeHiddenRows))
+                if(!this.isCopyPaste || (this.isCopyPaste && rangeTable && this.isCopyPaste.isIntersect(rangeTable) && !ws.bExcludeHiddenRows))
                     this.bs.WriteItem(c_oSer_TablePart.Table, function(){oThis.WriteTable(aTables[i], ws);});
             }
         };
@@ -3824,7 +3824,7 @@
 
             let oThis = this;
             if (oTimelineCache.name != null) {
-                //this.bs.WriteItem(c_oSerWorksheetsTypes.PageMargins, function(){oThis.WritePageMargins(ws.PagePrletOptions.asc_getPageMargins());});
+                //this.bs.WriteItem(c_oSerWorksheetsTypes.PageMargins, function(){oThis.WritePageMargins(ws.PagePrintOptions.asc_getPageMargins());});
 
                 oThis.memory.WriteByte(c_oSer_TimelineCache.Name);
                 oThis.memory.WriteString2(oTimelineCache.name);
@@ -4128,47 +4128,47 @@
 			}
 		};
 
-        
-        //****write metadata****
-        this.WriteMetadata = function (pMetadata) {
-            if (!pMetadata) {
-                return;
-            }
 
-            var oThis = this;
-            if (pMetadata.metadataTypes) {
-                this.bs.WriteItem(c_oSer_Metadata.MetadataTypes, function () {
-                    oThis.WriteMetadataTypes(pMetadata.metadataTypes);
-                });
-            }
-            if (pMetadata.metadataTypes) {
-                this.bs.WriteItem(c_oSer_Metadata.MetadataStrings, function () {
-                    oThis.WriteMetadataStrings(pMetadata.metadataTypes);
-                });
-            }
-            if (pMetadata.mdxMetadata) {
-                this.bs.WriteItem(c_oSer_Metadata.MdxMetadata, function () {
-                    oThis.WriteMdxMetadata(pMetadata.mdxMetadata);
-                });
-            }
-            if (pMetadata.cellMetadata) {
-                this.bs.WriteItem(c_oSer_Metadata.CellMetadata, function () {
-                    oThis.WriteMetadataBlocks(pMetadata.cellMetadata);
-                });
-            }
-            if (pMetadata.valueMetadata) {
-                this.bs.WriteItem(c_oSer_Metadata.ValueMetadata, function () {
-                    oThis.WriteMetadataBlocks(pMetadata.valueMetadata);
-                });
-            }
-            if (pMetadata.aFutureMetadata) {
-                for (let i = 0; i < pMetadata.aFutureMetadata.length; ++i) {
-                    this.bs.WriteItem(c_oSer_Metadata.FutureMetadata, function () {
-                        oThis.WriteFutureMetadata(pMetadata.aFutureMetadata[i]);
-                    });
-                }
-            }
-        };
+		//****write metadata****
+		this.WriteMetadata = function (pMetadata) {
+			if (!pMetadata) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMetadata.metadataTypes) {
+				this.bs.WriteItem(c_oSer_Metadata.MetadataTypes, function () {
+					oThis.WriteMetadataTypes(pMetadata.metadataTypes);
+				});
+			}
+			if (pMetadata.metadataTypes) {
+				this.bs.WriteItem(c_oSer_Metadata.MetadataStrings, function () {
+					oThis.WriteMetadataStrings(pMetadata.metadataTypes);
+				});
+			}
+			if (pMetadata.mdxMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.MdxMetadata, function () {
+					oThis.WriteMdxMetadata(pMetadata.mdxMetadata);
+				});
+			}
+			if (pMetadata.cellMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.CellMetadata, function () {
+					oThis.WriteMetadataBlocks(pMetadata.cellMetadata);
+				});
+			}
+			if (pMetadata.valueMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.ValueMetadata, function () {
+					oThis.WriteMetadataBlocks(pMetadata.valueMetadata);
+				});
+			}
+			if (pMetadata.aFutureMetadata) {
+				for (let i = 0; i < pMetadata.aFutureMetadata.length; ++i) {
+					this.bs.WriteItem(c_oSer_Metadata.FutureMetadata, function () {
+						oThis.WriteFutureMetadata(pMetadata.aFutureMetadata[i]);
+					});
+				}
+			}
+		};
 		this.WriteMetadataTypes = function (pMetadataTypes) {
 			if (!pMetadataTypes) {
 				return;
@@ -4353,120 +4353,101 @@
 				});
 			}
 		};
-        this.WriteMdx = function (pMdx)
-        {
-            if (!pMdx) {
-            	return;
+		this.WriteMdx = function (pMdx) {
+			if (!pMdx) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMdx.n != null)
-            {
+			if (pMdx.n != null) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.NameIndex, function () {
 					oThis.memory.WriteLong(pMdx.n);
 				});
-            }
-            if (pMdx.f)
-            {
+			}
+			if (pMdx.f) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.FunctionTag, function () {
 					oThis.memory.WriteByte(pMdx.f);
 				});
-            }
-            if (pMdx.mdxTuple)
-            {
+			}
+			if (pMdx.mdxTuple) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.MdxTuple, function () {
 					oThis.WriteMdxTuple(pMdx.mdxTuple);
 				});
-            }
-            if (pMdx.mdxSet)
-            {
+			}
+			if (pMdx.mdxSet) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.MdxSet, function () {
 					oThis.WriteMdxSet(pMdx.mdxSet);
 				});
-            }
-            if (pMdx.cMdxKPI)
-            {
+			}
+			if (pMdx.cMdxKPI) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.MdxKPI, function () {
 					oThis.WriteMdxKPI(pMdx.cMdxKPI);
 				});
-            }
-            if (pMdx.mdxMemeberProp)
-            {
+			}
+			if (pMdx.mdxMemeberProp) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.MdxMemeberProp, function () {
 					oThis.WriteMdxMemeberProp(pMdx.mdxMemeberProp);
 				});
-            }
-        };
-        this.WriteMdxTuple = function (pMdxTuple)
-        {
-            if (!pMdxTuple) {
-            	return;
+			}
+		};
+		this.WriteMdxTuple = function (pMdxTuple) {
+			if (!pMdxTuple) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMdxTuple.c)
-            {
+			if (pMdxTuple.c) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.IndexCount, function () {
 					oThis.memory.WriteLong(pMdxTuple.c);
 				});
-            }
-            if (pMdxTuple.ct)
-            {
+			}
+			if (pMdxTuple.ct) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.CultureCurrency, function () {
 					oThis.memory.WriteString3(pMdxTuple.ct);
 				});
-            }
-            if (pMdxTuple.si)
-            {
+			}
+			if (pMdxTuple.si) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.StringIndex, function () {
 					oThis.memory.WriteLong(pMdxTuple.si);
 				});
-            }
-            if (pMdxTuple.fi)
-            {
+			}
+			if (pMdxTuple.fi) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.NumFmtIndex, function () {
 					oThis.memory.WriteLong(pMdxTuple.fi);
 				});
-            }
-            if (pMdxTuple.bc)
-            {
+			}
+			if (pMdxTuple.bc) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.BackColor, function () {
 					oThis.memory.WriteLong(pMdxTuple.bc);
 				});
-            }
-            if (pMdxTuple.fc)
-            {
+			}
+			if (pMdxTuple.fc) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.ForeColor, function () {
 					oThis.memory.WriteLong(pMdxTuple.fc);
 				});
-            }
-            if (pMdxTuple.i)
-            {
+			}
+			if (pMdxTuple.i) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Italic, function () {
 					oThis.memory.WriteLong(pMdxTuple.i);
 				});
-            }
-            if (pMdxTuple.b)
-            {
+			}
+			if (pMdxTuple.b) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Bold, function () {
 					oThis.memory.WriteBool(pMdxTuple.b);
 				});
-            }
-            if (pMdxTuple.u)
-            {
+			}
+			if (pMdxTuple.u) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Underline, function () {
 					oThis.memory.WriteBool(pMdxTuple.u);
 				});
-            }
-            if (pMdxTuple.st)
-            {
+			}
+			if (pMdxTuple.st) {
 				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Strike, function () {
 					oThis.memory.WriteBool(pMdxTuple.st);
 				});
-            }
-            if (pMdxTuple.metadataStringIndexes) {
-				for (let i = 0; i < pMdxTuple.metadataStringIndexes.length; ++i)
-				{
+			}
+			if (pMdxTuple.metadataStringIndexes) {
+				for (let i = 0; i < pMdxTuple.metadataStringIndexes.length; ++i) {
 					if (!pMdxTuple.metadataStringIndexes[i]) {
 						continue;
 					}
@@ -4476,55 +4457,47 @@
 					});
 				}
 			}
-        };
-        this.WriteMetadataStringIndex = function(pStringIndex)
-        {
-            if (!pStringIndex) {
-            	return;
+		};
+		this.WriteMetadataStringIndex = function (pStringIndex) {
+			if (!pStringIndex) {
+				return;
 			}
 
 			var oThis = this;
-            if (pStringIndex.x)
-            {
+			if (pStringIndex.x) {
 				this.bs.WriteItem(c_oSer_MetadataStringIndex.IndexValue, function () {
 					oThis.memory.WriteLong(pStringIndex.x);
 				});
-            }
-            if (pStringIndex.s)
-            {
+			}
+			if (pStringIndex.s) {
 				this.bs.WriteItem(c_oSer_MetadataStringIndex.StringIsSet, function () {
 					oThis.memory.WriteLong(pStringIndex.s);
 				});
-            }
-        };
-        this.WriteMdxSet = function(pMdxSet)
-        {
-            if (!pMdxSet) {
-            	return;
+			}
+		};
+		this.WriteMdxSet = function (pMdxSet) {
+			if (!pMdxSet) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMdxSet.c)
-            {
+			if (pMdxSet.c) {
 				this.bs.WriteItem(c_oSer_MetadataMdxSet.Count, function () {
 					oThis.memory.WriteLong(pMdxSet.c);
 				});
-            }
-            if (pMdxSet.ns)
-            {
+			}
+			if (pMdxSet.ns) {
 				this.bs.WriteItem(c_oSer_MetadataMdxSet.Index, function () {
 					oThis.memory.WriteLong(pMdxSet.ns);
 				});
-            }
-            if (pMdxSet.o)
-            {
+			}
+			if (pMdxSet.o) {
 				this.bs.WriteItem(c_oSer_MetadataMdxSet.SortOrder, function () {
 					oThis.memory.WriteByte(pMdxSet.o);
 				});
-            }
+			}
 			if (pMdxSet.metadataStringIndexes) {
-				for (let i = 0; i < pMdxSet.metadataStringIndexes.length; ++i)
-				{
+				for (let i = 0; i < pMdxSet.metadataStringIndexes.length; ++i) {
 					if (!pMdxSet.metadataStringIndexes[i]) {
 						continue;
 					}
@@ -4534,63 +4507,54 @@
 					});
 				}
 			}
-        };
-        this.WriteMdxKPI = function(pMdxKPI)
-        {
-            if (!pMdxKPI) {
-            	return;
+		};
+		this.WriteMdxKPI = function (pMdxKPI) {
+			if (!pMdxKPI) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMdxKPI.n)
-            {
+			if (pMdxKPI.n) {
 				this.bs.WriteItem(c_oSer_MetadataMdxKPI.NameIndex, function () {
 					oThis.memory.WriteLong(pMdxKPI.n);
 				});
-            }
-            if (pMdxKPI.np)
-            {
+			}
+			if (pMdxKPI.np) {
 				this.bs.WriteItem(c_oSer_MetadataMdxKPI.Index, function () {
 					oThis.memory.WriteLong(pMdxKPI.np);
 				});
-            }
-            if (pMdxKPI.p)
-            {
+			}
+			if (pMdxKPI.p) {
 				this.bs.WriteItem(c_oSer_MetadataMdxKPI.Property, function () {
 					oThis.memory.WriteByte(pMdxKPI.p);
 				});
 
-            }
-        };
-        this.WriteMdxMemeberProp = function(pMdxMemeberProp)
-        {
-            if (!pMdxMemeberProp) {
-            	return;
+			}
+		};
+		this.WriteMdxMemeberProp = function (pMdxMemeberProp) {
+			if (!pMdxMemeberProp) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMdxMemeberProp.n)
-            {
+			if (pMdxMemeberProp.n) {
 				this.bs.WriteItem(c_oSer_MetadataMemberProperty.NameIndex, function () {
 					oThis.memory.WriteLong(pMdxMemeberProp.n);
 				});
-            }
-            if (pMdxMemeberProp.np)
-            {
+			}
+			if (pMdxMemeberProp.np) {
 				this.bs.WriteItem(c_oSer_MetadataMemberProperty.Index, function () {
 					oThis.memory.WriteLong(pMdxMemeberProp.np);
 				});
-            }
-        };
-        this.WriteMetadataBlocks = function(aMetadataBlocks)
-        {
-            if (!aMetadataBlocks) {
-            	return;
+			}
+		};
+		this.WriteMetadataBlocks = function (aMetadataBlocks) {
+			if (!aMetadataBlocks) {
+				return;
 			}
 
 			var oThis = this;
-			for (let i = 0; i < aMetadataBlocks.length; ++i)
-			{
+			for (let i = 0; i < aMetadataBlocks.length; ++i) {
 				if (!aMetadataBlocks[i]) {
 					continue;
 				}
@@ -4599,103 +4563,89 @@
 					oThis.WriteMetadataBlock(aMetadataBlocks[i]);
 				});
 			}
-        };
-        this.WriteMetadataBlock = function(aMetadataBlock)
-        {
-            if (!aMetadataBlock) {
-            	return;
+		};
+		this.WriteMetadataBlock = function (aMetadataBlock) {
+			if (!aMetadataBlock) {
+				return;
 			}
 
 			var oThis = this;
-            for (let i = 0; i < aMetadataBlock.length; ++i)
-            {
-                if (!aMetadataBlock[i]) {
+			for (let i = 0; i < aMetadataBlock.length; ++i) {
+				if (!aMetadataBlock[i]) {
 					continue;
 				}
 
 				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecord, function () {
 					oThis.WriteMetadataRecord(aMetadataBlock[i]);
 				});
-            }
-        };
-        this.WriteMetadataRecord = function(pMetadataRecord)
-        {
-            if (!pMetadataRecord) {
-            	return;
+			}
+		};
+		this.WriteMetadataRecord = function (pMetadataRecord) {
+			if (!pMetadataRecord) {
+				return;
 			}
 
 			var oThis = this;
-            if (pMetadataRecord.t)
-            {
+			if (pMetadataRecord.t) {
 				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordType, function () {
 					oThis.memory.WriteLong(pMetadataRecord.t);
 				});
-            }
-            if (pMetadataRecord.v)
-            {
+			}
+			if (pMetadataRecord.v) {
 				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordValue, function () {
 					oThis.memory.WriteLong(pMetadataRecord.v);
 				});
-            }
-        };
-        this.WriteFutureMetadataBlock = function(pFutureMetadataBlock)
-        {
-            if (!pFutureMetadataBlock || !pFutureMetadataBlock.extLst) {
-            	return;
+			}
+		};
+		this.WriteFutureMetadataBlock = function (pFutureMetadataBlock) {
+			if (!pFutureMetadataBlock || !pFutureMetadataBlock.extLst) {
+				return;
 			}
 
 			var oThis = this;
-            for (let i = 0; i < pFutureMetadataBlock.extLst.length; ++i)
-            {
-                if (!pFutureMetadataBlock.extLst[i]) {
-                	continue;
+			for (let i = 0; i < pFutureMetadataBlock.extLst.length; ++i) {
+				if (!pFutureMetadataBlock.extLst[i]) {
+					continue;
 				}
 
-                if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties)
-                {
+				if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties) {
 
 					this.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArrayProperties, function () {
 
-						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic)
-						{
+						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArray, function () {
 								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic);
 							});
 
 						}
-						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed)
-						{
+						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.CollapsedArray, function () {
 								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed);
 							});
 						}
 					});
-                }
+				}
 
-                if ((pFutureMetadataBlock.ExtLst[i].RichValueBlock) && (pFutureMetadataBlock.ExtLst[i].RichValueBlock.i))
-                {
+				if ((pFutureMetadataBlock.ExtLst[i].RichValueBlock) && (pFutureMetadataBlock.ExtLst[i].RichValueBlock.i)) {
 					oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.RichValueBlock, function () {
 						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].RichValueBlock.i);
 					});
-                }
-            }
-        };
-        this.WriteFutureMetadata = function(pFutureMetadata)
-        {
-            if (!pFutureMetadata) {
-            	return;
+				}
+			}
+		};
+		this.WriteFutureMetadata = function (pFutureMetadata) {
+			if (!pFutureMetadata) {
+				return;
 			}
 
 			var oThis = this;
-            if (pFutureMetadata.name)
-            {
+			if (pFutureMetadata.name) {
 				oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.Name, function () {
 					oThis.memory.WriteString3(pFutureMetadata.name);
 				});
-            }
-            if (pFutureMetadata.futureMetadataBlocks) {
-				for (let i = 0; i < pFutureMetadata.futureMetadataBlocks.length; ++i)
-				{
+			}
+			if (pFutureMetadata.futureMetadataBlocks) {
+				for (let i = 0; i < pFutureMetadata.futureMetadataBlocks.length; ++i) {
 					if (!pFutureMetadata.futureMetadataBlocks[i]) {
 						continue;
 					}
@@ -4705,7 +4655,7 @@
 					});
 				}
 			}
-        };
+		};
 
         
         this.WriteComments = function(aComments) {
@@ -4895,13 +4845,13 @@
 
             this.bs.WriteItem(c_oSerWorksheetsTypes.SheetFormatPr, function(){oThis.WriteSheetFormatPr(ws);});
 
-            if(null != ws.PagePrletOptions)
+            if(null != ws.PagePrintOptions)
             {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.PageMargins, function(){oThis.WritePageMargins(ws.PagePrletOptions.asc_getPageMargins());});
+                this.bs.WriteItem(c_oSerWorksheetsTypes.PageMargins, function(){oThis.WritePageMargins(ws.PagePrintOptions.asc_getPageMargins());});
 
-                this.bs.WriteItem(c_oSerWorksheetsTypes.PageSetup, function(){oThis.WritePageSetup(ws.PagePrletOptions.asc_getPageSetup());});
+                this.bs.WriteItem(c_oSerWorksheetsTypes.PageSetup, function(){oThis.WritePageSetup(ws.PagePrintOptions.asc_getPageSetup());});
 
-                this.bs.WriteItem(c_oSerWorksheetsTypes.PrletOptions, function(){oThis.WritePrletOptions(ws.PagePrletOptions);});
+                this.bs.WriteItem(c_oSerWorksheetsTypes.PrintOptions, function(){oThis.WritePrintOptions(ws.PagePrintOptions);});
             }
 
 			this.bs.WriteItem(c_oSerWorksheetsTypes.SheetData, function() {
@@ -5748,10 +5698,10 @@
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(oPageSetup.useFirstPageNumber);
             }
-            if (null != oPageSetup.usePrleterDefaults) {
-                this.memory.WriteByte(c_oSer_PageSetup.UsePrleterDefaults);
+            if (null != oPageSetup.usePrinterDefaults) {
+                this.memory.WriteByte(c_oSer_PageSetup.UsePrinterDefaults);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteBool(oPageSetup.usePrleterDefaults);
+                this.memory.WriteBool(oPageSetup.usePrinterDefaults);
             }
             if (null != oPageSetup.verticalDpi) {
                 this.memory.WriteByte(c_oSer_PageSetup.VerticalDpi);
@@ -5759,39 +5709,39 @@
                 this.memory.WriteLong(oPageSetup.verticalDpi);
             }
         };
-        this.WritePrletOptions = function (oPrletOptions) {
+        this.WritePrintOptions = function (oPrintOptions) {
             //GridLines
-            let bGridLines = oPrletOptions.asc_getGridLines();
+            let bGridLines = oPrintOptions.asc_getGridLines();
             if (null != bGridLines) {
-                this.memory.WriteByte(c_oSer_PrletOptions.GridLines);
+                this.memory.WriteByte(c_oSer_PrintOptions.GridLines);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bGridLines);
             }
             //Headings
-            let bHeadings = oPrletOptions.asc_getHeadings();
+            let bHeadings = oPrintOptions.asc_getHeadings();
             if (null != bHeadings) {
-                this.memory.WriteByte(c_oSer_PrletOptions.Headings);
+                this.memory.WriteByte(c_oSer_PrintOptions.Headings);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bHeadings);
             }
             //GridLinesSet
-            let bGridLinesSet = oPrletOptions.asc_getGridLinesSet();
+            let bGridLinesSet = oPrintOptions.asc_getGridLinesSet();
             if (null != bGridLinesSet) {
-                this.memory.WriteByte(c_oSer_PrletOptions.GridLinesSet);
+                this.memory.WriteByte(c_oSer_PrintOptions.GridLinesSet);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bGridLinesSet);
             }
             //HorizontalCentered
-            let bHorizontalCentered = oPrletOptions.asc_getHorizontalCentered();
+            let bHorizontalCentered = oPrintOptions.asc_getHorizontalCentered();
             if (null != bHorizontalCentered) {
-                this.memory.WriteByte(c_oSer_PrletOptions.HorizontalCentered);
+                this.memory.WriteByte(c_oSer_PrintOptions.HorizontalCentered);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bHorizontalCentered);
             }
             //VerticalCentered
-            let bVerticalCentered = oPrletOptions.asc_getVerticalCentered();
+            let bVerticalCentered = oPrintOptions.asc_getVerticalCentered();
             if (null != bVerticalCentered) {
-                this.memory.WriteByte(c_oSer_PrletOptions.VerticalCentered);
+                this.memory.WriteByte(c_oSer_PrintOptions.VerticalCentered);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bVerticalCentered);
             }
@@ -5994,11 +5944,11 @@
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(oClientData.fLocksWithSheet);
             }
-            if (oClientData.fPrletsWithSheet !== null)
+            if (oClientData.fPrintsWithSheet !== null)
             {
-                this.memory.WriteByte(c_oSer_DrawingClientDataType.fPrletsWithSheet);
+                this.memory.WriteByte(c_oSer_DrawingClientDataType.fPrintsWithSheet);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteBool(oClientData.fPrletsWithSheet);
+                this.memory.WriteBool(oClientData.fPrintsWithSheet);
             }
         };
 		this.WriteSheetDataXLSB = function(ws)
@@ -6963,7 +6913,7 @@
 				this.Memory.WriteXmlString(this.WriteFileHeader(0, Asc.c_nVersionNoBase64));
 			}
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				t.WriteMaletable();
+				t.WriteMainTable();
 			});
             pptx_content_writer._End();
 			if (noBase64) {
@@ -6979,7 +6929,7 @@
         {
             return AscCommon.c_oSerFormat.Signature + ";v" + version + ";" + nDataSize  + ";";
         };
-        this.WriteMaletable = function()
+        this.WriteMainTable = function()
         {
             var t = this;
             var nTableCount = 128;//Специально ставим большое число, чтобы не увеличивать его при добавлении очередной таблицы.
@@ -7064,14 +7014,14 @@
             this.Memory.WriteLong(this.nLastFilePos);
 
             //Write table
-            //Запоминаем позицию в Maletable
+            //Запоминаем позицию в MainTable
             var nCurPos = this.Memory.GetCurPosition();
             //Seek в свободную область
             this.Memory.Seek(this.nLastFilePos);
             oTableSer.Write();
             //сдвигаем позицию куда можно следующую таблицу
             this.nLastFilePos = this.Memory.GetCurPosition();
-            //Seek вобратно в Maletable
+            //Seek вобратно в MainTable
             this.Memory.Seek(nCurPos);
 
             this.nRealTableCount++;
@@ -7093,14 +7043,14 @@
             this.Memory.WriteLong(this.nLastFilePos);
 
             //Write table
-            //Запоминаем позицию в Maletable
+            //Запоминаем позицию в MainTable
             var nCurPos = this.Memory.GetCurPosition();
             //Seek в свободную область
             this.Memory.Seek(this.nLastFilePos);
             oTableSer.Write();
             //сдвигаем позицию куда можно следующую таблицу
             this.nLastFilePos = this.Memory.GetCurPosition();
-            //Seek вобратно в Maletable
+            //Seek вобратно в MainTable
             this.Memory.Seek(nCurPos);
 
             this.nRealTableCount++;
@@ -7670,9 +7620,9 @@
 			{
 				oQueryTable.headers = this.stream.GetBool();
 			}
-			else if(c_oSer_QueryTable.letermediate == type)
+			else if(c_oSer_QueryTable.Intermediate == type)
 			{
-				oQueryTable.letermediate = this.stream.GetBool();
+				oQueryTable.intermediate = this.stream.GetBool();
 			}
 			else if(c_oSer_QueryTable.PreserveFormatting == type)
 			{
@@ -9809,7 +9759,7 @@
 						if(ref) {
 							var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
 							rangeFormulaArray._foreach(function(cell){
-								cell.setFormulaleternal(curFormula);
+								cell.setFormulaInternal(curFormula);
 								if (curFormula.ca || cell.isNullTextString()) {
 									tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
 								}
@@ -9849,8 +9799,8 @@
                 oNewWorksheet.aFormulaExt = [];
                 var DrawingDocument = oNewWorksheet.getDrawingDocument();
 				//TODO при copy/paste в word из excel необходимо подменить DrawingDocument из word - пересмотреть правку!
-				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.LogicDocument && editor.WordControl.LogicDocument.DrawingDocument) {
-                   this.wb.DrawingDocument = editor.WordControl.LogicDocument.DrawingDocument;
+				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.DrawingDocument) {
+                   this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
                 }
 
 
@@ -9904,19 +9854,19 @@
             else if ( c_oSerWorksheetsTypes.PageMargins == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
-                    return oThis.ReadPageMargins(t,l, oWorksheet.PagePrletOptions.pageMargins);
+                    return oThis.ReadPageMargins(t,l, oWorksheet.PagePrintOptions.pageMargins);
                 });
             }
             else if ( c_oSerWorksheetsTypes.PageSetup == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
-                    return oThis.ReadPageSetup(t,l, oWorksheet.PagePrletOptions.pageSetup);
+                    return oThis.ReadPageSetup(t,l, oWorksheet.PagePrintOptions.pageSetup);
                 });
             }
-            else if ( c_oSerWorksheetsTypes.PrletOptions == type )
+            else if ( c_oSerWorksheetsTypes.PrintOptions == type )
             {
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
-                    return oThis.ReadPrletOptions(t,l, oWorksheet.PagePrletOptions);
+                    return oThis.ReadPrintOptions(t,l, oWorksheet.PagePrintOptions);
                 });
             }
             else if ( c_oSerWorksheetsTypes.Hyperlinks == type )
@@ -9959,7 +9909,7 @@
                 oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, oWorksheet);
                 oBinary_TableReader.Read(length, oWorksheet.TableParts);
             } else if ( c_oSerWorksheetsTypes.Comments == type
-                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.LogicDocument && Array.isArray(editor.WordControl.LogicDocument.Slides))) {
+                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.m_oLogicDocument && Array.isArray(editor.WordControl.m_oLogicDocument.Slides))) {
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadComments(t,l, oWorksheet);
                 });
@@ -10630,26 +10580,26 @@
                 oPageSetup.scale = this.stream.GetULongLE();
             } else if ( c_oSer_PageSetup.UseFirstPageNumber == type ) {
                 oPageSetup.useFirstPageNumber = this.stream.GetBool();
-            } else if ( c_oSer_PageSetup.UsePrleterDefaults == type ) {
-                oPageSetup.usePrleterDefaults = this.stream.GetBool();
+            } else if ( c_oSer_PageSetup.UsePrinterDefaults == type ) {
+                oPageSetup.usePrinterDefaults = this.stream.GetBool();
             } else if ( c_oSer_PageSetup.VerticalDpi == type ) {
                 oPageSetup.verticalDpi = this.stream.GetULongLE();
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
-        this.ReadPrletOptions = function (type, length, oPrletOptions) {
+        this.ReadPrintOptions = function (type, length, oPrintOptions) {
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_PrletOptions.GridLines === type) {
-                oPrletOptions.asc_setGridLines(this.stream.GetBool());
-            } else if (c_oSer_PrletOptions.Headings === type) {
-                oPrletOptions.asc_setHeadings(this.stream.GetBool());
-            } else if (c_oSer_PrletOptions.GridLinesSet === type) {
-                oPrletOptions.asc_setGridLinesSet(this.stream.GetBool());
-            } else if (c_oSer_PrletOptions.HorizontalCentered === type) {
-                oPrletOptions.asc_setHorizontalCentered(this.stream.GetBool());
-            } else if (c_oSer_PrletOptions.VerticalCentered === type) {
-                oPrletOptions.asc_setVerticalCentered(this.stream.GetBool());
+            if (c_oSer_PrintOptions.GridLines === type) {
+                oPrintOptions.asc_setGridLines(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.Headings === type) {
+                oPrintOptions.asc_setHeadings(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.GridLinesSet === type) {
+                oPrintOptions.asc_setGridLinesSet(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.HorizontalCentered === type) {
+                oPrintOptions.asc_setHorizontalCentered(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.VerticalCentered === type) {
+                oPrintOptions.asc_setVerticalCentered(this.stream.GetBool());
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
@@ -10810,7 +10760,7 @@
                 });
                 if (tmp.cell.isNullTextString()) {
                     //set default value in case of empty cell value
-                    tmp.cell.setTypeleternal(CellValueType.Number);
+                    tmp.cell.setTypeInternal(CellValueType.Number);
                 }
                 if (tmp.cell.hasRowCol()) {
                     tmp.prevCol = tmp.cell.nCol;
@@ -10850,10 +10800,10 @@
             {
                 switch(this.stream.GetUChar())
                 {
-                    case ECellTypeType.celltypeBool: oCell.setTypeleternal(CellValueType.Bool);break;
-                    case ECellTypeType.celltypeError: oCell.setTypeleternal(CellValueType.Error);break;
-                    case ECellTypeType.celltypeNumber: oCell.setTypeleternal(CellValueType.Number);break;
-                    case ECellTypeType.celltypeSharedString: oCell.setTypeleternal(CellValueType.String);break;
+                    case ECellTypeType.celltypeBool: oCell.setTypeInternal(CellValueType.Bool);break;
+                    case ECellTypeType.celltypeError: oCell.setTypeInternal(CellValueType.Error);break;
+                    case ECellTypeType.celltypeNumber: oCell.setTypeInternal(CellValueType.Number);break;
+                    case ECellTypeType.celltypeSharedString: oCell.setTypeInternal(CellValueType.String);break;
                 }
             }
             else if( c_oSerCellTypes.Formula === type )
@@ -10868,13 +10818,13 @@
 					var ss = this.aSharedStrings[val];
                     if (undefined !== ss) {
                         if (typeof ss === 'string') {
-                            oCell.setValueTextleternal(ss);
+                            oCell.setValueTextInternal(ss);
                         } else {
-                            oCell.setValueMultiTextleternal(ss);
+                            oCell.setValueMultiTextInternal(ss);
                         }
                     }
 				} else {
-                    oCell.setValueNumberleternal(val);
+                    oCell.setValueNumberInternal(val);
 				}
             }
             else
@@ -11085,8 +11035,8 @@
             var res = c_oSerConstants.ReadOk;
             if ( c_oSer_DrawingClientDataType.fLocksWithSheet == type )
                 oClientData.fLocksWithSheet = this.stream.GetBool();
-            else if ( c_oSer_DrawingClientDataType.fPrletsWithSheet == type )
-                oClientData.fPrletsWithSheet = this.stream.GetBool();
+            else if ( c_oSer_DrawingClientDataType.fPrintsWithSheet == type )
+                oClientData.fPrintsWithSheet = this.stream.GetBool();
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -11985,7 +11935,7 @@
         };
     }
     /** @constructor */
-    function Binary_CalcChaletableReader(stream, aCalcChain)
+    function Binary_CalcChainTableReader(stream, aCalcChain)
     {
         this.stream = stream;
         this.aCalcChain = aCalcChain;
@@ -12001,7 +11951,7 @@
         {
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
-            if ( c_oSer_CalcChaletype.CalcChainItem === type )
+            if ( c_oSer_CalcChainType.CalcChainItem === type )
             {
                 var oNewCalcChain = {};
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
@@ -12016,17 +11966,17 @@
         this.ReadCalcChain = function(type, length, oCalcChain)
         {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSer_CalcChaletype.Array == type )
+            if ( c_oSer_CalcChainType.Array == type )
                 oCalcChain.Array = this.stream.GetBool();
-            else if ( c_oSer_CalcChaletype.SheetId == type )
+            else if ( c_oSer_CalcChainType.SheetId == type )
                 oCalcChain.SheetId = this.stream.GetULongLE();
-            else if ( c_oSer_CalcChaletype.DependencyLevel == type )
+            else if ( c_oSer_CalcChainType.DependencyLevel == type )
                 oCalcChain.DependencyLevel = this.stream.GetBool();
-            else if ( c_oSer_CalcChaletype.Ref == type )
+            else if ( c_oSer_CalcChainType.Ref == type )
                 oCalcChain.Ref = this.stream.GetString2LE(length);
-            else if ( c_oSer_CalcChaletype.ChildChain == type )
+            else if ( c_oSer_CalcChainType.ChildChain == type )
                 oCalcChain.ChildChain = this.stream.GetBool();
-            else if ( c_oSer_CalcChaletype.NewThread == type )
+            else if ( c_oSer_CalcChainType.NewThread == type )
                 oCalcChain.NewThread = this.stream.GetBool();
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -12268,7 +12218,7 @@
 			}
 			var stream;
 			if (Asc.c_nVersionNoBase64 !== nVersion) {
-				var dstLen = parselet(dst_len);
+				var dstLen = parseInt(dst_len);
 
 				var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
 				stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
@@ -12305,7 +12255,7 @@
 				History.TurnOff();
 
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				t.ReadMaletable(wb);
+				t.ReadMainTable(wb);
 			});
 
             if(!this.InitOpenManager.copyPasteObj.isCopyPaste)
@@ -12323,7 +12273,7 @@
             //чтобы удалялся stream с бинарником
 			pptx_content_loader.Clear(true);
         };
-        this.ReadMaletable = function(wb)
+        this.ReadMainTable = function(wb)
         {
             var res = c_oSerConstants.ReadOk;
             //mtLen
@@ -12455,7 +12405,7 @@
                             res = bwtr.Read();
                             break;
                         // case c_oSerTableTypes.CalcChain:
-                        //     res = (new Binary_CalcChaletableReader(this.stream, wb.calcChain)).Read();
+                        //     res = (new Binary_CalcChainTableReader(this.stream, wb.calcChain)).Read();
                         //     break;
                         // case c_oSerTableTypes.Other:
                         // res = (new Binary_OtherTableReader(this.stream, oMediaArray)).Read();
@@ -12956,17 +12906,17 @@
 	};
     function ReadDefTableStyles(wb)
     {
-    	var stylesZip = "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";
+    	var stylesZip = "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";
 
         var dstLen = stylesZip.length;
-        var poleter = g_memory.Alloc(dstLen);
-        var stream = new AscCommon.FT_Stream2(poleter.data, dstLen);
-        stream.obj = poleter.obj;
+        var pointer = g_memory.Alloc(dstLen);
+        var stream = new AscCommon.FT_Stream2(pointer.data, dstLen);
+        stream.obj = pointer.obj;
         var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
         oBinaryFileReader.getbase64DecodedData2(stylesZip, 0, stream, 0);
 
         let jsZlib = new AscCommon.ZLib();
-        if (jsZlib.open(new Ulet8Array(poleter.data))) {
+        if (jsZlib.open(new Uint8Array(pointer.data))) {
             let contentBytes = jsZlib.getFile("presetTableStyles.xml");
             if (contentBytes) {
                 let content = AscCommon.UTF8ArrayToString(contentBytes, 0, contentBytes.length);
@@ -13491,7 +13441,7 @@
             tmp.ws.workbook.openErrors.push(cell.getName());
         }
         if (curFormula) {
-            cell.setFormulaleternal(curFormula.parsed);
+            cell.setFormulaInternal(curFormula.parsed);
             if (curFormula.parsed.ca || cell.isNullTextString()) {
                 tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
             }
@@ -14015,7 +13965,7 @@
         var defNameList = this.wb.dependencyFormulas.saveDefName(this.isCopyPaste === false);
         var filterDefName = "_xlnm._FilterDatabase";
         var tempMap = {};
-        var prletAreaDefName = "Prlet_Area";
+        var printAreaDefName = "Print_Area";
         var prefix = "_xlnm.";
 
         if(null != defNameList ){
@@ -14026,7 +13976,7 @@
                         tempMap[defNameList[i].LocalSheetId] = 1;
                     }
                     //на запись добавляем к области печати префикс
-                    if(prletAreaDefName === defNameList[i].Name && null != defNameList[i].LocalSheetId && true === defNameList[i].isXLNM) {
+                    if(printAreaDefName === defNameList[i].Name && null != defNameList[i].LocalSheetId && true === defNameList[i].isXLNM) {
                         defNameList[i].Name = prefix + defNameList[i].Name;
                     }
                 }
@@ -14076,7 +14026,7 @@
             } else {
                 bboxes = ws.mergeManager.getAll().map(function(elem){return elem.bbox});
             }
-            bboxes = getDisjoletMerged(this.wb, bboxes);
+            bboxes = getDisjointMerged(this.wb, bboxes);
             for (i = 0; i < bboxes.length; ++i) {
                 if (!bboxes[i].isOneCell()) {
                     func(bboxes[i].getName());
@@ -14113,7 +14063,7 @@
                 for (var type in elems) {
                     if (elems.hasOwnProperty(type)) {
                         var styleElement = new Asc.CT_slicerStyleElement();
-                        styleElement.type = parselet(type);
+                        styleElement.type = parseInt(type);
                         styleElement.dxfId = aDxfs.length;
                         aDxfs.push(elems[type]);
                         slicerStyle.slicerStyleElements.push(styleElement);
@@ -14318,8 +14268,8 @@
                 formula = parsed.getFormula();
             } else if(this.isCopyPaste) {
                 //если выделена часть формулы, и первая ячейка формулы массива не входит в выделение
-                var letersection = arrayFormula.letersection(this.isCopyPaste);
-                if(letersection && letersection.r1 === cell.nRow && letersection.c1 === cell.nCol) {
+                var intersection = arrayFormula.intersection(this.isCopyPaste);
+                if(intersection && intersection.r1 === cell.nRow && intersection.c1 === cell.nCol) {
                     ref = arrayFormula;
                     type = ECellFormulaType.cellformulatypeArray;
                     formula = parsed.getFormula();
@@ -14437,7 +14387,7 @@
             if ("name" === name) {
                 this.name = reader.GetValueDecodeXml();
             } else if ("sheetId" === name) {
-                this.sheetId = reader.GetValuelet();
+                this.sheetId = reader.GetValueInt();
             } else if ("id" === name) {
                 this.id = reader.GetValueDecodeXml();
             } else if ("state" === name) {
@@ -14497,7 +14447,7 @@
             if ("id" === name) {
                 this.id = reader.GetValueDecodeXml();
             } else if ("cacheId" === name) {
-                this.cacheId = parselet(reader.GetValue());
+                this.cacheId = parseInt(reader.GetValue());
             }
         }
     };
@@ -14686,7 +14636,7 @@
     window["AscCommonExcel"].XfForWrite = XfForWrite;
     window["AscCommonExcel"].ESortMethod = ESortMethod;
     window["AscCommonExcel"].ST_CellComments = ST_CellComments;
-    window["AscCommonExcel"].ST_PrletError = ST_PrletError;
+    window["AscCommonExcel"].ST_PrintError = ST_PrintError;
     window["AscCommonExcel"].ST_TableType = ST_TableType;
     window["AscCommonExcel"].ST_PageOrder = ST_PageOrder;
     window["AscCommonExcel"].EActivePane = EActivePane;
