@@ -124,24 +124,6 @@
         return this._origRect;
     };
     
-    CTextShape.prototype.SetAlign = function(nType) {
-        this._alignment = nType;
-    };
-    CTextShape.prototype.GetAlign = function() {
-        return this._alignment;
-    };
-
-    CTextShape.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-
-        for (let i = 0; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].pen;
-            oLine.setFill(oFill);
-        }
-    };
     CTextShape.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
@@ -386,7 +368,7 @@
     CTextShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetElement(0);
+        let oParagraph  = oContent.GetCurrentParagraph();
 
         oDoc.SetLocalHistory();
         oDoc.CreateNewHistoryPoint(this);
@@ -494,68 +476,152 @@
         if (oContent.IsSelectionEmpty())
             oContent.RemoveSelection();
     };
-    CTextShape.prototype.onAfterMove = function() {
-        this.onMouseDown();
-        this.isInMove = false;
+    
+    /////////////////////////////
+    /// work with text properties
+    ////////////////////////////
+
+    CTextShape.prototype.SetParaTextPr = function(oParaTextPr) {
+        let oContent = this.GetDocContent();
+        var StartPos = oContent.Selection.StartPos;
+        var EndPos   = oContent.Selection.EndPos;
+
+        if (EndPos < StartPos)
+        {
+            var Temp = StartPos;
+            StartPos = EndPos;
+            EndPos   = Temp;
+        }
+
+        for (var nIndex = StartPos; nIndex <= EndPos; nIndex++) {
+            oContent.GetElement(nIndex).Add(oParaTextPr.Copy());
+        }
+
+        this.SetNeedRecalc(true);
+        this.SetNeedUpdateRC(true);
     };
-    CTextShape.prototype.onPreMove = function(e) {
-        if (this.isInMove)
-            return;
+    CTextShape.prototype.SetAlign = function(nType) {
+        this._alignment = nType;
+        
+        let _alignType; // внутренний тип
+        switch (nType) {
+			case AscPDF.ALIGN_TYPE.left:
+				_alignType = AscCommon.align_Left;
+				break;
+			case AscPDF.ALIGN_TYPE.center:
+				_alignType = AscCommon.align_Center;
+				break;
+			case AscPDF.ALIGN_TYPE.right:
+				_alignType = AscCommon.align_Right;
+				break;
+		}
 
-        this.isInMove = true; // происходит ли resize/move действие
+        let oContent = this.GetDocContent();
+        oContent.SetParagraphAlign(nType);
+        this.SetNeedRecalc(true);
+    };
+    CTextShape.prototype.GetAlign = function() {
+        return this._alignment;
+    };
+    CTextShape.prototype.SetBold = function(bBold) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
+    };
+    CTextShape.prototype.GetBold = function() {
+        return !!this.GetCalculatedTextPr().GetBold();        
+    };
+    CTextShape.prototype.SetItalic = function(bItalic) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
+    };
+    CTextShape.prototype.GetItalic = function() {
+        return !!this.GetCalculatedTextPr().GetItalic();
+    };
+    CTextShape.prototype.SetStrikeout = function(bStrikeout) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({
+			Strikeout  : bStrikeout,
+			DStrikeout : false
+        }));
+    };
+    CTextShape.prototype.GetStrikeout = function() {
+        return !!this.GetCalculatedTextPr().GetStrikeout();
+    };
+    CTextShape.prototype.SetVertAling = function(nType) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
+    };
+    CTextShape.prototype.GetVertAlign = function() {
+        return this.GetCalculatedTextPr().GetVertAlign();
+    };
+    CTextShape.prototype.SetFontSize = function(nType) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
+    };
+    CTextShape.prototype.GetFontSize = function() {
+        return this.GetCalculatedTextPr().GetFontSize();
+    };
+    CTextShape.prototype.SetSpacing = function(nSpacing) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
+    };
+    CTextShape.prototype.GetSpacing = function() {
+        return this.GetCalculatedTextPr().GetSpacing();
+    };
+    CTextShape.prototype.SetFontFamily = function(sFontFamily) {
+        let oParaTextPr = new AscCommonWord.ParaTextPr();
+		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
+        this.SetParaTextPr(oParaTextPr);
+    };
+    CTextShape.prototype.GetFontFamily = function() {
+        return this.GetCalculatedTextPr().GetFontFamily();
+    };
+    CTextShape.prototype.GetAllFonts = function(aFonts) {
+        let oContent    = this.GetDocContent();
+        let fontMap     = {};
+		aFonts          = aFonts || [];
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
+        let oPara;
+        for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
+            oPara = oContent.GetElement(nPara);
+            oPara.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
 
-        this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
-
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
-        if (oCursorInfo.cursorType == null) {
-            this.isInMove = false;
-            return;
-        }
-
-        let isResize    = oCursorInfo.cursorType.indexOf("resize") != -1 ? true : false;
-        let sShapeId    = oCursorInfo.objectId;
-
-        // если фигуры в селекте группы, тогда смотрим в какую попали
-        this.selectedObjects.length = 0;
-
-        let _t = this;
-        // если в handles то телектим внутри группы нужную фигуру
-        if (isResize) {
-            this.spTree.forEach(function(sp) {
-                if (sp.GetId() == sShapeId) {
-                    sp.selectStartPage = 0;
-                    _t.selectedObjects.push(sp);
-                }
-            });
-        }
-        // иначе move 
-        else {
-            // если попали в стрелку, тогда селектим группу, т.к. будем перемещать всю аннотацию целиком
-            if (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line") {
-                this.selectedObjects.length = 0;
-                oDrawingObjects.selection.groupSelection = null;
-                oDrawingObjects.selectedObjects.length = 0;
-                oDrawingObjects.selectedObjects.push(this);
+            let oRun;
+            for (let nRun = 0, nRunCount = oPara.GetElementsCount(); nRun < nRunCount; nRun++) {
+                oRun = oPara.GetElement(nRun);
+                oRun.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
             }
-            // если попали в textbox, тогда селектим textbox фигуру внутри группы, т.к. будем перемещать только её
-            else if (this.spTree[0] && sShapeId == this.spTree[0].GetId()) {
-                this.selectedObjects.length                 = 0;
-                oDrawingObjects.selection.groupSelection    = this;
-                this.selectedObjects.push(this.spTree[0]);
-            }
         }
+		
+        delete fontMap["+mj-lt"];
+        delete fontMap["+mn-lt"];
+        delete fontMap["+mj-ea"];
+        delete fontMap["+mn-ea"];
+        delete fontMap["+mj-cs"];
+        delete fontMap["+mn-cs"];
 
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        for (let key in fontMap) {
+			if (aFonts.includes(key) == false)
+                aFonts.push(key);
+		}
+		
+		return aFonts;
+    };
+
+    CTextShape.prototype.SetParagraphSpacing = function(oSpacing) {
+        this.GetDocContent().SetParagraphSpacing(oSpacing);
+    };
+    CTextShape.prototype.GetParagraphSpacing = function() {
+        let oCalcedPr = this.GetCalculatedParaPr();
+        return {
+            After:  oCalcedPr.GetSpacingAfter(),
+            Before: oCalcedPr.GetSpacingBefor()
+        }
+    };
+
+    /**
+     * Получаем рассчитанные настройки текста (полностью заполненные)
+     * @returns {CTextPr}
+     */
+    CTextShape.prototype.GetCalculatedTextPr = function() {
+        return this.GetDocContent().GetCalculatedTextPr();
+    };
+    CTextShape.prototype.GetCalculatedParaPr = function() {
+        return this.GetDocContent().GetCalculatedParaPr();
     };
 
     function initTextShape(oParentTextShape) {
@@ -594,9 +660,7 @@
         if (oParentTextShape.GetDocument().IsTextEditMode() == false)
             oLine.setFill(AscFormat.CreateNoFillUniFill());
 
-        let oRun = oParentTextShape.GetDocContent().GetElement(0).GetElement(0);
-
-        oRun.AddText('TestTestTest');
+        oParentTextShape.SetRichContents(JSON.parse('[{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"Text\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dwa"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dawd\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"aw\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"da\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"d\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dw"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"adawd\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"daw\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dwa\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"d\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"awd3212312323233"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"\\r"}]'));
         // editor.private_CreateApiRun(oRun).SetColor(0, 0, 0, false);
         
         oParentTextShape.setTxBox(true);
