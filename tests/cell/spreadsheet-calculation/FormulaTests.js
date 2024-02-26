@@ -20055,6 +20055,7 @@ $(function () {
 
 	QUnit.test("Test: \"MATCH\"", function (assert) {
 
+		AscCommonExcel.bIsSupportDynamicArrays = false;
 
 		ws.getRange2("A551").setValue("28");
 		ws.getRange2("A552").setValue("29");
@@ -20076,35 +20077,35 @@ $(function () {
 
 		oParser = new parserFormula("MATCH(30,A551:A555,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_1");
 
 		oParser = new parserFormula("MATCH(30,A551:A555,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_2");
 
 		oParser = new parserFormula("MATCH(30,A551:A555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_3");
 
 		oParser = new parserFormula("MATCH(30,B551:B555)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_4");
 
 		oParser = new parserFormula("MATCH(30,B551:B555,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_5");
 
 		oParser = new parserFormula("MATCH(30,B551:B555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_6");
 
 		oParser = new parserFormula("MATCH(31,C551:C555,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_7");
 
 		oParser = new parserFormula("MATCH(\"b\",{\"a\";\"b\";\"c\"},0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_8");
 
 		ws.getRange2("F3").setValue("");
 
@@ -20123,35 +20124,35 @@ $(function () {
 
 		oParser = new parserFormula("MATCH(F3,F106:F114,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_9");
 
 		oParser = new parserFormula("MATCH(F3,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 10);
+		assert.strictEqual(oParser.calculate().getValue(), 10, "MATCH_10");
 
 		oParser = new parserFormula("MATCH(0,F106:F114,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_11");
 
 		oParser = new parserFormula("MATCH(0,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 10);
+		assert.strictEqual(oParser.calculate().getValue(), 10, "MATCH_12");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,0)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 9);
+		assert.strictEqual(oParser.calculate().getValue(), 9, "MATCH_13");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 5);
+		assert.strictEqual(oParser.calculate().getValue(), 5, "MATCH_14");
 
 		oParser = new parserFormula("MATCH(6,F106:F117,-1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "MATCH_15");
 
 		oParser = new parserFormula("MATCH({6,2,3},F106:F117,1)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 5);
+		assert.strictEqual(oParser.calculate().getValue(), 5, "MATCH_16");
 
 		// bug 62332
 		ws.getRange2("B200").setValue("P/N");
@@ -20174,19 +20175,19 @@ $(function () {
 		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 1);
+		assert.strictEqual(oParser.calculate().getValue(), 1, "MATCH_17");
 
 		bbox = ws.getRange2("D201").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.strictEqual(oParser.calculate().getValue(), 2, "MATCH_18");
 
 		bbox = ws.getRange2("D202").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 3);
+		assert.strictEqual(oParser.calculate().getValue(), 3, "MATCH_19");
 
 		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
 		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);

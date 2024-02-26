@@ -3746,7 +3746,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
 
-		if (!bIsSupportDynamicArrays || this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
+		if (!AscCommonExcel.bIsSupportDynamicArrays || this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
 			return null;
 		}
 
@@ -9249,6 +9249,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cReturnFormulaType = cReturnFormulaType;
 
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
+	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
 
 	window['AscCommonExcel'].cNumber = cNumber;
 	window['AscCommonExcel'].cString = cString;
