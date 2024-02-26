@@ -1922,49 +1922,56 @@
 			});
 
 			// before deleting a value from a cell, check its PF for dynamicRange and if there is one, then leave the PF which can then be recalculated (should only work for deleting values)
-			this._foreachChangedDynamicRange(function(cell, i, j, r1, c1){
-				if (cell) {
-					// todo пересчет только первой ячейки ?
-					// затем каждый раз проверка формулы на ошибку
-					// если да, то не пересчитываем текущую ячейку, а полностью очищаем её? 
+			// this._foreachChangedDynamicRange(function(cell, i, j, r1, c1){
+			// 	if (cell) {
+			// 		// todo пересчет только первой ячейки ?
+			// 		// затем каждый раз проверка формулы на ошибку
+			// 		// если да, то не пересчитываем текущую ячейку, а полностью очищаем её? 
 
-					let parsedF = cell.formulaParsed, dynamicRange;
-					if (parsedF) {
-						cell.setIsDirty(true);
+			// 		let parsedF = cell.formulaParsed, dynamicRange;
+			// 		if (parsedF) {
+			// 			cell.setIsDirty(true);
 						
-						// caclulate cell, then check result
-						cell._checkDirty();
+			// 			// caclulate cell, then check result
+			// 			cell._checkDirty();
 
-						dynamicRange = parsedF.getDynamicRef();
-						// if first cell of dynamic range is empty, delete all PF from all cells in range
-						if (dynamicRange) {
-							// work only with non first cell
-							if (cell.nCol !== dynamicRange.c1 || cell.nRow !== dynamicRange.r1) {
-								if (parsedF.isDynamicRangeErr2()) {
-									// cell.setValue("");	!!!
-									// or
-									// this.cleanText();
-									// this.setFormulaInternal(null);
-								}
-							}
-						}
-					} else {
-						// if (cell.nRow === r1 && cell.nCol === c1) {
-							// first cell without formula
-						// }
-						// cell without formula
-						// check if it's empty cell
-						if (cell.isEmptyTextString()) {
-							// set PF? or just recalc?
-						} else {
-							// non empty cell without formula
-							// set flag cm and ca to the main cell of DAF
-						}
-					}
-				}
-			});
+			// 			dynamicRange = parsedF.getDynamicRef();
+			// 			// if first cell of dynamic range is empty, delete all PF from all cells in range
+			// 			if (dynamicRange) {
+			// 				// work only with non first cell
+			// 				if (cell.nCol !== dynamicRange.c1 || cell.nRow !== dynamicRange.r1) {
+			// 					if (parsedF.isDynamicRangeErr2()) {
+			// 						// cell.setValue("");	!!!
+			// 						// or
+			// 						// this.cleanText();
+			// 						// this.setFormulaInternal(null);
+			// 					}
+			// 				}
+			// 			}
+			// 		} else {
+			// 			// if (cell.nRow === r1 && cell.nCol === c1) {
+			// 				// first cell without formula
+			// 			// }
+			// 			// cell without formula
+			// 			// check if it's empty cell
+			// 			if (cell.isEmptyTextString()) {
+			// 				// set PF? or just recalc?
+			// 			} else {
+			// 				// non empty cell without formula
+			// 				// set flag cm and ca to the main cell of DAF
+			// 			}
+			// 		}
+			// 	}
+			// });
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
+				// if (cell) {
+				// 	cell._checkDirty();
+				if (cell.formulaParsed && cell.formulaParsed.getDynamicRef() && cell.formulaParsed.vm && cell.formulaParsed.aca && cell.formulaParsed.ca) {
+					t.addToVolatileArrays(cell.formulaParsed);
+				}
+				// }
+				
 			});
 			this.changedCell = null;
 			this.changedRange = null;
@@ -13574,7 +13581,8 @@
 						newFP.setFormulaString(newFP.assemble());
 						//***dynamic-array-formula***
 						if(byRef && dynamicRange) {
-							newFP.dynamicRange = byRef;
+							// byRef может отличаться от dynamicRange в случаях когда массив не раскрыт(находится в одной ячейке, но возможный размер может быть больше)
+							newFP.dynamicRange = dynamicRange;
 							newFP.ref = byRef;
 							this.ws.formulaArrayLink = newFP;
 						} 
