@@ -149,7 +149,8 @@
 	{
 		if (this.Buffer.length >= AscFonts.HB_STRING_MAX_LEN)
 			this.FlushWord();
-
+		
+		// TODO: Check bugs 66317 66435
 		let nScript = this.GetTextScript(nUnicode);
 		if (nScript !== this.Script
 			&& -1 !== this.Script

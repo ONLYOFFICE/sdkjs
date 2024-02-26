@@ -474,6 +474,35 @@
 
         this.WordControl.m_oLogicDocument.ReplaceSearchElement(sReplace, true, null, false);
     };
+	/**
+	 * Find and select the next occurrence of the text starting at the current position.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SearchAndReplace
+	 * @param {Object} oProperties - An object which contains the search and replacement strings.
+	 * @param {string} oProperties.searchString - The search string.
+	 * @param {string} oProperties.replaceString - The replacement string.
+	 * @param {boolean} [isForward=true] - Search direction.
+	 * @returns {boolean} returns false if text was not found
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SearchNext"] = function(oProperties, isForward)
+	{
+		let logicDocument = this.WordControl.m_oLogicDocument;
+		if (!logicDocument)
+			return false;
+		
+		let searchProps = new AscCommon.CSearchSettings();
+		searchProps.SetText(oProperties["searchString"]);
+		searchProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties["matchCase"] : true);
+		
+		logicDocument.Search(searchProps);
+		let elementId = logicDocument.GetSearchElementId(!(false === isForward || 0 === isForward));
+		if (null === elementId)
+			return false;
+		
+		logicDocument.SelectSearchElement(elementId);
+		return true;
+	};
     /**
      * Returns file content in the HTML format.
      * @memberof Api

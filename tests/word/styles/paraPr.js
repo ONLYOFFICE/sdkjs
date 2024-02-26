@@ -49,7 +49,7 @@ $(function () {
 		style.SetParaPr({
 			Ind : {Left : 10, Right : 10, FirstLine : 20}
 		});
-		p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		p.SetParagraphStyleById(style.GetId());
 

@@ -39,7 +39,7 @@ $(function () {
 	let dc = new AscWord.CDocumentContent();
 	dc.ClearContent(false);
 
-	let para = new AscWord.CParagraph();
+	let para = new AscWord.Paragraph();
 	dc.AddToContent(0, para);
 
 	let run = new AscWord.CRun();

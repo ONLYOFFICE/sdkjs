@@ -155,6 +155,7 @@ function BinaryPPTYLoader()
     this.TempGroupObject = null;
     this.TempMainObject = null;
 
+    this.IsFillingSmartArt = false;
     this.IsThemeLoader = false;
     this.Api = null;
 
@@ -5780,7 +5781,7 @@ function BinaryPPTYLoader()
                             if (AscCommonWord.c_oSer_OMathContentType.OMath === type2)
                             {
                                 var oReadResult = new AscCommonWord.DocReadResult(null);
-                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscCommonWord.Paragraph(this.DrawingDocument, null, true));
+                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscWord.Paragraph(null, true));
                                 ole.setMathObject(oMathPara);
                             }
                             else
@@ -8550,7 +8551,7 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    if(!this.IsThemeLoader)
+                    if(!(this.IsThemeLoader || this.IsFillingSmartArt))
                     {
                         var nLcid = Asc.g_oLcidNameToIdMap[lang];
                         if(nLcid)
@@ -9880,7 +9881,7 @@ function BinaryPPTYLoader()
 
     this.ReadParagraph = function(DocumentContent)
     {
-        var par = new Paragraph(DocumentContent.DrawingDocument, DocumentContent, true);
+        var par = new AscWord.Paragraph(DocumentContent, true);
 
         var EndPos = 0;
 

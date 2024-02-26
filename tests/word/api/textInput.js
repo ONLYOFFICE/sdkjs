@@ -42,7 +42,7 @@ $(function () {
 	{
 		AscTest.ClearDocument();
 		
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		
 		logicDocument.SelectAll();
@@ -94,13 +94,27 @@ $(function () {
 		AscTest.EnterTextCompositeInput("yz");
 		AscTest.CorrectEnterText("yz", "x");
 		assert.strictEqual(GetParagraphText(p), "xx", "Test special case, when added symbols collect to a single grapheme with previous symbols");
+		
+		// Вводим на сингальском 1ෑඒ (1-e-e-t)
+		p = new AscWord.Paragraph();
+		logicDocument.PushToContent(p);
+		AscTest.MoveCursorToParagraph(p);
+		AscTest.EnterText("1");
+		AscTest.BeginCompositeInput();
+		AscTest.ReplaceCompositeInput([]);
+		AscTest.ReplaceCompositeInput([3536]);
+		AscTest.ReplaceCompositeInput([3537]);
+		AscTest.ReplaceCompositeInput([3537, 3474]);
+		AscTest.EndCompositeInput();
+		assert.strictEqual(GetParagraphText(p), "1ෑඒ", "Add text '1ෑඒ'");
+		assert.strictEqual(p.IsCursorAtEnd(), true, "Check cursor position");
 	});
 	QUnit.test("EnterText/CorrectEnterText/CompositeInput in collaboration", function (assert)
 	{
 		AscTest.StartCollaboration();
 		
 		AscTest.ClearDocument();
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		
 		AscTest.EnterText("ABC");
@@ -119,6 +133,42 @@ $(function () {
 		assert.strictEqual(GetParagraphText(p), "AB123QRSC", "Add text '111' and correct it with '123' in collaboration (no sync between actions)");
 		
 		AscTest.EndCollaboration();
+	});
+	QUnit.test("EnterText/CorrectEnterText/CompositeInput with running TextSpeaker", function (assert)
+	{
+		AscTest.StartTextSpeaker();
+		
+		AscTest.ClearDocument();
+		let p = new AscWord.Paragraph();
+		logicDocument.AddToContent(0, p);
+		
+		AscTest.EnterText("ABC");
+		assert.strictEqual(GetParagraphText(p), "ABC", "Add text 'ABC' in collaboration");
+		
+		AscTest.MoveCursorLeft();
+		AscTest.EnterText("111");
+		AscTest.CorrectEnterText("11", "23");
+		assert.strictEqual(GetParagraphText(p), "AB123C", "Add text '111' and correct it with '123' in collaboration (sync between actions)");
+		
+		AscTest.EnterText("QQQ");
+		AscTest.CorrectEnterText("QQ", "RS");
+		assert.strictEqual(GetParagraphText(p), "AB123QRSC", "Add text '111' and correct it with '123' in collaboration (no sync between actions)");
+		
+		// Вводим на сингальском 1ෑඒ (1-e-e-t)
+		p = new AscWord.Paragraph();
+		logicDocument.PushToContent(p);
+		AscTest.MoveCursorToParagraph(p);
+		AscTest.EnterText("1");
+		AscTest.BeginCompositeInput();
+		AscTest.ReplaceCompositeInput([]);
+		AscTest.ReplaceCompositeInput([3536]);
+		AscTest.ReplaceCompositeInput([3537]);
+		AscTest.ReplaceCompositeInput([3537, 3474]);
+		AscTest.EndCompositeInput();
+		assert.strictEqual(GetParagraphText(p), "1ෑඒ", "Add text '1ෑඒ'");
+		assert.strictEqual(p.IsCursorAtEnd(), true, "Check cursor position");
+		
+		AscTest.StopTextSpeaker();
 	});
 	QUnit.test("Test 'complex script' property on input", function (assert)
 	{
@@ -145,7 +195,7 @@ $(function () {
 		{
 			AscTest.ClearDocument();
 
-			let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+			let p = new AscWord.Paragraph();
 			logicDocument.AddToContent(0, p);
 
 			let overallText = "";
@@ -220,6 +270,5 @@ $(function () {
 			[true, true],
 			["3", "ෑඒ"]
 		);
-
 	});
 });

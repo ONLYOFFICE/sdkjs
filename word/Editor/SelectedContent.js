@@ -1091,7 +1091,7 @@
 		else
 		{
 			oParagraphS = oParagraph;
-			oParagraphE = new Paragraph(oParagraph.DrawingDocument, undefined, this.IsPresentationContent);
+			oParagraphE = new AscWord.Paragraph(undefined, this.IsPresentationContent);
 			oParagraphS.Split(oParagraphE);
 			oDocContent.AddToContent(nDstIndex + 1, oParagraphE);
 			nInsertPos  = nDstIndex + 1;
@@ -1189,7 +1189,7 @@
 	};
 	CSelectedContent.prototype.private_CreateParagraph = function()
 	{
-		return new AscWord.CParagraph(this.private_GetDrawingDocument(), undefined, this.IsPresentationContent);
+		return new AscWord.Paragraph(undefined, this.IsPresentationContent);
 	};
 	CSelectedContent.prototype.private_IsBlockLevelSdtPlaceholder = function()
 	{

@@ -71,6 +71,11 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 
 	return this.LogicDocument;
 };
+CDocumentContentBase.prototype.getDrawingDocument = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return logicDocument ? logicDocument.GetDrawingDocument() : null;
+};
 /**
  * Получаем тип активной части документа.
  * @returns {(docpostype_Content | docpostype_HdrFtr | docpostype_DrawingObjects | docpostype_Footnotes)}
@@ -443,7 +448,7 @@ CDocumentContentBase.prototype.MoveCursorToNearestPos = function(oNearestPos)
 };
 CDocumentContentBase.prototype.private_CreateNewParagraph = function()
 {
-	var oPara = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+	var oPara = new AscWord.Paragraph(this, this.bPresentation === true);
 	oPara.Correct_Content();
 	oPara.MoveCursorToStartPos(false);
 	return oPara;
@@ -1287,7 +1292,7 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				}
 				else
 				{
-					var oNewParagraph = new Paragraph(this.DrawingDocument, this);
+					var oNewParagraph = new AscWord.Paragraph();
 					oElement.Split(oNewParagraph);
 
 					this.AddToContent(nContentPos + 1, oNewParagraph);

@@ -39,8 +39,8 @@ $(function () {
 
 	let formsManager = logicDocument.GetFormsManager();
 
-	let p1 = new AscWord.CParagraph(AscTest.DrawingDocument);
-	let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
+	let p1 = new AscWord.Paragraph();
+	let p2 = new AscWord.Paragraph();
 
 	logicDocument.AddToContent(0, p1);
 	logicDocument.AddToContent(1, p2);
@@ -260,7 +260,7 @@ $(function () {
 		AscTest.ClearDocument();
 		AscTest.SetEditingMode();
 
-		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 		paragraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
@@ -341,7 +341,7 @@ $(function () {
 		AscTest.ClearDocument();
 		AscTest.SetEditingMode();
 
-		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 		paragraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
@@ -394,7 +394,7 @@ $(function () {
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
-		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 		paragraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
@@ -480,7 +480,7 @@ $(function () {
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
-		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 		paragraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
@@ -542,7 +542,7 @@ $(function () {
 		assert.strictEqual(complexForm.IsFormFilled(), false, "Clear combo box and and check form completion");
 
 
-		let paragraph2 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph2 = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph2);
 
 		let complexForm2 = logicDocument.AddComplexForm();
@@ -576,7 +576,7 @@ $(function () {
 
 		// Наполняем нашу форму: 111<textForm>222<comboForm>333
 
-		let paragraph = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let paragraph = new AscWord.Paragraph();
 		logicDocument.AddToContent(logicDocument.GetElementsCount(), paragraph);
 
 		let complexForm   = logicDocument.AddComplexForm();

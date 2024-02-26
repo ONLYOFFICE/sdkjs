@@ -170,7 +170,8 @@
 	};
 	CDocumentPrintView.prototype.GetSectionByPos = function(nContentIndex)
 	{
-		return this.SectionsInfo.Get_SectPr(nContentIndex).SectPr;
+		let sectInfo = this.SectionsInfo.Get_SectPr(nContentIndex);
+		return sectInfo ? sectInfo.SectPr : null;
 	};
 	CDocumentPrintView.prototype.GetSectionInfo = function(nContentIndex)
 	{

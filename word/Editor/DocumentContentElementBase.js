@@ -1319,7 +1319,20 @@ CDocumentContentElementBase.prototype.RecalculateEndInfo = function() {};
  */
 CDocumentContentElementBase.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
+};
+/**
+ * @returns {?CDrawingDocument}
+ */
+CDocumentContentElementBase.prototype.getDrawingDocument = function()
+{
+	if (this.DrawingDocument)
+		return this.DrawingDocument;
+	
+	return this.Parent && this.Parent.getDrawingDocument ? this.Parent.getDrawingDocument() : null;
 };
 /**
  * Получаем настройки рамки для данного элемента
@@ -1351,6 +1364,27 @@ CDocumentContentElementBase.prototype.OnContentChange = function()
 {
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
+};
+/**
+ * Get the scale coefficient for the current element depending on the current section and the document layout
+ * @returns {number}
+ */
+CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor() || !this.Get_SectPr)
+		return 1;
+	
+	let layout = logicDocument.Layout;
+	logicDocument.Layout = logicDocument.Layouts.Print;
+	
+	let sectPr = this.Get_SectPr();
+	logicDocument.Layout = layout;
+	
+	if (!sectPr)
+		return 1;
+	
+	return logicDocument.GetDocumentLayout().GetScaleBySection(sectPr);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

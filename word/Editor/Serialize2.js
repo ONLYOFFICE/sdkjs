@@ -11294,7 +11294,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         var oThis = this;
         if ( c_oSerParType.Par === type )
         {
-            var oNewParagraph = new Paragraph(this.Document.DrawingDocument, this.Document);
+            var oNewParagraph = new AscWord.Paragraph();
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadParagraph(t,l, oNewParagraph);
             });

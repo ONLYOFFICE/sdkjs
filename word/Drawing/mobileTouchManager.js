@@ -80,9 +80,25 @@
 			this.LoadMobileImages();
 	};
 
-	CMobileTouchManager.prototype.isViewMode = function()
+	CMobileTouchManager.prototype.isViewMode = function(isDown)
 	{
-		return (this.Api.isViewMode || this.Api.isRestrictionView()) ? true : false;
+		if (this.Api.isViewMode)
+			return true;
+
+		if (this.Api.isRestrictionView())
+		{
+			if (this.Api.isRestrictionForms())
+			{
+				// на down - проверяем на самом down по координате
+				if (true === isDown)
+					return false;
+				let logicDocument = this.Api.WordControl.m_oLogicDocument;
+				return logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText, null, true, logicDocument.IsFormFieldEditing());
+			}
+			return true;
+		}
+
+		return false;
 	};
 
 	CMobileTouchManager.prototype.onTouchStart = function(e)
@@ -169,6 +185,7 @@
 			}
 		}
 
+		let isCheckForm = false;
 		switch (this.Mode)
 		{
 			case AscCommon.MobileTouchMode.None:
@@ -182,6 +199,7 @@
 				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
+				isCheckForm = true;
 				break;
 			}
 			case AscCommon.MobileTouchMode.Scroll:
@@ -194,6 +212,7 @@
 				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
+				isCheckForm = true;
 				break;
 			}
 			case AscCommon.MobileTouchMode.Select:
@@ -272,6 +291,8 @@
 			{
 				this.Mode      = AscCommon.MobileTouchMode.Scroll;
 				this.DownPoint = this.delegate.ConvertCoordsFromCursor(global_mouseEvent.X, global_mouseEvent.Y);
+
+				isCheckForm = true;
 				break;
 			}
 			case AscCommon.MobileTouchMode.TableMove:
@@ -289,7 +310,14 @@
 		if (AscCommon.AscBrowser.isAndroid && !AscCommon.AscBrowser.isSailfish)
 			isPreventDefault = false;
 
-		if (this.isViewMode() || isPreventDefault)
+		if (this.Api.isRestrictionForms() && isCheckForm && this.delegate.HtmlPage.m_oLogicDocument)
+		{
+			let isInForm = this.delegate.HtmlPage.m_oLogicDocument.IsInForm(this.DownPoint.X, this.DownPoint.Y, this.DownPoint.Page);
+			if (!isInForm)
+				isPreventDefault = true;
+		}
+
+		if (this.isViewMode(true) || isPreventDefault)
 			AscCommon.stopEvent(e);
 
 		return false;

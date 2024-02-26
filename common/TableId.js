@@ -147,7 +147,7 @@
 	};
 	CTableId.prototype.private_InitFactoryClass = function()
 	{
-		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscCommonWord.Paragraph;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscWord.Paragraph;
 		this.m_oFactoryClass[AscDFH.historyitem_type_TextPr]                 = AscCommonWord.ParaTextPr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Hyperlink]              = AscCommonWord.ParaHyperlink;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Drawing]                = AscCommonWord.ParaDrawing;
