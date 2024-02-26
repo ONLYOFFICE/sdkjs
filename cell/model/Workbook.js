@@ -2478,6 +2478,8 @@
 
 		this.timelineCaches = [];
 		this.TimelineStyles = null;
+
+		this.metadata = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)

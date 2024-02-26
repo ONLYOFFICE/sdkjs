@@ -275,7 +275,8 @@
         FileSharing: 25,
         ExternalLinksAutoRefresh: 26,
         TimelineCaches: 27,
-        TimelineCache: 28
+        TimelineCache: 28,
+        Metadata: 29
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -1253,6 +1254,117 @@
         TimelineStyleElementType : 5,
         TimelineStyleElementDxfId : 6
     };
+
+
+	var c_oSer_Metadata =
+	{
+		MetadataTypes: 0,
+		MetadataStrings: 1,
+		MdxMetadata: 2,
+		CellMetadata: 3,
+		ValueMetadata: 4,
+		FutureMetadata: 5
+	};
+	var c_oSer_MetadataType =
+	{
+		MetadataType: 0,
+		Name: 1,
+		MinSupportedVersion: 2,
+		GhostRow: 3,
+		GhostCol: 4,
+		Edit: 5,
+		Delete: 6,
+		Copy: 7,
+		PasteAll: 8,
+		PasteFormulas: 9,
+		PasteValues: 10,
+		PasteFormats: 11,
+		PasteComments: 12,
+		PasteDataValidation: 13,
+		PasteBorders: 14,
+		PasteColWidths: 15,
+		PasteNumberFormats: 16,
+		Merge: 17,
+		SplitFirst: 18,
+		SplitAll: 19,
+		RowColShift: 30,
+		ClearAll: 21,
+		ClearFormats: 22,
+		ClearContents: 23,
+		ClearComments: 24,
+		Assign: 25,
+		Coerce: 26,
+		CellMeta: 27
+	};
+	var c_oSer_MetadataString =
+	{
+		MetadataString: 0
+
+	};
+	var c_oSer_MetadataBlock =
+	{
+		MetadataBlock: 0,
+		MetadataRecord: 1,
+		MetadataRecordType: 2,
+		MetadataRecordValue: 3
+	};
+	var c_oSer_FutureMetadataBlock =
+	{
+		Name: 0,
+		FutureMetadataBlock: 1,
+		RichValueBlock: 2,
+		DynamicArrayProperties: 3,
+		DynamicArray: 4,
+		CollapsedArray: 5
+	};
+	var c_oSer_MdxMetadata =
+	{
+		Mdx: 0,
+		NameIndex: 1,
+		FunctionTag: 2,
+		MdxTuple: 3,
+		MdxSet: 4,
+		MdxKPI: 5,
+		MdxMemeberProp: 6
+	};
+	var c_oSer_MetadataMdxTuple =
+	{
+		IndexCount: 0,
+		CultureCurrency: 1,
+		StringIndex: 2,
+		NumFmtIndex: 3,
+		BackColor: 4,
+		ForeColor: 5,
+		Italic: 6,
+		Underline: 7,
+		Strike: 8,
+		Bold: 9,
+		MetadataStringIndex: 10
+	};
+	var c_oSer_MetadataStringIndex =
+	{
+		StringIsSet: 0,
+		IndexValue: 1
+	};
+	var c_oSer_MetadataMdxSet =
+	{
+		Count: 0,
+		Index: 1,
+		SortOrder: 2,
+		MetadataStringIndex: 3
+	};
+	var c_oSer_MetadataMdxKPI =
+	{
+		NameIndex: 0,
+		Index: 1,
+		Property: 2
+	};
+	var c_oSer_MetadataMemberProperty =
+	{
+		NameIndex: 0,
+		Index: 1
+	};
+	
 
     /** @enum */
     var EBorderStyle =
@@ -3515,6 +3627,10 @@
                 this.bs.WriteItem(c_oSerWorkbookTypes.TimelineCaches, function () {oThis.WriteTimelineCaches(oThis.wb.timelineCaches);});
             }
 
+			if (this.wb.metadata) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.Metadata, function () {oThis.WriteMetadata(oThis.wb.metadata);});
+			}
+
         };
         this.WriteWorkbookPr = function()
         {
@@ -4012,6 +4128,530 @@
 			}
 		};
 
+
+		//****write metadata****
+		this.WriteMetadata = function (pMetadata) {
+			if (!pMetadata) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMetadata.metadataTypes) {
+				this.bs.WriteItem(c_oSer_Metadata.MetadataTypes, function () {
+					oThis.WriteMetadataTypes(pMetadata.metadataTypes);
+				});
+			}
+			if (pMetadata.metadataTypes) {
+				this.bs.WriteItem(c_oSer_Metadata.MetadataStrings, function () {
+					oThis.WriteMetadataStrings(pMetadata.metadataTypes);
+				});
+			}
+			if (pMetadata.mdxMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.MdxMetadata, function () {
+					oThis.WriteMdxMetadata(pMetadata.mdxMetadata);
+				});
+			}
+			if (pMetadata.cellMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.CellMetadata, function () {
+					oThis.WriteMetadataBlocks(pMetadata.cellMetadata);
+				});
+			}
+			if (pMetadata.valueMetadata) {
+				this.bs.WriteItem(c_oSer_Metadata.ValueMetadata, function () {
+					oThis.WriteMetadataBlocks(pMetadata.valueMetadata);
+				});
+			}
+			if (pMetadata.aFutureMetadata) {
+				for (let i = 0; i < pMetadata.aFutureMetadata.length; ++i) {
+					this.bs.WriteItem(c_oSer_Metadata.FutureMetadata, function () {
+						oThis.WriteFutureMetadata(pMetadata.aFutureMetadata[i]);
+					});
+				}
+			}
+		};
+		this.WriteMetadataTypes = function (pMetadataTypes) {
+			if (!pMetadataTypes) {
+				return;
+			}
+
+			var oThis = this;
+			for (let i = 0; i < pMetadataTypes.length; ++i) {
+				this.bs.WriteItem(c_oSer_MetadataType.MetadataType, function () {
+					oThis.WriteMetadataType(pMetadataTypes[i]);
+				});
+			}
+		};
+		this.WriteMetadataType = function (pMetadataType) {
+			if (!pMetadataType) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMetadataType.name != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Name, function () {
+					oThis.memory.WriteString3(pMetadataType.name);
+				});
+			}
+			if (pMetadataType.minSupportedVersion != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.MinSupportedVersion, function () {
+					oThis.memory.WriteLong(pMetadataType.minSupportedVersion);
+				});
+			}
+			if (pMetadataType.ghostRow != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.GhostRow, function () {
+					oThis.memory.WriteBool(pMetadataType.ghostRow);
+				});
+			}
+			if (pMetadataType.ghostCol != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.GhostCol, function () {
+					oThis.memory.WriteBool(pMetadataType.ghostCol);
+				});
+			}
+			if (pMetadataType.edit != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Edit, function () {
+					oThis.memory.WriteBool(pMetadataType.edit);
+				});
+			}
+			if (pMetadataType.delete != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Delete, function () {
+					oThis.memory.WriteBool(pMetadataType.delete);
+				});
+			}
+			if (pMetadataType.copy != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Copy, function () {
+					oThis.memory.WriteBool(pMetadataType.copy);
+				});
+			}
+			if (pMetadataType.pasteAll != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteAll, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteAll);
+				});
+			}
+			if (pMetadataType.pasteFormulas != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteFormulas, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteFormulas);
+				});
+			}
+			if (pMetadataType.pasteValues != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteValues, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteValues);
+				});
+			}
+			if (pMetadataType.pasteFormats != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteFormats, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteFormats);
+				});
+			}
+			if (pMetadataType.pasteComments != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteComments, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteComments);
+				});
+			}
+			if (pMetadataType.pasteDataValidation != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteDataValidation, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteDataValidation);
+				});
+			}
+			if (pMetadataType.pasteBorders != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteBorders, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteBorders);
+				});
+			}
+			if (pMetadataType.pasteColWidths != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteColWidths, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteColWidths);
+				});
+			}
+			if (pMetadataType.pasteNumberFormats != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.PasteNumberFormats, function () {
+					oThis.memory.WriteBool(pMetadataType.pasteNumberFormats);
+				});
+			}
+			if (pMetadataType.merge != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Merge, function () {
+					oThis.memory.WriteBool(pMetadataType.merge);
+				});
+			}
+			if (pMetadataType.splitFirst != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.SplitFirst, function () {
+					oThis.memory.WriteBool(pMetadataType.splitFirst);
+				});
+			}
+			if (pMetadataType.SplitAll != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.SplitAll, function () {
+					oThis.memory.WriteBool(pMetadataType.splitAll);
+				});
+			}
+			if (pMetadataType.rowColShift != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.RowColShift, function () {
+					oThis.memory.WriteBool(pMetadataType.rowColShift);
+				});
+			}
+			if (pMetadataType.clearAll != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.ClearAll, function () {
+					oThis.memory.WriteBool(pMetadataType.clearAll);
+				});
+			}
+			if (pMetadataType.clearFormats != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.ClearFormats, function () {
+					oThis.memory.WriteBool(pMetadataType.clearFormats);
+				});
+			}
+			if (pMetadataType.clearContents != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.ClearContents, function () {
+					oThis.memory.WriteBool(pMetadataType.clearContents);
+				});
+			}
+			if (pMetadataType.clearComments != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.ClearComments, function () {
+					oThis.memory.WriteBool(pMetadataType.clearComments);
+				});
+			}
+			if (pMetadataType.assign != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Assign, function () {
+					oThis.memory.WriteBool(pMetadataType.assign);
+				});
+			}
+			if (pMetadataType.coerce != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.Coerce, function () {
+					oThis.memory.WriteBool(pMetadataType.coerce);
+				});
+			}
+			if (pMetadataType.cellMeta != null) {
+				this.bs.WriteItem(c_oSer_MetadataType.CellMeta, function () {
+					oThis.memory.WriteBool(pMetadataType.cellMeta);
+				});
+			}
+		};
+		this.WriteMetadataStrings = function (pMetadataStrings) {
+			if (!pMetadataStrings) {
+				return;
+			}
+
+			var oThis = this;
+			for (let i = 0; i < pMetadataStrings.length; ++i) {
+				if (pMetadataStrings[i] && pMetadataStrings[i].v) {
+					this.bs.WriteItem(c_oSer_MetadataString.MetadataString, function () {
+						oThis.memory.WriteString3(pMetadataStrings[i].v);
+					});
+				}
+			}
+		};
+		this.WriteMdxMetadata = function (pMdxMetadata) {
+			if (!pMdxMetadata) {
+				return;
+			}
+
+			var oThis = this;
+			for (let i = 0; i < pMdxMetadata.length; ++i) {
+				if (!pMdxMetadata[i]) {
+					continue;
+				}
+
+				this.bs.WriteItem(c_oSer_MdxMetadata.Mdx, function () {
+					oThis.WriteMdx(pMdxMetadata[i]);
+				});
+			}
+		};
+		this.WriteMdx = function (pMdx) {
+			if (!pMdx) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMdx.n != null) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.NameIndex, function () {
+					oThis.memory.WriteLong(pMdx.n);
+				});
+			}
+			if (pMdx.f) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.FunctionTag, function () {
+					oThis.memory.WriteByte(pMdx.f);
+				});
+			}
+			if (pMdx.mdxTuple) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.MdxTuple, function () {
+					oThis.WriteMdxTuple(pMdx.mdxTuple);
+				});
+			}
+			if (pMdx.mdxSet) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.MdxSet, function () {
+					oThis.WriteMdxSet(pMdx.mdxSet);
+				});
+			}
+			if (pMdx.cMdxKPI) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.MdxKPI, function () {
+					oThis.WriteMdxKPI(pMdx.cMdxKPI);
+				});
+			}
+			if (pMdx.mdxMemeberProp) {
+				this.bs.WriteItem(c_oSer_MdxMetadata.MdxMemeberProp, function () {
+					oThis.WriteMdxMemeberProp(pMdx.mdxMemeberProp);
+				});
+			}
+		};
+		this.WriteMdxTuple = function (pMdxTuple) {
+			if (!pMdxTuple) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMdxTuple.c) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.IndexCount, function () {
+					oThis.memory.WriteLong(pMdxTuple.c);
+				});
+			}
+			if (pMdxTuple.ct) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.CultureCurrency, function () {
+					oThis.memory.WriteString3(pMdxTuple.ct);
+				});
+			}
+			if (pMdxTuple.si) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.StringIndex, function () {
+					oThis.memory.WriteLong(pMdxTuple.si);
+				});
+			}
+			if (pMdxTuple.fi) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.NumFmtIndex, function () {
+					oThis.memory.WriteLong(pMdxTuple.fi);
+				});
+			}
+			if (pMdxTuple.bc) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.BackColor, function () {
+					oThis.memory.WriteLong(pMdxTuple.bc);
+				});
+			}
+			if (pMdxTuple.fc) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.ForeColor, function () {
+					oThis.memory.WriteLong(pMdxTuple.fc);
+				});
+			}
+			if (pMdxTuple.i) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Italic, function () {
+					oThis.memory.WriteLong(pMdxTuple.i);
+				});
+			}
+			if (pMdxTuple.b) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Bold, function () {
+					oThis.memory.WriteBool(pMdxTuple.b);
+				});
+			}
+			if (pMdxTuple.u) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Underline, function () {
+					oThis.memory.WriteBool(pMdxTuple.u);
+				});
+			}
+			if (pMdxTuple.st) {
+				this.bs.WriteItem(c_oSer_MetadataMdxTuple.Strike, function () {
+					oThis.memory.WriteBool(pMdxTuple.st);
+				});
+			}
+			if (pMdxTuple.metadataStringIndexes) {
+				for (let i = 0; i < pMdxTuple.metadataStringIndexes.length; ++i) {
+					if (!pMdxTuple.metadataStringIndexes[i]) {
+						continue;
+					}
+
+					this.bs.WriteItem(c_oSer_MetadataMdxTuple.MetadataStringIndex, function () {
+						oThis.WriteMetadataStringIndex(pMdxTuple.metadataStringIndexes[i]);
+					});
+				}
+			}
+		};
+		this.WriteMetadataStringIndex = function (pStringIndex) {
+			if (!pStringIndex) {
+				return;
+			}
+
+			var oThis = this;
+			if (pStringIndex.x) {
+				this.bs.WriteItem(c_oSer_MetadataStringIndex.IndexValue, function () {
+					oThis.memory.WriteLong(pStringIndex.x);
+				});
+			}
+			if (pStringIndex.s) {
+				this.bs.WriteItem(c_oSer_MetadataStringIndex.StringIsSet, function () {
+					oThis.memory.WriteLong(pStringIndex.s);
+				});
+			}
+		};
+		this.WriteMdxSet = function (pMdxSet) {
+			if (!pMdxSet) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMdxSet.c) {
+				this.bs.WriteItem(c_oSer_MetadataMdxSet.Count, function () {
+					oThis.memory.WriteLong(pMdxSet.c);
+				});
+			}
+			if (pMdxSet.ns) {
+				this.bs.WriteItem(c_oSer_MetadataMdxSet.Index, function () {
+					oThis.memory.WriteLong(pMdxSet.ns);
+				});
+			}
+			if (pMdxSet.o) {
+				this.bs.WriteItem(c_oSer_MetadataMdxSet.SortOrder, function () {
+					oThis.memory.WriteByte(pMdxSet.o);
+				});
+			}
+			if (pMdxSet.metadataStringIndexes) {
+				for (let i = 0; i < pMdxSet.metadataStringIndexes.length; ++i) {
+					if (!pMdxSet.metadataStringIndexes[i]) {
+						continue;
+					}
+
+					this.bs.WriteItem(c_oSer_MetadataMdxSet.MetadataStringIndex, function () {
+						oThis.WriteMetadataStringIndex(pMdxSet.metadataStringIndexes[i]);
+					});
+				}
+			}
+		};
+		this.WriteMdxKPI = function (pMdxKPI) {
+			if (!pMdxKPI) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMdxKPI.n) {
+				this.bs.WriteItem(c_oSer_MetadataMdxKPI.NameIndex, function () {
+					oThis.memory.WriteLong(pMdxKPI.n);
+				});
+			}
+			if (pMdxKPI.np) {
+				this.bs.WriteItem(c_oSer_MetadataMdxKPI.Index, function () {
+					oThis.memory.WriteLong(pMdxKPI.np);
+				});
+			}
+			if (pMdxKPI.p) {
+				this.bs.WriteItem(c_oSer_MetadataMdxKPI.Property, function () {
+					oThis.memory.WriteByte(pMdxKPI.p);
+				});
+
+			}
+		};
+		this.WriteMdxMemeberProp = function (pMdxMemeberProp) {
+			if (!pMdxMemeberProp) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMdxMemeberProp.n) {
+				this.bs.WriteItem(c_oSer_MetadataMemberProperty.NameIndex, function () {
+					oThis.memory.WriteLong(pMdxMemeberProp.n);
+				});
+			}
+			if (pMdxMemeberProp.np) {
+				this.bs.WriteItem(c_oSer_MetadataMemberProperty.Index, function () {
+					oThis.memory.WriteLong(pMdxMemeberProp.np);
+				});
+			}
+		};
+		this.WriteMetadataBlocks = function (aMetadataBlocks) {
+			if (!aMetadataBlocks) {
+				return;
+			}
+
+			var oThis = this;
+			for (let i = 0; i < aMetadataBlocks.length; ++i) {
+				if (!aMetadataBlocks[i]) {
+					continue;
+				}
+
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataBlock, function () {
+					oThis.WriteMetadataBlock(aMetadataBlocks[i]);
+				});
+			}
+		};
+		this.WriteMetadataBlock = function (metadataBlock) {
+			if (!metadataBlock) {
+				return;
+			}
+
+			var oThis = this;
+			this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecord, function () {
+				oThis.WriteMetadataRecord(metadataBlock);
+			});
+		};
+		this.WriteMetadataRecord = function (pMetadataRecord) {
+			if (!pMetadataRecord) {
+				return;
+			}
+
+			var oThis = this;
+			if (pMetadataRecord.t) {
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordType, function () {
+					oThis.memory.WriteLong(pMetadataRecord.t);
+				});
+			}
+			if (pMetadataRecord.v) {
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordValue, function () {
+					oThis.memory.WriteLong(pMetadataRecord.v);
+				});
+			}
+		};
+		this.WriteFutureMetadataBlock = function (pFutureMetadataBlock) {
+			if (!pFutureMetadataBlock || !pFutureMetadataBlock.extLst) {
+				return;
+			}
+
+			var oThis = this;
+			for (let i = 0; i < pFutureMetadataBlock.extLst.length; ++i) {
+				if (!pFutureMetadataBlock.extLst[i]) {
+					continue;
+				}
+
+				if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties) {
+
+					this.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArrayProperties, function () {
+
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic) {
+							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArray, function () {
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic);
+							});
+
+						}
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed) {
+							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.CollapsedArray, function () {
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed);
+							});
+						}
+					});
+				}
+
+				if ((pFutureMetadataBlock.extLst[i].richValueBlock) && (pFutureMetadataBlock.extLst[i].richValueBlock.i)) {
+					oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.RichValueBlock, function () {
+						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].richValueBlock.i);
+					});
+				}
+			}
+		};
+		this.WriteFutureMetadata = function (pFutureMetadata) {
+			if (!pFutureMetadata) {
+				return;
+			}
+
+			var oThis = this;
+			if (pFutureMetadata.name) {
+				oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.Name, function () {
+					oThis.memory.WriteString3(pFutureMetadata.name);
+				});
+			}
+			if (pFutureMetadata.futureMetadataBlocks) {
+				for (let i = 0; i < pFutureMetadata.futureMetadataBlocks.length; ++i) {
+					if (!pFutureMetadata.futureMetadataBlocks[i]) {
+						continue;
+					}
+
+					this.bs.WriteItem(c_oSer_FutureMetadataBlock.FutureMetadataBlock, function () {
+						oThis.WriteFutureMetadataBlock(pFutureMetadata.futureMetadataBlocks[i]);
+					});
+				}
+			}
+		};
+
+        
         this.WriteComments = function(aComments) {
             var t = this;
             for (var i = 0; i < aComments.length; ++i) {
@@ -8127,6 +8767,13 @@
                     return oThis.ReadTimelineCaches(t, l, oThis.oWorkbook.timelineCaches);
                 });
             }
+            else if (c_oSerWorkbookTypes.Metadata === type)
+            {
+                this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
+                });
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -8292,7 +8939,7 @@
             }
 
             return res;
-        }
+        };
         this.ReadTimelinePivotFilter = function (type, length, oTimelinePivotFilter) {
             let res = c_oSerConstants.ReadOk;
 
@@ -8315,6 +8962,408 @@
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
+            return res;
+        };
+
+        //****metadata****
+        this.ReadMetadata = function (type, length, pMetadata) {
+            var oThis = this;
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_Metadata.MetadataTypes === type) {
+                if (!pMetadata.metadataTypes) {
+                    pMetadata.metadataTypes = [];
+                }
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataTypes(t, l, pMetadata.metadataTypes);
+                });
+            } else if (c_oSer_Metadata.MetadataStrings === type) {
+                if (!pMetadata.metadataStrings) {
+                    pMetadata.metadataStrings = [];
+                }
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStrings(t, l, pMetadata.metadataStrings);
+                });
+            } else if (c_oSer_Metadata.MdxMetadata === type) {
+                if (!pMetadata.mdxMetadata) {
+                    pMetadata.mdxMetadata = [];
+                }
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdxMetadata(t, l, pMetadata.mdxMetadata);
+                });
+            } else if (c_oSer_Metadata.CellMetadata === type) {
+                if (!pMetadata.cellMetadata) {
+                    pMetadata.cellMetadata = [];
+                }
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlocks(t, l, pMetadata.cellMetadata);
+                });
+            } else if (c_oSer_Metadata.ValueMetadata === type) {
+                if (!pMetadata.valueMetadata) {
+                    pMetadata.valueMetadata = [];
+                }
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlocks(t, l, pMetadata.valueMetadata);
+                });
+            } else if (c_oSer_Metadata.FutureMetadata === type) {
+                if (!pMetadata.aFutureMetadata) {
+                    pMetadata.aFutureMetadata = [];
+                }
+                let pMetadataRecord = new AscCommonExcel.CFutureMetadata();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFutureMetadata(t, l, pMetadataRecord);
+                });
+                pMetadata.aFutureMetadata.push(pMetadataRecord);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataTypes = function (type, length, aMetadataTypes) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataType.MetadataType === type) {
+                var metadataType = new AscCommonExcel.CMetadataType();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataType(t, l, metadataType);
+                });
+                aMetadataTypes.push(metadataType);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+
+        this.ReadMetadataType = function (type, length, pMetadataType) {
+            var res = c_oSerConstants.ReadOk;
+
+            if (c_oSer_MetadataType.Name === type) {
+                pMetadataType.name = this.stream.GetString2LE(length);
+            } else if (c_oSer_MetadataType.MinSupportedVersion === type) {
+                pMetadataType.minSupportedVersion = this.stream.GetULong();
+            } else if (c_oSer_MetadataType.GhostRow === type) {
+                pMetadataType.ghostRow = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.GhostCol === type) {
+                pMetadataType.ghostCol = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Edit === type) {
+                pMetadataType.edit = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Delete === type) {
+                pMetadataType.delete = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Copy === type) {
+                pMetadataType.copy = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteAll === type) {
+                pMetadataType.pasteAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteFormulas === type) {
+                pMetadataType.pasteFormulas = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteValues === type) {
+                pMetadataType.pasteValues = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteFormats === type) {
+                pMetadataType.pasteFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteComments === type) {
+                pMetadataType.pasteComments = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteDataValidation === type) {
+                pMetadataType.pasteDataValidation = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteBorders === type) {
+                pMetadataType.pasteBorders = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteColWidths === type) {
+                pMetadataType.pasteColWidths = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteNumberFormats === type) {
+                pMetadataType.pasteNumberFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Merge === type) {
+                pMetadataType.merge = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.SplitFirst === type) {
+                pMetadataType.splitFirst = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.SplitAll === type) {
+                pMetadataType.splitAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.RowColShift === type) {
+                pMetadataType.rowColShift = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearAll === type) {
+                pMetadataType.clearAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearFormats === type) {
+                pMetadataType.clearFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearContents === type) {
+                pMetadataType.clearContents = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearComments === type) {
+                pMetadataType.clearComments = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Assign === type) {
+                pMetadataType.assign = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Coerce === type) {
+                pMetadataType.coerce = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.CellMeta === type) {
+                pMetadataType.cellMeta = this.stream.GetBool();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataStrings = function (type, length, aMetadataStrings) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataString.MetadataString === type) {
+                let pMetadataString = new AscCommonExcel.CMetadataString();
+                pMetadataString.v = this.stream.GetString2LE(length);
+                aMetadataStrings.push(pMetadataString);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMdxMetadata = function (type, length, aMdxMetadata) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MdxMetadata.Mdx === type) {
+                let pMdx = new AscCommonExcel.CMdx();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx);
+                });
+                aMdxMetadata.push(pMdx);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMdx = function (type, length, pMdx) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MdxMetadata.NameIndex === type) {
+                pMdx.n = this.stream.GetULong();
+            } else if (c_oSer_MdxMetadata.FunctionTag === type) {
+                //pMdx.F.SetValueFromByte(this.stream.GetUChar());
+                pMdx.f = this.stream.GetUChar();
+            } else if (c_oSer_MdxMetadata.MdxTuple === type) {
+                //READ1_DEF(length, res, this.ReadMdxTuple, pMdx.MdxTuple.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxTuple);
+                });
+            } else if (c_oSer_MdxMetadata.MdxSet === type) {
+                //READ1_DEF(length, res, this.ReadMdxSet, pMdx.MdxSet.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxSet);
+                });
+            } else if (c_oSer_MdxMetadata.MdxKPI === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxKPI);
+                });
+            } else if (c_oSer_MdxMetadata.MdxMemeberProp === type) {
+                //READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.MdxMemeberProp.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxMemeberProp);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        //TODO CMetadataBlock -> CMetadataRecord array leto array???
+        this.ReadMetadataBlocks = function (type, length, aMetadataBlocks) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataBlock.MetadataBlock === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlock(t, l, aMetadataBlocks);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataBlock = function (type, length, aMetadataBlocks) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataBlock.MetadataRecord === type) {
+                let pMetadataRecord = new AscCommonExcel.CMetadataRecord();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataRecord(t, l, pMetadataRecord);
+                });
+                aMetadataBlocks.push(pMetadataRecord);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataRecord = function (type, length, pMetadataRecord) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataBlock.MetadataRecordType === type) {
+                pMetadataRecord.t = this.stream.GetULong();
+            } else if (c_oSer_MetadataBlock.MetadataRecordValue === type) {
+                pMetadataRecord.v = this.stream.GetULong();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadDynamicArrayProperties = function (type, length, pDynamicArrayProperties) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_FutureMetadataBlock.DynamicArray === type) {
+                pDynamicArrayProperties.fDynamic = this.stream.GetBool();
+            } else if (c_oSer_FutureMetadataBlock.CollapsedArray === type) {
+                pDynamicArrayProperties.fCollapsed = this.stream.GetBool();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        }
+        this.ReadMetadataStringIndex = function (type, length, pStringIndex) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataStringIndex.StringIsSet === type) {
+                pStringIndex.s = this.stream.GetULong();
+            } else if (c_oSer_MetadataStringIndex.IndexValue === type) {
+                pStringIndex.x = this.stream.GetULong();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        }
+        this.ReadMdxMemeberProp = function (type, length, pMdxMemeberProp) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataMemberProperty.NameIndex === type) {
+                pMdxMemeberProp.n = this.stream.GetULong();
+            } else if (c_oSer_MetadataMemberProperty.Index === type) {
+                pMdxMemeberProp.np = this.stream.GetULong();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        }
+        this.ReadMdxKPI = function (type, length, pMetadataRecord) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataMdxKPI.NameIndex === type) {
+                pMetadataRecord.n = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxKPI.Index === type) {
+                pMetadataRecord.np = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxKPI.Property === type) {
+                //pMdxKPI.P.Init();
+                //pMdxKPI.P.SetValueFromByte(this.stream.GetUChar());
+                pMetadataRecord.op = this.stream.GetUChar();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMdxSet = function (type, length, pMdxSet)
+        {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataMdxSet.Count === type)
+            {
+                pMdxSet.c = this.stream.GetULong();
+            }
+            else if (c_oSer_MetadataMdxSet.Index === type)
+            {
+                pMdxSet.ns = this.stream.GetULong();
+            }
+            else if (c_oSer_MetadataMdxSet.SortOrder === type)
+            {
+                //pMdxSet.O.Init();
+                //pMdxSet.O.SetValueFromByte(this.stream.GetUChar());
+                pMdxSet.o = this.stream.GetUChar();
+            }
+            else if (c_oSer_MetadataMdxSet.MetadataStringIndex === type)
+            {
+               let pMetadataStringIndex = new AscCommonExcel.CMetadataStringIndex();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStringIndex(t, l, pMetadataStringIndex);
+                });
+                pMdxSet.metadataStringIndexes.push(pMetadataStringIndex);
+            }
+            else
+                res = c_oSerConstants.ReadUnknown;
+            return res;
+        };
+        this.ReadMdxTuple = function (type, length, pMdxTuple) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataMdxTuple.IndexCount === type) {
+                pMdxTuple.c = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.StringIndex === type) {
+                pMdxTuple.si = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.CultureCurrency === type) {
+                pMdxTuple.ct = this.stream.GetString2LE(length);
+            } else if (c_oSer_MetadataMdxTuple.NumFmtIndex === type) {
+                pMdxTuple.fi = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.BackColor === type) {
+                pMdxTuple.bc = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.ForeColor === type) {
+                pMdxTuple.fc = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.Italic === type) {
+                pMdxTuple.i = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Bold === type) {
+                pMdxTuple.b = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Underline === type) {
+                pMdxTuple.u = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Strike === type) {
+                pMdxTuple.st = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.MetadataStringIndex === type) {
+                let pMetadataStringIndex = new AscCommonExcel.CMetadataStringIndex();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStringIndex(t, l, pMetadataStringIndex);
+                });
+                pMdxTuple.metadataStringIndexes.push(pMetadataStringIndex);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadFutureMetadata = function (type, length, pCFutureMetadata)
+        {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+
+            if (c_oSer_FutureMetadataBlock.Name === type)
+            {
+                pCFutureMetadata.name = this.stream.GetString2LE(length);
+            }
+            else if (c_oSer_FutureMetadataBlock.FutureMetadataBlock === type)
+            {
+                if (!pCFutureMetadata.futureMetadataBlocks) {
+                    pCFutureMetadata.futureMetadataBlocks = [];
+                }
+                let pFutureMetadataBlock = new AscCommonExcel.CFutureMetadataBlock();
+				if (!pFutureMetadataBlock.extLst) {
+					pFutureMetadataBlock.extLst = [];
+				}
+				let elemExtList = new AscCommonExcel.CMetadataBlockExt();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFutureMetadataBlock(t, l, elemExtList);
+                });
+				pFutureMetadataBlock.extLst.push(elemExtList);
+                pCFutureMetadata.futureMetadataBlocks.push(pFutureMetadataBlock);
+            }
+            else
+                res = c_oSerConstants.ReadUnknown;
+            return res;
+        };
+        this.ReadFutureMetadataBlock = function (type, length, pFutureMetadataBlock)
+        {
+        	var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
+            {
+                /*let pExt = new Asc.COfficeArtExtension();
+                pExt.m_sUri = L"{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
+                pExt.RichValueBlock.Init();
+                pExt.RichValueBlock.I = this.stream.GetULong();*/
+
+                let richValueBlock = new AscCommonExcel.CRichValueBlock();
+				richValueBlock.i = this.stream.GetULong();
+				pFutureMetadataBlock.richValueBlock = richValueBlock;
+            }
+            else if (c_oSer_FutureMetadataBlock.DynamicArrayProperties === type)
+            {
+
+                /*OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
+                pExt.m_sUri = L"{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
+                pExt.DynamicArrayProperties.Init();
+
+                READ1_DEF(length, res, this.ReadDynamicArrayProperties, pExt.DynamicArrayProperties.GetPovarer());
+                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);*/
+
+                let pExt = new AscCommonExcel.CDynamicArrayProperties();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadDynamicArrayProperties(t, l, pExt);
+                });
+				pFutureMetadataBlock.dynamicArrayProperties = pExt;
+            }
+            else
+                res = c_oSerConstants.ReadUnknown;
             return res;
         };
 
