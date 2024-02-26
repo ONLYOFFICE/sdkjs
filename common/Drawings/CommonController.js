@@ -6039,7 +6039,7 @@
 							var oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
 							var oParagraph = oTargetDocContent.GetCurrentParagraph();
 							if (oParagraph && oParagraph.GetParent()) {
-								var oTempPara = new Paragraph(this.drawingObjects.getDrawingDocument(), oParagraph.GetParent());
+								var oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
 								var oRun = new ParaRun(oTempPara, false);
 								oRun.AddText(sText);
 								oTempPara.AddToContent(0, oRun);

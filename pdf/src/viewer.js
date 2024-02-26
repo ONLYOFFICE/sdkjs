@@ -845,7 +845,10 @@
 			}
 
 			if (window["AscDesktopEditor"])
-				this.savedPassword = password;
+			{
+				this.savedPassword = password || "";
+				this.Api.sendEvent("asc_onDocumentPassword", "" !== this.savedPassword);
+			}
 
 			this.pagesInfo.setCount(this.file.pages.length);
             this.getPDFDoc().GetDrawingDocument().m_lPagesCount = this.file.pages.length;

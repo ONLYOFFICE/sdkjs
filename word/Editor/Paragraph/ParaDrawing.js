@@ -1283,25 +1283,8 @@ ParaDrawing.prototype.Measure = function()
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
-	let oParagraph = this.GetParagraph();
-	let oLogicDocument;
-
-	if (oParagraph
-		&& (oLogicDocument = oParagraph.GetLogicDocument())
-		&& oLogicDocument.IsDocumentEditor())
-	{
-		let oLayout = oLogicDocument.Layout;
-		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
-		let oSectPr = oParagraph.Get_SectPr();
-		oLogicDocument.Layout = oLayout;
-
-		if (!oSectPr)
-			return 1;
-
-		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
-	}
-
-	return 1;
+	let paragraph = this.GetParagraph();
+	return paragraph ? paragraph.getLayoutScaleCoefficient() : 1;
 };
 ParaDrawing.prototype.createPlaceholderControl = function (arrObjects)
 {
@@ -2102,7 +2085,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 	let oAnchorParagraph = oAnchorPos.Paragraph;
 	oAnchorParagraph.Check_NearestPos(oAnchorPos);
 
-	let oInsertParagraph = new AscCommonWord.Paragraph(this.DrawingDocument);
+	let oInsertParagraph = new AscWord.Paragraph();
 	var oDrawingRun = new AscCommonWord.ParaRun();
 	oDrawingRun.AddToContent(0, this);
 

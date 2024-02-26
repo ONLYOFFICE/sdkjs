@@ -3251,7 +3251,7 @@
 			},
 
 			_convertTableFromExcelToDocument: function (worksheet, aContentExcel, documentContent) {
-				var oCurPar = new Paragraph(worksheet.getDrawingDocument(), documentContent);
+				var oCurPar = new AscWord.Paragraph(documentContent);
 
 				var getElem = function (text, format, isAddSpace, isHyperLink) {
 					var result = null;
@@ -3418,7 +3418,7 @@
 						isIntoShape.Remove(1, true, true);
 						var Count = text.length;
 
-						var newParagraph = new Paragraph(isIntoShape.DrawingDocument, isIntoShape);
+						var newParagraph = new AscWord.Paragraph(isIntoShape);
 						var selectedElements = new AscCommonWord.CSelectedContent();
 						var insertText = "";
 						for (var Index = 0; Index < Count; Index++) {
@@ -3438,7 +3438,7 @@
 								selectedElements.Elements.push(selectedElement);
 
 								insertText = "";
-								newParagraph = new Paragraph(isIntoShape.DrawingDocument, isIntoShape);
+								newParagraph = new AscWord.Paragraph(isIntoShape);
 							}
 						}
 

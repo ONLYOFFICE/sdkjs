@@ -359,7 +359,7 @@
 						let curMultiText = _fragments[m].text;
 						for (let k = 0, length = curMultiText.length; k < length; k++) {
 							if (oCurPar === null) {
-								oCurPar = new Paragraph();
+								oCurPar = new AscWord.Paragraph();
 								oCurRun = new ParaRun(oCurPar);
 							}
 
@@ -2485,6 +2485,8 @@
 
 		this.timelineCaches = [];
 		this.TimelineStyles = null;
+
+		this.metadata = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)

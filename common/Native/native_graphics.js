@@ -759,7 +759,16 @@ CNativeGraphics.prototype =
 	IsPdfRenderer : function()
 	{
 		return this.RENDERER_PDF_FLAG;
-	}
+	},
+
+    CreateLayer : function(opacity)
+    {
+        this.Native["CreateLayer"](opacity);
+    },
+    BlendLayer : function()
+    {
+        this.Native["BlendLayer"]();
+    }
 };
 
 AscCommon.CNativeGraphics = CNativeGraphics;

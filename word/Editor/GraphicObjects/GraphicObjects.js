@@ -1936,7 +1936,7 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var para = new Paragraph(this.document.DrawingDocument, this.document);
+            var para = new AscWord.Paragraph();
             var selectedObjects, run, drawing, i;
             var aDrawings = [];
             if(this.selection.groupSelection)

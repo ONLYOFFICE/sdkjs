@@ -1096,7 +1096,7 @@
                         return;
 
                     aFullNames.push(sFullName);
-                    aFields.push(oField);
+                    aFields.push(field);
                 });
             }
         });

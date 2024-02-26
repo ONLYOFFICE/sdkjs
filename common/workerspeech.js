@@ -253,9 +253,20 @@
 
 		this._setValue = this._setValuePermanentlyDiffEqual;
 
-		this.speech = function(type, obj)
+		this.isSpeechEnabled = function()
 		{
 			if (!this.isEnabled)
+				return false;
+
+			if (AscCommon.g_inputContext && AscCommon.g_inputContext.isCompositionProcess())
+				return false;
+
+			return true;
+		};
+
+		this.speech = function(type, obj)
+		{
+			if (!this.isSpeechEnabled())
 				return;
 
 			if (undefined === obj)

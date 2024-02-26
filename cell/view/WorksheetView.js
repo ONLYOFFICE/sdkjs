@@ -16046,6 +16046,7 @@
 					var modelExternalReference = t.model.workbook.externalReferences[pasteLinkIndex - 1];
 					if (modelExternalReference) {
 						modelExternalReference.updateSheetData(pasteSheetLinkName, pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
+						t.model.workbook.changeExternalReference(pasteLinkIndex, modelExternalReference);
 					}
 				} else if (linkInfo.type === -2) {
 					//добавляем

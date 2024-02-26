@@ -1439,7 +1439,7 @@
                     return false;
                 }
             }
-            if(this.element instanceof AscCommonWord.Paragraph)
+            if(this.element instanceof AscWord.Paragraph)
             {
                 if(!this.element.SectPr && oNode.element.SectPr)
                 {
