@@ -276,7 +276,7 @@
         ExternalLinksAutoRefresh: 26,
         TimelineCaches: 27,
         TimelineCache: 28,
-		Metadata: 29
+        Metadata: 29
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -8768,12 +8768,12 @@
                 });
             }
             else if (c_oSerWorkbookTypes.Metadata === type)
-			{
-				this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
-				res = this.bcr.Read1(length, function (t, l) {
-					return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
-				});
-			}
+            {
+                this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
+                });
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
