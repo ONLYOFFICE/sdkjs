@@ -154,6 +154,13 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 		}
+		else if (oItem.IsTextShape()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.textShapes.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].textShapes.splice(nPosInPage, 0, oItem);
+		}
 	}
 
 	oDocument.mouseDownAnnot = null;
@@ -178,6 +185,13 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 1);
 			if (oItem.GetReply(0) != null || oItem.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText && oItem.GetContents())
 				editor.sync_RemoveComment(oItem.GetId());
+		}
+		else if (oItem.IsTextShape()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.textShapes.splice(nPos, 1);
+			oViewer.pagesInfo.pages[nPage].textShapes.splice(nPosInPage, 1);
 		}
 	}
 	

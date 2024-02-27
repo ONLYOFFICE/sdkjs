@@ -447,8 +447,14 @@
 		
 		return textObj.Text;
 	};
-	PDFEditorApi.prototype.SetMarkerFormat          = function(nType, value, opacity, r, g, b)
+	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b)
 	{
+		// from edit mode
+		if (typeof nType === "boolean") {
+			this.getPDFDoc().SetHighlight(r, g, b, opacity);
+			return;
+		}
+
 		this.isMarkerFormat	= value;
 		this.curMarkerType	= nType;
 		let oDoc			= this.getPDFDoc();
@@ -480,6 +486,25 @@
 		else {
 			oDoc.bOffMarkerAfterUsing = true;
 		}
+	};
+	PDFEditorApi.prototype.SetTextEditMode = function(bEdit) {
+		this.getPDFDoc().SetTextEditMode(bEdit);
+	};
+	PDFEditorApi.prototype.put_TextPrBold = function(value) {
+		this.getPDFDoc().SetBold(value);
+	};
+	PDFEditorApi.prototype.put_TextPrItalic = function(value) {
+		this.getPDFDoc().SetItalic(value);
+	};
+	PDFEditorApi.prototype.put_TextPrUnderline = function(value) {
+		this.getPDFDoc().SetUnderline(value);
+	};
+	PDFEditorApi.prototype.put_TextPrStrikeout = function(value) {
+		this.getPDFDoc().SetStrikeout(value);
+	};
+	// 0- baseline, 2-subscript, 1-superscript
+	PDFEditorApi.prototype.put_TextPrBaseline = function(value) {
+		this.getPDFDoc().SetVertAling(value);
 	};
 	PDFEditorApi.prototype.Paste = function()
 	{
@@ -1053,6 +1078,7 @@
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
+	PDFEditorApi.prototype['SetTextEditMode']              = PDFEditorApi.prototype.SetTextEditMode;
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;

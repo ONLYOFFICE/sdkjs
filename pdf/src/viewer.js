@@ -4144,20 +4144,30 @@
 				for (let nShape = 0; nShape < aPages[i].textShapes.length; nShape++) {
 					let oTextShape = aPages[i].textShapes[nShape];
 
-					oMemory.WriteByte(167);
+					oMemory.WriteByte(167); // shape start
 
 					// длина комманд
 					let nStartPos = oMemory.GetCurPosition();
 					oMemory.Skip(4);
 
+					// длина xml строки
+					let nStrLengthPos = oMemory.GetCurPosition();
+					oMemory.Skip(4);
+
 					oTextShape.WriteToBinary(oMemory);
-					oTextShape.draw(oRenderer);
 
-					oMemory.WriteByte(168);
-
+					// запись длины xml строки
 					let nEndPos = oMemory.GetCurPosition();
+					oMemory.Seek(nStrLengthPos);
+					oMemory.WriteLong(nEndPos - nStrLengthPos);
+					oMemory.Seek(nEndPos);
+
+					oTextShape.draw(oRenderer); // запись графики
+
+					oMemory.WriteByte(168); // shape end
 
 					// запись длины комманд
+					nEndPos = oMemory.GetCurPosition();
 					oMemory.Seek(nStartPos);
 					oMemory.WriteLong(nEndPos - nStartPos);
 					oMemory.Seek(nEndPos);

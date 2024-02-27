@@ -585,7 +585,7 @@
             oLastUsedPara.AddToContentToEnd(oRun);
 
             if (oRCInfo["text"].indexOf('\r') != -1) {
-                oLastUsedPara = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, true);
+                oLastUsedPara = new AscWord.Paragraph(oContent, true);
                 oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
             }
         }
