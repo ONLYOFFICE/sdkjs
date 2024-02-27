@@ -1709,6 +1709,10 @@ CopyProcessor.prototype =
 				this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 			}
 
+			if (!this.oBinaryFileWriter.Document) {
+				this.oBinaryFileWriter.Document = this.oDocument;
+			}
+
 			this.oBinaryFileWriter.CopyStart();
 			this.CopyDocument2(this.oRoot, oDocument, elementsContent, bFromPresentation);
 			this.CopyFootnotes(this.oRoot, this.aFootnoteReference);
