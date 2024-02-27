@@ -2422,7 +2422,7 @@ CMathBase.prototype.raw_SetReviewType = function(Type, Info)
 {
     this.ReviewType = Type;
     this.ReviewInfo = Info;
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 };
 CMathBase.prototype.GetReviewType = function()
 {

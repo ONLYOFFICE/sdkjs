@@ -1386,6 +1386,10 @@ CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
 	
 	return logicDocument.GetDocumentLayout().GetScaleBySection(sectPr);
 };
+CDocumentContentElementBase.prototype.updateTrackRevisions = function()
+{
+	AscWord.checkElementInRevision(this);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

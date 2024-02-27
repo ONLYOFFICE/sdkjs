@@ -62,7 +62,7 @@ CChangesParaFieldAddItem.prototype.Undo = function()
 	var oField = this.Class;
 	oField.Content.splice(this.Pos, this.Items.length);
 	oField.OnContentChange();
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
@@ -75,7 +75,7 @@ CChangesParaFieldAddItem.prototype.Redo = function()
 	var Array_end   = oField.Content.slice(this.Pos);
 
 	oField.Content = Array_start.concat(this.Items, Array_end);
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.OnContentChange();
 	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
@@ -131,7 +131,7 @@ CChangesParaFieldAddItem.prototype.Load = function(Color)
 		}
 	}
 
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.OnContentChange();
 	oField.SetIsRecalculated(false);
@@ -168,7 +168,7 @@ CChangesParaFieldRemoveItem.prototype.Undo = function()
 	oField.Content = Array_start.concat(this.Items, Array_end);
 	oField.OnContentChange();
 	oField.private_CheckUpdateBookmarks(this.Items);
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 
@@ -191,7 +191,7 @@ CChangesParaFieldRemoveItem.prototype.Redo = function()
 {
 	var oField = this.Class;
 	oField.Content.splice(this.Pos, this.Items.length);
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.OnContentChange();
 	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
@@ -219,7 +219,7 @@ CChangesParaFieldRemoveItem.prototype.Load = function(Color)
 		oField.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oField, ChangesPos, 1);
 	}
-	oField.private_UpdateTrackRevisions();
+	oField.updateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.OnContentChange();
 	oField.SetIsRecalculated(false);

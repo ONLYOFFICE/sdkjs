@@ -941,7 +941,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 {
 	History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
 	this.Content.splice(Pos, 0, Item);
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
 	this.UpdateDocumentOutline();
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -1027,7 +1027,7 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 	}
 
 	History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(arrNewItems);
 	this.UpdateDocumentOutline();
 
@@ -1050,7 +1050,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 		Item.PreDelete();
 
 	this.Content.splice(Pos, 1);
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
 	this.UpdateDocumentOutline();
 	this.private_UpdateSelectionPosOnRemove(Pos, 1);
@@ -1130,7 +1130,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.UpdateDocumentOutline();
 
@@ -1237,7 +1237,7 @@ Paragraph.prototype.ClearContent = function()
 
 	History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
 
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(this.Content);
 	this.UpdateDocumentOutline();
 
@@ -15268,7 +15268,7 @@ Paragraph.prototype.AddPrChange = function()
 				PrChange   : this.Pr.PrChange,
 				ReviewInfo : this.Pr.ReviewInfo
 			}));
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
     }
 };
 Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
@@ -15283,7 +15283,7 @@ Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
 			ReviewInfo : ReviewInfo ? ReviewInfo.Copy() : undefined
 		}));
     this.Pr.SetPrChange(PrChange, ReviewInfo);
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 };
 Paragraph.prototype.SetPStyleToPrChange = function(styleId)
 {
@@ -15323,7 +15323,7 @@ Paragraph.prototype.RemovePrChange = function()
 				ReviewInfo : undefined
 			}));
         this.Pr.RemovePrChange();
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
     }
 };
 Paragraph.prototype.private_AddPrChange = function()
@@ -15465,7 +15465,7 @@ Paragraph.prototype.private_UpdateTrackRevisionOnChangeParaPr = function(bUpdate
 {
     if (true === this.HavePrChange())
     {
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
 
         if (true === bUpdateInfo && this.LogicDocument && true === this.LogicDocument.IsTrackRevisions())
         {
@@ -15473,14 +15473,6 @@ Paragraph.prototype.private_UpdateTrackRevisionOnChangeParaPr = function(bUpdate
             this.Pr.ReviewInfo.Update();
             History.Add(new CChangesParagraphPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
         }
-    }
-};
-Paragraph.prototype.private_UpdateTrackRevisions = function()
-{
-    if (this.LogicDocument && this.LogicDocument.GetTrackRevisionsManager)
-    {
-        var RevisionsManager = this.LogicDocument.GetTrackRevisionsManager();
-        RevisionsManager.CheckElement(this);
     }
 };
 Paragraph.prototype.UpdateDocumentOutline = function()
@@ -15586,7 +15578,7 @@ Paragraph.prototype.AcceptRevisionChanges = function(Type, bAll)
 		{
 			this.Correct_Content();
 			this.Correct_ContentPos(false);
-			this.private_UpdateTrackRevisions();
+			this.updateTrackRevisions();
 		}
     }
 };
@@ -15651,7 +15643,7 @@ Paragraph.prototype.RejectRevisionChanges = function(Type, bAll)
 
 		this.Correct_Content();
 		this.Correct_ContentPos(false);
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 Paragraph.prototype.GetRevisionsChangeElement = function(SearchEngine)

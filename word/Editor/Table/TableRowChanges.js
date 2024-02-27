@@ -611,7 +611,7 @@ CChangesTableRowPr.prototype.private_SetValue = function(Value)
 	row.private_UpdateTableGrid();
 	
 	if (trackRevisions)
-		row.private_UpdateTrackRevisions();
+		row.updateTrackRevisions();
 };
 CChangesTableRowPr.prototype.Merge = function(oChange)
 {
@@ -676,14 +676,14 @@ CChangesTableRowPrChange.prototype.Undo = function()
 	var oTableRow = this.Class;
 	oTableRow.Pr.PrChange   = this.Old.PrChange;
 	oTableRow.Pr.ReviewInfo = this.Old.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };
 CChangesTableRowPrChange.prototype.Redo = function()
 {
 	var oTableRow = this.Class;
 	oTableRow.Pr.PrChange   = this.New.PrChange;
 	oTableRow.Pr.ReviewInfo = this.New.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };
 CChangesTableRowPrChange.prototype.WriteToBinary = function(oWriter)
 {
@@ -852,5 +852,5 @@ CChangesTableRowReviewType.prototype.private_SetValue = function(Value)
 
 	oTableRow.ReviewType = Value.ReviewType;
 	oTableRow.ReviewInfo = Value.ReviewInfo;
-	oTableRow.private_UpdateTrackRevisions();
+	oTableRow.updateTrackRevisions();
 };

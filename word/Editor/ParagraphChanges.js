@@ -341,7 +341,7 @@ CChangesParagraphAddItem.prototype.Undo = function()
 {
 	var oParagraph = this.Class;
 	oParagraph.Content.splice(this.Pos, this.Items.length);
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oParagraph.SetIsRecalculated(false);
@@ -354,7 +354,7 @@ CChangesParagraphAddItem.prototype.Redo = function()
 	var Array_end   = oParagraph.Content.slice(this.Pos);
 
 	oParagraph.Content = Array_start.concat(this.Items, Array_end);
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oParagraph.SetIsRecalculated(false);
@@ -416,7 +416,7 @@ CChangesParagraphAddItem.prototype.Load = function(Color)
 	}
 
 	oParagraph.private_ResetSelection();
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.UpdateDocumentOutline();
 	oParagraph.SetIsRecalculated(false);
@@ -468,7 +468,7 @@ CChangesParagraphRemoveItem.prototype.Undo = function()
 	var Array_end   = oParagraph.Content.slice(this.Pos);
 
 	oParagraph.Content = Array_start.concat(this.Items, Array_end);
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oParagraph.SetIsRecalculated(false);
@@ -494,7 +494,7 @@ CChangesParagraphRemoveItem.prototype.Redo = function()
 {
 	var oParagraph  = this.Class;
 	oParagraph.Content.splice(this.Pos, this.Items.length);
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oParagraph.SetIsRecalculated(false);
@@ -523,7 +523,7 @@ CChangesParagraphRemoveItem.prototype.Load = function(Color)
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oParagraph, ChangesPos, 1);
 	}
 	oParagraph.private_ResetSelection();
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	oParagraph.private_CheckUpdateBookmarks(this.Items);
 	oParagraph.UpdateDocumentOutline();
 	oParagraph.SetIsRecalculated(false);
@@ -1717,7 +1717,7 @@ CChangesParagraphPrChange.prototype.Undo = function()
 	var oParagraph = this.Class;
 	oParagraph.Pr.PrChange   = this.Old.PrChange;
 	oParagraph.Pr.ReviewInfo = this.Old.ReviewInfo;
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphPrChange.prototype.Redo = function()
@@ -1725,7 +1725,7 @@ CChangesParagraphPrChange.prototype.Redo = function()
 	var oParagraph = this.Class;
 	oParagraph.Pr.PrChange   = this.New.PrChange;
 	oParagraph.Pr.ReviewInfo = this.New.ReviewInfo;
-	oParagraph.private_UpdateTrackRevisions();
+	oParagraph.updateTrackRevisions();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphPrChange.prototype.WriteToBinary = function(Writer)

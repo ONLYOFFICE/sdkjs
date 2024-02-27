@@ -2022,7 +2022,7 @@ CChangesRunReviewType.prototype.private_SetValue = function(Value)
 
 	oRun.ReviewType = Value.ReviewType;
 	oRun.ReviewInfo = Value.ReviewInfo;
-	oRun.private_UpdateTrackRevisions();
+	oRun.updateTrackRevisions();
 };
 CChangesRunReviewType.prototype.Merge = function(oChange)
 {
@@ -2155,7 +2155,7 @@ CChangesRunPrChange.prototype.private_SetValue = function(Value)
 
 	oRun.Pr.PrChange   = Value.PrChange;
 	oRun.Pr.ReviewInfo = Value.ReviewInfo;
-	oRun.private_UpdateTrackRevisions();
+	oRun.updateTrackRevisions();
 };
 CChangesRunPrChange.prototype.Merge = function(oChange)
 {

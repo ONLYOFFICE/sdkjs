@@ -1195,7 +1195,7 @@ CTableCell.prototype =
 		this.private_UpdateTableGrid();
 		
 		if (isHavePrChange || this.HavePrChange())
-			this.private_UpdateTrackRevisions();
+			this.updateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -2602,11 +2602,11 @@ CTableCell.prototype.GetColumn = function()
 
 	return oTable.GetColumn(this.GetIndex(), this.GetRow().GetIndex());
 };
-CTableCell.prototype.private_UpdateTrackRevisions = function()
+CTableCell.prototype.updateTrackRevisions = function()
 {
 	var oTable = this.GetTable();
 	if (oTable)
-		oTable.UpdateTrackRevisions();
+		oTable.updateTrackRevisions();
 };
 CTableCell.prototype.HavePrChange = function()
 {
@@ -2624,7 +2624,7 @@ CTableCell.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.RemovePrChange = function()
@@ -2639,7 +2639,7 @@ CTableCell.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.private_AddPrChange = function()
