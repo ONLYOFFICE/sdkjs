@@ -4039,6 +4039,15 @@
 			this.isRepaint = true;
 		}
 	};
+	CHtmlPage.prototype.InitDocRenderer = function(oMemory) {
+		this.m_oDocRenderer								= new AscCommon.CDocumentRenderer();
+		this.m_oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+		this.m_oDocRenderer.Memory        				= oMemory;
+		this.m_lCurrentRendererPage                     = 0;
+
+		return this.m_oDocRenderer;
+	};
+
 	CHtmlPage.prototype.Save = function()
 	{
 		let memoryInitSize = 1024 * 500; // 500Kb
@@ -4070,7 +4079,7 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if ((aPages[i].annots == null || aPages[i].annots.length === 0) && (aPages[i].fields == null || aPages[i].fields.length === 0) && !aDeleted[i])
+			if ((aPages[i].textShapes == null || aPages[i].textShapes.length == 0) && (aPages[i].annots == null || aPages[i].annots.length === 0) && (aPages[i].fields == null || aPages[i].fields.length === 0) && !aDeleted[i])
 				continue;
 
 			if (!oMemory)
@@ -4107,6 +4116,51 @@
 				for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
 					if (aPages[i].fields[nForm].IsChanged())
 						aPages[i].fields[nForm].WriteToBinary(oMemory);
+				}
+			}
+
+			// text shapes
+			if (aPages[i].textShapes && aPages[i].textShapes.length != 0) {
+				let oRenderer			= this.InitDocRenderer(oMemory);
+				oMemory.context			= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
+				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
+
+				// graphics
+				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(this.GetPageWidthMM(i), this.GetPageHeightMM(i));
+				oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
+				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
+				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
+				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].VectorMemoryForPrint	= oRenderer.VectorMemoryForPrint;
+				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker				= oRenderer.FontPicker;
+
+				if (oRenderer.FontPicker)
+					oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker.Metafile  = oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1];
+
+				var _page = oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1];
+				oRenderer.m_oPen       = _page.m_oPen;
+				oRenderer.m_oBrush     = _page.m_oBrush;
+				oRenderer.m_oTransform = _page.m_oTransform;
+
+				for (let nShape = 0; nShape < aPages[i].textShapes.length; nShape++) {
+					let oTextShape = aPages[i].textShapes[nShape];
+
+					oMemory.WriteByte(AscCommon.CommandType.ctShapeStart);
+
+					// длина комманд
+					let nStartPos = oMemory.GetCurPosition();
+					oMemory.Skip(4);
+
+					oTextShape.WriteToBinary(oMemory);
+					oTextShape.draw(oRenderer);
+
+					oMemory.WriteByte(AscCommon.CommandType.ctShapeEnd);
+
+					let nEndPos = oMemory.GetCurPosition();
+
+					// запись длины комманд
+					oMemory.Seek(nStartPos);
+					oMemory.WriteLong(nEndPos - nStartPos);
+					oMemory.Seek(nEndPos);
 				}
 			}
 
@@ -4172,6 +4226,44 @@
 		}
 			
 		return null;
+	};
+
+	CHtmlPage.prototype.GetPageWidth = function(nPage, bScaled) {
+		let aPages			= this.file.pages;
+		let aScaledPages	= this.drawingPages;
+
+		if (aPages[nPage] == undefined)
+			return undefined;
+
+		return bScaled ? aScaledPages[nPage].W : aPages[nPage].W;
+	};
+	CHtmlPage.prototype.GetPageHeight = function(nPage, bScaled) {
+		let aPages			= this.file.pages;
+		let aScaledPages	= this.drawingPages;
+
+		if (aPages[nPage] == undefined)
+			return undefined;
+
+		return bScaled ? aScaledPages[nPage].H : aPages[nPage].H;
+	};
+
+	CHtmlPage.prototype.GetPageWidthMM = function(nPage, bScaled) {
+		let aPages			= this.file.pages;
+		let aScaledPages	= this.drawingPages;
+
+		if (aPages[nPage] == undefined)
+			return undefined;
+
+		return (bScaled ? aScaledPages[nPage].W : aPages[nPage].W) * g_dKoef_pix_to_mm;
+	};
+	CHtmlPage.prototype.GetPageHeightMM = function(nPage, bScaled) {
+		let aPages			= this.file.pages;
+		let aScaledPages	= this.drawingPages;
+
+		if (aPages[nPage] == undefined)
+			return undefined;
+
+		return (bScaled ? aScaledPages[nPage].H : aPages[nPage].H) * g_dKoef_pix_to_mm;
 	};
 
 	function CCurrentPageDetector(w, h)
