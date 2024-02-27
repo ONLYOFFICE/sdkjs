@@ -230,6 +230,9 @@
 		return false;
 	};
 	CUserProtectedRange.prototype.isUserCanView = function (userId) {
+		if (this.asc_getType() !== Asc.c_oSerUserProtectedRangeType.notView) {
+			return true;
+		}
 		if (this.users) {
 			for (let i = 0; i < this.users.length; i++) {
 				if (this.users[i].isCanView(userId)) {
