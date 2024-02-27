@@ -1817,8 +1817,15 @@ var editor;
 				wbXml.fromXml(reader);
 			}
 
-
 			if (t.isOpenOOXInBrowser) {
+				//metadata
+				let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);
+				if (metaData) {
+					let contentMetaData = metaData.getDocumentContent();
+					wb.metadata = new AscCommonExcel.CMetadata();
+					reader = new StaxParser(contentMetaData, metaData, xmlParserContext);
+					wb.metadata.fromXml(reader);
+				}
 
 				//theme
 				var workbookThemePart = wbPart.getPartByRelationshipType(openXml.Types.theme.relationType);
