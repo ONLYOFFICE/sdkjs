@@ -4144,7 +4144,7 @@
 				for (let nShape = 0; nShape < aPages[i].textShapes.length; nShape++) {
 					let oTextShape = aPages[i].textShapes[nShape];
 
-					oMemory.WriteByte(AscCommon.CommandType.ctShapeStart);
+					oMemory.WriteByte(167);
 
 					// длина комманд
 					let nStartPos = oMemory.GetCurPosition();
@@ -4153,7 +4153,7 @@
 					oTextShape.WriteToBinary(oMemory);
 					oTextShape.draw(oRenderer);
 
-					oMemory.WriteByte(AscCommon.CommandType.ctShapeEnd);
+					oMemory.WriteByte(168);
 
 					let nEndPos = oMemory.GetCurPosition();
 
