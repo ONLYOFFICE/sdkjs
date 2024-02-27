@@ -1192,7 +1192,8 @@
     };
 	var c_oSerUserProtectedRangeDesc = {
 		Id: 0,
-		Name: 1
+		Name: 1,
+		Type: 2
 	};
 	var c_oSerUserProtectedRangeType = {
 		notView: 0,
