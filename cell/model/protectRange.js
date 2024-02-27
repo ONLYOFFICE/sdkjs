@@ -186,7 +186,7 @@
 		if (r.GetBool()) {
 			this.warningText = r.GetString2();
 		}
-		
+
 		if (r.GetBool()) {
 			this.Id = r.GetString2();
 		}
@@ -320,12 +320,11 @@
 		return this.Id;
 	};
 	CUserProtectedRange.prototype.asc_getType = function () {
-		return this.type;
+		return this.type == null ? Asc.c_oSerUserProtectedRangeType.view : this.type;
 	};
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
 	};
-
 
 	function CUserProtectedRangeUserInfo() {
 		this.id = null;
@@ -336,7 +335,7 @@
 	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id) {
 		let res = false;
 		if (id === this.id) {
-			res = this.asc_getType() === Asc.c_oSerUserProtectedRangeType.edit;
+			res = this.asc_getType() === Asc.c_oSerUserProtectedRangeType.edit || this.asc_getType() == null;
 		}
 		return res;
 	};

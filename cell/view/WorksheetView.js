@@ -8081,6 +8081,7 @@
             showFormulas = true;
         }
         let getValue2Func = showFormulas ? c.getValueForEdit2 : c.getValue2;
+
         let str, tm, strCopy;
 
         // Range для замерженной ячейки

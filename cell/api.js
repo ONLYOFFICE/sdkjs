@@ -8796,7 +8796,7 @@ var editor;
 		if (this.wb && this.wb.getCellEditMode()) {
 			return;
 		}
-		
+
 		this.wb.changeUserProtectedRanges(null, obj);
 	};
 
@@ -8808,7 +8808,6 @@ var editor;
 		if (this.wb && this.wb.getCellEditMode()) {
 			return;
 		}
-
 
 		this.wb.changeUserProtectedRanges(oldObj, newObj);
 	};
