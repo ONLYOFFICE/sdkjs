@@ -1329,215 +1329,7 @@ var CPresentation = CPresentation || function(){};
             this.isUndoRedoInProgress = false;
         }
     };
-    CPDFDoc.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oContent;
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.MoveCursorLeft(isShiftKey, isCtrlKey);
-            oContent = oForm.GetDocContent();
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.MoveCursorLeft(isShiftKey, isCtrlKey);
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape && oTextShape.IsInTextBox()) {
-            oTextShape.MoveCursorLeft(isShiftKey, isCtrlKey);
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-        }
-    };
-    CPDFDoc.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oContent;
-        if (oForm && !oForm.IsNeedDrawHighlight())
-        {
-            switch (oForm.GetType())
-            {
-                case AscPDF.FIELD_TYPES.listbox:
-                    oForm.MoveSelectUp();
-                    break;
-                case AscPDF.FIELD_TYPES.text: {
-                    if (oForm.IsInForm()) {
-                        oForm.MoveCursorUp(isShiftKey, isCtrlKey);
-                        oContent = oForm.GetDocContent();
-                    }
-                    break;
-                }
-            }
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.MoveCursorUp(isShiftKey, isCtrlKey);
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape && oTextShape.IsInTextBox()) {
-            oTextShape.MoveCursorUp(isShiftKey, isCtrlKey);
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-        }
-    };
-    CPDFDoc.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oContent;
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.MoveCursorRight(isShiftKey, isCtrlKey);
-            oContent = oForm.GetDocContent();
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.MoveCursorRight(isShiftKey, isCtrlKey);
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape && oTextShape.IsInTextBox()) {
-            oTextShape.MoveCursorRight(isShiftKey, isCtrlKey);
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-        }
-    };
-    CPDFDoc.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oContent;
-        if (oForm && !oForm.IsNeedDrawHighlight())
-        {
-            switch (oForm.GetType())
-            {
-                case AscPDF.FIELD_TYPES.listbox:
-                    oForm.MoveSelectDown();
-                    break;
-                case AscPDF.FIELD_TYPES.text: {
-                    if (oForm.IsInForm()) {
-                        oForm.MoveCursorDown(isShiftKey, isCtrlKey);
-                        oContent = oForm.GetDocContent();
-                    }
-                    
-                    break;
-                }
-            }
-            
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.MoveCursorDown(isShiftKey, isCtrlKey);
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape && oTextShape.IsInTextBox()) {
-            oTextShape.MoveCursorDown(isShiftKey, isCtrlKey);
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            oDrDoc.TargetStart();
-            // сбрасываем счетчик до появления курсора
-            if (!isShiftKey) {
-                oDrDoc.showTarget(true);
-            }
-
-            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-                oDrDoc.TargetEnd();
-
-            this.Viewer.onUpdateOverlay();
-        }
-    };
-    CPDFDoc.prototype.SelectAll = function() {
-        let oDrDoc = this.GetDrawingDocument();
-
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oContent;
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.SelectAllText();
-            oContent = oForm.GetDocContent();
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.SelectAllText();
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape) {
-            oTextShape.SelectAllText();
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
-                oDrDoc.TargetEnd();
-                this.Viewer.onUpdateOverlay();
-            }
-            else {
-                oContent.RemoveSelection();
-            }
-        }
-        else {
-            if (!this.Viewer.isFullTextMessage) {
-                if (!this.Viewer.isFullText)
-                {
-                    this.Viewer.fullTextMessageCallbackArgs = [];
-                    this.Viewer.fullTextMessageCallback = function() {
-                        this.Viewer.file.selectAll();
-                    };
-                    this.Viewer.showTextMessage();
-                }
-                else
-                {
-                    this.Viewer.file.selectAll();
-                }
-            }
-        }
-    };
+    
     CPDFDoc.prototype.GetActiveObject = function() {
         return this.activeForm || this.mouseDownAnnot || this.activeTextShape;
     };
@@ -1815,172 +1607,6 @@ var CPresentation = CPresentation || function(){};
         oAnnot.AddToRedraw();
         return oAnnot;
     };
-    CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
-        this.HighlightColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
-            a: opacity
-        };
-
-        let oViewer         = editor.getDocumentRenderer();
-        let oFile           = oViewer.file;
-        let aSelQuads       = oFile.getSelectionQuads();
-
-        if (aSelQuads.length == 0)
-            return;
-
-        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
-            let nPage   = aSelQuads[nInfo].page;
-            let aQuads  = aSelQuads[nInfo].quads;
-
-            let aAllPoints = [];
-            aQuads.forEach(function(rect) {
-                aAllPoints = aAllPoints.concat(rect);
-            });
-
-            let aMinRect = getMinRect(aAllPoints);
-            let MinX = aMinRect[0];
-            let MinY = aMinRect[1];
-            let MaxX = aMinRect[2];
-            let MaxY = aMinRect[3];
-
-            let oProps = {
-                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:           nPage,
-                name:           AscCommon.CreateGUID(),
-                type:           AscPDF.ANNOTATIONS_TYPES.Highlight,
-                creationDate:   (new Date().getTime()).toString(),
-                modDate:        (new Date().getTime()).toString(),
-                hidden:         false
-            }
-
-            let oAnnot = this.AddAnnot(oProps);
-
-            oAnnot.SetQuads(aQuads);
-            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity / 100);
-        }
-
-        if (this.bOffMarkerAfterUsing) {
-            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
-            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
-        }
-    };
-    CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
-        this.UnderlineColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
-            a: opacity
-        };
-
-        let oViewer         = editor.getDocumentRenderer();
-        let oFile           = oViewer.file;
-        let aSelQuads       = oFile.getSelectionQuads();
-        if (aSelQuads.length == 0)
-            return;
-
-        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
-            let nPage   = aSelQuads[nInfo].page;
-            let aQuads  = aSelQuads[nInfo].quads;
-
-            let aAllPoints = [];
-            aQuads.forEach(function(rect) {
-                aAllPoints = aAllPoints.concat(rect);
-            });
-
-            let aMinRect = getMinRect(aAllPoints);
-            let MinX = aMinRect[0];
-            let MinY = aMinRect[1];
-            let MaxX = aMinRect[2];
-            let MaxY = aMinRect[3];
-
-            let oProps = {
-                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:           nPage,
-                name:           AscCommon.CreateGUID(),
-                type:           AscPDF.ANNOTATIONS_TYPES.Underline,
-                creationDate:   (new Date().getTime()).toString(),
-                modDate:        (new Date().getTime()).toString(),
-                hidden:         false
-            }
-
-            let oAnnot = this.AddAnnot(oProps);
-
-            oAnnot.SetQuads(aQuads);
-            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity / 100);
-        }
-
-        if (this.bOffMarkerAfterUsing) {
-            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
-            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
-        }
-    };
-    CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
-        this.StrikeoutColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
-            a: opacity
-        };
-
-        let oViewer         = editor.getDocumentRenderer();
-        let oFile           = oViewer.file;
-        let aSelQuads       = oFile.getSelectionQuads();
-        if (aSelQuads.length == 0)
-            return;
-
-        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
-            let nPage   = aSelQuads[nInfo].page;
-            let aQuads  = aSelQuads[nInfo].quads;
-
-            let aAllPoints = [];
-            aQuads.forEach(function(rect) {
-                aAllPoints = aAllPoints.concat(rect);
-            });
-
-            let aMinRect = getMinRect(aAllPoints);
-            let MinX = aMinRect[0];
-            let MinY = aMinRect[1];
-            let MaxX = aMinRect[2];
-            let MaxY = aMinRect[3];
-
-            let oProps = {
-                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:           nPage,
-                name:           AscCommon.CreateGUID(),
-                type:           AscPDF.ANNOTATIONS_TYPES.Strikeout,
-                creationDate:   (new Date().getTime()).toString(),
-                modDate:        (new Date().getTime()).toString(),
-                hidden:         false
-            }
-
-            let oAnnot = this.AddAnnot(oProps);
-
-            oAnnot.SetQuads(aQuads);
-            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity / 100);
-        }
-
-        if (this.bOffMarkerAfterUsing) {
-            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
-            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
-        }
-    };
-    CPDFDoc.prototype.GetMarkerColor = function(nType) {
-        switch (nType) {
-            case AscPDF.ANNOTATIONS_TYPES.Highlight:
-                return this.HighlightColor;
-            case AscPDF.ANNOTATIONS_TYPES.Underline:
-                return this.UnderlineColor;
-            case AscPDF.ANNOTATIONS_TYPES.Strikeout:
-                return this.StrikeoutColor;
-        }
-
-        return null;
-    };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer     = editor.getDocumentRenderer();
         let pageObject  = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
@@ -2226,13 +1852,23 @@ var CPresentation = CPresentation || function(){};
             oForm.Remove(nDirection, isCtrlKey);
             oContent = oForm.GetDocContent();
         }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.Remove(nDirection, isCtrlKey);
-            oContent = oFreeText.GetDocContent();
+        else if (oFreeText) {
+            if (oFreeText.IsInTextBox()) {
+                oFreeText.Remove(nDirection, isCtrlKey);
+                oContent = oFreeText.GetDocContent();
+            }
+            else {
+                this.RemoveAnnot(oFreeText.GetId());
+            }
         }
         else if (oTextShape) {
-            oTextShape.Remove(nDirection, isCtrlKey);
-            oContent = oTextShape.GetDocContent();
+            if (oTextShape.IsInTextBox()) {
+                oTextShape.Remove(nDirection, isCtrlKey);
+                oContent = oTextShape.GetDocContent();
+            }
+            else {
+                this.RemoveTextShape(oTextShape.GetId());
+            }
         }
         else if (nDirection == 1 && oAnnot && this.Viewer.isMouseDown == false) {
             this.RemoveAnnot(oAnnot.GetId());
@@ -2274,70 +1910,7 @@ var CPresentation = CPresentation || function(){};
             oDrDoc.TargetStart();
         }
     };
-    CPDFDoc.prototype.SelectionSetStart = function(x, y, e) {
-        let oDrDoc      = this.GetDrawingDocument();
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
-
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.SelectionSetStart(X, Y, e);
-            if (false == this.Viewer.isMouseDown) {
-                oForm.content.RemoveSelection();
-            }
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.SelectionSetStart(X, Y, e);
-        }
-        else if (oTextShape) {
-            oTextShape.SelectionSetStart(X, Y, e);
-        }
-        
-        oDrDoc.UpdateTargetFromPaint = true;
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
-        this.Viewer.onUpdateOverlay();
-    };
-    CPDFDoc.prototype.SelectionSetEnd = function(x, y, e) {
-        let oDrDoc      = this.GetDrawingDocument();
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oTextShape  = this.activeTextShape;
-
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
-
-        let oContent;
-        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
-            oForm.SelectionSetEnd(X, Y, e);
-            oContent = oForm.GetDocContent();
-        }
-        else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.SelectionSetEnd(X, Y, e);
-            oContent = oFreeText.GetDocContent();
-        }
-        else if (oTextShape) {
-            oTextShape.SelectionSetEnd(X, Y, e);
-            oContent = oTextShape.GetDocContent();
-        }
-
-        if (oContent) {
-            if (oContent.IsSelectionEmpty() == false) {
-                oDrDoc.TargetEnd();
-            }
-            else {
-                oDrDoc.TargetStart();
-                oDrDoc.showTarget(true);
-            }
-        }
-        
-        this.Viewer.onUpdateOverlay();   
-    };
+    
     CPDFDoc.prototype.RemoveComment = function(Id) {
         let oAnnot = this.annots.find(function(annot) {
             return annot.GetId() === Id;
@@ -2381,6 +1954,34 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
+        oViewer.DrawingObjects.resetSelection();
+    };
+
+    CPDFDoc.prototype.RemoveTextShape = function(Id) {
+        let oViewer = editor.getDocumentRenderer();
+        let oTextShape = this.textShapes.find(function(annot) {
+            return annot.GetId() === Id;
+        });
+
+        if (!oTextShape)
+            return;
+
+        let nPage = oTextShape.GetPage();
+        oTextShape.AddToRedraw();
+
+        let nPos        = this.textShapes.indexOf(oTextShape);
+        let nPosInPage  = oViewer.pagesInfo.pages[nPage].textShapes.indexOf(oTextShape);
+
+        this.textShapes.splice(nPos, 1);
+        oViewer.pagesInfo.pages[nPage].textShapes.splice(nPosInPage, 1);
+        
+        if (this.mouseDownAnnot == oTextShape)
+            this.mouseDownAnnot = null;
+
+        this.CreateNewHistoryPoint();
+        this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oTextShape]));
+        this.TurnOffHistory();
+
         oViewer.DrawingObjects.resetSelection();
     };
     /**
@@ -2749,6 +2350,520 @@ var CPresentation = CPresentation || function(){};
         return null;
     };
 	
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Work with text
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    CPDFDoc.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
+        let oDrDoc = this.GetDrawingDocument();
+
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oContent;
+        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
+            oForm.MoveCursorLeft(isShiftKey, isCtrlKey);
+            oContent = oForm.GetDocContent();
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.MoveCursorLeft(isShiftKey, isCtrlKey);
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape && oTextShape.IsInTextBox()) {
+            oTextShape.MoveCursorLeft(isShiftKey, isCtrlKey);
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            oDrDoc.TargetStart();
+            // сбрасываем счетчик до появления курсора
+            if (!isShiftKey) {
+                oDrDoc.showTarget(true);
+            }
+
+            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                oDrDoc.TargetEnd();
+
+            this.Viewer.onUpdateOverlay();
+        }
+    };
+    CPDFDoc.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
+        let oDrDoc = this.GetDrawingDocument();
+
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oContent;
+        if (oForm && !oForm.IsNeedDrawHighlight())
+        {
+            switch (oForm.GetType())
+            {
+                case AscPDF.FIELD_TYPES.listbox:
+                    oForm.MoveSelectUp();
+                    break;
+                case AscPDF.FIELD_TYPES.text: {
+                    if (oForm.IsInForm()) {
+                        oForm.MoveCursorUp(isShiftKey, isCtrlKey);
+                        oContent = oForm.GetDocContent();
+                    }
+                    break;
+                }
+            }
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.MoveCursorUp(isShiftKey, isCtrlKey);
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape && oTextShape.IsInTextBox()) {
+            oTextShape.MoveCursorUp(isShiftKey, isCtrlKey);
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            oDrDoc.TargetStart();
+            // сбрасываем счетчик до появления курсора
+            if (!isShiftKey) {
+                oDrDoc.showTarget(true);
+            }
+
+            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                oDrDoc.TargetEnd();
+
+            this.Viewer.onUpdateOverlay();
+        }
+    };
+    CPDFDoc.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
+        let oDrDoc = this.GetDrawingDocument();
+
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oContent;
+        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
+            oForm.MoveCursorRight(isShiftKey, isCtrlKey);
+            oContent = oForm.GetDocContent();
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.MoveCursorRight(isShiftKey, isCtrlKey);
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape && oTextShape.IsInTextBox()) {
+            oTextShape.MoveCursorRight(isShiftKey, isCtrlKey);
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            oDrDoc.TargetStart();
+            // сбрасываем счетчик до появления курсора
+            if (!isShiftKey) {
+                oDrDoc.showTarget(true);
+            }
+
+            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                oDrDoc.TargetEnd();
+
+            this.Viewer.onUpdateOverlay();
+        }
+    };
+    CPDFDoc.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
+        let oDrDoc = this.GetDrawingDocument();
+
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oContent;
+        if (oForm && !oForm.IsNeedDrawHighlight())
+        {
+            switch (oForm.GetType())
+            {
+                case AscPDF.FIELD_TYPES.listbox:
+                    oForm.MoveSelectDown();
+                    break;
+                case AscPDF.FIELD_TYPES.text: {
+                    if (oForm.IsInForm()) {
+                        oForm.MoveCursorDown(isShiftKey, isCtrlKey);
+                        oContent = oForm.GetDocContent();
+                    }
+                    
+                    break;
+                }
+            }
+            
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.MoveCursorDown(isShiftKey, isCtrlKey);
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape && oTextShape.IsInTextBox()) {
+            oTextShape.MoveCursorDown(isShiftKey, isCtrlKey);
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            oDrDoc.TargetStart();
+            // сбрасываем счетчик до появления курсора
+            if (!isShiftKey) {
+                oDrDoc.showTarget(true);
+            }
+
+            if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+                oDrDoc.TargetEnd();
+
+            this.Viewer.onUpdateOverlay();
+        }
+    };
+    CPDFDoc.prototype.SelectAll = function() {
+        let oDrDoc = this.GetDrawingDocument();
+
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oContent;
+        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
+            oForm.SelectAllText();
+            oContent = oForm.GetDocContent();
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.SelectAllText();
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape) {
+            oTextShape.SelectAllText();
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
+                oDrDoc.TargetEnd();
+                this.Viewer.onUpdateOverlay();
+            }
+            else {
+                oContent.RemoveSelection();
+            }
+        }
+        else {
+            if (!this.Viewer.isFullTextMessage) {
+                if (!this.Viewer.isFullText)
+                {
+                    this.Viewer.fullTextMessageCallbackArgs = [];
+                    this.Viewer.fullTextMessageCallback = function() {
+                        this.Viewer.file.selectAll();
+                    };
+                    this.Viewer.showTextMessage();
+                }
+                else
+                {
+                    this.Viewer.file.selectAll();
+                }
+            }
+        }
+    };
+    CPDFDoc.prototype.SelectionSetStart = function(x, y, e) {
+        let oDrDoc      = this.GetDrawingDocument();
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
+            oForm.SelectionSetStart(X, Y, e);
+            if (false == this.Viewer.isMouseDown) {
+                oForm.content.RemoveSelection();
+            }
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.SelectionSetStart(X, Y, e);
+        }
+        else if (oTextShape) {
+            oTextShape.SelectionSetStart(X, Y, e);
+        }
+        
+        oDrDoc.UpdateTargetFromPaint = true;
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+        this.Viewer.onUpdateOverlay();
+    };
+    CPDFDoc.prototype.SelectionSetEnd = function(x, y, e) {
+        let oDrDoc      = this.GetDrawingDocument();
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let oContent;
+        if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
+            oForm.SelectionSetEnd(X, Y, e);
+            oContent = oForm.GetDocContent();
+        }
+        else if (oFreeText && oFreeText.IsInTextBox()) {
+            oFreeText.SelectionSetEnd(X, Y, e);
+            oContent = oFreeText.GetDocContent();
+        }
+        else if (oTextShape) {
+            oTextShape.SelectionSetEnd(X, Y, e);
+            oContent = oTextShape.GetDocContent();
+        }
+
+        if (oContent) {
+            if (oContent.IsSelectionEmpty() == false) {
+                oDrDoc.TargetEnd();
+            }
+            else {
+                oDrDoc.TargetStart();
+                oDrDoc.showTarget(true);
+            }
+        }
+        
+        this.Viewer.onUpdateOverlay();   
+    };
+    CPDFDoc.prototype.SetBold = function(bBold) {
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        this.CreateNewHistoryPoint();
+        if (oTextShape) {
+            oTextShape.SetBold(bBold);
+        }
+    };
+    CPDFDoc.prototype.SetItalic = function(bBold) {
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        this.CreateNewHistoryPoint();
+        if (oTextShape) {
+            oTextShape.SetItalic(bBold);
+        }
+    };
+    CPDFDoc.prototype.SetVertAling = function(nType) {
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        this.CreateNewHistoryPoint();
+        if (oTextShape) {
+            oTextShape.SetVertAling(nType);
+        }
+    };
+    CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
+        this.HighlightColor = {
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity
+        };
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let aSelQuads       = oFile.getSelectionQuads();
+
+        if (this.IsTextEditMode()) {
+            let oForm       = this.activeForm;
+            let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+            let oTextShape  = this.activeTextShape;
+
+            this.CreateNewHistoryPoint();
+            if (oTextShape) {
+                oTextShape.SetHighlight(r, g, b, opacity);
+            }
+        }
+        else {
+            if (aSelQuads.length == 0) {
+                return;
+            }
+
+            for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+                let nPage   = aSelQuads[nInfo].page;
+                let aQuads  = aSelQuads[nInfo].quads;
+
+                let aAllPoints = [];
+                aQuads.forEach(function(rect) {
+                    aAllPoints = aAllPoints.concat(rect);
+                });
+
+                let aMinRect = getMinRect(aAllPoints);
+                let MinX = aMinRect[0];
+                let MinY = aMinRect[1];
+                let MaxX = aMinRect[2];
+                let MaxY = aMinRect[3];
+
+                let oProps = {
+                    rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                    page:           nPage,
+                    name:           AscCommon.CreateGUID(),
+                    type:           AscPDF.ANNOTATIONS_TYPES.Highlight,
+                    creationDate:   (new Date().getTime()).toString(),
+                    modDate:        (new Date().getTime()).toString(),
+                    hidden:         false
+                }
+
+                let oAnnot = this.AddAnnot(oProps);
+
+                oAnnot.SetQuads(aQuads);
+                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+                oAnnot.SetOpacity(opacity / 100);
+            }
+        }
+
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+        }
+    };
+    CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
+        this.UnderlineColor = {
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity
+        };
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let aSelQuads;
+
+        if (this.IsTextEditMode()) {
+            let oForm       = this.activeForm;
+            let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+            let oTextShape  = this.activeTextShape;
+    
+            this.CreateNewHistoryPoint();
+            if (oTextShape) {
+                oTextShape.SetUnderline(bBold);
+            }
+        }
+        else {
+            aSelQuads = oFile.getSelectionQuads();
+            if (aSelQuads.length == 0)
+                return;
+
+            for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+                let nPage   = aSelQuads[nInfo].page;
+                let aQuads  = aSelQuads[nInfo].quads;
+
+                let aAllPoints = [];
+                aQuads.forEach(function(rect) {
+                    aAllPoints = aAllPoints.concat(rect);
+                });
+
+                let aMinRect = getMinRect(aAllPoints);
+                let MinX = aMinRect[0];
+                let MinY = aMinRect[1];
+                let MaxX = aMinRect[2];
+                let MaxY = aMinRect[3];
+
+                let oProps = {
+                    rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                    page:           nPage,
+                    name:           AscCommon.CreateGUID(),
+                    type:           AscPDF.ANNOTATIONS_TYPES.Underline,
+                    creationDate:   (new Date().getTime()).toString(),
+                    modDate:        (new Date().getTime()).toString(),
+                    hidden:         false
+                }
+
+                let oAnnot = this.AddAnnot(oProps);
+
+                oAnnot.SetQuads(aQuads);
+                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+                oAnnot.SetOpacity(opacity / 100);
+            }
+        }
+
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
+        }
+    };
+    CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
+        this.StrikeoutColor = {
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity
+        };
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let aSelQuads;
+
+        if (this.IsTextEditMode()) {
+            let oForm       = this.activeForm;
+            let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+            let oTextShape  = this.activeTextShape;
+
+            this.CreateNewHistoryPoint();
+            if (oTextShape) {
+                oTextShape.SetStrikeout(bBold);
+            }
+        }
+        else {
+            aSelQuads = oFile.getSelectionQuads();
+            if (aSelQuads.length == 0)
+            return;
+
+            for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+                let nPage   = aSelQuads[nInfo].page;
+                let aQuads  = aSelQuads[nInfo].quads;
+
+                let aAllPoints = [];
+                aQuads.forEach(function(rect) {
+                    aAllPoints = aAllPoints.concat(rect);
+                });
+
+                let aMinRect = getMinRect(aAllPoints);
+                let MinX = aMinRect[0];
+                let MinY = aMinRect[1];
+                let MaxX = aMinRect[2];
+                let MaxY = aMinRect[3];
+
+                let oProps = {
+                    rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                    page:           nPage,
+                    name:           AscCommon.CreateGUID(),
+                    type:           AscPDF.ANNOTATIONS_TYPES.Strikeout,
+                    creationDate:   (new Date().getTime()).toString(),
+                    modDate:        (new Date().getTime()).toString(),
+                    hidden:         false
+                }
+
+                let oAnnot = this.AddAnnot(oProps);
+
+                oAnnot.SetQuads(aQuads);
+                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+                oAnnot.SetOpacity(opacity / 100);
+            }
+        }
+
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+        }
+    };
+    CPDFDoc.prototype.GetMarkerColor = function(nType) {
+        switch (nType) {
+            case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                return this.HighlightColor;
+            case AscPDF.ANNOTATIONS_TYPES.Underline:
+                return this.UnderlineColor;
+            case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                return this.StrikeoutColor;
+        }
+
+        return null;
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for History
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

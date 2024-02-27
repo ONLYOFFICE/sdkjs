@@ -57,6 +57,7 @@
         this.Internal_InitRect(aOrigRect);
         initTextShape(this);
     }
+    
     CTextShape.prototype.constructor = CTextShape;
     CTextShape.prototype = Object.create(AscFormat.CShape.prototype);
 
@@ -325,7 +326,7 @@
             oLastUsedPara.AddToContentToEnd(oRun);
 
             if (oRCInfo["text"].indexOf('\r') != -1) {
-                oLastUsedPara = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, true);
+                oLastUsedPara = new AscWord.Paragraph(oContent, true);
                 oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
             }
         }
@@ -543,6 +544,15 @@
     CTextShape.prototype.GetItalic = function() {
         return !!this.GetCalculatedTextPr().GetItalic();
     };
+    CTextShape.prototype.SetUnderline = function(bUnderline) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
+    };
+    CTextShape.prototype.GetUnderline = function() {
+        return !!this.GetCalculatedTextPr().GetUnderline();
+    };
+    CTextShape.prototype.SetHighlight = function(r, g, b) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
+    };
     CTextShape.prototype.SetStrikeout = function(bStrikeout) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({
 			Strikeout  : bStrikeout,
@@ -678,6 +688,10 @@
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
+
+    AscFormat.CTextBody.prototype.getDrawingDocument = function() {
+        return this.parent && this.parent.getDrawingDocument && this.parent.getDrawingDocument();
+    };
 
     window["AscPDF"].CTextShape = CTextShape;
 })();
