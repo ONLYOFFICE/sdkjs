@@ -1194,11 +1194,11 @@
 		Id: 0,
 		Name: 1
 	};
-    var c_oSerUserProtectedRangeType = {
-        notView: 0,
-        view: 1,
-        edit: 2
-    };
+	var c_oSerUserProtectedRangeType = {
+		notView: 0,
+		view: 1,
+		edit: 2
+	};
 
     /** @enum */
     var c_oSer_Timeline = {
@@ -6085,11 +6085,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
-            if (desc.type) {
-                this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
-                this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(desc.type);
-            }
+			if (desc.type) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(desc.type);
+			}
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
@@ -9231,8 +9231,8 @@
 			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
 				oUser.id = this.stream.GetString2LE(length);
 			} else if (c_oSerUserProtectedRangeDesc.Type === type) {
-                oUser.type = this.stream.GetByte();
-            } else {
+				oUser.type = this.stream.GetByte();
+			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}
 
