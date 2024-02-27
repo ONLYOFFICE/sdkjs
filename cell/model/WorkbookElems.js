@@ -17051,7 +17051,7 @@ function RangeDataManagerElem(bbox, data)
 	function CMdx() {
 		this.mdxTuple = null;
 		this.mdxSet = null;
-		this.cMdxKPI = null;
+		this.mdxKPI = null;
 		this.mdxMemeberProp = null;
 
 		this.n = null;

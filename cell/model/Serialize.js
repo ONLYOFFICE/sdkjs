@@ -4379,9 +4379,9 @@
 					oThis.WriteMdxSet(pMdx.mdxSet);
 				});
 			}
-			if (pMdx.cMdxKPI) {
+			if (pMdx.mdxKPI) {
 				this.bs.WriteItem(c_oSer_MdxMetadata.MdxKPI, function () {
-					oThis.WriteMdxKPI(pMdx.cMdxKPI);
+					oThis.WriteMdxKPI(pMdx.mdxKPI);
 				});
 			}
 			if (pMdx.mdxMemeberProp) {
