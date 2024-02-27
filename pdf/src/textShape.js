@@ -478,6 +478,14 @@
     };
     
     /////////////////////////////
+    /// saving
+    ////////////////////////////
+
+    CTextShape.prototype.WriteToBinary = function(memory) {
+        this.toXml(memory, '');
+    };
+
+    /////////////////////////////
     /// work with text properties
     ////////////////////////////
 
