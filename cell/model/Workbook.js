@@ -5362,6 +5362,7 @@
 		this.bFillHandleRightClick = false;
 		this.activeFillType = null;
 		this.timelines = [];
+		this.changedArrays = null;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -13028,6 +13029,78 @@
 			}
 		}
 	};
+	// !!*
+	Worksheet.prototype.addChangedArray = function (rangeName, arrayInfo) {
+		// changedArrayList
+		if (!rangeName || !arrayInfo) {
+			return
+		}
+
+		if (!this.changedArrays) {
+			this.changedArrays = {};
+		}
+
+		if (!this.changedArrays[rangeName]) {
+			this.changedArrays[rangeName] = arrayInfo
+		}
+
+		// this.changedArrays[rangeName] = arrayInfo;
+	};
+	Worksheet.prototype.getChangedArrayList = function () {
+		// changedArrayList
+		if (!this.changedArrays) {
+			return
+		}
+
+		return this.changedArrays
+	};
+	Worksheet.prototype.removeFromChangedArrayList = function (name) {
+		// changedArrayList
+		if (!this.changedArrays) {
+			return
+		}
+
+		return this.changedArrays[name]
+	};
+	Worksheet.prototype.clearChangedArrayList = function () {
+		this.changedArrays = null;
+	};
+	Worksheet.prototype.recalculateVolatileArrays = function () {
+		const ws = this;
+
+		// recalculate all volatile arrays on page
+		if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
+			let depGraph = ws.workbook.dependencyFormulas;
+			// get volatileArraysList
+			let volatileArrayList = depGraph.getVolatileArrays();
+			if (volatileArrayList) {
+				for (let listenerId in volatileArrayList) {
+					let formula = volatileArrayList[listenerId];
+					let formulaResult = formula.calculate();
+					if (!(formula.aca && formula.ca && formula.vm)) {
+						// the array can now expand, do setValue for each cell except first
+						let bbox = formula.getDynamicRef();
+						if (bbox) {
+							for (let row = bbox.r1; row <= bbox.r2; row++) {
+								for (let col = bbox.c1; col <= bbox.c2; col++) {
+									if (row === bbox.r1 && col === bbox.c1) {
+										continue
+									}
+									// get cell and setPF to it
+									ws._getCell(row, col, function(cell) {
+										cell && cell.setFormulaInternal(formula);
+									});
+								}
+							}
+						}							
+						// depGraph.addToChangedDynamicRange(formula.getWs().getId(), formula.getDynamicRef());
+						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
+						depGraph.endListeningVolatileArray(listenerId);
+					}
+				}
+			}
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -14227,7 +14300,6 @@
 				DataOld = this.getValueData();
 			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
 				this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
-				// todo если первая ячейка была затронута, удаляем весь массив здесь
 				if (Val.value.getTextValue()) {
 					let dynamicRef = this.formulaParsed.getDynamicRef();
 					// non empty val, delete PF from cell

@@ -8398,23 +8398,21 @@ function parserFormula( formula, parent, _ws ) {
 						}
 						
 						this.ws._getCell(i, j, function(cell) {
-							if (cell.formulaParsed && cell.formulaParsed.dynamicRange) {
-								// check if cell belong to current dynamicRange
-								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
-								// todo consider using cm flags for cell and vm for spill ranges
-								if (!t.dynamicRange.isEqual(cell.formulaParsed.dynamicRange)) {
-									// if a cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
-									// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
-									// if (!cell.isEmptyTextString()) {
-									// 	isHaveNonEmptyCell = true
-									// }
+							if (cell) {
+								let formula = cell.getFormulaParsed();
+								let dynamicRangeFromCell = formula && formula.getDynamicRef();
+								if (formula && dynamicRangeFromCell) {
+									// check if cell belong to current dynamicRange
+									// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
+									if (!t.dynamicRange.isEqual(dynamicRangeFromCell)) {
+										// if the cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
+										// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
+										isHaveNonEmptyCell = true
+									}
+								} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
 									isHaveNonEmptyCell = true
-								}
-							} 
-							else if (!cell.isEmptyTextString()) {
-								isHaveNonEmptyCell = true
+								} 
 							}
-
 						});
 						if (isHaveNonEmptyCell) {
 							return false
