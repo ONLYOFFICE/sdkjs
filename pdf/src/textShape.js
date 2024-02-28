@@ -41,7 +41,6 @@
         AscFormat.CShape.call(this);
                 
         this._page          = nPage;
-        this._alignment     = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
         this._rect          = [];       // scaled rect
         this._origRect      = [];
@@ -510,27 +509,12 @@
         this.SetNeedUpdateRC(true);
     };
     CTextShape.prototype.SetAlign = function(nType) {
-        this._alignment = nType;
-        
-        let _alignType; // внутренний тип
-        switch (nType) {
-			case AscPDF.ALIGN_TYPE.left:
-				_alignType = AscCommon.align_Left;
-				break;
-			case AscPDF.ALIGN_TYPE.center:
-				_alignType = AscCommon.align_Center;
-				break;
-			case AscPDF.ALIGN_TYPE.right:
-				_alignType = AscCommon.align_Right;
-				break;
-		}
-
         let oContent = this.GetDocContent();
         oContent.SetParagraphAlign(nType);
         this.SetNeedRecalc(true);
     };
     CTextShape.prototype.GetAlign = function() {
-        return this._alignment;
+        return this.GetDocContent().GetCalculatedParaPr().GetJc();
     };
     CTextShape.prototype.SetBold = function(bBold) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
@@ -562,17 +546,22 @@
     CTextShape.prototype.GetStrikeout = function() {
         return !!this.GetCalculatedTextPr().GetStrikeout();
     };
-    CTextShape.prototype.SetVertAling = function(nType) {
+    CTextShape.prototype.SetBaseline = function(nType) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
     };
-    CTextShape.prototype.GetVertAlign = function() {
+    CTextShape.prototype.GetBaseline = function() {
         return this.GetCalculatedTextPr().GetVertAlign();
     };
     CTextShape.prototype.SetFontSize = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
     };
     CTextShape.prototype.GetFontSize = function() {
         return this.GetCalculatedTextPr().GetFontSize();
+    };
+    CTextShape.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
+        this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
+        this.SetNeedRecalc(true);
+        this.SetNeedUpdateRC(true);
     };
     CTextShape.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
@@ -588,6 +577,31 @@
     CTextShape.prototype.GetFontFamily = function() {
         return this.GetCalculatedTextPr().GetFontFamily();
     };
+    CTextShape.prototype.SetTextColor = function(r, g, b) {
+        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
+    };
+    CTextShape.prototype.ChangeTextCase = function(nCaseType) {
+        let oContent    = this.GetDocContent();
+        let oState      = oContent.GetSelectionState();
+
+        let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
+		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());
+
+        oContent.SetSelectionState(oState);
+        this.SetNeedRecalc(true);
+    };
+    CTextShape.prototype.GetSelectedParagraphs = function() {
+        let oContent        = this.GetDocContent();
+        let aSelectedParas  = [];
+
+        oContent.GetCurrentParagraph(false, aSelectedParas);
+        return aSelectedParas;
+    };
+    CTextShape.prototype.SetVertAlign = function(nType) {
+        this.setVerticalAlign(nType);
+        this.SetNeedRecalc(true);
+    };
+
     CTextShape.prototype.GetAllFonts = function(aFonts) {
         let oContent    = this.GetDocContent();
         let fontMap     = {};
@@ -620,15 +634,27 @@
 		return aFonts;
     };
 
-    CTextShape.prototype.SetParagraphSpacing = function(oSpacing) {
+    CTextShape.prototype.SetLineSpacing = function(oSpacing) {
         this.GetDocContent().SetParagraphSpacing(oSpacing);
     };
-    CTextShape.prototype.GetParagraphSpacing = function() {
+    CTextShape.prototype.GetLineSpacing = function() {
         let oCalcedPr = this.GetCalculatedParaPr();
         return {
             After:  oCalcedPr.GetSpacingAfter(),
             Before: oCalcedPr.GetSpacingBefor()
         }
+    };
+    CTextShape.prototype.SetColumnNumber = function(nColumns) {
+        this.setColumnNumber(nColumns);
+        this.SetNeedRecalc(true);
+    };
+    CTextShape.prototype.IncreaseDecreaseIndent = function(bIncrease) {
+        this.GetDocContent().IncreaseDecreaseIndent(bIncrease);
+        this.SetNeedRecalc(true);
+    };
+    CTextShape.prototype.ClearFormatting = function(bParaPr, bTextText) {
+        this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
+        this.SetNeedRecalc(true);
     };
 
     /**
