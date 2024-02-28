@@ -450,7 +450,7 @@
 	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b)
 	{
 		// from edit mode
-		if (typeof nType === "boolean") {
+		if (nType == undefined) {
 			this.getPDFDoc().SetHighlight(r, g, b, opacity);
 			return;
 		}
@@ -504,7 +504,100 @@
 	};
 	// 0- baseline, 2-subscript, 1-superscript
 	PDFEditorApi.prototype.put_TextPrBaseline = function(value) {
-		this.getPDFDoc().SetVertAling(value);
+		this.getPDFDoc().SetBaseline(value);
+	};
+	PDFEditorApi.prototype.put_TextPrFontSize = function(value) {
+		this.getPDFDoc().SetFontSize(value);
+	};
+	PDFEditorApi.prototype.put_TextPrFontName = function(name) {
+		this.getPDFDoc().SetFontFamily(name);
+	};
+	PDFEditorApi.prototype.FontSizeIn = function() {
+		this.getPDFDoc().IncreaseDecreaseFontSize(true);
+	};
+	PDFEditorApi.prototype.FontSizeOut = function() {
+		this.getPDFDoc().IncreaseDecreaseFontSize(false);
+	};
+	PDFEditorApi.prototype.put_TextColor = function(color) {
+		this.getPDFDoc().SetTextColor(color.r, color.g, color.b);
+	};
+	PDFEditorApi.prototype.asc_ChangeTextCase = function(nType) {
+		this.getPDFDoc().ChangeTextCase(nType);
+	};
+	PDFEditorApi.prototype.put_PrAlign = function(nType) {
+		this.getPDFDoc().SetAlign(nType);
+	};
+	PDFEditorApi.prototype.setVerticalAlign = function(nType) {
+		this.getPDFDoc().SetVertAlign(nType);
+	};
+	PDFEditorApi.prototype.put_PrLineSpacing = function(nType, nValue) {
+		this.getPDFDoc().SetLineSpacing({LineRule : nType, Line : nValue});
+	};
+	PDFEditorApi.prototype.put_LineSpacingBeforeAfter = function(type, value) { //"type == 0" means "Before", "type == 1" means "After"
+		switch (type) {
+			case 0:
+				this.getPDFDoc().SetLineSpacing({Before : value});
+				break;
+			case 1:
+				this.getPDFDoc().SetLineSpacing({After : value});
+				break;
+		}
+	};
+	PDFEditorApi.prototype.IncreaseIndent = function() {
+		this.getPDFDoc().IncreaseDecreaseIndent(true);
+	};
+	PDFEditorApi.prototype.DecreaseIndent = function(){
+		this.getPDFDoc().IncreaseDecreaseIndent(false);
+	};
+	PDFEditorApi.prototype.ClearFormating = function() {
+		this.getPDFDoc().ClearFormatting(undefined, true);
+	};
+	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
+		this.getPDFDoc().ShapeApply(shapeProps);
+	};
+	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
+		this.sync_ParaSpacingLine(oParaPr.Spacing);
+		this.Update_ParaInd(oParaPr.Ind);
+		this.sync_PrAlignCallBack(oParaPr.Jc);
+		this.sync_PrPropCallback(oParaPr);
+	};
+	PDFEditorApi.prototype.ParseBulletPreviewInformation = function(arrDrawingInfo) {
+		const arrNumberingLvls = [];
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			for (let i = 0; i < arrDrawingInfo.length; i += 1)
+			{
+				const oDrawInfo = arrDrawingInfo[i];
+				const oNumberingInfo = oDrawInfo["numberingInfo"];
+				if (!oNumberingInfo) continue;
+				const sDivId = oDrawInfo["divId"];
+				if (!oNumberingInfo["bullet"])
+				{
+					const oPresentationBullet = new AscCommonWord.CPresentationBullet();
+					const oTextPr = new AscCommonWord.CTextPr();
+					oPresentationBullet.m_sChar = AscCommon.translateManager.getValue("None");
+					oPresentationBullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
+					oPresentationBullet.m_bFontTx = false;
+					oPresentationBullet.m_sFont   = "Arial";
+					oTextPr.Unifill = AscFormat.CreateSolidFillRGB(0, 0, 0);
+					oTextPr.FontSize = oTextPr.FontSizeCS = 65;
+					oPresentationBullet.MergeTextPr(oTextPr);
+					arrNumberingLvls.push({divId: sDivId, arrLvls: [oPresentationBullet], isRemoving: true});
+				}
+				else
+				{
+					const oBullet = window['AscJsonConverter'].ReaderFromJSON.prototype.BulletFromJSON(oNumberingInfo["bullet"]);
+					const oPresentationBullet = oBullet.getPresentationBullet(AscFormat.GetDefaultTheme(), AscFormat.GetDefaultColorMap());
+					oPresentationBullet.m_bFontTx = false;
+					const oTextPr = new AscCommonWord.CTextPr();
+					oTextPr.Unifill = AscFormat.CreateSolidFillRGB(0, 0, 0);
+					oTextPr.FontSize = oTextPr.FontSizeCS = 65;
+					oPresentationBullet.MergeTextPr(oTextPr);
+					arrNumberingLvls.push({divId: sDivId, arrLvls: [oPresentationBullet]});
+				}
+			}
+		}, this);
+		return arrNumberingLvls;
 	};
 	PDFEditorApi.prototype.Paste = function()
 	{

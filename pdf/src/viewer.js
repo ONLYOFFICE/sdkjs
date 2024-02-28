@@ -2785,7 +2785,6 @@
 			this._paintFormsHighlight();
 			this._paintFormsMarkers();
 			oDoc.UpdateInterface();
-			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
@@ -4146,11 +4145,11 @@
 
 					oMemory.WriteByte(167); // shape start
 
-					// длина комманд
+					// тут будет длина комманд
 					let nStartPos = oMemory.GetCurPosition();
 					oMemory.Skip(4);
 
-					// длина xml строки
+					// тут будет длина xml строки
 					let nStrLengthPos = oMemory.GetCurPosition();
 					oMemory.Skip(4);
 
@@ -4159,18 +4158,20 @@
 					// запись длины xml строки
 					let nEndPos = oMemory.GetCurPosition();
 					oMemory.Seek(nStrLengthPos);
-					oMemory.WriteLong(nEndPos - nStrLengthPos);
+					oMemory.WriteLong(nEndPos - nStrLengthPos - 4); // вычитаем 4 так как должна быть длина строки, без учета команды длины
 					oMemory.Seek(nEndPos);
-
-					oTextShape.draw(oRenderer); // запись графики
-
-					oMemory.WriteByte(168); // shape end
 
 					// запись длины комманд
 					nEndPos = oMemory.GetCurPosition();
 					oMemory.Seek(nStartPos);
 					oMemory.WriteLong(nEndPos - nStartPos);
 					oMemory.Seek(nEndPos);
+
+					// запись графики
+					oTextShape.draw(oRenderer); 
+
+					oMemory.WriteByte(168); // shape end
+					oMemory.WriteLong(4); // для обратной совместимости
 				}
 			}
 
