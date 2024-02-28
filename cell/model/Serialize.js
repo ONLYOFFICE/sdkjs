@@ -12303,6 +12303,11 @@
                 //TODO так же он проставляет флаг ca - рассмотреть стоит ли его нам доблавлять
                 formula.v = formula.v.replace("_xludf.", "");
             }
+            if (formula.v.startsWith("IFERROR(__xludf.DUMMYFUNCTION(\"")) {
+                formula.v = formula.v.replace('IFERROR(__xludf.DUMMYFUNCTION(\"', "");
+                formula.v = formula.v.substr(0, formula.v.lastIndexOf('\"\)'));
+                formula.v = formula.v.replace(/\"\"/g,"\"");
+            }
             if (formula.v.startsWith("=")) {
                 //LO write "=" to file
                 formula.v = formula.v.replace("=", "");
@@ -13218,8 +13223,11 @@
         }
         //TODO пока едиственный идентификатор, что внутри есть функция import - importFunctionsRangeLinks
         //обходить каждый раз колстек - не хотелось бы замедлять сохранение, так же как и искать в строке
+
+        //view ->sum(IMPORTRANGE("https://","Sheet1!A1"))+cos(1)
+        //file -> IFERROR(__xludf.DUMMYFUNCTION("sum(IMPORTRANGE(""https://"",""Sheet1!A1""))+cos(1)"),123)</f>
         if (formula && parsed && parsed.importFunctionsRangeLinks) {
-            formula = "IFERROR(" + formula + "," + cell.getValue() + ")";
+            formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
         }
         return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca};
     };

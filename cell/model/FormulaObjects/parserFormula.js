@@ -3121,8 +3121,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				str += ",";
 			}
 		}
-		if (this.isXLFN || this.isXLWS || this.isXLUDF) {
-			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + (this.isXLUDF ? "__xludf.DUMMYFUNCTION." : "") + this.name + "(" + str + ")");
+		if (this.isXLFN || this.isXLWS) {
+			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
+		} else if (this.isXLUDF) {
+			//return new cString("__xludf.DUMMYFUNCTION." + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
