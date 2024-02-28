@@ -26525,8 +26525,16 @@
 								if (initStructure) {
 									for (let j in importRangeLinks[i]) {
 										let rangeOptions = importRangeLinks[i][j];
-										let _range = eR.worksheets[rangeOptions.sheet].getRange2(rangeOptions.range);
-										eR.initRows(_range);
+
+										let externalWs = eR.worksheets && eR.worksheets[rangeOptions.sheet];
+										if (!externalWs) {
+											externalWs = t.model.workbook.getExternalWorksheetByName(i, rangeOptions.sheet);
+										}
+
+										if (externalWs) {
+											let _range = externalWs.getRange2(rangeOptions.range);
+											eR.initRows(_range);
+										}
 									}
 								}
 							}
