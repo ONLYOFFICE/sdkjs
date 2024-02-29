@@ -14020,51 +14020,6 @@
 				return false;
 			};
 
-			//***dynamic array-formula***
-			// const recalculateDynamicArrays = function(arrayList) {
-			// 	// на вход получаем список, непосредственно затронутых текущим изменением, динамических массивов
-			// 	// есть два варианта развития событий:
-			// 	// 1) массив не может раскрыться - добавляем ячейку в depGraph.changedCell + добавляем формулу в список volatileArrays, формулу оставляем в ячейке
-			// 	// 2) массив может раскрыться - проходимся по всем ячейкам этого массива и проставляем формулу PF, удаляем формулу из слушателей volatileArrays и добавляем range в changedRange
-	
-			// 	if (arrayList && ws) {
-			// 		for (let array in arrayList) {
-			// 			let arrayInfo = arrayList[array];
-	
-			// 			if (arrayInfo.doRecalc) {
-			// 				let formula = arrayInfo.formula;
-			// 				let formulaRes = formula && formula.calculate();
-	
-			// 				if (formula.ca && formula.aca && formula.vm) {
-			// 					let cellWithFormula = formula.getParent();
-			// 					// 1) массив не может раскрыться после внесенных изменений
-			// 					ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
-			// 					ws.workbook.dependencyFormulas.addToChangedCell(cellWithFormula);
-			// 				} else {
-			// 					// 2) массив может раскрыться
-			// 					ws.workbook.dependencyFormulas.endListeningVolatileArray(formula.getListenerId());
-			// 					ws.workbook.dependencyFormulas.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
-	
-			// 					let bbox = formula.getDynamicRef();
-			// 					if (bbox) {
-			// 						for (let row = bbox.r1; row <= bbox.r2; row++) {
-			// 							for (let col = bbox.c1; col <= bbox.c2; col++) {
-			// 								if (row === bbox.r1 && col === bbox.c1) {
-			// 									continue
-			// 								}
-			// 								// get cell and set formula to each
-			// 								t.model._getCell(row, col, function(cell) {
-			// 									cell && cell.setFormulaInternal(formula);
-			// 								});
-			// 							}
-			// 						}
-			// 					}
-	
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// };
 
             History.Create_NewPoint();
             History.StartTransaction();
@@ -18907,15 +18862,15 @@
 		let applyByArray = ctrlKey && shiftKey;
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
-		let dafCannotExpand; 	// флаг, нужен для того чтобы не выбирать весь предполагаемый дианмический диапазон в ситуациях, когда массив не может раскрыться
+		let arrayCannotExpand; 	// flag, needed to avoid selecting the entire expected dynamic range in situations where the array cannot open
 
 		//***array-formula***
 		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
-				c = dynamicSelectionRange && !dafCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
+				c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
-				if(c.bbox.isOneCell() && !dafCannotExpand) {
+				if(c.bbox.isOneCell() && !arrayCannotExpand) {
 					//проверяем, есть ли формула массива в этой ячейке
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
 						var formulaRef = cell && cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
@@ -18975,9 +18930,7 @@
 						ctrlKey = true;
 
 						if ((newFP.aca && newFP.ca && newFP.vm)) {
-							// array cannot expand, add formula to volatileArraysListener
-							ws.workbook.dependencyFormulas.addToVolatileArrays(newFP);
-							dafCannotExpand = true;
+							arrayCannotExpand = true;
 						}
 					} else if (newFP.ref) {
 						applyByArray = true;
