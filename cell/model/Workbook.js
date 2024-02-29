@@ -157,7 +157,6 @@
 	window.importRangeLinks = null;
 	window.startBuildImportRangeLinks = null;
 
-	window.importRangeOnRecalc = false;
 	window.importRangeAsUpdateER = true;
 
 
@@ -1856,39 +1855,12 @@
 
 		_calculateDirty: function() {
 			var t = this;
-
-			if (window.startBuildImportRangeLinks === null && window.importRangeOnRecalc) {
-				window.startBuildImportRangeLinks = true;
-			}
-
+			
 			let needUpdateCells = [];
 
 			this._foreachChanged(function (cell) {
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
-
-					if (window.importRangeOnRecalc) {
-						//check on import functions
-						for (let i = 0; i < cell.formulaParsed.outStack.length; i++) {
-							if (cell.formulaParsed.outStack[i].type === cElementType.func && cell.formulaParsed.outStack[i].name === "IMPORTRANGE") {
-
-								let lengthBefore = window.importRangeLinks && window.importRangeLinks.length;
-								//need temporary calculate and check on external links
-								cell.formulaParsed.calculate();
-								let lengthAfter = window.importRangeLinks && window.importRangeLinks.length;
-
-								//if (lengthAfter !== lengthAfter) {
-								needUpdateCells.push(cell);
-								//}
-								cell.setIsDirty(false);
-
-								//window.importRangeLinks = [];
-								//window.startBuildImportRangeLinks = null;
-
-							}
-						}
-					}
-
 				}
 			});
 
