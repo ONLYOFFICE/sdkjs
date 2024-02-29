@@ -145,6 +145,7 @@ var CPresentation = CPresentation || function(){};
 
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
+        this.Api        = Asc.editor;
 
         this.annotsHidden = false;
 		
@@ -796,29 +797,32 @@ var CPresentation = CPresentation || function(){};
 
         // если режим редактора текста
         if (this.IsTextEditMode()) {
-            let oMouseDownTextShape = oViewer.getPageTextShapeByMouse();
-            if (oMouseDownTextShape != this.activeTextShape) {
-                this.BlurObject(this.activeTextShape);
+            
+            if (this.Api.isStartAddShape) {
+                oDrawingObjects.startAddShape(this.Api.addShapePreset);
+                oDrawingObjects.OnMouseDown(e, X, Y, 0);
             }
-
-            if (oMouseDownTextShape) {
-                this.activeTextShape = oMouseDownTextShape;
-                this.activeTextShape.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-
-                if (this.activeTextShape.IsInTextBox() == false) {
-                    oDrDoc.TargetEnd();
+            else {
+                let oMouseDownTextShape = oViewer.getPageTextShapeByMouse();
+                if (oMouseDownTextShape != this.activeTextShape) {
+                    this.BlurObject(this.activeTextShape);
                 }
 
-                let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-                let X       = oPos.X;
-                let Y       = oPos.Y;
+                if (oMouseDownTextShape) {
+                    this.activeTextShape = oMouseDownTextShape;
+                    this.activeTextShape.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 
-                oDrawingObjects.OnMouseDown(e, X, Y, oMouseDownTextShape.selectStartPage);
-                oViewer.onUpdateOverlay();
+                    if (this.activeTextShape.IsInTextBox() == false) {
+                        oDrDoc.TargetEnd();
+                    }
+
+                    oDrawingObjects.OnMouseDown(e, X, Y, oMouseDownTextShape.selectStartPage);
+                    oViewer.onUpdateOverlay();
+                }
+
+                oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+                return;
             }
-
-            oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-            return;
         }
 
         // тут далее для режима просмотра/комментирования/заполнения форм
@@ -1861,11 +1865,11 @@ var CPresentation = CPresentation || function(){};
             }
         }
         else if (oFreeText && oFreeText.IsInTextBox()) {
-            oFreeText.EnterText([13]);
+            oFreeText.AddNewParagraph();
             oContent = oFreeText.GetDocContent();
         }
         else if (oTextShape) {
-            oTextShape.EnterText([13]);
+            oTextShape.AddNewParagraph();
             oContent = oTextShape.GetDocContent();
         }
 
@@ -2367,11 +2371,19 @@ var CPresentation = CPresentation || function(){};
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oTextShape  = this.activeTextShape;
 
-        let oParaPr = new AscWord.CParaPr()
+        let oParaPr = new AscWord.CParaPr();
+
+        let isCanIncreaseInd = false;
+        let isCanDecreaseInd = false;
+
         if (oTextShape) {
             oParaPr = oTextShape.GetCalculatedParaPr();
+            isCanIncreaseInd = oTextShape.GetDocContent().Can_IncreaseParagraphLevel(true);
+            isCanDecreaseInd = oTextShape.GetDocContent().Can_IncreaseParagraphLevel(false);
         }
         
+        Asc.editor.sendEvent("asc_canIncreaseIndent", isCanIncreaseInd);
+	    Asc.editor.sendEvent("asc_canDecreaseIndent", isCanDecreaseInd);
         Asc.editor.UpdateParagraphProp(oParaPr);
     };
     CPDFDoc.prototype.UpdateTextProps = function() {
@@ -2985,6 +2997,15 @@ var CPresentation = CPresentation || function(){};
             oTextShape.IncreaseDecreaseIndent(bIncrease);
         }
     };
+    CPDFDoc.prototype.SetNumbering = function(oBullet) {
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
+
+        this.CreateNewHistoryPoint();
+        if (oTextShape) {
+            oTextShape.SetNumbering(oBullet);
+        }
+    };
     CPDFDoc.prototype.ClearFormatting = function(bParaPr, bTextText) {
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oTextShape  = this.activeTextShape;
@@ -3060,6 +3081,11 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.GetStyles = function() {
 		return this.Get_Styles();
 	};
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Extension required for CGraphicObjects
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Запрашиваем настройку автозамены двух дефисов на тире
      * @returns {boolean}

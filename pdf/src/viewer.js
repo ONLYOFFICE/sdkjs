@@ -225,10 +225,8 @@
 		this.doc = new AscPDF.CPDFDoc(this);
 		AscCommon.History.Document = this.doc;
 
-		if (typeof CGraphicObjects !== "undefined") {
-			this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
-			this.DrawingObjects.saveDocumentState = null;
-		}
+		this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
+		CGraphicObjects.prototype.saveDocumentState = function() {};
 
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
 		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
@@ -2108,7 +2106,7 @@
 
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.MouseHandObject.Active && !oDoc.activeTextShape && !oDoc.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
+				if (oThis.canMovePageByHand())
 				{
 					// двигаем рукой
 					oThis.setCursorType(AscCommon.Cursors.Grabbing);
@@ -2179,6 +2177,9 @@
 				}
 			}
 			return false;
+		};
+		this.canMovePageByHand = function() {
+			return this.isMouseDown && this.MouseHandObject.Active && !this.doc.activeTextShape && !this.doc.mouseDownAnnot && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;
 		};
 
 		this.onMouseWhell = function(e)

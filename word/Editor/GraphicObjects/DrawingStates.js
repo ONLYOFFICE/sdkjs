@@ -192,37 +192,47 @@ StartAddNewShape.prototype =
             }
             else
             {
-                let oViewer = editor.getDocumentRenderer();
-                if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
-                    oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
+                let oViewer = Asc.editor.getDocumentRenderer();
+                // рисование кистью
+                if (Asc.editor.isInkDrawerOn()) {
+                    // добавлем path если рисование не закончено
+                    if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
+                        oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
+                    }
+                    else {
+                        let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
+                        let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
+    
+                        var bounds  = oTrack.getBounds();
+                        
+                        let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
+                        let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
+    
+                        let oInkAnnot = oLogicDocument.AddAnnot({
+                            rect:       aRect,
+                            page:       this.pageIndex,
+                            contents:   null,
+                            type:       AscPDF.ANNOTATIONS_TYPES.Ink,
+                            creationDate:   (new Date().getTime()).toString(),
+                            modDate:        (new Date().getTime()).toString()
+                        });
+    
+                        var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint, oTrack.pen);
+    
+                        oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
+                        oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
+                        
+                        oInkAnnot.AddToRedraw();
+                        shape.recalculate();
+    
+                        // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
+                        oLogicDocument.currInkInDrawingProcess = oInkAnnot;
+                    }
                 }
                 else {
-                    let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
-                    let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
-
-                    var bounds  = oTrack.getBounds();
-                    
-                    let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
-                    let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
-
-                    let oInkAnnot = oLogicDocument.AddAnnot({
-                        rect:       aRect,
-                        page:       this.pageIndex,
-                        contents:   null,
-                        type:       AscPDF.ANNOTATIONS_TYPES.Ink,
-                        creationDate:   (new Date().getTime()).toString(),
-                        modDate:        (new Date().getTime()).toString()
-                    });
-
-                    var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint, oTrack.pen);
-
-                    oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
-                    oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
-                    
-                    oInkAnnot.AddToRedraw();
-                    shape.recalculate();
-
-                    oLogicDocument.currInkInDrawingProcess = oInkAnnot;
+                    // добавление шейпов
+                    var oBounds     = oTrack.getBounds();
+                    var oTextShape  = oTrack.getShape(true, this.drawingObjects.drawingDocument);
                 }
             }
         }

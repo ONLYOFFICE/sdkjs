@@ -217,6 +217,11 @@
             oDoc.SetLocalHistory();
         }
     };
+    CTextShape.prototype.AddNewParagraph = function() {
+        this.GetDocContent().AddNewParagraph();
+        this.FitTextBox();
+        this.SetNeedRecalc(true);
+    };
     CTextShape.prototype.SelectionSetStart = function(X, Y, e) {
         this.selectStartPage = this.GetPage();
 
@@ -649,14 +654,19 @@
         this.SetNeedRecalc(true);
     };
     CTextShape.prototype.IncreaseDecreaseIndent = function(bIncrease) {
-        this.GetDocContent().IncreaseDecreaseIndent(bIncrease);
+        // Increase_ParagraphLevel для шейпов из презентаций
+        this.GetDocContent().Increase_ParagraphLevel(bIncrease);
+        this.SetNeedRecalc(true);
+    };
+    CTextShape.prototype.SetNumbering = function(oBullet) {
+        this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
         this.SetNeedRecalc(true);
     };
     CTextShape.prototype.ClearFormatting = function(bParaPr, bTextText) {
         this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
         this.SetNeedRecalc(true);
     };
-
+    
     /**
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
