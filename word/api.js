@@ -13362,6 +13362,10 @@ background-repeat: no-repeat;\
 		{
 			return new AscCommon.CPluginCtxMenuInfo();
 		}
+		const hyperlink = oLogicDocument.IsCursorInHyperlink();
+		if (hyperlink) {
+			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Hyperlink, undefined, hyperlink.GetValue());
+		}
 		if (!oLogicDocument.IsSelectionUse())
 		{
 			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
