@@ -6086,7 +6086,7 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
-			if (desc.type) {
+			if (null != desc.type) {
 				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteByte(desc.type);
@@ -6130,7 +6130,7 @@
 					});
 				}
             }
-            if (oUserProtectedRange.type) {
+            if (null != oUserProtectedRange.type) {
                 this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
                     oThis.memory.WriteByte(oUserProtectedRange.type);
                 });
