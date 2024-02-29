@@ -15664,16 +15664,19 @@ function RangeDataManagerElem(bbox, data)
 		let res;
 
 		switch (this.CellType) {
-			case CellValueType.String:
+			case Asc.ECellTypeType.celltypeStr:
+			case Asc.ECellTypeType.celltypeSharedString:
+			case Asc.ECellTypeType.celltypeInlineStr:
+			case Asc.ECellTypeType.celltypeDate:
 				res = new AscCommonExcel.cString(this.CellValue);
 				break;
-			case CellValueType.Bool:
+			case Asc.ECellTypeType.celltypeBool:
 				res = new AscCommonExcel.cBool(this.CellValue);
 				break;
-			case CellValueType.Error:
+			case Asc.ECellTypeType.celltypeError:
 				res = new AscCommonExcel.cError(this.CellValue);
 				break;
-			case CellValueType.Number:
+			case Asc.ECellTypeType.celltypeNumber:
 			default:
 				res = new AscCommonExcel.cNumber(this.CellValue - 0);
 				break;

@@ -12353,6 +12353,15 @@
                     return;
                 }
 
+				if (parsed.importFunctionsRangeLinks) {
+					for (let i in parsed.importFunctionsRangeLinks) {
+						let eR = tmp.ws.workbook.getExternalLinkByName(i);
+						if (eR) {
+							eR.notUpdateId = true;
+						}
+					}
+				}
+
                 if (null !== formula.ref) {
                     let range;
                     if(formula.t === ECellFormulaType.cellformulatypeShared) {

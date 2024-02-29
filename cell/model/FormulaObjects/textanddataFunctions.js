@@ -1242,7 +1242,7 @@ function (window, undefined) {
 			let eR = wb && wb.getExternalLinkByName(arg0.toString());
 			let ret = new cArray();
 			if (eR) {
-				let externalWs = eR.worksheets[is3DRef.sheet];
+				let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
 				if (externalWs) {
 					let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
