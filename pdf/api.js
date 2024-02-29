@@ -556,10 +556,16 @@
 		this.getPDFDoc().ShapeApply(shapeProps);
 	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
+		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
 		this.sync_ParaSpacingLine(oParaPr.Spacing);
 		this.Update_ParaInd(oParaPr.Ind);
 		this.sync_PrAlignCallBack(oParaPr.Jc);
+		this.sync_ParaStyleName(oParaPr.StyleName);
+		this.sync_ListType(oParaPr.ListType);
 		this.sync_PrPropCallback(oParaPr);
+	};
+	PDFEditorApi.prototype.sync_ListType = function(NumPr) {
+		this.sendEvent("asc_onListType", new AscCommon.asc_CListType(NumPr));
 	};
 	PDFEditorApi.prototype.ParseBulletPreviewInformation = function(arrDrawingInfo) {
 		const arrNumberingLvls = [];
@@ -598,6 +604,66 @@
 			}
 		}, this);
 		return arrNumberingLvls;
+	};
+	PDFEditorApi.prototype.put_ListType = function(type, subtype, custom) {
+		let blipUrl = custom && custom.imageId;
+		if (blipUrl) {
+			let checkImageUrlFromServer;
+
+			let that		= this;
+			let localUrl	= AscCommon.g_oDocumentUrls.getLocal(blipUrl);
+			let fullUrl		= AscCommon.g_oDocumentUrls.getUrl(blipUrl);
+
+			if (fullUrl) {
+				checkImageUrlFromServer = fullUrl;
+			}
+			else if (localUrl) {
+				checkImageUrlFromServer = blipUrl;
+			}
+
+			if (checkImageUrlFromServer) {
+				blipUrl			= checkImageUrlFromServer;
+				custom.imageId	= blipUrl;
+
+				let isImageNotAttendInImageLoader = !this.ImageLoader.map_image_index[blipUrl];
+				if (isImageNotAttendInImageLoader) {
+					let tryToSetImageBulletAgain = function () {
+						that.put_ListType(type, subtype, custom);
+					}
+					this.ImageLoader.LoadImagesWithCallback([blipUrl], tryToSetImageBulletAgain);
+					return;
+				}
+			}
+			else {
+				let changeBlipFillUrlToLocalAndTrySetImageBulletAgain = function (data) {
+					let uploadImageUrl = data[0].url;
+					custom.imageId = uploadImageUrl;
+					that.put_ListType(type, subtype, custom);
+				}
+				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, custom.token);
+				return;
+			}
+		}
+
+		let oDoc = this.getPDFDoc();
+		let NumberInfo = {
+			Type:		type,
+			SubType:	subtype,
+			Custom:		custom
+		};
+		let oBullet = AscFormat.fGetPresentationBulletByNumInfo(NumberInfo);
+		let sBullet = oBullet.asc_getSymbol();
+
+		let fCallback = function() {
+			oDoc.SetNumbering(oBullet);
+		};
+
+		if(typeof sBullet === "string" && sBullet.length > 0) {
+			AscFonts.FontPickerByCharacter.checkText(sBullet, this, fCallback);
+		}
+		else {
+			fCallback();
+		}
 	};
 	PDFEditorApi.prototype.Paste = function()
 	{
