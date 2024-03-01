@@ -45,6 +45,8 @@
         this._rect          = [];       // scaled rect
         this._richContents  = [];
 
+        this._isFromScan = false; // флаг, что был прочитан из скана текста 
+
         this._doc                   = undefined;
         this._needRecalc            = true;
         this._wasChanged            = false; // была ли изменена
@@ -55,6 +57,22 @@
     CTextShape.prototype.constructor = CTextShape;
     CTextShape.prototype = Object.create(AscFormat.CShape.prototype);
 
+    CTextShape.prototype.SetFromScan = function(bFromScan) {
+        this._isFromScan = bFromScan;
+
+        this.setTxBox(true);
+
+        // пунктирный бордер
+        this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
+        this.spPr.ln.setW(25.4 / 72.0 * 36000);
+        this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
+
+        // fit to text
+        this.setTextFitType(AscFormat.text_fit_Auto);
+    };
+    CTextShape.prototype.IsFromScan = function() {
+        return this._isFromScan;
+    };
     CTextShape.prototype.SetDocument = function(oDoc) {
         this._doc = oDoc;
     };
@@ -155,6 +173,7 @@
         this.updateTransformMatrix();
         this.recalcGeometry();
         this.recalculateContent();
+        this.checkExtentsByDocContent(true, true);
         this.recalculate();
         this.SetNeedRecalc(false);
     };
@@ -422,6 +441,8 @@
     };
 
     CTextShape.prototype.FitTextBox = function() {
+        return;
+
         let oDocContent     = this.GetDocContent();
         this.recalculateContent();                
 

@@ -1674,14 +1674,21 @@ var CPresentation = CPresentation || function(){};
         return oStickyComm;
     };
     CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
-        let aSpsXmls = this.Viewer.file.nativeFile.scanPage(nPage);
+        if (this.isConvertedToShapes) {
+            return;
+        }
+
+        this.isConvertedToShapes = true;
+
+        let oDrDoc      = this.GetDrawingDocument();
+        let aSpsXmls    = this.Viewer.file.nativeFile.scanPage(nPage);
       
-        let aShapes = [];
+        let aPdfShapes = [];
         let oXmlReader, oSp;
 
         let oParserContext  = new AscCommon.XmlParserContext();
         
-		oParserContext.DrawingDocument = this.GetDrawingDocument();
+		oParserContext.DrawingDocument = oDrDoc;
 
         for (let i = 0; i < aSpsXmls.length; i++) {
             let oPara = new AscWord.Paragraph();
@@ -1691,10 +1698,22 @@ var CPresentation = CPresentation || function(){};
             oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
             oXmlReader.ReadNextSiblingNode(0);
             oRun.fromXml(oXmlReader);
-            oSp = new AscFormat.CShape();
-            // oSp.fromXml(oXmlReader);
-            // aShapes.push(oSp);
+            
+            oRun.GetAllDrawingObjects().forEach(function(paraDrawing) {
+                let oWordShape = paraDrawing.GraphicObj;
+                oWordShape.getXfrm().setOffX(paraDrawing.GetPositionH().Value);
+                oWordShape.getXfrm().setOffY(paraDrawing.GetPositionV().Value);
+                aPdfShapes.push(oWordShape.convertToPdf(oDrDoc));
+            });
         }
+
+        let _t = this;
+        aPdfShapes.forEach(function(sp) {
+            sp.SetFromScan(true);
+            _t.AddTextShape(sp, nPage);
+        });
+
+        this.Viewer.drawingPages[nPage].isOnEditing = true;
     };
 
     CPDFDoc.prototype.AddTextShape = function(oShape, nPage) {
@@ -1711,14 +1730,14 @@ var CPresentation = CPresentation || function(){};
         oShape.SetDocument(this);
         oShape.SetPage(nPage);
 
-        oShape.createTextBody();
-        oShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
-        oShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
-        oShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
+        // oShape.createTextBody();
+        // oShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+        // oShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        // oShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
-        this.CreateNewHistoryPoint();
+        // this.CreateNewHistoryPoint();
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.textShapes.length - 1, [oShape]));
-        this.TurnOffHistory();
+        // this.TurnOffHistory();
 
         oShape.AddToRedraw();
     };
