@@ -609,6 +609,9 @@
         let fontMap     = {};
 		aFonts          = aFonts || [];
 
+        if (!oContent)
+            return aFonts;
+
         let oPara;
         for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
             oPara = oContent.GetElement(nPara);
