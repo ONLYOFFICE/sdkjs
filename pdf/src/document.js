@@ -1689,8 +1689,8 @@ var CPresentation = CPresentation || function(){};
             
 
             oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
-            oPara.fromXml(oXmlReader);
-
+            oXmlReader.ReadNextSiblingNode(0);
+            oRun.fromXml(oXmlReader);
             oSp = new AscFormat.CShape();
             // oSp.fromXml(oXmlReader);
             // aShapes.push(oSp);
