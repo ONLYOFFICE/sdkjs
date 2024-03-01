@@ -1673,6 +1673,30 @@ var CPresentation = CPresentation || function(){};
         
         return oStickyComm;
     };
+    CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
+        let aSpsXmls = this.Viewer.file.nativeFile.scanPage(nPage);
+      
+        let aShapes = [];
+        let oXmlReader, oSp;
+
+        let oParserContext  = new AscCommon.XmlParserContext();
+        
+		oParserContext.DrawingDocument = this.GetDrawingDocument();
+
+        for (let i = 0; i < aSpsXmls.length; i++) {
+            let oPara = new AscWord.Paragraph();
+            let oRun = new ParaRun(oPara);
+            
+
+            oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
+            oPara.fromXml(oXmlReader);
+
+            oSp = new AscFormat.CShape();
+            // oSp.fromXml(oXmlReader);
+            // aShapes.push(oSp);
+        }
+    };
+
     CPDFDoc.prototype.AddTextShape = function(oShape, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
         if (!oPagesInfo.pages[nPage])
