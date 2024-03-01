@@ -13111,6 +13111,9 @@
 		this.isDirty = false;
 		this.isCalc = false;
 
+		this.cm = null;
+		this.vm = null;
+
 		this._hasChanged = true;
 	};
 	Cell.prototype.clearDataKeepXf = function(border) {
