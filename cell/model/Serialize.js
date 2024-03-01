@@ -432,7 +432,10 @@
         Value: 3,
         Formula: 4,
         RefRowCol: 5,
-        ValueText: 6
+        ValueText: 6,
+        ValueCache: 7,
+        CellMetadata: 8,
+        ValueMetadata: 9
     };
     /** @enum */
     var c_oSerFormulaTypes =
@@ -1071,7 +1074,13 @@
 		SheetDataRowCell: 14,
 		SheetDataRowCellRef: 15,
 		SheetDataRowCellType: 16,
-		SheetDataRowCellValue: 17
+		SheetDataRowCellValue: 17,
+		AlternateUrls : 18,
+		AbsoluteUrl : 19,
+		RelativeUrl : 20,
+		ExternalAlternateUrlsDriveId : 21,
+		ExternalAlternateUrlsItemId : 22,
+		ValueMetadata : 23
 	};
     var c_oSer_HeaderFooter = {
         AlignWithMargins: 0,
@@ -4125,6 +4134,11 @@
 			if (null != cell.CellValue) {
 				oThis.memory.WriteByte(c_oSer_ExternalLinkTypes.SheetDataRowCellValue);
 				oThis.memory.WriteString2(cell.CellValue);
+			}
+			if (null != cell.vm) {
+				this.bs.WriteItem(c_oSer_ExternalLinkTypes.ValueMetadata, function () {
+					oThis.memory.WriteULong(cell.vm);
+				});
 			}
 		};
 
@@ -10813,6 +10827,13 @@
 				} else {
                     oCell.setValueNumberInternal(val);
 				}
+            }   else if (c_oSerCellTypes.CellMetadata === type)
+            {
+                oCell.cm = this.stream.GetULong();
+            }
+            else if (c_oSerCellTypes.ValueMetadata === type)
+            {
+                oCell.vm = this.stream.GetULong();
             }
             else
                 res = c_oSerConstants.ReadUnknown;
