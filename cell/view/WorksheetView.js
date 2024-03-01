@@ -26507,7 +26507,7 @@
 									eR.initRows(fP.outStack[i].getRange());
 								}
 							}
-						} else if (initStructure && window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
+						} else if (initStructure && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
 							needCalc = true;
 						}
 					}
@@ -26536,7 +26536,6 @@
 								}
 							}
 						}
-						//window.importRangeLinks = null;
 					}
 				}
 			}

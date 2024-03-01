@@ -1222,15 +1222,15 @@ function (window, undefined) {
 			return new cError(cErrorType.bad_reference);
 		}
 
-		if (window.startBuildImportRangeLinks) {
-			if (!window.importRangeLinks) {
-				window.importRangeLinks = {};
+		if (AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks) {
+			if (!AscCommonExcel.importRangeLinksState.importRangeLinks) {
+				AscCommonExcel.importRangeLinksState.importRangeLinks = {};
 			}
 			let linkName = arg0.toString();
-			if (!window.importRangeLinks[linkName]) {
-				window.importRangeLinks[linkName] = [];
+			if (!AscCommonExcel.importRangeLinksState.importRangeLinks[linkName]) {
+				AscCommonExcel.importRangeLinksState.importRangeLinks[linkName] = [];
 			}
-			window.importRangeLinks[linkName].push(is3DRef);
+			AscCommonExcel.importRangeLinksState.importRangeLinks[linkName].push(is3DRef);
 		}
 
 		let api = window["Asc"]["editor"];

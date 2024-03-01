@@ -154,11 +154,6 @@
 	};
 
 
-	window.importRangeLinks = null;
-	window.startBuildImportRangeLinks = null;
-
-	window.importRangeAsUpdateER = true;
-
 
 	var emptyStyleComponents = {table: [], conditional: []};
 	function getRangeType(oBBox){
@@ -1864,7 +1859,7 @@
 				}
 			});
 
-			window.startBuildImportRangeLinks = false;
+			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
 
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
@@ -1872,24 +1867,24 @@
 			this.changedCell = null;
 			this.changedRange = null;
 
-			if (window.importRangeLinks) {
+			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
 				//need update
 
 				let needUpdateExternalReference = [];
 				let newExternalReferences = [];
-				for (let i in window.importRangeLinks) {
+				for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
 					let newExternalReference = new AscCommonExcel.ExternalReference();
 					//newExternalReference.referenceData = referenceData;
 					newExternalReference.Id = i;
 
-					for (var j = 0; j < window.importRangeLinks[i].length; j++) {
-						let newSheet = window.importRangeLinks[i][j].sheet;
+					for (var j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+						let newSheet = AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet;
 						newExternalReference.addSheetName(newSheet, true);
 						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
 
 						let ws = newExternalReference.worksheets[newSheet];
 
-						newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));
+						newExternalReference.initRows(ws.getRange2(AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].range));
 					}
 
 					newExternalReference.notUpdateId = true;
@@ -1898,7 +1893,7 @@
 					needUpdateExternalReference.push(newExternalReference.getAscLink())
 				}
 
-				window.importRangeLinks = null;
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
 
 				this.wb.addExternalReferences(newExternalReferences);
 
@@ -1913,13 +1908,13 @@
 						t.wb.dependencyFormulas.addToChangedCell(needUpdateCells[i]);
 					}
 					t.wb.sortDependency();
-					window.startBuildImportRangeLinks = null;
+					AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
 
 
 					t.wb.drawWorksheet();
 				});
 			} else {
-				window.startBuildImportRangeLinks = null;
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
 			}
 
 		},
@@ -13412,15 +13407,15 @@
 			}
 
 			if (needCheckImportFuncs) {
-				window.startBuildImportRangeLinks = true;
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				fOld.calculate();
-				window.startBuildImportRangeLinks = null;
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
 
-				if (window.importRangeLinks) {
-					for (i in window.importRangeLinks) {
-						for (let j = 0; j < window.importRangeLinks[i].length; j++) {
-							if (window.importRangeLinks[i][j]) {
-								let ws = this.ws.workbook.getExternalWorksheet(i, window.importRangeLinks[i][j].sheet);
+				if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+					for (i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						for (let j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+							if (AscCommonExcel.importRangeLinksState.importRangeLinks[i][j]) {
+								let ws = this.ws.workbook.getExternalWorksheet(i, AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet);
 								if (ws) {
 									if (!externalLinks) {
 										externalLinks = {};
@@ -13432,7 +13427,7 @@
 						}
 					}
 				}
-				window.importRangeLinks = null;
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
 			}
 		}
 

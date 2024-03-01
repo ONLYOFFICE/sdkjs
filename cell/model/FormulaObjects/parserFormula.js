@@ -72,6 +72,8 @@ function (window, undefined) {
 
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1};
 
+	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
+
 	function getArrayCopy(arr) {
 		var newArray = [];
 		for (var i = 0; i < arr.length; i++) {
@@ -6951,7 +6953,7 @@ function parserFormula( formula, parent, _ws ) {
 						startArrayFunc = true;
 					}
 
-					if (found_operator.name === "IMPORTRANGE" && window.importRangeAsUpdateER) {
+					if (found_operator.name === "IMPORTRANGE") {
 						isFoundImportFunctions = true;
 					}
 
@@ -7124,11 +7126,11 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (isFoundImportFunctions) {
 				//share external links
-				window.startBuildImportRangeLinks = true;
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				this.calculate();
-				window.startBuildImportRangeLinks = null;
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
 
-				this.importFunctionsRangeLinks = window.importRangeLinks;
+				this.importFunctionsRangeLinks = AscCommonExcel.importRangeLinksState.importRangeLinks;
 
 				if (this.importFunctionsRangeLinks) {
 					for (let i in this.importFunctionsRangeLinks) {
@@ -7148,7 +7150,7 @@ function parserFormula( formula, parent, _ws ) {
 						}
 					}
 
-					window.importRangeLinks = null;
+					AscCommonExcel.importRangeLinksState.importRangeLinks = null;
 				}
 			}
 			return this.isParsed = true;
@@ -9104,5 +9106,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+
+	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 
 })(window);
