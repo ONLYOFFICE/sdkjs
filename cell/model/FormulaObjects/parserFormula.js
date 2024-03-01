@@ -7130,12 +7130,8 @@ function parserFormula( formula, parent, _ws ) {
 
 				this.importFunctionsRangeLinks = window.importRangeLinks;
 
-				if (window.importRangeLinks) {
-
-
-					for (let i in window.importRangeLinks) {
-
-
+				if (this.importFunctionsRangeLinks) {
+					for (let i in this.importFunctionsRangeLinks) {
 						let externalLink = this.wb.getExternalLinkIndexByName(i);
 						if (externalLink === null) {
 							externalLink = i;
@@ -7146,43 +7142,10 @@ function parserFormula( formula, parent, _ws ) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
 
-							for (var j = 0; j < window.importRangeLinks[i].length; j++) {
-								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: window.importRangeLinks[i][j].sheet, notUpdateId: true});
+							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
+								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
 							}
 						}
-
-						//!!!newExternalReference.notUpdateId = true;
-
-						/*for (let i in window.importRangeLinks) {
-							let newExternalReference = new AscCommonExcel.ExternalReference();
-							//newExternalReference.referenceData = referenceData;
-							newExternalReference.Id = i;
-
-							for (var j = 0; j < window.importRangeLinks[i].length; j++) {
-								let newSheet = window.importRangeLinks[i][j].sheet;
-								newExternalReference.addSheetName(newSheet, true);
-								newExternalReference.initWorksheetFromSheetDataSet(newSheet);
-
-								let ws = newExternalReference.worksheets[newSheet];
-
-								newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));
-							}
-
-							newExternalReference.notUpdateId = true;
-
-							newExternalReferences.push(newExternalReference);
-							needUpdateExternalReference.push(newExternalReference.getAscLink())
-						}*/
-
-
-						/*let newSheet = window.importRangeLinks[i][j].sheet;
-						newExternalReference.addSheetName(newSheet, true);
-						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
-
-						let ws = newExternalReference.worksheets[newSheet];
-
-						newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));*/
-
 					}
 
 					window.importRangeLinks = null;

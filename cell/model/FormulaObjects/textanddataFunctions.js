@@ -1192,9 +1192,6 @@ function (window, undefined) {
 		//if first argument - link, when - text only inside " "
 		//if second argument - link, when - text only without " "
 
-
-		//window.startBuildImportRangeLinks
-
 		let arg0 = arg[0], arg1 = arg[1];
 
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
@@ -1234,43 +1231,41 @@ function (window, undefined) {
 				window.importRangeLinks[linkName] = [];
 			}
 			window.importRangeLinks[linkName].push(is3DRef);
+		}
 
-			return new cError(cErrorType.bad_reference);
-		} else {
-			let api = window["Asc"]["editor"];
-			let wb = api && api.wbModel;
-			let eR = wb && wb.getExternalLinkByName(arg0.toString());
-			let ret = new cArray();
-			if (eR) {
-				let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
-				if (externalWs) {
-					let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
+		let api = window["Asc"]["editor"];
+		let wb = api && api.wbModel;
+		let eR = wb && wb.getExternalLinkByName(arg0.toString());
+		let ret = new cArray();
+		if (eR) {
+			let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
+			if (externalWs) {
+				let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
-					if (is3DRef.sheet) {
-						let index = eR.getSheetByName(is3DRef.sheet);
-						if (index != null) {
-							let externalSheetDataSet = eR.SheetDataSet[index];
-							for (let i = bbox.r1; i <= bbox.r2; i++) {
-								let row = externalSheetDataSet.getRow(i + 1);
-								if (!row) {
-									continue;
-								}
-								if (!ret.array[i - bbox.r1]) {
-									ret.addRow();
-								}
-								for (let j = bbox.c1; j <= bbox.c2; j++) {
-									let externalCell = row.getCell(j);
-									let cellValue = externalCell.getFormulaValue();
-									ret.addElement(cellValue);
-								}
+				if (is3DRef.sheet) {
+					let index = eR.getSheetByName(is3DRef.sheet);
+					if (index != null) {
+						let externalSheetDataSet = eR.SheetDataSet[index];
+						for (let i = bbox.r1; i <= bbox.r2; i++) {
+							let row = externalSheetDataSet.getRow(i + 1);
+							if (!row) {
+								continue;
+							}
+							if (!ret.array[i - bbox.r1]) {
+								ret.addRow();
+							}
+							for (let j = bbox.c1; j <= bbox.c2; j++) {
+								let externalCell = row.getCell(j);
+								let cellValue = externalCell.getFormulaValue();
+								ret.addElement(cellValue);
 							}
 						}
 					}
-					return ret;
 				}
+				return ret;
 			}
-			return new cError(cErrorType.bad_reference);
 		}
+		return new cError(cErrorType.bad_reference);
 	};
 
 	/**

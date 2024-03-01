@@ -26513,9 +26513,6 @@
 					}
 				}
 				if (needCalc) {
-					/*window.startBuildImportRangeLinks = true;
-					fP.calculate();
-					window.startBuildImportRangeLinks = null;*/
 					let importRangeLinks = fP.importFunctionsRangeLinks;
 					if (importRangeLinks) {
 						for (let i in importRangeLinks) {
