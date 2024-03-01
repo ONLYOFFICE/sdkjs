@@ -231,8 +231,10 @@ StartAddNewShape.prototype =
                 }
                 else {
                     // добавление шейпов
-                    var oBounds     = oTrack.getBounds();
-                    var oTextShape  = oTrack.getShape(true, this.drawingObjects.drawingDocument);
+                    // var oBounds     = oTrack.getBounds();
+                    var oTextShape  = oTrack.getShape(false, this.drawingObjects.drawingDocument);
+
+                    oLogicDocument.AddTextShape(oTextShape, 0);
                 }
             }
         }
@@ -791,50 +793,54 @@ RotateState.prototype =
         {
             var bounds;
             if (Asc.editor.isPdfEditor()) {
-                let oViewer = editor.getDocumentRenderer();
-                let oDoc = oViewer.getPDFDoc();
+                let oViewer = Asc.editor.getDocumentRenderer();
+                let oDoc    = oViewer.getPDFDoc();
+
                 oDoc.SetGlobalHistory();
-                for(i = 0; i < aTracks.length; ++i)
+
+                for (i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
-                    oTrack.trackEnd(true);
 
-                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack) {
-                        let aRect = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
+                    oDoc.CreateNewHistoryPoint();
+                    oTrack.trackEnd(false);
+
+                    // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
+                    if (oTrack.originalObject.IsAnnot()) {
+                        let oAnnot  = oTrack.originalObject;
+                        let aRect   = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
                         
-                        oDoc.CreateNewHistoryPoint();
                         if (oTrack.originalFlipV != oTrack.resizedflipV)
-                            oDoc.History.Add(new CChangesPDFInkFlipV(oTrack.originalObject, oTrack.originalFlipV, oTrack.resizedflipV));
+                            oDoc.History.Add(new CChangesPDFInkFlipV(oAnnot, oTrack.originalFlipV, oTrack.resizedflipV));
                         if (oTrack.originalFlipH != oTrack.resizedflipH)
-                            oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
+                            oDoc.History.Add(new CChangesPDFInkFlipH(oAnnot, oTrack.originalFlipH, oTrack.resizedflipH));
 
-                        // для аннотации линии свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
-                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsLine()) {
+                        if (oAnnot.IsLine()) {
                             
                             let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
 
-                            let nPage = oTrack.originalObject.GetPage();
+                            let nPage = oAnnot.GetPage();
                             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
                             let aLinePoints = [];
-                            let oTranform   = oTrack.originalObject.transform;
+                            let oTranform   = oAnnot.transform;
                             // считаем новые точки linePoints (в оригинальных координатах - в пикселях, без скейлов)
                             aLinePoints.push(oTranform.TransformPointX(aPaths[0].X, 0) * g_dKoef_mm_to_pix / nScaleX)
                             aLinePoints.push(oTranform.TransformPointY(0, aPaths[0].Y) * g_dKoef_mm_to_pix / nScaleY)
                             aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pix / nScaleX)
                             aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pix / nScaleY)
 
-                            oTrack.originalObject.SetLinePoints(aLinePoints);
-                            oTrack.originalObject.SetRect(oTrack.originalObject.GetMinShapeRect());
+                            oAnnot.SetLinePoints(aLinePoints);
+                            oAnnot.SetRect(oAnnot.GetMinShapeRect());
 
                             oDoc.TurnOnHistory();
                         }
-                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsPolygon()) {
+                        else if (oAnnot.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-                            let aVertices   = oTrack.originalObject.GetVertices().slice();
+                            let aVertices   = oAnnot.GetVertices().slice();
                             
                             // если редактируется последняя точка, то надо отредактировать ещё начальную (только у Polygon, в случае если первая совпадает с последней)
                             let nStartPos = (oTrack.gmEditPtIdx + 1) * 2;
@@ -848,20 +854,20 @@ RotateState.prototype =
                                 aVertices.splice(0, 2, pageObject.x, pageObject.y);
                             }
 
-                            let nPage = oTrack.originalObject.GetPage();
+                            let nPage = oAnnot.GetPage();
                             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
                             aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
-                            oTrack.originalObject.SetVertices(aVertices);
+                            oAnnot.SetVertices(aVertices);
 
                             // расширяем рект на ширину линии (или на радиус cloud бордера)
-                            let nLineWidth = oTrack.originalObject.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-                            if (oTrack.originalObject.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
-                                aRect[0] -= oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
-                                aRect[1] -= oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
-                                aRect[2] += oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
-                                aRect[3] += oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
+                            let nLineWidth = oAnnot.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+                            if (oAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+                                aRect[0] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
+                                aRect[1] -= oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
+                                aRect[2] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
+                                aRect[3] += oAnnot.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
                             }
                             else {
                                 aRect[0] -= nLineWidth * nScaleX;
@@ -870,23 +876,23 @@ RotateState.prototype =
                                 aRect[3] += nLineWidth * nScaleY;
                             }
 
-                            oTrack.originalObject.SetRect(aRect);
+                            oAnnot.SetRect(aRect);
                         }
-                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsPolyLine()) {
+                        else if (oAnnot.IsPolyLine()) {
                             // меняем только редактируемую точку в массиве vertices
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-                            let aVertices   = oTrack.originalObject.GetVertices().slice();
+                            let aVertices   = oAnnot.GetVertices().slice();
                             let nStartPos   = oTrack.gmEditPtIdx * 2;
                             
-                            let nPage   = oTrack.originalObject.GetPage();
+                            let nPage   = oAnnot.GetPage();
                             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
                             aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
-                            oTrack.originalObject.SetVertices(aVertices);
+                            oAnnot.SetVertices(aVertices);
 
                             // расширяем рект на ширину линии
-                            let nLineWidth = oTrack.originalObject.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+                            let nLineWidth = oAnnot.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
                             aRect[0] -= nLineWidth * nScaleX;
                             aRect[1] -= nLineWidth * nScaleY;
                             aRect[2] += nLineWidth * nScaleX;
@@ -894,30 +900,20 @@ RotateState.prototype =
 
                             // у polyline могут быть окончания линии, их тоже учитываем
                             let aResultRect = aRect;
-                            if (oTrack.originalObject.IsPolyLine()) {
-                                let aMinShapeRect = oTrack.originalObject.GetMinShapeRect();
+                            if (oAnnot.IsPolyLine()) {
+                                let aMinShapeRect = oAnnot.GetMinShapeRect();
                                 aResultRect = AscPDF.unionRectangles([aRect, aMinShapeRect]);
                             }
 
-                            oTrack.originalObject.SetRect(aResultRect);
+                            oAnnot.SetRect(aResultRect);
                         }
                         else {
-                            oTrack.originalObject.SetRect(aRect);
+                            oAnnot.SetRect(aRect);
                         }
-                        
-                        oDoc.TurnOffHistory();
-                    }
-                    // pdf text shape
-                    else if (oTrack instanceof AscFormat.MoveShapeImageTrack || oTrack instanceof AscFormat.RotateTrackShapeImage) {
-                        oDoc.CreateNewHistoryPoint();
-                        let aRect = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
-                        oTrack.originalObject.SetRect(aRect);
-                        if (oTrack.angle != undefined)
-                            oTrack.originalObject.SetRot(oTrack.angle);
-                        oDoc.TurnOffHistory();
                     }
                     
-                    oTrack.originalObject.AddToRedraw();
+                    oDoc.TurnOffHistory();
+                    oTrack.originalObject.SetNeedRecalc(true);
                 }
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
