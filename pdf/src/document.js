@@ -1673,38 +1673,30 @@ var CPresentation = CPresentation || function(){};
         
         return oStickyComm;
     };
-    CPDFDoc.prototype.AddTextShape = function(oProps) {
-        oProps = {
-            page: 0,
-            rect: [111.19326050420169, 56.761788347205716, 311.1092268907563, 86.08640190249703]
-        }
-        let nPageNum = oProps.page;
-
+    CPDFDoc.prototype.AddTextShape = function(oShape, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
-        if (!oPagesInfo.pages[nPageNum])
-            return null;
+        if (!oPagesInfo.pages[nPage])
+            return;
 
-        let oShape = new AscPDF.CTextShape('', nPageNum, oProps.rect, this);
-        
         this.textShapes.push(oShape);
-        if (oPagesInfo.pages[nPageNum].textShapes == null) {
-            oPagesInfo.pages[nPageNum].textShapes = [];
+        if (oPagesInfo.pages[nPage].textShapes == null) {
+            oPagesInfo.pages[nPage].textShapes = [];
         }
-        oPagesInfo.pages[nPageNum].textShapes.push(oShape);
+        oPagesInfo.pages[nPage].textShapes.push(oShape);
+
+        oShape.SetDocument(this);
+        oShape.SetPage(nPage);
+
+        oShape.createTextBody();
+        oShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+        oShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        oShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
         this.CreateNewHistoryPoint();
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.textShapes.length - 1, [oShape]));
         this.TurnOffHistory();
 
-        if (oProps.apIdx == null) {
-            oShape.SetApIdx(this.GetMaxApIdx() + 1);
-        }
-        else {
-            oShape.SetApIdx(oProps.apIdx);
-        }
-
         oShape.AddToRedraw();
-        return oShape;
     };
     /**
 	 * Обновляет позицию всплывающего окна комментария

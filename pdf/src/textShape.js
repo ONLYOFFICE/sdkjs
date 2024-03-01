@@ -36,38 +36,30 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CTextShape(sName, nPage, aOrigRect, oDoc)
+    function CTextShape()
     {
         AscFormat.CShape.call(this);
                 
-        this._page          = nPage;
+        this._page          = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
         this._rect          = [];       // scaled rect
-        this._origRect      = [];
         this._richContents  = [];
 
-        // internal
-        this._doc                   = oDoc;
+        this._doc                   = undefined;
         this._needRecalc            = true;
         this._wasChanged            = false; // была ли изменена
         this._bDrawFromStream       = false; // нужно ли рисовать из стрима
         this._hasOriginView         = false; // имеет ли внешний вид из файла
-
-        this.Internal_InitRect(aOrigRect);
-        initTextShape(this);
     }
     
     CTextShape.prototype.constructor = CTextShape;
     CTextShape.prototype = Object.create(AscFormat.CShape.prototype);
 
-    CTextShape.prototype.Internal_InitRect = function(aOrigRect) {
-        let nPage = this.GetPage();
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        this._rect = [aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY, aOrigRect[2] * nScaleX, aOrigRect[3] * nScaleY];
-        this._origRect = aOrigRect;
+    CTextShape.prototype.SetDocument = function(oDoc) {
+        this._doc = oDoc;
+    };
+    CTextShape.prototype.SetPage = function(nPage) {
+        this._page = nPage;
     };
     CTextShape.prototype.IsNeedDrawFromStream = function() {
        return false; 
@@ -120,19 +112,12 @@
     CTextShape.prototype.GetRect = function() {
         return this._rect;
     };
-    CTextShape.prototype.GetOrigRect = function() {
-        return this._origRect;
-    };
     
     CTextShape.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
-        let nPage       = this.GetPage();
 
         oDoc.History.Add(new CChangesPDFTxShapeRect(this, this.GetRect(), aRect));
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
         this._rect = aRect;
 
@@ -142,11 +127,6 @@
             w: (aRect[2] - aRect[0]),
             h: (aRect[3] - aRect[1])
         };
-
-        this._origRect[0] = this._rect[0] / nScaleX;
-        this._origRect[1] = this._rect[1] / nScaleY;
-        this._origRect[2] = this._rect[2] / nScaleX;
-        this._origRect[3] = this._rect[3] / nScaleY;
 
         this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
         this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
@@ -171,10 +151,6 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        let aRect = this.GetRect();
-        this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
-        
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.recalcGeometry();
