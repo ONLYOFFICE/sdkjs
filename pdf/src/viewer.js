@@ -2716,15 +2716,20 @@
 					}
 				}
 
-				if (!page.Image && !isStretchPaint)
-				{
-					page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-					if (this.bCachedMarkupAnnnots)
-						this._paintMarkupAnnotsOnPage(i, page.Image.getContext("2d"));
+				if (!page.isOnEditing) {
+					if (!page.Image && !isStretchPaint)
+					{
+						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+						if (this.bCachedMarkupAnnnots)
+							this._paintMarkupAnnotsOnPage(i, page.Image.getContext("2d"));
 
-					// нельзя кэшировать с вотермарком - так как есть поворот
-					//if (this.Api.watermarkDraw)
-					//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+						// нельзя кэшировать с вотермарком - так как есть поворот
+						//if (this.Api.watermarkDraw)
+						//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+					}
+				}
+				else {
+					page.Image = null;
 				}
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
