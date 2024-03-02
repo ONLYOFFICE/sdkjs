@@ -1247,7 +1247,7 @@
 						console.error(err);
 					}
 				}
-				else if (!this.api.isLongAction() && (task.resize || this.api.asc_canPaste()))
+				else if (!this.api.isLongAction() && (task.resize || this.api.canRunBuilderScript()))
 				{
 					this.api._beforeEvalCommand();
 					AscFonts.IsCheckSymbols = true;
@@ -1265,33 +1265,19 @@
 						commandReturnValue = undefined;
 
 					AscFonts.IsCheckSymbols = false;
-
+					
 					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
 					{
+						let _t = this;
 						this.api._afterEvalCommand(function() {
-							window.g_asc_plugins.shiftCommand(commandReturnValue);
+							_t.api.onEndBuilderScript();
+							_t.shiftCommand(commandReturnValue);
 						});
 						return;
 					}
 					else
 					{
-						switch (this.api.getEditorId())
-						{
-							case AscCommon.c_oEditorId.Word:
-							case AscCommon.c_oEditorId.Presentation:
-							{
-								this.api.WordControl.m_oLogicDocument.FinalizeAction(true);
-								break;
-							}
-							case AscCommon.c_oEditorId.Spreadsheet:
-							{
-								// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
-								this.api.asc_endPaste();
-								break;
-							}
-							default:
-								break;
-						}
+						this.api.onEndBuilderScript();
 					}
 				}
 			}

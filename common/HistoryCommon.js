@@ -4501,6 +4501,7 @@
 	window['AscDFH'].historydescription_Presentation_ResetSlideBackground           = 0x01ac;
 	window['AscDFH'].historydescription_Presentation_ApplyBackgroundToAll           = 0x01ad;
 	window['AscDFH'].historydescription_Presentation_ShowMasterShapes               = 0x01ae;
+	window['AscDFH'].historydescription_BuilderScript                               = 0x01af;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -3119,6 +3119,13 @@
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
 	};
+	baseEditorsApi.prototype.canRunBuilderScript = function()
+	{
+		return this.asc_canPaste();
+	};
+	baseEditorsApi.prototype.onEndBuilderScript = function()
+	{
+	};
 
 	// Native
 	baseEditorsApi.prototype['asc_nativeCheckPdfRenderer'] = function (_memory1, _memory2) {
@@ -3846,10 +3853,7 @@
 						oLogicDocument.UnlockPanelStyles(true);
 						oLogicDocument.OnEndLoadScript();
 					}
-
-					oApi.asc_Recalculate(true);
-					oLogicDocument.FinalizeAction();
-
+					
 					if (oApi.SaveAfterMacros)
 					{
 						oApi.asc_Save();
@@ -3906,16 +3910,17 @@
 
 		if (this.DocInfo && !this.DocInfo.asc_getIsEnabledMacroses())
 			return;
-
-    	if (!this.asc_canPaste())
-    		return;
-
+		
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
-
-    	this._beforeEvalCommand();
+		
+		if (!this.canRunBuilderScript())
+			return;
+	
+		this._beforeEvalCommand();
 		this.macros.runAuto();
 		this._afterEvalCommand(undefined);
+		this.onEndBuilderScript();
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
     {
@@ -3924,16 +3929,17 @@
 
 		if (this.DocInfo && !this.DocInfo.asc_getIsEnabledMacroses())
 			return;
-
-    	if (!this.asc_canPaste())
-    		return;
-
+		
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
-
-    	this._beforeEvalCommand();
+		
+		if (!this.canRunBuilderScript())
+			return;
+		
+		this._beforeEvalCommand();
 		this.macros.run(sGuid);
 		this._afterEvalCommand(undefined);
+		this.onEndBuilderScript();
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
     {

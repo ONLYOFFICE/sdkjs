@@ -8314,6 +8314,16 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
 	};
+	asc_docs_api.prototype.canRunBuilderScript = function()
+	{
+		return this.asc_canPaste();
+	};
+	asc_docs_api.prototype.onEndBuilderScript = function()
+	{
+		this.asc_Recalculate();
+		let logicDocument = this.getLogicDocument();
+		logicDocument.FinalizeAction();
+	};
 
 	asc_docs_api.prototype.asc_SetAutomaticBulletedLists = function(isAuto)
 	{

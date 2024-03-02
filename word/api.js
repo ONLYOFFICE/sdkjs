@@ -9562,6 +9562,23 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
 	};
+	asc_docs_api.prototype.canRunBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
+		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
+		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		return true;
+	};
+	asc_docs_api.prototype.onEndBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		logicDocument.Recalculate();
+		logicDocument.FinalizeAction();
+	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями
 	//----------------------------------------------------------------------------------------------------------------------
