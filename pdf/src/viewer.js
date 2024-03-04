@@ -1874,14 +1874,14 @@
 			
 			if (page.textShapes)
 			{
-				if (oDoc.activeTextShape && (oDoc.activeTextShape.hitInInnerArea(X, Y) || oDoc.activeTextShape.hitInBoundingRect(X, Y) || oDoc.activeTextShape.hitToHandles(X, Y) !== -1)) {
+				if (oDoc.activeTextShape && (oDoc.activeTextShape.checkHitToBounds(X, Y) || oDoc.activeTextShape.hitInBoundingRect(X, Y) || oDoc.activeTextShape.hitToHandles(X, Y) !== -1)) {
 					return oDoc.activeTextShape;
 				}
 				for (var i = page.textShapes.length -1; i >= 0; i--)
 				{
 					let oTextShape = page.textShapes[i];
 
-					if (oTextShape.hitInInnerArea(X, Y) || oTextShape.hitInBoundingRect(X, Y) || oTextShape.hitToHandles(X, Y) != -1) {
+					if (oTextShape.checkHitToBounds(X, Y) || oTextShape.hitInBoundingRect(X, Y) || oTextShape.hitToHandles(X, Y) != -1) {
 						return oTextShape;
 					}
 				}
