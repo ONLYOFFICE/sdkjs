@@ -2700,6 +2700,7 @@ CInlineLevelSdt.prototype.IsShowingPlcHdr = function()
 };
 CInlineLevelSdt.prototype.GetLogicDocument = function()
 {
+	let paragraph = this.GetParagraph();
 	let logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
 	return logicDocument ? logicDocument : editor.WordControl.m_oLogicDocument;
 };
