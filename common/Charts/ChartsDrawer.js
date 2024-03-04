@@ -1720,6 +1720,46 @@ CChartsDrawer.prototype =
 			}
 		};
 
+		let calcErrValues = function (_seria, _l, _col) {
+			if (_seria.errBars) {
+				var oErrVal = t.errBars.calculateErrVal(chart, _l, _col);
+				if (oErrVal) {
+					var pointVal;
+					if (null !== oErrVal.startVal) {
+						pointVal = oErrVal.startVal;
+					} else {
+						pointVal = oErrVal.val;
+					}
+
+					var plusErrVal = oErrVal.plusErrVal;
+					var minusErrVal = oErrVal.minusErrVal
+					switch (_seria.errBars.errBarType) {
+						case AscFormat.st_errbartypeBOTH: {
+							if (maxErr === null || maxErr < pointVal + plusErrVal) {
+								maxErr = pointVal + plusErrVal;
+							}
+							if (minErr === null || minErr > pointVal - minusErrVal) {
+								minErr = pointVal - minusErrVal;
+							}
+							break;
+						}
+						case AscFormat.st_errbartypePLUS: {
+							if (maxErr === null || maxErr < pointVal + plusErrVal) {
+								maxErr = pointVal + plusErrVal;
+							}
+							break;
+						}
+						case AscFormat.st_errbartypeMINUS: {
+							if (minErr === null || minErr > pointVal - minusErrVal) {
+								minErr = pointVal - minusErrVal;
+							}
+							break;
+						}
+					}
+				}
+			}
+		};
+
 		var generateArrValues = function () {
 
 			var seria, numCache, pts;
@@ -1756,43 +1796,7 @@ CChartsDrawer.prototype =
 							isEn = true;
 						}
 
-						if (seria.errBars) {
-							var oErrVal = t.errBars.calculateErrVal(chart, l, col);
-							if (oErrVal) {
-								var pointVal;
-								if (null !== oErrVal.startVal) {
-									pointVal = oErrVal.startVal;
-								} else {
-									pointVal = oErrVal.val;
-								}
-
-								var plusErrVal = oErrVal.plusErrVal;
-								var minusErrVal = oErrVal.minusErrVal
-								switch (seria.errBars.errBarType) {
-									case AscFormat.st_errbartypeBOTH: {
-										if (maxErr === null || maxErr < pointVal + plusErrVal) {
-											maxErr = pointVal + plusErrVal;
-										}
-										if (minErr === null || minErr > pointVal - minusErrVal) {
-											minErr = pointVal - minusErrVal;
-										}
-										break;
-									}
-									case AscFormat.st_errbartypePLUS: {
-										if (maxErr === null || maxErr < pointVal + plusErrVal) {
-											maxErr = pointVal + plusErrVal;
-										}
-										break;
-									}
-									case AscFormat.st_errbartypeMINUS: {
-										if (minErr === null || minErr > pointVal - minusErrVal) {
-											minErr = pointVal - minusErrVal;
-										}
-										break;
-									}
-								}
-							}
-						}
+						calcErrValues(seria, l, col);
 
 						if (!isNaN(value) && value > max) {
 							max = value;
@@ -1847,6 +1851,7 @@ CChartsDrawer.prototype =
 
 				for (var j = 0; j < yNumCache.ptCount; ++j) {
 					var val = t._getScatterPointVal(series[l], j);
+					calcErrValues(series[l], l, j);
 					if(val) {
 						addValues(val.x, val.y);
 						newArr[l][j] = [val.x, val.y];
