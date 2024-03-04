@@ -1716,17 +1716,21 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			}
 		}
 	};
+	/**
+	 * Проверяем лок для последних нескольких точек
+	 * @param pointCount
+	 */
 	CHistory.prototype.checkLock = function(pointCount)
 	{
-		if (!pointCount)
+		if (!pointCount || pointCount > this.Index || -1 === this.Index)
 			return;
 		
 		for (let pointIndex = 0; pointIndex < pointCount; ++pointIndex)
 		{
-			let point = this.Points[pointIndex].Items;
+			let point = this.Points[this.Index - pointIndex];
 			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
 			{
-				point.Items[changeIndex].CheckLock();
+				point.Items[changeIndex].Data.CheckLock();
 			}
 		}
 	};

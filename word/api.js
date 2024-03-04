@@ -9577,6 +9577,7 @@ background-repeat: no-repeat;\
 	{
 		let logicDocument = this.getLogicDocument();
 		logicDocument.Recalculate();
+		logicDocument.CheckActionLock();
 		logicDocument.FinalizeAction();
 	};
 	//----------------------------------------------------------------------------------------------------------------------
