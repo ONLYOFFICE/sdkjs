@@ -217,7 +217,6 @@
 		this.isMouseMoveBetweenDownUp = false;
 		this.mouseMoveEpsilon = 5;
 		this.mouseDownCoords = { X : 0, Y : 0 };
-		this.mouseDownLinkObject = null;
 
 		this.isFocusOnThumbnails = false;
 		this.isDocumentContentReady = false;
@@ -1948,14 +1947,14 @@
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
 
 			oThis.isMouseMoveBetweenDownUp = false;
-			oThis.getPDFDoc().OnMouseDown(e);
+			oThis.getPDFDoc().OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 		};
 
 		this.onMouseDownEpsilon = function()
 		{
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.mouseDownLinkObject || oThis.mouseDownField)
+				if (oThis.getPDFDoc().mouseDownLinkObject)
 				{
 					// если нажали на ссылке - то не зажимаем лапу
 					oThis.setCursorType("pointer");
@@ -2035,12 +2034,12 @@
 				}
 			}
 
-			if (oThis.mouseDownLinkObject)
+			if (oThis.getPDFDoc().mouseDownLinkObject)
 			{
 				// значит не уходили с ссылки
 				// проверим - остались ли на ней
 				var mouseUpLinkObject = oThis.getPageLinkByMouse();
-				if (mouseUpLinkObject === oThis.mouseDownLinkObject)
+				if (mouseUpLinkObject === oThis.getPDFDoc().mouseDownLinkObject)
 				{
 					oThis.navigateToLink(mouseUpLinkObject);
 				}
@@ -2053,7 +2052,7 @@
 			if (oThis.MouseHandObject)
 				oThis.MouseHandObject.Active = false;
 			oThis.isMouseMoveBetweenDownUp = false;
-			oThis.mouseDownLinkObject = null;
+			oThis.getPDFDoc().mouseDownLinkObject = null;
 
 			if (-1 !== oThis.timerScrollSelect)
 			{
@@ -2124,13 +2123,13 @@
 			}
 			else
 			{
-				if (oThis.mouseDownLinkObject)
+				if (oThis.getPDFDoc().mouseDownLinkObject)
 				{
 					// селект начат на ссылке. смотрим, нужно ли начать реально селект
 					if (oThis.isMouseMoveBetweenDownUp)
 					{
 						// вышли за eps
-						oThis.mouseDownLinkObject = null;
+						oThis.getPDFDoc().mouseDownLinkObject = null;
 						oThis.setCursorType("default");
 					}
 					else

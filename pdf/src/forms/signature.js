@@ -74,7 +74,7 @@
         this._hovered = bValue;
     };
 
-    CSignatureField.prototype.onMouseDown = function() {
+    CSignatureField.prototype.onMouseDown = function(x, y, e) {
     };
     CSignatureField.prototype.onMouseUp = function() {
     };

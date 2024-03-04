@@ -661,7 +661,7 @@
 
         this.draw(oGraphicsWord);
     };
-    CAnnotationFreeText.prototype.onMouseDown = function(e) {
+    CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
         let oViewer             = editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oViewer.DrawingObjects;
@@ -683,7 +683,7 @@
             }
         }
         else {
-            oDoc.SelectionSetStart(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+            oDoc.SelectionSetStart(x, y, e);
         }
     };
     CAnnotationFreeText.prototype.SelectionSetStart = function(X, Y, e) {

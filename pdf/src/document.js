@@ -701,129 +701,28 @@ var CPresentation = CPresentation || function(){};
             oForm.AddToRedraw();
         }
     };
-    CPDFDoc.prototype.OnExitFieldByClick = function() {
-        let oDrDoc          = this.GetDrawingDocument();
-        let oActiveForm     = this.activeForm;
+    CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
+        Asc.editor.sendEvent('asc_onHidePdfFormsActions');
 
-        oDrDoc.TargetEnd();
-        oActiveForm.SetDrawHighlight(true);
-        oActiveForm.UpdateScroll && oActiveForm.UpdateScroll(false); // убираем скрол
-        
-        // если чекбокс то выходим сразу
-        if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oActiveForm.GetType())) {
-            oActiveForm.SetPressed(false);
-            oActiveForm.SetHovered(false);
-            oActiveForm.AddToRedraw();
-            oActiveForm.Blur();
-            return;
-        }
-        
-        if (oActiveForm.IsNeedCommit()) {
-            this.CommitField(oActiveForm);
-        }
-        else {
-            if (oActiveForm.IsChanged() == false) {
-                oActiveForm.SetDrawFromStream(true);
-            }
-
-            if (oActiveForm.IsNeedRevertShiftView()) {
-                oActiveForm.RevertContentViewToOriginal();
-            }
-        }
-        
-        oActiveForm.AddToRedraw();
-        oActiveForm.Blur();
-        
-        this.Viewer.onUpdateOverlay();
-    };
-    CPDFDoc.prototype.OnMouseDownField = function(oField, event) {
-        if (oField.GetType() == AscPDF.FIELD_TYPES.signature)
-            return;
-        
-        let oViewer = editor.getDocumentRenderer();
-		
-		let _t = this;
-		if (!this.checkFieldFont(oField, function(){_t.OnMouseDownField(oField, event)}))
-			return;
-		
-        if ((oField.IsNeedDrawFromStream() || oField.IsNeedRecalc()) && oField.GetType() != AscPDF.FIELD_TYPES.button) {
-		    oField.Recalculate();
-            oField.SetNeedRecalc(true);
-        }
-
-        oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
-
-        // нажали мышь - запомнили координаты и находимся ли на ссылке
-        // при выходе за epsilon на mouseMove - сэмулируем нажатие
-        // так что тут только курсор
-        var cursorType;
-        if (this.activeForm)
-        {
-            switch (this.activeForm.GetType())
-            {
-                case AscPDF.FIELD_TYPES.text:
-                    cursorType = "text";
-                    break;
-                case AscPDF.FIELD_TYPES.combobox:
-                    cursorType = "text";
-                    break;
-                default:
-                    cursorType = "pointer";
-                    break;
-            }
-        }
-
-        oViewer.setCursorType(cursorType);
-    };
-    CPDFDoc.prototype.OnMouseDown = function(e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = this.Viewer;
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let IsOnDrawer      = this.Api.isDrawInkMode();
+        let IsOnEraser      = this.Api.isEraseInkMode();
+        let IsOnAddAddShape = this.Api.isStartAddShape;
+
+        let oMouseDownLink              = oViewer.getPageLinkByMouse();
+        let oMouseDownField             = oViewer.getPageFieldByMouse();
+        let oMouseDownAnnot             = oViewer.getPageAnnotByMouse();
+        let oMouseDownTextShape         = oViewer.getPageTextShapeByMouse();
+
+        // координаты клика на странице в MM
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
-
-        // если режим редактора текста
-        if (this.IsTextEditMode()) {
-            
-            if (this.Api.isStartAddShape) {
-                oDrawingObjects.startAddShape(this.Api.addShapePreset);
-                oDrawingObjects.OnMouseDown(e, X, Y, 0);
-            }
-            else {
-                let oMouseDownTextShape = oViewer.getPageTextShapeByMouse();
-                if (oMouseDownTextShape != this.activeTextShape) {
-                    this.BlurObject(this.activeTextShape);
-                }
-
-                if (oMouseDownTextShape) {
-                    this.activeTextShape = oMouseDownTextShape;
-                    this.activeTextShape.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-
-                    if (this.activeTextShape.IsInTextBox() == false) {
-                        oDrDoc.TargetEnd();
-                    }
-
-                    oDrawingObjects.OnMouseDown(e, X, Y, oMouseDownTextShape.selectStartPage);
-                    oViewer.onUpdateOverlay();
-                }
-
-                oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-                return;
-            }
-        }
-
-        // тут далее для режима просмотра/комментирования/заполнения форм
-        let IsOnDrawer      = oViewer.Api.isDrawInkMode();
-        let IsOnEraser      = oViewer.Api.isEraseInkMode();
-
-        editor.sendEvent('asc_onHidePdfFormsActions');
-        oViewer.mouseDownLinkObject = oViewer.getPageLinkByMouse();
-        let oMouseDownField         = oViewer.getPageFieldByMouse();
-        let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
-
-        // ластик
+        
+        // если ластик
         if (IsOnEraser) {
             if (oMouseDownAnnot && oMouseDownAnnot.IsInk()) {
                 this.EraseInk(oMouseDownAnnot);
@@ -831,60 +730,56 @@ var CPresentation = CPresentation || function(){};
 
             return;
         }
-
-        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
-        
-        if (IsOnDrawer == false && false == IsOnEraser) {
-            // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
-            if (oCursorInfo.cursorType && oCursorInfo.cursorType.indexOf("resize") != -1) {
-                if (oMouseDownField && (this.mouseDownAnnot != oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))) {
-                    this.mouseDownField = oMouseDownField;
-                    this.mouseDownAnnot = null;
-                }
-                else if (oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(oMouseDownAnnot)) {
-                    this.mouseDownAnnot = oMouseDownAnnot;
-                    this.mouseDownField = null;
-                }
-            }
-            else {
-                if (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && oMouseDownAnnot != this.mouseDownAnnot) {
-                    this.mouseDownAnnot.Blur();
-                }
-                
-                if (oMouseDownField) {
-                    this.mouseDownField = oMouseDownField;
-                    this.mouseDownAnnot = null;
-                }
-                else if (oMouseDownAnnot) {
-                    this.mouseDownAnnot = oMouseDownAnnot;
-                    this.mouseDownField = null;
-                }
-                else {
-                    this.mouseDownAnnot = null;
-                    this.mouseDownField = null;
-                }
-            }
+        // если добавление шейпа
+        else if (IsOnAddAddShape) {
+            oDrawingObjects.startAddShape(this.Api.addShapePreset);
+            oDrawingObjects.OnMouseDown(e, X, Y, 0);
+            return;
         }
-
-        if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
+        // если рисование
+        else if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
             this.mouseDownAnnot = null;
             this.mouseDownField = null
             oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
             return;
         }
         
-        // если попали в другую форму или никуда, то выход из текущей формы
-        if (this.activeForm && this.mouseDownField != this.activeForm) {
-            this.OnExitFieldByClick();
+        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        // если курсор меняется на handles, то клик по нему может выйти за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
+        if (oCursorInfo.cursorType && oCursorInfo.cursorType.indexOf("resize") != -1) {
+            if (oMouseDownField && (this.mouseDownAnnot != oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))) {
+                this.SetMouseDownObject(oMouseDownField);
+            }
+            else if (oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(oMouseDownAnnot)) {
+                this.SetMouseDownObject(oMouseDownAnnot);
+            }
+        }
+        else {
+            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownTextShape || oMouseDownLink);
+        }
+
+        let oMouseDownObject = this.GetMouseDownObject();
+
+        if (oMouseDownObject) {
+
+            // если форма, то проверяем шрифт перед кликом в неё
+            if (oMouseDownObject.IsForm() && false == [AscPDF.FIELD_TYPES.signature, AscPDF.FIELD_TYPES.checkbox , AscPDF.FIELD_TYPES.radiobutton].includes(oMouseDownObject.GetType())) {
+                let _t = this;
+                if (!this.checkFieldFont(oMouseDownObject, function(){_t.OnMouseDown(x, y, e)})) {
+                    return;
+                }
+
+                if ((oMouseDownObject.IsNeedDrawFromStream() || oMouseDownObject.IsNeedRecalc()) && oMouseDownObject.GetType() != AscPDF.FIELD_TYPES.button) {
+                    oMouseDownObject.Recalculate();
+                    oMouseDownObject.SetNeedRecalc(true);
+                }
+            }
+
+            oMouseDownObject.onMouseDown(x, y, e);
         }
         
-        if (this.mouseDownField)
-            this.OnMouseDownField(this.mouseDownField, e); 
-        else if (this.mouseDownAnnot)
-            this.mouseDownAnnot.onMouseDown(e);
 
-        if (!oViewer.MouseHandObject && (!oViewer.mouseDownLinkObject))
-        {
+        if (!oViewer.MouseHandObject && !this.mouseDownLinkObject) {
             oViewer.isMouseMoveBetweenDownUp = true;
             oViewer.onMouseDownEpsilon();
         }
@@ -897,21 +792,60 @@ var CPresentation = CPresentation || function(){};
             oDrawingObjects.resetSelection();
         }
     };
-    CPDFDoc.prototype.BlurObject = function(oObject) {
-        if (!oObject)
+    CPDFDoc.prototype.BlurActiveObject = function() {
+        let oActiveObj = this.GetActiveObject();
+
+        if (!oActiveObj)
             return;
         
         let oDrDoc          = this.GetDrawingDocument();
         let oDrawingObjects = this.Viewer.DrawingObjects;
 
         let oContent;
-        if (oObject.IsTextShape()) {
+        if (oActiveObj.IsTextShape()) {
+            oContent = oActiveObj.GetDocContent();
+
             oDrawingObjects.resetSelection();
-            oContent = oObject.GetDocContent();
-            oObject.SetInTextBox(false);
+            oActiveObj.SetInTextBox(false);
             this.activeTextShape = null;
         }
+        else if (oActiveObj.IsForm()) {
+            oContent = oActiveObj.GetDocContent();
 
+            oActiveObj.SetDrawHighlight(true);
+            oActiveObj.UpdateScroll && oActiveObj.UpdateScroll(false); // убираем скрол
+            
+            // если чекбокс то выходим сразу
+            if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.button].includes(oActiveObj.GetType())) {
+                oActiveObj.SetPressed(false);
+                oActiveObj.SetHovered(false);
+                return;
+            }
+            else {
+                if (oActiveObj.IsNeedCommit()) {
+                    this.CommitField(oActiveObj);
+                }
+                else {
+                    if (oActiveObj.IsChanged() == false) {
+                        oActiveObj.SetDrawFromStream(true);
+                    }
+    
+                    if (oActiveObj.IsNeedRevertShiftView()) {
+                        oActiveObj.RevertContentViewToOriginal();
+                    }
+                }
+            }
+            
+            oActiveObj.AddToRedraw();
+            oActiveObj.Blur();
+        }
+        else if (oActiveObj.IsAnnot()) {
+            if (oActiveObj.IsFreeText()) {
+                oActiveObj.Blur();
+            }
+
+            this.mouseDownAnnot = null;
+        }
 
         if (oContent) {
             oDrDoc.TargetEnd();
@@ -923,11 +857,62 @@ var CPresentation = CPresentation || function(){};
         this.SetGlobalHistory();
         this.Viewer.onUpdateOverlay();
     };
+    CPDFDoc.prototype.SetMouseDownObject = function(oObject) {
+        if (!oObject) {
+            this.mouseDownField         = null;
+            this.mouseDownAnnot         = null;
+            this.activeTextShape        = null;
+            this.mouseDownLinkObject    = null;
+
+            this.BlurActiveObject();
+            return;
+        }
+
+        if (oObject.IsForm()) {
+            // если попали в другую форму, то выход из текущей
+            if (this.mouseDownAnnot != this.activeForm) {
+                this.BlurActiveObject();
+            }
+
+            this.mouseDownField         = oObject;
+            this.mouseDownAnnot         = null;
+            this.activeTextShape        = null;
+            this.mouseDownLinkObject    = null;
+        }
+        else if (oObject.IsAnnot()) {
+            if (oObject != this.mouseDownAnnot) {
+                this.BlurActiveObject();
+            }
+
+            this.mouseDownField         = null;
+            this.mouseDownAnnot         = oObject;
+            this.activeTextShape        = null;
+            this.mouseDownLinkObject    = null;
+        }
+        else if (oObject.IsTextShape()) {
+            if (oObject != this.activeTextShape) {
+                this.BlurActiveObject();
+            }
+
+            this.mouseDownField         = null;
+            this.mouseDownAnnot         = null;
+            this.activeTextShape        = oObject;
+            this.mouseDownLinkObject    = null;
+        }
+        // значит Link object
+        else {
+            this.mouseDownField         = null;
+            this.mouseDownAnnot         = null;
+            this.activeTextShape        = null;
+            this.mouseDownLinkObject    = oObject;
+        }
+    };
+    
     CPDFDoc.prototype.SetTextEditMode = function(bEdit) {
         this.editMode.text = bEdit;
         this.editMode.forms = false;
 
-        this.BlurObject(this.GetActiveObject());
+        this.BlurActiveObject();
     };
     CPDFDoc.prototype.IsTextEditMode = function() {
         return this.editMode.text;
@@ -936,7 +921,7 @@ var CPresentation = CPresentation || function(){};
         this.editMode.text = false;
         this.editMode.forms = bEdit;
 
-        this.BlurObject(this.GetActiveObject());
+        this.BlurActiveObject();
     };
     CPDFDoc.prototype.IsFormsEditMode = function() {
         return this.editMode.forms;
@@ -1028,7 +1013,7 @@ var CPresentation = CPresentation || function(){};
 
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
-            else if (oViewer.mouseDownLinkObject)
+            else if (this.mouseDownLinkObject)
             {
                 // не меняем курсор с "ссылочного", если зажимали на ссылке
                 oViewer.setCursorType("pointer");
@@ -1172,7 +1157,8 @@ var CPresentation = CPresentation || function(){};
             oViewer.isMouseMoveBetweenDownUp = false;
             if (oViewer.MouseHandObject)
                 oViewer.MouseHandObject.Active = false;
-            oViewer.mouseDownLinkObject = null;
+
+            this.mouseDownLinkObject = null;
         }
 
         oDrawingObjects.OnMouseUp(e, X, Y, pageObject.index);
@@ -1320,9 +1306,20 @@ var CPresentation = CPresentation || function(){};
         }
     };
     
+    /**
+	 * Получает активный объект
+	 */
     CPDFDoc.prototype.GetActiveObject = function() {
         return this.activeForm || this.mouseDownAnnot || this.activeTextShape;
     };
+    /**
+	 * Разница от предыдущего метода в том, что для полей будет полочено поле, в которое был клик, а не активное
+     * так как после клика в поле, оно может перестать быть активный после выполнения каких либо actions
+	 */
+    CPDFDoc.prototype.GetMouseDownObject = function() {
+        return this.mouseDownField || this.mouseDownAnnot || this.activeTextShape;
+    };
+
     CPDFDoc.prototype.SetEvent = function(oEventPr) {
         if (oEventPr["target"] != null && oEventPr["target"] != this.event["target"])
             this.event["target"] = oEventPr["target"];

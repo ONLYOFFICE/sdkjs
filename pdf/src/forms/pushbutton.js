@@ -1205,7 +1205,7 @@
         this._hovered = bValue;
     };
 
-    CPushButtonField.prototype.onMouseDown = function() {
+    CPushButtonField.prototype.onMouseDown = function(x, y, e) {
         let oDoc = this.GetDocument();
         this.DrawPressed();
 
