@@ -219,20 +219,18 @@
 
         return oPolygon;
     };
-    CAnnotationPolygon.prototype.onMouseDown = function(e) {
+    CAnnotationPolygon.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolygon.prototype.GetGeometryEdit = function() {

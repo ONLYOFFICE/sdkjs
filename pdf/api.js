@@ -459,8 +459,8 @@
 		this.curMarkerType	= nType;
 		let oDoc			= this.getPDFDoc();
 		
-		if (value == true && oDoc.activeForm)
-			oDoc.OnExitFieldByClick();
+		if (value == true)
+			oDoc.BlurActiveObject();
 
 		if (this.isMarkerFormat) {
 			let aSelQuads = this.getDocumentRenderer().file.getSelectionQuads();
@@ -974,7 +974,10 @@
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 		oDoc.currInkInDrawingProcess = null;
 
-		if (false == this.isInkDrawerOn()) {
+		if (this.isInkDrawerOn()) {
+			this.getPDFDoc().BlurActiveObject();
+		}
+		else {
 			if (oViewer.MouseHandObject) {
 				oViewer.setCursorType("pointer");
 			}

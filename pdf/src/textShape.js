@@ -197,10 +197,11 @@
     };
     CTextShape.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
+        let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
         let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
@@ -212,6 +213,8 @@
             oDoc.SelectionSetStart(x, y, e);
             oDoc.SetLocalHistory();
         }
+
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
     CTextShape.prototype.AddNewParagraph = function() {
         this.GetDocContent().AddNewParagraph();
@@ -222,7 +225,9 @@
         this.selectStartPage = this.GetPage();
 
         let oContent = this.GetDocContent();
-        
+        if (!oContent)
+            return;
+
         let oTransform  = this.invertTransformText;
         let xContent    = oTransform.TransformPointX(X, 0);
         let yContent    = oTransform.TransformPointY(0, Y);
@@ -233,7 +238,9 @@
     
     CTextShape.prototype.SelectionSetEnd = function(X, Y, e) {
         let oContent = this.GetDocContent();
-        
+        if (!oContent)
+            return;
+
         let oTransform  = this.invertTransformText;
         let xContent    = oTransform.TransformPointX(X, 0);
         let yContent    = oTransform.TransformPointY(0, Y);
@@ -241,22 +248,34 @@
         oContent.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CTextShape.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent()
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
         oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
     CTextShape.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent()
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
         oContent.MoveCursorRight(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
     CTextShape.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent()
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
         oContent.MoveCursorDown(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
     CTextShape.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent()
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
         oContent.MoveCursorUp(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
