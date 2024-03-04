@@ -1858,7 +1858,7 @@
 			}
 			return null;
 		};
-		this.getPageTextShapeByMouse = function(bGetHidden)
+		this.getPageTextShapeByMouse = function()
 		{
 			let oDoc	= this.getPDFDoc();
 			let oDrDoc	= oDoc.GetDrawingDocument();
@@ -1870,23 +1870,7 @@
 			if (!pageObject)
 				return null;
 
-			var page = this.pagesInfo.pages[pageObject.index];
-			
-			if (page.textShapes)
-			{
-				if (oDoc.activeTextShape && (oDoc.activeTextShape.checkHitToBounds(X, Y) || oDoc.activeTextShape.hitInBoundingRect(X, Y) || oDoc.activeTextShape.hitToHandles(X, Y) !== -1)) {
-					return oDoc.activeTextShape;
-				}
-				for (var i = page.textShapes.length -1; i >= 0; i--)
-				{
-					let oTextShape = page.textShapes[i];
-
-					if (oTextShape.checkHitToBounds(X, Y) || oTextShape.hitInBoundingRect(X, Y) || oTextShape.hitToHandles(X, Y) != -1) {
-						return oTextShape;
-					}
-				}
-			}
-			return null;
+			return this.getPDFDoc().GetShapeById(this.DrawingObjects.getGraphicInfoUnderCursor(pageObject.index, X, Y).objectId);
 		};
 
 		this.onMouseDown = function(e)
