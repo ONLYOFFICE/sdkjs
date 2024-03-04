@@ -603,7 +603,9 @@ CopyProcessor.prototype =
 		var closeBookmarks = function (_level) {
 			var tempTarget = bookmarkPrviousTargetMap[_level];
 			if (tempTarget) {
-				tempTarget.addChild(oTarget);
+				if (oTarget && !oTarget.isEmptyChild()) {
+					tempTarget.addChild(oTarget);
+				}
 				oTarget = tempTarget;
 			}
 		};
