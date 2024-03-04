@@ -327,18 +327,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.IsOpenFormsInProgress = false;
         });
     };
-    CPDFDoc.prototype.GetFieldBySourceIdx = function(nIdx) {
-        for (let i = 0; i < this.widgets.length; i++) {
-            if (this.widgets[i].GetApIdx() == nIdx) {
-                return this.widgets[i];
-            }
-        }
-        for (let i = 0; i < this.widgetsParents.length; i++) {
-            if (this.widgetsParents[i].GetApIdx() == nIdx) {
-                return this.widgetsParents[i];
-            }
-        }
-    };
+    
     ////////////////////////////////////
 
 
@@ -2040,9 +2029,27 @@ var CPresentation = CPresentation || function(){};
         editor.sync_HideComment();
         this.showedCommentId = undefined;
     };
+
+    CPDFDoc.prototype.GetFieldBySourceIdx = function(nIdx) {
+        for (let i = 0; i < this.widgets.length; i++) {
+            if (this.widgets[i].GetApIdx() == nIdx) {
+                return this.widgets[i];
+            }
+        }
+        for (let i = 0; i < this.widgetsParents.length; i++) {
+            if (this.widgetsParents[i].GetApIdx() == nIdx) {
+                return this.widgetsParents[i];
+            }
+        }
+    };
     CPDFDoc.prototype.GetAnnotById = function(sId) {
         return this.annots.find(function(annot) {
             return annot.GetId() == sId;
+        });
+    };
+    CPDFDoc.prototype.GetShapeById = function(sId) {
+        return this.textShapes.find(function(textShapes) {
+            return textShapes.GetId() == sId;
         });
     };
     
