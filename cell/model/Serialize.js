@@ -13618,7 +13618,7 @@
     prot['pageBreakPreview'] = prot.pageBreakPreview;
     prot['pageLayout'] = prot.pageLayout;
 
-    window["Asc"].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
+    window['Asc']['c_oSerUserProtectedRangeType'] = window['Asc'].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
     prot = c_oSerUserProtectedRangeType;
     prot['notView'] = prot.notView;
     prot['view'] = prot.view;
