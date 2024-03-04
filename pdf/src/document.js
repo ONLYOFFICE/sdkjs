@@ -938,10 +938,6 @@ var CPresentation = CPresentation || function(){};
         this.editMode.text = bEdit;
         this.editMode.forms = false;
 
-        this.textShapes.forEach(function(shape) {
-            shape.ShowBorder(bEdit);
-        });
-
         this.BlurObject(this.GetActiveObject());
     };
     CPDFDoc.prototype.IsTextEditMode = function() {
@@ -950,10 +946,6 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetFormsEditMode = function(bEdit) {
         this.editMode.text = false;
         this.editMode.forms = bEdit;
-
-        this.textShapes.forEach(function(shape) {
-            shape.ShowBorder(false);
-        });
 
         this.BlurObject(this.GetActiveObject());
     };
