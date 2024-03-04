@@ -60,6 +60,10 @@
     CTextShape.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
 
+        if (this.GetDocContent() == null) {
+            this.createTextBody();
+        }
+
         this.setTxBox(true);
 
         // пунктирный бордер
@@ -68,7 +72,9 @@
         this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
 
         // fit to text
-        this.setTextFitType(AscFormat.text_fit_Auto);
+        let oBodyPr             = this.txBody.bodyPr;
+        oBodyPr.textFit         = new AscFormat.CTextFit();
+        oBodyPr.textFit.type    = AscFormat.text_fit_Auto;
     };
     CTextShape.prototype.IsFromScan = function() {
         return this._isFromScan;
