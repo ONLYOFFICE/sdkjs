@@ -1715,7 +1715,22 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 				point.Items.push(items[index]);
 			}
 		}
-	};	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	};
+	CHistory.prototype.checkLock = function(pointCount)
+	{
+		if (!pointCount)
+			return;
+		
+		for (let pointIndex = 0; pointIndex < pointCount; ++pointIndex)
+		{
+			let point = this.Points[pointIndex].Items;
+			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
+			{
+				point.Items[changeIndex].CheckLock();
+			}
+		}
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CHistory.prototype.private_UndoPoint = function(point, changes)

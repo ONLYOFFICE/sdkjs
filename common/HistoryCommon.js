@@ -4618,6 +4618,9 @@
 	{
 		return false;
 	};
+	CChangesBase.prototype.CheckLock = function(lockData)
+	{
+	};
 	window['AscDFH'].CChangesBase = CChangesBase;
 	/**
 	 * Базовый класс для изменений, которые меняют содержимое родительского класса.*

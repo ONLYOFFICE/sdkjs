@@ -1914,6 +1914,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		Description     : AscDFH.historyitem_type_Unknown,
 		Recalculate     : false,
 		CancelAction    : false,
+		CheckLock       : false,
 		UpdateSelection : false,
 		UpdateInterface : false,
 		UpdateRulers    : false,
@@ -2746,6 +2747,8 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	}
 
 	this.private_CheckAdditionalOnFinalize();
+	
+	this.private_CheckActionLock();
 
 	var isAllPointsEmpty = true;
 	if (this.Action.CancelAction)
@@ -2810,6 +2813,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.PointsCount        = 0;
 	this.Action.Recalculate        = false;
 	this.Action.CancelAction       = false;
+	this.Action.CheckLock          = false;
 	this.Action.Redraw.Start       = undefined;
 	this.Action.Redraw.End         = undefined;
 	this.Action.Additional         = {};
@@ -2858,6 +2862,17 @@ CDocument.prototype.CancelAction = function()
 		return;
 
 	this.Action.CancelAction = true;
+};
+/**
+ * Сообщаем, что перед окончанием действия нужно проверить, что все выполненные изменения были разрешены
+ * Используется, когда мы не может проверить лок объектов до самого действия
+ */
+CDocument.prototype.CheckActionLock = function()
+{
+	if (!this.IsActionStarted())
+		return;
+	
+	this.Action.CheckLock = true;
 };
 CDocument.prototype.StartUndoRedoAction = function()
 {
@@ -2918,6 +2933,26 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 		this.OFormDocument.onEndAction();
 	
 	this.Action.Additional.Start = false;
+};
+CDocument.prototype.private_CheckActionLock = function()
+{
+	if (!this.Action.CheckLock || this.Action.CancelAction)
+		return;
+	
+	if (!this.StartSelectionLockCheck())
+	{
+		this.Action.CancelAction = true;
+		return;
+	}
+	
+	this.History.checkLock(this.Action.PointsCount);
+	
+	if (this.EndSelectionLockCheck())
+		this.Action.CancelAction = true;
+	
+	// TODO: Если сервер нам запрещает делать действие, то мы делаем Undo из совместки. Но там делается отмена для
+	//       только для одной точки, а в действии их может быть несколько. Надо доработать этот момент (но в текущий
+	//       момент данная проверка не вызывается для случаев, где в действии более одной точки)
 };
 /**
  * Пересчитываем нумерацию строк
