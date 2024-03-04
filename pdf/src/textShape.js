@@ -60,21 +60,21 @@
     CTextShape.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
 
-        if (this.GetDocContent() == null) {
-            this.createTextBody();
+        // выставляем пунктирный бордер если нет заливки и собственного бордера 
+        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
+            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
+            this.spPr.ln.setW(25.4 / 72.0 * 36000);
+            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
         }
 
-        this.setTxBox(true);
-
-        // пунктирный бордер
-        this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
-        this.spPr.ln.setW(25.4 / 72.0 * 36000);
-        this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-
         // fit to text
-        let oBodyPr             = this.txBody.bodyPr;
-        oBodyPr.textFit         = new AscFormat.CTextFit();
-        oBodyPr.textFit.type    = AscFormat.text_fit_Auto;
+        if (this.txBody) {
+            this.setTxBox(true);
+
+            let oBodyPr             = this.txBody.bodyPr;
+            oBodyPr.textFit         = new AscFormat.CTextFit();
+            oBodyPr.textFit.type    = AscFormat.text_fit_Auto;
+        }
     };
     CTextShape.prototype.IsFromScan = function() {
         return this._isFromScan;
