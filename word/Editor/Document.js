@@ -2727,11 +2727,12 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
 /**
  * Завершаем действие
  * @param {boolean} [isCheckEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @returns {boolean} Выполнилось ли действие
  */
 CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 {
 	if (!this.IsActionStarted())
-		return;
+		return true;
 
 	if (this.Action.Depth > 0)
 	{
@@ -2743,8 +2744,10 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		}
 
 		this.Action.Depth--;
-		return;
+		return true;
 	}
+	
+	let actionCanceled = false;
 
 	this.private_CheckAdditionalOnFinalize();
 	
@@ -2760,6 +2763,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		}
 
 		this.RecalculateByChanges(arrChanges);
+		actionCanceled = true;
 	}
 	else if (false !== isCheckEmptyAction)
 	{
@@ -2820,7 +2824,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Api.checkChangesSize();
 	
 	if (this.Action.UpdateStates)
-		return;
+		return !actionCanceled;
 	
 	this.Action.UpdateStates = true;
 	
@@ -2852,6 +2856,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
+	return !actionCanceled;
 };
 /**
  * Сообщаем, что нужно отменить начатое действие

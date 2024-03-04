@@ -8323,6 +8323,7 @@ background-repeat: no-repeat;\
 		this.asc_Recalculate();
 		let logicDocument = this.getLogicDocument();
 		logicDocument.FinalizeAction();
+		return true;
 	};
 
 	asc_docs_api.prototype.asc_SetAutomaticBulletedLists = function(isAuto)

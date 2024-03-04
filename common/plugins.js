@@ -1270,14 +1270,17 @@
 					{
 						let _t = this;
 						this.api._afterEvalCommand(function() {
-							_t.api.onEndBuilderScript();
+							if (!_t.api.onEndBuilderScript())
+								commandReturnValue = undefined;
+							
 							_t.shiftCommand(commandReturnValue);
 						});
 						return;
 					}
 					else
 					{
-						this.api.onEndBuilderScript();
+						if (!this.api.onEndBuilderScript())
+							commandReturnValue = undefined;
 					}
 				}
 			}

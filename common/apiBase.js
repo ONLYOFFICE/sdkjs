@@ -3125,6 +3125,7 @@
 	};
 	baseEditorsApi.prototype.onEndBuilderScript = function()
 	{
+		return true;
 	};
 
 	// Native

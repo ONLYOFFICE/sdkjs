@@ -6928,6 +6928,7 @@ var editor;
 	};
 	spreadsheet_api.prototype.onEndBuilderScript = function() {
 		this.asc_endPaste();
+		return true;
 	};
 
 
