@@ -226,7 +226,6 @@
 
 		this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
 		CGraphicObjects.prototype.saveDocumentState = function() {};
-
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
 		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
 			this.isXP = true;
@@ -2485,6 +2484,9 @@
 			}
 
 			let oDoc = this.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
+			oDrDoc.private_StartDrawSelection(this.overlay);
+			
 			//if (!this.MouseHandObject)
 			{
 				ctx.fillStyle = "rgba(51,102,204,255)";
@@ -2500,9 +2502,9 @@
 
 				if (this.DrawingObjects.needUpdateOverlay())
 				{
-					this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = -1;
-					this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
-					this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
+					oDrDoc.AutoShapesTrack.PageIndex = -1;
+					this.DrawingObjects.drawOnOverlay(oDrDoc.AutoShapesTrack);
+					oDrDoc.AutoShapesTrack.CorrectOverlayBounds();
 				}
 				else if (oDoc.mouseDownAnnot)
 				{
@@ -2519,7 +2521,7 @@
 					else if (oDoc.mouseDownAnnot.IsComment() == false)
 					{
 						let nPage = oDoc.mouseDownAnnot.GetPage();
-						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
+						oDrDoc.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
 
 						if (oDoc.mouseDownAnnot.IsLine() || oDoc.mouseDownAnnot.IsPolygon() || oDoc.mouseDownAnnot.IsPolyLine() || oDoc.mouseDownAnnot.IsFreeText())
@@ -2537,7 +2539,7 @@
 						ctx.fill();
 					}
 
-					this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
+					oDrDoc.AutoShapesTrack.PageIndex = nPage;
 					this.DrawingObjects.drawSelect(nPage);
 				}
 			}
@@ -2549,6 +2551,7 @@
 				ctx.fill();
 			}
 			
+			oDrDoc.private_EndDrawSelection();
 			ctx.globalAlpha = 1.0;
 		};
 

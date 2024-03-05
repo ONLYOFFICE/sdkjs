@@ -777,7 +777,7 @@ var CPresentation = CPresentation || function(){};
 
             oMouseDownObject.onMouseDown(x, y, e);
 
-            if ((oMouseDownObject.IsTextShape() || oMouseDownObject.IsFreeText()) && false == oMouseDownObject.IsInTextBox()) {
+            if ((oMouseDownObject.IsTextShape() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
                 oDrDoc.TargetEnd();
             }
         }
@@ -1094,6 +1094,9 @@ var CPresentation = CPresentation || function(){};
             }
             else if (oMouseMoveAnnot.IsTextMarkup()) {
                 cursorType = "default";
+            }
+            else if (oMouseMoveAnnot.IsFreeText() && oMouseMoveAnnot.IsInTextBox()) {
+                cursorType = "text";
             }
         }
         else if (oMouseMoveLink) {

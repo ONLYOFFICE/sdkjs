@@ -744,8 +744,12 @@
             AscCommon.History.TurnOff();
     }
 
-    AscFormat.CTextBody.prototype.getDrawingDocument = function() {
-        return this.parent && this.parent.getDrawingDocument && this.parent.getDrawingDocument();
+    //////////////////////////////////////////////////////////////////////////////
+    ///// Overrides
+    /////////////////////////////////////////////////////////////////////////////
+    
+    CTextShape.prototype.Get_AbsolutePage = function() {
+        return this.GetPage();
     };
 
     window["AscPDF"].CTextShape = CTextShape;
