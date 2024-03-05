@@ -19935,3 +19935,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
 window['AscWord'].CTable = CTable;
+window['AscWord'].Table = CTable;

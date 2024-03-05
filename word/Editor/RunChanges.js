@@ -304,7 +304,7 @@ function private_ParaRunChangesOnMergeLangTextPr(oChange)
 /**
  * Универсальный метод для проверки лока для простых изменений внутри параграфа
  */
-function private_ParagraphContentChangesCheckLock()
+function private_ParagraphContentChangesCheckLock(lockData)
 {
 	let obj = this.Class;
 	

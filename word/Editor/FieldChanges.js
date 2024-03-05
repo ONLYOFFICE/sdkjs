@@ -147,6 +147,7 @@ CChangesParaFieldAddItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesParaFieldRemoveItem);
 };
+CChangesParaFieldAddItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -235,6 +236,7 @@ CChangesParaFieldRemoveItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesParaFieldAddItem);
 };
+CChangesParaFieldRemoveItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -250,6 +252,7 @@ CChangesParaFieldFormFieldName.prototype.private_SetValue = function(Value)
 {
 	this.Class.FormFieldName = Value;
 };
+CChangesParaFieldFormFieldName.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -265,3 +268,4 @@ CChangesParaFieldFormFieldDefaultText.prototype.private_SetValue = function(Valu
 {
 	this.Class.FormFieldDefaultText = Value;
 };
+CChangesParaFieldFormFieldDefaultText.prototype.CheckLock = private_ParagraphContentChangesCheckLock;

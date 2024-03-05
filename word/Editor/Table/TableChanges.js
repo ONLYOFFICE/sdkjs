@@ -203,6 +203,27 @@ function private_TableChangesOnMergePr(oChange)
 
 	return true;
 }
+
+/**
+ * Универсальная функция для проверки лока для всех изменений связанных с таблицей
+ * @param lockData
+ */
+function private_TableChangesCheckLock(lockData)
+{
+	if (lockData && lockData.isFillingForm())
+		return lockData.lock();
+
+	let table = null;
+	if (this instanceof AscWord.Table)
+		table = this;
+	else if (this.GetTable)
+		table = this.GetTable();
+	
+	if (!table)
+		return;
+	
+	table.Lock.Check(table.GetId());
+}
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -228,6 +249,7 @@ CChangesTableTableW.prototype.private_SetValue = function(Value)
 	oTable.private_UpdateTableGrid();
 };
 CChangesTableTableW.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableW.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -414,6 +436,7 @@ CChangesTableTableCellMar.prototype.private_SetValue = function(Value)
 	oTable.private_UpdateTableGrid();
 };
 CChangesTableTableCellMar.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableCellMar.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -432,6 +455,7 @@ CChangesTableTableAlign.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr();
 };
 CChangesTableTableAlign.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableAlign.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
@@ -450,6 +474,7 @@ CChangesTableTableInd.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr();
 };
 CChangesTableTableInd.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableInd.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -472,6 +497,7 @@ CChangesTableTableBorderLeft.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderLeft.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderLeft.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -494,6 +520,7 @@ CChangesTableTableBorderTop.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderTop.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderTop.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -516,6 +543,7 @@ CChangesTableTableBorderRight.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderRight.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderRight.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -538,6 +566,7 @@ CChangesTableTableBorderBottom.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderBottom.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderBottom.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -560,6 +589,7 @@ CChangesTableTableBorderInsideH.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderInsideH.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderInsideH.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -582,6 +612,7 @@ CChangesTableTableBorderInsideV.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableBorderInsideV.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableBorderInsideV.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -604,6 +635,7 @@ CChangesTableTableShd.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableShd.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableShd.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolValue}
@@ -620,6 +652,7 @@ CChangesTableInline.prototype.private_SetValue = function(Value)
 	var oTable = this.Class;
 	oTable.Inline = Value;
 };
+CChangesTableInline.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -701,6 +734,7 @@ CChangesTableAddRow.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesTableRemoveRow);
 };
+CChangesTableAddRow.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -784,6 +818,7 @@ CChangesTableRemoveRow.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesTableAddRow);
 };
+CChangesTableRemoveRow.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -835,6 +870,7 @@ CChangesTableTableGrid.prototype.private_SetValue = function(Value)
 	oTable.TableGrid = Value;
 	oTable.private_UpdateTableGrid();
 };
+CChangesTableTableGrid.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -856,6 +892,7 @@ CChangesTableTableLook.prototype.private_CreateObject = function()
 {
 	return new AscCommon.CTableLook();
 };
+CChangesTableTableLook.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -874,6 +911,7 @@ CChangesTableTableStyleRowBandSize.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr();
 };
 CChangesTableTableStyleRowBandSize.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableStyleRowBandSize.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -892,6 +930,7 @@ CChangesTableTableStyleColBandSize.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr();
 };
 CChangesTableTableStyleColBandSize.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableStyleColBandSize.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -951,6 +990,7 @@ CChangesTableTableStyle.prototype.private_SetValue = function(Value)
 	oTable.TableStyle = Value;
 	oTable.Recalc_CompiledPr2();
 };
+CChangesTableTableStyle.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolValue}
@@ -967,6 +1007,7 @@ CChangesTableAllowOverlap.prototype.private_SetValue = function(Value)
 	var oTable = this.Class;
 	oTable.AllowOverlap = Value;
 };
+CChangesTableAllowOverlap.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1041,6 +1082,7 @@ CChangesTablePositionH.prototype.private_SetValue = function(Value)
 	oTable.PositionH.Align        = Value.Align;
 	oTable.PositionH.Value        = Value.Value;
 };
+CChangesTablePositionH.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1115,6 +1157,7 @@ CChangesTablePositionV.prototype.private_SetValue = function(Value)
 	oTable.PositionV.Align        = Value.Align;
 	oTable.PositionV.Value        = Value.Value;
 };
+CChangesTablePositionV.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1189,6 +1232,7 @@ CChangesTableDistance.prototype.private_SetValue = function(Value)
 	oTable.Distance.R = Value.Right;
 	oTable.Distance.B = Value.Bottom;
 };
+CChangesTableDistance.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -1317,6 +1361,7 @@ CChangesTablePr.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTablePr.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1335,6 +1380,7 @@ CChangesTableTableLayout.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableLayout.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableLayout.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -1353,6 +1399,7 @@ CChangesTableTableDescription.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableDescription.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableDescription.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -1371,6 +1418,7 @@ CChangesTableTableCaption.prototype.private_SetValue = function(Value)
 	oTable.Recalc_CompiledPr2();
 };
 CChangesTableTableCaption.prototype.Merge = private_TableChangesOnMergePr;
+CChangesTableTableCaption.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1444,6 +1492,7 @@ CChangesTableTableGridChange.prototype.private_SetValue = function(Value)
 	oTable.TableGridChange = Value;
 	oTable.updateTrackRevisions();
 };
+CChangesTableTableGridChange.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBase}
@@ -1589,3 +1638,4 @@ CChangesTablePrChange.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTablePrChange.prototype.CheckLock = private_TableChangesCheckLock;
