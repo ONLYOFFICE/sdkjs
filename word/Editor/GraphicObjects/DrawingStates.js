@@ -804,10 +804,10 @@ RotateState.prototype =
                     bounds      = oTrack.getBounds();
 
                     oDoc.CreateNewHistoryPoint();
-                    oTrack.trackEnd(false);
+                    oTrack.trackEnd(oTrack.originalObject.IsAnnot());
 
                     // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
-                    if (oTrack.originalObject.IsAnnot()) {
+                    if (oTrack.originalObject.IsAnnot() && (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack)) {
                         let oAnnot  = oTrack.originalObject;
                         let aRect   = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
                         

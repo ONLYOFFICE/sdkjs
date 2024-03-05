@@ -1961,7 +1961,6 @@
 					return;
 				}
 				// режим лапы. просто начинаем режим Active - зажимаем лапу
-				oThis.setCursorType(AscCommon.Cursors.Grabbing);
 				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
 				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
 				oThis.MouseHandObject.Active = true;
@@ -2018,7 +2017,7 @@
 			AscCommon.check_MouseUpEvent(e);
 
 			let oDoc = oThis.getPDFDoc();
-			oDoc.OnMouseUp(e);
+			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 
 			if (false == oThis.Api.isInkDrawerOn())
 			{
@@ -2034,17 +2033,6 @@
 				}
 			}
 
-			if (oThis.getPDFDoc().mouseDownLinkObject)
-			{
-				// значит не уходили с ссылки
-				// проверим - остались ли на ней
-				var mouseUpLinkObject = oThis.getPageLinkByMouse();
-				if (mouseUpLinkObject === oThis.getPDFDoc().mouseDownLinkObject)
-				{
-					oThis.navigateToLink(mouseUpLinkObject);
-				}
-			}
-
 			// если было нажатие - то отжимаем
 			if (oThis.isMouseMoveBetweenDownUp)
 				oThis.file.onMouseUp();
@@ -2052,7 +2040,6 @@
 			if (oThis.MouseHandObject)
 				oThis.MouseHandObject.Active = false;
 			oThis.isMouseMoveBetweenDownUp = false;
-			oThis.getPDFDoc().mouseDownLinkObject = null;
 
 			if (-1 !== oThis.timerScrollSelect)
 			{
