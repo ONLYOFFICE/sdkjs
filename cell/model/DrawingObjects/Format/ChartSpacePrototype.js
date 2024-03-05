@@ -246,12 +246,12 @@ CChartSpace.prototype.recalculateBounds = function()
 
 CChartSpace.prototype.recalculate = function()
 {
-    if(this.bDeleted)
+    if(this.bDeleted && !this.isFrameChart)
         return;
 
     var oController = this.getDrawingObjectsController();
     //Use this check to prevent charts recalculation on not initialized sheets bug 50467
-    if(!oController) {
+    if(!oController && !this.isFrameChart) {
         return;
     }
     //---------------------------------------------------
@@ -435,4 +435,166 @@ CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
             this.worksheet.contentChanges.Refresh();
         }
     };
+
+	CChartSpace.prototype.addExternalReferenceToEditor = function (oPastedWb)
+	{
+		if (!oPastedWb)
+			return;
+
+		const oApi = Asc.editor;
+
+		const oWbModel = oApi.wbModel;
+		const oWs = oApi.wb.getWorksheet();
+		if (!oWs)
+			return;
+
+
+		const oMockWb = oWbModel.getTemporaryExternalWb();
+		//todo: do we want to read already created links when copy-pasting?
+		//const oConvertedExternalReference = oExternalReference.convertToExternalReference();
+		const oCachedWorksheets = this.getWorksheetsFromCache(oMockWb);
+		let bNeedConvert = false;
+
+		let oMainExternalReference;
+		for (let sSheetName in oCachedWorksheets)
+		{
+			const oPastedWS = oCachedWorksheets[sSheetName].ws;
+			const oRange = new Asc.Range(0, 0, oCachedWorksheets[sSheetName].maxC, oCachedWorksheets[sSheetName].maxR);
+
+
+			const oPastedLinkInfo = oWs._getPastedLinkInfo(oPastedWb, oPastedWS);
+
+			if (oPastedLinkInfo)
+			{
+				if (oPastedLinkInfo.type === -1)
+				{
+					const pasteSheetLinkName = oPastedLinkInfo.sheet;
+					//необходимо положить нужные данные в SheetDataSet
+					oMainExternalReference = oWbModel.externalReferences[oPastedLinkInfo.index - 1];
+					if (oMainExternalReference)
+					{
+						oMainExternalReference.updateSheetData(pasteSheetLinkName, oPastedWS, [oRange]);
+					}
+					bNeedConvert = true;
+				}
+				else if (oPastedLinkInfo.type === -2)
+				{
+					if (!oMainExternalReference)
+					{
+						var referenceData;
+						var name = oPastedWb.Core.title;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
+						{
+							name = oPastedLinkInfo.path;
+						}
+						else
+						{
+							if (oPastedWb && oPastedWb.Core)
+							{
+								referenceData = {};
+								referenceData["fileKey"] = oPastedWb.Core.contentStatus;
+								referenceData["instanceId"] = oPastedWb.Core.category;
+							}
+						}
+
+						oMainExternalReference = new AscCommonExcel.ExternalReference();
+						oMainExternalReference.referenceData = referenceData;
+						oMainExternalReference.Id = name;
+					}
+
+					oMainExternalReference.addSheet(oPastedWS, [oRange]);
+					bNeedConvert = true;
+				}
+			}
+		}
+		if (bNeedConvert)
+		{
+			this.convertRefsToExternal(oMainExternalReference, oPastedWb.externalReferences);
+		}
+	}
+	CChartSpace.prototype.convertRefsToExternal = function (oMainExternalReference, arrPastedExternalReferences)
+	{
+		const aSeries = this.getAllSeries();
+		for (let i = 0; i < aSeries.length; i += 1)
+		{
+			const oSeria = aSeries[i];
+			const oVal = oSeria.val || oSeria.yVal;
+			if (oVal && oVal.numRef)
+			{
+				oVal.numRef.updateToExternal(oMainExternalReference, arrPastedExternalReferences);
+			}
+			const oCat = oSeria.cat || oSeria.xVal;
+			if (oCat)
+			{
+				if (oCat.numRef)
+				{
+					oCat.numRef.updateToExternal(oMainExternalReference, arrPastedExternalReferences);
+				}
+				if (oCat.strRef)
+				{
+					oCat.strRef.updateToExternal(oMainExternalReference, arrPastedExternalReferences);
+				}
+			}
+			if (oSeria.tx && oSeria.tx.strRef)
+			{
+				oSeria.tx.strRef.updateToExternal(oMainExternalReference, arrPastedExternalReferences);
+			}
+		}
+		this.onDataUpdateRecalc();
+	};
+	CChartSpace.prototype.applySpecialPasteProps = function (oExternalWb)
+	{
+		if (!(this.XLSX && this.XLSX.length))
+		{
+			this.setXLSX(new Uint8Array(0));
+		}
+		if (oExternalWb)
+		{
+			this.addExternalReferenceToEditor(oExternalWb);
+		}
+		else
+		{
+			this.setExternalReference(null);
+		}
+	}
+	CChartSpace.prototype.canPasteExternal = function ()
+	{
+		const oExternalReference = this.getExternalReference();
+		if (oExternalReference)
+		{
+			const oReferenceData = oExternalReference.referenceData;
+			if (oReferenceData)
+			{
+				const oApi = Asc.editor || editor;
+				const oDocInfo = oApi.DocInfo;
+				const oDocumentReferenceData = oDocInfo && oDocInfo.ReferenceData;
+				if (oDocumentReferenceData)
+				{
+					return oDocumentReferenceData['fileKey'] === oReferenceData['fileKey'] && oDocumentReferenceData['instanceId'] === oReferenceData['instanceId'];
+				}
+			}
+			return true;
+		}
+		return false;
+
+	};
+	CChartSpace.prototype.getSpecialPasteProps = function ()
+	{
+		const oSpecialProps = Asc.c_oSpecialPasteProps;
+		const mapProps = {};
+
+		mapProps[oSpecialProps.destinationFormatting] = [];
+		mapProps[oSpecialProps.sourceformatting] = [];
+		mapProps[oSpecialProps.picture] = [oSpecialProps.picture];
+		if (this.canPasteExternal())
+		{
+			mapProps[oSpecialProps.destinationFormatting].push(oSpecialProps.destinationFormattingLink);
+			mapProps[oSpecialProps.sourceformatting].push(oSpecialProps.sourceFormattingLink);
+		}
+		return mapProps;
+	};
+	CChartSpace.prototype.isWorkbookChart = function () {
+		return true;
+	};
+
 })(window);

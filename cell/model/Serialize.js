@@ -45,7 +45,6 @@
       var c_oSerConstants = AscCommon.c_oSerConstants;
     var History = AscCommon.History;
     var pptx_content_loader = AscCommon.pptx_content_loader;
-    var pptx_content_writer = AscCommon.pptx_content_writer;
 
       var c_oAscPageOrientation = Asc.c_oAscPageOrientation;
 
@@ -2712,6 +2711,7 @@
     /** @constructor */
 	function BinaryStylesTableWriter(memory, wb, initSaveManager)
     {
+	    const pptx_content_writer = AscCommon.pptx_content_writer;
         this.memory = memory;
         this.bs = new BinaryCommonWriter(this.memory);
         this.wb = wb;
@@ -2755,8 +2755,10 @@
                 if(aExtDxfs.length > 0) {
                     this.bs.WriteItem(c_oSerStylesTypes.ExtDxfs, function(){oThis.WriteDxfs(aExtDxfs);});
                 }
-                this.bs.WriteItem(c_oSerStylesTypes.SlicerStyles, function(){oThis.WriteSlicerStyles(slicerStyles);});
-            }
+	            if (slicerStyles) {
+		            this.bs.WriteItem(c_oSerStylesTypes.SlicerStyles, function () {oThis.WriteSlicerStyles(slicerStyles);});
+	            }
+						}
             //numfmts пишется в конце потому что они могут пополниться при записи Dxfs
             this.bs.WriteItem(c_oSerStylesTypes.NumFmts, function(){oThis.WriteNumFmts();});
 
@@ -3385,6 +3387,7 @@
         this.InitSaveManager = initSaveManager;
         //this.tableIds = tableIds;
         //this.sheetIds = sheetIds;
+	    const pptx_content_writer = AscCommon.pptx_content_writer;
         this.Write = function()
         {
             var oThis = this;
@@ -4143,6 +4146,7 @@
         this.InitSaveManager = initSaveManager;
         /*this.tableIds = tableIds;
         this.sheetIds = sheetIds;*/
+	    const pptx_content_writer = AscCommon.pptx_content_writer;
         this._getCrc32FromObjWithProperty = function(val)
         {
             return Asc.crc32(this._getStringFromObjWithProperty(val));
@@ -4261,28 +4265,31 @@
 			for (i = 0; i < ws.pivotTables.length; ++i) {
 				this.bs.WriteItem(c_oSerWorksheetsTypes.PivotTable, function(){oThis.WritePivotTable(ws.pivotTables[i], oThis.isCopyPaste)});
 			}
-            var slicers = new Asc.CT_slicers();
-            var slicerExt = new Asc.CT_slicers();
-            for (var i = 0; i < ws.aSlicers.length; ++i) {
-                if (this.isCopyPaste) {
-                    var _graphicObject = ws.workbook.getSlicerViewByName(ws.aSlicers[i].name);
-                    if (!_graphicObject || !_graphicObject.selected) {
-                        continue;
-                    }
-                }
+			if (Asc.CT_slicers) {
+				var slicers = new Asc.CT_slicers();
+				var slicerExt = new Asc.CT_slicers();
+				for (var i = 0; i < ws.aSlicers.length; ++i) {
+					if (this.isCopyPaste) {
+						var _graphicObject = ws.workbook.getSlicerViewByName(ws.aSlicers[i].name);
+						if (!_graphicObject || !_graphicObject.selected) {
+							continue;
+						}
+					}
 
-                if (ws.aSlicers[i].isExt()) {
-                    slicerExt.slicer.push(ws.aSlicers[i]);
-                } else {
-                    slicers.slicer.push(ws.aSlicers[i]);
-                }
-            }
-            if (slicers.slicer.length > 0) {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.Slicers, function () {oThis.WriteSlicers(slicers);});
-            }
-            if (slicerExt.slicer.length > 0) {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.SlicersExt, function () {oThis.WriteSlicers(slicerExt);});
-            }
+					if (ws.aSlicers[i].isExt()) {
+						slicerExt.slicer.push(ws.aSlicers[i]);
+					} else {
+						slicers.slicer.push(ws.aSlicers[i]);
+					}
+				}
+				if (slicers.slicer.length > 0) {
+					this.bs.WriteItem(c_oSerWorksheetsTypes.Slicers, function () {oThis.WriteSlicers(slicers);});
+				}
+				if (slicerExt.slicer.length > 0) {
+					this.bs.WriteItem(c_oSerWorksheetsTypes.SlicersExt, function () {oThis.WriteSlicers(slicerExt);});
+				}
+			}
+
             if (null !== ws.headerFooter) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.HeaderFooter, function () {oThis.WriteHeaderFooter(ws.headerFooter);});
             }
@@ -4302,7 +4309,7 @@
 			if (null !== ws.dataValidations) {
 				this.bs.WriteItem(c_oSerWorksheetsTypes.DataValidations, function () {oThis.WriteDataValidations(ws.dataValidations);});
 			}
-			if (ws.aNamedSheetViews.length > 0) {
+			if (ws.aNamedSheetViews.length > 0 && Asc.CT_NamedSheetViews) {
 				this.bs.WriteItem(c_oSerWorksheetsTypes.NamedSheetView, function () {
 					var namedSheetViews = new Asc.CT_NamedSheetViews();
 					namedSheetViews.namedSheetView = ws.aNamedSheetViews;
@@ -6222,6 +6229,7 @@
 		this.memory = memory;
 		this.wb = wb;
 		this.bs = new BinaryCommonWriter(this.memory);
+		const pptx_content_writer = AscCommon.pptx_content_writer;
 		this.Write = function()
 		{
 			var oThis = this;
@@ -6238,6 +6246,7 @@
         this.memory = memory;
         this.personList = personList;
         this.bs = new BinaryCommonWriter(this.memory);
+	    const pptx_content_writer = AscCommon.pptx_content_writer;
         this.Write = function()
         {
             var oThis = this;
@@ -6276,6 +6285,7 @@
         this.nRealTableCount = 0;
         this.InitSaveManager = new InitSaveManager(wb, isCopyPaste);
         this.bs = new BinaryCommonWriter(this.Memory);
+	    const pptx_content_writer = AscCommon.pptx_content_writer;
         this.Write = function(noBase64, onlySaveBase64)
         {
             var t = this;
@@ -8901,7 +8911,7 @@
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadRowColBreaks(t, l, oWorksheet.colBreaks);
 				});
-            } else if (c_oSerWorksheetsTypes.LegacyDrawingHF === type) {
+            } else if (c_oSerWorksheetsTypes.LegacyDrawingHF === type && AscCommonExcel.CLegacyDrawingHF) {
 				oWorksheet.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
 				res = this.bcr.Read1(length, function (t, l) {
 					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
@@ -12675,7 +12685,9 @@
         this.InitDxfs(oStyleObject.aDxfs);
         this.InitDxfs(oStyleObject.aExtDxfs);
         this.InitTableStyles(wb.TableStyles.DefaultStyles, oStyleObject.oCustomTableStyles, oStyleObject.aDxfs);
-        wb.SlicerStyles.addDefaultStylesAtOpening(oStyleObject.oCustomSlicerStyles, oStyleObject.aExtDxfs);
+				if (oStyleObject.oCustomSlicerStyles) {
+					wb.SlicerStyles.addDefaultStylesAtOpening(oStyleObject.oCustomSlicerStyles, oStyleObject.aExtDxfs);
+				}
     };
     InitOpenManager.prototype.InitDxfs = function (Dxfs)
     {
@@ -13012,26 +13024,28 @@
     };
 
     InitSaveManager.prototype.PrepareSlicerStyles = function (slicerStyles, aDxfs) {
-        var styles = new Asc.CT_slicerStyles();
-        styles.defaultSlicerStyle = slicerStyles.DefaultStyle;
-        for (var name in slicerStyles.CustomStyles) {
-            if (slicerStyles.CustomStyles.hasOwnProperty(name)) {
-                var slicerStyle = new Asc.CT_slicerStyle();
-                slicerStyle.name = name;
-                var elems = slicerStyles.CustomStyles[name];
-                for (var type in elems) {
-                    if (elems.hasOwnProperty(type)) {
-                        var styleElement = new Asc.CT_slicerStyleElement();
-                        styleElement.type = parseInt(type);
-                        styleElement.dxfId = aDxfs.length;
-                        aDxfs.push(elems[type]);
-                        slicerStyle.slicerStyleElements.push(styleElement);
-                    }
-                }
-                styles.slicerStyle.push(slicerStyle);
-            }
-        }
-        return styles;
+			if (Asc.CT_slicerStyles) {
+				var styles = new Asc.CT_slicerStyles();
+				styles.defaultSlicerStyle = slicerStyles.DefaultStyle;
+				for (var name in slicerStyles.CustomStyles) {
+					if (slicerStyles.CustomStyles.hasOwnProperty(name)) {
+						var slicerStyle = new Asc.CT_slicerStyle();
+						slicerStyle.name = name;
+						var elems = slicerStyles.CustomStyles[name];
+						for (var type in elems) {
+							if (elems.hasOwnProperty(type)) {
+								var styleElement = new Asc.CT_slicerStyleElement();
+								styleElement.type = parseInt(type);
+								styleElement.dxfId = aDxfs.length;
+								aDxfs.push(elems[type]);
+								slicerStyle.slicerStyleElements.push(styleElement);
+							}
+						}
+						styles.slicerStyle.push(slicerStyle);
+					}
+				}
+				return styles;
+			}
     };
 
     InitSaveManager.prototype.writeCols = function (ws, stylesForWrite, func) {

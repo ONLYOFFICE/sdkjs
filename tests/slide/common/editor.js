@@ -73,6 +73,8 @@
 		GetDotsPerMM : function(value) {return 72;},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		m_oNotesApi: {},
+		onUpdateExternalList: function() {},
+		checkChart: function() {},
 		clear: function () {}
 	};
 
@@ -88,6 +90,7 @@
 	editor.WordControl.m_oApi = editor;
 
 	editor.textArtPreviewManager = drawingDocument;
+	editor.externalChartCollector = drawingDocument;
 
 	editor.asc_hideComments = function () {};
 	editor.isSlideShow = function () {return false};

@@ -40,6 +40,18 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 var History = AscCommon.History;
 
 
+DrawingObjectsController.prototype.handleChartDoubleClick = function()
+{
+	var drawingObjects = this.drawingObjects;
+	var oThis = this;
+	this.checkSelectedObjectsAndFireCallback(function(){
+		oThis.clearTrackObjects();
+		oThis.clearPreTrackObjects();
+		oThis.changeCurrentState(new AscFormat.NullState(this));
+		drawingObjects.openChartEditor();
+	}, []);
+};
+
 DrawingObjectsController.prototype.getTheme = function()
 {
     return this.drawingObjects.getTheme();
@@ -134,7 +146,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
         }
         else if (oleObject.canEditTableOleObject())
         {
-            editor.asc_doubleClickOnTableOleObject(oleObject);
+            this.openOleEditor();
         }
         else {
             var pluginData = new Asc.CPluginData();
@@ -274,45 +286,64 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = functio
         this.startRecalculate();
     }
 };
-
-
-DrawingObjectsController.prototype.showChartSettings  =  function()
+DrawingObjectsController.prototype.openChartEditor = function()
 {
-    editor.asc_doubleClickOnChart(this.getChartObject());
-    this.changeCurrentState(new AscFormat.NullState(this));
+	const oChartLoader = new AscCommon.CFrameDiagramBinaryLoader(this.getChartObject());
+	oChartLoader.tryOpen();
+	this.changeCurrentState(new AscFormat.NullState(this));
 };
 DrawingObjectsController.prototype.getColorMapOverride  =  function()
 {
     return this.drawingObjects.Get_ColorMap();
 };
+DrawingObjectsController.prototype.getSingleSelectedChart = function ()
+{
+	const arrByTypes = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
+	const arrSelectedCharts = [];
+
+	for(let i = 0; i < arrByTypes.charts.length; ++i)
+	{
+		if(arrByTypes.charts[i].selected)
+		{
+			arrSelectedCharts.push(arrByTypes.charts[i]);
+		}
+	}
+	if (arrSelectedCharts.length === 1)
+	{
+		return arrSelectedCharts[0];
+	}
+	return null;
+};
 DrawingObjectsController.prototype.editChart = function(binary)
 {
     var chart_space = this.getChartSpace2(binary, null);
     chart_space.setParent(this.drawingObjects);
-    var by_types, i;
-    by_types = AscFormat.getObjectsByTypesFromArr(this.selectedObjects, true);
-    var aSelectedCharts = [];
-    for(i = 0; i < by_types.charts.length; ++i)
+		const oSelectedChart = this.getSingleSelectedChart();
+
+    if(oSelectedChart)
     {
-        if(by_types.charts[i].selected)
+	    oSelectedChart.recalculateChart();
+        if (!oSelectedChart.isExternal() && binary["workbookBinary"])
         {
-            aSelectedCharts.push(by_types.charts[i]);
+					const oApi = this.getEditorApi();
+          chart_space.setXLSX(oApi.frameManager.getDecodedArray(binary["workbookBinary"]));
         }
-    }
-    if(aSelectedCharts.length === 1)
-    {
-        if(aSelectedCharts[0].group)
+				if (binary['imagesForAddToHistory'])
+				{
+					AscDFH.addImagesFromFrame(chart_space, binary['imagesForAddToHistory']);
+				}
+        if(oSelectedChart.group)
         {
-            var parent_group = aSelectedCharts[0].group;
-            var major_group = aSelectedCharts[0].getMainGroup();
-            for(i = parent_group.spTree.length -1; i > -1; --i)
+            var parent_group = oSelectedChart.group;
+            var major_group = oSelectedChart.getMainGroup();
+            for(let i = parent_group.spTree.length -1; i > -1; --i)
             {
-                if(parent_group.spTree[i] === aSelectedCharts[0])
+                if(parent_group.spTree[i] === oSelectedChart)
                 {
                     parent_group.removeFromSpTreeByPos(i);
                     chart_space.setGroup(parent_group);
-                    chart_space.spPr.xfrm.setOffX(aSelectedCharts[0].spPr.xfrm.offX);
-                    chart_space.spPr.xfrm.setOffY(aSelectedCharts[0].spPr.xfrm.offY);
+                    chart_space.spPr.xfrm.setOffX(oSelectedChart.spPr.xfrm.offX);
+                    chart_space.spPr.xfrm.setOffY(oSelectedChart.spPr.xfrm.offY);
                     parent_group.addToSpTree(i, chart_space);
                     parent_group.updateCoordinatesAfterInternalResize();
                     major_group.recalculate();
@@ -328,12 +359,10 @@ DrawingObjectsController.prototype.editChart = function(binary)
         }
         else
         {
-            chart_space.spPr.xfrm.setOffX(aSelectedCharts[0].x);
-            chart_space.spPr.xfrm.setOffY(aSelectedCharts[0].y);
-            var pos = aSelectedCharts[0].deleteDrawingBase();
+            chart_space.spPr.xfrm.setOffX(oSelectedChart.spPr.xfrm.offX);
+            chart_space.spPr.xfrm.setOffY(oSelectedChart.spPr.xfrm.offY);
+            var pos = oSelectedChart.deleteDrawingBase();
             chart_space.addToDrawingObjects(pos);
-            chart_space.setTitle(binary["cTitle"]);
-            chart_space.setDescription(binary["cDescription"]);
             this.resetSelection();
             this.selectObject(chart_space, this.drawingObjects.num);
             this.startRecalculate();
@@ -341,6 +370,21 @@ DrawingObjectsController.prototype.editChart = function(binary)
         }
     }
 };
+
+DrawingObjectsController.prototype.updateChart = function (binary)
+{
+	const oSelectedChart = this.getSingleSelectedChart();
+	if (oSelectedChart)
+	{
+		const oChart = this.getChart(binary);
+		oChart.setParent(oSelectedChart);
+		oSelectedChart.setChart(oChart);
+		oSelectedChart.handleUpdateChart();
+		oSelectedChart.recalculate();
+	}
+};
+
+
 DrawingObjectsController.prototype.addImage = function(sImageUrl, nPixW, nPixH, videoUrl, audioUrl)
 {
     let oPresentation = this.getPresentation();

@@ -766,6 +766,18 @@ CHeaderFooter.prototype =
     {
         this.Content.EditChart( Chart );
     },
+	UpdateChart : function(Chart)
+	{
+		this.Content.UpdateChart( Chart );
+	},
+	GetChartSettings : function()
+	{
+		return this.Content.GetChartSettings();
+	},
+	ApplyChartSettings : function(oChartSettings)
+	{
+		return this.Content.ApplyChartSettings( oChartSettings );
+	},
 
 	AddInlineTable : function(nCols, nRows, nMode)
 	{
@@ -2068,6 +2080,24 @@ CHeaderFooterController.prototype =
         if ( null != this.CurHdrFtr )
             return this.CurHdrFtr.EditChart( Chart );
     },
+
+	UpdateChart : function(Chart)
+	{
+		if ( null != this.CurHdrFtr )
+			return this.CurHdrFtr.UpdateChart( Chart );
+	},
+
+	GetChartSettings : function()
+	{
+		if ( null != this.CurHdrFtr )
+			return this.CurHdrFtr.GetChartSettings();
+	},
+
+	ApplyChartSettings : function(oChartSettings)
+	{
+		if ( null != this.CurHdrFtr )
+			return this.CurHdrFtr.ApplyChartSettings( oChartSettings );
+	},
 
 	AddInlineTable : function(nCols, nRows, nMode)
 	{

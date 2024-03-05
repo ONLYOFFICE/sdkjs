@@ -345,7 +345,7 @@
 
     // create canvas
     if (null != this.element) {
-		if (!this.Api.VersionHistory && !this.Api.isEditOleMode) {
+		if (!this.Api.VersionHistory && this.Api.frameManager.isInitFrameManager) {
 			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\
@@ -2274,8 +2274,8 @@
     }
   };
 
-  WorkbookView.prototype.onOleEditorReady = function () {
-	  this.handlers.trigger("asc_onOleEditorReady");
+  WorkbookView.prototype.onFrameEditorReady = function () {
+	  this.handlers.trigger("asc_onFrameEditorReady");
   };
 
   WorkbookView.prototype._onDocumentPlaceChanged = function() {
@@ -3736,7 +3736,7 @@
     var previewOleObjectContext = AscCommonExcel.getContext(sizes.width, sizes.height, this);
     previewOleObjectContext.DocumentRenderer = AscCommonExcel.getGraphics(previewOleObjectContext);
     previewOleObjectContext.isPreviewOleObjectContext = true;
-		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
+		previewOleObjectContext.isNotDrawBackground = !(this.Api.frameManager.isFromSheetEditor);
     ws.drawForPrint(previewOleObjectContext, page, 0, 1);
     return previewOleObjectContext;
   };
@@ -3895,6 +3895,7 @@
             }
             this.onShowDrawingObjects();
         }
+				this.Api.frameManager.updateGeneralDiagramCache(aRanges);
     };
     WorkbookView.prototype.handleChartsOnChangeSheetName = function (oWorksheet, sOldName, sNewName) {
         //change sheet name in chart references
@@ -5375,7 +5376,8 @@
 							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
 								continue;
 							}
-							let updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
+							const oMockWb = wb ? wb : t.model;
+							let updatedData = oMockWb.getExternalReferenceSheetsFromZip(stream);
 							if (updatedData) {
 								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}

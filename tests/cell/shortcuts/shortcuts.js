@@ -102,7 +102,7 @@ QUnit.config.autostart = false;
 	function AddChart()
 	{
 		ws.getRange4(0, 0).fillData([['1']]);
-		const props = editor.asc_getChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
+		const props = editor.asc_getChartSettings(Asc.c_oAscChartTypeSettings.lineNormal);
 		props.left = 0;
 		props.top = 0;
 		props.width = 100;

@@ -54,6 +54,8 @@ function(window, undefined) {
 	const History = AscCommon.History;
 	const global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
+	const c_oAscChartTitleShowSettings = Asc.c_oAscChartTitleShowSettings;
+
 	const CShape = AscFormat.CShape;
 	const Ax_Counter = AscFormat.Ax_Counter;
 	const checkTxBodyDefFonts = AscFormat.checkTxBodyDefFonts;
@@ -83,7 +85,13 @@ function(window, undefined) {
 
 
 	const DEFAULT_LBLS_DISTANCE = 10.0 * (25.4 / 72);///TODO
-
+	function checkExternalChart(chart) {
+		const oApi = Asc.editor;
+		const oExternalLinkCollector = oApi && oApi.externalChartCollector;
+		if (oExternalLinkCollector) {
+			oExternalLinkCollector.checkChart(chart);
+		}
+	}
 	function checkVerticalTitle(title) {
 		return false;
 	}
@@ -370,15 +378,44 @@ function(window, undefined) {
 	var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
 
 
+	function CChangesStartChartSpaceBinary(Class, Old, New, Color) {
+		AscDFH.CChangesStartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetStartBinaryData, Color);
+	}
+	CChangesStartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesStartBinaryData.prototype);
+	CChangesStartChartSpaceBinary.prototype.constructor = CChangesStartChartSpaceBinary;
+	CChangesStartChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
+	{
+		this.Class.XLSX = oPr;
+	}
+
+	function CChangesPartChartSpaceBinary(Class, Old, New, Color) {
+		AscDFH.CChangesPartBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetPartBinaryData, Color);
+	}
+	CChangesPartChartSpaceBinary.prototype = Object.create(AscDFH.CChangesPartBinaryData.prototype);
+	CChangesPartChartSpaceBinary.prototype.constructor = CChangesPartChartSpaceBinary;
+
+	function CChangesEndChartSpaceBinary(Class, Old, New, Color) {
+		AscDFH.CChangesEndBinaryData.call(this, Class, Old, New, AscDFH.historyitem_ChartSpace_SetEndBinaryData, Color);
+	}
+	CChangesEndChartSpaceBinary.prototype = Object.create(AscDFH.CChangesEndBinaryData.prototype);
+	CChangesEndChartSpaceBinary.prototype.constructor = CChangesEndChartSpaceBinary;
+	CChangesEndChartSpaceBinary.prototype.setBinaryDataToClass = function (oPr)
+	{
+		this.Class.XLSX = oPr;
+	}
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStartBinaryData] = CChangesStartChartSpaceBinary;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPartBinaryData] = CChangesPartChartSpaceBinary;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetEndBinaryData] = CChangesEndChartSpaceBinary;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
-	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetBDeleted] = CChangesDrawingsBool;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetBDeleted] = CChangesDrawingsBool;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetParent] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetDate1904] = CChangesDrawingsBool;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetExternalData] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetLang] = CChangesDrawingsString;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetExternalReference] = CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPivotSource] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPrintSettings] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetProtection] = CChangesDrawingsObject;
@@ -532,8 +569,9 @@ function(window, undefined) {
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetThemeOverride] = function (oClass, value) {
 		oClass.themeOverride = value;
 	};
-	drawingsChangesMap[AscDFH.historyitem_ShapeSetBDeleted] = function (oClass, value) {
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetBDeleted] = function (oClass, value) {
 		oClass.bDeleted = value;
+		checkExternalChart(oClass);
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetParent] = function (oClass, value) {
 		oClass.oldParent = oClass.parent;
@@ -553,6 +591,13 @@ function(window, undefined) {
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetLang] = function (oClass, value) {
 		oClass.lang = value;
+	};
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetExternalReference] = function (oClass, value) {
+		oClass.externalReference = value;
+		if (value) {
+			value.chart = oClass;
+		}
+		checkExternalChart(oClass);
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetPivotSource] = function (oClass, value) {
 		oClass.pivotSource = value;
@@ -1306,11 +1351,15 @@ function(window, undefined) {
 
 	function CChartSpace() {
 		AscFormat.CGraphicObjectBase.call(this);
+		this.isFrameChart = false;
+
 		this.nvGraphicFramePr = null;
 		this.chart = null;
 		this.clrMapOvr = null;
 		this.date1904 = false;
 		this.externalData = null;
+		this.XLSX = new Uint8Array(0);
+		this.externalReference = null;
 		this.lang = null;
 		this.pivotSource = null;
 		this.printSettings = null;
@@ -1421,6 +1470,672 @@ function(window, undefined) {
 		}
 		if (oChartSpace.textLink !== null) {
 			this.setTextLink(oChartSpace.textLink);
+		}
+	};
+
+	CChartSpace.prototype.applySpecialPasteProps = function ()
+	{
+		const oSpecialProps = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
+		const oApi = Asc.editor || editor;
+		switch (oSpecialProps)
+		{
+			case Asc.c_oSpecialPasteProps.sourceFormattingEmbedding:
+			case Asc.c_oSpecialPasteProps.destinationFormattingEmbedding:
+			{
+				this.setExternalReference(null);
+				break;
+			}
+			case Asc.c_oSpecialPasteProps.sourceFormattingLink:
+			case Asc.c_oSpecialPasteProps.destinationFormattingLink:
+			{
+				this.setXLSX(new Uint8Array(0));
+				break;
+			}
+			case Asc.c_oSpecialPasteProps.destinationFormatting:
+			case Asc.c_oSpecialPasteProps.sourceformatting:
+			case undefined:
+			case null:
+			{
+				if (this.canPasteExternal())
+				{
+					this.setXLSX(new Uint8Array(0));
+				}
+				else
+				{
+					this.setExternalReference(null);
+				}
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+		if (this.XLSX.length)
+		{
+			if (oApi.isOpenOOXInBrowser && !AscCommon.checkOOXMLSignature(this.XLSX))
+			{
+				const base64 = oApi.frameManager.getEncodedArray(this.XLSX).toUtf8();
+				const oThis = this;
+				oApi.getConvertedXLSXFileFromUrl({data: base64}, Asc.c_oAscFileType.XLSX, function (arrBinaryData) {
+					if (arrBinaryData)
+					{
+						oThis.setXLSX(arrBinaryData);
+					}
+					else
+					{
+						oThis.setXLSX(new Uint8Array(0));
+					}
+				});
+			}
+		}
+	};
+	CChartSpace.prototype.getXLSXFromCache = function () {
+		const oApi = Asc.editor;
+		return AscFormat.ExecuteNoHistory(function () {
+			const oWorkbook = new AscCommonExcel.Workbook(undefined, oApi);
+			oWorkbook.dependencyFormulas.lockRecal();
+			oWorkbook.DrawingDocument = oApi.getDrawingDocument();
+			const oInitOpenManager = new AscCommonExcel.InitOpenManager();
+			oInitOpenManager.initSchemeAndTheme(oWorkbook);
+			oInitOpenManager.readDefStyles(oWorkbook, oWorkbook.CellStyles.DefaultStyles);
+			const mapWorksheets = this.getWorksheetsFromCache(oWorkbook, false, true);
+			for (let sSheetName in mapWorksheets) {
+				oWorkbook.aWorksheets.push(mapWorksheets[sSheetName].ws);
+			}
+			if (oApi.isOpenOOXInBrowser) {
+				let arrData;
+				oApi.saveDocumentToZip(oWorkbook, AscCommon.c_oEditorId.Spreadsheet, function (data) {
+					arrData = data;
+				});
+				return arrData;
+			} else {
+				const oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(oWorkbook);
+				oBinaryFileWriter.Write();
+				return oBinaryFileWriter.Memory.data.slice();
+			}
+		}, this, []);
+	};
+	CChartSpace.prototype.getWorksheetsFromCache = function (oParentWb, bInsertWorksheets, bCreateXLSX)
+	{
+		let bFirst = true;
+		const mapWorksheets = {};
+
+		function fFillCell(oCell, sNumFormat, value)
+		{
+			const oCellValue = new AscCommonExcel.CCellValue();
+			if (AscFormat.isRealNumber(value))
+			{
+				oCellValue.number = value;
+				oCellValue.type = AscCommon.CellValueType.Number;
+			}
+			else
+			{
+				oCellValue.text = value;
+				oCellValue.type = AscCommon.CellValueType.String;
+			}
+			oCell.setNumFormat(sNumFormat);
+			if (bCreateXLSX) {
+					oCell._setValueData(oCellValue);
+			} else {
+				oCell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+			}
+		}
+
+		function fillTableFromRef(ref)
+		{
+			const oCache = ref.numCache ? ref.numCache : (ref.strCache ? ref.strCache : null);
+			if (oCache)
+			{
+				const sFormatCode = (typeof oCache.formatCode === "string" && oCache.formatCode.length > 0) ? oCache.formatCode : "General";
+
+				let sFormula = ref.f + "";
+				if (sFormula[0] === '(')
+					sFormula = sFormula.slice(1);
+				if (sFormula[sFormula.length - 1] === ')')
+					sFormula = sFormula.slice(0, -1);
+
+				const f1 = sFormula;
+				const arrF = f1.split(",");
+
+				let nPtIndex = 0, nPtCount;
+				for (let i = 0; i < arrF.length; ++i)
+				{
+					var oParsedRef = AscCommon.parserHelp.parse3DRef(arrF[i]);
+					if (oParsedRef)
+					{
+						const sSheetName  = oParsedRef.sheet;
+						if  (!mapWorksheets[sSheetName])
+						{
+							let ws;
+							if (bInsertWorksheets) {
+								if (bFirst) {
+									bFirst = false;
+									ws = oParentWb.getWorksheet(0);
+									ws.setName(sSheetName);
+								} else {
+									ws = oParentWb.createWorksheet(oParentWb.aWorksheets.length, sSheetName);
+								}
+							} else {
+								ws = new AscCommonExcel.Worksheet(oParentWb);
+								ws.sName = sSheetName;
+							}
+							mapWorksheets[sSheetName] = {};
+							mapWorksheets[sSheetName].ws = ws;
+							mapWorksheets[sSheetName].maxR = 0;
+							mapWorksheets[sSheetName].maxC = 0;
+						}
+						const oWorksheet = mapWorksheets[sSheetName].ws;
+						var range = oWorksheet.getRange2(oParsedRef.range);
+						if (range)
+						{
+							range = range.bbox;
+
+							if (range.r1 > mapWorksheets[sSheetName].maxR)
+								mapWorksheets[sSheetName].maxR = range.r1;
+							if (range.r2 > mapWorksheets[sSheetName].maxR)
+								mapWorksheets[sSheetName].maxR = range.r2;
+
+							if (range.c1 > mapWorksheets[sSheetName].maxC)
+								mapWorksheets[sSheetName].maxC = range.c1;
+							if (range.c2 > mapWorksheets[sSheetName].maxC)
+								mapWorksheets[sSheetName].maxC = range.c2;
+
+							if (i === arrF.length - 1)
+							{
+								nPtCount = oCache.getPtCount();
+								if ((nPtCount - nPtIndex) <= (range.r2 - range.r1 + 1))
+								{
+									for (let k = range.c1; k <= range.c2; ++k)
+									{
+										for (let j = range.r1; j <= range.r2; ++j)
+										{
+											oWorksheet._getCell(j, k, function (cell)
+											{
+												const oPt = oCache.getPtByIndex(nPtIndex + j - range.r1);
+												if (oPt)
+												{
+													fFillCell(cell, typeof oPt.formatCode === "string" && oPt.formatCode.length > 0 ? oPt.formatCode : sFormatCode, oPt.val);
+												}
+											});
+										}
+									}
+									nPtIndex += (range.r2 - range.r1 + 1);
+								}
+								else if ((nPtCount - nPtIndex) <= (range.c2 - range.c1 + 1))
+								{
+									for (let k = range.r1; k <= range.r2; ++k)
+									{
+										for (let j = range.c1; j <= range.c2; ++j)
+										{
+											oWorksheet._getCell(k, j, function (cell)
+											{
+												const oPt = oCache.getPtByIndex(nPtIndex + j - range.c1);
+												if (oPt)
+												{
+													fFillCell(cell, typeof oPt.formatCode === "string" && oPt.formatCode.length > 0 ? oPt.formatCode : sFormatCode, oPt.val);
+												}
+											});
+										}
+									}
+									nPtIndex += (range.c2 - range.c1 + 1);
+								}
+							}
+							else
+							{
+								if (range.r1 === range.r2)
+								{
+									for (let j = range.c1; j <= range.c2; ++j)
+									{
+										oWorksheet._getCell(range.r1, j, function (cell)
+										{
+											const oPt = oCache.getPtByIndex(nPtIndex);
+											if (oPt)
+											{
+												fFillCell(cell, typeof oPt.formatCode === "string" && oPt.formatCode.length > 0 ? oPt.formatCode : sFormatCode, oPt.val);
+											}
+											++nPtIndex;
+										});
+									}
+								}
+								else
+								{
+									for (let j = range.r1; j <= range.r2; ++j)
+									{
+										oWorksheet._getCell(j, range.c1, function (cell)
+										{
+											const oPt = oCache.getPtByIndex(nPtIndex);
+											if (oPt)
+											{
+												fFillCell(cell, typeof oPt.formatCode === "string" && oPt.formatCode.length > 0 ? oPt.formatCode : sFormatCode, oPt.val);
+											}
+											++nPtIndex;
+										});
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		const arrSeries = this.getAllSeries();
+		for (let i = 0; i < arrSeries.length; i += 1)
+		{
+			const oSeria = arrSeries[i];
+			const oVal = oSeria.val || oSeria.yVal;
+			if (oVal && oVal.numRef)
+			{
+				fillTableFromRef(oVal.numRef);
+			}
+			const oCat = oSeria.cat || oSeria.xVal;
+			if (oCat)
+			{
+				if (oCat.numRef)
+				{
+					fillTableFromRef(oCat.numRef);
+				}
+				if (oCat.strRef)
+				{
+					fillTableFromRef(oCat.strRef);
+				}
+			}
+			if (oSeria.tx && oSeria.tx.strRef)
+			{
+				fillTableFromRef(oSeria.tx.strRef);
+			}
+		}
+		return mapWorksheets;
+	};
+	CChartSpace.prototype.isEqualCacheAndWorkbookData = function ()
+	{
+		function IsEqualRefCacheAndWorkbookData(oRef)
+		{
+			let bEqualData = true;
+			const oCache = oRef.numCache ? oRef.numCache : (oRef.strCache ? oRef.strCache : null);
+			if (oCache)
+			{
+				let sFormula = oRef.f + "";
+				const arrParsedRef = AscFormat.fParseChartFormula(sFormula);
+				if (!Array.isArray(arrParsedRef) || arrParsedRef.length === 0)
+				{
+					return bEqualData;
+				}
+				let nPtIndex = 0;
+				for (let i = 0; i < arrParsedRef.length; ++i)
+				{
+					const oParsedRef = arrParsedRef[i];
+					const oRange = oParsedRef.bbox;
+					const oWorksheet = oParsedRef.worksheet;
+					if (oRange)
+					{
+						if (oRange.r1 === oRange.r2)
+						{
+							for (let j = oRange.c1; j <= oRange.c2; ++j)
+							{
+								oWorksheet._getCell(oRange.r1, j, function (cell)
+								{
+									const oPt = oCache.getPtByIndex(nPtIndex);
+									if (oPt)
+									{
+										bEqualData = cell.getValue() === String(oPt.val);
+									}
+									++nPtIndex;
+								});
+								if (!bEqualData)
+								{
+									return bEqualData;
+								}
+							}
+						}
+						else
+						{
+							for (let j = oRange.r1; j <= oRange.r2; ++j)
+							{
+								oWorksheet._getCell(j, oRange.c1, function (cell)
+								{
+									const oPt = oCache.getPtByIndex(nPtIndex);
+									if (oPt)
+									{
+										bEqualData = cell.getValue() === String(oPt.val);
+									}
+									++nPtIndex;
+								});
+								if (!bEqualData)
+								{
+									return bEqualData;
+								}
+							}
+						}
+					}
+				}
+			}
+			return bEqualData;
+		}
+
+		const arrSeries = this.getAllSeries();
+		for (let i = 0; i < arrSeries.length; i += 1)
+		{
+			const oSeria = arrSeries[i];
+			const oVal = oSeria.val || oSeria.yVal;
+			if (oVal && oVal.numRef)
+			{
+				if (!IsEqualRefCacheAndWorkbookData(oVal.numRef))
+				{
+					return false;
+				}
+			}
+			const oCat = oSeria.cat || oSeria.xVal;
+			if (oCat)
+			{
+				if (oCat.numRef)
+				{
+					if (!IsEqualRefCacheAndWorkbookData(oCat.numRef))
+					{
+						return false;
+					}
+				}
+				if (oCat.strRef)
+				{
+					if (!IsEqualRefCacheAndWorkbookData(oCat.strRef))
+					{
+						return false;
+					}
+				}
+			}
+			if (oSeria.tx && oSeria.tx.strRef)
+			{
+				if (!IsEqualRefCacheAndWorkbookData(oSeria.tx.strRef))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	};
+	CChartSpace.prototype.canPasteExternal = function ()
+	{
+		const oExternalReference = this.getExternalReference();
+		if (oExternalReference)
+		{
+			const oReferenceData = oExternalReference.referenceData;
+			if (oReferenceData)
+			{
+				const oApi = Asc.editor || editor;
+				const oDocInfo = oApi.DocInfo;
+				const oDocumentReferenceData = oDocInfo && oDocInfo.ReferenceData;
+				if (oDocumentReferenceData)
+				{
+					return oDocumentReferenceData['fileKey'] === oReferenceData['fileKey'] && oDocumentReferenceData['instanceId'] === oReferenceData['instanceId'];
+				}
+			}
+			return true;
+		}
+		return false;
+
+	};
+	CChartSpace.prototype.getSpecialPasteProps = function ()
+	{
+		const oSpecialProps = Asc.c_oSpecialPasteProps;
+		const mapProps = {};
+
+		mapProps[oSpecialProps.destinationFormatting] = [];
+		mapProps[oSpecialProps.sourceformatting] = [];
+		mapProps[oSpecialProps.picture] = [oSpecialProps.picture];
+		if (this.canPasteExternal())
+		{
+			mapProps[oSpecialProps.destinationFormatting].push(oSpecialProps.destinationFormattingLink);
+			mapProps[oSpecialProps.sourceformatting].push(oSpecialProps.sourceFormattingLink);
+		}
+		if (this.XLSX && this.XLSX.length)
+		{
+			mapProps[oSpecialProps.destinationFormatting].push(oSpecialProps.destinationFormattingEmbedding);
+			mapProps[oSpecialProps.sourceformatting].push(oSpecialProps.sourceFormattingEmbedding);
+		}
+		return mapProps;
+	};
+	CChartSpace.prototype.convertToFrameChart = function ()
+	{
+		this.isFrameChart = true;
+	};
+	CChartSpace.prototype.getExternalReference = function ()
+	{
+		return this.externalReference;
+	}
+	CChartSpace.prototype.getExternalPath = function ()
+	{
+		return this.externalReference && this.externalReference.Id;
+	}
+	CChartSpace.prototype.isExternal = function()
+	{
+		return !!this.externalReference;
+	}
+	CChartSpace.prototype.getAscSettings = function ()
+	{
+		const chart = this.chart;
+		const plot_area = chart.plotArea;
+		const ret = new Asc.asc_ChartSettings();
+		ret.chartSpace = this;
+		const range_obj = this.getRangeObjectStr();
+		if (range_obj) {
+			if (typeof range_obj.range === "string" && range_obj.range.length > 0) {
+				ret.putRange(range_obj.range);
+				ret.putInColumns(!range_obj.bVert);
+			}
+		}
+
+		ret.putStyle(this.getChartStyleIdx());
+
+		ret.putTitle(isRealObject(chart.title) ? (chart.title.overlay ? c_oAscChartTitleShowSettings.overlay : c_oAscChartTitleShowSettings.noOverlay) : c_oAscChartTitleShowSettings.none);
+
+		const oOrderedAxes = this.getOrderedAxes();
+		let aAx = oOrderedAxes.getHorizontalAxes();
+		for (let nAx = 0; nAx < aAx.length; ++nAx) {
+			ret.addHorAxesProps(aAx[nAx].getMenuProps());
+		}
+		aAx = oOrderedAxes.getVerticalAxes();
+		for (let nAx = 0; nAx < aAx.length; ++nAx) {
+			ret.addVertAxesProps(aAx[nAx].getMenuProps());
+		}
+
+		if (chart.legend) {
+			ret.putLegendPos(chart.legend.getPropsPos());
+		} else {
+			ret.putLegendPos(c_oAscChartLegendShowSettings.none);
+		}
+		ret.putType(this.getChartType());
+
+		//TODO: change work with labels and markers
+		const aPositions = this.getPossibleDLblsPosition();
+		const nDefaultDatalabelsPos = aPositions[0];
+		const oFirstChart = plot_area.charts[0];
+		const aSeries = oFirstChart.series;
+		const oFirstSeries = aSeries[0];
+		const data_labels = oFirstChart.dLbls;
+
+		if (data_labels) {
+			if (oFirstSeries && oFirstSeries.dLbls) {
+				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls);
+			} else {
+				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, data_labels);
+			}
+		} else {
+			if (oFirstSeries && oFirstSeries.dLbls) {
+				ret._collectPropsFromDLbls(nDefaultDatalabelsPos, oFirstSeries.dLbls);
+			} else {
+				ret.putShowSerName(false);
+				ret.putShowCatName(false);
+				ret.putShowVal(false);
+				ret.putSeparator("");
+				ret.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+			}
+		}
+		let bNoLine, bSmooth;
+		if (oFirstChart.getObjectType() === AscDFH.historyitem_type_LineChart) {
+			bNoLine = oFirstChart.isNoLine();
+			bSmooth = oFirstChart.isSmooth();
+			if (!bNoLine) {
+				ret.putLine(true);
+				ret.putSmooth(bSmooth);
+			} else {
+				ret.putLine(false);
+			}
+		} else if (oFirstChart.getObjectType() === AscDFH.historyitem_type_ScatterChart) {
+			ret.bLine = !oFirstChart.isNoLine();
+			ret.smooth = oFirstChart.isSmooth();
+			ret.showMarker = oFirstChart.isMarkerChart();
+		}
+		ret.putView3d(this.getView3d());
+		return ret;
+	};
+	CChartSpace.prototype.applyChartSettings = function (oProps)
+	{
+		const oCurProps = this.getAscSettings();
+		if (oCurProps.isEqual(oProps)) {
+			this.setDLblsDeleteValue(false);
+			return;
+		}
+
+		//for bug http://bugzilla.onlyoffice.com/show_bug.cgi?id=35570 TODO: check it
+		const nType = oProps.getType();
+		const nCurType = oCurProps.getType();
+		let bEmpty;
+		if (nType === nCurType) {
+			oProps.type = null;
+			bEmpty = oProps.isEmpty();
+			oProps.type = nType;
+			if (bEmpty) {
+				return;
+			}
+		}
+
+		//Set the properties which was already set. It needs for the fast coediting. TODO: check it
+		this.setChart(this.chart.createDuplicate());
+		this.setStyle(this.style);
+
+		//Apply chart preset TODO: remove this when chartStyle will be implemented
+		const oChart = this.chart;
+		const oPlotArea = oChart.plotArea;
+		const nStyle = oProps.getStyle();
+		const nCurStyle = oCurProps.getStyle();
+		if (AscFormat.isRealNumber(nStyle)) {
+			oProps.putStyle(null);
+			oCurProps.putStyle(null);
+			if (oCurProps.isEqual(oProps) || (window['IS_NATIVE_EDITOR'] && nCurStyle !== nStyle)) {
+				var aTypeStyles = AscCommon.g_oChartStyles[nCurType];
+				if (aTypeStyles) {
+					var aStyle = aTypeStyles[nStyle - 1];
+					if (aStyle) {
+						this.applyChartStyleByIds(aStyle);
+						return;
+					}
+				}
+				return;
+			}
+			oCurProps.putStyle(nCurStyle);
+			oProps.putStyle(nStyle);
+		}
+
+		//Set the data range
+		//TODO: Rework this
+		const sRange = oProps.getRange();
+		if (typeof sRange === "string") {
+			this.setRange(sRange);
+		}
+
+		//Title
+		const nTitle = oProps.getTitle();
+		let oTitle, bOverlay;
+		if (nTitle === c_oAscChartTitleShowSettings.none) {
+			if (oChart.title) {
+				oChart.setTitle(null);
+			}
+		} else if (nTitle === c_oAscChartTitleShowSettings.noOverlay
+			|| nTitle === c_oAscChartTitleShowSettings.overlay) {
+			oTitle = oChart.title;
+			if (!oTitle) {
+				oTitle = new AscFormat.CTitle();
+				oChart.setTitle(oTitle);
+			}
+			bOverlay = (nTitle === c_oAscChartTitleShowSettings.overlay);
+			if (oTitle.overlay !== bOverlay) {
+				oTitle.setOverlay(bOverlay);
+			}
+			this.checkElementChartStyle(oTitle);
+		}
+
+		//Legend
+		let nLegend = oProps.getLegendPos(), oLegend;
+		bOverlay = (c_oAscChartLegendShowSettings.leftOverlay === nLegend || nLegend === c_oAscChartLegendShowSettings.rightOverlay);
+		if (bOverlay) {
+			if (c_oAscChartLegendShowSettings.leftOverlay === nLegend) {
+				nLegend = c_oAscChartLegendShowSettings.left;
+			}
+			if (c_oAscChartLegendShowSettings.rightOverlay === nLegend) {
+				nLegend = c_oAscChartLegendShowSettings.right;
+			}
+		}
+		if (nLegend !== null) {
+			if (nLegend === c_oAscChartLegendShowSettings.none) {
+				if (oChart.legend) {
+					oChart.setLegend(null);
+				}
+			} else {
+				oLegend = oChart.legend;
+				let bChange = false;
+				if (!oLegend) {
+					oLegend = new AscFormat.CLegend();
+					oChart.setLegend(oLegend);
+					bChange = true;
+				}
+				if (oLegend.legendPos !== nLegend && nLegend !== c_oAscChartLegendShowSettings.layout) {
+					oLegend.setLegendPos(nLegend);
+					bChange = true;
+				}
+				if (oLegend.overlay !== bOverlay) {
+					oLegend.setOverlay(bOverlay);
+					bChange = true;
+				}
+				if (bChange) {
+					oLegend.setLayout(new AscFormat.CLayout());
+				}
+				this.checkElementChartStyle(oLegend);
+			}
+		}
+
+		this.changeChartType(oProps.getType());
+		var oOrderedAxes = this.getOrderedAxes();
+		var aAx = oOrderedAxes.getHorizontalAxes();
+		var aAxSettings = oProps.getHorAxesProps();
+		var nAx;
+		if (aAx.length === aAxSettings.length) {
+			for (nAx = 0; nAx < aAx.length; ++nAx) {
+				this.checkElementChartStyle(aAx[nAx]);
+				aAx[nAx].setMenuProps(aAxSettings[nAx]);
+			}
+		}
+		aAx = oOrderedAxes.getVerticalAxes();
+		aAxSettings = oProps.getVertAxesProps();
+		if (aAx.length === aAxSettings.length) {
+			for (nAx = 0; nAx < aAx.length; ++nAx) {
+				this.checkElementChartStyle(aAx[nAx]);
+				aAx[nAx].setMenuProps(aAxSettings[nAx]);
+			}
+		}
+
+		this.setDlblsProps(oProps);
+		var oTypedChart;
+		oTypedChart = oPlotArea.charts[0];
+		if (oTypedChart.getObjectType() === AscDFH.historyitem_type_LineChart && !this.is3dChart()) {
+			oTypedChart.setLineParams(oProps.showMarker, oProps.bLine, oProps.smooth)
+		}
+		if (oTypedChart.getObjectType() === AscDFH.historyitem_type_ScatterChart) {
+			oTypedChart.setLineParams(oProps.showMarker, oProps.bLine, oProps.smooth);
+		}
+		let oView3D = oProps.view3D;
+		if (oView3D) {
+			this.changeView3d(oView3D);
 		}
 	};
 	CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
@@ -2925,6 +3640,11 @@ function(window, undefined) {
 		}
 		this.spPr.setFill(this.spPr.Fill ? this.spPr.Fill.createDuplicate() : this.spPr.Fill);
 	};
+	CChartSpace.prototype.setBDeleted = function (pr) {
+		History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ChartSpace_SetBDeleted, this.bDeleted, pr));
+		this.bDeleted = pr;
+		checkExternalChart(this);
+	};
 	CChartSpace.prototype.setFill = function (fill) {
 		if (!this.spPr) {
 			this.setSpPr(new AscFormat.CSpPr());
@@ -3313,7 +4033,18 @@ function(window, undefined) {
 		}
 		copy.setDate1904(this.date1904);
 		if (this.externalData) {
-			copy.setExternalData(this.externalData.createDuplicate());
+			const oCopyExternalData = {};
+			if (this.externalData.m_autoUpdate)
+			{
+				oCopyExternalData.m_autoUpdate = {m_val: this.externalData.m_autoUpdate.m_val};
+			}
+			copy.setExternalData(oCopyExternalData);
+		}
+		if (this.XLSX) {
+			copy.setXLSX(this.XLSX.slice());
+		}
+		if (this.externalReference) {
+			copy.setExternalReference(this.externalReference.createDuplicate());
 		}
 		copy.setLang(this.lang);
 		if (this.pivotSource) {
@@ -3577,6 +4308,9 @@ function(window, undefined) {
 				this.addToRecalculate();
 				break;
 			}
+			case AscDFH.historyitem_type_StrCache:
+			case AscDFH.historyitem_type_MultiLvlStrCache:
+			case AscDFH.historyitem_type_NumLit:
 			case AscDFH.historyitem_ChartSpace_SetChart: {
 				this.handleUpdateType();
 				break;
@@ -3782,6 +4516,32 @@ function(window, undefined) {
 		History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetExternalData, this.externalData, externalData));
 		this.externalData = externalData;
 	};
+	CChartSpace.prototype.setXLSX = function (arrData)
+	{
+		AscDFH.addBinaryDataToHistory(this, this.XLSX, arrData, CChangesStartChartSpaceBinary, CChangesPartChartSpaceBinary, CChangesEndChartSpaceBinary);
+		this.XLSX = arrData;
+	};
+	CChartSpace.prototype.setExternalReference = function (oExternalReference)
+	{
+		History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetExternalReference, this.externalReference, oExternalReference));
+		this.externalReference = oExternalReference;
+		if (this.externalReference) {
+			this.externalReference.chart = this;
+		}
+		checkExternalChart(this);
+	};
+	CChartSpace.prototype.setExternalPath = function (sPath)
+	{
+		const oReference = new AscCommonExcel.CChartExternalReference(this);
+		oReference.Id = sPath;
+		this.setExternalReference(oReference);
+	};
+	CChartSpace.prototype.setPortalData = function (fileKey, instanceId)
+	{
+		const oReference = new AscCommonExcel.CChartExternalReference(this);
+		oReference.setReferenceData(fileKey, instanceId);
+		this.setExternalReference(oReference);
+	};
 	CChartSpace.prototype.setLang = function (lang) {
 		History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ChartSpace_SetLang, this.lang, lang));
 		this.lang = lang;
@@ -3860,36 +4620,44 @@ function(window, undefined) {
 	CChartSpace.prototype.clearChartDataCache = function () {
 		this.clearDataCache();
 	};
-	CChartSpace.prototype.recalculateReferences = function () {
-		var oSelectedSeries = this.getSelectedSeries();
-		if (AscFormat.isRealNumber(this.selection.series)) {
-			if (!oSelectedSeries) {
-				this.selection.series = null;
-				this.selection.datPoint = null;
-				this.selection.markers = null;
+	CChartSpace.prototype.recalculateReferences = function (bWithHistory) {
+		const oThis = this;
+		const fCallback = function () {
+			var oSelectedSeries = oThis.getSelectedSeries();
+			if (AscFormat.isRealNumber(oThis.selection.series)) {
+				if (!oSelectedSeries) {
+					oThis.selection.series = null;
+					oThis.selection.datPoint = null;
+					oThis.selection.markers = null;
+				}
 			}
-		}
-		var worksheet = this.worksheet;
-		if (!worksheet)
-			return;
-		var charts, series, i, j, ser;
-		charts = this.chart.plotArea.charts;
-		for (i = 0; i < charts.length; ++i) {
-			series = charts[i].series;
-			for (j = 0; j < series.length; ++j) {
-				series[j].updateData(this.displayEmptyCellsAs, this.displayHidden);
+			var worksheet = oThis.worksheet;
+			if (!worksheet)
+				return;
+			var charts, series, i, j, ser;
+			charts = oThis.chart.plotArea.charts;
+			for (i = 0; i < charts.length; ++i) {
+				series = charts[i].series;
+				for (j = 0; j < series.length; ++j) {
+					series[j].updateData(oThis.displayEmptyCellsAs, oThis.displayHidden);
+				}
 			}
-		}
-		var aTitles = this.getAllTitles();
-		for (i = 0; i < aTitles.length; ++i) {
-			var oTitle = aTitles[i];
-			if (oTitle.tx) {
-				oTitle.tx.update();
+			var aTitles = oThis.getAllTitles();
+			for (i = 0; i < aTitles.length; ++i) {
+				var oTitle = aTitles[i];
+				if (oTitle.tx) {
+					oTitle.tx.updateWithHistory();
+				}
 			}
-		}
-		var aAxis = this.chart.plotArea.axId;
-		for (i = 0; i < aAxis.length; ++i) {
-			aAxis[i].updateNumFormat();
+			var aAxis = oThis.chart.plotArea.axId;
+			for (i = 0; i < aAxis.length; ++i) {
+				aAxis[i].updateNumFormat();
+			}
+		};
+		if (bWithHistory) {
+			fCallback();
+		} else {
+			AscFormat.ExecuteNoHistory(fCallback, this, []);
 		}
 	};
 	CChartSpace.prototype.checkEmptyVal = function (val) {
@@ -9578,6 +10346,10 @@ function(window, undefined) {
 			}
 		}
 		return  oCurCandidate;
+	};
+
+	CChartSpace.prototype.isWorkbookChart = function () {
+		return false;
 	};
 
 	CChartSpace.prototype.updateView = CChartSpace.prototype["updateView"] = function (sDivId) {

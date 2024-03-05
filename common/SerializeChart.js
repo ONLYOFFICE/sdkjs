@@ -218,6 +218,8 @@ var c_oserct_chartspaceTHEMEOVERRIDE = 15;
 var c_oserct_chartspaceXLSX = 16;
 var c_oserct_chartspaceSTYLES = 17;
 var c_oserct_chartspaceCOLORS = 18;
+var c_oserct_chartspaceXLSXEXTERNAL = 19;
+var c_oserct_chartspaceXLSXZIP = 20;
 
 
 var c_oserct_usershapes_COUNT = 0;
@@ -1200,6 +1202,10 @@ var c_oserct_chartExDataValueCONTENT = 1;
 // extens ... 0x80
 var c_oserct_dataLabel = 0x81;
 var c_oserct_chartFiltering = 0x82;
+var c_oserct_chartDataDisplayNaAsBlank = 0x83;
+const c_oserct_chartExternalReference = 0x84;
+const c_oserct_chartDataExternalFileKey = 0x85;
+const c_oserct_chartDataExternalInstanceId = 0x86;
 
 var c_oserct_dataLabelsRange = 0x90;
 var c_oserct_filteredLineSeries = 0x91;
@@ -1292,8 +1298,81 @@ BinaryChartWriter.prototype.WriteCT_extLst = function (oVal) {
         }
     }
 };
-BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
-    var oThis = this;
+
+	BinaryChartWriter.prototype.WriteExtensions = function (arrExt) {
+		for (let i = 0; i < arrExt.length; i++)
+		{
+			const oExt = arrExt[i];
+			if (oExt.referenceData)
+			{
+				this.WriteCT_PortalData(oExt.referenceData);
+			}
+		}
+	};
+
+	BinaryChartWriter.prototype.WriteCT_PortalData = function (oVal)
+	{
+		const oThis = this;
+		this.bs.WriteItem(c_oserct_chartExternalReference, function ()
+		{
+			if (oVal['fileKey'])
+			{
+				oThis.bs.WriteItem(c_oserct_chartDataExternalFileKey, function ()
+				{
+					oThis.memory.WriteString3(AscCommonExcel.encodeXmlPath(oVal['fileKey'], true, true));
+				});
+			}
+			if (oVal['instanceId'])
+			{
+				oThis.bs.WriteItem(c_oserct_chartDataExternalInstanceId, function ()
+				{
+					oThis.memory.WriteString3(oVal['instanceId']);
+				});
+			}
+		});
+	}
+BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal, oCopyPaste) {
+    const oThis = this;
+		let bWriteExternalReference = true;
+		if (oCopyPaste && oCopyPaste.isExcel)
+		{
+			const wb = oCopyPaste.wb;
+				let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+				if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]())
+				{
+					const sPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
+					oThis.memory.WriteByte(c_oserct_chartspaceXLSXEXTERNAL);
+					oThis.memory.WriteString2(AscCommonExcel.encodeXmlPath(sPath));
+				}
+				else if (wb && wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.ReferenceData)
+				{
+					this.WriteCT_PortalData(wb.oApi.DocInfo.ReferenceData);
+					bWriteExternalReference = false;
+				}
+				const arrXLSX = oCopyPaste.getCachedWorkbookBinaryData();
+				if (arrXLSX && arrXLSX.length)
+				{
+					this.bs.WriteItem(c_oserct_chartspaceXLSX, function () {
+						oThis.memory.WriteBuffer(arrXLSX, 0, arrXLSX.length);
+					});
+				}
+		}
+		else
+		{
+			let XLSX = (oVal.XLSX && oVal.XLSX.length) ? oVal.XLSX : null;
+			if (oVal.externalReference && oVal.externalReference.Id) {
+				oThis.memory.WriteByte(c_oserct_chartspaceXLSXEXTERNAL);
+				oThis.memory.WriteString2(AscCommonExcel.encodeXmlPath(oVal.externalReference.Id));
+			} else if (!oVal.isWorkbookChart() && !XLSX) {
+				XLSX = oVal.getXLSXFromCache();
+			}
+			if (XLSX) {
+				const nBinaryType = AscCommon.checkOOXMLSignature(XLSX) ? c_oserct_chartspaceXLSXZIP : c_oserct_chartspaceXLSX;
+				this.bs.WriteItem(nBinaryType, function () {
+					oThis.memory.WriteBuffer(XLSX, 0, XLSX.length);
+				});
+			}
+		}
     if (null != oVal.date1904) {
         this.bs.WriteItem(c_oserct_chartspaceDATE1904, function () {
             oThis.WriteCT_Boolean(oVal.date1904);
@@ -1357,17 +1436,24 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
             oThis.WriteTxPr(oVal.txPr);
         });
     }
-    //var oCurVal = oVal.m_externalData;
-    //if (null != oCurVal) {
-    //    this.bs.WriteItem(c_oserct_chartspaceEXTERNALDATA, function () {
-    //        oThis.WriteCT_ExternalData(oCurVal);
-    //    });
-    //}
+    var oCurVal = oVal.m_externalData;
+    if (null != oCurVal) {
+       this.bs.WriteItem(c_oserct_chartspaceEXTERNALDATA, function () {
+           oThis.WriteCT_ExternalData(oCurVal);
+       });
+    }
     if (null != oVal.printSettings) {
         this.bs.WriteItem(c_oserct_chartspacePRINTSETTINGS, function () {
             oThis.WriteCT_PrintSettings(oVal.printSettings);
         });
     }
+
+		const arrExt = [];
+		if (bWriteExternalReference && oVal.externalReference && oVal.externalReference.referenceData)
+		{
+			arrExt.push({referenceData: oVal.externalReference.referenceData});
+		}
+		this.WriteExtensions(arrExt);
 
     if(oVal.userShapes.length > 0){
         this.bs.WriteItem(c_oserct_chartspaceUSERSHAPES, function () {
@@ -6062,6 +6148,21 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
     var oNewVal;
+		if (type > 0x80)
+		{
+			const oExt = {val: {}};
+			res = this.ReadExtensions(type, length, oExt);
+			if (type === c_oserct_chartExternalReference && res === c_oSerConstants.ReadOk)
+			{
+				let sFileKey = oExt.val['fileKey'];
+				if (sFileKey)
+				{
+					sFileKey = AscCommonExcel.decodeXmlPath(oExt.val['fileKey'], true);
+				}
+				val.setPortalData(sFileKey, oExt.val['instanceId']);
+			}
+			return res;
+		}
     if (c_oserct_chartspaceDATE1904 === type) {
         oNewVal = { m_val: null };
         res = this.bcr.Read1(length, function (t, l) {
@@ -6147,14 +6248,22 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         val.setTxPr(this.ReadTxPr(length));
         val.txPr.setParent(val);
     }
-    //else if (c_oserct_chartspaceEXTERNALDATA === type) {
-    //    oNewVal;
-    //    oNewVal = {};
-    //    res = this.bcr.Read1(length, function (t, l) {
-    //        return oThis.ReadCT_ExternalData(t, l, oNewVal);
-    //    });
-    //    val.m_externalData = oNewVal;
-    //}
+    else if (c_oserct_chartspaceEXTERNALDATA === type) {
+       oNewVal;
+       oNewVal = {};
+       res = this.bcr.Read1(length, function (t, l) {
+           return oThis.ReadCT_ExternalData(t, l, oNewVal);
+       });
+       val.m_externalData = oNewVal;
+    }
+		else if (c_oserct_chartspaceXLSXEXTERNAL === type) {
+			const sExternalPath = this.bcr.stream.GetString2LE(length);
+			if (sExternalPath)
+			{
+				val.setExternalPath(AscCommonExcel.decodeXmlPath(sExternalPath))
+			}
+			res = c_oSerConstants.ReadOk;
+    }
     else if (c_oserct_chartspacePRINTSETTINGS === type) {
         oNewVal = new AscFormat.CPrintSettings();
         res = this.bcr.Read1(length, function (t, l) {
@@ -6179,8 +6288,10 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         if (null != theme)
             val.setThemeOverride(theme);
     }
-    else if(c_oserct_chartspaceXLSX === type) {
-        //todo
+    else if(c_oserct_chartspaceXLSX === type || c_oserct_chartspaceXLSXZIP === type) {
+			const nCur = this.bcr.stream.cur;
+			const arrData = this.bcr.stream.data.slice(nCur, nCur + length);
+			val.setXLSX(arrData);
         res = c_oSerConstants.ReadUnknown;
     }
     else if(c_oserct_chartspaceSTYLES === type) {
@@ -6208,6 +6319,23 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
     }
     return res;
 };
+	BinaryChartReader.prototype.ReadCT_ChartExternalReference = function (type, length, val)
+	{
+		let res = c_oSerConstants.ReadOk;
+		switch (type)
+		{
+			case c_oserct_chartDataExternalFileKey:
+				val['fileKey'] = this.stream.GetString2LE(length);
+				break;
+			case c_oserct_chartDataExternalInstanceId:
+				val['instanceId'] = this.stream.GetString2LE(length);
+				break;
+			default:
+				res = c_oSerConstants.ReadUnknown;
+				break;
+		}
+		return res;
+	}
 BinaryChartReader.prototype.ReadSpPr = function (length) {
     return AscCommon.pptx_content_loader.ReadShapeProperty(this.stream);
 };
@@ -7381,6 +7509,24 @@ BinaryChartReader.prototype.ReadCT_Tx = function (type, length, val) {
         res = c_oSerConstants.ReadUnknown;
     return res;
 };
+	BinaryChartReader.prototype.ReadExtensions = function (type, length, val)
+	{
+		let res = c_oSerConstants.ReadOk;
+		const oThis = this;
+		switch (type)
+		{
+			case c_oserct_chartExternalReference:
+				res = this.bcr.Read1(length, function (t, l)
+				{
+					return oThis.ReadCT_ChartExternalReference(t, l, val.val);
+				});
+				break;
+			default:
+				res = c_oSerConstants.ReadUnknown;
+				break;
+		}
+		return res;
+	};
 BinaryChartReader.prototype.ReadCT_StrRef = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
@@ -12203,5 +12349,7 @@ BinaryChartReader.prototype.ReadAlternateContentFallback = function (type, lengt
 	window['AscFormat'].ERR_VAL_TYPE_PERCENTAGE    = ERR_VAL_TYPE_PERCENTAGE;
 	window['AscFormat'].ERR_VAL_TYPE_STD_DEV    = ERR_VAL_TYPE_STD_DEV;
 	window['AscFormat'].ERR_VAL_TYPE_STD_ERR    = ERR_VAL_TYPE_STD_ERR;
+
+	window['AscFormat'].c_oserct_chartspaceCHART    = c_oserct_chartspaceCHART;
 
 })(window);

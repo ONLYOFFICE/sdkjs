@@ -584,6 +584,7 @@
 		this.tmpViewRulers = null;
 		this.tmpZoomType   = null;
         this.tmpDocumentUnits = null;
+		this.tmpLocale = null;
 
         this.DocumentUrl     = "";
 		this.bNoSendComments = false;
@@ -642,6 +643,8 @@
 
 		this.isOnlyDemonstration = false;
 
+		this.frameLoader = null;
+
 		if (window.editor == undefined)
 		{
 			window.editor = this;
@@ -688,6 +691,7 @@
 		if (this.isReporterMode)
 			this.watermarkDraw = null;
 
+		this.externalChartCollector = new AscCommon.CExternalChartCollector();
 		this._init();
 	}
 
@@ -1224,7 +1228,7 @@
 
 	asc_docs_api.prototype.isDocumentModified = function()
 	{
-		if (!this.canSave)
+		if (!this.canSave || this.isOpenedFrameEditor)
 		{
 			// Пока идет сохранение, мы не закрываем документ
 			return true;
@@ -1427,7 +1431,19 @@
 	};
 	asc_docs_api.prototype.asc_setLocale = function(val)
 	{
+		if (!this.isLoadFullApi)
+		{
+			this.tmpLocale = val;
+			return;
+		}
 		this.locale = val;
+		const LCID = Asc.g_oLcidNameToIdMap[val];
+		if (AscCommon.setCurrentCultureInfo(LCID))
+		{
+			AscCommon.parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
+			AscCommon.oGeneralEditFormatCache.cleanCache();
+			AscCommon.oNumFormatCache.cleanCache();
+		}
 	};
 	asc_docs_api.prototype.asc_getLocale = function()
 	{
@@ -1684,6 +1700,8 @@ background-repeat: no-repeat;\
 
 		if (this.WordControl.MobileTouchManager)
 			this.WordControl.MobileTouchManager.delegate.LogicDocument = this.WordControl.m_oLogicDocument;
+
+		this.externalChartCollector.init(this);
 	};
 
 	asc_docs_api.prototype.SetInterfaceDrawImagePlaceSlide = function(div_id)
@@ -2441,6 +2459,7 @@ background-repeat: no-repeat;\
 			}, undefined, true);
 		}
 	};
+
 	asc_docs_api.prototype._autoSaveInner = function () {
 		if (this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode) {
 			return;
@@ -4798,25 +4817,6 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_doubleClickOnTableOleObject    = function(obj)
-	{
-		this.isOleEditor = true;	// Для совместного редактирования
-		this.asc_onOpenChartFrame();
-
-		if(!window['IS_NATIVE_EDITOR']) {
-			this.WordControl.onMouseUpMainSimple();
-		}
-		if(this.asc_checkNeedCallback("asc_doubleClickOnTableOleObject"))
-		{
-			this.sendEvent("asc_doubleClickOnTableOleObject", obj);
-		}
-		else
-		{
-			this.sendEvent("asc_doubleClickOnChart", obj); // TODO: change event type
-		}
-	};
-
-
     asc_docs_api.prototype.asc_startEditCurrentOleObject = function(){
     	if(this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
             this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage].graphicObjects.startEditCurrentOleObject();
@@ -4890,7 +4890,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype._addImageUrl = function(urls, obj)
 	{
-		if (obj && obj.sendUrlsToFrameEditor && this.isOpenedChartFrame) {
+		if (obj && obj.sendUrlsToFrameEditor && this.isOpenedFrameEditor) {
 			this.addImageUrlsFromGeneralToFrameEditor(urls);
 			return;
 		}
@@ -5131,6 +5131,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ChartApply              = function(obj)
 	{
+		this.asc_onCloseFrameEditor();
 		if (obj.ChartProperties && obj.ChartProperties.type === Asc.c_oAscChartTypeSettings.stock && this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
 		{
 			if (!AscFormat.CheckStockChart(this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage].graphicObjects, this))
@@ -6069,6 +6070,8 @@ background-repeat: no-repeat;\
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
+
+		this.onNeedUpdateExternalReferenceOnOpen();
 	};
 	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
@@ -7953,46 +7956,86 @@ background-repeat: no-repeat;\
 	};
 
 	// Вставка диаграмм
-	asc_docs_api.prototype.asc_getChartObject = function(type)
+	asc_docs_api.prototype.asc_getChartObject = function(type, placeholder)
 	{
-        if (!AscFormat.isRealNumber(type))
-        {
-            this.asc_onOpenChartFrame();
-            this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props);
-        }
-		return this.WordControl.m_oLogicDocument.GetChartObject(type);
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		if (!AscFormat.isRealNumber(type))
+		{
+			this.asc_onOpenFrameEditor();
+			oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props);
+		}
+		return oLogicDocument.GetChartObject(type);
+	};
+	asc_docs_api.prototype.asc_editChartInFrameEditor = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+		if(oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
+		{
+			oLogicDocument.Slides[oLogicDocument.CurPage].openChartEditor();
+		}
+	}
+
+	asc_docs_api.prototype.asc_editOleTableInFrameEditor = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		if(oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
+		{
+			oLogicDocument.Slides[oLogicDocument.CurPage].openOleEditor();
+		}
 	};
 
-	asc_docs_api.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder)
+	asc_docs_api.prototype.asc_addChartDrawingObject = function(nType, Placeholder)
 	{
-		/**/
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+		return;
 
-		// Приводим бинарик к объекту типа CChartAsGroup и добавляем объект
-		if (AscFormat.isObject(chartBinary))
-		{
-			//if ( false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Drawing_Props) )
-			{
-				AscFonts.IsCheckSymbols = true;
-				this.WordControl.m_oLogicDocument.addChart(chartBinary, true, Placeholder);
-				AscFonts.IsCheckSymbols = false;
-			}
-		}
+		this.WordControl.m_oLogicDocument.addChart(nType, true, Placeholder);
 	};
 
 	asc_docs_api.prototype.asc_editChartDrawingObject = function(chartBinary)
 	{
-		/**/
-
 		// Находим выделенную диаграмму и накатываем бинарник
 		if (AscCommon.isRealObject(chartBinary))
 		{
-			this.WordControl.m_oLogicDocument.EditChart(chartBinary);
+			this.WordControl.m_oLogicDocument.FinalizeEditChart(chartBinary);
 		}
 	};
 
-	asc_docs_api.prototype.asc_onCloseChartFrame               = function()
+	asc_docs_api.prototype.asc_applyChartSettings = function (oAscChartSettings)
 	{
-		AscCommon.baseEditorsApi.prototype.asc_onCloseChartFrame.call(this);
+		const oLogicDocument = this.private_GetLogicDocument();
+		this.asc_onCloseFrameEditor();
+		if (oLogicDocument)
+		{
+			const oController = oLogicDocument.GetCurrentController();
+			return oController.editChartDrawingObjects(oAscChartSettings);
+		}
+	};
+	asc_docs_api.prototype.asc_getChartSettings = function (bNoLock)
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			if(bNoLock !== true) {
+				this.asc_onOpenFrameEditor();
+			}
+			const oController = oLogicDocument.GetCurrentController();
+			return oController.getChartSettings();
+		}
+	};
+
+	asc_docs_api.prototype.asc_onCloseFrameEditor               = function()
+	{
+		AscCommon.baseEditorsApi.prototype.asc_onCloseFrameEditor.call(this);
 		this.WordControl.m_bIsMouseLock = false;
 	};
 
@@ -8166,6 +8209,11 @@ background-repeat: no-repeat;\
             this.tmpDocumentUnits = null;
         }
 
+				if (null !== this.tmpLocale)
+				{
+					this.asc_setLocale(this.tmpLocale);
+					this.tmpLocale = null;
+				}
 		this.asc_setViewMode(this.isViewMode);
 
 		if (this.isReporterMode)
@@ -9065,6 +9113,22 @@ background-repeat: no-repeat;\
 		}
 		return oLogicDocument.GetSpeechDescription(prevState, action);
 	};
+
+	asc_docs_api.prototype.asc_getExternalReferences = function() {
+		return this.externalChartCollector.getExternalReferences();
+	};
+
+	asc_docs_api.prototype.asc_updateExternalReferences = function(arrExternalReferences, fCallback) {
+		this.externalChartCollector.updateExternalReferences(arrExternalReferences, fCallback);
+	};
+
+	asc_docs_api.prototype.asc_removeExternalReferences = function(arrExternalReferences) {
+		this.externalChartCollector.removeExternalReferences(arrExternalReferences);
+	};
+
+	asc_docs_api.prototype.asc_changeExternalReference = function(oAscExternalReference, oExternalInfo) {
+		this.externalChartCollector.changeExternalReference(oAscExternalReference, oExternalInfo);
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -9313,7 +9377,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_moveAnimationLater']              = asc_docs_api.prototype.asc_moveAnimationLater;
 	asc_docs_api.prototype['asc_onShowAnimTab']                   = asc_docs_api.prototype.asc_onShowAnimTab;
 
-
 	asc_docs_api.prototype['StartAddShape']                       = asc_docs_api.prototype.StartAddShape;
 	asc_docs_api.prototype['asc_canEditGeometry']                 = asc_docs_api.prototype.asc_canEditGeometry;
 	asc_docs_api.prototype['asc_editPointsGeometry']              = asc_docs_api.prototype.asc_editPointsGeometry;
@@ -9338,7 +9401,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['set_PositionOnPage']                  = asc_docs_api.prototype.set_PositionOnPage;
 	asc_docs_api.prototype['get_OriginalSizeImage']               = asc_docs_api.prototype.get_OriginalSizeImage;
 	asc_docs_api.prototype['asc_FitImagesToSlide']                = asc_docs_api.prototype.asc_FitImagesToSlide;
-	asc_docs_api.prototype['asc_onCloseChartFrame']               = asc_docs_api.prototype.asc_onCloseChartFrame;
+	asc_docs_api.prototype['asc_onCloseFrameEditor']               = asc_docs_api.prototype.asc_onCloseFrameEditor;
 	asc_docs_api.prototype['sync_AddImageCallback']               = asc_docs_api.prototype.sync_AddImageCallback;
 	asc_docs_api.prototype['sync_ImgPropCallback']                = asc_docs_api.prototype.sync_ImgPropCallback;
 	asc_docs_api.prototype['SetDrawingFreeze']                    = asc_docs_api.prototype.SetDrawingFreeze;
@@ -9501,6 +9564,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getChartObject']                  = asc_docs_api.prototype.asc_getChartObject;
 	asc_docs_api.prototype['asc_addChartDrawingObject']           = asc_docs_api.prototype.asc_addChartDrawingObject;
 	asc_docs_api.prototype['asc_editChartDrawingObject']          = asc_docs_api.prototype.asc_editChartDrawingObject;
+	asc_docs_api.prototype['asc_editChartInFrameEditor']          = asc_docs_api.prototype.asc_editChartInFrameEditor;
+	asc_docs_api.prototype['asc_applyChartSettings']              = asc_docs_api.prototype.asc_applyChartSettings;
+	asc_docs_api.prototype['asc_getChartSettings']                = asc_docs_api.prototype.asc_getChartSettings;
 	asc_docs_api.prototype['asc_getChartPreviews']                = asc_docs_api.prototype.asc_getChartPreviews;
 	asc_docs_api.prototype['asc_getTextArtPreviews']              = asc_docs_api.prototype.asc_getTextArtPreviews;
 	asc_docs_api.prototype['sync_closeChartEditor']               = asc_docs_api.prototype.sync_closeChartEditor;
@@ -9548,8 +9614,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_setHeaderFooterProperties"]       = asc_docs_api.prototype.asc_setHeaderFooterProperties;
 
 	asc_docs_api.prototype["asc_startEditCurrentOleObject"]       = asc_docs_api.prototype.asc_startEditCurrentOleObject;
-	asc_docs_api.prototype["asc_doubleClickOnTableOleObject"]     = asc_docs_api.prototype.asc_doubleClickOnTableOleObject;
 	asc_docs_api.prototype["asc_editOleObjectAction"]             = asc_docs_api.prototype.asc_editOleObjectAction;
+	asc_docs_api.prototype["asc_editOleTableInFrameEditor"]       = asc_docs_api.prototype.asc_editOleTableInFrameEditor;
 	asc_docs_api.prototype["asc_addOleObjectAction"]              = asc_docs_api.prototype.asc_addOleObjectAction;
 	asc_docs_api.prototype["asc_InputClearKeyboardElement"]       = asc_docs_api.prototype.asc_InputClearKeyboardElement;
 
@@ -9606,6 +9672,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_initPrintPreview"] 	= asc_docs_api.prototype.asc_initPrintPreview;
 	asc_docs_api.prototype["asc_drawPrintPreview"] 	= asc_docs_api.prototype.asc_drawPrintPreview;
 	asc_docs_api.prototype["asc_closePrintPreview"] = asc_docs_api.prototype.asc_closePrintPreview;
+
+	asc_docs_api.prototype["asc_getExternalReferences"]    = asc_docs_api.prototype.asc_getExternalReferences;
+	asc_docs_api.prototype["asc_updateExternalReferences"] = asc_docs_api.prototype.asc_updateExternalReferences;
+	asc_docs_api.prototype["asc_removeExternalReferences"] = asc_docs_api.prototype.asc_removeExternalReferences;
+	asc_docs_api.prototype["asc_changeExternalReference"]  = asc_docs_api.prototype.asc_changeExternalReference;
 
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;

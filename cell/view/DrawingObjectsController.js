@@ -373,7 +373,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
         if(oleObject.m_oMathObject) {
             window["Asc"]["editor"].sendEvent("asc_onConvertEquationToMath", oleObject);
         } else if (oleObject.canEditTableOleObject()) {
-            window["Asc"]["editor"].asc_doubleClickOnTableOleObject(oleObject);
+            window["Asc"]["editor"].asc_editOleTableInFrameEditor();
         } else {
             var pluginData = new Asc.CPluginData();
             pluginData.setAttribute("data", oleObject.m_sData);

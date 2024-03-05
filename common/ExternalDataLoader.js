@@ -215,15 +215,10 @@
 			const bIsXLSX = sFileType === "xlsx";
 
 			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
-				let bLoad = false;
-				oThis.api.getConvertedXLSXFileFromUrl(sFileUrl, sFileType, sToken, nOutputFormat,
-					function (sFileUrlAfterConvert) {
-						if (sFileUrlAfterConvert) {
-							oThis.loadFileContentFromUrl(sFileUrlAfterConvert, fResolve);
-							bLoad = true;
-						} else if (!bLoad) {
-							oThis.resolveStream(null, fResolve);
-						}
+				const oDocument = {url: sFileUrl, format: sFileType, token: sToken};
+				oThis.api.getConvertedXLSXFileFromUrl(oDocument, nOutputFormat,
+					function (arrBinaryData) {
+						oThis.resolveStream(arrBinaryData, fResolve);
 					});
 			} else if (sDirectUrl || sFileUrl) {
 				oThis.api._downloadOriginalFile(sDirectUrl, sFileUrl, sFileType, sToken, function (arrStream) {

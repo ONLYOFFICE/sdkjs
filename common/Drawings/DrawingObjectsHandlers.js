@@ -186,6 +186,10 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     {
         for(var i = selected_objects.length - 1; i > -1; --i)
         {
+					if (selected_objects[i].isFrameChart)
+					{
+						continue;
+					}
             if(bWord && pageIndex !== selected_objects[i].selectStartPage)
             {
                 t = drawingObjectsController.drawingDocument.ConvertCoordsToAnotherPage(x, y, pageIndex, selected_objects[i].selectStartPage);
@@ -241,6 +245,10 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     {
         for(i = selected_objects.length - 1; i > -1; --i)
         {
+	        if (selected_objects[i].isFrameChart)
+	        {
+		        continue;
+	        }
             if(bWord && pageIndex !== selected_objects[i].selectStartPage)
             {
                 t = drawingObjectsController.drawingDocument.ConvertCoordsToAnotherPage(x, y, pageIndex, selected_objects[i].selectStartPage);

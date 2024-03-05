@@ -948,6 +948,7 @@ function (window, undefined) {
 
 		this.sRange = null;
 
+		this.fUpdateGeneralChart = null;
 
 		this.showMarker = null;
 		this.bLine = null;
@@ -969,6 +970,20 @@ function (window, undefined) {
 		}
 		else {
 			this.horizontalAxes[0] = v;
+		}
+	};
+	asc_ChartSettings.prototype._collectPropsFromDLbls = function (nDefaultDataLabelsPos, data_labels)
+	{
+		this.putShowSerName(data_labels.showSerName === true);
+		this.putShowCatName(data_labels.showCatName === true);
+		this.putShowVal(data_labels.showVal === true);
+		this.putSeparator(data_labels.separator);
+		if (data_labels.bDelete) {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
+		} else if (data_labels.showSerName || data_labels.showCatName || data_labels.showVal || data_labels.showPercent) {
+			this.putDataLabelsPos(AscFormat.isRealNumber(data_labels.dLblPos) ? data_labels.dLblPos : nDefaultDataLabelsPos);
+		} else {
+			this.putDataLabelsPos(Asc.c_oAscChartDataLabelsPos.none);
 		}
 	};
 	asc_ChartSettings.prototype.getHorAxisProps = function () {
@@ -1109,6 +1124,13 @@ function (window, undefined) {
 		this.horizontalAxes.length = 0;
 		this.verticalAxes.length = 0;
 		this.depthAxes.length = 0;
+	};
+	asc_ChartSettings.prototype.getExternalReference = function ()
+	{
+		if (this.chartSpace && this.chartSpace.externalReference)
+		{
+			return this.chartSpace.externalReference.getAscLink();
+		}
 	};
 	asc_ChartSettings.prototype.equalBool = function (a, b) {
 		return ((!!a) === (!!b));
@@ -1519,7 +1541,7 @@ function (window, undefined) {
 		}
 		this.bStartEdit = false;
 		AscCommon.History.EndTransaction();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.cancelEdit = function () {
@@ -1531,7 +1553,7 @@ function (window, undefined) {
 			AscCommon.History.Clear_Redo();
 		}
 		AscCommon.History._sendCanUndoRedo();
-		this.updateChart();
+		this.updateChart(true);
 		this.updateInterface();
 	};
 	asc_ChartSettings.prototype.startEditData = function () {
@@ -1545,12 +1567,22 @@ function (window, undefined) {
 		AscCommon.History.ClearPointIndex();
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.updateChart = function () {
+	asc_ChartSettings.prototype.updateChart = function (bSelect) {
 		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
+			this.updateGeneralChart(bSelect);
 		}
 	};
-
+	asc_ChartSettings.prototype.setFUpdateGeneralChart = function(fUpdate) {
+		this.fUpdateGeneralChart = fUpdate;
+	};
+	asc_ChartSettings.prototype.updateGeneralChart = function (bSelect)
+	{
+		if (this.fUpdateGeneralChart)
+		{
+			this.fUpdateGeneralChart(bSelect);
+		}
+	};
 	/** @constructor */
 	function asc_CRect(x, y, width, height) {
 		// private members
@@ -5561,6 +5593,45 @@ function (window, undefined) {
 		return 0;
 	};
 
+	/** @constructor */
+	function asc_CFormatCellsInfo() {
+		this.type = Asc.c_oAscNumFormatType.General;
+		this.decimalPlaces = 2;
+		this.separator = false;
+		this.symbol = null;
+		this.currency = null;
+	}
+	asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
+		this.type = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {
+		this.decimalPlaces = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSeparator = function (val) {
+		this.separator = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setSymbol = function (val) {
+		this.symbol = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
+		this.currency = val;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getDecimalPlaces = function () {
+		return this.decimalPlaces;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSeparator = function () {
+		return this.separator;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {
+		return this.symbol;
+	};
+	asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
+		return this.currency;
+	};
+
 	/**
 	 * @constructor
 	 */
@@ -5886,6 +5957,8 @@ function (window, undefined) {
 	prot["getView3d"] = prot.getView3d;
 	prot["putView3d"] = prot.putView3d;
 	prot["setView3d"] = prot.setView3d;
+
+	prot["getExternalReference"] = prot.getExternalReference;
 
 
 	window["AscCommon"].asc_CRect = asc_CRect;
@@ -6606,5 +6679,18 @@ function (window, undefined) {
 	CDocInfoProp.prototype['put_SymbolsCount'] = CDocInfoProp.prototype.put_SymbolsCount;
 	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
 	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
+
+	window["Asc"]["asc_CFormatCellsInfo"] = window["Asc"].asc_CFormatCellsInfo = asc_CFormatCellsInfo;
+	prot = asc_CFormatCellsInfo.prototype;
+	prot["asc_setType"] = prot.asc_setType;
+	prot["asc_setDecimalPlaces"] = prot.asc_setDecimalPlaces;
+	prot["asc_setSeparator"] = prot.asc_setSeparator;
+	prot["asc_setSymbol"] = prot.asc_setSymbol;
+	prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
+	prot["asc_getSeparator"] = prot.asc_getSeparator;
+	prot["asc_getSymbol"] = prot.asc_getSymbol;
+	prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
 
 })(window);

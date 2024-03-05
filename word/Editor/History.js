@@ -90,6 +90,8 @@
     this.UserSavedIndex = null;  // Номер точки, на которой произошло последнее сохранение пользователем (не автосохранение)
 
 	this.StoredData = [];
+
+	this.PosInCurPoint = null;
 }
 
 CHistory.prototype =
@@ -1748,6 +1750,72 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	CHistory.prototype.private_IsFormFillingPoint = function(point, form)
 	{
 		return (point.Additional && form === point.Additional.FormFilling);
+	};
+	CHistory.prototype.private_IsChartPreviewPoint = function()
+	{
+		const oPoint = this.Points[this.Index];
+		if (oPoint)
+		{
+			return oPoint.Description === AscDFH.historydescription_Presentation_ShowChartPreview;
+		}
+		return false;
+	};
+	CHistory.prototype.UndoChartPreviewPoint = function()
+	{
+		if (this.private_IsChartPreviewPoint())
+		{
+			const arrChanges = this.Undo();
+			this.Clear_Redo();
+			return arrChanges;
+		}
+	};
+	CHistory.prototype.CreateChartPreviewPoint = function()
+	{
+		if (!this.private_IsChartPreviewPoint())
+		{
+			this.Create_NewPoint(AscDFH.historydescription_Presentation_ShowChartPreview);
+		}
+	};
+
+	CHistory.prototype.SavePointIndex = function()
+	{
+		var oPoint = this.Points[this.Index];
+		if(oPoint)
+		{
+			this.PosInCurPoint = oPoint.Items.length;
+		}
+		else
+		{
+			this.PosInCurPoint = null;
+		}
+	};
+
+	CHistory.prototype.UndoToPointIndex = function()
+	{
+		var oPoint = this.Points[this.Index];
+		if(oPoint)
+		{
+			if(this.PosInCurPoint !== null)
+			{
+				for (let Index = oPoint.Items.length - 1; Index >= this.PosInCurPoint; --Index)
+				{
+					let item = oPoint.Items[Index];
+					if (item.Data)
+					{
+						item.Data.Undo();
+						item.Data.RefreshRecalcData();
+					}
+					this.private_UpdateContentChangesOnUndo(item);
+				}
+				oPoint.Items.splice(this.PosInCurPoint);
+			}
+		}
+		this.PosInCurPoint = null;
+	};
+
+	CHistory.prototype.ClearPointIndex = function()
+	{
+		this.PosInCurPoint = null;
 	};
 
 	//----------------------------------------------------------export--------------------------------------------------

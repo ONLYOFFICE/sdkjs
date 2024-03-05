@@ -3618,46 +3618,6 @@
 		};
 		var g_oCacheMeasureEmpty = new CCacheMeasureEmpty();
 
-		/** @constructor */
-		function asc_CFormatCellsInfo() {
-			this.type = Asc.c_oAscNumFormatType.General;
-			this.decimalPlaces = 2;
-			this.separator = false;
-			this.symbol = null;
-			this.currency = null;
-		}
-
-		asc_CFormatCellsInfo.prototype.asc_setType = function (val) {
-			this.type = val;
-		};
-		asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {
-			this.decimalPlaces = val;
-		};
-		asc_CFormatCellsInfo.prototype.asc_setSeparator = function (val) {
-			this.separator = val;
-		};
-		asc_CFormatCellsInfo.prototype.asc_setSymbol = function (val) {
-			this.symbol = val;
-		};
-		asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {
-			this.currency = val;
-		};
-		asc_CFormatCellsInfo.prototype.asc_getType = function () {
-			return this.type;
-		};
-		asc_CFormatCellsInfo.prototype.asc_getDecimalPlaces = function () {
-			return this.decimalPlaces;
-		};
-		asc_CFormatCellsInfo.prototype.asc_getSeparator = function () {
-			return this.separator;
-		};
-		asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {
-			return this.symbol;
-		};
-		asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {
-			return this.currency;
-		};
-
 		/**
 		 * передаём в меню для того, чтобы показать иконку опций авторавертывания таблиц
 		 * @constructor
@@ -4092,19 +4052,6 @@
 
 		window["AscCommonExcel"].g_oCacheMeasureEmpty = g_oCacheMeasureEmpty;
 		window["AscCommonExcel"].g_oCacheMeasureEmpty2 = g_oCacheMeasureEmpty2;
-
-		window["Asc"]["asc_CFormatCellsInfo"] = window["Asc"].asc_CFormatCellsInfo = asc_CFormatCellsInfo;
-		prot = asc_CFormatCellsInfo.prototype;
-		prot["asc_setType"] = prot.asc_setType;
-		prot["asc_setDecimalPlaces"] = prot.asc_setDecimalPlaces;
-		prot["asc_setSeparator"] = prot.asc_setSeparator;
-		prot["asc_setSymbol"] = prot.asc_setSymbol;
-		prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
-		prot["asc_getType"] = prot.asc_getType;
-		prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
-		prot["asc_getSeparator"] = prot.asc_getSeparator;
-		prot["asc_getSymbol"] = prot.asc_getSymbol;
-		prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
 
 		window["Asc"]["asc_CAutoCorrectOptions"] = window["Asc"].asc_CAutoCorrectOptions = asc_CAutoCorrectOptions;
 		prot = asc_CAutoCorrectOptions.prototype;

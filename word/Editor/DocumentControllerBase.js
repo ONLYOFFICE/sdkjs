@@ -333,6 +333,30 @@ CDocumentControllerBase.prototype.AddSignatureLine = function(oSignatureDrawing)
  */
 CDocumentControllerBase.prototype.EditChart = function(Chart){};
 /**
+ * Обновляем диаграмму.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.UpdateChart = function(Chart){};
+/**
+ * Пробуем открыть редактор диаграмм.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.OpenChartEditor = function(){};
+/**
+ * Пробуем открыть редактор оле таблиц.
+ * @param Chart
+ */
+CDocumentControllerBase.prototype.OpenOleEditor = function(){};
+/**
+ * Применяем настройки диаграммы.
+ * @param ChartSettings
+ */
+CDocumentControllerBase.prototype.ApplyChartSettings = function(ChartSettings){};
+/**
+ * Получаем настройки диаграммы.
+ */
+CDocumentControllerBase.prototype.GetChartSettings = function(){};
+/**
  * Добавляем инлайн таблицу
  * @param nCols
  * @param nRows

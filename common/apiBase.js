@@ -126,10 +126,8 @@
 		this.textArtPreviewManager = null;
 		this.shapeElementId        = null;
 		// Режим вставки диаграмм в редакторе документов
-		this.isChartEditor         = false;
-		this.isOpenedChartFrame    = false;
-
-		this.isOleEditor = false;
+		this.isOpenedFrameEditor    = false;
+		this.openedFrameEditorType  = null;
 
 		this.MathMenuLoad          = false;
 
@@ -233,6 +231,8 @@
 		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this.eyedropper = new AscCommon.CEyedropper(this);
 		this.inkDrawer = new AscCommon.CInkDrawer(this);
+
+		this.frameManager = new AscCommon.CMainEditorFrameManager(this);
 		this._correctEmbeddedWork();
 
 		return this;
@@ -443,7 +443,7 @@
 		return null;
 	};
 	baseEditorsApi.prototype.isFrameEditor = function () {
-		return !!(this.isChartEditor ||  this.isEditOleMode); // TODO: solve the confusion
+		return this.frameManager.isFrameEditor();
 	};
 	baseEditorsApi.prototype.asc_setCoreProps                = function(oProps)
 	{
@@ -511,10 +511,18 @@
 
 		if (AscCommon.chartMode === this.documentUrl)
 		{
-			this.isChartEditor = true;
-            AscCommon.EncryptionWorker.isChartEditor = true;
+			this.frameManager = new AscCommon.CDiagramCellFrameManager(this);
+        AscCommon.EncryptionWorker.isFrameEditor = true;
 			this.DocInfo.put_OfflineApp(true);
 		}
+
+		if (AscCommon.oleMode === this.documentUrl)
+		{
+			this.frameManager = new AscCommon.COleCellFrameManager(this);
+			AscCommon.EncryptionWorker.isFrameEditor = true;
+			this.DocInfo.put_OfflineApp(true);
+		}
+
 		else if (AscCommon.offlineMode === this.documentUrl)
 		{
 			this.DocInfo.put_OfflineApp(true);
@@ -535,7 +543,7 @@
 			window["AscDesktopEditor"]["SetDocumentName"](this.documentTitle);
 		}
 
-		if (!this.isChartEditor && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
+		if (!this.frameManager.isFrameEditor() && undefined !== window["AscDesktopEditor"] && undefined !== window["AscDesktopEditor"]["CryptoMode"])
 		{
 			this.DocInfo.put_Encrypted(0 < window["AscDesktopEditor"]["CryptoMode"]);
 		}
@@ -728,7 +736,7 @@
 			}
 			var blipUrl = oleBinary['imageUrl'];
 			var arrImagesForAddToHistory = oleBinary['imagesForAddToHistory'];
-			var binaryDataOfSheet = AscCommon.Base64.decode(oleBinary['binary']);
+			var binaryDataOfSheet = this.frameManager.getDecodedArray(oleBinary['binary']);
 			var sizes = AscCommon.getSourceImageSize(blipUrl);
 			var mmExtX = sizes.width * AscCommon.g_dKoef_pix_to_mm;
 			var mmExtY = sizes.height * AscCommon.g_dKoef_pix_to_mm;
@@ -750,12 +758,27 @@
 		this.sendEvent("asc_sendFromFrameToGeneralEditor", oData);
 	};
 
-	baseEditorsApi.prototype.sendFromGeneralToFrameEditor = function (oData)
+	baseEditorsApi.prototype.sendFromGeneralToOleEditor = function (oData)
 	{
-		this.sendEvent("asc_sendFromGeneralToFrameEditor", oData);
+		this.sendEvent("asc_sendFromGeneralToOleEditor", oData);
 	};
 
+	baseEditorsApi.prototype.sendFromGeneralToChartEditor = function (oData)
+	{
+		this.sendEvent("asc_sendFromGeneralToChartEditor", oData);
+	};
 
+	baseEditorsApi.prototype.sendFromGeneralToOpenedFrameEditor = function (oData)
+	{
+		if (this.openedFrameEditorType === AscCommon.FrameEditorTypes.OleEditor)
+		{
+			this.sendFromGeneralToOleEditor(oData);
+		}
+		else if (this.openedFrameEditorType === AscCommon.FrameEditorTypes.ChartEditor)
+		{
+			this.sendFromGeneralToChartEditor(oData);
+		}
+	};
 	baseEditorsApi.prototype.asc_getInformationBetweenFrameAndGeneralEditor = function (oData)
 	{
 		const nType = oData["type"];
@@ -775,7 +798,7 @@
 			case c_oAscFrameDataType.OpenFrame: // TODO: это нужно перенести в web-apps,
 				// при открытии и закрытии фрейма метод должен вызываться там, в 7.2 это сделать не успели
 			{
-				this.asc_onOpenChartFrame();
+				this.asc_onOpenFrameEditor(oInformation["editorType"]);
 				break;
 			}
 			case c_oAscFrameDataType.ShowImageDialogInFrame:
@@ -805,6 +828,29 @@
 			case c_oAscFrameDataType.StartUploadImageAction:
 			{
 				this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+				break;
+			}
+			case c_oAscFrameDataType.UpdateDiagramInGeneral:
+			{
+				const oLogicDocument = this.private_GetLogicDocument();
+				const oBinaryData = oInformation["binary"];
+				if (oLogicDocument)
+				{
+					AscCommon.History.CreateChartPreviewPoint();
+					oLogicDocument.UpdateChart(oBinaryData);
+				}
+				break;
+			}
+			case c_oAscFrameDataType.UpdateIsOpenOnClient:
+			{
+				if (this.frameManager.isGeneralEditor())
+				{
+					this.sendFromGeneralToOpenedFrameEditor(new AscCommon.CFrameUpdateIsOpenOnClient(this.isOpenOOXInBrowser));
+				}
+				else
+				{
+					this.frameManager.isSaveZipWorkbook = oInformation["isOpenOnClient"];
+				}
 			}
 			default:
 			{
@@ -813,8 +859,41 @@
 		}
 	};
 
+	baseEditorsApi.prototype.asc_getLocaleExample = function(format, value, culture) {
+		if (!AscFormat.isRealNumber(value))
+		{
+			return '';
+		}
+		const cultureInfo = AscCommon.g_aCultureInfos[culture] || AscCommon.g_oDefaultCultureInfo;
+		const numFormat = AscCommon.oNumFormatCache.get(format || "General");
+		return numFormat.formatToChart(value, undefined, cultureInfo);
+	};
+	baseEditorsApi.prototype.asc_convertNumFormatLocal2NumFormat = function(format) {
+		var oFormat = new AscCommon.CellFormat(format,undefined,true);
+		return oFormat.toString(0, false);
+	};
+	baseEditorsApi.prototype.asc_convertNumFormat2NumFormatLocal = function(format) {
+		var oFormat = new AscCommon.CellFormat(format,undefined,false);
+		return oFormat.toString(0, true);
+	};
+	baseEditorsApi.prototype.asc_getAdditionalCurrencySymbols = function () {
+		return AscCommon.g_aAdditionalCurrencySymbols;
+	};
+
+	baseEditorsApi.prototype.asc_getCurrencySymbols = function () {
+		var result = {};
+		for (var key in AscCommon.g_aCultureInfos) {
+			result[key] = AscCommon.g_aCultureInfos[key].CurrencySymbol;
+		}
+		return result;
+	};
+
+	baseEditorsApi.prototype.asc_getFormatCells = function(info) {
+		return AscCommon.getFormatCells(info);
+	};
+
 	baseEditorsApi.prototype.sendStartUploadImageActionToFrameEditor = function () {
-		this.sendFromGeneralToFrameEditor({
+		this.sendFromGeneralToOpenedFrameEditor({
 			"type": c_oAscFrameDataType.StartUploadImageAction,
 		});
 	}
@@ -827,7 +906,7 @@
 			const url = urls[i];
 			urlsForAddToDocumentUrls[AscCommon.g_oDocumentUrls.getLocal(url)] = url;
 		}
-		this.sendFromGeneralToFrameEditor({
+		this.sendFromGeneralToOpenedFrameEditor({
 			"type": AscCommon.c_oAscFrameDataType.GetUrlsFromImageDialog,
 			"information": urlsForAddToDocumentUrls
 		});
@@ -867,7 +946,7 @@
 					const arrImagesForAddToHistory = oOleBinaryInfo['imagesForAddToHistory'];
 					const oSelectedOleObject = arrSelectedObjects.oleObjects[0];
 					const sBlipUrl = oOleBinaryInfo['imageUrl'];
-					const arrBinaryDataOfSheet = AscCommon.Base64.decode(oOleBinaryInfo['binary']);
+					const arrBinaryDataOfSheet = this.frameManager.getDecodedArray(oOleBinaryInfo['binary']);
 					const oSizes = AscCommon.getSourceImageSize(sBlipUrl);
 					const nImageWidthCoefficient = oOleBinaryInfo['widthCoefficient'] || 1;
 					const nImageHeightCoefficient = oOleBinaryInfo['heightCoefficient'] || 1;
@@ -1444,22 +1523,25 @@
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("getEditorPermissions", performance.now()), this);
 		this._coAuthoringInit();
 	};
-	baseEditorsApi.prototype.getConvertedXLSXFileFromUrl  = function (sUrl, sFileType, sToken, nOutputFormat, fCallback) {
+	baseEditorsApi.prototype.getConvertedXLSXFileFromUrl  = function (oDocument, nOutputFormat, fCallback) {
 		if (this.canEdit()) {
-			const oDocument = {url: sUrl, format: sFileType, token: sToken};
 			this.insertDocumentUrlsData = {
 				imageMap: null, documents: [oDocument], convertCallback: function (_api, url) {
 					_api.insertDocumentUrlsData.imageMap = url;
-					if (url['output.xlsx']) {
-						fCallback(url['output.xlsx']);
-					} else if (url['output.xlst']) {
-						fCallback(url['output.xlst']);
+					let sFileUrlAfterConvert = url['output.xlsx'] || url['output.xlst'];
+					if (sFileUrlAfterConvert) {
+						AscCommon.loadFileContent(sFileUrlAfterConvert, function (httpRequest) {
+							let arrStream = null;
+							if (httpRequest) {
+								arrStream = AscCommon.initStreamFromResponse(httpRequest);
+							}
+							fCallback(arrStream);
+						}, "arraybuffer");
 					} else {
 						fCallback(null);
 					}
 					_api.endInsertDocumentUrls();
 				}, endCallback: function (_api) {
-					fCallback(null);
 				}
 			};
 
@@ -1779,14 +1861,14 @@
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
-			if (t.isOpenedChartFrame) {
+			if (t.isOpenedFrameEditor) {
 				const oSentInformation = {
 					"type": c_oAscFrameDataType.GetLoadedImages,
 					"information": {
 						"inputWrap": inputWrap
 					}
 				};
-				t.sendFromGeneralToFrameEditor(oSentInformation);
+				t.sendFromGeneralToOpenedFrameEditor(oSentInformation);
 			}
 			if (AscCommon.EncryptionWorker.isNeedCrypt())
 			{
@@ -2247,16 +2329,18 @@
 	{
 		return this.textArtPreviewManager.getWordArtStyles();
 	};
-	baseEditorsApi.prototype.asc_onOpenChartFrame                = function()
+	baseEditorsApi.prototype.asc_onOpenFrameEditor                = function(nEditorType)
 	{
 		if(this.isMobileVersion){
 			return;
 		}
-		this.isOpenedChartFrame = true;
+		this.isOpenedFrameEditor = true;
+		this.openedFrameEditorType = nEditorType || AscCommon.FrameEditorTypes.JustBlock;
 	};
-	baseEditorsApi.prototype.asc_onCloseChartFrame               = function()
+	baseEditorsApi.prototype.asc_onCloseFrameEditor               = function()
 	{
-		this.isOpenedChartFrame = false;
+		this.isOpenedFrameEditor = false;
+		this.openedFrameEditorType = null;
 	};
 	baseEditorsApi.prototype.asc_setInterfaceDrawImagePlaceShape = function(elementId)
 	{
@@ -2306,7 +2390,7 @@
 	};
 	baseEditorsApi.prototype.asc_addImage                        = function(obj)
 	{
-		if (this.isEditOleMode)
+		if (this.frameManager.isFrameEditor())
 		{
 			this.oSaveObjectForAddImage = obj;
 			this.sendFromFrameToGeneralEditor({
@@ -2326,7 +2410,7 @@
 			{
 				t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
 			}
-			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedChartFrame)
+			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedFrameEditor)
 			{
 				t.sendStartUploadImageActionToFrameEditor();
 			}
@@ -2344,7 +2428,7 @@
 		}
 		else
 		{
-			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedChartFrame)
+			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedFrameEditor)
 			{
 				this.sendStartUploadImageActionToFrameEditor();
 			}
@@ -2755,7 +2839,7 @@
 	baseEditorsApi.prototype.checkDocumentTitleFonts = function() {
 		if (!AscFonts.FontPickerByCharacter || !this.documentTitle)
 			return;
-		
+
 		AscFonts.FontPickerByCharacter.getFontsByString(this.documentTitle);
 	};
 	baseEditorsApi.prototype._loadSdkImages = function ()
@@ -4345,9 +4429,9 @@
 	{
 		if (this.selectSearchingResults === isShow)
 			return;
-		
+
 		this.selectSearchingResults = isShow;
-		
+
 		this._selectSearchingResults(isShow);
 	};
 	baseEditorsApi.prototype.asc_isSelectSearchingResults = function()
@@ -4790,6 +4874,48 @@
 			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
 	};
 
+	baseEditorsApi.prototype.asc_openExternalReference = function(externalReference) {
+		let t = this;
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+		if (isLocalDesktop) {
+			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
+				let internalError = Asc.c_oAscError.ID.No;
+				switch (error) {
+					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+					default: break;
+				}
+
+				if (Asc.c_oAscError.ID.No !== internalError) {
+					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
+				}
+			});
+			return null;
+		} else {
+			return externalReference;
+		}
+	};
+
+	baseEditorsApi.prototype.asc_getExternalReferences = function() {
+	};
+
+	baseEditorsApi.prototype.asc_updateExternalReferences = function(arr) {
+	};
+
+	baseEditorsApi.prototype.asc_removeExternalReferences = function(arr) {
+	};
+
+	baseEditorsApi.prototype.asc_changeExternalReference = function(eR, to) {
+	};
+
+	baseEditorsApi.prototype.onNeedUpdateExternalReferenceOnOpen = function () {
+		if (this.canEdit()) {
+			const arrExternalReferences = this.asc_getExternalReferences();
+			if (arrExternalReferences && arrExternalReferences.length) {
+				this.sendEvent("asc_onNeedUpdateExternalReferenceOnOpen");
+			}
+		}
+	};
+
 	// speech
 	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
 		if (!AscCommon.EditorActionSpeaker)
@@ -4892,6 +5018,13 @@
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
+	prot['asc_getFormatCells'] = prot.asc_getFormatCells;
+	prot['asc_getLocaleExample'] = prot.asc_getLocaleExample;
+	prot['asc_getAdditionalCurrencySymbols'] = prot.asc_getAdditionalCurrencySymbols;
+	prot['asc_convertNumFormat2NumFormatLocal'] = prot.asc_convertNumFormat2NumFormatLocal;
+	prot['asc_convertNumFormatLocal2NumFormat'] = prot.asc_convertNumFormatLocal2NumFormat;
+	prot['asc_getCurrencySymbols'] = prot.asc_getCurrencySymbols;
+	prot["asc_openExternalReference"] = prot.asc_openExternalReference;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;

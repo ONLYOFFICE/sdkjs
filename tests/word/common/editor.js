@@ -65,7 +65,9 @@
 		SetCurrentPage : function(pageNum) {},
 		SelectClear : function() {},
 		Start_CollaborationEditing : function() {},
-		End_CollaborationEditing : function() {}
+		End_CollaborationEditing : function() {},
+		onUpdateExternalList : function() {},
+		checkChart : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -79,6 +81,7 @@
 	editor.WordControl.m_oDrawingDocument = drawingDocument;
 	editor.WordControl.m_oDrawingDocument.m_oWordControl = drawingDocument;
 	editor.WordControl.m_oApi = editor;
+	editor.externalChartCollector = drawingDocument;
 	editor.sync_BeginCatchRevisionsChanges = function(){};
 	editor.sync_EndCatchRevisionsChanges = function(){};
 	editor.sync_ChangeCommentLogicalPosition = function(){};

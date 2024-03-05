@@ -1439,6 +1439,8 @@
 	};
 	CGraphicObjectBase.prototype.recalcContent2 = function () {
 	};
+	CGraphicObjectBase.prototype.applySpecialPasteProps = function () {};
+	CGraphicObjectBase.prototype.getSpecialPasteProps = function () {};
 
 	CGraphicObjectBase.prototype.checkDrawingBaseCoords = function () {
 		if (this.drawingBase && this.spPr && this.spPr.xfrm && !this.group) {

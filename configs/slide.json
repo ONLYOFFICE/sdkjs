@@ -15,7 +15,9 @@
 			"vendor/string.js",
 			"vendor/array.js",
 			"common/editorscommon.js",
-            "common/BulletPreviewDrawer.js",
+			"common/externalChartCollector.js",
+			"common/frameManager.js",
+			"common/BulletPreviewDrawer.js",
 			"common/HistoryCommon.js",
 			"common/TableId.js",
 			"common/TableIdChanges.js",
@@ -138,8 +140,9 @@
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
+			"cell/model/FormulaObjects/parserFormula.js",
 			"cell/view/DrawingObjectsController.js",
-			
+
 			"word/Math/mathTypes.js",
 			"word/Editor/Styles.js",
 			"word/Math/math-settings.js",

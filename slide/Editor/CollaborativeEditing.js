@@ -499,10 +499,10 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if ( true === editor.isOpenedChartFrame )
+            if (editor.frameManager.isLoadingChartEditor)
                 editor.sync_closeChartEditor();
 
-            if ( true === editor.isOleEditor )
+            if (editor.frameManager.isLoadingOleEditor)
               editor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -511,8 +511,8 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         }
 
     }
-    editor.isChartEditor = false;
-    editor.isOleEditor = false;
+	editor.frameManager.endLoadChartEditor();
+	editor.frameManager.endLoadOleEditor();
 };
 
 CCollaborativeEditing.prototype.AddPosExtChanges = function(Item, ChangeObject)

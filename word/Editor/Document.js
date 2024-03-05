@@ -2214,6 +2214,10 @@ CDocument.prototype.IsDocumentEditor = function()
 {
 	return true;
 };
+CDocument.prototype.OpenOleEditor = function ()
+{
+	this.Controller.OpenOleEditor();
+};
 CDocument.prototype.IsPresentationEditor = function()
 {
 	return false;
@@ -6018,12 +6022,50 @@ CDocument.prototype.AddTextArt = function(nStyle)
 CDocument.prototype.AddSignatureLine = function(oSignatureDrawing){
     this.Controller.AddSignatureLine(oSignatureDrawing);
 };
-
+CDocument.prototype.FinalizeEditChart = function(chartBinary)
+{
+	const arrChanges = AscCommon.History.UndoChartPreviewPoint();
+	if (chartBinary['noHistory'])
+	{
+		if (arrChanges)
+		{
+			this.RecalculateByChanges(arrChanges);
+		}
+		this.UpdateInterface();
+		return;
+	}
+	// Находим выделенную диаграмму и накатываем бинарник
+	if (AscFormat.isObject(chartBinary))
+	{
+		if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+		{
+			this.StartAction(AscDFH.historydescription_Document_EditChart);
+			this.EditChart(chartBinary);
+			this.FinalizeAction();
+		}
+	}
+};
 CDocument.prototype.EditChart = function(Chart)
 {
 	this.Controller.EditChart(Chart);
 };
-CDocument.prototype.GetChartObject = function(type)
+CDocument.prototype.UpdateChart = function(Chart)
+{
+	this.Controller.UpdateChart(Chart);
+};
+CDocument.prototype.OpenChartEditor = function()
+{
+	this.Controller.OpenChartEditor();
+};
+CDocument.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	return this.Controller.ApplyChartSettings(oChartSettings);
+};
+CDocument.prototype.GetChartSettings = function()
+{
+	return this.Controller.GetChartSettings();
+};
+CDocument.prototype.GetChartObject = function(type, bAddToHistory)
 {
     var W = null, H = null;
     if(type != null)
@@ -6044,7 +6086,7 @@ CDocument.prototype.GetChartObject = function(type)
             }
         }
     }
-    return this.DrawingObjects.getChartObject(type, W, H);
+    return this.DrawingObjects.getChartObject(type, W, H, bAddToHistory);
 
 };
 CDocument.prototype.GetImageDataFromSelection = function()
@@ -11934,6 +11976,8 @@ CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange
 
 	this.UpdateSelectedReviewChanges(isSaveCurrentReviewChange);
 
+	oApi.externalChartCollector.onUpdateExternalList();
+
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();
 	this.Document_UpdateSectionPr();
@@ -15067,7 +15111,7 @@ CDocument.prototype.Continue_FastCollaborativeEditing = function()
 	if (true !== this.CollaborativeEditing.Is_Fast() || true === this.CollaborativeEditing.Is_SingleUser())
 		return;
 
-	if (true === this.IsMovingTableBorder() || true === this.Api.isStartAddShape || this.DrawingObjects.isTrackingDrawings() || this.Api.isOpenedChartFrame)
+	if (true === this.IsMovingTableBorder() || true === this.Api.isStartAddShape || this.DrawingObjects.isTrackingDrawings() || this.Api.isOpenedFrameEditor)
 		return;
 
 	var HaveChanges = this.History.Have_Changes(true);
@@ -18787,10 +18831,9 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, GraphicObjec
 		else
 		{
 			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			var Image = this.DrawingObjects.getChartSpace2(GraphicObject, null);
-			Image.setParent(Drawing);
-			Drawing.Set_GraphicObject(Image);
-			Drawing.setExtent(Image.spPr.xfrm.extX, Image.spPr.xfrm.extY);
+			GraphicObject.setParent(Drawing);
+			Drawing.Set_GraphicObject(GraphicObject);
+			Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
 		}
 		if (true === bFlow)
 		{

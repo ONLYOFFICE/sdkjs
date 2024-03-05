@@ -127,6 +127,26 @@ CDrawingsController.prototype.EditChart = function(Chart)
 {
 	this.DrawingObjects.editChart(Chart);
 };
+CDrawingsController.prototype.UpdateChart = function(Chart)
+{
+	this.DrawingObjects.updateChart(Chart);
+};
+CDrawingsController.prototype.OpenChartEditor = function()
+{
+	this.DrawingObjects.openChartEditor();
+};
+CDrawingsController.prototype.ApplyChartSettings = function(oChartSettings)
+{
+	this.DrawingObjects.editChartDrawingObjects(oChartSettings);
+};
+CDrawingsController.prototype.GetChartSettings = function()
+{
+	return this.DrawingObjects.getChartSettings();
+};
+CDrawingsController.prototype.OpenOleEditor = function()
+{
+	this.DrawingObjects.openOleEditor();
+};
 CDrawingsController.prototype.AddInlineTable = function(nCols, nRows, nMode)
 {
 	return this.DrawingObjects.addInlineTable(nCols, nRows, nMode);

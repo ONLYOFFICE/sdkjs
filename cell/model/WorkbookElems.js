@@ -14799,21 +14799,220 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	//external reference
-	function ExternalReference() {
-		this.DefinedNames = [];
+	function ExternalReferenceBase()
+	{
 		this.Id = null;
-		this.SheetDataSet = [];
-		this.SheetNames = [];
 		this.Type = 0;
-
 		//дополнительная информация, которая приходит при copy/paste
 		//необходимо её добавлять в ooxml
 		//fileId
 		//portalName
 		this.referenceData = null;
+	}
+
+	ExternalReferenceBase.prototype.createDuplicate = function ()
+	{
+		const oCopy = new this.constructor();
+		oCopy.Id = this.Id;
+		oCopy.Type = this.Type;
+		if (null != this.referenceData)
+		{
+			oCopy.referenceData = {};
+			oCopy.referenceData["fileKey"] = this.referenceData["fileKey"];
+			oCopy.referenceData["instanceId"] = this.referenceData["instanceId"];
+		}
+		return oCopy;
+	}
+	ExternalReferenceBase.prototype.convertToExternalReference = function ()
+	{
+		const oExternalReference = new ExternalReference();
+		if (this.referenceData)
+		{
+			oExternalReference.setReferenceData(this.referenceData["fileKey"], this.referenceData["instanceId"]);
+		}
+		oExternalReference.Id = this.Id;
+		oExternalReference.Type = this.Type;
+		return oExternalReference;
+	}
+	ExternalReferenceBase.prototype.isExternalLink = function() {
+		if (!this.Id)
+			return false;
+		var p = /^(?:http:\/\/|https:\/\/)/;
+		return this.Id.match(p);
+	};
+
+	ExternalReferenceBase.prototype.isXlsx = function() {
+		if (!this.Id)
+			return false;
+		var p = /^.*\.(xlsx)$/i;
+		return this.Id.match(p);
+	};
+
+	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
+
+	ExternalReferenceBase.prototype.getAscLink = function () {
+
+		// вот так, если это из файла прилетело, в т.ч. из буфера
+		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
+		//
+		//
+		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
+		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
+		//
+		// вот так, если б это было просто путь к файлу как в MS:
+		// 	onRequestReferenceData({data:{path: "new.docx"}})
+
+
+		var res = new asc_CExternalReference();
+
+		if (this.referenceData) {
+			res.type = Asc.c_oAscExternalReferenceType.referenceData;
+			res.data = this.referenceData;
+		} else if (this.isExternalLink()) {
+			res.type = Asc.c_oAscExternalReferenceType.link;
+			res.data = this.Id;
+		} else {
+			res.type = Asc.c_oAscExternalReferenceType.path;
+			res.data = this.Id;
+		}
+
+		res.externalReference = this;
+
+		return res;
+	};
+
+
+	ExternalReferenceBase.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["instanceId"] = portalName;
+		this.referenceData["fileKey"] = fileId;
+	};
+
+	ExternalReferenceBase.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
+	ExternalReferenceBase.prototype.initFromObj = function (obj) {
+		//directUrl:
+		//fileType:
+		//token:
+		//url
+		//path
+		//referenceData
+		if (obj["path"] !== this.Id) {
+			this.setId(this._checkAndCorrectPath(obj["path"], obj["filePath"]));
+		}
+
+		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
+			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
+			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
+		}
+	};
+
+	ExternalReferenceBase.prototype._checkAndCorrectPath = function (sPath, sAbsolutePath) {
+		if (!sPath || 1 === sPath.indexOf("../")) {
+			// sPath -> ../../from.xlsx
+			//sAbsolutePath - > C:\root\from.xlsx
+			// need -> /root/from.xlsx
+			if (sAbsolutePath) {
+				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"))
+				sPath = sPath.replace(/\\/g,"/")
+			}
+		} else if (sPath && -1 !== sPath.indexOf(":/")) {
+			// sPath -> C:/root/from1.xlsx
+			//need -> file:///C:\root\from1.xlsx
+			sPath = sPath.replace(/\//g,"\\");
+			sPath = "file:///" + sPath;
+		}
+
+		return sPath;
+	};
+
+	function CChartExternalReference(chart)
+	{
+		ExternalReferenceBase.call(this);
+		this.chart = chart;
+	}
+	AscFormat.InitClassWithoutType(CChartExternalReference, ExternalReferenceBase);
+
+	CChartExternalReference.prototype.Write_ToBinary = function(writer) {
+		this.WriteToBinary(writer);
+	};
+	CChartExternalReference.prototype.Read_FromBinary = function(writer) {
+		this.ReadFromBinary(writer);
+	};
+	CChartExternalReference.prototype.WriteToBinary = function(writer) {
+		AscFormat.writeString(writer, this.Id);
+		AscFormat.writeLong(writer, this.Type);
+		writer.WriteBool(isRealObject(this.referenceData));
+		if (this.referenceData)
+		{
+			AscFormat.writeString(writer, this.referenceData["instanceId"]);
+			AscFormat.writeString(writer, this.referenceData["fileKey"]);
+		}
+	};
+	CChartExternalReference.prototype.ReadFromBinary = function(reader) {
+		this.Id = AscFormat.readString(reader);
+		this.Type = AscFormat.readLong(reader);
+		if (reader.GetBool())
+		{
+			this.referenceData = {};
+			this.referenceData["instanceId"] = AscFormat.readString(reader);
+			this.referenceData["fileKey"] = AscFormat.readString(reader);
+		}
+	};
+	CChartExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		ExternalReferenceBase.prototype.setReferenceData.call(this, fileId, portalName);
+		try {
+			this.Id = JSON.parse(fileId)["fileName"];
+		} catch (e) {
+		}
+	};
+	CChartExternalReference.prototype.updateData = function (wb, oPortalData) {
+		Asc.editor.wbModel = wb;
+		this.chart.worksheet = wb.getWorksheet(0);
+		this.chart.recalculateReferences(true);
+
+		const oReferenceData = oPortalData && oPortalData["referenceData"];
+		let oCopy;
+		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
+			oCopy = this.createDuplicate();
+			oCopy.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
+		}
+
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			oCopy = oCopy ? oCopy : this.createDuplicate();
+			oCopy.setId(path);
+		}
+
+		if (oCopy) {
+			this.chart.setExternalReference(oCopy);
+		}
+
+		this.chart.worksheet = undefined;
+		delete Asc.editor.wbModel;
+	};
+	AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartSpace_SetExternalReference] = CChartExternalReference;
+
+	function ExternalReference() {
+		ExternalReferenceBase.call(this);
+		this.DefinedNames = [];
+		this.SheetDataSet = [];
+		this.SheetNames = [];
 
 		this.worksheets = {};
 	}
+	AscFormat.InitClassWithoutType(ExternalReference, ExternalReferenceBase);
 
 	ExternalReference.prototype.getType = function() {
 		return AscCommonExcel.UndoRedoDataTypes.externalReference;
@@ -14968,6 +15167,9 @@ function RangeDataManagerElem(bbox, data)
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
+
+		const oWb = arr[0] && arr[0].workbook;
+		oWb.aWorksheets = [];
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
@@ -14979,6 +15181,7 @@ function RangeDataManagerElem(bbox, data)
 						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
 						oAllRange.cleanAll();
 						wsTo.copyFrom(arr[i], wsTo.sName);
+						oWb.aWorksheets.push(wsTo);
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -15022,49 +15225,6 @@ function RangeDataManagerElem(bbox, data)
 				this.SheetDataSet[i].putToChangedCells(this.worksheets && this.worksheets[sheetName]);
 			}
 		}
-	};
-
-	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
-
-	ExternalReference.prototype.getAscLink = function () {
-
-		// вот так, если это из файла прилетело, в т.ч. из буфера
-		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
-		//
-		//
-		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
-		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
-		//
-		// вот так, если б это было просто путь к файлу как в MS:
-		// 	onRequestReferenceData({data:{path: "new.docx"}})
-
-
-		var res = new asc_CExternalReference();
-
-		if (this.referenceData) {
-			res.type = Asc.c_oAscExternalReferenceType.referenceData;
-			res.data = this.referenceData;
-		} else if (this.isExternalLink()) {
-			res.type = Asc.c_oAscExternalReferenceType.link;
-			res.data = this.Id;
-		} else {
-			res.type = Asc.c_oAscExternalReferenceType.path;
-			res.data = this.Id;
-		}
-
-		res.externalReference = this;
-
-		return res;
-	};
-
-	ExternalReference.prototype.isExternalLink = function() {
-		var p = /^(?:http:\/\/|https:\/\/)/;
-		return this.Id.match(p);
-	};
-
-	ExternalReference.prototype.isXlsx = function() {
-		var p = /^.*\.(xlsx)$/i;
-		return this.Id.match(p);
 	};
 
 	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
@@ -15134,6 +15294,8 @@ function RangeDataManagerElem(bbox, data)
 				var wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
+				wb.aWorksheets.push(ws);
+				ws._setIndex(wb.aWorksheets.length - 1);
 
 				this.worksheets[sheetName] = ws;
 			}
@@ -15232,62 +15394,6 @@ function RangeDataManagerElem(bbox, data)
 			}
 		}
 	};
-
-	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
-		if (!fileId || !portalName) {
-			return;
-		}
-		if (!this.referenceData) {
-			this.referenceData = {};
-		}
-		this.referenceData["instanceId"] = portalName;
-		this.referenceData["fileKey"] = fileId;
-	};
-
-	ExternalReference.prototype.setId = function (id) {
-		if (!id) {
-			return;
-		}
-
-		this.Id = id;
-	};
-
-	ExternalReference.prototype.initFromObj = function (obj) {
-		//directUrl:
-		//fileType:
-		//token:
-		//url
-		//path
-		//referenceData
-		if (obj["path"] !== this.Id) {
-			this.setId(this._checkAndCorrectPath(obj["path"], obj["filePath"]));
-		}
-
-		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
-			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
-			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
-		}
-	};
-
-	ExternalReference.prototype._checkAndCorrectPath = function (sPath, sAbsolutePath) {
-		if (!sPath || 1 === sPath.indexOf("../")) {
-			// sPath -> ../../from.xlsx
-			//sAbsolutePath - > C:\root\from.xlsx
-			// need -> /root/from.xlsx
-			if (sAbsolutePath) {
-				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"))
-				sPath = sPath.replace(/\\/g,"/")
-			}
-		} else if (sPath && -1 !== sPath.indexOf(":/")) {
-			// sPath -> C:/root/from1.xlsx
-			//need -> file:///C:\root\from1.xlsx
-			sPath = sPath.replace(/\//g,"\\");
-			sPath = "file:///" + sPath;
-		}
-
-		return sPath;
-	};
-
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15420,6 +15526,10 @@ function RangeDataManagerElem(bbox, data)
 		if (sheet) {
 			var t = this;
 
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var wbView = api_sheet.wb;
+			const aRanges = [];
 			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
 			for (var i = 0; i < this.Row.length; i++) {
 				var row = this.Row[i];
@@ -15432,6 +15542,7 @@ function RangeDataManagerElem(bbox, data)
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
+					aRanges.push(range);
 					range._foreach(function (cell) {
 
 						let changedCell = externalCell.initFromCell(cell, true);
@@ -15439,12 +15550,11 @@ function RangeDataManagerElem(bbox, data)
 							isChanged = changedCell;
 						}
 
-						var api_sheet = Asc['editor'];
-						var wb = api_sheet.wbModel;
 						wb.dependencyFormulas.addToChangedCell(cell);
 					});
 				}
 			}
+			wbView.handleChartsOnWorkbookChange(aRanges);
 		}
 		return isChanged;
 	};
@@ -17372,6 +17482,7 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CT_Connection = CT_Connection;
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
+	window["AscCommonExcel"].CChartExternalReference = CChartExternalReference;
 	window["AscCommonExcel"].ExternalReference = ExternalReference;
 	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
 	window["AscCommonExcel"].ExternalRow = ExternalRow;
