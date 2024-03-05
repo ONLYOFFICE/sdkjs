@@ -13441,6 +13441,13 @@
 					}
 				}
 			}
+			if (fNew.importFunctionsRangeLinks) {
+				for (i in fNew.importFunctionsRangeLinks) {
+					if (externalLinks[i]) {
+						delete externalLinks[i];
+					}
+				}
+			}
 		}
 
 		//3. проверям, не ссылаются ли на эти ссылки кто-то другой

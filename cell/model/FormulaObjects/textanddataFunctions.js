@@ -1256,8 +1256,10 @@ function (window, undefined) {
 							}
 							for (let j = bbox.c1; j <= bbox.c2; j++) {
 								let externalCell = row.getCell(j);
-								let cellValue = externalCell.getFormulaValue();
-								ret.addElement(cellValue);
+								if (externalCell) {
+									let cellValue = externalCell.getFormulaValue();
+									ret.addElement(cellValue);
+								}
 							}
 						}
 					}
