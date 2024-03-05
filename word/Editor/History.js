@@ -1722,7 +1722,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	 */
 	CHistory.prototype.checkLock = function(pointCount)
 	{
-		if (!pointCount || pointCount > this.Index || -1 === this.Index)
+		if (!pointCount || pointCount - 1 > this.Index)
 			return;
 		
 		let lockData = {
@@ -1731,7 +1731,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			
 			isFillingForm : function()
 			{
-				return this.document.IsFillingForm();
+				return this.document.IsFillingFormMode();
 			},
 			
 			lock : function()
@@ -1750,6 +1750,8 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
 			{
 				point.Items[changeIndex].Data.CheckLock(lockData);
+				if (lockData.isLocked())
+					return;
 			}
 		}
 	};

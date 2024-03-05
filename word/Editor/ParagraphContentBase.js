@@ -4879,3 +4879,23 @@ CParagraphContentWithParagraphLikeContent.prototype.Save_Changes = function(Data
 CParagraphContentWithParagraphLikeContent.prototype.Load_Changes = function(Reader){};
 CParagraphContentWithParagraphLikeContent.prototype.Write_ToBinary2 = function(Writer){};
 CParagraphContentWithParagraphLikeContent.prototype.Read_FromBinary2 = function(Reader){};
+
+// TODO: Сделать и перенести в коммоны для изменений
+/**
+ * Универсальный метод для проверки лока для простых изменений внутри параграфа
+ */
+function private_ParagraphContentChangesCheckLock(lockData)
+{
+	let obj = this.Class;
+	
+	while (obj)
+	{
+		if (obj.Lock)
+			obj.Lock.Check(obj.Get_Id());
+		
+		if (!(obj instanceof AscWord.Paragraph) && obj.GetParent)
+			obj = obj.GetParent()
+		else
+			obj = null;
+	}
+}

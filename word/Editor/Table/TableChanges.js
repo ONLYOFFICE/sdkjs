@@ -212,12 +212,14 @@ function private_TableChangesCheckLock(lockData)
 {
 	if (lockData && lockData.isFillingForm())
 		return lockData.lock();
+	
+	let obj = this.Class;
 
 	let table = null;
-	if (this instanceof AscWord.Table)
-		table = this;
-	else if (this.GetTable)
-		table = this.GetTable();
+	if (obj instanceof AscWord.Table)
+		table = obj;
+	else if (obj.GetTable)
+		table = obj.GetTable();
 	
 	if (!table)
 		return;

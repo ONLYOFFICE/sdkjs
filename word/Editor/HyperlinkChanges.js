@@ -69,6 +69,7 @@ CChangesHyperlinkValue.prototype.private_SetValue = function(Value)
 {
 	this.Class.Value = Value;
 };
+CChangesHyperlinkValue.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringValue}
@@ -84,6 +85,7 @@ CChangesHyperlinkToolTip.prototype.private_SetValue = function(Value)
 {
 	this.Class.ToolTip = Value;
 };
+CChangesHyperlinkToolTip.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -158,6 +160,7 @@ CChangesHyperlinkAddItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesHyperlinkRemoveItem);
 };
+CChangesHyperlinkAddItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -224,6 +227,7 @@ CChangesHyperlinkRemoveItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesHyperlinkAddItem);
 };
+CChangesHyperlinkRemoveItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringValue}
@@ -239,3 +243,4 @@ CChangesHyperlinkAnchor.prototype.private_SetValue = function(Value)
 {
 	this.Class.Anchor = Value;
 };
+CChangesHyperlinkAnchor.prototype.CheckLock = private_ParagraphContentChangesCheckLock;

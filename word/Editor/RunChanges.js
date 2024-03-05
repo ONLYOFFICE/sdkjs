@@ -301,25 +301,6 @@ function private_ParaRunChangesOnMergeLangTextPr(oChange)
 	return true;
 }
 
-/**
- * Универсальный метод для проверки лока для простых изменений внутри параграфа
- */
-function private_ParagraphContentChangesCheckLock(lockData)
-{
-	let obj = this.Class;
-	
-	while (obj)
-	{
-		if (obj.Lock)
-			obj.Lock.Check(obj.Get_Id());
-		
-		if (!(obj instanceof AscWord.Paragraph) && obj.GetParent)
-			obj = obj.GetParent()
-		else
-			obj = null;
-	}
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
