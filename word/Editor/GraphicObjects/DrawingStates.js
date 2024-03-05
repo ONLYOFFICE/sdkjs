@@ -231,10 +231,9 @@ StartAddNewShape.prototype =
                 }
                 else {
                     // добавление шейпов
-                    // var oBounds     = oTrack.getBounds();
-                    var oTextShape  = oTrack.getShape(false, this.drawingObjects.drawingDocument);
+                    var oTextShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
 
-                    oLogicDocument.AddTextShape(oTextShape, 0);
+                    oLogicDocument.AddTextShape(oTextShape, this.pageIndex);
                 }
             }
         }
@@ -441,15 +440,14 @@ NullState.prototype =
             }
         }
         else {
-            let oViewer     = editor.getDocumentRenderer();
-            let oDoc        = oViewer.getPDFDoc();
+            let oViewer = editor.getDocumentRenderer();
 
-            let aDrawings;
-            if (oDoc.IsTextEditMode()) {
-                aDrawings = (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].textShapes) || [];
+            let aDrawings = [];
+            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].textShapes) {
+                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].textShapes);
             }
-            else {
-                aDrawings = (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) || [];
+            else if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
+                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
             }
 
             return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
@@ -2139,6 +2137,11 @@ TextAddState.prototype =
             }
             if(oCheckObject && oCheckObject.parent){
                 return {cursorType: "default", objectId: oCheckObject.Get_Id()};
+            }
+            else if (Asc.editor.isPdfEditor()) {
+                if (oCheckObject.IsTextShape()) {
+                    return {cursorType: "text", objectId: oCheckObject.Get_Id()};
+                }   
             }
         }
     },

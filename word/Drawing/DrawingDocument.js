@@ -4806,26 +4806,22 @@ function CDrawingDocument()
 		{
 			let oViewer		= this.m_oDocumentRenderer;
 			let oPdfDoc		= oViewer.getPDFDoc();
-			let oTargetObj	= oPdfDoc.GetActiveObject();
-			let nPage		= oTargetObj.GetPage();
 
 			if (oPdfDoc.activeForm) {
 				page = {
-					width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
-					height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
+					width_mm: this.m_oDocumentRenderer.drawingPages[pageIndex].W / oViewer.zoom * g_dKoef_pix_to_mm,
+					height_mm: this.m_oDocumentRenderer.drawingPages[pageIndex].H / oViewer.zoom * g_dKoef_pix_to_mm
 				}
 				drawPage = {
 					left:	0,
-					right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
+					right:	this.m_oDocumentRenderer.drawingPages[pageIndex].W,
 					top:	0,
-					bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
+					bottom:	this.m_oDocumentRenderer.drawingPages[pageIndex].H
 				}
 			}
 			else if (oPdfDoc.mouseDownAnnot || oPdfDoc.activeTextShape) {
 				drawPage = page.drawingPage;
 			}
-			
-			this.Overlay = this.m_oDocumentRenderer.overlay;
 		}
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
