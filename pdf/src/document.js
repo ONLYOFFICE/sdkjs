@@ -105,7 +105,7 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx = -1;
-        this.theme = new AscFormat.CTheme();
+        this.theme = AscFormat.GenerateDefaultTheme(this);
         this.actionsInfo = new CActionQueue(this);
         this.calculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
@@ -738,8 +738,6 @@ var CPresentation = CPresentation || function(){};
         }
         // если рисование
         else if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
-            this.mouseDownAnnot = null;
-            this.mouseDownField = null
             oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
             return;
         }
@@ -755,11 +753,14 @@ var CPresentation = CPresentation || function(){};
             }
         }
         else {
-            this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownTextShape || oMouseDownLink);
+            let oCurObject = this.GetMouseDownObject();
+            
+            // оставляем текущий объет к селекте, если кликнули по нему же
+            if (null == oCurObject || (oCurObject && false == [oMouseDownField, oMouseDownAnnot, oMouseDownTextShape, oMouseDownLink].includes(oCurObject)))
+                this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownTextShape || oMouseDownLink);
         }
 
         let oMouseDownObject = this.GetMouseDownObject();
-
         if (oMouseDownObject) {
 
             // если форма, то проверяем шрифт перед кликом в неё
@@ -1049,7 +1050,14 @@ var CPresentation = CPresentation || function(){};
         let Y       = oPos.Y;
 
         let isCursorUpdated = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-        
+        let oCursorInfo     = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        let oCurObject      = this.GetActiveObject();
+
+        // уже обновлён в oDrawingObjects
+        if (oCurObject && oCurObject.GetId && oCursorInfo.objectId == oCurObject.GetId()) {
+            return true;
+        }
+
         // курсор залочен для этих действий
         if (IsOnDrawer || IsOnEraser || IsOnAddAddShape)
             return true;
