@@ -191,7 +191,7 @@
 	CTextBoxContent.prototype.Get_ParentTextTransform = function() {
 		return this.transform;
 	};
-	CDocumentContent.prototype.Get_AbsolutePage = function() {
+	CTextBoxContent.prototype.Get_AbsolutePage = function() {
 		return this.ParentPDF.GetPage();
 	};
 	
