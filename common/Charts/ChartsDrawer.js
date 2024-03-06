@@ -1696,7 +1696,7 @@ CChartsDrawer.prototype =
 		var t = this;
 		var bFirst = true;
 		var maxErr = null, minErr = null;
-		const isCatAx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T ? true : false;
+		const isHorAxis = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T ? true : false;
 
 		var addValues = function(tempValX, tempValY) {
 			if(bFirst) {
@@ -1721,9 +1721,27 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		let calcErrValues = function (_seria, _l, _col, isCatAx) {
+		const findErrBarIdx = function (_seria, isHorAxis) {
+			const errBars = Array.isArray(_seria.errBars) ? _seria.errBars : [_seria.errBars];
+			for (let i = 0; i < errBars.length; i++) {
+				if (isHorAxis && errBars[i].errDir === AscFormat.st_errdirX) {
+					return i;
+				}
+				if (!isHorAxis && errBars[i].errDir === AscFormat.st_errdirY) {
+					return i;
+				}
+			}
+			return null;
+		}
+
+		let calcErrValues = function (_seria, _l,  _col, isHorAxis) {
 			if (_seria.errBars) {
-				var oErrVal = t.errBars.calculateErrVal(chart, _l, _col, isCatAx);
+				const errBarIdx = findErrBarIdx(_seria, isHorAxis);
+				if (errBarIdx === null) {
+					return;
+				}
+				const errBar = Array.isArray(_seria.errBars) ? _seria.errBars[errBarIdx] : _seria.errBars;
+				var oErrVal = t.errBars.calculateErrVal(chart, _l, errBarIdx, _col);
 				if (oErrVal) {
 					var pointVal;
 					if (null !== oErrVal.startVal) {
@@ -1734,7 +1752,7 @@ CChartsDrawer.prototype =
 
 					var plusErrVal = oErrVal.plusErrVal;
 					var minusErrVal = oErrVal.minusErrVal
-					switch (_seria.errBars.errBarType) {
+					switch (errBar.errBarType) {
 						case AscFormat.st_errbartypeBOTH: {
 							if (maxErr === null || maxErr < pointVal + plusErrVal) {
 								maxErr = pointVal + plusErrVal;
@@ -1840,7 +1858,7 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var generateArrValuesScatter = function (isCatAx) {
+		var generateArrValuesScatter = function (isHorAxis) {
 			newArr = [];
 			for (var l = 0; l < series.length; ++l) {
 				newArr[l] = [];
@@ -1852,7 +1870,7 @@ CChartsDrawer.prototype =
 
 				for (var j = 0; j < yNumCache.ptCount; ++j) {
 					var val = t._getScatterPointVal(series[l], j);
-					calcErrValues(series[l], l, j, isCatAx);
+					calcErrValues(series[l], l, j, isHorAxis);
 					if(val) {
 						addValues(val.x, val.y);
 						newArr[l][j] = [val.x, val.y];
@@ -1864,7 +1882,7 @@ CChartsDrawer.prototype =
 		if (chartType !== c_oChartTypes.Scatter) {
 			generateArrValues();
 		} else {
-			generateArrValuesScatter(isCatAx);
+			generateArrValuesScatter(isHorAxis);
 		}
 
 		if(chartType === c_oChartTypes.Bar || chartType === c_oChartTypes.HBar) {
@@ -1883,7 +1901,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		if (isCatAx) {
+		if (isHorAxis) {
 			min = (minErr !== null && min > minErr) ? minErr : min;
 			max = (maxErr !== null && max < maxErr) ? maxErr : max;
 		} else {
@@ -5861,11 +5879,14 @@ CChartsDrawer.prototype =
 		} else if (errBars.errDir === AscFormat.st_errdirY) {
 			res = false;
 		} else if (errBars.errDir === null) {
-			var chartType = this._getChartType(oChart.chart);
-			if (chartType === c_oChartTypes.HBar) {
-				res = true;
-			} else {
-				res = false;
+			const chart = oChart && oChart.chart ? oChart.chart : oChart;
+			if (chart) {
+				var chartType = this._getChartType(chart);
+				if (chartType === c_oChartTypes.HBar) {
+					res = true;
+				} else {
+					res = false;
+				}
 			}
 		}
 		return res;
@@ -15440,32 +15461,34 @@ CErrBarsDraw.prototype = {
 	constructor: CErrBarsDraw,
 
 	draw: function () {
-		var diffPen = 0;
-		var leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
-		var topRect = (this.cChartDrawer.calcProp.chartGutter._top - diffPen) / this.cChartDrawer.calcProp.pxToMM;
-		var rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
-		var bottomRect = (this.cChartDrawer.calcProp.trueHeight + diffPen) / this.cChartDrawer.calcProp.pxToMM;
+		const diffPen = 0;
+		const leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		const topRect = (this.cChartDrawer.calcProp.chartGutter._top - diffPen) / this.cChartDrawer.calcProp.pxToMM;
+		const rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		const bottomRect = (this.cChartDrawer.calcProp.trueHeight + diffPen) / this.cChartDrawer.calcProp.pxToMM;
 
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
 
-		for (var i in this.paths) {
-			if (this.paths[i]) {
-				for (var j = 0; j < this.paths[i].length; j++) {
-					if (!this.paths[i][j]) {
-						continue;
-					}
-					var seria = this.charts[i].chart.series[j];
-					for (var k = 0; k < this.paths[i][j].length; k++) {
-						var errBars = seria.getErrBars();
-						var pen = errBars && errBars.getPen();
-						if (pen) {
-							this.cChartDrawer.drawPath(this.paths[i][j][k], pen);
+		for (let chartId in this.paths) {
+			if (this.paths.hasOwnProperty(chartId) && this.paths[chartId]) {
+				for (let serId in this.paths[chartId]) {
+					if (this.paths[chartId].hasOwnProperty(serId) && this.paths[chartId][serId]) {
+						for (let errBarIdx in this.paths[chartId][serId]) {
+							if (this.paths[chartId][serId].hasOwnProperty(errBarIdx) && this.paths[chartId][serId][errBarIdx]) {
+								const seria = this.charts[chartId].chart.series[serId];
+								for (let i = 0; i < this.paths[chartId][serId][errBarIdx].length; i++) {
+									const errBar = seria.getErrBars(errBarIdx);
+									const pen = errBar && errBar.getPen();
+									if (pen) {
+										this.cChartDrawer.drawPath(this.paths[chartId][serId][errBarIdx][i], pen);
+									}
+								}
+							}
 						}
 					}
 				}
 			}
-
 		}
 
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
@@ -15474,8 +15497,10 @@ CErrBarsDraw.prototype = {
 	recalculate: function (charts) {
 		this.paths = {};
 		this.charts = charts;
-		for (var i in charts) {
-			this.paths[i] = this.recalculateChart(charts[i]);
+		for (let i in charts) {
+			if (charts.hasOwnProperty(i) && charts[i]) {
+				this.paths[i] = this.recalculateChart(charts[i]);
+			}
 		}
 	},
 
@@ -15495,17 +15520,17 @@ CErrBarsDraw.prototype = {
 			return;
 		}
 
-		var res = [];
+		var res = {};
 		var t = this;
 		var pxToMm = this.cChartDrawer.calcProp.pxToMM;
-		var calcErrLine = function (_start, _end, pos) {
+		var calcErrLine = function (errBar, _start, _end, pos) {
 			var pathId = t.cChartDrawer.cChartSpace.AllocPath();
 			var path = t.cChartDrawer.cChartSpace.GetPath(pathId);
 
 			var pathH = t.cChartDrawer.calcProp.pathH;
 			var pathW = t.cChartDrawer.calcProp.pathW;
 
-			if (t.cChartDrawer.getErrBarsPosition(errBars, oChart)) {
+			if (t.cChartDrawer.getErrBarsPosition(errBar, oChart)) {
 				path.moveTo(_start * pathW, pos * pathH);
 				path.lnTo(_end * pathW, pos * pathH);
 			} else {
@@ -15513,7 +15538,7 @@ CErrBarsDraw.prototype = {
 				path.lnTo(pos * pathW, _end * pathH);
 			}
 
-			if (!errBars.noEndCap) {
+			if (!errBar.noEndCap) {
 				var sizeCap = 5 / pxToMm;
 
 				if (isHorPos) {
@@ -15534,7 +15559,7 @@ CErrBarsDraw.prototype = {
 			return pathId;
 		};
 
-		var errBars;
+		let errBars;
 		var isHorPos;
 		for (var i = 0; i < this.points.length; i++) {
 			if (this.points[i]) {
@@ -15543,74 +15568,89 @@ CErrBarsDraw.prototype = {
 					continue;
 				}
 				errBars = oChart.chart.series[serIndex].errBars;
-				for (var j = 0; j < this.points[i].length; j++) {
-					if (this.points[i][j]) {
 
-						isHorPos = t.cChartDrawer.getErrBarsPosition(errBars, oChart);
-						var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
-						//другая ось нужна в случае, если используется ось категорий и нужно расчитать позицию по другой оси
-						var otherAxis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, !isHorPos);
-						var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
+				if (!errBars) {
+					return;
+				}
 
-						//расчитываем величину погрешности в одну сторону
-						var oErrVal = this.calculateErrVal(oChart.chart, serIndex, j, isCatAx);
-						if (oErrVal !== null) {
-							var plusErrVal = oErrVal.plusErrVal;
-							var minusErrVal = oErrVal.minusErrVal;
-							var x = this.points[i][j].x;
-							var y = this.points[i][j].y;
+				if (!Array.isArray(errBars)) {
+					errBars = [errBars];
+				}
 
-							//todo пока конкретно для line реализую
-							var pointVal;
-							if (null !== oErrVal.startVal) {
-								pointVal = oErrVal.startVal;
-							} else {
-								switch (this.cChartDrawer._getChartType(oChart.chart)) {
-									case c_oChartTypes.Scatter: {
-										pointVal = isCatAx ? j + 1 : (isHorPos ? this.points[i][j].xVal : this.points[i][j].yVal);
-										break;
-									}
-									default: {
-										pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
-										break;
-									}
-								}
-							}
-
-							var start, end;
-							switch (errBars.errBarType) {
-								case AscFormat.st_errbartypeBOTH: {
-									start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
-									end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
-									break;
-								}
-								case AscFormat.st_errbartypePLUS: {
-									start = this.cChartDrawer.getYPosition(pointVal, axis, true);
-									end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
-									break;
-								}
-								case AscFormat.st_errbartypeMINUS: {
-									start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
-									end = this.cChartDrawer.getYPosition(pointVal, axis, true);
-									break;
-								}
-							}
-
-							if (!res[serIndex]) {
-								res[serIndex] = [];
-							}
-
-							var fixPosition = x;
-							var isCatOtherAxis = otherAxis.getObjectType() === AscDFH.historyitem_type_CatAx;
-							if (isHorPos) {
-								if (isCatOtherAxis && y) {
-									fixPosition = y;
+				for (let errBarIdx = 0; errBarIdx < errBars.length; errBarIdx ++) {
+					const errBar = errBars[errBarIdx];
+					for (var j = 0; j < this.points[i].length; j++) {
+						if (this.points[i][j]) {
+							isHorPos = t.cChartDrawer.getErrBarsPosition(errBar, oChart);
+							var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
+							//другая ось нужна в случае, если используется ось категорий и нужно расчитать позицию по другой оси
+							var otherAxis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, !isHorPos);
+							var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
+							
+							//расчитываем величину погрешности в одну сторону
+							var oErrVal = this.calculateErrVal(oChart.chart, serIndex, errBarIdx, j, isCatAx);
+							if (oErrVal !== null) {
+								var plusErrVal = oErrVal.plusErrVal;
+								var minusErrVal = oErrVal.minusErrVal;
+								var x = this.points[i][j].x;
+								var y = this.points[i][j].y;
+	
+								//todo пока конкретно для line реализую
+								var pointVal;
+								if (null !== oErrVal.startVal) {
+									pointVal = oErrVal.startVal;
 								} else {
-									fixPosition = this.cChartDrawer.getYPosition(isCatOtherAxis ? j + 1 : this.points[i][j].yVal, otherAxis, true);
+									switch (this.cChartDrawer._getChartType(oChart.chart)) {
+										case c_oChartTypes.Scatter: {
+											pointVal = isCatAx ? j + 1 : (isHorPos ? this.points[i][j].xVal : this.points[i][j].yVal);
+											break;
+										}
+										default: {
+											pointVal = isCatAx ? j + 1 : this.points[i][j].xVal;
+											break;
+										}
+									}
 								}
-							}
+	
+								var start, end;
+								switch (errBar.errBarType) {
+									case AscFormat.st_errbartypeBOTH: {
+										start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
+										end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
+										break;
+									}
+									case AscFormat.st_errbartypePLUS: {
+										start = this.cChartDrawer.getYPosition(pointVal, axis, true);
+										end = this.cChartDrawer.getYPosition(pointVal + plusErrVal, axis, true);
+										break;
+									}
+									case AscFormat.st_errbartypeMINUS: {
+										start = this.cChartDrawer.getYPosition(pointVal - minusErrVal, axis, true);
+										end = this.cChartDrawer.getYPosition(pointVal, axis, true);
+										break;
+									}
+								}
+	
+								if (!res[serIndex]) {
+									res[serIndex] = [];
+								}
 
-							res[serIndex].push(calcErrLine(start, end, fixPosition));
+								if (!res[serIndex][errBar.Id]) {
+									res[serIndex][errBar.Id] = [];
+								}
+	
+								var fixPosition = x;
+								var isCatOtherAxis = otherAxis.getObjectType() === AscDFH.historyitem_type_CatAx;
+								if (isHorPos) {
+									if (isCatOtherAxis && y) {
+										fixPosition = y;
+									} else {
+										fixPosition = this.cChartDrawer.getYPosition(isCatOtherAxis ? j + 1 : this.points[i][j].yVal, otherAxis, true);
+									}
+								}
+	
+								res[serIndex][errBar.Id].push(calcErrLine(errBar, start, end, fixPosition));
+							}
 						}
 					}
 				}
@@ -15633,7 +15673,7 @@ CErrBarsDraw.prototype = {
 		return res;
 	},
 
-	calculateErrVal: function (oChart, ser, val, isCatAx) {
+	calculateErrVal: function (oChart, ser, errBarIdx, val, isCatAx) {
 		var t = this;
 		var seria = oChart.series[ser];
 
@@ -15642,15 +15682,14 @@ CErrBarsDraw.prototype = {
 		var minusErrVal = null;
 
 		if (seria && seria.errBars) {
-			var errBars = seria.errBars;
-
+			const errBars = Array.isArray(seria.errBars) ? seria.errBars[errBarIdx] : seria.errBars;
+			const isHorAxis = errBars.errDir === AscFormat.st_errdirX;
 			var grouping = t.cChartDrawer.getChartGrouping(oChart);
 			var chartType = t.cChartDrawer._getChartType(oChart);
 			var pointVal = null;
 			if (chartType === c_oChartTypes.Scatter) {
-				isCatAx = isCatAx ? isCatAx : errBars.errDir === AscFormat.st_errdirX;
-				pointVal = t.cChartDrawer.getValWithoutStacked(ser, val, oChart, isCatAx);
-				if (!pointVal && errBars.errDir === AscFormat.st_errdirX) {
+				pointVal = t.cChartDrawer.getValWithoutStacked(ser, val, oChart, isHorAxis);
+				if (!pointVal && isHorAxis) {
 					pointVal = val + 1;
 				}
 			} else {
@@ -15664,7 +15703,9 @@ CErrBarsDraw.prototype = {
 			//TODO J
 			var calculateSerSum = function (_ser, _startVal, endVal) {
 				return t.cChartDrawer.getAutoSum(_ser, _ser, _startVal, endVal, function (_ser, _val) {
-					var _pointVal = isCatAx ? _val + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+					const numPoint = seria ? t.cChartDrawer.getPointByIndex(seria, _val, true) : null;
+					const currPointVal = numPoint ? numPoint.val : _val + 1;
+					var _pointVal = (isCatAx || isHorAxis) ? currPointVal : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
 					return _pointVal != null ? _pointVal : 0;
 				});
 			};
@@ -15681,7 +15722,9 @@ CErrBarsDraw.prototype = {
 				var m = mSumm / ny;
 
 				aSumm = t.cChartDrawer.getAutoSum(startSer, endSer, startPoint, endPoint, function (_ser, _val) {
-						var _pointVal = isCatAx ? _val + 1 : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
+						const numPoint = seria ? t.cChartDrawer.getPointByIndex(seria, _val, true) : null;
+						const currPointVal = numPoint ? numPoint.val : _val + 1;
+						var _pointVal = (isCatAx || isHorAxis) ? currPointVal : t.cChartDrawer.getValWithStacked(_ser, _val, oChart);
 						if (_pointVal == null) {
 							return 0;
 						}
