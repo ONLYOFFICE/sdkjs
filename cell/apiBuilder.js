@@ -2023,40 +2023,87 @@
 	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
-	 * @param {boolean} bInRows - Specifies whether to take the data from the rows or from the columns. If true, the data from the rows will be used.
-	 * @param {ChartType} sType - The chart type used for the chart display.
-	 * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
-	 * @param {EMU} nExtX - The chart width in English measure units
-	 * @param {EMU} nExtY - The chart height in English measure units.
-	 * @param {number} nFromCol - The number of the column where the beginning of the chart will be placed.
-	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the chart measured in English measure units.
-	 * @param {number} nFromRow - The number of the row where the beginning of the chart will be placed.
-	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the chart measured in English measure units.
-	 * @returns {ApiChart}
+	 * @param {string} sTitle - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
+	 * @param {string} sDataRange - Specifies whether to take the data from the rows or from the columns. If true, the data from the rows will be used.
+	 * @returns {ApiProtectedRange}
 	 */
-	ApiWorksheet.prototype.AddProtectedRange =
-		function (sTitle, sDataRange, aUsers) {
-			var settings = new Asc.asc_ChartSettings();
-			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
-			settings.style = nStyleIndex;
-			settings.inColumns = !bInRows;
-			settings.putRange(sDataRange);
-			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
-			if (arguments.length === 8) {//support old variant
-				oChart.setBDeleted(false);
-				oChart.setWorksheet(this.worksheet);
-				oChart.addToDrawingObjects();
-				oChart.setDrawingBaseCoords(arguments[4], 0, arguments[5], 0, arguments[6], 0, arguments[7], 0, 0, 0, 0, 0);
-			} else {
-				private_SetCoords(oChart, this.worksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset);
+	ApiWorksheet.prototype.AddProtectedRange = function (sTitle, sDataRange) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let isValidRef = typeof (sDataRange) === 'string' && sDataRange.trim() !== '';
+		let result;
+		if (isValidTitle && isValidRef) {
+			let settings = new Asc.CUserProtectedRange(this.worksheet);
+			settings.asc_setName(sTitle);
+			settings.asc_setRef(sDataRange);
+
+			let docInfo = this.worksheet.workbook.oApi && this.worksheet.workbook.oApi.DocInfo;
+			if (docInfo) {
+				let userInfo = docInfo.UserInfo;
+				if (userInfo) {
+					let users = [];
+					let user = new Asc.CUserProtectedRangeUserInfo();
+
+					user.asc_setId(userInfo.asc_getId());
+					user.asc_setName(userInfo.asc_getName());
+
+					users.push(user);
+					settings.asc_setUsers(users);
+				}
 			}
-			if (AscFormat.isRealNumber(nStyleIndex)) {
-				oChart.setStyle(nStyleIndex);
+
+			this.worksheet.editUserProtectedRanges(null, settings, true)
+
+			result = new ApiProtectedRange(settings);
+		}
+
+		return result;
+	};
+
+	/**
+	 * Creates a chart of the specified type from the selected data range of the current sheet.
+	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
+	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sTitle - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
+	 * @returns {ApiProtectedRange}
+	 */
+	ApiWorksheet.prototype.GetProtectedRange = function (sTitle) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let result;
+		if (isValidTitle) {
+			let protectedRange = this.worksheet.getProtectedRangeByName(sTitle);
+			result = protectedRange && protectedRange.val ? new ApiProtectedRange(protectedRange.val.clone()) : null;
+		}
+
+		return result;
+	};
+
+	/**
+	 * Creates a chart of the specified type from the selected data range of the current sheet.
+	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
+	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiProtectedRange}
+	 */
+	ApiWorksheet.prototype.GetAllProtectedRanges = function () {
+		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getProtectedRanges();
+		let result = null;
+		if (protectedRanges) {
+			result = [];
+			for (let i  = 0; i < protectedRanges.length; i++) {
+				result.push(new ApiProtectedRange(protectedRanges[i].clone()));
 			}
-			oChart.recalculateReferences();
-			return new ApiChart(oChart);
-		};
+		}
+		return result;
+	};
+	Object.defineProperty(ApiWorksheet.prototype, "GetAllProtectedRanges", {
+		get: function () {
+			return this.GetAllProtectedRanges();
+		}
+	});
+
 
 
 	/**
@@ -6588,14 +6635,71 @@
 	};
 
 	/**
-	 * Removes all frozen panes in the current worksheet.
-	 * @memberof ApiFreezePanes
-	 * @typeofeditors ["CSE"]
-	 * @since 8.0.0
+	 * Class representing user protected range.
+	 * @constructor
 	 */
-	ApiFreezePanes.prototype.Unfreeze = function () {
-		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
-			this.ws.workbook.oApi.asc_freezePane(undefined);
+	function ApiProtectedRange(protectedRange) {
+		this.protectedRange = protectedRange;
+	}
+
+	/**
+	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sTitle - Any valid expression.
+	 * @returns {bool}
+	 */
+	ApiProtectedRange.prototype.SetTitle = function (sTitle) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		if (isValidTitle && sTitle !== this.protectedRange.asc_getName()) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone();
+				newProtectedRange.asc_setName(sTitle);
+				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sTitle - Any valid expression.
+	 * @returns {bool}
+	 */
+	ApiProtectedRange.prototype.SetRange = function (sRange) {
+		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
+		if (isValidRange /*asc_getRef !==*/) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone();
+				newProtectedRange.asc_setRef(sRange);
+				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sTitle - Any valid expression.
+	 * @returns {bool}
+	 */
+	ApiProtectedRange.prototype.SetUser = function (sRange) {
+		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
+		if (isValidRange /*asc_getRef !==*/) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone();
+				newProtectedRange.asc_setRef(sRange);
+				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange);
+				return true;
+			}
+		}
+		return false;
 	};
 
 
