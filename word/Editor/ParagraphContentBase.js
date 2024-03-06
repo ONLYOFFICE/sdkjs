@@ -4887,15 +4887,31 @@ CParagraphContentWithParagraphLikeContent.prototype.Read_FromBinary2 = function(
 function private_ParagraphContentChangesCheckLock(lockData)
 {
 	let obj = this.Class;
+	if (!this.IsContentChange() && lockData && lockData.isFillingForm())
+		return lockData.lock();
 	
+	let isForm = false;
+	let isCC   = false;
 	while (obj)
 	{
 		if (obj.Lock)
 			obj.Lock.Check(obj.Get_Id());
 		
+		isForm = isForm || (obj instanceof AscWord.CInlineLevelSdt && obj.IsForm());
+		isCC   = isCC || obj instanceof AscWord.CInlineLevelSdt;
+		
 		if (!(obj instanceof AscWord.Paragraph) && obj.GetParent)
 			obj = obj.GetParent()
 		else
 			obj = null;
+	}
+	
+	if (this.IsContentChange())
+	{
+		if (isForm && lockData && !lockData.isFillingForm())
+			lockData.lock();
+		
+		if (!isCC && lockData && lockData.isFillingForm())
+			lockData.lock();
 	}
 }

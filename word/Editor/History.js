@@ -1729,6 +1729,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			document : this.Document,
 			locked   : false,
 			
+			
 			isFillingForm : function()
 			{
 				return this.document.IsFillingFormMode();
@@ -1736,6 +1737,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			
 			lock : function()
 			{
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
 				this.locked = true;
 			},
 			
