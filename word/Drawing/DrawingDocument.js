@@ -4797,32 +4797,7 @@ function CDrawingDocument()
 		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var page = this.m_arrPages[pageIndex];
-		var drawPage;
-		if (!this.m_oDocumentRenderer)
-		{
-			drawPage = page.drawingPage;
-		}
-		else
-		{
-			let oViewer		= this.m_oDocumentRenderer;
-			let oPdfDoc		= oViewer.getPDFDoc();
-
-			if (oPdfDoc.activeForm) {
-				page = {
-					width_mm: this.m_oDocumentRenderer.drawingPages[pageIndex].W / oViewer.zoom * g_dKoef_pix_to_mm,
-					height_mm: this.m_oDocumentRenderer.drawingPages[pageIndex].H / oViewer.zoom * g_dKoef_pix_to_mm
-				}
-				drawPage = {
-					left:	0,
-					right:	this.m_oDocumentRenderer.drawingPages[pageIndex].W,
-					top:	0,
-					bottom:	this.m_oDocumentRenderer.drawingPages[pageIndex].H
-				}
-			}
-			else if (oPdfDoc.mouseDownAnnot || oPdfDoc.activeTextShape) {
-				drawPage = page.drawingPage;
-			}
-		}
+		var drawPage = page.drawingPage;
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;

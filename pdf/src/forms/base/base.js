@@ -387,37 +387,6 @@
         return this._formRect;
     };
     
-    CBaseField.prototype.IntersectWithRect = function(X, Y, W, H)
-    {
-        let oViewer     = editor.getDocumentRenderer();
-        var arrRects    = [];
-        var oBounds     = this.getFormRelRect();
-
-        let nPage = this.GetPage();
-        let oPage = oViewer.pageDetector.pages.find(function(page) {
-            return page.num == nPage;
-        });
-        
-        let nPageIndX = oPage.x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-        let nPageIndY = oPage.y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-
-        var nLeft   = Math.max(X, oBounds.X) + nPageIndX / oViewer.zoom;
-        var nRight  = Math.min(X + W, oBounds.X + oBounds.W) + nPageIndX / oViewer.zoom;
-        var nTop    = Math.max(Y, oBounds.Y) + nPageIndY / oViewer.zoom;
-        var nBottom = Math.min(Y + H, oBounds.Y + oBounds.H) + nPageIndY / oViewer.zoom;
-
-        if (nLeft < nRight && nTop < nBottom)
-        {
-            arrRects.push({
-                X : nLeft,
-                Y : nTop,
-                W : nRight - nLeft,
-                H : nBottom - nTop
-            });
-        }
-
-        return arrRects;
-    };
     CBaseField.prototype.GetFullName = function() {
         if (this._parent)
         {
