@@ -2726,10 +2726,10 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
 };
 /**
  * Завершаем действие
- * @param {boolean} [isCheckEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @param {boolean} [checkEmptyAction=true] Нужно ли проверять, что действие ничего не делало
  * @returns {boolean} Выполнилось ли действие
  */
-CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
+CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 {
 	if (!this.IsActionStarted())
 		return true;
@@ -2747,13 +2747,11 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		return true;
 	}
 	
-	let actionCanceled = false;
-
 	this.private_CheckAdditionalOnFinalize();
-	
+	this.private_CheckEmptyPointsInAction(checkEmptyAction);
 	this.private_CheckActionLock();
-
-	var isAllPointsEmpty = true;
+	
+	let actionCompleted = true;
 	if (this.Action.CancelAction)
 	{
 		let arrChanges = [];
@@ -2761,35 +2759,17 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		{
 			arrChanges = arrChanges.concat(this.History.Undo());
 		}
-
-		this.RecalculateByChanges(arrChanges);
-		actionCanceled = true;
+		
+		if (arrChanges.length)
+			this.RecalculateByChanges(arrChanges);
+		
+		actionCompleted = false;
 	}
-	else if (false !== isCheckEmptyAction)
-	{
-		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
-		{
-			if (this.History.Is_LastPointEmpty())
-			{
-				this.History.Remove_LastPoint();
-			}
-			else
-			{
-				isAllPointsEmpty = false;
-				break;
-			}
-		}
-	}
-	else
-	{
-		isAllPointsEmpty = false;
-	}
-
-	if (!isAllPointsEmpty)
+	
+	if (this.Action.PointsCount)
 	{
 		if (this.Action.Recalculate)
 		{
-
             if (this.Action.Additional.ShapeAutoFit)
                 this.private_FinalizeShapeAutoFit();
 
@@ -2824,7 +2804,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Api.checkChangesSize();
 	
 	if (this.Action.UpdateStates)
-		return !actionCanceled;
+		return actionCompleted;
 	
 	this.Action.UpdateStates = true;
 	
@@ -2856,7 +2836,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
-	return !actionCanceled;
+	return actionCompleted;
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -2939,9 +2919,23 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 	
 	this.Action.Additional.Start = false;
 };
+CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmtpyPoints)
+{
+	if (false === checkEmtpyPoints)
+		return;
+	
+	for (let pointIndex = 0, pointCount = this.Action.PointsCount; pointIndex < pointCount; ++pointIndex)
+	{
+		if (!this.History.Is_LastPointEmpty())
+			break;
+		
+		this.History.Remove_LastPoint();
+		--this.Action.PointsCount;
+	}
+};
 CDocument.prototype.private_CheckActionLock = function()
 {
-	if (!this.Action.CheckLock || this.Action.CancelAction)
+	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
 		return;
 	
 	if (!this.StartSelectionLockCheck())
