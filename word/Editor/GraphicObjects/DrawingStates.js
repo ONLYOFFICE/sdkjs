@@ -446,7 +446,7 @@ NullState.prototype =
             if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].textShapes) {
                 aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].textShapes);
             }
-            else if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
+            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
                 aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
             }
 
