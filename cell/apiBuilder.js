@@ -6665,7 +6665,7 @@
 	/**
 	 * Returns a class formatted according to the instructions contained in the format expression.
 	 * @memberof ApiProtectedRange
-	 * @param {string} sTitle - Any valid expression.
+	 * @param {string} sRange - Any valid expression.
 	 * @returns {bool}
 	 */
 	ApiProtectedRange.prototype.SetRange = function (sRange) {
@@ -6688,7 +6688,27 @@
 	 * @param {string} sTitle - Any valid expression.
 	 * @returns {bool}
 	 */
-	ApiProtectedRange.prototype.SetUser = function (sRange) {
+	ApiProtectedRange.prototype.AddUser = function (sId, sName, nType) {
+		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		if (isValidTitle && sTitle !== this.protectedRange.asc_getName()) {
+			let worksheet = this.protectedRange._ws;
+			if (worksheet) {
+				let newProtectedRange = this.protectedRange.clone();
+				newProtectedRange.asc_setName(sTitle);
+				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * @memberof ApiProtectedRange
+	 * @param {string} sTitle - Any valid expression.
+	 * @returns {bool}
+	 */
+	ApiProtectedRange.prototype.DeleteUser = function (sId) {
 		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
 		if (isValidRange /*asc_getRef !==*/) {
 			let worksheet = this.protectedRange._ws;
