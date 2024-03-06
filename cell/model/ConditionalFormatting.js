@@ -2786,7 +2786,10 @@
 					prevVal = props[i][0];
 					prevNum = _isNumeric;
 				} else {
-					nError = compareRefs(prevVal, prevType, prevNum, props[i][0], props[i][1], _isNumeric);
+					if (!(i === 1 && type === Asc.ECfType.iconSet)) {
+						nError = compareRefs(prevVal, prevType, prevNum, props[i][0], props[i][1], _isNumeric);
+					}
+
 					if (nError !== null) {
 						return [nError, i];
 					}
