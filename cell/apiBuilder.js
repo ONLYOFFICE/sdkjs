@@ -2017,6 +2017,47 @@
 		}
 	});
 
+	/**
+	 * Creates a chart of the specified type from the selected data range of the current sheet.
+	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
+	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
+	 * @param {boolean} bInRows - Specifies whether to take the data from the rows or from the columns. If true, the data from the rows will be used.
+	 * @param {ChartType} sType - The chart type used for the chart display.
+	 * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
+	 * @param {EMU} nExtX - The chart width in English measure units
+	 * @param {EMU} nExtY - The chart height in English measure units.
+	 * @param {number} nFromCol - The number of the column where the beginning of the chart will be placed.
+	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the chart measured in English measure units.
+	 * @param {number} nFromRow - The number of the row where the beginning of the chart will be placed.
+	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the chart measured in English measure units.
+	 * @returns {ApiChart}
+	 */
+	ApiWorksheet.prototype.AddProtectedRange =
+		function (sTitle, sDataRange, aUsers) {
+			var settings = new Asc.asc_ChartSettings();
+			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
+			settings.style = nStyleIndex;
+			settings.inColumns = !bInRows;
+			settings.putRange(sDataRange);
+			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
+			if (arguments.length === 8) {//support old variant
+				oChart.setBDeleted(false);
+				oChart.setWorksheet(this.worksheet);
+				oChart.addToDrawingObjects();
+				oChart.setDrawingBaseCoords(arguments[4], 0, arguments[5], 0, arguments[6], 0, arguments[7], 0, 0, 0, 0, 0);
+			} else {
+				private_SetCoords(oChart, this.worksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset);
+			}
+			if (AscFormat.isRealNumber(nStyleIndex)) {
+				oChart.setStyle(nStyleIndex);
+			}
+			oChart.recalculateReferences();
+			return new ApiChart(oChart);
+		};
+
 
 	/**
 	 * Specifies the cell border position.
