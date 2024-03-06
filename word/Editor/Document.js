@@ -2919,9 +2919,9 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 	
 	this.Action.Additional.Start = false;
 };
-CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmtpyPoints)
+CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmptyAction)
 {
-	if (false === checkEmtpyPoints)
+	if (false === checkEmptyAction)
 		return;
 	
 	for (let pointIndex = 0, pointCount = this.Action.PointsCount; pointIndex < pointCount; ++pointIndex)
