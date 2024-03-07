@@ -2210,6 +2210,9 @@
             }
         }
     };
+	CDocumentComparison.prototype.insertCopyTextBoxContent = function (oBaseShape, oTextBoxContent) {
+		oBaseShape.setTextBoxContent(oTextBoxContent.Copy(oBaseShape, editor.WordControl.m_oDrawingDocument, this.copyPr));
+	};
     CDocumentComparison.prototype.compareShapes = function(oBaseShape, oCompareShape)
     {
         if(oBaseShape.textBoxContent && oCompareShape.textBoxContent)
@@ -2222,7 +2225,7 @@
         }
         else if(!oBaseShape.textBoxContent && oCompareShape.textBoxContent)
         {
-            oBaseShape.setTextBoxContent(oCompareShape.textBoxContent.Copy(oBaseShape, editor.WordControl.m_oDrawingDocument, this.copyPr))
+					this.insertCopyTextBoxContent(oBaseShape, oCompareShape.textBoxContent);
         }
     };
 	CDocumentComparison.prototype.updateBookmarksStack = function (oNode)

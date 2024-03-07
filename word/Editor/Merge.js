@@ -701,17 +701,26 @@
     CDocumentMergeComparison.prototype = Object.create(CDocumentComparison.prototype);
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
 
+	CDocumentMergeComparison.prototype.insertCopyTextBoxContent = function (oBaseShape, oTextBoxContent) {
+		this.executeDisableSkipUpdateInfo(function () {
+			CDocumentComparison.prototype.insertCopyTextBoxContent.call(this, oBaseShape, oTextBoxContent);
+		}.bind(this));
+	};
+	CDocumentMergeComparison.prototype.executeDisableSkipUpdateInfo = function (callback) {
+		const bOldSkipUpdateInfo = this.copyPr.SkipUpdateInfo;
+		const bSaveCustomReviewType = this.copyPr.bSaveCustomReviewType;
+		this.copyPr.SkipUpdateInfo = false;
+		this.copyPr.bSaveCustomReviewType = true;
+		callback();
+		this.copyPr.SkipUpdateInfo = bOldSkipUpdateInfo;
+		this.copyPr.bSaveCustomReviewType = bSaveCustomReviewType;
+	};
+
     CDocumentMergeComparison.prototype.executeWithCheckInsertAndRemove = function (callback, oChange) {
         if (!oChange.remove.length || !oChange.insert.length) {
-            const bOldSkipUpdateInfo = this.copyPr.SkipUpdateInfo;
-            const bSaveCustomReviewType = this.copyPr.bSaveCustomReviewType;
-            this.copyPr.SkipUpdateInfo = false;
-            this.copyPr.bSaveCustomReviewType = true;
-            callback();
-            this.copyPr.SkipUpdateInfo = bOldSkipUpdateInfo;
-            this.copyPr.bSaveCustomReviewType = bSaveCustomReviewType;
+					this.executeDisableSkipUpdateInfo(callback);
         } else {
-            callback();
+					callback();
         }
     };
 
@@ -864,11 +873,9 @@
     };
 
     CDocumentMergeComparison.prototype.applyChangesToTableSize = function(oNode) {
-        this.copyPr.SkipUpdateInfo = false;
-        this.copyPr.bSaveCustomReviewType = true;
-        CDocumentComparison.prototype.applyChangesToTableSize.call(this, oNode);
-        delete this.copyPr.bSaveCustomReviewType;
-        this.copyPr.SkipUpdateInfo = true;
+	    this.executeDisableSkipUpdateInfo(function () {
+		    CDocumentComparison.prototype.applyChangesToTableSize.call(this, oNode);
+	    }.bind(this));
     };
 
     CDocumentMergeComparison.prototype.checkRowReview = function(oRowNode) {
@@ -922,15 +929,12 @@
     CDocumentMergeComparison.prototype.getCompareReviewInfo = CDocumentResolveConflictComparison.prototype.getCompareReviewInfo;
 
     CDocumentMergeComparison.prototype.applyParagraphComparison = function (oOrigRoot, oRevisedRoot) {
-        this.copyPr.SkipUpdateInfo = false;
-        this.copyPr.bSaveCustomReviewType = true;
-        CDocumentComparison.prototype.applyParagraphComparison.call(this, oOrigRoot, oRevisedRoot);
-        for (let i = oOrigRoot.children.length - 1; i >= 0; i -= 1) {
-            this.checkParaEndReview(oOrigRoot.children[i]);
-        }
-
-        delete this.copyPr.bSaveCustomReviewType;
-        this.copyPr.SkipUpdateInfo = true;
+				this.executeDisableSkipUpdateInfo(function () {
+					CDocumentComparison.prototype.applyParagraphComparison.call(this, oOrigRoot, oRevisedRoot);
+					for (let i = oOrigRoot.children.length - 1; i >= 0; i -= 1) {
+						this.checkParaEndReview(oOrigRoot.children[i]);
+					}
+				}.bind(this));
     };
 
     CDocumentMergeComparison.prototype.getNodeConstructor = function () {
