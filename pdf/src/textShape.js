@@ -554,6 +554,7 @@
 
     CTextShape.prototype.SetLineSpacing = function(oSpacing) {
         this.GetDocContent().SetParagraphSpacing(oSpacing);
+        this.SetNeedRecalc(true);
     };
     CTextShape.prototype.GetLineSpacing = function() {
         let oCalcedPr = this.GetCalculatedParaPr();

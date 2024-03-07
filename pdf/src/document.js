@@ -107,6 +107,9 @@ var CPresentation = CPresentation || function(){};
         this.maxApIdx               = -1;
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
+        this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
+        this.InitDefaultTextListStyles();
+
         this.actionsInfo            = new CActionQueue(this);
         this.calculateInfo          = new CCalculateInfo(this);
         this.fieldsToCommit         = [];
@@ -3051,6 +3054,30 @@ var CPresentation = CPresentation || function(){};
             }
         }
     };
+    CPDFDoc.prototype.InitDefaultTextListStyles = function() {
+        let oTextStyles     = new AscFormat.CTextStyles();
+        let oTextListStyle  = new AscFormat.TextListStyle();
+
+        oTextStyles.otherStyle = oTextListStyle;
+
+        let nDefTab     = 25.4
+        let nIndStep    = 12.7;
+        let nJc         = AscCommon.align_Left;
+
+        for (let i = 0; i < 10; i++) {
+            let oParaPr = new AscWord.CParaPr();
+            oTextListStyle.levels[i] = oParaPr;
+
+            if (i == 9)
+                break;
+
+            oParaPr.DefaultTab  = nDefTab;
+            oParaPr.Ind.Left    = i * nIndStep;
+            oParaPr.Jc          = nJc;
+        }
+
+        this.styles.txStyles = oTextStyles;
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for History
@@ -3094,7 +3121,7 @@ var CPresentation = CPresentation || function(){};
 		return true;
 	};
 	CPDFDoc.prototype.Get_Styles = function() {
-		return AscCommonWord.DEFAULT_STYLES;
+		return this.styles;
 	};
 	CPDFDoc.prototype.GetStyles = function() {
 		return this.Get_Styles();
