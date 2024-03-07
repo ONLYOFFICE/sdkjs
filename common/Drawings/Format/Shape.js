@@ -2928,6 +2928,19 @@
 					}
 					hierarchy_styles.splice(0, 0, ownStyle);
 				}
+				else if (Asc.editor.isPdfEditor()) {
+					let oDoc		= this.GetDocument();
+					let aListStyle	= oDoc.styles.txStyles.otherStyle;
+
+					ownStyle = new CStyle("ownStyle", null, null, null, true);
+					var own_ppt_style = aListStyle.levels[level];
+					ownStyle.ParaPr = own_ppt_style.Copy();
+					if (own_ppt_style.DefaultRunPr) {
+						ownStyle.TextPr = own_ppt_style.DefaultRunPr.Copy();
+					}
+					hierarchy_styles.splice(0, 0, ownStyle);
+				}
+
 				var shape_text_style;
 				var compiled_style = this.getCompiledStyle && this.getCompiledStyle();
 				if (isRealObject(compiled_style) && isRealObject(compiled_style.fontRef)) {
