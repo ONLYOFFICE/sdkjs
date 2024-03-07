@@ -2539,8 +2539,7 @@
 					if (oContent.IsSelectionUse()) {
 						ctx.beginPath();
 						oContent.DrawSelectionOnPage(0);
-						ctx.globalAlpha = 0.2;
-						ctx.fill();
+						oDrDoc.private_EndDrawSelection();
 					}
 
 					oDrDoc.AutoShapesTrack.PageIndex = nPage;
@@ -2551,11 +2550,9 @@
 			{
 				ctx.beginPath();
 				oDoc.activeForm.content.DrawSelectionOnPage(0);
-				ctx.globalAlpha = 0.2;
-				ctx.fill();
+				oDrDoc.private_EndDrawSelection();
 			}
 			
-			oDrDoc.private_EndDrawSelection();
 			ctx.globalAlpha = 1.0;
 		};
 
