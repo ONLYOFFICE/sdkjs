@@ -2517,7 +2517,7 @@
             oOriginalDocument.StopRecalculate();
             oOriginalDocument.StartAction(AscDFH.historydescription_Document_CompareDocuments);
             oOriginalDocument.Start_SilentMode();
-            const oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
+            const oldTrackRevisions = oOriginalDocument.GetLocalTrackRevisions();
             oOriginalDocument.SetTrackRevisions(false);
             const LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
             for (let LogicDocId in LogicDocuments)
@@ -3556,8 +3556,10 @@
             }
         }
         oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-        let bHaveRevisons2 = false;
-        const oDoc2 = AscFormat.ExecuteNoHistory(function(){
+				const oldTrackRevisions = oDoc1.GetLocalTrackRevisions();
+	    oDoc1.SetTrackRevisions(false);
+	    let bHaveRevisons2 = false;
+	    const oDoc2 = AscFormat.ExecuteNoHistory(function(){
             const openParams = {disableRevisions: true, noSendComments: true};
             const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
             const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
@@ -3572,6 +3574,7 @@
             }
             return oTempDocument;
         }, this, []);
+	    oDoc1.SetTrackRevisions(oldTrackRevisions);
         if(oDoc2)
         {
             const fCallback = function()

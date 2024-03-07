@@ -1062,7 +1062,7 @@
         oOriginalDocument.StopRecalculate();
         oOriginalDocument.StartAction(AscDFH.historydescription_Document_MergeDocuments);
         oOriginalDocument.Start_SilentMode();
-        this.oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
+        this.oldTrackRevisions = oOriginalDocument.GetLocalTrackRevisions();
         oOriginalDocument.SetTrackRevisions(false);
         const oTrackRevisionManager = oOriginalDocument.TrackRevisionsManager;
         this.oldSkipPreDeleteMoveMarks = oTrackRevisionManager.SkipPreDeleteMoveMarks;
@@ -1082,6 +1082,8 @@
         }
         oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
 
+	    const oldTrackRevisions = oDoc1.GetLocalTrackRevisions();
+	    oDoc1.SetTrackRevisions(false);
         const oDoc2 = AscFormat.ExecuteNoHistory(function () {
             const openParams = {noSendComments: true};
             const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
@@ -1092,7 +1094,7 @@
             }
             return oTempDocument;
         }, this, []);
-
+	    oDoc1.SetTrackRevisions(oldTrackRevisions);
         if (oDoc2) {
             const oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new AscCommonWord.ComparisonOptions());
             oMerge.merge();
