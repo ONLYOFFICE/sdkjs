@@ -448,7 +448,6 @@
         };
 
         this.SetNeedRecalc(true);
-        this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsShapeBased = function() {
@@ -490,7 +489,8 @@
         }
         else {
             this._needRecalc = true;
-            if (bSkipAddToRedraw != true)
+            // note: lazyCopy флаг означает, что объект был скопирован для отрисовки на overlay
+            if (bSkipAddToRedraw != true && this.lazyCopy != true)
                 this.AddToRedraw();
         }
     };
@@ -898,6 +898,8 @@
 
         let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oNewAnnot.lazyCopy = true;
+        
         if (this._pagePos) {
             oNewAnnot._pagePos = {
                 x: this._pagePos.x,

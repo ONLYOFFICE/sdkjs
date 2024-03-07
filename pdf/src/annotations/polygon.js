@@ -190,6 +190,8 @@
 
         let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oPolygon.lazyCopy = true;
+
         oPolygon._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,

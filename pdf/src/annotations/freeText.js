@@ -380,6 +380,8 @@
 
         let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oFreeText.lazyCopy = true;
+
         oFreeText._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
