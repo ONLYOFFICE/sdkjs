@@ -12702,14 +12702,11 @@
 
 	//*****user range protect*****
 	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
-
-		var res = null;
-
-
-		/*if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
-			return res;
-		}*/
-
+		
+		if ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
+			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref))) {
+			return false;
+		}
 
 		if (oldObj || newObj) {
 			let cloneNewOnj = newObj && newObj.clone();
@@ -12746,7 +12743,7 @@
 			}
 		}
 
-		return res;
+		return true;
 	};
 
 	Worksheet.prototype.deleteUserProtectedRanges = function (range) {

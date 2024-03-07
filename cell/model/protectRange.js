@@ -259,6 +259,16 @@
 		}
 		this.ref = ref;
 	};
+	CUserProtectedRange.prototype.getUserById = function (userId) {
+		if (this.users) {
+			for (let i = 0; i < this.users.length; i++) {
+				if (this.users[i].id === userId) {
+					return {obj: this.users[i], index: i};
+				}
+			}
+		}
+		return null;
+	};
 
 	CUserProtectedRange.prototype.asc_getRef = function () {
 		var result = null;
