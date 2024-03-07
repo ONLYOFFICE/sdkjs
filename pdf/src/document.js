@@ -1217,10 +1217,11 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.Undo();
             
             let aSourceObjects  = oCurPoint.Additional.Pdf;
-            let isTextConvert   = oCurPoint.Additional.PdfConvertText;
+            let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
-            if (isTextConvert) {
-                this.isConvertedToShapes = false;
+            if (oTextConvert) {
+                this.Viewer.drawingPages[oTextConvert.page].isConvertedToShapes = false;
+                this.isUndoRedoInProgress = false;
                 return;
             }
 
@@ -1284,10 +1285,11 @@ var CPresentation = CPresentation || function(){};
             let oCurPoint = AscCommon.History.Points[nCurPoindIdx];
 
             let aSourceObjects  = oCurPoint.Additional.Pdf;
-            let isTextConvert   = oCurPoint.Additional.PdfConvertText;
+            let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
-            if (isTextConvert) {
-                this.isConvertedToShapes = true;
+            if (oTextConvert) {
+                this.Viewer.drawingPages[oTextConvert.page].isConvertedToShapes = true;
+                this.isUndoRedoInProgress = false;
                 return;
             }
 
@@ -1666,13 +1668,13 @@ var CPresentation = CPresentation || function(){};
         return oStickyComm;
     };
     CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
-        if (this.isConvertedToShapes) {
+        if (null == this.Viewer.drawingPages[nPage] || this.Viewer.drawingPages[nPage].isConvertedToShapes) {
             return;
         }
 
-        this.isConvertedToShapes = true;
+        this.Viewer.drawingPages[nPage].isConvertedToShapes = true;
 
-        this.CreateNewHistoryPoint({isTextConvert: true});
+        this.CreateNewHistoryPoint({textConvert: {page: nPage}});
         let oDrDoc = this.GetDrawingDocument();
 
         let aSpsXmls        = this.Viewer.file.nativeFile.scanPage(nPage);
@@ -1768,8 +1770,8 @@ var CPresentation = CPresentation || function(){};
         AscCommon.History.Create_NewPoint();
 
         if (oAdditional) {
-            if (oAdditional.isTextConvert) {
-                AscCommon.History.SetPdfConvertTextPoint(true);
+            if (oAdditional.textConvert) {
+                AscCommon.History.SetPdfConvertTextPoint(oAdditional.textConvert);
             }
             else if (oAdditional.objects) {
                 AscCommon.History.SetSourceObjectsToPointPdf(oAdditional.objects);
