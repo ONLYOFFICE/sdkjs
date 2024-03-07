@@ -757,7 +757,7 @@
         let oContent    = this.GetDocContent();
         let oParagraph  = oContent.GetCurrentParagraph();
 
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         // удаляем текст в селекте
         if (oContent.IsSelectionUse())
@@ -783,7 +783,7 @@
 	 */
     CAnnotationFreeText.prototype.Remove = function(nDirection, isCtrlKey) {
         let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let oContent = this.GetDocContent();
         oContent.Remove(nDirection, true, false, false, isCtrlKey);

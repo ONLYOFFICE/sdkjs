@@ -195,6 +195,8 @@ StartAddNewShape.prototype =
                 let oViewer = Asc.editor.getDocumentRenderer();
                 // рисование кистью
                 if (Asc.editor.isInkDrawerOn()) {
+                    oLogicDocument.CreateNewHistoryPoint();
+
                     // добавлем path если рисование не закончено
                     if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
                         oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
@@ -228,12 +230,17 @@ StartAddNewShape.prototype =
                         // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
                         oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                     }
+
+                    oLogicDocument.TurnOffHistory();
                 }
                 else {
+                    oLogicDocument.CreateNewHistoryPoint();
+
                     // добавление шейпов
                     var oTextShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
-
                     oLogicDocument.AddTextShape(oTextShape, this.pageIndex);
+
+                    oLogicDocument.TurnOffHistory();
                 }
             }
         }
@@ -801,7 +808,7 @@ RotateState.prototype =
                     var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
 
-                    oDoc.CreateNewHistoryPoint();
+                    oDoc.CreateNewHistoryPoint({objects: [oTrack.originalObject]});
                     oTrack.trackEnd(oTrack.originalObject.IsAnnot());
 
                     // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании

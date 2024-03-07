@@ -1790,13 +1790,13 @@
 
 			var page = this.pagesInfo.pages[pageObject.index];
 			
-			// если есть заселекченная аннотация под мышкой, то возвращаем её, а не первую попавшуюся
+			// если есть заселекченная shape base аннотация под мышкой, то возвращаем её, а не первую попавшуюся
 			if (oDoc.mouseDownAnnot) {
 				let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 				let X       = oPos.X;
 				let Y       = oPos.Y;
 
-				if (oDoc.mouseDownAnnot.hitInPath && oDoc.mouseDownAnnot.hitInPath(X, Y))
+				if (oDoc.mouseDownAnnot.IsShapeBased() && (oDoc.mouseDownAnnot.hitInBoundingRect(X, Y) || oDoc.mouseDownAnnot.hitToHandles(X, Y) != -1 || oDoc.mouseDownAnnot.hitInPath(X, Y)))
 					return oDoc.mouseDownAnnot;
 			}
 
@@ -1838,7 +1838,7 @@
 						let X       = oPos.X;
 						let Y       = oPos.Y;
 
-						if (oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
+						if (oAnnot.hitInBoundingRect(X, Y) || oAnnot.hitToHandles(X, Y) != -1 || oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
 							return oAnnot;
 					}
 
@@ -2689,7 +2689,7 @@
 					}
 				}
 
-				if (!page.isOnEditing) {
+				if (!this.getPDFDoc().isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
 						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);

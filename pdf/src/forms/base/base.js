@@ -1430,7 +1430,7 @@
 		
         let oDoc = this.GetDocument();
             
-		oDoc.CreateNewHistoryPoint(this);
+		oDoc.CreateNewHistoryPoint({objects: [this]});
 		this.beforeCompositeInput();
 		let run = this.getRunForCompositeInput();
 		if (!run) {
@@ -1467,7 +1467,7 @@
 		
         let oDoc = this.GetDocument();
 
-		oDoc.CreateNewHistoryPoint(this);
+		oDoc.CreateNewHistoryPoint({objects: [this]});
 		this.compositeReplaceCount++;
 		this.compositeInput.add(codePoint);
 		this.SetNeedRecalc(true);
@@ -1479,7 +1479,7 @@
 		
         let oDoc = this.GetDocument();
 
-		oDoc.CreateNewHistoryPoint(this);
+		oDoc.CreateNewHistoryPoint({objects: [this]});
 		this.compositeReplaceCount++;
 		this.compositeInput.remove(count);
 		this.SetNeedRecalc(true);
@@ -1491,7 +1491,7 @@
 		
         let oDoc = this.GetDocument();
 
-		oDoc.CreateNewHistoryPoint(this);
+		oDoc.CreateNewHistoryPoint({objects: [this]});
 		this.compositeReplaceCount++;
 		this.compositeInput.replace(codePoints);
 		this.SetNeedRecalc(true);

@@ -60,10 +60,6 @@
     CTextShape.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
 
-        if (this.GetDocContent() == null) {
-            this.createTextBody();
-        }
-
         // выставляем пунктирный бордер если нет заливки и  
         if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
             this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
@@ -205,13 +201,12 @@
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        if (this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
+        if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
             this.SetInTextBox(false);
         }
         else {
             this.SetInTextBox(true);
             oDoc.SelectionSetStart(x, y, e);
-            oDoc.SetLocalHistory();
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
@@ -289,109 +284,17 @@
         return this._needUpdateRC;
     };
     CTextShape.prototype.SetInTextBox = function(bIn) {
-        let oDoc = this.GetDocument();
-
         this.isInTextBox = bIn;
-
-        if (bIn == false && this.IsNeedUpdateRC()) {
-            oDoc.SetGlobalHistory();
-            oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFTxShapeRC(this, this.GetRichContents(), this.GetRichContents(true)));
-            this.SetNeedUpdateRC(false);
-        }
     };
     CTextShape.prototype.IsInTextBox = function() {
         return this.isInTextBox;
-    };
-    CTextShape.prototype.SetRichContents = function(aRCInfo) {
-        let oDoc            = this.GetDocument();
-        let oContent        = this.GetDocContent();
-        oContent.ClearContent();
-        
-        let oLastUsedPara   = oContent.GetElement(0);
-        oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
-
-        let oRCInfo;
-        let oRun, oRFonts;
-
-        this._richContents = aRCInfo;
-        oDoc.History.Add(new CChangesPDFTxShapeRC(this, this.GetRichContents(), aRCInfo));
-
-        for (let i = 0; i < aRCInfo.length; i++) {
-            oRCInfo = aRCInfo[i];
-
-            oRun = new ParaRun(oLastUsedPara, false);
-            oRFonts = new CRFonts();
-            // oRFonts.SetAll(oRCInfo["name"], -1);
-            oRFonts.SetAll("Arial", -1);
-
-            oRun.SetBold(Boolean(oRCInfo["bold"]));
-            oRun.SetItalic(Boolean(oRCInfo["italic"]));
-            oRun.SetStrikeout(Boolean(oRCInfo["strikethrough"]));
-            oRun.SetUnderline(Boolean(oRCInfo["underlined"]));
-            oRun.SetFontSize(oRCInfo["size"]);
-            oRun.Set_RFonts2(oRFonts);
-
-            editor.private_CreateApiRun(oRun).SetColor(0, 0, 0, false);
-
-            let oIterator = oRCInfo["text"].replace('\r', '').getUnicodeIterator();
-            while (oIterator.check()) {
-                let runElement = AscPDF.codePointToRunElement(oIterator.value());
-				oRun.Add(runElement);
-                
-                oIterator.next();
-            }
-
-            oLastUsedPara.AddToContentToEnd(oRun);
-
-            if (oRCInfo["text"].indexOf('\r') != -1) {
-                oLastUsedPara = new AscWord.Paragraph(oContent, true);
-                oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
-            }
-        }
-
-        this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(false);
-    };
-    CTextShape.prototype.GetRichContents = function(bCalced) {
-        if (!bCalced)
-            return this._richContents;
-
-        let oContent = this.GetDocContent();
-        let aRCInfo = [];
-
-        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
-            let oPara = oContent.GetElement(i);
-
-            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
-                let oRun = oPara.GetElement(j);
-                let sText = oRun.GetText();
-                if (sText) {
-                    aRCInfo.push({
-                        "bold":             oRun.Get_Bold(),
-                        "italic":           oRun.Get_Italic(),
-                        "strikethrough":    oRun.Get_Strikeout(),
-                        "underlined":       oRun.Get_Underline(),
-                        "size":             oRun.Get_FontSize(),
-                        "name":             oRun.Get_RFonts().Ascii.Name,
-                        "text":             sText
-                    });
-                }
-            }
-
-            if (aRCInfo[aRCInfo.length - 1])
-                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
-        }
-
-        return aRCInfo;
     };
     CTextShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
         let oParagraph  = oContent.GetCurrentParagraph();
 
-        oDoc.SetLocalHistory();
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         // удаляем текст в селекте
         if (oContent.IsSelectionUse())
@@ -417,7 +320,7 @@
      */
     CTextShape.prototype.Remove = function(nDirection, isCtrlKey) {
         let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let oContent = this.GetDocContent();
         oContent.Remove(nDirection, true, false, false, isCtrlKey);
@@ -512,19 +415,10 @@
 
     CTextShape.prototype.SetParaTextPr = function(oParaTextPr) {
         let oContent = this.GetDocContent();
-        var StartPos = oContent.Selection.StartPos;
-        var EndPos   = oContent.Selection.EndPos;
-
-        if (EndPos < StartPos)
-        {
-            var Temp = StartPos;
-            StartPos = EndPos;
-            EndPos   = Temp;
-        }
-
-        for (var nIndex = StartPos; nIndex <= EndPos; nIndex++) {
-            oContent.GetElement(nIndex).Add(oParaTextPr.Copy());
-        }
+        
+        false == this.IsInTextBox() && oContent.SetApplyToAll(true);
+        oContent.AddToParagraph(oParaTextPr.Copy());
+        false == this.IsInTextBox() && oContent.SetApplyToAll(false);
 
         this.SetNeedRecalc(true);
         this.SetNeedUpdateRC(true);
@@ -697,59 +591,18 @@
         return this.GetDocContent().GetCalculatedParaPr();
     };
 
-    function initTextShape(oParentTextShape) {
-        let aShapeRectInMM = oParentTextShape.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
-        });
-        let xMax = aShapeRectInMM[2];
-        let xMin = aShapeRectInMM[0];
-        let yMin = aShapeRectInMM[1];
-        let yMax = aShapeRectInMM[3];
-
-        oParentTextShape.setSpPr(new AscFormat.CSpPr());
-        oParentTextShape.spPr.setParent(oParentTextShape);
-        oParentTextShape.spPr.setXfrm(new AscFormat.CXfrm());
-        oParentTextShape.spPr.xfrm.setParent(oParentTextShape.spPr);
-        oParentTextShape.spPr.setLn(new AscFormat.CLn());
-
-        oParentTextShape.spPr.xfrm.setOffX(xMin);
-        oParentTextShape.spPr.xfrm.setOffY(xMax);
-        oParentTextShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
-        oParentTextShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
-        oParentTextShape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        // oParentTextShape.setStyle(AscFormat.CreateDefaultShapeStyle());
-        oParentTextShape.setBDeleted(false);
-        oParentTextShape.recalculate();
-        oParentTextShape.brush = AscFormat.CreateNoFillUniFill();
-
-        oParentTextShape.createTextBody();
-        oParentTextShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
-        oParentTextShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
-        oParentTextShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
-
-        let oLine       = oParentTextShape.pen;
-        oLine.setPrstDash(Asc.c_oDashType.sysDot);
-        oLine.setW(25.4 / 72.0 * 36000);
-        if (oParentTextShape.GetDocument().IsTextEditMode() == false)
-            oLine.setFill(AscFormat.CreateNoFillUniFill());
-
-        oParentTextShape.SetRichContents(JSON.parse('[{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"Text\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dwa"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dawd\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"aw\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"da\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"d\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dw"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"adawd\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"daw\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"dwa\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"d\\r"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"awd3212312323233"},{"bold":0,"italic":0,"strikethrough":0,"underlined":0,"size":10,"color":[0,0,0],"name":"","text":"\\r"}]'));
-        // editor.private_CreateApiRun(oRun).SetColor(0, 0, 0, false);
-        
-        oParentTextShape.setTxBox(true);
-    }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
     CTextShape.prototype.Get_AbsolutePage = function() {
         return this.GetPage();
+    };
+    CTextShape.prototype.getLogicDocument = function() {
+        return this.GetDocument();
+    };
+    CTextShape.prototype.IsThisElementCurrent = function() {
+        return true;
     };
 
     window["AscPDF"].CTextShape = CTextShape;

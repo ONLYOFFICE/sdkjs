@@ -4066,7 +4066,6 @@
 
 	AscDFH.historyitem_Pdf_TxShape_Rect	= AscDFH.historyitem_Pdf_TextShape | 0;
 	AscDFH.historyitem_Pdf_TxShape_Page	= AscDFH.historyitem_Pdf_TextShape | 1;
-	AscDFH.historyitem_Pdf_TxShape_RC	= AscDFH.historyitem_Pdf_TextShape | 2;
 	AscDFH.historyitem_Pdf_TxShape_Rot	= AscDFH.historyitem_Pdf_TextShape | 2;
 
 	//------------------------------------------------------------------------------------------------------------------
