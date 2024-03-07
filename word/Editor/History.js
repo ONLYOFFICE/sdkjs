@@ -1108,14 +1108,14 @@ CHistory.prototype =
 			this.Points[this.Index].Additional.Pdf = aObj;
 		}
 	};
-	CHistory.prototype.IsPdfConvertTextPoint = function() {
+	CHistory.prototype.GetPdfConvertTextPoint = function() {
 		if (this.Index != -1) {
 			return !!this.Points[this.Index].Additional.PdfConvertText;
 		}
 	};
-	CHistory.prototype.SetPdfConvertTextPoint = function(isTextConvert) {
+	CHistory.prototype.SetPdfConvertTextPoint = function(oConvertInfo) {
 		if (this.Index != -1) {
-			this.Points[this.Index].Additional.PdfConvertText = isTextConvert;
+			this.Points[this.Index].Additional.PdfConvertText = oConvertInfo;
 		}
 	};
 	CHistory.prototype.GetLastPointFormFilling = function()
@@ -1159,7 +1159,7 @@ CHistory.prototype.ClearAdditional = function()
 
 		let form				= this.GetLastPointFormFilling();
 		let pdfSourceObjs		= this.GetLastPointSourceObjectsPdf();
-		let isPdfTextConvert	= this.IsPdfConvertTextPoint();
+		let convertTextInfo		= this.GetPdfConvertTextPoint();
 
 		this.Points[this.Index].Additional = {};
 
@@ -1169,8 +1169,8 @@ CHistory.prototype.ClearAdditional = function()
 		if (pdfSourceObjs)
 			this.SetSourceObjectsToPointPdf(pdfSourceObjs);
 
-		if (isPdfTextConvert)
-			this.SetPdfConvertTextPoint(isPdfTextConvert);
+		if (convertTextInfo)
+			this.SetPdfConvertTextPoint(convertTextInfo);
 	}
 
 	if(this.Api)

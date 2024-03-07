@@ -2690,8 +2690,8 @@
 					}
 				}
 
-				if (!this.getPDFDoc().isConvertedToShapes) {
-					if (!page.Image && !isStretchPaint)
+				if (!page.isConvertedToShapes) {
+					if (!page.Image && !isStretchPaint && !page.isConvertedToShapes)
 					{
 						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
 						if (this.bCachedMarkupAnnnots)
