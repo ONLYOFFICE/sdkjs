@@ -710,6 +710,10 @@ var CPresentation = CPresentation || function(){};
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');
 
         let oViewer         = this.Viewer;
+        if (!oViewer.canInteract()) {
+            return;
+        }
+
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
 
@@ -929,6 +933,10 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
+        if (!oViewer.canInteract()) {
+            return;
+        }
+
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
         
@@ -1118,6 +1126,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
+        if (!oViewer.canInteract()) {
+            return;
+        }
+        
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
         
@@ -1182,6 +1194,14 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.DoUndo = function() {
         let oDrDoc = this.GetDrawingDocument();
 
+        let oActive = this.GetActiveObject();
+        if (oActive) {
+            let oContent = oActive.GetDocContent();
+            if (oContent) {
+                oContent.RemoveSelection();
+            }
+        }
+
         if (this.History.Can_Undo && !this.LocalHistory.Can_Undo())
             this.SetGlobalHistory();
         
@@ -1241,6 +1261,14 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.DoRedo = function() {
         let oDrDoc = this.GetDrawingDocument();
+
+        let oActive = this.GetActiveObject();
+        if (oActive) {
+            let oContent = oActive.GetDocContent();
+            if (oContent) {
+                oContent.RemoveSelection();
+            }
+        }
 
         if (this.History.Can_Redo && !this.LocalHistory.Can_Redo())
             this.SetGlobalHistory();

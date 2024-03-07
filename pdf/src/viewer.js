@@ -1856,6 +1856,10 @@
 			}
 			return null;
 		};
+		this.canInteract = function() {
+			// не даем взаимодействовать с документом пока не произошла отрисовка
+			return this.scheduledRepaintTimer == null && this.isRepaint != true;
+		};
 		this.getPageTextShapeByMouse = function()
 		{
 			let oDoc	= this.getPDFDoc();
