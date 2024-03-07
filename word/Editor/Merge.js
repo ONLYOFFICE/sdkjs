@@ -1080,24 +1080,14 @@
 
         const oDoc2 = AscFormat.ExecuteNoHistory(function () {
             const openParams = {noSendComments: true};
-            let oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
-            oApi.WordControl.m_oLogicDocument = oDoc2;
-            const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
+            const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
+            const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
             if (!oBinaryFileReader.Read(sBinary2)) {
-                oDoc2 = null;
+                return null;
             }
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
-            oApi.WordControl.m_oLogicDocument = oDoc1;
-            if (oDoc1.History)
-                oDoc1.History.Set_LogicDocument(oDoc1);
-            if (oDoc1.CollaborativeEditing)
-                oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
-            return oDoc2;
+            return oTempDocument;
         }, this, []);
-
-        oDoc1.History.Document = oDoc1;
 
         if (oDoc2) {
             const oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new AscCommonWord.ComparisonOptions());
