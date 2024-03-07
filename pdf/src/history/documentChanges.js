@@ -50,7 +50,8 @@ CChangesPDFDocumentAddItem.prototype.Type = AscDFH.historyitem_PDF_Document_AddI
 
 CChangesPDFDocumentAddItem.prototype.Undo = function()
 {
-	var oDocument	= this.Class;
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
 	let oViewer		= Asc.editor.getDocumentRenderer();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -80,13 +81,15 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			oViewer.DrawingObjects.resetSelection();
 		}
 	}
-
-	oDocument.mouseDownAnnot = null;
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };
 CChangesPDFDocumentAddItem.prototype.Redo = function()
 {
-	var oDocument = this.Class;
-	let oViewer = editor.getDocumentRenderer();
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	let oViewer		= Asc.editor.getDocumentRenderer();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -116,7 +119,9 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 			oViewer.DrawingObjects.resetSelection();
 		}
 	}
-	oDocument.mouseDownAnnot = null;
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };
 
 /**

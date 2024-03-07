@@ -849,10 +849,11 @@
 		let oCommentData = new AscCommon.CCommentData();
 		oCommentData.Read_FromAscCommentData(AscCommentData);
 
+		oDoc.CreateNewHistoryPoint();
 		let oComment = oDoc.AddComment(AscCommentData);
-
+		oDoc.TurnOffHistory();
+		
 		if (oComment) {
-			oComment.AddToRedraw();
 			return oComment.GetId()
 		}
 	};

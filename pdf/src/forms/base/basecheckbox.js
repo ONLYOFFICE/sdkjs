@@ -393,7 +393,7 @@
     CBaseCheckBoxField.prototype.onMouseUp = function() {
         let oDoc = this.GetDocument();
 
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
         if (this.IsChecked()) {
             if (this._noToggleToOff == false) {
                 this.SetChecked(false);

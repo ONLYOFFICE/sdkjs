@@ -267,10 +267,8 @@
         let oDoc    = this.GetDocument();
         let nLineW  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
 
-        oDoc.CreateNewHistoryPoint();
         oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aNewPath));
-        oDoc.TurnOffHistory();
-
+        
         let aCurAllPoints = [];
         for (let i = 0; i < this._gestures.length; i++)
             aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);

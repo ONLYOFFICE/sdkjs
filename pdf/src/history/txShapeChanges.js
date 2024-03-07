@@ -34,7 +34,6 @@
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_TxShape_Rect]		= CChangesPDFTxShapeRect;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_TxShape_Page]		= CChangesPDFTxShapePage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_TxShape_RC]		= CChangesPDFTxShapeRC;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_TxShape_Rot]		= CChangesPDFTxShapeRot;
 
 
@@ -76,30 +75,13 @@ CChangesPDFTxShapePage.prototype.private_SetValue = function(Value)
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFTxShapeRC(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFTxShapeRC.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-CChangesPDFTxShapeRC.prototype.constructor = CChangesPDFTxShapeRC;
-CChangesPDFTxShapeRC.prototype.Type = AscDFH.historyitem_Pdf_TxShape_RC;
-CChangesPDFTxShapeRC.prototype.private_SetValue = function(Value)
-{
-	let oTxShape = this.Class;
-	oTxShape.SetRichContents(Value);
-};
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
- */
 function CChangesPDFTxShapeRot(Class, Old, New, Color)
 {
 	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
 }
 CChangesPDFTxShapeRot.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFTxShapeRot.prototype.constructor = CChangesPDFTxShapeRot;
-CChangesPDFTxShapeRot.prototype.Type = AscDFH.historyitem_Pdf_TxShape_RC;
+CChangesPDFTxShapeRot.prototype.Type = AscDFH.historyitem_Pdf_TxShape_Rot;
 CChangesPDFTxShapeRot.prototype.private_SetValue = function(Value)
 {
 	let oTxShape = this.Class;

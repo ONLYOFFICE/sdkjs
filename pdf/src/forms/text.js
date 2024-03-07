@@ -868,7 +868,7 @@
     CTextField.prototype.EnterText = function(aChars)
     {
         let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let nChars = 0;
         function countChars(oRun) {
@@ -1016,7 +1016,7 @@
         }
         
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint(this);
+            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             
             this.SetApiValue(this.GetValue());
@@ -1230,7 +1230,7 @@
             return false;
 
         let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         if (this.DoKeystrokeAction(null, nDirection, false, isCtrlKey) == false) {
             AscCommon.History.Remove_LastPoint();

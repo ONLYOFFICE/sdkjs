@@ -129,7 +129,7 @@
             return;
         }
 
-        oDoc.CreateNewHistoryPoint(this);
+        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         aFields.forEach(function(field) {
             if (field.GetHeaderPosition() == position["textOnly"])

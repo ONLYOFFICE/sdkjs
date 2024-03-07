@@ -1098,14 +1098,24 @@ CHistory.prototype =
 			this.Points[nIndex].Additional.FormFilling = oForm;
 		}
 	};
-	CHistory.prototype.GetLastPointSourceObjPdf = function() {
+	CHistory.prototype.GetLastPointSourceObjectsPdf = function() {
 		if (this.Index != -1) {
 			return this.Points[this.Index].Additional.Pdf;
 		}
 	};
-	CHistory.prototype.SetSourceObjToPointPdf = function(Obj) {
+	CHistory.prototype.SetSourceObjectsToPointPdf = function(aObj) {
 		if (this.Index != -1) {
-			this.Points[this.Index].Additional.Pdf = Obj;
+			this.Points[this.Index].Additional.Pdf = aObj;
+		}
+	};
+	CHistory.prototype.IsPdfConvertTextPoint = function() {
+		if (this.Index != -1) {
+			return !!this.Points[this.Index].Additional.PdfConvertText;
+		}
+	};
+	CHistory.prototype.SetPdfConvertTextPoint = function(isTextConvert) {
+		if (this.Index != -1) {
+			this.Points[this.Index].Additional.PdfConvertText = isTextConvert;
 		}
 	};
 	CHistory.prototype.GetLastPointFormFilling = function()
@@ -1147,16 +1157,20 @@ CHistory.prototype.ClearAdditional = function()
 		// TODO: На создании новой точки не удаляем информацию о заполнении формы
 		//       надо переназвать функции по-нормальному
 
-		let form			= this.GetLastPointFormFilling();
-		let pdfSourceObj	= this.GetLastPointSourceObjPdf();
+		let form				= this.GetLastPointFormFilling();
+		let pdfSourceObjs		= this.GetLastPointSourceObjectsPdf();
+		let isPdfTextConvert	= this.IsPdfConvertTextPoint();
 
 		this.Points[this.Index].Additional = {};
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
 
-		if (pdfSourceObj)
-			this.SetSourceObjToPointPdf(pdfSourceObj);
+		if (pdfSourceObjs)
+			this.SetSourceObjectsToPointPdf(pdfSourceObjs);
+
+		if (isPdfTextConvert)
+			this.SetPdfConvertTextPoint(isPdfTextConvert);
 	}
 
 	if(this.Api)
