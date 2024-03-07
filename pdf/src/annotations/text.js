@@ -199,6 +199,8 @@
 
         let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oNewAnnot.lazyCopy = true;
+
         if (this._pagePos) {
             oNewAnnot._pagePos = {
                 x: this._pagePos.x,

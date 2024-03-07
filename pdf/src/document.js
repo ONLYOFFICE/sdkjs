@@ -1054,7 +1054,7 @@ var CPresentation = CPresentation || function(){};
         let oCurObject      = this.GetActiveObject();
 
         // уже обновлён в oDrawingObjects
-        if (oCurObject && oCurObject.GetId && oCursorInfo.objectId == oCurObject.GetId()) {
+        if (oCurObject && oCurObject.GetId && oCursorInfo.objectId == oCurObject.GetId() && (!oCurObject.IsAnnot() || !oCurObject.IsComment())) {
             return true;
         }
 

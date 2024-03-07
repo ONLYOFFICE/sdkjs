@@ -69,6 +69,8 @@
 
         let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oCircle.lazyCopy = true;
+
         oCircle._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,

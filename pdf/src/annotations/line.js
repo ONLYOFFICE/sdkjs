@@ -208,6 +208,8 @@
 
         let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oLine.lazyCopy = true;
+
         oLine._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
