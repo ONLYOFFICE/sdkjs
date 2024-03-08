@@ -1343,7 +1343,6 @@
 			if (!this.volatileArrays) {
 				this.volatileArrays = {};
 			}
-			// todo хранить VM массивы по порядку возрастания как в МС (counter)
 			let listenerId = formula.getListenerId();
 			this.volatileArrays[listenerId] = formula;
 		},
@@ -1355,7 +1354,6 @@
 			return this.volatileArrays
 		},
 		endListeningVolatileArray: function(listenerId) {
-			// let listenerId = listener.getListenerId();
 			if (listenerId) {
 				delete this.volatileArrays[listenerId];
 			}
@@ -1380,29 +1378,6 @@
 				if (!changedSheetRepeated) {
 					changedSheetRepeated = {};
 					this.changedRangeRepeated[sheetId] = changedSheetRepeated;
-				}
-				changedSheetRepeated[name] = bbox;
-			}
-			changedSheet[name] = bbox;
-		},
-		addToChangedDynamicRange: function(sheetId, bbox) {
-			if (!this.changedDynamicRange) {
-				this.changedDynamicRange = {};
-			}
-			let changedSheet = this.changedDynamicRange[sheetId];
-			if (!changedSheet) {
-				changedSheet = {};
-				this.changedDynamicRange[sheetId] = changedSheet;
-			}
-			let name = getVertexIndex(bbox);
-			if (this.isInCalc && !changedSheet[name]) {
-				if (!this.changedDynamicRangeRepeated) {
-					this.changedDynamicRangeRepeated = {};
-				}
-				let changedSheetRepeated = this.changedDynamicRangeRepeated[sheetId];
-				if (!changedSheetRepeated) {
-					changedSheetRepeated = {};
-					this.changedDynamicRangeRepeated[sheetId] = changedSheetRepeated;
 				}
 				changedSheetRepeated[name] = bbox;
 			}
@@ -1594,17 +1569,16 @@
 			}
 			this.buildDependency();
 			this.addToChangedHiddenRows();
-			if (!(this.changedCell || this.changedRange || this.changedDefName || this.changedDynamicRange)) {
+			if (!(this.changedCell || this.changedRange || this.changedDefName)) {
 				return;
 			}
 			var notifyData = {type: c_oNotifyType.Dirty, areaData: undefined};
 			this._broadscastVolatile(notifyData);
 			this._broadcastCellsStart();
-			while (this.changedCellRepeated || this.changedRangeRepeated || this.changedDefNameRepeated || this.changedDynamicRangeRepeated) {
+			while (this.changedCellRepeated || this.changedRangeRepeated || this.changedDefNameRepeated) {
 				this._broadcastDefNames(notifyData);
 				this._broadcastCells(notifyData);
 				this._broadcastRanges(notifyData);
-				this._broadcastDynamicRanges(notifyData);
 			}
 			this._broadcastCellsEnd();
 
@@ -1837,31 +1811,6 @@
 				}
 			}
 		},
-		_broadcastDynamicRanges: function(notifyData) {
-			if (this.changedRangeRepeated) {
-				let changedRange = this.changedDynamicRangeRepeated;
-				this.changedDynamicRangeRepeated = null;
-				for (let sheetId in changedRange) {
-					let changedSheet = changedRange[sheetId];
-					let sheetContainer = this.sheetListeners[sheetId];
-					if (sheetContainer) {
-						if (sheetContainer) {
-							let rangesTop = [];
-							let rangesBottom = [];
-							for (let name in changedSheet) {
-								let range = changedSheet[name];
-								rangesTop.push(range);
-								rangesBottom.push(range);
-							}
-							rangesTop.sort(Asc.Range.prototype.compareByLeftTop);
-							rangesBottom.sort(Asc.Range.prototype.compareByRightBottom);
-							this._broadcastCellsByRanges(sheetContainer, rangesTop, rangesBottom, notifyData);
-							this._broadcastRangesByRanges(sheetContainer, rangesTop, rangesBottom, notifyData);
-						}
-					}
-				}
-			}
-		},
 		_broadcastCellsStart: function() {
 			this.isInCalc = true;
 			this.changedCellRepeated = this.changedCell;
@@ -1923,14 +1872,13 @@
 
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
-				if (cell.formulaParsed && cell.formulaParsed.getDynamicRef() && cell.formulaParsed.vm && cell.formulaParsed.aca && cell.formulaParsed.ca) {
+				if (cell.formulaParsed && cell.formulaParsed.getDynamicRef() && cell.formulaParsed.aca && cell.formulaParsed.ca) {
 					t.addToVolatileArrays(cell.formulaParsed);
 				}
 				
 			});
 			this.changedCell = null;
 			this.changedRange = null;
-			this.changedDynamicRange = null;
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
@@ -1957,23 +1905,6 @@
 							if (changedSheet.hasOwnProperty(name)) {
 								bbox = changedSheet[name];
 								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(callback);
-							}
-						}
-					}
-				}
-			}
-		},
-		_foreachChangedDynamicRange: function(callback) {
-			let sheetId, changedSheet, ws, bbox;
-			for (sheetId in this.changedDynamicRange) {
-				if (this.changedDynamicRange.hasOwnProperty(sheetId)) {
-					changedSheet = this.changedDynamicRange[sheetId];
-					ws = this.wb.getWorksheetById(sheetId);
-					if (changedSheet && ws) {
-						for (let name in changedSheet) {
-							if (changedSheet.hasOwnProperty(name)) {
-								bbox = changedSheet[name];
-								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreach(callback);
 							}
 						}
 					}
@@ -13032,7 +12963,7 @@
 				for (let listenerId in volatileArrayList) {
 					let formula = volatileArrayList[listenerId];
 					let formulaResult = formula.calculate();
-					if (!(formula.aca && formula.ca && formula.vm)) {
+					if (!(formula.aca && formula.ca)) {
 						// the array can now expand, do setValue for each cell except first
 						let bbox = formula.getDynamicRef();
 						if (bbox) {
@@ -13048,9 +12979,13 @@
 								}
 							}
 						}							
-						// depGraph.addToChangedDynamicRange(formula.getWs().getId(), formula.getDynamicRef());
 						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
 						depGraph.endListeningVolatileArray(listenerId);
+					} else {
+						// todo get first formula coord
+						// depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
+						let firstCell = new Asc.Range();
+						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
 					}
 				}
 			}
@@ -13432,14 +13367,13 @@
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
 			} else {
-				if ( oldFP && oldFP.dynamicRange && oldFP.parent && (oldFP.parent.nCol !== newFP.parent.nCol || oldFP.parent.nRow !== newFP.parent.nRow) ) {
-					// add to changedDynamicRange
-					// wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
-					wb.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
-					// addToBuildDependencyArray ?
-				} else {
-					// wb.dependencyFormulas.addToBuildDependencyCell(this);
-				}
+				// if ( oldFP && oldFP.dynamicRange && oldFP.parent && (oldFP.parent.nCol !== newFP.parent.nCol || oldFP.parent.nRow !== newFP.parent.nRow) ) {
+				// 	// add to changedDynamicRange
+				// 	// wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
+				// 	// addToBuildDependencyArray ?
+				// } else {
+				// 	// wb.dependencyFormulas.addToBuildDependencyCell(this);
+				// }
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
 			if (this.ws.workbook.handlers) {
@@ -13458,17 +13392,8 @@
 				// we check here and add the range with daf to the dependency sheet
 				// the problem arises in the absence of recalculation of the internal cell of the range because the isDirty flag is set to false
 				// wb.dependencyFormulas.addToBuildDependencyArray(oldFP);
-				wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
-				wb.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
-
-				// there is also a need to save PF for dynamic range cells (except the first)
-				// if we delete the first one, we delete all the others, otherwise we save the PF of the cell and set the flag isDirty = true
-				if (!isFirstArrayFormulaCell) {
-					// if the first daf cell is not empty (has PF), then we assign the old PF to the cell
-					if (!oldFP.isFirstDynamicCellEmpty()) {
-						// this.setFormulaInternal(oldFP);	// newFP = oldFP; ???
-					}
-					
+				if (isFirstArrayFormulaCell) {
+					wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
 				}
 				// if (this.ws.workbook.handlers) {
 				// 	this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.rangeValues, this, null, this.ws.getId());
@@ -13642,8 +13567,7 @@
 		this._setValue2(array, undefined, xfTableAndCond);
 		// add check for dynamic ranges and adding to the dependency sheet
 		if (/*this.isEmptyTextString()*/oldFP && oldFP.getDynamicRef()) {
-			// check when deletion or when new text
-			this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
+			// check when deletion or when new text?
 		}
 		this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 		this.ws.workbook.sortDependency();
@@ -14257,7 +14181,7 @@
 			if (History.Is_On())
 				DataOld = this.getValueData();
 			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
-				this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
+				this.ws.workbook.dependencyFormulas.addToChangedRange2(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
 				if (Val.value.getTextValue()) {
 					let dynamicRef = this.formulaParsed.getDynamicRef();
 					// non empty val, delete PF from cell
@@ -15447,8 +15371,12 @@
 		}
 	};
 	Cell.prototype.setDynamicArrayFlags = function () {
-		this.cm = true;
-		// todo flag vm is used as a counter for arrays that cannot be expanded
+		this.cm = 1;
+		// this.vm = 1;
+		// todo prop vm - determines the order in which dynamic arrays are expanded?
+		// presumably the metadata it refers to contains the estimated size of the array
+		// the size of the array is unique and has its own number in the order of initialization on the page
+		// for example array 3x1 initialized before than array 2x1 will have the number 1 in vm prop 
 	};
 //-------------------------------------------------------------------------------------------------
 

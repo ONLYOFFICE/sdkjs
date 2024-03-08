@@ -14255,7 +14255,7 @@
 									let arrayData = changedDynamicArraysList[array];
 									let formula = arrayData.formula;
 									let dynamicbbox = arrayData.range;
-									let range = (formula && formula.aca && formula.ca && formula.vm) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+									let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
 									// todo create clear function for cells (clearRange?)
 									if (arrayData.doDelete) {
 										// delete all cells
@@ -16608,7 +16608,7 @@
 				let arrayData = changedDynamicArraysList[array];
 				let formula = arrayData.formula;
 				let dynamicbbox = arrayData.range;
-				let range = (formula && formula.aca && formula.ca && formula.vm) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+				let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
 				// todo create clear function for cells (clearRange?)
 				if (arrayData.doDelete) {
 					// delete all cells
@@ -18929,8 +18929,10 @@
 						applyByArray = true;
 						ctrlKey = true;
 
-						if ((newFP.aca && newFP.ca && newFP.vm)) {
+						if ((newFP.aca && newFP.ca)) {
 							arrayCannotExpand = true;
+							// add to volatile?
+							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
 						}
 					} else if (newFP.ref) {
 						applyByArray = true;
@@ -18995,7 +18997,7 @@
 					let arrayData = changedDynamicArraysList[array];
 					let formula = arrayData.formula;
 					let dynamicbbox = arrayData.range;
-					let range = (formula && formula.aca && formula.ca && formula.vm) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
 					// todo create clear function for cells (clearRange?)
 					if (arrayData.doDelete) {
 						// delete all cells
@@ -19067,7 +19069,7 @@
 					let arrayData = changedDynamicArraysList[array];
 					let formula = arrayData.formula;
 					let dynamicbbox = arrayData.range;
-					let range = (formula && formula.aca && formula.ca && formula.vm) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
 					// todo create clear function for cells (clearRange?)
 					if (arrayData.doDelete) {
 						// delete all cells

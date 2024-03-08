@@ -7316,15 +7316,10 @@ function parserFormula( formula, parent, _ws ) {
 			// 6.CSE может расширяться на все ячейки кроме таких же массивов CSE, таблиц, сводных таблиц,
 			// DAF же может расширяться только на абсолютно пустые клетки
 
+			// todo нужно ли это?
 			this.ref = this.dynamicRange;
 			// this.dynamicRange = null;
-
 			// если это не первая ячейка, проверить первую ячейку на ошибку
-			if (this.isDynamicRangeErr2()) {
-				// this.dynamicRange = null;
-				// this.ref = null;
-			}
-
 		} 
 		else if (!this.value) {
 			let elem = elemArr[elemArr.length ? elemArr.length - 1 : 0];
@@ -7354,14 +7349,12 @@ function parserFormula( formula, parent, _ws ) {
 				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
-				this.vm = true;
+				// TODO ref to the single cell?
 				// this.ref = null;
-				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
 				// this.dynamicRange = null;
 			} else {
 				this.ca = false;
 				this.aca = false;
-				this.vm = false;
 			}
 
 			this._endCalculate();
@@ -7377,14 +7370,11 @@ function parserFormula( formula, parent, _ws ) {
 				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
-				this.vm = true;
-				// this.ref = null;
 				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
 				// this.dynamicRange = null;
 			} else {
 				this.ca = false;
 				this.aca = false;
-				this.vm = false;
 			}
 			this.value.numFormat = numFormat;
 			//***array-formula***
@@ -8391,13 +8381,13 @@ function parserFormula( formula, parent, _ws ) {
 				let rangeRow = mainCell.nRow,
 					rangeCol = mainCell.nCol;
 
+				// let range = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1)
 				for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
 					for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
 						if (i === rangeRow && j === rangeCol) {
 							continue
 						}
-						
-						this.ws._getCell(i, j, function(cell) {
+						this.ws._getCellNoEmpty(i, j, function(cell) {
 							if (cell) {
 								let formula = cell.getFormulaParsed();
 								let dynamicRangeFromCell = formula && formula.getDynamicRef();
@@ -8411,7 +8401,7 @@ function parserFormula( formula, parent, _ws ) {
 									}
 								} else if (cell.formulaParsed || !cell.isEmptyTextString()) {
 									isHaveNonEmptyCell = true
-								} 
+								}
 							}
 						});
 						if (isHaveNonEmptyCell) {
@@ -8442,6 +8432,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	parserFormula.prototype.isDynamicRangeErr = function () {
+		// todo нужен ли метод проверяющий наличие/отсутствие ошибки spill в формуле?
 		if (!this.dynamicRange) {
 			return true
 		}
@@ -8450,10 +8441,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.ws._getCell(i, j, function(cell) {
 			if (cell && cell.formulaParsed && cell.formulaParsed.getDynamicRef()) {
 				let val = cell.formulaParsed.value;
-				// TODO
-				if (cell.formulaParsed.vm) {
-					res = true
-				} else if (val && val.type === cElementType.error && val.errorType === cErrorType.cannot_be_spilled) {
+				if (val && val.type === cElementType.error && val.errorType === cErrorType.cannot_be_spilled) {
 					res = true
 				}
 			}
@@ -8462,7 +8450,7 @@ function parserFormula( formula, parent, _ws ) {
 		return res
 	};
 	parserFormula.prototype.isDynamicRangeErr2 = function () {
-		if (!this.dynamicRange || this.vm /* && this.cm*/) {
+		if (!this.dynamicRange) {
 			return true
 		}
 
