@@ -3541,13 +3541,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var res = null;
 		var t = this;
 
-		let dynamicRange = null;
-		// parserFormula.dynamicRange = null;
-		if (!parserFormula.ref) {
-			let dynamicArraySize = this.getDynamicArraySize(arg);
+		let dynamicRange = null, dynamicArraySize = null;
+		if (!parserFormula.dynamicRange && !parserFormula.ref) {
+			dynamicArraySize = this.getDynamicArraySize(arg);
 			if (dynamicArraySize && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow != null) {
 				dynamicRange = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, dynamicArraySize.width + parserFormula.parent.nCol - 1, dynamicArraySize.height + parserFormula.parent.nRow - 1);
-				parserFormula.ref = dynamicRange;
+				// parserFormula.ref = dynamicRange;
 				parserFormula.dynamicRange = dynamicRange;
 				this.bArrayFormula = true;
 			}
@@ -3735,7 +3734,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		if (dynamicRange) {
+		if (dynamicRange || dynamicArraySize) {
 			// parserFormula.ref = null;
 			this.bArrayFormula = null;
 		}
@@ -7194,8 +7193,6 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 			return this.value;
 		}
-		// todo при повторном расчете теряем dynamicRange, но получаем ref
-		// рассмотреть варианты распознавания именно динамического массива при расчете(почему теряется именно для формулы)
 		if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
 			opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
 		}
@@ -7224,8 +7221,18 @@ function parserFormula( formula, parent, _ws ) {
 			//TODO пока проставляю у каждого элемента флаг для рассчетов. пересмотреть
 			//***array-formula***
 			currentElement.bArrayFormula = null;
-			if(this.ref) {
+			if(this.ref || this.dynamicRange) {
 				currentElement.bArrayFormula = true;
+			} else if (currentElement.type === cElementType.array || currentElement.type === cElementType.cellsRange) {
+				let dynamicRange = null;
+				let elementSize = currentElement.getDimensions();
+				if (elementSize && this.parent && this.parent.nCol != null && this.parent.nRow != null) {
+					dynamicRange = Asc.Range(this.parent.nCol, this.parent.nRow, elementSize.col + this.parent.nCol - 1, elementSize.row + this.parent.nRow - 1);
+					// this.ref = dynamicRange;
+					this.dynamicRange = dynamicRange;
+					// this.bArrayFormula = true;
+					currentElement.bArrayFormula = true;
+				}
 			}
 
 			if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
@@ -7304,24 +7311,18 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-		if (this.dynamicRange) {
-			// ref(CSE) - legacy array-formula
-			// dynamic range(DAF) - newest array-formula
-			// Differences:
-			// 1.Формула DAF вводится в одну ячейку и завершается обычным нажатием enter 'spill' происходит автоматически
-			// 2.В случае с CSE же необходимо заранее выделить диапазон и нажать сочетание cse после ввода формулы
-			// 3.Размер DAF автоматически изменяется при изменении данных в исходном диапазоне. Ссылка на динамический диапазон пишется в формате D2#
-			// 4.DAF редактируется в первой ячейке(1,1) диапазона, для редактирования cse нужно выделять весь ранее созданный диапазон
-			// 5.В CSE нельзя удалить ранее созданные строки, DAF же можно редактировать
-			// 6.CSE может расширяться на все ячейки кроме таких же массивов CSE, таблиц, сводных таблиц,
-			// DAF же может расширяться только на абсолютно пустые клетки
+		// ref(CSE) - legacy array-formula
+		// dynamic range(DAF) - newest dynamic array-formula
+		// Differences:
+		// The DAF formula is entered into one cell and is completed by simply pressing enter 'spill' occurs automatically
+		// In the case of CSE, you must select the range in advance and press the cse combination after entering the formula
+		// The DAF size automatically changes when the data in the original range changes. Dynamic range reference is written in D2# format
+		// DAF is edited in the first cell (parent) of the range; to edit cse we need to select the entire previously created range
+		// In CSE we cannot delete previously created rows, but DAF can be edited
+		// CSE can expand to all cells except the same CSE arrays, tables, pivot tables
+		// DAF can only expand to completely empty cells(empty values)
 
-			// todo нужно ли это?
-			this.ref = this.dynamicRange;
-			// this.dynamicRange = null;
-			// если это не первая ячейка, проверить первую ячейку на ошибку
-		} 
-		else if (!this.value) {
+		if (!this.value) {
 			let elem = elemArr[elemArr.length ? elemArr.length - 1 : 0];
 			if (elem.type === cElementType.array || elem.type === cElementType.cellsRange || elem.type === cElementType.cellsRange3D) {
 				// single element in PF, if it's array/range use dynamic array formula
