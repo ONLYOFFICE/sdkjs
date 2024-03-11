@@ -69,8 +69,14 @@
     };
     CAnnotationTextMarkup.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawHighlights = true;
+        let _t      = this;
+        
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[_t.GetPage()])
+                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawHighlights = true;
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
     };
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
         let oOverlayCtx = editor.getDocumentRenderer().overlay.m_oContext;

@@ -2446,6 +2446,17 @@ var CPresentation = CPresentation || function(){};
         if (oTextShape) {
             oTextPr = oTextShape.GetCalculatedTextPr();
         }
+        else {
+            oTextPr.Underline = false;
+            oTextPr.Strikeout = false;
+        }
+
+        if (oTextPr.HighlightColor) {
+            editor.sendEvent("asc_onMarkerFormatChanged", undefined, true);
+        }
+        else {
+            editor.sendEvent("asc_onMarkerFormatChanged", undefined, false);
+        }
 
         Asc.editor.UpdateTextPr(oTextPr);
     };
@@ -2765,11 +2776,11 @@ var CPresentation = CPresentation || function(){};
         let oFile           = oViewer.file;
         let aSelQuads       = oFile.getSelectionQuads();
 
-        if (this.IsTextEditMode()) {
-            let oForm       = this.activeForm;
-            let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-            let oTextShape  = this.activeTextShape;
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oTextShape  = this.activeTextShape;
 
+        if (oTextShape) {
             this.CreateNewHistoryPoint({objects: [oFreeText || oTextShape]});
             if (oTextShape) {
                 oTextShape.SetHighlight(r, g, b, opacity);
@@ -2808,8 +2819,8 @@ var CPresentation = CPresentation || function(){};
                 let oAnnot = this.AddAnnot(oProps);
 
                 oAnnot.SetQuads(aQuads);
-                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-                oAnnot.SetOpacity(opacity / 100);
+                oAnnot.SetStrokeColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
+                oAnnot.SetOpacity(typeof(opacity) != "boolean" ? opacity / 100 : 1);
             }
         }
 
@@ -2873,7 +2884,7 @@ var CPresentation = CPresentation || function(){};
                 let oAnnot = this.AddAnnot(oProps);
 
                 oAnnot.SetQuads(aQuads);
-                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+                oAnnot.SetStrokeColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
                 oAnnot.SetOpacity(opacity / 100);
             }
         }
@@ -2907,8 +2918,9 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             aSelQuads = oFile.getSelectionQuads();
-            if (aSelQuads.length == 0)
-            return;
+            if (aSelQuads.length == 0) return;
+
+            
 
             for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
                 let nPage   = aSelQuads[nInfo].page;
@@ -2938,7 +2950,7 @@ var CPresentation = CPresentation || function(){};
                 let oAnnot = this.AddAnnot(oProps);
 
                 oAnnot.SetQuads(aQuads);
-                oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+                oAnnot.SetStrokeColor([private_correctRGBColorComponent(r)/255, private_correctRGBColorComponent(g)/255, private_correctRGBColorComponent(b)/255]);
                 oAnnot.SetOpacity(opacity / 100);
             }
         }
@@ -3480,10 +3492,17 @@ var CPresentation = CPresentation || function(){};
         return oAnnot;
     }
 
-    function private_PtToMM(pt)
-	{
+    function private_PtToMM(pt) {
 		return 25.4 / 72.0 * pt;
 	}
+
+    function private_correctRGBColorComponent(component) {
+        if (typeof(component) != "number") {
+            component = 0;
+        }
+
+        return component;
+    }
 
     function getMinRect(aPoints) {
         let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
