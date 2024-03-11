@@ -1206,8 +1206,7 @@
 			return false;
 		
 		let blockSdt = docContent.GetParent();
-		if (blockSdt.IsPlaceHolder())
-			return true;
+		return (blockSdt.IsPlaceHolder() || blockSdt.IsEmpty());
 	};
 	CSelectedContent.prototype.private_InsertToBlockLevelSdtWithPlaceholder = function()
 	{

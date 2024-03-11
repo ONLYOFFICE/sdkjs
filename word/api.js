@@ -485,7 +485,10 @@
 					_blockStd = null;
 					if (undefined !== _current["Props"]["InternalId"])
 					{
-						_blockStd   = LogicDocument.ClearContentControl(_current["Props"]["InternalId"]);
+						_blockStd = LogicDocument.GetContentControl(_current["Props"]["InternalId"]);
+						if (_blockStd && !_blockStd.IsPlaceHolder())
+							_blockStd.ReplaceContentWithPlaceHolder();
+						
 						_isReplaced = true;
 					}
 
@@ -586,6 +589,7 @@
 					}
 
 					_blockStd.SetContentControlPr(_content_control_pr);
+					_blockStd.SelectContentControl();
 
 					_obj = _blockStd.GetContentControlPr();
 					this.returnDocuments.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId, "Alias" : _obj.Alias, "Appearance" : _obj.Appearance });
@@ -619,9 +623,11 @@
 							}, false);
 						}, "arraybuffer");
 					}, endCallback : function(_api) {
-						_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1 , 1);
-						_blockStd.MoveCursorToEndPos(false, false);
-
+						if (_isReplaced)
+							_blockStd.MoveCursorToContentControl(false);
+						else
+							_blockStd.MoveCursorOutsideForm(false);
+						
 						var _worker = _api.__content_control_worker;
 						if (_worker.documents[_worker.current]["Props"])
 							_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -646,7 +652,7 @@
 						console.error('Invalid JS.');
 						return;	
 					}
-
+					
 					try
 					{
 						AscCommon.safePluginEval(_current["Script"]);
@@ -655,48 +661,12 @@
 					{
 						console.error(err);
 					}
-
-					if (c_oAscSdtLevelType.Block === _blockStd.GetContentControlType())
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos(false);
-						}
-						else
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-							{
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos(false, false);
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
+					
+					if (_isReplaced)
+						_blockStd.MoveCursorToContentControl(false);
 					else
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.GetElementsCount() > 1)
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos();
-							_blockStd.SetThisElementCurrent();
-						}
-						else
-						{
-							if (_blockStd.GetElementsCount() > 1)
-							{
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos();
-								_blockStd.SetThisElementCurrent();
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
-
+						_blockStd.MoveCursorOutsideForm(false);
+					
 					var _worker = _api.__content_control_worker;
 					if (_worker.documents[_worker.current]["Props"])
 						_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -800,11 +770,11 @@
 			var _current = this.documents[this.current];
 			if (undefined === _current["Props"])
 				_current["Props"] = {};
-
-			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && undefined !== _current["Props"]["InternalId"])
+			
+			var _internalId     = _current["Props"]["InternalId"];
+			var _contentControl = _internalId ? g_oTableId.Get_ById(_internalId) : null;
+			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && _contentControl)
 			{
-				var _internalId     = _current["Props"]["InternalId"];
-				var _contentControl = g_oTableId.Get_ById(_internalId);
 				LogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 					Elements  : [_contentControl],
