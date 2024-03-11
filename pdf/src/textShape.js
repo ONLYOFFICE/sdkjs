@@ -108,9 +108,15 @@
         return this._apIdx;
     };
     CTextShape.prototype.GetDocument = function() {
+        if (this.group)
+            return this.group.GetDocument();
+
         return this._doc;
     };
     CTextShape.prototype.GetPage = function() {
+        if (this.group)
+            return this.group.GetPage();
+        
         return this._page;
     };
     CTextShape.prototype.AddToRedraw = function() {
