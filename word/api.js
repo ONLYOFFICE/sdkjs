@@ -3803,8 +3803,8 @@ background-repeat: no-repeat;\
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(Props.Shd.Color, Unifill.fill.color, 1);
-
-				this.WordControl.m_oLogicDocument.SetParagraphShd({
+				
+				let shd = {
 					Value   : Asc.c_oAscShd.Clear,
 					Color   : {
 						r    : Props.Shd.Color.asc_getR(),
@@ -3819,7 +3819,17 @@ background-repeat: no-repeat;\
 						Auto : false
 					},
 					Unifill : Unifill
-				});
+				};
+
+				if (Asc.c_oAscShd.Nil === Props.Shd.Value)
+				{
+					shd.Color.Auto = true;
+					shd.Fill.Auto  = true;
+					shd.Unifill    = undefined;
+					shd.ThemeFill  = undefined;
+				}
+				
+				this.WordControl.m_oLogicDocument.SetParagraphShd(shd);
 			}
 
 			if ("undefined" != typeof(Props.Brd) && null != Props.Brd)
