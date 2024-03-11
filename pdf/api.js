@@ -868,6 +868,111 @@
 		let oDoc = this.getPDFDoc();
 		oDoc.HideShowAnnots(true);
 	};
+	PDFEditorApi.prototype.UpdateTextPr = function(TextPr)
+	{
+		let oDoc = this.getPDFDoc();
+		let oDrDoc = oDoc.GetDrawingDocument();
+
+		if ("undefined" != typeof(TextPr))
+		{
+			if (TextPr.Color !== undefined)
+			{
+				oDrDoc.TargetCursorColor.R = TextPr.Color.r;
+				oDrDoc.TargetCursorColor.G = TextPr.Color.g;
+				oDrDoc.TargetCursorColor.B = TextPr.Color.b;
+			}
+			if (TextPr.Bold === undefined)
+				TextPr.Bold = false;
+			if (TextPr.Italic === undefined)
+				TextPr.Italic = false;
+			if (TextPr.Underline === undefined)
+				TextPr.Underline = false;
+			if (TextPr.Strikeout === undefined)
+				TextPr.Strikeout = false;
+			if (TextPr.FontFamily === undefined)
+				TextPr.FontFamily = {Index : 0, Name : ""};
+			if (TextPr.FontSize === undefined)
+				TextPr.FontSize = "";
+
+			this.sync_BoldCallBack(TextPr.Bold);
+			this.sync_ItalicCallBack(TextPr.Italic);
+			this.sync_UnderlineCallBack(TextPr.Underline);
+			this.sync_StrikeoutCallBack(TextPr.Strikeout);
+			this.sync_TextPrFontSizeCallBack(TextPr.FontSize);
+			this.sync_TextPrFontFamilyCallBack(TextPr.FontFamily);
+
+			if (TextPr.VertAlign !== undefined)
+				this.sync_VerticalAlign(TextPr.VertAlign);
+			if (TextPr.Spacing !== undefined)
+				this.sync_TextSpacing(TextPr.Spacing);
+			if (TextPr.DStrikeout !== undefined)
+				this.sync_TextDStrikeout(TextPr.DStrikeout);
+			if (TextPr.Caps !== undefined)
+				this.sync_TextCaps(TextPr.Caps);
+			if (TextPr.SmallCaps !== undefined)
+				this.sync_TextSmallCaps(TextPr.SmallCaps);
+			if (TextPr.Position !== undefined)
+				this.sync_TextPosition(TextPr.Position);
+			if (TextPr.Lang !== undefined)
+				this.sync_TextLangCallBack(TextPr.Lang);
+
+			if (TextPr.Unifill !== undefined)
+			{
+				this.sync_TextColor2(TextPr.Unifill);
+			}
+
+			if (AscCommon.isRealObject(TextPr.HighlightColor))
+			{
+				var oRGB = TextPr.HighlightColor.RGBA;
+				this.sendEvent("asc_onTextHighLight", new AscCommon.CColor(oRGB.R, oRGB.G, oRGB.B));
+			}
+			else
+			{
+				this.sendEvent("asc_onTextHighLight", AscCommonWord.highlight_None);
+			}
+		}
+	};
+	PDFEditorApi.prototype.sync_TextColor2 = function(unifill)
+	{
+		var _color;
+		if (unifill.fill == null)
+			return;
+		var color;
+		if (unifill.fill.type == Asc.c_oAscFill.FILL_TYPE_SOLID)
+		{
+			_color    = unifill.getRGBAColor();
+			color = AscCommon.CreateAscColor(unifill.fill.color);
+			color.asc_putR(_color.R);
+			color.asc_putG(_color.G);
+			color.asc_putB(_color.B);
+			this.sendEvent("asc_onTextColor", color);
+		}
+		else if (unifill.fill.type == Asc.c_oAscFill.FILL_TYPE_GRAD)
+		{
+			_color    = unifill.getRGBAColor();
+			if(unifill.fill.colors[0] && unifill.fill.colors[0].color)
+			{
+				color = AscCommon.CreateAscColor(unifill.fill.colors[0].color);
+			}
+			else
+			{
+				color = new Asc.asc_CColor();
+			}
+			color.asc_putR(_color.R);
+			color.asc_putG(_color.G);
+			color.asc_putB(_color.B);
+			this.sendEvent("asc_onTextColor", color);
+		}
+		else
+		{
+			_color    = unifill.getRGBAColor();
+			color = new Asc.asc_CColor();
+			color.asc_putR(_color.R);
+			color.asc_putG(_color.G);
+			color.asc_putB(_color.B);
+			this.sendEvent("asc_onTextColor", color);
+		}
+	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
