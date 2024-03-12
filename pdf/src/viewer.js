@@ -1259,7 +1259,6 @@
 			this.doc.FillButtonsIconsOnOpen();
 		};
 		this.openAnnots = function() {
-			this.doc.checkDefaultFieldFonts();
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
@@ -1838,7 +1837,7 @@
 						let X       = oPos.X;
 						let Y       = oPos.Y;
 
-						if (oAnnot.hitInBoundingRect(X, Y) || oAnnot.hitToHandles(X, Y) != -1 || oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
+						if (oAnnot.hitInBoundingRect(X, Y) || oAnnot.hitToHandles(X, Y) != -1 || oAnnot.hitInPath(X, Y) || oAnnot.hitInInnerArea(X, Y))
 							return oAnnot;
 					}
 
@@ -3524,6 +3523,9 @@
 
 			let aForms		= this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : [];
 			let aTextShapes	= this.pagesInfo.pages[i].textShapes != null ? this.pagesInfo.pages[i].textShapes : [];
+			let aFreeText	= this.pagesInfo.pages[i].annots != null ? this.pagesInfo.pages[i].annots.filter(function(annot) {
+				return annot.IsFreeText();
+			}): [];
 
 			if (this.pagesInfo.pages[i].needRedrawForms)
 			{
@@ -3546,7 +3548,15 @@
 				});
 			}
 
-			aFontsToLoad = aFontsToLoad.concat(aTextShapesFonts);
+			let aFreeTextFonts = [];
+			if (this.pagesInfo.pages[i].needRedrawAnnots)
+			{
+				aFreeText.forEach(function(annot) {
+					annot.GetAllFonts(aFreeTextFonts);
+				});
+			}
+
+			aFontsToLoad = aFontsToLoad.concat(aFreeTextFonts, aFreeTextFonts);
 		}
 
 		let oThis = this;

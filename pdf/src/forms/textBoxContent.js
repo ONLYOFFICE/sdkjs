@@ -72,18 +72,7 @@
 		return this.PdfDoc;
 	};
 	CTextBoxContent.prototype.SetAlign = function(alignType) {
-		let _alignType = AscCommon.align_Left;
-		switch (alignType) {
-			case AscPDF.ALIGN_TYPE.left:
-				_alignType = AscCommon.align_Left;
-				break;
-			case AscPDF.ALIGN_TYPE.center:
-				_alignType = AscCommon.align_Center;
-				break;
-			case AscPDF.ALIGN_TYPE.right:
-				_alignType = AscCommon.align_Right;
-				break;
-		}
+		let _alignType = getInternalAlignByPdfType(alignType);
 		
 		this.SetApplyToAll(true);
 		this.SetParagraphAlign(_alignType);
@@ -195,9 +184,27 @@
 		return this.ParentPDF.GetPage();
 	};
 	
+	function getInternalAlignByPdfType(nPdfType) {
+		let nInternalType = AscCommon.align_Left;
+		switch (nPdfType) {
+			case AscPDF.ALIGN_TYPE.left:
+				nInternalType = AscCommon.align_Left;
+				break;
+			case AscPDF.ALIGN_TYPE.center:
+				nInternalType = AscCommon.align_Center;
+				break;
+			case AscPDF.ALIGN_TYPE.right:
+				nInternalType = AscCommon.align_Right;
+				break;
+		}
+
+		return nInternalType;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
-	window['AscPDF'].CTextBoxContent = CTextBoxContent;
+
+	window['AscPDF'].getInternalAlignByPdfType	= getInternalAlignByPdfType;
+	window['AscPDF'].CTextBoxContent			= CTextBoxContent;
 	
 	
 })(window);

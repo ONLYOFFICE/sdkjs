@@ -1178,6 +1178,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();
+        this.Api.sync_EndCatchSelectedElements();
         oViewer.onUpdateOverlay();
     };
 
@@ -2423,20 +2424,16 @@ var CPresentation = CPresentation || function(){};
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oTextShape  = this.activeTextShape;
 
-        let oParaPr = new AscWord.CParaPr();
-
-        let isCanIncreaseInd = false;
-        let isCanDecreaseInd = false;
-
+        // let oParaPr = new AscWord.CParaPr();
+        
         if (oTextShape) {
-            oParaPr = oTextShape.GetCalculatedParaPr();
+            let oParaPr = oTextShape.GetCalculatedParaPr();
             isCanIncreaseInd = oTextShape.GetDocContent().Can_IncreaseParagraphLevel(true);
             isCanDecreaseInd = oTextShape.GetDocContent().Can_IncreaseParagraphLevel(false);
+            Asc.editor.sendEvent("asc_canIncreaseIndent", isCanIncreaseInd);
+            Asc.editor.sendEvent("asc_canDecreaseIndent", isCanDecreaseInd);
+            Asc.editor.UpdateParagraphProp(oParaPr);
         }
-        
-        Asc.editor.sendEvent("asc_canIncreaseIndent", isCanIncreaseInd);
-	    Asc.editor.sendEvent("asc_canDecreaseIndent", isCanDecreaseInd);
-        Asc.editor.UpdateParagraphProp(oParaPr);
     };
     CPDFDoc.prototype.UpdateTextProps = function() {
 		let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
