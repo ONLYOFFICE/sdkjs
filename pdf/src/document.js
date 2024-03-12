@@ -3282,13 +3282,15 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.checkFonts = function(aFontsNames, callback) {
         let aFontsToLoad    = [];
         let aMap            = [];
-
+		
         for (let i = 0; i < aFontsNames.length; i++) {
             if (this.loadedFonts.includes(aFontsNames[i]) == false && aFontsToLoad.includes(aFontsNames[i]) == false) {
                 aFontsToLoad.push(aFontsNames[i]);
                 aMap.push({name: aFontsNames[i]});
             }
         }
+	
+		//AscFonts.FontPickerByCharacter.extendFonts(aMap);
 
         if (aMap.length == 0) {
             return true;
