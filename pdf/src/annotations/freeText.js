@@ -602,8 +602,8 @@
         if (oDoc.Viewer.IsOpenAnnotsInProgress) {
             let _t = this;
             new Promise(function(resolve) {
-                AscFonts.FontPickerByCharacter.checkText(aRCInfo.reduce(function(accumulator, rc) {
-                    return accumulator += rc["text"];
+                AscFonts.FontPickerByCharacter.checkTextLight(aRCInfo.reduce(function(accumulator, rc) {
+                    return accumulator + rc["text"];
                 }, ""), _t, resolve);
             }).then(function() {
                 _t.SetNeedRecalc(true);
