@@ -6924,7 +6924,7 @@ var editor;
       this._onUpdateAfterApplyChanges();
   };
 	spreadsheet_api.prototype.canRunBuilderScript = function() {
-		return this.asc_canPaste(true);
+		return this.asc_canPaste();
 	};
 	spreadsheet_api.prototype.onEndBuilderScript = function() {
 		this.asc_endPaste(true);
