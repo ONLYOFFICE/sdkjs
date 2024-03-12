@@ -237,7 +237,7 @@
             let oRGB            = this.GetRGBColor(oStrokeColor);
             let oFill           = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
             for (let i = 0; i < this.spTree.length; i++) {
-                let oLine = this.spTree[i].pen;
+                let oLine = this.spTree[i].spPr.ln;
                 oLine.setFill(oFill);
             }
         }
@@ -254,22 +254,20 @@
         let nWidthPt = this.GetWidth();
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
         for (let i = 0; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].pen;
+            let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
         }
 
         let nLineEndType = this.GetLineEnd();
         if (this.spTree[1] && this.spTree[1].getPresetGeom() == "line") {
             let oTargetSp = this.spTree[1];
-            let oLine = oTargetSp.pen;
+            let oLine = oTargetSp.spPr.ln;
             oLine.setTailEnd(new AscFormat.EndArrow());
             let nInnerType = getInnerLineEndType(nLineEndType);
             
             oLine.tailEnd.setType(nInnerType);
             oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
         }
-
-        this.recalculate();
     };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
         let oDoc = this.GetDocument();
@@ -298,7 +296,7 @@
 
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
         for (let i = 0; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].pen;
+            let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
         }
     };
@@ -309,7 +307,7 @@
         let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
 
         for (let i = 0; i < this.spTree.length; i++) {
-            let oLine = this.spTree[i].pen;
+            let oLine = this.spTree[i].spPr.ln;
             oLine.setFill(oFill);
         }
     };
@@ -555,20 +553,28 @@
         let oLastUsedPara   = oContent.GetElement(0);
         oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
 
-        let oRCInfo;
-        let oRun, oRFonts;
-
         this._richContents = aRCInfo;
         oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
 
         for (let i = 0; i < aRCInfo.length; i++) {
-            oRCInfo = aRCInfo[i];
+            let oRCInfo = aRCInfo[i];
 
-            oRun = new ParaRun(oLastUsedPara, false);
-            oRFonts = new CRFonts();
-            // oRFonts.SetAll(oRCInfo["name"], -1);
-            oRFonts.SetAll("Arial", -1);
+            let oRun = new ParaRun(oLastUsedPara, false);
 
+            let oRGB    = AscPDF.CBaseField.prototype.GetRGBColor(oRCInfo["color"]);
+            let oRFonts = new CRFonts();
+
+            if (oRCInfo["actual"]) {
+                oRFonts.SetAll(oRCInfo["actual"], -1);
+            }
+            else if (oRCInfo["name"]) {
+                oRFonts.SetAll(AscFonts.getEmbeddedFontPrefix() + oRCInfo["name"], -1);
+            }
+            else {
+                oRFonts.SetAll(AscPDF.DEFAULT_FIELD_FONT, -1);
+            }
+
+            oRun.Set_Unifill(AscFormat.CreateSolidFillRGB(oRGB.r, oRGB.g, oRGB.b));
             oRun.SetBold(Boolean(oRCInfo["bold"]));
             oRun.SetItalic(Boolean(oRCInfo["italic"]));
             oRun.SetStrikeout(Boolean(oRCInfo["strikethrough"]));
@@ -577,23 +583,33 @@
             oRun.Set_RFonts2(oRFonts);
 
             let oIterator = oRCInfo["text"].replace('\r', '').getUnicodeIterator();
-            while (oIterator.check()) {
-                let runElement = AscPDF.codePointToRunElement(oIterator.value());
-				oRun.Add(runElement);
-                
-                oIterator.next();
-            }
 
             oLastUsedPara.AddToContentToEnd(oRun);
+            oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
 
             if (oRCInfo["text"].indexOf('\r') != -1) {
                 oLastUsedPara = new AscWord.Paragraph(oContent, true);
                 oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
             }
+
+            while (oIterator.check()) {
+                let runElement = AscPDF.codePointToRunElement(oIterator.value());
+                oRun.Add(runElement);
+                oIterator.next();
+            }            
         }
 
-        this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(false);
+        if (oDoc.Viewer.IsOpenAnnotsInProgress) {
+            let _t = this;
+            new Promise(function(resolve) {
+                AscFonts.FontPickerByCharacter.checkText(aRCInfo.reduce(function(accumulator, rc) {
+                    return accumulator += rc["text"];
+                }, ""), _t, resolve);
+            }).then(function() {
+                _t.SetNeedRecalc(true);
+                _t.SetNeedUpdateRC(false);
+            })
+        }
     };
     CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();
@@ -613,6 +629,26 @@
             oDoc.CheckComment(this);
         else
             editor.sync_RemoveComment(this.GetId());
+    };
+    CAnnotationFreeText.prototype.GetAllFonts = function(aFonts) {
+        let aRCInfo = this.GetRichContents();
+        if (!aFonts) {
+            aFonts = [];
+        }
+
+        for (let i = 0; i < aRCInfo.length; i++) {
+            if (aRCInfo[i]["actual"]) {
+                aFonts.push(aRCInfo[i]["actual"]);
+            }
+            else if (aRCInfo[i]["name"]) {
+                aFonts.push(AscFonts.getEmbeddedFontPrefix() + aRCInfo[i]["name"]);
+            }
+            else {
+                aFonts.push(AscPDF.DEFAULT_FIELD_FONT);
+            }
+        }
+
+        return aFonts;
     };
     CAnnotationFreeText.prototype.hitInPath = function(x,y) {
         for (let i = 0; i < this.spTree.length; i++) {
@@ -1164,10 +1200,9 @@
             oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
             oRectShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
             oRectShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
-
-            AscPDF.CTextBoxContent.prototype.replaceAllText.call(oRectShape.getDocContent(), oParentAnnot.GetContents());
         }
 
+        oRectShape.setTxBox(true);
         oRectShape.setGroup(oParentAnnot);
         if (!oParentAnnot.spTree[0])
             oParentAnnot.addToSpTree(0, oRectShape);
@@ -1195,8 +1230,6 @@
             oLineShape = createInnerShape(aArrowPts, oParentAnnot.spTree[1], oParentAnnot);
             oLineShape.spPr.xfrm.setFlipH(bFlipH);
             oLineShape.spPr.xfrm.setFlipV(bFlipV);
-            oLineShape.recalculateTransform();
-            oLineShape.updateTransformMatrix();
 
             if (!oParentAnnot.spTree[1])
                 oParentAnnot.addToSpTree(1, oLineShape);
@@ -1420,11 +1453,11 @@
         oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
         oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
-        oShape.setStyle(AscFormat.CreateDefaultShapeStyle());
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
         oShape.setGroup(oParentAnnot);
-        oShape.recalculate();
+        oShape.spPr.setLn(new AscFormat.CLn());
+        oShape.recalculateTransform();
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
@@ -1472,11 +1505,11 @@
         oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
         oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
-        oShape.setStyle(AscFormat.CreateDefaultShapeStyle());
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
         oShape.setGroup(oParentAnnot);
-        oShape.recalculate();
+        oShape.spPr.setLn(new AscFormat.CLn());
+        oShape.recalculateTransform();
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
