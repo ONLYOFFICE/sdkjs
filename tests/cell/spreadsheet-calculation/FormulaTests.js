@@ -25375,7 +25375,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"ODDFYIELD\"", function (assert) {
-
+		ws.getRange2("A10:Z100").cleanAll();
 		oParser = new parserFormula("ODDFYIELD(DATE(1990,6,1),DATE(1995,12,31),DATE(1990,1,1),DATE(1990,12,31),6%,790,100,1,1)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.ok(oParser.assemble() == "ODDFYIELD(DATE(1990,6,1),DATE(1995,12,31),DATE(1990,1,1),DATE(1990,12,31),6%,790,100,1,1)");
@@ -25390,6 +25390,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.ok(oParser.assemble() == "ODDFYIELD(DATE(2008,12,11),DATE(2021,4,1),DATE(2008,10,15),DATE(2009,4,1),6%,100,100,4,1)");
 		assert.ok(difBetween(oParser.calculate().getValue(), 0.0599769985558904));
+
+		// for bug 21211
+		ws.getRange2("A12").setValue("November 11, 2008");
+		ws.getRange2("A13").setValue("March 1, 2021");
+		ws.getRange2("A14").setValue("October 15, 2008");
+		ws.getRange2("A15").setValue("March 1, 2009");
+		ws.getRange2("A16").setValue("5.75%");
+		ws.getRange2("A17").setValue("84.50");
+		ws.getRange2("A18").setValue("100");
+		ws.getRange2("A19").setValue("2");
+		ws.getRange2("A20").setValue("0");
+
+		oParser = new parserFormula("ODDFYIELD(A12, A13, A14, A15, A16, A17, A18, A19, A20)", "A2", ws);
+		assert.ok(oParser.parse(), 'ODDFYIELD(A12, A13, A14, A15, A16, A17, A18, A19, A20)');
+		assert.ok(oParser.calculate().getValue(), 0.08, 'Result of ODDFYIELD(A12, A13, A14, A15, A16, A17, A18, A19, A20)');
 
 		testArrayFormula2(assert, "ODDFYIELD", 8, 9, true);
 	});
