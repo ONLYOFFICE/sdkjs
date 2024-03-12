@@ -3018,18 +3018,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 	function checkTypeCell(cell) {
 		if (cell && !cell.isNullText()) {
-			var type = cell.getType();
+			let type = cell.getType();
 			if (CellValueType.Number === type) {
 				return new cNumber(cell.getNumberValue());
 			} else{
-				var val = cell.getValueWithoutFormat();
+				let val = cell.getValueWithoutFormat();
 				if (CellValueType.Bool === type) {
-				return new cBool(val);
-			} else if (CellValueType.Error === type) {
-				return new cError(val);
-			} else {
-				return new cString(val);
-			}
+					return new cBool(val);
+				} else if (CellValueType.Error === type) {
+					return new cError(val);
+				} else {
+					return new cString(val);
+				}
 			}
 		} else {
 			return new cEmpty();
@@ -9116,5 +9116,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+	window['AscCommonExcel'].prepareTypedArrayUniversal = prepareTypedArrayUniversal;
 
 })(window);

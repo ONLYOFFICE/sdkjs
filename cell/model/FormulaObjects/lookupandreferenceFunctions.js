@@ -2767,9 +2767,11 @@ function (window, undefined) {
 		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
 			arg0 = arg0.getValue();
 		}
-
 		if (cElementType.error === arg0.type) {
 			return arg0;
+		}
+		if (cElementType.empty === arg0.type) {
+			arg0 = new cNumber(0);
 		}
 
 		var arg0Val;
@@ -2848,11 +2850,31 @@ function (window, undefined) {
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			range = arg1.getRange();
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
-			var _cacheElem = {elements: []};
+			let _cacheElem = {elements: [], mapElements: {}};
 			arg1.foreach(function (elem, r, c) {
-				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
+				let type = elem.type;
+				let key = elem.getValue();
+				let obj = {v: elem, i: (t.bHor ? c : r)};
+				
+				if (!_cacheElem.mapElements[type]) {
+					_cacheElem.mapElements[type] = new Map();
+				}
+
+				if (type === cElementType.string) {
+					key = key.toLowerCase();
+				}
+
+				if (!_cacheElem.mapElements[type].get(key)) {
+					_cacheElem.mapElements[type].set(key, obj);
+				} else {
+					// save the last index number for possible reverse search
+					_cacheElem.mapElements[type].get(key).last_index = (t.bHor ? c : r);
+				}
+
+				_cacheElem.elements.push(obj);
 			});
-			return this._calculate(_cacheElem.elements, arg0Val, null, opt_arg4, opt_arg5);
+
+			return this._calculate(_cacheElem, arg0Val, null, opt_arg4, opt_arg5);
 		}
 
 		if (!range) {
@@ -2902,8 +2924,8 @@ function (window, undefined) {
 
 		var cacheElem = this.cacheId[sRangeName];
 		if (!cacheElem) {
-			cacheElem = {elements: [], results: {}};
-			this.generateElements(range, cacheElem);
+			cacheElem = { mapElements: {}, elements: [], results: {}, range: range};
+			this.generateElements(range, cacheElem, this.cacheId);
 			this.cacheId[sRangeName] = cacheElem;
 			var cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -2924,14 +2946,17 @@ function (window, undefined) {
 		res = cacheElem.results[sInputKey];
 		if (!res) {
 			cacheElem.results[sInputKey] =
-				res = this._calculate(cacheElem.elements, valueForSearching, arg3Value, opt_arg4, opt_arg5);
+				res = this._calculate(cacheElem, valueForSearching, arg3Value, opt_arg4, opt_arg5);
 		}
 
 		return res;
 	};
-	VHLOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup, opt_arg4, opt_arg5) {
-		let res = -1, i = 0, j, length = cacheArray.length, k, elem, val, nextVal;
+	VHLOOKUPCache.prototype._calculate = function (cache, valueForSearching, lookup, opt_arg4, opt_arg5) {
+		let res = -1, i = 0, j, k, elem, val, nextVal;
 		let xlookup = opt_arg4 !== undefined && opt_arg5 !== undefined;
+		let valueForSearchingType = valueForSearching.type;
+
+		// todo использовать запись флагов выполнения, например если xlookup, то {arg4: 1, arg5: 2} и т.д.
 
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
@@ -2965,41 +2990,67 @@ function (window, undefined) {
 		};
 
 		const simpleSearch = function (revert) {
+			let cacheArray = cache.mapElements ? cache.mapElements[valueForSearchingType] : null;
+			if (!cacheArray) {
+				return -1;
+			}
+
 			if (revert) {
-				for (i = length - 1; i >= 0; i--) {
-					elem = cacheArray[i];
-					val = elem.v;
-					if (_compareValues(valueForSearching, val, "=")) {
-						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
-							return elem.i;
+				if (cacheArray.size > 0 && (opt_arg4 === -1 || opt_arg4 === 1 || opt_arg4 === 2)) {
+					// todo wildcard match(can be in v/hlookup)
+					let maxIndex = -1;
+					cacheArray.forEach(function (elem, key) {
+						if (_compareValues(valueForSearching, elem.v, "=")) {
+							if (!(valueForSearching.type !== cElementType.error && elem.v.type === cElementType.error)) {
+								let curIndex = (elem.i && elem.last_index) ? elem.last_index : elem.i
+								maxIndex = maxIndex >= curIndex ? maxIndex : curIndex;
+							}
 						}
+						(opt_arg4 === 1 || opt_arg4 === -1) && addNextOptVal(elem, valueForSearching);
+					})
+					return maxIndex
+				} else {
+					let key = valueForSearching.getValue();
+					let item = cacheArray.get(key);
+					if (item) {
+						return item.last_index ? item.last_index : item.i;
 					}
-					opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching);
 				}
 			} else {
-				for (i = 0; i < length; i++) {
-					elem = cacheArray[i];
-					val = elem.v;
-					if (_compareValues(valueForSearching, val, "=")) {
-						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
-							return elem.i;
+				if (cacheArray.size > 0 && (opt_arg4 === -1 || opt_arg4 === 1 || opt_arg4 === 2)) {
+					// todo wildcard match(can be in v/hlookup)
+					let minIndex = Infinity;
+					cacheArray.forEach(function (elem, key) {
+						if (_compareValues(valueForSearching, elem.v, "=")) {
+							if (!(valueForSearching.type !== cElementType.error && elem.v.type === cElementType.error)) {
+								minIndex = minIndex >= elem.i ? elem.i : minIndex;
+							}
 						}
+						(opt_arg4 === 1 || opt_arg4 === -1) && addNextOptVal(elem, valueForSearching);
+					})
+					return minIndex === Infinity ? -1 : minIndex
+				} else {
+					let key = valueForSearching.getValue();
+					let item = cacheArray.get(key);
+					if (item) {
+						return item.i;
 					}
-					(opt_arg4 === 1 || opt_arg4 === -1) && addNextOptVal(elem, valueForSearching);
 				}
 			}
 			return -1;
 		};
 
-		//бинарный поиск для xlookup(так работает ms) бинарный поиск происходит до определенной длины массива
-		//как только длина становится меньше n(около 10), начинается линейный поиск
-		//так же в случае бинарного поиска когда требуется возвратить меньший или больший элемент(opt_arg4)
-		//- возвращается последний обработанный элемент меньший(больший) искомого, между собой элементы не сравниваются
+		//binary search for xlookup (this is how ms works) binary search occurs up to a certain length of the array
+		//as soon as the length becomes less than n (about 10), linear search begins
+		//also in the case of binary search when you need to return a smaller or larger element (opt_arg4)
+		//- the last processed element smaller (larger) than the one being sought is returned, the elements are not compared with each other
 
-		//мы делаем иначе: бинарный поиск происходит всегда и не зависит от длины массива, при поиске наибольшего(наименьшего)
-		//из обработанных элементов выбираем те, которые больше(меньше) -> из них уже ищем наименьший(наибольший)
-		//т.е. в итоге получаем следующий наименьший/наибольший элемент
+		//we do it differently: binary search always occurs and does not depend on the length of the array, when searching for the largest (smallest)
+		//from the processed elements, select those that are larger (smaller) -> from them we are already looking for the smallest (largest)
+		//those. as a result we get the next smallest/largest element
 		const _binarySearch = function (revert) {
+			let cacheArray = cache.elements;
+			let length = cacheArray ? cacheArray.length : 0;
 			i = 0;
 
 			//TODO проверить обратный поиск
@@ -3052,7 +3103,7 @@ function (window, undefined) {
 			return _res;
 		};
 
-		if (valueForSearching.type === cElementType.string) {
+		if (valueForSearchingType === cElementType.string) {
 			valueForSearching = new cString(valueForSearching.getValue().toLowerCase());
 		}
 
@@ -3096,13 +3147,245 @@ function (window, undefined) {
 		this.cacheId = {};
 		this.cacheRanges = {};
 	};
-	VHLOOKUPCache.prototype.generateElements = function (range, cacheElem) {
-		var _this = this;
+	VHLOOKUPCache.prototype.generateElements = function (currentRange, cacheElem, cache) {
+		const _this = this;
 
-		//сильного прироста не получил, пока оставляю прежнюю обработку, подумать на счёт разбития диапазонов
-		range._foreachNoEmpty(function (cell, r, c) {
-			cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
-		});
+		// another approach: when generating elements for the cache, create an associative Map array separately for each data type
+		// Each Map is stored in a cache object. The key is the type of the element being searched, the value is the Map array itself
+		// for example cache[cElementType.string] will return a Map containing cStrings, as well as the index of an individual cell "i" and the index "last_index" if this element occurs more than once
+		// In the Map itself, the key will be the value from the cell
+
+		function fillCurrentCache () {
+			currentRange._foreachNoEmpty(function (cell, r, c) {
+				let cellVal = checkTypeCell(cell);
+				let type = cellVal.type;
+	
+				if (!cacheElem.mapElements[type]) {
+					cacheElem.mapElements[type] = new Map();
+				}
+	
+				let key = cellVal.getValue();
+				let currentIndex = _this.bHor ? c : r;
+	
+				if (type === cElementType.string) {
+					key = key.toLowerCase();
+				}
+	
+				if (!cacheElem.mapElements[type].get(key)) {
+					cacheElem.mapElements[type].set(key, {v: cellVal, i: currentIndex, indexes: [], last_index: null});
+					cacheElem.mapElements[type].get(key).indexes.push(currentIndex);
+				} else {
+					let curObj = cacheElem.mapElements[type].get(key);
+					// save the last index of this element for possible reverse search
+					curObj.last_index = currentIndex;
+					// save all encountered indexes for this value 
+					curObj.indexes ? curObj.indexes.push(currentIndex) : null;
+				}
+				
+				cacheElem.elements.push({v: cellVal, i: currentIndex});
+			});
+		}
+		
+		// optimization of generation of cache elements 2:
+		// if the cache is not empty, then we go through all the elements trying to find a range that intersects with the current one
+		// if there is one, then write down the number of elements that are already in the existing range in the cache
+		// in this way we find the range that is closest in value
+		// calculate the difference in elements (if any) and copy? all elements of the range to the current one
+		// if there are not enough elements, then we go through the remaining pieces of the current range and write them down
+		// if there are too many elements, then you need to find and remove these elements: search by index
+
+		// todo r/c indexes for array mode in lookup
+
+		let r1diff = Infinity, r2diff = Infinity, c1diff = Infinity, c2diff = Infinity;
+		let lookingKey;
+
+		// go through all cache elements and look for the smallest difference in ranges
+		for (let key in cache) {
+			let elem = cache[key];
+			let cacheRange = elem.range;
+			if (currentRange.isIntersect(cacheRange)) {
+				let tempR1Diff = Math.abs(currentRange.bbox.r1 - cacheRange.bbox.r1),
+					tempR2Diff = Math.abs(currentRange.bbox.r2 - cacheRange.bbox.r2),
+					tempC1Diff = Math.abs(currentRange.bbox.c1 - cacheRange.bbox.c1),
+					tempC2Diff = Math.abs(currentRange.bbox.c2 - cacheRange.bbox.c2);
+
+				if (tempR1Diff < r1diff || tempR2Diff < r2diff || tempC1Diff < c1diff || tempC2Diff < c2diff) {
+					lookingKey = key;
+					r1diff = Math.min(tempR1Diff, r1diff);
+					r2diff = Math.min(r2diff, r2diff);
+					c1diff = Math.min(c1diff, c1diff);
+					c2diff = Math.min(c2diff, c2diff);
+				}
+			}
+		}
+
+		let lookingObj = lookingKey ? cache[lookingKey] : null;
+		if (lookingObj) {
+			// get the range and find difference between current range
+			// add all elements to a new object and remove or add extra/missing ones
+			let topElem = lookingObj.range.bbox.r1 - currentRange.bbox.r1, 	//> 0 add, < 0 remove 
+				botElem = lookingObj.range.bbox.r2 - currentRange.bbox.r2, 	//< 0 add, > 0 remove
+				leftElem = lookingObj.range.bbox.c1 - currentRange.bbox.c1,  //> 0 add, < 0 remove 
+				rightElem = lookingObj.range.bbox.c2 - currentRange.bbox.c2; //< 0 add, > 0 remove
+
+
+			// todo copy all .mapElements
+			cacheElem.mapElements[cElementType.string] = new Map(lookingObj.mapElements[cElementType.string]);
+			cacheElem.mapElements[cElementType.number] = new Map(lookingObj.mapElements[cElementType.number]);
+			cacheElem.mapElements[cElementType.empty] = new Map(lookingObj.mapElements[cElementType.empty]);
+			cacheElem.mapElements[cElementType.error] = new Map(lookingObj.mapElements[cElementType.error]);
+			cacheElem.mapElements[cElementType.bool] = new Map(lookingObj.mapElements[cElementType.bool]);
+			cacheElem.elements = lookingObj.elements.slice();
+			cacheElem.range = currentRange;
+
+			// r1/c1 - addition to the beginning of the range(concat) + delete
+			if (topElem > 0 || leftElem > 0) {
+				// add missing elements
+				// create a temp array and then concatenate it to current arr
+				let tempArr;
+				let tempRange = currentRange.worksheet ? currentRange.worksheet.getRange3(currentRange.bbox.r1, currentRange.bbox.c1, currentRange.bbox.r1 + topElem, currentRange.bbox.c2 + leftElem) : null;
+
+				if (tempRange) {
+					tempArr = [];
+					tempRange._foreachNoEmpty(function (cell, r, c) {
+						let cellVal = checkTypeCell(cell);
+						let key = cellVal.getValue();
+						let type = cellVal.type;
+			
+						if (!cacheElem.mapElements[type]) {
+							cacheElem.mapElements[type] = new Map();
+						}
+			
+						if (type === cElementType.string) {
+							key = key.toLowerCase();
+						}
+
+						let curIndex = _this.bHor ? c : r;
+						if (!cacheElem.mapElements[type].get(key)) {
+							cacheElem.mapElements[type].set(key, {v: cellVal, i: curIndex, indexes: [], last_index: null});
+							cacheElem.mapElements[type].get(key).indexes.push(curIndex);
+							tempArr.push({v: cellVal, i: curIndex, last_index: null});
+						} else {
+							let curObj = cacheElem.mapElements[type].get(key);
+							// add index to indexes array
+							if (!curObj.indexes.includes(curIndex)) {
+								curObj.indexes.push(curIndex);
+								curObj.i = curObj.i > curIndex ? curIndex : curObj.i;
+								tempArr.push({v: cellVal, i: curIndex, last_index: null});
+							}
+						}
+					});
+				}
+
+				// concat temp array with currunt array of elements
+				if (tempArr) {
+					cacheElem.elements = tempArr.concat(cacheElem.elements);
+				}
+
+			} else if (topElem < 0 || leftElem < 0) {
+				let iterationVal = topElem < 0 ? Math.abs(topElem) : Math.abs(leftElem);
+				// remove unnecessary elements
+				for (let i = 0; i < iterationVal; i++) {
+					let elem = cacheElem.elements[i];
+					let key = elem.v.getValue();
+					let type = elem.v.type;
+
+					if (type === cElementType.string) {
+						key = key.toLowerCase();
+					}
+
+					let mapElem = cacheElem.mapElements[type].get(key);
+					if (mapElem) {
+						// check indexes inside the map value
+						let indexesElemArr = mapElem.indexes;
+						if (indexesElemArr && indexesElemArr.includes(mapElem.i)) {
+							// if single index - delete this element
+							if (indexesElemArr.length < 2) {
+								cacheElem.mapElements[type].delete(key);
+							} else {
+								// delete only this index from array
+								// reassign elem.i and elem.last_index
+								mapElem.indexes.splice(0, 1);
+								mapElem.indexes.sort();
+								mapElem.i = mapElem.indexes[0];
+								mapElem.last_index = mapElem.indexes[mapElem.indexes.length - 1];
+							}
+						}
+					}
+				}
+				cacheElem.elements.splice(0, iterationVal);
+			}
+
+			// r2/c2 - addition at the end(push) + delete
+			if (botElem < 0 || rightElem < 0) {
+				// add missing elements
+				let tempRange = currentRange.worksheet ? currentRange.worksheet.getRange3(currentRange.bbox.r2 + botElem, currentRange.bbox.c1 + rightElem, currentRange.bbox.r2, currentRange.bbox.c2) : null;
+				if (tempRange) {
+					tempRange._foreachNoEmpty(function (cell, r, c) {
+						let cellVal = checkTypeCell(cell);
+						let key = cellVal.getValue();
+						let type = cellVal.type;
+			
+						if (!cacheElem.mapElements[type]) {
+							cacheElem.mapElements[type] = new Map();
+						}
+			
+						if (type === cElementType.string) {
+							key = key.toLowerCase();
+						}
+
+						let curIndex = _this.bHor ? c : r;
+						if (!cacheElem.mapElements[type].get(key)) {
+							cacheElem.mapElements[type].set(key, {v: cellVal, i: curIndex, indexes: [], last_index: null});
+							cacheElem.mapElements[type].get(key).indexes.push(curIndex);
+							cacheElem.elements.push({v: cellVal, i: curIndex, last_index: null});
+						} else {
+							let curObj = cacheElem.mapElements[type].get(key);
+							// add index to indexes array
+							if (!curObj.indexes.includes(curIndex)) {
+								curObj.indexes.push(curIndex);
+								curObj.i = curObj.i > curIndex ? curIndex : curObj.i;
+								cacheElem.elements.push({v: cellVal, i: curIndex, last_index: null});
+							}
+						}
+					});
+				}
+			} else if (botElem > 0 || rightElem > 0) {
+				let iterationVal = botElem > 0 ? Math.abs(botElem) : Math.abs(rightElem);
+				// remove unnecessary elements
+				for (let i = cacheElem.elements.length - 1; i > cacheElem.elements.length - iterationVal; i--) {
+					let elem = cacheElem.elements[i];
+					let key = elem.v.getValue();
+					let type = elem.v.type;
+
+					if (type === cElementType.string) {
+						key = key.toLowerCase();
+					}
+
+					let mapElem = cacheElem.mapElements[type].get(key);
+					if (mapElem) {
+						let indexesElemArr = mapElem.indexes;
+						if (indexesElemArr && indexesElemArr.includes(mapElem.i)) {
+							// if single index - delete this element
+							if (indexesElemArr.length < 2) {
+								cacheElem.mapElements[type].delete(key);
+							} else {
+								// delete only this index from array
+								// reassign elem.i and elem.last_index
+								mapElem.indexes.splice(-1, 1);
+								mapElem.indexes.sort();
+								mapElem.i = mapElem.indexes[0];
+								mapElem.last_index = mapElem.indexes[mapElem.indexes.length - 1];
+							}
+						}
+					}
+				}
+				cacheElem.elements.splice(-iterationVal, iterationVal);
+			}
+		} else {
+			fillCurrentCache();
+		}
+
 		return;
 
 		//попытка оптимизации фукнции. если находим диапазон, который полностью перекрывает текущий или пересекаемся с текущим - тогда данные из кэша берём и не обращаемся к модели
@@ -3992,7 +4275,8 @@ function (window, undefined) {
 			return res;
 		}
 	};
-	LOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup) {
+	LOOKUPCache.prototype._calculate = function (cache, valueForSearching, lookup) {
+		let cacheArray = cache.elements;
 		return _func.lookupBinarySearch(valueForSearching, cacheArray, true);
 	};
 
