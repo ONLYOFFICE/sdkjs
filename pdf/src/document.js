@@ -3290,7 +3290,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 	
-		//AscFonts.FontPickerByCharacter.extendFonts(aMap);
+		AscFonts.FontPickerByCharacter.extendFonts(aMap);
 
         if (aMap.length == 0) {
             return true;
