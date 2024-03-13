@@ -4465,8 +4465,15 @@
             arrPt[0].setParent(null);
         }
     };
-    CSeriesBase.prototype.getErrBars = function() {
-        return this.errBars;
+    CSeriesBase.prototype.getErrBars = function(errBarrId) {
+        if (this.errBars) {
+            for (let i = 0; i < this.errBars.length; i++) {
+                if (this.errBars[i].Id === errBarrId) {
+                    return this.errBars[i];
+                }
+            }
+        }
+        return null;
     };
 	CSeriesBase.prototype.checkSeriesAfterChangeType = function() {
 
