@@ -385,7 +385,6 @@
 		const parsedJSDoc = this.parsedJSDoc;
 		// remove it from this class and use it from the variable
 		delete this.parsedJSDoc;
-		console.log(parsedJSDoc);
 
 		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
 
@@ -503,7 +502,7 @@
 			]
 		*/
 
-		this.addCustomFunction(func, options);
+		this.addCustomFunction(func, parsedJSDoc ? parsedJSDoc : options);
 	};
 
 	/**
