@@ -9605,10 +9605,10 @@
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @returns {ApiTextPr}
 	 */
-	ApiRun.prototype.SetLanguage = function(sLangId)
+	ApiRun.prototype.SetLang = function(sLangId)
 	{
 		var oTextPr = this.GetTextPr();
-		oTextPr.SetLanguage(sLangId);
+		oTextPr.SetLang(sLangId);
 		
 		return oTextPr;
 	};
@@ -12576,7 +12576,7 @@
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @return {ApiTextPr} - this text properties.
 	 */
-	ApiTextPr.prototype.SetLanguage = function(sLangId)
+	ApiTextPr.prototype.SetLang = function(sLangId)
 	{
 		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
 		if (undefined !== nLcid)
@@ -12588,12 +12588,12 @@
 	};
 
 	/**
-	 * Gets the language property.
+	 * Gets the lang property.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
 	 */
-	ApiTextPr.prototype.GetLanguage = function()
+	ApiTextPr.prototype.GetLang = function()
 	{
 		let nLcid = this.TextPr.GetLang();
 		
@@ -20195,7 +20195,7 @@
 	ApiRun.prototype["SetFontSize"]                  = ApiRun.prototype.SetFontSize;
 	ApiRun.prototype["SetHighlight"]                 = ApiRun.prototype.SetHighlight;
 	ApiRun.prototype["SetItalic"]                    = ApiRun.prototype.SetItalic;
-	ApiRun.prototype["SetLanguage"]                  = ApiRun.prototype.SetLanguage;
+	ApiRun.prototype["SetLang"]                      = ApiRun.prototype.SetLang;
 	ApiRun.prototype["SetPosition"]                  = ApiRun.prototype.SetPosition;
 	ApiRun.prototype["SetShd"]                       = ApiRun.prototype.SetShd;
 	ApiRun.prototype["SetSmallCaps"]                 = ApiRun.prototype.SetSmallCaps;
@@ -20379,8 +20379,8 @@
 	ApiTextPr.prototype["GetSmallCaps"]              = ApiTextPr.prototype.GetSmallCaps;
 	ApiTextPr.prototype["SetPosition"]               = ApiTextPr.prototype.SetPosition;
 	ApiTextPr.prototype["GetPosition"]               = ApiTextPr.prototype.GetPosition;
-	ApiTextPr.prototype["SetLanguage"]               = ApiTextPr.prototype.SetLanguage;
-	ApiTextPr.prototype["GetLanguage"]               = ApiTextPr.prototype.GetLanguage;
+	ApiTextPr.prototype["SetLang"]                   = ApiTextPr.prototype.SetLang;
+	ApiTextPr.prototype["GetLang"]                   = ApiTextPr.prototype.GetLang;
 	ApiTextPr.prototype["SetShd"]                    = ApiTextPr.prototype.SetShd;
 	ApiTextPr.prototype["GetShd"]                    = ApiTextPr.prototype.GetShd;
 	ApiTextPr.prototype["SetFill"]                   = ApiTextPr.prototype.SetFill;
