@@ -12127,6 +12127,26 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the style of this text properties.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiStyle} - used style.
+	 */
+	ApiTextPr.prototype.GetStyle = function()
+	{
+		var oDocument	= private_GetLogicDocument();
+		var oStyles		= oDocument.GetStyles();
+		let nStyleId	= this.TextPr.RStyle;
+
+		if (nStyleId != undefined) {
+			return new ApiStyle(oStyles.Get(nStyleId));
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiTextPr
@@ -12140,6 +12160,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the bold property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetBold = function()
+	{
+		return this.TextPr.GetBold();
+	};
+
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextPr
@@ -12153,6 +12185,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the italic property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetItalic = function()
+	{
+		return this.TextPr.GetItalic();
+	};
+
 	/**
 	 * Specifies that the contents of the run are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiTextPr
@@ -12166,6 +12210,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the strikeout property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetStrikeout = function()
+	{
+		return this.TextPr.GetStrikeout();
+	};
+
 	/**
 	 * Specifies that the contents of the run are displayed along with a line appearing directly below the character
 	 * (less than all the spacing above and below the characters on the line).
@@ -12180,6 +12236,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the underline property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetUnderline = function()
+	{
+		return this.TextPr.GetUnderline();
+	};
+
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiTextPr
@@ -12193,6 +12261,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the font family property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?string}
+	 */
+	ApiTextPr.prototype.GetFontFamily = function()
+	{
+		return this.TextPr.GetFontFamily();
+	};
+
 	/**
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiTextPr
@@ -12206,6 +12286,22 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the font size property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?hps}
+	 */
+	ApiTextPr.prototype.GetFontSize = function()
+	{
+		let nFontSize = this.TextPr.GetFontSize();
+		if (nFontSize !== undefined)
+			return 2 * nFontSize;
+
+		return nFontSize;
+	};
+
 	/**
 	 * Sets the text color to the current text run in the RGB format.
 	 * @memberof ApiTextPr
@@ -12222,6 +12318,23 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the color property
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiRGBColor}
+	 */
+	ApiTextPr.prototype.GetColor = function()
+	{
+		let oColor = this.TextPr.GetColor();
+		if (oColor !== undefined) {
+			return new ApiRGBColor(oColor.r, oColor.g, oColor.b);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
 	 * * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
@@ -12244,6 +12357,28 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the vert align property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?string}
+	 */
+	ApiTextPr.prototype.GetVertAlign = function()
+	{
+		let nType = this.TextPr.GetVertAlign();
+		let sType;
+
+		if (nType === AscCommon.vertalign_Baseline)
+			sType = "baseline";
+		else if (nType === AscCommon.vertalign_SubScript)
+			sType = "subscript";
+		else if (nType === AscCommon.vertalign_SuperScript)
+			sType = "superscript";
+
+		return sType;
+	};
+
 	/**
 	 * Specifies a highlighting color which is added to the text properties and applied as a background to the contents of the current run/range/paragraph.
 	 * @memberof ApiTextPr
@@ -12275,6 +12410,24 @@
 
 		return this;
 	};
+
+	/**
+	 * Gets the highlight property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CPE"]
+	 * @return {?string}
+	 */
+	ApiTextPr.prototype.GetHighlight = function()
+	{
+		let HighLight;
+		if (Asc.editor.editorId === AscCommon.c_oEditorId.Word)
+			HighLight = this.TextPr.HighLight;
+		else if (Asc.editor.editorId === AscCommon.c_oEditorId.Presentation)
+			HighLight = this.TextPr.HighlightColor;
+
+		return private_getHighlightNameByColor(HighLight);
+	};
+
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextPr
@@ -12288,6 +12441,23 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the text spacing measured in twentieths of a point.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?twips}
+	 */
+	ApiTextPr.prototype.GetSpacing = function()
+	{
+		let nSpacing = this.TextPr.GetSpacing();
+		if (nSpacing != undefined) {
+			return private_MM2Twips(nSpacing);
+		}
+		
+		return undefined;
+	};
+
 	/**
 	 * Specifies that the contents of the run are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextPr
@@ -12301,6 +12471,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the double strikeout property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetDoubleStrikeout = function()
+	{
+		return this.TextPr.GetDoubleStrikeout();
+	};
+
 	/**
 	 * Specifies that any lowercase characters in the text run are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextPr
@@ -12314,6 +12496,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the caps property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetCaps = function()
+	{
+		return this.TextPr.GetCaps();
+	};
+
 	/**
 	 * Specifies that all the small letter characters in the text run are formatted for display only as their capital
 	 * letter character equivalents which are two points smaller than the actual font size specified for this text.
@@ -12328,6 +12522,18 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the small caps property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @return {?boolean}
+	 */
+	ApiTextPr.prototype.GetSmallCaps = function()
+	{
+		return this.TextPr.GetSmallCaps();
+	};
+
 	/**
 	 * Specifies an amount by which text is raised or lowered for this run in relation to the default
 	 * baseline of the surrounding non-positioned text.
@@ -12343,6 +12549,24 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the position property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?hps}
+	 */
+	ApiTextPr.prototype.GetPosition = function()
+	{
+		let nPosition = this.TextPr.GetPosition();
+		
+		if (nPosition != undefined) {
+			return private_MM2Pt(2 * nPosition);
+		}
+
+		return undefined;
+	};
+
 	/**
 	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
 	 * the contents of the text run.
@@ -12362,6 +12586,25 @@
 			return this;
 		}
 	};
+
+	/**
+	 * Gets the language property.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?string}
+	 */
+	ApiTextPr.prototype.GetLanguage = function()
+	{
+		let nLcid = this.TextPr.GetLang();
+		
+		if (nLcid !== undefined)
+		{
+			return Asc.g_oLcidIdToNameMap[nLcid];
+		}
+
+		return undefined;
+	};
+
 	/**
 	 * Specifies the shading applied to the contents of the current text run.
 	 * @memberof ApiTextPr
@@ -12378,6 +12621,23 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the shading applied to the contents of the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CDE"]
+	 * @return {?ApiRGBColor}
+	 */
+	ApiTextPr.prototype.GetShd = function()
+	{
+		let oShd = this.TextPr.GetShd();
+		if (oShd) {
+			return new ApiRGBColor(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the text color to the current text run.
 	 * @memberof ApiTextPr
@@ -12391,6 +12651,23 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the text color from the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CSE", "CPE"]
+	 * @return {ApiFill}
+	 */
+	ApiTextPr.prototype.GetFill = function()
+	{
+		let oUniFill = this.TextPr.Unifill;
+		if (oUniFill) {
+			return new ApiFill(oUniFill);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the text fill to the current text run.
 	 * @memberof ApiTextPr
@@ -12404,6 +12681,23 @@
 		this.private_OnChange();
 		return this;
 	};
+
+	/**
+	 * Gets the text fill from the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CSE", "CPE"]
+	 * @return {ApiFill}
+	 */
+	ApiTextPr.prototype.GetTextFill = function()
+	{
+		let oUniFill = this.TextPr.TextFill;
+		if (oUniFill) {
+			return new ApiFill(oUniFill);
+		}
+
+		return null;
+	};
+
 	/**
 	 * Sets the text outline to the current text run.
 	 * @memberof ApiTextPr
@@ -12416,6 +12710,22 @@
 		this.TextPr.TextOutline = oStroke.Ln;
 		this.private_OnChange();
 		return this;
+	};
+
+	/**
+	 * Gets the text outline from the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @return {ApiStroke}
+	 */
+	ApiTextPr.prototype.GetOutLine = function()
+	{
+		let oOutline = this.TextPr.TextOutline;
+		if (oOutline) {
+			return new ApiStroke(oOutline);
+		}
+
+		return null;
 	};
 
 	/**
@@ -20040,25 +20350,45 @@
 
 	ApiTextPr.prototype["GetClassType"]              = ApiTextPr.prototype.GetClassType;
 	ApiTextPr.prototype["SetStyle"]                  = ApiTextPr.prototype.SetStyle;
+	ApiTextPr.prototype["GetStyle"]                  = ApiTextPr.prototype.GetStyle;
 	ApiTextPr.prototype["SetBold"]                   = ApiTextPr.prototype.SetBold;
+	ApiTextPr.prototype["GetBold"]                   = ApiTextPr.prototype.GetBold;
 	ApiTextPr.prototype["SetItalic"]                 = ApiTextPr.prototype.SetItalic;
+	ApiTextPr.prototype["GetItalic"]                 = ApiTextPr.prototype.GetItalic;
 	ApiTextPr.prototype["SetStrikeout"]              = ApiTextPr.prototype.SetStrikeout;
+	ApiTextPr.prototype["GetStrikeout"]              = ApiTextPr.prototype.GetStrikeout;
 	ApiTextPr.prototype["SetUnderline"]              = ApiTextPr.prototype.SetUnderline;
+	ApiTextPr.prototype["GetUnderline"]              = ApiTextPr.prototype.GetUnderline;
 	ApiTextPr.prototype["SetFontFamily"]             = ApiTextPr.prototype.SetFontFamily;
+	ApiTextPr.prototype["GetFontFamily"]             = ApiTextPr.prototype.GetFontFamily;
 	ApiTextPr.prototype["SetFontSize"]               = ApiTextPr.prototype.SetFontSize;
+	ApiTextPr.prototype["GetFontSize"]               = ApiTextPr.prototype.GetFontSize;
 	ApiTextPr.prototype["SetColor"]                  = ApiTextPr.prototype.SetColor;
+	ApiTextPr.prototype["GetColor"]                  = ApiTextPr.prototype.GetColor;
 	ApiTextPr.prototype["SetVertAlign"]              = ApiTextPr.prototype.SetVertAlign;
+	ApiTextPr.prototype["GetVertAlign"]              = ApiTextPr.prototype.GetVertAlign;
 	ApiTextPr.prototype["SetHighlight"]              = ApiTextPr.prototype.SetHighlight;
+	ApiTextPr.prototype["GetHighlight"]              = ApiTextPr.prototype.GetHighlight;
 	ApiTextPr.prototype["SetSpacing"]                = ApiTextPr.prototype.SetSpacing;
+	ApiTextPr.prototype["GetSpacing"]                = ApiTextPr.prototype.GetSpacing;
 	ApiTextPr.prototype["SetDoubleStrikeout"]        = ApiTextPr.prototype.SetDoubleStrikeout;
+	ApiTextPr.prototype["GetDoubleStrikeout"]        = ApiTextPr.prototype.GetDoubleStrikeout;
 	ApiTextPr.prototype["SetCaps"]                   = ApiTextPr.prototype.SetCaps;
+	ApiTextPr.prototype["GetCaps"]                   = ApiTextPr.prototype.GetCaps;
 	ApiTextPr.prototype["SetSmallCaps"]              = ApiTextPr.prototype.SetSmallCaps;
+	ApiTextPr.prototype["GetSmallCaps"]              = ApiTextPr.prototype.GetSmallCaps;
 	ApiTextPr.prototype["SetPosition"]               = ApiTextPr.prototype.SetPosition;
+	ApiTextPr.prototype["GetPosition"]               = ApiTextPr.prototype.GetPosition;
 	ApiTextPr.prototype["SetLanguage"]               = ApiTextPr.prototype.SetLanguage;
+	ApiTextPr.prototype["GetLanguage"]               = ApiTextPr.prototype.GetLanguage;
 	ApiTextPr.prototype["SetShd"]                    = ApiTextPr.prototype.SetShd;
+	ApiTextPr.prototype["GetShd"]                    = ApiTextPr.prototype.GetShd;
 	ApiTextPr.prototype["SetFill"]                   = ApiTextPr.prototype.SetFill;
+	ApiTextPr.prototype["GetFill"]                   = ApiTextPr.prototype.GetFill;
 	ApiTextPr.prototype["SetTextFill"]               = ApiTextPr.prototype.SetTextFill;
+	ApiTextPr.prototype["GetTextFill"]               = ApiTextPr.prototype.GetTextFill;
 	ApiTextPr.prototype["SetOutLine"]                = ApiTextPr.prototype.SetOutLine;
+	ApiTextPr.prototype["GetOutLine"]                = ApiTextPr.prototype.GetOutLine;
 	ApiTextPr.prototype["ToJSON"]                    = ApiTextPr.prototype.ToJSON;
 
 	ApiParaPr.prototype["GetClassType"]              = ApiParaPr.prototype.GetClassType;
@@ -21069,6 +21399,121 @@
 		}
 
 		return oColor;
+	}
+
+	/**
+	 * Gets a document higlight name by color object.
+	 * @param {object} - available highlight color
+	 * @returns {highlightColor}
+	 */
+	function private_getHighlightNameByColor(oColor)
+	{
+		if (oColor === -1 || oColor === null) {
+			return "none";
+		}
+
+		if (AscCommon.c_oEditorId.Word == Asc.editor.editorId) {
+			if (new CDocumentColor(0, 0, 0).IsEqual(oColor)) {
+				return "black";
+			}
+			if (new CDocumentColor(0, 0, 255).IsEqual(oColor)) {
+				return "blue";
+			}
+			if (new CDocumentColor(0, 255, 255).IsEqual(oColor)) {
+				return "cyan";
+			}
+			if (new CDocumentColor(0, 255, 0).IsEqual(oColor)) {
+				return "green";
+			}
+			if (new CDocumentColor(255, 0, 255).IsEqual(oColor)) {
+				return "magenta";
+			}
+			if (new CDocumentColor(255, 0, 0).IsEqual(oColor)) {
+				return "red";
+			}
+			if (new CDocumentColor(255, 255, 0).IsEqual(oColor)) {
+				return "yellow";
+			}
+			if (new CDocumentColor(255, 255, 255).IsEqual(oColor)) {
+				return "white";
+			}
+			if (new CDocumentColor(0, 0, 139).IsEqual(oColor)) {
+				return "darkBlue";
+			}
+			if (new CDocumentColor(0, 139, 139).IsEqual(oColor)) {
+				return "darkCyan";
+			}
+			if (new CDocumentColor(0, 100, 0).IsEqual(oColor)) {
+				return "darkGreen";
+			}
+			if (new CDocumentColor(128, 0, 128).IsEqual(oColor)) {
+				return "darkMagenta";
+			}
+			if (new CDocumentColor(139, 0, 0).IsEqual(oColor)) {
+				return "darkRed";
+			}
+			if (new CDocumentColor(128, 128, 0).IsEqual(oColor)) {
+				return "darkYellow";
+			}
+			if (new CDocumentColor(169, 169, 169).IsEqual(oColor)) {
+				return "darkGray";
+			}
+			if (new CDocumentColor(211, 211, 211).IsEqual(oColor)) {
+				return "lightGray";
+			}
+		}
+		else if (AscCommon.c_oEditorId.Presentation == Asc.editor.editorId) {
+			if (AscFormat.CreateUniColorRGB(0, 0, 0).IsEqual(oColor)) {
+				return "black";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 0, 255).IsEqual(oColor)) {
+				return "blue";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 255, 255).IsEqual(oColor)) {
+				return "cyan";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 255, 0).IsEqual(oColor)) {
+				return "green";
+			}
+			if (AscFormat.CreateUniColorRGB(255, 0, 255).IsEqual(oColor)) {
+				return "magenta";
+			}
+			if (AscFormat.CreateUniColorRGB(255, 0, 0).IsEqual(oColor)) {
+				return "red";
+			}
+			if (AscFormat.CreateUniColorRGB(255, 255, 0).IsEqual(oColor)) {
+				return "yellow";
+			}
+			if (AscFormat.CreateUniColorRGB(255, 255, 255).IsEqual(oColor)) {
+				return "white";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 0, 139).IsEqual(oColor)) {
+				return "darkBlue";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 139, 139).IsEqual(oColor)) {
+				return "darkCyan";
+			}
+			if (AscFormat.CreateUniColorRGB(0, 100, 0).IsEqual(oColor)) {
+				return "darkGreen";
+			}
+			if (AscFormat.CreateUniColorRGB(128, 0, 128).IsEqual(oColor)) {
+				return "darkMagenta";
+			}
+			if (AscFormat.CreateUniColorRGB(139, 0, 0).IsEqual(oColor)) {
+				return "darkRed";
+			}
+			if (AscFormat.CreateUniColorRGB(128, 128, 0).IsEqual(oColor)) {
+				return "darkYellow";
+			}
+			if (AscFormat.CreateUniColorRGB(169, 169, 169).IsEqual(oColor)) {
+				return "darkGray";
+			}
+			if (AscFormat.CreateUniColorRGB(211, 211, 211).IsEqual(oColor)) {
+				return "lightGray";
+			}
+		}
+
+		return undefined;
 	}
 
 	function logError(err) {
