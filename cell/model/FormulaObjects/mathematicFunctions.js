@@ -82,7 +82,7 @@ function (window, undefined) {
 		cCOTH, cCSC, cCSCH, cDECIMAL, cDEGREES, cECMA_CEILING, cEVEN, cEXP, cFACT, cFACTDOUBLE, cFLOOR, cFLOOR_PRECISE,
 		cFLOOR_MATH, cGCD, cINT, cISO_CEILING, cLCM, cLN, cLOG, cLOG10, cMDETERM, cMINVERSE, cMMULT, cMOD, cMROUND,
 		cMULTINOMIAL, cMUNIT, cODD, cPI, cPOWER, cPRODUCT, cQUOTIENT, cRADIANS, cRAND, cRANDARRAY, cRANDBETWEEN, cROMAN, cROUND, cROUNDDOWN,
-		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
+		cROUNDUP, cSEC, cSECH, cSERIESSUM, cSIGN, cSIN, cSINGLE, cSINH, cSQRT, cSQRTPI, cSUBTOTAL, cSUM, cSUMIF, cSUMIFS,
 		cSUMPRODUCT, cSUMSQ, cSUMX2MY2, cSUMX2PY2, cSUMXMY2, cTAN, cTANH, cTRUNC, cSEQUENCE);
 
 	var cSubTotalFunctionType = {
@@ -4659,6 +4659,32 @@ function (window, undefined) {
 		} else {
 			var a = Math.sin(arg0.getValue());
 			return isNaN(a) ? new cError(cErrorType.not_numeric) : new cNumber(a);
+		}
+		return arg0;
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cSINGLE() {
+	}
+
+	//***array-formula***
+	cSINGLE.prototype = Object.create(cBaseFunction.prototype);
+	cSINGLE.prototype.constructor = cSINGLE;
+	cSINGLE.prototype.name = 'SINGLE';
+	cSINGLE.prototype.argumentsMin = 1;
+	cSINGLE.prototype.argumentsMax = 1;
+	cSINGLE.prototype.argumentsType = [argType.any];
+	cSINGLE.prototype.arrayIndexes = {0: 1};
+	cSINGLE.prototype.isXLFN = true;
+	cSINGLE.prototype.Calculate = function (arg) {
+		let arg0 = arg[0];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			arg0 = arg0.cross(arguments[1]);
+		} else if (arg0.type === cElementType.array) {
+			arg0 = arg0.getElement(0);
 		}
 		return arg0;
 	};
