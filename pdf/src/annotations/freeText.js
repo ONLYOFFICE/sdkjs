@@ -599,8 +599,8 @@
             }            
         }
 
+        let _t = this;
         if (oDoc.Viewer.IsOpenAnnotsInProgress) {
-            let _t = this;
             new Promise(function(resolve) {
                 AscFonts.FontPickerByCharacter.checkTextLight(aRCInfo.reduce(function(accumulator, rc) {
                     return accumulator + rc["text"];
@@ -610,6 +610,53 @@
                 _t.SetNeedUpdateRC(false);
             })
         }
+        else {
+            _t.SetNeedRecalc(true);
+            _t.SetNeedUpdateRC(false);
+        }
+    };
+    CAnnotationFreeText.prototype.GetRichContents = function(bCalced) {
+        if (!bCalced)
+            return this._richContents;
+
+        let oContent = this.GetDocContent();
+        let aRCInfo = [];
+
+        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
+            let oPara = oContent.GetElement(i);
+
+            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
+                let oRun = oPara.GetElement(j);
+                let sText = oRun.GetText();
+                if (sText) {
+                    let oUniColor   = oRun.Pr.Unifill;
+                    let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
+                    let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : undefined;
+
+                    let sFont = oRun.Get_RFonts().Ascii.Name;
+                    let prefix = AscFonts.getEmbeddedFontPrefix();
+                    if (sFont.startsWith(prefix))
+                        sFont = sFont.substr(prefix.length);
+
+                    aRCInfo.push({
+                        "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
+                        "bold":             oRun.Get_Bold(),
+                        "italic":           oRun.Get_Italic(),
+                        "strikethrough":    oRun.Get_Strikeout(),
+                        "underlined":       oRun.Get_Underline(),
+                        "size":             oRun.Get_FontSize(),
+                        "name":             sFont,
+                        "color":            aPdfColor,
+                        "text":             sText
+                    });
+                }
+            }
+
+            if (aRCInfo[aRCInfo.length - 1])
+                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
+        }
+
+        return aRCInfo;
     };
     CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();
@@ -867,38 +914,6 @@
         }
         
         oDoc.GetDrawingDocument().TargetEnd();
-    };
-    CAnnotationFreeText.prototype.GetRichContents = function(bCalced) {
-        if (!bCalced)
-            return this._richContents;
-
-        let oContent = this.GetDocContent();
-        let aRCInfo = [];
-
-        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
-            let oPara = oContent.GetElement(i);
-
-            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
-                let oRun = oPara.GetElement(j);
-                let sText = oRun.GetText();
-                if (sText) {
-                    aRCInfo.push({
-                        "bold":             oRun.Get_Bold(),
-                        "italic":           oRun.Get_Italic(),
-                        "strikethrough":    oRun.Get_Strikeout(),
-                        "underlined":       oRun.Get_Underline(),
-                        "size":             oRun.Get_FontSize(),
-                        "name":             oRun.Get_RFonts().Ascii.Name,
-                        "text":             sText
-                    });
-                }
-            }
-
-            if (aRCInfo[aRCInfo.length - 1])
-                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
-        }
-
-        return aRCInfo;
     };
 
     CAnnotationFreeText.prototype.FitTextBox = function() {

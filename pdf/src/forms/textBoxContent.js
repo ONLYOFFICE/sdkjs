@@ -200,10 +200,28 @@
 
 		return nInternalType;
 	}
+
+	function getPdfTypeAlignByInternal(nInternalType) {
+		let nPdfType = AscPDF.ALIGN_TYPE.left;
+		switch (nInternalType) {
+			case AscCommon.align_Left:
+				nPdfType = AscPDF.ALIGN_TYPE.left;
+				break;
+			case AscCommon.align_Center:
+				nPdfType = AscPDF.ALIGN_TYPE.center;
+				break;
+			case AscCommon.align_Right:
+				nPdfType = AscPDF.ALIGN_TYPE.right;
+				break;
+		}
+
+		return nPdfType;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
 
 	window['AscPDF'].getInternalAlignByPdfType	= getInternalAlignByPdfType;
+	window['AscPDF'].getPdfTypeAlignByInternal	= getPdfTypeAlignByInternal;
 	window['AscPDF'].CTextBoxContent			= CTextBoxContent;
 	
 	
