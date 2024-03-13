@@ -451,7 +451,7 @@
 			this.UpdateDrDocDrawingPages();
 
 			if (this.disabledPaintOnScroll != true)
-				this.paint();
+				this._paint();
 				
 		};
 		this.UpdateDrDocDrawingPages = function() {
@@ -491,7 +491,7 @@
 			this.UpdateDrDocDrawingPages();
 
 			if (this.disabledPaintOnScroll != true)
-				this.paint();
+				this._paint();
 		};
 
 		this.onLoadModule = function()
@@ -1715,8 +1715,6 @@
 					}
 				}
 			});
-			
-			this.paint();
 		};
 
 		this.setCursorType = function(cursor)
@@ -4019,6 +4017,8 @@
 		
 		if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
 			this.clearZoomCoord();
+
+		this._paint();
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
 	{
