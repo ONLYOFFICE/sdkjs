@@ -5762,15 +5762,22 @@
 		};
 
 		let funcName = func.name.toUpperCase();
+		if (funcName.length === 0) {
+			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_NAME");
+			return;
+		}
+
+		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
+		//prefix add for separate main function from custom function
+		//!!!_xldudf
+		funcName = "CUSTOMFUNCTION_" + funcName;
+
 		let argumentsMin = 0;
 		let argumentsMax = 255;
 		//let argumentsType = [];
-		if (typeof options === "string" ) {
-			options = AscCommon.parseJSDoc(options);
-			//TODO array ?
-			if (options) {
-				options = options[0];
-			}
+		//TODO array?
+		if (Asc.typeOf(options)) {
+			options = options[0];
 		}
 		let params = options["params"];
 		if (params) {
@@ -5788,14 +5795,16 @@
 		//TODO check function arguments length
 		let argsFuncLength = func.length;
 		if (argsFuncLength > argumentsMax) {
-
+			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_ARGUMENTS_COUNT");
+			return;
 		}
 
 		//TODO check duplicated name
+		let isDuplicateName = false;
 		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
 			AscCommonExcel.cFormulaFunction;
 		if (oFormulaList[funcName]) {
-
+			isDuplicateName = true;
 		}
 
 		/**
@@ -5846,11 +5855,21 @@
 			}
 		};
 
-
 		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
-		window['AscCommonExcel'].getFormulasInfo();
-		this.initFormulasList();
+
+		if (isDuplicateName) {
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			for (let i in customFunctionList) {
+				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
+					customFunctionList[i] = newFunc;
+					break;
+				}
+			}
+		} else {
+			AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+			window['AscCommonExcel'].getFormulasInfo();
+			this.initFormulasList();
+		}
 	};
 
 
