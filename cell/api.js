@@ -2913,7 +2913,7 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype._onApplyChanges = function(changes, fCallback) {
+  spreadsheet_api.prototype._onApplyChanges = function(changes, fCallback, oColor) {
 	  let t = this;
 	  let perfStart = performance.now();
 	  let callback = fCallback;
@@ -2927,7 +2927,7 @@ var editor;
 	  }
 
     this.inkDrawer.startSilentMode();
-    this.wbModel.DeserializeHistory(changes, callback);
+    this.wbModel.DeserializeHistory(changes, callback, oColor);
     this.inkDrawer.endSilentMode();
   };
 
@@ -6662,7 +6662,7 @@ var editor;
 		for (var Index = 0; Index < Count; ++Index) {
 			this.CoAuthoringApi.onSaveChanges(e[Index], null, true);
 		}
-		this.collaborativeEditing.applyChanges();
+		this.collaborativeEditing.applyChanges(oColor);
 		//this._onUpdateAfterApplyChanges();
 	};
 

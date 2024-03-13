@@ -3368,7 +3368,7 @@
 		}
 		return aUndoRedoElems;
 	}
-	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback){
+	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback, oColor){
 		var oThis = this;
 		//сохраняем те изменения, которые были до приема данных, потому что дальше undo/redo будет очищено
 		this.aCollaborativeActions = this.aCollaborativeActions.concat(History.GetSerializeArray());
@@ -3435,6 +3435,15 @@
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
 					});
+					if (item.nSheetId && item.oRange) {
+						let ws = this.getWorksheetById(item.nSheetId);
+						if (ws) {
+							if (!ws.changeRanges) {
+								ws.changeRanges = [];
+							}
+							ws.changeRanges.push({range: item.oRange, color: oColor});
+						}
+					}
 				}
 			}
 			AscFonts.IsCheckSymbols = false;

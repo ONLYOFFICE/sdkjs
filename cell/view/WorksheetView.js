@@ -7238,6 +7238,17 @@
 
         this.drawTraceDependents();
 
+		if (this.model.changeRanges) {
+			for (let i in this.model.changeRanges) {
+				let range = this.model.changeRanges[i].range;
+				let color = this.model.changeRanges[i].color;
+				if (range && color) {
+					this._drawElements(this._drawSelectionElement, range,
+						AscCommonExcel.selectionLineType.Selection, new CColor(color.r, color.g, color.b));
+				}
+			}
+		}
+
         // restore canvas' original clipping range
         ctx.restore();
 
@@ -8065,7 +8076,7 @@
 				} else {
 					widthStr = self.stringRender.measureString(str, flags, width).width;
 				}
-				return widthStr <= (widthWithoutZoom !== null ? widthWithoutZoom : width);
+				return true;
             };
         }
 
