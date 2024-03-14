@@ -5893,7 +5893,7 @@
 		} else {
 			AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
 			window['AscCommonExcel'].getFormulasInfo();
-			this.initFormulasList();
+			this.initFormulasList && this.initFormulasList();
 		}
 	};
 

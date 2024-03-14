@@ -619,6 +619,7 @@ $(function () {
 		docInfo.asc_putTitle("TeSt.xlsx");
 		api.DocInfo = docInfo;
 
+
 		window["Asc"]["editor"] = api;
 
 		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
@@ -30730,6 +30731,36 @@ $(function () {
 		assert.strictEqual(randRegValBefore !== randRegValAfter, true, "Check values after recalculate");
 		assert.strictEqual(randArrayFValBefore !== randArrayFValAfter, true, "Check values after recalculate");
 
+		ws.getRange2("A1:Z10000").cleanAll();
+	});
+
+	QUnit.test("Test: \"Custom function test\"", function (assert) {
+		wb.dependencyFormulas.unlockRecal();
+
+		let api = window["Asc"]["editor"];
+		let trueWb = api.wb;
+		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
+
+		let sJsDoc = "/**\n" +
+			"\t\t * Calculates the sum of the specified numbers\n" +
+			"\t\t * @customfunction\n" +
+			"\t\t * @param {number} first First number.\n" +
+			"\t\t * @param {number} second Second number.\n" +
+			"\t\t * @returns {number} The sum of the numbers.\n" +
+			"\t\t */";
+
+		let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
+		api.addCustomFunction(function add(first, second) {
+			let res = null;
+			return first + second;
+		}, oJsDoc);
+
+		oParser = new parserFormula('CUSTOMFUNCTION_ADD(10, 10)', 'A2', ws);
+		assert.ok(oParser.parse(), 'Custom_function_ADD(10, 10)');
+		assert.strictEqual(oParser.calculate().getValue(), 20, 'Custom_function_ADD(10, 10)');
+
+
+		api.wb = trueWb;
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
 
