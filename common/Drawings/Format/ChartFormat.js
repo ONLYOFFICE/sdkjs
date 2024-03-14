@@ -4465,7 +4465,7 @@
             arrPt[0].setParent(null);
         }
     };
-    CSeriesBase.prototype.getErrBars = function(errBarrId) {
+    CSeriesBase.prototype.getErrBarById = function(errBarrId) {
         if (this.errBars) {
             for (let i = 0; i < this.errBars.length; i++) {
                 if (this.errBars[i].Id === errBarrId) {
@@ -4474,6 +4474,9 @@
             }
         }
         return null;
+    };
+    CSeriesBase.prototype.getErrBars = function(errBarrId) {
+        return this.errBars;
     };
 	CSeriesBase.prototype.checkSeriesAfterChangeType = function() {
 

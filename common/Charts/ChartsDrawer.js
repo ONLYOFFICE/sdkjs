@@ -15485,7 +15485,7 @@ CErrBarsDraw.prototype = {
 							if (this.paths[chartId][serId].hasOwnProperty(errBarIdx) && this.paths[chartId][serId][errBarIdx]) {
 								const seria = this.charts[chartId].chart.series[serId];
 								for (let i = 0; i < this.paths[chartId][serId][errBarIdx].length; i++) {
-									const errBar = seria.getErrBars(errBarIdx);
+									const errBar = seria.getErrBarById(errBarIdx);
 									const pen = errBar && errBar.getPen();
 									if (pen) {
 										this.cChartDrawer.drawPath(this.paths[chartId][serId][errBarIdx][i], pen);
@@ -15588,11 +15588,11 @@ CErrBarsDraw.prototype = {
 
 							isHorPos = t.cChartDrawer.getErrBarsPosition(errBar, oChart);
 							var axis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, isHorPos);
-							//другая ось нужна в случае, если используется ось категорий и нужно расчитать позицию по другой оси
+							// if categoryAxis in use, then we need other axis to calculate the position
 							var otherAxis = this.cChartDrawer.getAxisByPos(oChart.chart.axId, !isHorPos);
 							var isCatAx = axis.getObjectType() === AscDFH.historyitem_type_CatAx;
 
-							//расчитываем величину погрешности в одну сторону
+							// calculate the magnitude of error in one direction 
 							var oErrVal = this.calculateErrVal(oChart.chart, serIndex, errBarIdx, j, isCatAx);
 							if (oErrVal !== null) {
 								var plusErrVal = oErrVal.plusErrVal;
@@ -15600,7 +15600,7 @@ CErrBarsDraw.prototype = {
 								var x = this.points[i][j].x;
 								var y = this.points[i][j].y;
 
-								//todo пока конкретно для line реализую
+								//TODO, for now supports only lines
 								var pointVal;
 								if (null !== oErrVal.startVal) {
 									pointVal = oErrVal.startVal;
@@ -15780,8 +15780,8 @@ CErrBarsDraw.prototype = {
 				}
 				case AscFormat.st_errvaltypePERCENTAGE: {
 					plusErrVal = pointVal * errBars.val / 100;
-					//эта величина используется для расчёт оси. в данном случае расчёт величины погрешности выполняется от изначальнго значение
-					//но стартовая точка - величина с накоплением
+					// this number is used to calculate an axis, in this case the magnitude of error is calculated from the inital value
+					// but the inital value is - stacked value
 					pointVal = t.cChartDrawer.getValWithStacked(ser, val, oChart);
 					break;
 				}
@@ -15792,8 +15792,8 @@ CErrBarsDraw.prototype = {
 					break;
 				}
 				case AscFormat.st_errvaltypeSTDERR: {
-					//по официальным данным мс, формула для расчёта стандратной ошибки - другая
-					//здесь использую STDEV(currentSerData)/SQRT(COUNT(currentSerData))
+					//official excel information. formula for calculating the error
+					//here the gormula is STDEV(currentSerData)/SQRT(COUNT(currentSerData))
 					plusErrVal = calculateStDev() / Math.sqrt(pointsCount);
 					break;
 				}
