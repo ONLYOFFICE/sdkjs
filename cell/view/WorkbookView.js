@@ -5723,7 +5723,6 @@
 			description - описание параметра
 		}*/
 
-
 		let getType = function (_type) {
 			let res =  AscCommonExcel.cElementType.number;
 			switch (_type) {
@@ -5732,6 +5731,12 @@
 					break;
 				case "string":
 					res = AscCommonExcel.cElementType.string;
+					break;
+				case "boolean":
+					res = AscCommonExcel.cElementType.bool;
+					break;
+				default:
+					res = AscCommonExcel.cElementType.any;
 					break;
 			}
 			return res;
@@ -5745,13 +5750,31 @@
 
 			let res = null;
 			switch (_type) {
-				case AscCommonExcel.cElementType.number:
+				case "number":
 					res = _elem.tocNumber();
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toNumber();
 					}
 					break;
-				case AscCommonExcel.cElementType.string:
+				case "string":
+					res = _elem.tocString();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toString();
+					}
+					break;
+				case "boolean":
+					res = _elem.tocString();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toString();
+					}
+					break;
+				case "number[][]":
+					res = _elem.tocString();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toString();
+					}
+					break;
+				case "string[][]":
 					res = _elem.tocString();
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toString();
@@ -5774,11 +5797,13 @@
 
 		let argumentsMin = 0;
 		let argumentsMax = 255;
-		//let argumentsType = [];
+
 		//TODO array?
 		if (Asc.typeOf(options)) {
 			options = options[0];
 		}
+
+		let argumentsType = [];
 		let params = options["params"];
 		if (params) {
 			argumentsMax = 0;
@@ -5787,8 +5812,8 @@
 					argumentsMin++;
 				}
 				argumentsMax++;
-				//let type = params[i]["type"];
-				//argumentsType.push(getType(type));
+				let type = params[i]["type"];
+				argumentsType.push(getType(type));
 			}
 		}
 
@@ -5821,13 +5846,13 @@
 		newFunc.prototype.argumentsMin = argumentsMin;
 		newFunc.prototype.argumentsMax = argumentsMax;
 		//argumentsType - other arguments type, need convert
-		//newFunc.prototype.argumentsType = argumentsType;
+		newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.Calculate = function (arg) {
 			try {
 				//prepare arguments
 				let args = [];
 				for (let i = 0; i < params.length; i++) {
-					let type = getType(params[i]["type"]);
+					let type = params[i]["type"];
 					let defaultValue = params[i]["defaultValue"];
 					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
 						args.push(arg[i].toString());
