@@ -251,7 +251,7 @@
      */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
-        if (this.isViewMode || !AscCommon.g_inputContext)
+        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
             return;
 
         if (textReplace)
@@ -275,7 +275,7 @@
 		if (!AscCommon.g_clipboardBase)
 			return null;
 
-		if (this.isViewMode)
+		if (!this.canEdit() || this.isPdfEditor())
 			return null;
 
 		let _elem = document.getElementById("pmpastehtml");
@@ -1205,7 +1205,7 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-		if(this.isViewMode || this.isPdfEditor())
+		if(!this.canEdit() || this.isPdfEditor())
 		{
 			return;
 		}
