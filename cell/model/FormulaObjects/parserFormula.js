@@ -3742,6 +3742,95 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
+	cBaseFunction.prototype.checkFormulaArray2 = function (arg, opt_bbox, opt_defName, parserFormula, bIsSpecialFunction, argumentsCount) {
+		const t = this;
+		let res = null;
+		let functionsCanReturnArray = ["index"];
+
+		let returnFormulaType = this.returnValueType;
+		if (cReturnFormulaType.setArrayRefAsArg === returnFormulaType) {
+			// todo проверить встречается ли данная ситуация
+			if (arg.length === 0 && parserFormula.ref) {
+				res = this.Calculate([new cArea(parserFormula.ref.getName(), parserFormula.ws)], opt_bbox, opt_defName, parserFormula.ws);
+			} else {
+				return null;
+			}
+		}
+
+		let arrayIndexes = this.arrayIndexes;
+		let replaceAreaByValue = cReturnFormulaType.value_replace_area === returnFormulaType;
+		let replaceAreaByRefs = cReturnFormulaType.area_to_ref === returnFormulaType;
+		let replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
+
+		const checkArrayIndex = function(index) {
+			let res = false;
+			if(arrayIndexes) {
+				if(1 === arrayIndexes[index]) {
+					res = true;
+				} else if(typeof arrayIndexes[index] === "object") {
+					//для данной проверки запрашиваем у объекта 0 индекс, там хранится значение индекса аргумента
+					//от которого зависит стоит ли вопринимать данный аргумент как массив или нет
+					let tempsArgIndex = arrayIndexes[index][0];
+					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
+						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
+							res = true;
+						}
+					}
+				}
+			}
+			return res;
+		};
+
+		if((true === this.bArrayFormula || bIsSpecialFunction) && (!returnFormulaType || replaceAreaByValue || replaceAreaByRefs || arrayIndexes || replaceOnlyArray)) {
+			if (functionsCanReturnArray.indexOf(this.name.toLowerCase()) !== -1) {
+				let _tmp = this.Calculate(arg, opt_bbox, opt_defName, this.ws, bIsSpecialFunction);
+				if (_tmp && _tmp.type === cElementType.array) {
+					return _tmp;
+				}
+			}
+
+			let tempArgs = [], tempArg, firstArray, _checkArrayIndex;
+			for (let j = 0; j < argumentsCount; j++) {
+				tempArg = arg[j];
+
+				_checkArrayIndex = checkArrayIndex(j);
+				if (!_checkArrayIndex) {
+					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type || cElementType.array === tempArg.type) {
+						res = true
+						/*if (replaceAreaByValue) {
+							// intersection||single ?
+							tempArg = tempArg.cross(opt_bbox);
+						} else if (replaceAreaByRefs) {
+							//добавляю специальные заглушки для функций row/column
+							//они работают с аргументами иначе, чем все остальные
+							//row - игнорируем в area колонки и проходимся только по строчкам и берём 1 колонку
+							//к примеру, area A1:B2 разбиваем на [a1,a1;a2,a2] вместо нормального [a1,b1;a2,b2]
+							var useOnlyFirstRow = "column" === this.name.toLowerCase() ? parserFormula.ref : null;
+							var useOnlyFirstColumn = "row" === this.name.toLowerCase() ? parserFormula.ref : null;
+							var _bbox = tempArg.getBBox0();
+							if (useOnlyFirstRow) {
+								firstArray = new Asc.Range(_bbox.c1, _bbox.r1, _bbox.c2, _bbox.r1);
+							} else if (useOnlyFirstColumn) {
+								firstArray = new Asc.Range(_bbox.c1, _bbox.r1, _bbox.c1, _bbox.r2);
+							} else {
+								tempArg = window['AscCommonExcel'].convertAreaToArrayRefs(tempArg, useOnlyFirstRow, useOnlyFirstColumn);
+							}
+						} else if(!replaceOnlyArray){
+							tempArg = window['AscCommonExcel'].convertAreaToArray(tempArg);
+						}
+						*/
+					}
+				}
+				if (res) {
+					return res;
+				}
+
+				tempArgs.push(tempArg);
+			}
+		}
+
+		return res;
+	};
 
 	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
 
@@ -7182,6 +7271,125 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 
+	// todo проверка на single - @
+	parserFormula.prototype.findRefByOutStack = function () {
+		// по outStack смотрим на все аргументы в формулах и сравниваем их с позициями arrayIndex для этой формулы
+		// проходимся в том же порядке что и .calculate
+		if (this.ref) {
+			return true;
+		}
+
+		if (this.outStack && this.outStack.length > 0) {
+			let elemArr = [], _tmp, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
+			let length = this.outStack.length;
+			let isRef, opt_bbox;
+
+			if (length === 1) {
+				let singleElem = this.outStack[0];
+				if (singleElem.type === cElementType.cellsRange || singleElem.type === cElementType.cellsRange3D || singleElem.type === cElementType.array) {
+					isRef = true;
+				} else if (singleElem.type === cElementType.name || singleElem.type === cElementType.name3D) {
+					// let defName = singleElem.getDefName();
+					let defNameResult = singleElem.Calculate(null, opt_bbox, true);
+					if (defNameResult && defNameResult.type === cElementType.array || defNameResult.type === cElementType.cellsRange || defNameResult.type === cElementType.cellsRange3D) {
+						isRef = true;
+					}
+				}
+
+				if (isRef) {
+					return isRef;
+				}
+			}
+
+			if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
+				opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
+			}
+			if (!opt_bbox) {
+				opt_bbox = new Asc.Range(0, 0, 0, 0);
+			}
+
+			for (let i = 0; i < this.outStack.length; i++) {
+				currentElement = this.outStack[i];
+				if (!currentElement) {
+					continue;
+				}
+
+				if(currentElement.name === "(" || currentElement.type === cElementType.specialFunctionStart || currentElement.type === cElementType.specialFunctionEnd || "number" === typeof(currentElement)) {
+					continue;
+				}
+	
+				if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
+					argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
+					if (argumentsCount < 0) {
+						argumentsCount = -argumentsCount;
+						currentElement.bArrayFormula = true;
+					}
+					if (elemArr.length < argumentsCount) {
+						// elemArr = [];
+						// todo протестировать эти случаи в ms(есть ли ref)
+						return false;
+					} else if (argumentsCount + defNameArgCount > currentElement.argumentsMax) {
+						// elemArr = [];
+						// todo протестировать эти случаи в ms(есть ли ref)
+						return false;
+					} else {
+						// если operator - проверить каждый из аргументов или проверить результат вычисления
+						let arg = [];
+						for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
+							if ("number" === typeof(elemArr[elemArr.length - 1])) {
+								elemArr.pop();
+							}
+							arg.unshift(elemArr.pop());
+						}
+	
+						let formulaArray = null;
+						if (currentElement.type === cElementType.func) {
+							//если данная функция не может возвращать массив, проходимся по всем элементам аргументов и если появляется массив, возвращаем true
+							formulaArray = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
+						} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
+							bIsSpecialFunction = true;
+						}
+
+						if(formulaArray) {
+							isRef = true;
+						} else {
+							_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
+						}
+
+						if (isRef || _tmp.type === cElementType.array || _tmp.type === cElementType.cellsRange || _tmp.type === cElementType.cellsRange3D) {
+							return true;
+						}
+	
+						defNameArgCount = 0;
+						elemArr.push(_tmp);
+					}
+				} else if (currentElement.type === cElementType.name || currentElement.type === cElementType.name3D) {
+					// let defName = currentElement.getDefName();
+					// if(defName && defName.parsedRef && defName.parsedRef.ref) {
+					// 	isRef = true;
+					// }
+
+					defNameCalcArr = currentElement.Calculate(null, opt_bbox, true);
+					defNameArgCount = [];
+					if(defNameCalcArr && defNameCalcArr.length) {
+						defNameArgCount = defNameCalcArr.length - 1;
+						for(let j = 0; j < defNameCalcArr.length; j++) {
+							elemArr.push(defNameCalcArr[j]);
+						}
+					} else {
+						elemArr.push(defNameCalcArr);
+					}
+				} else if (currentElement.type === cElementType.table) {
+					elemArr.push(currentElement.toRef(opt_bbox));
+				} else {
+					elemArr.push(currentElement);
+				}
+			}
+
+			return isRef;
+		}
+		return false;
+	};
 	parserFormula.prototype.calculateCycleError = function () {
 			this.value = new cError(cErrorType.bad_reference);
 			this._endCalculate();

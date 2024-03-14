@@ -18922,6 +18922,9 @@
 				}
 			} else {
 				if (!applyByArray) {
+					// check for ref in formula
+					let isRef = newFP.findRefByOutStack();
+					// console.log(isRef);
 					newFP.calculate();
 					if (newFP.dynamicRange && newFP.ref) {
 						// dynamicSelectionRange = bbox;
@@ -19325,6 +19328,7 @@
 				//***array-formula***
 				let ref = null;
 				let isDynamicRef = null;
+				// !!*
 				if (flags.ctrlKey && flags.shiftKey) {
 					//необходимо проверить на выделение массива частично
 					var activeRange = t.getSelectedRange();
