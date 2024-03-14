@@ -5799,7 +5799,7 @@
 		let argumentsMax = 255;
 
 		//TODO array?
-		if (Asc.typeOf(options)) {
+		if (Asc.typeOf(options) === "array") {
 			options = options[0];
 		}
 

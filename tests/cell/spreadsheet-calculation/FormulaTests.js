@@ -30734,13 +30734,35 @@ $(function () {
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
 
+	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {
+		let api = window["Asc"]["editor"];
+		if (jsDoc) {
+			let oJsDoc = AscCommon.parseJSDoc(jsDoc);
+			api.addCustomFunction(innerFunc, oJsDoc);
+			fCompare("jsDoc");
+		}
+		if (oDoc) {
+			api.addCustomFunction(innerFunc, oDoc);
+			fCompare("oDoc");
+		}
+	}
+
 	QUnit.test("Test: \"Custom function test\"", function (assert) {
 		wb.dependencyFormulas.unlockRecal();
 
+		let prefix = "CUSTOMFUNCTION_";
+		
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
 
+		let func = function add(first, second) {
+			let res = null;
+			return first + second;
+		};
+
+
+		//params as jsdoc
 		let sJsDoc = "/**\n" +
 			"\t\t * Calculates the sum of the specified numbers\n" +
 			"\t\t * @customfunction\n" +
@@ -30749,15 +30771,37 @@ $(function () {
 			"\t\t * @returns {number} The sum of the numbers.\n" +
 			"\t\t */";
 
-		let oJsDoc = AscCommon.parseJSDoc(sJsDoc);
-		api.addCustomFunction(function add(first, second) {
-			let res = null;
-			return first + second;
-		}, oJsDoc);
+		//params as obj
+		let oDoc = {
+			"params": [
+				{
+					"type": "number",
+					"name": "first",
+					"isOptional": false,
+					"description": "First number."
+				},
+				{
+					"type": "number",
+					"name": "second",
+					"isOptional": false,
+					"description": "Second number."
+				}
+			],
+			"properties": [],
+			"returnInfo": {
+				"type": "number",
+				"description": "The sum of the numbers."
+			},
+			"description": "Calculates the sum of the specified numbers"
+		};
 
-		oParser = new parserFormula('CUSTOMFUNCTION_ADD(10, 10)', 'A2', ws);
-		assert.ok(oParser.parse(), 'Custom_function_ADD(10, 10)');
-		assert.strictEqual(oParser.calculate().getValue(), 20, 'Custom_function_ADD(10, 10)');
+		calcCustomFunction(func, sJsDoc, oDoc, function (desc) {
+			oParser = new parserFormula(prefix + 'ADD(10, 10)', 'A2', ws);
+			assert.ok(oParser.parse(), 'Custom_function_ADD_NUMBER+NUMBER' + "_" + desc);
+			assert.strictEqual(oParser.calculate().getValue(), 20, 'Custom_function_ADD_NUMBER+NUMBER' + "_" + desc);
+		});
+
+
 
 
 		api.wb = trueWb;
