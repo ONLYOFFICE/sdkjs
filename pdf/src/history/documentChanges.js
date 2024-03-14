@@ -71,13 +71,13 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			
 			oViewer.DrawingObjects.resetSelection();
 		}
-		else if (oItem.IsTextShape()) {
+		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
-			oDocument.textShapes.splice(nPos, 1);
-			this.PosInPage = oViewer.pagesInfo.pages[nPage].textShapes.indexOf(oItem);
-			oViewer.pagesInfo.pages[nPage].textShapes.splice(this.PosInPage, 1);
+			oDocument.drawings.splice(nPos, 1);
+			this.PosInPage = oViewer.pagesInfo.pages[nPage].drawings.indexOf(oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 1);
 			oViewer.DrawingObjects.resetSelection();
 		}
 	}
@@ -109,12 +109,12 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 
 			oViewer.DrawingObjects.resetSelection();
 		}
-		else if (oItem.IsTextShape()) {
+		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
-			oDocument.textShapes.splice(nPos, 0, oItem);
-			oViewer.pagesInfo.pages[nPage].textShapes.splice(this.PosInPage, 0, oItem);
+			oDocument.drawings.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 0, oItem);
 
 			oViewer.DrawingObjects.resetSelection();
 		}
@@ -159,12 +159,12 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 		}
-		else if (oItem.IsTextShape()) {
+		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
-			oDocument.textShapes.splice(nPos, 0, oItem);
-			oViewer.pagesInfo.pages[nPage].textShapes.splice(nPosInPage, 0, oItem);
+			oDocument.drawings.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 0, oItem);
 		}
 	}
 
@@ -191,12 +191,12 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 			if (oItem.GetReply(0) != null || oItem.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText && oItem.GetContents())
 				editor.sync_RemoveComment(oItem.GetId());
 		}
-		else if (oItem.IsTextShape()) {
+		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
-			oDocument.textShapes.splice(nPos, 1);
-			oViewer.pagesInfo.pages[nPage].textShapes.splice(nPosInPage, 1);
+			oDocument.drawings.splice(nPos, 1);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
 		}
 	}
 	

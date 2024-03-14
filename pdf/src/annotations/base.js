@@ -824,7 +824,7 @@
     CAnnotationBase.prototype.IsAnnot = function() {
         return true;
     };
-    CAnnotationBase.prototype.IsTextShape = function() {
+    CAnnotationBase.prototype.IsDrawing = function() {
         return false;
     };
     CAnnotationBase.prototype.IsForm = function() {
