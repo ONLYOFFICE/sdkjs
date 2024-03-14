@@ -238,7 +238,7 @@ StartAddNewShape.prototype =
 
                     // добавление шейпов
                     var oTextShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
-                    oLogicDocument.AddTextShape(oTextShape, this.pageIndex);
+                    oLogicDocument.AddShape(oTextShape, this.pageIndex);
 
                     oLogicDocument.TurnOffHistory();
                 }
@@ -450,8 +450,8 @@ NullState.prototype =
             let oViewer = editor.getDocumentRenderer();
 
             let aDrawings = [];
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].textShapes) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].textShapes);
+            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
+                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
             }
             if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
                 aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);

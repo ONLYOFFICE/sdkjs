@@ -83,7 +83,7 @@
 		
 		this.WordControl.OnResize(true);
 
-		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oDrawingDocument.CheckFontNeeds(), false);
+		this.FontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}]);
 
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
@@ -206,7 +206,7 @@
 		let oDoc			= this.DocumentRenderer.getPDFDoc();
 		let oField			= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeTextShape;
+		let oActiveTxShape	= oDoc.activeDrawing;
 
 		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
@@ -237,7 +237,7 @@
 		let data			= text_data || data1;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeTextShape;
+		let oActiveTxShape	= oDoc.activeDrawing;
 
 		if (!data)
 			return;
@@ -407,7 +407,7 @@
 		let oDrDoc	= oDoc.GetDrawingDocument();
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeTextShape;
+		let oActiveTxShape	= oDoc.activeDrawing;
 		
 		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveTxShape))
 			return false;
@@ -663,6 +663,46 @@
 		}
 		else {
 			fCallback();
+		}
+	};
+	PDFEditorApi.prototype._addImageUrl = function(arrUrls, oOptionObject) {
+		let oDoc = this.getPDFDoc();
+		
+		if (oOptionObject) {
+			if (oOptionObject.sendUrlsToFrameEditor && this.isOpenedChartFrame) {
+				this.addImageUrlsFromGeneralToFrameEditor(arrUrls);
+				return;
+			}
+			else if (oOptionObject.isImageChangeUrl || oOptionObject.isShapeImageChangeUrl || oOptionObject["obj"] || (oOptionObject instanceof AscCommon.CContentControlPr && oOptionObject.GetInternalId()) || oOptionObject.fAfterUploadOleObjectImage) {
+				this.AddImageUrlAction(arrUrls[0], undefined, oOptionObject);
+				return;
+			}
+		}
+
+		if (this.ImageLoader) {
+			const oApi = this;
+			this.ImageLoader.LoadImagesWithCallback(arrUrls, function() {
+				if (oOptionObject && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button) {
+					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
+					if (oImage && oImage.Image) {
+						oOptionObject.AddImage(oImage);
+					}
+				}
+				else {
+					const arrImages = [];
+					for (let i = 0; i < arrUrls.length; ++i) {
+						const oImage = oApi.ImageLoader.LoadImage(arrUrls[i], 1);
+						if(oImage)  {
+							arrImages.push(oImage);
+						}
+					}
+					if (arrImages.length) {
+						oDoc.CreateNewHistoryPoint();
+						oDoc.AddImages(arrImages);
+						oDoc.TurnOffHistory();
+					}
+				}
+			}, []);
 		}
 	};
 	PDFEditorApi.prototype.Paste = function()

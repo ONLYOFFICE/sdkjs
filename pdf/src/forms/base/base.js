@@ -223,7 +223,7 @@
     CBaseField.prototype.IsForm = function() {
         return true;
     };
-    CBaseField.prototype.IsTextShape = function() {
+    CBaseField.prototype.IsDrawing = function() {
         return false;
      };
     CBaseField.prototype.SetApIdx = function(nIdx) {

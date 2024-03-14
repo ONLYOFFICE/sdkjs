@@ -1453,7 +1453,7 @@
         let yMin = aShapeBounds[1];
         let yMax = aShapeBounds[3];
 
-        let oShape = oExistShape ? oExistShape : new AscPDF.CTextShape();
+        let oShape = oExistShape ? oExistShape : new AscPDF.CPdfShape();
         if (!oExistShape) {
             oShape.setSpPr(new AscFormat.CSpPr());
             oShape.spPr.setParent(oShape);
@@ -1497,7 +1497,7 @@
             return [x_min, y_min, x_max, y_max];
         }
 
-        let oShape = oExistShape || new AscPDF.CTextShape();
+        let oShape = oExistShape || new AscPDF.CPdfShape();
         let aShapeBounds = findMinRect(aPoints);
 
         let xMax = aShapeBounds[2];

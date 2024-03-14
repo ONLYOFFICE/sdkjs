@@ -2617,7 +2617,11 @@ function CDrawingDocument()
 				this.GuiControlColorsMap[i] = arr_colors[i];
 			}
 
-			this.SendControlColors();
+			if (false == Asc.editor.isPdfEditor())
+			{
+				this.SendControlColors();
+			}
+			
 		}
 	};
 
