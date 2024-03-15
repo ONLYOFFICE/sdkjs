@@ -36,9 +36,9 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfImage()
+    function CPdfGraphicFrame()
     {
-        AscFormat.CImageShape.call(this);
+        AscFormat.CGraphicFrame.call(this);
                 
         this._page          = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
@@ -54,10 +54,10 @@
         this._hasOriginView         = false; // имеет ли внешний вид из файла
     }
     
-    CPdfImage.prototype.constructor = CPdfImage;
-    CPdfImage.prototype = Object.create(AscFormat.CImageShape.prototype);
+    CPdfGraphicFrame.prototype.constructor = CPdfGraphicFrame;
+    CPdfGraphicFrame.prototype = Object.create(AscFormat.CGraphicFrame.prototype);
 
-    CPdfImage.prototype.SetFromScan = function(bFromScan) {
+    CPdfGraphicFrame.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
 
         // выставляем пунктирный бордер если нет заливки и  
@@ -67,38 +67,38 @@
             this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
         }
     };
-    CPdfImage.prototype.IsFromScan = function() {
+    CPdfGraphicFrame.prototype.IsFromScan = function() {
         return this._isFromScan;
     };
-    CPdfImage.prototype.SetDocument = function(oDoc) {
+    CPdfGraphicFrame.prototype.SetDocument = function(oDoc) {
         this._doc = oDoc;
     };
-    CPdfImage.prototype.SetPage = function(nPage) {
+    CPdfGraphicFrame.prototype.SetPage = function(nPage) {
         this._page = nPage;
     };
-    CPdfImage.prototype.IsNeedDrawFromStream = function() {
+    CPdfGraphicFrame.prototype.IsNeedDrawFromStream = function() {
        return false; 
     };
-    CPdfImage.prototype.IsAnnot = function() {
+    CPdfGraphicFrame.prototype.IsAnnot = function() {
        return false;
     };
-    CPdfImage.prototype.IsForm = function() {
+    CPdfGraphicFrame.prototype.IsForm = function() {
        return false;
     };
-    CPdfImage.prototype.IsTextShape = function() {
+    CPdfGraphicFrame.prototype.IsTextShape = function() {
        return false;
     };
-    CPdfImage.prototype.IsImage = function() {
+    CPdfGraphicFrame.prototype.IsImage = function() {
         return true;
     };
-    CPdfImage.prototype.IsChart = function() {
+    CPdfGraphicFrame.prototype.IsChart = function() {
         return false;
     };
-    CPdfImage.prototype.IsDrawing = function() {
+    CPdfGraphicFrame.prototype.IsDrawing = function() {
         return true;
     };
 
-    CPdfImage.prototype.ShowBorder = function(bShow) {
+    CPdfGraphicFrame.prototype.ShowBorder = function(bShow) {
         let oLine = this.pen;
 
         if (bShow) {
@@ -110,32 +110,32 @@
 
         this.AddToRedraw();
     };
-    CPdfImage.prototype.SetApIdx = function(nIdx) {
+    CPdfGraphicFrame.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
     };
-    CPdfImage.prototype.GetApIdx = function() {
+    CPdfGraphicFrame.prototype.GetApIdx = function() {
         return this._apIdx;
     };
-    CPdfImage.prototype.GetDocument = function() {
+    CPdfGraphicFrame.prototype.GetDocument = function() {
         if (this.group)
             return this.group.GetDocument();
 
         return this._doc;
     };
-    CPdfImage.prototype.GetPage = function() {
+    CPdfGraphicFrame.prototype.GetPage = function() {
         if (this.group)
             return this.group.GetPage();
         
         return this._page;
     };
-    CPdfImage.prototype.IsInTextBox = function() {
+    CPdfGraphicFrame.prototype.IsInTextBox = function() {
         return false;
     };
-    CPdfImage.prototype.GetDocContent = function() {
+    CPdfGraphicFrame.prototype.GetDocContent = function() {
         return null;
     };
-    CPdfImage.prototype.AddToRedraw = function() {
+    CPdfGraphicFrame.prototype.AddToRedraw = function() {
         let oViewer = Asc.editor.getDocumentRenderer();
         let _t      = this;
         
@@ -146,11 +146,11 @@
 
         oViewer.paint(setRedrawPageOnRepaint);
     };
-    CPdfImage.prototype.GetRect = function() {
+    CPdfGraphicFrame.prototype.GetRect = function() {
         return this._rect;
     };
     
-    CPdfImage.prototype.SetRect = function(aRect) {
+    CPdfGraphicFrame.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
 
@@ -173,7 +173,7 @@
 
         this.SetNeedRecalc(true);
     };
-    CPdfImage.prototype.SetRot = function(dAngle) {
+    CPdfGraphicFrame.prototype.SetRot = function(dAngle) {
         let oDoc = this.GetDocument();
 
         oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
@@ -181,10 +181,10 @@
         this.changeRot(dAngle);
         this.SetNeedRecalc(true);
     };
-    CPdfImage.prototype.GetRot = function() {
+    CPdfGraphicFrame.prototype.GetRot = function() {
         return this.rot;
     };
-    CPdfImage.prototype.Recalculate = function() {
+    CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
@@ -194,10 +194,10 @@
         this.recalculate();
         this.SetNeedRecalc(false);
     };
-    CPdfImage.prototype.IsNeedRecalc = function() {
+    CPdfGraphicFrame.prototype.IsNeedRecalc = function() {
        return this._needRecalc;
     };
-    CPdfImage.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
+    CPdfGraphicFrame.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
        if (bRecalc == false) {
            this._needRecalc = false;
        }
@@ -207,11 +207,11 @@
                this.AddToRedraw();
        }
     };
-    CPdfImage.prototype.Draw = function(oGraphicsWord) {
+    CPdfGraphicFrame.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         this.draw(oGraphicsWord);
     };
-    CPdfImage.prototype.onMouseDown = function(x, y, e) {
+    CPdfGraphicFrame.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
         let oDrDoc              = oDoc.GetDrawingDocument();
@@ -223,7 +223,7 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
-    CPdfImage.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
+    CPdfGraphicFrame.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent();
         if (!oContent)
             return;
@@ -231,7 +231,7 @@
         oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
-    CPdfImage.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
+    CPdfGraphicFrame.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent();
         if (!oContent)
             return;
@@ -239,7 +239,7 @@
         oContent.MoveCursorRight(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
-    CPdfImage.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
+    CPdfGraphicFrame.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent();
         if (!oContent)
             return;
@@ -247,7 +247,7 @@
         oContent.MoveCursorDown(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
     };
-    CPdfImage.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
+    CPdfGraphicFrame.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent();
         if (!oContent)
             return;
@@ -261,15 +261,15 @@
      * @memberof CTextField
      * @typeofeditors ["PDF"]
      */
-    CPdfImage.prototype.Blur = function() {};
+    CPdfGraphicFrame.prototype.Blur = function() {};
 
-    CPdfImage.prototype.onMouseUp = function(x, y, e) {};
+    CPdfGraphicFrame.prototype.onMouseUp = function(x, y, e) {};
     
     /////////////////////////////
     /// saving
     ////////////////////////////
 
-    CPdfImage.prototype.WriteToBinary = function(memory) {
+    CPdfGraphicFrame.prototype.WriteToBinary = function(memory) {
         this.toXml(memory, '');
     };
 
@@ -277,19 +277,33 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfImage.prototype.Get_AbsolutePage = function() {
+    CPdfGraphicFrame.prototype.Get_AbsolutePage = function() {
         return this.GetPage();
     };
-    CPdfImage.prototype.getLogicDocument = function() {
+    CPdfGraphicFrame.prototype.getLogicDocument = function() {
         return this.GetDocument();
     };
-    CPdfImage.prototype.IsThisElementCurrent = function() {
+    CPdfGraphicFrame.prototype.IsThisElementCurrent = function() {
         return true;
     };
-    CPdfImage.prototype.getDrawingDocument = function() {
-        Asc.editor.getPDFDoc().GetDrawingDocument();
+    CPdfGraphicFrame.prototype.getDrawingDocument = function() {
+        return Asc.editor.getPDFDoc().GetDrawingDocument();
+    };
+    CPdfGraphicFrame.prototype.Get_Styles = function (level) {
+		if (AscFormat.isRealNumber(level)) {
+			if (!this.compiledStyles[level]) {
+				AscFormat.CShape.prototype.recalculateTextStyles.call(this, level);
+			}
+			return this.compiledStyles[level];
+		}
+        else {
+			return Asc.editor.getPDFDoc().globalTableStyles;
+		}
+	};
+    CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {
+        return this.Get_PageLimits(nPage);
     };
 
-    window["AscPDF"].CPdfImage = CPdfImage;
+    window["AscPDF"].CPdfGraphicFrame = CPdfGraphicFrame;
 })();
 
