@@ -1859,7 +1859,7 @@ var CPresentation = CPresentation || function(){};
         graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
         graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
     
-        var table = new CTable(this.DrawingDocument, graphic_frame, false, Rows, Cols, Grid, true);
+        var table = new CTable(this.GetDrawingDocument(), graphic_frame, false, Rows, Cols, Grid, true);
         table.Reset(0, 0, W, 100000, 0, 0, 1, 0);
         table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
         table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
@@ -3311,6 +3311,12 @@ var CPresentation = CPresentation || function(){};
         return;
     };
     CPDFDoc.prototype.RemoveSelection = function() {};
+    CPDFDoc.prototype.Set_TargetPos = function() {};
+    CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function() { 
+        return 0;
+    };
+    CPDFDoc.prototype.isShapeChild = function() {};
+    
     
     CPDFDoc.prototype.GetDocPosType = function() {};
     CPDFDoc.prototype.GetSelectedContent = function() {};

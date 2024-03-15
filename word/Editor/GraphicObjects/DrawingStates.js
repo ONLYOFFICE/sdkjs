@@ -375,7 +375,7 @@ NullState.prototype =
 
         if(!b_no_handle_selected)
         {
-            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, true);
+            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
             if(ret)
             {
                 if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -394,7 +394,7 @@ NullState.prototype =
             var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
             if(drawing_page)
             {
-                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);
+                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
                 if(ret)
                 {
                     if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)

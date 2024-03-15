@@ -292,12 +292,6 @@
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
-    CPdfShape.prototype.SetNeedUpdateRC = function(bUpdate) {
-        this._needUpdateRC = bUpdate;
-    };
-    CPdfShape.prototype.IsNeedUpdateRC = function() {
-        return this._needUpdateRC;
-    };
     CPdfShape.prototype.SetInTextBox = function(bIn) {
         this.isInTextBox = bIn;
     };
@@ -323,7 +317,6 @@
 
         this.FitTextBox();
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
         oContent.RecalculateCurPos();
 
         return true;
@@ -347,7 +340,6 @@
         }
         else {
             this.SetNeedRecalc(true);
-            this.SetNeedUpdateRC(true);
         }
     };
     CPdfShape.prototype.SelectAllText = function() {
@@ -436,7 +428,6 @@
         false == this.IsInTextBox() && oContent.SetApplyToAll(false);
 
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfShape.prototype.SetAlign = function(nType) {
         let oContent = this.GetDocContent();
@@ -491,7 +482,6 @@
     CPdfShape.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfShape.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
