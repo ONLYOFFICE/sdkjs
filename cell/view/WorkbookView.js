@@ -5751,6 +5751,9 @@
 			let res = null;
 			switch (_type) {
 				case "number":
+					if (_elem.type === AscCommonExcel.cElementType.error) {
+						return _elem;
+					}
 					if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
 						//TODO ms -> calc error
 						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
@@ -5854,11 +5857,19 @@
 		newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.Calculate = function (arg) {
 			try {
+
+				for (let i in arg) {
+					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error) {
+						return arg[i];
+					}
+				}
+
 				//prepare arguments
 				let args = [];
 				for (let i = 0; i < params.length; i++) {
 					let type = params[i]["type"];
 					let defaultValue = params[i]["defaultValue"];
+
 					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
 						args.push(arg[i].toString());
 					} else {

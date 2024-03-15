@@ -30825,105 +30825,77 @@ $(function () {
 		}
 	}
 
-	QUnit.test("Test: \"Custom function test\"", function (assert) {
+	function executeCustomFunction (_func) {
 		wb.dependencyFormulas.unlockRecal();
-
 		initCustomFunctionData();
 
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
 
-		fCustomFunc = function add(first, second) {
-			return first + second;
-		};
-		let func = fCustomFunc;
-
-		//********** 1. @number / @number <- @number **********
-		initParamsCustomFunction([{type: "number"}, {type: "number"}], "number");
-
-		let typeToArgMap = {"number": 10, "ref": "A100", "range": "A100:B101", "bool": true, "error": "#REF!", "string": "test"};
-		let aTasks = [{paramsType: ["number", "number"], result: 20}];
-
-		doCustomFunctionTasks(assert, aTasks, typeToArgMap, func.name.toUpperCase(), "_@NUMBER_@NUMBER");
-
-		//number + number
-		let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(10, 10)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), 20, desc + "_" + _desc);
-		});
-
-		//ref + ref
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_REF_REF";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(A100, A101)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), 3, desc + "_" + _desc);
-		});
-
-		//ref + number
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_REF_NUMBER";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(A100, 2)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), 3, desc + "_" + _desc);
-		});
-
-		//string + number
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_STRING_NUMBER";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD("test", 2)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
-		});
-
-		//number + bool
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_STRING_BOOL";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(1, TRUE)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), 2, desc + "_" + _desc);
-		});
-
-		//bool + error(from ref)
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_BOOL_ERROR";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(1, G101)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), "#REF!", desc + "_" + _desc);
-		});
-
-		//number + array
-		//ms -> calc error
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(1,{1,3,4})', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
-		});
-
-		//number + range
-		//ms -> calc error
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD(1,A100:A101)', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
-		});
-
-		//array + array
-		//ms -> calc error
-		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
-		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
-			oParser = new parserFormula(prefix + 'ADD({1,3,4},{1,3,4})', 'A2', ws);
-			assert.ok(oParser.parse(), desc + "_" + _desc);
-			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
-		});
+		_func();
 
 		api.wb = trueWb;
 		ws.getRange2("A1:Z10000").cleanAll();
+	}
+
+	QUnit.test("Test: \"Custom function test\"", function (assert) {
+
+		executeCustomFunction(function () {
+			fCustomFunc = function add(first, second) {
+				return first + second;
+			};
+
+			//********** 1. @number / @number <- @number **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "number");
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+			let aTasks = [
+				{paramsType: ["number", "number"], result: 20},
+				{paramsType: ["number", "stringNumber"], result: 11},
+				{paramsType: ["number", "string"], result: "#VALUE!"},
+				{paramsType: ["number", "bool"], result: 11},
+				{paramsType: ["number", "error"], result: "#REF!"},
+				{paramsType: ["number", "array"], result: "#VALUE!"},
+				{paramsType: ["number", "ref"], result: 11},
+				{paramsType: ["number", "range"], result: "#VALUE!"},
+
+				{paramsType: ["string", "string"], result: "#VALUE!"},
+				{paramsType: ["string", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["string", "error"], result: "#REF!"},
+				{paramsType: ["string", "array"], result: "#VALUE!"},
+				{paramsType: ["string", "ref"], result: "#VALUE!"},
+				{paramsType: ["string", "range"], result: "#VALUE!"},
+
+				{paramsType: ["bool", "string"], result: "#VALUE!"},
+				{paramsType: ["bool", "bool"], result: 2},
+				{paramsType: ["bool", "error"], result: "#REF!"},
+				{paramsType: ["bool", "array"], result: "#VALUE!"},
+				{paramsType: ["bool", "ref"], result: 2},
+				{paramsType: ["bool", "range"], result: "#VALUE!"},
+
+				{paramsType: ["error", "stringNumber"], result: "#REF!"},
+				{paramsType: ["error", "error"], result: "#REF!"},
+				{paramsType: ["error", "array"], result: "#REF!"},
+				{paramsType: ["error", "ref"], result: "#REF!"},
+				{paramsType: ["error", "range"], result: "#REF!"},
+
+				{paramsType: ["array", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["array", "array"], result: "#VALUE!"},
+				{paramsType: ["array", "ref"], result: "#VALUE!"},
+				{paramsType: ["array", "range"], result: "#VALUE!"},
+
+				{paramsType: ["ref", "stringNumber"], result: 2},
+				{paramsType: ["ref", "ref"], result: 2},
+				{paramsType: ["ref", "range"], result: "#VALUE!"},
+
+				{paramsType: ["range", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["range", "range"], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER");
+		});
+
 	});
 
 
