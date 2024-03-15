@@ -225,12 +225,11 @@
 		AscCommon.History.Document = this.doc;
 
 		this.drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
-		this.DrawingObjects = new CGraphicObjects(this.doc, this.drawingDocument, this.Api);
+		this.DrawingObjects = new CGraphicObjects(null, this.drawingDocument, this.Api);
 		this.doc.DrawingObjects = this.DrawingObjects;
 		
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
 		this.drawingDocument.CheckGuiControlColors();
-		Asc.editor.WordControl.m_oLogicDocument = null;
 
 		CGraphicObjects.prototype.saveDocumentState = function() {};
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;

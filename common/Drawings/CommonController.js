@@ -8141,7 +8141,7 @@
 						MainLogicDocument.SetLocalTrackRevisions(false);
 					}
 
-					var oShape = new AscFormat.CShape();
+					var oShape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape() : new AscFormat.CShape();
 					oShape.setWordShape(bWord === true);
 					oShape.setBDeleted(false);
 					if (wsModel)

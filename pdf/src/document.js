@@ -108,8 +108,9 @@ var CPresentation = CPresentation || function(){};
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
         this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
+        this.TableStylesIdMap       = {};
         this.InitDefaultTextListStyles();
-
+        this.InitDefaultTableStyles();
         this.actionsInfo            = new CActionQueue(this);
         this.calculateInfo          = new CCalculateInfo(this);
         this.fieldsToCommit         = [];
@@ -1760,6 +1761,124 @@ var CPresentation = CPresentation || function(){};
         oImage.AddToRedraw();
     };
 
+    CPDFDoc.prototype.AddTextArt = function(nStyle, nPage) {
+        let oPagesInfo = this.Viewer.pagesInfo;
+        if (!oPagesInfo.pages[nPage])
+            return;
+
+        let oDrDoc      = this.GetDrawingDocument();
+        let oPageInfo   = oDrDoc.m_arrPages[nPage];
+
+        let oTextArt    = this.Viewer.DrawingObjects.createTextArt(nStyle, false);
+        let oXfrm       = oTextArt.getXfrm();
+
+        let nExtX   = oXfrm.extX;
+        let nExtY   = oXfrm.extY;
+        let nPageW  = oPageInfo.width_mm;
+        let nPageH  = oPageInfo.height_mm;
+
+        oXfrm.setOffX((nPageW - nExtX) / 2);
+        oXfrm.setOffY((nPageH / 2 - nExtY) / 2);
+
+        this.drawings.push(oTextArt);
+        if (oPagesInfo.pages[nPage].drawings == null) {
+            oPagesInfo.pages[nPage].drawings = [];
+        }
+        oPagesInfo.pages[nPage].drawings.push(oTextArt);
+
+        oTextArt.SetDocument(this);
+        oTextArt.SetPage(nPage);
+
+        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTextArt]));
+
+        oTextArt.AddToRedraw();
+    };
+
+    CPDFDoc.prototype.AddTable = function(nCol, nRow, sStyleId, nPage) {
+        let oPagesInfo = this.Viewer.pagesInfo;
+        if (!oPagesInfo.pages[nPage])
+            return;
+
+        let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId, undefined, undefined, undefined, undefined, nPage);
+
+        this.drawings.push(oTable);
+        if (oPagesInfo.pages[nPage].drawings == null) {
+            oPagesInfo.pages[nPage].drawings = [];
+        }
+        oPagesInfo.pages[nPage].drawings.push(oTable);
+
+        oTable.SetDocument(this);
+        oTable.graphicObject.LogicDocument = this;
+        oTable.SetPage(nPage);
+
+        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTable]));
+
+        oTable.AddToRedraw();
+    };
+    CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage) {
+        let oDrDoc      = this.GetDrawingDocument();
+        let oPageInfo   = oDrDoc.m_arrPages[nPage];
+
+        let nPageW  = oPageInfo.width_mm;
+        let nPageH  = oPageInfo.height_mm;
+
+        var W;
+        if (AscFormat.isRealNumber(Width)) {
+            W = Width;
+        } else {
+            W = nPageW * 2 / 3;
+        }
+        var X, Y;
+        if (AscFormat.isRealNumber(PosX) && AscFormat.isRealNumber(PosY)) {
+            X = PosX;
+            Y = PosY;
+        } else {
+            X = (nPageW - W) / 2;
+            Y = nPageH / 5;
+        }
+        
+        var Grid = [];
+    
+        for (var Index = 0; Index < Cols; Index++)
+            Grid[Index] = W / Cols;
+    
+        var RowHeight;
+        if (AscFormat.isRealNumber(Height)) {
+            RowHeight = Height / Rows;
+        }
+    
+        var graphic_frame = new AscPDF.CPdfGraphicFrame();
+        graphic_frame.setParent(this);
+        graphic_frame.setSpPr(new AscFormat.CSpPr());
+        graphic_frame.spPr.setParent(graphic_frame);
+        graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
+        graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
+        graphic_frame.spPr.xfrm.setOffX(X);
+        graphic_frame.spPr.xfrm.setOffY(Y);
+        graphic_frame.spPr.xfrm.setExtX(W);
+        graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
+        graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
+    
+        var table = new CTable(this.DrawingDocument, graphic_frame, false, Rows, Cols, Grid, true);
+        table.Reset(0, 0, W, 100000, 0, 0, 1, 0);
+        table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
+        table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
+        table.SetTableLayout(tbllayout_Fixed);
+        if (typeof StyleId === "string") {
+            table.Set_TableStyle(StyleId);
+        }
+        table.Set_TableLook(new AscCommon.CTableLook(false, true, false, false, true, false));
+        for (var i = 0; i < table.Content.length; ++i) {
+            var Row = table.Content[i];
+            if (AscFormat.isRealNumber(RowHeight)) {
+                Row.Set_Height(RowHeight, Asc.linerule_AtLeast);
+            }
+        }
+        graphic_frame.setGraphicObject(table);
+        graphic_frame.setBDeleted(false);
+        return graphic_frame;
+    };
+
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
         let oDrDoc      = this.GetDrawingDocument();
@@ -3165,9 +3284,16 @@ var CPresentation = CPresentation || function(){};
 
         this.styles.txStyles = oTextStyles;
     };
+    CPDFDoc.prototype.InitDefaultTableStyles = function () {
+        this.globalTableStyles = new CStyles(false);
+    
+        this.globalTableStyles.Id = AscCommon.g_oIdCounter.Get_NewId();
+        AscCommon.g_oTableId.Add(this.globalTableStyles, this.globalTableStyles.Id);
+        this.DefaultTableStyleId = AscFormat.CreatePresentationTableStyles(this.globalTableStyles, this.TableStylesIdMap);
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Extension required for History
+	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
@@ -3187,7 +3313,8 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.RemoveSelection = function() {};
     
     CPDFDoc.prototype.GetDocPosType = function() {};
-    
+    CPDFDoc.prototype.GetSelectedContent = function() {};
+    CPDFDoc.prototype.Is_ShowParagraphMarks = function() {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
@@ -3368,6 +3495,21 @@ var CPresentation = CPresentation || function(){};
 
         return false;
     };
+    CPDFDoc.prototype.Get_PageLimits = function(nPage) {
+        let oDrDoc      = this.GetDrawingDocument();
+        let oPageInfo   = oDrDoc.m_arrPages[nPage];
+
+        return {
+            X: 0,
+            XLimit: Math.ceil(oPageInfo.width_mm),
+            Y: 0,
+            YLimit: Math.ceil(oPageInfo.height_mm),
+        }
+    };
+    CPDFDoc.prototype.Get_PageFields = function(nPage) {
+        return this.Get_PageLimits(nPage);
+    };
+
 	
     function CActionQueue(oDoc) {
         this.doc                = oDoc;

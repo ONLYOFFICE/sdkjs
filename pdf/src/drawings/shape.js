@@ -620,6 +620,9 @@
     CPdfShape.prototype.IsThisElementCurrent = function() {
         return true;
     };
+    CPdfShape.prototype.getDrawingDocument = function() {
+        return Asc.editor.getPDFDoc().GetDrawingDocument();
+    };
 
     window["AscPDF"].CPdfShape = CPdfShape;
 })();

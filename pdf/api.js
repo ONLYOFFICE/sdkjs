@@ -106,6 +106,12 @@
 	PDFEditorApi.prototype.IsNeedDefaultFonts = function() {
 		return false;
 	};
+	PDFEditorApi.prototype.AddTextArt = function(nStyle) {
+		let oDoc = this.getPDFDoc();
+		oDoc.CreateNewHistoryPoint();
+		oDoc.AddTextArt(nStyle, this.getDocumentRenderer().currentPage);
+		oDoc.TurnOffHistory();
+	};
 	PDFEditorApi.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.haveThumbnails())
 			this.DocumentRenderer.Thumbnails.setZoom(value);
@@ -1343,6 +1349,15 @@
 	PDFEditorApi.prototype.getSpeechDescription = function(prevState, action)
 	{
 		return null;
+	};
+
+	/*----------------------------------------------------------------*/
+	/*functions for working with table*/
+	PDFEditorApi.prototype.put_Table = function(col, row, placeholder, sStyleId) {
+		let oDoc = this.getPDFDoc();
+		oDoc.CreateNewHistoryPoint();
+		oDoc.AddTable(col, row, sStyleId, editor.getDocumentRenderer().currentPage);
+		oDoc.TurnOffHistory();
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
