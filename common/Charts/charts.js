@@ -1226,6 +1226,7 @@ TextArtPreviewManager.prototype.getShape =  function()
 	oShape.spPr.xfrm.setOffY(0);
 	oShape.spPr.xfrm.setExtX(this.shapeWidth);
 	oShape.spPr.xfrm.setExtY(this.shapeHeight);
+	oShape._page = 0;
 	return oShape;
 };
 
