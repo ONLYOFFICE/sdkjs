@@ -287,7 +287,7 @@
         return true;
     };
     CPdfImage.prototype.getDrawingDocument = function() {
-        Asc.editor.getPDFDoc().GetDrawingDocument();
+        return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
 
     window["AscPDF"].CPdfImage = CPdfImage;
