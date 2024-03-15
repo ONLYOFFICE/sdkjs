@@ -30736,6 +30736,7 @@ $(function () {
 
 	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {
 		let api = window["Asc"]["editor"];
+		innerFunc.name = innerFunc.prototype.name;
 		if (jsDoc) {
 			let oJsDoc = AscCommon.parseJSDoc(jsDoc);
 			api.addCustomFunction(innerFunc, oJsDoc);
@@ -30747,11 +30748,7 @@ $(function () {
 		}
 	}
 
-	QUnit.test("Test: \"Custom function test\"", function (assert) {
-		wb.dependencyFormulas.unlockRecal();
-
-		let prefix = "CUSTOMFUNCTION_";
-
+	function initCustomFunctionData() {
 		ws.getRange2("A100").setValue("1");
 		ws.getRange2("A101").setValue("2");
 		ws.getRange2("B100").setValue("3");
@@ -30771,48 +30768,84 @@ $(function () {
 		ws.getRange2("G101").setValue("#REF!");
 		ws.getRange2("H100").setValue("#VALUE!");
 		ws.getRange2("H101").setValue("#DIV/0!");
+	}
+
+	let prefix = "CUSTOMFUNCTION_";
+	let sJsDoc, oDoc, fCustomFunc;
+	function initParamsCustomFunction(aInputTypes, sReturnType) {
+		//generate jsdoc
+		sJsDoc = "/**\n" +
+			"\t\t * Calculates\n" +
+			"\t\t * @customfunction\n";
+
+		for (let i in aInputTypes) {
+			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} desc" + i + "+.\n";
+		}
+		sJsDoc += "\t\t * @returns {" + sReturnType + "} The sum of the numbers.\n\t\t */";
+
+		oDoc = {};
+		for (let i in aInputTypes) {
+			if (!oDoc["params"]) {
+				oDoc["params"] = [];
+			}
+			oDoc["params"].push({"type": aInputTypes[i].type, "name": "name", "isOptional": !!aInputTypes[i].isOptional, "description": "description_params"});
+		}
+		oDoc["properties"] = [];
+		oDoc["description"] = "all_desc";
+		oDoc["returnInfo"] = {"type": sReturnType, "description": "description_return"};
+	}
+
+	function doCustomFunctionTasks(assert, aTasks, typeToArgMap, funcName, _descArgs) {
+		//generate ->
+		// let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
+		// calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+		// 	oParser = new parserFormula(prefix + 'ADD(10, 10)', 'A2', ws);
+		// 	assert.ok(oParser.parse(), desc + "_" + _desc);
+		// 	assert.strictEqual(oParser.calculate().getValue(), 20, desc + "_" + _desc);
+		// });
+
+		for (let i in aTasks) {
+			let task = aTasks[i];
+			let desc = "Custom_function_" + funcName + "_" +_descArgs + "_INPUT_";
+			let sFunc = funcName + "(";
+			for (let j = 0; j < aTasks[i].paramsType.length; j++) {
+				sFunc += typeToArgMap[aTasks[i].paramsType[j]];
+				if (j !== aTasks[i].paramsType.length - 1) {
+					sFunc += ",";
+				}
+				desc += "_" + aTasks[i].paramsType[j];
+			}
+			sFunc += ")";
+
+			calcCustomFunction(fCustomFunc, sJsDoc, oDoc, function (_desc) {
+				oParser = new parserFormula(prefix + sFunc, 'A2', ws);
+				assert.ok(oParser.parse(), "parse_ " + desc + "_" + _desc);
+				assert.strictEqual(oParser.calculate().getValue(), task.result, desc + "_" + _desc);
+			});
+		}
+	}
+
+	QUnit.test("Test: \"Custom function test\"", function (assert) {
+		wb.dependencyFormulas.unlockRecal();
+
+		initCustomFunctionData();
 
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
 
-		let func = function add(first, second) {
+		fCustomFunc = function add(first, second) {
 			return first + second;
 		};
+		let func = fCustomFunc;
 
 		//********** 1. @number / @number <- @number **********
-		//params as jsdoc
-		let sJsDoc = "/**\n" +
-			"\t\t * Calculates the sum of the specified numbers\n" +
-			"\t\t * @customfunction\n" +
-			"\t\t * @param {number} first First number.\n" +
-			"\t\t * @param {number} second Second number.\n" +
-			"\t\t * @returns {number} The sum of the numbers.\n" +
-			"\t\t */";
+		initParamsCustomFunction([{type: "number"}, {type: "number"}], "number");
 
-		//params as obj
-		let oDoc = {
-			"params": [
-				{
-					"type": "number",
-					"name": "first",
-					"isOptional": false,
-					"description": "First number."
-				},
-				{
-					"type": "number",
-					"name": "second",
-					"isOptional": false,
-					"description": "Second number."
-				}
-			],
-			"properties": [],
-			"returnInfo": {
-				"type": "number",
-				"description": "The sum of the numbers."
-			},
-			"description": "Calculates the sum of the specified numbers"
-		};
+		let typeToArgMap = {"number": 10, "ref": "A100", "range": "A100:B101", "bool": true, "error": "#REF!", "string": "test"};
+		let aTasks = [{paramsType: ["number", "number"], result: 20}];
+
+		doCustomFunctionTasks(assert, aTasks, typeToArgMap, func.name.toUpperCase(), "_@NUMBER_@NUMBER");
 
 		//number + number
 		let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
@@ -30892,6 +30925,8 @@ $(function () {
 		api.wb = trueWb;
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
+
+
 
 	wb.dependencyFormulas.unlockRecal();
 });
