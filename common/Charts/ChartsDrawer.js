@@ -7815,6 +7815,14 @@ drawAreaChart.prototype = {
 					this.points[i][n] = {x: x, y: nullPositionOX, val: val};
 				}
 
+				let errBars = seria.errBars[0];
+				if (errBars && this.chartProp && this.chartProp.pxToMM) {
+					const idx = AscFormat.isRealNumber(dataSeries[n].idx) ? dataSeries[n].idx : n;
+					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
+					// var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					this.cChartDrawer.errBars.putPoint(x, y, _pointVal, _pointVal,  seria.idx, idx);
+				}
+
 			}
 
 			if (this.cChartDrawer.nDimensionCount === 3) {
@@ -7825,6 +7833,7 @@ drawAreaChart.prototype = {
 					this._calculateDarkSideOfTheFace(null);
 				}
 			}
+
 		}
 
 
