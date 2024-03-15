@@ -30751,17 +30751,36 @@ $(function () {
 		wb.dependencyFormulas.unlockRecal();
 
 		let prefix = "CUSTOMFUNCTION_";
-		
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("B100").setValue("3");
+		ws.getRange2("B101").setValue("4");
+
+		ws.getRange2("C100").setValue("test1");
+		ws.getRange2("C101").setValue("test2");
+		ws.getRange2("D100").setValue("test3");
+		ws.getRange2("D101").setValue("test4");
+
+		ws.getRange2("E100").setValue("TRUE");
+		ws.getRange2("E101").setValue("FALSE");
+		ws.getRange2("F100").setValue("FALSE");
+		ws.getRange2("F101").setValue("TRUE");
+
+		ws.getRange2("G100").setValue("#VALUE!");
+		ws.getRange2("G101").setValue("#REF!");
+		ws.getRange2("H100").setValue("#VALUE!");
+		ws.getRange2("H101").setValue("#DIV/0!");
+
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
 		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
 
 		let func = function add(first, second) {
-			let res = null;
 			return first + second;
 		};
 
-
+		//********** 1. @number / @number <- @number **********
 		//params as jsdoc
 		let sJsDoc = "/**\n" +
 			"\t\t * Calculates the sum of the specified numbers\n" +
@@ -30795,14 +30814,80 @@ $(function () {
 			"description": "Calculates the sum of the specified numbers"
 		};
 
-		calcCustomFunction(func, sJsDoc, oDoc, function (desc) {
+		//number + number
+		let desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_NUMBER";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
 			oParser = new parserFormula(prefix + 'ADD(10, 10)', 'A2', ws);
-			assert.ok(oParser.parse(), 'Custom_function_ADD_NUMBER+NUMBER' + "_" + desc);
-			assert.strictEqual(oParser.calculate().getValue(), 20, 'Custom_function_ADD_NUMBER+NUMBER' + "_" + desc);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), 20, desc + "_" + _desc);
 		});
 
+		//ref + ref
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_REF_REF";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(A100, A101)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), 3, desc + "_" + _desc);
+		});
 
+		//ref + number
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_REF_NUMBER";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(A100, 2)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), 3, desc + "_" + _desc);
+		});
 
+		//string + number
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_STRING_NUMBER";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD("test", 2)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
+		});
+
+		//number + bool
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_STRING_BOOL";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(1, TRUE)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), 2, desc + "_" + _desc);
+		});
+
+		//bool + error(from ref)
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_BOOL_ERROR";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(1, G101)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), "#REF!", desc + "_" + _desc);
+		});
+
+		//number + array
+		//ms -> calc error
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(1,{1,3,4})', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
+		});
+
+		//number + range
+		//ms -> calc error
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD(1,A100:A101)', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
+		});
+
+		//array + array
+		//ms -> calc error
+		desc = "Custom_function_ADD_@NUMBER_@NUMBER_INPUT_NUMBER_ARRAY";
+		calcCustomFunction(func, sJsDoc, oDoc, function (_desc) {
+			oParser = new parserFormula(prefix + 'ADD({1,3,4},{1,3,4})', 'A2', ws);
+			assert.ok(oParser.parse(), desc + "_" + _desc);
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", desc + "_" + _desc);
+		});
 
 		api.wb = trueWb;
 		ws.getRange2("A1:Z10000").cleanAll();

@@ -5751,9 +5751,14 @@
 			let res = null;
 			switch (_type) {
 				case "number":
-					res = _elem.tocNumber();
-					if (res.type !== AscCommonExcel.cElementType.error) {
-						res = res.toNumber();
+					if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+						//TODO ms -> calc error
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = _elem.tocNumber();
+						if (res.type !== AscCommonExcel.cElementType.error) {
+							res = res.toNumber();
+						}
 					}
 					break;
 				case "string":
