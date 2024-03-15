@@ -30736,7 +30736,6 @@ $(function () {
 
 	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {
 		let api = window["Asc"]["editor"];
-		innerFunc.name = innerFunc.prototype.name;
 		if (jsDoc) {
 			let oJsDoc = AscCommon.parseJSDoc(jsDoc);
 			api.addCustomFunction(innerFunc, oJsDoc);
@@ -30862,13 +30861,14 @@ $(function () {
 
 				{paramsType: ["string", "string"], result: "#VALUE!"},
 				{paramsType: ["string", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["string", "bool"], result: "#VALUE!"},
 				{paramsType: ["string", "error"], result: "#REF!"},
 				{paramsType: ["string", "array"], result: "#VALUE!"},
 				{paramsType: ["string", "ref"], result: "#VALUE!"},
 				{paramsType: ["string", "range"], result: "#VALUE!"},
 
-				{paramsType: ["bool", "string"], result: "#VALUE!"},
 				{paramsType: ["bool", "bool"], result: 2},
+				{paramsType: ["bool", "stringNumber"], result: 2},
 				{paramsType: ["bool", "error"], result: "#REF!"},
 				{paramsType: ["bool", "array"], result: "#VALUE!"},
 				{paramsType: ["bool", "ref"], result: 2},
@@ -30890,10 +30890,60 @@ $(function () {
 				{paramsType: ["ref", "range"], result: "#VALUE!"},
 
 				{paramsType: ["range", "stringNumber"], result: "#VALUE!"},
-				{paramsType: ["range", "range"], result: "#VALUE!"},
+				{paramsType: ["range", "range"], result: "#VALUE!"}
 			];
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER");
+
+			//********** 2. @string / @number <- @number **********
+			initParamsCustomFunction([{type: "string"}, {type: "number"}], "number");
+
+			aTasks = [
+				{paramsType: ["number", "number"], result: "1010"},//ms returns string, but return type== "number"
+				{paramsType: ["number", "stringNumber"], result: "101"},
+				{paramsType: ["number", "string"], result: "#VALUE!"},
+				/*{paramsType: ["number", "bool"], result: 11},
+				{paramsType: ["number", "error"], result: "#REF!"},
+				{paramsType: ["number", "array"], result: "#VALUE!"},
+				{paramsType: ["number", "ref"], result: 11},
+				{paramsType: ["number", "range"], result: "#VALUE!"},
+
+				{paramsType: ["string", "string"], result: "#VALUE!"},
+				{paramsType: ["string", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["string", "bool"], result: "#VALUE!"},
+				{paramsType: ["string", "error"], result: "#REF!"},
+				{paramsType: ["string", "array"], result: "#VALUE!"},
+				{paramsType: ["string", "ref"], result: "#VALUE!"},
+				{paramsType: ["string", "range"], result: "#VALUE!"},
+
+				{paramsType: ["bool", "bool"], result: 2},
+				{paramsType: ["bool", "stringNumber"], result: 2},
+				{paramsType: ["bool", "error"], result: "#REF!"},
+				{paramsType: ["bool", "array"], result: "#VALUE!"},
+				{paramsType: ["bool", "ref"], result: 2},
+				{paramsType: ["bool", "range"], result: "#VALUE!"},
+
+				{paramsType: ["error", "stringNumber"], result: "#REF!"},
+				{paramsType: ["error", "error"], result: "#REF!"},
+				{paramsType: ["error", "array"], result: "#REF!"},
+				{paramsType: ["error", "ref"], result: "#REF!"},
+				{paramsType: ["error", "range"], result: "#REF!"},
+
+				{paramsType: ["array", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["array", "array"], result: "#VALUE!"},
+				{paramsType: ["array", "ref"], result: "#VALUE!"},
+				{paramsType: ["array", "range"], result: "#VALUE!"},
+
+				{paramsType: ["ref", "stringNumber"], result: 2},
+				{paramsType: ["ref", "ref"], result: 2},
+				{paramsType: ["ref", "range"], result: "#VALUE!"},
+
+				{paramsType: ["range", "stringNumber"], result: "#VALUE!"},
+				{paramsType: ["range", "range"], result: "#VALUE!"}*/
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@NUMBER");
+
 		});
 
 	});

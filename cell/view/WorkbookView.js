@@ -5792,6 +5792,28 @@
 			return res;
 		};
 
+		let getResultByType = function (val, _type) {
+			let res = null;
+			switch (_type) {
+				case "number":
+					res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+					break;
+				case "string":
+					res = new AscCommonExcel.cString(val + "");
+					break;
+				case "boolean":
+
+					break;
+				case "number[][]":
+
+					break;
+				case "string[][]":
+
+					break;
+			}
+			return res;
+		};
+
 		let funcName = func.name.toUpperCase();
 		if (funcName.length === 0) {
 			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_NAME");
@@ -5889,8 +5911,8 @@
 				let res = func.apply(this, args);
 
 				//prepare result
-
-				return new AscCommonExcel.cNumber(res);
+				let returnInfo = options["returnInfo"];
+				return getResultByType(res, returnInfo.type);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE")
 			}
@@ -5902,15 +5924,15 @@
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
-					customFunctionList[i] = newFunc;
+					customFunctionList.splice(i - 0, 0);
 					break;
 				}
 			}
-		} else {
-			AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
-			window['AscCommonExcel'].getFormulasInfo();
-			this.initFormulasList && this.initFormulasList();
 		}
+
+		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		window['AscCommonExcel'].getFormulasInfo();
+		this.initFormulasList && this.initFormulasList();
 	};
 
 
