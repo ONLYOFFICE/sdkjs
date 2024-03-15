@@ -212,7 +212,7 @@
 		let oDoc			= this.DocumentRenderer.getPDFDoc();
 		let oField			= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeDrawing;
+		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
@@ -227,10 +227,10 @@
 				oDoc.UpdateCopyCutState();
 			}
 		}
-		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
-			let oContent = oActiveTxShape.GetDocContent();
+		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
+			let oContent = oActiveDrawing.GetDocContent();
 			if (oContent.IsSelectionUse()) {
-				oActiveTxShape.Remove(-1);
+				oActiveDrawing.Remove(-1);
 				oDoc.UpdateCopyCutState();
 			}
 		}
@@ -243,7 +243,7 @@
 		let data			= text_data || data1;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeDrawing;
+		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (!data)
 			return;
@@ -263,7 +263,7 @@
 			oActiveAnnot.EnterText(aChars);
 			oDoc.UpdateCopyCutState();
 		}
-		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
+		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
 			oActiveAnnot.EnterText(aChars);
 			oDoc.UpdateCopyCutState();
 		}
@@ -413,9 +413,9 @@
 		let oDrDoc	= oDoc.GetDrawingDocument();
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveTxShape	= oDoc.activeDrawing;
+		let oActiveDrawing	= oDoc.activeDrawing;
 		
-		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveTxShape))
+		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
 			return false;
 
 		let oContent;
@@ -427,9 +427,9 @@
 			oActiveAnnot.EnterText(text);
 			oContent = oActiveAnnot.GetDocContent();
 		}
-		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
-			oActiveTxShape.EnterText(text);
-			oContent = oActiveTxShape.GetDocContent();
+		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
+			oActiveDrawing.EnterText(text);
+			oContent = oActiveDrawing.GetDocContent();
 		}
 		
 		if (oContent) {
@@ -819,6 +819,25 @@
 			return true;
 		
 		begin();
+		return true;
+	};
+	PDFEditorApi.prototype.SetDocumentModified = function(bValue)
+	{
+		this.isDocumentModify = bValue;
+		this.sendEvent("asc_onDocumentModifiedChanged");
+
+		if (undefined !== window["AscDesktopEditor"])
+		{
+			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
+		}
+	};
+	PDFEditorApi.prototype.getAddedTextOnKeyDown = function() {
+		return [];
+	};
+	PDFEditorApi.prototype.asc_getSelectedDrawingObjectsCount = function() {
+		return this.WordControl.m_oLogicDocument.GetSelectedDrawingObjectsCount();
+	};
+	PDFEditorApi.prototype.isShowShapeAdjustments = function() {
 		return true;
 	};
 	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
@@ -1350,7 +1369,7 @@
 	{
 		return null;
 	};
-
+	PDFEditorApi.prototype.GenerateStyles = function() {};
 	/*----------------------------------------------------------------*/
 	/*functions for working with table*/
 	PDFEditorApi.prototype.put_Table = function(col, row, placeholder, sStyleId) {

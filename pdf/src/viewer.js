@@ -224,12 +224,10 @@
 		this.doc = new AscPDF.CPDFDoc(this);
 		AscCommon.History.Document = this.doc;
 
-		this.drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
-		this.DrawingObjects = new CGraphicObjects(null, this.drawingDocument, this.Api);
-		this.doc.DrawingObjects = this.DrawingObjects;
-		
+		this.drawingDocument	= Asc.editor.WordControl.m_oDrawingDocument;
+		this.DrawingObjects		= new CGraphicObjects(this.doc, this.drawingDocument, this.Api);
+		this.doc.DrawingObjects	= this.DrawingObjects;
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
-		this.drawingDocument.CheckGuiControlColors();
 
 		CGraphicObjects.prototype.saveDocumentState = function() {};
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
@@ -2130,7 +2128,7 @@
 
 				if (oThis.isMouseDown)
 				{
-					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeDrawing && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !oThis.Api.isInkDrawerOn())
+					if (oThis.canSelectPageText())
 					{
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");
@@ -2154,7 +2152,10 @@
 		this.canMovePageByHand = function() {
 			return this.isMouseDown && this.MouseHandObject.Active && !this.doc.activeDrawing && !this.doc.mouseDownAnnot && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;
 		};
-
+		this.canSelectPageText = function() {
+			let oDoc = this.getPDFDoc();
+			return this.isMouseMoveBetweenDownUp && !oDoc.activeDrawing && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;
+		};
 		this.onMouseWhell = function(e)
 		{
 			if (!oThis.file || !oThis.file.isValid())

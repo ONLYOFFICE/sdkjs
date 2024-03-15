@@ -129,11 +129,36 @@
         
         return this._page;
     };
+    CPdfGraphicFrame.prototype.SetInTextBox = function(bIn) {
+        this.isInTextBox = bIn;
+    };
     CPdfGraphicFrame.prototype.IsInTextBox = function() {
-        return false;
+        return this.isInTextBox;
     };
     CPdfGraphicFrame.prototype.GetDocContent = function() {
-        return null;
+        return this.getDocContent();
+    };
+    CPdfGraphicFrame.prototype.EnterText = function(aChars) {
+        let oDoc        = this.GetDocument();
+        let oContent    = this.GetDocContent();
+        let oParagraph  = oContent.GetCurrentParagraph();
+
+        oDoc.CreateNewHistoryPoint({objects: [this]});
+
+        // удаляем текст в селекте
+        if (oContent.IsSelectionUse())
+            oContent.Remove(-1);
+
+        for (let index = 0; index < aChars.length; ++index) {
+            let oRun = AscPDF.codePointToRunElement(aChars[index]);
+            if (oRun)
+                oParagraph.AddToParagraph(oRun, true);
+        }
+
+        this.SetNeedRecalc(true);
+        oContent.RecalculateCurPos();
+
+        return true;
     };
     CPdfGraphicFrame.prototype.AddToRedraw = function() {
         let oViewer = Asc.editor.getDocumentRenderer();
@@ -203,6 +228,8 @@
        }
        else {
            this._needRecalc = true;
+           this.recalcInfo.recalculateTable = true;
+           
            if (bSkipAddToRedraw != true)
                this.AddToRedraw();
        }
@@ -210,6 +237,32 @@
     CPdfGraphicFrame.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         this.draw(oGraphicsWord);
+    };
+    CPdfGraphicFrame.prototype.SelectionSetStart = function(X, Y, e) {
+        this.selectStartPage = this.GetPage();
+
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
+        let oTransform  = this.invertTransformText;
+        let xContent    = oTransform.TransformPointX(X, 0);
+        let yContent    = oTransform.TransformPointY(0, Y);
+
+        oContent.Selection_SetStart(xContent, yContent, 0, e);
+        oContent.RecalculateCurPos();
+    };
+    
+    CPdfGraphicFrame.prototype.SelectionSetEnd = function(X, Y, e) {
+        let oContent = this.GetDocContent();
+        if (!oContent)
+            return;
+
+        let oTransform  = this.invertTransformText;
+        let xContent    = oTransform.TransformPointX(X, 0);
+        let yContent    = oTransform.TransformPointY(0, Y);
+
+        oContent.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CPdfGraphicFrame.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -220,6 +273,14 @@
         let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
+
+        if (this.hitInBoundingRect(X, Y) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
+            this.SetInTextBox(false);
+        }
+        else {
+            this.SetInTextBox(true);
+            oDoc.SelectionSetStart(x, y, e);
+        }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
@@ -298,6 +359,40 @@
 		}
         else {
 			return Asc.editor.getPDFDoc().globalTableStyles;
+		}
+	};
+    CPdfGraphicFrame.prototype.selectionSetStart = function (e, x, y) {
+		if (AscCommon.g_mouse_button_right === e.Button) {
+			this.rightButtonFlag = true;
+			return;
+		}
+		if (isRealObject(this.graphicObject)) {
+			var tx, ty;
+			tx = this.invertTransform.TransformPointX(x, y);
+			ty = this.invertTransform.TransformPointY(x, y);
+			if (AscCommon.g_mouse_event_type_down === e.Type) {
+				if (this.graphicObject.IsTableBorder(tx, ty, 0)) {
+					if (editor.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Drawing_Props) !== false) {
+						return;
+					} else {
+					}
+				}
+			}
+
+			if (!(/*content.IsTextSelectionUse() && */e.ShiftKey)) {
+				if (editor.WordControl.m_oLogicDocument.CurPosition) {
+					editor.WordControl.m_oLogicDocument.CurPosition.X = tx;
+					editor.WordControl.m_oLogicDocument.CurPosition.Y = ty;
+				}
+				this.graphicObject.Selection_SetStart(tx, ty, this.GetPage(), e);
+			} else {
+				if (!this.graphicObject.IsSelectionUse()) {
+					this.graphicObject.StartSelectionFromCurPos();
+				}
+				this.graphicObject.Selection_SetEnd(tx, ty, this.GetPage(), e);
+			}
+			this.graphicObject.RecalculateCurPos();
+
 		}
 	};
     CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {
