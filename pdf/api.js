@@ -235,6 +235,7 @@
 			}
 		}
 	};
+	PDFEditorApi.prototype.onUpdateRestrictions = function() { };
 	PDFEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {
 		if (!this.DocumentRenderer)
 			return;
