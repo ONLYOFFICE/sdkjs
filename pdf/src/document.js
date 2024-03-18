@@ -1005,12 +1005,14 @@ var CPresentation = CPresentation || function(){};
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             else if (this.activeDrawing) {
-                if (this.activeDrawing.IsInTextBox()) {
-                    this.SelectionSetEnd(x, y, e);
-                }
-                else {
-                    oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
-                }
+                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+
+                // if (this.activeDrawing.IsInTextBox()) {
+                //     this.SelectionSetEnd(x, y, e);
+                // }
+                // else {
+                //     oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                // }
 
                 this.UpdateCursorType(x, y, e);
                 return;
@@ -1173,7 +1175,7 @@ var CPresentation = CPresentation || function(){};
             oMouseUpAnnot.onMouseUp(x, y, e);
         }
         else if (this.activeDrawing && this.activeDrawing == oMouseUpDrawing) {
-            oMouseUpDrawing.onMouseUp(x, y, e);
+            // oMouseUpDrawing.onMouseUp(x, y, e);
             oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         }
         else if (this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
