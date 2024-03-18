@@ -12127,10 +12127,10 @@
 	};
 
 	/**
-	 * Gets the style of this text properties.
+	 * Gets the style of the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
-	 * @return {?ApiStyle} - used style.
+	 * @return {?ApiStyle} - The used style.
 	 */
 	ApiTextPr.prototype.GetStyle = function()
 	{
@@ -12160,7 +12160,7 @@
 	};
 
 	/**
-	 * Gets the bold property.
+	 * Gets the bold property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12185,7 +12185,7 @@
 	};
 
 	/**
-	 * Gets the italic property.
+	 * Gets the italic property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12210,7 +12210,7 @@
 	};
 
 	/**
-	 * Gets the strikeout property.
+	 * Gets the strikeout property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12236,7 +12236,7 @@
 	};
 
 	/**
-	 * Gets the underline property.
+	 * Gets the underline property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12261,7 +12261,7 @@
 	};
 
 	/**
-	 * Gets the font family property.
+	 * Gets the font family from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?string}
@@ -12286,7 +12286,7 @@
 	};
 
 	/**
-	 * Gets the font size property.
+	 * Gets the font size from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?hps}
@@ -12318,7 +12318,7 @@
 	};
 
 	/**
-	 * Gets the color property
+	 * Gets the RGB color from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
@@ -12357,7 +12357,7 @@
 	};
 
 	/**
-	 * Gets the vert align property.
+	 * Gets the vertical alignment type from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
@@ -12410,7 +12410,7 @@
 	};
 
 	/**
-	 * Gets the highlight property.
+	 * Gets the highlight property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @return {?string}
@@ -12441,7 +12441,7 @@
 	};
 
 	/**
-	 * Gets the text spacing measured in twentieths of a point.
+	 * Gets the text spacing from the current text properties measured in twentieths of a point.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?twips}
@@ -12471,7 +12471,7 @@
 	};
 
 	/**
-	 * Gets the double strikeout property.
+	 * Gets the double strikeout property from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12496,7 +12496,7 @@
 	};
 
 	/**
-	 * Gets the caps property.
+	 * Specifies whether the text with the current text properties are capitalized.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12522,7 +12522,7 @@
 	};
 
 	/**
-	 * Gets the small caps property.
+	 * Specifies whether the text with the current text properties are displayed capitalized two points smaller than the actual font size.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
@@ -12549,7 +12549,7 @@
 	};
 
 	/**
-	 * Gets the position property.
+	 * Gets the text position from the current text properties measured in half-points (1/144 of an inch).
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?hps}
@@ -12586,7 +12586,7 @@
 	};
 
 	/**
-	 * Gets the language property.
+	 * Gets the language from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
@@ -12621,7 +12621,7 @@
 	};
 
 	/**
-	 * Gets the shading applied to the contents of the current text run.
+	 * Gets the text shading from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
@@ -12651,7 +12651,7 @@
 	};
 
 	/**
-	 * Gets the text color from the current text run.
+	 * Gets the text color from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
@@ -12681,7 +12681,7 @@
 	};
 
 	/**
-	 * Gets the text fill from the current text run.
+	 * Gets the text fill from the current text properties.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
@@ -12711,9 +12711,9 @@
 	};
 
 	/**
-	 * Gets the text outline from the current text run.
+	 * Gets the text outline from the current text properties.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiStroke}
 	 */
 	ApiTextPr.prototype.GetOutLine = function()
