@@ -881,6 +881,8 @@
 
 			if (this.file && !this.file.isNeedPassword() && !this.file.isValid())
 				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
+
+			this.Api.WordControl.m_oOverlayApi = this.overlay;
 		};
 		this.close = function()
 		{
@@ -2018,6 +2020,7 @@
 			AscCommon.check_MouseUpEvent(e);
 
 			let oDoc = oThis.getPDFDoc();
+			e.Type = AscCommon.g_mouse_event_type_up;
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 
 			if (false == oThis.Api.isInkDrawerOn())

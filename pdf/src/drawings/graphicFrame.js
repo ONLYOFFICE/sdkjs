@@ -160,6 +160,27 @@
 
         return true;
     };
+    /**
+     * Removes char in current position by direction.
+     * @memberof CTextField
+     * @typeofeditors ["PDF"]
+     */
+    CPdfGraphicFrame.prototype.Remove = function(nDirection, isCtrlKey) {
+        let oDoc = this.GetDocument();
+        oDoc.CreateNewHistoryPoint({objects: [this]});
+
+        let oContent = this.GetDocContent();
+        oContent.Remove(nDirection, true, false, false, isCtrlKey);
+        oContent.RecalculateCurPos();
+        this.SetNeedRecalc(true);
+
+        if (AscCommon.History.Is_LastPointEmpty()) {
+            AscCommon.History.Remove_LastPoint();
+        }
+        else {
+            this.SetNeedRecalc(true);
+        }
+    };
     CPdfGraphicFrame.prototype.AddToRedraw = function() {
         let oViewer = Asc.editor.getDocumentRenderer();
         let _t      = this;
@@ -223,11 +244,11 @@
         if (!oContent)
             return;
 
-        let oTransform  = this.invertTransformText;
+        let oTransform  = this.getInvertTransform();
         let xContent    = oTransform.TransformPointX(X, 0);
         let yContent    = oTransform.TransformPointY(0, Y);
 
-        oContent.Selection_SetStart(xContent, yContent, 0, e);
+        this.graphicObject.Selection_SetStart(xContent, yContent, 0, e);
         oContent.RecalculateCurPos();
     };
     
@@ -236,11 +257,11 @@
         if (!oContent)
             return;
 
-        let oTransform  = this.invertTransformText;
+        let oTransform  = this.getInvertTransform();
         let xContent    = oTransform.TransformPointX(X, 0);
         let yContent    = oTransform.TransformPointY(0, Y);
 
-        oContent.Selection_SetEnd(xContent, yContent, 0, e);
+        this.graphicObject.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CPdfGraphicFrame.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -302,7 +323,35 @@
      */
     CPdfGraphicFrame.prototype.Blur = function() {};
 
-    CPdfGraphicFrame.prototype.onMouseUp = function(x, y, e) {};
+    CPdfGraphicFrame.prototype.onMouseUp = function(x, y, e) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        this.selectStartPage    = this.GetPage();
+        let oContent            = this.GetDocContent();
+
+        this.graphicObject.Selection.Start = false;
+
+        if (oDrDoc.m_sLockedCursorType.indexOf("resize") != -1) {
+            this.SetNeedRecalc(true);
+        }
+        
+        if (!oContent) {
+            return;
+        }
+
+        if (global_mouseEvent.ClickCount == 2) {
+            oContent.SelectAll();
+            if (oContent.IsSelectionEmpty() == false)
+                oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+            else
+                oContent.RemoveSelection();
+        }
+                
+        if (oContent.IsSelectionEmpty())
+            oContent.RemoveSelection();
+    };
     
     /////////////////////////////
     /// saving
