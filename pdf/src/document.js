@@ -1011,6 +1011,9 @@ var CPresentation = CPresentation || function(){};
                 else {
                     oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
                 }
+
+                this.UpdateCursorType(x, y, e);
+                return;
             }
         }
         else
@@ -1179,6 +1182,7 @@ var CPresentation = CPresentation || function(){};
         
         e.IsLocked = false;
 
+        oDrDoc.UnlockCursorType();
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();
@@ -1799,7 +1803,7 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPage])
             return;
 
-        let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId, undefined, undefined, undefined, undefined, nPage);
+        let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
 
         this.drawings.push(oTable);
         if (oPagesInfo.pages[nPage].drawings == null) {
@@ -2049,6 +2053,9 @@ var CPresentation = CPresentation || function(){};
         if (oContent) {
             oDrDoc.TargetStart();
             oDrDoc.showTarget(true);
+        }
+        else {
+            oDrDoc.TargetEnd();
         }
     };
     CPDFDoc.prototype.EnterDown = function(isShiftKey) {
@@ -3316,7 +3323,15 @@ var CPresentation = CPresentation || function(){};
         return 0;
     };
     CPDFDoc.prototype.isShapeChild = function() {};
-    
+    CPDFDoc.prototype.IsShowTableAdjustments = function() {
+        return true;
+    };
+    CPDFDoc.prototype.Document_Is_SelectionLocked = function() {
+        return false;
+    };
+    CPDFDoc.prototype.StartAction = function(){};
+    CPDFDoc.prototype.Recalculate = function(){};
+    CPDFDoc.prototype.FinalizeAction = function(){};
     
     CPDFDoc.prototype.GetDocPosType = function() {};
     CPDFDoc.prototype.GetSelectedContent = function() {};
