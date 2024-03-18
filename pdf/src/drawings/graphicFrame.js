@@ -175,29 +175,6 @@
         return this._rect;
     };
     
-    CPdfGraphicFrame.prototype.SetRect = function(aRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRect(this, this.GetRect(), aRect));
-
-        this._rect = aRect;
-
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
-
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
-        this.updateTransformMatrix();
-
-        this.SetNeedRecalc(true);
-    };
     CPdfGraphicFrame.prototype.SetRot = function(dAngle) {
         let oDoc = this.GetDocument();
 
@@ -213,10 +190,11 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalculateTransform();
-        this.updateTransformMatrix();
-        this.recalcGeometry();
+        this.recalcInfo.recalculateTransform = true;
+        this.recalcInfo.recalculateSizes = true;
+        
         this.recalculate();
+        this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
     CPdfGraphicFrame.prototype.IsNeedRecalc = function() {
