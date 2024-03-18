@@ -278,7 +278,7 @@
         }
         else {
             this.SetInTextBox(true);
-            oDoc.SelectionSetStart(x, y, e);
+            // oDoc.SelectionSetStart(x, y, e);
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
@@ -336,7 +336,7 @@
         if (oDrDoc.m_sLockedCursorType.indexOf("resize") != -1) {
             this.SetNeedRecalc(true);
         }
-        
+
         if (!oContent) {
             return;
         }

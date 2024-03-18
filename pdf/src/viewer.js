@@ -1950,6 +1950,7 @@
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
 
 			oThis.isMouseMoveBetweenDownUp = false;
+			e.ClickCount = global_mouseEvent.ClickCount;
 			oThis.getPDFDoc().OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 		};
 
@@ -2021,6 +2022,7 @@
 
 			let oDoc = oThis.getPDFDoc();
 			e.Type = AscCommon.g_mouse_event_type_up;
+			e.ClickCount = global_mouseEvent.ClickCount;
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 
 			if (false == oThis.Api.isInkDrawerOn())
