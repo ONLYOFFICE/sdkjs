@@ -677,25 +677,22 @@
         else
             editor.sync_RemoveComment(this.GetId());
     };
-    CAnnotationFreeText.prototype.GetAllFonts = function(aFonts) {
+    CAnnotationFreeText.prototype.GetAllFonts = function(fontMap) {
         let aRCInfo = this.GetRichContents();
-        if (!aFonts) {
-            aFonts = [];
-        }
+        fontMap = fontMap || {};
 
         for (let i = 0; i < aRCInfo.length; i++) {
+            fontName = AscPDF.DEFAULT_FIELD_FONT;
             if (aRCInfo[i]["actual"]) {
-                aFonts.push(aRCInfo[i]["actual"]);
+                fontName = aRCInfo[i]["actual"];
             }
             else if (aRCInfo[i]["name"]) {
-                aFonts.push(AscFonts.getEmbeddedFontPrefix() + aRCInfo[i]["name"]);
+                fontName = AscFonts.getEmbeddedFontPrefix() + aRCInfo[i]["name"];
             }
-            else {
-                aFonts.push(AscPDF.DEFAULT_FIELD_FONT);
-            }
+            fontMap[fontName] = true;
         }
 
-        return aFonts;
+        return fontMap;
     };
     CAnnotationFreeText.prototype.hitInPath = function(x,y) {
         for (let i = 0; i < this.spTree.length; i++) {
