@@ -353,6 +353,7 @@
 			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
+			"pdf/src/history/history.js",
 			"pdf/src/history/documentChanges.js",
 			"pdf/src/history/annotsChanges.js",
 			"pdf/src/history/formsChanges.js",
