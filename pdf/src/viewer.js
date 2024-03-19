@@ -3515,7 +3515,7 @@
 			oDoc.activeForm.content.RecalculateCurPos();
 	};
 	CHtmlPage.prototype._checkFontsOnPages = function(nStart, nEnd) {
-		let aFontsToLoad = [];
+		let fontMap = {};
 
 		for (let i = nStart; i <= nEnd; i++)
 		{
@@ -3535,37 +3535,33 @@
 					if (field.IsNeedDrawFromStream() == false) {
 						let sFont = field.GetTextFontActual();
 						if (sFont)
-							aFontsToLoad.push(sFont);
+							fontMap[sFont] = true;
 					}
 				});
 			}
-
-			let aDrawingFonts = [];
+			
 			if (this.pagesInfo.pages[i].needRedrawTextShapes)
 			{
 				aDrawings.forEach(function(drawing) {
 					if (false == drawing.IsImage()) {
-						drawing.GetAllFonts(aDrawingFonts);
+						drawing.GetAllFonts(fontMap);
 					}
 				});
 			}
-
-			let aFreeTextFonts = [];
+			
 			if (this.pagesInfo.pages[i].needRedrawAnnots)
 			{
 				aFreeText.forEach(function(annot) {
-					annot.GetAllFonts(aFreeTextFonts);
+					annot.GetAllFonts(fontMap);
 				});
 			}
-
-			aFontsToLoad = aFontsToLoad.concat(aFreeTextFonts, aFreeTextFonts);
 		}
 
 		let oThis = this;
 		
 		// грузим шрифты для форм без внешнего вида
 		let isLoadedFontsSync;
-		oThis.isLoadFonts = !oThis.doc.checkFonts(aFontsToLoad, function() {
+		oThis.isLoadFonts = !oThis.doc.checkFonts(Object.keys(fontMap), function() {
 			oThis.isLoadFonts = false;
 			isLoadedFontsSync = true;
 			oThis.scheduleRepaint();

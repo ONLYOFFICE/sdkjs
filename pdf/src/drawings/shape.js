@@ -464,13 +464,13 @@
         this.SetNeedRecalc(true);
     };
 
-    CPdfShape.prototype.GetAllFonts = function(aFonts) {
-        let oContent    = this.GetDocContent();
-        let fontMap     = {};
-		aFonts          = aFonts || [];
+    CPdfShape.prototype.GetAllFonts = function(fontMap) {
+        let oContent = this.GetDocContent();
+
+        fontMap = fontMap || {};
 
         if (!oContent)
-            return aFonts;
+            return fontMap;
 
         let oPara;
         for (let nPara = 0, nCount = oContent.GetElementsCount(); nPara < nCount; nPara++) {
@@ -483,20 +483,15 @@
                 oRun.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
             }
         }
-		
+        
         delete fontMap["+mj-lt"];
         delete fontMap["+mn-lt"];
         delete fontMap["+mj-ea"];
         delete fontMap["+mn-ea"];
         delete fontMap["+mj-cs"];
         delete fontMap["+mn-cs"];
-
-        for (let key in fontMap) {
-			if (aFonts.includes(key) == false)
-                aFonts.push(key);
-		}
-		
-		return aFonts;
+        
+        return fontMap;
     };
 
     CPdfShape.prototype.SetLineSpacing = function(oSpacing) {
