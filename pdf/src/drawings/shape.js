@@ -193,14 +193,15 @@
        return this._needRecalc;
     };
     CPdfShape.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
-       if (bRecalc == false) {
-           this._needRecalc = false;
-       }
-       else {
-           this._needRecalc = true;
-           if (bSkipAddToRedraw != true)
-               this.AddToRedraw();
-       }
+        if (bRecalc == false) {
+            this._needRecalc = false;
+        }
+        else {
+            this.GetDocument().SetNeedUpdateTarget(true);
+            this._needRecalc = true;
+            if (bSkipAddToRedraw != true)
+                this.AddToRedraw();
+        }
     };
     CPdfShape.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
@@ -221,7 +222,6 @@
         }
         else {
             this.SetInTextBox(true);
-            oDoc.SelectionSetStart(x, y, e);
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
@@ -230,64 +230,6 @@
         this.GetDocContent().AddNewParagraph();
         this.FitTextBox();
         this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.SelectionSetStart = function(X, Y, e) {
-        this.selectStartPage = this.GetPage();
-
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetStart(xContent, yContent, 0, e);
-        oContent.RecalculateCurPos();
-    };
-    
-    CPdfShape.prototype.SelectionSetEnd = function(X, Y, e) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetEnd(xContent, yContent, 0, e);
-    };
-    CPdfShape.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfShape.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorRight(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfShape.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorDown(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfShape.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorUp(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
     };
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();

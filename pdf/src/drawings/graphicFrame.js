@@ -156,8 +156,6 @@
         }
 
         this.SetNeedRecalc(true);
-        oContent.RecalculateCurPos();
-
         return true;
     };
     /**
@@ -171,7 +169,6 @@
 
         let oContent = this.GetDocContent();
         oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        oContent.RecalculateCurPos();
         this.SetNeedRecalc(true);
 
         if (AscCommon.History.Is_LastPointEmpty()) {
@@ -219,49 +216,24 @@
         this.SetNeedRecalc(false);
     };
     CPdfGraphicFrame.prototype.IsNeedRecalc = function() {
-       return this._needRecalc;
+        return this._needRecalc;
     };
     CPdfGraphicFrame.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
-       if (bRecalc == false) {
-           this._needRecalc = false;
-       }
-       else {
-           this._needRecalc = true;
-           this.recalcInfo.recalculateTable = true;
+        if (bRecalc == false) {
+            this._needRecalc = false;
+        }
+        else {
+            this.GetDocument().SetNeedUpdateTarget(true);
+            this._needRecalc = true;
+            this.recalcInfo.recalculateTable = true;
            
-           if (bSkipAddToRedraw != true)
-               this.AddToRedraw();
-       }
+            if (bSkipAddToRedraw != true)
+                this.AddToRedraw();
+        }
     };
     CPdfGraphicFrame.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         this.draw(oGraphicsWord);
-    };
-    CPdfGraphicFrame.prototype.SelectionSetStart = function(X, Y, e) {
-        this.selectStartPage = this.GetPage();
-
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.getInvertTransform();
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        this.graphicObject.Selection_SetStart(xContent, yContent, 0, e);
-        oContent.RecalculateCurPos();
-    };
-    
-    CPdfGraphicFrame.prototype.SelectionSetEnd = function(X, Y, e) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.getInvertTransform();
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        this.graphicObject.Selection_SetEnd(xContent, yContent, 0, e);
     };
     CPdfGraphicFrame.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -278,42 +250,9 @@
         }
         else {
             this.SetInTextBox(true);
-            // oDoc.SelectionSetStart(x, y, e);
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
-    };
-    CPdfGraphicFrame.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfGraphicFrame.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorRight(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfGraphicFrame.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorDown(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfGraphicFrame.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorUp(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
     };
     
     /**
@@ -419,7 +358,33 @@
 				this.graphicObject.Selection_SetEnd(tx, ty, this.GetPage(), e);
 			}
 			this.graphicObject.RecalculateCurPos();
+		}
+	};
+    CPdfGraphicFrame.prototype.updateSelectionState = function () {
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
 
+		if (isRealObject(this.graphicObject)) {
+			let graphicObject = this.graphicObject;
+			if (true === graphicObject.IsSelectionUse() && !graphicObject.IsSelectionEmpty()) {
+				oDrDoc.UpdateTargetTransform(this.transform);
+				oDrDoc.TargetEnd();
+				oDrDoc.SelectEnabled(true);
+				oDrDoc.SelectClear();
+				graphicObject.DrawSelectionOnPage(0);
+				oDrDoc.SelectShow();
+			} else {
+				oDrDoc.SelectEnabled(false);
+				graphicObject.RecalculateCurPos();
+				oDrDoc.UpdateTargetTransform(this.transform);
+				oDrDoc.TargetShow();
+			}
+		} else {
+			oDrDoc.UpdateTargetTransform(null);
+			oDrDoc.TargetEnd();
+			oDrDoc.SelectEnabled(false);
+			oDrDoc.SelectClear();
+			oDrDoc.SelectShow();
 		}
 	};
     CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {

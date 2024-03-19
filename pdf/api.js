@@ -415,6 +415,7 @@
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
+		oDrDoc.UpdateTargetFromPaint = true;
 		
 		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
 			return false;

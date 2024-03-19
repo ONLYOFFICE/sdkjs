@@ -349,6 +349,7 @@
 			"pdf/src/drawings/image.js",
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",
+			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
 			"pdf/src/history/documentChanges.js",
