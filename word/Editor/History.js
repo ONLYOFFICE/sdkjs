@@ -1098,26 +1098,6 @@ CHistory.prototype =
 			this.Points[nIndex].Additional.FormFilling = oForm;
 		}
 	};
-	CHistory.prototype.GetLastPointSourceObjectsPdf = function() {
-		if (this.Index != -1) {
-			return this.Points[this.Index].Additional.Pdf;
-		}
-	};
-	CHistory.prototype.SetSourceObjectsToPointPdf = function(aObj) {
-		if (this.Index != -1) {
-			this.Points[this.Index].Additional.Pdf = aObj;
-		}
-	};
-	CHistory.prototype.GetPdfConvertTextPoint = function() {
-		if (this.Index != -1) {
-			return !!this.Points[this.Index].Additional.PdfConvertText;
-		}
-	};
-	CHistory.prototype.SetPdfConvertTextPoint = function(oConvertInfo) {
-		if (this.Index != -1) {
-			this.Points[this.Index].Additional.PdfConvertText = oConvertInfo;
-		}
-	};
 	CHistory.prototype.GetLastPointFormFilling = function()
 	{
 		let additional = this.Index >= 0 ? this.Points[this.Index].Additional : null;
@@ -1158,19 +1138,10 @@ CHistory.prototype.ClearAdditional = function()
 		//       надо переназвать функции по-нормальному
 
 		let form				= this.GetLastPointFormFilling();
-		let pdfSourceObjs		= this.GetLastPointSourceObjectsPdf();
-		let convertTextInfo		= this.GetPdfConvertTextPoint();
-
 		this.Points[this.Index].Additional = {};
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
-
-		if (pdfSourceObjs)
-			this.SetSourceObjectsToPointPdf(pdfSourceObjs);
-
-		if (convertTextInfo)
-			this.SetPdfConvertTextPoint(convertTextInfo);
 	}
 
 	if(this.Api)

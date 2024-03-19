@@ -145,10 +145,12 @@ var CPresentation = CPresentation || function(){};
         }
 
         this._id = AscCommon.g_oIdCounter.Get_NewId();
-
-        this.History        = AscCommon.History;
-        this.LocalHistory   = new AscCommon.CHistory();
-
+		
+		this.History        = new AscPDF.History(this);
+		this.LocalHistory   = new AscPDF.History(this);
+		
+		AscCommon.History = this.History;
+		
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
         this.Api        = Asc.editor;
@@ -1937,17 +1939,17 @@ var CPresentation = CPresentation || function(){};
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || this.isUndoRedoInProgress)
             return;
 
-        if (AscCommon.History.IsOn() == false)
-            AscCommon.History.TurnOn();
-
-        AscCommon.History.Create_NewPoint();
+        if (!this.History.IsOn())
+            this.History.TurnOn();
+        
+        this.History.Create_NewPoint();
 
         if (oAdditional) {
             if (oAdditional.textConvert) {
-                AscCommon.History.SetPdfConvertTextPoint(oAdditional.textConvert);
+                this.History.SetPdfConvertTextPoint(oAdditional.textConvert);
             }
             else if (oAdditional.objects) {
-                AscCommon.History.SetSourceObjectsToPointPdf(oAdditional.objects);
+                this.History.SetSourceObjectsToPointPdf(oAdditional.objects);
             }
         }
     };
