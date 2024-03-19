@@ -5765,9 +5765,14 @@
 					}
 					break;
 				case "string":
-					res = _elem.tocString();
-					if (res.type !== AscCommonExcel.cElementType.error) {
-						res = res.toString();
+					if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+						//TODO ms -> calc error
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = _elem.tocString();
+						if (res.type !== AscCommonExcel.cElementType.error) {
+							res = res.toString();
+						}
 					}
 					break;
 				case "boolean":
