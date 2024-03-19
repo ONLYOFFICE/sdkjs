@@ -30741,10 +30741,10 @@ $(function () {
 			api.addCustomFunction(innerFunc, oJsDoc);
 			fCompare("jsDoc");
 		}
-		if (oDoc) {
+		/*if (oDoc) {
 			api.addCustomFunction(innerFunc, oDoc);
 			fCompare("oDoc");
-		}
+		}*/
 	}
 
 	function initCustomFunctionData() {
@@ -30893,7 +30893,7 @@ $(function () {
 				{paramsType: ["range", "range"], result: "#VALUE!"}
 			];
 
-			//doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER");
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@NUMBER_@NUMBER");
 
 			//********** 2. @string / @number <- @number **********
 			initParamsCustomFunction([{type: "string"}, {type: "number"}], "number");
@@ -30963,7 +30963,7 @@ $(function () {
 				{paramsType: ['range', 'range'], result: "#VALUE!"},
 			];
 
-			//doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@NUMBER");
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@NUMBER");
 
 			//********** 2. @string / @string <- @number **********
 			initParamsCustomFunction([{type: "string"}, {type: "string"}], "number");
@@ -31033,7 +31033,147 @@ $(function () {
 				{paramsType: ['range', 'range'], result: "#VALUE!"},
 			];
 
-			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@NUMBER");
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@STRING");
+
+			//********** 2. @string / @string <- @string **********
+			initParamsCustomFunction([{type: "string"}, {type: "string"}], "string");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "10test"},
+				{paramsType: ['number', 'bool'], result: "10TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "testtest"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "testTRUE"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "TRUEtest"},
+				{paramsType: ['bool', 'bool'], result: "TRUETRUE"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "1test"},
+				{paramsType: ['ref', 'bool'], result: "1TRUE"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@STRING_@STRING");
+
+			//********** 2. @number[][] / @number <- @number **********
+			initParamsCustomFunction([{type: "number[][]"}, {type: "number"}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "1010"},
+				{paramsType: ['number', 'stringNumber'], result: "101"},
+				{paramsType: ['number', 'string'], result: "10test"},
+				{paramsType: ['number', 'bool'], result: "10TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "101"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['string', 'number'], result: "test10"},
+				{paramsType: ['string', 'string'], result: "testtest"},
+				{paramsType: ['string', 'stringNumber'], result: "test1"},
+				{paramsType: ['string', 'bool'], result: "testTRUE"},
+				{paramsType: ['string', 'error'], result: "#REF!"},
+				{paramsType: ['string', 'array'], result: "#VALUE!"},
+				{paramsType: ['string', 'ref'], result: "test1"},
+				{paramsType: ['string', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['bool', 'number'], result: "TRUE10"},
+				{paramsType: ['bool', 'string'], result: "TRUEtest"},
+				{paramsType: ['bool', 'bool'], result: "TRUETRUE"},
+				{paramsType: ['bool', 'stringNumber'], result: "TRUE1"},
+				{paramsType: ['bool', 'error'], result: "#REF!"},
+				{paramsType: ['bool', 'array'], result: "#VALUE!"},
+				{paramsType: ['bool', 'ref'], result: "TRUE1"},
+				{paramsType: ['bool', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['error', 'number'], result: "#REF!"},
+				{paramsType: ['error', 'string'], result: "#REF!"},
+				{paramsType: ['error', 'bool'], result: "#REF!"},
+				{paramsType: ['error', 'stringNumber'], result: "#REF!"},
+				{paramsType: ['error', 'error'], result: "#REF!"},
+				{paramsType: ['error', 'array'], result: "#REF!"},
+				{paramsType: ['error', 'ref'], result: "#REF!"},
+				{paramsType: ['error', 'range'], result: "#REF!"},
+
+				{paramsType: ['array', 'number'], result: "#VALUE!"},
+				{paramsType: ['array', 'string'], result: "#VALUE!"},
+				{paramsType: ['array', 'bool'], result: "#VALUE!"},
+				{paramsType: ['array', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['array', 'error'], result: "#REF!"},
+				{paramsType: ['array', 'array'], result: "#VALUE!"},
+				{paramsType: ['array', 'ref'], result: "#VALUE!"},
+				{paramsType: ['array', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['ref', 'number'], result: "110"},
+				{paramsType: ['ref', 'string'], result: "1test"},
+				{paramsType: ['ref', 'bool'], result: "1TRUE"},
+				{paramsType: ['ref', 'stringNumber'], result: "11"},
+				{paramsType: ['ref', 'error'], result: "#REF!"},
+				{paramsType: ['ref', 'array'], result: "#VALUE!"},
+				{paramsType: ['ref', 'ref'], result: "11"},
+				{paramsType: ['ref', 'range'], result: "#VALUE!"},
+
+				{paramsType: ['range', 'number'], result: "#VALUE!"},
+				{paramsType: ['range', 'string'], result: "#VALUE!"},
+				{paramsType: ['range', 'bool'], result: "#VALUE!"},
+				{paramsType: ['range', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['range', 'error'], result: "#REF!"},
+				{paramsType: ['range', 'array'], result: "#VALUE!"},
+				{paramsType: ['range', 'ref'], result: "#VALUE!"},
+				{paramsType: ['range', 'range'], result: "#VALUE!"},
+			];
+
+			//doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "_@number[][]_@number");
 
 		});
 
