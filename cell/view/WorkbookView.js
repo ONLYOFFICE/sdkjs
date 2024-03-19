@@ -5743,7 +5743,7 @@
 		};
 
 
-		let getElement = function (_elem, _type, _defaultValue) {
+		let prepareInputArg = function (_elem, _type, _defaultValue) {
 			if (!_elem) {
 				return _defaultValue;
 			}
@@ -5782,10 +5782,9 @@
 					}
 					break;
 				case "number[][]":
-					res = _elem.tocString();
-					if (res.type !== AscCommonExcel.cElementType.error) {
-						res = res.toString();
-					}
+					res = _elem.toArray(true, true, function (elem) {
+						return elem.tocNumber();
+					});
 					break;
 				case "string[][]":
 					res = _elem.tocString();
@@ -5797,11 +5796,58 @@
 			return res;
 		};
 
+		let checkOnErrorByString = function (_str) {
+			for (let i in window["AscCommon"].cErrorOrigin) {
+				if (window["AscCommon"].cErrorOrigin[i] === _str) {
+					return new AscCommonExcel.cError(_str);
+				}
+			}
+			for (let i in window["AscCommon"].cErrorLocal) {
+				if (window["AscCommon"].cErrorLocal[i] === _str) {
+					return new AscCommonExcel.cError(_str);
+				}
+			}
+			return false;
+		};
+
+		let tocArray = function (array, resTypeNumber, checkOnError) {
+			var oArray = [], _res = new AscCommonExcel.cArray();
+
+			for (var i = 0; i < array.length; i++) {
+				for (var j = 0; j < array[i].length; j++) {
+					if (typeof array[i][j] === "object") {
+						return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
+
+					let isError = checkOnError && checkOnErrorByString(array[i][j]);
+					if (isError) {
+						return isError;
+					}
+					if (!oArray[i]) {
+						oArray[i] = [];
+					}
+					if (resTypeNumber && !isNaN(array[i][j] - 0)) {
+						oArray[i][j] = new AscCommonExcel.cNumber(array[i][j] - 0);
+					} else {
+						oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
+					}
+				}
+			}
+
+			_res.fillFromArray(oArray);
+
+			return _res;
+		};
+
 		let getResultByType = function (val, _type) {
 			let res = null;
 			switch (_type) {
 				case "number":
-					res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+					if (typeof val === "object") {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+					}
 					break;
 				case "string":
 					res = new AscCommonExcel.cString(val + "");
@@ -5810,10 +5856,18 @@
 
 					break;
 				case "number[][]":
-
+					if (Asc.typeOf(val) !== "array" || !val[0]) {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = tocArray(val, true, true);
+					}
 					break;
 				case "string[][]":
-
+					if (Asc.typeOf(val) !== "array" || !val[0]) {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = tocArray(val, null, true);
+					}
 					break;
 			}
 			return res;
@@ -5878,12 +5932,16 @@
 		newFunc.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
 		newFunc.prototype.constructor = newFunc;
 		newFunc.prototype.name = funcName;
-		newFunc.prototype.argumentsMin = argumentsMin;
-		newFunc.prototype.argumentsMax = argumentsMax;
+		//newFunc.prototype.argumentsMin = argumentsMin;
+		//newFunc.prototype.argumentsMax = argumentsMax;
 		//argumentsType - other arguments type, need convert
 		newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.Calculate = function (arg) {
 			try {
+
+				if (arg.length < argumentsMin || arg.length > argumentsMax) {
+					return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				}
 
 				for (let i in arg) {
 					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error) {
@@ -5904,7 +5962,7 @@
 							return arg[i];
 						}
 
-						let elem = getElement(arg[i], type, defaultValue);
+						let elem = prepareInputArg(arg[i], type, defaultValue);
 						if (elem && elem.type === AscCommonExcel.cElementType.error) {
 							return elem;
 						}
