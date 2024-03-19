@@ -937,7 +937,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer = editor.getDocumentRenderer();
         if (!oViewer.canInteract()) {
             return;
         }
@@ -1007,9 +1007,9 @@ var CPresentation = CPresentation || function(){};
             }
             else if (this.activeDrawing) {
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
-                this.UpdateCursorType(x, y, e);
-                return;
             }
+
+            oViewer.onUpdateOverlay();
         }
         else
         {
@@ -1029,7 +1029,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        oViewer.onUpdateOverlay();
         this.UpdateCursorType(x, y, e);
     };
     CPDFDoc.prototype.UpdateCursorType = function(x, y, e) {
@@ -3372,6 +3371,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
     };
+    CPDFDoc.prototype.SetWordSelection = function(){};
     
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent

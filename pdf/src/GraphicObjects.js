@@ -40,23 +40,6 @@ function CGraphicObjectsPdf(document, drawingDocument, api)
 CGraphicObjectsPdf.prototype.constructor = CGraphicObjectsPdf;
 CGraphicObjectsPdf.prototype = Object.create(AscCommonWord.CGraphicObjects.prototype);
 
-CGraphicObjectsPdf.prototype.OnMouseDown = function(e, x, y, pageIndex)
-{
-    //console.log("down " + this.curState.id);
-    this.checkInkState();
-    this.curState.onMouseDown(e, x, y, pageIndex);
-    if(this.arrTrackObjects.length === 0)
-    {
-        this.document.GetApi().sendEvent("asc_onSelectionEnd");
-    }
-
-    if(e.ClickCount < 2)
-    {
-        this.updateOverlay();
-        this.updateSelectionState();
-    }
-};
-
 CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck)
 {
     let text_object, drawingDocument = this.drawingDocument;
@@ -76,8 +59,6 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck)
     } else if (bNoCheck !== true) {
         drawingDocument.UpdateTargetTransform(null);
         drawingDocument.TargetEnd();
-        drawingDocument.SelectEnabled(false);
-        drawingDocument.SelectShow();
     }
     let oMathTrackHandler = null;
     if (Asc.editor.wbModel && Asc.editor.wbModel.mathTrackHandler) {

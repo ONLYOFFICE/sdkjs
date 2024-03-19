@@ -2025,7 +2025,7 @@
 			e.ClickCount = global_mouseEvent.ClickCount;
 			oDoc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 
-			if (false == oThis.Api.isInkDrawerOn())
+			if (oThis.canSelectPageText())
 			{
 				if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 2 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
 				{
@@ -2539,15 +2539,10 @@
 					}
 				}
 				else if (oDoc.activeDrawing) {
-					let nPage		= oDoc.activeDrawing.GetPage();
-					let oContent	= oDoc.activeDrawing.GetDocContent();
+					let nPage = oDoc.activeDrawing.GetPage();
 
-					if (oContent && oContent.IsSelectionUse()) {
-						ctx.beginPath();
-						oContent.DrawSelectionOnPage(0);
-						oDrDoc.private_EndDrawSelection();
-					}
-
+					this.DrawingObjects.updateSelectionState();
+					oDrDoc.private_EndDrawSelection();
 					oDrDoc.AutoShapesTrack.PageIndex = nPage;
 					this.DrawingObjects.drawSelect(nPage);
 				}

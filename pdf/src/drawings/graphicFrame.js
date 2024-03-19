@@ -369,12 +369,8 @@
 			if (true === graphicObject.IsSelectionUse() && !graphicObject.IsSelectionEmpty()) {
 				oDrDoc.UpdateTargetTransform(this.transform);
 				oDrDoc.TargetEnd();
-				oDrDoc.SelectEnabled(true);
-				oDrDoc.SelectClear();
 				graphicObject.DrawSelectionOnPage(0);
-				oDrDoc.SelectShow();
 			} else {
-				oDrDoc.SelectEnabled(false);
 				graphicObject.RecalculateCurPos();
 				oDrDoc.UpdateTargetTransform(this.transform);
 				oDrDoc.TargetShow();
@@ -382,9 +378,6 @@
 		} else {
 			oDrDoc.UpdateTargetTransform(null);
 			oDrDoc.TargetEnd();
-			oDrDoc.SelectEnabled(false);
-			oDrDoc.SelectClear();
-			oDrDoc.SelectShow();
 		}
 	};
     CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {

@@ -555,6 +555,51 @@
     CPdfShape.prototype.getDrawingDocument = function() {
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
+    CPdfShape.prototype.updateSelectionState = function () {
+        var drawing_document = this.getDrawingDocument();
+        if (drawing_document) {
+            var content = this.getDocContent();
+            if (content) {
+                var oMatrix = null;
+                if (this.transformText) {
+                    oMatrix = this.transformText.CreateDublicate();
+                }
+                drawing_document.UpdateTargetTransform(oMatrix);
+                if (true === content.IsSelectionUse()) {
+                    // Выделение нумерации
+                    if (selectionflag_Numbering == content.Selection.Flag) {
+                        drawing_document.TargetEnd();
+                    }
+                    // Обрабатываем движение границы у таблиц
+                    else if (null != content.Selection.Data && true === content.Selection.Data.TableBorder && type_Table == content.Content[content.Selection.Data.Pos].GetType()) {
+                        // Убираем курсор, если он был
+                        drawing_document.TargetEnd();
+                    } else {
+                        if (false === content.IsSelectionEmpty()) {
+                            content.DrawSelectionOnPage(0);
+                            drawing_document.TargetEnd();
+                        } else {
+                            if (true !== content.Selection.Start) {
+                                content.RemoveSelection();
+                            }
+                            content.RecalculateCurPos();
+
+                            drawing_document.TargetStart();
+                            drawing_document.TargetShow();
+                        }
+                    }
+                } else {
+                    content.RecalculateCurPos();
+
+                    drawing_document.TargetStart();
+                    drawing_document.TargetShow();
+                }
+            } else {
+                drawing_document.UpdateTargetTransform(new CMatrix());
+                drawing_document.TargetEnd();
+            }
+        }
+    };
 
     window["AscPDF"].CPdfShape = CPdfShape;
 })();
