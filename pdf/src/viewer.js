@@ -225,7 +225,7 @@
 		AscCommon.History.Document = this.doc;
 
 		this.drawingDocument	= Asc.editor.WordControl.m_oDrawingDocument;
-		this.DrawingObjects		= new CGraphicObjects(this.doc, this.drawingDocument, this.Api);
+		this.DrawingObjects		= new AscPDF.CGraphicObjectsPdf(this.doc, this.drawingDocument, this.Api);
 		this.doc.DrawingObjects	= this.DrawingObjects;
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
 

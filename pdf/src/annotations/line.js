@@ -170,9 +170,6 @@
         this.recalculate();
         this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
-    CAnnotationLine.prototype.SetNeedRecalc = function(bRecalc) {
-        this._needRecalc = bRecalc;
-    };
     CAnnotationLine.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };

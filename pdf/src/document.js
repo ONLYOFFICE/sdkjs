@@ -715,8 +715,9 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        let oDrawingObjects = oViewer.DrawingObjects;
-        let oDrDoc          = this.GetDrawingDocument();
+        let oDrawingObjects             = oViewer.DrawingObjects;
+        let oDrDoc                      = this.GetDrawingDocument();
+        oDrDoc.UpdateTargetFromPaint    = true
 
         let IsOnDrawer      = this.Api.isDrawInkMode();
         let IsOnEraser      = this.Api.isEraseInkMode();
@@ -1006,14 +1007,6 @@ var CPresentation = CPresentation || function(){};
             }
             else if (this.activeDrawing) {
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
-
-                // if (this.activeDrawing.IsInTextBox()) {
-                //     this.SelectionSetEnd(x, y, e);
-                // }
-                // else {
-                //     oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
-                // }
-
                 this.UpdateCursorType(x, y, e);
                 return;
             }
@@ -1204,6 +1197,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.DoUndo = function() {
         let oDrDoc = this.GetDrawingDocument();
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oActive = this.GetActiveObject();
         if (oActive) {
@@ -1273,6 +1267,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.DoRedo = function() {
         let oDrDoc = this.GetDrawingDocument();
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oActive = this.GetActiveObject();
         if (oActive) {
@@ -1337,6 +1332,9 @@ var CPresentation = CPresentation || function(){};
 
             this.isUndoRedoInProgress = false;
         }
+    };
+    CPDFDoc.prototype.SetNeedUpdateTarget = function(bUpdate) {
+        this.NeedUpdateTarget = bUpdate;
     };
     
     /**
@@ -2019,11 +2017,12 @@ var CPresentation = CPresentation || function(){};
     
     CPDFDoc.prototype.Remove = function(nDirection, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oForm       = this.activeForm;
         let oAnnot      = this.mouseDownAnnot;
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oDrawing    = this.activeDrawing;
 
         let oContent;
         if (oForm && oForm.IsCanEditText()) {
@@ -2644,7 +2643,9 @@ var CPresentation = CPresentation || function(){};
 
         let oForm       = this.activeForm;
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oDrawing    = this.activeDrawing;
+        let oDrawingObjects = this.Viewer.DrawingObjects;
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
@@ -2656,8 +2657,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawing.MoveCursorLeft(isShiftKey, isCtrlKey);
-            oContent = oDrawing.GetDocContent();
+            oDrawingObjects.cursorMoveLeft(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2676,9 +2676,12 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oForm           = this.activeForm;
+        let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oDrawing        = this.activeDrawing;
+        let oDrawingObjects = this.Viewer.DrawingObjects;
+
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
         if (oForm && !oForm.IsNeedDrawHighlight())
@@ -2702,8 +2705,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawing.MoveCursorUp(isShiftKey, isCtrlKey);
-            oContent = oDrawing.GetDocContent();
+            oDrawingObjects.cursorMoveUp(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2722,9 +2724,12 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oForm           = this.activeForm;
+        let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oDrawing        = this.activeDrawing;
+        let oDrawingObjects = this.Viewer.DrawingObjects;
+
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
@@ -2736,8 +2741,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawing.MoveCursorRight(isShiftKey, isCtrlKey);
-            oContent = oDrawing.GetDocContent();
+            oDrawingObjects.cursorMoveRight(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2756,9 +2760,12 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
-        let oForm       = this.activeForm;
-        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oForm           = this.activeForm;
+        let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oDrawing        = this.activeDrawing;
+        let oDrawingObjects = this.Viewer.DrawingObjects;
+
+        oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
         if (oForm && !oForm.IsNeedDrawHighlight())
@@ -2784,8 +2791,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawing.MoveCursorDown(isShiftKey, isCtrlKey);
-            oContent = oDrawing.GetDocContent();
+            oDrawingObjects.cursorMoveDown(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -3338,7 +3344,35 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetDocPosType = function() {};
     CPDFDoc.prototype.GetSelectedContent = function() {};
     CPDFDoc.prototype.Is_ShowParagraphMarks = function() {};
+    CPDFDoc.prototype.CheckTargetUpdate = function() {
+        let oDrDoc = this.GetDrawingDocument();
 
+        // Проверим можно ли вообще пересчитывать текущее положение.
+        if (oDrDoc.UpdateTargetFromPaint === true) {
+            if (true === oDrDoc.UpdateTargetCheck)
+                this.NeedUpdateTarget = oDrDoc.UpdateTargetCheck;
+            
+            oDrDoc.UpdateTargetCheck = false;
+        }
+
+        if (!this.NeedUpdateTarget)
+            return;
+
+        if (this.ViewPosition) {
+            this.CheckViewPosition();
+        }
+        else {
+            let oActiveObj  = this.GetActiveObject();
+            let oContent    = oActiveObj.GetDocContent();
+
+            if (oActiveObj && oContent) {
+                // Обновляем курсор сначала, чтобы обновить текущую страницу
+                oContent.RecalculateCurPos();
+                this.NeedUpdateTarget = false;
+            }
+        }
+    };
+    
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1248,6 +1248,9 @@
             this._needRecalc = false;
         }
         else {
+            if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.GetType())) {
+                this.GetDocument().SetNeedUpdateTarget(true);
+            }
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
