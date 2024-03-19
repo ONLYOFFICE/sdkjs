@@ -4873,7 +4873,7 @@
 	baseEditorsApi.prototype.asc_getFilePath = function(callback)
 	{
 		if (window["AscDesktopEditor"]) {
-			window["AscDesktopEditor"]["OpenFilenameDialog"]("All files (*.*)", false, function(_file) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("any", false, function(_file) {
 				var file = _file;
 				if (Array.isArray(file)) {
 					file = file[0];
