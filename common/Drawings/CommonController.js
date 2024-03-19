@@ -1815,8 +1815,9 @@
 						if (this.isSlideShow()) {
 							e.CtrlKey = oldCtrlKey;
 						}
-
-						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
+						
+						this.changeCurrentState(this.createTextAddState(object, x, y, e));
+						//this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
 						return true;
 					} else {
 						var ret = {objectId: object.Get_Id(), cursorType: "text"};

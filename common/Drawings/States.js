@@ -2959,6 +2959,7 @@ function TrackTextState(drawingObjects, majorObject, x, y) {
     window['AscFormat'].PreResizeInGroupState = PreResizeInGroupState;
     window['AscFormat'].PreChangeAdjInGroupState = PreChangeAdjInGroupState;
     window['AscFormat'].TextAddState = TextAddState;
+	window['AscFormat'].TextAddState2 = TextAddState;
     window['AscFormat'].SplineBezierState = SplineBezierState;
     window['AscFormat'].PolyLineAddState = PolyLineAddState;
     window['AscFormat'].AddPolyLine2State = AddPolyLine2State;

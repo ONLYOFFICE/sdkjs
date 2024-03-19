@@ -85,8 +85,9 @@
 			"common/Drawings/ColorArray.js",
 
 			"common/SmartArts/SmartArtCache.js",
-
+			
 			"common/Drawings/CommonController.js",
+			"common/Drawings/States.js",
 			"word/Editor/GraphicObjects/DrawingStates.js",
 			"common/Drawings/DrawingsChanges.js",
 			"common/Drawings/Format/Format.js",
