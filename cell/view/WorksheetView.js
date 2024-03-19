@@ -18868,7 +18868,8 @@
 		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
-				c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
+				// c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
+				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell() && !arrayCannotExpand) {
 					//проверяем, есть ли формула массива в этой ячейке
@@ -18921,21 +18922,27 @@
 					return;
 				}
 			} else {
+				// если выполняем запись не через cse, то проверяем формулу на наличие ref
+				// если ref есть - записываем формулу как формулу массива
 				if (!applyByArray) {
 					// check for ref in formula
-					let isRef = newFP.findRefByOutStack();
-					// console.log(isRef);
-					newFP.calculate();
-					if (newFP.dynamicRange && newFP.ref) {
-						// dynamicSelectionRange = bbox;
-						dynamicSelectionRange = newFP.dynamicRange;
+					let isRef = newFP.findRefByOutStack();	// check is formula has ref
+					if (isRef) {
+						// if formula has ref, calculate it to get the final size of ref
+						let formulaRes = newFP.calculate();
 						applyByArray = true;
 						ctrlKey = true;
 
 						if ((newFP.aca && newFP.ca)) {
+							// array cannot expand
+							// set ref to the first(parent) cell
 							arrayCannotExpand = true;
-							// add to volatile?
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
 							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
+						} else {
+							// t.setSelection();
+							let dimension = formulaRes.getDimensions();
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
 						}
 					} else if (newFP.ref) {
 						applyByArray = true;
@@ -19001,7 +19008,6 @@
 					let formula = arrayData.formula;
 					let dynamicbbox = arrayData.range;
 					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-					// todo create clear function for cells (clearRange?)
 					if (arrayData.doDelete) {
 						// delete all cells
 						range.cleanText();

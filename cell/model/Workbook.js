@@ -1872,7 +1872,7 @@
 
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
-				if (cell.formulaParsed && cell.formulaParsed.getDynamicRef() && cell.formulaParsed.aca && cell.formulaParsed.ca) {
+				if (cell.formulaParsed && (cell.formulaParsed.getDynamicRef() || cell.formulaParsed.getArrayFormulaRef()) && cell.formulaParsed.aca && cell.formulaParsed.ca) {
 					t.addToVolatileArrays(cell.formulaParsed);
 				}
 				
@@ -12963,28 +12963,34 @@
 				for (let listenerId in volatileArrayList) {
 					let formula = volatileArrayList[listenerId];
 					let formulaResult = formula.calculate();
+					// let firstCellRef = formula.ref ? new Asc.Range(formula.ref.c1, formula.ref.r1, formula.ref.c1, formula.ref.r1) : new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+					let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 					if (!(formula.aca && formula.ca)) {
-						// the array can now expand, do setValue for each cell except first
-						let bbox = formula.getDynamicRef();
-						if (bbox) {
-							for (let row = bbox.r1; row <= bbox.r2; row++) {
-								for (let col = bbox.c1; col <= bbox.c2; col++) {
-									if (row === bbox.r1 && col === bbox.c1) {
-										continue
-									}
+						// array can expand, setValue for each cell except first
+						let dimensions = formulaResult.getDimensions();
+						let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
+						formula.setDynamicRef(newRef);
+						if (newRef) {
+							for (let row = newRef.r1; row <= newRef.r2; row++) {
+								for (let col = newRef.c1; col <= newRef.c2; col++) {
+									// if (row === newRef.r1 && col === newRef.c1) {
+									// 	continue
+									// }
 									// get cell and setPF to it
 									ws._getCell(row, col, function(cell) {
 										cell && cell.setFormulaInternal(formula);
 									});
 								}
 							}
-						}							
+						}
 						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
 						depGraph.endListeningVolatileArray(listenerId);
 					} else {
-						// todo get first formula coord
-						// depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
-						let firstCell = new Asc.Range();
+						formula.setDynamicRef(firstCellRef);
+						ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
+							cell && cell.setFormulaInternal(formula);
+						});
+
 						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
 					}
 				}
