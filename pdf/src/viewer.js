@@ -107,6 +107,9 @@
 		this.links = null;
 		this.fields = null;
 		this.annots = null;
+		this.needRedrawForms = true;
+		this.needRedrawTextShapes = true;
+		this.needRedrawAnnots = true;
 	}
 	
 	function CDocumentPagesInfo()
