@@ -56,133 +56,17 @@
     
     CPdfImage.prototype.constructor = CPdfImage;
     CPdfImage.prototype = Object.create(AscFormat.CImageShape.prototype);
+    Object.assign(CPdfImage.prototype, AscPDF.PdfDrawingPrototype.prototype);
 
-    CPdfImage.prototype.SetFromScan = function(bFromScan) {
-        this._isFromScan = bFromScan;
-
-        // выставляем пунктирный бордер если нет заливки и  
-        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
-            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
-            this.spPr.ln.setW(25.4 / 72.0 * 36000);
-            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-    };
-    CPdfImage.prototype.IsFromScan = function() {
-        return this._isFromScan;
-    };
-    CPdfImage.prototype.SetDocument = function(oDoc) {
-        this._doc = oDoc;
-    };
-    CPdfImage.prototype.SetPage = function(nPage) {
-        this._page = nPage;
-    };
-    CPdfImage.prototype.IsNeedDrawFromStream = function() {
-       return false; 
-    };
-    CPdfImage.prototype.IsAnnot = function() {
-       return false;
-    };
-    CPdfImage.prototype.IsForm = function() {
-       return false;
-    };
-    CPdfImage.prototype.IsTextShape = function() {
-       return false;
-    };
     CPdfImage.prototype.IsImage = function() {
         return true;
     };
-    CPdfImage.prototype.IsChart = function() {
-        return false;
-    };
-    CPdfImage.prototype.IsDrawing = function() {
-        return true;
-    };
-
-    CPdfImage.prototype.ShowBorder = function(bShow) {
-        let oLine = this.pen;
-
-        if (bShow) {
-            oLine.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-        else {
-            oLine.setFill(AscFormat.CreateNoFillUniFill());
-        }
-
-        this.AddToRedraw();
-    };
-    CPdfImage.prototype.SetApIdx = function(nIdx) {
-        this.GetDocument().UpdateApIdx(nIdx);
-        this._apIdx = nIdx;
-    };
-    CPdfImage.prototype.GetApIdx = function() {
-        return this._apIdx;
-    };
-    CPdfImage.prototype.GetDocument = function() {
-        if (this.group)
-            return this.group.GetDocument();
-
-        return this._doc;
-    };
-    CPdfImage.prototype.GetPage = function() {
-        if (this.group)
-            return this.group.GetPage();
-        
-        return this._page;
-    };
+    
     CPdfImage.prototype.IsInTextBox = function() {
         return false;
     };
     CPdfImage.prototype.GetDocContent = function() {
         return null;
-    };
-    CPdfImage.prototype.AddToRedraw = function() {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let _t      = this;
-        
-        function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawTextShapes = true;
-        }
-
-        oViewer.paint(setRedrawPageOnRepaint);
-    };
-    CPdfImage.prototype.GetRect = function() {
-        return this._rect;
-    };
-    
-    CPdfImage.prototype.SetRect = function(aRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRect(this, this.GetRect(), aRect));
-
-        this._rect = aRect;
-
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
-
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
-        this.updateTransformMatrix();
-
-        this.SetNeedRecalc(true);
-    };
-    CPdfImage.prototype.SetRot = function(dAngle) {
-        let oDoc = this.GetDocument();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
-
-        this.changeRot(dAngle);
-        this.SetNeedRecalc(true);
-    };
-    CPdfImage.prototype.GetRot = function() {
-        return this.rot;
     };
     CPdfImage.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -193,23 +77,6 @@
         this.recalcGeometry();
         this.recalculate();
         this.SetNeedRecalc(false);
-    };
-    CPdfImage.prototype.IsNeedRecalc = function() {
-       return this._needRecalc;
-    };
-    CPdfImage.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
-       if (bRecalc == false) {
-           this._needRecalc = false;
-       }
-       else {
-           this._needRecalc = true;
-           if (bSkipAddToRedraw != true)
-               this.AddToRedraw();
-       }
-    };
-    CPdfImage.prototype.Draw = function(oGraphicsWord) {
-        this.Recalculate();
-        this.draw(oGraphicsWord);
     };
     CPdfImage.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -222,38 +89,6 @@
         let Y       = oPos.Y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
-    };
-    CPdfImage.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfImage.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorRight(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfImage.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorDown(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfImage.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorUp(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
     };
     
     /**
@@ -277,18 +112,6 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfImage.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
-    };
-    CPdfImage.prototype.getLogicDocument = function() {
-        return this.GetDocument();
-    };
-    CPdfImage.prototype.IsThisElementCurrent = function() {
-        return true;
-    };
-    CPdfImage.prototype.getDrawingDocument = function() {
-        return Asc.editor.getPDFDoc().GetDrawingDocument();
-    };
 
     window["AscPDF"].CPdfImage = CPdfImage;
 })();

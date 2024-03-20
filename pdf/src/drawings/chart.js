@@ -56,126 +56,10 @@
     
     CPdfChart.prototype.constructor = CPdfChart;
     CPdfChart.prototype = Object.create(AscFormat.CShape.prototype);
+    Object.assign(CPdfChart.prototype, AscPDF.PdfDrawingPrototype.prototype);
 
-    CPdfChart.prototype.SetFromScan = function(bFromScan) {
-        this._isFromScan = bFromScan;
-
-        // выставляем пунктирный бордер если нет заливки и  
-        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
-            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
-            this.spPr.ln.setW(25.4 / 72.0 * 36000);
-            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-    };
-    CPdfChart.prototype.IsFromScan = function() {
-        return this._isFromScan;
-    };
-    CPdfChart.prototype.SetDocument = function(oDoc) {
-        this._doc = oDoc;
-    };
-    CPdfChart.prototype.SetPage = function(nPage) {
-        this._page = nPage;
-    };
-    CPdfChart.prototype.IsNeedDrawFromStream = function() {
-       return false; 
-    };
-    CPdfChart.prototype.IsAnnot = function() {
-       return false;
-    };
-    CPdfChart.prototype.IsForm = function() {
-       return false;
-    };
-    CPdfChart.prototype.IsTextShape = function() {
-        return false;
-    };
-    CPdfChart.prototype.IsImage = function() {
-        return false;
-    };
     CPdfChart.prototype.IsChart = function() {
         return true;
-    };
-    CPdfChart.prototype.IsDrawing = function() {
-        return true;
-    };
-    CPdfChart.prototype.ShowBorder = function(bShow) {
-        let oLine = this.pen;
-
-        if (bShow) {
-            oLine.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-        else {
-            oLine.setFill(AscFormat.CreateNoFillUniFill());
-        }
-
-        this.AddToRedraw();
-    };
-    CPdfChart.prototype.SetApIdx = function(nIdx) {
-        this.GetDocument().UpdateApIdx(nIdx);
-        this._apIdx = nIdx;
-    };
-    CPdfChart.prototype.GetApIdx = function() {
-        return this._apIdx;
-    };
-    CPdfChart.prototype.GetDocument = function() {
-        if (this.group)
-            return this.group.GetDocument();
-
-        return this._doc;
-    };
-    CPdfChart.prototype.GetPage = function() {
-        if (this.group)
-            return this.group.GetPage();
-        
-        return this._page;
-    };
-    CPdfChart.prototype.AddToRedraw = function() {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let _t      = this;
-        
-        function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawTextShapes = true;
-        }
-
-        oViewer.paint(setRedrawPageOnRepaint);
-    };
-    CPdfChart.prototype.GetRect = function() {
-        return this._rect;
-    };
-    
-    CPdfChart.prototype.SetRect = function(aRect) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = oViewer.getPDFDoc();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRect(this, this.GetRect(), aRect));
-
-        this._rect = aRect;
-
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
-
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
-        this.updateTransformMatrix();
-
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SetRot = function(dAngle) {
-        let oDoc = this.GetDocument();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
-
-        this.changeRot(dAngle);
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.GetRot = function() {
-        return this.rot;
     };
     CPdfChart.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -188,23 +72,6 @@
         this.checkExtentsByDocContent(true, true);
         this.recalculate();
         this.SetNeedRecalc(false);
-    };
-    CPdfChart.prototype.IsNeedRecalc = function() {
-       return this._needRecalc;
-    };
-    CPdfChart.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
-       if (bRecalc == false) {
-           this._needRecalc = false;
-       }
-       else {
-           this._needRecalc = true;
-           if (bSkipAddToRedraw != true)
-               this.AddToRedraw();
-       }
-    };
-    CPdfChart.prototype.Draw = function(oGraphicsWord) {
-        this.Recalculate();
-        this.draw(oGraphicsWord);
     };
     CPdfChart.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -225,78 +92,6 @@
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
-    };
-    CPdfChart.prototype.AddNewParagraph = function() {
-        this.GetDocContent().AddNewParagraph();
-        this.FitTextBox();
-        this.SetNeedRecalc(true);
-    };
-    CPdfChart.prototype.SelectionSetStart = function(X, Y, e) {
-        this.selectStartPage = this.GetPage();
-
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetStart(xContent, yContent, 0, e);
-        oContent.RecalculateCurPos();
-    };
-    
-    CPdfChart.prototype.SelectionSetEnd = function(X, Y, e) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        let oTransform  = this.invertTransformText;
-        let xContent    = oTransform.TransformPointX(X, 0);
-        let yContent    = oTransform.TransformPointY(0, Y);
-
-        oContent.Selection_SetEnd(xContent, yContent, 0, e);
-    };
-    CPdfChart.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfChart.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorRight(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfChart.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorDown(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfChart.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oContent = this.GetDocContent();
-        if (!oContent)
-            return;
-
-        oContent.MoveCursorUp(isShiftKey, isCtrlKey);
-        oContent.RecalculateCurPos();
-    };
-    CPdfChart.prototype.GetDocContent = function() {
-        return this.getDocContent();
-    };
-    CPdfChart.prototype.SetNeedUpdateRC = function(bUpdate) {
-        this._needUpdateRC = bUpdate;
-    };
-    CPdfChart.prototype.IsNeedUpdateRC = function() {
-        return this._needUpdateRC;
     };
     CPdfChart.prototype.SetInTextBox = function(bIn) {
         this.isInTextBox = bIn;
@@ -376,26 +171,6 @@
         }
         
         oDoc.GetDrawingDocument().TargetEnd();
-    };
-
-    CPdfChart.prototype.FitTextBox = function() {
-        return;
-        let oDocContent = this.GetDocContent();
-        this.recalculateContent();                
-
-        let nContentH = oDocContent.GetSummaryHeight();
-
-        if (nContentH > this.extY) {
-            let aCurTextBoxRect = this.GetRect();
-            
-            // Находим новый textbox rect 
-            let xMin = aCurTextBoxRect[0];
-            let yMin = aCurTextBoxRect[1];
-            let xMax = aCurTextBoxRect[2];
-            let yMax = aCurTextBoxRect[3] + (nContentH - this.extY + 0.5) * g_dKoef_mm_to_pix;
-
-            this.SetRect([xMin, yMin, xMax, yMax]);
-        }
     };
 
     CPdfChart.prototype.onMouseUp = function(x, y, e) {

@@ -36,33 +36,154 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfShape()
+    function CPdfDrawingPrototype()
     {
-        AscFormat.CShape.call(this);
-                
         this._page          = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
         this._rect          = [];       // scaled rect
-        this._richContents  = [];
 
-        this._isFromScan = false; // флаг, что был прочитан из скана текста 
+        this._isFromScan = false;   // флаг, что был прочитан из скана страницы 
 
         this._doc                   = undefined;
         this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
     }
     
-    CPdfShape.prototype.constructor = CPdfShape;
-    CPdfShape.prototype = Object.create(AscFormat.CShape.prototype);
-    Object.assign(CPdfShape.prototype, AscPDF.PdfDrawingPrototype.prototype);
+    CPdfDrawingPrototype.prototype.constructor = CPdfDrawingPrototype;
+    
+    CPdfDrawingPrototype.prototype.IsAnnot = function() {
+        return false;
+    };
+    CPdfDrawingPrototype.prototype.IsForm = function() {
+        return false;
+    };
+    CPdfDrawingPrototype.prototype.IsTextShape = function() {
+        return false;
+    };
+    CPdfDrawingPrototype.prototype.IsImage = function() {
+        return false;
+    };
+    CPdfDrawingPrototype.prototype.IsChart = function() {
+        return false;
+    };
+    CPdfDrawingPrototype.prototype.IsDrawing = function() {
+        return true;
+    };
+    CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
+        if (this.GetDocument().drawings.indexOf(this) == -1)
+            return false;
 
-    CPdfShape.prototype.IsTextShape = function() {
         return true;
     };
 
-    CPdfShape.prototype.Recalculate = function() {
+    CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
+        this._isFromScan = bFromScan;
+
+        // выставляем пунктирный бордер если нет заливки и  
+        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
+            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
+            this.spPr.ln.setW(25.4 / 72.0 * 36000);
+            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
+        }
+    };
+    CPdfDrawingPrototype.prototype.IsFromScan = function() {
+        return this._isFromScan;
+    };
+    CPdfDrawingPrototype.prototype.SetDocument = function(oDoc) {
+        this._doc = oDoc;
+    };
+    CPdfDrawingPrototype.prototype.GetDocument = function() {
+        if (this.group)
+            return this.group.GetDocument();
+
+        return this._doc;
+    };
+    CPdfDrawingPrototype.prototype.SetPage = function(nPage) {
+        let nCurPage = this.GetPage();
+        if (nPage == nCurPage)
+            return;
+
+        // initial set
+        if (nCurPage == undefined) {
+            this._page = nPage;
+            return;
+        }
+
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
+        if (oViewer.pagesInfo.pages[nPage]) {
+            if (oDoc.drawings.indexOf(this) != -1) {
+                if (oViewer.pagesInfo.pages[nPage].drawings == null) {
+                    oViewer.pagesInfo.pages[nPage].drawings = [];
+                }
+    
+                if (nCurIdxOnPage != -1)
+                    oViewer.pagesInfo.pages[nCurPage].drawings.splice(nCurIdxOnPage, 1);
+    
+                if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].drawings.indexOf(this) == -1)
+                    oViewer.pagesInfo.pages[nPage].drawings.push(this);
+
+                oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
+
+                // добавляем в перерисовку исходную страницу
+                this.AddToRedraw();
+            }
+
+            this._page = nPage;
+            this.selectStartPage = nPage;
+            this.AddToRedraw();
+        }
+    };
+    CPdfDrawingPrototype.prototype.GetPage = function() {
+        if (this.group)
+            return this.group.GetPage();
+        
+        return this._page;
+    };
+    CPdfDrawingPrototype.prototype.ShowBorder = function(bShow) {
+        let oLine = this.pen;
+
+        if (bShow) {
+            oLine.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
+        }
+        else {
+            oLine.setFill(AscFormat.CreateNoFillUniFill());
+        }
+
+        this.AddToRedraw();
+    };
+    CPdfDrawingPrototype.prototype.SetApIdx = function(nIdx) {
+        this.GetDocument().UpdateApIdx(nIdx);
+        this._apIdx = nIdx;
+    };
+    CPdfDrawingPrototype.prototype.GetApIdx = function() {
+        return this._apIdx;
+    };
+    CPdfDrawingPrototype.prototype.AddToRedraw = function() {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let nPage   = this.GetPage();
+        
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[nPage])
+                oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
+    };
+    
+    CPdfDrawingPrototype.prototype.SetRot = function(dAngle) {
+        let oDoc = this.GetDocument();
+
+        oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
+
+        this.changeRot(dAngle);
+        this.SetNeedRecalc(true);
+    };
+    CPdfDrawingPrototype.prototype.GetRot = function() {
+        return this.rot;
+    };
+    CPdfDrawingPrototype.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
 
@@ -74,7 +195,25 @@
         this.recalculate();
         this.SetNeedRecalc(false);
     };
-    CPdfShape.prototype.onMouseDown = function(x, y, e) {
+    CPdfDrawingPrototype.prototype.IsNeedRecalc = function() {
+       return this._needRecalc;
+    };
+    CPdfDrawingPrototype.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
+        if (bRecalc == false) {
+            this._needRecalc = false;
+        }
+        else {
+            this.GetDocument().SetNeedUpdateTarget(true);
+            this._needRecalc = true;
+            if (bSkipAddToRedraw != true)
+                this.AddToRedraw();
+        }
+    };
+    CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
+        this.Recalculate();
+        this.draw(oGraphicsWord);
+    };
+    CPdfDrawingPrototype.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
         let oDrDoc              = oDoc.GetDrawingDocument();
@@ -93,20 +232,21 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
-    CPdfShape.prototype.AddNewParagraph = function() {
+    CPdfDrawingPrototype.prototype.AddNewParagraph = function() {
         this.GetDocContent().AddNewParagraph();
+        this.FitTextBox();
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.GetDocContent = function() {
+    CPdfDrawingPrototype.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
-    CPdfShape.prototype.SetInTextBox = function(bIn) {
+    CPdfDrawingPrototype.prototype.SetInTextBox = function(bIn) {
         this.isInTextBox = bIn;
     };
-    CPdfShape.prototype.IsInTextBox = function() {
+    CPdfDrawingPrototype.prototype.IsInTextBox = function() {
         return this.isInTextBox;
     };
-    CPdfShape.prototype.EnterText = function(aChars) {
+    CPdfDrawingPrototype.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
         let oParagraph  = oContent.GetCurrentParagraph();
@@ -123,6 +263,7 @@
                 oParagraph.AddToParagraph(oRun, true);
         }
 
+        this.FitTextBox();
         this.SetNeedRecalc(true);
         oContent.RecalculateCurPos();
 
@@ -133,7 +274,7 @@
      * @memberof CTextField
      * @typeofeditors ["PDF"]
      */
-    CPdfShape.prototype.Remove = function(nDirection, isCtrlKey) {
+    CPdfDrawingPrototype.prototype.Remove = function(nDirection, isCtrlKey) {
         let oDoc = this.GetDocument();
         oDoc.CreateNewHistoryPoint({objects: [this]});
 
@@ -149,15 +290,15 @@
             this.SetNeedRecalc(true);
         }
     };
-    CPdfShape.prototype.SelectAllText = function() {
+    CPdfDrawingPrototype.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
     };
     /**
-     * Exit from this annot.
+     * Exit from this drawing.
      * @memberof CTextField
      * @typeofeditors ["PDF"]
      */
-    CPdfShape.prototype.Blur = function() {
+    CPdfDrawingPrototype.prototype.Blur = function() {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
         let oPara       = oContent.GetElement(0);
@@ -177,7 +318,7 @@
         oDoc.GetDrawingDocument().TargetEnd();
     };
 
-    CPdfShape.prototype.onMouseUp = function(x, y, e) {
+    CPdfDrawingPrototype.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
         this.selectStartPage    = this.GetPage();
@@ -199,7 +340,7 @@
     /// saving
     ////////////////////////////
 
-    CPdfShape.prototype.WriteToBinary = function(memory) {
+    CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
         this.toXml(memory, '');
     };
 
@@ -207,7 +348,7 @@
     /// work with text properties
     ////////////////////////////
 
-    CPdfShape.prototype.SetParaTextPr = function(oParaTextPr) {
+    CPdfDrawingPrototype.prototype.SetParaTextPr = function(oParaTextPr) {
         let oContent = this.GetDocContent();
         
         false == this.IsInTextBox() && oContent.SetApplyToAll(true);
@@ -216,78 +357,78 @@
 
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.SetAlign = function(nType) {
+    CPdfDrawingPrototype.prototype.SetAlign = function(nType) {
         let oContent = this.GetDocContent();
         oContent.SetParagraphAlign(nType);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.GetAlign = function() {
+    CPdfDrawingPrototype.prototype.GetAlign = function() {
         return this.GetDocContent().GetCalculatedParaPr().GetJc();
     };
-    CPdfShape.prototype.SetBold = function(bBold) {
+    CPdfDrawingPrototype.prototype.SetBold = function(bBold) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
     };
-    CPdfShape.prototype.GetBold = function() {
+    CPdfDrawingPrototype.prototype.GetBold = function() {
         return !!this.GetCalculatedTextPr().GetBold();        
     };
-    CPdfShape.prototype.SetItalic = function(bItalic) {
+    CPdfDrawingPrototype.prototype.SetItalic = function(bItalic) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
     };
-    CPdfShape.prototype.GetItalic = function() {
+    CPdfDrawingPrototype.prototype.GetItalic = function() {
         return !!this.GetCalculatedTextPr().GetItalic();
     };
-    CPdfShape.prototype.SetUnderline = function(bUnderline) {
+    CPdfDrawingPrototype.prototype.SetUnderline = function(bUnderline) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
     };
-    CPdfShape.prototype.GetUnderline = function() {
+    CPdfDrawingPrototype.prototype.GetUnderline = function() {
         return !!this.GetCalculatedTextPr().GetUnderline();
     };
-    CPdfShape.prototype.SetHighlight = function(r, g, b) {
+    CPdfDrawingPrototype.prototype.SetHighlight = function(r, g, b) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
     };
-    CPdfShape.prototype.SetStrikeout = function(bStrikeout) {
+    CPdfDrawingPrototype.prototype.SetStrikeout = function(bStrikeout) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({
 			Strikeout  : bStrikeout,
 			DStrikeout : false
         }));
     };
-    CPdfShape.prototype.GetStrikeout = function() {
+    CPdfDrawingPrototype.prototype.GetStrikeout = function() {
         return !!this.GetCalculatedTextPr().GetStrikeout();
     };
-    CPdfShape.prototype.SetBaseline = function(nType) {
+    CPdfDrawingPrototype.prototype.SetBaseline = function(nType) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
     };
-    CPdfShape.prototype.GetBaseline = function() {
+    CPdfDrawingPrototype.prototype.GetBaseline = function() {
         return this.GetCalculatedTextPr().GetVertAlign();
     };
-    CPdfShape.prototype.SetFontSize = function(nType) {
+    CPdfDrawingPrototype.prototype.SetFontSize = function(nType) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
     };
-    CPdfShape.prototype.GetFontSize = function() {
+    CPdfDrawingPrototype.prototype.GetFontSize = function() {
         return this.GetCalculatedTextPr().GetFontSize();
     };
-    CPdfShape.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
+    CPdfDrawingPrototype.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.SetSpacing = function(nSpacing) {
+    CPdfDrawingPrototype.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
     };
-    CPdfShape.prototype.GetSpacing = function() {
+    CPdfDrawingPrototype.prototype.GetSpacing = function() {
         return this.GetCalculatedTextPr().GetSpacing();
     };
-    CPdfShape.prototype.SetFontFamily = function(sFontFamily) {
+    CPdfDrawingPrototype.prototype.SetFontFamily = function(sFontFamily) {
         let oParaTextPr = new AscCommonWord.ParaTextPr();
 		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
         this.SetParaTextPr(oParaTextPr);
     };
-    CPdfShape.prototype.GetFontFamily = function() {
+    CPdfDrawingPrototype.prototype.GetFontFamily = function() {
         return this.GetCalculatedTextPr().GetFontFamily();
     };
-    CPdfShape.prototype.SetTextColor = function(r, g, b) {
+    CPdfDrawingPrototype.prototype.SetTextColor = function(r, g, b) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
     };
-    CPdfShape.prototype.ChangeTextCase = function(nCaseType) {
+    CPdfDrawingPrototype.prototype.ChangeTextCase = function(nCaseType) {
         let oContent    = this.GetDocContent();
         let oState      = oContent.GetSelectionState();
 
@@ -297,19 +438,19 @@
         oContent.SetSelectionState(oState);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.GetSelectedParagraphs = function() {
+    CPdfDrawingPrototype.prototype.GetSelectedParagraphs = function() {
         let oContent        = this.GetDocContent();
         let aSelectedParas  = [];
 
         oContent.GetCurrentParagraph(false, aSelectedParas);
         return aSelectedParas;
     };
-    CPdfShape.prototype.SetVertAlign = function(nType) {
+    CPdfDrawingPrototype.prototype.SetVertAlign = function(nType) {
         this.setVerticalAlign(nType);
         this.SetNeedRecalc(true);
     };
 
-    CPdfShape.prototype.GetAllFonts = function(fontMap) {
+    CPdfDrawingPrototype.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();
 
         fontMap = fontMap || {};
@@ -339,31 +480,31 @@
         return fontMap;
     };
 
-    CPdfShape.prototype.SetLineSpacing = function(oSpacing) {
+    CPdfDrawingPrototype.prototype.SetLineSpacing = function(oSpacing) {
         this.GetDocContent().SetParagraphSpacing(oSpacing);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.GetLineSpacing = function() {
+    CPdfDrawingPrototype.prototype.GetLineSpacing = function() {
         let oCalcedPr = this.GetCalculatedParaPr();
         return {
             After:  oCalcedPr.GetSpacingAfter(),
             Before: oCalcedPr.GetSpacingBefor()
         }
     };
-    CPdfShape.prototype.SetColumnNumber = function(nColumns) {
+    CPdfDrawingPrototype.prototype.SetColumnNumber = function(nColumns) {
         this.setColumnNumber(nColumns);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.IncreaseDecreaseIndent = function(bIncrease) {
+    CPdfDrawingPrototype.prototype.IncreaseDecreaseIndent = function(bIncrease) {
         // Increase_ParagraphLevel для шейпов из презентаций
         this.GetDocContent().Increase_ParagraphLevel(bIncrease);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.SetNumbering = function(oBullet) {
+    CPdfDrawingPrototype.prototype.SetNumbering = function(oBullet) {
         this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.ClearFormatting = function(bParaPr, bTextText) {
+    CPdfDrawingPrototype.prototype.ClearFormatting = function(bParaPr, bTextText) {
         this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
         this.SetNeedRecalc(true);
     };
@@ -372,10 +513,10 @@
      * Получаем рассчитанные настройки текста (полностью заполненные)
      * @returns {CTextPr}
      */
-    CPdfShape.prototype.GetCalculatedTextPr = function() {
+    CPdfDrawingPrototype.prototype.GetCalculatedTextPr = function() {
         return this.GetDocContent().GetCalculatedTextPr();
     };
-    CPdfShape.prototype.GetCalculatedParaPr = function() {
+    CPdfDrawingPrototype.prototype.GetCalculatedParaPr = function() {
         return this.GetDocContent().GetCalculatedParaPr();
     };
 
@@ -383,52 +524,19 @@
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfShape.prototype.updateSelectionState = function () {
-        var drawing_document = this.getDrawingDocument();
-        if (drawing_document) {
-            var content = this.getDocContent();
-            if (content) {
-                var oMatrix = null;
-                if (this.transformText) {
-                    oMatrix = this.transformText.CreateDublicate();
-                }
-                drawing_document.UpdateTargetTransform(oMatrix);
-                if (true === content.IsSelectionUse()) {
-                    // Выделение нумерации
-                    if (selectionflag_Numbering == content.Selection.Flag) {
-                        drawing_document.TargetEnd();
-                    }
-                    // Обрабатываем движение границы у таблиц
-                    else if (null != content.Selection.Data && true === content.Selection.Data.TableBorder && type_Table == content.Content[content.Selection.Data.Pos].GetType()) {
-                        // Убираем курсор, если он был
-                        drawing_document.TargetEnd();
-                    } else {
-                        if (false === content.IsSelectionEmpty()) {
-                            content.DrawSelectionOnPage(0);
-                            drawing_document.TargetEnd();
-                        } else {
-                            if (true !== content.Selection.Start) {
-                                content.RemoveSelection();
-                            }
-                            content.RecalculateCurPos();
-
-                            drawing_document.TargetStart();
-                            drawing_document.TargetShow();
-                        }
-                    }
-                } else {
-                    content.RecalculateCurPos();
-
-                    drawing_document.TargetStart();
-                    drawing_document.TargetShow();
-                }
-            } else {
-                drawing_document.UpdateTargetTransform(new CMatrix());
-                drawing_document.TargetEnd();
-            }
-        }
+    CPdfDrawingPrototype.prototype.Get_AbsolutePage = function() {
+        return this.GetPage();
+    };
+    CPdfDrawingPrototype.prototype.getLogicDocument = function() {
+        return this.GetDocument();
+    };
+    CPdfDrawingPrototype.prototype.IsThisElementCurrent = function() {
+        return true;
+    };
+    CPdfDrawingPrototype.prototype.getDrawingDocument = function() {
+        return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
 
-    window["AscPDF"].CPdfShape = CPdfShape;
+    window["AscPDF"].PdfDrawingPrototype = CPdfDrawingPrototype;
 })();
 

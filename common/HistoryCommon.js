@@ -1744,7 +1744,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
 	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2217 << 16;
 	window['AscDFH'].historyitem_Pdf_FreeText				= 2218 << 16;
-	window['AscDFH'].historyitem_Pdf_TextShape				= 2219 << 16;
+	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
 
 	
 
@@ -4064,9 +4064,9 @@
 	// Типы изменений в PDF Text Shape 
 	//------------------------------------------------------------------------------------------------------------------
 
-	AscDFH.historyitem_Pdf_TxShape_Rect	= AscDFH.historyitem_Pdf_TextShape | 0;
-	AscDFH.historyitem_Pdf_TxShape_Page	= AscDFH.historyitem_Pdf_TextShape | 1;
-	AscDFH.historyitem_Pdf_TxShape_Rot	= AscDFH.historyitem_Pdf_TextShape | 2;
+	AscDFH.historyitem_Pdf_Drawing_Rect	= AscDFH.historyitem_Pdf_Drawing | 0;
+	AscDFH.historyitem_Pdf_Drawing_Page	= AscDFH.historyitem_Pdf_Drawing | 1;
+	AscDFH.historyitem_Pdf_Drawing_Rot	= AscDFH.historyitem_Pdf_Drawing | 2;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

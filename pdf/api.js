@@ -444,6 +444,19 @@
 
 		return true;
 	};
+	PDFEditorApi.prototype.asc_EditText = function() {
+		let oViewer	= this.getDocumentRenderer();
+		let oDoc	= this.getPDFDoc();
+		
+		oDoc.ConvertTextToShapes(oViewer.currentPage);
+	};
+	PDFEditorApi.prototype.asc_AddPage = function() {
+		let oViewer = this.getDocumentRenderer();
+		let oDoc 	= this.getPDFDoc();
+
+		oDoc.AddPage();
+		oViewer.navigateToPage(oViewer.file.pages.length - 1);
+	};
 	PDFEditorApi.prototype.asc_GetSelectedText = function() {
 		if (!this.DocumentRenderer)
 			return "";
@@ -1422,6 +1435,8 @@
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
+	PDFEditorApi.prototype['asc_EditText']                 = PDFEditorApi.prototype.asc_EditText;
+	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
