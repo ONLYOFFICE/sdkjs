@@ -13361,10 +13361,6 @@
 		if (newFP) {
 			this.setFormulaInternal(newFP);
 			if(byRef) {
-				// should do this for all array cells or just for the parent one?
-				// if (dynamicRange) {
-				// 	this.setDynamicArrayFlags();
-				// }
 				if(isFirstArrayFormulaCell) {
 					if (dynamicRange) {
 						// todo add vm flags to use
@@ -13373,13 +13369,6 @@
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
 			} else {
-				// if ( oldFP && oldFP.dynamicRange && oldFP.parent && (oldFP.parent.nCol !== newFP.parent.nCol || oldFP.parent.nRow !== newFP.parent.nRow) ) {
-				// 	// add to changedDynamicRange
-				// 	// wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
-				// 	// addToBuildDependencyArray ?
-				// } else {
-				// 	// wb.dependencyFormulas.addToBuildDependencyCell(this);
-				// }
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
 			if (this.ws.workbook.handlers) {

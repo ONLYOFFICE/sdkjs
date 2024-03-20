@@ -30735,5 +30735,141 @@ $(function () {
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
 
+	QUnit.test("Test: \"Dynamic array test\"", function (assert) {
+		let result, resultSize, bboxParent, cellWithFormula;
+			
+		// wb.dependencyFormulas.unlockRecal();
+
+		ws.getRange2("A1:Z10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("B1").setValue("4");
+		ws.getRange2("B2").setValue("str");
+		ws.getRange2("B3").setValue("6");
+		ws.getRange2("C1").setValue("1");
+		ws.getRange2("C2").setValue();
+		ws.getRange2("C3").setValue("1");
+
+		// let parent = AscCommonExcel.g_oRangeCache.getAscRange("D1");
+		bboxParent = ws.getRange2("D1").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bboxParent.r1, bboxParent.c1);
+
+		ws.getRange2("C3").setValue("=SIN(A1:A3)", null, null, bboxParent);
+
+		oParser = new parserFormula('A1:A3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:A3');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in =A1:A3');
+		assert.strictEqual(resultSize.col, 1, '1 cols in =A1:A3');
+
+		oParser = new parserFormula('{1;2;3}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1;2;3}');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in ={1;2;3}');
+		assert.strictEqual(resultSize.col, 1, '1 cols in ={1;2;3}');
+
+		oParser = new parserFormula('A1:C1', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:C1');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1, '1 rows in =A1:C1');
+		assert.strictEqual(resultSize.col, 3, '3 cols in =A1:C1');
+
+		oParser = new parserFormula('{1,2,3}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2,3}');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1, '1 rows in ={1,2,3}');
+		assert.strictEqual(resultSize.col, 3, '3 cols in ={1,2,3}');
+
+		oParser = new parserFormula('A1:C3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:C3');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in =A1:C3');
+		assert.strictEqual(resultSize.col, 3, '3 cols in =A1:C3');
+
+		oParser = new parserFormula('{1,2;3,4}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2;3,4}');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 2, '2 rows in ={1,2;3,4}');
+		assert.strictEqual(resultSize.col, 2, '2 cols in ={1,2;3,4}');
+
+		oParser = new parserFormula('SIN(A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:A3)');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN(A1:A3)');
+		assert.strictEqual(resultSize.col, 1, '1 cols in =SIN(A1:A3)');
+
+		oParser = new parserFormula('SIN({1;2;3})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1;2;3})');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN({1;2;3})');
+		assert.strictEqual(resultSize.col, 1, '1 cols in =SIN({1;2;3})');
+
+		oParser = new parserFormula('SIN(A1:C1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:C1)');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1, '1 rows in =SIN(A1:C1)');
+		assert.strictEqual(resultSize.col, 3, '3 cols in =SIN(A1:C1)');
+
+		oParser = new parserFormula('SIN({1,2,3})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1,2,3})');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1, '3 rows in =SIN({1,2,3})');
+		assert.strictEqual(resultSize.col, 3, '1 cols in =SIN({1,2,3})');
+
+		oParser = new parserFormula('SIN(A1:C3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1:C3)');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN(A1:C3)');
+		assert.strictEqual(resultSize.col, 3, '3 cols in =SIN(A1:C3)');
+
+		oParser = new parserFormula('SIN({1,2;3,4})', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN({1,2;3,4})');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 2, '3 rows in =SIN({1,2;3,4})');
+		assert.strictEqual(resultSize.col, 2, '1 cols in =SIN({1,2;3,4})');
+
+		oParser = new parserFormula('A:A', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A:A');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1048576, '1048576 rows in =A:A');
+		assert.strictEqual(resultSize.col, 1, '1 cols in =A:A');
+
+		oParser = new parserFormula('A1:XFD1', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'A1:XFD1');
+		oParser.setArrayFormulaRef(bboxParent);
+		result = oParser.calculate();
+		resultSize = result && result.getDimensions();
+		assert.strictEqual(resultSize.row, 1, '1048576 rows in =A1:XFD1');
+		assert.strictEqual(resultSize.col, 16384, '1 cols in =A1:XFD1');
+
+	});
+
 	wb.dependencyFormulas.unlockRecal();
 });

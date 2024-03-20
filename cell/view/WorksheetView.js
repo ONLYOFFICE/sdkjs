@@ -18869,7 +18869,7 @@
 				// c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
-				if(c.bbox.isOneCell() && !arrayCannotExpand) {
+				if(c.bbox.isOneCell() ) {
 					//проверяем, есть ли формула массива в этой ячейке
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
 						var formulaRef = cell && cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
@@ -18938,7 +18938,6 @@
 							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
 							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
 						} else {
-							// t.setSelection();
 							let dimension = formulaRes.getDimensions();
 							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
 						}
@@ -18961,9 +18960,10 @@
 
 						let formulaRes = newFP.calculate();
 						let dimension = formulaRes.getDimensions();
-						// let tempDynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
-						let tempDynamicSelectionRange = this.model.getRange3(newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow + dimension.row - 1, newFP.parent.nCol + dimension.col - 1);
+						let newR2 = (newFP.parent.nRow + dimension.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (newFP.parent.nRow + dimension.row - 1);
+						let newC2 = (newFP.parent.nCol + dimension.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (newFP.parent.nCol + dimension.col - 1);
 
+						let tempDynamicSelectionRange = this.model.getRange3(newFP.parent.nRow, newFP.parent.nCol, newR2, newC2);
 						tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
 							let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
 
@@ -18977,6 +18977,11 @@
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 								c_oAscError.Level.NoCritical);
 							return false;
+						}
+
+						if (tempDynamicSelectionRange.bbox.isOneCell()) {
+							applyByArray = false;
+							ctrlKey = false;
 						}
 
 						dynamicSelectionRange = tempDynamicSelectionRange.bbox;
