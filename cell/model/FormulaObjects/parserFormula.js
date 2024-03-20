@@ -49,7 +49,7 @@ function (window, undefined) {
   var CellAddress = AscCommon.CellAddress;
   var cDate = Asc.cDate;
   var bIsSupportArrayFormula = true;
-  var bIsSupportDynamicArrays = true;
+  var bIsSupportDynamicArrays = false;
 
   var c_oAscError = Asc.c_oAscError;
 
@@ -7439,19 +7439,6 @@ function parserFormula( formula, parent, _ws ) {
 			if(this.ref) {
 				currentElement.bArrayFormula = true;
 			}
-			// if(this.ref || this.dynamicRange) {
-			// 	currentElement.bArrayFormula = true;
-			// } else if (currentElement.type === cElementType.array || currentElement.type === cElementType.cellsRange) {
-			// 	let dynamicRange = null;
-			// 	let elementSize = currentElement.getDimensions();
-			// 	if (elementSize && this.parent && this.parent.nCol != null && this.parent.nRow != null) {
-			// 		dynamicRange = Asc.Range(this.parent.nCol, this.parent.nRow, elementSize.col + this.parent.nCol - 1, elementSize.row + this.parent.nRow - 1);
-			// 		// this.ref = dynamicRange;
-			// 		this.dynamicRange = dynamicRange;
-			// 		// this.bArrayFormula = true;
-			// 		currentElement.bArrayFormula = true;
-			// 	}
-			// }
 
 			if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
 				argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
@@ -7540,37 +7527,17 @@ function parserFormula( formula, parent, _ws ) {
 		// CSE can expand to all cells except the same CSE arrays, tables, pivot tables
 		// DAF can only expand to completely empty cells(empty values)
 
-		// if (!this.value) {
-		// 	let elem = elemArr[elemArr.length ? elemArr.length - 1 : 0];
-		// 	if (elem.type === cElementType.array || elem.type === cElementType.cellsRange || elem.type === cElementType.cellsRange3D) {
-		// 		// single element in PF, if it's array/range use dynamic array formula
-		// 		if (!this.ref) {
-		// 			let arraySize = elem.getDimensions();
-		// 			if (arraySize && this.parent && this.parent.nCol != null && this.parent.nRow != null) {
-		// 				let dynamicRange = Asc.Range(this.parent.nCol, this.parent.nRow, arraySize.col + this.parent.nCol - 1, arraySize.row + this.parent.nRow - 1);
-		// 				this.ref = dynamicRange;
-		// 				this.dynamicRange = dynamicRange;
-		// 				this.bArrayFormula = true;
-		// 			}
-		// 		}
-		// 	}
-		// } 
-
 		let isRangeCanFitIntoCells;
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
 			this.value = elemArr;
 
 			// check further dynamic range
-			isRangeCanFitIntoCells = this.checkDynamicRange();
+			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRange2(this.value, opt_bbox) : true;
 			if (!isRangeCanFitIntoCells) {
-				// todo add aca flag to use
 				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
-				// TODO ref to the single cell?
-				// this.ref = null;
-				// this.dynamicRange = null;
 			} else {
 				this.ca = false;
 				this.aca = false;
@@ -7579,18 +7546,13 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 		} else {
 			this.value = elemArr.pop();
-			// if (!(this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled)) {
-			// 	this.value = elemArr.pop();
-			// }
+
 			// check further dynamic range
-			isRangeCanFitIntoCells = this.checkDynamicRange2(this.value, opt_bbox);
+			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRange2(this.value, opt_bbox) : true;
 			if (!isRangeCanFitIntoCells) {
-				// todo add aca flag to use
 				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
-				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
-				// this.dynamicRange = null;
 			} else {
 				this.ca = false;
 				this.aca = false;
