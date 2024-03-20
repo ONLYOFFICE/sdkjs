@@ -12734,7 +12734,8 @@
 			if (addToHistory) {
 				let updateRange = null;
 				if (oldObj && newObj && oldObj.ref && newObj.ref) {
-					updateRange = oldObj.ref.clone().union2(newObj.ref);
+					updateRange = oldObj.ref.clone();
+					updateRange.union2(newObj.ref);
 				} else if (oldObj && oldObj.ref) {
 					updateRange = oldObj.ref.clone();
 				} else if (newObj && newObj.ref) {
