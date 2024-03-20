@@ -9243,14 +9243,14 @@
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
             if (c_oSerUserProtectedRange.Name === type) {
-                oUserProtectedRange.name = this.stream.GetString2(length);
+                oUserProtectedRange.name = this.stream.GetString2LE(length);
             } else if (c_oSerUserProtectedRange.Sqref === type) {
-                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2(length));
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
                 if (range) {
                     oUserProtectedRange.ref = range.clone();
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
-                oUserProtectedRange.warningText = this.stream.GetString2(length);
+                oUserProtectedRange.warningText = this.stream.GetString2LE(length);
             } else if (c_oSerUserProtectedRange.Type === type) {
                 oUserProtectedRange.type = this.stream.GetByte(length);
             } else if (c_oSerUserProtectedRange.User === type)
