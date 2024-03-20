@@ -4762,9 +4762,6 @@ CGraphicObjects.prototype.saveStartDocState = function() {
 
 	}
 };
-CGraphicObjects.prototype.createTextAddState = function(object, x, y, e) {
-	return new AscFormat.TextAddState(this, object, x, y, e.Button)
-};
 
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)

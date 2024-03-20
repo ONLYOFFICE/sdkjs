@@ -193,11 +193,8 @@ CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
             return;
         this.moveSelectedObjectsByDir([null, 1], Word);
     }
-};
+},
 
-CGraphicObjectsPdf.prototype.createTextAddState = function(object, x, y, e) {
-	return new AscFormat.TextAddState(this, object, x, y, e.Button)
-};
 
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
