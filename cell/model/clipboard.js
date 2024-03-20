@@ -3129,6 +3129,15 @@
 				var oBinaryFileReader = new AscCommonWord.BinaryFileReader(newCDocument, openParams);
 				var oRes = oBinaryFileReader.ReadFromString(sBase64, {excelCopyPaste: true});
 
+				//check parents
+				if (oRes.content) {
+					for (let i = 0; i < oRes.content.length; i++) {
+						if (oRes.content[i] && oRes.content[i].Parent == null) {
+							oRes.content[i].Parent = newCDocument;
+						}
+					}
+				}
+
 				var defrPr = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.DefrPr;
 				if (defrPr && newCDocument.Styles && newCDocument.Styles.Default && newCDocument.Styles.Default.TextPr) {
 					newCDocument.Styles.Default.TextPr.FontSize = defrPr.FontSize;
