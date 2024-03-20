@@ -382,9 +382,17 @@
 
 	Api.prototype.AddCustomFunction = function (func, options) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
-		const parsedJSDoc = this.parsedJSDoc;
-		// remove it from this class and use it from the variable
-		delete this.parsedJSDoc;
+		// take the first element and validate it
+		const parsedJSDoc = this.parsedJSDoc.shift();
+		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
+		const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
+		if (!isValidJsDoc && !isValidOptions) {
+			throwException(new Error('Invalid parameters type in JSDOC or options.'));
+		}
+		// remove it from this class and use it from the variable (only if it was the last)
+		// we don't remove it immediately, because we can have there data for another function
+		if (!this.parsedJSDoc.length)
+			delete this.parsedJSDoc;
 
 		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
 
@@ -518,7 +526,7 @@
 			return first + second + third;
 		})*/
 
-		this.addCustomFunction(func, parsedJSDoc ? parsedJSDoc : options);
+		this.addCustomFunction(func, isValidJsDoc ? parsedJSDoc : options);
 	};
 
 	/**
@@ -7145,6 +7153,33 @@
 
 		return nLockType;
 	}
+
+	/**
+	 * Validate parsed JSDOC or options for custom functions.
+	 * @param {object} jsdoc - Parsed JSDOC object.
+	 * @returns {boolean} - Returns false if jsdoc isn't valid
+	 */
+	function private_ValidateParamsForCustomFunction(jsdoc) {
+		let result = true;
+		const types = [ 
+						'number', 'string', 'boolean', 'bool', 'any',
+						'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
+						'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
+					];
+
+		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type))
+			result = false;
+
+		for (let index = 0; result && index < jsdoc.params.length; index++) {
+			const param = jsdoc.params[index];
+			if (!types.includes(param.type)) {
+				result = false;
+				break;
+			}
+		}
+
+		return result;
+	};
 
 	function logError(err) {
 		if (console.error)

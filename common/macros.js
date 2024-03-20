@@ -441,9 +441,17 @@ function (window, undefined)
 	window['AscCommon'].safePluginEval = function(value) {
 		Object.getPrototypeOf(function(){}).constructor = function(){};
 		const Api = window.g_asc_plugins.api;
+		// clear this field on each run
+		delete Api.parsedJSDoc;
 		// check if we add a custom function into this macros we will parse a jsdoc
 		if (value.includes('AddCustomFunction') && value.includes('@customfunction')) {
+			// calculate how any times the function of adding will be called
+			const countOfAdding = (value.match(/\.AddCustomFunction\(/g) || []).length;
+			// parse JSDOC and put it to Api
 			Api.parsedJSDoc = AscCommon.parseJSDoc(value);
+			// remove extra parsed JSDOC
+			if (Api.parsedJSDoc.length > countOfAdding)
+				Api.parsedJSDoc.length = countOfAdding;
 		}
 		return _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
 	};
