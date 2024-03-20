@@ -1465,9 +1465,9 @@ var CPresentation = CPresentation || function(){};
         if (nPos === undefined || -1 === nPos)
             nPos = oFile.pages.length;
         if (nWidth === undefined)
-            nWidth = 612;
+            nWidth = oFile.pages[nPos - 1].W;
         if (nHeight === undefined)
-            nHeight = 792;
+            nHeight = oFile.pages[nPos - 1].H;
 
         oFile.pages.splice(nPos, 0, {
             W: nWidth,
@@ -1503,6 +1503,11 @@ var CPresentation = CPresentation || function(){};
         }
             
         oViewer.resize();
+        for (let i = 0; i < oViewer.file.pages.length; i++) {
+            oViewer.DrawingObjects.mergeDrawings(i);
+        }
+        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
+
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
     };
     /**

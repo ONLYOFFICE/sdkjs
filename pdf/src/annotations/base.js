@@ -839,11 +839,11 @@
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        let _t      = this;
-        
+        let nPage   = this.GetPage();
+
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawAnnots = true;
+            if (oViewer.pagesInfo.pages[nPage])
+                oViewer.pagesInfo.pages[nPage].needRedrawAnnots = true;
         }
 
         oViewer.paint(setRedrawPageOnRepaint);

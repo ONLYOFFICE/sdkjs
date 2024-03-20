@@ -1311,11 +1311,11 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        let _t      = this;
+        let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawForms = true;
+            if (oViewer.pagesInfo.pages[nPage])
+                oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
         }
 
         oViewer.paint(setRedrawPageOnRepaint);

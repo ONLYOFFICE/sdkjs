@@ -180,11 +180,11 @@
     };
     CPdfGraphicFrame.prototype.AddToRedraw = function() {
         let oViewer = Asc.editor.getDocumentRenderer();
-        let _t      = this;
+        let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawTextShapes = true;
+            if (oViewer.pagesInfo.pages[nPage])
+                oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
         }
 
         oViewer.paint(setRedrawPageOnRepaint);

@@ -916,6 +916,11 @@ RotateState.prototype =
                             oAnnot.SetRect(aRect);
                         }
                     }
+                    if (oTrack.originalObject.IsDrawing()) {
+                        if (pageIndex != oTrack.originalObject.pageIndex) {
+                            oTrack.originalObject.SetPage(pageIndex);
+                        }
+                    }
                     
                     oDoc.TurnOffHistory();
                     oTrack.originalObject.SetNeedRecalc(true);
