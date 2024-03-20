@@ -17008,25 +17008,16 @@ function RangeDataManagerElem(bbox, data)
 		]
 		*/
 
-		/*{
-			type,  - тип параметра ( то, что указано в {})
-			name, - имя параметра
-			isOptional, - обязательный он или нет
-			defaultValue, - если есть дефолтное значение
-			description - описание параметра
-		}*/
-
 		this._add(func, options);
 	};
 
 	CCustomFunctionEngine.prototype._add = function (func, options) {
+		let oThis = this;
 		let funcName = func.name.toUpperCase();
 		if (funcName.length === 0) {
 			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_NAME");
 			return;
 		}
-
-		let oThis = this;
 
 		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
 		//prefix add for separate main function from custom function
@@ -17058,13 +17049,6 @@ function RangeDataManagerElem(bbox, data)
 		if (argsFuncLength > argumentsMax) {
 			console.log("REGISTRAION_ERROR_INVALID_FUNCTION_ARGUMENTS_COUNT");
 			return;
-		}
-
-		let isDuplicateName = false;
-		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
-			AscCommonExcel.cFormulaFunction;
-		if (oFormulaList[funcName]) {
-			isDuplicateName = true;
 		}
 
 		/**
@@ -17127,7 +17111,20 @@ function RangeDataManagerElem(bbox, data)
 			}
 		};
 
+		this.addToFunctionsList(newFunc);
+	};
+
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc) {
 		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+
+		let funcName = newFunc.prototype.name;
+
+		let isDuplicateName = false;
+		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+			AscCommonExcel.cFormulaFunction;
+		if (oFormulaList[funcName]) {
+			isDuplicateName = true;
+		}
 
 		if (isDuplicateName) {
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
