@@ -444,6 +444,9 @@
 
 		return true;
 	};
+	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
+		return this.asc_enterText(newText);
+	};
 	PDFEditorApi.prototype.asc_EditText = function() {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
@@ -1420,6 +1423,7 @@
 	PDFEditorApi.prototype['getCurrentPage']               = PDFEditorApi.prototype.getCurrentPage;
 	PDFEditorApi.prototype['asc_getPdfProps']              = PDFEditorApi.prototype.asc_getPdfProps;
 	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
+	PDFEditorApi.prototype['asc_correctEnterText']         = PDFEditorApi.prototype.asc_correctEnterText;
 	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
 	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
 	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
