@@ -502,6 +502,22 @@
 			]
 		*/
 
+		//result jsdoc variant:
+		/**
+		 * Calculates the sum of the specified numbers
+		 * @customfunction
+		 * @param {number} first First number.
+		 * @param {number} second Second number.
+		 * @param {number} [third] Third number to add. If omitted, third = 0.
+		 * @returns {number} The sum of the numbers.
+		 */
+		/*Api.AddCustomFunction(function add(first, second, third) {
+			if (third === null) {
+				third = 0;
+			}
+			return first + second + third;
+		})*/
+
 		this.addCustomFunction(func, parsedJSDoc ? parsedJSDoc : options);
 	};
 
