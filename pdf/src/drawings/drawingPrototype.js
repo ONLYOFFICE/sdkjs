@@ -68,6 +68,10 @@
     CPdfDrawingPrototype.prototype.IsDrawing = function() {
         return true;
     };
+    CPdfDrawingPrototype.prototype.IsSmartArt = function() {
+        return false;
+    };
+
     CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
         if (this.GetDocument().drawings.indexOf(this) == -1)
             return false;
@@ -238,7 +242,7 @@
         this.SetNeedRecalc(true);
     };
     CPdfDrawingPrototype.prototype.GetDocContent = function() {
-        return this.getDocContent();
+        return null;
     };
     CPdfDrawingPrototype.prototype.SetInTextBox = function(bIn) {
         this.isInTextBox = bIn;

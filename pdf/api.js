@@ -444,10 +444,25 @@
 
 		return true;
 	};
+	PDFEditorApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
+		let oViewer	= this.getDocumentRenderer();
+		let oDoc	= this.getPDFDoc();
+
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function()
+		{
+			return AscCommon.g_oBinarySmartArts.checkLoadData(nSmartArtType);
+		}).then(function()
+		{
+			oDoc.CreateNewHistoryPoint();
+			let oSmartArt = oDoc.AddSmartArt(nSmartArtType, oPlaceholderObject, oViewer.currentPage);
+			oDoc.TurnOffHistory();
+
+			return oSmartArt;
+		});
+	};
 	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
 		return this.asc_enterText(newText);
-	};
-	PDFEditorApi.prototype.asc_EditText = function() {
+	};	PDFEditorApi.prototype.asc_EditText = function() {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		
@@ -1441,6 +1456,7 @@
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 	PDFEditorApi.prototype['asc_EditText']                 = PDFEditorApi.prototype.asc_EditText;
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
+	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;

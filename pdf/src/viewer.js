@@ -457,9 +457,10 @@
 
 			this.UpdateDrDocDrawingPages();
 
-			if (this.disabledPaintOnScroll != true)
+			if (this.disabledPaintOnScroll != true) {
 				this._paint();
-				
+				this.onUpdateOverlay();
+			}
 		};
 		this.UpdateDrDocDrawingPages = function() {
 			let oThis = this;
@@ -497,8 +498,10 @@
 
 			this.UpdateDrDocDrawingPages();
 
-			if (this.disabledPaintOnScroll != true)
+			if (this.disabledPaintOnScroll != true) {
 				this._paint();
+				this.onUpdateOverlay();
+			}
 		};
 
 		this.onLoadModule = function()
@@ -911,6 +914,7 @@
 			};
 
 			this._paint();
+			this.onUpdateOverlay();
 		};
 
 		this.getFileNativeBinary = function()
@@ -4018,6 +4022,7 @@
 			this.clearZoomCoord();
 
 		this._paint();
+		this.onUpdateOverlay();
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
 	{
