@@ -5787,10 +5787,9 @@
 					});
 					break;
 				case "string[][]":
-					res = _elem.tocString();
-					if (res.type !== AscCommonExcel.cElementType.error) {
-						res = res.toString();
-					}
+					res = _elem.toArray(true, true, function (elem) {
+						return elem.tocString();
+					});
 					break;
 			}
 			return res;
@@ -5850,7 +5849,11 @@
 					}
 					break;
 				case "string":
-					res = new AscCommonExcel.cString(val + "");
+					if (typeof val === "object") {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					} else {
+						res = new AscCommonExcel.cString(val + "");
+					}
 					break;
 				case "boolean":
 

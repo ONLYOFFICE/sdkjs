@@ -30917,7 +30917,7 @@ $(function () {
 				{paramsType: ['number', 'string'], result: "#VALUE!"},
 				{paramsType: ['number', 'bool'], result: [[1]]},
 				{paramsType: ['number', 'error'], result: "#REF!"},
-				{paramsType: ['number', 'array'], result: [[1]]},
+				{paramsType: ['number', 'array'], result: [[1,2,3]]},
 				{paramsType: ['number', 'ref'], result: [[1]]},
 				{paramsType: ['number', 'range'], result: [[1]]},
 			];
@@ -30988,6 +30988,7 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER[][]_@STRING->number !");
 
+			//ms returns number!
 			//********** 9. @number[][] / @string <- @string **********
 			initParamsCustomFunction([{type: "number"}, {type: "string"}], "string");
 
@@ -31004,7 +31005,8 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER[][]_@STRING->string !");
 
-			//********** 10. @number[][] / @number <- @string **********
+			//ms returns number!
+			//********** 10. @number / @number <- @string **********
 			initParamsCustomFunction([{type: "number"}, {type: "number"}], "string");
 
 			aTasks = [
@@ -31018,7 +31020,72 @@ $(function () {
 				{paramsType: ['number', 'range'], result: "#VALUE!"},
 			];
 
-			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER[][]_@NUMBER->string !");
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER->string !");
+
+			//********** 11. @number / @number[][] <- @string **********
+			initParamsCustomFunction([{type: "number"}, {type: "number[][]"}], "string");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "#VALUE!"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "#VALUE!"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->string !");
+
+			//********** 12. @number / @number <- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result: "#VALUE!"},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: "#VALUE!"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "#VALUE!"},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER->string[][] !");
+
+			//ms returns number!
+			//********** 13. @number / @number[][] <- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "number[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [["10"]]},
+				{paramsType: ['number', 'stringNumber'], result: [["1"]]},
+				{paramsType: ['number', 'string'], result: "#VALUE!"},
+				{paramsType: ['number', 'bool'], result: [["1"]]},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: [["1","2","3"]]},
+				{paramsType: ['number', 'ref'], result: [["1"]]},
+				{paramsType: ['number', 'range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@NUMBER[][]->string[][] !");
+
+			//********** 13. @number / @string[][] <- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "string[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [["10"]]},
+				{paramsType: ['number', 'stringNumber'], result: [["1"]]},
+				{paramsType: ['number', 'string'], result: [["test"]]},
+				{paramsType: ['number', 'bool'], result: [["TRUE"]]},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: [["1"]]},
+				{paramsType: ['number', 'ref'], result: [["1"]]},
+				{paramsType: ['number', 'range'], result: [["1"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@STRING[][]->string[][] !");
 		});
 	});
 
