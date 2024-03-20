@@ -148,7 +148,7 @@ var CPresentation = CPresentation || function(){};
 		
 		this.History        = new AscPDF.History(this);
 		this.LocalHistory   = new AscPDF.History(this);
-		
+        
 		AscCommon.History = this.History;
 		
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
@@ -1804,6 +1804,65 @@ var CPresentation = CPresentation || function(){};
         oTextArt.AddToRedraw();
     };
 
+    CPDFDoc.prototype.AddSmartArt = function(nSmartArtType, oPlaceholder, nPage) {
+        let oPagesInfo = this.Viewer.pagesInfo;
+        if (!oPagesInfo.pages[nPage])
+            return;
+
+        let oDrDoc      = this.GetDrawingDocument();
+        let oPageInfo   = oDrDoc.m_arrPages[nPage];
+
+        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oSmartArt       = new AscPDF.CPdfSmartArt();
+
+        oSmartArt.fillByPreset(nSmartArtType);
+        oSmartArt.setRecalculateInfo();
+		
+        let oPh;
+        if (oPlaceholder) {
+			this.Api.WordControl.m_bIsMouseLock = false;
+			oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			if (oPh) {
+				const nWidth = oPh.extX;
+                const nHeight = oPh.extY;
+                oSmartArt.fitForSizes(nHeight, nWidth);
+                const nX = oPh.x + oPh.extX / 2 - oSmartArt.spPr.xfrm.extX / 2;
+                const nY = oPh.y + oPlaceholder.extY / 2 - oSmartArt.spPr.xfrm.extY / 2;
+                oSmartArt.spPr.xfrm.setOffX(nX);
+                oSmartArt.spPr.xfrm.setOffY(nY);
+			}
+		}
+		
+		oSmartArt.checkDrawingBaseCoords();
+		oSmartArt.fitFontSize();
+		oDrawingObjects.checkChartTextSelection();
+		oDrawingObjects.resetSelection();
+		oSmartArt.select(oDrawingObjects, 0);
+		// oDrawingObjects.startRecalculate();
+		// oDrawingObjects.sendGraphicObjectProps();
+
+        oDrawingObjects.clearTrackObjects();
+        oDrawingObjects.clearPreTrackObjects();
+        // oDrawingObjects.updateOverlay();
+        oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
+        oDrawingObjects.updateSelectionState();
+
+        this.drawings.push(oSmartArt);
+        if (oPagesInfo.pages[nPage].drawings == null) {
+            oPagesInfo.pages[nPage].drawings = [];
+        }
+        oPagesInfo.pages[nPage].drawings.push(oSmartArt);
+
+        oSmartArt.SetDocument(this);
+        oSmartArt.SetPage(nPage);
+
+        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oSmartArt]));
+
+        oSmartArt.AddToRedraw();
+
+        return oSmartArt;
+    };
+
     CPDFDoc.prototype.AddTable = function(nCol, nRow, sStyleId, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
         if (!oPagesInfo.pages[nPage])
@@ -1944,17 +2003,17 @@ var CPresentation = CPresentation || function(){};
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || this.isUndoRedoInProgress)
             return;
 
-        if (!this.History.IsOn())
-            this.History.TurnOn();
+        if (!AscCommon.History.IsOn())
+            AscCommon.History.TurnOn();
         
-        this.History.Create_NewPoint();
+        AscCommon.History.Create_NewPoint();
 
         if (oAdditional) {
             if (oAdditional.textConvert) {
-                this.History.SetPdfConvertTextPoint(oAdditional.textConvert);
+                AscCommon.History.SetPdfConvertTextPoint(oAdditional.textConvert);
             }
             else if (oAdditional.objects) {
-                this.History.SetSourceObjectsToPointPdf(oAdditional.objects);
+                AscCommon.History.SetSourceObjectsToPointPdf(oAdditional.objects);
             }
         }
     };
@@ -2609,7 +2668,7 @@ var CPresentation = CPresentation || function(){};
 
         // let oParaPr = new AscWord.CParaPr();
         
-        if (oDrawing && false == oDrawing.IsImage()) {
+        if (oDrawing && oDrawing.IsTextShape()) {
             let oParaPr = oDrawing.GetCalculatedParaPr();
             isCanIncreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(true);
             isCanDecreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(false);
@@ -2623,7 +2682,7 @@ var CPresentation = CPresentation || function(){};
         let oDrawing  = this.activeDrawing;
 
         let oTextPr = new AscWord.CTextPr();
-        if (oDrawing && false == oDrawing.IsImage()) {
+        if (oDrawing && oDrawing.IsTextShape()) {
             oTextPr = oDrawing.GetCalculatedTextPr();
         }
         else {
