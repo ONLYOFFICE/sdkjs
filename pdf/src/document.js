@@ -1962,6 +1962,43 @@ var CPresentation = CPresentation || function(){};
         return graphic_frame;
     };
 
+    CPDFDoc.prototype.AddToParagraph = function(oParaItem) {
+        let oController = this.Viewer.DrawingObjects;
+        let oMathShape  = null;
+
+        let oDrDoc      = this.GetDrawingDocument();
+        let nCurPage    = this.Viewer.currentPage;
+        let oPageInfo   = oDrDoc.m_arrPages[nCurPage];
+
+        let nPageW  = oPageInfo.width_mm;
+        let nPageH  = oPageInfo.height_mm;
+
+        if (oParaItem.Type === para_Math) {
+			if (!(oController.selection.textSelection || (oController.selection.groupSelection && oController.selection.groupSelection.selection.textSelection))) {
+				oController.resetSelection();
+                
+				oMathShape = oController.createTextArt(0, false, null, "");
+
+                let oXfrm   = oMathShape.getXfrm();
+                let nPosX   = (nPageW - oXfrm.extX) / 2;
+                let nPosY   = nPageH / 5;
+                
+                oXfrm.setOffX(nPosX);
+                oXfrm.setOffY(nPosY);
+
+				this.AddShape(oMathShape, nCurPage);
+				oMathShape.select(oController, nCurPage);
+				oController.selection.textSelection = oMathShape;
+				oMathShape.GetDocContent().MoveCursorToStartPos(false);
+			}
+		}
+    };
+
+    CPDFDoc.prototype.GetDirectTextPr = function() {
+        let oController = this.Viewer.DrawingObjects;
+        return oController.getParagraphTextPr();
+    };
+
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
         let oDrDoc      = this.GetDrawingDocument();
