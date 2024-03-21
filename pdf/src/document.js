@@ -1989,9 +1989,11 @@ var CPresentation = CPresentation || function(){};
 				this.AddShape(oMathShape, nCurPage);
 				oMathShape.select(oController, nCurPage);
 				oController.selection.textSelection = oMathShape;
-				oMathShape.GetDocContent().MoveCursorToStartPos(false);
+				oMathShape.GetDocContent().SelectAll();
 			}
 		}
+
+        oController.paragraphAdd(oParaItem, false);
     };
 
     CPDFDoc.prototype.GetDirectTextPr = function() {
@@ -3494,14 +3496,11 @@ var CPresentation = CPresentation || function(){};
         if (!this.NeedUpdateTarget)
             return;
 
-        if (this.ViewPosition) {
-            this.CheckViewPosition();
-        }
-        else {
-            let oActiveObj  = this.GetActiveObject();
-            let oContent    = oActiveObj.GetDocContent();
+        let oActiveObj  = this.GetActiveObject();
+        let oContent    = oActiveObj.GetDocContent();
 
-            if (oActiveObj && oContent) {
+        if (oActiveObj && oContent) {
+            if (oActiveObj.IsNeedRecalc() == false) {
                 // Обновляем курсор сначала, чтобы обновить текущую страницу
                 oContent.RecalculateCurPos();
                 this.NeedUpdateTarget = false;
