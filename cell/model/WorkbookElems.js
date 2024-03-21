@@ -17209,6 +17209,17 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 				break;
+			case "any":
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					if (_elem.type === AscCommonExcel.cElementType.cell || _elem.type === AscCommonExcel.cElementType.cell3D) {
+						_elem = _elem.getValue();
+					}
+					res = _elem.getValue();
+				}
+				break;
 			case "number[][]":
 				res = _elem.toArray(true, true, function (elem) {
 					return elem.tocNumber();
@@ -17261,6 +17272,13 @@ function RangeDataManagerElem(bbox, data)
 					res = this._toBool(val);
 				}
 				break;
+			case "any":
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._toAny(val);
+				}
+				break;
 			case "number[][]":
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
@@ -17287,6 +17305,18 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype._toBool = function (val) {
+		if (this._checkBool(val)) {
+			return new AscCommonExcel.cBool(val);
+		} else {
+			if (Number.isFinite(val)) {
+				return new AscCommonExcel.cNumber(val);
+			} else {
+				return new AscCommonExcel.cString(val);
+			}
+		}
+	};
+
+	CCustomFunctionEngine.prototype._toAny = function (val) {
 		if (this._checkBool(val)) {
 			return new AscCommonExcel.cBool(val);
 		} else {
