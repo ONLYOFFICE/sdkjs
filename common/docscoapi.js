@@ -587,7 +587,7 @@
     this._id = null;
     this._sessionTimeConnect = null;
 	this._allChangesSaved = null;
-	this._lastForceSaveButtonTime = null;
+	this._lastForceSaveButtonTime = -2;//-2 to allow first save without changes
 	this._lastForceSaveTimeoutTime = null;
     this._indexUser = -1;
     // Если пользователей больше 1, то совместно редактируем
