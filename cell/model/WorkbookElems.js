@@ -17178,6 +17178,8 @@ function RangeDataManagerElem(bbox, data)
 					res = _elem.tocNumber();
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toNumber();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 					}
 				}
 				break;
@@ -17189,13 +17191,22 @@ function RangeDataManagerElem(bbox, data)
 					res = _elem.tocString();
 					if (res.type !== AscCommonExcel.cElementType.error) {
 						res = res.toString();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 					}
 				}
 				break;
 			case "boolean":
-				res = _elem.tocString();
-				if (res.type !== AscCommonExcel.cElementType.error) {
-					res = res.toString();
+				if (_elem.type === AscCommonExcel.cElementType.array || _elem.type === AscCommonExcel.cElementType.cellsRange || _elem.type === AscCommonExcel.cElementType.cellsRange3D) {
+					//TODO ms -> calc error
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = _elem.tocBool();
+					if (res.type !== AscCommonExcel.cElementType.error && res.toBool) {
+						res = res.toBool();
+					} else {
+						res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
 				}
 				break;
 			case "number[][]":
@@ -17206,6 +17217,12 @@ function RangeDataManagerElem(bbox, data)
 			case "string[][]":
 				res = _elem.toArray(true, true, function (elem) {
 					return elem.tocString();
+				});
+				break;
+			case "boolean[][]":
+				let isError;
+				res = _elem.toArray(true, true, function (elem) {
+					return elem.tocBool();
 				});
 				break;
 		}
@@ -17219,7 +17236,11 @@ function RangeDataManagerElem(bbox, data)
 				if (typeof val === "object") {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+					if (val === true || val === false) {
+						res = new AscCommonExcel.cBool(val);
+					} else {
+						res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+					}
 				}
 				break;
 			case "string":
@@ -17230,27 +17251,38 @@ function RangeDataManagerElem(bbox, data)
 				}
 				break;
 			case "boolean":
-
+				if (typeof val === "object") {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = new AscCommonExcel.cBool(!!val);
+				}
 				break;
 			case "number[][]":
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, true, true);
+					res = this._tocArray(val, AscCommonExcel.cElementType.number, true);
 				}
 				break;
 			case "string[][]":
 				if (Asc.typeOf(val) !== "array" || !val[0]) {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = this._tocArray(val, null, true);
+					res = this._tocArray(val, AscCommonExcel.cElementType.string, true);
+				}
+				break;
+			case "boolean[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, AscCommonExcel.cElementType.bool, true);
 				}
 				break;
 		}
 		return res;
 	};
 
-	CCustomFunctionEngine.prototype._tocArray = function (array, resTypeNumber, checkOnError) {
+	CCustomFunctionEngine.prototype._tocArray = function (array, resType, checkOnError) {
 		var oArray = [], _res = new AscCommonExcel.cArray();
 
 		for (var i = 0; i < array.length; i++) {
@@ -17266,10 +17298,25 @@ function RangeDataManagerElem(bbox, data)
 				if (!oArray[i]) {
 					oArray[i] = [];
 				}
-				if (resTypeNumber && !isNaN(array[i][j] - 0)) {
-					oArray[i][j] = new AscCommonExcel.cNumber(array[i][j] - 0);
-				} else {
-					oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
+
+				switch (resType) {
+					case AscCommonExcel.cElementType.number:
+						if (!isNaN(array[i][j] - 0)) {
+							oArray[i][j] = new AscCommonExcel.cNumber(array[i][j] - 0);
+						} else {
+							oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
+						}
+						break;
+					case AscCommonExcel.cElementType.string:
+						oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
+						break;
+					case AscCommonExcel.cElementType.bool:
+						if (this._checkBool(array[i][j])) {
+							oArray[i][j] = new AscCommonExcel.cBool(array[i][j]);
+						} else {
+							return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+						}
+						break;
 				}
 			}
 		}
@@ -17277,6 +17324,18 @@ function RangeDataManagerElem(bbox, data)
 		_res.fillFromArray(oArray);
 
 		return _res;
+	};
+
+	CCustomFunctionEngine.prototype._checkBool = function (val) {
+		if (val === true || val === false) {
+			return true;
+		} else {
+			val = val.toLowerCase();
+			if (val === "true" || val === "false") {
+				return true;
+			}
+		}
+		return false;
 	};
 
 	CCustomFunctionEngine.prototype._checkOnErrorByString = function (_str) {
