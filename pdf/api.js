@@ -486,6 +486,16 @@
 		
 		return textObj.Text;
 	};
+	PDFEditorApi.prototype.asc_AddMath2 = function(Type)
+	{
+		let oDoc	= this.getPDFDoc();
+		let oTextPr	= oDoc.GetDirectTextPr();
+
+		oDoc.CreateNewHistoryPoint();
+		let oMathElement = new AscCommonWord.MathMenu(Type, oTextPr ? oTextPr.Copy() : null);
+		oDoc.AddToParagraph(oMathElement, false);
+		oDoc.TurnOffHistory();
+	};
 	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b)
 	{
 		// from edit mode
@@ -1415,6 +1425,9 @@
 		if (!this.DocumentRenderer)
 			return;
 		this.DocumentRenderer.resize();
+	};
+	PDFEditorApi.prototype._openDocumentEndCallback = function() {
+		this.sendMathToMenu();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
