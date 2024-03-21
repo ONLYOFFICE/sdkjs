@@ -1872,7 +1872,7 @@
 
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
-				if (cell.formulaParsed && (cell.formulaParsed.getDynamicRef() || cell.formulaParsed.getArrayFormulaRef()) && cell.formulaParsed.aca && cell.formulaParsed.ca) {
+				if (cell.formulaParsed && AscCommonExcel.bIsSupportDynamicArrays && (cell.formulaParsed.getDynamicRef() || cell.formulaParsed.getArrayFormulaRef()) && cell.formulaParsed.aca && cell.formulaParsed.ca) {
 					t.addToVolatileArrays(cell.formulaParsed);
 				}
 				
@@ -12915,9 +12915,7 @@
 			}
 		}
 	};
-	// !!*
 	Worksheet.prototype.addChangedArray = function (rangeName, arrayInfo) {
-		// changedArrayList
 		if (!rangeName || !arrayInfo) {
 			return
 		}
@@ -12929,11 +12927,8 @@
 		if (!this.changedArrays[rangeName]) {
 			this.changedArrays[rangeName] = arrayInfo
 		}
-
-		// this.changedArrays[rangeName] = arrayInfo;
 	};
 	Worksheet.prototype.getChangedArrayList = function () {
-		// changedArrayList
 		if (!this.changedArrays) {
 			return
 		}
@@ -12941,7 +12936,6 @@
 		return this.changedArrays
 	};
 	Worksheet.prototype.removeFromChangedArrayList = function (name) {
-		// changedArrayList
 		if (!this.changedArrays) {
 			return
 		}
@@ -12963,7 +12957,6 @@
 				for (let listenerId in volatileArrayList) {
 					let formula = volatileArrayList[listenerId];
 					let formulaResult = formula.calculate();
-					// let firstCellRef = formula.ref ? new Asc.Range(formula.ref.c1, formula.ref.r1, formula.ref.c1, formula.ref.r1) : new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 					let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 					if (!(formula.aca && formula.ca)) {
 						// array can expand, setValue for each cell except first
@@ -13376,7 +13369,6 @@
 		this._hasChanged = true;
 	};
 	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange) {
-		// TODO lockCounter 2 после одного из изменений
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -13399,7 +13391,6 @@
 			if(byRef) {
 				if(isFirstArrayFormulaCell) {
 					if (dynamicRange) {
-						// todo add vm flags to use
 						this.setDynamicArrayFlags();
 					}
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
@@ -13421,14 +13412,9 @@
 			if (oldFP && oldFP.dynamicRange) {
 				isFirstArrayFormulaCell = this.nCol === oldFP.dynamicRange.c1 && this.nRow === oldFP.dynamicRange.r1;
 				// we check here and add the range with daf to the dependency sheet
-				// the problem arises in the absence of recalculation of the internal cell of the range because the isDirty flag is set to false
-				// wb.dependencyFormulas.addToBuildDependencyArray(oldFP);
 				if (isFirstArrayFormulaCell) {
 					wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
 				}
-				// if (this.ws.workbook.handlers) {
-				// 	this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.rangeValues, this, null, this.ws.getId());
-				// }
 			} else {
 				wb.dependencyFormulas.addToChangedCell(this);
 			}
@@ -13570,7 +13556,6 @@
 						newFP.setFormulaString(newFP.assemble());
 						//***dynamic-array-formula***
 						if(byRef && dynamicRange) {
-							// byRef может отличаться от dynamicRange в случаях когда массив не раскрыт(находится в одной ячейке, но возможный размер может быть больше)
 							newFP.dynamicRange = dynamicRange;
 							newFP.ref = byRef;
 							this.ws.formulaArrayLink = newFP;
@@ -13596,10 +13581,6 @@
 		this.setFormulaInternal(null);
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
-		// add check for dynamic ranges and adding to the dependency sheet
-		if (/*this.isEmptyTextString()*/oldFP && oldFP.getDynamicRef()) {
-			// check when deletion or when new text?
-		}
 		this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 		this.ws.workbook.sortDependency();
 		var DataNew = null;
@@ -13683,11 +13664,7 @@
 				var fText = "=" + this.formulaParsed.getFormula();
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
 					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
-			} 
-			// else if (arrayFormula && dynamicRange) {
-			// 	//***dynamic-array-formula***
-			// } 
-			else {
+			} else {
 				this.formulaParsed.removeDependencies();
 			}
 		}
@@ -14214,11 +14191,7 @@
 			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
 				this.ws.workbook.dependencyFormulas.addToChangedRange2(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
 				if (Val.value.getTextValue()) {
-					let dynamicRef = this.formulaParsed.getDynamicRef();
 					// non empty val, delete PF from cell
-					if (this.nRow === dynamicRef.r1 && this.nCol === dynamicRef.c1) {
-						// delete all the range
-					}
 					this.setFormulaInternal(null);
 				}
 			} else {
@@ -14226,9 +14199,7 @@
 				this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 			}
 
-			// this.setFormulaInternal(null);
 			this._setValueData(Val.value);
-			// this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 			this.ws.workbook.sortDependency();
 			if (History.Is_On()) {
 				DataNew = this.getValueData();
@@ -14385,7 +14356,6 @@
 					this.setValueNumberInternal(res.value ? 1 : 0);
 					break;
 				case cElementType.error:
-					// todo если ошибка spill не в первой ячейке массива, очищать ли ячейку?
 					this.setTypeInternal(CellValueType.Error);
 					this.setValueTextInternal(res.getValue().toString());
 					break;
@@ -16054,8 +16024,7 @@
 				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
-			// при формировании новых формул массива необходимо передавать информацию о динамическом массиве т.к. используется обычный ref 
-			// как вариант получать значение уже сформированной формулы для первой ячейки и проверять свойство dynamicRange(которое мы выставляем при первом создании PF для ячейки)
+			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used
 			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange);
 		});
 		History.EndTransaction();

@@ -3797,7 +3797,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let returnFormulaType = this.returnValueType;
 		if (cReturnFormulaType.setArrayRefAsArg === returnFormulaType) {
-			// todo проверить встречается ли данная ситуация
+			// todo check if this situation occurs
 			if (arg.length === 0 && parserFormula.ref) {
 				res = this.Calculate([new cArea(parserFormula.ref.getName(), parserFormula.ws)], opt_bbox, opt_defName, parserFormula.ws);
 			} else {
@@ -3816,8 +3816,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				if(1 === arrayIndexes[index]) {
 					res = true;
 				} else if(typeof arrayIndexes[index] === "object") {
-					//для данной проверки запрашиваем у объекта 0 индекс, там хранится значение индекса аргумента
-					//от которого зависит стоит ли вопринимать данный аргумент как массив или нет
+					// for this situation check object 0 for an index, the value of the argument index is stored there
+					// which determines whether a given argument should be treated as an array or not
 					let tempsArgIndex = arrayIndexes[index][0];
 					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
 						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
@@ -3844,28 +3844,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				if (!_checkArrayIndex) {
 					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type || cElementType.array === tempArg.type) {
 						res = true
-						/*if (replaceAreaByValue) {
-							// intersection||single ?
-							tempArg = tempArg.cross(opt_bbox);
-						} else if (replaceAreaByRefs) {
-							//добавляю специальные заглушки для функций row/column
-							//они работают с аргументами иначе, чем все остальные
-							//row - игнорируем в area колонки и проходимся только по строчкам и берём 1 колонку
-							//к примеру, area A1:B2 разбиваем на [a1,a1;a2,a2] вместо нормального [a1,b1;a2,b2]
-							var useOnlyFirstRow = "column" === this.name.toLowerCase() ? parserFormula.ref : null;
-							var useOnlyFirstColumn = "row" === this.name.toLowerCase() ? parserFormula.ref : null;
-							var _bbox = tempArg.getBBox0();
-							if (useOnlyFirstRow) {
-								firstArray = new Asc.Range(_bbox.c1, _bbox.r1, _bbox.c2, _bbox.r1);
-							} else if (useOnlyFirstColumn) {
-								firstArray = new Asc.Range(_bbox.c1, _bbox.r1, _bbox.c1, _bbox.r2);
-							} else {
-								tempArg = window['AscCommonExcel'].convertAreaToArrayRefs(tempArg, useOnlyFirstRow, useOnlyFirstColumn);
-							}
-						} else if(!replaceOnlyArray){
-							tempArg = window['AscCommonExcel'].convertAreaToArray(tempArg);
-						}
-						*/
 					}
 				}
 				if (res) {
@@ -7344,8 +7322,8 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	parserFormula.prototype.findRefByOutStack = function () {
-		// по outStack смотрим на все аргументы в формулах и сравниваем их с позициями arrayIndex для этой формулы
-		// проходимся в том же порядке что и .calculate
+		// using outStack, look at all the arguments in the formulas and compare them with the arrayIndex positions for this formula
+		// go through the stack in the same order as .calculate method
 		if (this.ref) {
 			return true;
 		}
@@ -7402,14 +7380,14 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					if (elemArr.length < argumentsCount) {
 						// elemArr = [];
-						// todo протестировать эти случаи в ms(есть ли ref)
+						// todo test these cases
 						return false;
 					} else if (argumentsCount + defNameArgCount > currentElement.argumentsMax) {
 						// elemArr = [];
-						// todo протестировать эти случаи в ms(есть ли ref)
+						// todo test these cases
 						return false;
 					} else {
-						// если operator - проверить каждый из аргументов на диапазон/массив
+						// if operator - check whether each of the arguments is a range or an array
 						let isOperator = currentElement.type === cElementType.operator;
 						let arg = [];
 						for (let i = 0; i < argumentsCount + defNameArgCount; i++) {
@@ -7427,7 +7405,6 @@ function parserFormula( formula, parent, _ws ) {
 	
 						let formulaArray = null;
 						if (currentElement.type === cElementType.func) {
-							//если данная функция не может возвращать массив, проходимся по всем элементам аргументов и если появляется массив, возвращаем true
 							formulaArray = cBaseFunction.prototype.checkFormulaArray2.call(currentElement, arg, opt_bbox, null, this, bIsSpecialFunction, argumentsCount);
 						} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
 							bIsSpecialFunction = true;
@@ -7436,7 +7413,7 @@ function parserFormula( formula, parent, _ws ) {
 						if(formulaArray) {
 							isRef = true;
 						} else {
-							// todo результаты SEQUENCE, RANDARRAY могут возвращать массив при использовании обычных значений в аргументах
+							// todo results SEQUENCE, RANDARRAY etc... can return an array when using regular values ​​in arguments
 							_tmp = currentElement.Calculate(arg, opt_bbox, null, this.ws, bIsSpecialFunction);
 						}
 
@@ -7606,7 +7583,7 @@ function parserFormula( formula, parent, _ws ) {
 			this.value = elemArr;
 
 			// check further dynamic range
-			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRange2(this.value, opt_bbox) : true;
+			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRangeByElement(this.value, opt_bbox) : true;
 			if (!isRangeCanFitIntoCells) {
 				this.aca = true;
 				this.ca = true;
@@ -7621,7 +7598,7 @@ function parserFormula( formula, parent, _ws ) {
 			this.value = elemArr.pop();
 
 			// check further dynamic range
-			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRange2(this.value, opt_bbox) : true;
+			isRangeCanFitIntoCells = window['AscCommonExcel'].bIsSupportDynamicArrays ? this.checkDynamicRangeByElement(this.value, opt_bbox) : true;
 			if (!isRangeCanFitIntoCells) {
 				this.aca = true;
 				this.ca = true;
@@ -8622,7 +8599,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	parserFormula.prototype.checkDynamicRange = function () {
-		/* this function checks if the current dynamic range can fit in the cells */
+		/* this function checks if the current value in formula can fit in the cells */
 		if (!this.dynamicRange) {
 			return true
 		}
@@ -8643,7 +8620,6 @@ function parserFormula( formula, parent, _ws ) {
 				let rangeRow = mainCell.nRow,
 					rangeCol = mainCell.nCol;
 
-				// let range = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1)
 				for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
 					for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
 						if (i === rangeRow && j === rangeCol) {
@@ -8678,8 +8654,8 @@ function parserFormula( formula, parent, _ws ) {
 		return false
 	};
 
-	parserFormula.prototype.checkDynamicRange2 = function (element, parentCell) {
-		/* this function checks if the current element can fit in the cells */
+	parserFormula.prototype.checkDynamicRangeByElement = function (element, parentCell) {
+		/* this function checks if element can fit in the cells */
 		if (!element || !parentCell) {
 			return true;
 		}
@@ -8700,7 +8676,6 @@ function parserFormula( formula, parent, _ws ) {
 				rangeCol = parentCell.c1;
 
 			let supposedDynamicRange = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1);
-			// let range = this.ws.getRange3(rangeRow, rangeCol, (rangeRow + dimensions.row) - 1, (rangeCol + dimensions.col) - 1)
 			for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
 				for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
 					if (i === rangeRow && j === rangeCol) {
@@ -8734,46 +8709,6 @@ function parserFormula( formula, parent, _ws ) {
 		return false
 	};
 
-	parserFormula.prototype.isFirstDynamicCellEmpty = function () {
-		if (!this.dynamicRange) {
-			return true
-		}
-
-		let i = this.dynamicRange.r1, j = this.dynamicRange.c1, res;
-		this.ws._getCell(i, j, function(cell) {
-			if (!(cell && cell.formulaParsed && cell.formulaParsed.dynamicRange)) {
-				res = true
-			}
-		});
-
-		return res
-	};
-
-	parserFormula.prototype.isDynamicRangeErr = function () {
-		// todo нужен ли метод проверяющий наличие/отсутствие ошибки spill в формуле?
-		if (!this.dynamicRange) {
-			return true
-		}
-
-		let i = this.dynamicRange.r1, j = this.dynamicRange.c1, res;
-		this.ws._getCell(i, j, function(cell) {
-			if (cell && cell.formulaParsed && cell.formulaParsed.getDynamicRef()) {
-				let val = cell.formulaParsed.value;
-				if (val && val.type === cElementType.error && val.errorType === cErrorType.cannot_be_spilled) {
-					res = true
-				}
-			}
-		});
-
-		return res
-	};
-	parserFormula.prototype.isDynamicRangeErr2 = function () {
-		if (!this.dynamicRange) {
-			return true
-		}
-
-		return false
-	};
 	function CalcRecursion() {
 		this.level = 0;
 		this.elemsPart = [];

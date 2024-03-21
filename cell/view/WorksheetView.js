@@ -18869,7 +18869,7 @@
 				// c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
-				if(c.bbox.isOneCell() ) {
+				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
 						var formulaRef = cell && cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
@@ -18920,11 +18920,12 @@
 					return;
 				}
 			} else {
-				// если выполняем запись не через cse, то проверяем формулу на наличие ref
-				// если ref есть - записываем формулу как формулу массива
+
 				if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
-					// check for ref in formula
-					let isRef = newFP.findRefByOutStack();	// check is formula has ref
+					/* if we write not through cse, then check the formula for the presence of ref */
+					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
+
+					let isRef = newFP.findRefByOutStack();
 					if (isRef) {
 						// if formula has ref, calculate it to get the final size of ref
 						let formulaRes = newFP.calculate();
@@ -18944,14 +18945,12 @@
 					} else if (newFP.ref) {
 						applyByArray = true;
 						ctrlKey = true;
-						//c = t._getRange(newFP.ref.c1, newFP.ref.r1, newFP.ref.c2, newFP.ref.r2);
-						//t.setSelection(newFP.ref);
 						dynamicSelectionRange = newFP.ref;
 					}
 				} else if (!applyByArray) {
+					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
 					let refInfo = ws.getRefDynamicInfo(newFP);
 					if (refInfo) {
-						// {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
 						if (refInfo.cannoChangeFormulaArray) {
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 								c_oAscError.Level.NoCritical);
@@ -18971,7 +18970,7 @@
 			History.StartTransaction();
 		}
 
-		// если есть формула используем setValue, иначе setValue2
+		// if there is a formula use setValue, otherwise setValue2
 		if (isFormula) {
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
 			//***array-formula***
@@ -19007,13 +19006,11 @@
 				t.model.workbook.addExternalReferences(newExternalReferences);
 			}
 
-			// перед тем как проставлять значение выбранным ячейка, необходимо проверить касается ли данный диапазон любого из массивов(daf) на странице
-			// собираем список всех затронутых массивов и проходимся по каждому из них
-			// если главная ячейка была затронута, то необходимо очистить весь массив(также нужно будет обновить список зависимостей DepGraph)
-			// если главная ячейка НЕ была затронута, нужно выполнить cell.setValue("") или Range.setValue("") для всех дочерних ячеек массива, а для главной выставить флаг aca=true
-			// далее проставлять значение для изначально измененных ячеек, а уже после этого ...
+			// before putting a value in the selected cell, need to check whether the given range concerns any of the arrays (daf) on the page
+			// collect a list of all affected arrays and go through each of them
+			// if the main cell was affected, then need to clear the entire array (we will also need to update the DepGraph dependency list)
+			// if the main cell has NOT been affected, we need to execute cell.setValue("") or Range.setValue("") for all child cells of the array, and set the aca=true flag for the main cell
 			if (changedDynamicArraysList) {
-				// go through changed dynamic arrays, and delete all|partitional values?
 				for (let array in changedDynamicArraysList) {
 					let arrayData = changedDynamicArraysList[array];
 					let formula = arrayData.formula;
@@ -19036,7 +19033,7 @@
 				ws.clearChangedArrayList();
 			}
 
-			// устанавливаем значение в выбранный диапазон
+			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
 			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? dynamicSelectionRange : null);
@@ -19345,7 +19342,6 @@
 				//***array-formula***
 				let ref = null;
 				let isDynamicRef = null;
-				// !!*
 				if (flags.ctrlKey && flags.shiftKey) {
 					//необходимо проверить на выделение массива частично
 					var activeRange = t.getSelectedRange();
@@ -19361,7 +19357,6 @@
 								c_oAscError.Level.NoCritical);
 							return false;
 						} else {
-							// !!*
 							activeRange._foreachNoEmpty(function (cell) {
 								ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
 
@@ -19385,8 +19380,7 @@
 						t._isLockedCells(lockedRange, /*subType*/null, saveCellValueCallback);
 					}
 				} else {
-					// !!*
-					//проверяем activeCell на наличие форулы массива
+					// check activeCell for the presence of an array formula
 					c._foreachNoEmpty(function (cell) {
 						if (cell) {
 							let formula = cell.formulaParsed;
@@ -22416,7 +22410,7 @@
 		const ws = this.model;
 		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
 		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
-		// помимо проверки cse формул, проверяем динамические массивы и заполняем список измененных массивов
+		// this function, in addition to checking cse formulas, checks dynamic arrays and fills in the list of changed arrays
 
 		let res = false;
 		for (let row = range.r1; row <= range.r2; row++) {
