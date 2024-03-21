@@ -109,23 +109,17 @@
     CPdfShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
 
         oDoc.CreateNewHistoryPoint({objects: [this]});
 
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
         for (let index = 0; index < aChars.length; ++index) {
             let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun)
-                oParagraph.AddToParagraph(oRun, true);
+            if (oRun) {
+                oContent.AddToParagraph(oRun, false);
+            }
         }
 
         this.SetNeedRecalc(true);
-        oContent.RecalculateCurPos();
-
         return true;
     };
     /**
@@ -139,7 +133,6 @@
 
         let oContent = this.GetDocContent();
         oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        oContent.RecalculateCurPos();
         this.SetNeedRecalc(true);
 
         if (AscCommon.History.Is_LastPointEmpty()) {
