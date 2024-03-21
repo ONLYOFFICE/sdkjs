@@ -649,6 +649,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							}
 							if (fPrepareElem) {
 								arr[i][j] = fPrepareElem(arr[i][j]);
+								if (checkOnError) {
+									if (arr[i][j].type === cElementType.error) {
+										return arr[i][j];
+									}
+								}
 							}
 							if (putValue) {
 								arr[i][j] = arr[i][j].getValue();
@@ -664,6 +669,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 			}
 			let _res = fPrepareElem ? fPrepareElem(this) : this;
+			if (fPrepareElem && checkOnError) {
+				if (this.type === cElementType.error) {
+					return this;
+				}
+			}
 			if (!arr[0]) {
 				arr[0] = [];
 			}

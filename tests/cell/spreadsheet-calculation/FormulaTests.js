@@ -31167,13 +31167,13 @@ $(function () {
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->boolean !");
 
-			//********** 20. @number / @boolean[][]<- @number[][] **********
+			//********** 19. @number / @boolean[][]<- @number[][] **********
 			initParamsCustomFunction([{type: "number"}, {type: "boolean[][]"}], "number[][]");
 
 			aTasks = [
 				{paramsType: ['number', 'number'], result: [["TRUE"]]},
-				//{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
-				//{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
 				{paramsType: ['number', 'bool'], result: [["TRUE"]]},
 				{paramsType: ['number', 'error'], result:"#REF!"},
 				{paramsType: ['number', 'array'], result: [["TRUE"]]},
@@ -31182,6 +31182,119 @@ $(function () {
 			];
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->number[][] !");
+
+			//********** 20. @number / @boolean[][]<- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "boolean[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [["TRUE"]]},
+				{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result: [["TRUE"]]},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result: [["TRUE"]]},
+				{paramsType: ['number', 'ref'], result: [["TRUE"]]},
+				{paramsType: ['number', 'range'], result: [["TRUE"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@BOOLEAN[][]->string[][] !");
+
+			//********** 21. @number / @number <- @boolean **********
+			initParamsCustomFunction([{type: "number"}, {type: "number"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: 1},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result: 1},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@number->boolean !");
+
+			//********** 22. @number / @string<- @boolean **********
+			initParamsCustomFunction([{type: "number"}, {type: "string"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: "10"},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result: "1"},
+				{paramsType: ['number', 'range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string->boolean !");
+
+			//********** 23. @number / @string[][]<- @boolean **********
+			initParamsCustomFunction([{type: "number"}, {type: "string[][]"}], "boolean");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result:"#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result:"#VALUE!"},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result:"#VALUE!"},
+				{paramsType: ['number', 'range'], result:"#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string[][]->boolean !");
+
+			//********** 24. @number / @string<- @boolean[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "string"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result:"#VALUE!"},
+				{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result:"#VALUE!"},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result:"#VALUE!"},
+				{paramsType: ['number', 'ref'], result:"#VALUE!"},
+				{paramsType: ['number', 'range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string->boolean[][] !");
+
+			//********** 24. @number / @string[][]<- @boolean[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "string[][]"}], "boolean[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [["10"]]},
+				{paramsType: ['number', 'stringNumber'], result: [["1"]]},
+				{paramsType: ['number', 'string'], result: [["test"]]},
+				{paramsType: ['number', 'bool'], result: [["TRUE"]]},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result: [["1"]]},
+				{paramsType: ['number', 'ref'], result: [["1"]]},
+				{paramsType: ['number', 'range'], result: [["1"]]}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@string[][]->boolean[][] !");
+
+			//********** 25. @number / @boolean[][]<- @string[][] **********
+			initParamsCustomFunction([{type: "number"}, {type: "boolean[][]"}], "string[][]");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: [["TRUE"]]},
+				{paramsType: ['number', 'stringNumber'], result:"#VALUE!"},
+				{paramsType: ['number', 'string'], result:"#VALUE!"},
+				{paramsType: ['number', 'bool'], result: [["TRUE"]]},
+				{paramsType: ['number', 'error'], result:"#REF!"},
+				{paramsType: ['number', 'array'], result: [["TRUE"]]},
+				{paramsType: ['number', 'ref'], result: [["TRUE"]]},
+				{paramsType: ['number', 'range'], result: [["TRUE"]]},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! _@NUMBER_@boolean[][]->string[][] !");
+
 		});
 	});
 

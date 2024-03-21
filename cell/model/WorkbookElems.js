@@ -17220,9 +17220,13 @@ function RangeDataManagerElem(bbox, data)
 				});
 				break;
 			case "boolean[][]":
-				let isError;
-				res = _elem.toArray(true, true, function (elem) {
-					return elem.tocBool();
+				res = _elem.toArray(true, true, function (arrayElem) {
+					let _res = arrayElem.tocBool();
+					if (_res.type !== AscCommonExcel.cElementType.error && _res.toBool) {
+						return _res;
+					} else {
+						return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+					}
 				});
 				break;
 		}
@@ -17254,7 +17258,7 @@ function RangeDataManagerElem(bbox, data)
 				if (typeof val === "object") {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = new AscCommonExcel.cBool(!!val);
+					res = this._toBool(val);
 				}
 				break;
 			case "number[][]":
@@ -17280,6 +17284,18 @@ function RangeDataManagerElem(bbox, data)
 				break;
 		}
 		return res;
+	};
+
+	CCustomFunctionEngine.prototype._toBool = function (val) {
+		if (this._checkBool(val)) {
+			return new AscCommonExcel.cBool(val);
+		} else {
+			if (Number.isFinite(val)) {
+				return new AscCommonExcel.cNumber(val);
+			} else {
+				return new AscCommonExcel.cString(val);
+			}
+		}
 	};
 
 	CCustomFunctionEngine.prototype._tocArray = function (array, resType, checkOnError) {
@@ -17311,11 +17327,7 @@ function RangeDataManagerElem(bbox, data)
 						oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
 						break;
 					case AscCommonExcel.cElementType.bool:
-						if (this._checkBool(array[i][j])) {
-							oArray[i][j] = new AscCommonExcel.cBool(array[i][j]);
-						} else {
-							return new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
-						}
+						oArray[i][j] = this._toBool((array[i][j]));
 						break;
 				}
 			}
@@ -17330,7 +17342,7 @@ function RangeDataManagerElem(bbox, data)
 		if (val === true || val === false) {
 			return true;
 		} else {
-			val = val.toLowerCase();
+			val = val.toLowerCase && val.toLowerCase();
 			if (val === "true" || val === "false") {
 				return true;
 			}
