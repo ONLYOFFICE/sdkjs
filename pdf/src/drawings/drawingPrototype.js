@@ -97,7 +97,7 @@
     };
     CPdfDrawingPrototype.prototype.GetDocument = function() {
         if (this.group)
-            return this.group.GetDocument();
+            return this.group.getLogicDocument();
 
         return this._doc;
     };
@@ -141,7 +141,7 @@
     };
     CPdfDrawingPrototype.prototype.GetPage = function() {
         if (this.group)
-            return this.group.GetPage();
+            return this.group.Get_AbsolutePage();
         
         return this._page;
     };
