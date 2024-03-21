@@ -6351,7 +6351,7 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
-        var shape = new AscFormat.CShape(this.TempMainObject);
+        var shape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape(this.TempMainObject) : new AscFormat.CShape(this.TempMainObject);
 
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;

@@ -1812,10 +1812,26 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
+        let nPageW  = oPageInfo.width_mm;
+        let nPageH  = oPageInfo.height_mm;
+
+        let nExtX   = nPageW * 2 /3;
+        let nExtY   = nPageH / 5;
+        let nPosX   = (nPageW - nExtX) / 2;
+        let nPosY   = nPageH / 5;
+
         let oDrawingObjects = this.Viewer.DrawingObjects;
         let oSmartArt       = new AscPDF.CPdfSmartArt();
 
         oSmartArt.fillByPreset(nSmartArtType);
+        oSmartArt.fitForSizes(nExtY, nExtX);
+        oSmartArt.fitFontSize();
+        oSmartArt.recalculateBounds();
+        // oSmartArt.changeSize(nExtX / oSmartArt.extX, nExtY / oSmartArt.extY);
+        let oXfrm = oSmartArt.getXfrm();
+        oXfrm.setOffX(nPosX);
+        oXfrm.setOffY(nPosY);
+        oSmartArt.normalize();
         oSmartArt.setRecalculateInfo();
 		
         let oPh;
@@ -1838,12 +1854,10 @@ var CPresentation = CPresentation || function(){};
 		oDrawingObjects.checkChartTextSelection();
 		oDrawingObjects.resetSelection();
 		oSmartArt.select(oDrawingObjects, 0);
-		// oDrawingObjects.startRecalculate();
-		// oDrawingObjects.sendGraphicObjectProps();
+		
 
         oDrawingObjects.clearTrackObjects();
         oDrawingObjects.clearPreTrackObjects();
-        // oDrawingObjects.updateOverlay();
         oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
         oDrawingObjects.updateSelectionState();
 
@@ -2309,9 +2323,29 @@ var CPresentation = CPresentation || function(){};
         });
     };
     CPDFDoc.prototype.GetDrawingById = function(sId) {
-        return this.drawings.find(function(drawing) {
-            return drawing.GetId() == sId;
+        if (!sId) {
+            return null;
+        }
+
+        function findInDrawing(drawing) {
+            let isFound = false;
+            if (drawing.GetId() == sId) {
+                isFound = true;
+                return isFound;
+            }
+
+            if (drawing.isGroup()) {
+                isFound = drawing.spTree.find(findInDrawing)
+            }
+
+            return isFound;
+        };
+
+        let oDrawing = this.drawings.find(function(drawing) {
+            return findInDrawing(drawing);
         });
+
+        return oDrawing;
     };
     
     /**
