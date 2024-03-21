@@ -475,13 +475,13 @@
         this.WordControl.m_oLogicDocument.ReplaceSearchElement(sReplace, true, null, false);
     };
 	/**
-	 * Find and select the next occurrence of the text starting at the current position.
+	 * Finds and selects the next occurrence of the text starting at the current position.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @alias SearchAndReplace
-	 * @param {Object} oProperties - An object which contains the search and replacement strings.
+	 * @alias SearchNext
+	 * @param {Object} oProperties - An object which contains the search string.
 	 * @param {string} oProperties.searchString - The search string.
-	 * @param {string} oProperties.replaceString - The replacement string.
+	 * @param {boolean} [oProperties.matchCase=true] - Case sensitive or not.
 	 * @param {boolean} [isForward=true] - Search direction.
 	 * @returns {boolean} returns false if text was not found
 	 */

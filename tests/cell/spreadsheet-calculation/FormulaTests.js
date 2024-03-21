@@ -1564,6 +1564,362 @@ $(function () {
 			assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "#N/A", "Array 4x3. [2,2]");
 		}
 
+		ws.getRange2("A200").setValue("1");
+		ws.getRange2("A201").setValue("3");
+		ws.getRange2("B200").setValue("3");
+		ws.getRange2("B201").setValue("4");
+		ws.getRange2("D200").setValue("1");
+		ws.getRange2("D201").setValue("2");
+		ws.getRange2("D202").setValue("3");
+		ws.getRange2("D203").setValue("4");
+		ws.getRange2("D204").setValue("5");
+		ws.getRange2("D205").setValue("6");
+		ws.getRange2("D206:D300").setValue("");
+
+		// for bug 54877
+		oParser = new parserFormula("A200:B201*D200:D203", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "A200:B201*D200:D203. Result - array 4x2");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Array 4x2. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Array 4x2. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Array 4x2. [2,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Array 4x2. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 8, "Array 4x2. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", "Array 4x2. [2,1]");
+		}
+
+		oParser = new parserFormula("A200:B201*D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "A200:B201*D200:D300. Result - array 100x2");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Array 100x2. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Array 100x2. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Array 100x2. [2,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Array 100x2. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 8, "Array 100x2. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", "Array 100x2. [2,1]");
+		}
+
+		oParser = new parserFormula("D200:D300*2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300*2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 6, "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 8, "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 10, "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 12, "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 0, "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), 0, "Array 100x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2*D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2*D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 6, "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 8, "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 10, "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 12, "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 0, "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), 0, "Array 100x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// conditional check and & operator
+		// <
+		oParser = new parserFormula("D200:D300<2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		
+		oParser = new parserFormula("2<D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		
+		// <=
+		oParser = new parserFormula("D200:D300<=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2<=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// >
+		oParser = new parserFormula("D200:D300>2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300>2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		
+		oParser = new parserFormula("2>D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2>D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// >=
+		oParser = new parserFormula("D200:D300>=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300>=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2>=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2>=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// =
+		oParser = new parserFormula("D200:D300=2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300=2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		oParser = new parserFormula("2=D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2=D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "FALSE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "FALSE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "FALSE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "FALSE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "FALSE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "FALSE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "FALSE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "FALSE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+
+		// <>
+		oParser = new parserFormula("D200:D300<>2", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "D200:D300<>2. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		oParser = new parserFormula("2<>D200:D300", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E200:H210").bbox);
+		assert.ok(oParser.parse(), "2<>D200:D300. Result - array 100x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "TRUE", "Array 100x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "FALSE", "Array 100x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "TRUE", "Array 100x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "TRUE", "Array 100x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "TRUE", "Array 100x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "TRUE", "Array 100x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "TRUE", "Array 100x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "TRUE", "Array 100x1. [7,0]");
+			assert.strictEqual(array.getElementRowCol(8, 0).getValue(), "TRUE", "Array 100x1. [8,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 100x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 100x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 100x1. [2,1]");
+		}
+		
+		// & 
+		ws.getRange2("D204").setValue("A");
+		ws.getRange2("D205").setValue("B");
+		ws.getRange2("D206:D210").setValue("");
+		ws.getRange2("E204").setValue("A");
+		ws.getRange2("E205").setValue("B");
+		ws.getRange2("E206").setValue("C");
+		ws.getRange2("E207").setValue("D");
+		ws.getRange2("E208:E210").setValue("");
+
+		oParser = new parserFormula("D204:D210&E204:E210", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E300:H310").bbox);
+		assert.ok(oParser.parse(), "D204:D210&E204:E210. Result - array 7x1");
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "AA", "Array 7x1. [0,0]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "BB", "Array 7x1. [1,0]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "C", "Array 7x1. [2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "D", "Array 7x1. [3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Array 7x1. [4,0]");
+			assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "", "Array 7x1. [5,0]");
+			assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "", "Array 7x1. [6,0]");
+			assert.strictEqual(array.getElementRowCol(7, 0).getValue(), "", "Array 7x1. [7,0]");
+
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Array 7x1. [0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Array 7x1. [1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", "Array 7x1. [2,1]");
+		}
+
 	});
 
 	QUnit.test("Test: \"ACOS\"", function (assert) {
@@ -7481,6 +7837,7 @@ $(function () {
 		ws.getRange2("C8").setValue("Tom");
 		ws.getRange2("C9").setValue("Sarah");
 
+		ws.getRange2("D:E").cleanAll();
 		oParser = new parserFormula("SUMIFS(A2:A9, B2:B9, \"=A*\", C2:C9, \"Tom\")", "A10", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 20);
@@ -14678,6 +15035,68 @@ $(function () {
 		oParser = new parserFormula("AGGREGATE(19,3,A101:B105,2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 64);
+
+		// for bug 38994
+		ws.getRange2("B101").setValue("");
+		ws.getRange2("B102").setValue("0");
+		ws.getRange2("B103").setValue("0");
+		ws.getRange2("B104").setValue("1");
+		ws.getRange2("B105").setValue("0");
+		ws.getRange2("B106").setValue("0");
+		ws.getRange2("B107").setValue("1");
+
+		ws.getRange2("C101").setValue("#DIV/0!");
+		ws.getRange2("C102").setValue("#DIV/0!");
+		ws.getRange2("C103").setValue("#DIV/0!");
+		ws.getRange2("C104").setValue("3");
+		ws.getRange2("C105").setValue("#DIV/0!");
+		ws.getRange2("C106").setValue("#DIV/0!");
+		ws.getRange2("C107").setValue("37");
+
+		ws.getRange2("D101").setValue("");
+		ws.getRange2("D102").setValue("1");
+		ws.getRange2("D103").setValue("2");
+		ws.getRange2("D104").setValue("3");
+		ws.getRange2("D105").setValue("4");
+		ws.getRange2("D106").setValue("5");
+		ws.getRange2("D107").setValue("999");
+
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 101, 'Result of AGGREGATE(15,6,ROW(B101:B107),1)');
+		
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 103, 'Result of AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+
+		oParser = new parserFormula("AGGREGATE(15,6,C101:C107,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,6,C101:C107,1)');
+
+		// cross test
+		let bbox = ws.getRange2("G101").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G103").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G104").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G107").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
 
 	});
 

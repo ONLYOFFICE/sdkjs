@@ -389,21 +389,21 @@ function (window, undefined) {
 	cAGGREGATE.prototype.isXLFN = true;
 	cAGGREGATE.prototype.argumentsType = [argType.number, argType.number, [argType.reference]];
 	//TODO начиная со 3 аргумента все оставшиеся - массивы
-	cAGGREGATE.prototype.arrayIndexes = {2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
+	cAGGREGATE.prototype.arrayIndexes = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1};
 	cAGGREGATE.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var nFunc = argClone[0].getValue();
-		var f = null;
+		let nFunc = argClone[0].getValue();
+		let f = null;
 		switch (nFunc) {
 			case AGGREGATE_FUNC_AVE:
 				f = AscCommonExcel.cAVERAGE.prototype;
@@ -482,10 +482,10 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var nOption = argClone[1].getValue();
-		var ignoreHiddenRows = false;
-		var ignoreErrorsVal = false;
-		var ignoreNestedStAg = false;
+		let nOption = argClone[1].getValue();
+		let ignoreHiddenRows = false;
+		let ignoreErrorsVal = false;
+		let ignoreNestedStAg = false;
 		switch (nOption) {
 			case 0 : // ignore nested SUBTOTAL and AGGREGATE functions
 				ignoreNestedStAg = true;
@@ -519,20 +519,20 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 		}
 
-		var res;
+		let res;
 		if (f) {
-			var oldExcludeHiddenRows = f.excludeHiddenRows;
-			var oldExcludeErrorsVal = f.excludeErrorsVal;
-			var oldIgnoreNestedStAg = f.excludeNestedStAg;
+			let oldExcludeHiddenRows = f.excludeHiddenRows;
+			let oldExcludeErrorsVal = f.excludeErrorsVal;
+			let oldIgnoreNestedStAg = f.excludeNestedStAg;
 
 			f.excludeHiddenRows = ignoreHiddenRows;
 			f.excludeErrorsVal = ignoreErrorsVal;
 			f.excludeNestedStAg = ignoreNestedStAg;
 
-			var newArgs = [];
+			let newArgs = [];
 			//14 - 19 особенные функции, требующие второго аргумента
-			var doNotCheckRef = nFunc >= 14 && nFunc <= 19;
-			for (var i = 2; i < arg.length; i++) {
+			let doNotCheckRef = nFunc >= 14 && nFunc <= 19;
+			for (let i = 2; i < arg.length; i++) {
 				//аргумент может быть только ссылка на ячейку или диапазон ячеек
 				//в противном случае - ошибка
 				if (doNotCheckRef || this.checkRef(arg[i])) {
