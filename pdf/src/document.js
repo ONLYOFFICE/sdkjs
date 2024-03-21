@@ -1179,10 +1179,8 @@ var CPresentation = CPresentation || function(){};
         e.IsLocked = false;
 
         oDrDoc.UnlockCursorType();
-        this.UpdateCopyCutState();
-        this.UpdateParagraphProps();
-        this.UpdateTextProps();
-        this.Api.sync_EndCatchSelectedElements();
+        
+        this.UpdateInterface();
         oViewer.onUpdateOverlay();
     };
 
@@ -2281,6 +2279,10 @@ var CPresentation = CPresentation || function(){};
         this.TurnOffHistory();
 
         oViewer.DrawingObjects.resetSelection();
+
+        if (this.activeDrawing == oDrawing) {
+            this.activeDrawing = null;
+        }
     };
     /**
 	 * Move page to annot (if annot is't visible)
@@ -2690,10 +2692,32 @@ var CPresentation = CPresentation || function(){};
 	// Work with interface
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CPDFDoc.prototype.UpdateInterface = function() {
+        this.Api.sync_BeginCatchSelectedElements();
+
+        let oController = this.Viewer.DrawingObjects;
+        let oDrawingPr  = oController.getDrawingProps();
+
+        let oImgPr      = oDrawingPr.imageProps;
+		let oSpPr       = oDrawingPr.shapeProps;
+		let oChartPr    = oDrawingPr.chartProps;
+		let oTblPr      = oDrawingPr.tableProps;
+		let oParaPr     = oController.getParagraphParaPr();
+		let oTextPr     = oController.getParagraphTextPr()
+
+        if (oSpPr) {
+            oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
+            this.Api.sync_shapePropCallback(oSpPr);
+            this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
+            this.Api.sync_Vert(oSpPr.vert);
+        }
+
         this.UpdateUndoRedo();
         this.UpdateCommentPos();
+        this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();
+        this.Api.sync_EndCatchSelectedElements();
+        
         Asc.editor.CheckChangedDocument();
     };
 
@@ -2737,10 +2761,8 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.UpdateParagraphProps = function() {
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing  = this.activeDrawing;
+        let oDrawing    = this.activeDrawing;
 
-        // let oParaPr = new AscWord.CParaPr();
-        
         if (oDrawing && oDrawing.IsTextShape()) {
             let oParaPr = oDrawing.GetCalculatedParaPr();
             isCanIncreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(true);
@@ -2748,6 +2770,7 @@ var CPresentation = CPresentation || function(){};
             Asc.editor.sendEvent("asc_canIncreaseIndent", isCanIncreaseInd);
             Asc.editor.sendEvent("asc_canDecreaseIndent", isCanDecreaseInd);
             Asc.editor.UpdateParagraphProp(oParaPr);
+            Asc.editor.sync_PrPropCallback(oParaPr);
         }
     };
     CPDFDoc.prototype.UpdateTextProps = function() {

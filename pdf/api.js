@@ -486,8 +486,7 @@
 		
 		return textObj.Text;
 	};
-	PDFEditorApi.prototype.asc_AddMath2 = function(Type)
-	{
+	PDFEditorApi.prototype.asc_AddMath2 = function(Type) {
 		let oDoc	= this.getPDFDoc();
 		let oTextPr	= oDoc.GetDirectTextPr();
 
@@ -496,8 +495,41 @@
 		oDoc.AddToParagraph(oMathElement, false);
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b)
-	{
+	PDFEditorApi.prototype.sync_shapePropCallback = function(pr) {
+		var obj = AscFormat.CreateAscShapePropFromProp(pr);
+		if (pr.fill != null && pr.fill.fill != null && pr.fill.fill.type == Asc.c_oAscFill.FILL_TYPE_BLIP) {
+			this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(pr.fill.fill.RasterImageId);
+		}
+		// else {
+		// 	this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(null);
+		// }
+
+		var oTextArtProperties = pr.textArtProperties;
+		if (oTextArtProperties && oTextArtProperties.Fill && oTextArtProperties.Fill.fill && oTextArtProperties.Fill.fill.type == Asc.c_oAscFill.FILL_TYPE_BLIP) {
+			this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(oTextArtProperties.Fill.fill.RasterImageId);
+		}
+		// else {
+		// 	this.WordControl.m_oDrawingDocument.DrawImageTextureFillTextArt(null);
+		// }
+
+
+		var _len = this.SelectedObjectsStack.length;
+		if (_len > 0) {
+			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Shape) {
+				this.SelectedObjectsStack[_len - 1].Value = obj;
+				return;
+			}
+		}
+
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Shape, obj);
+	};
+	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
+		this.sendEvent("asc_onVerticalTextAlign", align);
+	};
+	PDFEditorApi.prototype.sync_Vert = function(vert) {
+		this.sendEvent("asc_onVert", vert);
+	};
+	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b) {
 		// from edit mode
 		if (nType == undefined) {
 			this.getPDFDoc().SetHighlight(r, g, b, opacity);

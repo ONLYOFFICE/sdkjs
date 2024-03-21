@@ -132,7 +132,7 @@ CGraphicObjectsPdf.prototype.cursorMoveRight = function(AddToSelect, Word, bFrom
 
         this.moveSelectedObjectsByDir([1, null], Word);
     }
-},
+};
 
 
 CGraphicObjectsPdf.prototype.cursorMoveUp = function(AddToSelect, Word) {
@@ -163,7 +163,7 @@ CGraphicObjectsPdf.prototype.cursorMoveUp = function(AddToSelect, Word) {
             return;
         this.moveSelectedObjectsByDir([null, -1], Word);
     }
-},
+};
 
 CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
     var target_text_object = AscFormat.getTargetTextObject(this);
@@ -193,8 +193,11 @@ CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
             return;
         this.moveSelectedObjectsByDir([null, 1], Word);
     }
-},
+};
 
+CGraphicObjectsPdf.prototype.getDrawingProps = function () {
+    return this.getDrawingPropsFromArray(this.getSelectedArray());
+};
 
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
