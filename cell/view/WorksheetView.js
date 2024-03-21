@@ -18949,42 +18949,18 @@
 						dynamicSelectionRange = newFP.ref;
 					}
 				} else if (!applyByArray) {
-					applyByArray = true;
-					ctrlKey = true;
-
-					if (newFP.ref) {
-						dynamicSelectionRange = newFP.ref;
-					} else {
-						let tempRef = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow), cannoChangeFormulaArray = false;
-						newFP.ref = tempRef;
-
-						let formulaRes = newFP.calculate();
-						let dimension = formulaRes.getDimensions();
-						let newR2 = (newFP.parent.nRow + dimension.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (newFP.parent.nRow + dimension.row - 1);
-						let newC2 = (newFP.parent.nCol + dimension.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (newFP.parent.nCol + dimension.col - 1);
-
-						let tempDynamicSelectionRange = this.model.getRange3(newFP.parent.nRow, newFP.parent.nCol, newR2, newC2);
-						tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
-							let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
-
-							if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
-								cannoChangeFormulaArray = true;
-								return false;
-							}
-						});
-
-						if (cannoChangeFormulaArray) {
+					let refInfo = ws.getRefDynamicInfo(newFP);
+					if (refInfo) {
+						// {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
+						if (refInfo.cannoChangeFormulaArray) {
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 								c_oAscError.Level.NoCritical);
 							return false;
 						}
-
-						if (tempDynamicSelectionRange.bbox.isOneCell()) {
-							applyByArray = false;
-							ctrlKey = false;
-						}
-
-						dynamicSelectionRange = tempDynamicSelectionRange.bbox;
+	
+						applyByArray = refInfo.applyByArray;
+						ctrlKey = refInfo.ctrlKey;
+						dynamicSelectionRange = refInfo.dynamicRange;
 					}
 				}
 			}

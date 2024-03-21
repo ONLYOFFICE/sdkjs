@@ -31155,7 +31155,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"Dynamic array test\"", function (assert) {
-		let result, resultSize, bboxParent, cellWithFormula;
+		let bboxParent, cellWithFormula, formulaInfo, resultRow, resultCol, applyByArray;
 			
 		// wb.dependencyFormulas.unlockRecal();
 
@@ -31178,115 +31178,263 @@ $(function () {
 
 		oParser = new parserFormula('A1:A3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:A3');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in =A1:A3');
-		assert.strictEqual(resultSize.col, 1, '1 cols in =A1:A3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:A3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =A1:A3');
+		assert.strictEqual(resultCol, 1, 'Cols in =A1:A3');
 
+		
 		oParser = new parserFormula('{1;2;3}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1;2;3}');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in ={1;2;3}');
-		assert.strictEqual(resultSize.col, 1, '1 cols in ={1;2;3}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1;2;3} array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in ={1;2;3}');
+		assert.strictEqual(resultCol, 1, 'Cols in ={1;2;3}');
 
 		oParser = new parserFormula('A1:C1', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:C1');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1, '1 rows in =A1:C1');
-		assert.strictEqual(resultSize.col, 3, '3 cols in =A1:C1');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:C1 array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =A1:C1');
+		assert.strictEqual(resultCol, 3, 'Cols in =A1:C1');
 
 		oParser = new parserFormula('{1,2,3}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2,3}');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1, '1 rows in ={1,2,3}');
-		assert.strictEqual(resultSize.col, 3, '3 cols in ={1,2,3}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2,3} array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in ={1,2,3}');
+		assert.strictEqual(resultCol, 3, 'Cols in ={1,2,3}');
 
 		oParser = new parserFormula('A1:C3', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:C3');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in =A1:C3');
-		assert.strictEqual(resultSize.col, 3, '3 cols in =A1:C3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:C3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =A1:C3');
+		assert.strictEqual(resultCol, 3, 'Cols in =A1:C3');
 
 		oParser = new parserFormula('{1,2;3,4}', cellWithFormula, ws);
 		assert.ok(oParser.parse(), '{1,2;3,4}');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 2, '2 rows in ={1,2;3,4}');
-		assert.strictEqual(resultSize.col, 2, '2 cols in ={1,2;3,4}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2;3,4} array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in ={1,2;3,4}');
+		assert.strictEqual(resultCol, 2, 'Cols in ={1,2;3,4}');
 
 		oParser = new parserFormula('SIN(A1:A3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:A3)');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN(A1:A3)');
-		assert.strictEqual(resultSize.col, 1, '1 cols in =SIN(A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1:A3)');
 
 		oParser = new parserFormula('SIN({1;2;3})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1;2;3})');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN({1;2;3})');
-		assert.strictEqual(resultSize.col, 1, '1 cols in =SIN({1;2;3})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1;2;3}) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN({1;2;3})');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN({1;2;3})');
 
 		oParser = new parserFormula('SIN(A1:C1)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:C1)');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1, '1 rows in =SIN(A1:C1)');
-		assert.strictEqual(resultSize.col, 3, '3 cols in =SIN(A1:C1)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:C1) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(A1:C1)');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN(A1:C1)');
 
 		oParser = new parserFormula('SIN({1,2,3})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1,2,3})');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1, '3 rows in =SIN({1,2,3})');
-		assert.strictEqual(resultSize.col, 3, '1 cols in =SIN({1,2,3})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1,2,3}) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN({1,2,3})');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN({1,2,3})');
 
 		oParser = new parserFormula('SIN(A1:C3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN(A1:C3)');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 3, '3 rows in =SIN(A1:C3)');
-		assert.strictEqual(resultSize.col, 3, '3 cols in =SIN(A1:C3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1:C3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1:C3)');
+		assert.strictEqual(resultCol, 3, 'Cols in =SIN(A1:C3)');
 
 		oParser = new parserFormula('SIN({1,2;3,4})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'SIN({1,2;3,4})');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 2, '3 rows in =SIN({1,2;3,4})');
-		assert.strictEqual(resultSize.col, 2, '1 cols in =SIN({1,2;3,4})');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN({1,2;3,4}) array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in =SIN({1,2;3,4})');
+		assert.strictEqual(resultCol, 2, 'Cols in =SIN({1,2;3,4})');
 
 		oParser = new parserFormula('A:A', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A:A');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1048576, '1048576 rows in =A:A');
-		assert.strictEqual(resultSize.col, 1, '1 cols in =A:A');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A:A array formula');
+		assert.strictEqual(resultRow, AscCommon.gc_nMaxRow, 'Rows in =A:A from D1');
+		assert.strictEqual(resultCol, 1, 'Cols in =A:A from D1');
 
 		oParser = new parserFormula('A1:XFD1', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'A1:XFD1');
-		oParser.setArrayFormulaRef(bboxParent);
-		result = oParser.calculate();
-		resultSize = result && result.getDimensions();
-		assert.strictEqual(resultSize.row, 1, '1048576 rows in =A1:XFD1');
-		assert.strictEqual(resultSize.col, 16384, '1 cols in =A1:XFD1');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =A1:XFD1 array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =A1:XFD1 from D1');
+		assert.strictEqual(resultCol, AscCommon.gc_nMaxCol - 3, 'Cols in =A1:XFD1 from D1');
+		
+
+		oParser = new parserFormula('SIN(A1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SIN(A1) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(A1)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1)');
+		
+
+		oParser = new parserFormula('SUM(A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3)');
+
+
+		oParser = new parserFormula('SUM(A1:A3+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(A1:A3+A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(A1:A3+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3+A1:A3)');
+
+		oParser = new parserFormula('SUM(A1:A3+A1:A3)+A1:A3', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(A1:A3+A1:A3)+A1:A3');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SUM(A1:A3+A1:A3)+A1:A3 array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SUM(A1:A3+A1:A3)+A1:A3');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(A1:A3+A1:A3)+A1:A3');
+
+
+		oParser = new parserFormula('SUM(SIN(A1:A3)+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(A1:A3)+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(A1:A3)+A1:A3) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(A1:A3)+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(A1:A3)+A1:A3)');
+
+
+		oParser = new parserFormula('SUM(SIN(SUM(A1:A3)))', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(SUM(A1:A3)))');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SUM(SIN(SUM(A1:A3))) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SUM(SIN(SUM(A1:A3)))');
+		assert.strictEqual(resultCol, 1, 'Cols in =SUM(SIN(SUM(A1:A3)))');
+
+
+		oParser = new parserFormula('SIN(SUM(SIN(A1:A3)))', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(SUM(SIN(A1:A3)))');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, false, 'Is =SIN(SUM(SIN(A1:A3))) array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in =SIN(SUM(SIN(A1:A3)))');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(SUM(SIN(A1:A3)))');
+
+
+		oParser = new parserFormula('COS(SIN(A1)*SUM(A1:A3)+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =COS(SIN(A1)*SUM(A1:A3)+A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =COS(SIN(A1)*SUM(A1:A3)+A1:A3)');
+
+
+		oParser = new parserFormula('SIN(A1+A1:A3)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'SIN(A1+A1:A3)');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is =SIN(A1+A1:A3) array formula');
+		assert.strictEqual(resultRow, 3, 'Rows in =SIN(A1+A1:A3)');
+		assert.strictEqual(resultCol, 1, 'Cols in =SIN(A1+A1:A3)');
+
+
+		oParser = new parserFormula('{1,2}*{3;4}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{1,2}*{3;4}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={1,2}*{3;4} array formula');
+		assert.strictEqual(resultRow, 2, 'Rows in ={1,2}*{3;4}');
+		assert.strictEqual(resultCol, 2, 'Cols in ={1,2}*{3;4}');
+
+		oParser = new parserFormula('{2}*{2}', cellWithFormula, ws);
+		assert.ok(oParser.parse(), '{2}*{2}');
+		formulaInfo = ws.getRefDynamicInfo(oParser);
+		resultRow = formulaInfo && formulaInfo.dynamicRange.getHeight();
+		resultCol = formulaInfo && formulaInfo.dynamicRange.getWidth();
+		applyByArray = formulaInfo && formulaInfo.applyByArray;
+		assert.strictEqual(applyByArray, true, 'Is ={2}*{2} array formula');
+		assert.strictEqual(resultRow, 1, 'Rows in ={1,2}*{3;4}');
+		assert.strictEqual(resultCol, 1, 'Cols in ={1,2}*{3;4}');
 
 	});
 

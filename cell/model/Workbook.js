@@ -12997,6 +12997,42 @@
 			}
 		}
 	};
+	Worksheet.prototype.getRefDynamicInfo = function (formula) {
+		if (formula) {
+			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannoChangeFormulaArray = false; 
+				
+			if (formula.ref) {
+				dynamicRange = formula.ref;
+			} else {
+				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+				formula.ref = tempRef;
+
+				let formulaResult = formula.calculate();
+				let arraySize = formulaResult.getDimensions(true);
+				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
+				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
+
+				let tempDynamicSelectionRange = this.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
+				tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
+					let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
+
+					if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
+						cannoChangeFormulaArray = true;
+						return false;
+					}
+				});
+
+				if (tempDynamicSelectionRange.bbox.isOneCell() && (formulaResult.type !== cElementType.array && formulaResult.type !== cElementType.cellsRange && formulaResult.type !== cElementType.cellsRange3D)) {
+					applyByArray = false;
+					ctrlKey = false;
+				}
+
+				dynamicRange = tempDynamicSelectionRange.bbox;
+			}
+
+			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannoChangeFormulaArray: cannoChangeFormulaArray};
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
