@@ -8781,13 +8781,13 @@
                     return oThis.ReadTimelineCaches(t, l, oThis.oWorkbook.timelineCaches);
                 });
             }
-            else if (c_oSerWorkbookTypes.Metadata === type)
+            /*else if (c_oSerWorkbookTypes.Metadata === type)
             {
                 this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
                 });
-            }
+            }*/
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -10827,14 +10827,14 @@
 				} else {
                     oCell.setValueNumberInternal(val);
 				}
-            }   else if (c_oSerCellTypes.CellMetadata === type)
+            }   /*else if (c_oSerCellTypes.CellMetadata === type)
             {
                 oCell.cm = this.stream.GetULong();
             }
             else if (c_oSerCellTypes.ValueMetadata === type)
             {
                 oCell.vm = this.stream.GetULong();
-            }
+            }*/
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;

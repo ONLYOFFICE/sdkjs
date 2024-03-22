@@ -15045,12 +15045,6 @@
 				this.setValueTextInternal(text);
 			}
 		}
-		/*if (0 !== (flags & 0x4000)) {
-			this.cm = stream.GetULongLE();
-		}
-		if (0 !== (flags & 0x8000)) {
-			this.vm = stream.GetULongLE();
-		}*/
 
 		stream.Seek2(end);
 	};
@@ -15248,26 +15242,12 @@
 			flags = this.toXLSBFormula(stream, formulaToWrite, isBlankFormula);
 		}
 
-		this.cm = 1
-		this.vm = 1
-		/*if (null != this.cm) {
-			flags |= 0x4000;
-		}
-		if (null != this.vm) {
-			flags |= 0x8000;
-		}*/
 
 		stream.WriteUShort(flags);
 
 		if (formulaToWrite) {
 			flags = this.toXLSBFormulaExt(stream, formulaToWrite);
 		}
-		/*if (null != this.cm) {
-			stream.WriteULong(this.cm);
-		}
-		if (null != this.vm) {
-			stream.WriteULong(this.vm);
-		}*/
 
 		stream.XlsbEndRecord();
 	};
