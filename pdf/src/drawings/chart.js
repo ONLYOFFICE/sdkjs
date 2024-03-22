@@ -38,7 +38,7 @@
     */
     function CPdfChart()
     {
-        AscFormat.CShape.call(this);
+        AscFormat.CChartSpace.call(this);
                 
         this._page          = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
@@ -55,7 +55,7 @@
     }
     
     CPdfChart.prototype.constructor = CPdfChart;
-    CPdfChart.prototype = Object.create(AscFormat.CShape.prototype);
+    CPdfChart.prototype = Object.create(AscFormat.CChartSpace.prototype);
     Object.assign(CPdfChart.prototype, AscPDF.PdfDrawingPrototype.prototype);
 
     CPdfChart.prototype.IsChart = function() {
@@ -68,8 +68,6 @@
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.recalcGeometry();
-        this.recalculateContent();
-        this.checkExtentsByDocContent(true, true);
         this.recalculate();
         this.SetNeedRecalc(false);
     };

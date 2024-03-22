@@ -105,6 +105,7 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
+        this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
         this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
@@ -1719,54 +1720,37 @@ var CPresentation = CPresentation || function(){};
         let _t = this;
         aPageShapes.forEach(function(sp) {
             sp.SetFromScan(true);
-            _t.AddShape(sp, nPage);
+            _t.AddDrawing(sp, nPage);
         });
 
         this.TurnOffHistory();
     };
 
-    CPDFDoc.prototype.AddShape = function(oShape, nPage) {
+    CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
         if (!oPagesInfo.pages[nPage])
             return;
 
-        this.drawings.push(oShape);
+        this.drawings.push(oDrawing);
         if (oPagesInfo.pages[nPage].drawings == null) {
             oPagesInfo.pages[nPage].drawings = [];
         }
-        oPagesInfo.pages[nPage].drawings.push(oShape);
+        oPagesInfo.pages[nPage].drawings.push(oDrawing);
 
-        oShape.SetDocument(this);
-        oShape.SetPage(nPage);
+        oDrawing.SetDocument(this);
+        oDrawing.SetPage(nPage);
 
-        AscFormat.ExecuteNoHistory(function () {
-            if (oShape.GetDocContent() == null) {
-                oShape.createTextBody();
-            }
-        }, this);
-
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oShape]));
-
-        oShape.AddToRedraw();
-    };
-
-    CPDFDoc.prototype.AddImage = function(oImage, nPage) {
-        let oPagesInfo = this.Viewer.pagesInfo;
-        if (!oPagesInfo.pages[nPage])
-            return;
-
-        this.drawings.push(oImage);
-        if (oPagesInfo.pages[nPage].drawings == null) {
-            oPagesInfo.pages[nPage].drawings = [];
+        if (oDrawing instanceof AscPDF.CPdfShape) {
+            AscFormat.ExecuteNoHistory(function () {
+                if (oDrawing.GetDocContent() == null) {
+                    oDrawing.createTextBody();
+                }
+            }, this);
         }
-        oPagesInfo.pages[nPage].drawings.push(oImage);
 
-        oImage.SetDocument(this);
-        oImage.SetPage(nPage);
+        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oDrawing]));
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oImage]));
-
-        oImage.AddToRedraw();
+        oDrawing.AddToRedraw();
     };
 
     CPDFDoc.prototype.AddTextArt = function(nStyle, nPage) {
@@ -1853,26 +1837,59 @@ var CPresentation = CPresentation || function(){};
 		oDrawingObjects.resetSelection();
 		oSmartArt.select(oDrawingObjects, 0);
 		
-
         oDrawingObjects.clearTrackObjects();
         oDrawingObjects.clearPreTrackObjects();
         oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
         oDrawingObjects.updateSelectionState();
 
-        this.drawings.push(oSmartArt);
-        if (oPagesInfo.pages[nPage].drawings == null) {
-            oPagesInfo.pages[nPage].drawings = [];
-        }
-        oPagesInfo.pages[nPage].drawings.push(oSmartArt);
-
-        oSmartArt.SetDocument(this);
-        oSmartArt.SetPage(nPage);
-
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oSmartArt]));
-
-        oSmartArt.AddToRedraw();
-
+        this.AddDrawing(oSmartArt);
         return oSmartArt;
+    };
+    CPDFDoc.prototype.AddChartByBinary = function(chartBinary, isFromInterface, oPlaceholder, nPage) {
+        let oPagesInfo = this.Viewer.pagesInfo;
+        if (!oPagesInfo.pages[nPage])
+            return;
+
+        let oThis       = this;
+        let oDrDoc      = this.GetDrawingDocument();
+        let oPageInfo   = oDrDoc.m_arrPages[nPage];
+        let oController = this.Viewer.DrawingObjects;
+
+        let oChart = oController.getChartSpace2(chartBinary, null);
+
+        let oXfrm   = oChart.getXfrm();
+        let nPageW  = oPageInfo.width_mm;
+        let nPageH  = oPageInfo.height_mm;
+        let nPosX   = (nPageW - oXfrm.extX) / 2;
+        let nPosY   = (nPageH - oXfrm.extY) / 2;
+
+        if (oPlaceholder) {
+            let oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+
+            if (oPh) {
+                nPosX = oPh.x;
+                nPosY = oPh.y;
+                oXfrm.setExtX(oPh.extX);
+                oXfrm.setExtY(oPh.extY);
+            }
+            else {
+                return;
+            }
+        }
+
+        oXfrm.setOffX(nPosX);
+        oXfrm.setOffY(nPosY);
+        oController.resetSelection();
+        oController.selectObject(oChart, 0);
+
+        if (isFromInterface) {
+            AscFonts.FontPickerByCharacter.checkText("", this, function () {
+                oThis.AddDrawing(oChart, nPage);
+            }, false, false, false);
+        }
+        else {
+            this.AddDrawing(oChart, nPage);
+        }
     };
 
     CPDFDoc.prototype.AddTable = function(nCol, nRow, sStyleId, nPage) {
@@ -1881,20 +1898,9 @@ var CPresentation = CPresentation || function(){};
             return;
 
         let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
-
-        this.drawings.push(oTable);
-        if (oPagesInfo.pages[nPage].drawings == null) {
-            oPagesInfo.pages[nPage].drawings = [];
-        }
-        oPagesInfo.pages[nPage].drawings.push(oTable);
-
-        oTable.SetDocument(this);
         oTable.graphicObject.LogicDocument = this;
-        oTable.SetPage(nPage);
-
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTable]));
-
-        oTable.AddToRedraw();
+        
+        this.AddDrawing(oTable);
     };
     CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage) {
         let oDrDoc      = this.GetDrawingDocument();
@@ -1984,7 +1990,7 @@ var CPresentation = CPresentation || function(){};
                 oXfrm.setOffX(nPosX);
                 oXfrm.setOffY(nPosY);
 
-				this.AddShape(oMathShape, nCurPage);
+				this.AddDrawing(oMathShape, nCurPage);
 				oMathShape.select(oController, nCurPage);
 				oController.selection.textSelection = oMathShape;
 				oMathShape.GetDocContent().SelectAll();
@@ -2022,7 +2028,7 @@ var CPresentation = CPresentation || function(){};
             let oImage = new AscPDF.CPdfImage();
 
             AscFormat.fillImage(oImage, _image.src, nCenterX, nCenterY, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
-            this.AddImage(oImage, nCurPage);
+            this.AddDrawing(oImage, nCurPage);
         }
     };
 
@@ -3418,10 +3424,18 @@ var CPresentation = CPresentation || function(){};
             oDrawing.ClearFormatting(bParaPr, bTextText);
         }
     };
+    CPDFDoc.prototype.AddTextWithPr = function(sText, oSettings) {
+        let oController = this.Viewer.DrawingObjects;
+        oController.addTextWithPr(sText, oSettings);
+    };
+    CPDFDoc.prototype.GetChartObject = function(nType) {
+        let oController = this.Viewer.DrawingObjects;
+        return oController.getChartObject(nType);
+    };
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// For text shapes
+	// For shapes
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.ShapeApply = function(shapeProps) {
         let oDrawingObjects = this.Viewer.DrawingObjects;
@@ -3559,6 +3573,9 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.GetStyles = function() {
 		return this.Get_Styles();
 	};
+    CPDFDoc.prototype.GetDefaultLanguage = function() {
+        return this.GetStyles().Default.TextPr.Lang.Val;
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CGraphicObjects

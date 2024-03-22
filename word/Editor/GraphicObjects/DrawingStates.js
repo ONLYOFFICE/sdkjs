@@ -238,7 +238,7 @@ StartAddNewShape.prototype =
 
                     // добавление шейпов
                     var oTextShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
-                    oLogicDocument.AddShape(oTextShape, this.pageIndex);
+                    oLogicDocument.AddDrawing(oTextShape, this.pageIndex);
 
                     oLogicDocument.TurnOffHistory();
                 }
