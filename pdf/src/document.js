@@ -3435,20 +3435,17 @@ var CPresentation = CPresentation || function(){};
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// For shapes
+	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.ShapeApply = function(shapeProps) {
-        let oDrawingObjects = this.Viewer.DrawingObjects;
-        let aSelected       = oDrawingObjects.getSelectedObjectsByTypes(true);
+        let oController     = this.Viewer.DrawingObjects;
+        let oObjectsByType  = oController.applyDrawingProps(shapeProps);
 
-        this.CreateNewHistoryPoint();
-        for (let i = 0; i < aSelected.drawings.length; i++) {
-            let oShape = aSelected.drawings[i];
-
-            if (AscFormat.isRealNumber(shapeProps.columnNumber)) {
-                oShape.SetColumnNumber(shapeProps.columnNumber);
-            }
-        }
+        Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                drawing.SetNeedRecalc(true);
+            });
+        });
     };
     CPDFDoc.prototype.InitDefaultTextListStyles = function() {
         let oTextStyles     = new AscFormat.CTextStyles();

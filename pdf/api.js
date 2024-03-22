@@ -649,7 +649,11 @@
 		this.getPDFDoc().ClearFormatting(undefined, true);
 	};
 	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
+		let oDoc = this.getPDFDoc();
+		
+		oDoc.CreateNewHistoryPoint();
 		this.getPDFDoc().ShapeApply(shapeProps);
+		oDoc.TurnOffHistory();
 	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
 		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
