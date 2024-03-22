@@ -7392,7 +7392,6 @@ CT_pivotTableDefinition.prototype.findDataFieldByFldName = function(name) {
  * @return {{row: number, col: number} | null}
  */
 CT_pivotTableDefinition.prototype.getCellByDataFieldOnly = function(name) {
-	const dataFields = this.asc_getDataFields()
 	const pivotRange = this.getRange();
 	const r = pivotRange.r1 + this.location.firstDataRow;
 	const c = pivotRange.c1 + this.location.firstDataCol;
@@ -7543,7 +7542,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(value) 
 	const pivotFields = this.asc_getPivotFields();
 	const cacheFields = this.asc_getCacheFields();
 	const grandTotalCaption = this.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
-	if (dataFields.length === 1) {
+	if (dataFields && dataFields.length === 1) {
 		const dataFieldName = dataFields[0].asc_getName();
 		if (value === '' || value === grandTotalCaption || value === dataFieldName) {
 			return this.getCellByGetPivotDataParams({
@@ -7965,7 +7964,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible;
 			}
 			if (!canShowSubtotal) {
-				rowItemIndex = null;
+				colItemIndex = null;
 			}
 		}
 	}

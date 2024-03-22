@@ -1196,7 +1196,8 @@ function (window, undefined) {
 			const pivotTables = ws.getPivotTablesIntersectingRange(bbox);
 			const pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
-				if (pivotTable.asc_getDataFields().length === 0) {
+				const dataFields = pivotTable.asc_getDataFields();
+				if (dataFields && dataFields.length === 0) {
 					return 0;
 				}
 				const range = fieldCellRef.getBBox0();
