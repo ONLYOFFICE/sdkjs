@@ -7539,7 +7539,6 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
  * @return {{row: number, col: number} | null}
  */
 CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(value) {
-	/**@type {string} */
 	const dataFields = this.asc_getDataFields();
 	const pivotFields = this.asc_getPivotFields();
 	const cacheFields = this.asc_getCacheFields();
