@@ -17254,18 +17254,14 @@ function RangeDataManagerElem(bbox, data)
 				if (typeof val === "object") {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					if (val === true || val === false) {
-						res = new AscCommonExcel.cBool(val);
-					} else {
-						res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
-					}
+					res = this._toNumber(val);
 				}
 				break;
 			case "string":
 				if (typeof val === "object") {
 					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 				} else {
-					res = new AscCommonExcel.cString(val + "");
+					res = this._toString(val);
 				}
 				break;
 			case "boolean":
@@ -17314,6 +17310,20 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	CCustomFunctionEngine.prototype._toNumber = function (val) {
+		let res;
+		if (val === true || val === false) {
+			res = new AscCommonExcel.cBool(val);
+		} else {
+			res = typeof val === "string" ? new AscCommonExcel.cString(val) : new AscCommonExcel.cNumber(val);
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype._toString = function (val) {
+		return new AscCommonExcel.cString(val + "");
+	};
+
 	CCustomFunctionEngine.prototype._toBool = function (val) {
 		if (this._checkBool(val)) {
 			return new AscCommonExcel.cBool(val);
@@ -17357,14 +17367,10 @@ function RangeDataManagerElem(bbox, data)
 
 				switch (resType) {
 					case AscCommonExcel.cElementType.number:
-						if (!isNaN(array[i][j] - 0)) {
-							oArray[i][j] = new AscCommonExcel.cNumber(array[i][j] - 0);
-						} else {
-							oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
-						}
+						oArray[i][j] = this._toNumber((array[i][j]));
 						break;
 					case AscCommonExcel.cElementType.string:
-						oArray[i][j] = new AscCommonExcel.cString(array[i][j] + "");
+						oArray[i][j] = this._toString((array[i][j]));
 						break;
 					case AscCommonExcel.cElementType.bool:
 						oArray[i][j] = this._toBool((array[i][j]));

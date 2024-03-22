@@ -31529,7 +31529,7 @@ $(function () {
 
 			let aTasks = [
 				{paramsType: ['number'], result: [[10]]},
-				{paramsType: ['stringNumber'], result: [[1]]},
+				{paramsType: ['stringNumber'], result: [["1"]]},
 				{paramsType: ['string'], result: [["test"]]},
 				{paramsType: ['bool'], result: [["TRUE"]]},
 				{paramsType: ['error'], result:"#REF!"},
