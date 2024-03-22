@@ -7523,7 +7523,7 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
 		const fieldIndex = field.asc_getIndex();
 		if (itemMap.has(fieldIndex)) {
 			if (fieldIndex === AscCommonExcel.st_VALUES) {
-				if (i !==  fields.length - 1 && depth + 2 === itemMap.size) {
+				if (i !== fields.length - 1 && depth + 2 === itemMap.size) {
 					return depth;
 				}
 			}
@@ -7533,6 +7533,28 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
 		}
 	}
 	return depth;
+};
+/**
+ * @param {Range} cell
+ * @return {{row: number, col: number} | null}
+ */
+CT_pivotTableDefinition.prototype.getCellByGetPivotDataCell = function(cell) {
+	const pivotRange = this.getRange();
+	const location = this.location;
+	const dataFields = this.asc_getDataFields();
+	const colFields = this.asc_getColumnFields();
+	if (dataFields.length === 1 && colFields && colFields.length > 0) {
+		if (cell.r1 <= pivotRange.r1 + location.firstHeaderRow && cell.c1 < pivotRange.c1 + location.firstDataCol) {
+			if (this.rowGrandTotals && this.colGrandTotals) {
+				return {
+					row: pivotRange.r2,
+					col: pivotRange.c2
+				}
+			}
+		}
+	}
+
+	return null;
 };
 /**
  * @param {GetPivotDataParams} params
@@ -7807,7 +7829,6 @@ CT_pivotTableDefinition.prototype.getMaxSubtotalR = function(fields) {
  * @param {number} dataIndex 
  */
 CT_pivotTableDefinition.prototype.getDefaultSubtotalItemIndex = function(items, itemIndex, fields, dataIndex, r) {
-	const pivotFields = this.asc_getPivotFields();
 	let maxSubtotalR = this.getMaxSubtotalR(fields);
 	if (r < maxSubtotalR) {
 		for (let i = itemIndex + 1; i < items.length; i += 1) {
@@ -7874,7 +7895,11 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 	const colFields = this.asc_getColumnFields();
 	const rowItems = this.getRowItems();
 	const colItems = this.getColItems();
-	let rowItemIndex = rowItems.length - 1;
+
+	let rowItemIndex = null;
+	if (rowItems[rowItems.length - 1].t === Asc.c_oAscItemType.Grand || !this.asc_getRowFields()) {
+		rowItemIndex = rowItems.length - 1;
+	}
 	if (rowItemMap) {
 		if(rowItemMap.size === 1 && rowItemMap.has(AscCommonExcel.st_VALUES)) {
 			rowItemIndex = this.getIndexWithOnlyDataIndex(rowItems, rowItemMap.get(AscCommonExcel.st_VALUES), rowFields);
@@ -7882,24 +7907,27 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			rowItemIndex = getIndex(rowItems, rowFields, rowItemMap, maxRowR);
 			const dataIndex = rowItemMap.has(AscCommonExcel.st_VALUES) ? rowItemMap.get(AscCommonExcel.st_VALUES) : 0;
 			rowItemIndex = this.getDefaultSubtotalItemIndex(rowItems, rowItemIndex, rowFields, dataIndex, maxRowR);
-
 			const pivotField = pivotFields[rowFields[maxRowR].asc_getIndex()];
-			let canShowSubtotal = null !== rowItemIndex && (this.colGrandTotals || !this.asc_getColumnFields() || (maxRowR === rowFields.length - 1));
-			if (pivotField && canShowSubtotal) {
+			let canShowSubtotal = true;
+			if (rowItemIndex !== null && rowItems[rowItemIndex].getR() !== rowFields.length - 1 && pivotField) {
 				let visible = true;
 				let rowItemX = rowItems[rowItemIndex].x;
 				if (rowItemX.length > 0) {
 					let rowX = rowItemX[rowItemX.length - 1];
-					visible = pivotField.asc_getVisible(rowX.getV())
+					visible = pivotField.asc_getVisible(rowX.getV());
 				}
-				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible || (maxRowR === rowFields.length - 1);
+				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible;
 			}
 			if (!canShowSubtotal) {
 				rowItemIndex = null;
 			}
 		}
 	}
-	let colItemIndex = colItems.length - 1;
+	let colItemIndex = null;
+	if (colItems[colItems.length - 1].t === Asc.c_oAscItemType.Grand || !this.asc_getColumnFields()) {
+		colItemIndex = colItems.length - 1;
+	}
+	
 	if (colItemMap) {
 		if(colItemMap.size === 1 && colItemMap.has(AscCommonExcel.st_VALUES)) {
 			colItemIndex = this.getIndexWithOnlyDataIndex(colItems, colItemMap.get(AscCommonExcel.st_VALUES), colFields);
@@ -7909,18 +7937,18 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			colItemIndex = this.getDefaultSubtotalItemIndex(colItems, colItemIndex, colFields, dataIndex, maxColR);
 
 			const pivotField = pivotFields[colFields[maxColR].asc_getIndex()];
-			let canShowSubtotal = null !== colItemIndex && (this.rowGrandTotals || !this.asc_getRowFields() || (maxColR === colFields.length - 1));
-			if (pivotField && canShowSubtotal) {
+			let canShowSubtotal = true;
+			if (colItemIndex !== null && colItems[colItemIndex].getR() !== colFields.length - 1 && pivotField) {
 				let visible = true;
 				let colItemX = colItems[colItemIndex].x;
 				if (colItemX.length > 0) {
 					let colX = colItemX[colItemX.length - 1];
-					visible = pivotField.asc_getVisible(colX.getV())
+					visible = pivotField.asc_getVisible(colX.getV());
 				}
-				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible || (maxColR === colFields.length - 1);
+				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible;
 			}
 			if (!canShowSubtotal) {
-				colItemIndex = null;
+				rowItemIndex = null;
 			}
 		}
 	}

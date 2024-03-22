@@ -1191,6 +1191,33 @@ function (window, undefined) {
 			return refError;
 		};
 
+		const getPivotDataByTwoCells = function(pivotTableRef, fieldCellRef) {
+			const bbox = pivotTableRef.getBBox0();
+			const pivotTables = ws.getPivotTablesIntersectingRange(bbox);
+			const pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
+			if (pivotTable) {
+				if (pivotTable.asc_getDataFields().length === 0) {
+					return 0;
+				}
+				const range = fieldCellRef.getBBox0();
+				const c = range.c1;
+				const r = range.r1;
+				const location = pivotTable.location;
+				const pivotRange = pivotTable.getRange();
+				if (r > pivotRange.r1 + location.firstDataRow && c > pivotRange.c1 + location.firstDataCol) {
+					if (r <= pivotRange.r2 && c <= pivotRange.c2) {
+						return nAError;
+					}
+				}
+				const cell = pivotTable.getCellByGetPivotDataCell(range);
+				if (cell) {
+					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
+					return res.tocNumber();
+				}
+			}
+			return refError;
+		};
+
 		const prepareItemsArray = function (array) {
 			return array.map(function(elem) {
 				return elem.getValue();
@@ -1200,9 +1227,19 @@ function (window, undefined) {
 		const t = this;
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.slice(2);
 		let refError = new cError(cErrorType.bad_reference);
+		let nAError = new cError(cErrorType.not_available);
 		let ws = arguments[3], res;
 
 		if (ws) {
+			if (arg.length === 2) {
+				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+						getPivotDataByTwoCells(arg0, arg1);
+					}
+					return nAError;
+				}
+			}
+			
 			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 				return refError;
 			}
