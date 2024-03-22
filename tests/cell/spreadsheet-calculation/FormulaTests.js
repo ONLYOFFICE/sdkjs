@@ -31590,6 +31590,94 @@ $(function () {
 		});
 	});
 
+	QUnit.test("Test: \"Custom function test: other\"", function (assert) {
+
+		executeCustomFunction(function () {
+
+			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
+
+			//empty function
+			fCustomFunc = function simpleFunc() {
+			};
+
+			initParamsCustomFunction([], "number");
+
+			let aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! empty  function !");
+
+			//return null
+			fCustomFunc = function simpleFunc() {
+				return null;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return null !");
+
+			//return undefined
+			fCustomFunc = function simpleFunc() {
+				return undefined;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return undefined !");
+
+			//return NaN
+			fCustomFunc = function simpleFunc() {
+				return NaN;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return NaN !");
+
+		});
+	});
+
 	QUnit.test("Test: \"Custom function test: number+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
