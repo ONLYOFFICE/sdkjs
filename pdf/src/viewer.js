@@ -2517,6 +2517,7 @@
 					ctx.fill();
 				}
 
+				this.DrawingObjects.updateSelectionState();
 				if (this.DrawingObjects.needUpdateOverlay())
 				{
 					oDrDoc.AutoShapesTrack.PageIndex = -1;
@@ -2547,8 +2548,6 @@
 				}
 				else if (oDoc.activeDrawing) {
 					let nPage = oDoc.activeDrawing.GetPage();
-
-					this.DrawingObjects.updateSelectionState();
 					oDrDoc.private_EndDrawSelection();
 					oDrDoc.AutoShapesTrack.PageIndex = nPage;
 					this.DrawingObjects.drawSelect(nPage);
