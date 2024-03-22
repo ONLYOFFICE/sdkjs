@@ -17240,6 +17240,9 @@ function RangeDataManagerElem(bbox, data)
 					}
 				});
 				break;
+			case "any[][]":
+				res = _elem.toArray(true, true);
+				break;
 		}
 		return res;
 	};
@@ -17300,6 +17303,13 @@ function RangeDataManagerElem(bbox, data)
 					res = this._tocArray(val, AscCommonExcel.cElementType.bool, true);
 				}
 				break;
+			case "any[][]":
+				if (Asc.typeOf(val) !== "array" || !val[0]) {
+					res = new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
+				} else {
+					res = this._tocArray(val, null, true);
+				}
+				break;
 		}
 		return res;
 	};
@@ -17358,6 +17368,9 @@ function RangeDataManagerElem(bbox, data)
 						break;
 					case AscCommonExcel.cElementType.bool:
 						oArray[i][j] = this._toBool((array[i][j]));
+						break;
+					case null://any
+						oArray[i][j] = this._toAny((array[i][j]));
 						break;
 				}
 			}
