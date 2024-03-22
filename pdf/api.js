@@ -465,7 +465,7 @@
 		let oViewer	= this.getDocumentRenderer();
 
 		oDoc.CreateNewHistoryPoint();
-		
+
 		AscFonts.IsCheckSymbols = true;
 		oDoc.AddChartByBinary(chartBinary, true, Placeholder, oViewer.currentPage);
 		AscFonts.IsCheckSymbols = false;
@@ -1475,6 +1475,7 @@
 	};
 	PDFEditorApi.prototype._openDocumentEndCallback = function() {
 		this.sendMathToMenu();
+		this.sendStandartTextures();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
