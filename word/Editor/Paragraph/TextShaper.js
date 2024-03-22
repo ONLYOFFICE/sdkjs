@@ -274,10 +274,15 @@
 	};
 	CParagraphTextShaper.prototype.GetTextScript = function(nUnicode)
 	{
+		// TODO: Remove it after implementing bigi algorithm
+		// Check bugs 66317, 66435
+		if (0x060C <= nUnicode && nUnicode <= 0x074A)
+			return AscFonts.HB_SCRIPT.HB_SCRIPT_ARABIC;
+		
 		let script = AscFonts.hb_get_script_by_unicode(nUnicode);
 		if (AscFonts.HB_SCRIPT.HB_SCRIPT_COMMON === script && this.TextPr && this.TextPr.CS)
 			return AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED;
-
+		
 		return script;
 	};
 	

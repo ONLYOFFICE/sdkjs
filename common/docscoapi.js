@@ -1657,7 +1657,7 @@
 	this.permissions = docInfo.get_Permissions();
 	this.lang = docInfo.get_Lang();
 	this.jwtOpen = docInfo.get_Token();
-    this.encrypted = docInfo.get_Encrypted();
+    this.encrypted = docInfo.get_Encrypted() || docInfo.get_IsWebOpening();
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
     this.coEditingMode = docInfo.asc_getCoEditingMode();
     this.shardKey = shardKey;

@@ -1715,7 +1715,49 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 				point.Items.push(items[index]);
 			}
 		}
-	};	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	};
+	/**
+	 * Проверяем лок для последних нескольких точек
+	 * @param pointCount
+	 */
+	CHistory.prototype.checkLock = function(pointCount)
+	{
+		if (!pointCount || pointCount - 1 > this.Index)
+			return;
+		
+		let lockData = {
+			document : this.Document,
+			locked   : false,
+			
+			
+			isFillingForm : function()
+			{
+				return this.document.IsFillingFormMode();
+			},
+			
+			lock : function()
+			{
+				AscCommon.CollaborativeEditing.Add_CheckLock(true);
+				this.locked = true;
+			},
+			
+			isLocked : function()
+			{
+				return this.locked;
+			}
+		};
+		for (let pointIndex = 0; pointIndex < pointCount; ++pointIndex)
+		{
+			let point = this.Points[this.Index - pointIndex];
+			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
+			{
+				point.Items[changeIndex].Data.CheckLock(lockData);
+				if (lockData.isLocked())
+					return;
+			}
+		}
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CHistory.prototype.private_UndoPoint = function(point, changes)

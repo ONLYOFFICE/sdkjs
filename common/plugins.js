@@ -536,9 +536,16 @@
 
 		onThemeChanged : function(obj)
 		{
+			let connectors = [];
 			for (let guid in this.runnedPluginsMap)
 			{
 				let runObject = this.runnedPluginsMap[guid];
+
+				if (runObject.isConnector)
+				{
+					connectors.push(guid);
+					continue;
+				}
 
 				runObject.startData.setAttribute("type", "onThemeChanged");
 				runObject.startData.setAttribute("theme", obj);
@@ -549,6 +556,15 @@
 				let frame = document.getElementById(runObject.frameId);
 				if (frame)
 					frame.contentWindow.postMessage(runObject.startData.serialize(), "*");
+			}
+
+			for (let i = 0, len = connectors.length; i < len; i++)
+			{
+				var pluginData = new CPluginData();
+				pluginData.setAttribute("guid", connectors[i]);
+				pluginData.setAttribute("type", "onTheme");
+				pluginData.setAttribute("theme", obj);
+				this.sendMessageToFrame("", pluginData);
 			}
 		},
 
@@ -828,6 +844,14 @@
 			{
 				runObject.currentInit = true;
 				runObject.isInitReceive = true;
+
+				var pluginData = new CPluginData();
+				pluginData.setAttribute("guid", plugin.guid);
+				pluginData.setAttribute("type", "onInfo");
+				pluginData.setAttribute("theme", AscCommon.GlobalSkin);
+				this.correctData(pluginData);
+
+				this.sendMessageToFrame("", pluginData);
 				return;
 			}
 
@@ -1247,7 +1271,7 @@
 						console.error(err);
 					}
 				}
-				else if (!this.api.isLongAction() && (task.resize || this.api.asc_canPaste()))
+				else if (!this.api.isLongAction() && (task.resize || this.api.canRunBuilderScript()))
 				{
 					this.api._beforeEvalCommand();
 					AscFonts.IsCheckSymbols = true;
@@ -1265,33 +1289,22 @@
 						commandReturnValue = undefined;
 
 					AscFonts.IsCheckSymbols = false;
-
+					
 					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
 					{
+						let _t = this;
 						this.api._afterEvalCommand(function() {
-							window.g_asc_plugins.shiftCommand(commandReturnValue);
+							if (!_t.api.onEndBuilderScript())
+								commandReturnValue = undefined;
+							
+							_t.shiftCommand(commandReturnValue);
 						});
 						return;
 					}
 					else
 					{
-						switch (this.api.getEditorId())
-						{
-							case AscCommon.c_oEditorId.Word:
-							case AscCommon.c_oEditorId.Presentation:
-							{
-								this.api.WordControl.m_oLogicDocument.FinalizeAction(true);
-								break;
-							}
-							case AscCommon.c_oEditorId.Spreadsheet:
-							{
-								// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
-								this.api.asc_endPaste();
-								break;
-							}
-							default:
-								break;
-						}
+						if (!this.api.onEndBuilderScript())
+							commandReturnValue = undefined;
 					}
 				}
 			}

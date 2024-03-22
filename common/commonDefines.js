@@ -2431,7 +2431,8 @@ window.AscCommon.g_cIsBeta = "false";
 
 	var offlineMode = '_offline_';
 	var chartMode = '_chart_';
-	
+	var dataMode = '_data_';
+
 	var c_oSpecialPasteProps = {
 		paste: 0,
 		pasteOnlyFormula: 1,
@@ -5241,6 +5242,7 @@ window.AscCommon.g_cIsBeta = "false";
 
 	window["AscCommon"].offlineMode = offlineMode;
 	window["AscCommon"].chartMode = chartMode;
+	window["AscCommon"].dataMode = dataMode;
 
 	window['AscCommon']['align_Right'] = window['AscCommon'].align_Right = align_Right;
 	window['AscCommon']['align_Left'] = window['AscCommon'].align_Left = align_Left;

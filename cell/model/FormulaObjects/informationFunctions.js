@@ -320,8 +320,17 @@ function (window, undefined) {
 				}
 				case _cCellFunctionLocal["protect"]: {
 					//default - protect, do not support on open
+					let isLocked = true;
 					cell = ws.getCell3(bbox.r1, bbox.c1);
-					if (cell.getLocked()) {
+					cell._foreachNoEmpty(function (cell) {
+						if (cell) {
+							let xfs = cell.xfs ? cell.xfs : cell.getCompiledStyle();
+							if (xfs) {
+								isLocked = xfs.getLocked();
+							}
+						}
+					});
+					if (isLocked) {
 						res = new cNumber(1);
 					} else {
 						res = new cNumber(0);

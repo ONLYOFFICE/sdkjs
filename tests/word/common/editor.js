@@ -73,6 +73,7 @@
 	
 	window['asc_docs_api'] = AscCommon.baseEditorsApi;
 	
+	let _callbacks = {};
 	const editor = new AscCommon.baseEditorsApi({});
 	editor.WordControl = drawingDocument;
 	editor.WordControl.m_oDrawingDocument = drawingDocument;
@@ -105,7 +106,44 @@
 	editor.sync_ColumnsPropsCallback = function(){};
 	editor.sync_LineNumbersPropsCollback = function(){};
 	editor.sync_SectionPropsCallback = function(){};
-
+	editor.sendEvent = function()
+	{
+		var name = arguments[0];
+		if (_callbacks.hasOwnProperty(name))
+		{
+			for (var i = 0; i < _callbacks[name].length; ++i)
+			{
+				_callbacks[name][i].apply(this || window, Array.prototype.slice.call(arguments, 1));
+			}
+			return true;
+		}
+		return false;
+	};
+	editor.asc_registerCallback = function(name, callback)
+	{
+		if (!_callbacks.hasOwnProperty(name))
+			_callbacks[name] = [];
+		_callbacks[name].push(callback);
+	};
+	editor.asc_unregisterCallback = function(name, callback)
+	{
+		if (_callbacks.hasOwnProperty(name))
+		{
+			for (var i = _callbacks[name].length - 1; i >= 0; --i)
+			{
+				if (_callbacks[name][i] === callback)
+					_callbacks[name].splice(i, 1);
+			}
+		}
+	};
+	editor.getSelectionState = function()
+	{
+		return AscTest.GetLogicDocument().GetSelectionState();
+	};
+	editor.getSpeechDescription = function()
+	{
+		return AscTest.GetLogicDocument().getSpeechDescription(...arguments);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;

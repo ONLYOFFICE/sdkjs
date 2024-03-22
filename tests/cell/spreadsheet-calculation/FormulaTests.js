@@ -627,6 +627,8 @@ $(function () {
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
 
+		api.wbModel = wb;
+
 		AscCommon.g_oTableId.init();
 		if (this.User) {
 			g_oIdCounter.Set_UserId(this.User.asc_getId());
@@ -30732,6 +30734,54 @@ $(function () {
 		assert.strictEqual(randArrayFValBefore !== randArrayFValAfter, true, "Check values after recalculate");
 
 		ws.getRange2("A1:Z10000").cleanAll();
+	});
+
+	QUnit.test("Test: \"External reference test: importRange function\"", function (assert) {
+
+		let initReference = function (eR, sheetName, range, val) {
+			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
+			let externalSheetDataSet = eR.getSheetDataSetByName(sheetName);
+			for (let i = range.r1; i <= range.r2; i++) {
+				let row = externalSheetDataSet.getRow(i + 1, true);
+				for (let j = range.c1; j <= range.c2; j++) {
+					let cell = row.getCell(j, true);
+					cell.CellValue = val[i][j];
+				}
+			}
+		};
+
+		let tempLink = '"http://localhost/editor?fileName=new%20(51).xlsx"';
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		oParser = new parserFormula('IMPORTRANGE(' + tempLink + ',"Sheet1!A1")', 'A2', ws);
+		assert.ok(oParser.parse(null, null, parseResult), 'IMPORTRANGE(' + tempLink + ',"Sheet1!A1")');
+		let res = oParser.calculate().getValue();
+		assert.strictEqual(res, "#REF!", 'IMPORTRANGE_1');
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add');
+
+		res = oParser.calculate();
+		let dimension = res.getDimensions();
+		assert.strictEqual(dimension.row, 0, 'IMPORTRANGE_1_after_add_references_row_count');
+
+		initReference(wb.externalReferences[0], "Sheet1", "A1", [[1000]]);
+		res = oParser.calculate();
+		assert.strictEqual(res.getElementRowCol(0, 0).getValue(), 1000, 'IMPORTRANGE_1_AFTER_INIT');
+
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_2');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add_clone_2');
+
+		//check remove on setValue
+		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A1\"');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_3');
+
+		ws.getRange2("A2").setValue('=importrange(\"http://localhost/editor?fileName=new%20(51).xlsx\",\"Sheet1!A2\"');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
+
+		ws.getRange2("A2").setValue("1");
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_after_remove_value');
 	});
 
 	function calcCustomFunction (innerFunc, jsDoc, oDoc, fCompare) {

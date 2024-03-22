@@ -1223,13 +1223,10 @@ CParagraphContentWithContentBase.prototype.protected_GetPrevRangeEndPos = functi
 
     return LineIndex == 0 && RangeIndex == 0 ? 0 : this.Lines[RangeOffset + 1];
 };
-CParagraphContentWithContentBase.prototype.private_UpdateTrackRevisions = function()
+CParagraphContentWithContentBase.prototype.updateTrackRevisions = function()
 {
-    if (this.Paragraph && this.Paragraph.LogicDocument && this.Paragraph.LogicDocument.GetTrackRevisionsManager)
-    {
-        var RevisionsManager = this.Paragraph.LogicDocument.GetTrackRevisionsManager();
-        RevisionsManager.CheckElement(this.Paragraph);
-    }
+	if (this.Paragraph)
+		this.Paragraph.updateTrackRevisions();
 };
 CParagraphContentWithContentBase.prototype.CanSplit = function()
 {
@@ -1643,7 +1640,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Check_Content = function()
 CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
     this.Content.splice(Pos, 0, Item);
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 	this.private_UpdateDocumentOutline();
     this.private_CheckUpdateBookmarks([Item]);
 	this.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -1728,7 +1725,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	this.Content.splice(Pos, Count);
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 	this.private_UpdateDocumentOutline();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.private_UpdateSelectionPosOnRemove(Pos, Count);
@@ -4223,14 +4220,6 @@ CParagraphContentWithParagraphLikeContent.prototype.RejectRevisionChanges = func
         this.Correct_Content();
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.private_UpdateTrackRevisions = function()
-{
-    if (this.Paragraph && this.Paragraph.LogicDocument && this.Paragraph.LogicDocument.GetTrackRevisionsManager)
-    {
-        var RevisionsManager = this.Paragraph.LogicDocument.GetTrackRevisionsManager();
-        RevisionsManager.CheckElement(this.Paragraph);
-    }
-};
 CParagraphContentWithParagraphLikeContent.prototype.private_CheckUpdateBookmarks = function(Items)
 {
 	if (!Items)
@@ -4890,3 +4879,39 @@ CParagraphContentWithParagraphLikeContent.prototype.Save_Changes = function(Data
 CParagraphContentWithParagraphLikeContent.prototype.Load_Changes = function(Reader){};
 CParagraphContentWithParagraphLikeContent.prototype.Write_ToBinary2 = function(Writer){};
 CParagraphContentWithParagraphLikeContent.prototype.Read_FromBinary2 = function(Reader){};
+
+// TODO: Сделать и перенести в коммоны для изменений
+/**
+ * Универсальный метод для проверки лока для простых изменений внутри параграфа
+ */
+function private_ParagraphContentChangesCheckLock(lockData)
+{
+	let obj = this.Class;
+	if (!this.IsContentChange() && lockData && lockData.isFillingForm())
+		return lockData.lock();
+	
+	let isForm = false;
+	let isCC   = false;
+	while (obj)
+	{
+		if (obj.Lock)
+			obj.Lock.Check(obj.Get_Id());
+		
+		isForm = isForm || (obj instanceof AscWord.CInlineLevelSdt && obj.IsForm());
+		isCC   = isCC || obj instanceof AscWord.CInlineLevelSdt;
+		
+		if (!(obj instanceof AscWord.Paragraph) && obj.GetParent)
+			obj = obj.GetParent()
+		else
+			obj = null;
+	}
+	
+	if (this.IsContentChange())
+	{
+		if (isForm && lockData && !lockData.isFillingForm())
+			lockData.lock();
+		
+		if (!isCC && lockData && lockData.isFillingForm())
+			lockData.lock();
+	}
+}

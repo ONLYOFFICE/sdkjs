@@ -251,7 +251,7 @@
      */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
-        if (this.isViewMode || !AscCommon.g_inputContext)
+        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
             return;
 
         if (textReplace)
@@ -275,7 +275,7 @@
 		if (!AscCommon.g_clipboardBase)
 			return null;
 
-		if (this.isViewMode)
+		if (!this.canEdit() || this.isPdfEditor())
 			return null;
 
 		let _elem = document.getElementById("pmpastehtml");
@@ -557,7 +557,7 @@
 	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
 	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
 	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
-	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
+	 * @property {number} paragraphs.linespacing The text linespacing in the current paragraph.
 	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
 	 * @property {string} paragraphs.runs.text The run text.
 	 * @property {Array.<number>} paragraphs.runs.fill The text highlight in the RGB format. The empty array [] means that the text is not highlighted.
@@ -1205,7 +1205,7 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-		if(this.isViewMode || this.isPdfEditor())
+		if(!this.canEdit() || this.isPdfEditor())
 		{
 			return;
 		}

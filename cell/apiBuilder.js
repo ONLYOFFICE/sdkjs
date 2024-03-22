@@ -3613,10 +3613,11 @@
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		if (destination && destination instanceof ApiRange) {
-			var cols = this.GetCols().Count - 1;
-			var rows = this.GetRows().Count - 1;
-			var bbox = destination.range.bbox;
-			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+			let bboxFrom = this.range.bbox;
+			let cols = bboxFrom.c2 - bboxFrom.c1;
+			let rows = bboxFrom.r2 - bboxFrom.r1;
+			let bbox = destination.range.bbox;
+			let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
 			logError(new Error('Invalid destination'));
@@ -3631,10 +3632,11 @@
 	 */
 	ApiRange.prototype.Paste = function (rangeFrom) {
 		if (rangeFrom && rangeFrom instanceof ApiRange) {
-			var cols = rangeFrom.GetCols().Count - 1;
-			var rows = rangeFrom.GetRows().Count - 1;
-			var bbox = this.range.bbox;
-			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+			let bboxFrom = rangeFrom.range.bbox;
+			let cols = bboxFrom.c2 - bboxFrom.c1;
+			let rows = bboxFrom.r2 - bboxFrom.r1;
+			let bbox = this.range.bbox;
+			let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
 			logError(new Error('Invalid range'));

@@ -1439,7 +1439,7 @@
                     return false;
                 }
             }
-            if(this.element instanceof AscCommonWord.Paragraph)
+            if(this.element instanceof AscWord.Paragraph)
             {
                 if(!this.element.SectPr && oNode.element.SectPr)
                 {
@@ -2210,6 +2210,9 @@
             }
         }
     };
+	CDocumentComparison.prototype.insertCopyTextBoxContent = function (oBaseShape, oTextBoxContent) {
+		oBaseShape.setTextBoxContent(oTextBoxContent.Copy(oBaseShape, editor.WordControl.m_oDrawingDocument, this.copyPr));
+	};
     CDocumentComparison.prototype.compareShapes = function(oBaseShape, oCompareShape)
     {
         if(oBaseShape.textBoxContent && oCompareShape.textBoxContent)
@@ -2222,7 +2225,7 @@
         }
         else if(!oBaseShape.textBoxContent && oCompareShape.textBoxContent)
         {
-            oBaseShape.setTextBoxContent(oCompareShape.textBoxContent.Copy(oBaseShape, editor.WordControl.m_oDrawingDocument, this.copyPr))
+					this.insertCopyTextBoxContent(oBaseShape, oCompareShape.textBoxContent);
         }
     };
 	CDocumentComparison.prototype.updateBookmarksStack = function (oNode)
@@ -2514,7 +2517,7 @@
             oOriginalDocument.StopRecalculate();
             oOriginalDocument.StartAction(AscDFH.historydescription_Document_CompareDocuments);
             oOriginalDocument.Start_SilentMode();
-            const oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
+            const oldTrackRevisions = oOriginalDocument.GetLocalTrackRevisions();
             oOriginalDocument.SetTrackRevisions(false);
             const LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
             for (let LogicDocId in LogicDocuments)
@@ -3553,31 +3556,25 @@
             }
         }
         oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-        let bHaveRevisons2 = false;
-        const oDoc2 = AscFormat.ExecuteNoHistory(function(){
+				const oldTrackRevisions = oDoc1.GetLocalTrackRevisions();
+	    oDoc1.SetTrackRevisions(false);
+	    let bHaveRevisons2 = false;
+	    const oDoc2 = AscFormat.ExecuteNoHistory(function(){
             const openParams = {disableRevisions: true, noSendComments: true};
-            let oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
-            oApi.WordControl.m_oLogicDocument = oDoc2;
-            const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
+            const oTempDocument = new CDocument(oApi.WordControl.m_oDrawingDocument, false);
+            const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oTempDocument, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
             if (!oBinaryFileReader.Read(sBinary2))
             {
-                oDoc2 = null;
+                return null;
             }
-            if(oDoc2)
+            if(oTempDocument)
             {
                 bHaveRevisons2 = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.hasRevisions;
             }
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
-            oApi.WordControl.m_oLogicDocument = oDoc1;
-            if (oDoc1.History)
-                oDoc1.History.Set_LogicDocument(oDoc1);
-            if (oDoc1.CollaborativeEditing)
-                oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
-            return oDoc2;
+            return oTempDocument;
         }, this, []);
-        oDoc1.History.Document = oDoc1;
+	    oDoc1.SetTrackRevisions(oldTrackRevisions);
         if(oDoc2)
         {
             const fCallback = function()
@@ -3602,9 +3599,6 @@
                         if(bAccept){
                             oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
                             fCallback();
-                        }
-                        else
-                        {
                         }
                     })
                 }

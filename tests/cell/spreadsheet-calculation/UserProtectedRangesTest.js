@@ -144,11 +144,21 @@ $(function () {
 	}
 
 	function create(ref, name, users) {
+		let oUsers;
+		for (let i = 0; i < users.length; i++) {
+			if (!oUsers) {
+				oUsers = [];
+			}
+			let oUser = new Asc.CUserProtectedRangeUserInfo();
+			oUser.id = users[i].id;
+			oUsers.push(oUser);
+		}
+
 		let obj = new Asc.CUserProtectedRange(ws);
 		obj.asc_setRef(ref);
 		obj.asc_setName(name);
-		if (users) {
-			obj.asc_setUsers(users);
+		if (oUsers) {
+			obj.asc_setUsers(oUsers);
 		}
 		api.asc_addUserProtectedRange(obj);
 		return obj;

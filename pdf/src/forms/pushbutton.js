@@ -1504,7 +1504,7 @@
                 oPara1.Remove_FromContent(nPosInPara, 1, true);
             }
 
-            let oNewPara = new AscCommonWord.Paragraph(oPara1.DrawingDocument, this.content, false);
+            let oNewPara = new AscWord.Paragraph(this.content, false);
             oNewPara.CorrectContent();
             this.content.AddToContent(1, oNewPara);
             oNewPara.Set_Align(align_Center);
@@ -1562,7 +1562,7 @@
                 oPara1.Remove_FromContent(nPosInPara, 1, true);
             }
 
-            let oNewPara = new AscCommonWord.Paragraph(oPara1.DrawingDocument, this.content, false);
+            let oNewPara = new AscWord.Paragraph(this.content, false);
             oNewPara.CorrectContent();
             this.content.AddToContent(0, oNewPara);
             oNewPara.Set_Align(align_Center);

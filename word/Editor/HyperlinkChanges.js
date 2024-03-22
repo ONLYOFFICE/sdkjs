@@ -69,6 +69,7 @@ CChangesHyperlinkValue.prototype.private_SetValue = function(Value)
 {
 	this.Class.Value = Value;
 };
+CChangesHyperlinkValue.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringValue}
@@ -84,6 +85,7 @@ CChangesHyperlinkToolTip.prototype.private_SetValue = function(Value)
 {
 	this.Class.ToolTip = Value;
 };
+CChangesHyperlinkToolTip.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -99,7 +101,7 @@ CChangesHyperlinkAddItem.prototype.Undo = function()
 {
 	var oHyperlink = this.Class;
 	oHyperlink.Content.splice(this.Pos, this.Items.length);
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -110,7 +112,7 @@ CChangesHyperlinkAddItem.prototype.Redo = function()
 	var Array_end   = oHyperlink.Content.slice(this.Pos);
 
 	oHyperlink.Content = Array_start.concat(this.Items, Array_end);
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -143,7 +145,7 @@ CChangesHyperlinkAddItem.prototype.Load = function(Color)
 		}
 	}
 
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -158,6 +160,7 @@ CChangesHyperlinkAddItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesHyperlinkRemoveItem);
 };
+CChangesHyperlinkAddItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -176,7 +179,7 @@ CChangesHyperlinkRemoveItem.prototype.Undo = function()
 	var Array_end   = oHyperlink.Content.slice(this.Pos);
 
 	oHyperlink.Content = Array_start.concat(this.Items, Array_end);
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -184,7 +187,7 @@ CChangesHyperlinkRemoveItem.prototype.Redo = function()
 {
 	var oHyperlink  = this.Class;
 	oHyperlink.Content.splice(this.Pos, this.Items.length);
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -209,7 +212,7 @@ CChangesHyperlinkRemoveItem.prototype.Load = function(Color)
 		oHyperlink.Content.splice(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oHyperlink, ChangesPos, 1);
 	}
-	oHyperlink.private_UpdateTrackRevisions();
+	oHyperlink.updateTrackRevisions();
 	oHyperlink.private_CheckUpdateBookmarks(this.Items);
 	oHyperlink.private_UpdateSpellChecking();
 };
@@ -224,6 +227,7 @@ CChangesHyperlinkRemoveItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesHyperlinkAddItem);
 };
+CChangesHyperlinkRemoveItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringValue}
@@ -239,3 +243,4 @@ CChangesHyperlinkAnchor.prototype.private_SetValue = function(Value)
 {
 	this.Class.Anchor = Value;
 };
+CChangesHyperlinkAnchor.prototype.CheckLock = private_ParagraphContentChangesCheckLock;

@@ -15005,7 +15005,7 @@ function RangeDataManagerElem(bbox, data)
 		//path also can changed
 		var path = oPortalData && oPortalData["path"];
 		if (path && this.Id !== path) {
-			this.setId(path);
+			!this.notUpdateId && this.setId(path);
 			isChanged = true;
 		}
 
@@ -15660,6 +15660,31 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	ExternalCell.prototype.getFormulaValue = function () {
+		let res;
+
+		switch (this.CellType) {
+			case Asc.ECellTypeType.celltypeStr:
+			case Asc.ECellTypeType.celltypeSharedString:
+			case Asc.ECellTypeType.celltypeInlineStr:
+			case Asc.ECellTypeType.celltypeDate:
+				res = new AscCommonExcel.cString(this.CellValue);
+				break;
+			case Asc.ECellTypeType.celltypeBool:
+				res = new AscCommonExcel.cBool(this.CellValue);
+				break;
+			case Asc.ECellTypeType.celltypeError:
+				res = new AscCommonExcel.cError(this.CellValue);
+				break;
+			case Asc.ECellTypeType.celltypeNumber:
+			default:
+				res = new AscCommonExcel.cNumber(this.CellValue - 0);
+				break;
+		}
+
+		return res;
+	};
+
 	function ExternalDefinedName() {
 		this.Name = null;
 		this.RefersTo = null;
@@ -15708,6 +15733,7 @@ function RangeDataManagerElem(bbox, data)
 
 		return newObj;
 	};
+
 
 	//CellWatch
 	function CCellWatch(ws) {

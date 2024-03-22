@@ -5268,7 +5268,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);
                 var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
 
-                var LogicDocument = this.Paragraph.LogicDocument;
+                var LogicDocument = PRSA.getLogicDocument();
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
                 var LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 
@@ -6240,7 +6240,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
 			let mark    = this.SearchMarks[iMark];
-			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
+			let markPos = mark.SearchResult.EndPos.Get(mark.Depth);
 			
 			if (pos + 1 === markPos && !mark.Start)
 				drawState.decreaseSearchCounter();
@@ -7600,22 +7600,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	if (this.Paragraph.IsInFixedForm())
 		TextPr.Position = 0;
 
-	let oLogicDocument = this.Paragraph.GetLogicDocument();
-	let oLayout;
-	if (oLogicDocument
-		&& oLogicDocument.IsDocumentEditor()
-		&& (oLayout = oLogicDocument.GetDocumentLayout()))
-	{
-		let nFontCoef = oLayout.GetFontScale();
-
-		let shape   = this.Paragraph.GetParentShape();
-		let drawing = shape ? shape.GetParaDrawing() : null;
-		if (drawing)
-			nFontCoef = drawing.GetScaleCoefficient();
-
-		TextPr.FontSize *= nFontCoef;
-		TextPr.FontSizeCS *= nFontCoef;
-	}
+	let layoutCoeff = this.Paragraph.getLayoutFontSizeCoefficient();
+	TextPr.FontSize   *= layoutCoeff;
+	TextPr.FontSizeCS *= layoutCoeff;
 
 	return TextPr;
 };
@@ -8254,7 +8241,7 @@ ParaRun.prototype.AddPrChange = function()
 				PrChange   : this.Pr.PrChange,
 				ReviewInfo : this.Pr.ReviewInfo
 			}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
     }
 };
 
@@ -8270,7 +8257,7 @@ ParaRun.prototype.SetPrChange = function(PrChange, ReviewInfo)
 			ReviewInfo : ReviewInfo ? ReviewInfo.Copy() : undefined
 		}));
 	this.Pr.SetPrChange(PrChange, ReviewInfo);
-    this.private_UpdateTrackRevisions();
+    this.updateTrackRevisions();
 };
 
 ParaRun.prototype.RemovePrChange = function()
@@ -8287,7 +8274,7 @@ ParaRun.prototype.RemovePrChange = function()
 				ReviewInfo : undefined
 			}));
 		this.Pr.RemovePrChange();
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 
@@ -10379,7 +10366,7 @@ ParaRun.prototype.RemoveReviewMoveType = function()
 	}));
 
 	this.ReviewInfo = oInfo;
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 };
 ParaRun.prototype.GetReviewInfo = function()
 {
@@ -10438,7 +10425,7 @@ ParaRun.prototype.SetReviewType = function(nType, isCheckDeleteAdded)
 			ReviewType : this.ReviewType,
 			ReviewInfo : this.ReviewInfo.Copy()
 		}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 /**
@@ -10475,7 +10462,7 @@ ParaRun.prototype.SetReviewTypeWithInfo = function(nType, oInfo, isCheckLastPara
 	this.ReviewType = nType;
 	this.ReviewInfo = oInfo;
 
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 };
 ParaRun.prototype.Get_Parent = function()
 {
@@ -10624,7 +10611,7 @@ ParaRun.prototype.private_UpdateTrackRevisionOnChangeContent = function(bUpdateI
 {
     if (reviewtype_Common !== this.GetReviewType())
     {
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
 
         if (true === bUpdateInfo && this.Paragraph && this.Paragraph.LogicDocument && this.Paragraph.bFromDocument && true === this.Paragraph.LogicDocument.IsTrackRevisions() && this.ReviewInfo && true === this.ReviewInfo.IsCurrentUser())
         {
@@ -10638,7 +10625,7 @@ ParaRun.prototype.private_UpdateTrackRevisionOnChangeTextPr = function(bUpdateIn
 {
     if (true === this.HavePrChange())
     {
-        this.private_UpdateTrackRevisions();
+        this.updateTrackRevisions();
 
         if (true === bUpdateInfo && this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsTrackRevisions())
         {
@@ -10646,14 +10633,6 @@ ParaRun.prototype.private_UpdateTrackRevisionOnChangeTextPr = function(bUpdateIn
             this.Pr.ReviewInfo.Update();
             History.Add(new CChangesRunPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
         }
-    }
-};
-ParaRun.prototype.private_UpdateTrackRevisions = function()
-{
-    if (this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument && this.Paragraph.LogicDocument.GetTrackRevisionsManager)
-    {
-        var RevisionsManager = this.Paragraph.LogicDocument.GetTrackRevisionsManager();
-        RevisionsManager.CheckElement(this.Paragraph);
     }
 };
 ParaRun.prototype.AcceptRevisionChanges = function(nType, bAll)

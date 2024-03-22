@@ -89,7 +89,7 @@ var search_HdrFtr_Even         = 0x0004; // Поиск в колонтитуле
 var search_HdrFtr_Odd          = 0x0005; // Поиск в колонтитуле, который находится только на нечетных страницах, включая первую
 var search_HdrFtr_Odd_no_First = 0x0006; // Поиск в колонтитуле, который находится только на нечетных страницах, кроме первой
 
-// Типы которые возвращают классы CParagraph и CTable после пересчета страницы
+// Типы которые возвращают классы Paragraph и CTable после пересчета страницы
 var recalcresult_NextElement = 0x01; // Пересчитываем следующий элемент
 var recalcresult_PrevPage    = 0x02; // Пересчитываем заново предыдущую страницу
 var recalcresult_CurPage     = 0x04; // Пересчитываем заново текущую страницу
@@ -1844,7 +1844,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	this.Layout = this.Layouts.Print;
 
-	this.Content[0] = new Paragraph(DrawingDocument, this);
+	this.Content[0] = new AscWord.Paragraph(this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
 
@@ -1914,6 +1914,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		Description     : AscDFH.historyitem_type_Unknown,
 		Recalculate     : false,
 		CancelAction    : false,
+		CheckLock       : false,
 		UpdateSelection : false,
 		UpdateInterface : false,
 		UpdateRulers    : false,
@@ -2354,7 +2355,7 @@ CDocument.prototype.Add_TestDocument               = function()
     var RunsCount  = Text.length;
     for (var ParaIndex = 0; ParaIndex < ParasCount; ParaIndex++)
     {
-        var Para = new Paragraph(this.DrawingDocument, this);
+        var Para = new AscWord.Paragraph();
         //var Run = new ParaRun(Para);
         for (var RunIndex = 0; RunIndex < RunsCount; RunIndex++)
         {
@@ -2725,12 +2726,13 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
 };
 /**
  * Завершаем действие
- * @param {boolean} [isCheckEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @param {boolean} [checkEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @returns {boolean} Выполнилось ли действие
  */
-CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
+CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 {
 	if (!this.IsActionStarted())
-		return;
+		return true;
 
 	if (this.Action.Depth > 0)
 	{
@@ -2742,12 +2744,14 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		}
 
 		this.Action.Depth--;
-		return;
+		return true;
 	}
-
+	
 	this.private_CheckAdditionalOnFinalize();
-
-	var isAllPointsEmpty = true;
+	this.private_CheckEmptyPointsInAction(checkEmptyAction);
+	this.private_CheckActionLock();
+	
+	let actionCompleted = true;
 	if (this.Action.CancelAction)
 	{
 		let arrChanges = [];
@@ -2755,34 +2759,17 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		{
 			arrChanges = arrChanges.concat(this.History.Undo());
 		}
-
-		this.RecalculateByChanges(arrChanges);
+		
+		if (arrChanges.length)
+			this.RecalculateByChanges(arrChanges);
+		
+		actionCompleted = false;
 	}
-	else if (false !== isCheckEmptyAction)
-	{
-		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
-		{
-			if (this.History.Is_LastPointEmpty())
-			{
-				this.History.Remove_LastPoint();
-			}
-			else
-			{
-				isAllPointsEmpty = false;
-				break;
-			}
-		}
-	}
-	else
-	{
-		isAllPointsEmpty = false;
-	}
-
-	if (!isAllPointsEmpty)
+	
+	if (this.Action.PointsCount)
 	{
 		if (this.Action.Recalculate)
 		{
-
             if (this.Action.Additional.ShapeAutoFit)
                 this.private_FinalizeShapeAutoFit();
 
@@ -2810,13 +2797,14 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.PointsCount        = 0;
 	this.Action.Recalculate        = false;
 	this.Action.CancelAction       = false;
+	this.Action.CheckLock          = false;
 	this.Action.Redraw.Start       = undefined;
 	this.Action.Redraw.End         = undefined;
 	this.Action.Additional         = {};
 	this.Api.checkChangesSize();
 	
 	if (this.Action.UpdateStates)
-		return;
+		return actionCompleted;
 	
 	this.Action.UpdateStates = true;
 	
@@ -2848,6 +2836,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
+	return actionCompleted;
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -2858,6 +2847,17 @@ CDocument.prototype.CancelAction = function()
 		return;
 
 	this.Action.CancelAction = true;
+};
+/**
+ * Сообщаем, что перед окончанием действия нужно проверить, что все выполненные изменения были разрешены
+ * Используется, когда мы не может проверить лок объектов до самого действия
+ */
+CDocument.prototype.CheckActionLock = function()
+{
+	if (!this.IsActionStarted())
+		return;
+	
+	this.Action.CheckLock = true;
 };
 CDocument.prototype.StartUndoRedoAction = function()
 {
@@ -2918,6 +2918,40 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 		this.OFormDocument.onEndAction();
 	
 	this.Action.Additional.Start = false;
+};
+CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmptyAction)
+{
+	if (false === checkEmptyAction)
+		return;
+	
+	for (let pointIndex = 0, pointCount = this.Action.PointsCount; pointIndex < pointCount; ++pointIndex)
+	{
+		if (!this.History.Is_LastPointEmpty())
+			break;
+		
+		this.History.Remove_LastPoint();
+		--this.Action.PointsCount;
+	}
+};
+CDocument.prototype.private_CheckActionLock = function()
+{
+	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
+		return;
+	
+	if (!this.StartSelectionLockCheck())
+	{
+		this.Action.CancelAction = true;
+		return;
+	}
+	
+	this.History.checkLock(this.Action.PointsCount);
+	
+	if (this.EndSelectionLockCheck())
+		this.Action.CancelAction = true;
+	
+	// TODO: Если сервер нам запрещает делать действие, то мы делаем Undo из совместки. Но там делается отмена
+	//       только для одной точки, а в действии их может быть несколько. Надо доработать этот момент (но в текущий
+	//       момент данная проверка не вызывается для случаев, где в действии более одной точки)
 };
 /**
  * Пересчитываем нумерацию строк
@@ -5884,7 +5918,7 @@ CDocument.prototype.Extend_ToPos = function(X, Y)
 
     while (true)
     {
-        var NewParagraph = new Paragraph(this.DrawingDocument, this);
+        var NewParagraph = new AscWord.Paragraph();
         var NewRun       = new ParaRun(NewParagraph, false);
         NewParagraph.Add_ToContent(0, NewRun);
 
@@ -6145,7 +6179,7 @@ CDocument.prototype.AddDropCap = function(bInText)
 	{
 		this.StartAction(AscDFH.historydescription_Document_AddDropCap);
 
-		var NewParagraph = new Paragraph(this.DrawingDocument, this);
+		var NewParagraph = new AscWord.Paragraph();
 
 		var TextPr = OldParagraph.Split_DropCap(NewParagraph);
 		var Before = OldParagraph.Get_CompiledPr().ParaPr.Spacing.Before;
@@ -11047,7 +11081,7 @@ CDocument.prototype.Internal_Content_Add = function(Position, NewObject, isCorre
 
 		// Проверим, что последний элемент - параграф
 		if (!this.Content[this.Content.length - 1].IsParagraph())
-			this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this), false);
+			this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph(), false);
 	}
 
 	// Запоминаем, что нам нужно произвести переиндексацию элементов
@@ -11089,7 +11123,7 @@ CDocument.prototype.Internal_Content_Remove = function(Position, Count, isCorrec
 
 		// Проверим, что последний элемент - параграф
 		if (this.Content.length <= 0 || !this.Content[this.Content.length - 1].IsParagraph())
-			this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this));
+			this.Internal_Content_Add(this.Content.length, new AscWord.Paragraph());
 	}
 
 	// Обновим информацию о секциях
@@ -13804,7 +13838,7 @@ CDocument.prototype.Check_SectionLastParagraph = function()
 
 	var Element = this.Content[Count - 1];
 	if (type_Paragraph === Element.GetType() && undefined !== Element.Get_SectionPr())
-		this.Internal_Content_Add(Count, new Paragraph(this.DrawingDocument, this), false);
+		this.Internal_Content_Add(Count, new AscWord.Paragraph(), false);
 };
 CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 {
@@ -13841,7 +13875,7 @@ CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 		// секции. Если мы стоим в первой строке таблицы, таблицу делить не надо, достаточно добавить новый
 		// параграф перед ней.
 
-		var oNewParagraph = new Paragraph(this.DrawingDocument, this);
+		var oNewParagraph = new AscWord.Paragraph();
 		var oNewTable     = oElement.Split();
 
 		if (null === oNewTable)
@@ -16086,7 +16120,7 @@ CDocument.prototype.Set_ColumnsProps = function(ColumnsProps)
 		var oEndParagraph = null;
 		if (type_Paragraph !== this.Content[nEndPos].GetType())
 		{
-			oEndParagraph = new Paragraph(this.DrawingDocument, this);
+			oEndParagraph = new AscWord.Paragraph();
 			this.Add_ToContent(nEndPos + 1, oEndParagraph);
 		}
 		else
@@ -16101,7 +16135,7 @@ CDocument.prototype.Set_ColumnsProps = function(ColumnsProps)
 			var oSectPr = new CSectionPr(this);
 			oSectPr.Copy(oStartSectPr, false);
 
-			var oStartParagraph = new Paragraph(this.DrawingDocument, this);
+			var oStartParagraph = new AscWord.Paragraph();
 			this.Add_ToContent(nStartPos, oStartParagraph);
 			oStartParagraph.Set_SectionPr(oSectPr, true);
 
@@ -16471,6 +16505,16 @@ CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
 	{
 		oRun.Recalc_CompiledPr(true);
 	});
+	
+	this.GetAllParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+	});
+	
+	this.GetAllTables().forEach(function(table)
+	{
+		table.Recalc_CompiledPr();
+	});
 
 	this.RecalculateFromStart(true);
 };
@@ -16481,6 +16525,16 @@ CDocument.prototype.SetDocumentPrintMode = function()
 	this.CheckAllRunContent(function(oRun)
 	{
 		oRun.Recalc_CompiledPr(true);
+	});
+	
+	this.GetAllParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+	});
+	
+	this.GetAllTables().forEach(function(table)
+	{
+		table.Recalc_CompiledPr();
 	});
 
 	this.RecalculateFromStart(true);
@@ -17175,7 +17229,7 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 		}
 
 		// Добавляем дополнительный параграф с окончанием секции
-		var SectionPara = new Paragraph(this.DrawingDocument, this);
+		var SectionPara = new AscWord.Paragraph();
 		var SectPr = new CSectionPr(LogicDocument);
 		SectPr.Copy(this.SectPr, true);
 		SectPr.Set_Type(c_oAscSectionBreakType.NextPage);
@@ -17189,7 +17243,7 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 	this.ForceCopySectPr  = false;
 
 	// Добавляем дополнительный параграф в самом конце для последней секции документа
-	var SectPara = new Paragraph(this.DrawingDocument, this);
+	var SectPara = new AscWord.Paragraph();
 	LogicDocument.Content[OverallIndex++] = SectPara;
 	LogicDocument.SectPr.Copy(this.SectPr);
 	LogicDocument.SectPr.Set_Type(c_oAscSectionBreakType.Continuous);
@@ -18612,7 +18666,7 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		{
 			var ItemReviewType = Item.GetReviewType();
 			// Создаем новый параграф
-			var NewParagraph   = new Paragraph(this.DrawingDocument, this);
+			var NewParagraph   = new AscWord.Paragraph();
 
 			if (Item.IsCursorAtBegin())
 			{
@@ -18725,7 +18779,7 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		
 		if (-1 !== newPos)
 		{
-			let newParagraph = new Paragraph(this.DrawingDocument, this);
+			let newParagraph = new AscWord.Paragraph();
 			this.Internal_Content_Add(newPos, newParagraph);
 			this.CurPos.ContentPos = newPos;
 			
@@ -19021,7 +19075,7 @@ CDocument.prototype.controller_AddInlineTable = function(nCols, nRows, nMode)
 			}
 			else
 			{
-				var NewParagraph = new Paragraph(this.DrawingDocument, this);
+				var NewParagraph = new AscWord.Paragraph();
 				Item.Split(NewParagraph);
 
 				this.AddToContent(nContentPos + 1, NewParagraph);
@@ -19287,7 +19341,7 @@ CDocument.prototype.controller_AddToParagraph = function(ParaItem, bRecalculate)
 			else
 			{
 				var oNewTable = Item.Split();
-				var oNewPara  = new Paragraph(this.DrawingDocument, this);
+				var oNewPara  = new AscWord.Paragraph();
 
 				if (ParaItem.IsPageBreak())
 					oNewPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
@@ -24337,9 +24391,9 @@ CDocument.prototype.AddBlankPage = function()
 			else if (oElement.IsTable())
 			{
 				var oNewTable = oElement.Split();
-				var oBreak1   = new Paragraph(this.DrawingDocument, this);
-				var oEmpty    = new Paragraph(this.DrawingDocument, this);
-				var oBreak2   = new Paragraph(this.DrawingDocument, this);
+				var oBreak1   = new AscWord.Paragraph();
+				var oEmpty    = new AscWord.Paragraph();
+				var oBreak2   = new AscWord.Paragraph();
 
 				oBreak1.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
 				oBreak2.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
@@ -24544,7 +24598,7 @@ CDocument.prototype.AddCaption = function(oPr)
             if(oDrawing.Is_Inline())
             {
                 let oDocContent = oDrawing.GetDocumentContent();
-                NewParagraph = new Paragraph(this.DrawingDocument, oDocContent);
+                NewParagraph = new AscWord.Paragraph();
                 NewParagraph.SetParagraphStyle("Caption");
                 oDocContent.Internal_Content_Add(oPr.get_Before() ? oDrawing.Get_ParentParagraph().Index : (oDrawing.Get_ParentParagraph().Index + 1), NewParagraph, true);
             }
@@ -24599,13 +24653,13 @@ CDocument.prototype.AddCaption = function(oPr)
         if(this.Selection.Use)
         {
             var oTable = this.Content[this.Selection.StartPos];
-            NewParagraph = new Paragraph(this.DrawingDocument, this);
+            NewParagraph = new AscWord.Paragraph();
             NewParagraph.SetParagraphStyle("Caption");
             this.Internal_Content_Add(oPr.get_Before() ? oTable.Index : (oTable.Index + 1), NewParagraph, true);
         }
         else
         {
-            NewParagraph = new Paragraph(this.DrawingDocument, this);
+            NewParagraph = new AscWord.Paragraph();
             NewParagraph.SetParagraphStyle("Caption");
             this.Internal_Content_Add(oPr.get_Before() ? this.CurPos.ContentPos : (this.CurPos.ContentPos + 1), NewParagraph, true);
         }
@@ -25131,7 +25185,7 @@ CDocument.prototype.AddTextWithPr = function(sText, oSettings)
 				}
 			}
 
-			var oTempPara = new Paragraph(this.GetDrawingDocument(), oParagraph.GetParent());
+			var oTempPara = new AscWord.Paragraph();
 			var oRun      = new ParaRun(oTempPara, false);
 			oRun.AddText(sText);
 			oTempPara.AddToContent(0, oRun);
@@ -26267,7 +26321,7 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 		if (oNewContent && oParent)
 		{
 			var nIndex     = oTable.GetIndex();
-			var oParagraph = new Paragraph(this.GetDrawingDocument());
+			var oParagraph = new AscWord.Paragraph();
 
 			oParent.RemoveFromContent(nIndex, 1, true);
 			oParent.AddToContent(nIndex, oParagraph, true);
@@ -26348,7 +26402,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		{
 			var oRow = TableC.GetRow(i);
 			var Tabs = oProps.type == 2 ? new CParaTabs() : null;
-			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
+			var oNewParagraph = new AscWord.Paragraph();
 			NewContent.content.push(oNewParagraph);
 			var bAdd = true;
 			for (var k = 0; k < oRow.GetCellsCount(); k++)
@@ -26363,7 +26417,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 						case type_Paragraph:
 							if (isNewPar)
 							{
-								oNewParagraph = new Paragraph(this.DrawingDocument, this);
+								oNewParagraph = new AscWord.Paragraph();
 								NewContent.content.push(oNewParagraph);
 							}
 							else
@@ -26403,7 +26457,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							Tabs.Add(new CParaTab(tab_Left, pos, Asc.c_oAscTabLeader.None));
 							break;
 						case 1:
-							oNewParagraph = new Paragraph(this.DrawingDocument, this);
+							oNewParagraph = new AscWord.Paragraph();
 							NewContent.content.push(oNewParagraph);
 							break;
 						default:

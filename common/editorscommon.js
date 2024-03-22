@@ -1662,7 +1662,7 @@
 
 	var c_oAscSpreadsheetUploadProp = {
 		MaxFileSize:      104857600, //100 mb
-		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlt", "fods", "ots"]
+		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlsb", "xlt", "fods", "ots"]
 	};
 
 	var c_oAscTextUploadProp = {
@@ -1815,6 +1815,9 @@
 				break;
 			case c_oAscFileType.XLTM:
 				return 'xltm';
+				break;
+			case c_oAscFileType.XLSB:
+				return 'xlsb';
 				break;
 			case c_oAscFileType.FODS:
 				return 'fods';

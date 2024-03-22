@@ -596,6 +596,9 @@
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
     };
+    CTextBody.prototype.getDrawingDocument = function() {
+        return Asc.editor.getDrawingDocument();
+    };
 
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);

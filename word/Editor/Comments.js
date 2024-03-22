@@ -725,10 +725,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return null;
 	};
-
-	var comments_NoComment        = 0;
-	var comments_NonActiveComment = 1;
-	var comments_ActiveComment    = 2;
+	
+	// Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
+	let marksToCheck = [];
 
 	/**
 	 * Класс для работы с комментариями документов
@@ -749,8 +748,6 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	this.m_arrComments     = [];    // Массив
 
     this.Pages = [];
-
-    this.MarksToCheck = []; // Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
 
     this.Get_Id = function()
     {
@@ -1161,15 +1158,11 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		return this.m_arrComments.length;
 	};
-	CComments.prototype.AddMarkToCheck = function(oMark)
-	{
-		this.MarksToCheck.push(oMark);
-	};
 	CComments.prototype.CheckMarks = function()
 	{
-		for (var nIndex = 0, nCount = this.MarksToCheck.length; nIndex < nCount; ++nIndex)
+		for (var nIndex = 0, nCount = marksToCheck.length; nIndex < nCount; ++nIndex)
 		{
-			var oMark      = this.MarksToCheck[nIndex];
+			var oMark      = marksToCheck[nIndex];
 			var sCommentId = oMark.GetCommentId();
 			var oComment   = this.Get_ById(sCommentId);
 			var oParagraph = oMark.GetParagraph();
@@ -1178,8 +1171,8 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				oComment.SetRangeMark(oMark);
 			}
 		}
-
-		this.MarksToCheck.length = 0;
+		
+		marksToCheck.length = 0;
 	};
 
 /**
@@ -1351,19 +1344,14 @@ ParaComment.prototype.IsCommentStart = function()
 {
 	return this.Start;
 };
-ParaComment.prototype.SetParagraph = function(oParagraph)
+ParaComment.prototype.SetParagraph = function(paragraph)
 {
-	this.Paragraph = oParagraph;
-
-	var oLogicDocument = oParagraph.GetLogicDocument();
-	if (oLogicDocument)
-	{
-		// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
-		// создаются копии ParaComment, которые ломают эту связь, т.к. для них
-		// еще не создан свой комментарий и они пока "привязаны" к старому
-		var oDocComments = oLogicDocument.Comments;
-		oDocComments.AddMarkToCheck(this);
-	}
+	this.Paragraph = paragraph;
+	
+	// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
+	// создаются копии ParaComment, которые ломают эту связь, т.к. для них
+	// еще не создан свой комментарий и они пока "привязаны" к старому
+	marksToCheck.push(this);
 };
 ParaComment.prototype.IsUseInDocument = function()
 {

@@ -160,6 +160,7 @@ CChangesTableCellGridSpan.prototype.private_SetValue = function(Value)
 	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellGridSpan.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellGridSpan.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -390,6 +391,7 @@ CChangesTableCellMargins.prototype.private_SetValue = function(Value)
 	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellMargins.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellMargins.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -412,6 +414,7 @@ CChangesTableCellShd.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellShd.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellShd.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -430,6 +433,7 @@ CChangesTableCellVMerge.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellVMerge.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellVMerge.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -519,6 +523,7 @@ CChangesTableCellBorderLeft.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellBorderLeft.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellBorderLeft.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -608,6 +613,7 @@ CChangesTableCellBorderTop.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellBorderTop.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellBorderTop.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -697,6 +703,7 @@ CChangesTableCellBorderRight.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellBorderRight.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellBorderRight.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -786,6 +793,7 @@ CChangesTableCellBorderBottom.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellBorderBottom.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellBorderBottom.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -804,6 +812,7 @@ CChangesTableCellVAlign.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellVAlign.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellVAlign.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -827,6 +836,7 @@ CChangesTableCellW.prototype.private_SetValue = function(Value)
 	oCell.private_UpdateTableGrid();
 };
 CChangesTableCellW.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellW.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectValue}
@@ -853,7 +863,7 @@ CChangesTableCellPr.prototype.private_SetValue = function(Value)
 	cell.private_UpdateTableGrid();
 	
 	if (trackRevisions)
-		cell.private_UpdateTrackRevisions();
+		cell.updateTrackRevisions();
 };
 CChangesTableCellPr.prototype.Merge = function(oChange)
 {
@@ -937,6 +947,7 @@ CChangesTableCellPr.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTableCellPr.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -955,6 +966,7 @@ CChangesTableCellTextDirection.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellTextDirection.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellTextDirection.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -973,6 +985,7 @@ CChangesTableCellNoWrap.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellNoWrap.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellNoWrap.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -991,6 +1004,7 @@ CChangesTableCellHMerge.prototype.private_SetValue = function(Value)
 	oCell.Recalc_CompiledPr();
 };
 CChangesTableCellHMerge.prototype.Merge = private_TableCellChangesOnMergePr;
+CChangesTableCellHMerge.prototype.CheckLock = private_TableChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBase}
@@ -1010,14 +1024,14 @@ CChangesTableCellPrChange.prototype.Undo = function()
 	var oTableCell = this.Class;
 	oTableCell.Pr.PrChange   = this.Old.PrChange;
 	oTableCell.Pr.ReviewInfo = this.Old.ReviewInfo;
-	oTableCell.private_UpdateTrackRevisions();
+	oTableCell.updateTrackRevisions();
 };
 CChangesTableCellPrChange.prototype.Redo = function()
 {
 	var oTableCell = this.Class;
 	oTableCell.Pr.PrChange   = this.New.PrChange;
 	oTableCell.Pr.ReviewInfo = this.New.ReviewInfo;
-	oTableCell.private_UpdateTrackRevisions();
+	oTableCell.updateTrackRevisions();
 };
 CChangesTableCellPrChange.prototype.WriteToBinary = function(oWriter)
 {
@@ -1136,3 +1150,4 @@ CChangesTableCellPrChange.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesTableCellPrChange.prototype.CheckLock = private_TableChangesCheckLock;

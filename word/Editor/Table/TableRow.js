@@ -359,7 +359,7 @@ CTableRow.prototype =
 		this.private_UpdateTableGrid();
 		
 		if (isHavePrChange || this.HavePrChange())
-			this.private_UpdateTrackRevisions();
+			this.updateTrackRevisions();
 	},
 
     Get_Before : function()
@@ -1086,7 +1086,7 @@ CTableRow.prototype.SetReviewType = function(nType, isCheckDeleteAdded)
 			ReviewInfo : this.ReviewInfo.Copy()
 		}));
 
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 /**
@@ -1107,13 +1107,13 @@ CTableRow.prototype.SetReviewTypeWithInfo = function(nType, oInfo)
 	this.ReviewType = nType;
 	this.ReviewInfo = oInfo;
 
-	this.private_UpdateTrackRevisions();
+	this.updateTrackRevisions();
 };
-CTableRow.prototype.private_UpdateTrackRevisions = function()
+CTableRow.prototype.updateTrackRevisions = function()
 {
 	var oTable = this.GetTable();
 	if (oTable)
-		oTable.UpdateTrackRevisions();
+		oTable.updateTrackRevisions();
 };
 CTableRow.prototype.HavePrChange = function()
 {
@@ -1131,7 +1131,7 @@ CTableRow.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableRow.prototype.RemovePrChange = function()
@@ -1146,7 +1146,7 @@ CTableRow.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableRow.prototype.private_AddPrChange = function()

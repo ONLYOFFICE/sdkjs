@@ -36,8 +36,8 @@ $(function () {
 	let dc = new AscWord.CDocumentContent();
 	dc.ClearContent(false);
 
-	let p1 = new AscWord.CParagraph();
-	let p2 = new AscWord.CParagraph();
+	let p1 = new AscWord.Paragraph();
+	let p2 = new AscWord.Paragraph();
 
 	dc.AddToContent(0, p1);
 	dc.AddToContent(1, p2);

@@ -152,6 +152,9 @@
 		NeedTransform: 2,
 		PreProcessed: 3
 	};
+
+
+
 	var emptyStyleComponents = {table: [], conditional: []};
 	function getRangeType(oBBox){
 		if(null == oBBox)
@@ -359,7 +362,7 @@
 						let curMultiText = _fragments[m].text;
 						for (let k = 0, length = curMultiText.length; k < length; k++) {
 							if (oCurPar === null) {
-								oCurPar = new Paragraph();
+								oCurPar = new AscWord.Paragraph();
 								oCurRun = new ParaRun(oCurPar);
 							}
 
@@ -1842,18 +1845,78 @@
 			}
 			this.tempGetByCells = [];
 		},
+
+
+
 		_calculateDirty: function() {
 			var t = this;
-			this._foreachChanged(function(cell){
+			
+			let needUpdateCells = [];
+
+			this._foreachChanged(function (cell) {
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
 				}
 			});
+
+			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
+
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
 			});
 			this.changedCell = null;
 			this.changedRange = null;
+
+			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+				//need update
+
+				let needUpdateExternalReference = [];
+				let newExternalReferences = [];
+				for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+					let newExternalReference = new AscCommonExcel.ExternalReference();
+					//newExternalReference.referenceData = referenceData;
+					newExternalReference.Id = i;
+
+					for (var j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+						let newSheet = AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet;
+						newExternalReference.addSheetName(newSheet, true);
+						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+
+						let ws = newExternalReference.worksheets[newSheet];
+
+						newExternalReference.initRows(ws.getRange2(AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].range));
+					}
+
+					newExternalReference.notUpdateId = true;
+
+					newExternalReferences.push(newExternalReference);
+					needUpdateExternalReference.push(newExternalReference.getAscLink())
+				}
+
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+
+				this.wb.addExternalReferences(newExternalReferences);
+
+
+				this.wb.dependencyFormulas.lockRecal();
+				let t = this;
+				this.wb.oApi.asc_updateExternalReferences(needUpdateExternalReference, function () {
+					t.wb.dependencyFormulas.unlockRecal(true);
+
+					//needUpdateCells
+					for (let i = 0; i < needUpdateCells.length; i++) {
+						t.wb.dependencyFormulas.addToChangedCell(needUpdateCells[i]);
+					}
+					t.wb.sortDependency();
+					AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+
+					t.wb.drawWorksheet();
+				});
+			} else {
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+			}
+
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
@@ -4711,7 +4774,7 @@
 	};
 
 	Workbook.prototype.addExternalReferences = function (arr) {
-		if (arr) {
+		if (arr && arr.length) {
 			for (var i = 0; i < arr.length; i++) {
 				this.externalReferences.push(arr[i]);
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -4769,6 +4832,39 @@
 			}
 		}
 		return null;
+	};
+
+	Workbook.prototype.addExternalReferencesAfterParseFormulas = function (externalReferenesNeedAdd) {
+		let newExternalReferences = [];
+		for (let i in externalReferenesNeedAdd) {
+			let needAdd = false;
+			let newExternalReference = this.getExternalReferenceById(i);
+			if (!newExternalReference) {
+				newExternalReference = new AscCommonExcel.ExternalReference();
+				newExternalReference.Id = i;
+				needAdd = true;
+			}
+
+			for (let j = 0; j < externalReferenesNeedAdd[i].length; j++) {
+				let oNewSheet = externalReferenesNeedAdd[i][j];
+				if (null === newExternalReference.getSheetByName(oNewSheet.sheet)) {
+					let newSheet = oNewSheet.sheet;
+					newExternalReference.addSheetName(newSheet, true);
+					newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+				}
+				if (oNewSheet.notUpdateId) {
+					newExternalReference.notUpdateId = true;
+				}
+			}
+
+			if (needAdd) {
+				newExternalReferences.push(newExternalReference);
+			} else {
+				//this.changeExternalReference();
+			}
+		}
+
+		this.addExternalReferences(newExternalReferences);
 	};
 
 	Workbook.prototype.unlockUserProtectedRanges = function(){
@@ -12636,7 +12732,17 @@
 			}
 
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), null,
+				let updateRange = null;
+				if (oldObj && newObj && oldObj.ref && newObj.ref) {
+					updateRange = oldObj.ref.clone();
+					updateRange.union2(newObj.ref);
+				} else if (oldObj && oldObj.ref) {
+					updateRange = oldObj.ref.clone();
+				} else if (newObj && newObj.ref) {
+					updateRange = newObj.ref.clone();
+				}
+				
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), updateRange,
 					new UndoRedoData_FromTo(oldObj, newObj));
 			}
 		}
@@ -12696,7 +12802,7 @@
 		return res;
 	};
 
-	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId, notCheckUser){
+	Worksheet.prototype.isUserProtectedRangesIntersection = function (range, userId, notCheckUser, type) {
 		//range - array of ranges or range
 		let res = false;
 		if (!this.userProtectedRanges || !this.userProtectedRanges.length) {
@@ -12712,13 +12818,61 @@
 				let curUserProtectedRange = this.userProtectedRanges[i];
 				if (range && range.length) {
 					for (let j = 0; j < range.length; j++) {
-						if (curUserProtectedRange.intersection(range[j])&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+						if (curUserProtectedRange.intersection(range[j]) && (notCheckUser || !curUserProtectedRange.isUserCanDoByType(userId, type))) {
 							return true;
 						}
 					}
-				} else if ((!range || curUserProtectedRange.intersection(range))&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+				} else if ((!range || curUserProtectedRange.intersection(range)) && (notCheckUser || !curUserProtectedRange.isUserCanDoByType(userId, type))) {
 					res = true;
 					break;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isUserProtectedRangesIntersectionCell = function(oCell, userId, notCheckUser, type){
+		//range - array of ranges or range
+		let res = false;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length || !oCell) {
+			return res;
+		}
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+		}
+
+		oCell = {col: oCell.nCol, row: oCell.nRow};
+
+		if (this.userProtectedRanges && userId) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (curUserProtectedRange.contains2(oCell) && (notCheckUser || !curUserProtectedRange.isUserCanDoByType(userId, type))) {
+					return true;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isUserProtectedRangesCanView = function(oCell, userId){
+		//range - array of ranges or range
+		let res = true;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length || !oCell) {
+			return res;
+		}
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+		}
+
+		oCell = {col: oCell.nCol, row: oCell.nRow};
+
+		if (this.userProtectedRanges && userId) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (curUserProtectedRange.contains2(oCell) && !curUserProtectedRange.isUserCanView(userId)) {
+					return false;
 				}
 			}
 		}
@@ -13298,15 +13452,43 @@
 		let externalLinks;
 		let i;
 		if (fOld && (!fNew || fNew.Formula !== fOld.Formula) && fOld.outStack) {
+			let needCheckImportFuncs = false;
 			for (i = 0; i < fOld.outStack.length; i++) {
 				if (fOld.outStack[i].externalLink) {
 					if (!externalLinks) {
 						externalLinks = {};
 					}
 					externalLinks[fOld.outStack[i].externalLink] = fOld.outStack[i].getWsId();
+				} else if (fOld.outStack[i].type === cElementType.func && fOld.outStack[i].name === "IMPORTRANGE") {
+					needCheckImportFuncs = true;
 				}
 			}
+
+			if (needCheckImportFuncs) {
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
+				fOld.calculate();
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+				if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+					for (i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						for (let j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+							if (AscCommonExcel.importRangeLinksState.importRangeLinks[i][j]) {
+								let ws = this.ws.workbook.getExternalWorksheet(i, AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet);
+								if (ws) {
+									if (!externalLinks) {
+										externalLinks = {};
+									}
+									externalLinks[i] = ws.getId();
+								}
+							}
+
+						}
+					}
+				}
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+			}
 		}
+
 
 		//2. проверяем, каких ссылок не осталось в новых данных
 		if (externalLinks && fNew && fNew.outStack) {
@@ -13314,6 +13496,13 @@
 				if (fNew.outStack[i].externalLink) {
 					if (externalLinks[fNew.outStack[i].externalLink]) {
 						delete externalLinks[fNew.outStack[i].externalLink];
+					}
+				}
+			}
+			if (fNew.importFunctionsRangeLinks) {
+				for (i in fNew.importFunctionsRangeLinks) {
+					if (externalLinks[i]) {
+						delete externalLinks[i];
 					}
 				}
 			}
@@ -13812,7 +14001,9 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if (this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) ||
+			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))
+			|| !this.ws.isUserProtectedRangesCanView(this, null)) {
 			return "";
 		}
 
@@ -13828,11 +14019,12 @@
 		var oValueArray = null;
 		var xfs = this.getCompiledStyle();
 		if (this.isFormula()) {
-			if (!(this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden())) {
-			this.processFormula(function(parsed) {
-				// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
-				oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
-			});
+			if (!((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden() ||
+				(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))))) {
+				this.processFormula(function (parsed) {
+					// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
+					oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				});
 			}
 		} else {
 			if(null != this.text || null != this.number)

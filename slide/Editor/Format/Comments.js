@@ -41,11 +41,6 @@ function (window, undefined) {
 	var g_oTableId = AscCommon.g_oTableId;
 	var History = AscCommon.History;
 
-	var comments_NoComment = 0;
-	var comments_NonActiveComment = 1;
-	var comments_ActiveComment = 2;
-
-
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Position] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_Change] = AscDFH.CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = AscDFH.CChangesDrawingsLong;
@@ -1162,10 +1157,6 @@ function (window, undefined) {
 
 //--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
-
-	window['AscCommon'].comments_NoComment = comments_NoComment;
-	window['AscCommon'].comments_NonActiveComment = comments_NonActiveComment;
-	window['AscCommon'].comments_ActiveComment = comments_ActiveComment;
 
 	window['AscCommon'].comment_type_Common = comment_type_Common;
 	window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;

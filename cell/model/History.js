@@ -1190,7 +1190,7 @@ CHistory.prototype.StartTransaction = function()
 	}
 	this.Transaction++;
 };
-CHistory.prototype.EndTransaction = function()
+CHistory.prototype.EndTransaction = function(checkLockLastAction)
 {
 	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {
 		var api = this.workbook && this.workbook.oApi;
@@ -1210,6 +1210,8 @@ CHistory.prototype.EndTransaction = function()
 
 		if (this.Is_LastPointEmpty()) {
 			this.Remove_LastPoint();
+		} else if (checkLockLastAction && this.isActionLock()) {
+			this.Undo();
 		}
 	}
 };
@@ -1394,6 +1396,14 @@ CHistory.prototype.GetSerializeArray = function()
 		if (!this.Points[this.Index] || this.Points[this.Index].Items.length <= 0)
 			return true;
 
+		return false;
+	};
+	CHistory.prototype.isActionLock = function()
+	{
+		let wb = this.workbook && this.workbook.oApi && this.workbook.oApi.wb;
+		if (wb && !wb.canEdit()) {
+			return true;
+		}
 		return false;
 	};
 	//------------------------------------------------------------export--------------------------------------------------

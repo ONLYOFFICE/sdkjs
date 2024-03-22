@@ -603,7 +603,9 @@ CopyProcessor.prototype =
 		var closeBookmarks = function (_level) {
 			var tempTarget = bookmarkPrviousTargetMap[_level];
 			if (tempTarget) {
-				tempTarget.addChild(oTarget);
+				if (oTarget && !oTarget.isEmptyChild()) {
+					tempTarget.addChild(oTarget);
+				}
 				oTarget = tempTarget;
 			}
 		};
@@ -1709,6 +1711,10 @@ CopyProcessor.prototype =
 				this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 			}
 
+			if (!this.oBinaryFileWriter.Document) {
+				this.oBinaryFileWriter.Document = this.oDocument;
+			}
+
 			this.oBinaryFileWriter.CopyStart();
 			this.CopyDocument2(this.oRoot, oDocument, elementsContent, bFromPresentation);
 			this.CopyFootnotes(this.oRoot, this.aFootnoteReference);
@@ -2430,7 +2436,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "mso-border-insideh": 1, "mso-row-margin-left": 1, "mso-row-margin-right": 1, "mso-cellspacing": 1, "mso-border-alt": 1,
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
 		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1, "mso-table-layout-alt": 1, "mso-table-left": 1,
-		"mso-table-top": 1};
+		"mso-table-top": 1, "mso-ignore": 1};
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -2632,7 +2638,7 @@ PasteProcessor.prototype =
 								var oThirdElem = oNestedElem.Content[k];
 								if (oThirdElem.Type === para_Tab)
 								{
-									var oPar = new Paragraph(oDoc.DrawingDocument);
+									var oPar = new AscWord.Paragraph();
 									arrNewContent[0].unshift(oPar);
 									var oRun = oNestedElem.Split2(k);
 									oRun.RemoveFromContent(0, 1);
@@ -2663,7 +2669,7 @@ PasteProcessor.prototype =
 				var oCellContent = oCell.GetContent();
 				var oPara;
 				if (isMerged) {
-					oPara = new Paragraph(oDoc.DrawingDocument);
+					oPara = new AscWord.Paragraph();
 					oCellContent.AddToContent(oCellContent.Content.length, oPara, true);
 					oPara.Document_SetThisElementCurrent(false);
 				}
@@ -3318,7 +3324,7 @@ PasteProcessor.prototype =
 		{
 			if(!newParagraph)
 			{
-				newParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
+				newParagraph = new AscWord.Paragraph(oDoc);
 			}
 
 			//col
@@ -3334,11 +3340,11 @@ PasteProcessor.prototype =
 					previousTableAdd = false;
 					if(createNewParagraph)
 					{
-						newParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
+						newParagraph = new AscWord.Paragraph(oDoc);
 						createNewParagraph = false;
 					}
 
-					if(cDocumentContent.Content[n] instanceof Paragraph)
+					if(cDocumentContent.Content[n] instanceof AscWord.Paragraph)
 					{
 						//TODO пересмотреть обработку. получаем текст из контента, затем делаем контент из текста!
 						this._specialPasteParagraphConvert(cDocumentContent.Content[n]);
@@ -3526,7 +3532,7 @@ PasteProcessor.prototype =
                 var LastPosCurDoc = oDoc.CurPos.ContentPos;
 				//Нужно разрывать параграф
                 var oSourceFirstPar = Item;
-                var oSourceLastPar = new Paragraph(oDoc.DrawingDocument, oDoc);
+                var oSourceLastPar = new AscWord.Paragraph(oDoc);
                 if(true !== oSourceFirstPar.IsCursorAtEnd() || oSourceFirstPar.IsEmpty())
                     oSourceFirstPar.Split(oSourceLastPar);
                 var oInsFirstPar = aNewContent[0];
@@ -5419,7 +5425,7 @@ PasteProcessor.prototype =
                 oCurParagraph.Internal_Content_Add(0, oCurRun);
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (bAddParagraph) {
-                        oCurParagraph = new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true);
+                        oCurParagraph = new AscWord.Paragraph(oContent, oContent.bPresentation === true);
                         oContent.Internal_Content_Add(oContent.Content.length, oCurParagraph);
                         oCurRun = new ParaRun(oCurParagraph, false);
                         oCurParagraph.Internal_Content_Add(0, oCurRun);
@@ -5478,7 +5484,7 @@ PasteProcessor.prototype =
 		}
 
 		var getNewParagraph = function () {
-			var paragraph = new Paragraph(t.oDocument.DrawingDocument, Parent, bPresentation);
+			var paragraph = new AscWord.Paragraph(Parent, bPresentation);
 			var copyParaPr;
 			if (getStyleCurSelection) {
 				if (pasteIntoParagraphPr) {
@@ -5611,7 +5617,7 @@ PasteProcessor.prototype =
 				if (isGraphicFrame && drawings.length > 1 && drawings[i].base64)//если кроме таблички(при вставке из презентаций) содержатся ещё данные, вставляем в виде base64
 				{
 					if (!tempParagraph)
-						tempParagraph = new Paragraph(this.oDocument.DrawingDocument, this.oDocument);
+						tempParagraph = new AscWord.Paragraph(this.oDocument);
 
 					extX = drawings[i].ExtX;
 					extY = drawings[i].ExtY;
@@ -5640,7 +5646,7 @@ PasteProcessor.prototype =
 
 				} else {
 					if (!tempParagraph)
-						tempParagraph = new Paragraph(this.oDocument.DrawingDocument, this.oDocument);
+						tempParagraph = new AscWord.Paragraph(this.oDocument);
 
 					extX = drawings[i].ExtX;
 					extY = drawings[i].ExtY;
@@ -5974,7 +5980,7 @@ PasteProcessor.prototype =
 			}
 		};
 
-		var paragraph = new Paragraph(this.oDocument.DrawingDocument, this.oDocument, true);
+		var paragraph = new AscWord.Paragraph(this.oDocument, true);
 		this.aContent.push(paragraph);
 
 		var diffRow = activeRange.r2 - activeRange.r1;
@@ -6091,13 +6097,13 @@ PasteProcessor.prototype =
 					let nPos = 0;
 					for(let nElement = 0; nElement < aElements.length; ++nElement) {
 						let oElement = aElements[nElement];
-						if(oElement instanceof AscCommonWord.Paragraph) {
+						if(oElement instanceof AscWord.Paragraph) {
 							let oNewParagraph = AscFormat.ConvertParagraphToPPTX(oElement, null, null, true, false);
 							oDocContent.Internal_Content_Add(nPos++, oNewParagraph, false);
 						}
 					}
 					if(nPos === 0) {
-						let oNewParagraph = new Paragraph(oDocContent.DrawingDocument, oDocContent, true);
+						let oNewParagraph = new AscWord.Paragraph(oDocContent, true);
 						oDocContent.Internal_Content_Add(0, oNewParagraph, true);
 					}
 				}
@@ -8417,7 +8423,7 @@ PasteProcessor.prototype =
 		}
 	},
 	_Add_NewParagraph: function () {
-		this.oCurPar = new Paragraph(this.oDocument.DrawingDocument, this.oDocument, this.oDocument.bPresentation === true);
+		this.oCurPar = new AscWord.Paragraph(this.oDocument, this.oDocument.bPresentation === true);
 		this.oCurParContentPos = this.oCurPar.CurPos.ContentPos;
 		this.oCurRun = new ParaRun(this.oCurPar);
 		this.oCurRunContentPos = 0;
@@ -8541,7 +8547,13 @@ PasteProcessor.prototype =
 						if (null == dWidth)
 							dWidth = tc.clientWidth * g_dKoef_pix_to_mm;
 
-						var nColSpan = tc.getAttribute("colspan");
+						let style = tc.getAttribute("style");
+						let tblPrMso = {};
+						if (style) {
+							this._parseCss(style, tblPrMso);
+						}
+
+						var nColSpan = tblPrMso["mso-ignore"] === "colspan" ? null : tc.getAttribute("colspan");
 						if (null != nColSpan)
 							nColSpan = nColSpan - 0;
 						else
@@ -9228,7 +9240,14 @@ PasteProcessor.prototype =
 			var tc = node.childNodes[i];
 			var tcName = tc.nodeName.toLowerCase();
 			if ("td" === tcName || "th" === tcName) {
-				var nColSpan = tc.getAttribute("colspan");
+				let style = tc.getAttribute("style");
+				let tblPrMso = {};
+				if (style) {
+					this._parseCss(style, tblPrMso);
+				}
+
+				var nColSpan = tblPrMso["mso-ignore"] === "colspan" ? null : tc.getAttribute("colspan");
+
 				if (null != nColSpan)
 					nColSpan = nColSpan - 0;
 				else
@@ -9392,7 +9411,7 @@ PasteProcessor.prototype =
 			oPasteProcessor._AddNextPrevToContent(cell.Content);
 			if (0 === oPasteProcessor.aContent.length) {
 				var oDocContent = cell.Content;
-				var oNewPar = new Paragraph(oDocContent.DrawingDocument, oDocContent);
+				var oNewPar = new AscWord.Paragraph(oDocContent);
 				//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
 				var oNewSpacing = new CParaSpacing();
 				oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
@@ -9571,7 +9590,7 @@ PasteProcessor.prototype =
 				if (bPresentation) {
 					oThis.oDocument = shape.txBody.content;
 					if (bAddParagraph) {
-                        let oParagraph = new Paragraph(oShapeContent.DrawingDocument, oShapeContent, oShapeContent.bPresentation === true);
+                        let oParagraph = new AscWord.Paragraph(oShapeContent, oShapeContent.bPresentation === true);
                         oShapeContent.Internal_Content_Add(oShapeContent.Content.length, oParagraph);
                         oParagraph.CorrectContent();
                         oParagraph.CheckParaEnd();
@@ -10058,7 +10077,7 @@ PasteProcessor.prototype =
 
 		let pushMathContent = function (_child) {
 			if (oThis.isSupportPasteMathContent(child.nodeValue, true) && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
-				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, bPresentation ? oShapeContent : null, bPresentation);
+				let oPar = new AscWord.Paragraph(bPresentation ? oShapeContent : null, bPresentation);
 
 				History.TurnOff();
 				let bAddNewParagraph = oThis._parseMathContent(_child, oPar);
@@ -10910,7 +10929,7 @@ PasteProcessor.prototype =
 				}
 				var oEndParagraph = null;
 				if (type_Paragraph !== aContent[nEndPos].GetType()) {
-					oEndParagraph = new Paragraph(this.DrawingDocument, this.oLogicDocument);
+					oEndParagraph = new AscWord.Paragraph(this.oLogicDocument);
 					aContent.splice(nEndPos, 0, oEndParagraph);
 				} else {
 					oEndParagraph = aContent[nEndPos];
@@ -10919,7 +10938,7 @@ PasteProcessor.prototype =
 				if (nStartPos > 0 && (type_Paragraph !== aContent[nStartPos - 1].GetType() || !aContent[nStartPos - 1].Get_SectionPr())) {
 					oSectPr = new CSectionPr(this.oLogicDocument);
 					oSectPr.Copy(oStartSectPr, false);
-					var oStartParagraph = new Paragraph(this.oLogicDocument.DrawingDocument, this.oLogicDocument);
+					var oStartParagraph = new AscWord.Paragraph(this.oLogicDocument);
 					aContent.splice(nStartPos, 0, oStartParagraph);
 					oStartParagraph.Set_SectionPr(oSectPr, true);
 					nStartPos++;

@@ -43,13 +43,13 @@
 	function CDocumentReadView(oLogicDocument)
 	{
 		AscWord.CDocumentLayoutBase.call(this, oLogicDocument);
-
+		
 		this.W        = 297;
 		this.H        = 210;
 		this.Scale    = 1;
 		this.SectPr   = null;
 		this.SectInfo = null;
-
+		
 		let oThis = this;
 		AscCommon.ExecuteNoHistory(function()
 		{
@@ -57,6 +57,7 @@
 			oThis.SectInfo = new CDocumentSectionsInfoElement(oThis.SectPr, 0);
 		}, oLogicDocument);
 	}
+	
 	CDocumentReadView.prototype = Object.create(AscWord.CDocumentLayoutBase.prototype);
 	CDocumentReadView.prototype.constructor = CDocumentReadView;
 	CDocumentReadView.prototype.IsReadMode = function()
@@ -68,9 +69,9 @@
 		this.W     = nW;
 		this.H     = nH;
 		this.Scale = nScale;
-
+		
 		let oSectPr = this.SectPr;
-
+		
 		AscCommon.ExecuteNoHistory(function()
 		{
 			oSectPr.SetPageSize(nW, nH);
@@ -96,7 +97,6 @@
 	CDocumentReadView.prototype.GetPageContentFrame = function(nPageAbs, oSectPr)
 	{
 		let oFrame = this.SectPr.GetContentFrame(0);
-
 		return {
 			X      : oFrame.Left,
 			Y      : oFrame.Top,
@@ -107,7 +107,6 @@
 	CDocumentReadView.prototype.GetColumnContentFrame = function(nPageAbs, nColumnAbs, oSectPr)
 	{
 		let oFrame = oSectPr.GetContentFrame(nPageAbs);
-
 		return {
 			X                 : oFrame.Left,
 			Y                 : oFrame.Top,
@@ -141,16 +140,24 @@
 	{
 		let nW = oSectPr.GetPageWidth();
 		let nH = oSectPr.GetPageHeight();
-
+		
 		let nCoef = 1;
 		if (this.W < nW)
 			nCoef = this.W / nW;
-
+		
 		if (this.H < nH)
 			nCoef = Math.min(this.H / nH, nCoef);
-
+		
 		return nCoef;
 	};
+	CDocumentReadView.prototype.calculateIndent = function(ind, sectPr)
+	{
+		if (ind > 0 && sectPr)
+			return ind * this.W / sectPr.GetPageWidth();
+		
+		return Math.max(ind, -2);
+	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;
 

@@ -2880,7 +2880,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						// Параграф начинается до заданной страницы и заканчивается после. Нам нужно разделить его на
 						// 2 параграфа в заданной точке.
 
-						var NewParagraph = new Paragraph(NewDocContent.DrawingDocument, NewDocContent);
+						var NewParagraph = new AscWord.Paragraph();
 						NearestPos.Paragraph.Split(NewParagraph, NearestPos.ContentPos);
 						NewDocContent.Internal_Content_Add(NewIndex + 1, NewParagraph);
 
@@ -2896,7 +2896,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						// в конец добавляем новый пустой параграф
 						NewIndex++;
 						if (NewIndex >= NewDocContent.Content.length - 1)
-							NewDocContent.Internal_Content_Add(NewDocContent.Content.length, new Paragraph(NewDocContent.DrawingDocument, NewDocContent));
+							NewDocContent.Internal_Content_Add(NewDocContent.Content.length, new AscWord.Paragraph());
 					}
 
 				}
@@ -3024,7 +3024,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				}
 				else if (true != TarParagraph.IsCursorAtBegin(ParaContentPos))
 				{
-					var NewParagraph = new Paragraph(NewDocContent.DrawingDocument, NewDocContent);
+					var NewParagraph = new AscWord.Paragraph();
 					NearestPos.Paragraph.Split(NewParagraph, NearestPos.ContentPos);
 					NewDocContent.Internal_Content_Add(NewIndex + 1, NewParagraph);
 
@@ -8535,6 +8535,10 @@ CTable.prototype.Internal_Compile_Pr = function()
 	}
 	// Копируем прямые настройки параграфа.
 	Pr.TablePr.Merge(this.Pr);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		Pr.TablePr.TableInd = logicDocument.Layout.calculateIndent(Pr.TablePr.TableInd, this.Get_SectPr());
 
 	return Pr;
 };
@@ -8597,7 +8601,7 @@ CTable.prototype.Set_Pr = function(TablePr)
 	this.private_UpdateTableGrid();
 
 	if (isHavePrChange || this.HavePrChange())
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 };
 CTable.prototype.SetPr = function(oTablePr)
 {
@@ -17387,7 +17391,7 @@ CTable.prototype.SetTableGridChange = function(arrTableGridChange)
 {
 	History.Add(new CChangesTableTableGridChange(this, this.TableGridChange, arrTableGridChange));
 	this.TableGridChange = arrTableGridChange;
-	this.UpdateTrackRevisions();
+	this.updateTrackRevisions();
 };
 /**
  * Получаем ширину заданного промежутка в сетке таблицы
@@ -18984,7 +18988,7 @@ CTable.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTable.prototype.RemovePrChange = function()
@@ -18999,21 +19003,13 @@ CTable.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTable.prototype.private_AddPrChange = function()
 {
 	if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && true !== this.HavePrChange())
 		this.AddPrChange();
-};
-CTable.prototype.UpdateTrackRevisions = function()
-{
-	if (this.LogicDocument && this.LogicDocument.GetTrackRevisionsManager)
-	{
-		var oRevisionsManager = this.LogicDocument.GetTrackRevisionsManager();
-		oRevisionsManager.CheckElement(this);
-	}
 };
 CTable.prototype.GetPrReviewColor = function()
 {
@@ -19939,3 +19935,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
 window['AscWord'].CTable = CTable;
+window['AscWord'].Table = CTable;

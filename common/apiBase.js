@@ -82,6 +82,7 @@
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
 		this.documentShardKey  = undefined;
+		this.documentIsWopi = false;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -499,6 +500,7 @@
 				if (this.documentOpenOptions["WOPISrc"])
 				{
 					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+					this.documentIsWopi = true;
 				}
 			}
 			if (!this.documentShardKey) {
@@ -516,6 +518,10 @@
 		else if (AscCommon.offlineMode === this.documentUrl)
 		{
 			this.DocInfo.put_OfflineApp(true);
+		}
+		else if (AscCommon.dataMode === this.documentUrl)
+		{
+			this.DocInfo.put_IsWebOpening(true);
 		}
 
 		if (this.DocInfo.get_EncryptedInfo())
@@ -617,6 +623,10 @@
 	// Events
 	baseEditorsApi.prototype.sendEvent                       = function()
 	{
+	};
+	baseEditorsApi.prototype.asc_checkNeedCallback = function(name)
+	{
+		return false;
 	};
 	baseEditorsApi.prototype.SendOpenProgress                = function()
 	{
@@ -1203,10 +1213,22 @@
 			AscCommon.getFile(url);
 		}
 	};
-	baseEditorsApi.prototype.getDrawingObjects = function () {};
-	baseEditorsApi.prototype.getDrawingDocument = function () {};
-	baseEditorsApi.prototype.getLogicDocument = function () {};
-	baseEditorsApi.prototype._createSmartArt = function () {};
+	baseEditorsApi.prototype.getDrawingObjects = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype.getDrawingDocument = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype.getLogicDocument = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype._createSmartArt = function ()
+	{
+		return null;
+	};
 	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		const oThis = this;
 		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function()
@@ -2112,6 +2134,7 @@
 		oAdditionalData["outputformat"] = options.fileType;
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
+		oAdditionalData["isSaveAs"] = options.isSaveAs;
 		let locale = this.asc_getLocale() || undefined;
 		if (typeof locale === "string") {
 			locale = Asc.g_oLcidNameToIdMap[locale];
@@ -2617,9 +2640,43 @@
 			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
 				this.forceSave();
 			}
+			this.checkSaveDocumentEvent(this.IsUserSave);
 		}
 		return res;
 	};
+	baseEditorsApi.prototype.checkSaveDocumentEvent = function (IsUserSave) {
+		let t = this;
+		if (IsUserSave && this.DocInfo && this.DocInfo.get_SupportsOnSaveDocument()) {
+			if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
+				this.saveLogicDocumentToZip(undefined, undefined, function (data) {
+					//slice to fix error after zip: Failed to execute 'postMessage' on 'Window': ArrayBuffer at index 0 is not detachable and could not be transferred.
+					t.sendEvent('asc_onSaveDocument', data.slice());
+					//AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+				});
+			} else {
+				let opts = new Asc.asc_CDownloadOptions(t.documentFormatSave, true);
+				opts.callback = function() {
+					t.fCurCallback = function(res) {
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+						if (res.status === "ok") {
+							AscCommon.loadFileContent(res.data, function (httpRequest) {
+								if (httpRequest && httpRequest.response) {
+									let data = new Uint8Array(httpRequest.response);
+									t.sendEvent('asc_onSaveDocument', data);
+									// AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+								} else {
+									t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+								}
+							}, "arraybuffer");
+						} else {
+							t.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+						}
+					};
+				}
+				t.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+			}
+		}
+	}
 	/**
 	 * Эта функция возвращает true, если есть изменения или есть lock-и в документе
 	 */
@@ -2668,6 +2725,12 @@
 	};
 	baseEditorsApi.prototype.openDocumentFromZip  = function()
 	{
+	};
+	baseEditorsApi.prototype.saveLogicDocumentToZip  = function(fileType, options, callback)
+	{
+		//todo common getLogicDocument
+		let model = this.WordControl && this.WordControl.m_oLogicDocument ? this.WordControl.m_oLogicDocument : this.wb.model;
+		this.saveDocumentToZip(model, this.editorId, callback, fileType, options);
 	};
 	baseEditorsApi.prototype.onEndLoadDocInfo = function()
 	{
@@ -3115,6 +3178,14 @@
 	};
 	baseEditorsApi.prototype.asc_Recalculate       = function()
 	{
+	};
+	baseEditorsApi.prototype.canRunBuilderScript = function()
+	{
+		return this.asc_canPaste();
+	};
+	baseEditorsApi.prototype.onEndBuilderScript = function()
+	{
+		return true;
 	};
 
 	// Native
@@ -3843,10 +3914,7 @@
 						oLogicDocument.UnlockPanelStyles(true);
 						oLogicDocument.OnEndLoadScript();
 					}
-
-					oApi.asc_Recalculate(true);
-					oLogicDocument.FinalizeAction();
-
+					
 					if (oApi.SaveAfterMacros)
 					{
 						oApi.asc_Save();
@@ -3903,16 +3971,17 @@
 
 		if (this.DocInfo && !this.DocInfo.asc_getIsEnabledMacroses())
 			return;
-
-    	if (!this.asc_canPaste())
-    		return;
-
+		
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
-
-    	this._beforeEvalCommand();
+		
+		if (!this.canRunBuilderScript())
+			return;
+	
+		this._beforeEvalCommand();
 		this.macros.runAuto();
 		this._afterEvalCommand(undefined);
+		this.onEndBuilderScript();
     };
 	baseEditorsApi.prototype.asc_runMacros = function(sGuid)
     {
@@ -3921,16 +3990,17 @@
 
 		if (this.DocInfo && !this.DocInfo.asc_getIsEnabledMacroses())
 			return;
-
-    	if (!this.asc_canPaste())
-    		return;
-
+		
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
 			return;
-
-    	this._beforeEvalCommand();
+		
+		if (!this.canRunBuilderScript())
+			return;
+		
+		this._beforeEvalCommand();
 		this.macros.run(sGuid);
 		this._afterEvalCommand(undefined);
+		this.onEndBuilderScript();
     };
 	baseEditorsApi.prototype.asc_getAllMacrosNames = function()
     {
@@ -4803,7 +4873,7 @@
 	baseEditorsApi.prototype.asc_getFilePath = function(callback)
 	{
 		if (window["AscDesktopEditor"]) {
-			window["AscDesktopEditor"]["OpenFilenameDialog"]("All files (*.*)", false, function(_file) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("any", false, function(_file) {
 				var file = _file;
 				if (Array.isArray(file)) {
 					file = file[0];
@@ -4813,6 +4883,19 @@
 		} else {
 			callback(null);
 		}
+	};
+	
+	baseEditorsApi.prototype["asc_getUserColorById"] = function(id)
+	{
+		return AscCommon.getUserColorById(id, null, false, true);
+	};
+
+	baseEditorsApi.prototype.asc_openDocumentFromBytes = function(data)
+	{
+		let file = new AscCommon.OpenFileResult();
+		file.data = data;
+		file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
+		this.onEndLoadFile(file);
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -4884,5 +4967,10 @@
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
+	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
+
+	// passwords
+	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
+	prot["asc_resetPassword"] = prot.asc_resetPassword;
 
 })(window);

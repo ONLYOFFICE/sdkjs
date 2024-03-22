@@ -485,7 +485,10 @@
 					_blockStd = null;
 					if (undefined !== _current["Props"]["InternalId"])
 					{
-						_blockStd   = LogicDocument.ClearContentControl(_current["Props"]["InternalId"]);
+						_blockStd = LogicDocument.GetContentControl(_current["Props"]["InternalId"]);
+						if (_blockStd && !_blockStd.IsPlaceHolder())
+							_blockStd.ReplaceContentWithPlaceHolder();
+						
 						_isReplaced = true;
 					}
 
@@ -586,6 +589,7 @@
 					}
 
 					_blockStd.SetContentControlPr(_content_control_pr);
+					_blockStd.SelectContentControl();
 
 					_obj = _blockStd.GetContentControlPr();
 					this.returnDocuments.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId, "Alias" : _obj.Alias, "Appearance" : _obj.Appearance });
@@ -619,9 +623,11 @@
 							}, false);
 						}, "arraybuffer");
 					}, endCallback : function(_api) {
-						_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1 , 1);
-						_blockStd.MoveCursorToEndPos(false, false);
-
+						if (_isReplaced)
+							_blockStd.MoveCursorToContentControl(false);
+						else
+							_blockStd.MoveCursorOutsideForm(false);
+						
 						var _worker = _api.__content_control_worker;
 						if (_worker.documents[_worker.current]["Props"])
 							_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -646,7 +652,7 @@
 						console.error('Invalid JS.');
 						return;	
 					}
-
+					
 					try
 					{
 						AscCommon.safePluginEval(_current["Script"]);
@@ -655,48 +661,12 @@
 					{
 						console.error(err);
 					}
-
-					if (c_oAscSdtLevelType.Block === _blockStd.GetContentControlType())
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos(false);
-						}
-						else
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-							{
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos(false, false);
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
+					
+					if (_isReplaced)
+						_blockStd.MoveCursorToContentControl(false);
 					else
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.GetElementsCount() > 1)
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos();
-							_blockStd.SetThisElementCurrent();
-						}
-						else
-						{
-							if (_blockStd.GetElementsCount() > 1)
-							{
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos();
-								_blockStd.SetThisElementCurrent();
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
-
+						_blockStd.MoveCursorOutsideForm(false);
+					
 					var _worker = _api.__content_control_worker;
 					if (_worker.documents[_worker.current]["Props"])
 						_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -800,11 +770,11 @@
 			var _current = this.documents[this.current];
 			if (undefined === _current["Props"])
 				_current["Props"] = {};
-
-			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && undefined !== _current["Props"]["InternalId"])
+			
+			var _internalId     = _current["Props"]["InternalId"];
+			var _contentControl = _internalId ? g_oTableId.Get_ById(_internalId) : null;
+			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && _contentControl)
 			{
-				var _internalId     = _current["Props"]["InternalId"];
-				var _contentControl = g_oTableId.Get_ById(_internalId);
 				LogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 					Elements  : [_contentControl],
@@ -2785,17 +2755,26 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
 	};
-	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
+	asc_docs_api.prototype.asc_DownloadOrigin = function(options)
 	{
+		if (!options) {
+			options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.UNKNOWN);
+		}
+		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
 		if (this.isUseNativeViewer && this.isDocumentRenderer())
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 
 		if (changes) {
-			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF, bIsDownloadEvent);
+			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
+		} else if(this.documentIsWopi && options.isSaveAs) {
+			//todo server request
+			// options.asc_setFileType(Asc.c_oAscFileType.PDF);
+			// this.asc_DownloadAs(options);
+			// return;
 		}
 		//скачивание оригинального pdf, djvu, xps
 		var downloadType = bIsDownloadEvent ? DownloadType.Download : DownloadType.None;
@@ -3824,8 +3803,8 @@ background-repeat: no-repeat;\
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(Props.Shd.Color, Unifill.fill.color, 1);
-
-				this.WordControl.m_oLogicDocument.SetParagraphShd({
+				
+				let shd = {
 					Value   : Asc.c_oAscShd.Clear,
 					Color   : {
 						r    : Props.Shd.Color.asc_getR(),
@@ -3840,7 +3819,17 @@ background-repeat: no-repeat;\
 						Auto : false
 					},
 					Unifill : Unifill
-				});
+				};
+
+				if (Asc.c_oAscShd.Nil === Props.Shd.Value)
+				{
+					shd.Color.Auto = true;
+					shd.Fill.Auto  = true;
+					shd.Unifill    = undefined;
+					shd.ThemeFill  = undefined;
+				}
+				
+				this.WordControl.m_oLogicDocument.SetParagraphShd(shd);
 			}
 
 			if ("undefined" != typeof(Props.Brd) && null != Props.Brd)
@@ -8756,6 +8745,10 @@ background-repeat: no-repeat;\
 			}
 		}
 
+		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData
+			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
@@ -8804,11 +8797,7 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML === fileType
-			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
-			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
-			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
-			&& !AscCommon.AscBrowser.isAndroidNativeApp)
+		else if (c_oAscFileType.HTML === fileType && canDownloadFromBytes)
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
@@ -8826,12 +8815,12 @@ background-repeat: no-repeat;\
 			}
 			return true;
 		}
-		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
+		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
+			this.saveLogicDocumentToZip(fileType, options, function(data) {
 				if (data) {
-					if (c_oAscFileType.DOCX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.DOCX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
 					} else {
 						dataContainer.data = data;
@@ -8850,7 +8839,7 @@ background-repeat: no-repeat;\
 				if (actionType) {
 					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-			}, fileType, options);
+			});
 			return true;
 		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
@@ -9552,6 +9541,24 @@ background-repeat: no-repeat;\
 
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
+	};
+	asc_docs_api.prototype.canRunBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
+		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
+		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		return true;
+	};
+	asc_docs_api.prototype.onEndBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		logicDocument.Recalculate();
+		logicDocument.CheckActionLock();
+		return logicDocument.FinalizeAction();
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями
@@ -12624,9 +12631,9 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+		if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 			let res;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+			this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				res = data;
 			});
 			if (res) {
@@ -12836,6 +12843,25 @@ background-repeat: no-repeat;\
 		window["native"]["Save_End"]("", _renderer.Memory.GetCurPosition());
 
 		return _renderer.Memory.data;
+	};
+
+	window["asc_docs_api"].prototype["asc_nativeGetWatermark"] = function(options)
+	{
+		if (options && options["watermark"])
+		{
+			if (!this.User)
+			{
+				this.User = new AscCommon.asc_CUser();
+				this.User.setId("TM");
+				this.User.setUserName("native");
+			}
+
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.isNativeGlobalAlpha = true;
+			this.watermarkDraw.generateNative();
+			return this.watermarkDraw.imageBase64;
+		}
+		return "";
 	};
 
 	// cool api (autotests)
@@ -14372,10 +14398,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_RemoveAllSignatures"] 					= asc_docs_api.prototype.asc_RemoveAllSignatures;
 	asc_docs_api.prototype["asc_gotoSignature"] 						= asc_docs_api.prototype.asc_gotoSignature;
 	asc_docs_api.prototype["asc_getSignatureSetup"] 					= asc_docs_api.prototype.asc_getSignatureSetup;
-
-	// passwords
-	asc_docs_api.prototype["asc_setCurrentPassword"] 					= asc_docs_api.prototype.asc_setCurrentPassword;
-	asc_docs_api.prototype["asc_resetPassword"] 						= asc_docs_api.prototype.asc_resetPassword;
 
 	// view modes
     asc_docs_api.prototype["asc_setContentDarkMode"]					= asc_docs_api.prototype.asc_setContentDarkMode;

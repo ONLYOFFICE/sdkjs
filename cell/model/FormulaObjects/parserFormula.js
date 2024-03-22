@@ -72,6 +72,8 @@ function (window, undefined) {
 
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1};
 
+	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
+
 	function getArrayCopy(arr) {
 		var newArray = [];
 		for (var i = 0; i < arr.length; i++) {
@@ -533,6 +535,7 @@ var c_Date1900Const = 25568; //разница в днях между 01.01.1970 
 var rx_sFuncPref = /_xlfn\./i;
 var rx_sFuncPrefXlWS = /_xlws\./i;// /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
+var rx_sFuncPrefXLUFD = /__xludf.DUMMYFUNCTION\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
@@ -1417,6 +1420,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return oRes;
 	};
 	cArea3D.prototype.wsRange = function () {
+		if (this.externalLink != null) {
+			return [this.wsFrom];
+		}
 		var wb = this.wsFrom.workbook;
 		var wsF = this.wsFrom.getIndex(), wsL = this.wsTo.getIndex(), r = [];
 		for (var i = wsF; i <= wsL; i++) {
@@ -3135,6 +3141,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		if (this.isXLFN || this.isXLWS) {
 			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
+		} else if (this.isXLUDF) {
+			//return new cString("__xludf.DUMMYFUNCTION." + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
@@ -3157,7 +3165,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.toString = function (/*locale*/) {
 		/*var name = this.toString();
 		var localeName = locale ? locale[name] : name;*/
-		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.");
+		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.").replace(rx_sFuncPrefXLUFD, "__xludf.DUMMYFUNCTION.");
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
@@ -3719,6 +3727,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.name = name;
 		this.isXLFN = null;
 		this.isXLWS = null;
+		this.isXLUDF = null;
 	}
 	cUnknownFunction.prototype = Object.create(cBaseFunction.prototype);
 	cUnknownFunction.prototype.constructor = cUnknownFunction;
@@ -5934,7 +5943,7 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startArrayFunc = false, counterArrayFunc = 0;
+		var startArrayFunc = false, counterArrayFunc = 0, isFoundImportFunctions;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -6136,6 +6145,7 @@ function parserFormula( formula, parent, _ws ) {
 								elem = new cUnknownFunction(val);
 								let xlfnFrefix = "_xlfn.";
 								let xlwsFrefix = "_xlws.";
+								//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
 								//_xlws only together with _xlfn
 								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
 								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
@@ -6784,7 +6794,7 @@ function parserFormula( formula, parent, _ws ) {
 							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
-							parseResult.externalReferenesNeedAdd[externalLink].push(_3DRefTmp[1]);
+							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: _3DRefTmp[1]});
 						}
 					}
 
@@ -6929,7 +6939,7 @@ function parserFormula( formula, parent, _ws ) {
 					elemArr.push(new cMultOperator());
 				}
 
-				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").replace(rx_sFuncPrefXlWS, "").toUpperCase();
+				var found_operator = null, operandStr = ph.operand_str.replace(rx_sFuncPref, "").replace(rx_sFuncPrefXlWS, "").replace(rx_sFuncPrefXLUFD, "").toUpperCase();
 				if (operandStr in cFormulaList) {
 					found_operator = cFormulaList[operandStr].prototype;
 				} else if (operandStr in cAllFormulaFunction) {
@@ -6938,6 +6948,8 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = new cUnknownFunction(operandStr);
 					let xlfnFrefix = "_xlfn.";
 					let xlwsFrefix = "_xlws.";
+					//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
+
 					//_xlws only together with _xlfn
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
@@ -6955,6 +6967,10 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.addElem(found_operator);
 					if (arrayFunctionsMap[found_operator.name]) {
 						startArrayFunc = true;
+					}
+
+					if (found_operator.name === "IMPORTRANGE") {
+						isFoundImportFunctions = true;
 					}
 
 					if (needCalcArgPos) {
@@ -7123,6 +7139,35 @@ function parserFormula( formula, parent, _ws ) {
 		if (0 !== this.outStack.length) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
+			}
+			if (isFoundImportFunctions) {
+				//share external links
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
+				this.calculate();
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+				this.importFunctionsRangeLinks = AscCommonExcel.importRangeLinksState.importRangeLinks;
+
+				if (this.importFunctionsRangeLinks) {
+					for (let i in this.importFunctionsRangeLinks) {
+						let externalLink = this.wb.getExternalLinkIndexByName(i);
+						if (externalLink === null) {
+							externalLink = i;
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
+								parseResult.externalReferenesNeedAdd[externalLink] = [];
+							}
+
+							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
+								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
+							}
+						}
+					}
+
+					AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+				}
 			}
 			return this.isParsed = true;
 		} else {
@@ -7920,6 +7965,22 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 			}
+		}
+
+		if (this.importFunctionsRangeLinks) {
+			for (let i in this.importFunctionsRangeLinks) {
+				let externalLink = this.wb.getExternalLinkByName(i);
+				if (externalLink) {
+					for (let j in this.importFunctionsRangeLinks[i]) {
+						let _rangeInfo = this.importFunctionsRangeLinks[i][j];
+						let _ws = externalLink.worksheets[_rangeInfo.sheet];
+						if (_ws) {
+							this._buildDependenciesRef(_ws.getId(), AscCommonExcel.g_oRangeCache.getRangesFromSqRef(_rangeInfo.range)[0], null, true);
+						}
+					}
+				}
+			}
+
 		}
 	};
 	parserFormula.prototype.removeDependencies = function() {
@@ -9061,5 +9122,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+
+	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 
 })(window);

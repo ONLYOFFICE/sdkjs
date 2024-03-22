@@ -8070,7 +8070,7 @@
         }
 
         let c = this._getCell(col, row);
-        if (null === c) {
+        if (null === c || !this.model.isUserProtectedRangesCanView({nCol: col, nRow: row})) {
             return col;
         }
 
@@ -10221,7 +10221,7 @@
 		}
 
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
-		var epsChangeSize = 3 * AscCommon.global_mouseEvent.KoefPixToMM;
+		var epsChangeSize = AscCommon.AscBrowser.convertToRetinaValue(3 * AscCommon.global_mouseEvent.KoefPixToMM, true);
 		if (x <= this.cellsLeft && y >= this.cellsTop && x >= this.headersLeft) {
 			r = this._findRowUnderCursor(y, true);
 			if (r === null) {
@@ -15884,6 +15884,7 @@
 					var modelExternalReference = t.model.workbook.externalReferences[pasteLinkIndex - 1];
 					if (modelExternalReference) {
 						modelExternalReference.updateSheetData(pasteSheetLinkName, pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
+						t.model.workbook.changeExternalReference(pasteLinkIndex, modelExternalReference);
 					}
 				} else if (linkInfo.type === -2) {
 					//добавляем
@@ -18867,25 +18868,7 @@
 
 			//проверим, нет ли новых ссылок на внешние данные
 			if (parseResult.externalReferenesNeedAdd) {
-				var newExternalReferences = [];
-				for (var i in parseResult.externalReferenesNeedAdd) {
-					var newExternalReference = new AscCommonExcel.ExternalReference();
-					//newExternalReference.referenceData = referenceData;
-					newExternalReference.Id = i;
-
-					for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
-						var newSheet = parseResult.externalReferenesNeedAdd[i][j];
-						newExternalReference.addSheetName(newSheet, true);
-						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
-					}
-
-
-					newExternalReferences.push(newExternalReference);
-				}
-
-				//добавляем внешние данные
-				//TODO lock не далаю, а надо бы
-				t.model.workbook.addExternalReferences(newExternalReferences);
+				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 			}
 
 
@@ -26514,6 +26497,7 @@
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 			if (cell && cell.isFormula()) {
 				let fP = cell.formulaParsed;
+				let needCalc = false;
 				if (fP) {
 					for (let i = 0; i < fP.outStack.length; i++) {
 						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
@@ -26522,6 +26506,34 @@
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
 									eR.initRows(fP.outStack[i].getRange());
+								}
+							}
+						} else if (initStructure && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
+							needCalc = true;
+						}
+					}
+				}
+				if (needCalc) {
+					let importRangeLinks = fP.importFunctionsRangeLinks;
+					if (importRangeLinks) {
+						for (let i in importRangeLinks) {
+							let eR = t.model.workbook.getExternalWorksheet(i);
+							if (eR) {
+								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
+								if (initStructure) {
+									for (let j in importRangeLinks[i]) {
+										let rangeOptions = importRangeLinks[i][j];
+
+										let externalWs = eR.worksheets && eR.worksheets[rangeOptions.sheet];
+										if (!externalWs) {
+											externalWs = t.model.workbook.getExternalWorksheetByName(i, rangeOptions.sheet);
+										}
+
+										if (externalWs) {
+											let _range = externalWs.getRange2(rangeOptions.range);
+											eR.initRows(_range);
+										}
+									}
 								}
 							}
 						}

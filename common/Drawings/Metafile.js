@@ -853,7 +853,7 @@
 
 		this.WriteUtf8Char = function(code)
 		{
-			this.CheckSize(1);
+			this.CheckSize(6);
 			if (code < 0x80) {
 				this.data[this.pos++] = code;
 			}

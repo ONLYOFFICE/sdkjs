@@ -335,9 +335,11 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 };
 CInlineLevelSdt.prototype.IsSolid = function()
 {
+	let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : null;
+	
 	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
-	return !!(this.Paragraph
-		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+	return !!(logicDocument
+		&& !logicDocument.IsFillingFormMode()
 		&& this.IsForm()
 		&& !this.IsComplexForm());
 };
@@ -345,7 +347,10 @@ CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
 	CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
-	this.GetLogicDocument().OnChangeForm(this);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
@@ -356,7 +361,10 @@ CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePositi
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParaFieldRemoveItem(this, Pos, DeletedItems));
 	CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
-	this.GetLogicDocument().OnChangeForm(this);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.OnContentChange = function()
 {
@@ -843,13 +851,14 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
+		let logicDocument = this.GetLogicDocument();
 		if (!bOnAddText && !this.IsSelectionUse())
 		{
 			this.SelectAll(1);
 			this.SelectThisElement();
 			return true;
 		}
-		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		else if (bOnAddText || !logicDocument || !logicDocument.IsFillingFormMode())
 		{
 			this.private_ReplacePlaceHolderWithContent();
 		}
@@ -1083,22 +1092,24 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 };
 CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
 {
-	if (!this.Paragraph && this.Paragraph.LogicDocument)
+	if (!this.Paragraph)
 		return;
-	
-	var oLogicDocument   = this.Paragraph.LogicDocument;
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+
+	let logicDocument   = this.Paragraph.GetLogicDocument();
+	let drawingDocument = this.Paragraph.getDrawingDocument();
+	if (!logicDocument || !drawingDocument)
+		return;
 	
 	if (this.IsContentControlEquation())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
-	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
+	if (this.IsFixedForm() && this.IsCurrent() && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingOFormMode())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 	
@@ -1112,10 +1123,10 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		else
 		{
 			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
-			if (oLogicDocument.IsFillingFormMode()
+			if (logicDocument.IsFillingFormMode()
 				&& (this.IsTextForm() || this.IsCheckBox()))
 			{
-				oDrawingDocument.OnDrawContentControl(null, nType);
+				drawingDocument.OnDrawContentControl(null, nType);
 				oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 				return;
 			}
@@ -1145,12 +1156,12 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
 		{
 			var oMMData   = new AscCommon.CMouseMoveData();
-			var oCoords   = oDrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
+			var oCoords   = drawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
 			oMMData.X_abs = oCoords.X - 5;
 			oMMData.Y_abs = oCoords.Y;
 			oMMData.Type  = Asc.c_oAscMouseMoveDataTypes.Form;
 			oMMData.Text  = sHelpText;
-			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
+			logicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
 	}
 
@@ -1159,21 +1170,21 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 	{
 		let oPolygon = new AscCommon.CPolygon();
 		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
+		drawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
 		return;
 	}
 
 	if (this.IsHideContentControlTrack())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
 	let oPolygon = this.GetBoundingPolygon();
 	if (!oPolygon || !oPolygon.length)
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 	else
-		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon);
+		drawingDocument.OnDrawContentControl(this, nType, oPolygon);
 };
 CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
 {
@@ -1343,10 +1354,7 @@ CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 };
 CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 {
-	let oLogicDocument;
-	if (this.GetTextFormPr() && (oLogicDocument = this.GetLogicDocument()))
-		oLogicDocument.GetFormsManager().Register(this);
-
+	AscWord.registerForm(this);
 	CParagraphContentWithParagraphLikeContent.prototype.SetParagraph.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
@@ -1491,13 +1499,15 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 	var isSelection = this.IsSelectionUse();
 
 	this.RemoveFromContent(0, this.GetElementsCount());
+	
+	let logicDocument = this.GetLogicDocument();
+	let docPart       = null;
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		docPart = logicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
 
-	var oParagraph     = this.GetParagraph();
-	var oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	var oDocPart       = oLogicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
-	if (oDocPart)
+	if (docPart)
 	{
-		var oFirstParagraph = oDocPart.GetFirstParagraph();
+		var oFirstParagraph = docPart.GetFirstParagraph();
 
 		if (this.IsContentControlEquation())
 		{
@@ -1536,7 +1546,7 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			var oRun = new ParaRun(oParagraph, false);
+			var oRun = new AscWord.Run();
 			oRun.AddText(String.fromCharCode(nbsp_charcode, nbsp_charcode, nbsp_charcode, nbsp_charcode));
 			this.AddToContent(0, oRun);
 		}
@@ -2690,8 +2700,9 @@ CInlineLevelSdt.prototype.IsShowingPlcHdr = function()
 };
 CInlineLevelSdt.prototype.GetLogicDocument = function()
 {
-	var oParagraph = this.GetParagraph();
-	return oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
+	let paragraph = this.GetParagraph();
+	let logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
+	return logicDocument ? logicDocument : editor.WordControl.m_oLogicDocument;
 };
 CInlineLevelSdt.prototype.private_OnAddFormPr = function()
 {

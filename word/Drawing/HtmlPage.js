@@ -1878,6 +1878,8 @@ function CEditorPage(api)
 		}
 
 		oWordControl.EndUpdateOverlay();
+
+		oWordControl.m_oDrawingDocument.isHideTargetBeforeFirstClick = false;
 	};
 
 	this.onMouseMove  = function(e, isTouch)

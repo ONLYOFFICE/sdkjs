@@ -38,7 +38,7 @@ $(function () {
 		logicDocument = AscTest.CreateLogicDocument();
         logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
-        let p1 = new AscWord.CParagraph(editor.WordControl);
+        let p1 = new AscWord.Paragraph();
         logicDocument.AddToContent(0, p1);
 
         MathContent = new ParaMath();

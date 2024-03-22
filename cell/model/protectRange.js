@@ -44,6 +44,9 @@
 		//for warning
 		this.warningText = null;
 
+		//everyone edit/view type
+		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit, //default -> Asc.c_oSerUserProtectedRangeType.view
+
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = ws;
 		this.isLock = null;
@@ -68,6 +71,8 @@
 		res.usersGroups = this.usersGroups;
 
 		res.warningText = this.warningText;
+
+		res.type = this.type;
 
 		return res;
 	};
@@ -133,6 +138,13 @@
 		} else {
 			w.WriteBool(false);
 		}
+
+		if (null != this.type) {
+			w.WriteBool(true);
+			w.WriteLong(this.type);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	CUserProtectedRange.prototype.Read_FromBinary2 = function (r) {
@@ -178,14 +190,52 @@
 		if (r.GetBool()) {
 			this.Id = r.GetString2();
 		}
+
+		if (r.GetBool()) {
+			this.type = r.GetLong();
+		}
+
 	};
 	CUserProtectedRange.prototype.intersection = function (range) {
 		return this.ref && this.ref.intersection(range);
 	};
+	CUserProtectedRange.prototype.contains2 = function (oCell) {
+		return this.ref && this.ref.contains2(oCell);
+	};
+	CUserProtectedRange.prototype.isUserCanDoByType = function (userId, type) {
+		let res = false;
+
+		switch (type) {
+			case Asc.c_oSerUserProtectedRangeType.view: {
+				res = this.isUserCanView(userId);
+				break;
+			}
+			case Asc.c_oSerUserProtectedRangeType.edit:
+			default: {
+				res = this.isUserCanEdit(userId);
+				break;
+			}
+		}
+
+		return res;
+	};
 	CUserProtectedRange.prototype.isUserCanEdit = function (userId) {
 		if (this.users) {
 			for (let i = 0; i < this.users.length; i++) {
-				if (this.users[i].id === userId) {
+				if (this.users[i].isCanEdit(userId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	CUserProtectedRange.prototype.isUserCanView = function (userId) {
+		if (this.asc_getType() !== Asc.c_oSerUserProtectedRangeType.notView) {
+			return true;
+		}
+		if (this.users) {
+			for (let i = 0; i < this.users.length; i++) {
+				if (this.users[i].isCanView(userId)) {
 					return true;
 				}
 			}
@@ -263,11 +313,17 @@
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
 		this.users = val;
 	};
+	CUserProtectedRange.prototype.asc_setType = function (val) {
+		this.type = val;
+	};
 	CUserProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
 	CUserProtectedRange.prototype.asc_getId = function () {
 		return this.Id;
+	};
+	CUserProtectedRange.prototype.asc_getType = function () {
+		return this.type == null ? Asc.c_oSerUserProtectedRangeType.view : this.type;
 	};
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
@@ -276,7 +332,24 @@
 	function CUserProtectedRangeUserInfo() {
 		this.id = null;
 		this.name = null;
+		this.type = null;//default -> Asc.c_oSerUserProtectedRangeType.edit
 	}
+
+	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id) {
+		let res = false;
+		if (id === this.id) {
+			res = this.asc_getType() === Asc.c_oSerUserProtectedRangeType.edit || this.asc_getType() == null;
+		}
+		return res;
+	};
+
+	CUserProtectedRangeUserInfo.prototype.isCanView = function (id) {
+		let res = false;
+		if (id === this.id) {
+			res = this.asc_getType() !== Asc.c_oSerUserProtectedRangeType.notView;
+		}
+		return res;
+	};
 
 	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.id) {
@@ -291,6 +364,12 @@
 		} else {
 			w.WriteBool(false);
 		}
+		if (null != this.type) {
+			w.WriteBool(true);
+			w.WriteLong(this.type);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	CUserProtectedRangeUserInfo.prototype.Read_FromBinary2 = function (r) {
@@ -299,6 +378,9 @@
 		}
 		if (r.GetBool()) {
 			this.name = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.type = r.GetLong();
 		}
 	};
 
@@ -311,6 +393,7 @@
 
 		res.id = this.id;
 		res.name = this.name;
+		res.type = this.type;
 
 		return res;
 	};
@@ -321,12 +404,18 @@
 	CUserProtectedRangeUserInfo.prototype.asc_getName = function () {
 		return this.name;
 	};
+	CUserProtectedRangeUserInfo.prototype.asc_getType = function () {
+		return this.type == null ? Asc.c_oSerUserProtectedRangeType.edit : this.type;
+	};
 
 	CUserProtectedRangeUserInfo.prototype.asc_setId = function (val) {
 		this.id = val;
 	};
 	CUserProtectedRangeUserInfo.prototype.asc_setName = function (val) {
 		this.name = val;
+	};
+	CUserProtectedRangeUserInfo.prototype.asc_setType = function (val) {
+		this.type = val;
 	};
 
 
@@ -341,6 +430,7 @@
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getUsers"] = prot.asc_getUsers;
 	prot["asc_getUserGroups"] = prot.asc_getUserGroups;
+	prot["asc_getType"] = prot.asc_getType;
 
 	prot["asc_setRef"] = prot.asc_setRef;
 	prot["asc_setName"] = prot.asc_setName;
@@ -349,13 +439,17 @@
 	prot["asc_getId"] = prot.asc_getId;
 
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
+	prot["asc_setType"] = prot.asc_setType;
+
 
 
 	window["Asc"]["CUserProtectedRangeUserInfo"] = window["Asc"].CUserProtectedRangeUserInfo = CUserProtectedRangeUserInfo;
 	prot = CUserProtectedRangeUserInfo.prototype;
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_setId"] = prot.asc_setId;
 	prot["asc_setName"] = prot.asc_setName;
+	prot["asc_setType"] = prot.asc_setType;
 
 })(window);

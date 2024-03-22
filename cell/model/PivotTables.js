@@ -4961,6 +4961,9 @@ CT_pivotTableDefinition.prototype._updateRowColItemsGrandTotal = function(grandT
 CT_pivotTableDefinition.prototype.updateAfterEdit = function() {
 	var res = this.updateRowColItems();
 	this.updateLocation();
+	//todo double init in updateAfterEdit and updatePivotTable
+	//init to update report ranges;
+	this.init();
 	return res;
 };
 CT_pivotTableDefinition.prototype.setLocation = function(location, addToHistory) {

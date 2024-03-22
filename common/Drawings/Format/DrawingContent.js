@@ -820,6 +820,18 @@
 			oField.Refresh_RecalcData2();
 		}
 	};
+
+    CDrawingDocContent.prototype.getDrawingDocument = function() {
+        if(this.Parent && this.Parent.getDrawingDocument) {
+            return this.Parent.getDrawingDocument();
+        }
+        return null;
+    };
+    CDrawingDocContent.prototype.GetLogicDocument = function() {
+        if(Asc.editor.private_GetLogicDocument)
+            return Asc.editor.private_GetLogicDocument();
+        return null;
+    };
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {

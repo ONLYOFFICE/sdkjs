@@ -1400,57 +1400,67 @@
 			"ptCount":    oStrLit.ptCount
 		}
 	};
-	WriterToJSON.prototype.SerErrBars = function(oErrBars)
+	WriterToJSON.prototype.SerErrBars = function(aErrBars)
 	{
-		if (!oErrBars)
+		if(!Array.isArray(aErrBars))
 			return undefined;
 
-		var sErrBarType = undefined;
-		switch(oErrBars.errBarType)
+		let aResult = [];
+		for (let nErrBar = 0; nErrBar < aErrBars.length; ++nErrBar)
 		{
-			case AscFormat.st_errbartypeBOTH:
-				sErrBarType = "both";
-				break;
-			case AscFormat.st_errbartypeMINUS:
-				sErrBarType = "minus";
-				break;
-			case AscFormat.st_errbartypePLUS:
-				sErrBarType = "plus";
-				break;
-		}
+			let oErrBars = aErrBars[nErrBar];
+			if (!oErrBars)
+				return undefined;
 
-		var sErrDir = oErrBars.errDir === AscFormat.st_errdirX ? "x" : "y";
+			let sErrBarType = undefined;
+			switch(oErrBars.errBarType)
+			{
+				case AscFormat.st_errbartypeBOTH:
+					sErrBarType = "both";
+					break;
+				case AscFormat.st_errbartypeMINUS:
+					sErrBarType = "minus";
+					break;
+				case AscFormat.st_errbartypePLUS:
+					sErrBarType = "plus";
+					break;
+			}
 
-		var sErrValType = undefined;
-		switch(oErrBars.errValType)
-		{
-			case AscFormat.st_errvaltypeCUST:
-				sErrValType = "cust";
-				break;
-			case AscFormat.st_errvaltypeFIXEDVAL:
-				sErrValType = "fixedVal";
-				break;
-			case AscFormat.st_errvaltypePERCENTAGE:
-				sErrValType = "percentage";
-				break;
-			case AscFormat.st_errvaltypeSTDDEV:
-				sErrValType = "stdDev";
-				break;
-			case AscFormat.st_errvaltypeSTDERR:
-				sErrValType = "stdErr";
-				break;
-		}
+			let sErrDir = oErrBars.errDir === AscFormat.st_errdirX ? "x" : "y";
 
-		return {
-			"errBarType": sErrBarType,
-			"errDir":     sErrDir,
-			"errValType": sErrValType,
-			"minus":      this.SerMinusPlus(oErrBars.minus),
-			"noEndCap":   oErrBars.noEndCap,
-			"plus":       this.SerMinusPlus(oErrBars.plus),
-			"spPr":       this.SerSpPr(oErrBars.spPr),
-			"val":        oErrBars.val
+			let sErrValType = undefined;
+			switch(oErrBars.errValType)
+			{
+				case AscFormat.st_errvaltypeCUST:
+					sErrValType = "cust";
+					break;
+				case AscFormat.st_errvaltypeFIXEDVAL:
+					sErrValType = "fixedVal";
+					break;
+				case AscFormat.st_errvaltypePERCENTAGE:
+					sErrValType = "percentage";
+					break;
+				case AscFormat.st_errvaltypeSTDDEV:
+					sErrValType = "stdDev";
+					break;
+				case AscFormat.st_errvaltypeSTDERR:
+					sErrValType = "stdErr";
+					break;
+			}
+
+			aResult.push({
+				"errBarType": sErrBarType,
+				"errDir":     sErrDir,
+				"errValType": sErrValType,
+				"minus":      this.SerMinusPlus(oErrBars.minus),
+				"noEndCap":   oErrBars.noEndCap,
+				"plus":       this.SerMinusPlus(oErrBars.plus),
+				"spPr":       this.SerSpPr(oErrBars.spPr),
+				"val":        oErrBars.val
+			});
+
 		}
+		return aResult;
 	};
 	WriterToJSON.prototype.SerMinusPlus = function(oMinusPlus)
 	{
@@ -3779,7 +3789,7 @@
 		{
 			TempElm = aContent[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				aResult.push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				aResult.push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -4196,7 +4206,7 @@
 		{
 			TempElm = oFootEndnote.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oFootEndnoteObj["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oFootEndnoteObj["content"].push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -4345,7 +4355,7 @@
 		{
 			TempElm = oDocument.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oDocObject["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oDocObject["content"].push(this.SerTable(TempElm, aComplexFieldsToSave));
@@ -5371,7 +5381,7 @@
 			var oFieldEndPos          = null;
 			var arrTemp               = [];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				arrTemp = oElm.GetAllFields();
 				if (!bAll)
@@ -5429,7 +5439,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				var aParaComments = oElm.GetAllComments();
 				for (var nComment = 0; nComment < aParaComments.length; nComment++)
@@ -5484,7 +5494,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				for (var nItem = 0; nItem < oElm.Content.length; nItem++)
 				{
@@ -8907,7 +8917,7 @@
 		var aContent  = oParsedPara["content"];
 		var oDocument = private_GetLogicDocument();
 		var oParaPr   = oParsedPara["bFromDocument"] === true ? this.ParaPrFromJSON(oParsedPara["pPr"], oPrevNumIdInfo) : this.ParaPrDrawingFromJSON(oParsedPara["pPr"]);
-		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara["bFromDocument"]);
+		var oPara     = new AscWord.Paragraph(oParent || oDocument, !oParsedPara["bFromDocument"]);
 
 		// символ конца параграфа
 		oPara.TextPr.Set_Value(oParsedPara["bFromDocument"] === true ? this.TextPrFromJSON(oParsedPara["rPr"]) : this.TextPrDrawingFromJSON(oParsedPara["rPr"]));
@@ -13847,7 +13857,7 @@
 			oItem["cat"] && oBarSeries.setCat(this.CatFromJSON(oItem["cat"], oBarSeries));
 			oItem["dLbls"] && oBarSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBarSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oBarSeries);
-			oItem["errBars"] && oBarSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oBarSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oBarSeries.setIdx(oItem["idx"]);
 			oBarSeries.setInvertIfNegative(oItem["invertIfNegative"]);
 			oBarSeries.setOrder(oItem["order"]);
@@ -13906,7 +13916,7 @@
 			oItem["cat"] && oLineSeries.setCat(this.CatFromJSON(oItem["cat"], oLineSeries));
 			oItem["dLbls"] && oLineSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oLineSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oLineSeries);
-			oItem["errBars"] && oLineSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oLineSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oLineSeries.setIdx(oItem["idx"]);
 			oItem["marker"] && oLineSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oLineSeries));
 			oLineSeries.setOrder(oItem["order"]);
@@ -14007,7 +14017,7 @@
 			oItem["cat"] && oAreaSeries.setCat(this.CatFromJSON(oItem["cat"], oAreaSeries));
 			oItem["dLbls"] && oAreaSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
 			this.DataPointsFromJSON(oItem["dPt"], oAreaSeries);
-			oItem["errBars"] && oAreaSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oAreaSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oAreaSeries.setIdx(oItem["idx"]);
 			oAreaSeries.setOrder(oItem["order"]);
 			oItem["pictureOptions"] && oAreaSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
@@ -14108,7 +14118,7 @@
 			
 			oItem["dLbls"] && oScatterSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
 			this.DataPointsFromJSON(oItem["dPt"], oScatterSeries);
-			oItem["errBars"] && oScatterSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oScatterSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oScatterSeries.setIdx(oItem["idx"]);
 			oItem["marker"] && oScatterSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oScatterSeries));
 			oScatterSeries.setOrder(oItem["order"]);
@@ -14198,7 +14208,7 @@
 			oBubbleSeries.setBubbleSize(this.YVALFromJSON(oItem["bubbleSize"], oBubbleSeries));
 			oItem["dLbls"] && oBubbleSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBubbleSeries));
 			this.DataPointsFromJSON(oItem["dPt"], oBubbleSeries);
-			oItem["errBars"] && oBubbleSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oItem["errBars"] && oBubbleSeries.addErrBarsArray(this.ErrBarsFromJSON(oItem["errBars"]));
 			oBubbleSeries.setIdx(oItem["idx"]);
 			oBubbleSeries.setInvertIfNegative(oItem["invertIfNegative"]);
 			oBubbleSeries.setOrder(oItem["order"]);
@@ -14332,56 +14342,64 @@
 
 		return oTrendLine;
 	};
-	ReaderFromJSON.prototype.ErrBarsFromJSON = function(oParsedErrBars)
+	ReaderFromJSON.prototype.ErrBarsFromJSON = function(aParsedErrBars)
 	{
-		var oErrBars = new AscFormat.CErrBars();
-
-		var nErrBarType = undefined;
-		switch(oParsedErrBars["errBarType"])
+		let aErrBars = [];
+		if(!Array.isArray(aParsedErrBars))
 		{
-			case "both":
-				nErrBarType = AscFormat.st_errbartypeBOTH;
-				break;
-			case "minus":
-				nErrBarType = AscFormat.st_errbartypeMINUS;
-				break;
-			case "plus":
-				nErrBarType = AscFormat.st_errbartypePLUS;
-				break;
+			return aErrBars;
 		}
-
-		var nErrDir = oParsedErrBars["errDir"] === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
-
-		var nErrValType = undefined;
-		switch(oParsedErrBars["errValType"])
+		for(let nErrB = 0; nErrB < aParsedErrBars.length; ++nErrB)
 		{
-			case "cust":
-				nErrValType = AscFormat.st_errvaltypeCUST;
-				break;
-			case "fixedVal":
-				nErrValType = AscFormat.st_errvaltypeFIXEDVAL;
-				break;
-			case "percentage":
-				nErrValType = AscFormat.st_errvaltypePERCENTAGE;
-				break;
-			case "stdDev":
-				nErrValType = AscFormat.st_errvaltypeSTDDEV;
-				break;
-			case "stdErr":
-				nErrValType = AscFormat.st_errvaltypeSTDERR;
-				break;
+			let oParsedErrBars = aParsedErrBars[nErrB];
+			var oErrBars = new AscFormat.CErrBars();
+			var nErrBarType = undefined;
+			switch(oParsedErrBars["errBarType"])
+			{
+				case "both":
+					nErrBarType = AscFormat.st_errbartypeBOTH;
+					break;
+				case "minus":
+					nErrBarType = AscFormat.st_errbartypeMINUS;
+					break;
+				case "plus":
+					nErrBarType = AscFormat.st_errbartypePLUS;
+					break;
+			}
+			var nErrDir = oParsedErrBars["errDir"] === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
+
+			var nErrValType = undefined;
+			switch(oParsedErrBars["errValType"])
+			{
+				case "cust":
+					nErrValType = AscFormat.st_errvaltypeCUST;
+					break;
+				case "fixedVal":
+					nErrValType = AscFormat.st_errvaltypeFIXEDVAL;
+					break;
+				case "percentage":
+					nErrValType = AscFormat.st_errvaltypePERCENTAGE;
+					break;
+				case "stdDev":
+					nErrValType = AscFormat.st_errvaltypeSTDDEV;
+					break;
+				case "stdErr":
+					nErrValType = AscFormat.st_errvaltypeSTDERR;
+					break;
+			}
+
+			oErrBars.setErrBarType(nErrBarType);
+			oErrBars.setErrDir(nErrDir);
+			oErrBars.setErrValType(nErrValType);
+			oParsedErrBars["minus"] && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars["minus"]));
+			oParsedErrBars["plus"] && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars["plus"]));
+			oErrBars.setNoEndCap(oParsedErrBars["noEndCap"]);
+			oParsedErrBars["spPr"] && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars["spPr"], oErrBars));
+			oErrBars.setVal(oParsedErrBars["val"]);
+
+			aErrBars.push(oErrBars);
 		}
-
-		oErrBars.setErrBarType(nErrBarType);
-		oErrBars.setErrDir(nErrDir);
-		oErrBars.setErrValType(nErrValType);
-		oParsedErrBars["minus"] && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars["minus"]));
-		oParsedErrBars["plus"] && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars["plus"]));
-		oErrBars.setNoEndCap(oParsedErrBars["noEndCap"]);
-		oParsedErrBars["spPr"] && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars["spPr"], oErrBars));
-		oErrBars.setVal(oParsedErrBars["val"]);
-
-		return oErrBars;
+		return aErrBars;
 	};
 	ReaderFromJSON.prototype.MinusPlusFromJSON = function(oParsedMinusPlus)
 	{
