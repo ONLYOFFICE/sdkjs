@@ -1819,12 +1819,14 @@ var editor;
 
 			if (t.isOpenOOXInBrowser) {
 				//metadata
-				let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);
-				if (metaData) {
-					let contentMetaData = metaData.getDocumentContent();
-					wb.metadata = new AscCommonExcel.CMetadata();
-					reader = new StaxParser(contentMetaData, metaData, xmlParserContext);
-					wb.metadata.fromXml(reader);
+				if (AscCommonExcel.bIsSupportDynamicArrays) {
+					let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);
+					if (metaData) {
+						let contentMetaData = metaData.getDocumentContent();
+						wb.metadata = new AscCommonExcel.CMetadata();
+						reader = new StaxParser(contentMetaData, metaData, xmlParserContext);
+						wb.metadata.fromXml(reader);
+					}
 				}
 
 				//theme
