@@ -421,7 +421,28 @@
             }
         }
     };
+    CPdfShape.prototype.setRecalculateInfo = function() {
+        this.recalcInfo =
+        {
+            recalculateContent:        true,
+            recalculateBrush:          true,
+            recalculatePen:            true,
+            recalculateTransform:      true,
+            recalculateTransformText:  true,
+            recalculateBounds:         true,
+            recalculateGeometry:       true,
+            recalculateStyle:          true,
+            recalculateFill:           true,
+            recalculateLine:           true,
+            recalculateTransparent:    true,
+            recalculateTextStyles:     [true, true, true, true, true, true, true, true, true],
+            recalculateContent2: true,
+            oContentMetrics: null
 
+        };
+        this.compiledStyles = [];
+        this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+    };
     window["AscPDF"].CPdfShape = CPdfShape;
 })();
 
