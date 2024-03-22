@@ -1204,15 +1204,18 @@ function (window, undefined) {
 				const r = range.r1;
 				const location = pivotTable.location;
 				const pivotRange = pivotTable.getRange();
-				if (r > pivotRange.r1 + location.firstDataRow && c > pivotRange.c1 + location.firstDataCol) {
+				if (r >= pivotRange.r1 + location.firstDataRow && c >= pivotRange.c1 + location.firstDataCol) {
 					if (r <= pivotRange.r2 && c <= pivotRange.c2) {
 						return nAError;
 					}
 				}
-				const cell = pivotTable.getCellByGetPivotDataCell(range);
-				if (cell) {
-					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
-					return res.tocNumber();
+				const value = fieldCellRef.getValue();
+				if (value) {
+					const cell = pivotTable.getCellByGetPivotDataString(value.value);
+					if (cell) {
+						res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
+						return res.tocNumber();
+					}
 				}
 			}
 			return refError;
@@ -1234,9 +1237,10 @@ function (window, undefined) {
 			if (arg.length === 2) {
 				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-						getPivotDataByTwoCells(arg0, arg1);
+						return getPivotDataByTwoCells(arg0, arg1);
+					} else {
+						return nAError;
 					}
-					return nAError;
 				}
 			}
 			

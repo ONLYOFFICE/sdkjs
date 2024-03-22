@@ -7535,25 +7535,43 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
 	return depth;
 };
 /**
- * @param {Range} cell
+ * @param {string} value
  * @return {{row: number, col: number} | null}
  */
-CT_pivotTableDefinition.prototype.getCellByGetPivotDataCell = function(cell) {
-	const pivotRange = this.getRange();
-	const location = this.location;
+CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(value) {
+	/**@type {string} */
 	const dataFields = this.asc_getDataFields();
-	const colFields = this.asc_getColumnFields();
-	if (dataFields.length === 1 && colFields && colFields.length > 0) {
-		if (cell.r1 <= pivotRange.r1 + location.firstHeaderRow && cell.c1 < pivotRange.c1 + location.firstDataCol) {
-			if (this.rowGrandTotals && this.colGrandTotals) {
-				return {
-					row: pivotRange.r2,
-					col: pivotRange.c2
-				}
+	const pivotFields = this.asc_getPivotFields();
+	const cacheFields = this.asc_getCacheFields();
+	const grandTotalCaption = this.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
+	if (dataFields.length === 1) {
+		const dataFieldName = dataFields[0].asc_getName();
+		if (value === '' || value === grandTotalCaption || value === dataFieldName) {
+			return this.getCellByGetPivotDataParams({
+				dataFieldName: dataFieldName,
+				optParams: []
+			});
+		}
+		for (let i = 0; i < pivotFields.length; i += 1) {
+			const pivotField = pivotFields[i];
+			const cacheField = cacheFields[i];
+			const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
+			const findValue = value.replace(' ' + subtotalCaption, '');
+			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
+			if (item !== null) {
+				return this.getCellByGetPivotDataParams({
+					dataFieldName: dataFieldName,
+					optParams: [cacheField.asc_getName(), findValue]
+				});
 			}
 		}
+		
+	} else {
+		return this.getCellByGetPivotDataParams({
+			dataFieldName: value,
+			optParams: []
+		});
 	}
-
 	return null;
 };
 /**
@@ -13494,6 +13512,9 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
  */
 CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value) {
 	const items = this.getItems();
+	if (!items) {
+		return null;
+	}
 	const lowerCaseValue = (value + "").toLowerCase();
 	for (let i = 0; i < items.length; i += 1) {
 		const item = items[i];
