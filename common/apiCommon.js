@@ -206,7 +206,6 @@ function (window, undefined) {
 		const jsDocRegex = /\/\*\*([\s\S]*?)\*\//g;
 		const paramRegex = /@param\s+{(\??)(.+?)}\s+(?:(\[)?([\w.]+|\{[\w.]+\}))?(?:\s*=\s*([^@]+?)(?=\s|\)|$))?(?:\s+(.+))?/g;
 		const propertyRegex = /@property\s+{(\??)(.+?)}\s+(?:(\[)?([\w.]+|\{[\w.]+\}))?(?:\s*=\s*([^@]+?)(?=\s|\)|$))?(?:\s+(.+))?/g;
-		const returnRegex = /@returns?\s+{(.+?)}\s+(.+)/g;
 	
 		let match;
 		while ((match = jsDocRegex.exec(jsDoc)) !== null) {
@@ -252,6 +251,7 @@ function (window, undefined) {
 			}
 	
 			// Parsing what the function returns
+			const returnRegex = /@returns?\s+{(.+?)}\s+(.+)/g;
 			let returnInfo = null;
 			const returnMatch = returnRegex.exec(commentBlock);
 			if (returnMatch !== null) {
