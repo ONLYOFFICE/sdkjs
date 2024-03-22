@@ -460,6 +460,18 @@
 			return oSmartArt;
 		});
 	};
+	PDFEditorApi.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder) {
+		let oDoc	= this.getPDFDoc();
+		let oViewer	= this.getDocumentRenderer();
+
+		oDoc.CreateNewHistoryPoint();
+		
+		AscFonts.IsCheckSymbols = true;
+		oDoc.AddChartByBinary(chartBinary, true, Placeholder, oViewer.currentPage);
+		AscFonts.IsCheckSymbols = false;
+
+		oDoc.TurnOffHistory();
+	};
 	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
 		return this.asc_enterText(newText);
 	};	PDFEditorApi.prototype.asc_EditText = function() {
@@ -528,6 +540,9 @@
 	};
 	PDFEditorApi.prototype.sync_Vert = function(vert) {
 		this.sendEvent("asc_onVert", vert);
+	};
+	PDFEditorApi.prototype.asc_getHeaderFooterProperties = function() {
+		return null;
 	};
 	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b) {
 		// from edit mode
@@ -1487,6 +1502,7 @@
 	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
 	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
 	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
+	PDFEditorApi.prototype['asc_getHeaderFooterProperties']= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
 
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;

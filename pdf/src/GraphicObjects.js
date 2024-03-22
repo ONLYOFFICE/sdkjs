@@ -40,8 +40,7 @@ function CGraphicObjectsPdf(document, drawingDocument, api)
 CGraphicObjectsPdf.prototype.constructor = CGraphicObjectsPdf;
 CGraphicObjectsPdf.prototype = Object.create(AscCommonWord.CGraphicObjects.prototype);
 
-CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck)
-{
+CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     let text_object, drawingDocument = this.drawingDocument;
     if (this.selection.textSelection) {
         text_object = this.selection.textSelection;
@@ -60,18 +59,14 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck)
         drawingDocument.UpdateTargetTransform(null);
         drawingDocument.TargetEnd();
     }
-    let oMathTrackHandler = null;
-    if (Asc.editor.wbModel && Asc.editor.wbModel.mathTrackHandler) {
-        oMathTrackHandler = Asc.editor.wbModel.mathTrackHandler;
-    } else {
-        if (this.drawingObjects.cSld) {
-            oMathTrackHandler = editor.WordControl.m_oLogicDocument.MathTrackHandler;
-        }
-    }
+    let oMathTrackHandler = this.document.MathTrackHandler;
     if (oMathTrackHandler) {
         this.setEquationTrack(oMathTrackHandler, this.canEdit());
     }
 };
+
+CGraphicObjectsPdf.prototype.setEquationTrack = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+
 CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Word/*Ctrl*/) {
     var target_text_object = AscFormat.getTargetTextObject(this);
     var oStartContent, oStartPara;
@@ -197,6 +192,58 @@ CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
 
 CGraphicObjectsPdf.prototype.getDrawingProps = function () {
     return this.getDrawingPropsFromArray(this.getSelectedArray());
+};
+
+CGraphicObjectsPdf.prototype.addTextWithPr = function(sText, oSettings) {
+    if (this.checkSelectedObjectsProtectionText()) {
+        return;
+    }
+    this.checkSelectedObjectsAndCallback(function () {
+
+        if (!oSettings)
+            oSettings = new AscCommon.CAddTextSettings();
+
+        let oTargetDocContent = this.getTargetDocContent(true, false);
+        if (oTargetDocContent) {
+            oTargetDocContent.Remove(-1, true, true, true, undefined);
+            let oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
+            let oParagraph = oTargetDocContent.GetCurrentParagraph();
+            if (oParagraph && oParagraph.GetParent()) {
+                let oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
+                let oRun = new ParaRun(oTempPara, false);
+                oRun.AddText(sText);
+                oTempPara.AddToContent(0, oRun);
+
+                oRun.SetPr(oCurrentTextPr.Copy());
+
+                let oTextPr = oSettings.GetTextPr();
+                if (oTextPr)
+                    oRun.ApplyPr(oTextPr);
+
+                let oAnchorPos = oParagraph.GetCurrentAnchorPosition();
+
+                let oSelectedContent = new AscCommonWord.CSelectedContent();
+                let oSelectedElement = new AscCommonWord.CSelectedElement();
+
+                oSelectedElement.Element = oTempPara;
+                oSelectedElement.SelectedAll = false;
+                oSelectedContent.Add(oSelectedElement);
+                oSelectedContent.EndCollect(oTargetDocContent);
+                oSelectedContent.ForceInlineInsert();
+                oSelectedContent.PlaceCursorInLastInsertedRun(!oSettings.IsMoveCursorOutside());
+                oSelectedContent.Insert(oAnchorPos);
+
+                let oTargetTextObject = AscFormat.getTargetTextObject(this);
+                if (oTargetTextObject) {
+                    oTargetTextObject.SetNeedRecalc(true);
+                    
+                    if (oTargetTextObject.checkExtentsByDocContent)
+                        oTargetTextObject.checkExtentsByDocContent();
+                }
+            }
+
+        }
+    }, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
 };
 
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
