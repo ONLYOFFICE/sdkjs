@@ -7534,21 +7534,42 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
 	return depth;
 };
 /**
- * @param {string} value
- * @return {{row: number, col: number} | null}
+ * @param {cString | cRef} stringOrCell
+ * @return {number | cError}
  */
-CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(value) {
+CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringOrCell) {
+	let value = null;
+	const refError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
+	const nAError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
+	const cRef = AscCommonExcel.cRef;
+	if (stringOrCell.type === AscCommonExcel.cElementType.string) {
+		value = stringOrCell.value;
+	} else {
+		const cellValue = stringOrCell.getValue();
+		if (cellValue.type !== AscCommonExcel.cElementType.number && cellValue.type !== AscCommonExcel.cElementType.string && cellValue.type !== AscCommonExcel.cElementType.empty) {
+			return nAError;
+		}
+		value = String(cellValue.value);
+	}
 	const dataFields = this.asc_getDataFields();
+	if (dataFields && dataFields.length === 0) {
+		return 0;
+	}
 	const pivotFields = this.asc_getPivotFields();
 	const cacheFields = this.asc_getCacheFields();
 	const grandTotalCaption = this.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
 	if (dataFields && dataFields.length === 1) {
 		const dataFieldName = dataFields[0].asc_getName();
 		if (value === '' || value === grandTotalCaption || value === dataFieldName) {
-			return this.getCellByGetPivotDataParams({
+			const cell = this.getCellByGetPivotDataParams({
 				dataFieldName: dataFieldName,
 				optParams: []
 			});
+			if (cell) {
+				const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
+				return res.tocNumber();
+			}
+			return refError;
 		}
 		for (let i = 0; i < pivotFields.length; i += 1) {
 			const pivotField = pivotFields[i];
@@ -7557,20 +7578,29 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(value) 
 			const findValue = value.replace(' ' + subtotalCaption, '');
 			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
 			if (item !== null) {
-				return this.getCellByGetPivotDataParams({
+				const cell = this.getCellByGetPivotDataParams({
 					dataFieldName: dataFieldName,
 					optParams: [cacheField.asc_getName(), findValue]
 				});
+				if (cell) {
+					const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
+					return res.tocNumber();
+				}
+				return refError;
 			}
 		}
-		
+		return nAError;
 	} else {
-		return this.getCellByGetPivotDataParams({
+		const cell = this.getCellByGetPivotDataParams({
 			dataFieldName: value,
 			optParams: []
 		});
+		if (cell) {
+			const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
+			return res.tocNumber();
+		}
+		return refError;
 	}
-	return null;
 };
 /**
  * @param {GetPivotDataParams} params

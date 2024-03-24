@@ -1191,33 +1191,12 @@ function (window, undefined) {
 			return refError;
 		};
 
-		const getPivotDataByTwoCells = function(pivotTableRef, fieldCellRef) {
+		const getPivotDataByTwoArgs = function(pivotTableRef, stringOrCell) {
 			const bbox = pivotTableRef.getBBox0();
 			const pivotTables = ws.getPivotTablesIntersectingRange(bbox);
 			const pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
-				const dataFields = pivotTable.asc_getDataFields();
-				if (dataFields && dataFields.length === 0) {
-					return 0;
-				}
-				const range = fieldCellRef.getBBox0();
-				const c = range.c1;
-				const r = range.r1;
-				const location = pivotTable.location;
-				const pivotRange = pivotTable.getRange();
-				if (r >= pivotRange.r1 + location.firstDataRow && c >= pivotRange.c1 + location.firstDataCol) {
-					if (r <= pivotRange.r2 && c <= pivotRange.c2) {
-						return nAError;
-					}
-				}
-				const value = fieldCellRef.getValue();
-				if (value) {
-					const cell = pivotTable.getCellByGetPivotDataString(value.value);
-					if (cell) {
-						res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
-						return res.tocNumber();
-					}
-				}
+				return pivotTable.getCellByGetPivotDataString(stringOrCell);
 			}
 			return refError;
 		};
@@ -1237,8 +1216,8 @@ function (window, undefined) {
 		if (ws) {
 			if (arg.length === 2) {
 				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
-						return getPivotDataByTwoCells(arg0, arg1);
+					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || arg1.type === cElementType.string) {
+						return getPivotDataByTwoArgs(arg0, arg1);
 					} else {
 						return nAError;
 					}
