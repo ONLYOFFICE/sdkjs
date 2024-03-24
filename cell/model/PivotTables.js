@@ -7591,8 +7591,10 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 		}
 		return nAError;
 	} else {
+		const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
+		const findValue = value.replace(subtotalCaption + ' ', '');
 		const cell = this.getCellByGetPivotDataParams({
-			dataFieldName: value,
+			dataFieldName: findValue,
 			optParams: []
 		});
 		if (cell) {
