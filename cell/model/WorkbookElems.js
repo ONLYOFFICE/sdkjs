@@ -17045,31 +17045,31 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 
+
 		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
 		//prefix add for separate main function from custom function
 		//!!!_xldudf
 		funcName = this.prefixName + funcName;
 
-		//TODO array?
-		if (Asc.typeOf(options) === "array") {
-			options = options[0];
+		let params = options && options["params"];
+		let argsInfo = this._getParamsInfo(func, params);
+
+		let argumentsType = [];
+		let argumentsMin = 0;
+		let argumentsMax = argsInfo ? argsInfo.length : 0;
+		if (argsInfo) {
+			let optionalCount = 0;
+			for (let i = 0; i < argsInfo.length; i++) {
+				argumentsType.push(this.getTypeByString(argsInfo[i].type));
+				if (argsInfo[i].isOptional) {
+					optionalCount++;
+				} else {
+					optionalCount = 0;
+				}
+			}
+			argumentsMin = argsInfo.length - optionalCount;
 		}
 
-		let argumentsMin = 0;
-		let argumentsMax = 255;
-		let argumentsType = [];
-		let params = options && options["params"];
-		if (params) {
-			argumentsMax = 0;
-			for (let i = 0; i < params.length; i++) {
-				if (false === params[i]["isOptional"]) {
-					argumentsMin++;
-				}
-				argumentsMax++;
-				let type = params[i]["type"];
-				argumentsType.push(this.getTypeByString(type));
-			}
-		}
 
 		let argsFuncLength = func.length;
 		if (argsFuncLength > argumentsMax) {
@@ -17107,9 +17107,9 @@ function RangeDataManagerElem(bbox, data)
 
 				//prepare arguments
 				let args = [];
-				for (let i = 0; i < params.length; i++) {
-					let type = params[i]["type"];
-					let defaultValue = params[i]["defaultValue"];
+				for (let i = 0; i < argsInfo.length; i++) {
+					let type = argsInfo[i].type;
+					let defaultValue = argsInfo[i].defaultValue;
 
 					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
 						args.push(arg[i].toString());
@@ -17138,6 +17138,43 @@ function RangeDataManagerElem(bbox, data)
 		};
 
 		this.addToFunctionsList(newFunc);
+	};
+
+	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {
+		let aArgs = this._getArgsByFunc(func);
+		let argsInfo = [];
+		if (!aArgs) {
+			return argsInfo;
+		}
+		
+		let paramsMap = {};
+		if (params) {
+			for (let i in params) {
+				paramsMap[params[i].name] = params[i];
+			}
+		}
+		for (let i = 0; i < aArgs.length; i++) {
+			let type = "any";
+			let curParams = paramsMap && paramsMap[aArgs[i]];
+			let _isOptional = false;
+			let _defaultValue = null;
+			if (curParams) {
+				if (curParams["type"]) {
+					type = curParams["type"];
+				}
+				_isOptional = curParams["isOptional"];
+				_defaultValue = curParams["defaultValue"];
+			}
+			argsInfo.push({type: type, isOptional: _isOptional, defaultValue: _defaultValue});
+		}
+		return argsInfo;
+	};
+
+	CCustomFunctionEngine.prototype._getArgsByFunc = function (func) {
+		const funcCommentsRegExp = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+		const funcArgsNamesRegExp = /([^\s,]+)/g;
+		let sFunc = func.toString().replace(funcCommentsRegExp, '');
+		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
 	};
 
 	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc) {

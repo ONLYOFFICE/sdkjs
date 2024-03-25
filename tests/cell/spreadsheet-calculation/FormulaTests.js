@@ -30788,7 +30788,7 @@ $(function () {
 		let api = window["Asc"]["editor"];
 		if (jsDoc) {
 			let oJsDoc = AscCommon.parseJSDoc(jsDoc);
-			api.addCustomFunction(innerFunc, oJsDoc);
+			api.addCustomFunction(innerFunc, oJsDoc[0]);
 			fCompare("jsDoc");
 		}
 		/*if (oDoc) {
@@ -30828,7 +30828,7 @@ $(function () {
 			"\t\t * @customfunction\n";
 
 		for (let i in aInputTypes) {
-			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} desc" + i + "+.\n";
+			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} arg" + ((i - 0) + 1) + "+.\n";
 		}
 		sJsDoc += "\t\t * @returns {" + sReturnType + "} The sum of the numbers.\n\t\t */";
 
@@ -30900,8 +30900,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first, second) {
-				return second;
+			fCustomFunc = function simpleFunc(arg1, arg2) {
+				return arg2;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31047,8 +31047,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: number[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31139,8 +31139,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31215,8 +31215,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: string[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31291,8 +31291,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31368,8 +31368,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: boolean[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31477,8 +31477,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31568,8 +31568,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: base operation: any[][]\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function simpleFunc(first) {
-				return first;
+			fCustomFunc = function simpleFunc(arg1) {
+				return arg1;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31731,8 +31731,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: number+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(first, second) {
-				return first + second;
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
 			};
 
 			//********** 1. @number / @number <- @number **********
@@ -31790,8 +31790,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(first, second) {
-				return first + second;
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31870,8 +31870,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+string->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(first, second) {
-				return first + second;
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -31950,8 +31950,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: string+string->string\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(first, second) {
-				return first + second;
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
@@ -32030,8 +32030,8 @@ $(function () {
 	QUnit.test("Test: \"Custom function test: number[][]+number->number\"", function (assert) {
 
 		executeCustomFunction(function () {
-			fCustomFunc = function add(first, second) {
-				return first + second;
+			fCustomFunc = function add(arg1, arg2) {
+				return arg1 + arg2;
 			};
 
 			let typeToArgMap = {"number": 10, "stringNumber": '"1"', "string": '"test"',  "bool": "TRUE", "error": "#REF!", "array": "{1,2,3}", "ref": "A100", "range": "A100:B101" };
