@@ -649,9 +649,18 @@
 		this.getPDFDoc().ClearFormatting(undefined, true);
 	};
 	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
-		let oDoc = this.getPDFDoc();
-		
-		oDoc.CreateNewHistoryPoint();
+		let oDoc		= this.getPDFDoc();
+		let oController	= this.getDocumentRenderer().DrawingObjects;
+
+		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+		let aAllDrawings	= [];
+		Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                aAllDrawings.push(drawing);
+            });
+        });
+
+		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
 		this.getPDFDoc().ShapeApply(shapeProps);
 		oDoc.TurnOffHistory();
 	};

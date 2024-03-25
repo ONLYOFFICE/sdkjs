@@ -4067,7 +4067,7 @@
 						var oAscTextArtProperties = props.textArtProperties;
 						var oParaTextPr;
 						var nStyle = oAscTextArtProperties.asc_getStyle();
-						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects));
+						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects) && false == Asc.editor.isPdfEditor());
 						if (this.selection.groupSelection && this.selection.groupSelection.isSmartArtObject()) {
 							bWord = false;
 						}
