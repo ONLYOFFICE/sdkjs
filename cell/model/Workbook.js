@@ -12946,45 +12946,47 @@
 		this.changedArrays = null;
 	};
 	Worksheet.prototype.recalculateVolatileArrays = function () {
-		const ws = this;
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			const ws = this;
 
-		// recalculate all volatile arrays on page
-		if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
-			let depGraph = ws.workbook.dependencyFormulas;
-			// get volatileArraysList
-			let volatileArrayList = depGraph.getVolatileArrays();
-			if (volatileArrayList) {
-				for (let listenerId in volatileArrayList) {
-					let formula = volatileArrayList[listenerId];
-					let formulaResult = formula.calculate();
-					let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
-					if (!(formula.aca && formula.ca)) {
-						// array can expand, setValue for each cell except first
-						let dimensions = formulaResult.getDimensions();
-						let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
-						formula.setDynamicRef(newRef);
-						if (newRef) {
-							for (let row = newRef.r1; row <= newRef.r2; row++) {
-								for (let col = newRef.c1; col <= newRef.c2; col++) {
-									// if (row === newRef.r1 && col === newRef.c1) {
-									// 	continue
-									// }
-									// get cell and setPF to it
-									ws._getCell(row, col, function(cell) {
-										cell && cell.setFormulaInternal(formula);
-									});
+			// recalculate all volatile arrays on page
+			if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
+				let depGraph = ws.workbook.dependencyFormulas;
+				// get volatileArraysList
+				let volatileArrayList = depGraph.getVolatileArrays();
+				if (volatileArrayList) {
+					for (let listenerId in volatileArrayList) {
+						let formula = volatileArrayList[listenerId];
+						let formulaResult = formula.calculate();
+						let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+						if (!(formula.aca && formula.ca)) {
+							// array can expand, setValue for each cell except first
+							let dimensions = formulaResult.getDimensions();
+							let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
+							formula.setDynamicRef(newRef);
+							if (newRef) {
+								for (let row = newRef.r1; row <= newRef.r2; row++) {
+									for (let col = newRef.c1; col <= newRef.c2; col++) {
+										// if (row === newRef.r1 && col === newRef.c1) {
+										// 	continue
+										// }
+										// get cell and setPF to it
+										ws._getCell(row, col, function(cell) {
+											cell && cell.setFormulaInternal(formula);
+										});
+									}
 								}
 							}
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
+							depGraph.endListeningVolatileArray(listenerId);
+						} else {
+							formula.setDynamicRef(firstCellRef);
+							ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
+								cell && cell.setFormulaInternal(formula);
+							});
+	
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
 						}
-						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
-						depGraph.endListeningVolatileArray(listenerId);
-					} else {
-						formula.setDynamicRef(firstCellRef);
-						ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
-							cell && cell.setFormulaInternal(formula);
-						});
-
-						depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
 					}
 				}
 			}

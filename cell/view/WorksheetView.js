@@ -14244,32 +14244,34 @@
 
                         t.model.workbook.dependencyFormulas.lockRecal();
 						
-						//***dynamic array-formula***
-						let changedDynamicArraysList;
-						// checking affected arrays only for cases of deleting values ​​in cells
-						if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text || val === c_oAscCleanOptions.Formula) {
-							changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
-							if (changedDynamicArraysList) {
-								// go through changed dynamic arrays, and delete all|partitional values?
-								for (let array in changedDynamicArraysList) {
-									let arrayData = changedDynamicArraysList[array];
-									let formula = arrayData.formula;
-									let dynamicbbox = arrayData.range;
-									let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-									// todo create clear function for cells (clearRange?)
-									if (arrayData.doDelete) {
-										// delete all cells
-										range.cleanText();
-										let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-										// remove from volatilate listeners
-										ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-									} else if (arrayData.doRecalc) {
-										// delete all cells except the first one
-										range.cleanTextExceptFirst();
-										ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+						if (AscCommonExcel.bIsSupportDynamicArrays) {
+							//***dynamic array-formula***
+							let changedDynamicArraysList;
+							// checking affected arrays only for cases of deleting values ​​in cells
+							if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text || val === c_oAscCleanOptions.Formula) {
+								changedDynamicArraysList = ws.getChangedArrayList();
+								if (changedDynamicArraysList) {
+									// go through changed dynamic arrays, and delete all|partitional values?
+									for (let array in changedDynamicArraysList) {
+										let arrayData = changedDynamicArraysList[array];
+										let formula = arrayData.formula;
+										let dynamicbbox = arrayData.range;
+										let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+										// todo create clear function for cells (clearRange?)
+										if (arrayData.doDelete) {
+											// delete all cells
+											range.cleanText();
+											let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+											// remove from volatilate listeners
+											ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+										} else if (arrayData.doRecalc) {
+											// delete all cells except the first one
+											range.cleanTextExceptFirst();
+											ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+										}
 									}
+									ws.clearChangedArrayList();
 								}
-								ws.clearChangedArrayList();
 							}
 						}
 
@@ -16597,33 +16599,35 @@
 		var propPaste = specialPasteProps.property;
 		var pasteOnlyText = propPaste === Asc.c_oSpecialPasteProps.valueNumberFormat || propPaste === Asc.c_oSpecialPasteProps.pasteOnlyValues;
 
-		//***dynamic array-formula***
-		// before editing the value, recalculate the affected dynamic ranges
-		let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? t.model.getChangedArrayList() : null;
-		if (changedDynamicArraysList) {
-			// go through changed dynamic arrays, and delete all|partitional values?
-			for (let array in changedDynamicArraysList) {
-				let arrayData = changedDynamicArraysList[array];
-				let formula = arrayData.formula;
-				let dynamicbbox = arrayData.range;
-				let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-				// todo create clear function for cells (clearRange?)
-				if (arrayData.doDelete) {
-					// delete all cells
-					range.cleanText();
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			//***dynamic array-formula***
+			// before editing the value, recalculate the affected dynamic ranges
+			let changedDynamicArraysList =  t.model.getChangedArrayList();
+			if (changedDynamicArraysList) {
+				// go through changed dynamic arrays, and delete all|partitional values?
+				for (let array in changedDynamicArraysList) {
+					let arrayData = changedDynamicArraysList[array];
+					let formula = arrayData.formula;
+					let dynamicbbox = arrayData.range;
+					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					// todo create clear function for cells (clearRange?)
+					if (arrayData.doDelete) {
+						// delete all cells
+						range.cleanText();
 
-					// remove listener
-					let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-					t.model.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-				} else if (arrayData.doRecalc) {
-					// delete all cells except the first one
-					range.cleanTextExceptFirst();
-					// add to volatile 
-					t.model.workbook.dependencyFormulas.addToVolatileArrays(formula);
+						// remove listener
+						let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+						t.model.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+					} else if (arrayData.doRecalc) {
+						// delete all cells except the first one
+						range.cleanTextExceptFirst();
+						// add to volatile 
+						t.model.workbook.dependencyFormulas.addToVolatileArrays(formula);
+					}
 				}
-			}
 
-			t.model.clearChangedArrayList();
+				t.model.clearChangedArrayList();
+			}
 		}
 
 		//***value***
@@ -19078,32 +19082,34 @@
 			//***array-formula***
 			changeRangesIfArrayFormula();
 
-			//***dynamic array-formula***
-			let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
-			if (changedDynamicArraysList) {
-				// go through changed dynamic arrays, and delete all|partitional values?
-				for (let array in changedDynamicArraysList) {
-					let arrayData = changedDynamicArraysList[array];
-					let formula = arrayData.formula;
-					let dynamicbbox = arrayData.range;
-					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
-					// todo create clear function for cells (clearRange?)
-					if (arrayData.doDelete) {
-						// delete all cells
-						range.cleanText();
+			if (AscCommonExcel.bIsSupportDynamicArrays) {
+				//***dynamic array-formula***
+				let changedDynamicArraysList =  ws.getChangedArrayList();
+				if (changedDynamicArraysList) {
+					// go through changed dynamic arrays, and delete all|partitional values?
+					for (let array in changedDynamicArraysList) {
+						let arrayData = changedDynamicArraysList[array];
+						let formula = arrayData.formula;
+						let dynamicbbox = arrayData.range;
+						let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+						// todo create clear function for cells (clearRange?)
+						if (arrayData.doDelete) {
+							// delete all cells
+							range.cleanText();
 
-						// remove listener
-						let listenerId = arrayData.formula && arrayData.formula.getListenerId();
-						ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
-					} else if (arrayData.doRecalc) {
-						// delete all cells except the first one
-						range.cleanTextExceptFirst();
-						// add to volatile 
-						ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+							// remove listener
+							let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+							ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+						} else if (arrayData.doRecalc) {
+							// delete all cells except the first one
+							range.cleanTextExceptFirst();
+							// add to volatile 
+							ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+						}
 					}
-				}
 
-				ws.clearChangedArrayList();
+					ws.clearChangedArrayList();
+				}
 			}
 
 			// set the value to the selected range 
