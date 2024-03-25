@@ -66,6 +66,57 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     }
 };
 
+CGraphicObjectsPdf.prototype.setTableProps = function(props) {
+    let by_type = this.getSelectedObjectsByTypes();
+    if(by_type.tables.length === 1) {
+        let sCaption = props.TableCaption;
+        let sDescription = props.TableDescription;
+        let sName = props.TableName;
+        let dRowHeight = props.RowHeight;
+        let oTable = by_type.tables[0];
+        oTable.setTitle(sCaption);
+        oTable.setDescription(sDescription);
+        oTable.setName(sName);
+        props.TableCaption = undefined;
+        props.TableDescription = undefined;
+        let bIgnoreHeight = false;
+        if(AscFormat.isRealNumber(props.RowHeight)) {
+            if(AscFormat.fApproxEqual(props.RowHeight, 0.0)) {
+                props.RowHeight = 1.0;
+            }
+            bIgnoreHeight = false;
+        }
+        let target_text_object = AscFormat.getTargetTextObject(this);
+        if (target_text_object === oTable) {
+            oTable.graphicObject.Set_Props(props);
+        }
+        else {
+            oTable.graphicObject.SelectAll();
+            oTable.graphicObject.Set_Props(props);
+            oTable.graphicObject.RemoveSelection();
+        }
+        props.TableCaption = sCaption;
+        props.TableDescription = sDescription;
+        props.RowHeight = dRowHeight;
+        if(!oTable.setFrameTransform(props)) {
+            this.Check_GraphicFrameRowHeight(oTable, bIgnoreHeight);
+        }
+    }
+};
+CGraphicObjectsPdf.prototype.Check_GraphicFrameRowHeight = function (grFrame, bIgnoreHeight) {
+	grFrame.recalculate();
+	let oTable = grFrame.graphicObject;
+	oTable.private_SetTableLayoutFixedAndUpdateCellsWidth(-1);
+	let content = oTable.Content, i, j;
+	for (i = 0; i < content.length; ++i) {
+		let row = content[i];
+		if (!bIgnoreHeight && row.Pr && row.Pr.Height && row.Pr.Height.HRule === Asc.linerule_AtLeast
+			&& AscFormat.isRealNumber(row.Pr.Height.Value) && row.Pr.Height.Value > 0) {
+			continue;
+		}
+		row.Set_Height(row.Height, Asc.linerule_AtLeast);
+	}
+};
 CGraphicObjectsPdf.prototype.setEquationTrack = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
 
 CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Word/*Ctrl*/) {

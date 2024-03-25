@@ -89,12 +89,15 @@
        return false;
     };
     CPdfGraphicFrame.prototype.IsImage = function() {
-        return true;
+        return false;
     };
     CPdfGraphicFrame.prototype.IsChart = function() {
         return false;
     };
     CPdfGraphicFrame.prototype.IsDrawing = function() {
+        return true;
+    };
+    CPdfGraphicFrame.prototype.IsGraphicFrame = function() {
         return true;
     };
 

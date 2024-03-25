@@ -33,7 +33,6 @@
 "use strict";
 
 // Import
-var History = AscCommon.History;
 var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1189,7 +1188,7 @@ CTableCell.prototype =
 		let isHavePrChange = this.HavePrChange();
 		
 		this.private_AddPrChange();
-		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
+		AscCommon.History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
@@ -1341,7 +1340,7 @@ CTableCell.prototype =
 	Set_W : function(CellW)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesTableCellW(this, this.Pr.TableCellW, CellW));
+		AscCommon.History.Add(new CChangesTableCellW(this, this.Pr.TableCellW, CellW));
 		this.Pr.TableCellW = CellW;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
@@ -1359,7 +1358,7 @@ CTableCell.prototype =
 			return;
 
 		this.private_AddPrChange();
-		History.Add(new CChangesTableCellGridSpan(this, this.Pr.GridSpan, Value));
+		AscCommon.History.Add(new CChangesTableCellGridSpan(this, this.Pr.GridSpan, Value));
 		this.Pr.GridSpan = Value;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
@@ -1421,7 +1420,7 @@ CTableCell.prototype =
 			if (Margin !== this.Pr.TableCellMar)
 			{
 				this.private_AddPrChange();
-				History.Add(new CChangesTableCellMargins(this, OldValue, Margin));
+				AscCommon.History.Add(new CChangesTableCellMargins(this, OldValue, Margin));
 				this.Pr.TableCellMar = undefined;
 				this.Recalc_CompiledPr();
 				this.private_UpdateTableGrid();
@@ -1528,7 +1527,7 @@ CTableCell.prototype =
 		if (true === bNeedChange)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesTableCellMargins(this, OldValue, Margins_new));
+			AscCommon.History.Add(new CChangesTableCellMargins(this, OldValue, Margins_new));
 			this.Pr.TableCellMar = Margins_new;
 			this.Recalc_CompiledPr();
 			this.private_UpdateTableGrid();
@@ -1549,7 +1548,7 @@ CTableCell.prototype =
 		if (undefined === Shd)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesTableCellShd(this, this.Pr.Shd, undefined));
+			AscCommon.History.Add(new CChangesTableCellShd(this, this.Pr.Shd, undefined));
 			this.Pr.Shd = undefined;
 			this.Recalc_CompiledPr();
 		}
@@ -1558,7 +1557,7 @@ CTableCell.prototype =
 			this.private_AddPrChange();
 			var _Shd = new CDocumentShd();
 			_Shd.Set_FromObject(Shd);
-			History.Add(new CChangesTableCellShd(this, this.Pr.Shd, _Shd));
+			AscCommon.History.Add(new CChangesTableCellShd(this, this.Pr.Shd, _Shd));
 			this.Pr.Shd = _Shd;
 			this.Recalc_CompiledPr();
 		}
@@ -1576,7 +1575,7 @@ CTableCell.prototype =
 			return;
 
 		this.private_AddPrChange();
-		History.Add(new CChangesTableCellVAlign(this, this.Pr.VAlign, Value));
+		AscCommon.History.Add(new CChangesTableCellVAlign(this, this.Pr.VAlign, Value));
 		this.Pr.VAlign = Value;
 		this.Recalc_CompiledPr();
 	},
@@ -1591,7 +1590,7 @@ CTableCell.prototype =
 		if (this.Pr.NoWrap !== Value)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesTableCellNoWrap(this, this.Pr.NoWrap, Value));
+			AscCommon.History.Add(new CChangesTableCellNoWrap(this, this.Pr.NoWrap, Value));
 			this.Pr.NoWrap = Value;
 			this.Recalc_CompiledPr();
 		}
@@ -1613,7 +1612,7 @@ CTableCell.prototype =
 		if (Value !== this.Pr.TextDirection)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesTableCellTextDirection(this, this.Pr.TextDirection, Value));
+			AscCommon.History.Add(new CChangesTableCellTextDirection(this, this.Pr.TextDirection, Value));
 			this.Pr.TextDirection = Value;
 			this.Recalc_CompiledPr();
 		}
@@ -1749,25 +1748,25 @@ CTableCell.prototype =
 			{
 				case 0:
 				{
-					History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, Border));
+					AscCommon.History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, Border));
 					this.Pr.TableCellBorders.Top = undefined;
 					break;
 				}
 				case 1 :
 				{
-					History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, Border));
+					AscCommon.History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, Border));
 					this.Pr.TableCellBorders.Right = undefined;
 					break;
 				}
 				case 2 :
 				{
-					History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, Border));
+					AscCommon.History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, Border));
 					this.Pr.TableCellBorders.Bottom = undefined;
 					break;
 				}
 				case 3 :
 				{
-					History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, Border));
+					AscCommon.History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, Border));
 					this.Pr.TableCellBorders.Left = undefined;
 					break;
 				}
@@ -1791,25 +1790,25 @@ CTableCell.prototype =
 			{
 				case 0:
 				{
-					History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, NewBorder));
 					this.Pr.TableCellBorders.Top = NewBorder;
 					break;
 				}
 				case 1 :
 				{
-					History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, NewBorder));
 					this.Pr.TableCellBorders.Right = NewBorder;
 					break;
 				}
 				case 2 :
 				{
-					History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, NewBorder));
 					this.Pr.TableCellBorders.Bottom = NewBorder;
 					break;
 				}
 				case 3 :
 				{
-					History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, NewBorder));
 					this.Pr.TableCellBorders.Left = NewBorder;
 					break;
 				}
@@ -1837,25 +1836,25 @@ CTableCell.prototype =
 			{
 				case 0:
 				{
-					History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderTop(this, this.Pr.TableCellBorders.Top, NewBorder));
 					this.Pr.TableCellBorders.Top = NewBorder;
 					break;
 				}
 				case 1 :
 				{
-					History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderRight(this, this.Pr.TableCellBorders.Right, NewBorder));
 					this.Pr.TableCellBorders.Right = NewBorder;
 					break;
 				}
 				case 2 :
 				{
-					History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderBottom(this, this.Pr.TableCellBorders.Bottom, NewBorder));
 					this.Pr.TableCellBorders.Bottom = NewBorder;
 					break;
 				}
 				case 3 :
 				{
-					History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, NewBorder));
+					AscCommon.History.Add(new CChangesTableCellBorderLeft(this, this.Pr.TableCellBorders.Left, NewBorder));
 					this.Pr.TableCellBorders.Left = NewBorder;
 					break;
 				}
@@ -1990,7 +1989,7 @@ CTableCell.prototype =
             {
                 // Если изменение внутри ячейки влечет за собой изменение сетки таблицы, тогда
                 // пересчитывать таблицу надо с самого начала.
-                History.Add_RecalcTableGrid(oTable.Get_Id());
+                AscCommon.History.Add_RecalcTableGrid(oTable.Get_Id());
             }
             else
 			{
@@ -2393,7 +2392,7 @@ CTableCell.prototype.SetVMerge = function(nType)
 		return;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesTableCellVMerge(this, this.Pr.VMerge, nType));
+	AscCommon.History.Add(new CChangesTableCellVMerge(this, this.Pr.VMerge, nType));
 	this.Pr.VMerge = nType;
 	this.Recalc_CompiledPr();
 };
@@ -2524,7 +2523,7 @@ CTableCell.prototype.SetHMerge = function(nType)
 		return;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesTableCellHMerge(this, this.Pr.HMerge, nType));
+	AscCommon.History.Add(new CChangesTableCellHMerge(this, this.Pr.HMerge, nType));
 	this.Pr.HMerge = nType;
 	this.Recalc_CompiledPr();
 };
@@ -2617,7 +2616,7 @@ CTableCell.prototype.AddPrChange = function()
 	if (false === this.HavePrChange())
 	{
 		this.Pr.AddPrChange();
-		History.Add(new CChangesTableCellPrChange(this, {
+		AscCommon.History.Add(new CChangesTableCellPrChange(this, {
 			PrChange   : undefined,
 			ReviewInfo : undefined
 		}, {
@@ -2631,7 +2630,7 @@ CTableCell.prototype.RemovePrChange = function()
 {
 	if (true === this.HavePrChange())
 	{
-		History.Add(new CChangesTableCellPrChange(this, {
+		AscCommon.History.Add(new CChangesTableCellPrChange(this, {
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}, {

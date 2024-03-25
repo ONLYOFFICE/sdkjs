@@ -71,6 +71,9 @@
     CPdfDrawingPrototype.prototype.IsSmartArt = function() {
         return false;
     };
+    CPdfDrawingPrototype.prototype.IsGraphicFrame = function() {
+        return false;
+    };
 
     CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
         if (this.GetDocument().drawings.indexOf(this) == -1)

@@ -3549,7 +3549,7 @@
 			if (this.pagesInfo.pages[i].needRedrawTextShapes)
 			{
 				aDrawings.forEach(function(drawing) {
-					if (false == drawing.IsImage()) {
+					if (true == drawing.IsTextShape()) {
 						drawing.GetAllFonts(fontMap);
 					}
 				});
