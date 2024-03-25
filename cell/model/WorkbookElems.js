@@ -16992,11 +16992,11 @@ function RangeDataManagerElem(bbox, data)
 	CMetadata.prototype.clone = function () {
 		let res = new CMetadata();
 
-		res.metadataTypes = this.metadataTypes;
-		res.metadataStrings = this.metadataStrings;
-		res.mdxMetadata = this.mdxMetadata;
-		res.cellMetadata = this.cellMetadata;
-		res.valueMetadata = this.valueMetadata;
+		res.metadataTypes = this.metadataTypes && this.metadataTypes.clone();
+		res.metadataStrings = this.metadataStrings && this.metadataStrings.clone();
+		res.mdxMetadata = this.mdxMetadata && this.mdxMetadata.clone();
+		res.cellMetadata = this.cellMetadata && this.cellMetadata.clone();	// CMetadataRecord.clone
+		res.valueMetadata = this.valueMetadata && this.valueMetadata.clone();	// CMetadataRecord.clone
 
 		res.aFutureMetadata = this.aFutureMetadata && this.aFutureMetadata.clone();
 
@@ -17044,7 +17044,7 @@ function RangeDataManagerElem(bbox, data)
 		this.coerce = null;
 		this.cellMeta = null;
 	}
-	CFutureMetadata.prototype.clone = function () {
+	CMetadataType.prototype.clone = function () {
 		let res = new CMetadataType();
 
 		res.minSupportedVersion = this.minSupportedVersion;
@@ -17104,7 +17104,7 @@ function RangeDataManagerElem(bbox, data)
 		res.mdxSet = this.mdxSet && this.mdxSet.clone();
 		res.mdxKPI = this.mdxKPI && this.mdxKPI.clone();
 
-		res.mdxMemeberProp = this.mdxMemeberProp;
+		res.mdxMemeberProp = this.mdxMemeberProp && this.mdxMemeberProp.clone();
 
 		res.n = this.n;
 		res.f = this.f;
@@ -17237,7 +17237,7 @@ function RangeDataManagerElem(bbox, data)
 	CFutureMetadataBlock.prototype.clone = function () {
 		let res = new CFutureMetadataBlock();
 
-		res.extLst = this.extLst;
+		res.extLst = this.extLst && this.extLst.clone();
 
 		return res;
 	};
