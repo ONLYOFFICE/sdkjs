@@ -1836,7 +1836,8 @@ var CPresentation = CPresentation || function(){};
 		oDrawingObjects.checkChartTextSelection();
 		oDrawingObjects.resetSelection();
 		oSmartArt.select(oDrawingObjects, 0);
-		
+		this.SetMouseDownObject(oSmartArt);
+
         oDrawingObjects.clearTrackObjects();
         oDrawingObjects.clearPreTrackObjects();
         oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
@@ -1992,12 +1993,18 @@ var CPresentation = CPresentation || function(){};
 
 				this.AddDrawing(oMathShape, nCurPage);
 				oMathShape.select(oController, nCurPage);
+                this.SetMouseDownObject(oMathShape);
 				oController.selection.textSelection = oMathShape;
 				oMathShape.GetDocContent().SelectAll();
 			}
 		}
 
         oController.paragraphAdd(oParaItem, false);
+        let oCurObject = this.GetActiveObject();
+        if (oCurObject && oCurObject.IsDrawing()) {
+            oCurObject.SetNeedRecalc(true);
+            this.History.SetSourceObjectsToPointPdf([oCurObject]);
+        }
     };
 
     CPDFDoc.prototype.GetDirectTextPr = function() {

@@ -57,7 +57,8 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
         text_object.updateSelectionState(drawingDocument);
     } else if (bNoCheck !== true) {
         drawingDocument.UpdateTargetTransform(null);
-        drawingDocument.TargetEnd();
+        if (this.document.GetActiveObject() == null)
+            drawingDocument.TargetEnd();
     }
     let oMathTrackHandler = this.document.MathTrackHandler;
     if (oMathTrackHandler) {
