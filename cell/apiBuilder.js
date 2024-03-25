@@ -2050,7 +2050,11 @@
 			}
 			if (this.worksheet.editUserProtectedRanges(null, settings, true)) {
 				result = new ApiProtectedRange(settings);
+			} else {
+				logError(new Error('Protected range cannot be added.'));
 			}
+		} else {
+			logError(new Error('The title or dataRange is invalid'));
 		}
 
 		return result;
@@ -2061,15 +2065,20 @@
 	 * Returns a protected range object.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {number} sTitle - The title which will be displayed for the current protected range.
+	 * @param {string} sTitle - The title which will be displayed for the current protected range.
 	 * @returns {ApiProtectedRange | null}
 	 */
 	ApiWorksheet.prototype.GetProtectedRange = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
-		let result;
+		let result = null;
 		if (isValidTitle) {
 			let protectedRange = this.worksheet.getProtectedRangeByName(sTitle);
 			result = protectedRange && protectedRange.val ? new ApiProtectedRange(protectedRange.val.clone()) : null;
+			if (result === null) {
+				logError(new Error('The range not found'));
+			}
+		} else {
+			logError(new Error('The title is invalid'));
 		}
 
 		return result;
@@ -2089,7 +2098,10 @@
 			for (let i  = 0; i < protectedRanges.length; i++) {
 				result.push(new ApiProtectedRange(protectedRanges[i].clone()));
 			}
+		} else {
+			logError(new Error('Ranges not found'));
 		}
+
 		return result;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "GetAllProtectedRanges", {
@@ -6637,7 +6649,7 @@
 	}
 
 	/**
-	 * Sets a value to the current cell or cell range.
+	 * Sets a title to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTitle - The title which will be displayed for the current protected range.
@@ -6659,10 +6671,10 @@
 	};
 
 	/**
-	 * Sets a value to the current cell or cell range.
+	 * Sets a range to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range of cells from the current sheet.
+	 * @param {string} sRange - The range of cells from the current protected range.
 	 * @return {boolean} - returns false if user don't have rules on change protected range.
 	 */
 	ApiProtectedRange.prototype.SetRange = function (sRange) {
@@ -6687,7 +6699,7 @@
 
 
 	/**
-	 * Creates a protected range of the specified type from the selected data range of the current sheet.
+	 * Sets the user to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sId - The user id.
@@ -6726,14 +6738,14 @@
 	};
 
 	/**
-	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * Remove the user current protected range.
 	 * @memberof ApiProtectedRange
 	 * @param {string} sId - The user id.
 	 * @returns {bool}
 	 */
 	ApiProtectedRange.prototype.DeleteUser = function (sId) {
-		let isValidRange = typeof (sId) === 'string' && sId.trim() !== '';
-		if (isValidRange) {
+		let isValidId = typeof (sId) === 'string' && sId.trim() !== '';
+		if (isValidId) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
 				let userInfo = this.protectedRange.getUserById(sId);
@@ -6782,7 +6794,7 @@
 	};
 
 	/**
-	 * Creates a protected range of the specified type from the selected data range of the current sheet.
+	 * Sets protected type for anyone user.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ProtectedRangeUserType} protectedRangeUserType - Specifies the protected range user type.
@@ -6809,7 +6821,7 @@
 	};
 
 	/**
-	 * Returns a class formatted according to the instructions contained in the format expression.
+	 * Returns an object that represents the user protected range.
 	 * @memberof ApiProtectedRange
 	 * @param {string} sId - The user id.
 	 * @returns {ApiProtectedRangeUserInfo | null}
@@ -6838,17 +6850,19 @@
 	}
 
 	/**
-	 * Returns the font name property of the specified font.
+	 * Returns the name property of the current user's info.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetName = function () {
+		//the sets methods are available from the parent
+		// not adding by ApiProtectedRangeUserInfo because need change id/name together
 		return this.userInfo.asc_getName();
 	};
 
 	/**
-	 * Returns the font name property of the specified font.
+	 * Returns the type property of the current user's info.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {ProtectedRangeUserType}
@@ -6866,7 +6880,7 @@
 
 
 	/**
-	 * Returns the font name property of the specified font.
+	 * Returns the id property of the current user's info.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
@@ -6875,36 +6889,6 @@
 		return this.userInfo.asc_getId();
 	};
 
-	/**
-	 * Returns a class formatted according to the instructions contained in the format expression.
-	 * @memberof ApiProtectedRangeUserInfo
-	 * @returns {bool}
-	 */
-	ApiProtectedRangeUserInfo.prototype.Delete = function () {
-		let worksheet = this.protectedRange._ws;
-		if (worksheet) {
-			let sId = this.userInfo.asc_getId();
-			let userInfo = this.protectedRange.getUserById(sId);
-			if (userInfo) {
-				let newProtectedRange = this.protectedRange.clone();
-				let users = this.protectedRange.asc_getUsers();
-				if (users) {
-					let newUsers = [];
-					for (let i = 0; i < users.length; i++) {
-						if (i !== userInfo.index) {
-							newUsers.push(users[i].clone());
-						}
-					}
-					newProtectedRange.asc_setUsers(newUsers);
-
-					if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	};
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -6987,6 +6971,9 @@
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
+	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
+	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
+	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -7206,6 +7193,18 @@
 	ApiFreezePanes.prototype["FreezeRows"]       = ApiFreezePanes.prototype.FreezeRows;
 	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
 	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
+
+	ApiProtectedRange.prototype["SetTitle"]      = ApiProtectedRange.prototype.SetTitle;
+	ApiProtectedRange.prototype["SetRange"]      = ApiProtectedRange.prototype.SetRange;
+	ApiProtectedRange.prototype["AddUser"]       = ApiProtectedRange.prototype.AddUser;
+	ApiProtectedRange.prototype["DeleteUser"]    = ApiProtectedRange.prototype.DeleteUser;
+	ApiProtectedRange.prototype["GetAllUsers"]   = ApiProtectedRange.prototype.GetAllUsers;
+	ApiProtectedRange.prototype["GetUser"]       = ApiProtectedRange.prototype.GetUser;
+
+	ApiProtectedRangeUserInfo.prototype["GetName"]  = ApiProtectedRangeUserInfo.prototype.GetName;
+	ApiProtectedRangeUserInfo.prototype["GetType"]  = ApiProtectedRangeUserInfo.prototype.GetType;
+	ApiProtectedRangeUserInfo.prototype["GetId"]    = ApiProtectedRangeUserInfo.prototype.GetId;
+
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
