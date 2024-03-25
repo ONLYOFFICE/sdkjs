@@ -2104,7 +2104,7 @@
 
 		return result;
 	};
-	Object.defineProperty(ApiWorksheet.prototype, "GetAllProtectedRanges", {
+	Object.defineProperty(ApiWorksheet.prototype, "AllProtectedRanges", {
 		get: function () {
 			return this.GetAllProtectedRanges();
 		}
