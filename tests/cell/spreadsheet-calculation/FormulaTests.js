@@ -30829,11 +30829,10 @@ $(function () {
 
 		for (let i in aInputTypes) {
 			let argName = "arg" + ((i - 0) + 1);
-			let sDefault = "";
-			if (aInputTypes[i].defaultValue) {
-				sDefault = ". If omitted, " + argName + " = " + aInputTypes[i].defaultValue;
+			if (aInputTypes[i].isOptional) {
+				argName = "[" + argName + (aInputTypes[i].defaultValue ? "=" + aInputTypes[i].defaultValue : "") + "]"
 			}
-			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} " + (aInputTypes[i].isOptional ? "[" : "") + argName + (aInputTypes[i].isOptional ? "]" : "") + sDefault +  "+.\n";
+			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} " + argName + " " + "Description.\n";
 		}
 		sJsDoc += "\t\t * @returns {" + sReturnType + "} The sum of the numbers.\n\t\t */";
 
@@ -31801,24 +31800,17 @@ $(function () {
 
 			//defaultvalue
 			//ms ignore defaultValue option, while skip
-			/*fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
 				return arg3;
 			};
 
-			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", defaultValue: "123", isOptional: true}], "number");
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", defaultValue: 123, isOptional: true}], "number");
 
 			aTasks = [
-				{paramsType: ['number'], result:"#VALUE!"},
-				{paramsType: ['stringNumber'], result:"#VALUE!"},
-				{paramsType: ['string'], result:"#VALUE!"},
-				{paramsType: ['bool'], result:"#VALUE!"},
-				{paramsType: ['error'], result:"#VALUE!"},
-				{paramsType: ['array'], result:"#VALUE!"},
-				{paramsType: ['ref'], result:"#VALUE!"},
-				{paramsType: ['range'], result:"#VALUE!"}
+				{paramsType: ['number', 'number'], result: "123"}
 			];
 
-			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function less then function arg count !");*/
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! defaultvalue !");
 
 		});
 	});

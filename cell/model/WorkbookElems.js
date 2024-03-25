@@ -17108,16 +17108,17 @@ function RangeDataManagerElem(bbox, data)
 				//prepare arguments
 				let args = [];
 				for (let i = 0; i < argsInfo.length; i++) {
-					if (!arg[i]) {
-						continue;
-					}
 					let type = argsInfo[i].type;
 					let defaultValue = argsInfo[i].defaultValue;
+
+					if (!arg[i] && !defaultValue) {
+						continue;
+					}
 
 					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
 						args.push(arg[i].toString());
 					} else {
-						if (arg[i].type === AscCommonExcel.cElementType.error) {
+						if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error) {
 							return arg[i];
 						}
 
