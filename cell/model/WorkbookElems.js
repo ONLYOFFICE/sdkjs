@@ -16990,7 +16990,15 @@ function RangeDataManagerElem(bbox, data)
 		this.aFutureMetadata = null;
 	}
 	CMetadata.prototype.clone = function () {
-		var res = new CMetadata();
+		let res = new CMetadata();
+
+		res.metadataTypes = this.metadataTypes;
+		res.metadataStrings = this.metadataStrings;
+		res.mdxMetadata = this.mdxMetadata;
+		res.cellMetadata = this.cellMetadata;
+		res.valueMetadata = this.valueMetadata;
+
+		res.aFutureMetadata = this.aFutureMetadata && this.aFutureMetadata.clone();
 
 		return res;
 	};
@@ -17000,7 +17008,10 @@ function RangeDataManagerElem(bbox, data)
 		this.futureMetadataBlocks = null;
 	}
 	CFutureMetadata.prototype.clone = function () {
-		var res = new CFutureMetadata();
+		let res = new CFutureMetadata();
+
+		res.name = this.name;
+		res.futureMetadataBlocks = this.futureMetadataBlocks && this.futureMetadataBlocks.clone();
 
 		return res;
 	};
@@ -17034,7 +17045,34 @@ function RangeDataManagerElem(bbox, data)
 		this.cellMeta = null;
 	}
 	CFutureMetadata.prototype.clone = function () {
-		var res = new CMetadataType();
+		let res = new CMetadataType();
+
+		res.minSupportedVersion = this.minSupportedVersion;
+		res.ghostRow = this.ghostRow;
+		res.ghostCol = this.ghostCol;
+		res.edit = this.edit;
+		res.delete = this.delete;
+		res.copy = this.copy;
+		res.pasteAll = this.pasteAll;
+		res.pasteFormulas = this.pasteFormulas;
+		res.pasteValues = this.pasteValues;
+		res.pasteFormats = this.pasteFormats;
+		res.pasteComments = this.pasteComments;
+		res.pasteDataValidation = this.pasteDataValidation;
+		res.pasteBorders = this.pasteBorders;
+		res.pasteColWidths = this.pasteColWidths;
+		res.pasteNumberFormats = this.pasteNumberFormats;
+		res.merge = this.merge;
+		res.splitFirst = this.splitFirst;
+		res.splitAll = this.splitAll;
+		res.rowColShift = this.rowColShift;
+		res.clearAll = this.clearAll;
+		res.clearFormats = this.clearFormats;
+		res.clearContents = this.clearContents;
+		res.clearComments = this.clearComments;
+		res.assign = this.assign;
+		res.coerce = this.coerce;
+		res.cellMeta = this.cellMeta;
 
 		return res;
 	};
@@ -17043,7 +17081,9 @@ function RangeDataManagerElem(bbox, data)
 		this.v = null;
 	}
 	CMetadataString.prototype.clone = function () {
-		var res = new CMetadataString();
+		let res = new CMetadataString();
+
+		res.v = this.v;
 
 		return res;
 	};
@@ -17058,7 +17098,16 @@ function RangeDataManagerElem(bbox, data)
 		this.f = null;
 	}
 	CMdx.prototype.clone = function () {
-		var res = new CMdx();
+		let res = new CMdx();
+
+		res.mdxTuple = this.mdxTuple && this.mdxTuple.clone();
+		res.mdxSet = this.mdxSet && this.mdxSet.clone();
+		res.mdxKPI = this.mdxKPI && this.mdxKPI.clone();
+
+		res.mdxMemeberProp = this.mdxMemeberProp;
+
+		res.n = this.n;
+		res.f = this.f;
 
 		return res;
 	};
@@ -17078,7 +17127,20 @@ function RangeDataManagerElem(bbox, data)
 		this.metadataStringIndexes = null;
 	}
 	CMdxTuple.prototype.clone = function () {
-		var res = new CMdxTuple();
+		let res = new CMdxTuple();
+
+		res.c = this.c;
+		res.ct = this.ct;
+		res.si = this.si;
+		res.fi = this.fi;
+		res.bc = this.bc;
+		res.fc = this.fc;
+		res.i = this.i;
+		res.u = this.u;
+		res.st = this.st;
+		res.b = this.b;
+
+		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
 
 		return res;
 	};
@@ -17091,7 +17153,13 @@ function RangeDataManagerElem(bbox, data)
 		this.metadataStringIndexes = null;
 	}
 	CMdxSet.prototype.clone = function () {
-		var res = new CMdxSet();
+		let res = new CMdxSet();
+
+		res.ns = this.ns;
+		res.c = this.c;
+		res.o = this.o;
+
+		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
 
 		return res;
 	};
@@ -17102,7 +17170,10 @@ function RangeDataManagerElem(bbox, data)
 
 	}
 	CMetadataStringIndex.prototype.clone = function () {
-		var res = new CMetadataStringIndex();
+		let res = new CMetadataStringIndex();
+
+		res.x = this.x;
+		res.s = this.s;
 
 		return res;
 	};
@@ -17113,7 +17184,10 @@ function RangeDataManagerElem(bbox, data)
 
 	}
 	CMdxMemeberProp.prototype.clone = function () {
-		var res = new CMdxMemeberProp();
+		let res = new CMdxMemeberProp();
+
+		res.n = this.n;
+		res.np = this.np;
 
 		return res;
 	};
@@ -17124,7 +17198,11 @@ function RangeDataManagerElem(bbox, data)
 		this.p = null;
 	}
 	CMdxKPI.prototype.clone = function () {
-		var res = new CMdxKPI();
+		let res = new CMdxKPI();
+
+		res.n = this.n;
+		res.np = this.np;
+		res.p = this.p;
 
 		return res;
 	};
@@ -17133,7 +17211,9 @@ function RangeDataManagerElem(bbox, data)
 		this.elems = null;
 	}
 	CMetadataBlock.prototype.clone = function () {
-		var res = new CMetadataBlock();
+		let res = new CMetadataBlock();
+
+		res.elems = this.elems;
 
 		return res;
 	};
@@ -17143,7 +17223,10 @@ function RangeDataManagerElem(bbox, data)
 		this.v = null;
 	}
 	CMetadataRecord.prototype.clone = function () {
-		var res = new CMetadataRecord();
+		let res = new CMetadataRecord();
+
+		res.t = this.t;
+		res.v = this.v;
 
 		return res;
 	};
@@ -17152,7 +17235,9 @@ function RangeDataManagerElem(bbox, data)
 		this.extLst = null;
 	}
 	CFutureMetadataBlock.prototype.clone = function () {
-		var res = new CFutureMetadataBlock();
+		let res = new CFutureMetadataBlock();
+
+		res.extLst = this.extLst;
 
 		return res;
 	};
@@ -17162,7 +17247,10 @@ function RangeDataManagerElem(bbox, data)
 		this.dynamicArrayProperties = null;
 	}
 	CMetadataBlockExt.prototype.clone = function () {
-		var res = new CMetadataBlockExt();
+		let res = new CMetadataBlockExt();
+
+		res.richValueBlock = this.richValueBlock && this.richValueBlock.clone();
+		res.dynamicArrayProperties = this.dynamicArrayProperties && this.dynamicArrayProperties.clone();
 
 		return res;
 	};
@@ -17172,7 +17260,10 @@ function RangeDataManagerElem(bbox, data)
 		this.fCollapsed = null;
 	}
 	CDynamicArrayProperties.prototype.clone = function () {
-		var res = new CDynamicArrayProperties();
+		let res = new CDynamicArrayProperties();
+
+		res.fDynamic = this.fDynamic;
+		res.fCollapsed = this.fCollapsed;
 
 		return res;
 	};
@@ -17181,7 +17272,9 @@ function RangeDataManagerElem(bbox, data)
 		this.i = null;
 	}
 	CRichValueBlock.prototype.clone = function () {
-		var res = new CRichValueBlock();
+		let res = new CRichValueBlock();
+
+		res.i = this.i;
 
 		return res;
 	};
