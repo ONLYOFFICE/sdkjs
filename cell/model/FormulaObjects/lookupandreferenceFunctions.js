@@ -1210,7 +1210,6 @@ function (window, undefined) {
 		const t = this;
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.slice(2);
 		let refError = new cError(cErrorType.bad_reference);
-		let nAError = new cError(cErrorType.not_available);
 		let ws = arguments[3], res;
 
 		if (ws) {
@@ -1219,7 +1218,7 @@ function (window, undefined) {
 					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || arg1.type === cElementType.string) {
 						return getPivotDataByTwoArgs(arg0, arg1);
 					} else {
-						return nAError;
+						return new cError(cErrorType.not_available);
 					}
 				}
 			}
