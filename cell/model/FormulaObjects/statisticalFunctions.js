@@ -5231,6 +5231,10 @@ function (window, undefined) {
 			}
 		}
 
+		if (arg0Matrix.length > arg1Matrix.length) {
+			arg0Matrix.length = arg1Matrix.length;
+		}
+
 		for (i = 0; i < arg0Matrix.length; ++i) {
 			if (!arg0Matrix[i]) {
 				continue;
