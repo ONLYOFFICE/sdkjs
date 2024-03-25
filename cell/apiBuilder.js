@@ -6657,17 +6657,18 @@
 	 */
 	ApiProtectedRange.prototype.SetTitle = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
+		let result = false;
 		if (isValidTitle && sTitle !== this.protectedRange.asc_getName()) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone();
 				newProtectedRange.asc_setName(sTitle);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
-					return true;
+					result = true;
 				}
 			}
 		}
-		return false;
+		return result;
 	};
 
 	/**
@@ -6679,17 +6680,18 @@
 	 */
 	ApiProtectedRange.prototype.SetRange = function (sRange) {
 		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
+		let result = false;
 		if (isValidRange /*asc_getRef !==*/) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone();
 				newProtectedRange.asc_setRef(sRange);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
-					return true;
+					result = true;
 				}
 			}
 		}
-		return false;
+		return result;
 	};
 
 	/**
@@ -6745,6 +6747,7 @@
 	 */
 	ApiProtectedRange.prototype.DeleteUser = function (sId) {
 		let isValidId = typeof (sId) === 'string' && sId.trim() !== '';
+		let result = false;
 		if (isValidId) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
@@ -6762,13 +6765,13 @@
 						newProtectedRange.asc_setUsers(newUsers);
 
 						if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
-							return true;
+							result = true;
 						}
 					}
 				}
 			}
 		}
-		return false;
+		return result;
 	};
 
 	/**
@@ -6779,6 +6782,7 @@
 	 */
 	ApiProtectedRange.prototype.GetAllUsers = function () {
 		let worksheet = this.protectedRange._ws;
+		let result = null;
 		if (worksheet) {
 			let users = this.protectedRange.asc_getUsers();
 			if (users) {
@@ -6786,11 +6790,11 @@
 				for (let i = 0; i < users.length; i++) {
 					newUsers.push(new ApiProtectedRangeUserInfo(users[i], this.protectedRange));
 				}
-				return newUsers;
+				result = newUsers;
 			}
 		}
 
-		return null;
+		return result;
 	};
 
 	/**
@@ -6807,17 +6811,18 @@
 		} else if (protectedRangeUserType === "NotView") {
 			nType = Asc.c_oSerUserProtectedRangeType.notView;
 		}
+		let result = false;
 		if (this.protectedRange.asc_getType() !== nType) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone();
 				newProtectedRange.asc_setType(nType);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
-					return true;
+					result = true;
 				}
 			}
 		}
-		return false;
+		return result;
 	};
 
 	/**
@@ -6828,16 +6833,17 @@
 	 */
 	ApiProtectedRange.prototype.GetUser = function (sId) {
 		let isValidRange = typeof (sId) === 'string' && sId.trim() !== '';
+		let result = null;
 		if (isValidRange) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
 				let userInfo = this.protectedRange.getUserById(sId);
 				if (userInfo) {
-					return new ApiProtectedRangeUserInfo(userInfo.obj, this.protectedRange)
+					result = new ApiProtectedRangeUserInfo(userInfo.obj, this.protectedRange)
 				}
 			}
 		}
-		return null;
+		return result;
 	};
 
 	/**
