@@ -1215,7 +1215,7 @@ function (window, undefined) {
 		if (ws) {
 			if (arg.length === 2) {
 				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || arg1.type === cElementType.string) {
+					if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D || arg1.type === cElementType.string || arg1.type === cElementType.number) {
 						return getPivotDataByTwoArgs(arg0, arg1);
 					} else {
 						return new cError(cErrorType.not_available);

@@ -7542,8 +7542,8 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 	const refError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
 	const nAError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	const cRef = AscCommonExcel.cRef;
-	if (stringOrCell.type === AscCommonExcel.cElementType.string) {
-		value = stringOrCell.value;
+	if (stringOrCell.type === AscCommonExcel.cElementType.string || stringOrCell.type === AscCommonExcel.cElementType.number) {
+		value = String(stringOrCell.value);
 	} else {
 		const cellValue = stringOrCell.getValue();
 		if (cellValue.type !== AscCommonExcel.cElementType.number && cellValue.type !== AscCommonExcel.cElementType.string && cellValue.type !== AscCommonExcel.cElementType.empty) {
