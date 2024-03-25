@@ -583,6 +583,46 @@
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
+
+	/////////////////////////////////////////////////////////////
+	///////// For table
+	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.tblApply = function(oPr) {
+		let oDoc = this.getPDFDoc();
+
+		let oBorders = oPr.CellBorders;
+		if (oPr.CellBorders){
+			function fCheckBorder(oBorder) {
+				if(!oBorder || !oBorder.Color)
+					return;
+				oBorder.Unifill =  AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
+			}
+			fCheckBorder(oBorders.Left);
+			fCheckBorder(oBorders.Top);
+			fCheckBorder(oBorders.Right);
+			fCheckBorder(oBorders.Bottom);
+			fCheckBorder(oBorders.InsideH);
+			fCheckBorder(oBorders.InsideV);
+		}
+		let oBackground = oPr.CellsBackground;
+		if (oBackground && oBackground.Color) {
+			if (oBackground.Value === Asc.c_oAscShd.Nil){
+				oBackground.Value = Asc.c_oAscShd.Clear;
+				oBackground.Unifill = AscFormat.CreateNoFillUniFill();
+			}
+			else {
+				oBackground.Unifill = AscFormat.CreateUnifillFromAscColor(oBackground.Color, 0);
+			}
+		}
+		oDoc.SetTableProps(oPr);
+	};
+	PDFEditorApi.prototype.asc_DistributeTableCells = function(isHorizontally) {
+		let oDoc	= this.getPDFDoc();
+		let bResult	= false;
+
+		bResult = oDoc.DistributeTableCells(isHorizontally);
+		return bResult;
+	};
 	PDFEditorApi.prototype.SetTextEditMode = function(bEdit) {
 		this.getPDFDoc().SetTextEditMode(bEdit);
 	};
@@ -1548,5 +1588,9 @@
 
 	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+
+	// table
+	PDFEditorApi.prototype['tblApply']					   = PDFEditorApi.prototype.tblApply;
+	PDFEditorApi.prototype['asc_DistributeTableCells']	   = PDFEditorApi.prototype.asc_DistributeTableCells;
 
 })(window, window.document);

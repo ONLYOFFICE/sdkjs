@@ -1010,6 +1010,10 @@ var CPresentation = CPresentation || function(){};
             }
             else if (this.activeDrawing) {
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
+                    return;
+                }
             }
 
             oViewer.onUpdateOverlay();
@@ -1161,8 +1165,6 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
-        
         if (this.mouseDownField && oMouseUpField == this.mouseDownField) {
             this.OnMouseUpField(oMouseUpField, e);
         }
@@ -1170,8 +1172,15 @@ var CPresentation = CPresentation || function(){};
             oMouseUpAnnot.onMouseUp(x, y, e);
         }
         else if (this.activeDrawing && this.activeDrawing == oMouseUpDrawing) {
-            // oMouseUpDrawing.onMouseUp(x, y, e);
+            // передвинули бордер
+            if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
+                this.CreateNewHistoryPoint({objects: [this.activeDrawing]});
+                this.activeDrawing.SetNeedRecalc(true);
+            }
+
+            oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
             oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+            this.TurnOffHistory();
         }
         else if (this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
             oViewer.navigateToLink(oMouseUpLink);
@@ -1843,7 +1852,7 @@ var CPresentation = CPresentation || function(){};
         oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
         oDrawingObjects.updateSelectionState();
 
-        this.AddDrawing(oSmartArt);
+        this.AddDrawing(oSmartArt, nPage);
         return oSmartArt;
     };
     CPDFDoc.prototype.AddChartByBinary = function(chartBinary, isFromInterface, oPlaceholder, nPage) {
@@ -1901,7 +1910,7 @@ var CPresentation = CPresentation || function(){};
         let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
         oTable.graphicObject.LogicDocument = this;
         
-        this.AddDrawing(oTable);
+        this.AddDrawing(oTable, nPage);
     };
     CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage) {
         let oDrDoc      = this.GetDrawingDocument();
@@ -2707,6 +2716,7 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.UpdateInterface = function() {
         this.Api.sync_BeginCatchSelectedElements();
 
+        let oDrDoc      = this.GetDrawingDocument();
         let oController = this.Viewer.DrawingObjects;
         let oDrawingPr  = oController.getDrawingProps();
 
@@ -2722,6 +2732,19 @@ var CPresentation = CPresentation || function(){};
             this.Api.sync_shapePropCallback(oSpPr);
             this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
             this.Api.sync_Vert(oSpPr.vert);
+        }
+        if (oTblPr) {
+            oDrDoc.CheckTableStyles(oTblPr.TableLook);
+            this.Api.sync_TblPropCallback(oTblPr);
+            if (!oSpPr) {
+                if (oTblPr.CellsVAlign === vertalignjc_Bottom) {
+                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+                } else if (oTblPr.CellsVAlign === vertalignjc_Center) {
+                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+                } else {
+                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+                }
+            }
         }
 
         this.UpdateUndoRedo();
@@ -3454,6 +3477,153 @@ var CPresentation = CPresentation || function(){};
             });
         });
     };
+    CPDFDoc.prototype.GetController = function() {
+        return this.DrawingObjects;
+    };
+
+
+    //-----------------------------------------------------------------------------------
+    // Функции для работы с таблицами
+    //-----------------------------------------------------------------------------------
+
+    CPDFDoc.prototype.SetTableProps = function(oTablePr) {
+        let oController = this.Viewer.DrawingObjects;
+        let oCurObject  = this.GetActiveObject();
+
+        this.CreateNewHistoryPoint({objects: [oCurObject]});
+        oCurObject.SetNeedRecalc(true);
+        oController.setTableProps(oTablePr);
+        this.TurnOffHistory();
+    };
+
+    CPDFDoc.prototype.ApplyTableFunction = function (Function, bBefore, bAll, Cols, Rows) {
+        let oController = this.GetController();
+        if(!oController)
+            return null;
+    
+        let result = null;
+    
+        let args;
+        if (AscFormat.isRealNumber(Rows) && AscFormat.isRealNumber(Cols)) {
+            args = [Cols, Rows];
+        } else {
+            args = [bBefore];
+        }
+        let oTargetText = AscFormat.getTargetTextObject(oController);
+        let oTable;
+        if (oTargetText && oTargetText.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+            oTable = oTargetText.graphicObject;
+        }
+        else {
+            let oByTypes = oController.getSelectedObjectsByTypes(true);
+            if (oByTypes.tables.length === 1) {
+                let oGrFrame = oByTypes.tables[0];
+                oTable = oGrFrame.graphicObject;
+                if (Function !== AscWord.CTable.prototype.DistributeTableCells) {
+                    oGrFrame.Set_CurrentElement();
+                    if (!(bAll === true)) {
+                        if (bBefore) {
+                            oTable.MoveCursorToStartPos();
+                        } else {
+                            oTable.MoveCursorToStartPos();
+                        }
+                    } else {
+                        oTable.SelectAll();
+                    }
+                }
+            }
+        }
+        if(oTable) {
+            this.CreateNewHistoryPoint({objects: [oTable.Parent]});
+            oTable.Parent.SetNeedRecalc(true);
+            result = Function.apply(oTable, args);
+            if (oTable.Content.length === 0) {
+                this.RemoveTable();
+                return result;
+            }
+            this.TurnOffHistory();
+        }
+        return result;
+    };
+    
+    
+    CPDFDoc.prototype.AddTableRow = function (bBefore) {
+        this.ApplyTableFunction(CTable.prototype.AddTableRow, bBefore);
+    };
+    
+    CPDFDoc.prototype.AddTableColumn = function (bBefore) {
+        this.ApplyTableFunction(CTable.prototype.AddTableColumn, bBefore);
+    };
+    
+    CPDFDoc.prototype.RemoveTableRow = function () {
+        this.ApplyTableFunction(CTable.prototype.RemoveTableRow, undefined);
+    };
+    
+    CPDFDoc.prototype.RemoveTableColumn = function () {
+        this.ApplyTableFunction(CTable.prototype.RemoveTableColumn, true);
+    };
+    
+    CPDFDoc.prototype.DistributeTableCells = function (isHorizontally) {
+        return this.ApplyTableFunction(CTable.prototype.DistributeTableCells, isHorizontally);
+    };
+    
+    CPDFDoc.prototype.MergeTableCells = function () {
+        this.ApplyTableFunction(CTable.prototype.MergeTableCells, false, true);
+    };
+    
+    CPDFDoc.prototype.SplitTableCells = function (Cols, Rows) {
+        this.ApplyTableFunction(CTable.prototype.SplitTableCells, true, true, parseInt(Cols, 10), parseInt(Rows, 10));
+    };
+    
+    CPDFDoc.prototype.RemoveTable = function () {
+        let oCurSlide = this.GetCurrentSlide();
+        if (oCurSlide) {
+            let oController = oCurSlide.graphicObjects;
+            oController.deleteSelectedObjectsCallback();
+            this.Recalculate();
+            this.Document_UpdateInterfaceState();
+            this.Document_UpdateSelectionState();
+        }
+    };
+    
+    CPDFDoc.prototype.SelectTable = function (Type) {
+        const oController = this.GetCurrentController();
+        if (oController) {
+            let oByTypes = oController.getSelectedObjectsByTypes(true);
+            if (oByTypes.tables.length === 1) {
+                let oGrFrame = oByTypes.tables[0];
+                oGrFrame.Set_CurrentElement();
+                oGrFrame.graphicObject.SelectTable(Type);
+                this.Document_UpdateSelectionState();
+                this.Document_UpdateInterfaceState();
+            }
+        }
+    };
+    
+    CPDFDoc.prototype.Table_CheckFunction = function (Function) {
+        let oController = this.GetCurrentController();
+        if (oController) {
+            let oTextDrawing = AscFormat.getTargetTextObject(oController);
+            if (oTextDrawing && oTextDrawing.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+                return Function.apply(oTextDrawing.graphicObject, []);
+            }
+        }
+        return false;
+    };
+    
+    CPDFDoc.prototype.CanMergeTableCells = function () {
+        return this.Table_CheckFunction(CTable.prototype.CanMergeTableCells);
+    };
+    
+    CPDFDoc.prototype.CanSplitTableCells = function () {
+        return this.Table_CheckFunction(CTable.prototype.CanSplitTableCells);
+    };
+    
+    CPDFDoc.prototype.CheckTableCoincidence = function (Table) {
+        return false;
+    };
+
+
     CPDFDoc.prototype.InitDefaultTextListStyles = function() {
         let oTextStyles     = new AscFormat.CTextStyles();
         let oTextListStyle  = new AscFormat.TextListStyle();
@@ -3579,6 +3749,9 @@ var CPresentation = CPresentation || function(){};
 	};
     CPDFDoc.prototype.GetDefaultLanguage = function() {
         return this.GetStyles().Default.TextPr.Lang.Val;
+    };
+    CPDFDoc.prototype.GetAllTableStyles = function() {
+        return this.globalTableStyles;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

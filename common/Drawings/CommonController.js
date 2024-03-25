@@ -7080,7 +7080,7 @@
 						}
 						if (!drawing.group) {
 							locked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
-							if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+							if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 								if (drawing.Lock) {
 									locked = drawing.Lock.Is_Locked();
 								}
@@ -7089,7 +7089,7 @@
 							var oParentGroup = drawing.group.getMainGroup();
 							if (oParentGroup) {
 								locked = oParentGroup.lockType !== c_oAscLockTypes.kLockTypeNone && oParentGroup.lockType !== c_oAscLockTypes.kLockTypeMine;
-								if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+								if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 									if (oParentGroup.Lock) {
 										locked = oParentGroup.Lock.Is_Locked();
 									}
