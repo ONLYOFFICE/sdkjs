@@ -5112,6 +5112,20 @@ $(function () {
 		assert.ok(oParser.parse());
 //        assert.strictEqual( oParser.calculate().getValue(), 1-1/Math.fact(2)+1/Math.fact(4)-1/Math.fact(6) );
 		assert.ok(Math.abs(oParser.calculate().getValue() - (1 - 1 / Math.fact(2) + 1 / Math.fact(4) - 1 / Math.fact(6))) < dif);
+
+		// for bug 66800
+		ws.getRange2("A101").setValue("1");
+		ws.getRange2("A102").setValue("2");
+		ws.getRange2("A103").setValue("3");
+
+		oParser = new parserFormula("SUM(A101:A103+A101:A103)", "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(A101:A103+A101:A103)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of SUM(A101:A103+A101:A103)');
+
+		oParser = new parserFormula("SUM(SIN(A101:A103))", "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(SIN(A101:A103))');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.89", 'Result of SUM(SIN(A101:A103))');
+
 	});
 
 	QUnit.test("Test: \"MAX\"", function (assert) {
