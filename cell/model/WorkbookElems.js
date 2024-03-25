@@ -17108,6 +17108,9 @@ function RangeDataManagerElem(bbox, data)
 				//prepare arguments
 				let args = [];
 				for (let i = 0; i < argsInfo.length; i++) {
+					if (!arg[i]) {
+						continue;
+					}
 					let type = argsInfo[i].type;
 					let defaultValue = argsInfo[i].defaultValue;
 

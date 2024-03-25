@@ -30828,7 +30828,12 @@ $(function () {
 			"\t\t * @customfunction\n";
 
 		for (let i in aInputTypes) {
-			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} arg" + ((i - 0) + 1) + "+.\n";
+			let argName = "arg" + ((i - 0) + 1);
+			let sDefault = "";
+			if (aInputTypes[i].defaultValue) {
+				sDefault = ". If omitted, " + argName + " = " + aInputTypes[i].defaultValue;
+			}
+			sJsDoc += "\t\t * @param {" + aInputTypes[i].type + "} " + (aInputTypes[i].isOptional ? "[" : "") + argName + (aInputTypes[i].isOptional ? "]" : "") + sDefault +  "+.\n";
 		}
 		sJsDoc += "\t\t * @returns {" + sReturnType + "} The sum of the numbers.\n\t\t */";
 
@@ -31724,6 +31729,96 @@ $(function () {
 			];
 
 			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! return NaN !");
+
+			fCustomFunc = function simpleFunc(arg1, arg2) {
+				return arg2;
+			};
+
+			initParamsCustomFunction([], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function without args !");
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any"}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! init args params count more then function contain!");
+
+			fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+				return arg2;
+			};
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any"}], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function less then function arg count !");
+
+			//isOptional
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", isOptional: true}], "number");
+
+			aTasks = [
+				{paramsType: ['number', 'number'], result: 10},
+				{paramsType: ['number', 'stringNumber'], result: "1"},
+				{paramsType: ['number', 'string'], result: "test"},
+				{paramsType: ['number', 'bool'], result: "TRUE"},
+				{paramsType: ['number', 'error'], result: "#REF!"},
+				{paramsType: ['number', 'array'], result: "#VALUE!"},
+				{paramsType: ['number', 'ref'], result: 1},
+				{paramsType: ['number', 'range'], result: "#VALUE!"},
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! optional third param !");
+
+			//defaultvalue
+			//ms ignore defaultValue option, while skip
+			/*fCustomFunc = function simpleFunc(arg1, arg2, arg3) {
+				return arg3;
+			};
+
+			initParamsCustomFunction([{type: "any"},{type: "any"},{type: "any", defaultValue: "123", isOptional: true}], "number");
+
+			aTasks = [
+				{paramsType: ['number'], result:"#VALUE!"},
+				{paramsType: ['stringNumber'], result:"#VALUE!"},
+				{paramsType: ['string'], result:"#VALUE!"},
+				{paramsType: ['bool'], result:"#VALUE!"},
+				{paramsType: ['error'], result:"#VALUE!"},
+				{paramsType: ['array'], result:"#VALUE!"},
+				{paramsType: ['ref'], result:"#VALUE!"},
+				{paramsType: ['range'], result:"#VALUE!"}
+			];
+
+			doCustomFunctionTasks(assert, aTasks, typeToArgMap, fCustomFunc.name.toUpperCase(), "! call function less then function arg count !");*/
 
 		});
 	});
