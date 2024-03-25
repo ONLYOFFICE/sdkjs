@@ -7539,17 +7539,12 @@ CT_pivotTableDefinition.prototype.getDepthItemMap = function(itemMap, fields) {
  */
 CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringOrCell) {
 	let value = null;
-	const refError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
-	const nAError = new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	const cRef = AscCommonExcel.cRef;
-	if (stringOrCell.type === AscCommonExcel.cElementType.string || stringOrCell.type === AscCommonExcel.cElementType.number) {
-		value = String(stringOrCell.value);
-	} else {
+	if (stringOrCell.type === AscCommonExcel.cElementType.cell || stringOrCell.type === AscCommonExcel.cElementType.cell3D) {
 		const cellValue = stringOrCell.getValue();
-		if (cellValue.type !== AscCommonExcel.cElementType.number && cellValue.type !== AscCommonExcel.cElementType.string && cellValue.type !== AscCommonExcel.cElementType.empty) {
-			return nAError;
-		}
 		value = String(cellValue.value);
+	} else {
+		value = String(stringOrCell.value);
 	}
 	const dataFields = this.asc_getDataFields();
 	if (dataFields && dataFields.length === 0) {
@@ -7569,13 +7564,13 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 				const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
 				return res.tocNumber();
 			}
-			return refError;
+			return new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
 		}
 		for (let i = 0; i < pivotFields.length; i += 1) {
 			const pivotField = pivotFields[i];
 			const cacheField = cacheFields[i];
 			const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-			const findValue = value.replace(' ' + subtotalCaption, '');
+			const findValue = value.replace(new RegExp(' ' + subtotalCaption, 'g'), '');
 			const item = pivotField.findFieldItemByTextValue(cacheField, findValue);
 			if (item !== null) {
 				const cell = this.getCellByGetPivotDataParams({
@@ -7586,13 +7581,13 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 					const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
 					return res.tocNumber();
 				}
-				return refError;
+				return new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
 			}
 		}
-		return nAError;
+		return new AscCommonExcel.cError(AscCommonExcel.cErrorType.not_available);
 	} else {
 		const subtotalCaption = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(Asc.c_oAscItemType.Default));
-		const findValue = value.replace(subtotalCaption + ' ', '');
+		const findValue = value.replace(new RegExp(subtotalCaption + ' ', 'g'), '');
 		const cell = this.getCellByGetPivotDataParams({
 			dataFieldName: findValue,
 			optParams: []
@@ -7601,7 +7596,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataString = function(stringO
 			const res = new cRef(this.worksheet.getCell3(cell.row, cell.col).getName(), this.worksheet);
 			return res.tocNumber();
 		}
-		return refError;
+		return new AscCommonExcel.cError(AscCommonExcel.cErrorType.bad_reference);
 	}
 };
 /**
