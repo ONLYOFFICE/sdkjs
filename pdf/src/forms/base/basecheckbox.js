@@ -343,9 +343,10 @@
         return canvas;
     };
     CBaseCheckBoxField.prototype.onMouseDown = function(x, y, e) {
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-        
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+        let oActionsQueue   = oDoc.GetActionsQueue();
+
         oDrDoc.TargetEnd();
         this.SetDrawHighlight(false);
         this.DrawPressed();

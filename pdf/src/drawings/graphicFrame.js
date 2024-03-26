@@ -196,17 +196,6 @@
         return this._rect;
     };
     
-    CPdfGraphicFrame.prototype.SetRot = function(dAngle) {
-        let oDoc = this.GetDocument();
-
-        oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
-
-        this.changeRot(dAngle);
-        this.SetNeedRecalc(true);
-    };
-    CPdfGraphicFrame.prototype.GetRot = function() {
-        return this.rot;
-    };
     CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

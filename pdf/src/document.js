@@ -1168,8 +1168,10 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownField && oMouseUpField == this.mouseDownField) {
             this.OnMouseUpField(oMouseUpField, e);
         }
-        else if (this.mouseDownAnnot && this.mouseDownAnnot == oMouseUpAnnot) {
-            oMouseUpAnnot.onMouseUp(x, y, e);
+        else if (this.mouseDownAnnot) {
+            oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
+            if (this.mouseDownAnnot == oMouseUpAnnot)
+                oMouseUpAnnot.onMouseUp(x, y, e);
         }
         else if (this.activeDrawing && this.activeDrawing == oMouseUpDrawing) {
             // передвинули бордер
@@ -2002,9 +2004,9 @@ var CPresentation = CPresentation || function(){};
 
 				this.AddDrawing(oMathShape, nCurPage);
 				oMathShape.select(oController, nCurPage);
+                oMathShape.SetInTextBox(true);
                 this.SetMouseDownObject(oMathShape);
 				oController.selection.textSelection = oMathShape;
-				oMathShape.GetDocContent().SelectAll();
 			}
 		}
 
@@ -2752,11 +2754,18 @@ var CPresentation = CPresentation || function(){};
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();
+        this.UpdateCanAddHyperlinkState();
         this.Api.sync_EndCatchSelectedElements();
         
         Asc.editor.CheckChangedDocument();
     };
-
+    CPDFDoc.prototype.UpdateCanAddHyperlinkState = function() {
+        this.Api.sync_CanAddHyperlinkCallback(this.CanAddHyperlink(false));
+    };
+    CPDFDoc.prototype.CanAddHyperlink = function(bCheckInHyperlink) {
+        let oController = this.GetController();
+        return oController.hyperlinkCanAdd(bCheckInHyperlink);
+    }
     CPDFDoc.prototype.UpdateUndoRedo = function() {
 		Asc.editor.sync_CanUndoCallback(this.History.Can_Undo() || this.LocalHistory.Can_Undo());
 		Asc.editor.sync_CanRedoCallback(this.History.Can_Redo() || this.LocalHistory.Can_Redo());
@@ -2801,8 +2810,8 @@ var CPresentation = CPresentation || function(){};
 
         if (oDrawing && oDrawing.IsTextShape()) {
             let oParaPr = oDrawing.GetCalculatedParaPr();
-            isCanIncreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(true);
-            isCanDecreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(false);
+            let isCanIncreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(true);
+            let isCanDecreaseInd = oDrawing.GetDocContent().Can_IncreaseParagraphLevel(false);
             Asc.editor.sendEvent("asc_canIncreaseIndent", isCanIncreaseInd);
             Asc.editor.sendEvent("asc_canDecreaseIndent", isCanDecreaseInd);
             Asc.editor.UpdateParagraphProp(oParaPr);

@@ -425,7 +425,7 @@
                     drawing_document.TargetShow();
                 }
             } else {
-                drawing_document.UpdateTargetTransform(new CMatrix());
+                drawing_document.UpdateTargetTransform(new AscCommon.CMatrix());
                 drawing_document.TargetEnd();
             }
         }

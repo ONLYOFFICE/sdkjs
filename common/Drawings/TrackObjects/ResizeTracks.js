@@ -523,7 +523,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
 
             let oFreeText               = this.originalObject.group;
             let oFreeTextRect           = oFreeText.GetTextBoxRect(true).map(function(measure) {
-                return measure * g_dKoef_pix_to_mm;
+                return measure * AscCommon.g_dKoef_pix_to_mm;
             });
             let aCallout                = oFreeText.GetCallout();
             let oExitPoint              = undefined; // перпендикулярная линия выходящая из freetext аннотации
@@ -531,8 +531,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             let oCalloutArrowEndPt      = undefined; // x1, y1 точка линии (точка конца стрелки)
             let oViewer = Asc.editor.getDocumentRenderer();
             let nPage   = oFreeText.GetPage();
-            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * AscCommon.g_dKoef_pix_to_mm;
+            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * AscCommon.g_dKoef_pix_to_mm;
 
             if (aCallout && aCallout.length == 6) {
                 // точка выхода callout из аннотации
@@ -574,8 +574,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
         this.correctXYForPdfFreeText = function(x, y) {
             let oFreeText       = this.originalObject.group;
             let aCallout        = oFreeText.GetCallout(true);
-            let aCalloutMM      = aCallout ? aCallout.map(function(measure) {return measure * g_dKoef_pix_to_mm}) : undefined;
-            let aTextBoxRectMM  = oFreeText.GetTextBoxRect(true).map(function(measure) {return measure * g_dKoef_pix_to_mm});
+            let aCalloutMM      = aCallout ? aCallout.map(function(measure) {return measure * AscCommon.g_dKoef_pix_to_mm}) : undefined;
+            let aTextBoxRectMM  = oFreeText.GetTextBoxRect(true).map(function(measure) {return measure * AscCommon.g_dKoef_pix_to_mm});
             let nExitPos        = oFreeText.GetCalloutExitPos();
 
             if (!aCalloutMM)

@@ -1206,7 +1206,9 @@
     };
 
     CPushButtonField.prototype.onMouseDown = function(x, y, e) {
-        let oDoc = this.GetDocument();
+        let oDoc            = this.GetDocument();
+        let oActionsQueue   = oDoc.GetActionsQueue();
+
         this.DrawPressed();
 
         let isInFocus   = oDoc.activeForm === this;
