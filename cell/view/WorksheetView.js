@@ -11386,7 +11386,8 @@
 					/**@type {CT_pivotTableDefinition[]} */
 					let pivotTables = this.model.getPivotTablesIntersectingRange(range);
 					if (pivotTables.length === 1) {
-						let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
+						let pivotTable = pivotTables[0];
+						let formula = pivotTable.getGetPivotDataFormulaByActiveCell(range.r1, range.c1, addSheet);
 						if (formula) {
 							res.push(formula);
 							return res;

@@ -7792,19 +7792,23 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 /**
  * @param {number} row
  * @param {number} col
+ * @param {boolean} isAddSheet
  * @return {string | undefined}
  */
-CT_pivotTableDefinition.prototype.getGetPivotDataFormulaByActiveCell = function(row, col) {
+CT_pivotTableDefinition.prototype.getGetPivotDataFormulaByActiveCell = function(row, col, isAddSheet) {
+	const pivotRange = this.getRange();
+	const parserHelp = AscCommon.parserHelp;
+	let pivotRangeName = new Asc.Range(pivotRange.c1, pivotRange.r1, pivotRange.c1, pivotRange.r1).getName(AscCommonExcel.referenceType.A);
+	if (isAddSheet) {
+		pivotRangeName = parserHelp.get3DRef(this.worksheet.getName(), pivotRangeName);
+	}
 	const dataFields = this.asc_getDataFields();
 	if (dataFields && dataFields.length > 0) {
 		const dataParams = this.getGetPivotParamsByActiveCell({row: row, col: col});
 		if (dataParams) {
-			let pivotReport = this.getRange();
-			let leftCell = new Asc.Range(pivotReport.c1, pivotReport.r1, pivotReport.c1, pivotReport.r1);
-
 			let formula = 'GETPIVOTDATA(';
 			formula += '"' + dataParams.dataFieldName + '"'
-			formula += ',' + leftCell.getName(AscCommonExcel.referenceType.A);
+			formula += ',' + pivotRangeName;
 			if (dataParams.optParams.length > 0) {
 				formula += ',' + dataParams.optParamsFormula.join(',');
 			}

@@ -1173,10 +1173,10 @@ function (window, undefined) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
 				return refError;
 			}
-
+			let worksheet = pivot_table_ref.ws;
 			let bbox = pivot_table_ref.getBBox0();
 
-			let pivotTables = ws.getPivotTablesIntersectingRange(bbox);
+			let pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);
 			let pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
 				let cell = pivotTable.getCellByGetPivotDataParams({
@@ -1184,7 +1184,7 @@ function (window, undefined) {
 					optParams: prepareItemsArray(items_array)
 				});
 				if (cell) {
-					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
+					res = new cRef(worksheet.getCell3(cell.row, cell.col).getName(), worksheet);
 					return res.tocNumber();
 				}
 			}
@@ -1193,7 +1193,8 @@ function (window, undefined) {
 
 		const getPivotDataByTwoArgs = function(pivotTableRef, stringOrCell) {
 			const bbox = pivotTableRef.getBBox0();
-			const pivotTables = ws.getPivotTablesIntersectingRange(bbox);
+			const worksheet = pivotTableRef.ws;
+			const pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);
 			const pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
 				return pivotTable.getCellByGetPivotDataString(stringOrCell);

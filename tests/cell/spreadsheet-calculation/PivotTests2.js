@@ -600,7 +600,7 @@ $(function() {
 						let rangePivot = ws.getRange2(pivotRef);
 						let bboxPivot = rangePivot.bbox;
 						let pivot = ws.getPivotTable(bboxPivot.c1, bboxPivot.r1);
-						let formula = pivot.getGetPivotDataFormulaByActiveCell(bboxPivot.r1, bboxPivot.c1);
+						let formula = pivot.getGetPivotDataFormulaByActiveCell(bboxPivot.r1, bboxPivot.c1, false);
 						assert.strictEqual(formula, formulaExpected, errorText);
 					}
 
