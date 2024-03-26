@@ -8076,7 +8076,7 @@
 				} else {
 					widthStr = self.stringRender.measureString(str, flags, width).width;
 				}
-				return true;
+				return widthStr <= (widthWithoutZoom !== null ? widthWithoutZoom : width);
             };
         }
 
