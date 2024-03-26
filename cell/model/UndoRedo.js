@@ -353,6 +353,38 @@ function (window, undefined) {
 		}
 	};
 
+	UndoRedoItemSerializable.prototype.GetChangedRange = function () {
+		let nType = this.oData && this.oData.getType();
+		let res = null;
+		switch (nType) {
+			case UndoRedoDataTypes.CellSimpleData:
+			case UndoRedoDataTypes.CellValue:
+			case UndoRedoDataTypes.ValueMultiTextElem:
+			case UndoRedoDataTypes.CellValueData:
+			case UndoRedoDataTypes.CellData: {
+				res = this.oRange;
+				break;
+			}
+			case UndoRedoDataTypes.FromToHyperlink:
+			case UndoRedoDataTypes.IndexSimpleProp:
+			case UndoRedoDataTypes.BBox:
+			case UndoRedoDataTypes.StyleFont:
+			case UndoRedoDataTypes.StyleFill:
+			case UndoRedoDataTypes.StyleNum:
+			case UndoRedoDataTypes.StyleBorder:
+			case UndoRedoDataTypes.StyleBorderProp:
+			case UndoRedoDataTypes.StyleXfs:
+			case UndoRedoDataTypes.StyleAlign:
+			case UndoRedoDataTypes.ColProp:
+			case UndoRedoDataTypes.RowProp:
+				break;
+			case UndoRedoDataTypes.FromTo:
+			case UndoRedoDataTypes.FromToRowCol:
+				break;
+		}
+		return res;
+	};
+
 //для сохранения в историю и пересылки изменений
 	var UndoRedoDataTypes = new function () {
 		this.Unknown = -1;

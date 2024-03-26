@@ -3435,13 +3435,15 @@
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
 					});
-					if (item.nSheetId && item.oRange) {
+					if (oThis.oApi.VersionHistory && item.nSheetId && item.oRange && item.GetChangedRange) {
 						let ws = this.getWorksheetById(item.nSheetId);
-						if (ws) {
+						let changedRange = ws && item.GetChangedRange();
+						if (changedRange) {
 							if (!ws.changeRanges) {
 								ws.changeRanges = [];
 							}
-							ws.changeRanges.push({range: item.oRange, color: oColor});
+
+							ws.changeRanges.push({range: item.GetChangedRange(), color: oColor});
 						}
 					}
 				}
