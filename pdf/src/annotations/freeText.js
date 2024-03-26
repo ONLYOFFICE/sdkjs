@@ -418,6 +418,12 @@
         let aRect = this.GetRect();
         this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
         this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        
+        if (this.recalcInfo.recalculateGeometry)
+            this.RefillGeometry();
+
+        this.recalculate();
+
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.spTree.forEach(function(sp, idx) {
@@ -425,11 +431,7 @@
             sp.recalculateTransform();
             sp.updateTransformMatrix();
         });
-
-        if (this.recalcInfo.recalculateGeometry)
-            this.RefillGeometry();
-
-        this.recalculate();
+        
         this.SetNeedRecalc(false);
     };
     CAnnotationFreeText.prototype.RefillGeometry = function() {
@@ -701,6 +703,15 @@
         }
 
         return false;
+    };
+    CAnnotationFreeText.prototype.hitToHandles = function(x,y) {
+        for (let i = 0; i < this.spTree.length; i++) {
+            let nHandeNum = this.spTree[i].hitToHandles(x,y);
+            if (nHandeNum != -1)
+                return nHandeNum;
+        }
+
+        return -1;
     };
     CAnnotationFreeText.prototype.hitInInnerArea = function(x, y) {
         for (let i = 0; i < this.spTree.length; i++) {
@@ -1494,7 +1505,7 @@
             return [x_min, y_min, x_max, y_max];
         }
 
-        let oShape = oExistShape || new AscPDF.CPdfShape();
+        let oShape = oExistShape || new AscFormat.CConnectionShape();
         let aShapeBounds = findMinRect(aPoints);
 
         let xMax = aShapeBounds[2];
