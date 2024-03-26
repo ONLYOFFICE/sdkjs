@@ -5180,7 +5180,7 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
 		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		let resArrayLength = Infinity;
+		let resArrayLength = 0;
 		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
@@ -5215,12 +5215,13 @@ function (window, undefined) {
 			if (!arg0Matrix) {
 				arg0Matrix = matrixClone(arg1Matrix);
 				argBaseDimension = argNextDimension;
+				resArrayLength = arg0Matrix.length;
 			}
 			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
 				return new cError(cErrorType.wrong_value_type);
 			}
+			resArrayLength = resArrayLength > arg1Matrix.length ? arg1Matrix.length : resArrayLength;
 			for (i = 0; i < arg1Matrix.length; ++i) {
-				resArrayLength = resArrayLength > arg1Matrix.length ? arg1Matrix.length : resArrayLength;
 				if (!arg1Matrix[i]) {
 					if (arg0Matrix[i]) {
 						arg0Matrix[i] = null;
