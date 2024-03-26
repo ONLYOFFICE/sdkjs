@@ -3763,7 +3763,7 @@
 		tmpCanvas.width		= w;
 		tmpCanvas.height	= h;
 		
-		nScale			= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
+		let nScale		= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
 		let widthPx		= this.canvas.width;
 		let heightPx	= this.canvas.height;
 		

@@ -8160,7 +8160,7 @@
 							oSelectedContent.ReplaceContent(oContent);
 							oShape.bSelectedText = true;
 						} else {
-							sText = this.getDefaultText();
+							sText = bUseStartString ? sStartString : this.getDefaultText();
 							AscFormat.AddToContentFromString(oContent, sText);
 							oShape.bSelectedText = false;
 						}

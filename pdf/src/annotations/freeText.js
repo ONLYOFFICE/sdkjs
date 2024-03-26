@@ -682,7 +682,7 @@
         fontMap = fontMap || {};
 
         for (let i = 0; i < aRCInfo.length; i++) {
-            fontName = AscPDF.DEFAULT_FIELD_FONT;
+            let fontName = AscPDF.DEFAULT_FIELD_FONT;
             if (aRCInfo[i]["actual"]) {
                 fontName = aRCInfo[i]["actual"];
             }
@@ -999,7 +999,7 @@
             let aArrowRect = this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]])
 
             // находим результирующий rect аннотации
-            aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+            let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
                 return idx % 2 ? measure * nScaleY : measure * nScaleX;
             });
             

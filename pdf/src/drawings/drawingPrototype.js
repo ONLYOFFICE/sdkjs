@@ -182,7 +182,7 @@
     CPdfDrawingPrototype.prototype.SetRot = function(dAngle) {
         let oDoc = this.GetDocument();
 
-        oDoc.History.Add(new CChangesPDFTxShapeRot(this, this.GetRot(), dAngle));
+        oDoc.History.Add(new CChangesPDFDrawingRot(this, this.GetRot(), dAngle));
 
         this.changeRot(dAngle);
         this.SetNeedRecalc(true);
