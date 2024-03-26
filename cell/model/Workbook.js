@@ -17949,26 +17949,26 @@
 		});
 		History.EndTransaction();
 	};
-	Range.prototype.cleanText=function(){
+	Range.prototype.cleanText = function () {
 		History.Create_NewPoint();
 		History.StartTransaction();
 		this._setPropertyNoEmpty(null, null,
-								 function(cell, nRow0, nCol0, nRowStart, nColStart){
-									 cell.setValue("");
-									 // if(cell.isEmpty())
-									 // cell.Remove();
-								 });
+			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				cell.setValue("");
+				// if(cell.isEmpty())
+				// cell.Remove();
+			});
 		History.EndTransaction();
 	};
-	Range.prototype.cleanTextExceptFirst=function(){
+	Range.prototype.cleanTextExceptFirst = function () {
 		History.Create_NewPoint();
 		History.StartTransaction();
 		this._setPropertyNoEmpty(null, null,
-								function(cell, nRow0, nCol0, nRowStart, nColStart){
-									if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
-										cell.setValue("");
-									}
-								});
+			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
+					cell.setValue("");
+				}
+			});
 		History.EndTransaction();
 	};
 	Range.prototype.cleanAll=function(){
