@@ -45,10 +45,15 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     if (this.selection.textSelection) {
         text_object = this.selection.textSelection;
     } else if (this.selection.groupSelection) {
-        if (this.selection.groupSelection.selection.textSelection) {
-            text_object = this.selection.groupSelection.selection.textSelection;
-        } else if (this.selection.groupSelection.selection.chartSelection && this.selection.groupSelection.selection.chartSelection.selection.textSelection) {
-            text_object = this.selection.groupSelection.selection.chartSelection.selection.textSelection;
+        let oDrawing = this.selection.groupSelection;
+        if (oDrawing.selection.textSelection) {
+            text_object = oDrawing.selection.textSelection;
+        }
+        else if (oDrawing.selection.chartSelection && oDrawing.selection.chartSelection.selection.textSelection) {
+            text_object = oDrawing.selection.chartSelection.selection.textSelection;
+        }
+        else if (oDrawing.IsAnnot() && oDrawing.IsFreeText() && oDrawing.IsInTextBox()) {
+            text_object = oDrawing.spTree[0];
         }
     } else if (this.selection.chartSelection && this.selection.chartSelection.selection.textSelection) {
         text_object = this.selection.chartSelection.selection.textSelection;
