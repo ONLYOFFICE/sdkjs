@@ -704,6 +704,22 @@
 		this.getPDFDoc().ShapeApply(shapeProps);
 		oDoc.TurnOffHistory();
 	};
+	PDFEditorApi.prototype.ChangeShapeType = function(sShapetype) {
+		let oDoc		= this.getPDFDoc();
+		let oController	= this.getDocumentRenderer().DrawingObjects;
+
+		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+		let aAllDrawings	= [];
+		Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                aAllDrawings.push(drawing);
+            });
+        });
+
+		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
+		oDoc.ChangeShapeType(sShapetype);
+		oDoc.TurnOffHistory();
+	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
 		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
 		this.sync_ParaSpacingLine(oParaPr.Spacing);
@@ -1588,6 +1604,10 @@
 
 	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+
+	// drawings
+	PDFEditorApi.prototype['ShapeApply']		= PDFEditorApi.prototype.ShapeApply;
+	PDFEditorApi.prototype['ChangeShapeType']	= PDFEditorApi.prototype.ChangeShapeType;
 
 	// table
 	PDFEditorApi.prototype['tblApply']					   = PDFEditorApi.prototype.tblApply;
