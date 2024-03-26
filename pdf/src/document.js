@@ -3486,6 +3486,18 @@ var CPresentation = CPresentation || function(){};
             });
         });
     };
+    CPDFDoc.prototype.ChangeShapeType = function (sShapeType) {
+        var oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+        
+		Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                drawing.SetNeedRecalc(true);
+            });
+        });
+
+        oController.checkSelectedObjectsAndCallback(oController.applyDrawingProps, [{type: sShapeType}], false, AscDFH.historydescription_Presentation_ChangeShapeType);
+    };
     CPDFDoc.prototype.GetController = function() {
         return this.DrawingObjects;
     };
