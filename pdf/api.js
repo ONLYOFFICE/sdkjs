@@ -169,9 +169,11 @@
 		if (!this.DocumentRenderer)
 			return;
 
-		let oDoc = this.DocumentRenderer.getPDFDoc();
-		let oActiveForm = oDoc.activeForm;
-		let oActiveAnnot = oDoc.mouseDownAnnot;
+		let oDoc			= this.getPDFDoc();
+		let oActiveForm		= oDoc.activeForm;
+		let oActiveAnnot	= oDoc.mouseDownAnnot;
+		let oActiveDrawing	= oDoc.activeDrawing;
+
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
 			let sText = oActiveForm.content.GetSelectedText(true);
 			if (!sText)
@@ -185,6 +187,17 @@
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
 			let sText = oActiveAnnot.GetDocContent().GetSelectedText(true);
+			if (!sText)
+				return;
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+		}
+		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
+			let sText = oActiveDrawing.GetDocContent().GetSelectedText(true);
 			if (!sText)
 				return;
 
@@ -265,7 +278,7 @@
 			oDoc.UpdateCopyCutState();
 		}
 		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			oActiveAnnot.EnterText(aChars);
+			oActiveDrawing.EnterText(aChars);
 			oDoc.UpdateCopyCutState();
 		}
 	};
@@ -585,6 +598,42 @@
 	};
 
 	/////////////////////////////////////////////////////////////
+	///////// For drawings
+	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
+		let oDoc		= this.getPDFDoc();
+		let oController	= this.getDocumentRenderer().DrawingObjects;
+
+		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+		let aAllDrawings	= [];
+		Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                aAllDrawings.push(drawing);
+            });
+        });
+
+		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
+		this.getPDFDoc().ShapeApply(shapeProps);
+		oDoc.TurnOffHistory();
+	};
+	PDFEditorApi.prototype.ChangeShapeType = function(sShapetype) {
+		let oDoc		= this.getPDFDoc();
+		let oController	= this.getDocumentRenderer().DrawingObjects;
+
+		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+		let aAllDrawings	= [];
+		Object.values(oObjectsByType).forEach(function(arrDrawings) {
+            arrDrawings.forEach(function(drawing) {
+                aAllDrawings.push(drawing);
+            });
+        });
+
+		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
+		oDoc.ChangeShapeType(sShapetype);
+		oDoc.TurnOffHistory();
+	};
+
+	/////////////////////////////////////////////////////////////
 	///////// For table
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.tblApply = function(oPr) {
@@ -623,6 +672,27 @@
 		bResult = oDoc.DistributeTableCells(isHorizontally);
 		return bResult;
 	};
+	PDFEditorApi.prototype.remColumn = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.RemoveTableColumn();
+		return true;
+	};
+	PDFEditorApi.prototype.remTable = function() {
+		let oDoc = this.getPDFDoc();
+		let oGrFrame = oDoc.SelectTable(c_oAscTableSelectionType.Table);
+		
+		if (oGrFrame) {
+			oDoc.RemoveDrawing(oGrFrame.GetId());
+			return true;
+		}
+
+		return false;
+	};
+
+	/////////////////////////////////////////////////////////////
+	///////// For text
+	////////////////////////////////////////////////////////////
+
 	PDFEditorApi.prototype.SetTextEditMode = function(bEdit) {
 		this.getPDFDoc().SetTextEditMode(bEdit);
 	};
@@ -688,37 +758,12 @@
 	PDFEditorApi.prototype.ClearFormating = function() {
 		this.getPDFDoc().ClearFormatting(undefined, true);
 	};
-	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
+	
+	PDFEditorApi.prototype.getPluginContextMenuInfo = function () {
 		let oDoc		= this.getPDFDoc();
-		let oController	= this.getDocumentRenderer().DrawingObjects;
-
-		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
-		let aAllDrawings	= [];
-		Object.values(oObjectsByType).forEach(function(arrDrawings) {
-            arrDrawings.forEach(function(drawing) {
-                aAllDrawings.push(drawing);
-            });
-        });
-
-		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
-		this.getPDFDoc().ShapeApply(shapeProps);
-		oDoc.TurnOffHistory();
-	};
-	PDFEditorApi.prototype.ChangeShapeType = function(sShapetype) {
-		let oDoc		= this.getPDFDoc();
-		let oController	= this.getDocumentRenderer().DrawingObjects;
-
-		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
-		let aAllDrawings	= [];
-		Object.values(oObjectsByType).forEach(function(arrDrawings) {
-            arrDrawings.forEach(function(drawing) {
-                aAllDrawings.push(drawing);
-            });
-        });
-
-		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
-		oDoc.ChangeShapeType(sShapetype);
-		oDoc.TurnOffHistory();
+		let oController	= oDoc.GetController();
+		
+		return oController.getPluginSelectionInfo();
 	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
 		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
@@ -1610,7 +1655,9 @@
 	PDFEditorApi.prototype['ChangeShapeType']	= PDFEditorApi.prototype.ChangeShapeType;
 
 	// table
-	PDFEditorApi.prototype['tblApply']					   = PDFEditorApi.prototype.tblApply;
-	PDFEditorApi.prototype['asc_DistributeTableCells']	   = PDFEditorApi.prototype.asc_DistributeTableCells;
+	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;
+	PDFEditorApi.prototype['asc_DistributeTableCells']		= PDFEditorApi.prototype.asc_DistributeTableCells;
+	PDFEditorApi.prototype['remColumn']						= PDFEditorApi.prototype.remColumn;
+	PDFEditorApi.prototype['remTable']						= PDFEditorApi.prototype.remTable;
 
 })(window, window.document);

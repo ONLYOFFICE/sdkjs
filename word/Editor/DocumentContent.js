@@ -34,7 +34,6 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
-var History = AscCommon.History;
 
 var c_oAscHAnchor = Asc.c_oAscHAnchor;
 var c_oAscXAlign = Asc.c_oAscXAlign;
@@ -7186,7 +7185,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 	var NextObj = this.Content[Position] ? this.Content[Position] : null;
 
 	this.private_RecalculateNumbering([NewObject]);
-	History.Add(new CChangesDocumentContentAddItem(this, Position, [NewObject]));
+	AscCommon.History.Add(new CChangesDocumentContentAddItem(this, Position, [NewObject]));
 	this.Content.splice(Position, 0, NewObject);
 	this.private_UpdateSelectionPosOnAdd(Position);
 	NewObject.Set_Parent(this);
@@ -7224,7 +7223,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 	for (var Index = 0; Index < Count; Index++)
 		this.Content[Position + Index].PreDelete();
 
-	History.Add(new CChangesDocumentContentRemoveItem(this, Position, this.Content.slice(Position, Position + Count)));
+	AscCommon.History.Add(new CChangesDocumentContentRemoveItem(this, Position, this.Content.slice(Position, Position + Count)));
 	var Elements = this.Content.splice(Position, Count);
 	this.private_RecalculateNumbering(Elements);
 	this.private_UpdateSelectionPosOnRemove(Position, Count);
@@ -7267,7 +7266,7 @@ CDocumentContent.prototype.Internal_Content_RemoveAll = function()
 		this.Content[index].PreDelete();
 	}
 
-	History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
+	AscCommon.History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
 	this.Content = [];
 };
 //-----------------------------------------------------------------------------------

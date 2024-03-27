@@ -718,7 +718,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        let oDrawingObjects             = oViewer.DrawingObjects;
+        let oController                 = this.GetController();
         let oDrDoc                      = this.GetDrawingDocument();
         oDrDoc.UpdateTargetFromPaint    = true
 
@@ -746,13 +746,13 @@ var CPresentation = CPresentation || function(){};
         }
         // если добавление шейпа
         else if (IsOnAddAddShape) {
-            oDrawingObjects.startAddShape(this.Api.addShapePreset);
-            oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
+            oController.startAddShape(this.Api.addShapePreset);
+            oController.OnMouseDown(e, X, Y, oPos.DrawPage);
             return;
         }
         // если рисование
         else if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
-            oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
+            oController.OnMouseDown(e, X, Y, oPos.DrawPage);
             return;
         }
         
@@ -794,8 +794,8 @@ var CPresentation = CPresentation || function(){};
         }
         
         // если в селекте нет drawing (аннотации или шейпа) по которой кликнули, то сбрасываем селект
-        if (oMouseDownObject == null || (false == oDrawingObjects.selectedObjects.includes(oMouseDownObject) && oDrawingObjects.selection.groupSelection != oMouseDownObject)) {
-            oDrawingObjects.resetSelection();
+        if (oMouseDownObject == null || (false == oController.selectedObjects.includes(oMouseDownObject) && oController.selection.groupSelection != oMouseDownObject)) {
+            oController.resetSelection();
         }
     };
     CPDFDoc.prototype.BlurActiveObject = function() {
@@ -804,14 +804,14 @@ var CPresentation = CPresentation || function(){};
         if (!oActiveObj)
             return;
         
-        let oDrDoc          = this.GetDrawingDocument();
-        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oDrDoc      = this.GetDrawingDocument();
+        let oController = this.GetController();
 
         let oContent;
         if (oActiveObj.IsDrawing()) {
             oContent = oActiveObj.GetDocContent();
 
-            oDrawingObjects.resetSelection();
+            oController.resetSelection();
             if (oActiveObj.IsImage() == false) {
                 oActiveObj.SetInTextBox(false);
             }
@@ -945,7 +945,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        let oDrawingObjects = oViewer.DrawingObjects;
+        let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
         
         let IsOnDrawer      = this.Api.isDrawInkMode();
@@ -975,7 +975,7 @@ var CPresentation = CPresentation || function(){};
             }
             // рисуем ink линию или добавляем фигугу
             else if (IsOnDrawer || IsOnAddAddShape) {
-                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             // обработка mouseMove в полях
             else if (this.activeForm) {
@@ -1006,11 +1006,11 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
 
-                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             else if (this.activeDrawing) {
-                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
-                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
+                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, oPos.DrawPage);
                 if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
                     return;
                 }
@@ -1040,7 +1040,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.UpdateCursorType = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
+        let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
         
         let IsOnDrawer      = this.Api.isDrawInkMode();
@@ -1057,11 +1057,11 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let isCursorUpdated = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-        let oCursorInfo     = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        let isCursorUpdated = oController.updateCursorType(oPos.DrawPage, X, Y, e, false);
+        let oCursorInfo     = oController.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
         let oCurObject      = this.GetActiveObject();
 
-        // уже обновлён в oDrawingObjects
+        // уже обновлён в oController
         if (oCurObject && oCurObject.GetId && oCursorInfo.objectId == oCurObject.GetId() && (!oCurObject.IsAnnot() || !oCurObject.IsComment())) {
             return true;
         }
@@ -1138,7 +1138,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
         
-        let oDrawingObjects = oViewer.DrawingObjects;
+        let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
         
         let IsOnDrawer      = this.Api.isDrawInkMode();
@@ -1161,7 +1161,7 @@ var CPresentation = CPresentation || function(){};
         }
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
-            oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
             return;
         }
 
@@ -1169,7 +1169,7 @@ var CPresentation = CPresentation || function(){};
             this.OnMouseUpField(oMouseUpField, e);
         }
         else if (this.mouseDownAnnot) {
-            oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
             if (this.mouseDownAnnot == oMouseUpAnnot)
                 oMouseUpAnnot.onMouseUp(x, y, e);
         }
@@ -1180,8 +1180,8 @@ var CPresentation = CPresentation || function(){};
                 this.activeDrawing.SetNeedRecalc(true);
             }
 
-            oDrawingObjects.OnMouseUp(e, X, Y, oPos.DrawPage);
-            oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.updateCursorType(oPos.DrawPage, X, Y, e, false);
             this.TurnOffHistory();
         }
         else if (this.mouseDownLinkObject && this.mouseDownLinkObject == oMouseUpLink) {
@@ -1469,8 +1469,9 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {boolean}
 	 */
     CPDFDoc.prototype.AddPage = function(nPos, nWidth, nHeight) {
-        let oViewer = editor.getDocumentRenderer();
-        let oFile   = oViewer.file;
+        let oViewer     = editor.getDocumentRenderer();
+        let oFile       = oViewer.file;
+        let oController = this.GetController();
 
         if (nPos === undefined || -1 === nPos)
             nPos = oFile.pages.length;
@@ -1514,7 +1515,7 @@ var CPresentation = CPresentation || function(){};
             
         oViewer.resize();
         for (let i = 0; i < oViewer.file.pages.length; i++) {
-            oViewer.DrawingObjects.mergeDrawings(i);
+            oController.mergeDrawings(i);
         }
         this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
 
@@ -1772,7 +1773,7 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
-        let oTextArt    = this.Viewer.DrawingObjects.createTextArt(nStyle, false);
+        let oTextArt    = this.GetController().createTextArt(nStyle, false);
         let oXfrm       = oTextArt.getXfrm();
 
         let nExtX   = oXfrm.extX;
@@ -1813,8 +1814,8 @@ var CPresentation = CPresentation || function(){};
         let nPosX   = (nPageW - nExtX) / 2;
         let nPosY   = nPageH / 5;
 
-        let oDrawingObjects = this.Viewer.DrawingObjects;
-        let oSmartArt       = new AscPDF.CPdfSmartArt();
+        let oController = this.GetController();
+        let oSmartArt   = new AscPDF.CPdfSmartArt();
 
         oSmartArt.fillByPreset(nSmartArtType);
         oSmartArt.fitForSizes(nExtY, nExtX);
@@ -1844,15 +1845,15 @@ var CPresentation = CPresentation || function(){};
 		
 		oSmartArt.checkDrawingBaseCoords();
 		oSmartArt.fitFontSize();
-		oDrawingObjects.checkChartTextSelection();
-		oDrawingObjects.resetSelection();
-		oSmartArt.select(oDrawingObjects, 0);
+		oController.checkChartTextSelection();
+		oController.resetSelection();
+		oSmartArt.select(oController, 0);
 		this.SetMouseDownObject(oSmartArt);
 
-        oDrawingObjects.clearTrackObjects();
-        oDrawingObjects.clearPreTrackObjects();
-        oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
-        oDrawingObjects.updateSelectionState();
+        oController.clearTrackObjects();
+        oController.clearPreTrackObjects();
+        oController.changeCurrentState(new AscFormat.NullState(oController));
+        oController.updateSelectionState();
 
         this.AddDrawing(oSmartArt, nPage);
         return oSmartArt;
@@ -1865,7 +1866,7 @@ var CPresentation = CPresentation || function(){};
         let oThis       = this;
         let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
 
         let oChart = oController.getChartSpace2(chartBinary, null);
 
@@ -1979,7 +1980,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.AddToParagraph = function(oParaItem) {
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         let oMathShape  = null;
 
         let oDrDoc      = this.GetDrawingDocument();
@@ -2019,7 +2020,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.GetDirectTextPr = function() {
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         return oController.getParagraphTextPr();
     };
 
@@ -2248,7 +2249,9 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.RemoveAnnot = function(Id) {
-        let oViewer = editor.getDocumentRenderer();
+        let oViewer     = editor.getDocumentRenderer();
+        let oController = this.GetController();
+
         let oAnnot = this.annots.find(function(annot) {
             return annot.GetId() === Id;
         });
@@ -2274,11 +2277,13 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
-        oViewer.DrawingObjects.resetSelection();
+        oController.resetSelection();
     };
 
     CPDFDoc.prototype.RemoveDrawing = function(Id) {
         let oViewer     = editor.getDocumentRenderer();
+        let oController = this.GetController();
+
         let oDrawing  = this.drawings.find(function(annot) {
             return annot.GetId() === Id;
         });
@@ -2302,7 +2307,7 @@ var CPresentation = CPresentation || function(){};
         this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oDrawing]));
         this.TurnOffHistory();
 
-        oViewer.DrawingObjects.resetSelection();
+        oController.resetSelection();
 
         if (this.activeDrawing == oDrawing) {
             this.activeDrawing = null;
@@ -2622,7 +2627,7 @@ var CPresentation = CPresentation || function(){};
 
         this.HideComments();
         this.mouseDownAnnot = null;
-        this.Viewer.DrawingObjects.resetSelection();
+        this.GetController().resetSelection();
     };
     CPDFDoc.prototype.IsAnnotsHidden = function() {
         return this.annotsHidden;
@@ -2719,36 +2724,39 @@ var CPresentation = CPresentation || function(){};
         this.Api.sync_BeginCatchSelectedElements();
 
         let oDrDoc      = this.GetDrawingDocument();
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         let oDrawingPr  = oController.getDrawingProps();
+        let oCurObject  = this.GetActiveObject();
 
-        let oImgPr      = oDrawingPr.imageProps;
-		let oSpPr       = oDrawingPr.shapeProps;
-		let oChartPr    = oDrawingPr.chartProps;
-		let oTblPr      = oDrawingPr.tableProps;
-		let oParaPr     = oController.getParagraphParaPr();
-		let oTextPr     = oController.getParagraphTextPr()
+        if (oCurObject && oCurObject.IsDrawing()) {
+            let oImgPr      = oDrawingPr.imageProps;
+            let oSpPr       = oDrawingPr.shapeProps;
+            let oChartPr    = oDrawingPr.chartProps;
+            let oTblPr      = oDrawingPr.tableProps;
+            let oParaPr     = oController.getParagraphParaPr();
+            let oTextPr     = oController.getParagraphTextPr()
 
-        if (oSpPr) {
-            oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
-            this.Api.sync_shapePropCallback(oSpPr);
-            this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
-            this.Api.sync_Vert(oSpPr.vert);
-        }
-        if (oTblPr) {
-            oDrDoc.CheckTableStyles(oTblPr.TableLook);
-            this.Api.sync_TblPropCallback(oTblPr);
-            if (!oSpPr) {
-                if (oTblPr.CellsVAlign === vertalignjc_Bottom) {
-                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
-                } else if (oTblPr.CellsVAlign === vertalignjc_Center) {
-                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-                } else {
-                    this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+            if (oSpPr) {
+                oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
+                this.Api.sync_shapePropCallback(oSpPr);
+                this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
+                this.Api.sync_Vert(oSpPr.vert);
+            }
+            if (oTblPr) {
+                oDrDoc.CheckTableStyles(oTblPr.TableLook);
+                this.Api.sync_TblPropCallback(oTblPr);
+                if (!oSpPr) {
+                    if (oTblPr.CellsVAlign === vertalignjc_Bottom) {
+                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+                    } else if (oTblPr.CellsVAlign === vertalignjc_Center) {
+                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+                    } else {
+                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+                    }
                 }
             }
         }
-
+        
         this.UpdateUndoRedo();
         this.UpdateCommentPos();
         this.UpdateCopyCutState();
@@ -2850,7 +2858,8 @@ var CPresentation = CPresentation || function(){};
         let oForm       = this.activeForm;
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oDrawing    = this.activeDrawing;
-        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
+
         oDrDoc.UpdateTargetFromPaint = true;
 
         let oContent;
@@ -2863,7 +2872,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawingObjects.cursorMoveLeft(isShiftKey, isCtrlKey);
+            oController.cursorMoveLeft(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2882,10 +2891,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
-        let oForm           = this.activeForm;
-        let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing        = this.activeDrawing;
-        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oDrawing    = this.activeDrawing;
+        let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
 
@@ -2911,7 +2920,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawingObjects.cursorMoveUp(isShiftKey, isCtrlKey);
+            oController.cursorMoveUp(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2930,10 +2939,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
         let oDrDoc = this.GetDrawingDocument();
 
-        let oForm           = this.activeForm;
-        let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
-        let oDrawing        = this.activeDrawing;
-        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oForm       = this.activeForm;
+        let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
+        let oDrawing    = this.activeDrawing;
+        let oController = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
 
@@ -2947,7 +2956,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawingObjects.cursorMoveRight(isShiftKey, isCtrlKey);
+            oController.cursorMoveRight(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -2969,7 +2978,7 @@ var CPresentation = CPresentation || function(){};
         let oForm           = this.activeForm;
         let oFreeText       = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oDrawing        = this.activeDrawing;
-        let oDrawingObjects = this.Viewer.DrawingObjects;
+        let oController     = this.GetController();
 
         oDrDoc.UpdateTargetFromPaint = true;
 
@@ -2997,7 +3006,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing && oDrawing.IsInTextBox()) {
-            oDrawingObjects.cursorMoveDown(isShiftKey, isCtrlKey);
+            oController.cursorMoveDown(isShiftKey, isCtrlKey);
         }
 
         if (oContent) {
@@ -3464,11 +3473,11 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.AddTextWithPr = function(sText, oSettings) {
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         oController.addTextWithPr(sText, oSettings);
     };
     CPDFDoc.prototype.GetChartObject = function(nType) {
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         return oController.getChartObject(nType);
     };
 
@@ -3477,7 +3486,7 @@ var CPresentation = CPresentation || function(){};
 	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.ShapeApply = function(shapeProps) {
-        let oController     = this.Viewer.DrawingObjects;
+        let oController     = this.GetController();
         let oObjectsByType  = oController.applyDrawingProps(shapeProps);
 
         Object.values(oObjectsByType).forEach(function(arrDrawings) {
@@ -3508,7 +3517,7 @@ var CPresentation = CPresentation || function(){};
     //-----------------------------------------------------------------------------------
 
     CPDFDoc.prototype.SetTableProps = function(oTablePr) {
-        let oController = this.Viewer.DrawingObjects;
+        let oController = this.GetController();
         let oCurObject  = this.GetActiveObject();
 
         this.CreateNewHistoryPoint({objects: [oCurObject]});
@@ -3559,7 +3568,7 @@ var CPresentation = CPresentation || function(){};
             oTable.Parent.SetNeedRecalc(true);
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
-                this.RemoveTable();
+                this.RemoveDrawing(oTable.Parent);
                 return result;
             }
             this.TurnOffHistory();
@@ -3596,33 +3605,22 @@ var CPresentation = CPresentation || function(){};
         this.ApplyTableFunction(CTable.prototype.SplitTableCells, true, true, parseInt(Cols, 10), parseInt(Rows, 10));
     };
     
-    CPDFDoc.prototype.RemoveTable = function () {
-        let oCurSlide = this.GetCurrentSlide();
-        if (oCurSlide) {
-            let oController = oCurSlide.graphicObjects;
-            oController.deleteSelectedObjectsCallback();
-            this.Recalculate();
-            this.Document_UpdateInterfaceState();
-            this.Document_UpdateSelectionState();
-        }
-    };
-    
     CPDFDoc.prototype.SelectTable = function (Type) {
-        const oController = this.GetCurrentController();
+        const oController = this.GetController();
         if (oController) {
             let oByTypes = oController.getSelectedObjectsByTypes(true);
             if (oByTypes.tables.length === 1) {
                 let oGrFrame = oByTypes.tables[0];
                 oGrFrame.Set_CurrentElement();
                 oGrFrame.graphicObject.SelectTable(Type);
-                this.Document_UpdateSelectionState();
-                this.Document_UpdateInterfaceState();
+                this.Viewer.onUpdateOverlay();
+                return oGrFrame;
             }
         }
     };
     
     CPDFDoc.prototype.Table_CheckFunction = function (Function) {
-        let oController = this.GetCurrentController();
+        let oController = this.GetController();
         if (oController) {
             let oTextDrawing = AscFormat.getTargetTextObject(oController);
             if (oTextDrawing && oTextDrawing.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
