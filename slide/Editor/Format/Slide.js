@@ -1325,7 +1325,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
     };
     Slide.prototype.draw = function(graphics) {
-        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
+        let bCheckBounds = graphics.isBoundsChecker();
         let bSlideShow = this.graphicObjects.isSlideShow();
         let bClipBySlide = !this.graphicObjects.canEdit();
         if (bCheckBounds && (bSlideShow || bClipBySlide)) {
@@ -1574,7 +1574,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		    oGraphics.animationDrawer ||
 		    oGraphics.IsThumbnail ||
 		    oGraphics.IsDemonstrationMode ||
-		    oGraphics.IsSlideBoundsCheckerType || 
+		    oGraphics.isBoundsChecker() ||
 			oGraphics.IsNoDrawingEmptyPlaceholder) {
 		    return;
 	    }

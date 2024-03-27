@@ -108,7 +108,7 @@
 		let logicDocument = paragraph.GetLogicDocument();
 		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
 		
-		this.DrawColl           = undefined === graphics.RENDERER_PDF_FLAG;
+		this.DrawColl           = !graphics.isPdf();
 		this.DrawSearch         = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
 		this.DrawComments       = commentManager && commentManager.isUse();
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();

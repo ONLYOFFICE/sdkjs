@@ -845,7 +845,7 @@
             }
         }
         AscFormat.CShape.prototype.draw.call(this, graphics, transform, transformText, pageIndex);
-        if(graphics.IsSlideBoundsCheckerType) {
+        if(graphics.isBoundsChecker()) {
             return;
         }
         graphics.SaveGrState();
@@ -872,7 +872,7 @@
             oLastDrawn = drawHorBorder(graphics, oSide, oLastDrawn, 1, this.extY, 0, this.extX) || oLastDrawn;
             graphics.reset();
         }
-        if(!AscCommon.IsShapeToImageConverter && !graphics.RENDERER_PDF_FLAG) {
+        if(!AscCommon.IsShapeToImageConverter && !graphics.isPdf()) {
             if(this.getLocked()) {
                 var oOldBrush = this.brush;
                 this.brush = AscFormat.CreateSolidFillRGBA(0, 0, 0, LOCKED_ALPHA);
@@ -1294,7 +1294,7 @@
             }
         }
         AscFormat.CShape.prototype.draw.call(this, graphics);
-        if(graphics.IsSlideBoundsCheckerType) {
+        if(graphics.isBoundsChecker()) {
             return;
         }
 
@@ -1747,11 +1747,11 @@
         this.brush.calculate(parents.theme, parents.slide, parents.layout, parents.master, {R: 0, G: 0, B: 0, A: 255});
         this.recalculateTransform();
         this.recalculateTransformText();
-        if(!graphics.IsSlideBoundsCheckerType) {
+        if(!graphics.isBoundsChecker()) {
             this.recalculateBounds();
         }
         AscFormat.CShape.prototype.draw.call(this, graphics);
-        if(graphics.IsSlideBoundsCheckerType) {
+        if(graphics.isBoundsChecker()) {
             return;
         }
         var oBorder = this.parent.getBorder(this.getState());
@@ -1943,7 +1943,7 @@
             }
         }
         CButtonBase.prototype.draw.call(this, graphics);
-        if(graphics.IsSlideBoundsCheckerType) {
+        if(graphics.isBoundsChecker()) {
             return;
         }
         var sIcon = this.parent.getIcon(this.parent.getButtonIndex(this), this.getState());

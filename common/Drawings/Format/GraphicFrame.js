@@ -753,7 +753,7 @@
 	};
 
 	CGraphicFrame.prototype.draw = function (graphics) {
-		if (graphics.IsSlideBoundsCheckerType === true) {
+		if (graphics.isBoundsChecker() === true) {
 			graphics.transform3(this.transform);
 			graphics._s();
 			graphics._m(0, 0);

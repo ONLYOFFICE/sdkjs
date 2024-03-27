@@ -35,643 +35,645 @@
 (function(window, undefined){
     var AscBrowser = AscCommon.AscBrowser;
 
-var TRACK_CIRCLE_RADIUS     = 5;
-var TRACK_RECT_SIZE2        = 4;
-var TRACK_RECT_SIZE         = 8;
-var TRACK_RECT_SIZE_FORM    = 6;
-var TRACK_RECT_SIZE_CT      = 6;
-var TRACK_DISTANCE_ROTATE   = 25;
-var TRACK_DISTANCE_ROTATE2  = 25;
-var TRACK_ADJUSTMENT_SIZE   = 10;
-var TRACK_WRAPPOINTS_SIZE   = 6;
-var ROTATE_TRACK_W    = 21;
+    var TRACK_CIRCLE_RADIUS     = 5;
+    var TRACK_RECT_SIZE2        = 4;
+    var TRACK_RECT_SIZE         = 8;
+    var TRACK_RECT_SIZE_FORM    = 6;
+    var TRACK_RECT_SIZE_CT      = 6;
+    var TRACK_DISTANCE_ROTATE   = 25;
+    var TRACK_DISTANCE_ROTATE2  = 25;
+    var TRACK_ADJUSTMENT_SIZE   = 10;
+    var TRACK_WRAPPOINTS_SIZE   = 6;
+    var ROTATE_TRACK_W    = 21;
 
-var bIsUseImageRotateTrack  = true;
-if (bIsUseImageRotateTrack)
-{
-    window.g_track_rotate_marker = new Image();
-	window.g_track_rotate_marker;
-    window.g_track_rotate_marker.asc_complete = false;
-    window.g_track_rotate_marker.onload = function(){
-        window.g_track_rotate_marker.asc_complete = true;
-    };
-    window.g_track_rotate_marker.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAMAAACeyVWkAAAAVFBMVEUAAAD///////////////////////////////////////////////////////98fHy2trb09PTT09OysrKqqqqJiYng4ODr6+uamprGxsbi4uKGhoYjgM0eAAAADnRSTlMAy00k7/z0jbeuMzDljsugwZgAAACpSURBVBjTdZHbEoMgDESDAl6bgIqX9v//s67UYpm6D0xyYMImoaiuUr3pVdVRUtnwqaY8YaE5SRcfaPgqc+DSIh7WIGGaEVoUqRGN4oZlcDIiqYlaPjQz5CNu6cFJwLiuSO3nlLBDrKhn3l4rcnH4NcAdGd5EZMfCsoMFBxM6CD57G+u6vC48PMVnHtrYhP/x+7+3cw7zdJnD3cyA7QXa4nYXaW+a9Xdvb6zqE5Jb7LmzAAAAAElFTkSuQmCC";
-
-    window.g_track_rotate_marker2 = new Image();
-	window.g_track_rotate_marker2;
-    window.g_track_rotate_marker2.asc_complete = false;
-    window.g_track_rotate_marker2.onload = function(){
-        window.g_track_rotate_marker2.asc_complete = true;
-    };
-    window.g_track_rotate_marker2.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAeFBMVEUAAAD///////////////////////////////////////////////////////////////////////////+Tk5Obm5v8/PzAwMD5+fmWlpbt7e3k5OSfn5/z8/PLy8vn5+fExMSsrKyqqqrf39+vr6+9vb2urq7c3NxSmuRpAAAAE3RSTlMA+u2XA+PTrId4WBwTN7EKtLY4iqQP6AAAAWhJREFUOMudVe2SgjAMLN+goN51CxTLp3r3/m943BAqIJTR/RU6O02yTRY2g5tEgW9blu0HUeKyLRxDj0/ghcdVWuxYfAHLiV95B5uvwD4saK7DN+DMSj1f+CYu58l9J27A6XnnJG9R3ZWU6l4Vk+y6D310baHRXvUxdRSP/aYZILJbmebFLRNAlo69x7PEeQdZ5Xz8qiS6fJr8aOnEquATFApdSsr/v1HINUo+Q6nwoDDspfH4JmoJ6shzWcINaNBSlLCI6uvLfyXmAlR2xIKBB/A1ZKiGIGA+8QCtphBawRt+hsBnNvE0M0OPZmwcijRnFvE0U6CuIcbrIUlJRnJL9L0YifTQCgU3p/aH4I7fnWaCIajwMMszCl5A7Aj+TWctGuMT6qG4QtbGodBj9oAyjpke3LSDYXCXq9A8V6GZrsLGcqXlcrneW9elAQgpxdwA3rcUdv4ymdQHtrdvpPvW/LHZ7/8+/gBTWGFPbAkGiAAAAABJRU5ErkJggg==";
-
-
-    TRACK_DISTANCE_ROTATE2 = 18;
-}
-
-
-function COverlay()
-{
-    this.m_oControl = null;
-    this.m_oContext = null;
-
-    this.min_x = 0xFFFF;
-    this.min_y = 0xFFFF;
-    this.max_x = -0xFFFF;
-    this.max_y = -0xFFFF;
-
-    this.m_bIsShow = false;
-    this.m_bIsAlwaysUpdateOverlay = false;
-
-    this.m_oHtmlPage = null;
-
-    this.DashLineColor = "#000000";
-    this.ClearAll = false;
-
-    this.IsCellEditor = false;
-}
-
-COverlay.prototype =
-{
-    init : function(context, controlName, x, y, w_pix, h_pix, w_mm, h_mm)
+    var bIsUseImageRotateTrack  = true;
+    if (bIsUseImageRotateTrack)
     {
-        this.m_oContext = context;
-        this.m_oControl = AscCommon.CreateControl(controlName);
+        window.g_track_rotate_marker = new Image();
+        window.g_track_rotate_marker;
+        window.g_track_rotate_marker.asc_complete = false;
+        window.g_track_rotate_marker.onload = function(){
+            window.g_track_rotate_marker.asc_complete = true;
+        };
+        window.g_track_rotate_marker.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAMAAACeyVWkAAAAVFBMVEUAAAD///////////////////////////////////////////////////////98fHy2trb09PTT09OysrKqqqqJiYng4ODr6+uamprGxsbi4uKGhoYjgM0eAAAADnRSTlMAy00k7/z0jbeuMzDljsugwZgAAACpSURBVBjTdZHbEoMgDESDAl6bgIqX9v//s67UYpm6D0xyYMImoaiuUr3pVdVRUtnwqaY8YaE5SRcfaPgqc+DSIh7WIGGaEVoUqRGN4oZlcDIiqYlaPjQz5CNu6cFJwLiuSO3nlLBDrKhn3l4rcnH4NcAdGd5EZMfCsoMFBxM6CD57G+u6vC48PMVnHtrYhP/x+7+3cw7zdJnD3cyA7QXa4nYXaW+a9Xdvb6zqE5Jb7LmzAAAAAElFTkSuQmCC";
 
-        this.m_oHtmlPage = new AscCommon.CHtmlPage();
-        this.m_oHtmlPage.init(x, y, w_pix, h_pix, w_mm, h_mm);
-    },
+        window.g_track_rotate_marker2 = new Image();
+        window.g_track_rotate_marker2;
+        window.g_track_rotate_marker2.asc_complete = false;
+        window.g_track_rotate_marker2.onload = function(){
+            window.g_track_rotate_marker2.asc_complete = true;
+        };
+        window.g_track_rotate_marker2.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAeFBMVEUAAAD///////////////////////////////////////////////////////////////////////////+Tk5Obm5v8/PzAwMD5+fmWlpbt7e3k5OSfn5/z8/PLy8vn5+fExMSsrKyqqqrf39+vr6+9vb2urq7c3NxSmuRpAAAAE3RSTlMA+u2XA+PTrId4WBwTN7EKtLY4iqQP6AAAAWhJREFUOMudVe2SgjAMLN+goN51CxTLp3r3/m943BAqIJTR/RU6O02yTRY2g5tEgW9blu0HUeKyLRxDj0/ghcdVWuxYfAHLiV95B5uvwD4saK7DN+DMSj1f+CYu58l9J27A6XnnJG9R3ZWU6l4Vk+y6D310baHRXvUxdRSP/aYZILJbmebFLRNAlo69x7PEeQdZ5Xz8qiS6fJr8aOnEquATFApdSsr/v1HINUo+Q6nwoDDspfH4JmoJ6shzWcINaNBSlLCI6uvLfyXmAlR2xIKBB/A1ZKiGIGA+8QCtphBawRt+hsBnNvE0M0OPZmwcijRnFvE0U6CuIcbrIUlJRnJL9L0YifTQCgU3p/aH4I7fnWaCIajwMMszCl5A7Aj+TWctGuMT6qG4QtbGodBj9oAyjpke3LSDYXCXq9A8V6GZrsLGcqXlcrneW9elAQgpxdwA3rcUdv4ymdQHtrdvpPvW/LHZ7/8+/gBTWGFPbAkGiAAAAABJRU5ErkJggg==";
 
-    Clear : function()
+
+        TRACK_DISTANCE_ROTATE2 = 18;
+    }
+
+
+    function COverlay()
     {
-        if (null == this.m_oContext)
-        {
-            this.m_oContext = this.m_oControl.HtmlElement.getContext('2d');
+        this.m_oControl = null;
+        this.m_oContext = null;
 
-            this.m_oContext.imageSmoothingEnabled = false;
-            this.m_oContext.mozImageSmoothingEnabled = false;
-            this.m_oContext.oImageSmoothingEnabled = false;
-            this.m_oContext.webkitImageSmoothingEnabled = false;
-        }
-
-        this.SetBaseTransform();
-        this.m_oContext.beginPath();
-        if (this.max_x != -0xFFFF && this.max_y != -0xFFFF)
-        {
-            if (this.ClearAll === true)
-            {
-                this.m_oContext.clearRect(0, 0, this.m_oControl.HtmlElement.width, this.m_oControl.HtmlElement.height);
-                this.ClearAll = false;
-            }
-            else
-            {
-                var _eps = 5;
-                this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
-            }
-        }
         this.min_x = 0xFFFF;
         this.min_y = 0xFFFF;
         this.max_x = -0xFFFF;
         this.max_y = -0xFFFF;
-    },
-
-    GetImageTrackRotationImage : function()
-    {
-        return AscCommon.AscBrowser.isCustomScalingAbove2() ? window.g_track_rotate_marker2 : window.g_track_rotate_marker;
-    },
-
-    SetTransform : function(sx, shy, shx, sy, tx, ty)
-    {
-        this.SetBaseTransform();
-        this.m_oContext.setTransform(sx, shy, shx, sy, tx, ty);
-
-    },
-
-    SetBaseTransform : function()
-    {
-        this.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
-    },
-
-    Show : function()
-    {
-        if (this.m_bIsShow)
-            return;
-
-        this.m_bIsShow = true;
-        this.m_oControl.HtmlElement.style.display = "block";
-    },
-    UnShow : function()
-    {
-        if (!this.m_bIsShow)
-            return;
 
         this.m_bIsShow = false;
-        this.m_oControl.HtmlElement.style.display = "none";
-    },
+        this.m_bIsAlwaysUpdateOverlay = false;
 
-    VertLine : function(position, bIsSimpleAdd)
-    {
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        if (bIsSimpleAdd !== true)
-        {
-            this.Clear();
-            if (this.m_bIsAlwaysUpdateOverlay || true/*мало ли что есть на оверлее*/)
-            {
-                if (!editor.WordControl.OnUpdateOverlay())
-                {
-                    editor.WordControl.EndUpdateOverlay();
-                }
-            }
-        }
-        position *= rPR;
-        if (this.min_x > position)
-            this.min_x = position;
-        if (this.max_x < position)
-            this.max_x = position;
+        this.m_oHtmlPage = null;
 
-        //this.min_x = position;
-        //this.max_x = position;
-        this.min_y = 0;
-        this.max_y = this.m_oControl.HtmlElement.height;
+        this.DashLineColor = "#000000";
+        this.ClearAll = false;
 
-        this.m_oContext.lineWidth = Math.round(rPR);
-        var x = ((position + 0.5 * this.m_oContext.lineWidth) >> 0) + 0.5 * this.m_oContext.lineWidth;
-        var y = 0;
-
-        this.m_oContext.strokeStyle = this.DashLineColor;
-        this.m_oContext.beginPath();
-
-        var lineWidth = this.m_oContext.lineWidth;
-        while (y < this.max_y)
-        {
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-
-            y += 5 * lineWidth;
-        }
-
-        this.m_oContext.stroke();
-
-        y = lineWidth;
-        this.m_oContext.strokeStyle = "#FFFFFF";
-        this.m_oContext.beginPath();
-
-        while (y < this.max_y)
-        {
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-            this.m_oContext.moveTo(x, y); y += lineWidth;
-            this.m_oContext.lineTo(x, y); y += lineWidth;
-
-            y += 5 * lineWidth;
-        }
-
-        this.m_oContext.stroke();
-        this.Show();
-    },
-
-    VertLine2 : function(position)
-    {
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        position *= rPR;
-        if (this.min_x > position)
-            this.min_x = position;
-        if (this.max_x < position)
-            this.max_x = position;
-
-        var _old_global = this.m_oContext.globalAlpha;
-        this.m_oContext.globalAlpha = 1;
-
-        this.min_y = 0;
-        this.max_y = this.m_oControl.HtmlElement.height;
-
-        this.m_oContext.lineWidth = Math.round(rPR);
-        var indent = 0.5 * this.m_oContext.lineWidth;
-
-        var x = ((position + indent) >> 0) + indent;
-        var y = 0;
-
-        /*
-        this.m_oContext.strokeStyle = "#FFFFFF";
-        this.m_oContext.beginPath();
-        this.m_oContext.moveTo(x, y);
-        this.m_oContext.lineTo(x, this.max_y);
-        this.m_oContext.stroke();
-        */
-
-        this.m_oContext.strokeStyle = this.DashLineColor;
-        this.m_oContext.beginPath();
-
-        var dist = this.m_oContext.lineWidth;
-
-        while (y < this.max_y)
-        {
-            this.m_oContext.moveTo(x, y);
-            y += dist;
-            this.m_oContext.lineTo(x, y);
-            y += dist;
-        }
-
-        this.m_oContext.stroke();
-        this.m_oContext.beginPath();
-        this.Show();
-
-        this.m_oContext.globalAlpha = _old_global;
-    },
-
-    HorLine : function(position, bIsSimpleAdd)
-    {
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-
-        if (bIsSimpleAdd !== true)
-        {
-            this.Clear();
-            if (this.m_bIsAlwaysUpdateOverlay || true/*мало ли что есть на оверлее*/)
-            {
-                if (!editor.WordControl.OnUpdateOverlay())
-                {
-                    editor.WordControl.EndUpdateOverlay();
-                }
-            }
-        }
-
-        this.min_x = 0;
-        this.max_x = this.m_oControl.HtmlElement.width;
-
-        position *= rPR;
-        if (this.min_y > position)
-            this.min_y = position;
-        if (this.max_y < position)
-            this.max_y = position;
-
-        this.m_oContext.lineWidth = Math.round(rPR);
-        var y = ((position + 0.5 * this.m_oContext.lineWidth) >> 0) + 0.5 * this.m_oContext.lineWidth;
-        var x = 0;
-
-        this.m_oContext.strokeStyle = this.DashLineColor;
-        this.m_oContext.beginPath();
-        var lineWidth = this.m_oContext.lineWidth;
-        while (x < this.max_x)
-        {
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-
-            x += 5 * lineWidth;
-        }
-
-        this.m_oContext.stroke();
-
-        x = lineWidth;
-        this.m_oContext.strokeStyle = "#FFFFFF";
-        this.m_oContext.beginPath();
-
-        while (x < this.max_x)
-        {
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-            this.m_oContext.moveTo(x, y); x += lineWidth;
-            this.m_oContext.lineTo(x, y); x += lineWidth;
-
-            x += 5 * lineWidth;
-        }
-
-        this.m_oContext.stroke();
-        this.Show();
-    },
-
-    HorLine2 : function(position)
-    {
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-
-        position *= rPR;
-        if (this.min_y > position)
-            this.min_y = position;
-        if (this.max_y < position)
-            this.max_y = position;
-
-        var _old_global = this.m_oContext.globalAlpha;
-        this.m_oContext.globalAlpha = 1;
-
-        this.min_x = 0;
-        this.max_x = this.m_oControl.HtmlElement.width;
-
-        this.m_oContext.lineWidth = Math.round(rPR);
-        var indent = 0.5 * this.m_oContext.lineWidth;
-
-        var y = ((position + indent) >> 0) + indent;
-        var x = 0;
-
-        /*
-        this.m_oContext.strokeStyle = "#FFFFFF";
-        this.m_oContext.beginPath();
-        this.m_oContext.moveTo(x, y);
-        this.m_oContext.lineTo(this.max_x, y);
-        this.m_oContext.stroke();
-        */
-
-        this.m_oContext.strokeStyle = this.DashLineColor;
-        this.m_oContext.beginPath();
-
-        var dist = this.m_oContext.lineWidth;
-
-        while (x < this.max_x)
-        {
-            this.m_oContext.moveTo(x, y);
-            x += dist;
-            this.m_oContext.lineTo(x, y);
-            x += dist;
-        }
-
-        this.m_oContext.stroke();
-        this.m_oContext.beginPath();
-        this.Show();
-
-        this.m_oContext.globalAlpha = _old_global;
-    },
-
-    CheckPoint1 : function(x,y)
-    {
-        if (x < this.min_x)
-            this.min_x = x;
-        if (y < this.min_y)
-            this.min_y = y;
-    },
-    CheckPoint2 : function(x,y)
-    {
-        if (x > this.max_x)
-            this.max_x = x;
-        if (y > this.max_y)
-            this.max_y = y;
-    },
-    CheckPoint : function(x,y)
-    {
-        if (x < this.min_x)
-            this.min_x = x ;
-        if (y < this.min_y)
-            this.min_y = y;
-        if (x > this.max_x)
-            this.max_x = x;
-        if (y > this.max_y)
-            this.max_y = y;
-    },
-
-    AddRect2 : function(x,y,r)
-    {
-        var _x = x - ((r / 2) >> 0);
-        var _y = y - ((r / 2) >> 0);
-        this.CheckPoint1(_x,_y);
-        this.CheckPoint2(_x+r,_y+r);
-
-        this.m_oContext.moveTo(_x,_y);
-        this.m_oContext.rect(_x,_y,r,r);
-    },
-
-    AddRect3 : function(x,y,r, ex1, ey1, ex2, ey2)
-    {
-        var _r = r / 2;
-
-        var x1 = x + _r * (ex2 - ex1);
-        var y1 = y + _r * (ey2 - ey1);
-
-        var x2 = x + _r * (ex2 + ex1);
-        var y2 = y + _r * (ey2 + ey1);
-
-        var x3 = x + _r * (-ex2 + ex1);
-        var y3 = y + _r * (-ey2 + ey1);
-
-        var x4 = x + _r * (-ex2 - ex1);
-        var y4 = y + _r * (-ey2 - ey1);
-
-        this.CheckPoint(x1,y1);
-        this.CheckPoint(x2,y2);
-        this.CheckPoint(x3,y3);
-        this.CheckPoint(x4,y4);
-
-        var ctx = this.m_oContext;
-        ctx.moveTo(x1,y1);
-        ctx.lineTo(x2,y2);
-        ctx.lineTo(x3,y3);
-        ctx.lineTo(x4,y4);
-        ctx.closePath();
-    },
-
-    AddRect : function(x,y,w,h)
-    {
-        this.CheckPoint1(x,y);
-        this.CheckPoint2(x + w,y + h);
-
-        this.m_oContext.moveTo(x,y);
-        this.m_oContext.rect(x,y,w,h);
-        //this.m_oContext.closePath();
-    },
-    CheckRectT : function(x,y,w,h,trans,eps)
-    {
-        var x1 = trans.TransformPointX(x, y);
-        var y1 = trans.TransformPointY(x, y);
-
-        var x2 = trans.TransformPointX(x+w, y);
-        var y2 = trans.TransformPointY(x+w, y);
-
-        var x3 = trans.TransformPointX(x+w, y+h);
-        var y3 = trans.TransformPointY(x+w, y+h);
-
-        var x4 = trans.TransformPointX(x, y+h);
-        var y4 = trans.TransformPointY(x, y+h);
-
-        this.CheckPoint(x1, y1);
-        this.CheckPoint(x2, y2);
-        this.CheckPoint(x3, y3);
-        this.CheckPoint(x4, y4);
-
-        if (eps !== undefined)
-        {
-            this.min_x -= eps;
-            this.min_y -= eps;
-            this.max_x += eps;
-            this.max_y += eps;
-        }
-    },
-    CheckRect : function(x,y,w,h)
-    {
-        this.CheckPoint1(x,y);
-        this.CheckPoint2(x + w,y + h);
-    },
-    AddEllipse : function(x,y,r)
-    {
-        this.CheckPoint1(x-r,y-r);
-        this.CheckPoint2(x+r,y+r);
-
-        this.m_oContext.moveTo(x+r,y);
-        this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
-        //this.m_oContext.closePath();
-    },
-    AddEllipse2 : function(x,y,r)
-    {
-        this.m_oContext.moveTo(x+r,y);
-        this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
-        //this.m_oContext.closePath();
-    },
-
-	AddDiamond : function(x,y,r)
-	{
-		this.CheckPoint1(x-r,y-r);
-		this.CheckPoint2(x+r,y+r);
-
-		this.m_oContext.moveTo(x-r,y);
-		this.m_oContext.lineTo(x, y-r);
-		this.m_oContext.lineTo(x+r, y);
-		this.m_oContext.lineTo(x, y+r);
-		this.m_oContext.lineTo(x-r, y);
-		//this.m_oContext.closePath();
-	},
-
-    AddRoundRect : function(x, y, w, h, r)
-    {
-        if (w < (2 * r) || h < (2 * r))
-            return this.AddRect(x, y, w, h);
-
-        this.CheckPoint1(x,y);
-        this.CheckPoint2(x + w,y + h);
-
-        var _ctx = this.m_oContext;
-        _ctx.moveTo(x + r, y);
-        _ctx.lineTo(x + w - r, y);
-        _ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        _ctx.lineTo(x + w, y + h - r);
-        _ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        _ctx.lineTo(x + r, y + h);
-        _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        _ctx.lineTo(x, y + r);
-        _ctx.quadraticCurveTo(x, y, x + r, y);
-        _ctx.closePath();
-    },
-
-    AddRoundRectCtx : function(ctx, x, y, w, h, r)
-    {
-        if (w < (2 * r) || h < (2 * r))
-            return ctx.rect(x, y, w, h);
-
-        var _ctx = this.m_oContext;
-        _ctx.moveTo(x + r, y);
-        _ctx.lineTo(x + w - r, y);
-        _ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        _ctx.lineTo(x + w, y + h - r);
-        _ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        _ctx.lineTo(x + r, y + h);
-        _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        _ctx.lineTo(x, y + r);
-        _ctx.quadraticCurveTo(x, y, x + r, y);
-		_ctx.closePath();
-    },
-    DrawFrozenPlaceHorLine: function(y, left, right)
-    {
-        this.m_oContext.strokeStyle = "#AAAAAA";
-        var nW = 2;
-
-        nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
-        this.CheckPoint1(left, y - nW);
-        this.CheckPoint2(right, y + nW);
-        this.m_oContext.lineWidth = nW;
-        this.m_oContext.beginPath();
-        this.m_oContext.moveTo(left, y);
-        this.m_oContext.lineTo(right, y);
-        this.m_oContext.stroke();
-    },
-    DrawFrozenPlaceVerLine: function(x, top, bottom)
-    {
-        this.m_oContext.strokeStyle = "#AAAAAA";
-        var nW = 2;
-
-        nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
-        this.CheckPoint1(x - nW, top);
-        this.CheckPoint2(x + nW, bottom);
-        this.m_oContext.lineWidth = nW;
-        this.m_oContext.beginPath();
-        this.m_oContext.moveTo(x, top);
-        this.m_oContext.lineTo(x, bottom);
-        this.m_oContext.stroke();
-    },
-    drawArrow : function(ctx, x, y, len, rgb, needToCorrectLen) {
-        ctx.beginPath();
-        var arrowSize = this.GetArrowSize();
-
-        if (needToCorrectLen && 0 == (len & 1) )
-            len += 1;
-        var _data, px,
-            _x = Math.round((arrowSize - len) / 2),
-            _y = Math.floor(arrowSize / 2),
-            r, g, b;
-        var __x = _x, __y = _y, _len = len;
-
-        // r = 147, g = 147, b = 147;
-        var r = rgb.r, g = rgb.g, b = rgb.b;
-        _data = ctx.createImageData(arrowSize, arrowSize);
-        px = _data.data;
-
-        while (_len > 0) {
-            var ind = 4 * (arrowSize * __y + __x);
-            for (var i = 0; i < _len; i++) {
-                px[ind++] = r;
-                px[ind++] = g;
-                px[ind++] = b;
-                px[ind++] = 255;
-            }
-
-            r = r >> 0;
-            g = g >> 0;
-            b = b >> 0;
-
-            __x += 1;
-            __y -= 1;
-            _len -= 2;
-        }
-
-        ctx.putImageData(_data, x, y);
-    },
-
-    GetArrowSize: function()
-    {
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        return Math.round(13 * rPR);
+        this.IsCellEditor = false;
     }
-};
 
-function CAutoshapeTrack()
-{
-    this.m_oContext = null;
-    this.m_oOverlay = null;
-
-    this.Graphics = null;
-
-    this.MaxEpsLine = 0;
-    this.IsTrack = true;
-
-    this.PageIndex = -1;
-    this.CurrentPageInfo = null;
-
-    this.ArrowCanvas = null;
-    this.RotatedArrowCanvas = null;
-}
-
-CAutoshapeTrack.prototype =
-{
-    SetFont : function(font)
+    COverlay.prototype =
     {
-    },
+        init : function(context, controlName, x, y, w_pix, h_pix, w_mm, h_mm)
+        {
+            this.m_oContext = context;
+            this.m_oControl = AscCommon.CreateControl(controlName);
 
-    init : function(overlay, x, y, r, b, w_mm, h_mm)
+            this.m_oHtmlPage = new AscCommon.CHtmlPage();
+            this.m_oHtmlPage.init(x, y, w_pix, h_pix, w_mm, h_mm);
+        },
+
+        Clear : function()
+        {
+            if (null == this.m_oContext)
+            {
+                this.m_oContext = this.m_oControl.HtmlElement.getContext('2d');
+
+                this.m_oContext.imageSmoothingEnabled = false;
+                this.m_oContext.mozImageSmoothingEnabled = false;
+                this.m_oContext.oImageSmoothingEnabled = false;
+                this.m_oContext.webkitImageSmoothingEnabled = false;
+            }
+
+            this.SetBaseTransform();
+            this.m_oContext.beginPath();
+            if (this.max_x != -0xFFFF && this.max_y != -0xFFFF)
+            {
+                if (this.ClearAll === true)
+                {
+                    this.m_oContext.clearRect(0, 0, this.m_oControl.HtmlElement.width, this.m_oControl.HtmlElement.height);
+                    this.ClearAll = false;
+                }
+                else
+                {
+                    var _eps = 5;
+                    this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
+                }
+            }
+            this.min_x = 0xFFFF;
+            this.min_y = 0xFFFF;
+            this.max_x = -0xFFFF;
+            this.max_y = -0xFFFF;
+        },
+
+        GetImageTrackRotationImage : function()
+        {
+            return AscCommon.AscBrowser.isCustomScalingAbove2() ? window.g_track_rotate_marker2 : window.g_track_rotate_marker;
+        },
+
+        SetTransform : function(sx, shy, shx, sy, tx, ty)
+        {
+            this.SetBaseTransform();
+            this.m_oContext.setTransform(sx, shy, shx, sy, tx, ty);
+
+        },
+
+        SetBaseTransform : function()
+        {
+            this.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
+        },
+
+        Show : function()
+        {
+            if (this.m_bIsShow)
+                return;
+
+            this.m_bIsShow = true;
+            this.m_oControl.HtmlElement.style.display = "block";
+        },
+        UnShow : function()
+        {
+            if (!this.m_bIsShow)
+                return;
+
+            this.m_bIsShow = false;
+            this.m_oControl.HtmlElement.style.display = "none";
+        },
+
+        VertLine : function(position, bIsSimpleAdd)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+            if (bIsSimpleAdd !== true)
+            {
+                this.Clear();
+                if (this.m_bIsAlwaysUpdateOverlay || true/*мало ли что есть на оверлее*/)
+                {
+                    if (!editor.WordControl.OnUpdateOverlay())
+                    {
+                        editor.WordControl.EndUpdateOverlay();
+                    }
+                }
+            }
+            position *= rPR;
+            if (this.min_x > position)
+                this.min_x = position;
+            if (this.max_x < position)
+                this.max_x = position;
+
+            //this.min_x = position;
+            //this.max_x = position;
+            this.min_y = 0;
+            this.max_y = this.m_oControl.HtmlElement.height;
+
+            this.m_oContext.lineWidth = Math.round(rPR);
+            var x = ((position + 0.5 * this.m_oContext.lineWidth) >> 0) + 0.5 * this.m_oContext.lineWidth;
+            var y = 0;
+
+            this.m_oContext.strokeStyle = this.DashLineColor;
+            this.m_oContext.beginPath();
+
+            var lineWidth = this.m_oContext.lineWidth;
+            while (y < this.max_y)
+            {
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+
+                y += 5 * lineWidth;
+            }
+
+            this.m_oContext.stroke();
+
+            y = lineWidth;
+            this.m_oContext.strokeStyle = "#FFFFFF";
+            this.m_oContext.beginPath();
+
+            while (y < this.max_y)
+            {
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+                this.m_oContext.moveTo(x, y); y += lineWidth;
+                this.m_oContext.lineTo(x, y); y += lineWidth;
+
+                y += 5 * lineWidth;
+            }
+
+            this.m_oContext.stroke();
+            this.Show();
+        },
+
+        VertLine2 : function(position)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+            position *= rPR;
+            if (this.min_x > position)
+                this.min_x = position;
+            if (this.max_x < position)
+                this.max_x = position;
+
+            var _old_global = this.m_oContext.globalAlpha;
+            this.m_oContext.globalAlpha = 1;
+
+            this.min_y = 0;
+            this.max_y = this.m_oControl.HtmlElement.height;
+
+            this.m_oContext.lineWidth = Math.round(rPR);
+            var indent = 0.5 * this.m_oContext.lineWidth;
+
+            var x = ((position + indent) >> 0) + indent;
+            var y = 0;
+
+            /*
+            this.m_oContext.strokeStyle = "#FFFFFF";
+            this.m_oContext.beginPath();
+            this.m_oContext.moveTo(x, y);
+            this.m_oContext.lineTo(x, this.max_y);
+            this.m_oContext.stroke();
+            */
+
+            this.m_oContext.strokeStyle = this.DashLineColor;
+            this.m_oContext.beginPath();
+
+            var dist = this.m_oContext.lineWidth;
+
+            while (y < this.max_y)
+            {
+                this.m_oContext.moveTo(x, y);
+                y += dist;
+                this.m_oContext.lineTo(x, y);
+                y += dist;
+            }
+
+            this.m_oContext.stroke();
+            this.m_oContext.beginPath();
+            this.Show();
+
+            this.m_oContext.globalAlpha = _old_global;
+        },
+
+        HorLine : function(position, bIsSimpleAdd)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+            if (bIsSimpleAdd !== true)
+            {
+                this.Clear();
+                if (this.m_bIsAlwaysUpdateOverlay || true/*мало ли что есть на оверлее*/)
+                {
+                    if (!editor.WordControl.OnUpdateOverlay())
+                    {
+                        editor.WordControl.EndUpdateOverlay();
+                    }
+                }
+            }
+
+            this.min_x = 0;
+            this.max_x = this.m_oControl.HtmlElement.width;
+
+            position *= rPR;
+            if (this.min_y > position)
+                this.min_y = position;
+            if (this.max_y < position)
+                this.max_y = position;
+
+            this.m_oContext.lineWidth = Math.round(rPR);
+            var y = ((position + 0.5 * this.m_oContext.lineWidth) >> 0) + 0.5 * this.m_oContext.lineWidth;
+            var x = 0;
+
+            this.m_oContext.strokeStyle = this.DashLineColor;
+            this.m_oContext.beginPath();
+            var lineWidth = this.m_oContext.lineWidth;
+            while (x < this.max_x)
+            {
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+
+                x += 5 * lineWidth;
+            }
+
+            this.m_oContext.stroke();
+
+            x = lineWidth;
+            this.m_oContext.strokeStyle = "#FFFFFF";
+            this.m_oContext.beginPath();
+
+            while (x < this.max_x)
+            {
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+                this.m_oContext.moveTo(x, y); x += lineWidth;
+                this.m_oContext.lineTo(x, y); x += lineWidth;
+
+                x += 5 * lineWidth;
+            }
+
+            this.m_oContext.stroke();
+            this.Show();
+        },
+
+        HorLine2 : function(position)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+            position *= rPR;
+            if (this.min_y > position)
+                this.min_y = position;
+            if (this.max_y < position)
+                this.max_y = position;
+
+            var _old_global = this.m_oContext.globalAlpha;
+            this.m_oContext.globalAlpha = 1;
+
+            this.min_x = 0;
+            this.max_x = this.m_oControl.HtmlElement.width;
+
+            this.m_oContext.lineWidth = Math.round(rPR);
+            var indent = 0.5 * this.m_oContext.lineWidth;
+
+            var y = ((position + indent) >> 0) + indent;
+            var x = 0;
+
+            /*
+            this.m_oContext.strokeStyle = "#FFFFFF";
+            this.m_oContext.beginPath();
+            this.m_oContext.moveTo(x, y);
+            this.m_oContext.lineTo(this.max_x, y);
+            this.m_oContext.stroke();
+            */
+
+            this.m_oContext.strokeStyle = this.DashLineColor;
+            this.m_oContext.beginPath();
+
+            var dist = this.m_oContext.lineWidth;
+
+            while (x < this.max_x)
+            {
+                this.m_oContext.moveTo(x, y);
+                x += dist;
+                this.m_oContext.lineTo(x, y);
+                x += dist;
+            }
+
+            this.m_oContext.stroke();
+            this.m_oContext.beginPath();
+            this.Show();
+
+            this.m_oContext.globalAlpha = _old_global;
+        },
+
+        CheckPoint1 : function(x,y)
+        {
+            if (x < this.min_x)
+                this.min_x = x;
+            if (y < this.min_y)
+                this.min_y = y;
+        },
+        CheckPoint2 : function(x,y)
+        {
+            if (x > this.max_x)
+                this.max_x = x;
+            if (y > this.max_y)
+                this.max_y = y;
+        },
+        CheckPoint : function(x,y)
+        {
+            if (x < this.min_x)
+                this.min_x = x ;
+            if (y < this.min_y)
+                this.min_y = y;
+            if (x > this.max_x)
+                this.max_x = x;
+            if (y > this.max_y)
+                this.max_y = y;
+        },
+
+        AddRect2 : function(x,y,r)
+        {
+            var _x = x - ((r / 2) >> 0);
+            var _y = y - ((r / 2) >> 0);
+            this.CheckPoint1(_x,_y);
+            this.CheckPoint2(_x+r,_y+r);
+
+            this.m_oContext.moveTo(_x,_y);
+            this.m_oContext.rect(_x,_y,r,r);
+        },
+
+        AddRect3 : function(x,y,r, ex1, ey1, ex2, ey2)
+        {
+            var _r = r / 2;
+
+            var x1 = x + _r * (ex2 - ex1);
+            var y1 = y + _r * (ey2 - ey1);
+
+            var x2 = x + _r * (ex2 + ex1);
+            var y2 = y + _r * (ey2 + ey1);
+
+            var x3 = x + _r * (-ex2 + ex1);
+            var y3 = y + _r * (-ey2 + ey1);
+
+            var x4 = x + _r * (-ex2 - ex1);
+            var y4 = y + _r * (-ey2 - ey1);
+
+            this.CheckPoint(x1,y1);
+            this.CheckPoint(x2,y2);
+            this.CheckPoint(x3,y3);
+            this.CheckPoint(x4,y4);
+
+            var ctx = this.m_oContext;
+            ctx.moveTo(x1,y1);
+            ctx.lineTo(x2,y2);
+            ctx.lineTo(x3,y3);
+            ctx.lineTo(x4,y4);
+            ctx.closePath();
+        },
+
+        AddRect : function(x,y,w,h)
+        {
+            this.CheckPoint1(x,y);
+            this.CheckPoint2(x + w,y + h);
+
+            this.m_oContext.moveTo(x,y);
+            this.m_oContext.rect(x,y,w,h);
+            //this.m_oContext.closePath();
+        },
+        CheckRectT : function(x,y,w,h,trans,eps)
+        {
+            var x1 = trans.TransformPointX(x, y);
+            var y1 = trans.TransformPointY(x, y);
+
+            var x2 = trans.TransformPointX(x+w, y);
+            var y2 = trans.TransformPointY(x+w, y);
+
+            var x3 = trans.TransformPointX(x+w, y+h);
+            var y3 = trans.TransformPointY(x+w, y+h);
+
+            var x4 = trans.TransformPointX(x, y+h);
+            var y4 = trans.TransformPointY(x, y+h);
+
+            this.CheckPoint(x1, y1);
+            this.CheckPoint(x2, y2);
+            this.CheckPoint(x3, y3);
+            this.CheckPoint(x4, y4);
+
+            if (eps !== undefined)
+            {
+                this.min_x -= eps;
+                this.min_y -= eps;
+                this.max_x += eps;
+                this.max_y += eps;
+            }
+        },
+        CheckRect : function(x,y,w,h)
+        {
+            this.CheckPoint1(x,y);
+            this.CheckPoint2(x + w,y + h);
+        },
+        AddEllipse : function(x,y,r)
+        {
+            this.CheckPoint1(x-r,y-r);
+            this.CheckPoint2(x+r,y+r);
+
+            this.m_oContext.moveTo(x+r,y);
+            this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
+            //this.m_oContext.closePath();
+        },
+        AddEllipse2 : function(x,y,r)
+        {
+            this.m_oContext.moveTo(x+r,y);
+            this.m_oContext.arc(x,y,r,0,Math.PI*2,false);
+            //this.m_oContext.closePath();
+        },
+
+        AddDiamond : function(x,y,r)
+        {
+            this.CheckPoint1(x-r,y-r);
+            this.CheckPoint2(x+r,y+r);
+
+            this.m_oContext.moveTo(x-r,y);
+            this.m_oContext.lineTo(x, y-r);
+            this.m_oContext.lineTo(x+r, y);
+            this.m_oContext.lineTo(x, y+r);
+            this.m_oContext.lineTo(x-r, y);
+            //this.m_oContext.closePath();
+        },
+
+        AddRoundRect : function(x, y, w, h, r)
+        {
+            if (w < (2 * r) || h < (2 * r))
+                return this.AddRect(x, y, w, h);
+
+            this.CheckPoint1(x,y);
+            this.CheckPoint2(x + w,y + h);
+
+            var _ctx = this.m_oContext;
+            _ctx.moveTo(x + r, y);
+            _ctx.lineTo(x + w - r, y);
+            _ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            _ctx.lineTo(x + w, y + h - r);
+            _ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            _ctx.lineTo(x + r, y + h);
+            _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            _ctx.lineTo(x, y + r);
+            _ctx.quadraticCurveTo(x, y, x + r, y);
+            _ctx.closePath();
+        },
+
+        AddRoundRectCtx : function(ctx, x, y, w, h, r)
+        {
+            if (w < (2 * r) || h < (2 * r))
+                return ctx.rect(x, y, w, h);
+
+            var _ctx = this.m_oContext;
+            _ctx.moveTo(x + r, y);
+            _ctx.lineTo(x + w - r, y);
+            _ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            _ctx.lineTo(x + w, y + h - r);
+            _ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            _ctx.lineTo(x + r, y + h);
+            _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            _ctx.lineTo(x, y + r);
+            _ctx.quadraticCurveTo(x, y, x + r, y);
+            _ctx.closePath();
+        },
+        DrawFrozenPlaceHorLine: function(y, left, right)
+        {
+            this.m_oContext.strokeStyle = "#AAAAAA";
+            var nW = 2;
+
+            nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
+            this.CheckPoint1(left, y - nW);
+            this.CheckPoint2(right, y + nW);
+            this.m_oContext.lineWidth = nW;
+            this.m_oContext.beginPath();
+            this.m_oContext.moveTo(left, y);
+            this.m_oContext.lineTo(right, y);
+            this.m_oContext.stroke();
+        },
+        DrawFrozenPlaceVerLine: function(x, top, bottom)
+        {
+            this.m_oContext.strokeStyle = "#AAAAAA";
+            var nW = 2;
+
+            nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
+            this.CheckPoint1(x - nW, top);
+            this.CheckPoint2(x + nW, bottom);
+            this.m_oContext.lineWidth = nW;
+            this.m_oContext.beginPath();
+            this.m_oContext.moveTo(x, top);
+            this.m_oContext.lineTo(x, bottom);
+            this.m_oContext.stroke();
+        },
+        drawArrow : function(ctx, x, y, len, rgb, needToCorrectLen) {
+            ctx.beginPath();
+            var arrowSize = this.GetArrowSize();
+
+            if (needToCorrectLen && 0 == (len & 1) )
+                len += 1;
+            var _data, px,
+                _x = Math.round((arrowSize - len) / 2),
+                _y = Math.floor(arrowSize / 2),
+                r, g, b;
+            var __x = _x, __y = _y, _len = len;
+
+            // r = 147, g = 147, b = 147;
+            var r = rgb.r, g = rgb.g, b = rgb.b;
+            _data = ctx.createImageData(arrowSize, arrowSize);
+            px = _data.data;
+
+            while (_len > 0) {
+                var ind = 4 * (arrowSize * __y + __x);
+                for (var i = 0; i < _len; i++) {
+                    px[ind++] = r;
+                    px[ind++] = g;
+                    px[ind++] = b;
+                    px[ind++] = 255;
+                }
+
+                r = r >> 0;
+                g = g >> 0;
+                b = b >> 0;
+
+                __x += 1;
+                __y -= 1;
+                _len -= 2;
+            }
+
+            ctx.putImageData(_data, x, y);
+        },
+
+        GetArrowSize: function()
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+            return Math.round(13 * rPR);
+        }
+    };
+
+    function CAutoshapeTrack()
+    {
+        AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.Track);
+
+        this.m_oContext = null;
+        this.m_oOverlay = null;
+
+        this.Graphics = null;
+
+        this.MaxEpsLine = 0;
+
+        this.PageIndex = -1;
+        this.CurrentPageInfo = null;
+
+        this.ArrowCanvas = null;
+        this.RotatedArrowCanvas = null;
+    }
+
+    CAutoshapeTrack.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+    CAutoshapeTrack.prototype.constructor = CAutoshapeTrack;
+
+    CAutoshapeTrack.prototype.SetFont = function(font)
+    {
+    };
+
+    CAutoshapeTrack.prototype.init = function(overlay, x, y, r, b, w_mm, h_mm)
     {
         this.m_oOverlay = overlay;
         this.m_oContext = this.m_oOverlay.m_oContext;
@@ -690,16 +692,14 @@ CAutoshapeTrack.prototype =
 
         this.Graphics.globalAlpha = 0.5;
         this.m_oContext.globalAlpha = 0.5;
-    },
-    SetIntegerGrid : function(b)
-    {
-    },
+    };
+
     // draw styles
-    p_color : function(r,g,b,a)
+    CAutoshapeTrack.prototype.p_color = function(r,g,b,a)
     {
         this.Graphics.p_color(r, g, b, a);
-    },
-    p_width : function(w)
+    };
+    CAutoshapeTrack.prototype.p_width = function(w)
     {
         this.Graphics.p_width(w);
 
@@ -721,46 +721,46 @@ CAutoshapeTrack.prototype =
 
         if (_EpsLine > this.MaxEpsLine)
             this.MaxEpsLine = _EpsLine;
-    },
-    p_dash : function(params)
+    };
+    CAutoshapeTrack.prototype.p_dash = function(params)
     {
         this.Graphics.p_dash(params);
-    },
-    b_color1 : function(r,g,b,a)
+    };
+    CAutoshapeTrack.prototype.b_color1 = function(r,g,b,a)
     {
         this.Graphics.b_color1(r,g,b,a);
-    },
+    };
 
     // path commands
-    _s : function()
+    CAutoshapeTrack.prototype._s = function()
     {
         this.Graphics._s();
-    },
-    _e : function()
+    };
+    CAutoshapeTrack.prototype._e = function()
     {
         this.Graphics._e();
-    },
-    _z : function()
+    };
+    CAutoshapeTrack.prototype._z = function()
     {
         this.Graphics._z();
-    },
-    _m : function(x,y)
+    };
+    CAutoshapeTrack.prototype._m = function(x,y)
     {
         this.Graphics._m(x,y);
 
         var _x = this.Graphics.m_oFullTransform.TransformPointX(x,y);
         var _y = this.Graphics.m_oFullTransform.TransformPointY(x,y);
         this.m_oOverlay.CheckPoint(_x, _y);
-    },
-    _l : function(x,y)
+    };
+    CAutoshapeTrack.prototype._l = function(x,y)
     {
         this.Graphics._l(x,y);
 
         var _x = this.Graphics.m_oFullTransform.TransformPointX(x,y);
         var _y = this.Graphics.m_oFullTransform.TransformPointY(x,y);
         this.m_oOverlay.CheckPoint(_x, _y);
-    },
-    _c : function(x1,y1,x2,y2,x3,y3)
+    };
+    CAutoshapeTrack.prototype._c = function(x1,y1,x2,y2,x3,y3)
     {
         this.Graphics._c(x1,y1,x2,y2,x3,y3);
 
@@ -776,8 +776,8 @@ CAutoshapeTrack.prototype =
         this.m_oOverlay.CheckPoint(_x1, _y1);
         this.m_oOverlay.CheckPoint(_x2, _y2);
         this.m_oOverlay.CheckPoint(_x3, _y3);
-    },
-    _c2 : function(x1,y1,x2,y2)
+    };
+    CAutoshapeTrack.prototype._c2 = function(x1,y1,x2,y2)
     {
         this.Graphics._c2(x1,y1,x2,y2);
 
@@ -789,44 +789,44 @@ CAutoshapeTrack.prototype =
 
         this.m_oOverlay.CheckPoint(_x1, _y1);
         this.m_oOverlay.CheckPoint(_x2, _y2);
-    },
-    ds : function()
+    };
+    CAutoshapeTrack.prototype.ds = function()
     {
         this.Graphics.ds();
-    },
-    df : function()
+    };
+    CAutoshapeTrack.prototype.df = function()
     {
         this.Graphics.df();
-    },
+    };
 
     // canvas state
-    save : function()
+    CAutoshapeTrack.prototype.save = function()
     {
         this.Graphics.save();
-    },
-    restore : function()
+    };
+    CAutoshapeTrack.prototype.restore = function()
     {
         this.Graphics.restore();
-    },
-    clip : function()
+    };
+    CAutoshapeTrack.prototype.clip = function()
     {
         this.Graphics.clip();
-    },
+    };
 
     // transform
-    reset : function()
+    CAutoshapeTrack.prototype.reset = function()
     {
         this.Graphics.reset();
-    },
-    transform3 : function(m)
+    };
+    CAutoshapeTrack.prototype.transform3 = function(m)
     {
         this.Graphics.transform3(m);
-    },
-    transform : function(sx,shy,shx,sy,tx,ty)
+    };
+    CAutoshapeTrack.prototype.transform = function(sx,shy,shx,sy,tx,ty)
     {
         this.Graphics.transform(sx,shy,shx,sy,tx,ty);
-    },
-    drawImage : function(image, x, y, w, h, alpha, srcRect, nativeImage)
+    };
+    CAutoshapeTrack.prototype.drawImage = function(image, x, y, w, h, alpha, srcRect, nativeImage)
     {
         this.Graphics.drawImage(image, x, y, w, h, undefined, srcRect, nativeImage);
 
@@ -846,8 +846,8 @@ CAutoshapeTrack.prototype =
         this.m_oOverlay.CheckPoint(_x2, _y2);
         this.m_oOverlay.CheckPoint(_x3, _y3);
         this.m_oOverlay.CheckPoint(_x4, _y4);
-    },
-    CorrectOverlayBounds : function()
+    };
+    CAutoshapeTrack.prototype.CorrectOverlayBounds = function()
     {
         this.m_oOverlay.SetBaseTransform();
 
@@ -855,9 +855,9 @@ CAutoshapeTrack.prototype =
         this.m_oOverlay.min_y -= this.MaxEpsLine;
         this.m_oOverlay.max_x += this.MaxEpsLine;
         this.m_oOverlay.max_y += this.MaxEpsLine;
-    },
+    };
 
-    SetCurrentPage : function(nPageIndex, isAttack)
+    CAutoshapeTrack.prototype.SetCurrentPage = function(nPageIndex, isAttack)
     {
         if (nPageIndex == this.PageIndex && !isAttack)
             return;
@@ -880,84 +880,78 @@ CAutoshapeTrack.prototype =
 
         this.Graphics.globalAlpha = 0.5;
         this.m_oContext.globalAlpha = 0.5;
-    },
+    };
 
-    init2 : function(overlay)
+    CAutoshapeTrack.prototype.init2 = function(overlay)
     {
         this.m_oOverlay = overlay;
         this.m_oContext = this.m_oOverlay.m_oContext;
         this.PageIndex = -1;
-    },
+    };
 
-    SetClip : function(r)
+    CAutoshapeTrack.prototype.AddClipRect = function()
     {
-    },
-    AddClipRect : function()
-    {
-    },
-    RemoveClip : function()
-    {
-    },
+    };
 
-    SavePen : function()
+    CAutoshapeTrack.prototype.SavePen = function()
     {
         this.Graphics.SavePen();
-    },
-    RestorePen : function()
+    };
+    CAutoshapeTrack.prototype.RestorePen = function()
     {
         this.Graphics.RestorePen();
-    },
+    };
 
-    SaveBrush : function()
+    CAutoshapeTrack.prototype.SaveBrush = function()
     {
         this.Graphics.SaveBrush();
-    },
-    RestoreBrush : function()
+    };
+    CAutoshapeTrack.prototype.RestoreBrush = function()
     {
         this.Graphics.RestoreBrush();
-    },
+    };
 
-    SavePenBrush : function()
+    CAutoshapeTrack.prototype.SavePenBrush = function()
     {
         this.Graphics.SavePenBrush();
-    },
-    RestorePenBrush : function()
+    };
+    CAutoshapeTrack.prototype.RestorePenBrush = function()
     {
         this.Graphics.RestorePenBrush();
-    },
+    };
 
-    SaveGrState : function()
+    CAutoshapeTrack.prototype.SaveGrState = function()
     {
         this.Graphics.SaveGrState();
-    },
-    RestoreGrState : function()
+    };
+    CAutoshapeTrack.prototype.RestoreGrState = function()
     {
         this.Graphics.RestoreGrState();
-    },
+    };
 
-    StartClipPath : function()
+    CAutoshapeTrack.prototype.StartClipPath = function()
     {
         this.Graphics.StartClipPath();
-    },
+    };
 
-    EndClipPath : function()
+    CAutoshapeTrack.prototype.EndClipPath = function()
     {
         this.Graphics.EndClipPath();
-    },
+    };
 
     /*************************************************************************/
     /******************************** TRACKS *********************************/
     /*************************************************************************/
-    DrawTrack : function(type, matrix, left, top, width, height, isLine, isCanRotate, isNoMove, isDrawHandles)
+    CAutoshapeTrack.prototype.DrawTrack = function(type, matrix, left, top, width, height, isLine, isCanRotate, isNoMove, isDrawHandles)
     {
-		if (true === isNoMove)
-			return;
+        if (true === isNoMove)
+            return;
 
         var bDrawHandles = (isDrawHandles !== false);
         if (bDrawHandles === false)
             type = AscFormat.TYPE_TRACK.SHAPE;
 
-		if (this.m_oOverlay.IsCellEditor)
+        if (this.m_oOverlay.IsCellEditor)
         {
             left    /= AscCommon.AscBrowser.retinaPixelRatio;
             top     /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -965,10 +959,10 @@ CAutoshapeTrack.prototype =
             height  /= AscCommon.AscBrowser.retinaPixelRatio;
 
             if (matrix)
-			{
-				matrix.tx /= AscCommon.AscBrowser.retinaPixelRatio;
-				matrix.ty /= AscCommon.AscBrowser.retinaPixelRatio;
-			}
+            {
+                matrix.tx /= AscCommon.AscBrowser.retinaPixelRatio;
+                matrix.ty /= AscCommon.AscBrowser.retinaPixelRatio;
+            }
         }
 
         // с самого начала нужно понять, есть ли поворот. Потому что если его нет, то можно
@@ -1129,12 +1123,12 @@ CAutoshapeTrack.prototype =
         if (bIsRectsTrack && (type == AscFormat.TYPE_TRACK.CHART_TEXT))
             bIsRectsTrack = false;
 
-		if (nType == 2)
-		{
-			var _tmp = bIsRectsTrackX;
-			bIsRectsTrackX = bIsRectsTrackY;
-			bIsRectsTrackY = _tmp;
-		}
+        if (nType == 2)
+        {
+            var _tmp = bIsRectsTrackX;
+            bIsRectsTrackX = bIsRectsTrackY;
+            bIsRectsTrackY = _tmp;
+        }
 
         ctx.lineWidth = Math.round(rPR);
         ctx.beginPath();
@@ -1280,54 +1274,54 @@ CAutoshapeTrack.prototype =
                 }
                 else
                 {
-					var _x1 = x1;
-					var _y1 = y1;
-					var _x2 = x2;
-					var _y2 = y2;
-					var _x3 = x3;
-					var _y3 = y3;
-					var _x4 = x4;
-					var _y4 = y4;
+                    var _x1 = x1;
+                    var _y1 = y1;
+                    var _x2 = x2;
+                    var _y2 = y2;
+                    var _x3 = x3;
+                    var _y3 = y3;
+                    var _x4 = x4;
+                    var _y4 = y4;
 
-					if (nIsCleverWithTransform)
-					{
-						var _x1 = x1;
-						if (x2 < _x1)
-							_x1 = x2;
-						if (x3 < _x1)
-							_x1 = x3;
-						if (x4 < _x1)
-							_x1 = x4;
+                    if (nIsCleverWithTransform)
+                    {
+                        var _x1 = x1;
+                        if (x2 < _x1)
+                            _x1 = x2;
+                        if (x3 < _x1)
+                            _x1 = x3;
+                        if (x4 < _x1)
+                            _x1 = x4;
 
-						var _x4 = x1;
-						if (x2 > _x4)
-							_x4 = x2;
-						if (x3 > _x4)
-							_x4 = x3;
-						if (x4 > _x4)
-							_x4 = x4;
+                        var _x4 = x1;
+                        if (x2 > _x4)
+                            _x4 = x2;
+                        if (x3 > _x4)
+                            _x4 = x3;
+                        if (x4 > _x4)
+                            _x4 = x4;
 
-						var _y1 = y1;
-						if (y2 < _y1)
-							_y1 = y2;
-						if (y3 < _y1)
-							_y1 = y3;
-						if (y4 < _y1)
-							_y1 = y4;
+                        var _y1 = y1;
+                        if (y2 < _y1)
+                            _y1 = y2;
+                        if (y3 < _y1)
+                            _y1 = y3;
+                        if (y4 < _y1)
+                            _y1 = y4;
 
-						var _y4 = y1;
-						if (y2 > _y4)
-							_y4 = y2;
-						if (y3 > _y4)
-							_y4 = y3;
-						if (y4 > _y4)
-							_y4 = y4;
+                        var _y4 = y1;
+                        if (y2 > _y4)
+                            _y4 = y2;
+                        if (y3 > _y4)
+                            _y4 = y3;
+                        if (y4 > _y4)
+                            _y4 = y4;
 
-						_x2 = _x4;
-						_y2 = _y1;
-						_x3 = _x1;
-						_y3 = _y4;
-					}
+                        _x2 = _x4;
+                        _y2 = _y1;
+                        _x3 = _x1;
+                        _y3 = _y4;
+                    }
 
                     ctx.strokeStyle = _style_blue;
 
@@ -1704,54 +1698,54 @@ CAutoshapeTrack.prototype =
                 }
                 else
                 {
-					var _x1 = x1;
-					var _y1 = y1;
-					var _x2 = x2;
-					var _y2 = y2;
-					var _x3 = x3;
-					var _y3 = y3;
-					var _x4 = x4;
-					var _y4 = y4;
+                    var _x1 = x1;
+                    var _y1 = y1;
+                    var _x2 = x2;
+                    var _y2 = y2;
+                    var _x3 = x3;
+                    var _y3 = y3;
+                    var _x4 = x4;
+                    var _y4 = y4;
 
-					if (nIsCleverWithTransform)
-					{
-						var _x1 = x1;
-						if (x2 < _x1)
-							_x1 = x2;
-						if (x3 < _x1)
-							_x1 = x3;
-						if (x4 < _x1)
-							_x1 = x4;
+                    if (nIsCleverWithTransform)
+                    {
+                        var _x1 = x1;
+                        if (x2 < _x1)
+                            _x1 = x2;
+                        if (x3 < _x1)
+                            _x1 = x3;
+                        if (x4 < _x1)
+                            _x1 = x4;
 
-						var _x4 = x1;
-						if (x2 > _x4)
-							_x4 = x2;
-						if (x3 > _x4)
-							_x4 = x3;
-						if (x4 > _x4)
-							_x4 = x4;
+                        var _x4 = x1;
+                        if (x2 > _x4)
+                            _x4 = x2;
+                        if (x3 > _x4)
+                            _x4 = x3;
+                        if (x4 > _x4)
+                            _x4 = x4;
 
-						var _y1 = y1;
-						if (y2 < _y1)
-							_y1 = y2;
-						if (y3 < _y1)
-							_y1 = y3;
-						if (y4 < _y1)
-							_y1 = y4;
+                        var _y1 = y1;
+                        if (y2 < _y1)
+                            _y1 = y2;
+                        if (y3 < _y1)
+                            _y1 = y3;
+                        if (y4 < _y1)
+                            _y1 = y4;
 
-						var _y4 = y1;
-						if (y2 > _y4)
-							_y4 = y2;
-						if (y3 > _y4)
-							_y4 = y3;
-						if (y4 > _y4)
-							_y4 = y4;
+                        var _y4 = y1;
+                        if (y2 > _y4)
+                            _y4 = y2;
+                        if (y3 > _y4)
+                            _y4 = y3;
+                        if (y4 > _y4)
+                            _y4 = y4;
 
-						_x2 = _x4;
-						_y2 = _y1;
-						_x3 = _x1;
-						_y3 = _y4;
-					}
+                        _x2 = _x4;
+                        _y2 = _y1;
+                        _x3 = _x1;
+                        _y3 = _y4;
+                    }
 
                     overlay.CheckPoint(x1, y1);
                     overlay.CheckPoint(x2, y2);
@@ -1759,14 +1753,14 @@ CAutoshapeTrack.prototype =
                     overlay.CheckPoint(x4, y4);
 
                     ctx.strokeStyle = _style_blue;
-					if (!nIsCleverWithTransform)
-					{
-						this.AddRectDash(ctx, x1, y1, x2, y2, x3, y3, x4, y4, 8, 3, true);
-					}
-					else
-					{
-						this.AddRectDashClever(ctx, _x1, _y1, _x4, _y4, 8, 3, true);
-					}
+                    if (!nIsCleverWithTransform)
+                    {
+                        this.AddRectDash(ctx, x1, y1, x2, y2, x3, y3, x4, y4, 8, 3, true);
+                    }
+                    else
+                    {
+                        this.AddRectDashClever(ctx, _x1, _y1, _x4, _y4, 8, 3, true);
+                    }
 
                     var ex1 = (x2 - x1) / _len_x;
                     var ey1 = (y2 - y1) / _len_x;
@@ -1825,26 +1819,26 @@ CAutoshapeTrack.prototype =
                                 var _w = Math.round(ROTATE_TRACK_W * rPR);
                                 var _w2 = Math.round(ROTATE_TRACK_W / 2 * rPR);
 
-								if (nIsCleverWithTransform)
-								{
-									_xI >>= 0;
-									_yI >>= 0;
-									_w2 >>= 0;
-									_w2 += 1;
-								}
+                                if (nIsCleverWithTransform)
+                                {
+                                    _xI >>= 0;
+                                    _yI >>= 0;
+                                    _w2 >>= 0;
+                                    _w2 += 1;
+                                }
 
-								//ctx.setTransform(ex1, ey1, -ey1, ex1, _xI, _yI);
+                                //ctx.setTransform(ex1, ey1, -ey1, ex1, _xI, _yI);
 
-								var _matrix = matrix.CreateDublicate();
-								_matrix.tx = 0;
-								_matrix.ty = 0;
-								var _xx = _matrix.TransformPointX(0, 1);
-								var _yy = _matrix.TransformPointY(0, 1);
-								var _angle = Math.atan2(_xx, -_yy) - Math.PI;
-								var _px = Math.cos(_angle);
-								var _py = Math.sin(_angle);
+                                var _matrix = matrix.CreateDublicate();
+                                _matrix.tx = 0;
+                                _matrix.ty = 0;
+                                var _xx = _matrix.TransformPointX(0, 1);
+                                var _yy = _matrix.TransformPointY(0, 1);
+                                var _angle = Math.atan2(_xx, -_yy) - Math.PI;
+                                var _px = Math.cos(_angle);
+                                var _py = Math.sin(_angle);
 
-								ctx.save();
+                                ctx.save();
 
                                 var cnvs = this.GetArrowCanvas(),
                                     cnvsRotate = this.GetRotatedArrowCanvas(),
@@ -1890,16 +1884,16 @@ CAutoshapeTrack.prototype =
 
                         ctx.beginPath();
 
-						if (!nIsCleverWithTransform)
-						{
-							ctx.moveTo(xc1, yc1);
-							ctx.lineTo(xc1 + ex2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)), yc1 + ey2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)));
-						}
-						else
-						{
-							ctx.moveTo((xc1 >> 0) + indent, (yc1 >> 0) + indent);
-							ctx.lineTo(((xc1 + ex2 * TRACK_DISTANCE_ROTATE2 * rPR) >> 0) + indent, ((yc1 + ey2 * TRACK_DISTANCE_ROTATE2 * rPR) >> 0) + indent);
-						}
+                        if (!nIsCleverWithTransform)
+                        {
+                            ctx.moveTo(xc1, yc1);
+                            ctx.lineTo(xc1 + ex2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)), yc1 + ey2 * (TRACK_DISTANCE_ROTATE2 * rPR + Math.round(rPR)));
+                        }
+                        else
+                        {
+                            ctx.moveTo((xc1 >> 0) + indent, (yc1 >> 0) + indent);
+                            ctx.lineTo(((xc1 + ex2 * TRACK_DISTANCE_ROTATE2 * rPR) >> 0) + indent, ((yc1 + ey2 * TRACK_DISTANCE_ROTATE2 * rPR) >> 0) + indent);
+                        }
 
                         ctx.stroke();
 
@@ -1909,76 +1903,76 @@ CAutoshapeTrack.prototype =
 
                     ctx.fillStyle = _style_white;
 
-					if (!nIsCleverWithTransform)
-					{
-						if (bIsEllipceCorner)
-						{
-							overlay.AddEllipse(x1, y1, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x2, y2, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x3, y3, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x4, y4, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-						}
-						else
-						{
-							overlay.AddRect3(x1, y1, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-							overlay.AddRect3(x2, y2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-							overlay.AddRect3(x3, y3, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-							overlay.AddRect3(x4, y4, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-						}
-					}
-					else
-					{
-						if (bIsEllipceCorner)
-						{
-							overlay.AddEllipse(x1, y1, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x2, y2, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x3, y3, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-							overlay.AddEllipse(x4, y4, Math.round(TRACK_CIRCLE_RADIUS * rPR));
-						}
-						else
-						{
-							overlay.AddRect2(_x1 + indent, _y1 + indent, SCALE_TRACK_RECT_SIZE);
-							overlay.AddRect2(_x2 + indent, _y2 + indent, SCALE_TRACK_RECT_SIZE);
-							overlay.AddRect2(_x3 + indent, _y3 + indent, SCALE_TRACK_RECT_SIZE);
-							overlay.AddRect2(_x4 + indent, _y4 + indent, SCALE_TRACK_RECT_SIZE);
-						}
-					}
+                    if (!nIsCleverWithTransform)
+                    {
+                        if (bIsEllipceCorner)
+                        {
+                            overlay.AddEllipse(x1, y1, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x2, y2, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x3, y3, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x4, y4, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                        }
+                        else
+                        {
+                            overlay.AddRect3(x1, y1, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                            overlay.AddRect3(x2, y2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                            overlay.AddRect3(x3, y3, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                            overlay.AddRect3(x4, y4, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                        }
+                    }
+                    else
+                    {
+                        if (bIsEllipceCorner)
+                        {
+                            overlay.AddEllipse(x1, y1, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x2, y2, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x3, y3, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                            overlay.AddEllipse(x4, y4, Math.round(TRACK_CIRCLE_RADIUS * rPR));
+                        }
+                        else
+                        {
+                            overlay.AddRect2(_x1 + indent, _y1 + indent, SCALE_TRACK_RECT_SIZE);
+                            overlay.AddRect2(_x2 + indent, _y2 + indent, SCALE_TRACK_RECT_SIZE);
+                            overlay.AddRect2(_x3 + indent, _y3 + indent, SCALE_TRACK_RECT_SIZE);
+                            overlay.AddRect2(_x4 + indent, _y4 + indent, SCALE_TRACK_RECT_SIZE);
+                        }
+                    }
 
-					if (!nIsCleverWithTransform)
-					{
-						if (bIsRectsTrack)
-						{
-							if (bIsRectsTrackX)
-							{
-								overlay.AddRect3((x1 + x2) / 2, (y1 + y2) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-								overlay.AddRect3((x3 + x4) / 2, (y3 + y4) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-							}
-							if (bIsRectsTrackY)
-							{
-								overlay.AddRect3((x2 + x4) / 2, (y2 + y4) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-								overlay.AddRect3((x3 + x1) / 2, (y3 + y1) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
-							}
-						}
-					}
-					else
-					{
-						if (bIsRectsTrack)
-						{
-							var _xC = (((_x1 + _x2) / 2) >> 0) + indent;
-							var _yC = (((_y1 + _y3) / 2) >> 0) + indent;
+                    if (!nIsCleverWithTransform)
+                    {
+                        if (bIsRectsTrack)
+                        {
+                            if (bIsRectsTrackX)
+                            {
+                                overlay.AddRect3((x1 + x2) / 2, (y1 + y2) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                                overlay.AddRect3((x3 + x4) / 2, (y3 + y4) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                            }
+                            if (bIsRectsTrackY)
+                            {
+                                overlay.AddRect3((x2 + x4) / 2, (y2 + y4) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                                overlay.AddRect3((x3 + x1) / 2, (y3 + y1) / 2, SCALE_TRACK_RECT_SIZE, ex1, ey1, ex2, ey2);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (bIsRectsTrack)
+                        {
+                            var _xC = (((_x1 + _x2) / 2) >> 0) + indent;
+                            var _yC = (((_y1 + _y3) / 2) >> 0) + indent;
 
-							if (bIsRectsTrackX)
-							{
-								overlay.AddRect2(_xC, _y1 + indent, SCALE_TRACK_RECT_SIZE);
-								overlay.AddRect2(_xC, _y3 + indent, SCALE_TRACK_RECT_SIZE);
-							}
-							if (bIsRectsTrackY)
-							{
-								overlay.AddRect2(_x2 + indent, _yC, SCALE_TRACK_RECT_SIZE);
-								overlay.AddRect2(_x1 + indent, _yC, SCALE_TRACK_RECT_SIZE);
-							}
-						}
-					}
+                            if (bIsRectsTrackX)
+                            {
+                                overlay.AddRect2(_xC, _y1 + indent, SCALE_TRACK_RECT_SIZE);
+                                overlay.AddRect2(_xC, _y3 + indent, SCALE_TRACK_RECT_SIZE);
+                            }
+                            if (bIsRectsTrackY)
+                            {
+                                overlay.AddRect2(_x2 + indent, _yC, SCALE_TRACK_RECT_SIZE);
+                                overlay.AddRect2(_x1 + indent, _yC, SCALE_TRACK_RECT_SIZE);
+                            }
+                        }
+                    }
 
                     ctx.fill();
                     ctx.stroke();
@@ -2092,7 +2086,7 @@ CAutoshapeTrack.prototype =
 
                     ctx.beginPath();
 
-					ctx.strokeStyle = _style_blue;
+                    ctx.strokeStyle = _style_blue;
                     this.AddRectDash(ctx, x1, y1, x2, y2, x3, y3, x4, y4, 8, 3, true);
 
                     ctx.beginPath();
@@ -2453,19 +2447,19 @@ CAutoshapeTrack.prototype =
 
         ctx.globalAlpha = _oldGlobalAlpha;
 
-		if (this.m_oOverlay.IsCellEditor)
-		{
-			this.m_oOverlay.SetBaseTransform();
+        if (this.m_oOverlay.IsCellEditor)
+        {
+            this.m_oOverlay.SetBaseTransform();
 
-			if (matrix)
-			{
-				matrix.tx *= AscCommon.AscBrowser.retinaPixelRatio;
-				matrix.ty *= AscCommon.AscBrowser.retinaPixelRatio;
-			}
-		}
-    },
+            if (matrix)
+            {
+                matrix.tx *= AscCommon.AscBrowser.retinaPixelRatio;
+                matrix.ty *= AscCommon.AscBrowser.retinaPixelRatio;
+            }
+        }
+    };
 
-    DrawTrackSelectShapes : function(x, y, w, h)
+    CAutoshapeTrack.prototype.DrawTrackSelectShapes = function(x, y, w, h)
     {
         var overlay = this.m_oOverlay;
         overlay.Show();
@@ -2516,9 +2510,9 @@ CAutoshapeTrack.prototype =
         ctx.beginPath();
         ctx.strokeRect(x1 - indent, y1 - indent, x2 - x1 + 1, y2 - y1 + 1);
         ctx.globalAlpha = globalAlphaOld;
-    },
+    };
 
-    AddRect : function(ctx, x, y, r, b, bIsClever)
+    CAutoshapeTrack.prototype.AddRect = function(ctx, x, y, r, b, bIsClever)
     {
         if (bIsClever) {
             var indent = 0.5 * Math.round(AscCommon.AscBrowser.retinaPixelRatio);
@@ -2529,9 +2523,9 @@ CAutoshapeTrack.prototype =
             ctx.moveTo(x,y);
             ctx.rect(x, y, r - x + 1, b - y + 1);
         }
-    },
+    };
 
-    AddRectDashClever : function(ctx, x, y, r, b, w_dot, w_dist, bIsStrokeAndCanUseNative)
+    CAutoshapeTrack.prototype.AddRectDashClever = function(ctx, x, y, r, b, w_dot, w_dist, bIsStrokeAndCanUseNative)
     {
         var _support_native_dash = (undefined !== ctx.setLineDash);
         var rPR = AscCommon.AscBrowser.retinaPixelRatio;
@@ -2609,9 +2603,9 @@ CAutoshapeTrack.prototype =
 
         if (bIsStrokeAndCanUseNative)
             ctx.stroke();
-    },
+    };
 
-    AddLineDash : function(ctx, x1, y1, x2, y2, w_dot, w_dist)
+    CAutoshapeTrack.prototype.AddLineDash = function(ctx, x1, y1, x2, y2, w_dot, w_dist)
     {
         var len = Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
         if (len < 1)
@@ -2622,10 +2616,10 @@ CAutoshapeTrack.prototype =
         var len_x2 = Math.abs(w_dist*(x2-x1)/len);
         var len_y2 = Math.abs(w_dist*(y2-y1)/len);
 
-		if (len_x1 < 0.01 && len_y1 < 0.01)
-			return;
-		if (len_x2 < 0.01 && len_y2 < 0.01)
-			return;
+        if (len_x1 < 0.01 && len_y1 < 0.01)
+            return;
+        if (len_x2 < 0.01 && len_y2 < 0.01)
+            return;
 
         if (x1 <= x2 && y1 <= y2)
         {
@@ -2695,9 +2689,9 @@ CAutoshapeTrack.prototype =
                 ctx.lineTo(i, j);
             }
         }
-    },
+    };
 
-    AddRectDash : function(ctx, x1, y1, x2, y2, x3, y3, x4, y4, w_dot, w_dist, bIsStrokeAndCanUseNative)
+    CAutoshapeTrack.prototype.AddRectDash = function(ctx, x1, y1, x2, y2, x3, y3, x4, y4, w_dot, w_dist, bIsStrokeAndCanUseNative)
     {
         var _support_native_dash = (undefined !== ctx.setLineDash);
 
@@ -2723,9 +2717,9 @@ CAutoshapeTrack.prototype =
 
         if (bIsStrokeAndCanUseNative)
             ctx.stroke();
-    },
+    };
 
-    DrawAdjustment : function(matrix, x, y, bTextWarp)
+    CAutoshapeTrack.prototype.DrawAdjustment = function(matrix, x, y, bTextWarp)
     {
         var overlay = this.m_oOverlay;
         this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);
@@ -2782,9 +2776,10 @@ CAutoshapeTrack.prototype =
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-    },
+    };
 
-    DrawGeomEditPoint: function(matrix, gmEditPoint) {
+    CAutoshapeTrack.prototype.DrawGeomEditPoint = function(matrix, gmEditPoint)
+    {
         var overlay = this.m_oOverlay;
         var ctx = overlay.m_oContext;
 
@@ -2851,9 +2846,10 @@ CAutoshapeTrack.prototype =
 
         ctx.stroke();
         ctx.fill();
-    },
+    };
 
-    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint, oBounds) {
+    CAutoshapeTrack.prototype.DrawGeometryEdit = function (matrix, pathLst, gmEditList, gmEditPoint, oBounds)
+    {
         var overlay = this.m_oOverlay;
         var ctx = overlay.m_oContext;
         ctx.lineWidth = Math.round(rPR);
@@ -2925,9 +2921,9 @@ CAutoshapeTrack.prototype =
         var pointX2 = (xDst + dKoefX * oBounds.max_x + 0.5) >> 0;
         var pointY2 = (yDst + dKoefY * oBounds.max_y + 0.5) >> 0;
         overlay.CheckRect(pointX1, pointY1, pointX2 - pointX1, pointY2 - pointY1);
-    },
+    };
 
-    DrawEditWrapPointsPolygon : function(points, matrix)
+    CAutoshapeTrack.prototype.DrawEditWrapPointsPolygon = function(points, matrix)
     {
         var _len = points.length;
         if (0 == _len)
@@ -2986,9 +2982,9 @@ CAutoshapeTrack.prototype =
         ctx.stroke();
 
         ctx.beginPath();
-    },
+    };
 
-    DrawEditWrapPointsTrackLines : function(points, matrix)
+    CAutoshapeTrack.prototype.DrawEditWrapPointsTrackLines = function(points, matrix)
     {
         var _len = points.length;
         if (0 == _len)
@@ -3048,9 +3044,9 @@ CAutoshapeTrack.prototype =
         ctx.beginPath();
 
         ctx.globalAlpha = globalAlpha;
-    },
+    };
 
-    DrawInlineMoveCursor : function(x, y, h, matrix, overlayNotes)
+    CAutoshapeTrack.prototype.DrawInlineMoveCursor = function(x, y, h, matrix, overlayNotes)
     {
         var overlay = this.m_oOverlay;
         this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);
@@ -3069,13 +3065,13 @@ CAutoshapeTrack.prototype =
         if (overlayNotes)
         {
             dKoefX = AscCommon.g_dKoef_mm_to_pix * rPR;
-			dKoefY = AscCommon.g_dKoef_mm_to_pix * rPR;
+            dKoefY = AscCommon.g_dKoef_mm_to_pix * rPR;
 
-			overlay = overlayNotes;
+            overlay = overlayNotes;
 
-			var offsets = overlayNotes.getNotesOffsets();
-			xDst = offsets.X;
-			yDst = offsets.Y;
+            var offsets = overlayNotes.getNotesOffsets();
+            xDst = offsets.X;
+            yDst = offsets.Y;
         }
 
         var bIsIdentMatr = true;
@@ -3111,7 +3107,7 @@ CAutoshapeTrack.prototype =
             ctx.strokeStyle = "#000000";
             var indent = 0.5 * Math.round(rPR);
 
-			var step = Math.round(rPR);
+            var step = Math.round(rPR);
             for (var i = 0; i < __h; i += (2 * step))
             {
                 ctx.moveTo(__x,__y + i + indent);
@@ -3168,9 +3164,9 @@ CAutoshapeTrack.prototype =
             var __x = _x1;
             var __y = _y1;
 
-			var step = rPR;
-			_dx *= step;
-			_dy *= step;
+            var step = rPR;
+            _dx *= step;
+            _dy *= step;
             for (var i = 0; i < _vec_len; i += (2 * step))
             {
                 ctx.moveTo(__x, __y);
@@ -3187,9 +3183,9 @@ CAutoshapeTrack.prototype =
 
             ctx.globalAlpha = _oldAlpha;
         }
-    },
+    };
 
-    drawFlowAnchor : function(x, y)
+    CAutoshapeTrack.prototype.drawFlowAnchor = function(x, y)
     {
         var _flow_anchor = (AscCommon.OverlayRasterIcons && AscCommon.OverlayRasterIcons.Anchor) ? AscCommon.OverlayRasterIcons.Anchor.get() : undefined;
         if (!_flow_anchor || (!editor || !editor.ShowParaMarks))
@@ -3231,9 +3227,9 @@ CAutoshapeTrack.prototype =
 
         ctx.drawImage(_flow_anchor, __x, __y, _w, _h);
         ctx.globalAlpha = _oldAlpha;
-    },
+    };
 
-    DrawPresentationComment : function(type, x, y, w, h)
+    CAutoshapeTrack.prototype.DrawPresentationComment = function(type, x, y, w, h)
     {
         if (!AscCommon.g_comment_image || !AscCommon.g_comment_image.asc_complete)
             return;
@@ -3273,9 +3269,9 @@ CAutoshapeTrack.prototype =
         this.m_oContext.drawImage(AscCommon.g_comment_image, _offset[0], _offset[1], _offset[2], _offset[3], __x, __y, rPR * _offset[2], rPR * _offset[3]);
 
         ctx.globalAlpha = _oldAlpha;
-    },
+    };
 
-    GetArrowCanvas: function()
+    CAutoshapeTrack.prototype.GetArrowCanvas = function()
     {
         if(!this.ArrowCanvas ||
             this.ArrowCanvas.width !== this.m_oOverlay.GetArrowSize())
@@ -3283,8 +3279,8 @@ CAutoshapeTrack.prototype =
             this.ArrowCanvas = this.CreateArrowCanvas();
         }
         return this.ArrowCanvas;
-    },
-    GetRotatedArrowCanvas: function()
+    };
+    CAutoshapeTrack.prototype.GetRotatedArrowCanvas = function()
     {
         if(!this.RotatedArrowCanvas ||
             this.RotatedArrowCanvas.width !== this.m_oOverlay.GetArrowSize())
@@ -3295,24 +3291,23 @@ CAutoshapeTrack.prototype =
         oCtx.setTransform(1, 0, 0, 1, 0, 0);
         oCtx.clearRect(0, 0, this.RotatedArrowCanvas.width, this.RotatedArrowCanvas.height);
         return this.RotatedArrowCanvas;
-    },
-    CreateEmptyArrowCanvas: function()
+    };
+    CAutoshapeTrack.prototype.CreateEmptyArrowCanvas = function()
     {
         var arrowSize = this.m_oOverlay.GetArrowSize();
         var oCanvas = document.createElement('canvas');
         oCanvas.width = arrowSize;
         oCanvas.height = arrowSize;
         return oCanvas;
-    },
-    CreateArrowCanvas: function()
+    };
+    CAutoshapeTrack.prototype.CreateArrowCanvas = function()
     {
         var oCanvas = this.CreateEmptyArrowCanvas();
         var cntx = oCanvas.getContext('2d');
         var rPR = AscCommon.AscBrowser.retinaPixelRatio;
         this.m_oOverlay.drawArrow(cntx, 0, 0, Math.round(4 * rPR), {r: 147, g: 147, b: 147}, true);
         return oCanvas;
-    }
-};
+    };
 
 	function DrawTextByCenter() // this!
 	{

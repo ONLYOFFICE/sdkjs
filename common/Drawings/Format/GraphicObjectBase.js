@@ -1193,7 +1193,7 @@
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
 		var outerShdw = this.getOuterShdw && this.getOuterShdw();
-		if (this.shdwSp && outerShdw && !graphics.IsSlideBoundsCheckerType) {
+		if (this.shdwSp && outerShdw && !graphics.isBoundsChecker()) {
 			var oTransform = new AscCommon.CMatrix();
 			var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
 			var dir = outerShdw.dir ? outerShdw.dir : 0;

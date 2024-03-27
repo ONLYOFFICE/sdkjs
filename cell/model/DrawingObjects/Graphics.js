@@ -103,9 +103,6 @@ function CGraphics()
     this.m_oFontManager2    = null;
     this.m_oLastFont2       = null;
 
-    this.ClearMode          = false;
-    this.IsRetina           = false;
-
 	this.dash_no_smart = null;
 }
 
@@ -1196,9 +1193,6 @@ CGraphics.prototype =
             this.m_oContext.setTransform(this.m_oFullTransform.sx,this.m_oFullTransform.shy,this.m_oFullTransform.shx,
                 this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
         }
-    },
-    charspace : function(space)
-    {
     },
 
     // private methods

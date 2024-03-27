@@ -3674,11 +3674,6 @@
 				this.Memory.WriteLong(nFlag);
 				this.Memory.Seek(nEndPos);
 			}
-		},
-		
-		IsPdfRenderer : function()
-		{
-			return this.RENDERER_PDF_FLAG;
 		}
 	};
 

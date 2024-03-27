@@ -5227,7 +5227,7 @@ CPresentation.prototype.checkGridCache = function (oGraphics) {
 		oGraphics.IsThumbnail ||
 		oGraphics.animationDrawer ||
 		oGraphics.IsDemonstrationMode ||
-		oGraphics.IsSlideBoundsCheckerType) {
+		oGraphics.isBoundsChecker()) {
 		return;
 	}
 	let nWidth = (oCoordTr.sx * this.GetWidthMM() + 0.5) >> 0;
@@ -5453,7 +5453,7 @@ CPresentation.prototype.GetTargetPosition = function () {
 
 // Отрисовка содержимого Документа
 CPresentation.prototype.Draw = function (nPageIndex, pGraphics) {
-	if (!pGraphics.IsSlideBoundsCheckerType) {
+	if (!pGraphics.isBoundsChecker()) {
 		AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
 	}
 	this.Slides[nPageIndex] && this.Slides[nPageIndex].draw(pGraphics);
@@ -9174,7 +9174,7 @@ CPresentation.prototype.Notes_GetHeight = function () {
 
 CPresentation.prototype.Notes_Draw = function (SlideIndex, graphics) {
 	if (this.Slides[SlideIndex]) {
-		if (!graphics.IsSlideBoundsCheckerType) {
+		if (!graphics.isBoundsChecker()) {
 			AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
 		}
 		this.Slides[SlideIndex].drawNotes(graphics);

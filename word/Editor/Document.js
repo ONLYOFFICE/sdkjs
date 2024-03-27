@@ -5708,11 +5708,11 @@ CDocument.prototype.Draw                                     = function(nPageInd
     if (section_borders_ZOrderFront === SectPr.Get_Borders_ZOrder())
         this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
 
-    if (docpostype_HdrFtr === this.CurPos.Type)
+    if (docpostype_HdrFtr === this.CurPos.Type && pGraphics.isSupportEditFeatures())
     {
         pGraphics.put_GlobalAlpha(false, 1.0);
 
-        // Рисуем колонтитулы
+		// Рисуем колонтитулы
         var SectIndex = this.SectionsInfo.Get_Index(Page_StartPos);
         var SectCount = this.SectionsInfo.Get_Count();
 

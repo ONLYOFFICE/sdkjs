@@ -3454,7 +3454,7 @@
 					}
 					oDocRenderer.SaveGrState();
 					oDocRenderer.RestoreGrState();
-					oDocRenderer.PrintPreview = true;
+					oDocRenderer.IsPrintPreview = true;
 					let oInvertBaseTransform = AscCommon.global_MatrixTransformer.Invert(oDocRenderer.m_oCoordTransform);
 					clipLeftShape = (t.getCellLeft(range.c1) - offsetX) >> 0;
 					clipTopShape = (t.getCellTop(range.r1) - offsetY) >> 0;
@@ -3467,7 +3467,7 @@
 					oDocRenderer.SaveGrState();
 					oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
 					t.objectRender.print(drawingPrintOptions);
-					delete oDocRenderer.PrintPreview;
+					delete oDocRenderer.IsPrintPreview;
 					oDocRenderer.RestoreGrState();
 					if (oDocRenderer.m_oCoordTransform) {
 						oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;

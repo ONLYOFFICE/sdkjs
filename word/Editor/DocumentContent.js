@@ -1433,10 +1433,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
     if (CurPage < 0 || CurPage >= this.Pages.length)
         return;
 
-    if (pGraphics.Start_Command)
-    {
-        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-    }
+    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
 	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
 
@@ -1489,17 +1486,12 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 		pGraphics.RestoreGrState();
 	}
 
-
-
     if (ClipInfo)
     {
         pGraphics.RestoreGrState();
     }
 
-    if (pGraphics.End_Command)
-    {
-        pGraphics.End_Command();
-    }
+    pGraphics.End_Command();
 };
 CDocumentContent.prototype.GetAllComments = function(AllComments)
 {

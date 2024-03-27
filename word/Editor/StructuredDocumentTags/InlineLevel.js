@@ -626,7 +626,7 @@ CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 };
 CInlineLevelSdt.prototype.private_IsAddFormFieldToGraphics = function(oGraphics, oTransform)
 {
-	if (oGraphics.isPrintMode || !oGraphics.IsPdfRenderer || !oGraphics.IsPdfRenderer())
+	if (oGraphics.isPrintMode || !oGraphics.isPdf())
 		return false;
 	
 	var _oTransform = oTransform;

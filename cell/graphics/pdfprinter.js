@@ -595,10 +595,6 @@ CPdfPrinter.prototype =
     {
         return this.DocumentRenderer.FillText2(x,y,text);
     },
-    charspace : function(space)
-    {
-        return this.DocumentRenderer.charspace(space);
-    },
     SetIntegerGrid : function(param)
     {
         return this.DocumentRenderer.SetIntegerGrid(param);

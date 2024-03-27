@@ -1205,7 +1205,7 @@ ParaDrawing.prototype.Draw = function( X, Y, pGraphics, PDSE)
 	{
 		nPageIndex = PDSE.Page;
 	}
-	if (pGraphics.Start_Command)
+	if (pGraphics.isTextDrawer())
 	{
 		pGraphics.m_aDrawings.push(new AscFormat.ParaDrawingStruct(undefined, this));
 		return;
@@ -1216,10 +1216,8 @@ ParaDrawing.prototype.Draw = function( X, Y, pGraphics, PDSE)
 		this.draw(pGraphics, PDSE);
 		pGraphics.shapePageIndex = null;
 	}
-	if (pGraphics.End_Command)
-	{
-		pGraphics.End_Command();
-	}
+
+	pGraphics.End_Command();
 };
 
 ParaDrawing.prototype.Measure = function()

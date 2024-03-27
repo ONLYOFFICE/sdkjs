@@ -192,7 +192,7 @@ CBlockLevelSdt.prototype.Read_FromBinary2 = function(Reader)
 };
 CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 {
-	if (this.LogicDocument.GetSdtGlobalShowHighlight() && undefined === oGraphics.RENDERER_PDF_FLAG)
+	if (this.LogicDocument.GetSdtGlobalShowHighlight() && !oGraphics.isPdf())
 	{
 		var oBounds = this.GetContentBounds(CurPage);
 		var oColor  = this.LogicDocument.GetSdtGlobalColor();

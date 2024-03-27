@@ -537,7 +537,6 @@ MasterSlide.prototype.scale = function (kw, kh) {
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;
-    this.IsRetina       = false;
     this.WidthMM        = 0;
     this.HeightMM       = 0;
 

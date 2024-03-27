@@ -10269,12 +10269,12 @@
         return false;
     };
     CLegend.prototype.draw = function(g) {
-        g.bDrawSmart = true;
+        g.IsDrawSmart = true;
         CShape.prototype.draw.call(this, g);
         for(var i = 0; i < this.calcEntryes.length; ++i) {
             this.calcEntryes[i].draw(g);
         }
-        g.bDrawSmart = false;
+        g.IsDrawSmart = false;
     };
     CLegend.prototype.hit = function(x, y) {
         var t_x = this.invertTransform.TransformPointX(x, y);
