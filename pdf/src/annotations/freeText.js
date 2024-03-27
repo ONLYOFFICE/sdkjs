@@ -1038,6 +1038,7 @@
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
+        this.isInMove       = false;
 
         this.selectStartPage = this.GetPage();
         let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
