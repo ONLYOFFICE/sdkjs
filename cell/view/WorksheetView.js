@@ -6998,7 +6998,7 @@
 			}
 		}
 
-        if (canFill) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
+        if (canFill && !notStroke) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
             ctx.setLineWidth(1);
             ctx.setStrokeStyle(colorN);
             ctx.beginPath();
@@ -7238,13 +7238,14 @@
 
         this.drawTraceDependents();
 
-		if (this.model.changeRanges) {
-			for (let i in this.model.changeRanges) {
-				let range = this.model.changeRanges[i].range;
-				let color = this.model.changeRanges[i].color;
+		if (this.model.changedRanges) {
+			for (let i in this.model.changedRanges) {
+				let range = this.model.changedRanges[i].range;
+				let color = this.model.changedRanges[i].color;
 				if (range && color) {
 					this._drawElements(this._drawSelectionElement, range,
-						AscCommonExcel.selectionLineType.Selection, new CColor(color.r, color.g, color.b));
+						AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke,
+						new CColor(color.r, color.g, color.b));
 				}
 			}
 		}
@@ -7706,8 +7707,8 @@
             });
         }
 
-		if (this.model.changeRanges) {
-			this.model.changeRanges.forEach(function (item) {
+		if (this.model.changedRanges) {
+			this.model.changedRanges.forEach(function (item) {
 				var arnIntersection = item && item.range.intersectionSimple(range);
 				if (arnIntersection) {
 					_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;

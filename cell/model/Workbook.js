@@ -3437,13 +3437,9 @@
 					});
 					if (oThis.oApi.VersionHistory && item.nSheetId && item.oRange && item.GetChangedRange) {
 						let ws = this.getWorksheetById(item.nSheetId);
-						let changedRange = ws && item.GetChangedRange();
-						if (changedRange) {
-							if (!ws.changeRanges) {
-								ws.changeRanges = [];
-							}
-
-							ws.changeRanges.push({range: item.GetChangedRange(), color: oColor});
+						let changedRanged = ws && item.GetChangedRange();
+						if (changedRanged) {
+							ws.addToChangedRanges(changedRanged, oColor);
 						}
 					}
 				}
@@ -5328,6 +5324,8 @@
 		this.bFillHandleRightClick = false;
 		this.activeFillType = null;
 		this.timelines = [];
+
+		this.changedRanges = null;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -13050,6 +13048,31 @@
 				}
 			}
 		}
+	};
+
+	Worksheet.prototype.addToChangedRanges = function(range, oColor) {
+		if (!range) {
+			return;
+		}
+		if (!this.changedRanges) {
+			this.changedRanges = [];
+		}
+		if (this.changedRanges.length) {
+			for (let i in this.changedRanges) {
+				if (!this.changedRanges[i] || !this.changedRanges[i].range) {
+					continue;
+				}
+				if (this.changedRanges[i].range.isEqual(range)) {
+					return;
+				} else if (this.changedRanges[i].range.intersection(range)) {
+					let _difference = this.changedRanges[i].difference(range);
+					console.log("ggg")
+					//this.changedRanges.concat(_difference);
+					//return;
+				}
+			}
+		}
+		this.changedRanges.push({range: range, color: oColor});
 	};
 
 //-------------------------------------------------------------------------------------------------

@@ -354,7 +354,57 @@ function (window, undefined) {
 	};
 
 	UndoRedoItemSerializable.prototype.GetChangedRange = function () {
-		let nType = this.oData && this.oData.getType();
+
+		/*AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
+		AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
+		AscCommonExcel.g_oUndoRedoWorkbook = new AscCommonExcel.UndoRedoWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoCol = new AscCommonExcel.UndoRedoRowCol(wbModel, false);
+		AscCommonExcel.g_oUndoRedoRow = new AscCommonExcel.UndoRedoRowCol(wbModel, true);
+		AscCommonExcel.g_oUndoRedoComment = new AscCommonExcel.UndoRedoComment(wbModel);
+		AscCommonExcel.g_oUndoRedoAutoFilters = new AscCommonExcel.UndoRedoAutoFilters(wbModel);
+		AscCommonExcel.g_oUndoRedoSparklines = new AscCommonExcel.UndoRedoSparklines(wbModel);
+		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
+		AscCommonExcel.g_oUndoRedoSharedFormula = new AscCommonExcel.UndoRedoSharedFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoLayout = new AscCommonExcel.UndoRedoRedoLayout(wbModel);
+		AscCommonExcel.g_oUndoRedoHeaderFooter = new AscCommonExcel.UndoRedoHeaderFooter(wbModel);
+		AscCommonExcel.g_oUndoRedoArrayFormula = new AscCommonExcel.UndoRedoArrayFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoSortState = new AscCommonExcel.UndoRedoSortState(wbModel);
+		AscCommonExcel.g_oUndoRedoSlicer = new AscCommonExcel.UndoRedoSlicer(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotTables = new AscCommonExcel.UndoRedoPivotTables(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotFields = new AscCommonExcel.UndoRedoPivotFields(wbModel);
+		AscCommonExcel.g_oUndoRedoCF = new AscCommonExcel.UndoRedoCF(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedRange = new AscCommonExcel.UndoRedoProtectedRange(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedSheet = new AscCommonExcel.UndoRedoProtectedSheet(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedWorkbook = new AscCommonExcel.UndoRedoProtectedWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoNamedSheetViews = new AscCommonExcel.UndoRedoNamedSheetViews(wbModel);
+		AscCommonExcel.g_oUndoRedoUserProtectedRange = new AscCommonExcel.UndoRedoUserProtectedRange(wbModel);*/
+
+
+		//let nActionType = this.nActionType;
+		//AscCH.historyitem_Workbook_SheetAdd
+
+		//this.oClass.nType
+		let res = null;
+		let classType = this.oClass.nType;
+		if (classType === AscCommonExcel.g_oUndoRedoCell.nType) {
+			res = this.oRange;
+		} else if (classType === AscCommonExcel.g_oUndoRedoWorksheet) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoCol) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoRow) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoComment) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoSortState) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoCF) {
+
+		} else if (classType === AscCommonExcel.g_oUndoRedoAutoFilters) {
+
+		}
+
+		/*let nType = this.oData && this.oData.getType();
 		let res = null;
 		switch (nType) {
 			case UndoRedoDataTypes.CellSimpleData:
@@ -381,7 +431,7 @@ function (window, undefined) {
 			case UndoRedoDataTypes.FromTo:
 			case UndoRedoDataTypes.FromToRowCol:
 				break;
-		}
+		}*/
 		return res;
 	};
 
