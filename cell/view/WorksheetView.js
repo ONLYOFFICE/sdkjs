@@ -19177,7 +19177,6 @@
 	};
 
 	WorksheetView.prototype.openCellEditor = function (editor, enterOptions, selectionRange) {
-		// !!*
 		var t = this, col, row, c, fl, mc, bg, isMerged;
 
 		if (selectionRange) {
