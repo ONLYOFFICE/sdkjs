@@ -3435,7 +3435,7 @@
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
 					});
-					if (oThis.oApi.VersionHistory && item.nSheetId && item.oRange && item.GetChangedRange) {
+					if (oThis.oApi.VersionHistory && item.nSheetId && item.GetChangedRange) {
 						let ws = this.getWorksheetById(item.nSheetId);
 						let changedRanged = ws && item.GetChangedRange();
 						if (changedRanged) {
@@ -13054,6 +13054,19 @@
 		if (!range) {
 			return;
 		}
+		if (Array.isArray(range)) {
+			for (let i in range) {
+				this._addToChangedRanges(range[i], oColor);
+			}
+		} else {
+			this._addToChangedRanges(range, oColor);
+		}
+	};
+
+	Worksheet.prototype._addToChangedRanges = function(range, oColor) {
+		if (!range) {
+			return;
+		}
 		if (!this.changedRanges) {
 			this.changedRanges = [];
 		}
@@ -13065,10 +13078,13 @@
 				if (this.changedRanges[i].range.isEqual(range)) {
 					return;
 				} else if (this.changedRanges[i].range.intersection(range)) {
-					let _difference = this.changedRanges[i].difference(range);
-					console.log("ggg")
-					//this.changedRanges.concat(_difference);
-					//return;
+					let _difference = this.changedRanges[i].range.difference(range);
+					if (_difference) {
+						for (let j in _difference) {
+							this.changedRanges.push({range: _difference[j], color: oColor});
+						}
+					}
+					return;
 				}
 			}
 		}
