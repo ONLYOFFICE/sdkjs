@@ -18910,14 +18910,6 @@
 
 				// set selection if dynamic arrays are used
 				if (dynamicSelectionRange) {
-					if (!ws.selectionRange) {
-						ws.selectionRange = new AscCommonExcel.SelectionRange(ws);
-					}
-					if (!ws.copySelection) {
-						ws.copySelection = new AscCommonExcel.SelectionRange(ws);
-					}
-
-					ws.selectionRange && ws.selectionRange.assign2(bbox);
 					ws.copySelection && ws.copySelection.assign2(bbox);
 				}
 			}
