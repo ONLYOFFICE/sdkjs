@@ -776,6 +776,12 @@
 						window.Asc.plugin.onExternalMouseUp();
 					break;
 				}
+				case "onPluginMessage":
+				{
+					if (window.Asc.plugin.onPluginMessage)
+						window.Asc.plugin.onPluginMessage(pluginData.message);
+					break;
+				}
 				case "onMethodReturn":
 				{
 					window.Asc.plugin.isWaitMethod = false;

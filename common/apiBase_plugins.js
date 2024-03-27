@@ -1943,4 +1943,36 @@
 	{
 		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
 	};
+
+	/**
+	 * Returns an array of all runned plugins.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetAllRunnedPlugins
+	 * @returns {Array.<string>}
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_GetAllRunnedPlugins"] = function()
+	{
+		const arrRunned = [];
+		for (let i in window.g_asc_plugins.runnedPluginsMap) {
+			arrRunned.push(i);
+		}
+		return arrRunned;
+	};
+
+	/**
+	 * Sends a message to a other plugin by guid.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} guid - The plugin guid wich will receive a message.
+	 * @param {object | string | number | boolean | array} data - The event data.
+	 * @alias SendMessageToPlugin
+	 * @returns {boolean} - Returns true if the message was successfully sent
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_SendMessageToPlugin"] = function(guid, data)
+	{
+		return window.g_asc_plugins.onPluginMessage(data, guid);
+	};
 })(window);
