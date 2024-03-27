@@ -372,6 +372,22 @@
 			oDrDoc.TargetEnd();
 		}
 	};
+    CPdfGraphicFrame.prototype.Set_CurrentElement = function () {
+        let oDoc        = this.GetDocument();
+        let oController = oDoc.GetController();
+
+		oController.resetSelection(true);
+        if (this.group) {
+            var main_group = this.group.getMainGroup();
+            oController.selectObject(main_group, 0);
+            main_group.selectObject(this, 0);
+            main_group.selection.textSelection = this;
+        }
+        else {
+            oController.selectObject(this, 0);
+            oController.selection.textSelection = this;
+        }
+	};
     CPdfGraphicFrame.prototype.Get_PageFields = function (nPage) {
         return this.Get_PageLimits(nPage);
     };
