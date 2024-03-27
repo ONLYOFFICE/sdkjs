@@ -61,7 +61,7 @@
 		NativeDrawer  : 6
 	};
 
-	function CGraphicsBase(type)
+	function CGraphicsBase(type, isUseGrState)
 	{
 		this.type = (undefined === type) ? AscCommon.RendererType.Base : type;
 		this.isDarkMode   = false;
@@ -81,6 +81,12 @@
 		this.IsDrawSmart = false;
 		this.IsPrintMode = false;
 		this.IsPrintPreview = false;
+
+		if (true === isUseGrState)
+		{
+			this.GrState = new AscCommon.CGrState();
+			this.GrState.Parent = this;
+		}
 	}
 
 	// TYPE
@@ -122,7 +128,7 @@
 		this.b_color2_old = this.b_color2; this.b_color2 = _darkColor(this, this.b_color2_old);
 	};
 
-	CGraphicsBase.prototype.darkMode2 = function()
+	CGraphicsBase.prototype._darkMode2 = function()
 	{
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
@@ -143,7 +149,7 @@
 		this.b_color2_old = this.b_color2; this.b_color2 = _darkColor(this, this.b_color2_old);
 	};
 
-	CGraphicsBase.prototype.darkMode3 = function()
+	CGraphicsBase.prototype._darkMode3 = function()
 	{
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
@@ -169,9 +175,19 @@
 		this.b_color2_old = this.b_color2; this.b_color2 = _darkColor(this, this.b_color2_old);
 	};
 
-	CGraphicsBase.prototype.setDarkMode = function()
+	CGraphicsBase.prototype.setDarkMode = function(mode)
 	{
-		this._darkMode3();
+		if (undefined === mode)
+			this._darkMode3();
+		else
+		{
+			if (mode === 1)
+				this._darkMode1();
+			else if (mode === 2)
+				this.darkMode2();
+			else
+				this.darkMode3();
+		}
 	};
 
 	CGraphicsBase.prototype.StartDrawShape = function(type, isForm)
@@ -299,12 +315,6 @@
 	};
 
 	// GRSTATE
-	CGraphicsBase.prototype.initGrStare = function()
-	{
-		this.GrState = new AscCommon.CGrState();
-		this.GrState.Parent = this;
-	};
-
 	CGraphicsBase.prototype.SavePen = function()
 	{
 		this.GrState && this.GrState.SavePen();

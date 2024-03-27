@@ -908,7 +908,7 @@ function CreatePenFromParams(oUnifill, nStyle, nLineCap, nLineJoin, dLineWidth, 
 
 function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
 {
-    AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.TextDrawer);
+    AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.TextDrawer, true);
 
     this.m_oFont =
     {
@@ -979,8 +979,6 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
 
     this.m_bIsTextDrawer = true;
     this.pathMemory = new AscFormat.CPathMemory();
-
-    this.initGrStare();
 }
 
 CTextDrawer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);

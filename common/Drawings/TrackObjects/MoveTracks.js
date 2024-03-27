@@ -744,7 +744,7 @@ function MoveAnnotationTrack(originalObject)
 				oGraphicsWord.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale,
                     this.tmpCanvas.width * AscCommon.g_dKoef_pix_to_mm, this.tmpCanvas.height * AscCommon.g_dKoef_pix_to_mm);
 				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
                 break;
             }

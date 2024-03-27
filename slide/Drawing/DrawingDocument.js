@@ -5918,7 +5918,7 @@ function CNotesDrawer(page)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 
 		g.SaveGrState();
@@ -6438,7 +6438,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 		oControl.draw(g);
 		g.RestoreGrState();
