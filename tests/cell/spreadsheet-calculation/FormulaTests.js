@@ -31437,7 +31437,6 @@ $(function () {
 		assert.strictEqual(resultCol, 1, 'Cols in ={1,2}*{3;4}');
 
 		// #N/A check
-		let val;
 		ws.getRange2("A100:Z110").cleanAll();
 
 		bboxParent = ws.getRange2("D100").bbox;
@@ -31446,16 +31445,12 @@ $(function () {
 		oParser.setArrayFormulaRef(ws.getRange2("D100:E104").bbox);	
 		assert.ok(oParser.parse(), 'A100:B101');
 		array = oParser.calculate();
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [0,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [1,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [1,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");
@@ -31472,16 +31467,12 @@ $(function () {
 		oParser.setArrayFormulaRef(ws.getRange2("I100:J104").bbox);	
 		assert.ok(oParser.parse(), 'A100:B101');
 		array = oParser.calculate();
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 1 || val === "", true, "Result of =A100:B101 [0,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), 1, "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [1,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [1,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");
@@ -31498,16 +31489,12 @@ $(function () {
 		oParser.setArrayFormulaRef(ws.getRange2("M100:O104").bbox);	
 		assert.ok(oParser.parse(), 'A100:B101');
 		array = oParser.calculate();
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 1 || val === "", true, "Result of =A100:B101 [0,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [0,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1).getValue(), 1, "Result of =A100:B101 [0,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 1).getValue(), "", "Result of =A100:B101 [0,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [0,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [0,3]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue();
-		assert.strictEqual(val === 0 || val === "", true, "Result of =A100:B101 [1,0]");
-		val = oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue();
-		assert.strictEqual(val === "#N/A", true, "Result of =A100:B101 [1,1]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1).getValue(), "", "Result of =A100:B101 [1,0]");
+		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 1).getValue(), "#N/A", "Result of =A100:B101 [1,1]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 2).getValue(), "#N/A", "Result of =A100:B101 [1,2]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 1, bboxParent.c1 + 3).getValue(), "#N/A", "Result of =A100:B101 [1,3]");
 		assert.strictEqual(oParser.simplifyRefType(array, ws, bboxParent.r1 + 2, bboxParent.c1).getValue(), "#N/A", "Result of =A100:B101 [2,0]");

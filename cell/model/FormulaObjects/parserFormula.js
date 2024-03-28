@@ -8551,7 +8551,7 @@ function parserFormula( formula, parent, _ws ) {
 						} else {
 							val = val.getValueByRowCol(row, col);
 							if (!val) {
-								val = new cNumber(0);
+								val = new cEmpty();
 							}
 						}
 
