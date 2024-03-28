@@ -380,13 +380,39 @@
 			.getValue();
 	};
 
-	Api.prototype.AddCustomFunction = function (func, options) {
+
+	/**
+	 * Creates a new custom function.
+	 * The description of the function parameters and result is set using jsdoc.
+	 * Parameters and results can be set as number/string/bool/any types.
+	 * Parameters can be required or optional. Also user can set the default value.
+	 *
+	 * Example with description:
+	 *
+	 * 'Calculates the sum of the specified numbers.
+	 * '@customfunction
+	 * '@param {number} first Required first number.
+	 * '@param {number} [second] Optional second number to add.
+	 * '@returns {number} The sum of the numbers.
+	 * 'Api.AddCustomFunction(function add(first, second) {
+			if (second === null) {
+				second = 0;
+			}
+			return first + second;
+		})
+	 * Tag customfunction is required.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {Function} fCustom - A new function for calculating.
+	 */
+	Api.prototype.AddCustomFunction = function (fCustom) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
 		// take the first element and validate it
 		const parsedJSDoc = this.parsedJSDoc.shift();
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
-		const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
-		if (!isValidJsDoc && !isValidOptions) {
+		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
+		if (!isValidJsDoc/* && !isValidOptions*/) {
 			throwException(new Error('Invalid parameters type in JSDOC or options.'));
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
@@ -396,7 +422,8 @@
 
 		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
 
-		//1. jsdoc example, js excel api
+
+		//1. jsdoc params:
 		/**
 		 * Calculates the sum of the specified numbers
 		 * @customfunction
@@ -405,37 +432,14 @@
 		 * @param {number} [third] Third number to add. If omitted, third = 0.
 		 * @returns {number} The sum of the numbers.
 		 */
-		/*function add(first, second, third) {
+		/*Api.AddCustomFunction(function add(first, second, third) {
 			if (third === null) {
 				third = 0;
 			}
 			return first + second + third;
-		}*/
+		})*/
 
-		//2. create base function and add params
-		/*(function()
-		{
-			function ABS1() {
-			}
-
-			//***array-formula***
-			ABS1.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
-			ABS1.prototype.constructor = ABS1;
-			ABS1.prototype.name = 'ABS1';
-			ABS1.prototype.argumentsMin = 1;
-			ABS1.prototype.argumentsMax = 1;
-			ABS1.prototype.argumentsType = [Asc.c_oAscFormulaArgumentType.number];
-			ABS1.prototype.Calculate = function (arg) {
-				return new AscCommonExcel.cNumber(arg[0].getValue());
-			};
-			Api.AddCustomFunction(ABS1);
-		})();*/
-
-		/*AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(function1);
-		window['AscCommonExcel'].getFormulasInfo();*/
-
-		//3. test variant
+		//2. object params
 		/*
 
 		(function()
@@ -476,57 +480,9 @@
 					 ]
 				}
 			);
-		})();
+		})();*/
 
-		*/
-
-		//options ->
-			/*{"params":
-			[
-				{
-					"defaultValue": "",
-					"description": "First number. *",
-					"name": "first",
-					"optional": false,
-					"parentName": "",
-					"type": "number" // "string", "bool"
-				},
-				{
-					"defaultValue": "",
-					"description": "Second number. *",
-					"name": "second",
-					"optional": false,
-					"parentName": "",
-					"type": "number"
-				},
-				{
-					"defaultValue": "",
-					"description": "Second number. *",
-					"name": "second",
-					"optional": true,
-					"parentName": "",
-					"type": "number"
-				}
-			]
-		*/
-
-		//result jsdoc variant:
-		/**
-		 * Calculates the sum of the specified numbers
-		 * @customfunction
-		 * @param {number} first First number.
-		 * @param {number} second Second number.
-		 * @param {number} [third] Third number to add. If omitted, third = 0.
-		 * @returns {number} The sum of the numbers.
-		 */
-		/*Api.AddCustomFunction(function add(first, second, third) {
-			if (third === null) {
-				third = 0;
-			}
-			return first + second + third;
-		})*/
-
-		this.addCustomFunction(func, isValidJsDoc ? parsedJSDoc : options);
+		this.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
 	};
 
 	/**
