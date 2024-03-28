@@ -1213,8 +1213,8 @@
 		const shapeBounds = this.getBounds();
 		checkBounds(bounds, shapeBounds);
 	};
-	Position.prototype.getBounds = function (isClean) {
-		const matrix = this.getMatrix();
+	Position.prototype.getBounds = function (isClean, customMatrix) {
+		const matrix = customMatrix || this.getMatrix();
 		const pos = isClean ? this.cleanParams : this;
 		const x1 = matrix.TransformPointX(pos.x, pos.y);
 		const x2 = matrix.TransformPointX(pos.x + pos.width, pos.y);
@@ -1427,6 +1427,7 @@
 		const presNode = this.node;
 		// todo: think about it
 		const contentNodes = !presNode.isTxXfrm() ? presNode.contentNodes : [];
+		shapeSmartArtInfo.shape = this;
 		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
 		editorShape.setShapeSmartArtInfo(shapeSmartArtInfo);
 		let sumRot = this.rot;
@@ -6396,28 +6397,57 @@ PresNode.prototype.addChild = function (ch, pos) {
 			width = width || 0;
 			height = height || 0;
 		}
-		if (layoutShape.rot === 45 || layoutShape.rot === 225) {
-			const side = width / Math.sqrt(2);
-			const center = (width - side) / 2;
-			x += center;
-			y += center;
-			width = side;
-			height = side;
+		if (layoutShape.rot) {
+			const pos = new Position(this);
+			pos.rot = shape.rot;
+			pos.height = height;
+			pos.width = width;
+
+			const bounds = pos.getBounds();
+			const boundsWidth = bounds.r - bounds.l;
+			const boundsHeight = bounds.b - bounds.t;
+			const widthCoefficient = boundsWidth !== 0 ? width / boundsWidth : 1;
+			const heightCoefficient = boundsHeight !== 0 ? height / boundsHeight : 1;
+			const mainCoefficient = Math.min(widthCoefficient, heightCoefficient);
+
+			const matrix = pos.getMatrix();
+			matrix.Scale(widthCoefficient, heightCoefficient);
+			matrix.get
+			matrix.RotateAt(-pos.rot * radToDeg, width / 2, height / 2);
+			const l = matrix.TransformPointX(0, 0);
+			const r = matrix.TransformPointX(width, height);
+			const t = matrix.TransformPointY(0, 0);
+			const b = matrix.TransformPointY(width, height);
+
+			const newWidth = r - l;
+			const newHeight = b - t;
+			x += (width - newWidth) / 2
+			y += (height - newHeight) / 2
+			height = newHeight;
+			width = newWidth
 		}
+		// if (layoutShape.rot === 45 || layoutShape.rot === 225) {
+		// 	const side = width / Math.sqrt(2);
+		// 	const center = (width - side) / 2;
+		// 	x += center;
+		// 	y += center;
+		// 	width = side;
+		// 	height = side;
+		// }
+
+		// if (this.isSwitchWidthHeight()) {
+		// 	x += (width - height) / 2;
+		// 	y += (height - width) / 2;
+		// 	let temp = width;
+		// 	width = height;
+		// 	height = temp;
+		// 	temp = scaleWidth;
+		// 	scaleWidth = scaleHeight;
+		// 	scaleHeight = temp;
+		// }
+
 		let scaleWidth = width * widthCoef;
 		let scaleHeight = height * heightCoef;
-		if (this.isSwitchWidthHeight()) {
-			x += (width - height) / 2;
-			y += (height - width) / 2;
-			let temp = width;
-			width = height;
-			height = temp;
-			temp = scaleWidth;
-			scaleWidth = scaleHeight;
-			scaleHeight = temp;
-		}
-
-
 		shape.x = x;
 		shape.y = y;
 
