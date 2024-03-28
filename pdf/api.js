@@ -688,6 +688,30 @@
 
 		return false;
 	};
+	PDFEditorApi.prototype.asc_getTableStylesPreviews = function(bUseDefault, arrIds) {
+		let oDoc = this.getPDFDoc();
+
+		this.private_CheckTableStylesPreviewGenerator();
+		let arrPreviews = [];
+
+		if (arrIds && arrIds.length) {
+			let oStylesList = oDoc.GetTableStyles();
+			for (let nIndex = 0, nCount = arrIds.length; nIndex < nCount; ++nIndex) {
+				let oStyle   = oStylesList.Get(arrIds[nIndex]);
+				let oPreview = this.TableStylesPreviewGenerator.GetPreview(oStyle);
+				if (oPreview)
+					arrPreviews.push(oPreview);
+			}
+		}
+		else {
+			arrPreviews = this.TableStylesPreviewGenerator.GetAllPreviews(bUseDefault);
+		}
+
+		return arrPreviews;
+	};
+	PDFEditorApi.prototype.asc_GetSelectionBounds = function() {
+		return [[0,0], [0,0], [0,0], [0,0]];
+	};
 
 	/////////////////////////////////////////////////////////////
 	///////// For text
@@ -1659,5 +1683,7 @@
 	PDFEditorApi.prototype['asc_DistributeTableCells']		= PDFEditorApi.prototype.asc_DistributeTableCells;
 	PDFEditorApi.prototype['remColumn']						= PDFEditorApi.prototype.remColumn;
 	PDFEditorApi.prototype['remTable']						= PDFEditorApi.prototype.remTable;
+	PDFEditorApi.prototype['asc_getTableStylesPreviews']	= PDFEditorApi.prototype.asc_getTableStylesPreviews;
+	PDFEditorApi.prototype['asc_GetSelectionBounds']		= PDFEditorApi.prototype.asc_GetSelectionBounds;
 
 })(window, window.document);

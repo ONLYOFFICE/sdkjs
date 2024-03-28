@@ -1910,25 +1910,24 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPage])
             return;
 
-        let oTable = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
-        oTable.graphicObject.LogicDocument = this;
-        
-        this.AddDrawing(oTable, nPage);
+        let oGrFrame = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
+                
+        this.AddDrawing(oGrFrame, nPage);
     };
-    CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage) {
+    CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage, bInline) {
         let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
-        var W;
+        let W;
         if (AscFormat.isRealNumber(Width)) {
             W = Width;
         } else {
             W = nPageW * 2 / 3;
         }
-        var X, Y;
+        let X, Y;
         if (AscFormat.isRealNumber(PosX) && AscFormat.isRealNumber(PosY)) {
             X = PosX;
             Y = PosY;
@@ -1937,17 +1936,22 @@ var CPresentation = CPresentation || function(){};
             Y = nPageH / 5;
         }
         
-        var Grid = [];
+        let Grid = [];
     
-        for (var Index = 0; Index < Cols; Index++)
+        for (let Index = 0; Index < Cols; Index++)
             Grid[Index] = W / Cols;
     
-        var RowHeight;
+        let RowHeight;
         if (AscFormat.isRealNumber(Height)) {
             RowHeight = Height / Rows;
         }
     
-        var graphic_frame = new AscPDF.CPdfGraphicFrame();
+        let Inline = false;
+        if (AscFormat.isRealBool(bInline)) {
+            Inline = bInline;
+	    }
+
+        let graphic_frame = new AscPDF.CPdfGraphicFrame();
         graphic_frame.setParent(this);
         graphic_frame.setSpPr(new AscFormat.CSpPr());
         graphic_frame.spPr.setParent(graphic_frame);
@@ -1959,23 +1963,26 @@ var CPresentation = CPresentation || function(){};
         graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
         graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
     
-        var table = new CTable(this.GetDrawingDocument(), graphic_frame, false, Rows, Cols, Grid, true);
-        table.Reset(0, 0, W, 100000, 0, 0, 1, 0);
-        table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
-        table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
+        let table = new CTable(this.GetDrawingDocument(), graphic_frame, Inline, Rows, Cols, Grid, true);
+        table.Reset(Inline ? X : 0, Inline ? Y : 0, W, 100000, 0, 0, 1, 0);
+        if (!Inline) {
+            table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
+            table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
+        }
         table.SetTableLayout(tbllayout_Fixed);
         if (typeof StyleId === "string") {
             table.Set_TableStyle(StyleId);
         }
         table.Set_TableLook(new AscCommon.CTableLook(false, true, false, false, true, false));
-        for (var i = 0; i < table.Content.length; ++i) {
-            var Row = table.Content[i];
+        for (let i = 0; i < table.Content.length; ++i) {
+            let Row = table.Content[i];
             if (AscFormat.isRealNumber(RowHeight)) {
                 Row.Set_Height(RowHeight, Asc.linerule_AtLeast);
             }
         }
         graphic_frame.setGraphicObject(table);
         graphic_frame.setBDeleted(false);
+        table.LogicDocument = this;
         return graphic_frame;
     };
 
@@ -3516,6 +3523,24 @@ var CPresentation = CPresentation || function(){};
     // Функции для работы с таблицами
     //-----------------------------------------------------------------------------------
 
+    CPDFDoc.prototype.GetTableForPreview = function () {
+        return AscFormat.ExecuteNoHistory(function () {
+            let _x_mar = 10;
+            let _y_mar = 10;
+            let _r_mar = 10;
+            let _b_mar = 10;
+            let _pageW = 297;
+            let _pageH = 210;
+            let W = (_pageW - _x_mar - _r_mar);
+            let H = (_pageH - _y_mar - _b_mar);
+            let oGrFrame = this.private_Create_TableGraphicFrame(5, 5, this.DefaultTableStyleId, W, H, _x_mar, _y_mar, this.Viewer.currentPage, true);
+            oGrFrame.setBDeleted(true);
+            oGrFrame.SetPage(this.Viewer.currentPage);
+            return oGrFrame.graphicObject;
+        }, this, []);
+    };
+    CPDFDoc.prototype.CheckTableForPreview = function (oTable) {};
+
     CPDFDoc.prototype.SetTableProps = function(oTablePr) {
         let oController = this.GetController();
         let oCurObject  = this.GetActiveObject();
@@ -3769,8 +3794,11 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetDefaultLanguage = function() {
         return this.GetStyles().Default.TextPr.Lang.Val;
     };
-    CPDFDoc.prototype.GetAllTableStyles = function() {
+    CPDFDoc.prototype.GetTableStyles = function() {
         return this.globalTableStyles;
+    };
+    CPDFDoc.prototype.GetAllTableStyles = function() {
+        return this.globalTableStyles.Style;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
