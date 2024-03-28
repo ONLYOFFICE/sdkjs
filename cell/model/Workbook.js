@@ -3436,10 +3436,9 @@
 						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
 					});
 					if (oThis.oApi.VersionHistory && item.nSheetId && item.GetChangedRange) {
-						let ws = this.getWorksheetById(item.nSheetId);
-						let changedRanged = ws && item.GetChangedRange();
-						if (changedRanged) {
-							ws.addToChangedRanges(changedRanged, oColor);
+						let changedRange = item.nSheetId && item.GetChangedRange();
+						if (changedRange) {
+							oThis.oApi.wb.addToHistoryChangedRanges(item.nSheetId, changedRange, oColor);
 						}
 					}
 				}
@@ -5324,8 +5323,6 @@
 		this.bFillHandleRightClick = false;
 		this.activeFillType = null;
 		this.timelines = [];
-
-		this.changedRanges = null;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -13050,46 +13047,7 @@
 		}
 	};
 
-	Worksheet.prototype.addToChangedRanges = function(range, oColor) {
-		if (!range) {
-			return;
-		}
-		if (Array.isArray(range)) {
-			for (let i in range) {
-				this._addToChangedRanges(range[i], oColor);
-			}
-		} else {
-			this._addToChangedRanges(range, oColor);
-		}
-	};
 
-	Worksheet.prototype._addToChangedRanges = function(range, oColor) {
-		if (!range) {
-			return;
-		}
-		if (!this.changedRanges) {
-			this.changedRanges = [];
-		}
-		if (this.changedRanges.length) {
-			for (let i in this.changedRanges) {
-				if (!this.changedRanges[i] || !this.changedRanges[i].range) {
-					continue;
-				}
-				if (this.changedRanges[i].range.isEqual(range)) {
-					return;
-				} else if (this.changedRanges[i].range.intersection(range)) {
-					let _difference = this.changedRanges[i].range.difference(range);
-					if (_difference) {
-						for (let j in _difference) {
-							this.changedRanges.push({range: _difference[j], color: oColor});
-						}
-					}
-					return;
-				}
-			}
-		}
-		this.changedRanges.push({range: range, color: oColor});
-	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

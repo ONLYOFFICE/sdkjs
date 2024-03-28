@@ -7238,17 +7238,18 @@
 
         this.drawTraceDependents();
 
-		if (this.model.changedRanges) {
-			for (let i in this.model.changedRanges) {
-				let range = this.model.changedRanges[i].range;
-				let color = this.model.changedRanges[i].color;
-				if (range && color) {
-					this._drawElements(this._drawSelectionElement, range,
-						AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke,
-						new CColor(color.r, color.g, color.b));
-				}
-			}
-		}
+        let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+        if (historyChangedRanges) {
+            for (let i in historyChangedRanges) {
+                let range = historyChangedRanges[i].range;
+                let color = historyChangedRanges[i].color;
+                if (range && color) {
+                    this._drawElements(this._drawSelectionElement, range,
+                        AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke,
+                        new CColor(color.r, color.g, color.b));
+                }
+            }
+        }
 
         // restore canvas' original clipping range
         ctx.restore();

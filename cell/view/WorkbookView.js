@@ -326,6 +326,9 @@
 	//внутри пока простой объект {groups: true}
 	this.drawRestrictions = null;
 
+	//for version history - changed ranges
+	this.oHistoryChangedRanges = null;
+
 	return this;
   }
 
@@ -5689,6 +5692,49 @@
 
 	WorkbookView.prototype.stepGoalSeek = function() {
 		this.model.stepGoalSeek();
+	};
+	WorkbookView.prototype.addToHistoryChangedRanges = function(sheetId, range, userColor) {
+		if (!range) {
+			return;
+		}
+		if (Array.isArray(range)) {
+			for (let i in range) {
+				this._addToHistoryChangedRanges(sheetId, range[i], userColor);
+			}
+		} else {
+			this._addToHistoryChangedRanges(sheetId, range, userColor);
+		}
+	};
+	WorkbookView.prototype._addToHistoryChangedRanges = function(sheetId, range, userColor) {
+		if (!range) {
+			return;
+		}
+		if (!this.historyChangedRanges) {
+			this.historyChangedRanges = {};
+		}
+		if (!this.historyChangedRanges[sheetId]) {
+			this.historyChangedRanges[sheetId] = [];
+		}
+		let changedRanges = this.historyChangedRanges[sheetId];
+		if (changedRanges.length) {
+			for (let i in changedRanges) {
+				if (!changedRanges[i] || !changedRanges[i].range) {
+					continue;
+				}
+				if (changedRanges[i].range.isEqual(range)) {
+					return;
+				} else if (changedRanges[i].range.intersection(range)) {
+					let _difference = changedRanges[i].range.difference(range);
+					if (_difference) {
+						for (let j in _difference) {
+							changedRanges.push({range: _difference[j], color: userColor});
+						}
+					}
+					return;
+				}
+			}
+		}
+		changedRanges.push({range: range, color: userColor});
 	};
 
 
