@@ -345,6 +345,7 @@
 			"pdf/src/annotations/freeText.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
+			"pdf/src/annotations/textPrTrackHandler.js",
 			"pdf/src/drawings/drawingPrototype.js",
 			"pdf/src/drawings/shape.js",
 			"pdf/src/drawings/image.js",
