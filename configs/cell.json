@@ -177,6 +177,7 @@
 			"cell/view/WorkbookView.js",
 			"cell/view/WorksheetView.js",
 			"cell/view/DrawingObjectsController.js",
+			"word/Drawing/Graphics.js",
 			"cell/model/DrawingObjects/Graphics.js",
 			"word/Drawing/buttons.js",
 			"word/Drawing/ShapeDrawer.js",

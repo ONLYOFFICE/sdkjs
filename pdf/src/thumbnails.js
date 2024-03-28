@@ -941,7 +941,7 @@
         if (this.viewer)
         {
             var backColor = this.viewer.Api.getPageBackgroundColor();
-            PageStyle.emptyColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+            PageStyle.emptyColor = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
         }
     }
 

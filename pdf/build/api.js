@@ -255,8 +255,8 @@
 			getPageBackgroundColor : function() {
 				// TODO: get color from theme
 				if (this.isDarkMode)
-					return [0x3A, 0x3A, 0x3A];
-				return [0xFF, 0xFF, 0xFF];
+					return { R: 0x3A, G : 0x3A, B : 0x3A };
+				return { R: 0xFF, G : 0xFF, B : 0xFF };
 			},
 
 			WordControl : {

@@ -35,7 +35,6 @@
 (function(window, undefined){
 
 	// Import
-	var FontStyle = AscFonts.FontStyle;
 	var g_fontApplication = AscFonts.g_fontApplication;
 
 	var locktype_None = AscCommon.locktype_None;
@@ -106,9 +105,9 @@
 	TextLine.prototype.draw = function(graphics, x, y)
 	{
 		let showParaMarks = false;
-		if (editor && editor.ShowParaMarks)
+		if (Asc.editor && Asc.editor.ShowParaMarks)
 		{
-			editor.ShowParaMarks = false;
+			Asc.editor.ShowParaMarks = false;
 			showParaMarks = true;
 		}
 		
@@ -117,7 +116,7 @@
 		this.dc.Draw(0, graphics);
 		
 		if (showParaMarks)
-			editor.ShowParaMarks = true;
+			Asc.editor.ShowParaMarks = true;
 	};
 
 	function CGraphics()
@@ -137,6 +136,8 @@
 		this.m_bPenColorInit = false;
 		this.m_oBrush   = new AscCommon.CBrush();
 		this.m_bBrushColorInit = false;
+
+		this.isDisableStrokeFillOptimization = false;
 
 		this.m_oFontManager = null;
 
@@ -164,9 +165,6 @@
 		this.LastFontOriginInfo = { Name : "", Replace : null };
 
 		this.m_bIntegerGrid = true;
-
-		this.ClipManager = new AscCommon.CClipManager();
-		this.ClipManager.BaseObject = this;
 
 		this.TextureFillTransformScaleX = 1;
 		this.TextureFillTransformScaleY = 1;
@@ -269,7 +267,9 @@
 		if (this.m_bPenColorInit && _c.R === r && _c.G === g && _c.B === b && _c.A === a)
 			return;
 
-		this.m_bPenColorInit = true;
+		if (!this.isDisableStrokeFillOptimization)
+			this.m_bPenColorInit = true;
+
 		_c.R = r;
 		_c.G = g;
 		_c.B = b;
@@ -332,7 +332,8 @@
 		if (this.m_bBrushColorInit && _c.R === r && _c.G === g && _c.B === b && _c.A === a)
 			return;
 
-		this.m_bBrushColorInit = true;
+		if (!this.isDisableStrokeFillOptimization)
+			this.m_bBrushColorInit = true;
 
 		_c.R = r;
 		_c.G = g;
@@ -570,6 +571,11 @@
 	};
 
 	// images
+	CGraphics.prototype.checkLoadingImage = function(img)
+	{
+		return (_img.Status === AscFonts.ImageLoadStatus.Loading);
+	};
+
 	CGraphics.prototype.drawImage2 = function(img,x,y,w,h,alpha,srcRect)
 	{
 		if (srcRect)
@@ -792,8 +798,8 @@
 			this.drawImage2(nativeImage,x,y,w,h,alpha,srcRect);
 			return;
 		}
-		var _img = editor.ImageLoader.map_image_index[img];
-		if (_img != undefined && _img.Status == AscFonts.ImageLoadStatus.Loading)
+		var _img = Asc.editor.ImageLoader.map_image_index[img];
+		if (_img && this.checkLoadingImage(_img))
 		{
 			// TODO: IMAGE_LOADING
 		}
@@ -878,7 +884,7 @@
 	};
 	CGraphics.prototype.font = function(font_id,font_size)
 	{
-		AscFonts.g_font_infos[AscFonts.g_map_font_index[font_id]].LoadFont(editor.FontLoader, this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager,
+		AscFonts.g_font_infos[AscFonts.g_map_font_index[font_id]].LoadFont(Asc.editor.FontLoader, this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager,
 			Math.max(font_size, 1), 0, this.m_dDpiX, this.m_dDpiY, this.m_oTransform);
 	};
 	CGraphics.prototype.SetFont = function(font)
@@ -894,13 +900,13 @@
 		var bItalic = true === font.Italic;
 		var bBold   = true === font.Bold;
 
-		var oFontStyle = FontStyle.FontStyleRegular;
+		var oFontStyle = AscFonts.FontStyle.FontStyleRegular;
 		if ( !bItalic && bBold )
-			oFontStyle = FontStyle.FontStyleBold;
+			oFontStyle = AscFonts.FontStyle.FontStyleBold;
 		else if ( bItalic && !bBold )
-			oFontStyle = FontStyle.FontStyleItalic;
+			oFontStyle = AscFonts.FontStyle.FontStyleItalic;
 		else if ( bItalic && bBold )
-			oFontStyle = FontStyle.FontStyleBoldItalic;
+			oFontStyle = AscFonts.FontStyle.FontStyleBoldItalic;
 
 		var _last_font = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
 		var _font_manager = this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager;
@@ -937,9 +943,14 @@
 			this.m_oGrFonts = this.m_oTextPr.RFonts;
 	};
 
+	CGraphics.prototype.GetRFonts = function()
+	{
+		return this.m_oGrFonts;
+	};
+
 	CGraphics.prototype.SetFontSlot = function(slot, fontSizeKoef)
 	{
-		var _rfonts = this.m_oGrFonts;
+		var _rfonts = this.GetRFonts();
 		var _lastFont = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
 
 		switch (slot)
@@ -1516,6 +1527,11 @@
 		textLine.draw(this, x, y);
 	};
 
+	CGraphics.prototype.GetAutoShapesTrack = function()
+	{
+		return Asc.editor.WordControl.m_oDrawingDocument.AutoShapesTrack;
+	};
+
 	CGraphics.prototype.DrawHeaderEdit = function(yPos, lock_type, sectionNum, bIsRepeat, type)
 	{
 		this.StartDrawShape();
@@ -1723,7 +1739,7 @@
 
 	CGraphics.prototype.DrawLockParagraph = function(lock_type, x, y1, y2)
 	{
-		if (lock_type == locktype_None || editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false || editor.isViewMode || (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast()))
+		if (lock_type == locktype_None || editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false || Asc.editor.isViewMode || (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast()))
 			return;
 
 		if (lock_type == locktype_Mine)
@@ -1750,7 +1766,7 @@
 			var w_dist = 1 * dKoefMMToPx;
 			var w_len_indent = 3;
 
-			var _interf = editor.WordControl.m_oDrawingDocument.AutoShapesTrack;
+			var _interf = this.GetAutoShapesTrack();
 
 			this._s();
 			_interf.AddLineDash(ctx, x, y1, x, y2, w_dot, w_dist);
@@ -1815,13 +1831,20 @@
 
 	CGraphics.prototype.DrawLockObjectRect = function(lock_type, x, y, w, h)
 	{
-		if (editor.isViewMode || this.IsThumbnail || lock_type == locktype_None || this.IsDemonstrationMode || (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast()))
+		if (Asc.editor.isViewMode || this.IsThumbnail || this.IsDemonstrationMode || lock_type === locktype_None)
 			return;
 
-		if (editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type == locktype_Mine)
-			return;
+		// for word/slides
+		if (Asc.editor.WordControl)
+		{
+			if (lock_type === locktype_Mine && true === AscCommon.CollaborativeEditing.Is_Fast())
+				return;
 
-		if (lock_type == locktype_Mine)
+			if (Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable === false && lock_type === locktype_Mine)
+				return;
+		}
+
+		if (lock_type === locktype_Mine)
 		{
 			this.p_color(22, 156, 0, 255);
 			//this.p_color(155, 187, 277, 255);
@@ -1841,7 +1864,7 @@
 			var w_dot = 2 * dKoefMMToPx;
 			var w_dist = 1 * dKoefMMToPx;
 
-			var _interf = editor.WordControl.m_oDrawingDocument.AutoShapesTrack;
+			var _interf = this.GetAutoShapesTrack();
 
 			var eps = 5 * dKoefMMToPx;
 			var _x = x - eps;
@@ -1923,7 +1946,7 @@
 
 	CGraphics.prototype.DrawEmptyTableLine = function(x1,y1,x2,y2)
 	{
-		if ((!editor.isShowTableEmptyLine || editor.isViewMode) && (editor.isShowTableEmptyLineAttack === false))
+		if ((!Asc.editor.isShowTableEmptyLine || Asc.editor.isViewMode) && (Asc.editor.isShowTableEmptyLineAttack === false))
 			return;
 
 		var _x1 = this.m_oFullTransform.TransformPointX(x1,y1);
@@ -1947,7 +1970,7 @@
 
 			this.p_width(1000 * dKoefMMToPx);
 			this._s();
-			editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddLineDash(ctx, x1, y1, x2, y2, 2 * dKoefMMToPx, 2 * dKoefMMToPx);
+			this.GetAutoShapesTrack().AddLineDash(ctx, x1, y1, x2, y2, 2 * dKoefMMToPx, 2 * dKoefMMToPx);
 			this.ds();
 			return;
 		}
@@ -2011,7 +2034,7 @@
 		{
 			// значит какой-то трансформ
 			this._s();
-			editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddLineDash(ctx, _x1, _y1, _x2, _y2, 2, 2);
+			this.GetAutoShapesTrack().AddLineDash(ctx, _x1, _y1, _x2, _y2, 2, 2);
 			this.ds();
 		}
 		if (!bIsInt)
@@ -2020,7 +2043,7 @@
 
 	CGraphics.prototype.DrawSpellingLine = function(y0, x0, x1, w)
 	{
-		if (!editor.isViewMode)
+		if (!Asc.editor.isViewMode)
 			this.drawHorLine(0, y0, x0, x1, w );
 	};
 
@@ -2535,7 +2558,7 @@
 	CGraphics.prototype.drawFlowAnchor = function(x, y)
 	{
 		var _flow_anchor = (AscCommon.OverlayRasterIcons && AscCommon.OverlayRasterIcons.Anchor) ? AscCommon.OverlayRasterIcons.Anchor.get() : undefined;
-		if (!_flow_anchor || (!editor || !editor.ShowParaMarks))
+		if (!_flow_anchor || (!Asc.editor || !Asc.editor.ShowParaMarks))
 			return;
 
 		if (false === this.m_bIntegerGrid)
@@ -2832,4 +2855,7 @@
 	//------------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CGraphics = CGraphics;
+
+	// cells rewrite AscCommon.Graphics
+	window['AscCommonExcel'].CGraphics = CGraphics;
 })(window);
