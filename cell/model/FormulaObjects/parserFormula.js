@@ -8536,23 +8536,26 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		} else if (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type) {
 			if (opt_ws) {
-				var range;
+				let range;
 				if (ref) {
 					range = val.getRange();
 					if (range) {
-						var bbox = range.bbox;
-						var rowCount = bbox.r2 - bbox.r1 + 1;
-						var colCount = bbox.c2 - bbox.c1 + 1;
+						let bbox = range.bbox;
+						let rowCount = bbox.r2 - bbox.r1 + 1,
+							colCount = bbox.c2 - bbox.c1 + 1;
+						
 						row = 1 === rowCount ? 0 : opt_row - ref.r1;
 						col = 1 === colCount ? 0 : opt_col - ref.c1;
 						if (row > rowCount - 1 || col > colCount - 1) {
 							val = null;
 						} else {
 							val = val.getValueByRowCol(row, col);
+							if (!val) {
+								val = new cNumber(0);
+							}
 						}
-						if (dynamicRef && !val) {
-							val = new cNumber(0);
-						} else if (!val) {
+
+						if (!val) {
 							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
 					} else {
