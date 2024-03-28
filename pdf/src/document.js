@@ -3840,12 +3840,12 @@ var CPresentation = CPresentation || function(){};
 		return this.Get_PageLimits(pageIndex);
 	};
     CPDFDoc.prototype.GetPageWidthEMU = function(nPage) {
-        let nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
 
         return this.Viewer.drawingPages[nPage].W * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
     };
     CPDFDoc.prototype.GetPageHeightEMU = function(nPage) {
-        let nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
 
         return this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
     };
