@@ -597,6 +597,15 @@
 		}
 	};
 
+	PDFEditorApi.prototype.get_PageWidth  = function(nPage) {
+		let oDoc = this.getPDFDoc();
+		return oDoc.GetPageWidthEMU();
+	};
+	PDFEditorApi.prototype.get_PageHeight = function(nPage) {
+		let oDoc = this.getPDFDoc();
+		return oDoc.GetPageHeightEMU();
+	};
+
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
@@ -1661,6 +1670,8 @@
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
+	PDFEditorApi.prototype['get_PageWidth']                = PDFEditorApi.prototype.get_PageWidth;
+	PDFEditorApi.prototype['get_PageHeight']               = PDFEditorApi.prototype.get_PageHeight;
 	PDFEditorApi.prototype['SetTextEditMode']              = PDFEditorApi.prototype.SetTextEditMode;
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;

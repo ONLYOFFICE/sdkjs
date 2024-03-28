@@ -106,6 +106,7 @@ var CPresentation = CPresentation || function(){};
 
         this.maxApIdx               = -1;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.TextPrTrackHandler     = new AscPDF.CTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
         this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
@@ -3838,6 +3839,16 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.Get_PageFields = function(pageIndex) {
 		return this.Get_PageLimits(pageIndex);
 	};
+    CPDFDoc.prototype.GetPageWidthEMU = function(nPage) {
+        let nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+
+        return this.Viewer.drawingPages[nPage].W * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+    };
+    CPDFDoc.prototype.GetPageHeightEMU = function(nPage) {
+        let nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+
+        return this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+    };
 	CPDFDoc.prototype.GetApi = function() {
 		return editor;
 	};

@@ -44,7 +44,8 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     let text_object, drawingDocument = this.drawingDocument;
     if (this.selection.textSelection) {
         text_object = this.selection.textSelection;
-    } else if (this.selection.groupSelection) {
+    }
+    else if (this.selection.groupSelection) {
         let oDrawing = this.selection.groupSelection;
         if (oDrawing.selection.textSelection) {
             text_object = oDrawing.selection.textSelection;
@@ -55,21 +56,44 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
         else if (oDrawing.IsAnnot() && oDrawing.IsFreeText() && oDrawing.IsInTextBox()) {
             text_object = oDrawing.spTree[0];
         }
-    } else if (this.selection.chartSelection && this.selection.chartSelection.selection.textSelection) {
+    }
+    else if (this.selection.chartSelection && this.selection.chartSelection.selection.textSelection) {
         text_object = this.selection.chartSelection.selection.textSelection;
     }
+
     if (isRealObject(text_object)) {
         text_object.updateSelectionState(drawingDocument);
-    } else if (bNoCheck !== true) {
+    }
+    else if (bNoCheck !== true) {
         drawingDocument.UpdateTargetTransform(null);
         if (this.document.GetActiveObject() == null)
             drawingDocument.TargetEnd();
     }
-    let oMathTrackHandler = this.document.MathTrackHandler;
-    if (oMathTrackHandler) {
-        this.setEquationTrack(oMathTrackHandler, this.canEdit());
-    }
+
+    let oMathTrackHandler   = this.document.MathTrackHandler;
+    let oTextPrTrackHandler = this.document.TextPrTrackHandler;
+
+    this.setEquationTrack(oMathTrackHandler, this.canEdit());
+    this.setTextPrTrack(oTextPrTrackHandler, this.canEdit());
 };
+
+CGraphicObjectsPdf.prototype.setTextPrTrack = function(oTextPrTrackHandler, IsShowTextPrTrack) {
+    let oDocContent     = null;
+    let oMath           = null;
+    let bSelection      = false;
+    let bEmptySelection = true;
+
+    oDocContent = this.getTargetDocContent();
+    if (oDocContent) {
+        bSelection          = oDocContent.IsSelectionUse();
+        bEmptySelection     = oDocContent.IsSelectionEmpty();
+        let oSelectedInfo   = oDocContent.GetSelectedElementsInfo();
+
+        oMath = oSelectedInfo.GetMath();
+    }
+    
+    oTextPrTrackHandler.SetTrackObject(IsShowTextPrTrack ? oMath : null, 0, false === bSelection || true === bEmptySelection);
+}
 
 CGraphicObjectsPdf.prototype.setTableProps = function(props) {
     let by_type = this.getSelectedObjectsByTypes();
