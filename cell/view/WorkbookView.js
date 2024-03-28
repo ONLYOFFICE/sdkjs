@@ -5718,13 +5718,18 @@
 		let changedRanges = this.historyChangedRanges[sheetId];
 		if (changedRanges.length) {
 			for (let i in changedRanges) {
-				if (!changedRanges[i] || !changedRanges[i].range) {
+				if (!changedRanges[i]) {
 					continue;
 				}
-				if (changedRanges[i].range.isEqual(range)) {
+				let _addedRange = changedRanges[i].range;
+				let _addedColor = changedRanges[i].color;
+				if (!_addedRange || !_addedColor || (userColor && userColor.IsEqual && !userColor.IsEqual(_addedColor))) {
+					continue;
+				}
+				if (_addedRange.isEqual(range)) {
 					return;
-				} else if (changedRanges[i].range.intersection(range)) {
-					let _difference = changedRanges[i].range.difference(range);
+				} else if (_addedRange.intersection(range)) {
+					let _difference = _addedRange.difference(range);
 					if (_difference) {
 						for (let j in _difference) {
 							changedRanges.push({range: _difference[j], color: userColor});

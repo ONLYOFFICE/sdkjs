@@ -7708,8 +7708,9 @@
             });
         }
 
-		if (this.model.changedRanges) {
-			this.model.changedRanges.forEach(function (item) {
+		let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+		if (historyChangedRanges) {
+			historyChangedRanges.forEach(function (item) {
 				var arnIntersection = item && item.range.intersectionSimple(range);
 				if (arnIntersection) {
 					_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
