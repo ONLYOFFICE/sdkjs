@@ -37,10 +37,10 @@
 	// Import
 	var g_fontApplication = AscFonts.g_fontApplication;
 
-	var locktype_None = AscCommon.locktype_None;
-	var locktype_Mine = AscCommon.locktype_Mine;
-	var locktype_Other = AscCommon.locktype_Other;
-	var locktype_Other2 = AscCommon.locktype_Other2;
+	var locktype_None = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2 = AscCommon.c_oAscLockTypes.kLockTypeOther2;
 	var AscBrowser = AscCommon.AscBrowser;
 	var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 

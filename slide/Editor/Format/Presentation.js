@@ -11302,7 +11302,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 	}
 
 	if (CheckType === AscCommon.changestype_Drawing_Props) {
-		if (cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_Mine && cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_None)
+		if (cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
 			return true;
 		var selected_objects = oController.selectedObjects;
 		for (var i = 0; i < selected_objects.length; ++i) {
@@ -11340,7 +11340,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 				};
 			this.commentsLock.Lock.Check(check_obj);
 		} else {
-			if (cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_Mine && cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_None)
+			if (cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
 				return true;
 			var check_obj =
 				{
@@ -11353,7 +11353,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 		}
 	}
 	if (CheckType === AscCommon.changestype_AddShapes) {
-		if (cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_Mine && cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_None)
+		if (cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
 			return true;
 		for (var i = 0; i < AdditionalData.length; ++i) {
 			var check_obj =
@@ -11372,7 +11372,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 			for (var i = 0; i < AdditionalData.length; ++i) {
 				var oCheckData = AdditionalData[i];
 				if (oCheckData.slide) {
-					if (oCheckData.slide.deleteLock.Lock.Type !== AscCommon.locktype_Mine && oCheckData.slide.deleteLock.Lock.Type !== AscCommon.locktype_None)
+					if (oCheckData.slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && oCheckData.slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
 						return true;
 					var check_obj =
 						{
@@ -11468,7 +11468,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 	}
 
 	if (CheckType === AscCommon.changestype_Text_Props) {
-		if (cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_Mine && cur_slide.deleteLock.Lock.Type !== AscCommon.locktype_None)
+		if (cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && cur_slide.deleteLock.Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
 			return true;
 		var selected_objects = oController.selectedObjects;
 		for (var i = 0; i < selected_objects.length; ++i) {
@@ -12642,7 +12642,7 @@ CPresentation.prototype.setShowMasterSp = function(bShow, arrSlideIndexes) {
 CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 	for (let i = 0; i < this.Slides.length; i++) {
 		const oSlide = this.Slides[i];
-		if (!(oSlide.backgroundLock.Lock.Type === AscCommon.locktype_Mine || oSlide.backgroundLock.Lock.Type === AscCommon.locktype_None)) {
+		if (!(oSlide.backgroundLock.Lock.Type === AscCommon.c_oAscLockTypes.kLockTypeMine || oSlide.backgroundLock.Lock.Type === AscCommon.c_oAscLockTypes.kLockTypeNone)) {
 			return true;
 		}
 	}

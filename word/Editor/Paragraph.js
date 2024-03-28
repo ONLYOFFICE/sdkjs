@@ -128,7 +128,7 @@ function Paragraph(Parent, bFromPresentation)
 		&& AscCommon.CollaborativeEditing
 		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
 	{
-		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 		AscCommon.CollaborativeEditing.Add_Unlock2(this);
 	}
 
@@ -2121,7 +2121,7 @@ Paragraph.prototype.Internal_Draw_1 = function(CurPage, pGraphics, Pr)
 	if (this.bFromDocument && pGraphics.isSupportEditFeatures())
 	{
 		// Если данный параграф зажат другим пользователем, рисуем соответствующий знак
-		if (AscCommon.locktype_None != this.Lock.Get_Type() && this.LogicDocument && !this.LogicDocument.IsViewModeInReview())
+		if (AscCommon.c_oAscLockTypes.kLockTypeNone != this.Lock.Get_Type() && this.LogicDocument && !this.LogicDocument.IsViewModeInReview())
 		{
 			if (( CurPage > 0 || false === this.IsStartFromNewPage() || null === this.Get_DocumentPrev() ))
 			{
@@ -2129,7 +2129,7 @@ Paragraph.prototype.Internal_Draw_1 = function(CurPage, pGraphics, Pr)
 				var Y_top    = this.Pages[CurPage].Bounds.Top;
 				var Y_bottom = this.Pages[CurPage].Bounds.Bottom;
 
-				if (true === editor.isCoMarksDraw || AscCommon.locktype_Mine != this.Lock.Get_Type())
+				if (true === editor.isCoMarksDraw || AscCommon.c_oAscLockTypes.kLockTypeMine != this.Lock.Get_Type())
 					pGraphics.DrawLockParagraph(this.Lock.Get_Type(), X_min, Y_top, Y_bottom);
 			}
 		}

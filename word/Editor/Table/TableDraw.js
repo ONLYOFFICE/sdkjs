@@ -119,7 +119,7 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
     var Y_bottom = this.Pages[PNum].Bounds.Top;
 
     var LockType = this.Lock.Get_Type();
-    if (AscCommon.locktype_None != LockType && pGraphics.isSupportEditFeatures())
+    if (AscCommon.c_oAscLockTypes.kLockTypeNone != LockType && pGraphics.isSupportEditFeatures())
     {
         pGraphics.DrawLockObjectRect(this.Lock.Get_Type(), this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Top, this.Pages[PNum].Bounds.Right - this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Bottom - this.Pages[PNum].Bounds.Top );
     }

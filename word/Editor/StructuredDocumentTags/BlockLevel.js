@@ -215,7 +215,7 @@ CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
 		oGraphics.setTextGlobalAlpha(nTextAlpha);
 
-	if (AscCommon.locktype_None !== this.Lock.Get_Type())
+	if (AscCommon.c_oAscLockTypes.kLockTypeNone !== this.Lock.Get_Type())
 	{
 		var oBounds = this.GetContentBounds(CurPage);
 		oGraphics.DrawLockObjectRect(this.Lock.Get_Type(), oBounds.Left, oBounds.Top, oBounds.Right - oBounds.Left, oBounds.Bottom - oBounds.Top);

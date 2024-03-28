@@ -425,7 +425,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
 		if (false === AscCommon.g_oIdCounter.m_bLoad)
 		{
-			this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+			this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 		}
 

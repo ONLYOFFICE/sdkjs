@@ -41,11 +41,11 @@
 	var c_oAscAdvancedOptionsAction      = AscCommon.c_oAscAdvancedOptionsAction;
 	var DownloadType                     = AscCommon.DownloadType;
 	var c_oAscFormatPainterState         = AscCommon.c_oAscFormatPainterState;
-	var locktype_None                    = AscCommon.locktype_None;
-	var locktype_Mine                    = AscCommon.locktype_Mine;
-	var locktype_Other                   = AscCommon.locktype_Other;
-	var locktype_Other2                  = AscCommon.locktype_Other2;
-	var locktype_Other3                  = AscCommon.locktype_Other3;
+	var locktype_None                    = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine                    = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other                   = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2                  = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3                  = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var changestype_None                 = AscCommon.changestype_None;
 	var changestype_Paragraph_Content    = AscCommon.changestype_Paragraph_Content;
 	var changestype_Paragraph_Properties = AscCommon.changestype_Paragraph_Properties;

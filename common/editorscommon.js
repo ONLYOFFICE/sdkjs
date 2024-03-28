@@ -40,11 +40,11 @@
 {
 // Import
 	var AscBrowser = AscCommon.AscBrowser;
-	var locktype_None = AscCommon.locktype_None;
-	var locktype_Mine = AscCommon.locktype_Mine;
-	var locktype_Other = AscCommon.locktype_Other;
-	var locktype_Other2 = AscCommon.locktype_Other2;
-	var locktype_Other3 = AscCommon.locktype_Other3;
+	var locktype_None = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2 = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3 = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var contentchanges_Add = AscCommon.contentchanges_Add;
 	var CColor = AscCommon.CColor;
 	var g_oCellAddressUtils = AscCommon.g_oCellAddressUtils;

@@ -1679,7 +1679,7 @@ window.AscCommon.g_cIsBeta = "false";
 	};
 	/**
 	 * lock types
-	 * @const
+	 * @enum {number}
 	 */
 	var c_oAscLockTypes       = {
 		kLockTypeNone   : 1, // никто не залочил данный объект
@@ -2135,12 +2135,6 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscMaxFilterListLength    = 10000;
 	var c_oAscMaxFormulaReferenceLength = 2048;
 	var c_oAscMaxTableColumnTextLength  = 256;
-
-	var locktype_None   = 1; // никто не залочил данный объект
-	var locktype_Mine   = 2; // данный объект залочен текущим пользователем
-	var locktype_Other  = 3; // данный объект залочен другим(не текущим) пользователем
-	var locktype_Other2 = 4; // данный объект залочен другим(не текущим) пользователем (обновления уже пришли)
-	var locktype_Other3 = 5; // данный объект был залочен (обновления пришли) и снова стал залочен
 
 	var changestype_None                      = 0; // Ничего не происходит с выделенным элементом (проверка идет через дополнительный параметр)
 	var changestype_Paragraph_Content         = 1; // Добавление/удаление элементов в параграф
@@ -5178,11 +5172,6 @@ window.AscCommon.g_cIsBeta = "false";
 	prot["Email"] = prot.Email;
 	prot["Unsafe"] = prot.Unsafe;
 
-	window["AscCommon"].locktype_None   = locktype_None;
-	window["AscCommon"].locktype_Mine   = locktype_Mine;
-	window["AscCommon"].locktype_Other  = locktype_Other;
-	window["AscCommon"].locktype_Other2 = locktype_Other2;
-	window["AscCommon"].locktype_Other3 = locktype_Other3;
 
 	window["AscCommon"].changestype_None                      = changestype_None;
 	window["AscCommon"].changestype_Paragraph_Content         = changestype_Paragraph_Content;
