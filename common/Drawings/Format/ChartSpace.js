@@ -9814,6 +9814,14 @@ function(window, undefined) {
 		ret.setFill(new AscFormat.CNoFill());
 		return ret;
 	}
+	function CreatePatternFillUniFill(ftype, BgColorUnicolor, FgColorUnicolor) {
+		var oUniFill = new AscFormat.CUniFill();
+		oUniFill.fill = new AscFormat.CPattFill();
+		oUniFill.fill.ftype = ftype;
+		oUniFill.fill.fgClr = FgColorUnicolor;
+		oUniFill.fill.bgClr = BgColorUnicolor;
+		return oUniFill;
+	}
 
 
 	function CreateView3d(nRotX, nRotY, bRAngAx, nDepthPercent) {
@@ -11184,6 +11192,7 @@ function(window, undefined) {
 	window['AscFormat'].CreateUnifillSolidFillSchemeColor = CreateUnifillSolidFillSchemeColor;
 	window['AscFormat'].CreateNoFillLine = CreateNoFillLine;
 	window['AscFormat'].CreateNoFillUniFill = CreateNoFillUniFill;
+	window['AscFormat'].CreatePatternFillUniFill = CreatePatternFillUniFill;
 	window['AscFormat'].CreateView3d = CreateView3d;
 	window['AscFormat'].CreateLineChart = CreateLineChart;
 	window['AscFormat'].CreateBarChart = CreateBarChart;

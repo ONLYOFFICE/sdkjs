@@ -133,7 +133,8 @@
   var c_oEditorId = {
     Word:0,
     Spreadsheet:1,
-    Presentation:2
+    Presentation:2,
+    Draw:3
   };
 
   var c_oCloseCode = {

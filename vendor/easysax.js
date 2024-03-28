@@ -1623,7 +1623,7 @@ function XmlParserContext(){
     this.curChart = null;
     //docx
     this.commentDataById = {};
-    this.oReadResult = new AscCommonWord.DocReadResult();
+    this.oReadResult = AscCommonWord.DocReadResult && new AscCommonWord.DocReadResult();
     this.maxZIndex = 0;
 
     this.oformContext = null;
@@ -1853,6 +1853,8 @@ function XmlWriterContext(editorId){
             break;
         }
     }
+
+
     //docx
     this.document = null;
     this.oNumIdMap = {};
@@ -1869,7 +1871,7 @@ function XmlWriterContext(editorId){
     this.sheetIds = [];
     this.sharedStrings = null;
     this.isCopyPaste = null;
-    this.stylesForWrite = new AscCommonExcel.StylesForWrite();
+    this.stylesForWrite = AscCommonExcel.StylesForWrite && new AscCommonExcel.StylesForWrite(); //no StylesForWrite in vsdx now
     this.oSharedStrings = {index: 0, strings: {}};
     this.oleDrawings = [];
     this.signatureDrawings = [];

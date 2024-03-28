@@ -387,111 +387,111 @@
      * @constructor
      * @memberOf Asc
      */
-	function WorksheetView(workbook, model, handlers, buffers, stringRender, maxDigitWidth, collaborativeEditing, settings) {
-		this.settings = settings;
+    function WorksheetView(workbook, model, handlers, buffers, stringRender, maxDigitWidth, collaborativeEditing, settings) {
+        this.settings = settings;
 
-		this.workbook = workbook;
-		this.handlers = handlers;
-		this.model = model;
+        this.workbook = workbook;
+        this.handlers = handlers;
+        this.model = model;
 
-		this.buffers = buffers;
-		this.drawingCtx = this.buffers.main;
-		this.overlayCtx = this.buffers.overlay;
+        this.buffers = buffers;
+        this.drawingCtx = this.buffers.main;
+        this.overlayCtx = this.buffers.overlay;
 
-		this.drawingGraphicCtx = this.buffers.mainGraphic;
-		this.overlayGraphicCtx = this.buffers.overlayGraphic;
+        this.drawingGraphicCtx = this.buffers.mainGraphic;
+        this.overlayGraphicCtx = this.buffers.overlayGraphic;
 
-		this.stringRender = stringRender;
+        this.stringRender = stringRender;
 
-		// Флаг, сигнализирует о том, что мы сделали resize, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
-		this.updateResize = false;
-		// Флаг, сигнализирует о том, что мы сменили zoom, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
-		this.updateZoom = false;
-		this.isZooming = false;
-		// ToDo Флаг-заглушка, для того, чтобы на mobile не было изменения высоты строк при zoom (по правильному высота просто не должна меняться)
-		this.notUpdateRowHeight = false;
+        // Флаг, сигнализирует о том, что мы сделали resize, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+        this.updateResize = false;
+        // Флаг, сигнализирует о том, что мы сменили zoom, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+        this.updateZoom = false;
+        this.isZooming = false;
+        // ToDo Флаг-заглушка, для того, чтобы на mobile не было изменения высоты строк при zoom (по правильному высота просто не должна меняться)
+        this.notUpdateRowHeight = false;
 
-		this.cache = new Cache();
+        this.cache = new Cache();
 
-		//---member declaration---
-		// Максимальная ширина числа из 0,1,2...,9, померенная в нормальном шрифте(дефалтовый для книги) в px(целое)
-		// Ecma-376 Office Open XML Part 1, пункт 18.3.1.13
-		this.maxDigitWidth = maxDigitWidth;
+        //---member declaration---
+        // Максимальная ширина числа из 0,1,2...,9, померенная в нормальном шрифте(дефалтовый для книги) в px(целое)
+        // Ecma-376 Office Open XML Part 1, пункт 18.3.1.13
+        this.maxDigitWidth = maxDigitWidth;
 
-		this.defaultColWidthChars = 0;
-		this.defaultColWidthPx = 0;
-		this.defaultRowHeightPx = 0;
-		this.defaultRowDescender = 0;
-		this.defaultSpaceWidth = 0;
-		this.headersLeft = 0;
-		this.headersTop = 0;
-		this.headersWidth = 0;
-		this.headersHeight = 0;
-		this.headersHeightByFont = 0;	// Размер по шрифту (размер без скрытия заголовков)
+        this.defaultColWidthChars = 0;
+        this.defaultColWidthPx = 0;
+        this.defaultRowHeightPx = 0;
+        this.defaultRowDescender = 0;
+        this.defaultSpaceWidth = 0;
+        this.headersLeft = 0;
+        this.headersTop = 0;
+        this.headersWidth = 0;
+        this.headersHeight = 0;
+        this.headersHeightByFont = 0;	// Размер по шрифту (размер без скрытия заголовков)
 		this.groupWidth = 0;
 		this.groupHeight = 0;
-		this.cellsLeft = 0;
-		this.cellsTop = 0;
-		this.cols = [];
-		this.rows = [];
+        this.cellsLeft = 0;
+        this.cellsTop = 0;
+        this.cols = [];
+        this.rows = [];
 
-		this.highlightedCol = -1;
-		this.highlightedRow = -1;
-		this.topLeftFrozenCell = null;	// Верхняя ячейка для закрепления диапазона
-		this.visibleRange = new asc_Range(0, 0, 0, 0);
-		this.isChanged = false;
-		this.isChartAreaEditMode = false;
-		this.lockDraw = false;
-		this.isSelectOnShape = false;	// Выделен shape
+        this.highlightedCol = -1;
+        this.highlightedRow = -1;
+        this.topLeftFrozenCell = null;	// Верхняя ячейка для закрепления диапазона
+        this.visibleRange = new asc_Range(0, 0, 0, 0);
+        this.isChanged = false;
+        this.isChartAreaEditMode = false;
+        this.lockDraw = false;
+        this.isSelectOnShape = false;	// Выделен shape
 
-		this.startCellMoveResizeRange = null;
-		this.startCellMoveResizeRange2 = null;
-		this.moveRangeDrawingObjectTo = null;
+        this.startCellMoveResizeRange = null;
+        this.startCellMoveResizeRange2 = null;
+        this.moveRangeDrawingObjectTo = null;
 
-		// Координаты ячейки начала перемещения диапазона
-		this.startCellMoveRange = null;
-		// Дипазон перемещения
-		this.activeMoveRange = null;
-		// Range for drag and drop
+        // Координаты ячейки начала перемещения диапазона
+        this.startCellMoveRange = null;
+        // Дипазон перемещения
+        this.activeMoveRange = null;
+        // Range for drag and drop
 		this.dragAndDropRange = null;
-		// Range fillHandle
-		this.activeFillHandle = null;
-		this.resizeTableIndex = null;
-		// Горизонтальное (0) или вертикальное (1) направление автозаполнения
-		this.fillHandleDirection = -1;
-		// Зона автозаполнения
-		this.fillHandleArea = -1;
-		this.nRowsCount = 0;
-		this.nColsCount = 0;
-		// Other ranges for draw (sparklines info, chart ranges or formula ranges)
-		this.oOtherRanges = null;
-		//------------------------
+        // Range fillHandle
+        this.activeFillHandle = null;
+        this.resizeTableIndex = null;
+        // Горизонтальное (0) или вертикальное (1) направление автозаполнения
+        this.fillHandleDirection = -1;
+        // Зона автозаполнения
+        this.fillHandleArea = -1;
+        this.nRowsCount = 0;
+        this.nColsCount = 0;
+        // Other ranges for draw (sparklines info, chart ranges or formula ranges)
+        this.oOtherRanges = null;
+        //------------------------
 
-		this.collaborativeEditing = collaborativeEditing;
+        this.collaborativeEditing = collaborativeEditing;
 
-		this.drawingArea = new AscFormat.DrawingArea(this);
-		this.cellCommentator = new AscCommonExcel.CCellCommentator(this);
-		this.objectRender = null;
+        this.drawingArea = new AscFormat.DrawingArea(this);
+        this.cellCommentator = new AscCommonExcel.CCellCommentator(this);
+        this.objectRender = null;
 
-		this.arrRecalcRanges = [];
+        this.arrRecalcRanges = [];
 		this.arrRecalcRangesWithHeight = [];
 		this.arrRecalcRangesCanChangeColWidth = [];
-		this.skipUpdateRowHeight = false;
-		this.canChangeColWidth = c_oAscCanChangeColWidth.none;
-		this.scrollType = 0;
-		this.updateRowHeightValuePx = null;
-		this.updateColumnsStart = Number.MAX_VALUE;
+        this.skipUpdateRowHeight = false;
+        this.canChangeColWidth = c_oAscCanChangeColWidth.none;
+        this.scrollType = 0;
+        this.updateRowHeightValuePx = null;
+        this.updateColumnsStart = Number.MAX_VALUE;
 
-		this.viewPrintLines = false;
+        this.viewPrintLines = false;
 
-		this.copyCutRange = null;
+        this.copyCutRange = null;
 
-		this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
+        this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
 
-		this.arrRowGroups = null;
-		this.arrColGroups = null;
-		this.clickedGroupButton = null;
-		this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
+        this.arrRowGroups = null;
+        this.arrColGroups = null;
+        this.clickedGroupButton = null;
+        this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
 
 		//ифомарция о залоченности нового добавленного правила
 		//TODO пока сюда добавляю, пересмотреть!
@@ -512,10 +512,10 @@
 		//settings for split draw/
 		this.renderingSettings = null;
 
-		this._init();
+        this._init();
 
-		return this;
-	}
+        return this;
+    }
 
 	WorksheetView.prototype._init = function () {
 		this._initTopLeftCell();
@@ -4019,10 +4019,10 @@
 
     // ----- Drawing -----
 
-	WorksheetView.prototype.draw = function (lockDraw) {
-		if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
-			return this;
-		}
+    WorksheetView.prototype.draw = function (lockDraw) {
+        if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
+            return this;
+        }
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
 			//если изменилось количество строк/столбцов со значениями - пересчитываю
@@ -4034,27 +4034,27 @@
 		}
 		this._recalculate();
 		this.handlers.trigger("checkLastWork");
-		this._clean();
-		this._drawCorner();
-		this._drawColumnHeaders(null);
-		this._drawRowHeaders(null);
-		this._drawGrid(null);
-		this._drawCellsAndBorders(null);
+        this._clean();
+        this._drawCorner();
+        this._drawColumnHeaders(null);
+        this._drawRowHeaders(null);
+        this._drawGrid(null);
+        this._drawCellsAndBorders(null);
 		this._drawGroupData(null);
 		this._drawGroupData(null, null, undefined, undefined, true);
-		this._drawFrozenPane();
-		this._drawFrozenPaneLines();
-		this._fixSelectionOfMergedCells();
-		this._drawElements(this.af_drawButtons);
-		this.cellCommentator.drawCommentCells();
-		this.objectRender.showDrawingObjects();
-		if (this.overlayCtx) {
-			this._drawSelection();
-		}
+        this._drawFrozenPane();
+        this._drawFrozenPaneLines();
+        this._fixSelectionOfMergedCells();
+        this._drawElements(this.af_drawButtons);
+        this.cellCommentator.drawCommentCells();
+        this.objectRender.showDrawingObjects();
+        if (this.overlayCtx) {
+            this._drawSelection();
+        }
 		//this._cleanPagesModeData();
 
-		return this;
-	};
+        return this;
+    };
 
     WorksheetView.prototype._clean = function () {
         this.drawingCtx
@@ -4495,44 +4495,7 @@
             let dLIns = 0, dRIns = 0;
             const oShape = AscFormat.ExecuteNoHistory(function() {
 
-                const oMockLogicDoc = {
-                    Get_PageLimits : function(PageAbs) {
-                        return {X: 0, Y: 0, XLimit: Page_Width, YLimit: Page_Height};
-                    },
-                    Get_PageFields : function (PageAbs, isInHdrFtr) {
-                        return {X: 0, Y: 0, XLimit: 2000, YLimit: 2000};
-                    },
-
-                    IsTrackRevisions: function() {
-                        return false;
-                    },
-
-                    IsDocumentEditor: function() {
-                        return false;
-                    },
-                    Spelling: {
-                        AddParagraphToCheck: function(Para) {}
-                    },
-
-                    IsSplitPageBreakAndParaMark: function () {
-                        return false;
-                    },
-                    IsDoNotExpandShiftReturn: function () {
-                        return false;
-                    },
-
-					GetApi: function() {
-						return Asc.editor;
-					},
-
-					GetDrawingDocument: function() {
-						return Asc.editor.getDrawingDocument();
-					},
-
-                    SearchEngine: {
-                        Selection: []
-                    }
-                };
+                const oMockLogicDoc = AscCommon.mockLogicDoc({});
 
                 const oShape = new AscFormat.CShape();
                 oShape.setWorksheet(t.model);
@@ -4823,7 +4786,7 @@
 		//this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 	};
 
-	WorksheetView.prototype._drawCellsAndBorders = function (drawingCtx, range, offsetXForDraw, offsetYForDraw) {
+    WorksheetView.prototype._drawCellsAndBorders = function (drawingCtx, range, offsetXForDraw, offsetYForDraw) {
 		if (range === undefined) {
 			range = this.visibleRange;
 		}
@@ -7444,8 +7407,8 @@
 	};
 
     WorksheetView.prototype.cleanSelection = function (range, isFrozen) {
-        var api = window["Asc"]["editor"];
-        if (window['IS_NATIVE_EDITOR']) {
+		var api = window["Asc"]["editor"];
+		if (window['IS_NATIVE_EDITOR']) {
             return;
         }
 
@@ -11351,16 +11314,16 @@
 			AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
     };
 
-	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
-		return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-	};
-	WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet) {
+    WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
+        return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+    };
+    WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet) {
 		// ToDo проблема с выбором целого столбца/строки
-		var name, res = [];
-		absName = absName || this.workbook.dialogAbsName;
-		addSheet = addSheet || this.workbook.getDialogSheetName();
-		if (this.model.selectionRange) {
-			var ranges = this.model.selectionRange.ranges;
+        var name, res = [];
+        absName = absName || this.workbook.dialogAbsName;
+        addSheet = addSheet || this.workbook.getDialogSheetName();
+        if (this.model.selectionRange) {
+            var ranges = this.model.selectionRange.ranges;
 
 			//formula edit mode - check tables selection
 			if (ranges.length === 1 && this.getFormulaEditMode()) {
@@ -11404,20 +11367,20 @@
 					}
 				}
 
-				// ToDo проблема с выбором целого столбца/строки
-				name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
-				if (addSheet) {
-					name = parserHelp.get3DRef(this.model.getName(), name);
-				}
-				res.push(name);
-			}
-		}
-		return res;
+                // ToDo проблема с выбором целого столбца/строки
+                name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
+                if (addSheet) {
+                    name = parserHelp.get3DRef(this.model.getName(), name);
+                }
+                res.push(name);
+            }
+        }
+        return res;
 	};
 
-	WorksheetView.prototype.getSelectionInfo = function () {
+    WorksheetView.prototype.getSelectionInfo = function () {
 		return this.objectRender.selectedGraphicObjectsExists() ? this._getSelectionInfoObject() : this._getSelectionInfoCell();
-	};
+    };
 
     WorksheetView.prototype._getSelectionInfoCell = function () {
         var selectionRange = this.model.selectionRange;
@@ -12693,124 +12656,124 @@
         return ret;
     };
 
-	/* Функция для применения автозаполнения */
+    /* Функция для применения автозаполнения */
 	WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
 		let t = this;
 
-		if (null !== this.resizeTableIndex) {
+        if (null !== this.resizeTableIndex) {
 			let table = t.model.TableParts && t.model.TableParts[t.resizeTableIndex] ? t.model.TableParts[t.resizeTableIndex] : null;
 			if (table && t.activeFillHandle) {
 				let isError = this.af_checkChangeRange(t.activeFillHandle);
-				if (isError !== null) {
+		 		if (isError !== null) {
 					this.model.workbook.handlers.trigger("asc_onError", isError, c_oAscError.Level.NoCritical);
 				} else {
 					t.af_changeTableRange(table.DisplayName, t.activeFillHandle.clone());
 				}
 			}
 			!opt_doNotDraw && this.cleanSelection();
-			t.activeFillHandle = null;
+        	t.activeFillHandle = null;
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
 			!opt_doNotDraw && t._drawSelection();
 			callback && callback(false);
-			return;
+        	return;
 		}
 
-		// Текущее выделение (к нему применится автозаполнение)
+        // Текущее выделение (к нему применится автозаполнение)
 		let arn = t.model.selectionRange.getLast();
 		let range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 
-		// Были ли изменения
+        // Были ли изменения
 		let bIsHaveChanges = false;
-		// Вычисляем индекс сдвига
+        // Вычисляем индекс сдвига
 		let nIndex = 0;
-		/*nIndex*/
-		if (0 === this.fillHandleDirection) {
-			// Горизонтальное движение
-			nIndex = this.activeFillHandle.c2 - arn.c1;
-			if (2 === this.fillHandleArea) {
-				// Для внутренности нужно вычесть 1 из значения
-				bIsHaveChanges = arn.c2 !== (this.activeFillHandle.c2 - 1);
-			} else {
-				bIsHaveChanges = arn.c2 !== this.activeFillHandle.c2;
-			}
-		} else {
-			// Вертикальное движение
-			nIndex = this.activeFillHandle.r2 - arn.r1;
-			if (2 === this.fillHandleArea) {
-				// Для внутренности нужно вычесть 1 из значения
-				bIsHaveChanges = arn.r2 !== (this.activeFillHandle.r2 - 1);
-			} else {
-				bIsHaveChanges = arn.r2 !== this.activeFillHandle.r2;
-			}
-		}
+        /*nIndex*/
+        if (0 === this.fillHandleDirection) {
+            // Горизонтальное движение
+            nIndex = this.activeFillHandle.c2 - arn.c1;
+            if (2 === this.fillHandleArea) {
+                // Для внутренности нужно вычесть 1 из значения
+                bIsHaveChanges = arn.c2 !== (this.activeFillHandle.c2 - 1);
+            } else {
+                bIsHaveChanges = arn.c2 !== this.activeFillHandle.c2;
+            }
+        } else {
+            // Вертикальное движение
+            nIndex = this.activeFillHandle.r2 - arn.r1;
+            if (2 === this.fillHandleArea) {
+                // Для внутренности нужно вычесть 1 из значения
+                bIsHaveChanges = arn.r2 !== (this.activeFillHandle.r2 - 1);
+            } else {
+                bIsHaveChanges = arn.r2 !== this.activeFillHandle.r2;
+            }
+        }
 
-		// Меняли ли что-то
+        // Меняли ли что-то
 		if (bIsHaveChanges && (this.activeFillHandle.r1 !== this.activeFillHandle.r2 || this.activeFillHandle.c1 !== this.activeFillHandle.c2)) {
-			// Диапазон ячеек, который мы будем менять
+            // Диапазон ячеек, который мы будем менять
 			let changedRange = arn.clone();
 
-			// Очищаем выделение
-			this.cleanSelection();
-			if (2 === this.fillHandleArea) {
-				// Мы внутри, будет удаление cбрасываем первую ячейку
-				// Проверяем, удалили ли мы все (если да, то область не меняется)
-				if (arn.c1 !== this.activeFillHandle.c2 || arn.r1 !== this.activeFillHandle.r2) {
-					// Уменьшаем диапазон (мы удалили не все)
-					if (0 === this.fillHandleDirection) {
-						// Горизонтальное движение (для внутренности необходимо вычесть 1)
-						arn.c2 = this.activeFillHandle.c2 - 1;
+            // Очищаем выделение
+            this.cleanSelection();
+            if (2 === this.fillHandleArea) {
+                // Мы внутри, будет удаление cбрасываем первую ячейку
+                // Проверяем, удалили ли мы все (если да, то область не меняется)
+                if (arn.c1 !== this.activeFillHandle.c2 || arn.r1 !== this.activeFillHandle.r2) {
+                    // Уменьшаем диапазон (мы удалили не все)
+                    if (0 === this.fillHandleDirection) {
+                        // Горизонтальное движение (для внутренности необходимо вычесть 1)
+                        arn.c2 = this.activeFillHandle.c2 - 1;
 
-						changedRange.c1 = changedRange.c2;
-						changedRange.c2 = this.activeFillHandle.c2;
-					} else {
-						// Вертикальное движение (для внутренности необходимо вычесть 1)
-						arn.r2 = this.activeFillHandle.r2 - 1;
+                        changedRange.c1 = changedRange.c2;
+                        changedRange.c2 = this.activeFillHandle.c2;
+                    } else {
+                        // Вертикальное движение (для внутренности необходимо вычесть 1)
+                        arn.r2 = this.activeFillHandle.r2 - 1;
 
-						changedRange.r1 = changedRange.r2;
-						changedRange.r2 = this.activeFillHandle.r2;
-					}
-				}
-			} else {
-				// Мы вне выделения. Увеличиваем диапазон
-				if (0 === this.fillHandleDirection) {
-					// Горизонтальное движение
-					if (1 === this.fillHandleArea) {
-						arn.c1 = this.activeFillHandle.c2;
+                        changedRange.r1 = changedRange.r2;
+                        changedRange.r2 = this.activeFillHandle.r2;
+                    }
+                }
+            } else {
+                // Мы вне выделения. Увеличиваем диапазон
+                if (0 === this.fillHandleDirection) {
+                    // Горизонтальное движение
+                    if (1 === this.fillHandleArea) {
+                        arn.c1 = this.activeFillHandle.c2;
 
-						changedRange.c2 = changedRange.c1 - 1;
-						changedRange.c1 = this.activeFillHandle.c2;
-					} else {
-						arn.c2 = this.activeFillHandle.c2;
+                        changedRange.c2 = changedRange.c1 - 1;
+                        changedRange.c1 = this.activeFillHandle.c2;
+                    } else {
+                        arn.c2 = this.activeFillHandle.c2;
 
-						changedRange.c1 = changedRange.c2 + 1;
-						changedRange.c2 = this.activeFillHandle.c2;
-					}
-				} else {
-					// Вертикальное движение
-					if (1 === this.fillHandleArea) {
-						arn.r1 = this.activeFillHandle.r2;
+                        changedRange.c1 = changedRange.c2 + 1;
+                        changedRange.c2 = this.activeFillHandle.c2;
+                    }
+                } else {
+                    // Вертикальное движение
+                    if (1 === this.fillHandleArea) {
+                        arn.r1 = this.activeFillHandle.r2;
 
-						changedRange.r2 = changedRange.r1 - 1;
-						changedRange.r1 = this.activeFillHandle.r2;
-					} else {
-						arn.r2 = this.activeFillHandle.r2;
+                        changedRange.r2 = changedRange.r1 - 1;
+                        changedRange.r1 = this.activeFillHandle.r2;
+                    } else {
+                        arn.r2 = this.activeFillHandle.r2;
 
-						changedRange.r1 = changedRange.r2 + 1;
-						changedRange.r2 = this.activeFillHandle.r2;
-					}
-				}
-			}
+                        changedRange.r1 = changedRange.r2 + 1;
+                        changedRange.r2 = this.activeFillHandle.r2;
+                    }
+                }
+            }
 
-			changedRange.normalize();
+            changedRange.normalize();
 
 			let applyFillHandleCallback = function (res) {
-				if (res) {
-					// Автозаполняем ячейки
+                if (res) {
+                    // Автозаполняем ячейки
 					let oCanPromote = range.canPromote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex);
-					if (null != oCanPromote) {
-						History.Create_NewPoint();
-						History.StartTransaction();
+                    if (null != oCanPromote) {
+                        History.Create_NewPoint();
+                        History.StartTransaction();
 
 						AscCommonExcel.executeInR1C1Mode(false, function () {
 							range.promote(/*bCtrl*/ctrlPress, /*bVertical*/(1 === t.fillHandleDirection), nIndex, oCanPromote);
@@ -12839,26 +12802,26 @@
 
 						!opt_doNotDraw && t.draw();
 						callback && callback(true);
-					} else {
+                    } else {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
-						t.model.selectionRange.assign2(range.bbox);
+                        t.model.selectionRange.assign2(range.bbox);
 
-						// Сбрасываем параметры автозаполнения
-						t.activeFillHandle = null;
-						t.fillHandleDirection = -1;
+                // Сбрасываем параметры автозаполнения
+                t.activeFillHandle = null;
+                t.fillHandleDirection = -1;
 
-						t.updateSelection();
+                        t.updateSelection();
 						callback && callback(false);
-					}
-				} else {
+                    }
+                } else {
 					// Сбрасываем параметры автозаполнения
 					t.activeFillHandle = null;
 					t.fillHandleDirection = -1;
 					// Перерисовываем
 					!opt_doNotDraw && t._drawSelection();
 					callback && callback(false);
-				}
-			};
+                }
+            };
 
 			if (this.model.isUserProtectedRangesIntersection(changedRange)) {
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
@@ -12907,19 +12870,19 @@
 				return;
 			}
 
-			// Можно ли применять автозаполнение ?
-			this._isLockedCells(changedRange, /*subType*/null, applyFillHandleCallback);
-		} else {
-			// Ничего не менялось, сбрасываем выделение
-			this.cleanSelection();
-			// Сбрасываем параметры автозаполнения
-			this.activeFillHandle = null;
-			this.fillHandleDirection = -1;
-			// Перерисовываем
+            // Можно ли применять автозаполнение ?
+            this._isLockedCells(changedRange, /*subType*/null, applyFillHandleCallback);
+        } else {
+            // Ничего не менялось, сбрасываем выделение
+            this.cleanSelection();
+            // Сбрасываем параметры автозаполнения
+            this.activeFillHandle = null;
+            this.fillHandleDirection = -1;
+            // Перерисовываем
 			!opt_doNotDraw && this._drawSelection();
 			callback && callback(false);
-		}
-	};
+        }
+    };
 
 	WorksheetView.prototype.applyFillHandleDoubleClick = function () {
 
@@ -13790,59 +13753,59 @@
 	};
 
 
-	WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
+    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
 		//opt_wsTo - for test reasons only
-		var t = this;
+        var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
 
-		var onApplyMoveRangeHandleCallback = function (isSuccess) {
-			if (false === isSuccess) {
+        var onApplyMoveRangeHandleCallback = function (isSuccess) {
+            if (false === isSuccess) {
 				wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
-				wsTo._cleanSelectionMoveRange();
-				callback && callback(false);
-				return;
-			}
+                wsTo._cleanSelectionMoveRange();
+                callback && callback(false);
+                return;
+            }
 
-			var onApplyMoveAutoFiltersCallback = function (isSuccess) {
-				if (false === isSuccess) {
+            var onApplyMoveAutoFiltersCallback = function (isSuccess) {
+                if (false === isSuccess) {
 					wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
-					wsTo._cleanSelectionMoveRange();
-					callback && callback(false);
-					return;
-				}
+                    wsTo._cleanSelectionMoveRange();
+                    callback && callback(false);
+                    return;
+                }
 
 				var hasMerged = t.model.getRange3(arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2).hasMerged();
 
-				// Очищаем выделение
-				wsTo.cleanSelection();
+                // Очищаем выделение
+                wsTo.cleanSelection();
 				// clear traces
 				if (t.traceDependentsManager) {
 					t.traceDependentsManager.clearAll();
 				}
 
-				//ToDo t.cleanDepCells();
-				History.Create_NewPoint();
+                //ToDo t.cleanDepCells();
+                History.Create_NewPoint();
 				if (opt_wsTo === undefined) {
-					History.SetSelection(arnFrom.clone());
-				}
-				History.SetSelectionRedo(arnTo.clone());
-				History.StartTransaction();
+                    History.SetSelection(arnFrom.clone());
+                }
+                History.SetSelectionRedo(arnTo.clone());
+                History.StartTransaction();
 
-				t.model.autoFilters._preMoveAutoFilters(arnFrom, arnTo, copyRange, opt_wsTo);
-				t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
-				t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
+                t.model.autoFilters._preMoveAutoFilters(arnFrom, arnTo, copyRange, opt_wsTo);
+                t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
+                t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
 				t.moveCellWatches(arnFrom, arnTo, copyRange, opt_wsTo);
 
-				var oRangeFrom = new AscCommonExcel.Range(t.model, arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2);
-				var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
-				Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
+                var oRangeFrom = new AscCommonExcel.Range(t.model, arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2);
+                var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
+                Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
 
-				// Вызываем функцию пересчета для заголовков форматированной таблицы
-				t.model.checkChangeTablesContent(arnFrom);
-				wsTo.model.checkChangeTablesContent(arnTo);
-				t.model.autoFilters.reDrawFilter(arnFrom);
+                // Вызываем функцию пересчета для заголовков форматированной таблицы
+                t.model.checkChangeTablesContent(arnFrom);
+                wsTo.model.checkChangeTablesContent(arnTo);
+                t.model.autoFilters.reDrawFilter(arnFrom);
 
-				t.model.autoFilters.afterMoveAutoFilters(arnFrom, arnTo, opt_wsTo);
+                t.model.autoFilters.afterMoveAutoFilters(arnFrom, arnTo, opt_wsTo);
 
 				if (opt_wsTo) {
 					History.SetSheetUndo(wsTo.model.getId());
@@ -13866,41 +13829,41 @@
 					//не делаем действий в asc_onConfirmAction, потому что во время диалога может выполниться autosave и новые измения добавятся в точку, которую уже отправили
 					//тем более результат диалога ни на что не влияет
 					wsTo.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmPutMergeRange, function () {
-					});
+						});
 				}
 				t.workbook.Api.onWorksheetChange(arnFrom);
 				t.workbook.Api.onWorksheetChange(arnTo);
 				callback && callback(true);
-			};
+            };
 
-			if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
-				t._isLockedAll(onApplyMoveAutoFiltersCallback);
+            if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
+                t._isLockedAll(onApplyMoveAutoFiltersCallback);
 				if (copyRange) {
 					//TODO перепроверить лок
 					t._isLockedDefNames(null, null);
 				}
-			} else {
-				onApplyMoveAutoFiltersCallback();
-			}
-		};
+            } else {
+                onApplyMoveAutoFiltersCallback();
+            }
+        };
 
-		if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
+        if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			this._cleanSelectionMoveRange();
 			callback && callback(false);
 			return;
 		}
 
-		if (this.af_isCheckMoveRange(arnFrom, arnTo, opt_wsTo)) {
+        if (this.af_isCheckMoveRange(arnFrom, arnTo, opt_wsTo)) {
 			if (opt_wsTo) {
-				this._isLockedCells([arnFrom], null, opt_wsTo._isLockedCells([arnTo], null, onApplyMoveRangeHandleCallback));
-			} else {
-				this._isLockedCells([arnFrom, arnTo], null, onApplyMoveRangeHandleCallback);
-			}
-		} else {
-			this._cleanSelectionMoveRange();
-		}
-	};
+                this._isLockedCells([arnFrom], null, opt_wsTo._isLockedCells([arnTo], null, onApplyMoveRangeHandleCallback));
+            } else {
+                this._isLockedCells([arnFrom, arnTo], null, onApplyMoveRangeHandleCallback);
+            }
+        } else {
+            this._cleanSelectionMoveRange();
+        }
+    };
 
     WorksheetView.prototype.isEmptyCellsSheet = function () {
       return !(this.rows.length || this.cols.length);
@@ -22966,10 +22929,10 @@
 			History.StartTransaction();
 
 			if (!addedRowBreak) {
-				t.model.changeRowColBreaks(null, activeCell.row, range, null, true);
+			t.model.changeRowColBreaks(null, activeCell.row, range, null, true);
 			}
 			if (!addedColBreak) {
-				t.model.changeRowColBreaks(null, activeCell.col, range, true, true);
+			t.model.changeRowColBreaks(null, activeCell.col, range, true, true);
 			}
 
 			t.changeViewPrintLines(true);
@@ -22989,7 +22952,7 @@
 
 		//do lock print settings
 		if (!addedRowBreak || !addedColBreak) {
-			this._isLockedLayoutOptions(onChangeCallback);
+		this._isLockedLayoutOptions(onChangeCallback);
 		}
 	};
 

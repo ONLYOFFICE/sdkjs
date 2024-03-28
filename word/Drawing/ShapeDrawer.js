@@ -922,6 +922,26 @@ CShapeDrawer.prototype =
         this.Graphics._c2(x1, y1, x2, y2);
     },
 
+    /**
+     * @param {{x: Number, y: Number, z? :Number}} startPoint
+     * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+     * @param {{x: Number, y: Number, z? :Number}} endPoint
+     */
+    drawNthDegreeBezier : function(startPoint, controlPoints, endPoint)
+    {
+        if (this.bIsCheckBounds)
+        {
+            this.CheckPoint(startPoint.x, startPoint.y);
+            controlPoints.forEach(function (controlPoint) {
+                this.CheckPoint(controlPoint.x, controlPoint.y);
+            })
+            this.CheckPoint(endPoint.x, endPoint.y);
+            return;
+        }
+
+        this.Graphics.drawNthDegreeBezier(startPoint, controlPoints, endPoint);
+    },
+
     _z : function()
     {
         this.IsCurrentPathCanArrows = false;

@@ -609,6 +609,158 @@ CGraphics.prototype =
             this.m_oContext.quadraticCurveTo(_x1 + 0.5,_y1 + 0.5,_x2 + 0.5,_y2 + 0.5);
         }
     },
+    /**
+     * accepts values in unknown units (mb mm) which to be scaled and transformed later
+     * (using this.m_oFullTransform maybe) or in it
+     * made with the use of:
+     * http://html5tutorial.com/how-to-draw-n-grade-bezier-curve-with-canvas-api/
+     * uses de Casteljau's algorithm
+     * @param {{x: Number, y: Number, z? :Number}} startPoint
+     * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+     * @param {{x: Number, y: Number, z? :Number}} endPoint
+     */
+    drawNthDegreeBezier : function(startPoint, controlPoints, endPoint)
+    {
+        /**
+         * Uses de Casteljau's algorithm
+         * @param {{x: Number, y: Number, z? :Number}} startPoint
+         * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+         * @param {{x: Number, y: Number, z? :Number}} endPoint
+         * @param {Number} pointsCount
+         * @param {CanvasRenderingContext2D} canvasRenderingContext
+         */
+        function drawNthDegreeBezierOnCanvas(startPoint, controlPoints, endPoint,
+                                             pointsCount, canvasRenderingContext)
+        {
+            /**Computes a point's coordinates for a value of t
+             * @param {Number} t - a value between o and 1
+             * @param {{x: Number, y: Number, z? :Number}} startPoint
+             * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+             * @param {{x: Number, y: Number, z? :Number}} endPoint
+             * @return {{x: Number, y: Number}} point
+             **/
+            function computeBezierPoint(t, startPoint, controlPoints, endPoint)
+            {
+                /**Computes Bernstain
+                 *@param {Integer} i - the i-th index
+                 *@param {Integer} n - the total number of points
+                 *@param {Number} t - the value of parameter t , between 0 and 1
+                 **/
+                function computeBernstainCoef(i,n,t)
+                {
+                    /**Computes factorial*/
+                    function fact(k){
+                        if(k==0 || k==1){
+                            return 1;
+                        }
+                        else{
+                            return k * fact(k-1);
+                        }
+                    }
+
+                    //if(n < i) throw "Wrong";
+                    return fact(n) / (fact(i) * fact(n-i))* Math.pow(t, i) * Math.pow(1-t, n-i);
+                }
+
+                var points = [].concat(startPoint, controlPoints, endPoint);
+                var r = {
+                    x: 0,
+                    y: 0
+                };
+                var n = points.length-1;
+                for(var i=0; i <= n; i++){
+                    r.x += points[i].x * computeBernstainCoef(i, n, t);
+                    r.y += points[i].y * computeBernstainCoef(i, n, t);
+                }
+                return r;
+            }
+
+            // in fact pointsCount is larger by 1 point. bcs if pointsCount = 2 t will be 0, 1/2 and 1 - 3 times total
+            for (let t = 0; t <= 1; t+= 1/pointsCount) {
+               let point = computeBezierPoint(t, startPoint, controlPoints, endPoint);
+               canvasRenderingContext.lineTo(point.x, point.y);
+            }
+        }
+
+        function sumDistanceBetweenPoints(points)
+        {
+            function distance(a, b){
+                return Math.sqrt(Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
+            }
+            /**Compute the incremental step*/
+            let tLength = 0;
+            for(let i=0; i < points.length - 1; i++){
+                tLength += distance(points[i], points[i+1]);
+            }
+            return tLength;
+        }
+
+        function transformPoints(points, transform)
+        {
+            let pointsCopy = Array(points.length);
+            for(let i=0; i < pointsCopy.length; i++){
+                pointsCopy[i] = {x: null, y: null};
+                pointsCopy[i].x = transform.TransformPointX(points[i].x, points[i].y);
+                pointsCopy[i].y = transform.TransformPointY(points[i].x, points[i].y);
+            }
+            return pointsCopy;
+        }
+
+        let bezierPoints = [].concat(startPoint, controlPoints, endPoint);
+
+        // https://www.figma.com/file/FT0m9czNuvK34TK227cQ6e/pointsToCalculatePerOnePixelLengthUnit?type=design&node-id=0%3A1&mode=design&t=0S7e2nxkt2sbCHqw-1
+        // not integer more like precision coefficient. can be 0.3 for example
+        let pointsToCalculatePerOnePixelLengthUnit = 1;
+
+        // convert length to pixels length units
+        // https://www.figma.com/file/FT0m9czNuvK34TK227cQ6e/pointsToCalculatePerOnePixelLengthUnit?type=design&node-id=41-49&mode=design&t=pH5bF1EvWeWjzkS0-0
+        // Canvas resize is not considered!
+        let bezierPointsCopy = transformPoints(bezierPoints, this.m_oFullTransform);
+
+        // As we calculate length of a curve as sum of control points there might be performance issue with
+        // high order curves because they have many control points and so length will be considered
+        // as long and there will be many control points
+        // add + 1 to avoid divide by 0 later when calculating interpolation step which is 1/interpolationPointsCount
+        let interpolationPointsCount = pointsToCalculatePerOnePixelLengthUnit *
+          sumDistanceBetweenPoints(bezierPointsCopy) + 1;
+
+        if (false === this.m_bIntegerGrid)
+        {
+            drawNthDegreeBezierOnCanvas(startPoint, controlPoints, endPoint,
+              interpolationPointsCount, this.m_oContext);
+
+            if (this.ArrayPoints != null)
+            {
+                // I do it by analogy
+
+                let thisContext = this;
+                controlPoints.forEach(function(controlPoint) {
+                    thisContext.ArrayPoints[thisContext.ArrayPoints.length] = {x: controlPoint.x, y: controlPoint.y};
+                });
+                this.ArrayPoints[this.ArrayPoints.length] = {x: endPoint.x, y: endPoint.y};
+            }
+        }
+        else
+        {
+            // I do it by analogy
+
+            startPoint.x = ((this.m_oFullTransform.TransformPointX(startPoint.x,startPoint.y)) >> 0) + 0.5;
+            startPoint.y = ((this.m_oFullTransform.TransformPointY(startPoint.x,startPoint.y)) >> 0) + 0.5;
+
+            // change controlPoints
+            for (let i = 0; i < controlPoints.length; i++) {
+                let controlPoint = controlPoints[i];
+                controlPoint.x = ((this.m_oFullTransform.TransformPointX(controlPoint.x,controlPoint.y)) >> 0) + 0.5;
+                controlPoint.y = ((this.m_oFullTransform.TransformPointY(controlPoint.x,controlPoint.y)) >> 0) + 0.5;
+            }
+
+            endPoint.x = ((this.m_oFullTransform.TransformPointX(endPoint.x,endPoint.y)) >> 0) + 0.5;
+            endPoint.y = ((this.m_oFullTransform.TransformPointY(endPoint.x,endPoint.y)) >> 0) + 0.5;
+
+            drawNthDegreeBezierOnCanvas(startPoint, controlPoints, endPoint,
+              interpolationPointsCount, this.m_oContext);
+        }
+    },
     ds : function()
     {
         this.m_oContext.stroke();

@@ -520,6 +520,9 @@
 		this.len  = 0;
 		this.pos  = 0;
 
+		this.posAttrEnd  = 0;
+		this.attrQuote = 0x22;//"
+
 		if (true !== bIsNoInit)
 			this.Init();
 
@@ -889,6 +892,11 @@
 			}
 		};
 
+
+		this.SetXmlAttributeQuote = function(val)
+		{
+			this.attrQuote = val;
+		}
 		this.WriteXmlString = function(val)
 		{
 			var pCur = 0;
@@ -936,6 +944,114 @@
 					this.WriteUtf8Char(0x70);
 					this.WriteUtf8Char(0x6f);
 					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x22:
+					//"
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x71);
+					this.WriteUtf8Char(0x75);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
+			}
+		};
+		this.WriteXmlStringEncodeInSingleQuote = function(val)
+		{
+			var pCur = 0;
+			var pEnd = val.length;
+			while (pCur < pEnd)
+			{
+				var code = val.charCodeAt(pCur++);
+				if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
+				{
+					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
+				}
+				this.WriteXmlCharCodeInSingleQuote(code);
+			}
+		};
+		this.WriteXmlCharCodeInSingleQuote = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x27:
+					//'
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
+			}
+		};
+		this.WriteXmlStringEncodeInDoubleQuote = function(val)
+		{
+			var pCur = 0;
+			var pEnd = val.length;
+			while (pCur < pEnd)
+			{
+				var code = val.charCodeAt(pCur++);
+				if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
+				{
+					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
+				}
+				this.WriteXmlCharCodeInDoubleQuote(code);
+			}
+		};
+		this.WriteXmlCharCodeInDoubleQuote = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
 					this.WriteUtf8Char(0x3b);
 					break;
 				case 0x3c:
@@ -1014,6 +1130,19 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlNodeEndCheckEmpty = function(name)
+		{
+			if (this.posAttrEnd === this.GetCurPosition()) {
+				this.Seek(this.posAttrEnd - 1);
+				this.WriteUtf8Char(0x2f);
+				this.WriteUtf8Char(0x3e);
+			} else {
+				this.WriteUtf8Char(0x3c);
+				this.WriteUtf8Char(0x2f);
+				this.WriteXmlString(name);
+				this.WriteUtf8Char(0x3e);
+			}
+		};
 		this.WriteXmlNodeWithText = function(name, text)
 		{
 			this.WriteXmlNodeStart(name);
@@ -1028,23 +1157,33 @@
 				this.WriteUtf8Char(0x2f);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlAttributesEndSavePos = function()
+		{
+			this.WriteUtf8Char(0x3e);
+			this.posAttrEnd = this.GetCurPosition();
+		};
 		this.WriteXmlAttributeString = function(name, val)
 		{
 			this.WriteUtf8Char(0x20);
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
 			this.WriteXmlString(val.toString());
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
 		};
 		this.WriteXmlAttributeStringEncode = function(name, val)
 		{
 			this.WriteUtf8Char(0x20);
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
-			this.WriteUtf8Char(0x22);
-			this.WriteXmlStringEncode(val.toString());
-			this.WriteUtf8Char(0x22);
+			this.WriteUtf8Char(this.attrQuote);
+			//todo remove if. save method to proerty like attrQuote
+			if (this.attrQuote === 0x22) {
+				this.WriteXmlStringEncodeInDoubleQuote(val.toString());
+			} else {
+				this.WriteXmlStringEncodeInSingleQuote(val.toString());
+			}
+			this.WriteUtf8Char(this.attrQuote);
 		};
 		this.WriteXmlAttributeBool = function(name, val)
 		{

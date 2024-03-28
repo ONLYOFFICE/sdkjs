@@ -1428,7 +1428,7 @@
 
 			this.IsInit = true;
 
-			if (window["g_fonts_selection_bin"] != "")
+			if (window["g_fonts_selection_bin"] != "" && window["g_fonts_selection_bin"] != undefined)
 			{
 				// read from stream
 				var _ft_stream = CreateFontData2(window["g_fonts_selection_bin"]);
