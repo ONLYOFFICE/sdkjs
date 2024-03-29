@@ -78,6 +78,19 @@
 		wrap : function(obj)
 		{
 			this.privateData = obj;
+		},
+
+		getDataObject: function ()
+		{
+			let oData = {};
+			for(let sKey in this.privateData)
+			{
+				if(this.privateData.hasOwnProperty(sKey))
+				{
+					oData[sKey] = this.privateData[sKey];
+				}
+			}
+			return oData;
 		}
 	};
 
@@ -193,12 +206,16 @@
 		{
 			this.path = basePath;
 
+			let services = {};
 			for (let i = 0; i < plugins.length; i++)
 			{
 				let newPlugin = plugins[i];
 
 				let guid = newPlugin.guid;
 				let isSystem = newPlugin.isSystem();
+
+				if (newPlugin.isBackground())
+					services[guid] = true;
 
 				if (this.runnedPluginsMap[guid])
 				{
@@ -237,6 +254,26 @@
 						setTimeout(function(){
 							window.g_asc_plugins.run(guid, 0, "");
 						}, 100);
+					}
+				}
+			}
+
+			let runnedServices = this.api.getUsedBackgroundPlugins();
+			for (let i = 0, len = runnedServices.length; i < len; i++)
+			{
+				let guid = runnedServices[i];
+				if (services[guid] === true)
+				{
+					if (!this.isRunned(guid))
+					{
+						if (!isDelayRun)
+							this.run(guid, 0, "");
+						else
+						{
+							setTimeout(function(){
+								window.g_asc_plugins.run(guid, 0, "");
+							}, 100);
+						}
 					}
 				}
 			}
@@ -727,6 +764,37 @@
 			}
 		},
 
+		setUsedBackgroundPlugins : function(services)
+		{
+			window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+		},
+
+		addUsedBackgroundPlugins : function(guid)
+		{
+			let services = this.api.getUsedBackgroundPlugins();
+			for (let i = 0, len = services.length; i < len; i++)
+			{
+				if (services[i] === guid)
+					return;
+			}
+			services.push(guid);
+			this.api.setUsedBackgroundPlugins(services);
+		},
+
+		removeUsedBackgroundPlugins : function(guid)
+		{
+			let services = this.api.getUsedBackgroundPlugins();
+			for (let i = 0, len = services.length; i < len; i++)
+			{
+				if (services[i] === guid)
+				{
+					services.splice(i, 1);
+					this.api.setUsedBackgroundPlugins(services);
+					return;
+				}
+			}
+		},
+
 		run : function(guid, variation, data, isOnlyResize)
 		{
 			if (window["AscDesktopEditor"] &&
@@ -751,14 +819,21 @@
 				return;
 
 			let isSystem = this.pluginsMap[guid].isSystem();
+			let isBackground = this.pluginsMap[guid].isBackground();
 			let isRunned = (this.runnedPluginsMap[guid] !== undefined) ? true : false;
 
 			if (isRunned)
 			{
-				// запуск запущенного => закрытие
+				// запуск запущенного => закрытие (только для видимых, так как в интерфейсе "отжим" кнопки плагина - приходит run)
+				if (isSystem || isBackground)
+					return false;
+
 				this.close(guid);
 				return false;
 			}
+
+			if (isBackground)
+				this.addUsedBackgroundPlugins(guid);
 
 			if (!isSystem && !this.isSupportManyPlugins && !isOnlyResize)
 			{
@@ -936,6 +1011,9 @@
 			if (runObject.startData && runObject.startData.getAttribute("resize") === true)
 				this.endLongAction();
 
+			if (this.pluginsMap[guid].isBackground())
+				this.removeUsedBackgroundPlugins(guid);
+
 			runObject.startData = null;
 
 			if (true)
@@ -952,6 +1030,7 @@
 
 			delete this.runnedPluginsMap[guid];
 			this.api.onPluginCloseContextMenuItem(guid);
+			this.api.onPluginCloseToolbarMenuItem(guid);
 
 			if (this.runAndCloseData)
 			{

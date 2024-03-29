@@ -167,16 +167,16 @@
 				window.addEventListener("resize", function () {
 					self._onWindowResize.apply(self, arguments);
 				}, false);
-				window.addEventListener("mousemove", function () {
+				window.addEventListener(AscCommon.getPtrEvtName("move"), function () {
 					return self._onWindowMouseMove.apply(self, arguments);
 				}, false);
-				window.addEventListener("mouseup", function () {
+				window.addEventListener(AscCommon.getPtrEvtName("up"), function () {
 					return self._onWindowMouseUp.apply(self, arguments);
 				}, false);
-				window.addEventListener("mouseleave", function () {
+				window.addEventListener(AscCommon.getPtrEvtName("leave"), function () {
 					return self._onWindowMouseLeaveOut.apply(self, arguments);
 				}, false);
-				window.addEventListener("mouseout", function () {
+				window.addEventListener(AscCommon.getPtrEvtName("out"), function () {
 					return self._onWindowMouseLeaveOut.apply(self, arguments);
 				}, false);
 			}
@@ -189,16 +189,16 @@
 			}
 
 			if (this.element.addEventListener) {
-				this.element.addEventListener("mousedown", function () {
+				this.element.addEventListener(AscCommon.getPtrEvtName("down"), function () {
 					return self._onMouseDown.apply(self, arguments);
 				}, false);
-				this.element.addEventListener("mouseup", function () {
+				this.element.addEventListener(AscCommon.getPtrEvtName("up"), function () {
 					return self._onMouseUp.apply(self, arguments);
 				}, false);
-				this.element.addEventListener("mousemove", function () {
+				this.element.addEventListener(AscCommon.getPtrEvtName("move"), function () {
 					return self._onMouseMove.apply(self, arguments);
 				}, false);
-				this.element.addEventListener("mouseleave", function () {
+				this.element.addEventListener(AscCommon.getPtrEvtName("leave"), function () {
 					return self._onMouseLeave.apply(self, arguments);
 				}, false);
 				this.element.addEventListener("dblclick", function () {
@@ -225,16 +225,16 @@
 			// Курсор для графических объектов. Определяем mousedown и mouseup для выделения текста.
 			var oShapeCursor = document.getElementById("id_target_cursor");
 			if (null != oShapeCursor && oShapeCursor.addEventListener) {
-				oShapeCursor.addEventListener("mousedown", function () {
+				oShapeCursor.addEventListener(AscCommon.getPtrEvtName("down"), function () {
 					return self._onMouseDown.apply(self, arguments);
 				}, false);
-				oShapeCursor.addEventListener("mouseup", function () {
+				oShapeCursor.addEventListener(AscCommon.getPtrEvtName("up"), function () {
 					return self._onMouseUp.apply(self, arguments);
 				}, false);
-				oShapeCursor.addEventListener("mousemove", function () {
+				oShapeCursor.addEventListener(AscCommon.getPtrEvtName("move"), function () {
 					return self._onMouseMove.apply(self, arguments);
 				}, false);
-				oShapeCursor.addEventListener("mouseleave", function () {
+				oShapeCursor.addEventListener(AscCommon.getPtrEvtName("leave"), function () {
 					return self._onMouseLeave.apply(self, arguments);
 				}, false);
 			}
@@ -470,7 +470,7 @@
 				this.vsbApi.bind("scrollvertical", function (evt) {
 					self.handlers.trigger("scrollY", evt.scrollPositionY / self.settings.vscrollStep, !self.vsbApi.scrollerMouseDown);
 				});
-				this.vsbApi.bind("mouseup", function (evt) {
+				this.vsbApi.bind(AscCommon.getPtrEvtName("up"), function (evt) {
 					if (self.vsbApi.scrollerMouseDown) {
 						self.handlers.trigger('initRowsCount');
 					}
@@ -500,7 +500,7 @@
 				this.hsbApi.bind("scrollhorizontal", function (evt) {
 					self.handlers.trigger("scrollX", evt.scrollPositionX / self.settings.hscrollStep, !self.hsbApi.scrollerMouseDown);
 				});
-				this.hsbApi.bind("mouseup", function (evt) {
+				this.hsbApi.bind(AscCommon.getPtrEvtName("up"), function (evt) {
 					if (self.hsbApi.scrollerMouseDown) {
 						self.handlers.trigger('initColsCount');
 					}

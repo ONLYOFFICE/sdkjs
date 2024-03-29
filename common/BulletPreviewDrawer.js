@@ -233,10 +233,7 @@
 		{
 			if(this.m_oApi.getEditorId() === AscCommon.c_oEditorId.Word)
 			{
-				if(oGraphics.darkModeOverride3)
-				{
-					oGraphics.darkModeOverride3();
-				}
+				oGraphics.setDarkMode();
 			}
 		}
 

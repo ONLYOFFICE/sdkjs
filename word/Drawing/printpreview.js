@@ -94,9 +94,6 @@
 		g.m_oFontManager = AscCommon.g_fontManager;
 		g.transform(1, 0, 0, 1, 0, 0);
 
-		if (AscCommon.AscBrowser.isCustomScalingAbove2())
-			g.IsRetina = true;
-
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
 		g.isPrintMode = true;

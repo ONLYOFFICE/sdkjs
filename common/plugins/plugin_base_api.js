@@ -330,6 +330,8 @@ window.startPluginApi = function() {
 
 	/**
 	 * Event: onContextMenuShow
+	 * WARNING! If plugin is listening this event, it MUST call AddContextMenuItem method (synchronously or not),
+	 * because editor wait answers from ALL plugins and then and only then fill contextmenu.
 	 * @event Plugin#onContextMenuShow
 	 * @memberof Plugin
 	 * @alias onContextMenuShow
@@ -346,6 +348,16 @@ window.startPluginApi = function() {
 	 * @description The function called when the context menu item has been clicked.
 	 * @param {string} id - Item ID.
 	 * @since 7.4.0
+	 */
+
+	/**
+	 * Event: onToolbarMenuClick
+	 * @event Plugin#onToolbarMenuClick
+	 * @memberof Plugin
+	 * @alias onToolbarMenuClick
+	 * @description The function called when the context menu item has been clicked.
+	 * @param {string} id - Item ID.
+	 * @since 8.1.0
 	 */
 
 	/**

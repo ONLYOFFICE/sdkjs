@@ -1325,7 +1325,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
     };
     Slide.prototype.draw = function(graphics) {
-        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
+        let bCheckBounds = graphics.isBoundsChecker();
         let bSlideShow = this.graphicObjects.isSlideShow();
         let bClipBySlide = !this.graphicObjects.canEdit();
         if (bCheckBounds && (bSlideShow || bClipBySlide)) {
@@ -1574,7 +1574,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		    oGraphics.animationDrawer ||
 		    oGraphics.IsThumbnail ||
 		    oGraphics.IsDemonstrationMode ||
-		    oGraphics.IsSlideBoundsCheckerType || 
+		    oGraphics.isBoundsChecker() ||
 			oGraphics.IsNoDrawingEmptyPlaceholder) {
 		    return;
 	    }
@@ -1601,7 +1601,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         if(this.notesShape) {
             this.notesShape.draw(g);
             var oLock = this.notesShape.Lock;
-            if(oLock && AscCommon.locktype_None != oLock.Get_Type()) {
+            if(oLock && AscCommon.c_oAscLockTypes.kLockTypeNone != oLock.Get_Type()) {
                 var bCoMarksDraw = true;
                 if(typeof editor !== "undefined" && editor && AscFormat.isRealBool(editor.isCoMarksDraw)) {
                     bCoMarksDraw = editor.isCoMarksDraw;
@@ -1827,7 +1827,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
       //  var sp_tree = this.cSld.spTree;
       //  for(var i = 0; i < sp_tree.length; ++i)
       //  {
-      //      if(sp_tree[i].Lock.Type !== AscCommon.locktype_Mine && sp_tree[i].Lock.Type !== AscCommon.locktype_None)
+      //      if(sp_tree[i].Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeMine && sp_tree[i].Lock.Type !== AscCommon.c_oAscLockTypes.kLockTypeNone)
       //          return true;
       //  }
         return false;

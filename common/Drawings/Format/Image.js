@@ -529,7 +529,7 @@
 
 
 			var oClipRect;
-			if (!graphics.IsSlideBoundsCheckerType) {
+			if (!graphics.isBoundsChecker()) {
 				oClipRect = this.getClipRect();
 			}
 			if (oClipRect) {
@@ -556,7 +556,7 @@
 					if (oApi) {
 						sImageId = AscCommon.getFullImageSrc2(sImageId);
 						var _img = oApi.ImageLoader.map_image_index[sImageId];
-						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || true === graphics.IsSlideBoundsCheckerType || true == graphics.RENDERER_PDF_FLAG) {
+						if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || graphics.isBoundsChecker() || graphics.isPdf()) {
 							this.brush = CreateBrushFromBlipFill(this.blipFill);
 							this.pen = null;
 						} else {

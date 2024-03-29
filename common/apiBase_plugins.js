@@ -150,6 +150,18 @@
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
+	/**
+	 * OLE-object properties
+	 * @typed {Object} OLEProperties
+	 * @property {string} data - OLE object data (internal format).
+	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+	 * @property {number} width - The OLE object width measured in millimeters.
+	 * @property {number} height - The OLE object height measured in millimeters.
+	 * @property {number} widthPix - The OLE object image width in pixels.
+	 * @property {number} heightPix - The OLE object image height in pixels.
+	 */
+
     /**
      * Base class
      * @global
@@ -174,14 +186,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -190,16 +195,30 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.objectId - The OLE object identifier.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
+
+
+	/**
+	 * Returns an array of selected ole-objects.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectedOleObjects
+	 * @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 */
+	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
+	{
+		let oDrawingsController = this.getGraphicController();
+		let aRes = [];
+		if(!oDrawingsController) return aRes;
+		let aSelectedOle = oDrawingsController.getSelectedOleObjects();
+		for(let nIdx = 0; nIdx < aSelectedOle.length; ++nIdx)
+		{
+			aRes.push(aSelectedOle[nIdx].getPluginDataObject());
+		}
+		return aRes;
+	};
 
     /**
 	 * An object containing the font information.
@@ -1299,6 +1318,28 @@
 		};
 	}
 
+	Api.prototype.getUsedBackgroundPlugins = function()
+	{
+		let services = [];
+		try
+		{
+			services = JSON.parse(window.localStorage.getItem("asc_plugins_background"));
+			if (!services)
+				services = [];
+		}
+		catch (e)
+		{
+			services = [];
+		}
+		return services;
+	};
+	Api.prototype["getUsedBackgroundPlugins"] = Api.prototype.getUsedBackgroundPlugins;
+
+	Api.prototype.setUsedBackgroundPlugins = function(services)
+	{
+		window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+	};
+
 	Api.prototype.checkInstalledPlugins = function()
 	{
 		if (this.disableCheckInstalledPlugins)
@@ -1718,8 +1759,10 @@
 	 * @typedef {Object} ContextMenuItem
 	 * The context menu item.
 	 * @property {string} id - The item ID.
-	 * @property {localeTranslate} text - The item text.
+	 * @property {string} text - The item text.
+	 * @property {string} [data] - The item data (this data will be sended to click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 */
 
@@ -1751,6 +1794,62 @@
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
+	 * @typedef {("button" | "...")} ToolbarMenuItemType
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuItem
+	 * The toolbar menu item.
+	 * @property {string} id - The item ID.
+	 * @property {ToolbarMenuItemType} The item type
+	 * @property {string} text - The item text.
+	 * @property {string} hint - The item text.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle]
+	 * @property {boolean} [lockInViewMode]
+	 * @property {boolean} [separator]
+	 * @property {boolean} [split]
+	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuTab
+	 * The toolbar menu item.
+	 * @property {string} id - The tab ID.
+	 * @property {string} text - The tab text.
+	 * @property {ToolbarMenuItem[]} [items] - The tab items.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuMainItem
+	 * The toolbar menu item.
+	 * @property {string} giud - The plugin guid.
+	 * @property {ToolbarMenuTab[]} tabs
+	 */
+
+	/**
+	 * Adds an item to the toolbar menu.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddToolbarMenuItem
+	 * @param {ToolbarMenuMainItem[]} items - An array containing the context menu items for the current item.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		for (let i = 0, len = items.tabs.length; i < len; i++)
+		{
+			if (items.tabs[i]["items"])
+				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+		}
+
+		this.sendEvent("onPluginToolbarMenu", [items]);
 	};
 
 	/**

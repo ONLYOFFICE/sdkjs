@@ -600,7 +600,7 @@ $(function() {
 						let rangePivot = ws.getRange2(pivotRef);
 						let bboxPivot = rangePivot.bbox;
 						let pivot = ws.getPivotTable(bboxPivot.c1, bboxPivot.r1);
-						let formula = pivot.getGetPivotDataFormulaByActiveCell(bboxPivot.r1, bboxPivot.c1);
+						let formula = pivot.getGetPivotDataFormulaByActiveCell(bboxPivot.r1, bboxPivot.c1, false);
 						assert.strictEqual(formula, formulaExpected, errorText);
 					}
 
@@ -610,6 +610,41 @@ $(function() {
 				});
 			}
 
+		});
+		QUnit.test('Test: GETPIVOTDATA TWO ARGS', function (assert) {
+			const file = Asc.GetPivotData2;
+			const wb = openDocument(file);
+			const data = {
+				'General': [
+					'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'G13', 'G14', 'G15', 'G16', 'G17', 'G18', 'G19',
+					'G22', 'G23', 'G24', 'G25', 'G30',
+					'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11',
+					'I3', 'I22', 'I23', 'I24', 'I25'
+				],
+				'Subtotals + GrandTotals': [
+					'G5', 'G6', 'G14', 'G15', 'G38', 'G39', 'G49', 'G50', 'G51', 'G55', 'G56', 'G57',
+					'H24', 'H25', 'H38', 'H39', 'H49', 'H50', 'H55', 'H56'
+				],
+				'DataFields': [
+					'I4', 'I5', 'I6', 'I7', 'I8', 'I9',
+					'J4', 'J5', 'J6', 'J7', 'J8', 'J9', 'J10'
+				]
+			}
+			for (let sheetName in data) {
+				const elems = data[sheetName];
+				const ws = wb.getWorksheetByName(sheetName);
+				elems.forEach(function (formulaRef) {
+					let errorText = sheetName + ':' + formulaRef;
+					let rangeFormula = ws.getRange2(formulaRef);
+					let valueExpected = rangeFormula.getValue();
+					let formula = rangeFormula.getValueForEdit().substring(1);
+
+					let oParser = new AscCommonExcel.parserFormula(formula, "A1", ws);
+					assert.ok(oParser.parse(), errorText);
+					const value = oParser.calculate().getValue();
+					assert.strictEqual(value + "", valueExpected, errorText);
+				});
+			}
 		});
 	}
 });

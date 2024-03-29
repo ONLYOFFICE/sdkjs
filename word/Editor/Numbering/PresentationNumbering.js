@@ -536,76 +536,76 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		return;
 	}
 
-		var OldTextPr  = Context.GetTextPr();
-		var OldTextPr2 = g_oTextMeasurer.GetTextPr();
+	var OldTextPr  = Context.GetTextPr();
+	var OldTextPr2 = g_oTextMeasurer.GetTextPr();
 
-		var sT = this.m_sString;
+	var sT = this.m_sString;
 	var FontSlot;
-		if (sT)
-		{
-			FontSlot = AscWord.GetFontSlotByTextPr( sT.getUnicodeIterator().value(), this.m_oTextPr);
-		}
+	if (sT)
+	{
+		FontSlot = AscWord.GetFontSlotByTextPr( sT.getUnicodeIterator().value(), this.m_oTextPr);
+	}
 
+	if(this.m_oTextPr.Unifill){
+		this.m_oTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
+	}
+	Context.SetTextPr( this.m_oTextPr, PDSE.Theme );
+	Context.SetFontSlot( FontSlot );
+	if(!Context.isTextDrawer()){
 		if(this.m_oTextPr.Unifill){
-			this.m_oTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
+			var RGBA = this.m_oTextPr.Unifill.getRGBAColor();
+			this.m_oColor.r = RGBA.R;
+			this.m_oColor.g = RGBA.G;
+			this.m_oColor.b = RGBA.B;
 		}
-		Context.SetTextPr( this.m_oTextPr, PDSE.Theme );
-		Context.SetFontSlot( FontSlot );
-		if(!Context.Start_Command){
-			if(this.m_oTextPr.Unifill){
-				var RGBA = this.m_oTextPr.Unifill.getRGBAColor();
-				this.m_oColor.r = RGBA.R;
-				this.m_oColor.g = RGBA.G;
-				this.m_oColor.b = RGBA.B;
-			}
-			var r = this.m_oColor.r;
-			var g = this.m_oColor.g;
-			var b = this.m_oColor.b;
-			if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty())
+		var r = this.m_oColor.r;
+		var g = this.m_oColor.g;
+		var b = this.m_oColor.b;
+		if(PDSE.Paragraph && PDSE.Paragraph.IsEmpty())
+		{
+			var dAlpha = 0.4;
+			var rB, gB, bB;
+			if(PDSE.BgColor)
 			{
-				var dAlpha = 0.4;
-				var rB, gB, bB;
-				if(PDSE.BgColor)
-				{
-					rB = PDSE.BgColor.r;
-					gB = PDSE.BgColor.g;
-					bB = PDSE.BgColor.b;
-				}
-				else
-				{
-					rB = 255;
-					gB = 255;
-					bB = 255;
-				}
-				r = Math.min(255, (r  * dAlpha + rB * (1 - dAlpha) + 0.5) >> 0);
-				g = Math.min(255, (g  * dAlpha + gB * (1 - dAlpha) + 0.5) >> 0);
-				b = Math.min(255, (b  * dAlpha + bB * (1 - dAlpha) + 0.5) >> 0);
+				rB = PDSE.BgColor.r;
+				gB = PDSE.BgColor.g;
+				bB = PDSE.BgColor.b;
 			}
-			Context.p_color(r, g, b, 255 );
-			Context.b_color1(r, g, b, 255 );
+			else
+			{
+				rB = 255;
+				gB = 255;
+				bB = 255;
+			}
+			r = Math.min(255, (r  * dAlpha + rB * (1 - dAlpha) + 0.5) >> 0);
+			g = Math.min(255, (g  * dAlpha + gB * (1 - dAlpha) + 0.5) >> 0);
+			b = Math.min(255, (b  * dAlpha + bB * (1 - dAlpha) + 0.5) >> 0);
 		}
-		g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
-		g_oTextMeasurer.SetFontSlot( FontSlot );
+		Context.p_color(r, g, b, 255 );
+		Context.b_color1(r, g, b, 255 );
+	}
+	g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
+	g_oTextMeasurer.SetFontSlot( FontSlot );
 
-		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
+	{
+		var charCode = iter.value();
+		if (Context.m_bIsTextDrawer === true)
 		{
-			var charCode = iter.value();
-			if (Context.m_bIsTextDrawer === true)
-			{
-				Context.CheckAddNewPath(X, Y, charCode);
-			}
-			Context.FillTextCode( X, Y, charCode );
-			X += g_oTextMeasurer.MeasureCode(charCode).Width;
+			Context.CheckAddNewPath(X, Y, charCode);
 		}
-		
-		if(OldTextPr)
-		{
-			Context.SetTextPr( OldTextPr, PDSE.Theme );
-		}
-		if(OldTextPr2)
-		{
-			g_oTextMeasurer.SetTextPr( OldTextPr2, PDSE.Theme  );
-		}
+		Context.FillTextCode( X, Y, charCode );
+		X += g_oTextMeasurer.MeasureCode(charCode).Width;
+	}
+
+	if(OldTextPr)
+	{
+		Context.SetTextPr( OldTextPr, PDSE.Theme );
+	}
+	if(OldTextPr2)
+	{
+		g_oTextMeasurer.SetTextPr( OldTextPr2, PDSE.Theme  );
+	}
 };
 CPresentationBullet.prototype.IsNumbered = function()
 {

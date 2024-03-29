@@ -312,7 +312,7 @@ ObjectToDraw.prototype =
                         this.brush = AscFormat.G_O_NO_ACTIVE_COMMENT_BRUSH;
                     }
                     var oComm = this.Comment;
-                    if(!graphics.IsSlideBoundsCheckerType && !AscCommon.IsShapeToImageConverter) 
+                    if(!graphics.isBoundsChecker() && !AscCommon.IsShapeToImageConverter)
                     {
                         oComments.Add_DrawingRect(oComm.x0, oComm.y0, oComm.x1 - oComm.x0, oComm.y1 - oComm.y0, graphics.PageNum, this.Comment.Additional.CommentId, global_MatrixTransformer.Invert(oTransform));
                     }
@@ -341,7 +341,7 @@ ObjectToDraw.prototype =
         graphics.transform3(oTransform, false);
         var shape_drawer = new AscCommon.CShapeDrawer();
         shape_drawer.fromShape2(this, graphics, this.geometry);
-        if(graphics.IsSlideBoundsCheckerType)
+        if(graphics.isBoundsChecker())
         {
             shape_drawer.bIsNoFillAttack = false;
         }

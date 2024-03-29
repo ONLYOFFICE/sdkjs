@@ -196,6 +196,8 @@ CGraphicObjects.prototype =
 
     getSelectedArray: DrawingObjectsController.prototype.getSelectedArray,
 
+    getSelectedOleObjects: DrawingObjectsController.prototype.getSelectedOleObjects,
+
     getTheme: function()
     {
         return this.document.theme;
@@ -1671,15 +1673,7 @@ CGraphicObjects.prototype =
             }
             else
             {
-                var pluginData = new Asc.CPluginData();
-                pluginData.setAttribute("data", oleObject.m_sData);
-                pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-                pluginData.setAttribute("width", oleObject.extX);
-                pluginData.setAttribute("height", oleObject.extY);
-                pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-                pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-                pluginData.setAttribute("objectId", oleObject.Id);
-                editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+                oleObject.runPlugin();
             }
             this.clearTrackObjects();
             this.clearPreTrackObjects();
@@ -1688,21 +1682,15 @@ CGraphicObjects.prototype =
         }
     },
 
-    startEditCurrentOleObject: function(){
-        var oSelector = this.selection.groupSelection ? this.selection.groupSelection : this;
-        var oThis = this;
-        if(oSelector.selectedObjects.length === 1 && oSelector.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_OleObject){
-            var oleObject = oSelector.selectedObjects[0];
-            if(false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props)){
-                var pluginData = new Asc.CPluginData();
-                pluginData.setAttribute("data", oleObject.m_sData);
-                pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-                pluginData.setAttribute("width", oleObject.extX);
-                pluginData.setAttribute("height", oleObject.extY);
-                pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-                pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-                pluginData.setAttribute("objectId", oleObject.Id);
-                editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+    startEditCurrentOleObject: function()
+    {
+        let aSelectedObjects = this.getSelectedArray();
+        if(aSelectedObjects.length === 1 && aSelectedObjects[0].isOleObject())
+        {
+            let oleObject = aSelectedObjects[0];
+            if(!this.document.IsSelectionLocked(changestype_Drawing_Props))
+            {
+                oleObject.runPlugin();
             }
         }
     },

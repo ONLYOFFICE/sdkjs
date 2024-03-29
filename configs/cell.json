@@ -68,6 +68,7 @@
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
 
+			"common/Drawings/GraphicsBase.js",
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
@@ -176,6 +177,7 @@
 			"cell/view/WorkbookView.js",
 			"cell/view/WorksheetView.js",
 			"cell/view/DrawingObjectsController.js",
+			"word/Drawing/Graphics.js",
 			"cell/model/DrawingObjects/Graphics.js",
 			"word/Drawing/buttons.js",
 			"word/Drawing/ShapeDrawer.js",

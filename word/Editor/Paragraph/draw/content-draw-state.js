@@ -366,7 +366,7 @@
 	 */
 	ParagraphContentDrawState.prototype.handleMathElement = function(element)
 	{
-		if (para_Math_Placeholder === element.Type && this.Graphics.RENDERER_PDF_FLAG)
+		if (para_Math_Placeholder === element.Type && this.Graphics.isPdf())
 			return;
 		
 		let linePos = this.paraMath.GetLinePosition(this.Line, this.Range);

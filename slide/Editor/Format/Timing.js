@@ -8467,7 +8467,7 @@
             dW = oRect.w;
             dH = oRect.h;
 
-            if (oGraphics.IsSlideBoundsCheckerType) {
+            if (oGraphics.isBoundsChecker()) {
                 oGraphics.rect(dX, dY, dW, dH);
                 return;
             }

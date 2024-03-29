@@ -468,10 +468,7 @@
             var oSection = this.Pages[0].Sections[0];
             if(oSection){
 
-                if (pGraphics.Start_Command)
-                {
-                    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-                }
+                pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
                 for (var ColumnIndex = 0, ColumnsCount = oSection.Columns.length; ColumnIndex < ColumnsCount; ++ColumnIndex)
                 {
@@ -503,10 +500,7 @@
                      }*/
                 }
 
-                if (pGraphics.End_Command)
-                {
-                    pGraphics.End_Command();
-                }
+                pGraphics.End_Command();
             }
 
             else{

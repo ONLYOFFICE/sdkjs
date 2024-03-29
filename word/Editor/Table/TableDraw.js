@@ -119,7 +119,7 @@ CTable.prototype.private_DrawTableBackgroundAndOuterBorder = function(pGraphics,
     var Y_bottom = this.Pages[PNum].Bounds.Top;
 
     var LockType = this.Lock.Get_Type();
-    if ( AscCommon.locktype_None != LockType )
+    if (AscCommon.c_oAscLockTypes.kLockTypeNone != LockType && pGraphics.isSupportEditFeatures())
     {
         pGraphics.DrawLockObjectRect(this.Lock.Get_Type(), this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Top, this.Pages[PNum].Bounds.Right - this.Pages[PNum].Bounds.Left, this.Pages[PNum].Bounds.Bottom - this.Pages[PNum].Bounds.Top );
     }
@@ -635,10 +635,8 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
 {
     if ( this.HeaderInfo.Count > 0 && PNum > this.HeaderInfo.PageIndex && true === this.HeaderInfo.Pages[PNum].Draw )
     {
-        if(pGraphics.Start_Command)
-        {
-            pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
-        }
+        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
+
         var HeaderPage = this.HeaderInfo.Pages[PNum];
         for ( var CurRow = 0; CurRow < this.HeaderInfo.Count; CurRow++ )
         {
@@ -657,10 +655,8 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
                 Cell.Content_Draw(PNum, pGraphics);
             }
         }
-        if(pGraphics.End_Command)
-        {
-            pGraphics.End_Command();
-        }
+
+		pGraphics.End_Command();
     }
 
     // Рисуем содержимое всех ячеек. Его рисуем в нормальном порядке, потому что некоторые элементы
@@ -670,10 +666,8 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
         var Row = this.Content[CurRow];
         var CellsCount = Row.Get_CellsCount();
 
-        if(pGraphics.Start_Command)
-        {
-            pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
-        }
+        pGraphics.Start_Command(AscFormat.DRAW_COMMAND_TABLE_ROW);
+
         for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
         {
             var Cell = Row.Get_Cell( CurCell );
@@ -703,10 +697,7 @@ CTable.prototype.private_DrawCellsContent = function(pGraphics, PNum, Row_start,
             Cell.Content_Draw(PNum, pGraphics);
         }
 
-        if(pGraphics.End_Command)
-        {
-            pGraphics.End_Command();
-        }
+        pGraphics.End_Command();
     }
 };
 CTable.prototype.private_DrawCellsBorders = function(pGraphics, PNum, Row_start, Row_last)

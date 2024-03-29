@@ -3626,7 +3626,7 @@
 				this.pagesInfo.pages[i].graphics.word = oGraphicsWord;
 				oGraphicsWord.init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
 				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 				
 				if (this.pagesInfo.pages[i].fields != null) {
@@ -3746,7 +3746,7 @@
 				this.pagesInfo.pages[i].graphics.word = oGraphicsWord;
 				oGraphicsWord.init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
 				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
 				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 				
 				let oGraphicsPDF = new AscPDF.CPDFGraphics();

@@ -79,7 +79,7 @@ CCacheManager.prototype.Lock = function (_w, _h, _drDocument)
 	if (_drDocument)
 	{
 		var backColor = _drDocument.m_oWordControl.m_oApi.getPageBackgroundColor();
-		backgroundColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+		backgroundColor = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
 	}
 
 	for (var i = 0; i < this.arrayCount; ++i)

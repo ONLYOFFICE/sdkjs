@@ -2762,7 +2762,6 @@ function CVerRuler()
     this.IsCanMoveMargins = true;
 
     this.m_oWordControl = null;
-    this.IsRetina = false;
 
     this.SimpleChanges = new RulerCheckSimpleChanges();
 

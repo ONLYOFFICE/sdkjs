@@ -908,6 +908,8 @@ function CreatePenFromParams(oUnifill, nStyle, nLineCap, nLineJoin, dLineWidth, 
 
 function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
 {
+    AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.TextDrawer, true);
+
     this.m_oFont =
     {
         Name     : "",
@@ -950,9 +952,6 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     this.m_oFontSlotFont = new AscCommon.CFontSetup();
     this.LastFontOriginInfo = { Name : "", Replace : null };
 
-    this.GrState = new AscCommon.CGrState();
-    this.GrState.Parent = this;
-
     this.m_bDivByLines = bDivByLInes === true;
     this.m_bDivGlyphs  = bDivGlyphs === true;
     this.m_aByLines = null;
@@ -982,1118 +981,970 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     this.pathMemory = new AscFormat.CPathMemory();
 }
 
-CTextDrawer.prototype =
+CTextDrawer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+CTextDrawer.prototype.constructor = CTextDrawer;
+
+CTextDrawer.prototype.SetObjectToDraw = function(oObjectToDraw)
 {
-    SetObjectToDraw: function(oObjectToDraw)
+    this.m_oObjectToDraw = oObjectToDraw;
+};
+// pen methods
+CTextDrawer.prototype.p_color = function(r,g,b,a)
+{
+    if (this.m_oPen.Color.R != r || this.m_oPen.Color.G != g || this.m_oPen.Color.B != b)
     {
-        this.m_oObjectToDraw = oObjectToDraw;
-    },
-    // pen methods
-    p_color : function(r,g,b,a)
+        this.m_oPen.Color.R = r;
+        this.m_oPen.Color.G = g;
+        this.m_oPen.Color.B = b;
+    }
+    if (this.m_oPen.Color.A != a)
     {
-        if (this.m_oPen.Color.R != r || this.m_oPen.Color.G != g || this.m_oPen.Color.B != b)
+        this.m_oPen.Color.A = a;
+    }
+    var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+    if(oLastCommand)
+    {
+        if(oLastCommand.m_nType === DRAW_COMMAND_LINE &&
+            oLastCommand.m_nDrawType === 3)
         {
-            this.m_oPen.Color.R = r;
-            this.m_oPen.Color.G = g;
-            this.m_oPen.Color.B = b;
-        }
-        if (this.m_oPen.Color.A != a)
-        {
-            this.m_oPen.Color.A = a;
-        }
-        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
-        if(oLastCommand)
-        {
-            if(oLastCommand.m_nType === DRAW_COMMAND_LINE && 
-                oLastCommand.m_nDrawType === 3)
+            if(this.m_oTextPr && this.m_oTheme)
             {
-                if(this.m_oTextPr && this.m_oTheme)
+                var oTextPr = this.m_oTextPr.Copy();
+                if(!oTextPr.TextOutline)
                 {
-                    var oTextPr = this.m_oTextPr.Copy();
-                    if(!oTextPr.TextOutline)
-                    {
-                        oTextPr.TextOutline = new AscFormat.CLn();
-                    }
-                    oTextPr.TextOutline.Fill = AscFormat.CreateUnfilFromRGB(r, g, b);
-                    this.SetTextPr(oTextPr, this.m_oTheme);
-                    return;
+                    oTextPr.TextOutline = new AscFormat.CLn();
                 }
+                oTextPr.TextOutline.Fill = AscFormat.CreateUnfilFromRGB(r, g, b);
+                this.SetTextPr(oTextPr, this.m_oTheme);
+                return;
             }
         }
-        this.Get_PathToDraw(false, true);
-    },
-    AddSmartRect: function()
-    {},
-    p_width : function(w)
+    }
+    this.Get_PathToDraw(false, true);
+};
+CTextDrawer.prototype.AddSmartRect = function()
+{};
+CTextDrawer.prototype.p_width = function(w)
+{
+    var val = w / 1000;
+    if (this.m_oPen.Size != val)
     {
-        var val = w / 1000;
-        if (this.m_oPen.Size != val)
-        {
-            this.m_oPen.Size = val;
-        }
-        this.Get_PathToDraw(false, true);
-    },
-    p_dash : function(w)
+        this.m_oPen.Size = val;
+    }
+    this.Get_PathToDraw(false, true);
+};
+
+// brush methods
+CTextDrawer.prototype.b_color1 = function(r,g,b,a)
+{
+    if (this.m_oBrush.Color1.R !== r || this.m_oBrush.Color1.G !== g || this.m_oBrush.Color1.B !== b)
     {
-    },
-    // brush methods
-    b_color1 : function(r,g,b,a)
+        this.m_oBrush.Color1.R = r;
+        this.m_oBrush.Color1.G = g;
+        this.m_oBrush.Color1.B = b;
+    }
+    if (this.m_oBrush.Color1.A !== a)
     {
-        if (this.m_oBrush.Color1.R !== r || this.m_oBrush.Color1.G !== g || this.m_oBrush.Color1.B !== b)
+        this.m_oBrush.Color1.A = a;
+    }
+    var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+    if(oLastCommand)
+    {
+        if(oLastCommand.m_nType === DRAW_COMMAND_LINE &&
+            (oLastCommand.m_nDrawType === 0))
         {
-            this.m_oBrush.Color1.R = r;
-            this.m_oBrush.Color1.G = g;
-            this.m_oBrush.Color1.B = b;
-        }
-        if (this.m_oBrush.Color1.A !== a)
-        {
-            this.m_oBrush.Color1.A = a;
-        }
-        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
-        if(oLastCommand)
-        {
-            if(oLastCommand.m_nType === DRAW_COMMAND_LINE && 
-                (oLastCommand.m_nDrawType === 0))
+            if(this.m_oTextPr && this.m_oTheme)
             {
-                if(this.m_oTextPr && this.m_oTheme)
-                {
-                    var oTextPr = this.m_oTextPr.Copy();
-                    oTextPr.Unifill = undefined;
-                    oTextPr.TextFill = undefined;
-                    oTextPr.FontRef = undefined;
-                    oTextPr.Color = new CDocumentColor(r, g, b, false);
-                    this.SetTextPr(oTextPr, this.m_oTheme);
-                    return;
-                }
+                var oTextPr = this.m_oTextPr.Copy();
+                oTextPr.Unifill = undefined;
+                oTextPr.TextFill = undefined;
+                oTextPr.FontRef = undefined;
+                oTextPr.Color = new CDocumentColor(r, g, b, false);
+                this.SetTextPr(oTextPr, this.m_oTheme);
+                return;
             }
         }
-        this.Get_PathToDraw(false, true);
-    },
+    }
+    this.Get_PathToDraw(false, true);
+};
 
-    set_fillColor: function(R, G, B)
-    {
-        this.m_oFill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(R, G, B));
-        this.Get_PathToDraw(false, true);
-    },
+CTextDrawer.prototype.set_fillColor = function(R, G, B)
+{
+    this.m_oFill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(R, G, B));
+    this.Get_PathToDraw(false, true);
+};
 
-    b_color2 : function(r,g,b,a)
+CTextDrawer.prototype.b_color2 = function(r,g,b,a)
+{
+    if (this.m_oBrush.Color2.R != r || this.m_oBrush.Color2.G != g || this.m_oBrush.Color2.B != b)
     {
-        if (this.m_oBrush.Color2.R != r || this.m_oBrush.Color2.G != g || this.m_oBrush.Color2.B != b)
+        this.m_oBrush.Color2.R = r;
+        this.m_oBrush.Color2.G = g;
+        this.m_oBrush.Color2.B = b;
+    }
+    if (this.m_oBrush.Color2.A != a)
+    {
+        this.m_oBrush.Color2.A = a;
+    }
+    this.Get_PathToDraw(false, true);
+};
+
+CTextDrawer.prototype.put_brushTexture = function(src, mode)
+{
+    this.m_oBrush.Color1.R = -1;
+    this.m_oBrush.Color1.G = -1;
+    this.m_oBrush.Color1.B = -1;
+    this.m_oBrush.Color1.A = -1;
+    this.Get_PathToDraw(false, true);
+};
+
+CTextDrawer.prototype.SetShd = function(oShd)
+{
+    if(oShd)
+    {
+        if (oShd.Value !== Asc.c_oAscShdNil)
         {
-            this.m_oBrush.Color2.R = r;
-            this.m_oBrush.Color2.G = g;
-            this.m_oBrush.Color2.B = b;
-        }
-        if (this.m_oBrush.Color2.A != a)
-        {
-            this.m_oBrush.Color2.A = a;
-        }
-        this.Get_PathToDraw(false, true);
-    },
-
-    put_brushTexture : function(src, mode)
-    {
-        this.m_oBrush.Color1.R = -1;
-        this.m_oBrush.Color1.G = -1;
-        this.m_oBrush.Color1.B = -1;
-        this.m_oBrush.Color1.A = -1;
-        this.Get_PathToDraw(false, true);
-    },
-
-    SetShd: function(oShd)
-    {
-        if(oShd)
-        {
-            if (oShd.Value !== Asc.c_oAscShdNil)
+            if(oShd.Unifill)
             {
-                if(oShd.Unifill)
-                {
-                    this.m_oFill = oShd.Unifill;
-                }
-                else
-                {
-                    if(oShd.Color)
-                    {
-                        this.m_oFill = AscFormat.CreateUnfilFromRGB(oShd.Color.r, oShd.Color.g, oShd.Color.b);
-                    }
-                    else
-                    {
-                        this.m_oFill = null;
-                    }
-                }
+                this.m_oFill = oShd.Unifill;
             }
             else
             {
-                this.m_oFill = null;
+                if(oShd.Color)
+                {
+                    this.m_oFill = AscFormat.CreateUnfilFromRGB(oShd.Color.r, oShd.Color.g, oShd.Color.b);
+                }
+                else
+                {
+                    this.m_oFill = null;
+                }
             }
         }
         else
         {
             this.m_oFill = null;
         }
-        this.Get_PathToDraw(false, true);
-    },
-
-
-    SetBorder: function(oBorder)
+    }
+    else
     {
-        if(oBorder && oBorder.Value !== border_None)
+        this.m_oFill = null;
+    }
+    this.Get_PathToDraw(false, true);
+};
+
+CTextDrawer.prototype.SetBorder = function(oBorder)
+{
+    if(oBorder && oBorder.Value !== border_None)
+    {
+        this.m_oLine = CreatePenFromParams(oBorder.Unifill ? oBorder.Unifill : AscFormat.CreateUnfilFromRGB(oBorder.Color.r, oBorder.Color.g, oBorder.Color.b), this.m_oPen.Style, this.m_oPen.LineCap, this.m_oPen.LineJoin, this.m_oPen.LineWidth, this.m_oPen.Size);
+    }
+    else
+    {
+        this.m_oLine = null;
+    }
+    //TODO
+};
+
+CTextDrawer.prototype.SetAdditionalProps = function(oProps)
+{
+    oProps && this.SetTextPr(oProps, this.m_oTheme);
+};
+
+CTextDrawer.prototype.StartCheckTableDraw = function()
+{
+    this.Start_Command(DRAW_COMMAND_TABLE);
+};
+
+CTextDrawer.prototype.EndCheckTableDraw = function()
+{
+    this.End_Command();
+};
+
+CTextDrawer.prototype.Start_Command = function(commandId, param, index, nType)
+{
+    this.m_aCommands.push(commandId);
+    let oNewStructure = null;
+    let bOld = false;
+    switch(commandId)
+    {
+        case DRAW_COMMAND_NO_CREATE_GEOM:
         {
-            this.m_oLine = CreatePenFromParams(oBorder.Unifill ? oBorder.Unifill : AscFormat.CreateUnfilFromRGB(oBorder.Color.r, oBorder.Color.g, oBorder.Color.b), this.m_oPen.Style, this.m_oPen.LineCap, this.m_oPen.LineJoin, this.m_oPen.LineWidth, this.m_oPen.Size);
+            break;
         }
-        else
+        case DRAW_COMMAND_CONTENT:
         {
-            this.m_oLine = null;
+            oNewStructure = new CDocContentStructure();
+            this.m_aStackLineIndex.push(this.m_nCurLineIndex);
+            break;
         }
-        //TODO
-    },
-
-    SetAdditionalProps: function(oProps)
-    {
-        oProps && this.SetTextPr(oProps, this.m_oTheme);
-    },
-
-    put_BrushTextureAlpha : function(alpha)
-    {
-    },
-
-    put_BrushGradient : function(gradFill, points, transparent)
-    {
-    },
-
-    StartCheckTableDraw: function()
-    {
-        this.Start_Command(DRAW_COMMAND_TABLE);
-    },
-
-    EndCheckTableDraw: function()
-    {
-        this.End_Command();
-    },
-
-    Start_Command : function(commandId, param, index, nType)
-    {
-        this.m_aCommands.push(commandId);
-        let oNewStructure = null;
-        let bOld = false;
-        switch(commandId)
+        case DRAW_COMMAND_PARAGRAPH:
         {
-            case DRAW_COMMAND_NO_CREATE_GEOM:
-            {
-                break;
-            }
-            case DRAW_COMMAND_CONTENT:
-            {
-                oNewStructure = new CDocContentStructure();
-                this.m_aStackLineIndex.push(this.m_nCurLineIndex);
-                break;
-            }
-            case DRAW_COMMAND_PARAGRAPH:
-            {
 
-                if(param)
+            if(param)
+            {
+                let oLast = this.m_aStack[this.m_aStack.length - 1];
+                if(oLast)
                 {
-                    let oLast = this.m_aStack[this.m_aStack.length - 1];
-                    if(oLast)
+                    let aLastContent = oLast.m_aContent;
+                    if(Array.isArray(aLastContent))
                     {
-                        let aLastContent = oLast.m_aContent;
-                        if(Array.isArray(aLastContent))
+                        for(let nIdx = 0; nIdx < aLastContent.length; ++nIdx)
                         {
-                            for(let nIdx = 0; nIdx < aLastContent.length; ++nIdx)
+                            let oElement = aLastContent[nIdx];
+                            if(oElement.m_oParagraph === param)
                             {
-                                let oElement = aLastContent[nIdx];
-                                if(oElement.m_oParagraph === param)
-                                {
-                                    oNewStructure = oElement;
-                                    bOld = true;
-                                    break;
-                                }
+                                oNewStructure = oElement;
+                                bOld = true;
+                                break;
                             }
                         }
                     }
                 }
-                if(!oNewStructure)
+            }
+            if(!oNewStructure)
+            {
+                oNewStructure = new CParagraphStructure(param);
+                if(!this.m_bDivByLines)
                 {
-                    oNewStructure = new CParagraphStructure(param);
-                    if(!this.m_bDivByLines)
-                    {
-                        this.m_aByParagraphs[this.m_aByParagraphs.length] = [];
-                    }
+                    this.m_aByParagraphs[this.m_aByParagraphs.length] = [];
                 }
-                break;
             }
-            case DRAW_COMMAND_LINE:
-            {
-                var oPrevStruct = this.m_aStack[this.m_aStack.length - 1];
-                if(oPrevStruct.m_nType === DRAW_COMMAND_PARAGRAPH && oPrevStruct.m_aContent[index])
-                {
-                    oPrevStruct.m_aContent[index].m_nDrawType = nType;
-                    this.m_aStack.push(oPrevStruct.m_aContent[index]);
-                }
-                else
-                {
-                    oNewStructure = new CLineStructure(param);
-                    oNewStructure.m_nDrawType = nType;
-                    if(this.m_bDivByLines)
-                    {
-                        ++this.m_nCurLineIndex;
-                        if(!Array.isArray(this.m_aByLines[this.m_nCurLineIndex]))
-                        {
-                            this.m_aByLines[this.m_nCurLineIndex] = [];
-                        }
-                        this.m_aByLines[this.m_nCurLineIndex].push(oNewStructure);
-                        if(this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length - 1] < this.m_nCurLineIndex)
-                        {
-                            this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length - 1] = this.m_nCurLineIndex;
-                        }
-                    }
-                    else
-                    {
-                        this.m_aByParagraphs[this.m_aByParagraphs.length - 1].push(oNewStructure);
-                    }
-                }
-                break;
-            }
-            case DRAW_COMMAND_TABLE:
-            {
-                oNewStructure = new CTableStructure();
-                break;
-            }
-            case DRAW_COMMAND_DRAWING:
-            {
-                break;
-            }
-            case DRAW_COMMAND_HIDDEN_ELEM:
-            {
-                break;
-            }
-            case DRAW_COMMAND_TABLE_ROW:
-            {
-                this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length] = -1;
-                break;
-            }
+            break;
         }
-        if(oNewStructure)
+        case DRAW_COMMAND_LINE:
         {
-            if(this.m_aStack[this.m_aStack.length - 1] && !bOld)
+            var oPrevStruct = this.m_aStack[this.m_aStack.length - 1];
+            if(oPrevStruct.m_nType === DRAW_COMMAND_PARAGRAPH && oPrevStruct.m_aContent[index])
             {
-                this.m_aStack[this.m_aStack.length - 1].m_aContent.push(oNewStructure);
-            }
-            this.m_aStack.push(oNewStructure);
-        }
-    },
-
-    End_Command : function()
-    {
-        var nCommandId = this.m_aCommands.pop();
-        switch(nCommandId)
-        {
-            case DRAW_COMMAND_NO_CREATE_GEOM:
-            {
-                break;
-            }
-            case DRAW_COMMAND_CONTENT:
-            {
-                var oDocContentStructure = this.m_aStack.pop();
-                if(this.m_aStack.length === 0)
-                {
-                    this.m_oDocContentStructure = oDocContentStructure;
-                    this.m_oDocContentStructure.m_aByLines = this.m_aByLines;
-                    this.m_oDocContentStructure.m_aByParagraphs = this.m_aByParagraphs;
-                    this.m_oDocContentStructure.m_aDrawingsStruct = this.m_aDrawings;
-                    this.m_aByLines = [];
-                    this.m_aByParagraphs = [];
-                    this.m_aDrawings = [];
-                }
-                this.m_nCurLineIndex = this.m_aStackLineIndex.pop();
-                break;
-            }
-            case DRAW_COMMAND_PARAGRAPH:
-            {
-                let oParaStruct = this.m_aStack.pop();
-                if(oParaStruct && oParaStruct.checkWord)
-                {
-                    oParaStruct.checkWord();
-                }
-                break;
-            }
-            case DRAW_COMMAND_LINE:
-            {
-                this.m_aStack.pop();
-                break;
-            }
-            case DRAW_COMMAND_TABLE:
-            {
-                this.m_aStack.pop();
-                break;
-            }
-            case DRAW_COMMAND_DRAWING:
-            {
-                break;
-            }
-            case DRAW_COMMAND_HIDDEN_ELEM:
-            {
-                break;
-            }
-            case DRAW_COMMAND_TABLE_ROW:
-            {
-                this.m_nCurLineIndex = this.m_aStackCurRowMaxIndex.pop();
-                break;
-            }
-        }
-    },
-
-    Get_PathToDraw : function(bStart, bStart2, x, y, Code)
-    {
-        var oPath = null;
-        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
-        var oLastObjectToDraw, oBrushColor = this.m_oBrush.Color1, oPenColor = this.m_oPen.Color;
-        if(oLastCommand)
-        {
-            switch(oLastCommand.m_nType)
-            {
-                case DRAW_COMMAND_LINE:
-                {
-                    switch(oLastCommand.m_nDrawType)
-                    {
-                        case 0://content
-                        {
-                            if(oLastCommand.m_aContent.length === 0)
-                            {
-                                oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, this.m_oCurComment, Code));
-                            }
-                            oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
-
-                            if(bStart2)
-                            {
-                                if(oLastObjectToDraw.geometry.isEmpty())
-                                {
-                                    oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y, Code)
-                                }
-                                else
-                                {
-                                    oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, null, Code));
-                                    oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
-                                }
-                            }
-                            break;
-                        }
-                        case 1://borders
-                        {
-                            if(oLastCommand.m_aBorders.length === 0)
-                            {
-                                oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
-                            }
-                            oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
-
-                            if(bStart2)
-                            {
-                                if(oLastObjectToDraw.geometry.isEmpty())
-                                {
-                                    oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
-                                }
-                                else
-                                {
-                                    oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                                    oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
-                                }
-                            }
-                            break;
-                        }
-                        case 2://backgrounds
-                        {
-                            if(oLastCommand.m_aBackgrounds.length === 0)
-                            {
-                                oLastCommand.m_aBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
-                            }
-                            oLastObjectToDraw = oLastCommand.m_aBackgrounds[oLastCommand.m_aBackgrounds.length - 1];
-
-                            if(bStart2)
-                            {
-                                if(oLastObjectToDraw.geometry.isEmpty())
-                                {
-                                    oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
-                                }
-                                else
-                                {
-                                    oLastCommand.m_aBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                                    oLastObjectToDraw = oLastCommand.m_aBackgrounds[oLastCommand.m_aBackgrounds.length - 1];
-                                }
-                            }
-                            break;
-                        }
-                        case 3://Underliens & Strikeouts
-                        {
-                            if(oLastCommand.m_aUnderlinesStrikeouts.length === 0)
-                            {
-                                oBrushColor = this.m_oBrush.Color1;
-                                oPenColor = this.m_oPen.Color;
-                                oLastCommand.m_aUnderlinesStrikeouts.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
-                            }
-                            oLastObjectToDraw = oLastCommand.m_aUnderlinesStrikeouts[oLastCommand.m_aUnderlinesStrikeouts.length - 1];
-
-                            if(bStart2)
-                            {
-                                if(oLastObjectToDraw.geometry.isEmpty())
-                                {
-                                    oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y);
-                                }
-                                else
-                                {
-                                    oLastCommand.m_aUnderlinesStrikeouts.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                                    oLastObjectToDraw = oLastCommand.m_aUnderlinesStrikeouts[oLastCommand.m_aUnderlinesStrikeouts.length - 1];
-                                }
-                            }
-                            break;
-                        }
-                        case 4:
-                        {
-                            if(oLastCommand.m_aParagraphBackgrounds.length === 0)
-                            {
-                                oLastCommand.m_aParagraphBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
-                            }
-                            oLastObjectToDraw = oLastCommand.m_aParagraphBackgrounds[oLastCommand.m_aParagraphBackgrounds.length - 1];
-
-                            if(bStart2)
-                            {
-                                if(oLastObjectToDraw.geometry.isEmpty())
-                                {
-                                    oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
-                                }
-                                else
-                                {
-                                    oLastCommand.m_aParagraphBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                                    oLastObjectToDraw = oLastCommand.m_aParagraphBackgrounds[oLastCommand.m_aParagraphBackgrounds.length - 1];
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case DRAW_COMMAND_TABLE:
-                {
-                    if(oLastCommand.m_aBorders.length === 0 || bStart2)
-                    {
-                        oBrushColor = this.m_oBrush.Color1;
-                        oPenColor = this.m_oPen.Color;
-                        oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                    }
-                    oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
-
-                    if(bStart2)
-                    {
-                        if(oLastObjectToDraw.geometry.isEmpty())
-                        {
-                            oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
-                        }
-                        else
-                        {
-                            oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
-                            oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
-                        }
-                    }
-                    oLastObjectToDraw.geometry.bDrawSmart = true;
-                    break;
-                }
-                case DRAW_COMMAND_PARAGRAPH:
-                {
-                    break;
-                }
-            }
-        }
-        else
-        {
-            if(this.m_oObjectToDraw)
-            {
-                oLastObjectToDraw = this.m_oObjectToDraw;
-            }
-        }
-
-        if(oLastObjectToDraw && oLastObjectToDraw.geometry)
-        {
-            oLastObjectToDraw.Comment = this.m_oCurComment;
-            if(oLastObjectToDraw.geometry.pathLst.length === 0 || bStart)
-            {
-                oPath = this.pathMemory.AllocPath2();
-                oPath.setPathW(this.pathW);
-                oPath.setPathH(this.pathH);
-                oPath.setExtrusionOk(false);
-                oPath.setFill("none");
-                oPath.setStroke(true);
-                oLastObjectToDraw.geometry.AddPath(oPath)
+                oPrevStruct.m_aContent[index].m_nDrawType = nType;
+                this.m_aStack.push(oPrevStruct.m_aContent[index]);
             }
             else
             {
-                oPath = oLastObjectToDraw.geometry.pathLst[oLastObjectToDraw.geometry.pathLst.length-1];
-            }
-        }
-        return oPath;
-    },
-
-
-    transform : function(sx,shy,shx,sy,tx,ty)
-    {
-        if (this.m_oTransform.sx    != sx || this.m_oTransform.shx   != shx || this.m_oTransform.shy   != shy ||
-            this.m_oTransform.sy    != sy || this.m_oTransform.tx    != tx || this.m_oTransform.ty    != ty)
-        {
-            this.m_oTransform.sx    = sx;
-            this.m_oTransform.shx   = shx;
-            this.m_oTransform.shy   = shy;
-            this.m_oTransform.sy    = sy;
-            this.m_oTransform.tx    = tx;
-            this.m_oTransform.ty    = ty;
-        }
-    },
-    // path commands
-    _s : function()
-    {
-        if(this.m_bTurnOff)
-            return;
-        this.Get_PathToDraw(true);
-    },
-    _e : function()
-    {
-    },
-    _z : function()
-    {
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.close();
-        }
-    },
-    _m : function(x,y)
-    {
-        if(this.m_bTurnOff)
-            return;
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.moveTo(this.xKoeff*x, this.yKoeff*y);
-        }
-        this.lastX = x;
-        this.lastY = y;
-    },
-    _l : function(x,y)
-    {
-
-        if(this.m_bTurnOff)
-            return;
-        if(this.bCheckLines)
-        {
-            if(Math.abs(x - this.lastX) < EPSILON_TEXT_AUTOFIT && Math.abs(x - this.lastX) < Math.abs(y - this.lastY))
-            {
-                this.checkCurveBezier(this.lastX, this.lastY, this.lastX, this.lastY  + (y - this.lastY)/3, this.lastX, this.lastY + 2*(y - this.lastY)/3, x, y, PATH_DIV_EPSILON);
-                this.lastX = x;
-                this.lastY = y;
-                return;
-            }
-            else if(Math.abs(y - this.lastY) < EPSILON_TEXT_AUTOFIT && Math.abs(y - this.lastY) < Math.abs(x - this.lastX))
-            {
-                this.checkCurveBezier(this.lastX, this.lastY, this.lastX + (x - this.lastX)/3, this.lastY, this.lastX + 2*(x - this.lastX)/3, this.lastY, x, y, PATH_DIV_EPSILON);
-                this.lastX = x;
-                this.lastY = y;
-                return;
-            }
-        }
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.lnTo(this.xKoeff*x, this.yKoeff*y);
-        }
-        this.lastX = x;
-        this.lastY = y;
-    },
-    _c : function(x1,y1,x2,y2,x3,y3)
-    {
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.cubicBezTo(this.xKoeff*x1, this.yKoeff*y1, this.xKoeff*x2, this.yKoeff*y2, this.xKoeff*x3, this.yKoeff*y3);
-        }
-        this.lastX = x3;
-        this.lastY = y3;
-    },
-    _c2 : function(x1,y1,x2,y2)
-    {
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.quadBezTo(this.xKoeff*x1, this.yKoeff*y1, this.xKoeff*x2, this.yKoeff*y2);
-        }
-        this.lastX = x2;
-        this.lastY = y2;
-    },
-    ds : function()
-    {
-    },
-    df : function()
-    {
-        var oPathToDraw = this.Get_PathToDraw();
-        if(oPathToDraw)
-        {
-            oPathToDraw.setFill("norm");
-        }
-    },
-
-    drawpath : function(type)
-    {
-    },
-
-    // canvas state
-    save : function()
-    {
-    },
-    restore : function()
-    {
-    },
-    clip : function()
-    {
-    },
-
-    SetIntegerGrid: function()
-    {
-    },
-
-    // images
-    drawImage : function(img,x,y,w,h)
-    {
-    },
-
-    SetFont : function(font)
-    {
-        if (null == font)
-            return;
-
-        var style = 0;
-        if (font.Italic == true)
-            style += 2;
-        if (font.Bold == true)
-            style += 1;
-
-        var fontinfo = g_fontApplication.GetFontInfo(font.FontFamily.Name, style, this.LastFontOriginInfo);
-        style = fontinfo.GetBaseStyle(style);
-
-        if (this.m_oFont.Name != fontinfo.Name)
-        {
-            this.m_oFont.Name = fontinfo.Name;
-        }
-        if (this.m_oFont.FontSize != font.FontSize)
-        {
-            this.m_oFont.FontSize = font.FontSize;
-        }
-        if (this.m_oFont.Style != style)
-        {
-            this.m_oFont.Style = style;
-        }
-    },
-    FillText : function(x,y,text)
-    {
-        this.FillTextCode(x, y, text.charCodeAt(0));
-    },
-
-    CheckAddNewPath : function(x, y, Code)
-    {
-
-        if(this.m_bDivGlyphs === true)
-        {
-            this.Get_PathToDraw(false, true, x, y, Code);
-        }
-    },
-
-    CheckSpaceDraw : function()
-    {
-        for(let nPos = 0; nPos < this.m_aStack.length; ++nPos) {
-            if(this.m_aStack[nPos] instanceof CParagraphStructure) {
-                this.m_aStack[nPos].checkWord();
-            }
-        }
-    },
-
-    FillTextCode : function(x,y,code)
-    {
-        //var _is_face_index_no_0 = (_font_info.faceIndexR <= 0 && _font_info.faceIndexI <= 0 && _font_info.faceIndexB <= 0 && _font_info.faceIndexBI <= 0);
-//
-        //if (code < 0xFFFF && (_is_face_index_no_0 || window["native"] !== undefined))
-        //    return;
-
-        this.CheckAddNewPath(x, y);
-        AscCommon.g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
-
-        if (null != this.LastFontOriginInfo.Replace)
-        {
-            code = g_fontApplication.GetReplaceGlyph(code, this.LastFontOriginInfo.Replace);
-        }
-
-        if (AscCommon.g_oTextMeasurer.m_oManager)
-            AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
-    },
-    tg : function(gid,x,y)
-    {
-        g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
-        g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
-    },
-    charspace : function(space)
-    {
-    },
-
-    beginCommand : function(command)
-    {
-    },
-    endCommand : function(command)
-    {
-    },
-
-    put_PenLineJoin : function(_join)
-    {
-    },
-    put_TextureBounds : function(x, y, w, h)
-    {
-    },
-    put_TextureBoundsEnabled : function(bIsEnabled)
-    {
-    },
-
-    SetFontInternal : function(name, size, style)
-    {
-        var fontinfo = g_fontApplication.GetFontInfo(name, style);
-        if (this.m_oFont.Name !== fontinfo.Name)
-        {
-            this.m_oFont.Name = fontinfo.Name;
-        }
-        if (this.m_oFont.FontSize !== size)
-        {
-            this.m_oFont.FontSize = size;
-        }
-        if (this.m_oFont.Style != style)
-        {
-            this.m_oFont.Style = style;
-        }
-    },
-
-    SetFontSlot : function(slot, fontSizeKoef)
-    {
-        var _rfonts = this.m_oGrFonts;
-        var _lastFont = this.m_oFontSlotFont;
-
-        switch (slot)
-        {
-            case fontslot_ASCII:
-            {
-                _lastFont.Name   = _rfonts.Ascii.Name;
-                _lastFont.Size = this.m_oTextPr.FontSize;
-                _lastFont.Bold = this.m_oTextPr.Bold;
-                _lastFont.Italic = this.m_oTextPr.Italic;
-
-                break;
-            }
-            case fontslot_CS:
-            {
-                _lastFont.Name   = _rfonts.CS.Name;
-                _lastFont.Size = this.m_oTextPr.FontSizeCS;
-                _lastFont.Bold = this.m_oTextPr.BoldCS;
-                _lastFont.Italic = this.m_oTextPr.ItalicCS;
-
-                break;
-            }
-            case fontslot_EastAsia:
-            {
-                _lastFont.Name   = _rfonts.EastAsia.Name;
-                _lastFont.Size = this.m_oTextPr.FontSize;
-                _lastFont.Bold = this.m_oTextPr.Bold;
-                _lastFont.Italic = this.m_oTextPr.Italic;
-
-                break;
-            }
-            case fontslot_HAnsi:
-            default:
-            {
-                _lastFont.Name   = _rfonts.HAnsi.Name;
-                _lastFont.Size = this.m_oTextPr.FontSize;
-                _lastFont.Bold = this.m_oTextPr.Bold;
-                _lastFont.Italic = this.m_oTextPr.Italic;
-
-                break;
-            }
-        }
-        if (undefined !== fontSizeKoef)
-            _lastFont.Size *= fontSizeKoef;
-
-        var style = 0;
-        if (_lastFont.Italic == true)
-            style += 2;
-        if (_lastFont.Bold == true)
-            style += 1;
-
-        var fontinfo = g_fontApplication.GetFontInfo(_lastFont.Name, style, this.LastFontOriginInfo);
-
-        if (this.m_oFont.Name != fontinfo.Name)
-        {
-            this.m_oFont.Name = fontinfo.Name;
-        }
-        if (this.m_oFont.FontSize != _lastFont.Size)
-        {
-            this.m_oFont.FontSize = _lastFont.Size;
-        }
-        if (this.m_oFont.Style != style)
-        {
-            this.m_oFont.Style = style;
-        }
-    },
-
-    BeginPage : function(width,height)
-    {
-    },
-    EndPage : function()
-    {
-    },
-
-    transform3 : function(m)
-    {
-        this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
-    },
-    reset : function()
-    {
-        this.transform(1, 0, 0, 1, 0, 0);
-    },
-
-    FillText2 : function(x,y,text)
-    {
-        this.FillText(x,y,text);
-    },
-    GetIntegerGrid : function()
-    {
-    },
-    GetFont : function()
-    {
-        return this.m_oFont;
-    },
-    put_GlobalAlpha : function(enable, alpha)
-    {
-    },
-
-    Start_GlobalAlpha : function()
-    {
-    },
-
-    End_GlobalAlpha : function()
-    {
-    },
-
-    DrawHeaderEdit : function(yPos)
-    {
-    },
-
-    DrawFooterEdit : function(yPos)
-    {
-    },
-
-    drawCollaborativeChanges : function(x, y, w, h)
-    {
-    },
-
-    drawSearchResult : function(x, y, w, h)
-    {
-    },
-
-    DrawEmptyTableLine : function(x1,y1,x2,y2)
-    {
-        // эта функция не для печати или сохранения вообще
-    },
-    DrawLockParagraph : function(lock_type, x, y1, y2)
-    {
-        // эта функция не для печати или сохранения вообще
-    },
-
-    DrawLockObjectRect : function(lock_type, x, y, w, h)
-    {
-        // эта функция не для печати или сохранения вообще
-    },
-
-    DrawSpellingLine : function(y0, x0, x1, w)
-    {
-    },
-
-    checkCurveBezier: function(x0, y0, x1, y1, x2, y2, x3, y3, dEpsilon)
-    {
-        var _epsilon = dEpsilon ? dEpsilon : UNDERLINE_DIV_EPSILON;
-        var arr_point = AscFormat.partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, _epsilon), i, count = arr_point.length >> 2;
-        for(i = 0; i < count; ++i)
-        {
-            var k = 4*i;
-            this._c(arr_point[k + 1].x, arr_point[k + 1].y, arr_point[k + 2].x, arr_point[k + 2].y, arr_point[k + 3].x, arr_point[k + 3].y);
-        }
-    },
-    // smart methods for horizontal / vertical lines
-    drawHorLine : function(align, y, x, r, penW, bMath)
-    {
-        if(bMath)
-        {
-            var oTextPr = this.GetTextPr();
-            var oCopyTextPr;
-            if(oTextPr)
-            {
-                oCopyTextPr = oTextPr.Copy();
-                oCopyTextPr.TextOutline = new AscFormat.CLn();
-                oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
-                var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
-                if((!oUnifill || !oUnifill.fill ||!oUnifill.fill.type === Asc.c_oAscFill._SOLID || !oUnifill.fill.color) && oCopyTextPr.Color)
+                oNewStructure = new CLineStructure(param);
+                oNewStructure.m_nDrawType = nType;
+                if(this.m_bDivByLines)
                 {
-                    oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
+                    ++this.m_nCurLineIndex;
+                    if(!Array.isArray(this.m_aByLines[this.m_nCurLineIndex]))
+                    {
+                        this.m_aByLines[this.m_nCurLineIndex] = [];
+                    }
+                    this.m_aByLines[this.m_nCurLineIndex].push(oNewStructure);
+                    if(this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length - 1] < this.m_nCurLineIndex)
+                    {
+                        this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length - 1] = this.m_nCurLineIndex;
+                    }
                 }
-                if(oUnifill)
+                else
                 {
-                    oCopyTextPr.TextOutline.Fill = oUnifill;
+                    this.m_aByParagraphs[this.m_aByParagraphs.length - 1].push(oNewStructure);
                 }
-                this.SetTextPr(oCopyTextPr, this.m_oTheme);
             }
-            this._s();
-            this._m(x, y);
-            this._l(r, y);
-            this.ds();
-            if(oCopyTextPr)
+            break;
+        }
+        case DRAW_COMMAND_TABLE:
+        {
+            oNewStructure = new CTableStructure();
+            break;
+        }
+        case DRAW_COMMAND_DRAWING:
+        {
+            break;
+        }
+        case DRAW_COMMAND_HIDDEN_ELEM:
+        {
+            break;
+        }
+        case DRAW_COMMAND_TABLE_ROW:
+        {
+            this.m_aStackCurRowMaxIndex[this.m_aStackCurRowMaxIndex.length] = -1;
+            break;
+        }
+    }
+    if(oNewStructure)
+    {
+        if(this.m_aStack[this.m_aStack.length - 1] && !bOld)
+        {
+            this.m_aStack[this.m_aStack.length - 1].m_aContent.push(oNewStructure);
+        }
+        this.m_aStack.push(oNewStructure);
+    }
+};
+
+CTextDrawer.prototype.End_Command = function()
+{
+    var nCommandId = this.m_aCommands.pop();
+    switch(nCommandId)
+    {
+        case DRAW_COMMAND_NO_CREATE_GEOM:
+        {
+            break;
+        }
+        case DRAW_COMMAND_CONTENT:
+        {
+            var oDocContentStructure = this.m_aStack.pop();
+            if(this.m_aStack.length === 0)
             {
-                this.SetTextPr(oTextPr, this.m_oTheme);
+                this.m_oDocContentStructure = oDocContentStructure;
+                this.m_oDocContentStructure.m_aByLines = this.m_aByLines;
+                this.m_oDocContentStructure.m_aByParagraphs = this.m_aByParagraphs;
+                this.m_oDocContentStructure.m_aDrawingsStruct = this.m_aDrawings;
+                this.m_aByLines = [];
+                this.m_aByParagraphs = [];
+                this.m_aDrawings = [];
             }
+            this.m_nCurLineIndex = this.m_aStackLineIndex.pop();
+            break;
+        }
+        case DRAW_COMMAND_PARAGRAPH:
+        {
+            let oParaStruct = this.m_aStack.pop();
+            if(oParaStruct && oParaStruct.checkWord)
+            {
+                oParaStruct.checkWord();
+            }
+            break;
+        }
+        case DRAW_COMMAND_LINE:
+        {
+            this.m_aStack.pop();
+            break;
+        }
+        case DRAW_COMMAND_TABLE:
+        {
+            this.m_aStack.pop();
+            break;
+        }
+        case DRAW_COMMAND_DRAWING:
+        {
+            break;
+        }
+        case DRAW_COMMAND_HIDDEN_ELEM:
+        {
+            break;
+        }
+        case DRAW_COMMAND_TABLE_ROW:
+        {
+            this.m_nCurLineIndex = this.m_aStackCurRowMaxIndex.pop();
+            break;
+        }
+    }
+};
+
+CTextDrawer.prototype.Get_PathToDraw = function(bStart, bStart2, x, y, Code)
+{
+    var oPath = null;
+    var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+    var oLastObjectToDraw, oBrushColor = this.m_oBrush.Color1, oPenColor = this.m_oPen.Color;
+    if(oLastCommand)
+    {
+        switch(oLastCommand.m_nType)
+        {
+            case DRAW_COMMAND_LINE:
+            {
+                switch(oLastCommand.m_nDrawType)
+                {
+                    case 0://content
+                    {
+                        if(oLastCommand.m_aContent.length === 0)
+                        {
+                            oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, this.m_oCurComment, Code));
+                        }
+                        oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
+
+                        if(bStart2)
+                        {
+                            if(oLastObjectToDraw.geometry.isEmpty())
+                            {
+                                oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y, Code)
+                            }
+                            else
+                            {
+                                oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, null, Code));
+                                oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
+                            }
+                        }
+                        break;
+                    }
+                    case 1://borders
+                    {
+                        if(oLastCommand.m_aBorders.length === 0)
+                        {
+                            oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
+                        }
+                        oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
+
+                        if(bStart2)
+                        {
+                            if(oLastObjectToDraw.geometry.isEmpty())
+                            {
+                                oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
+                            }
+                            else
+                            {
+                                oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                                oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
+                            }
+                        }
+                        break;
+                    }
+                    case 2://backgrounds
+                    {
+                        if(oLastCommand.m_aBackgrounds.length === 0)
+                        {
+                            oLastCommand.m_aBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
+                        }
+                        oLastObjectToDraw = oLastCommand.m_aBackgrounds[oLastCommand.m_aBackgrounds.length - 1];
+
+                        if(bStart2)
+                        {
+                            if(oLastObjectToDraw.geometry.isEmpty())
+                            {
+                                oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
+                            }
+                            else
+                            {
+                                oLastCommand.m_aBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                                oLastObjectToDraw = oLastCommand.m_aBackgrounds[oLastCommand.m_aBackgrounds.length - 1];
+                            }
+                        }
+                        break;
+                    }
+                    case 3://Underliens & Strikeouts
+                    {
+                        if(oLastCommand.m_aUnderlinesStrikeouts.length === 0)
+                        {
+                            oBrushColor = this.m_oBrush.Color1;
+                            oPenColor = this.m_oPen.Color;
+                            oLastCommand.m_aUnderlinesStrikeouts.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
+                        }
+                        oLastObjectToDraw = oLastCommand.m_aUnderlinesStrikeouts[oLastCommand.m_aUnderlinesStrikeouts.length - 1];
+
+                        if(bStart2)
+                        {
+                            if(oLastObjectToDraw.geometry.isEmpty())
+                            {
+                                oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y);
+                            }
+                            else
+                            {
+                                oLastCommand.m_aUnderlinesStrikeouts.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                                oLastObjectToDraw = oLastCommand.m_aUnderlinesStrikeouts[oLastCommand.m_aUnderlinesStrikeouts.length - 1];
+                            }
+                        }
+                        break;
+                    }
+                    case 4:
+                    {
+                        if(oLastCommand.m_aParagraphBackgrounds.length === 0)
+                        {
+                            oLastCommand.m_aParagraphBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y))
+                        }
+                        oLastObjectToDraw = oLastCommand.m_aParagraphBackgrounds[oLastCommand.m_aParagraphBackgrounds.length - 1];
+
+                        if(bStart2)
+                        {
+                            if(oLastObjectToDraw.geometry.isEmpty())
+                            {
+                                oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
+                            }
+                            else
+                            {
+                                oLastCommand.m_aParagraphBackgrounds.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                                oLastObjectToDraw = oLastCommand.m_aParagraphBackgrounds[oLastCommand.m_aParagraphBackgrounds.length - 1];
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+            case DRAW_COMMAND_TABLE:
+            {
+                if(oLastCommand.m_aBorders.length === 0 || bStart2)
+                {
+                    oBrushColor = this.m_oBrush.Color1;
+                    oPenColor = this.m_oPen.Color;
+                    oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                }
+                oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
+
+                if(bStart2)
+                {
+                    if(oLastObjectToDraw.geometry.isEmpty())
+                    {
+                        oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
+                    }
+                    else
+                    {
+                        oLastCommand.m_aBorders.push(new ObjectToDraw(this.m_oFill, this.m_oLine, this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                        oLastObjectToDraw = oLastCommand.m_aBorders[oLastCommand.m_aBorders.length - 1];
+                    }
+                }
+                oLastObjectToDraw.geometry.bDrawSmart = true;
+                break;
+            }
+            case DRAW_COMMAND_PARAGRAPH:
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        if(this.m_oObjectToDraw)
+        {
+            oLastObjectToDraw = this.m_oObjectToDraw;
+        }
+    }
+
+    if(oLastObjectToDraw && oLastObjectToDraw.geometry)
+    {
+        oLastObjectToDraw.Comment = this.m_oCurComment;
+        if(oLastObjectToDraw.geometry.pathLst.length === 0 || bStart)
+        {
+            oPath = this.pathMemory.AllocPath2();
+            oPath.setPathW(this.pathW);
+            oPath.setPathH(this.pathH);
+            oPath.setExtrusionOk(false);
+            oPath.setFill("none");
+            oPath.setStroke(true);
+            oLastObjectToDraw.geometry.AddPath(oPath)
+        }
+        else
+        {
+            oPath = oLastObjectToDraw.geometry.pathLst[oLastObjectToDraw.geometry.pathLst.length-1];
+        }
+    }
+    return oPath;
+};
+
+CTextDrawer.prototype.transform = function(sx,shy,shx,sy,tx,ty)
+{
+    if (this.m_oTransform.sx    != sx || this.m_oTransform.shx   != shx || this.m_oTransform.shy   != shy ||
+        this.m_oTransform.sy    != sy || this.m_oTransform.tx    != tx || this.m_oTransform.ty    != ty)
+    {
+        this.m_oTransform.sx    = sx;
+        this.m_oTransform.shx   = shx;
+        this.m_oTransform.shy   = shy;
+        this.m_oTransform.sy    = sy;
+        this.m_oTransform.tx    = tx;
+        this.m_oTransform.ty    = ty;
+    }
+};
+// path commands
+CTextDrawer.prototype._s = function()
+{
+    if(this.m_bTurnOff)
+        return;
+    this.Get_PathToDraw(true);
+};
+CTextDrawer.prototype._e = function()
+{
+};
+CTextDrawer.prototype._z = function()
+{
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.close();
+    }
+}
+CTextDrawer.prototype._m = function(x,y)
+{
+    if(this.m_bTurnOff)
+        return;
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.moveTo(this.xKoeff*x, this.yKoeff*y);
+    }
+    this.lastX = x;
+    this.lastY = y;
+};
+CTextDrawer.prototype._l = function(x,y)
+{
+    if(this.m_bTurnOff)
+        return;
+    if(this.bCheckLines)
+    {
+        if(Math.abs(x - this.lastX) < EPSILON_TEXT_AUTOFIT && Math.abs(x - this.lastX) < Math.abs(y - this.lastY))
+        {
+            this.checkCurveBezier(this.lastX, this.lastY, this.lastX, this.lastY  + (y - this.lastY)/3, this.lastX, this.lastY + 2*(y - this.lastY)/3, x, y, PATH_DIV_EPSILON);
+            this.lastX = x;
+            this.lastY = y;
             return;
         }
+        else if(Math.abs(y - this.lastY) < EPSILON_TEXT_AUTOFIT && Math.abs(y - this.lastY) < Math.abs(x - this.lastX))
+        {
+            this.checkCurveBezier(this.lastX, this.lastY, this.lastX + (x - this.lastX)/3, this.lastY, this.lastX + 2*(x - this.lastX)/3, this.lastY, x, y, PATH_DIV_EPSILON);
+            this.lastX = x;
+            this.lastY = y;
+            return;
+        }
+    }
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.lnTo(this.xKoeff*x, this.yKoeff*y);
+    }
+    this.lastX = x;
+    this.lastY = y;
+};
+CTextDrawer.prototype._c = function(x1,y1,x2,y2,x3,y3)
+{
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.cubicBezTo(this.xKoeff*x1, this.yKoeff*y1, this.xKoeff*x2, this.yKoeff*y2, this.xKoeff*x3, this.yKoeff*y3);
+    }
+    this.lastX = x3;
+    this.lastY = y3;
+};
+CTextDrawer.prototype._c2 = function(x1,y1,x2,y2)
+{
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.quadBezTo(this.xKoeff*x1, this.yKoeff*y1, this.xKoeff*x2, this.yKoeff*y2);
+    }
+    this.lastX = x2;
+    this.lastY = y2;
+};
+CTextDrawer.prototype.ds = function()
+{
+};
+CTextDrawer.prototype.df = function()
+{
+    var oPathToDraw = this.Get_PathToDraw();
+    if(oPathToDraw)
+    {
+        oPathToDraw.setFill("norm");
+    }
+};
 
+CTextDrawer.prototype.drawpath = function(type)
+{
+};
+
+CTextDrawer.prototype.SetFont = function(font)
+{
+    if (null == font)
+        return;
+
+    var style = 0;
+    if (font.Italic == true)
+        style += 2;
+    if (font.Bold == true)
+        style += 1;
+
+    var fontinfo = g_fontApplication.GetFontInfo(font.FontFamily.Name, style, this.LastFontOriginInfo);
+    style = fontinfo.GetBaseStyle(style);
+
+    if (this.m_oFont.Name != fontinfo.Name)
+    {
+        this.m_oFont.Name = fontinfo.Name;
+    }
+    if (this.m_oFont.FontSize != font.FontSize)
+    {
+        this.m_oFont.FontSize = font.FontSize;
+    }
+    if (this.m_oFont.Style != style)
+    {
+        this.m_oFont.Style = style;
+    }
+};
+CTextDrawer.prototype.FillText = function(x,y,text)
+{
+    this.FillTextCode(x, y, text.charCodeAt(0));
+};
+
+CTextDrawer.prototype.CheckAddNewPath = function(x, y, Code)
+{
+
+    if(this.m_bDivGlyphs === true)
+    {
+        this.Get_PathToDraw(false, true, x, y, Code);
+    }
+};
+
+CTextDrawer.prototype.CheckSpaceDraw = function()
+{
+    for(let nPos = 0; nPos < this.m_aStack.length; ++nPos) {
+        if(this.m_aStack[nPos] instanceof CParagraphStructure) {
+            this.m_aStack[nPos].checkWord();
+        }
+    }
+};
+
+CTextDrawer.prototype.FillTextCode = function(x,y,code)
+{
+    this.CheckAddNewPath(x, y);
+    AscCommon.g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+
+    if (null != this.LastFontOriginInfo.Replace)
+    {
+        code = g_fontApplication.GetReplaceGlyph(code, this.LastFontOriginInfo.Replace);
+    }
+
+    if (AscCommon.g_oTextMeasurer.m_oManager)
+        AscCommon.g_oTextMeasurer.m_oManager.LoadStringPathCode(code, false, x, y, this);
+};
+CTextDrawer.prototype.tg = function(gid,x,y)
+{
+    g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
+    g_oTextMeasurer.m_oManager.LoadStringPathCode(gid, true, x, y, this);
+};
+
+CTextDrawer.prototype.SetFontInternal = function(name, size, style)
+{
+    var fontinfo = g_fontApplication.GetFontInfo(name, style);
+    if (this.m_oFont.Name !== fontinfo.Name)
+    {
+        this.m_oFont.Name = fontinfo.Name;
+    }
+    if (this.m_oFont.FontSize !== size)
+    {
+        this.m_oFont.FontSize = size;
+    }
+    if (this.m_oFont.Style != style)
+    {
+        this.m_oFont.Style = style;
+    }
+};
+
+CTextDrawer.prototype.SetFontSlot = function(slot, fontSizeKoef)
+{
+    var _rfonts = this.m_oGrFonts;
+    var _lastFont = this.m_oFontSlotFont;
+
+    switch (slot)
+    {
+        case fontslot_ASCII:
+        {
+            _lastFont.Name   = _rfonts.Ascii.Name;
+            _lastFont.Size = this.m_oTextPr.FontSize;
+            _lastFont.Bold = this.m_oTextPr.Bold;
+            _lastFont.Italic = this.m_oTextPr.Italic;
+
+            break;
+        }
+        case fontslot_CS:
+        {
+            _lastFont.Name   = _rfonts.CS.Name;
+            _lastFont.Size = this.m_oTextPr.FontSizeCS;
+            _lastFont.Bold = this.m_oTextPr.BoldCS;
+            _lastFont.Italic = this.m_oTextPr.ItalicCS;
+
+            break;
+        }
+        case fontslot_EastAsia:
+        {
+            _lastFont.Name   = _rfonts.EastAsia.Name;
+            _lastFont.Size = this.m_oTextPr.FontSize;
+            _lastFont.Bold = this.m_oTextPr.Bold;
+            _lastFont.Italic = this.m_oTextPr.Italic;
+
+            break;
+        }
+        case fontslot_HAnsi:
+        default:
+        {
+            _lastFont.Name   = _rfonts.HAnsi.Name;
+            _lastFont.Size = this.m_oTextPr.FontSize;
+            _lastFont.Bold = this.m_oTextPr.Bold;
+            _lastFont.Italic = this.m_oTextPr.Italic;
+
+            break;
+        }
+    }
+    if (undefined !== fontSizeKoef)
+        _lastFont.Size *= fontSizeKoef;
+
+    var style = 0;
+    if (_lastFont.Italic == true)
+        style += 2;
+    if (_lastFont.Bold == true)
+        style += 1;
+
+    var fontinfo = g_fontApplication.GetFontInfo(_lastFont.Name, style, this.LastFontOriginInfo);
+
+    if (this.m_oFont.Name != fontinfo.Name)
+    {
+        this.m_oFont.Name = fontinfo.Name;
+    }
+    if (this.m_oFont.FontSize != _lastFont.Size)
+    {
+        this.m_oFont.FontSize = _lastFont.Size;
+    }
+    if (this.m_oFont.Style != style)
+    {
+        this.m_oFont.Style = style;
+    }
+};
+
+CTextDrawer.prototype.transform3 = function(m)
+{
+    this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+};
+CTextDrawer.prototype.reset = function()
+{
+    this.transform(1, 0, 0, 1, 0, 0);
+};
+
+CTextDrawer.prototype.FillText2 = function(x,y,text)
+{
+    this.FillText(x,y,text);
+};
+
+CTextDrawer.prototype.GetFont = function()
+{
+    return this.m_oFont;
+};
+CTextDrawer.prototype.put_GlobalAlpha = function(enable, alpha)
+{
+};
+
+CTextDrawer.prototype.checkCurveBezier = function(x0, y0, x1, y1, x2, y2, x3, y3, dEpsilon)
+{
+    var _epsilon = dEpsilon ? dEpsilon : UNDERLINE_DIV_EPSILON;
+    var arr_point = AscFormat.partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, _epsilon), i, count = arr_point.length >> 2;
+    for(i = 0; i < count; ++i)
+    {
+        var k = 4*i;
+        this._c(arr_point[k + 1].x, arr_point[k + 1].y, arr_point[k + 2].x, arr_point[k + 2].y, arr_point[k + 3].x, arr_point[k + 3].y);
+    }
+};
+// smart methods for horizontal / vertical lines
+CTextDrawer.prototype.drawHorLine = function(align, y, x, r, penW, bMath)
+{
+    if(bMath)
+    {
+        var oTextPr = this.GetTextPr();
+        var oCopyTextPr;
+        if(oTextPr)
+        {
+            oCopyTextPr = oTextPr.Copy();
+            oCopyTextPr.TextOutline = new AscFormat.CLn();
+            oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
+            var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
+            if((!oUnifill || !oUnifill.fill ||!oUnifill.fill.type === Asc.c_oAscFill._SOLID || !oUnifill.fill.color) && oCopyTextPr.Color)
+            {
+                oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
+            }
+            if(oUnifill)
+            {
+                oCopyTextPr.TextOutline.Fill = oUnifill;
+            }
+            this.SetTextPr(oCopyTextPr, this.m_oTheme);
+        }
         this._s();
         this._m(x, y);
+        this._l(r, y);
+        this.ds();
+        if(oCopyTextPr)
+        {
+            this.SetTextPr(oTextPr, this.m_oTheme);
+        }
+        return;
+    }
 
-        this.checkCurveBezier(x, y, x + ((r-x)/3), y, x + (2/3) * (r - x), y, r, y);// this._l(r, y);
-        this._l(r, y + penW);
-        this.checkCurveBezier(r, y + penW, x + (2/3) * (r - x), y + penW, x + ((r-x)/3), y + penW, x, y + penW);//this._l(x, y + penW);
+    this._s();
+    this._m(x, y);
+
+    this.checkCurveBezier(x, y, x + ((r-x)/3), y, x + (2/3) * (r - x), y, r, y);// this._l(r, y);
+    this._l(r, y + penW);
+    this.checkCurveBezier(r, y + penW, x + (2/3) * (r - x), y + penW, x + ((r-x)/3), y + penW, x, y + penW);//this._l(x, y + penW);
+    this._z();
+    this.ds();
+    this.df();
+};
+
+CTextDrawer.prototype.drawHorLine2 = function(align, y, x, r, penW)
+{
+    var _y = y;
+    switch (align)
+    {
+        case 0:
+        {
+            _y = y + penW / 2;
+            break;
+        }
+        case 1:
+        {
+            break;
+        }
+        case 2:
+        {
+            _y = y - penW / 2;
+            break;
+        }
+    }
+   // if(!AdditionalData)
+   // {
+   //     this.p_width(1000 * penW);
+//
+//
+   //     this._s();
+   //     this._m(x, (_y - penW));
+   //     this._l(r, (_y - penW));
+   //     this.ds();
+//
+   //     this._s();
+   //     this._m(x, (_y + penW));
+   //     this._l(r, (_y + penW));
+   //     this.ds();
+//
+   //     this._e();
+   // }
+   // else
+    {
+
+        this._s();
+        this._m(x, (_y - penW ));
+
+        this.checkCurveBezier(x, _y - penW, x + ((r-x)/3), _y - penW, x + (2/3) * (r - x), _y - penW, r, _y - penW);//this._l(r, (_y - penW ));
+        this._l(r, _y);
+        this.checkCurveBezier(r, _y, x + (2/3) * (r - x), _y, x + ((r-x)/3), _y, x, _y);//this._l(x, (_y - penW + penW));
         this._z();
         this.ds();
         this.df();
-    },
 
+        this._s();
+        this._m(x, (_y + penW ));
+        this.checkCurveBezier(x, _y + penW, x + ((r-x)/3), _y + penW, x + (2/3) * (r - x), _y + penW, r, _y + penW);//this._l(r, (_y + penW ));
+        this._l(r, (_y + penW + penW));
+        this.checkCurveBezier(r, (_y + penW + penW), x + (2/3) * (r - x), _y + penW + penW, x + ((r-x)/3), _y + penW + penW,  x, _y + penW + penW);//this._l(x, (_y + penW + penW));
+        this._z();
+        this.ds();
 
+        this._e();
+    }
+};
 
-    drawHorLine2 : function(align, y, x, r, penW)
+CTextDrawer.prototype.drawVerLine = function(align, x, y, b, penW, bMath)
+{
+    if(bMath)
     {
-
-        var _y = y;
-        switch (align)
+        var oTextPr = this.GetTextPr();
+        var oCopyTextPr;
+        if(oTextPr)
         {
-            case 0:
+            oCopyTextPr = oTextPr.Copy();
+            oCopyTextPr.TextOutline = new AscFormat.CLn();
+            oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
+            var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
+            if((!oUnifill || !oUnifill.fill ||!oUnifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID || !oUnifill.fill.color) && oCopyTextPr.Color)
             {
-                _y = y + penW / 2;
-                break;
+                oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
             }
-            case 1:
+            if(oUnifill)
             {
-                break;
+                oCopyTextPr.TextOutline.Fill = oUnifill;
             }
-            case 2:
-            {
-                _y = y - penW / 2;
-                break;
-            }
+            this.SetTextPr(oCopyTextPr, this.m_oTheme);
         }
-       // if(!AdditionalData)
-       // {
-       //     this.p_width(1000 * penW);
-//
-//
-       //     this._s();
-       //     this._m(x, (_y - penW));
-       //     this._l(r, (_y - penW));
-       //     this.ds();
-//
-       //     this._s();
-       //     this._m(x, (_y + penW));
-       //     this._l(r, (_y + penW));
-       //     this.ds();
-//
-       //     this._e();
-       // }
-       // else
-        {
-
-            this._s();
-            this._m(x, (_y - penW ));
-
-            this.checkCurveBezier(x, _y - penW, x + ((r-x)/3), _y - penW, x + (2/3) * (r - x), _y - penW, r, _y - penW);//this._l(r, (_y - penW ));
-            this._l(r, _y);
-            this.checkCurveBezier(r, _y, x + (2/3) * (r - x), _y, x + ((r-x)/3), _y, x, _y);//this._l(x, (_y - penW + penW));
-            this._z();
-            this.ds();
-            this.df();
-
-            this._s();
-            this._m(x, (_y + penW ));
-            this.checkCurveBezier(x, _y + penW, x + ((r-x)/3), _y + penW, x + (2/3) * (r - x), _y + penW, r, _y + penW);//this._l(r, (_y + penW ));
-            this._l(r, (_y + penW + penW));
-            this.checkCurveBezier(r, (_y + penW + penW), x + (2/3) * (r - x), _y + penW + penW, x + ((r-x)/3), _y + penW + penW,  x, _y + penW + penW);//this._l(x, (_y + penW + penW));
-            this._z();
-            this.ds();
-
-            this._e();
-        }
-    },
-
-    drawVerLine : function(align, x, y, b, penW, bMath)
-    {
-        if(bMath)
-        {
-            var oTextPr = this.GetTextPr();
-            var oCopyTextPr;
-            if(oTextPr)
-            {
-                oCopyTextPr = oTextPr.Copy();
-                oCopyTextPr.TextOutline = new AscFormat.CLn();
-                oCopyTextPr.TextOutline.w = 36000.0 * penW >> 0;
-                var oUnifill = oCopyTextPr.TextFill ? oCopyTextPr.TextFill : oCopyTextPr.Unifill;
-                if((!oUnifill || !oUnifill.fill ||!oUnifill.fill.type === Asc.c_oAscFill.FILL_TYPE_SOLID || !oUnifill.fill.color) && oCopyTextPr.Color)
-                {
-                    oUnifill = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(oCopyTextPr.Color.r, oCopyTextPr.Color.g, oCopyTextPr.Color.b))
-                }
-                if(oUnifill)
-                {
-                    oCopyTextPr.TextOutline.Fill = oUnifill;
-                }
-                this.SetTextPr(oCopyTextPr, this.m_oTheme);
-            }
-            this._s();
-
-            var _x = x;
-            switch (align)
-            {
-                case 0:
-                {
-                    _x = x + penW / 2;
-                    break;
-                }
-                case 1:
-                {
-                    break;
-                }
-                case 2:
-                {
-                    _x = x - penW / 2;
-                }
-            }
-            this._m(_x, y);
-            this._l(_x, b);
-
-            this.ds();
-            if(oCopyTextPr)
-            {
-                this.SetTextPr(oTextPr, this.m_oTheme);
-            }
-            return;
-        }
-
-        var nLastCommand = this.m_aCommands[this.m_aCommands.length -1], bOldVal;
-        if(nLastCommand === DRAW_COMMAND_TABLE)
-        {
-            bOldVal = this.bCheckLines;
-            this.bCheckLines = false;
-        }
-        this.p_width(1000 * penW);
         this._s();
 
         var _x = x;
@@ -2117,301 +1968,247 @@ CTextDrawer.prototype =
         this._l(_x, b);
 
         this.ds();
-        if(nLastCommand === DRAW_COMMAND_TABLE)
+        if(oCopyTextPr)
         {
-            this.bCheckLines = bOldVal;
+            this.SetTextPr(oTextPr, this.m_oTheme);
         }
-    },
+        return;
+    }
 
-    drawHorLineExt : function(align, y, x, r, penW, leftMW, rightMW)
+    var nLastCommand = this.m_aCommands[this.m_aCommands.length -1], bOldVal;
+    if(nLastCommand === DRAW_COMMAND_TABLE)
     {
-        var nLastCommand = this.m_aCommands[this.m_aCommands.length -1];
-        if(nLastCommand === DRAW_COMMAND_TABLE)
+        bOldVal = this.bCheckLines;
+        this.bCheckLines = false;
+    }
+    this.p_width(1000 * penW);
+    this._s();
+
+    var _x = x;
+    switch (align)
+    {
+        case 0:
         {
-            var bOldVal = this.bCheckLines;
-            this.bCheckLines = false;
-            this.p_width(penW * 1000);
-            this._s();
-            this._m(x, y);
-            this._l(r, y);
-            this.ds();
-            this.bCheckLines = bOldVal;
+            _x = x + penW / 2;
+            break;
         }
-        else
+        case 1:
         {
-            this.drawHorLine(align, y, x + leftMW, r + rightMW, penW);
+            break;
         }
-    },
-
-    DrawTextArtComment : function(Element)
-    {
-        this.m_oCurComment = Element;
-        this.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
-        this.df();
-        this.m_oCurComment = null;
-    },
-
-    rect : function(x,y,w,h)
-    {
-        if(this.m_bTurnOff)
-            return;
-        var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
-        if(oLastCommand && (oLastCommand.m_nDrawType === 2 || oLastCommand.m_nDrawType === 4))
+        case 2:
         {
-            this.Get_PathToDraw(true, true);
-            this._m(x, y);
-
-            this.checkCurveBezier(x, y, x + (w/3), y, x + (2/3) *w, y, x+w, y);// this._l(r, y);
-            this._l(x+w, y + h);
-            this.checkCurveBezier(x + w, y + h, x + (2/3) * (w), y + h, x + (w/3), y + h, x, y + h);//this._l(x, y + penW);
-            this._z();
-            this.ds();
+            _x = x - penW / 2;
         }
-        else
-        {
-            var _x = x;
-            var _y = y;
-            var _r = (x + w);
-            var _b = (y + h);
+    }
+    this._m(_x, y);
+    this._l(_x, b);
 
-            this.Get_PathToDraw(true, true);
-            this._m(_x, _y);
-            this._l(_r, _y);
-            this._l(_r, _b);
-            this._l(_x, _b);
-            this._l(_x, _y);
-        }
-    },
-
-    TableRect : function(x,y,w,h)
+    this.ds();
+    if(nLastCommand === DRAW_COMMAND_TABLE)
     {
-        this.rect(x,y,w,h);
-        this.df();
-    },
-
-    // функции клиппирования
-    AddClipRect : function(x, y, w, h)
-    {
-        /*
-         this.b_color1(0, 0, 0, 255);
-         this.rect(x, y, w, h);
-         this.df();
-         return;
-         */
-
-        var __rect = new AscCommon._rect();
-        __rect.x = x;
-        __rect.y = y;
-        __rect.w = w;
-        __rect.h = h;
-        this.GrState.AddClipRect(__rect);
-    },
-
-    RemoveClipRect : function()
-    {
-        //this.ClipManager.RemoveRect();
-    },
-
-    SetClip : function(r)
-    {
-        //this._s();
-    },
-
-    RemoveClip : function()
-    {
-    },
-
-    GetTransform : function()
-    {
-        return this.m_oTransform;
-    },
-    GetLineWidth : function()
-    {
-        return 0;
-    },
-    GetPen : function()
-    {
-        return 0;
-    },
-    GetBrush : function()
-    {
-        return 0;
-    },
-
-    drawFlowAnchor : function(x, y)
-    {
-    },
-
-    SavePen : function()
-    {
-        this.GrState.SavePen();
-    },
-    RestorePen : function()
-    {
-        this.GrState.RestorePen();
-    },
-
-    SaveBrush : function()
-    {
-        this.GrState.SaveBrush();
-    },
-
-    RestoreBrush : function()
-    {
-        this.GrState.RestoreBrush();
-    },
-
-    SavePenBrush : function()
-    {
-        this.GrState.SavePenBrush();
-    },
-    RestorePenBrush : function()
-    {
-        this.GrState.RestorePenBrush();
-    },
-
-    SaveGrState : function()
-    {
-        this.GrState.SaveGrState();
-    },
-    RestoreGrState : function()
-    {
-        this.GrState.RestoreGrState();
-    },
-
-    StartClipPath : function()
-    {
-        this.m_bTurnOff = true;
-    },
-
-    EndClipPath : function()
-    {
-        this.m_bTurnOff = false;
-    },
-
-    SetTextPr : function(textPr, theme)
-    {
-		if (theme && textPr && textPr.ReplaceThemeFonts)
-			textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
-
-        var bNeedGetPath = false;
-        if(!this.CheckCompareFillBrush(textPr, this.m_oTextPr))
-        {
-            bNeedGetPath = true;
-        }
-        this.m_oTextPr = textPr;
-        if(bNeedGetPath)
-        {
-            this.Get_PathToDraw(false, true);
-        }
-        if (theme)
-            this.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, this.m_oTextPr.RFonts);
-        else
-            this.m_oGrFonts = this.m_oTextPr.RFonts;
-    },
-
-    CheckCompareFillBrush: function(oTextPr1, oTextPr2)
-    {
-        if(!oTextPr1 && oTextPr2 || oTextPr1 && !oTextPr2)
-            return false;
-        if(oTextPr1 && oTextPr2)
-        {
-            var oFill1 = this.GetFillFromTextPr(oTextPr1);
-            var oFill2 = this.GetFillFromTextPr(oTextPr2);
-            if(!CompareBrushes(oFill1, oFill2))
-                return false;
-            var oPen1 = this.GetPenFromTextPr(oTextPr1);
-            var oPen2 = this.GetPenFromTextPr(oTextPr2);
-            if(!CompareBrushes(oPen1, oPen2))
-                return false;
-        }
-        return true;
-    },
-
-    GetFillFromTextPr: function(oTextPr)
-    {
-        if(oTextPr)
-        {
-            if(oTextPr.TextFill)
-            {
-                return oTextPr.TextFill;
-            }
-            if(oTextPr.Unifill)
-            {
-                return oTextPr.Unifill;
-            }
-            if(oTextPr.Color)
-            {
-                var oColor = oTextPr.Color;
-                if(oColor.Auto && oTextPr.FontRef && oTextPr.FontRef.Color && this.m_oTheme)
-                {
-                    var oColorMap = AscFormat.GetDefaultColorMap();
-                    var oApi = window && window.editor;
-                    if(oApi)
-                    {
-                        var oDoc = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
-                        if(oDoc && oDoc.Get_ColorMap)
-                        {
-                            var _cm = oDoc.Get_ColorMap();
-                            if(_cm)
-                            {
-                                oColorMap = _cm;
-                            }
-                        }
-                    }
-                    oTextPr.FontRef.Color.check(this.m_oTheme, oColorMap);
-                    var RGBA = oTextPr.FontRef.Color.RGBA;
-                    oColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-                }
-                return AscFormat.CreateUnfilFromRGB(oColor.r, oColor.g, oColor.b);
-            }
-            return null;
-        }
-        else
-        {
-            if(this.m_oBrush.Color1.R !== -1)
-            {
-                var Color = this.m_oBrush.Color1;
-                return AscFormat.CreateUnfilFromRGB(Color.R, Color.G, Color.B);
-            }
-            else
-            {
-                return AscFormat.CreateUnfilFromRGB(0, 0, 0);
-            }
-        }
-    },
-
-    GetPenFromTextPr: function(oTextPr)
-    {
-        if(oTextPr)
-        {
-            return oTextPr.TextOutline;
-        }
-        return null;
-    },
-
-    GetTextPr : function()
-    {
-        return this.m_oTextPr;
-    },
-
-    DrawPresentationComment : function(type, x, y, w, h)
-    {
-    },
-
-    private_removeVectors : function()
-    {
-    },
-
-    private_restoreVectors : function()
-    {
-    },
-
-	drawMailMergeField : function(x, y, w, h)
-	{
-	}
+        this.bCheckLines = bOldVal;
+    }
 };
 
+CTextDrawer.prototype.drawHorLineExt = function(align, y, x, r, penW, leftMW, rightMW)
+{
+    var nLastCommand = this.m_aCommands[this.m_aCommands.length -1];
+    if(nLastCommand === DRAW_COMMAND_TABLE)
+    {
+        var bOldVal = this.bCheckLines;
+        this.bCheckLines = false;
+        this.p_width(penW * 1000);
+        this._s();
+        this._m(x, y);
+        this._l(r, y);
+        this.ds();
+        this.bCheckLines = bOldVal;
+    }
+    else
+    {
+        this.drawHorLine(align, y, x + leftMW, r + rightMW, penW);
+    }
+};
+
+CTextDrawer.prototype.DrawTextArtComment = function(Element)
+{
+    this.m_oCurComment = Element;
+    this.rect(Element.x0, Element.y0, Element.x1 - Element.x0, Element.y1 - Element.y0);
+    this.df();
+    this.m_oCurComment = null;
+};
+
+CTextDrawer.prototype.rect = function(x,y,w,h)
+{
+    if(this.m_bTurnOff)
+        return;
+    var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
+    if(oLastCommand && (oLastCommand.m_nDrawType === 2 || oLastCommand.m_nDrawType === 4))
+    {
+        this.Get_PathToDraw(true, true);
+        this._m(x, y);
+
+        this.checkCurveBezier(x, y, x + (w/3), y, x + (2/3) *w, y, x+w, y);// this._l(r, y);
+        this._l(x+w, y + h);
+        this.checkCurveBezier(x + w, y + h, x + (2/3) * (w), y + h, x + (w/3), y + h, x, y + h);//this._l(x, y + penW);
+        this._z();
+        this.ds();
+    }
+    else
+    {
+        var _x = x;
+        var _y = y;
+        var _r = (x + w);
+        var _b = (y + h);
+
+        this.Get_PathToDraw(true, true);
+        this._m(_x, _y);
+        this._l(_r, _y);
+        this._l(_r, _b);
+        this._l(_x, _b);
+        this._l(_x, _y);
+    }
+};
+
+CTextDrawer.prototype.TableRect = function(x,y,w,h)
+{
+    this.rect(x,y,w,h);
+    this.df();
+};
+
+CTextDrawer.prototype.GetTransform = function()
+{
+    return this.m_oTransform;
+};
+CTextDrawer.prototype.GetLineWidth = function()
+{
+    return 0;
+};
+CTextDrawer.prototype.GetPen = function()
+{
+    return 0;
+};
+CTextDrawer.prototype.GetBrush = function()
+{
+    return 0;
+};
+
+CTextDrawer.prototype.StartClipPath = function()
+{
+    this.m_bTurnOff = true;
+};
+
+CTextDrawer.prototype.EndClipPath = function()
+{
+    this.m_bTurnOff = false;
+};
+
+CTextDrawer.prototype.SetTextPr = function(textPr, theme)
+{
+    if (theme && textPr && textPr.ReplaceThemeFonts)
+        textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
+    var bNeedGetPath = false;
+    if(!this.CheckCompareFillBrush(textPr, this.m_oTextPr))
+    {
+        bNeedGetPath = true;
+    }
+    this.m_oTextPr = textPr;
+    if(bNeedGetPath)
+    {
+        this.Get_PathToDraw(false, true);
+    }
+    if (theme)
+        this.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, this.m_oTextPr.RFonts);
+    else
+        this.m_oGrFonts = this.m_oTextPr.RFonts;
+};
+
+CTextDrawer.prototype.CheckCompareFillBrush = function(oTextPr1, oTextPr2)
+{
+    if(!oTextPr1 && oTextPr2 || oTextPr1 && !oTextPr2)
+        return false;
+    if(oTextPr1 && oTextPr2)
+    {
+        var oFill1 = this.GetFillFromTextPr(oTextPr1);
+        var oFill2 = this.GetFillFromTextPr(oTextPr2);
+        if(!CompareBrushes(oFill1, oFill2))
+            return false;
+        var oPen1 = this.GetPenFromTextPr(oTextPr1);
+        var oPen2 = this.GetPenFromTextPr(oTextPr2);
+        if(!CompareBrushes(oPen1, oPen2))
+            return false;
+    }
+    return true;
+};
+
+CTextDrawer.prototype.GetFillFromTextPr = function(oTextPr)
+{
+    if(oTextPr)
+    {
+        if(oTextPr.TextFill)
+        {
+            return oTextPr.TextFill;
+        }
+        if(oTextPr.Unifill)
+        {
+            return oTextPr.Unifill;
+        }
+        if(oTextPr.Color)
+        {
+            var oColor = oTextPr.Color;
+            if(oColor.Auto && oTextPr.FontRef && oTextPr.FontRef.Color && this.m_oTheme)
+            {
+                var oColorMap = AscFormat.GetDefaultColorMap();
+                var oApi = window && window.editor;
+                if(oApi)
+                {
+                    var oDoc = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                    if(oDoc && oDoc.Get_ColorMap)
+                    {
+                        var _cm = oDoc.Get_ColorMap();
+                        if(_cm)
+                        {
+                            oColorMap = _cm;
+                        }
+                    }
+                }
+                oTextPr.FontRef.Color.check(this.m_oTheme, oColorMap);
+                var RGBA = oTextPr.FontRef.Color.RGBA;
+                oColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
+            }
+            return AscFormat.CreateUnfilFromRGB(oColor.r, oColor.g, oColor.b);
+        }
+        return null;
+    }
+    else
+    {
+        if(this.m_oBrush.Color1.R !== -1)
+        {
+            var Color = this.m_oBrush.Color1;
+            return AscFormat.CreateUnfilFromRGB(Color.R, Color.G, Color.B);
+        }
+        else
+        {
+            return AscFormat.CreateUnfilFromRGB(0, 0, 0);
+        }
+    }
+};
+
+CTextDrawer.prototype.GetPenFromTextPr = function(oTextPr)
+{
+    if(oTextPr)
+    {
+        return oTextPr.TextOutline;
+    }
+    return null;
+};
+
+CTextDrawer.prototype.GetTextPr = function()
+{
+    return this.m_oTextPr;
+};
 
 function PolygonWrapper(oPolygon)
 {

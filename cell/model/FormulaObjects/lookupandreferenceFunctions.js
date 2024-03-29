@@ -1173,10 +1173,10 @@ function (window, undefined) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
 				return refError;
 			}
-
+			let worksheet = pivot_table_ref.ws;
 			let bbox = pivot_table_ref.getBBox0();
 
-			let pivotTables = ws.getPivotTablesIntersectingRange(bbox);
+			let pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);
 			let pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
 				let cell = pivotTable.getCellByGetPivotDataParams({
@@ -1184,9 +1184,20 @@ function (window, undefined) {
 					optParams: prepareItemsArray(items_array)
 				});
 				if (cell) {
-					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
+					res = new cRef(worksheet.getCell3(cell.row, cell.col).getName(), worksheet);
 					return res.tocNumber();
 				}
+			}
+			return refError;
+		};
+
+		const getPivotDataByTwoArgs = function(pivotTableRef, stringOrCell) {
+			const bbox = pivotTableRef.getBBox0();
+			const worksheet = pivotTableRef.ws;
+			const pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);
+			const pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
+			if (pivotTable) {
+				return pivotTable.getCellByGetPivotDataString(stringOrCell);
 			}
 			return refError;
 		};
@@ -1203,6 +1214,12 @@ function (window, undefined) {
 		let ws = arguments[3], res;
 
 		if (ws) {
+			if (arg.length === 2) {
+				if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+					return getPivotDataByTwoArgs(arg0, arg1);
+				}
+			}
+			
 			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 				return refError;
 			}

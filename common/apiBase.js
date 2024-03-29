@@ -4556,6 +4556,11 @@
 		let guids = {}; guids[guid] = true;
 		window.g_asc_plugins.onPluginEvent2("onContextMenuClick", itemId, guids);
 	};
+	baseEditorsApi.prototype["onPluginToolbarMenuItemClick"] = function(guid, itemId)
+	{
+		let guids = {}; guids[guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onToolbarMenuClick", itemId, guids);
+	};
 	baseEditorsApi.prototype.onPluginCloseContextMenuItem = function(guid)
 	{
 		if (!this.contextMenuPlugins)
@@ -4622,6 +4627,11 @@
 	baseEditorsApi.prototype.onPluginUpdateContextMenuItem = function(items)
 	{
 		this.sendEvent("onPluginContextMenu", items);
+	};
+
+	baseEditorsApi.prototype.onPluginCloseToolbarMenuItem = function(guid)
+	{
+		this.sendEvent("onPluginToolbarMenu", [{ "guid" : guid, "tabs" : [] }]);
 	};
 
 	// ---------------------------------------------------- wopi ---------------------------------------------

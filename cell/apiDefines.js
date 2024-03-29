@@ -353,7 +353,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     Promote     : 8,
     Dash        : 16,
     DashThick   : 32,
-    ResizeRange : 64
+    ResizeRange : 64,
+    NotStroke   : 128
   };
 
   var docChangedType = {

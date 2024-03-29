@@ -1082,7 +1082,7 @@ CPage.prototype.Draw = function (context, xDst, yDst, wDst, hDst, api)
 		else
 		{
 			var backColor = api.getPageBackgroundColor();
-			context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+			context.fillStyle = "#" + backColor.R.toString(16) + backColor.G.toString(16) + backColor.B.toString(16);
 		}
 
 		strokeColor = GlobalSkin.PageOutline;
@@ -4396,7 +4396,7 @@ function CDrawingDocument()
 		g.transform(1, 0, 0, 1, 0, 0);
 
 		if (this.m_oWordControl.m_oApi.isDarkMode)
-			g.darkModeOverride3();
+			g.setDarkMode();
 
 		if (null == this.m_oDocumentRenderer)
 			this.m_oLogicDocument.DrawPage(pageIndex, g);

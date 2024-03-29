@@ -760,7 +760,7 @@
             if ( null != Class )
             {
                 var Lock = Class.Lock;
-                Lock.Set_Type( AscCommon.locktype_Other, false );
+                Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeOther, false );
                 if(Class.getObjectType && Class.getObjectType() === AscDFH.historyitem_type_Slide)
                 {
                     editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide && editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);

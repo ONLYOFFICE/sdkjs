@@ -3454,7 +3454,7 @@
 					}
 					oDocRenderer.SaveGrState();
 					oDocRenderer.RestoreGrState();
-					oDocRenderer.PrintPreview = true;
+					oDocRenderer.IsPrintPreview = true;
 					let oInvertBaseTransform = AscCommon.global_MatrixTransformer.Invert(oDocRenderer.m_oCoordTransform);
 					clipLeftShape = (t.getCellLeft(range.c1) - offsetX) >> 0;
 					clipTopShape = (t.getCellTop(range.r1) - offsetY) >> 0;
@@ -3467,7 +3467,7 @@
 					oDocRenderer.SaveGrState();
 					oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
 					t.objectRender.print(drawingPrintOptions);
-					delete oDocRenderer.PrintPreview;
+					delete oDocRenderer.IsPrintPreview;
 					oDocRenderer.RestoreGrState();
 					if (oDocRenderer.m_oCoordTransform) {
 						oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
@@ -6998,7 +6998,7 @@
 			}
 		}
 
-        if (canFill) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
+        if (canFill && !notStroke) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
             ctx.setLineWidth(1);
             ctx.setStrokeStyle(colorN);
             ctx.beginPath();
@@ -7237,6 +7237,19 @@
         }
 
         this.drawTraceDependents();
+
+        let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+        if (historyChangedRanges) {
+            for (let i in historyChangedRanges) {
+                let range = historyChangedRanges[i].range;
+                let color = historyChangedRanges[i].color;
+                if (range && color) {
+                    this._drawElements(this._drawSelectionElement, range,
+                        AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke,
+                        new CColor(color.r, color.g, color.b));
+                }
+            }
+        }
 
         // restore canvas' original clipping range
         ctx.restore();
@@ -7694,6 +7707,24 @@
                 }
             });
         }
+
+		let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+		if (historyChangedRanges) {
+			historyChangedRanges.forEach(function (item) {
+				var arnIntersection = item && item.range.intersectionSimple(range);
+				if (arnIntersection) {
+					_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
+					_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+					_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2;
+					_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+
+					x1 = Math.min(x1, _x1);
+					x2 = Math.max(x2, _x2);
+					y1 = Math.min(y1, _y1);
+					y2 = Math.max(y2, _y2);
+				}
+			});
+		}
 		
         //todo для ретины все сдвиги необходимо сделать общими
 		//clean foreign cursors
@@ -11386,7 +11417,8 @@
 					/**@type {CT_pivotTableDefinition[]} */
 					let pivotTables = this.model.getPivotTablesIntersectingRange(range);
 					if (pivotTables.length === 1) {
-						let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
+						let pivotTable = pivotTables[0];
+						let formula = pivotTable.getGetPivotDataFormulaByActiveCell(range.r1, range.c1, addSheet);
 						if (formula) {
 							res.push(formula);
 							return res;
@@ -23941,7 +23973,7 @@
 			//}
 		}
 
-		if("mousemove" === type) {
+		if(AscCommon.getPtrEvtName("move") === type) {
 			if(t.clickedGroupButton) {
 				var props;
 				bCol = t.clickedGroupButton.bCol;
@@ -24009,10 +24041,10 @@
 								collapsed = t._getGroupCollapsed(arrayLines[i][j].start - 1, bCol);/*levelMap[arrayLines[i][j].end + 1] && levelMap[arrayLines[i][j].end + 1].collapsed*/
 								if(props) {
 									if(x >= props.x - offsetX && x <= props.x + props.w - offsetX && y >= props.y - offsetY && y <= props.y - offsetY + props.h) {
-										if("mouseup" === type) {
+										if(AscCommon.getPtrEvtName("up") === type) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
-										} else if("mousedown" === type) {
+										} else if(AscCommon.getPtrEvtName("down") === type) {
 											//перерисовываем кнопку в нажатом состоянии
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].start - 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].start - 1, bCol: bCol};
@@ -24033,10 +24065,10 @@
 								collapsed = t._getGroupCollapsed(arrayLines[i][j].end + 1, bCol);/*levelMap[arrayLines[i][j].end + 1] && levelMap[arrayLines[i][j].end + 1].collapsed*/
 								if(props) {
 									if(x >= props.x - offsetX && x <= props.x + props.w - offsetX && y >= props.y - offsetY && y <= props.y - offsetY + props.h) {
-										if("mouseup" === type) {
+										if(AscCommon.getPtrEvtName("up") === type) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
-										} else if("mousedown" === type) {
+										} else if(AscCommon.getPtrEvtName("down") === type) {
 											//перерисовываем кнопку в нажатом состоянии
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].end + 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].end + 1, bCol: bCol};

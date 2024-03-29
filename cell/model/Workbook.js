@@ -3368,7 +3368,7 @@
 		}
 		return aUndoRedoElems;
 	}
-	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback){
+	Workbook.prototype.DeserializeHistory = function(aChanges, fCallback, oColor){
 		var oThis = this;
 		//сохраняем те изменения, которые были до приема данных, потому что дальше undo/redo будет очищено
 		this.aCollaborativeActions = this.aCollaborativeActions.concat(History.GetSerializeArray());
@@ -3435,6 +3435,12 @@
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						history.RedoAdd(oRedoObjectParam, item.oClass, item.nActionType, item.nSheetId, item.oRange, item.oData);
 					});
+					if (oThis.oApi.VersionHistory && item.nSheetId && item.GetChangedRange) {
+						let changedRange = item.nSheetId && item.GetChangedRange();
+						if (changedRange) {
+							oThis.oApi.wb.addToHistoryChangedRanges(item.nSheetId, changedRange, oColor);
+						}
+					}
 				}
 			}
 			AscFonts.IsCheckSymbols = false;
@@ -12702,14 +12708,11 @@
 
 	//*****user range protect*****
 	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
-
-		var res = null;
-
-
-		/*if (!AscCommon.rx_defName.test(getDefNameIndex(newUndoName.name)) || newUndoName.name.length > g_nDefNameMaxLength) {
-			return res;
-		}*/
-
+		
+		if ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
+			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref))) {
+			return false;
+		}
 
 		if (oldObj || newObj) {
 			let cloneNewOnj = newObj && newObj.clone();
@@ -12747,7 +12750,7 @@
 			}
 		}
 
-		return res;
+		return true;
 	};
 
 	Worksheet.prototype.deleteUserProtectedRanges = function (range) {
@@ -13041,7 +13044,7 @@
 			}
 		}
 	};
-
+	
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
