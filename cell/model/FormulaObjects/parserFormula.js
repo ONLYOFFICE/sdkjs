@@ -70,7 +70,7 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
-	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1};
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
 
