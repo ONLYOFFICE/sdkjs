@@ -142,7 +142,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -215,7 +215,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 drawer._l(trans.TransformPointX(aSmall[i].x, aSmall[i].y), trans.TransformPointY(aSmall[i].x, aSmall[i].y));
             }
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -299,7 +299,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 trans.TransformPointX(cx3, cy3), trans.TransformPointY(cx3, cy3),
                 trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
 
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -397,7 +397,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
@@ -448,7 +448,7 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
                 let oRGBColor;
                 if (drawer.Shape.GetRGBColor) {
                     oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());

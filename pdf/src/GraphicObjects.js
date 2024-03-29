@@ -93,7 +93,29 @@ CGraphicObjectsPdf.prototype.setTextPrTrack = function(oTextPrTrackHandler, IsSh
     }
     
     oTextPrTrackHandler.SetTrackObject(IsShowTextPrTrack ? oMath : null, 0, false === bSelection || true === bEmptySelection);
-}
+};
+
+CGraphicObjectsPdf.prototype.canIncreaseParagraphLevel = function(bIncrease)
+{
+    let oDocContent = this.getTargetDocContent();
+    if(oDocContent)
+    {
+        let oTextObject = AscFormat.getTargetTextObject(this);
+        if(oTextObject && oTextObject.getObjectType() === AscDFH.historyitem_type_Shape)
+        {
+            if(oTextObject.isPlaceholder())
+            {
+                let nPhType = oTextObject.getPlaceholderType();
+                if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
+                {
+                    return false;
+                }
+            }
+            return oDocContent.Can_IncreaseParagraphLevel(bIncrease);
+        }
+    }
+    return false;
+};
 
 CGraphicObjectsPdf.prototype.setTableProps = function(props) {
     let by_type = this.getSelectedObjectsByTypes();
@@ -146,7 +168,48 @@ CGraphicObjectsPdf.prototype.Check_GraphicFrameRowHeight = function (grFrame, bI
 		row.Set_Height(row.Height, Asc.linerule_AtLeast);
 	}
 };
-CGraphicObjectsPdf.prototype.setEquationTrack = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+
+CGraphicObjectsPdf.prototype.fitImagesToPage = function() {
+    this.checkSelectedObjectsAndCallback(function () {
+        let oDoc    = this.document;
+        let oApi    = this.getEditorApi();
+        if (!oApi) {
+            return;
+        }
+        
+        let aSelectedObjects    = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+        let dWidth              = oDoc.GetPageWidthMM();
+        let dHeight             = oDoc.GetPageHeightMM();
+
+        for (let i = 0; i < aSelectedObjects.length; ++i) {
+            let oDrawing = aSelectedObjects[i];
+            if (oDrawing.getObjectType() === AscDFH.historyitem_type_ImageShape || oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject) {
+                let sImageId = oDrawing.getImageUrl();
+                if(typeof sImageId === "string") {
+                    sImageId = AscCommon.getFullImageSrc2(sImageId);
+                    let _image = oApi.ImageLoader.map_image_index[sImageId];
+                    if (_image && _image.Image) {
+                        let __w     = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+                        let __h     = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                        let fKoeff  = 1.0/Math.max(__w/dWidth, __h/dHeight);
+                        let _w      = Math.max(5, __w*fKoeff);
+                        let _h      = Math.max(5, __h*fKoeff);
+
+                        AscFormat.CheckSpPrXfrm(oDrawing, true);
+                        oDrawing.spPr.xfrm.setOffX((dWidth - _w)/ 2.0);
+                        oDrawing.spPr.xfrm.setOffY((dHeight - _h)/ 2.0);
+                        oDrawing.spPr.xfrm.setExtX(_w);
+                        oDrawing.spPr.xfrm.setExtY(_h);
+                    }
+                }
+            }
+        }
+    }, [], false, AscDFH.historydescription_Presentation_FitImagesToSlide)
+};
+
+CGraphicObjectsPdf.prototype.setEquationTrack   = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+CGraphicObjectsPdf.prototype.getParagraphParaPr = AscFormat.DrawingObjectsController.prototype.getParagraphParaPr;
+CGraphicObjectsPdf.prototype.getParagraphTextPr = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
 
 CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Word/*Ctrl*/) {
     var target_text_object = AscFormat.getTargetTextObject(this);

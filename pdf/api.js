@@ -610,36 +610,109 @@
 	///////// For drawings
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
-		let oDoc		= this.getPDFDoc();
-		let oController	= this.getDocumentRenderer().DrawingObjects;
-
-		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
-		let aAllDrawings	= [];
-		Object.values(oObjectsByType).forEach(function(arrDrawings) {
-            arrDrawings.forEach(function(drawing) {
-                aAllDrawings.push(drawing);
-            });
-        });
-
-		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
-		this.getPDFDoc().ShapeApply(shapeProps);
-		oDoc.TurnOffHistory();
+		let oDoc = this.getPDFDoc();
+		oDoc.ShapeApply(shapeProps);
 	};
 	PDFEditorApi.prototype.ChangeShapeType = function(sShapetype) {
-		let oDoc		= this.getPDFDoc();
-		let oController	= this.getDocumentRenderer().DrawingObjects;
+		let oDoc = this.getPDFDoc();
 
-		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
-		let aAllDrawings	= [];
-		Object.values(oObjectsByType).forEach(function(arrDrawings) {
-            arrDrawings.forEach(function(drawing) {
-                aAllDrawings.push(drawing);
-            });
-        });
-
-		oDoc.CreateNewHistoryPoint({objects: aAllDrawings});
 		oDoc.ChangeShapeType(sShapetype);
-		oDoc.TurnOffHistory();
+	};
+	PDFEditorApi.prototype.ImgApply = function(obj) {
+		let oDoc	= this.getPDFDoc();
+		let ImagePr	= {};
+
+		ImagePr.lockAspect = obj.lockAspect;
+		ImagePr.Width      = null === obj.Width || undefined === obj.Width ? null : parseFloat(obj.Width);
+		ImagePr.Height     = null === obj.Height || undefined === obj.Height ? null : parseFloat(obj.Height);
+
+		ImagePr.title				= obj.title;
+		ImagePr.bSetOriginalSize	= obj.bSetOriginalSize;
+		ImagePr.description			= obj.description;
+		ImagePr.name				= obj.name;
+		ImagePr.rot					= obj.rot;
+		ImagePr.rotAdd				= obj.rotAdd;
+		ImagePr.flipH				= obj.flipH;
+		ImagePr.flipV				= obj.flipV;
+		ImagePr.flipHInvert			= obj.flipHInvert;
+		ImagePr.flipVInvert			= obj.flipVInvert;
+		ImagePr.resetCrop			= obj.resetCrop;
+
+		if (undefined != obj.Position) {
+			ImagePr.Position =
+			{
+				X : null === obj.Position.X || undefined === obj.Position.X ? null : parseFloat(obj.Position.X),
+				Y : null === obj.Position.Y || undefined === obj.Position.Y ? null : parseFloat(obj.Position.Y)
+			};
+		}
+		else {
+			ImagePr.Position = {X : null, Y : null};
+		}
+
+		ImagePr.ImageUrl = obj.ImageUrl;
+
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+		  	oDoc.SetImageProps(ImagePr);
+		  	return;
+		}
+		if (!AscCommon.isNullOrEmptyString(ImagePr.ImageUrl)) {
+			let sImageUrl = null, sToken = undefined;
+			if (!g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl)) {
+				sImageUrl = ImagePr.ImageUrl;
+				sToken = obj.Token;
+			}
+
+			let oApi           = this;
+			let fApplyCallback = function() {
+				let _img     = oApi.ImageLoader.LoadImage(ImagePr.ImageUrl, 1);
+				let srcLocal = g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl);
+
+				if (srcLocal) {
+					ImagePr.ImageUrl = srcLocal;
+				}
+				if (null != _img) {
+					oDoc.SetImageProps(ImagePr);
+				}
+				else {
+					oApi.asyncImageEndLoaded2 = function(_image) {
+						oDoc.SetImageProps(ImagePr);
+						oApi.asyncImageEndLoaded2 = null;
+					}
+				}
+			};
+
+			if (!sImageUrl) {
+				fApplyCallback();
+			}
+			else {
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+                    this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+                    let _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
+                    _url     = g_oDocumentUrls.getImageUrl(_url);
+                    ImagePr.ImageUrl = _url;
+                    fApplyCallback();
+                    this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+                    return;
+                }
+
+                AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
+
+                    if (data && data[0] && data[0].url !== "error") {
+                        ImagePr.ImageUrl = data[0].url;
+                        fApplyCallback();
+                    }
+
+                }, undefined, sToken);
+			}
+		}
+		else {
+			ImagePr.ImageUrl = null;
+			oDoc.SetImageProps(ImagePr);
+		}
+	};
+	PDFEditorApi.prototype.asc_FitImagesToPage = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.FitImagesToPage();
 	};
 
 	/////////////////////////////////////////////////////////////
@@ -1686,8 +1759,10 @@
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
 
 	// drawings
-	PDFEditorApi.prototype['ShapeApply']		= PDFEditorApi.prototype.ShapeApply;
-	PDFEditorApi.prototype['ChangeShapeType']	= PDFEditorApi.prototype.ChangeShapeType;
+	PDFEditorApi.prototype['ShapeApply']			= PDFEditorApi.prototype.ShapeApply;
+	PDFEditorApi.prototype['ChangeShapeType']		= PDFEditorApi.prototype.ChangeShapeType;
+	PDFEditorApi.prototype['ImgApply']				= PDFEditorApi.prototype.ImgApply;
+	PDFEditorApi.prototype['asc_FitImagesToPage']	= PDFEditorApi.prototype.asc_FitImagesToPage;
 
 	// table
 	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;
