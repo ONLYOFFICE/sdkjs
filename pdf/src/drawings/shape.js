@@ -93,18 +93,8 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
-    CPdfShape.prototype.AddNewParagraph = function() {
-        this.GetDocContent().AddNewParagraph();
-        this.SetNeedRecalc(true);
-    };
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
-    };
-    CPdfShape.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
-    CPdfShape.prototype.IsInTextBox = function() {
-        return this.isInTextBox;
     };
     CPdfShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
@@ -196,112 +186,6 @@
         this.toXml(memory, '');
     };
 
-    /////////////////////////////
-    /// work with text properties
-    ////////////////////////////
-
-    CPdfShape.prototype.SetParaTextPr = function(oParaTextPr) {
-        let oContent = this.GetDocContent();
-        
-        false == this.IsInTextBox() && oContent.SetApplyToAll(true);
-        oContent.AddToParagraph(oParaTextPr.Copy());
-        false == this.IsInTextBox() && oContent.SetApplyToAll(false);
-
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.SetAlign = function(nType) {
-        let oContent = this.GetDocContent();
-        oContent.SetParagraphAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.GetAlign = function() {
-        return this.GetDocContent().GetCalculatedParaPr().GetJc();
-    };
-    CPdfShape.prototype.SetBold = function(bBold) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Bold : bBold}));
-    };
-    CPdfShape.prototype.GetBold = function() {
-        return !!this.GetCalculatedTextPr().GetBold();        
-    };
-    CPdfShape.prototype.SetItalic = function(bItalic) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Italic : bItalic}));
-    };
-    CPdfShape.prototype.GetItalic = function() {
-        return !!this.GetCalculatedTextPr().GetItalic();
-    };
-    CPdfShape.prototype.SetUnderline = function(bUnderline) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Underline : bUnderline}));
-    };
-    CPdfShape.prototype.GetUnderline = function() {
-        return !!this.GetCalculatedTextPr().GetUnderline();
-    };
-    CPdfShape.prototype.SetHighlight = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({HighlightColor : AscFormat.CreateUniColorRGB(r, g, b)}));
-    };
-    CPdfShape.prototype.SetStrikeout = function(bStrikeout) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({
-			Strikeout  : bStrikeout,
-			DStrikeout : false
-        }));
-    };
-    CPdfShape.prototype.GetStrikeout = function() {
-        return !!this.GetCalculatedTextPr().GetStrikeout();
-    };
-    CPdfShape.prototype.SetBaseline = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({VertAlign : nType}));
-    };
-    CPdfShape.prototype.GetBaseline = function() {
-        return this.GetCalculatedTextPr().GetVertAlign();
-    };
-    CPdfShape.prototype.SetFontSize = function(nType) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({FontSize : nType}));
-    };
-    CPdfShape.prototype.GetFontSize = function() {
-        return this.GetCalculatedTextPr().GetFontSize();
-    };
-    CPdfShape.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
-        this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.SetSpacing = function(nSpacing) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
-    };
-    CPdfShape.prototype.GetSpacing = function() {
-        return this.GetCalculatedTextPr().GetSpacing();
-    };
-    CPdfShape.prototype.SetFontFamily = function(sFontFamily) {
-        let oParaTextPr = new AscCommonWord.ParaTextPr();
-		oParaTextPr.Value.RFonts.SetAll(sFontFamily, -1);
-        this.SetParaTextPr(oParaTextPr);
-    };
-    CPdfShape.prototype.GetFontFamily = function() {
-        return this.GetCalculatedTextPr().GetFontFamily();
-    };
-    CPdfShape.prototype.SetTextColor = function(r, g, b) {
-        this.SetParaTextPr(new AscCommonWord.ParaTextPr({Unifill : AscFormat.CreateSolidFillRGB(r, g, b)}));
-    };
-    CPdfShape.prototype.ChangeTextCase = function(nCaseType) {
-        let oContent    = this.GetDocContent();
-        let oState      = oContent.GetSelectionState();
-
-        let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
-		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());
-
-        oContent.SetSelectionState(oState);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.GetSelectedParagraphs = function() {
-        let oContent        = this.GetDocContent();
-        let aSelectedParas  = [];
-
-        oContent.GetCurrentParagraph(false, aSelectedParas);
-        return aSelectedParas;
-    };
-    CPdfShape.prototype.SetVertAlign = function(nType) {
-        this.setVerticalAlign(nType);
-        this.SetNeedRecalc(true);
-    };
-
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();
 
@@ -330,46 +214,6 @@
         delete fontMap["+mn-cs"];
         
         return fontMap;
-    };
-
-    CPdfShape.prototype.SetLineSpacing = function(oSpacing) {
-        this.GetDocContent().SetParagraphSpacing(oSpacing);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.GetLineSpacing = function() {
-        let oCalcedPr = this.GetCalculatedParaPr();
-        return {
-            After:  oCalcedPr.GetSpacingAfter(),
-            Before: oCalcedPr.GetSpacingBefor()
-        }
-    };
-    CPdfShape.prototype.SetColumnNumber = function(nColumns) {
-        this.setColumnNumber(nColumns);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.IncreaseDecreaseIndent = function(bIncrease) {
-        // Increase_ParagraphLevel для шейпов из презентаций
-        this.GetDocContent().Increase_ParagraphLevel(bIncrease);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.SetNumbering = function(oBullet) {
-        this.GetDocContent().Set_ParagraphPresentationNumbering(oBullet);
-        this.SetNeedRecalc(true);
-    };
-    CPdfShape.prototype.ClearFormatting = function(bParaPr, bTextText) {
-        this.GetDocContent().ClearParagraphFormatting(bParaPr, bTextText);
-        this.SetNeedRecalc(true);
-    };
-    
-    /**
-     * Получаем рассчитанные настройки текста (полностью заполненные)
-     * @returns {CTextPr}
-     */
-    CPdfShape.prototype.GetCalculatedTextPr = function() {
-        return this.GetDocContent().GetCalculatedTextPr();
-    };
-    CPdfShape.prototype.GetCalculatedParaPr = function() {
-        return this.GetDocContent().GetCalculatedParaPr();
     };
 
     //////////////////////////////////////////////////////////////////////////////

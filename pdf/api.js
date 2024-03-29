@@ -515,10 +515,8 @@
 		let oDoc	= this.getPDFDoc();
 		let oTextPr	= oDoc.GetDirectTextPr();
 
-		oDoc.CreateNewHistoryPoint();
 		let oMathElement = new AscCommonWord.MathMenu(Type, oTextPr ? oTextPr.Copy() : null);
 		oDoc.AddToParagraph(oMathElement, false);
-		oDoc.TurnOffHistory();
 	};
 	PDFEditorApi.prototype.sync_shapePropCallback = function(pr) {
 		var obj = AscFormat.CreateAscShapePropFromProp(pr);
@@ -558,13 +556,14 @@
 		return null;
 	};
 	PDFEditorApi.prototype.SetMarkerFormat = function(nType, value, opacity, r, g, b) {
+		this.isMarkerFormat	= value;
+
 		// from edit mode
 		if (nType == undefined) {
 			this.getPDFDoc().SetHighlight(r, g, b, opacity);
 			return;
 		}
 
-		this.isMarkerFormat	= value;
 		this.curMarkerType	= nType;
 		let oDoc			= this.getPDFDoc();
 		
@@ -795,6 +794,13 @@
 		return [[0,0], [0,0], [0,0], [0,0]];
 	};
 
+	PDFEditorApi.prototype.getPluginContextMenuInfo = function () {
+		let oDoc		= this.getPDFDoc();
+		let oController	= oDoc.GetController();
+		
+		return oController.getPluginSelectionInfo();
+	};
+
 	/////////////////////////////////////////////////////////////
 	///////// For text
 	////////////////////////////////////////////////////////////
@@ -803,26 +809,32 @@
 		this.getPDFDoc().SetTextEditMode(bEdit);
 	};
 	PDFEditorApi.prototype.put_TextPrBold = function(value) {
-		this.getPDFDoc().SetBold(value);
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Bold : value}));
 	};
 	PDFEditorApi.prototype.put_TextPrItalic = function(value) {
-		this.getPDFDoc().SetItalic(value);
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Italic : value}));
 	};
 	PDFEditorApi.prototype.put_TextPrUnderline = function(value) {
-		this.getPDFDoc().SetUnderline(value);
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Underline : value}));
 	};
 	PDFEditorApi.prototype.put_TextPrStrikeout = function(value) {
-		this.getPDFDoc().SetStrikeout(value);
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({
+			Strikeout  : value,
+			DStrikeout : false
+		}));
 	};
-	// 0- baseline, 2-subscript, 1-superscript
-	PDFEditorApi.prototype.put_TextPrBaseline = function(value) {
-		this.getPDFDoc().SetBaseline(value);
+	PDFEditorApi.prototype.put_PrLineSpacing = function(nType, nValue) {
+		this.getPDFDoc().SetParagraphSpacing({LineRule : nType, Line : nValue});
 	};
-	PDFEditorApi.prototype.put_TextPrFontSize = function(value) {
-		this.getPDFDoc().SetFontSize(value);
-	};
-	PDFEditorApi.prototype.put_TextPrFontName = function(name) {
-		this.getPDFDoc().SetFontFamily(name);
+	PDFEditorApi.prototype.put_LineSpacingBeforeAfter = function(type, value) { //"type == 0" means "Before", "type == 1" means "After"
+		switch (type) {
+			case 0:
+				this.getPDFDoc().SetParagraphSpacing({Before : value});
+				break;
+			case 1:
+				this.getPDFDoc().SetParagraphSpacing({After : value});
+				break;
+		}
 	};
 	PDFEditorApi.prototype.FontSizeIn = function() {
 		this.getPDFDoc().IncreaseDecreaseFontSize(true);
@@ -830,30 +842,44 @@
 	PDFEditorApi.prototype.FontSizeOut = function() {
 		this.getPDFDoc().IncreaseDecreaseFontSize(false);
 	};
+	// 0- baseline, 2-subscript, 1-superscript
+	PDFEditorApi.prototype.put_TextPrBaseline = function(value) {
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({VertAlign : value}));
+	};
+	PDFEditorApi.prototype.put_TextPrFontSize = function(size) {
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}));
+	};
+	PDFEditorApi.prototype.put_TextPrFontName = function(name) {
+		var loader   = AscCommon.g_font_loader;
+		var fontinfo = AscFonts.g_fontApplication.GetFontInfo(name);
+		var isasync  = loader.LoadFont(fontinfo);
+
+		if (false === isasync) {
+			this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({
+				FontFamily : {
+					Name  : name,
+					Index : -1
+				}
+			}));
+		}
+	};
 	PDFEditorApi.prototype.put_TextColor = function(color) {
-		this.getPDFDoc().SetTextColor(color.r, color.g, color.b);
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({
+			Color : {
+				r : color.r,
+				g : color.g,
+				b : color.b
+			}
+		}), false);
 	};
 	PDFEditorApi.prototype.asc_ChangeTextCase = function(nType) {
 		this.getPDFDoc().ChangeTextCase(nType);
 	};
 	PDFEditorApi.prototype.put_PrAlign = function(nType) {
-		this.getPDFDoc().SetAlign(nType);
+		this.getPDFDoc().SetParagraphAlign(nType);
 	};
 	PDFEditorApi.prototype.setVerticalAlign = function(nType) {
-		this.getPDFDoc().SetVertAlign(nType);
-	};
-	PDFEditorApi.prototype.put_PrLineSpacing = function(nType, nValue) {
-		this.getPDFDoc().SetLineSpacing({LineRule : nType, Line : nValue});
-	};
-	PDFEditorApi.prototype.put_LineSpacingBeforeAfter = function(type, value) { //"type == 0" means "Before", "type == 1" means "After"
-		switch (type) {
-			case 0:
-				this.getPDFDoc().SetLineSpacing({Before : value});
-				break;
-			case 1:
-				this.getPDFDoc().SetLineSpacing({After : value});
-				break;
-		}
+		this.getPDFDoc().SetVerticalAlign(nType);
 	};
 	PDFEditorApi.prototype.IncreaseIndent = function() {
 		this.getPDFDoc().IncreaseDecreaseIndent(true);
@@ -862,14 +888,7 @@
 		this.getPDFDoc().IncreaseDecreaseIndent(false);
 	};
 	PDFEditorApi.prototype.ClearFormating = function() {
-		this.getPDFDoc().ClearFormatting(undefined, true);
-	};
-	
-	PDFEditorApi.prototype.getPluginContextMenuInfo = function () {
-		let oDoc		= this.getPDFDoc();
-		let oController	= oDoc.GetController();
-		
-		return oController.getPluginSelectionInfo();
+		this.getPDFDoc().ClearParagraphFormatting(false, true);
 	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
 		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
@@ -880,6 +899,11 @@
 		this.sync_ListType(oParaPr.ListType);
 		this.sync_PrPropCallback(oParaPr);
 	};
+
+	/////////////////////////////////////////////////////////////
+	///////// For text
+	////////////////////////////////////////////////////////////
+
 	PDFEditorApi.prototype.sync_ListType = function(NumPr) {
 		this.sendEvent("asc_onListType", new AscCommon.asc_CListType(NumPr));
 	};
@@ -1757,6 +1781,29 @@
 
 	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+
+	// text/para pr
+	PDFEditorApi.prototype['put_TextPrBold']				= PDFEditorApi.prototype.put_TextPrBold;
+	PDFEditorApi.prototype['put_TextPrItalic']				= PDFEditorApi.prototype.put_TextPrItalic;
+	PDFEditorApi.prototype['put_TextPrUnderline']			= PDFEditorApi.prototype.put_TextPrUnderline;
+	PDFEditorApi.prototype['put_TextPrStrikeout']			= PDFEditorApi.prototype.put_TextPrStrikeout;
+	PDFEditorApi.prototype['put_PrLineSpacing']				= PDFEditorApi.prototype.put_PrLineSpacing;
+	PDFEditorApi.prototype['put_LineSpacingBeforeAfter']	= PDFEditorApi.prototype.put_LineSpacingBeforeAfter;
+	PDFEditorApi.prototype['FontSizeIn']					= PDFEditorApi.prototype.FontSizeIn;
+	PDFEditorApi.prototype['FontSizeOut']					= PDFEditorApi.prototype.FontSizeOut;
+	PDFEditorApi.prototype['put_TextPrBaseline']			= PDFEditorApi.prototype.put_TextPrBaseline;
+	PDFEditorApi.prototype['put_TextPrFontSize']			= PDFEditorApi.prototype.put_TextPrFontSize;
+	PDFEditorApi.prototype['put_TextPrFontName']			= PDFEditorApi.prototype.put_TextPrFontName;
+	PDFEditorApi.prototype['put_TextColor']					= PDFEditorApi.prototype.put_TextColor;
+	PDFEditorApi.prototype['asc_ChangeTextCase']			= PDFEditorApi.prototype.asc_ChangeTextCase;
+	PDFEditorApi.prototype['put_PrAlign']					= PDFEditorApi.prototype.put_PrAlign;
+	PDFEditorApi.prototype['setVerticalAlign']				= PDFEditorApi.prototype.setVerticalAlign;
+	PDFEditorApi.prototype['IncreaseIndent']				= PDFEditorApi.prototype.IncreaseIndent;
+	PDFEditorApi.prototype['DecreaseIndent']				= PDFEditorApi.prototype.DecreaseIndent;
+	PDFEditorApi.prototype['ClearFormating']				= PDFEditorApi.prototype.ClearFormating;
+	PDFEditorApi.prototype['UpdateParagraphProp']			= PDFEditorApi.prototype.UpdateParagraphProp;
+	PDFEditorApi.prototype['sync_ListType']					= PDFEditorApi.prototype.sync_ListType;
+	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
 
 	// drawings
 	PDFEditorApi.prototype['ShapeApply']			= PDFEditorApi.prototype.ShapeApply;
