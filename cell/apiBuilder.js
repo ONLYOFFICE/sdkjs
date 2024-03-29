@@ -417,8 +417,10 @@
 		}
 		// remove it from this class and use it from the variable (only if it was the last)
 		// we don't remove it immediately, because we can have there data for another function
-		if (!this.parsedJSDoc.length)
+		if (!this.parsedJSDoc.length) {
 			delete this.parsedJSDoc;
+		}
+
 
 		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
 
@@ -439,7 +441,7 @@
 			return first + second + third;
 		})*/
 
-		//2. object params
+		//2. object params - removed it at the moment
 		/*
 
 		(function()
@@ -7472,14 +7474,15 @@
 	 */
 	function private_ValidateParamsForCustomFunction(jsdoc) {
 		let result = true;
-		const types = [ 
-						'number', 'string', 'boolean', 'bool', 'any',
-						'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
-						'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
-					];
+		const types = [
+			'number', 'string', 'boolean', 'bool', 'any',
+			'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
+			'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
+		];
 
-		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type))
+		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type)) {
 			result = false;
+		}
 
 		for (let index = 0; result && index < jsdoc.params.length; index++) {
 			const param = jsdoc.params[index];
