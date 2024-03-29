@@ -384,7 +384,7 @@
 	/**
 	 * Creates a new custom function.
 	 * The description of the function parameters and result is set using jsdoc.
-	 * Parameters and results can be set as number/string/bool/any types.
+	 * Parameters and results can be set as number/string/bool/any/number[][]/string[][]/bool[][]/any[][] types.
 	 * Parameters can be required or optional. Also user can set the default value.
 	 *
 	 * Example with description:
