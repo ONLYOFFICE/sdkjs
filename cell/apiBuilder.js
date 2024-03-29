@@ -389,19 +389,18 @@
 	 *
 	 * Example with description:
 	 *
-	 * @example
 	 * 'Calculates the sum of the specified numbers.
 	 * '@customfunction
 	 * '@param {number} first Required first number.
 	 * '@param {number} [second] Optional second number to add.
 	 * '@returns {number} The sum of the numbers.
 	 * 'Api.AddCustomFunction(function add(first, second) {
-	 *    if (second === null) {
-	 *        second = 0;
-	 *   }
-	 *   return first + second;
-	 * })
-	 * Tag customfunction is required.
+	 * '    if (second === null) {
+	 * '        second = 0;
+	 * '    }
+	 * '    return first + second;
+	 * '})
+	 * 'Tag customfunction is required.
 	 *
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
