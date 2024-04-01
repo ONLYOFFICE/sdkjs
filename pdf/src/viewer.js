@@ -1887,7 +1887,8 @@
 			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
 
-			oThis.getPDFDoc().HideComments();
+			let oDoc = oThis.getPDFDoc();
+			oDoc.HideComments();
 			
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			if (mouseButton !== 0)
@@ -1901,6 +1902,7 @@
 					var y = posY - oThis.y;
 
 					var isInSelection = false;
+					
 					if (oThis.overlay.m_oContext)
 					{
 						var pixX = AscCommon.AscBrowser.convertToRetinaValue(x, true);
@@ -1911,7 +1913,8 @@
 							var pixelOnOverlay = oThis.overlay.m_oContext.getImageData(pixX, pixY, 1, 1);
 							if (Math.abs(pixelOnOverlay.data[0] - 51) < 10 &&
 								Math.abs(pixelOnOverlay.data[1] - 102) < 10 &&
-								Math.abs(pixelOnOverlay.data[2] - 204) < 10)
+								Math.abs(pixelOnOverlay.data[2] - 204) < 10 &&
+								oThis.canSelectPageText())
 							{
 								isInSelection = true;
 							}
@@ -1932,13 +1935,12 @@
 					}
 					else
 					{
-						oThis.Api.sync_BeginCatchSelectedElements();
-						oThis.Api.sync_EndCatchSelectedElements();
 						oThis.removeSelection();
+						oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 						oThis.Api.sync_ContextMenuCallback({
-							Type  : Asc.c_oAscContextMenuTypes.ChangeHdrFtr,
-							X_abs : x,
-							Y_abs : y
+							Type: Asc.c_oAscContextMenuTypes.Common,
+							X_abs: x,
+							Y_abs: y
 						});
 					}
 				}
@@ -1958,7 +1960,7 @@
 
 			oThis.isMouseMoveBetweenDownUp = false;
 			e.ClickCount = global_mouseEvent.ClickCount;
-			oThis.getPDFDoc().OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+			oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 		};
 
 		this.onMouseDownEpsilon = function()
@@ -2166,7 +2168,7 @@
 		};
 		this.canSelectPageText = function() {
 			let oDoc = this.getPDFDoc();
-			return this.isMouseMoveBetweenDownUp && !oDoc.activeDrawing && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;
+			return !oDoc.activeDrawing && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !this.Api.isInkDrawerOn() && !this.Api.isStartAddShape;
 		};
 		this.onMouseWhell = function(e)
 		{

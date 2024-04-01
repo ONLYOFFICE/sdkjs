@@ -768,7 +768,10 @@ var CPresentation = CPresentation || function(){};
             // если форма, то проверяем шрифт перед кликом в неё
             if (oMouseDownObject.IsForm() && false == [AscPDF.FIELD_TYPES.signature, AscPDF.FIELD_TYPES.checkbox , AscPDF.FIELD_TYPES.radiobutton].includes(oMouseDownObject.GetType())) {
                 let _t = this;
-                if (!this.checkFieldFont(oMouseDownObject, function(){_t.OnMouseDown(x, y, e)})) {
+                if (!this.checkFieldFont(oMouseDownObject, function() {
+                    _t.SetMouseDownObject(null);
+                    _t.OnMouseDown(x, y, e)
+                })) {
                     return;
                 }
 
@@ -778,7 +781,11 @@ var CPresentation = CPresentation || function(){};
                 }
             }
 
-            oMouseDownObject.onMouseDown(x, y, e);
+            // всегда даём кликнуть по лкм, пкм даем кликнуть один раз, при первом попадании в объект
+            if (AscCommon.getMouseButton(e || {}) != 2 || (AscCommon.getMouseButton(e || {}) == 2 && oCurObject != oMouseDownObject)) {
+                oMouseDownObject.onMouseDown(x, y, e);
+            }
+            
 
             if (((oMouseDownObject.IsDrawing() && oMouseDownObject.IsTextShape()) || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
                 oDrDoc.TargetEnd();
@@ -798,6 +805,8 @@ var CPresentation = CPresentation || function(){};
         if (oMouseDownObject == null || (false == oController.selectedObjects.includes(oMouseDownObject) && oController.selection.groupSelection != oMouseDownObject)) {
             oController.resetSelection();
         }
+
+        this.UpdateInterface();
     };
     CPDFDoc.prototype.BlurActiveObject = function() {
         let oActiveObj = this.GetActiveObject();

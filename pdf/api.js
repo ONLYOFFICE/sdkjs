@@ -621,6 +621,31 @@
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.StartAddShape = function(sPreset, is_apply) {
+		let oDoc	= this.getPDFDoc();
+		let oDrDoc	= oDoc.GetDrawingDocument();
+
+		if (this.isDrawTablePen) {
+			this.sync_TableDrawModeCallback(false);
+        }
+        if (this.isDrawTableErase) {
+            this.sync_TableEraseModeCallback(false);
+        }
+
+		this.stopInkDrawer();
+		this.cancelEyedropper();
+
+		oDoc.BlurActiveObject();
+		this.isStartAddShape = true;
+		this.addShapePreset  = sPreset;
+		if (is_apply) {
+			oDrDoc.LockCursorType("crosshair");
+		}
+		else {
+			editor.sync_EndAddShape();
+			editor.sync_StartAddShapeCallback(false);
+		}
+	};
 	PDFEditorApi.prototype.ShapeApply = function(shapeProps) {
 		let oDoc = this.getPDFDoc();
 		oDoc.ShapeApply(shapeProps);
@@ -1819,6 +1844,7 @@
 	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
 
 	// drawings
+	PDFEditorApi.prototype['StartAddShape']				= PDFEditorApi.prototype.StartAddShape;
 	PDFEditorApi.prototype['ShapeApply']				= PDFEditorApi.prototype.ShapeApply;
 	PDFEditorApi.prototype['ChangeShapeType']			= PDFEditorApi.prototype.ChangeShapeType;
 	PDFEditorApi.prototype['ImgApply']					= PDFEditorApi.prototype.ImgApply;
