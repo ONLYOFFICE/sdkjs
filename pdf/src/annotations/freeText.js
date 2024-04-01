@@ -824,10 +824,13 @@
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
-        if (isIn)
+        if (isIn) {
+            this.selection.textSelection = this.GetTextBoxShape();
             oDoc.SetLocalHistory();
-        else
+        }
+        else {
             oDoc.SetGlobalHistory();
+        }
 
         if (false == this.IsChanged()) {
             this.SetDrawFromStream(!isIn);
@@ -909,9 +912,9 @@
 
         this.SetInTextBox(false);
 
-        if (this.GetContents() != sText) {
+        if (this.GetContents() != sText || this.IsNeedUpdateRC()) {
             oDoc.CreateNewHistoryPoint();
-            this.SetContents(sText);
+            this.GetContents() != sText && this.SetContents(sText);
             
             if (this.IsNeedUpdateRC()) {
                 oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), this.GetRichContents(true)));

@@ -692,7 +692,8 @@ window.AscCommon.g_cIsBeta = "false";
 		MailMerge      : 10,
 		ContentControl : 11,
 		Animation      : 12,
-		Text           : 13 // viewer
+		Text           : 13, // viewer
+		Annot          : 14
 	};
 
 	var c_oAscLineDrawingRule = {

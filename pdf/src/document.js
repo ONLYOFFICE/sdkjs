@@ -2372,41 +2372,46 @@ var CPresentation = CPresentation || function(){};
         let oDrawingPr  = oController.getDrawingProps();
         let oCurObject  = this.GetActiveObject();
 
-        if (oCurObject && oCurObject.IsDrawing()) {
-            let oImgPr      = oDrawingPr.imageProps;
-            let oSpPr       = oDrawingPr.shapeProps;
-            let oChartPr    = oDrawingPr.chartProps;
-            let oTblPr      = oDrawingPr.tableProps;
-            let oParaPr     = oController.getParagraphParaPr();
-            let oTextPr     = oController.getParagraphTextPr()
+        if (oCurObject) {
+            if (oCurObject.IsDrawing()) {
+                let oImgPr      = oDrawingPr.imageProps;
+                let oSpPr       = oDrawingPr.shapeProps;
+                let oChartPr    = oDrawingPr.chartProps;
+                let oTblPr      = oDrawingPr.tableProps;
+                let oParaPr     = oController.getParagraphParaPr();
+                let oTextPr     = oController.getParagraphTextPr()
 
-            if (oImgPr) {
-				oImgPr.Width = oImgPr.w;
-				oImgPr.Height = oImgPr.h;
-				oImgPr.Position = {X: oImgPr.x, Y: oImgPr.y};
-				if (AscFormat.isRealBool(oImgPr.locked) && oImgPr.locked) {
-					oImgPr.Locked = true;
-				}
-				this.Api.sync_ImgPropCallback(oImgPr);
-			}
-            if (oSpPr) {
-                oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
-                this.Api.sync_shapePropCallback(oSpPr);
-                this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
-                this.Api.sync_Vert(oSpPr.vert);
-            }
-            if (oTblPr) {
-                oDrDoc.CheckTableStyles(oTblPr.TableLook);
-                this.Api.sync_TblPropCallback(oTblPr);
-                if (!oSpPr) {
-                    if (oTblPr.CellsVAlign === vertalignjc_Bottom) {
-                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
-                    } else if (oTblPr.CellsVAlign === vertalignjc_Center) {
-                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
-                    } else {
-                        this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+                if (oImgPr) {
+                    oImgPr.Width = oImgPr.w;
+                    oImgPr.Height = oImgPr.h;
+                    oImgPr.Position = {X: oImgPr.x, Y: oImgPr.y};
+                    if (AscFormat.isRealBool(oImgPr.locked) && oImgPr.locked) {
+                        oImgPr.Locked = true;
+                    }
+                    this.Api.sync_ImgPropCallback(oImgPr);
+                }
+                if (oSpPr) {
+                    oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
+                    this.Api.sync_shapePropCallback(oSpPr);
+                    this.Api.sync_VerticalTextAlign(oSpPr.verticalTextAlign);
+                    this.Api.sync_Vert(oSpPr.vert);
+                }
+                if (oTblPr) {
+                    oDrDoc.CheckTableStyles(oTblPr.TableLook);
+                    this.Api.sync_TblPropCallback(oTblPr);
+                    if (!oSpPr) {
+                        if (oTblPr.CellsVAlign === vertalignjc_Bottom) {
+                            this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM);
+                        } else if (oTblPr.CellsVAlign === vertalignjc_Center) {
+                            this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_CENTER);
+                        } else {
+                            this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
+                        }
                     }
                 }
+            }
+            else if (oCurObject.IsAnnot()) {
+                this.Api.sync_annotPropCallback(oCurObject);
             }
         }
         
@@ -2837,10 +2842,12 @@ var CPresentation = CPresentation || function(){};
 
         oController.paragraphAdd(oParaItem, false);
         let oCurObject = this.GetActiveObject();
-        if (oCurObject && oCurObject.IsDrawing()) {
-            oCurObject.SetNeedRecalc(true);
-            this.History.SetSourceObjectsToPointPdf([oCurObject]);
+        oCurObject.SetNeedRecalc(true);
+        if (oCurObject.IsAnnot() && oCurObject.IsFreeText()) {
+            oCurObject.SetNeedUpdateRC(true);
         }
+        
+        this.History.SetSourceObjectsToPointPdf([oCurObject]);
 
         this.TurnOffHistory();
     };
@@ -4255,9 +4262,29 @@ var CPresentation = CPresentation || function(){};
         return oAnnot;
     }
 
-    function private_PtToMM(pt) {
-		return 25.4 / 72.0 * pt;
-	}
+    function CreateAscAnnotPropFromObj(annot) {
+        let oProps = new Asc.asc_CAnnotProperty();
+
+        oProps.asc_putType(annot.GetType());
+        
+        let oFillColor  = annot.GetFillColor();
+        let oFillRGB    = annot.GetRGBColor(oFillColor);
+        let oFill       = AscFormat.CreateSolidFillRGBA(oFillRGB.r, oFillRGB.g, oFillRGB.b, 255);
+        if (isRealObject(oFill)) {
+            oProps.asc_putFill(AscFormat.CreateAscFill(oFill));
+        }
+
+        let oStrokeColor    = annot.GetStrokeColor();
+        let oStrokeRGB      = annot.GetRGBColor(oStrokeColor);
+        let oStrokeFill     = AscFormat.CreateSolidFillRGBA(oStrokeRGB.r, oStrokeRGB.g, oStrokeRGB.b, 255);
+        if (isRealObject(oStrokeFill)) {
+            oProps.asc_putStroke(AscFormat.CreateAscStroke(oStrokeFill, true));
+        }
+
+        // obj.Position = new Asc.CPosition({X: shapeProp.x, Y: shapeProp.y});
+
+        return oProps;
+    }
 
     function private_correctRGBColorComponent(component) {
         if (typeof(component) != "number") {
@@ -4301,5 +4328,6 @@ var CPresentation = CPresentation || function(){};
 
     window["AscPDF"].CPDFDoc = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps = CreateAnnotByProps;
+    window["AscPDF"].CreateAscAnnotPropFromObj = CreateAscAnnotPropFromObj;
 
 })();

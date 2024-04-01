@@ -546,6 +546,19 @@
 
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Shape, obj);
 	};
+	PDFEditorApi.prototype.sync_annotPropCallback = function(annot) {
+		var obj = AscPDF.CreateAscAnnotPropFromObj(annot);
+
+		var _len = this.SelectedObjectsStack.length;
+		if (_len > 0) {
+			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Annot) {
+				this.SelectedObjectsStack[_len - 1].Value = obj;
+				return;
+			}
+		}
+
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Annot, obj);
+	};
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
 		this.sendEvent("asc_onVerticalTextAlign", align);
 	};
@@ -1806,10 +1819,13 @@
 	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
 
 	// drawings
-	PDFEditorApi.prototype['ShapeApply']			= PDFEditorApi.prototype.ShapeApply;
-	PDFEditorApi.prototype['ChangeShapeType']		= PDFEditorApi.prototype.ChangeShapeType;
-	PDFEditorApi.prototype['ImgApply']				= PDFEditorApi.prototype.ImgApply;
-	PDFEditorApi.prototype['asc_FitImagesToPage']	= PDFEditorApi.prototype.asc_FitImagesToPage;
+	PDFEditorApi.prototype['ShapeApply']				= PDFEditorApi.prototype.ShapeApply;
+	PDFEditorApi.prototype['ChangeShapeType']			= PDFEditorApi.prototype.ChangeShapeType;
+	PDFEditorApi.prototype['ImgApply']					= PDFEditorApi.prototype.ImgApply;
+	PDFEditorApi.prototype['asc_FitImagesToPage']		= PDFEditorApi.prototype.asc_FitImagesToPage;
+	PDFEditorApi.prototype['sync_shapePropCallback']	= PDFEditorApi.prototype.sync_shapePropCallback;
+	PDFEditorApi.prototype['sync_annotPropCallback']	= PDFEditorApi.prototype.sync_annotPropCallback;
+
 
 	// table
 	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;

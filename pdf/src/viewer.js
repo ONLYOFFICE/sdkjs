@@ -2542,7 +2542,7 @@
 						oDrDoc.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
 
-						if (oDoc.mouseDownAnnot.IsLine() || oDoc.mouseDownAnnot.IsPolygon() || oDoc.mouseDownAnnot.IsPolyLine() || oDoc.mouseDownAnnot.IsFreeText())
+						if (oDoc.mouseDownAnnot.IsFreeText())
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
 					}
 				}

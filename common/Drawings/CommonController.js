@@ -2159,7 +2159,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
+							!oGrp.IsAnnot && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2174,7 +2174,7 @@
 							const oGrpTx = oGrp.selection.textSelection;
 							const oGrpChart = oGrp.selection.chartSelection;
 							const aGrpSelected = oGrp.selectedObjects;
-							if (oGrpTx) {
+							if (oGrpTx && !oGrp.IsAnnot) {
 								drawingDocument.DrawTrack(
 									AscFormat.TYPE_TRACK.TEXT,
 									oGrpTx.transform,

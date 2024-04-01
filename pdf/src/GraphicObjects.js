@@ -390,6 +390,119 @@ CGraphicObjectsPdf.prototype.addTextWithPr = function(sText, oSettings) {
     }, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
 };
 
+CGraphicObjectsPdf.prototype.getParagraphParaPr = function () {
+    let target_text_object = AscFormat.getTargetTextObject(this);
+    if (target_text_object) {
+        if (target_text_object.group && target_text_object.group.IsAnnot())
+            return null;
+        
+        if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+            return target_text_object.graphicObject.GetCalculatedParaPr();
+        } else {
+            let content = this.getTargetDocContent();
+            if (content) {
+                return content.GetCalculatedParaPr();
+            }
+        }
+    } else {
+        let result, cur_pr, selected_objects, i;
+        let getPropsFromArr = function (arr) {
+            let cur_pr, result_pr, content;
+            for (let i = 0; i < arr.length; ++i) {
+                cur_pr = null;
+                if (arr[i].getObjectType() === AscDFH.historyitem_type_GroupShape) {
+                    cur_pr = getPropsFromArr(arr[i].arrGraphicObjects);
+                } else {
+                    if (arr[i].getDocContent && arr[i].getObjectType() !== AscDFH.historyitem_type_ChartSpace) {
+                        content = arr[i].getDocContent();
+                        if (content) {
+                            content.SetApplyToAll(true);
+                            cur_pr = content.GetCalculatedParaPr();
+                            content.SetApplyToAll(false);
+                        }
+                    }
+                }
+
+                if (cur_pr) {
+                    if (!result_pr)
+                        result_pr = cur_pr;
+                    else
+                        result_pr.Compare(cur_pr);
+                }
+            }
+            return result_pr;
+        };
+
+        if (this.selection.groupSelection && !this.selection.groupSelection.IsAnnot) {
+            result = getPropsFromArr(this.selection.groupSelection.selectedObjects);
+        } else {
+            result = getPropsFromArr(this.selectedObjects);
+        }
+        return result;
+    }
+};
+
+CGraphicObjectsPdf.prototype.getParagraphTextPr = function () {
+    let target_text_object = AscFormat.getTargetTextObject(this);
+    if (target_text_object) {
+        if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+            return target_text_object.graphicObject.GetCalculatedTextPr();
+        } else {
+            let content = this.getTargetDocContent();
+            if (content) {
+                return content.GetCalculatedTextPr();
+            }
+        }
+    } else {
+        let result, cur_pr, selected_objects, i;
+        let getPropsFromArr = function (arr) {
+            let cur_pr, result_pr, content;
+            for (let i = 0; i < arr.length; ++i) {
+                cur_pr = null;
+                if (arr[i].getObjectType() === AscDFH.historyitem_type_GroupShape) {
+                    cur_pr = getPropsFromArr(arr[i].arrGraphicObjects);
+                } else if (arr[i].getObjectType() === AscDFH.historyitem_type_ChartSpace) {
+                    cur_pr = arr[i].getParagraphTextPr();
+                } else {
+                    if (arr[i].getDocContent) {
+                        content = arr[i].getDocContent();
+                        if (content) {
+                            content.SetApplyToAll(true);
+                            cur_pr = content.GetCalculatedTextPr();
+                            content.SetApplyToAll(false);
+                        }
+                    }
+                }
+
+                if (cur_pr) {
+                    if (!result_pr)
+                        result_pr = cur_pr;
+                    else
+                        result_pr.Compare(cur_pr);
+                }
+            }
+            return result_pr;
+        };
+
+        if (this.selection.groupSelection && !this.selection.groupSelection.IsAnnot) {
+            result = getPropsFromArr(this.selection.groupSelection.selectedObjects);
+        } else if (this.selectedObjects
+            && 1 === this.selectedObjects.length
+            && this.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_ImageShape
+            && this.selectedObjects[0].parent
+            && this.selectedObjects[0].parent.Parent
+            && this.selectedObjects[0].parent.Parent.GetCalculatedTextPr) {
+            let oParaDrawing = this.selectedObjects[0].parent;
+            let oParagraph = oParaDrawing.Parent;
+            oParagraph.MoveCursorToDrawing(oParaDrawing.Get_Id(), true);
+            result = oParagraph.GetCalculatedTextPr();
+        } else {
+            result = getPropsFromArr(this.selectedObjects);
+        }
+        return result;
+    }
+};
+
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
 
