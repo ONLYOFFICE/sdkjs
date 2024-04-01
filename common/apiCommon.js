@@ -3342,6 +3342,7 @@ function (window, undefined) {
 		this.canChangeArrows	= true;
 		this.Locked				= false;
 		this.subject			= undefined;
+		this.canEditText		= false;
 
 		this.Position = undefined;
 	}
@@ -3382,6 +3383,12 @@ function (window, undefined) {
 	};
 	asc_CAnnotProperty.prototype.asc_setSubject = function (v) {
 		this.subject = v;
+	};
+	asc_CAnnotProperty.prototype.asc_getCanEditText = function (v) {
+		this.canEditText = v;
+	};
+	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
+		this.canEditText = v;
 	};
 
 	/** @constructor */
@@ -6421,6 +6428,8 @@ function (window, undefined) {
 	prot["asc_setCanChangeArrows"]	= prot.asc_setCanChangeArrows;
 	prot["asc_getSubject"]			= prot.asc_getSubject;
 	prot["asc_setSubject"]			= prot.asc_setSubject;
+	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
+	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
 
 
 	window["Asc"]["asc_TextArtProperties"] = window["Asc"].asc_TextArtProperties = asc_TextArtProperties;

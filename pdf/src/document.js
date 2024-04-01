@@ -4281,6 +4281,9 @@ var CPresentation = CPresentation || function(){};
             oProps.asc_putStroke(AscFormat.CreateAscStroke(oStrokeFill, true));
         }
 
+        if (annot.IsFreeText() && annot.IsInTextBox()) {
+            oProps.asc_setCanEditText(true);
+        }
         // obj.Position = new Asc.CPosition({X: shapeProp.x, Y: shapeProp.y});
 
         return oProps;
