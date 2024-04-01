@@ -1785,9 +1785,7 @@
                     if (null == cellType || CellValueType.Number === cellType) {
 						exist = setRows[r] = setCols[c] = true;
                     }
-                } else if (cell === undefined) {
-					// если есть пустые ячейки, нужно проверить есть ли после них ячейки с данными(в ms все пустые ячейки в конце обрезаются)
-				}
+                }
             }
         }
         if (exist) {
@@ -1860,7 +1858,7 @@
                 }
                 if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
                     // Мы расширяем диапазон
-                    if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {	
+                    if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {
 						// Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
                         ar.c2 += 1;
                     } else {
