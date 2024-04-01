@@ -1785,7 +1785,9 @@
                     if (null == cellType || CellValueType.Number === cellType) {
 						exist = setRows[r] = setCols[c] = true;
                     }
-                }
+                } else if (cell === undefined) {
+					// если есть пустые ячейки, нужно проверить есть ли после них ячейки с данными(в ms все пустые ячейки в конце обрезаются)
+				}
             }
         }
         if (exist) {
@@ -1834,8 +1836,8 @@
             var hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
 
             // Нужно уменьшить зону выделения (если она реально уменьшилась)
-            var startCol = hasNumber.arrCols[0];
-            var startRow = hasNumber.arrRows[0];
+			var startRow = (ar.c2 - ar.c1) > 0 ? hasNumber.arrRows[0] : ar.r1;
+            var startCol = hasNumber.arrRows.length === 1 ? ar.c1 : hasNumber.arrCols[0];
             // Старые границы диапазона
             var startColOld = ar.c1;
             var startRowOld = ar.r1;
@@ -1858,8 +1860,8 @@
                 }
                 if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
                     // Мы расширяем диапазон
-                    if (1 === hasNumber.arrRows.length) {
-                        // Одна строка или только в последней строке есть значения... (увеличиваем вправо)
+                    if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {	
+						// Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
                         ar.c2 += 1;
                     } else {
                         // Иначе вводим в строку вниз
@@ -1936,8 +1938,8 @@
                     }
                 };
             } else {
-                // Есть значения и в последнем столбце, и в последней строке
-                if (1 === hasNumber.arrRows.length) {
+                // Есть значения и в последнем столбце, и в последней строке, выделенный диапазон по столбцам больше одной ячейки и только в одной строке есть значения
+                if (1 === hasNumber.arrRows.length && (ar.c2 - ar.c1) > 0) {
                     changedRange = new asc_Range(arCopy.c2, arCopy.r2, arCopy.c2, arCopy.r2);
                     functionAction = function () {
                         // Одна строка или только в последней строке есть значения...
