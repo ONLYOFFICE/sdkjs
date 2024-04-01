@@ -1834,8 +1834,8 @@
             var hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
 
             // Нужно уменьшить зону выделения (если она реально уменьшилась)
-			var startRow = (ar.c2 - ar.c1) > 0 ? hasNumber.arrRows[0] : ar.r1;
-            var startCol = hasNumber.arrRows.length === 1 ? ar.c1 : hasNumber.arrCols[0];
+            var startRow = (ar.c2 - ar.c1) > 0 ? hasNumber.arrRows[0] : ar.r1;
+			var startCol = hasNumber.arrRows.length === 1 ? ar.c1 : hasNumber.arrCols[0];
             // Старые границы диапазона
             var startColOld = ar.c1;
             var startRowOld = ar.r1;
@@ -1859,8 +1859,8 @@
                 if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
                     // Мы расширяем диапазон
                     if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {
-						// Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
-                        ar.c2 += 1;
+                        // Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
+						ar.c2 += 1;
                     } else {
                         // Иначе вводим в строку вниз
                         ar.r2 += 1;
