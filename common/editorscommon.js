@@ -1566,18 +1566,18 @@
 			"type": "type",
 			"width": "width"
 		};
-		cCellFunctionLocal['address'] = local['address'];
-		cCellFunctionLocal['col'] = local['col'];
-		cCellFunctionLocal['color'] = local['color'];
-		cCellFunctionLocal['contents'] = local['contents'];
-		cCellFunctionLocal['filename'] = local['filename'];
-		cCellFunctionLocal['format'] = local['format'];
-		cCellFunctionLocal['parentheses'] = local['parentheses'];
-		cCellFunctionLocal['prefix'] = local['prefix'];
-		cCellFunctionLocal['protect'] = local['protect'];
-		cCellFunctionLocal['row'] = local['row'];
-		cCellFunctionLocal['type'] = local['type'];
-		cCellFunctionLocal['width'] = local['width'];
+		cCellFunctionLocal['address'] = local['address'] && local['address'].toLowerCase();
+		cCellFunctionLocal['col'] =  local['col'] && local['col'].toLowerCase();
+		cCellFunctionLocal['color'] = local['color'] && local['color'].toLowerCase();
+		cCellFunctionLocal['contents'] = local['contents'] && local['contents'].toLowerCase();
+		cCellFunctionLocal['filename'] = local['filename'] && local['filename'].toLowerCase();
+		cCellFunctionLocal['format'] = local['format'] && local['format'].toLowerCase();
+		cCellFunctionLocal['parentheses'] = local['parentheses'] && local['parentheses'].toLowerCase();
+		cCellFunctionLocal['prefix'] = local['prefix'] && local['prefix'].toLowerCase();
+		cCellFunctionLocal['protect'] = local['protect'] && local['protect'].toLowerCase();
+		cCellFunctionLocal['row'] =  local['row'] && local['row'].toLowerCase();
+		cCellFunctionLocal['type'] = local['type'] && local['type'].toLowerCase();
+		cCellFunctionLocal['width'] = local['width'] && local['width'].toLowerCase();
 
 		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
 			cCellFunctionLocal["col"] + "|" +

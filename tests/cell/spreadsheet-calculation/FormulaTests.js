@@ -14446,6 +14446,17 @@ $(function () {
 		assert.ok(oParser.parse(), "CELL(width,'J').");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,'J').");
 
+		oParser = new parserFormula('CELL("fiLename",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(fiLename,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "fiLename. Result of CELL(filename,J2).");
+
+		oParser = new parserFormula('CELL("FILENAME",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(FILENAME,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "FILENAME. Result of CELL(filename,J2).");
+
+		oParser = new parserFormula('CELL("FILENAM",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(FILENAM,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "FILENAM. Result of CELL(filename,J2).");
 	});
 
 

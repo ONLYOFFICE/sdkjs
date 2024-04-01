@@ -213,25 +213,30 @@ function (window, undefined) {
 			let _cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
 			let res, numFormat;
 			switch (str) {
+				case "col":
 				case _cCellFunctionLocal["col"]: {
 					res = new cNumber(bbox.c1 + 1);
 					break;
 				}
+				case "row":
 				case _cCellFunctionLocal["row"]: {
 					res = new cNumber(bbox.r1 + 1);
 					break;
 				}
+				case "sheet":
 				case _cCellFunctionLocal["sheet"]: {
 					//нет в офф. документации
 					//ms excel returns 1?
 					res = new cNumber(1);
 					break;
 				}
+				case "address":
 				case _cCellFunctionLocal["address"]: {
 					res = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
 					res = new cString(res.getAbsName());
 					break;
 				}
+				case "filename":
 				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
 					let docInfo = window["Asc"]["editor"].DocInfo;
@@ -245,10 +250,12 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "coord":
 				case _cCellFunctionLocal["coord"]: {
 					//нет в офф. документации
 					break;
 				}
+				case "contents":
 				case _cCellFunctionLocal["contents"]: {
 					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 						res = arg1.getValue();
@@ -260,6 +267,7 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "type":
 				case _cCellFunctionLocal["type"]: {
 					// b = blank; l = string (label); v = otherwise (value)
 					res = arg1.getValue();
@@ -272,6 +280,7 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "width":
 				case _cCellFunctionLocal["width"]: {
 					//return array
 					//{width 1 column; is default}
@@ -297,6 +306,7 @@ function (window, undefined) {
 
 					break;
 				}
+				case "prefix":
 				case _cCellFunctionLocal["prefix"]: {
 					// ' = left; " = right; ^ = centered; \ =
 					cell = ws.getCell3(bbox.r1, bbox.c1);
@@ -318,6 +328,7 @@ function (window, undefined) {
 
 					break;
 				}
+				case "protect":
 				case _cCellFunctionLocal["protect"]: {
 					//default - protect, do not support on open
 					let isLocked = true;
@@ -337,10 +348,12 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "format":
 				case _cCellFunctionLocal["format"]: {
 					res = getCellFormat(ws, bbox.r1, bbox.c1);
 					break
 				}
+				case "color":
 				case _cCellFunctionLocal["color"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if (numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
@@ -350,6 +363,7 @@ function (window, undefined) {
 					}
 					break
 				}
+				case "parentheses":
 				case _cCellFunctionLocal["parentheses"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if (numFormat && numFormat.oPositiveFormat && numFormat.oPositiveFormat.formatString.indexOf('(') != -1) {
