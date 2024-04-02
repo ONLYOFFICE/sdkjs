@@ -72,6 +72,7 @@
         this.recalculateContent();
         this.checkExtentsByDocContent(true, true);
         this.recalculate();
+        this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
     CPdfShape.prototype.onMouseDown = function(x, y, e) {
@@ -222,6 +223,7 @@
     
     CPdfShape.prototype.updateSelectionState = function () {
         var drawing_document = this.getDrawingDocument();
+
         if (drawing_document) {
             var content = this.getDocContent();
             if (content) {

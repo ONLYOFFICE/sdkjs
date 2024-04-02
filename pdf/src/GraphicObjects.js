@@ -212,6 +212,8 @@ CGraphicObjectsPdf.prototype.getParagraphParaPr = AscFormat.DrawingObjectsContro
 CGraphicObjectsPdf.prototype.getParagraphTextPr = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
 
 CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Word/*Ctrl*/) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+
     var target_text_object = AscFormat.getTargetTextObject(this);
     var oStartContent, oStartPara;
     if (target_text_object) {
@@ -234,7 +236,7 @@ CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Wor
                 // this.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
             }
         }
-        this.updateSelectionState();
+        oViewer.onUpdateOverlay();
     } else {
         if (this.selectedObjects.length === 0)
             return;
@@ -243,6 +245,8 @@ CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Wor
     }
 };
 CGraphicObjectsPdf.prototype.cursorMoveRight = function(AddToSelect, Word, bFromPaste) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+
     var target_text_object = AscFormat.getTargetTextObject(this);
     var oStartContent, oStartPara;
     if (target_text_object) {
@@ -264,7 +268,7 @@ CGraphicObjectsPdf.prototype.cursorMoveRight = function(AddToSelect, Word, bFrom
                 // this.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
             }
         }
-        this.updateSelectionState();
+        oViewer.onUpdateOverlay();
     } else {
         if (this.selectedObjects.length === 0)
             return;
@@ -275,6 +279,8 @@ CGraphicObjectsPdf.prototype.cursorMoveRight = function(AddToSelect, Word, bFrom
 
 
 CGraphicObjectsPdf.prototype.cursorMoveUp = function(AddToSelect, Word) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+
     var target_text_object = AscFormat.getTargetTextObject(this);
     var oStartContent, oStartPara;
     if (target_text_object) {
@@ -296,7 +302,7 @@ CGraphicObjectsPdf.prototype.cursorMoveUp = function(AddToSelect, Word) {
                 // this.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
             }
         }
-        this.updateSelectionState();
+        oViewer.onUpdateOverlay();
     } else {
         if (this.selectedObjects.length === 0)
             return;
@@ -305,6 +311,8 @@ CGraphicObjectsPdf.prototype.cursorMoveUp = function(AddToSelect, Word) {
 };
 
 CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
+    let oViewer = Asc.editor.getDocumentRenderer();
+
     var target_text_object = AscFormat.getTargetTextObject(this);
     var oStartContent, oStartPara;
     if (target_text_object) {
@@ -326,7 +334,7 @@ CGraphicObjectsPdf.prototype.cursorMoveDown = function(AddToSelect, Word) {
                 // this.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
             }
         }
-        this.updateSelectionState();
+        oViewer.onUpdateOverlay();
     } else {
         if (this.selectedObjects.length === 0)
             return;

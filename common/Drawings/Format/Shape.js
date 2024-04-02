@@ -46,7 +46,6 @@
 		var CMatrix = AscCommon.CMatrix;
 		var isRealObject = AscCommon.isRealObject;
 		var global_mouseEvent = AscCommon.global_mouseEvent;
-		var History = AscCommon.History;
 		var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 		var checkNormalRotate = AscFormat.checkNormalRotate;
@@ -661,7 +660,7 @@
 				}
 				var nIndex = oTable2.Content.length;
 				oTable2.Content[nIndex] = oNewRow;
-				History.Add(new CChangesTableAddRow(oTable2, nIndex, [oNewRow]));
+				AscCommon.History.Add(new CChangesTableAddRow(oTable2, nIndex, [oNewRow]));
 				oTable2.private_UpdateTableGrid();
 			}
 
@@ -965,7 +964,7 @@
 		}
 
 		CShape.prototype.setShapeSmartArtInfo = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo, this.shapeSmartArtInfo, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetShapeSmartArtPointInfo, this.shapeSmartArtInfo, pr));
 			this.shapeSmartArtInfo = pr;
 			this.shapeSmartArtInfo.setParent(this);
 		}
@@ -987,7 +986,7 @@
 			}
 		};
 		CShape.prototype.setSignature = function (oSignature) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetSignature, this.signatureLine, oSignature));
 			this.signatureLine = oSignature;
 		};
 		CShape.prototype.setSignaturePr = function (oPr, sUrl) {
@@ -1220,12 +1219,12 @@
 
 
 		CShape.prototype.setNvSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetNvSpPr, this.nvSpPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetNvSpPr, this.nvSpPr, pr));
 			this.nvSpPr = pr;
 		};
 
 		CShape.prototype.setTxXfrm = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxXfrm, this.txXfrm, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxXfrm, this.txXfrm, pr));
 			this.txXfrm = pr;
 			if (this.txXfrm) {
 				this.txXfrm.setParent(this);
@@ -1233,12 +1232,12 @@
 		};
 
 		CShape.prototype.setModelId = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, pr));
 			this.modelId = pr;
 		};
 
 		CShape.prototype.setSpPr = function (spPr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetSpPr, this.spPr, spPr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetSpPr, this.spPr, spPr));
 			this.spPr = spPr;
 			if (spPr) {
 				spPr.setParent(this);
@@ -1246,7 +1245,7 @@
 		};
 
 		CShape.prototype.setStyle = function (style) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetStyle, this.style, style));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetStyle, this.style, style));
 			this.style = style;
 			var content = this.getDocContent();
 
@@ -1260,7 +1259,7 @@
 		};
 
 		CShape.prototype.setTxBody = function (txBody) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxBody, this.txBody, txBody));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxBody, this.txBody, txBody));
 			this.txBody = txBody;
 			if (txBody && txBody.parent !== this) {
 				txBody.setParent(this);
@@ -1268,12 +1267,12 @@
 		};
 
 		CShape.prototype.setTextBoxContent = function (textBoxContent) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTextBoxContent, this.textBoxContent, textBoxContent));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTextBoxContent, this.textBoxContent, textBoxContent));
 			this.textBoxContent = textBoxContent;
 		};
 
 		CShape.prototype.setBodyPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetBodyPr, this.bodyPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetBodyPr, this.bodyPr, pr));
 			this.bodyPr = pr;
 			this.recalcInfo.recalculateContent = true;
 			this.recalcInfo.recalculateTransformText = true;
@@ -1585,12 +1584,12 @@
 		};
 
 		CShape.prototype.setParent = function (parent) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetParent, this.parent, parent));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetParent, this.parent, parent));
 			this.parent = parent;
 		};
 
 		CShape.prototype.setGroup = function (group) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetGroup, this.group, group));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetGroup, this.group, group));
 			this.group = group;
 		};
 
@@ -2696,7 +2695,7 @@
 		};
 
 		CShape.prototype.setWordShape = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetWordShape, this.bWordShape, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetWordShape, this.bWordShape, pr));
 			this.bWordShape = pr;
 		};
 

@@ -1879,7 +1879,13 @@
 			let X       = oPos.X;
 			let Y       = oPos.Y;
 
-			return this.getPDFDoc().GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y).objectId);
+			let oCurState = this.DrawingObjects.curState;
+			this.DrawingObjects.curState = this.DrawingObjects.nullState;
+
+			let oDrawing = this.getPDFDoc().GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y).objectId);
+			this.DrawingObjects.curState = oCurState;
+
+			return oDrawing
 		};
 
 		this.onMouseDown = function(e)

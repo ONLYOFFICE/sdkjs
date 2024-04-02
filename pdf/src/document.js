@@ -804,6 +804,7 @@ var CPresentation = CPresentation || function(){};
         // если в селекте нет drawing (аннотации или шейпа) по которой кликнули, то сбрасываем селект
         if (oMouseDownObject == null || (false == oController.selectedObjects.includes(oMouseDownObject) && oController.selection.groupSelection != oMouseDownObject)) {
             oController.resetSelection();
+            oController.resetTrackState();
         }
 
         this.UpdateInterface();
@@ -822,6 +823,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oActiveObj.GetDocContent();
 
             oController.resetSelection();
+            oController.resetTrackState();
             if (oActiveObj.IsImage() == false) {
                 oActiveObj.SetInTextBox(false);
             }
@@ -1183,7 +1185,7 @@ var CPresentation = CPresentation || function(){};
             if (this.mouseDownAnnot == oMouseUpAnnot)
                 oMouseUpAnnot.onMouseUp(x, y, e);
         }
-        else if (this.activeDrawing && this.activeDrawing == oMouseUpDrawing) {
+        else if (this.activeDrawing) {
             // передвинули бордер
             if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
                 this.CreateNewHistoryPoint({objects: [this.activeDrawing]});
@@ -1931,6 +1933,7 @@ var CPresentation = CPresentation || function(){};
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
         oController.resetSelection();
+        oController.resetTrackState();
     };
 
     CPDFDoc.prototype.RemoveDrawing = function(Id) {
@@ -1961,6 +1964,7 @@ var CPresentation = CPresentation || function(){};
         this.TurnOffHistory();
 
         oController.resetSelection();
+        oController.resetTrackState();
 
         if (this.activeDrawing == oDrawing) {
             this.activeDrawing = null;
@@ -2271,6 +2275,8 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {AscPDF.CAnnotationBase}
 	 */
     CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
+        let oController = this.GetController();
+
         this.annots.forEach(function(annot) {
             annot.SetDisplay(bHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
             annot.AddToRedraw();
@@ -2280,7 +2286,8 @@ var CPresentation = CPresentation || function(){};
 
         this.HideComments();
         this.mouseDownAnnot = null;
-        this.GetController().resetSelection();
+        oController.resetSelection();
+        oController.resetTrackState();
     };
     CPDFDoc.prototype.IsAnnotsHidden = function() {
         return this.annotsHidden;
@@ -2453,23 +2460,28 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oActiveForm     = this.activeForm;
         let oActiveAnnot    = this.mouseDownAnnot;
+        let oActiveDrawing  = this.activeDrawing;
 
         let isCanCopy = false;
         let isCanCut = false;
 
         let oSelection = oViewer.file.Selection;
-        if (oSelection.Glyph1 != oSelection.Glyph2 || oSelection.Line1 != oSelection.Line2 ||
-            oSelection.Page1 != oSelection.Page2) {
-                isCanCopy = true;
-            }
-        
-
-        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse() && 
-            oActiveForm.content.IsSelectionEmpty() == false) {
-                isCanCopy = true;
-                isCanCut = true;
+        if (oSelection.Glyph1 != oSelection.Glyph2 || oSelection.Line1 != oSelection.Line2 || oSelection.Page1 != oSelection.Page2) {
+            isCanCopy = true;
         }
-        else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox() && oActiveAnnot.GetDocContent().IsSelectionUse()) {
+        
+        let oContent;
+        if (oActiveForm) {
+            oContent = oActiveForm.GetDocContent();
+        }
+        else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
+            oContent = oActiveAnnot.GetDocContent();
+        }
+        else if (oActiveDrawing) {
+            oContent = oActiveDrawing.GetDocContent();
+        }
+
+        if (oContent && oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
             isCanCopy = true;
             isCanCut = true;
         }
@@ -2477,7 +2489,7 @@ var CPresentation = CPresentation || function(){};
         return {
             copy: isCanCopy,
             cut: isCanCut
-        };
+        }
     };
     CPDFDoc.prototype.UpdateParagraphProps = function() {
         let oParaPr = this.GetCalculatedParaPr();
@@ -2831,7 +2843,8 @@ var CPresentation = CPresentation || function(){};
         if (oParaItem.Type === para_Math) {
 			if (!(oController.selection.textSelection || (oController.selection.groupSelection && oController.selection.groupSelection.selection.textSelection))) {
 				oController.resetSelection();
-                
+                oController.resetTrackState();
+
 				oMathShape = oController.createTextArt(0, false, null, "");
 
                 let oXfrm   = oMathShape.getXfrm();
@@ -3395,6 +3408,7 @@ var CPresentation = CPresentation || function(){};
 		oSmartArt.fitFontSize();
 		oController.checkChartTextSelection();
 		oController.resetSelection();
+        oController.resetTrackState();
 		oSmartArt.select(oController, 0);
 		this.SetMouseDownObject(oSmartArt);
 
@@ -3441,6 +3455,7 @@ var CPresentation = CPresentation || function(){};
         oXfrm.setOffX(nPosX);
         oXfrm.setOffY(nPosY);
         oController.resetSelection();
+        oController.resetTrackState();
         oController.selectObject(oChart, 0);
 
         if (isFromInterface) {
