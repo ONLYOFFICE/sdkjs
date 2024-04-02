@@ -3378,14 +3378,14 @@ function (window, undefined) {
 	asc_CAnnotProperty.prototype.asc_setCanChangeArrows = function (v) {
 		this.canChangeArrows = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getSubject = function (v) {
-		this.subject = v;
+	asc_CAnnotProperty.prototype.asc_getSubject = function () {
+		return this.subject;
 	};
 	asc_CAnnotProperty.prototype.asc_setSubject = function (v) {
 		this.subject = v;
 	};
-	asc_CAnnotProperty.prototype.asc_getCanEditText = function (v) {
-		this.canEditText = v;
+	asc_CAnnotProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
 	};
 	asc_CAnnotProperty.prototype.asc_setCanEditText = function (v) {
 		this.canEditText = v;
