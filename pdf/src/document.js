@@ -3848,6 +3848,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetSelectionState = function(oState) {
         return;
     };
+    CPDFDoc.prototype.TrackDocumentPositions = function() {};
     CPDFDoc.prototype.RemoveSelection = function() {};
     CPDFDoc.prototype.Set_TargetPos = function() {};
     CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function() { 
