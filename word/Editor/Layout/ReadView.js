@@ -56,6 +56,8 @@
 			oThis.SectPr   = new CSectionPr(oLogicDocument);
 			oThis.SectInfo = new CDocumentSectionsInfoElement(oThis.SectPr, 0);
 		}, oLogicDocument);
+		
+		this.OriginalSectPr = false;
 	}
 	
 	CDocumentReadView.prototype = Object.create(AscWord.CDocumentLayoutBase.prototype);
@@ -88,6 +90,9 @@
 	};
 	CDocumentReadView.prototype.GetSectionHdrFtr = function(nPageAbs, isFirst, isEven)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionHdrFtr.apply(this, arguments);
+		
 		return {
 			Header : null,
 			Footer : null,
@@ -118,18 +123,30 @@
 	};
 	CDocumentReadView.prototype.GetSection = function(nPageAbs, nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSection.apply(this, arguments);
+		
 		return this.SectPr;
 	};
 	CDocumentReadView.prototype.GetSectionByPos = function(nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionByPos.apply(this, arguments);
+		
 		return this.SectPr;
 	};
 	CDocumentReadView.prototype.GetSectionInfo = function(nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionInfo.apply(this, arguments);
+		
 		return this.SectInfo;
 	};
 	CDocumentReadView.prototype.GetSectionIndex = function(oSectPr)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionIndex.apply(this, arguments);
+		
 		return 0;
 	};
 	CDocumentReadView.prototype.GetCalculateTimeLimit = function()
@@ -150,8 +167,15 @@
 		
 		return nCoef;
 	};
-	CDocumentReadView.prototype.calculateIndent = function(ind, sectPr)
+	CDocumentReadView.prototype.calculateIndent = function(ind, element)
 	{
+		if (!element || !element.Get_SectPr)
+			return ind;
+		
+		this.OriginalSectPr = true;
+		let sectPr = element.Get_SectPr();
+		this.OriginalSectPr = false;
+		
 		if (ind > 0 && sectPr)
 			return ind * this.W / sectPr.GetPageWidth();
 		
