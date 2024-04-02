@@ -13747,13 +13747,15 @@
 	}
 
 
-	function CPluginCtxMenuInfo(sType, sOlePluginGuid) {
+	function CPluginCtxMenuInfo(sType, sOlePluginGuid, sHyperLinkVal) {
 		if(!sType) {
 			this["type"] = Asc.c_oPluginContextMenuTypes.None;
 		}
 		else {
 			this["type"] = sType;
 			this["guid"] = sOlePluginGuid;
+			if (sHyperLinkVal)
+				this["value"] = sHyperLinkVal;
 		}
 	}
 

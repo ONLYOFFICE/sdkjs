@@ -3754,7 +3754,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Selection: "Selection",
 		Image: "Image",
 		Shape: "Shape",
-		OleObject: "OleObject"
+		OleObject: "OleObject",
+		Hyperlink: "Hyperlink"
 	};
 
 
