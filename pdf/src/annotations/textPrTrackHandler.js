@@ -40,7 +40,7 @@
 	 *
 	 * @constructor
 	 */
-	function CTextPrTrackHandler(drawingDocument, eventHandler) {
+	function CAnnotTrackHandler(drawingDocument, eventHandler) {
 		this.DrawingDocument = drawingDocument;
 		this.EventHandler    = eventHandler;
 
@@ -49,7 +49,7 @@
 		this.ForceUpdate = true;
 	}
 
-	CTextPrTrackHandler.prototype.SetTrackObject = function(math, pageNum, isActive) {
+	CAnnotTrackHandler.prototype.SetTrackObject = function(math, pageNum, isActive) {
 		// TODO: Сейчас посылаем сообщение в отрисовщик трека по старому всегда
 
 		if (math)
@@ -77,10 +77,10 @@
 			}
 		}
 	};
-	CTextPrTrackHandler.prototype.Update = function() {
+	CAnnotTrackHandler.prototype.Update = function() {
 		this.ForceUpdate = true;
 	};
-	CTextPrTrackHandler.prototype.OnChangePosition = function() {
+	CAnnotTrackHandler.prototype.OnChangePosition = function() {
 		let bounds = this.GetBounds();
 		if (!bounds)
 			return;
@@ -91,7 +91,7 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CTextPrTrackHandler.prototype.GetBounds = function() {
+	CAnnotTrackHandler.prototype.GetBounds = function() {
 		let math = this.Math;
 
 		if (!math)
@@ -190,14 +190,14 @@
 
 		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
 	};
-	CTextPrTrackHandler.prototype.OnHide = function() {
+	CAnnotTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideTextPrTrack");
 	};
-	CTextPrTrackHandler.prototype.OnShow = function(bounds) {
+	CAnnotTrackHandler.prototype.OnShow = function(bounds) {
 		this.EventHandler.sendEvent("asc_onShowTextPrTrack", bounds);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
-	window['AscPDF'].CTextPrTrackHandler = CTextPrTrackHandler;
+	window['AscPDF'].CAnnotTrackHandler = CAnnotTrackHandler;
 
 })(window);

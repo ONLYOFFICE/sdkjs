@@ -106,7 +106,7 @@ var CPresentation = CPresentation || function(){};
 
         this.maxApIdx               = -1;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
-        this.TextPrTrackHandler     = new AscPDF.CTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.AnnotTrackHandler      = new AscPDF.CAnnotTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
         this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
@@ -1729,6 +1729,12 @@ var CPresentation = CPresentation || function(){};
             editor.sync_UpdateCommentPosition(oAnnot.GetId(), oPos["X"], oPos["Y"]);
         }
     };
+    CPDFDoc.prototype.UpdateMathTrackPos = function() {
+        this.MathTrackHandler.OnChangePosition();
+    };
+    CPDFDoc.prototype.UpdateTextPrTrackPos = function() {
+
+    };
 
     CPDFDoc.prototype.CreateNewHistoryPoint = function(oAdditional) {
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || this.isUndoRedoInProgress)
@@ -2433,6 +2439,7 @@ var CPresentation = CPresentation || function(){};
         
         this.UpdateUndoRedo();
         this.UpdateCommentPos();
+        this.UpdateMathTrackPos();
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();

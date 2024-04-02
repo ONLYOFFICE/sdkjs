@@ -71,28 +71,21 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     }
 
     let oMathTrackHandler   = this.document.MathTrackHandler;
-    let oTextPrTrackHandler = this.document.TextPrTrackHandler;
+    let oAnnotTrackHandler = this.document.AnnotTrackHandler;
 
     this.setEquationTrack(oMathTrackHandler, this.canEdit());
-    this.setTextPrTrack(oTextPrTrackHandler, this.canEdit());
+    this.setAnnotTrack(oAnnotTrackHandler, this.canEdit());
 };
 
-CGraphicObjectsPdf.prototype.setTextPrTrack = function(oTextPrTrackHandler, IsShowTextPrTrack) {
-    let oDocContent     = null;
-    let oMath           = null;
+CGraphicObjectsPdf.prototype.setAnnotTrack = function(oAnnotTrackHandler, IsShowAnnotTrack) {
+    return;
+    
+    let oDoc            = this.document;
+    let oAnnot          = oDoc.mouseDownAnnot;
     let bSelection      = false;
     let bEmptySelection = true;
 
-    oDocContent = this.getTargetDocContent();
-    if (oDocContent) {
-        bSelection          = oDocContent.IsSelectionUse();
-        bEmptySelection     = oDocContent.IsSelectionEmpty();
-        let oSelectedInfo   = oDocContent.GetSelectedElementsInfo();
-
-        oMath = oSelectedInfo.GetMath();
-    }
-    
-    oTextPrTrackHandler.SetTrackObject(IsShowTextPrTrack ? oMath : null, 0, false === bSelection || true === bEmptySelection);
+    oAnnotTrackHandler.SetTrackObject(IsShowAnnotTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
 };
 
 CGraphicObjectsPdf.prototype.canIncreaseParagraphLevel = function(bIncrease)
