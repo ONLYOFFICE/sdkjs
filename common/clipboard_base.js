@@ -264,7 +264,7 @@
 				}
 
 				var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
-				if (_html_format && _html_format != "")
+				if (_html_format && _html_format != "" && _text_format && _text_format !== "")
 				{
 					var nIndex = _html_format.indexOf("</html>");
 					if (-1 != nIndex)
