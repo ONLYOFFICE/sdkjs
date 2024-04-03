@@ -384,29 +384,25 @@
 
 	/**
 	 * Creates a new custom function.
-	 * The description of the function parameters and result is set using jsdoc.
-	 * Parameters and results can be set as number/string/bool/any/number[][]/string[][]/bool[][]/any[][] types.
-	 * Parameters can be required or optional. Also user can set the default value.
-	 *
-	 * Example with description:
-	 *
-	 * 'Calculates the sum of the specified numbers.
-	 * '@customfunction
-	 * '@param {number} first Required first number.
-	 * '@param {number} [second] Optional second number to add.
-	 * '@returns {number} The sum of the numbers.
-	 * 'Api.AddCustomFunction(function add(first, second) {
-	 * '    if (second === null) {
-	 * '        second = 0;
-	 * '    }
-	 * '    return first + second;
-	 * '})
-	 * 'Tag customfunction is required.
-	 *
+	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
+	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters can be required or optional. A user can also set a default value.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCustom - A new function for calculating.
 	 */
+	// Example with description:
+	// Calculates the sum of the specified numbers.
+	// @customfunction
+	// @param {number} first Required first number.
+	// @param {number} [second] Optional second number to add.
+	// @returns {number} The sum of the numbers.
+	// Api.AddCustomFunction(function add(first, second) {
+	//     if (second === null) {
+	//         second = 0;
+	//     }
+	//     return first + second;
+	// })
 	Api.prototype.AddCustomFunction = function (fCustom) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
 		// take the first element and validate it
@@ -7482,9 +7478,9 @@
 	}
 
 	/**
-	 * Validate parsed JSDOC or options for custom functions.
-	 * @param {object} jsdoc - Parsed JSDOC object.
-	 * @returns {boolean} - Returns false if jsdoc isn't valid
+	 * Validates the parsed JSDoc or options for custom functions.
+	 * @param {object} jsdoc - Parsed JSDoc object.
+	 * @returns {boolean} - Returns false if JSDoc isn't valid
 	 */
 	function private_ValidateParamsForCustomFunction(jsdoc) {
 		let result = true;
