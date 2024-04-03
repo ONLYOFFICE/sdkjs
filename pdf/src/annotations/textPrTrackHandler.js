@@ -40,47 +40,40 @@
 	 *
 	 * @constructor
 	 */
-	function CAnnotTrackHandler(drawingDocument, eventHandler) {
+	function CAnnotTextPrTrackHandler(drawingDocument, eventHandler) {
 		this.DrawingDocument = drawingDocument;
 		this.EventHandler    = eventHandler;
 
-		this.Math        = null;
-		this.PageNum     = -1;
-		this.ForceUpdate = true;
+		this.Annot			= null;
+		this.PageNum		= -1;
+		this.ForceUpdate	= true;
 	}
 
-	CAnnotTrackHandler.prototype.SetTrackObject = function(math, pageNum, isActive) {
-		// TODO: Сейчас посылаем сообщение в отрисовщик трека по старому всегда
-
-		if (math)
-			this.DrawingDocument.Update_MathTrack(true, isActive, math);
-		else
-			this.DrawingDocument.Update_MathTrack(false);
-
-		if (math !== this.Math || (math && (this.PageNum !== pageNum || this.ForceUpdate))) {
-			this.Math        = math;
-			this.ForceUpdate = false;
-			this.PageNum     = pageNum;
+	CAnnotTextPrTrackHandler.prototype.SetTrackObject = function(oAnnot, pageNum, isActive) {
+		if (oAnnot !== this.Annot || (oAnnot && (this.PageNum !== pageNum || this.ForceUpdate))) {
+			this.Annot			= oAnnot;
+			this.ForceUpdate	= false;
+			this.PageNum		= pageNum;
 
 			let bounds = null;
-			if (this.Math)
+			if (this.Annot)
 				bounds = this.GetBounds();
 
 			if (bounds) {
 				this.OnShow(bounds);
 			}
 			else {
-				this.Math    = null;
+				this.Annot    = null;
 				this.PageNum = -1;
 
 				this.OnHide();
 			}
 		}
 	};
-	CAnnotTrackHandler.prototype.Update = function() {
+	CAnnotTextPrTrackHandler.prototype.Update = function() {
 		this.ForceUpdate = true;
 	};
-	CAnnotTrackHandler.prototype.OnChangePosition = function() {
+	CAnnotTextPrTrackHandler.prototype.OnChangePosition = function() {
 		let bounds = this.GetBounds();
 		if (!bounds)
 			return;
@@ -91,113 +84,33 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CAnnotTrackHandler.prototype.GetBounds = function() {
-		let math = this.Math;
+	CAnnotTextPrTrackHandler.prototype.GetBounds = function() {
+		let oAnnot = this.Annot;
 
-		if (!math)
+		if (!oAnnot)
 			return null;
 
-		let paragraph  = math.GetParagraph();
-		let mathBounds = math.GetBounds();
+		let nPage		= oAnnot.GetPage();
+		let aBoundsMM	= [];
 
-		let oTextTransform = paragraph.Get_ParentTextTransform();
-		if (!mathBounds || !mathBounds.length || !paragraph)
-			return null;
-
-		let firstBounds = null;
-		for (let index = 0, count = mathBounds.length; index < count; ++index) {
-			for (let innerIndex = 0, innerCount = mathBounds[index].length; innerIndex < innerCount; ++innerIndex) {
-				let bounds = mathBounds[index][innerIndex];
-
-				if (bounds.W < 0.001 || bounds.H < 0.001)
-					continue;
-				
-				if (!firstBounds)
-					firstBounds = bounds;
-
-				if (this.PageNum === bounds.Page) {
-					firstBounds = bounds;
-					break;
-				}
-			}
-		}
-		
-		if (!firstBounds) {
-			if (!math.IsEmpty() && mathBounds.length > 0 && mathBounds[0].length > 0) {
-				let logicDocument = paragraph.GetLogicDocument();
-				let shift         = logicDocument ? logicDocument.GetDrawingDocument().GetMMPerDot(5) : 0.1;
-
-				let tmpBounds = mathBounds[0][0];
-				firstBounds = {
-					Page : tmpBounds.Page,
-					X    : tmpBounds.X,
-					Y    : tmpBounds.Y,
-					W    : Math.max(tmpBounds.W, shift),
-					H    : Math.max(tmpBounds.H, shift)
-				};
-			}
-			else {
-				return null;
-			}
-		}
-		
-		let pageNum = firstBounds.Page;
-		let x0 = firstBounds.X;
-		let y0 = firstBounds.Y;
-		let x1 = firstBounds.X + firstBounds.W;
-		let y1 = firstBounds.Y + firstBounds.H;
-
-		for (let index = 0, count = mathBounds.length; index < count; ++index) {
-			for (let innerIndex = 0, innerCount = mathBounds[index].length; innerIndex < innerCount; ++innerIndex) {
-				let bounds = mathBounds[index][innerIndex];
-				if (bounds.Page !== pageNum
-					|| bounds.W < 0.001
-					|| bounds.H < 0.001)
-					continue;
-
-				if (x0 > bounds.X)
-					x0 = bounds.X;
-
-				if (x1 < bounds.X + bounds.W)
-					x1 = bounds.X + bounds.W;
-
-				if (y0 > bounds.Y)
-					y0 = bounds.Y;
-
-				if (y1 < bounds.Y + bounds.H)
-					y1 = bounds.Y + bounds.H;
-			}
-		}
-		if (oTextTransform) {
-			let aX = [];
-			let aY = [];
-			aX.push(oTextTransform.TransformPointX(x0, y0));
-			aX.push(oTextTransform.TransformPointX(x0, y1));
-			aX.push(oTextTransform.TransformPointX(x1, y0));
-			aX.push(oTextTransform.TransformPointX(x1, y1));
-			aY.push(oTextTransform.TransformPointY(x0, y0));
-			aY.push(oTextTransform.TransformPointY(x0, y1));
-			aY.push(oTextTransform.TransformPointY(x1, y0));
-			aY.push(oTextTransform.TransformPointY(x1, y1));
-			x0 = Math.min.apply(Math, aX);
-			y0 = Math.min.apply(Math, aY);
-			x1 = Math.max.apply(Math, aX);
-			y1 = Math.max.apply(Math, aY);
+		if (oAnnot.IsFreeText()) {
+			let oTxBoxBounds = oAnnot.GetTextBoxShape().getRectBounds();
+			aBoundsMM = [oTxBoxBounds.l, oTxBoxBounds.t, oTxBoxBounds.r, oTxBoxBounds.b];
 		}
 
-		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x0, y0, pageNum);
-		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, pageNum);
+		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(aBoundsMM[0], aBoundsMM[1], nPage);
+		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(aBoundsMM[2], aBoundsMM[3], nPage);
 
 		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
 	};
-	CAnnotTrackHandler.prototype.OnHide = function() {
-		this.EventHandler.sendEvent("asc_onHideTextPrTrack");
+	CAnnotTextPrTrackHandler.prototype.OnHide = function() {
+		this.EventHandler.sendEvent("asc_onHideAnnotTextPrTrack");
 	};
-	CAnnotTrackHandler.prototype.OnShow = function(bounds) {
-		this.EventHandler.sendEvent("asc_onShowTextPrTrack", bounds);
+	CAnnotTextPrTrackHandler.prototype.OnShow = function(bounds) {
+		this.EventHandler.sendEvent("asc_onShowAnnotTextPrTrack", bounds);
 	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
-	window['AscPDF'].CAnnotTrackHandler = CAnnotTrackHandler;
-
+	window['AscPDF'].CAnnotTextPrTrackHandler = CAnnotTextPrTrackHandler;
 })(window);

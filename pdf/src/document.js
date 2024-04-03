@@ -106,7 +106,8 @@ var CPresentation = CPresentation || function(){};
 
         this.maxApIdx               = -1;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
-        this.AnnotTrackHandler      = new AscPDF.CAnnotTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
+
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
         this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
@@ -1732,8 +1733,8 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateMathTrackPos = function() {
         this.MathTrackHandler.OnChangePosition();
     };
-    CPDFDoc.prototype.UpdateTextPrTrackPos = function() {
-
+    CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
+        this.AnnotTextPrTrackHandler.OnChangePosition();
     };
 
     CPDFDoc.prototype.CreateNewHistoryPoint = function(oAdditional) {
@@ -2440,6 +2441,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateUndoRedo();
         this.UpdateCommentPos();
         this.UpdateMathTrackPos();
+        this.UpdateAnnotTrackPos();
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();

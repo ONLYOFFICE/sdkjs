@@ -71,21 +71,21 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     }
 
     let oMathTrackHandler   = this.document.MathTrackHandler;
-    let oAnnotTrackHandler = this.document.AnnotTrackHandler;
+    let oAnnotTextPrTrackHandler = this.document.AnnotTextPrTrackHandler;
 
     this.setEquationTrack(oMathTrackHandler, this.canEdit());
-    this.setAnnotTrack(oAnnotTrackHandler, this.canEdit());
+    this.setAnnotTextPrTrack(oAnnotTextPrTrackHandler, this.canEdit());
 };
 
-CGraphicObjectsPdf.prototype.setAnnotTrack = function(oAnnotTrackHandler, IsShowAnnotTrack) {
-    return;
-    
+CGraphicObjectsPdf.prototype.setAnnotTextPrTrack = function(oAnnotTextPrTrackHandler, IsShowAnnotTrack) {
     let oDoc            = this.document;
     let oAnnot          = oDoc.mouseDownAnnot;
     let bSelection      = false;
     let bEmptySelection = true;
 
-    oAnnotTrackHandler.SetTrackObject(IsShowAnnotTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
+    let bShowTrack = oAnnot && oAnnot.IsFreeText() && oAnnot.IsInTextBox();
+
+    oAnnotTextPrTrackHandler.SetTrackObject(IsShowAnnotTrack && bShowTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
 };
 
 CGraphicObjectsPdf.prototype.canIncreaseParagraphLevel = function(bIncrease)
