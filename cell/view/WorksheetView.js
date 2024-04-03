@@ -14484,7 +14484,7 @@
 					}
 				}
 
-				var newRange = val.fromBinary ? t.cellPasteHelper.pasteFromBinary(val.data, true) : t.cellPasteHelper.pasteFromHTML(val.data, true);
+				var newRange = this.cellPasteHelper.checkPastedRange(val);
 				checkPasteRange = newRange && newRange.length ? newRange : [newRange];
 				checkRange = [checkPasteRange[0]];
 
@@ -14582,7 +14582,7 @@
 				if (!isSuccess) {
 					return;
 				}
-				if (t._isNeedLockedAllOnPaste(val)) {
+				if (t.cellPasteHelper.isNeedLockedAllOnPaste(val)) {
 					t._isLockedAll(function (success) {
 						if (!success) {
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError,
@@ -14616,61 +14616,6 @@
 		// убрал paste здесь так как не работает здесь для метода pasteHTML
 		if (/*prop == "paste" ||*/ prop == "empty" || prop == "hyperlink" || prop == "sort")
 			this.workbook.Api.onWorksheetChange(checkRange);
-	};
-
-	WorksheetView.prototype._isNeedLockedAllOnPaste = function (val) {
-		if (!val) {
-			return false;
-		}
-
-		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
-		var specialPasteProps = specialPasteHelper.specialPasteProps;
-		var allowedPasteTables = !specialPasteProps || specialPasteProps.formatTable;
-		var pasteContent = val.data;
-
-		//отдельный лок для этого не делаю, а лочу всё перед вставкой новой ссылки
-		if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
-			var linkInfo = this.cellPasteHelper.getPastedLinkInfo(pasteContent.workbook);
-			if (linkInfo && linkInfo.type === -2) {
-				return true;
-			}
-		}
-
-		if (val.fromBinary && pasteContent && pasteContent.TableParts && pasteContent.TableParts.length && allowedPasteTables) {
-
-			var arnToRange = this.model.selectionRange.getLast();
-
-			var range, tablePartRange, tables = pasteContent.TableParts, diffRow, diffCol, curTable, bIsAddTable;
-			var activeRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
-			var refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
-
-			var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
-			var activeCellsPasteFragment = typeof pasteRange === "string" ?
-				AscCommonExcel.g_oRangeCache.getAscRange(pasteRange) : pasteRange;
-
-			for (var i = 0; i < tables.length; i++) {
-				curTable = tables[i];
-				tablePartRange = curTable.Ref;
-				diffRow = tablePartRange.r1 - refInsertBinary.r1 + arnToRange.r1;
-				diffCol = tablePartRange.c1 - refInsertBinary.c1 + arnToRange.c1;
-				range = this.model.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1),
-					diffCol + (tablePartRange.c2 - tablePartRange.c1));
-
-				//если в активную область при записи попала лишь часть таблицы
-				if (activeCellsPasteFragment && !activeCellsPasteFragment.containsRange(tablePartRange)) {
-					continue;
-				}
-
-				//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
-				if (this.model.autoFilters._intersectionRangeWithTableParts(range.bbox)) {
-					continue;
-				}
-
-				return true;
-			}
-		}
-
-		return false;
 	};
 	WorksheetView.prototype.specialPaste = function (props) {
 		var api = window["Asc"]["editor"];
@@ -27188,6 +27133,68 @@
 		}
 
 		return type !== null ? {type: type, index: index, sheet: sheet, path: relativePath} : null;
+	};
+
+	CCellPasteHelper.prototype.checkPastedRange = function (pastedInfo) {
+		if (!pastedInfo) {
+			return false;
+		}
+		return pastedInfo.fromBinary ? this.pasteFromBinary(pastedInfo.data, true) : this.pasteFromHTML(pastedInfo.data, true);
+	};
+	CCellPasteHelper.prototype.isNeedLockedAllOnPaste = function (val) {
+		if (!val) {
+			return false;
+		}
+
+		let ws = this.ws;
+		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		var specialPasteProps = specialPasteHelper.specialPasteProps;
+		var allowedPasteTables = !specialPasteProps || specialPasteProps.formatTable;
+		var pasteContent = val.data;
+
+		//отдельный лок для этого не делаю, а лочу всё перед вставкой новой ссылки
+		if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
+			var linkInfo = this.getPastedLinkInfo(pasteContent.workbook);
+			if (linkInfo && linkInfo.type === -2) {
+				return true;
+			}
+		}
+
+		if (val.fromBinary && pasteContent && pasteContent.TableParts && pasteContent.TableParts.length && allowedPasteTables) {
+
+			var arnToRange = ws.model.selectionRange.getLast();
+
+			var range, tablePartRange, tables = pasteContent.TableParts, diffRow, diffCol, curTable, bIsAddTable;
+			var activeRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
+			var refInsertBinary = AscCommonExcel.g_oRangeCache.getAscRange(activeRange);
+
+			var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
+			var activeCellsPasteFragment = typeof pasteRange === "string" ?
+				AscCommonExcel.g_oRangeCache.getAscRange(pasteRange) : pasteRange;
+
+			for (var i = 0; i < tables.length; i++) {
+				curTable = tables[i];
+				tablePartRange = curTable.Ref;
+				diffRow = tablePartRange.r1 - refInsertBinary.r1 + arnToRange.r1;
+				diffCol = tablePartRange.c1 - refInsertBinary.c1 + arnToRange.c1;
+				range = ws.model.getRange3(diffRow, diffCol, diffRow + (tablePartRange.r2 - tablePartRange.r1),
+					diffCol + (tablePartRange.c2 - tablePartRange.c1));
+
+				//если в активную область при записи попала лишь часть таблицы
+				if (activeCellsPasteFragment && !activeCellsPasteFragment.containsRange(tablePartRange)) {
+					continue;
+				}
+
+				//если область вставки содержит форматированную таблицу, которая пересекается с вставляемой форматированной таблицей
+				if (ws.model.autoFilters._intersectionRangeWithTableParts(range.bbox)) {
+					continue;
+				}
+
+				return true;
+			}
+		}
+
+		return false;
 	};
 
 
