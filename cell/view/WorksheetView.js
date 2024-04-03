@@ -14618,178 +14618,19 @@
 			this.workbook.Api.onWorksheetChange(checkRange);
 	};
 	WorksheetView.prototype.specialPaste = function (props) {
-		var api = window["Asc"]["editor"];
-		var t = this;
-
-		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
-		var specialPasteData = specialPasteHelper.specialPasteData;
-
-		if (!specialPasteData) {
-			return;
-		}
-
-		var isIntoShape = t.objectRender.controller.getTargetDocContent();
-		var onSelectionCallback = function (isSuccess) {
-			if (!isSuccess) {
-				return false;
-			}
-
-			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
-
-			//для того, чтобы была возможность делать несколько математических операций подряд
-			var doUndo = true;
-			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
-				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
-					doUndo = false;
-				}
-				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = true;
-				//specialPasteHelper.selectionRange = null;
-			} else {
-				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = false;
-			}
-
-			//тут нужно откатить селект
-			if (doUndo) {
-				api.asc_Undo();
-			}
-			if (specialPasteHelper.selectionRange) {
-				t.model.selectionRange = specialPasteHelper.selectionRange.clone();
-			}
-
-			//транзакция закроется в end_paste
-			History.Create_NewPoint();
-			History.StartTransaction();
-
-			//далее специальная вставка
-			specialPasteHelper.specialPasteProps = props;
-			//TODO пока для закрытия транзации выставляю флаг. пересмотреть!
-			window['AscCommon'].g_specialPasteHelper.bIsEndTransaction = true;
-			AscCommonExcel.g_clipboardExcel.pasteData(t, specialPasteData._format, specialPasteData.data1, specialPasteData.data2, specialPasteData.text_data);
-
-			const cPasteProps = Asc.c_oSpecialPasteProps;
-			const pasteProp = props && props.property;
-			if (cPasteProps.none !== pasteProp && cPasteProps.link !== pasteProp && cPasteProps.picture !== pasteProp && cPasteProps.linkedPicture !== pasteProp) {
-				t.traceDependentsManager && t.traceDependentsManager.clearAll(true);
-			}
-		};
-
-		if (specialPasteData.activeRange && !isIntoShape) {
-			this._isLockedCells(specialPasteData.activeRange.ranges, /*subType*/null, props && props.width ? t._isLockedAll(onSelectionCallback) : onSelectionCallback);
-		} else {
-			onSelectionCallback(true);
-		}
+		this.cellPasteHelper.specialPaste(props);
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
-		var specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
-
-		var positionShapeContent = options.position;
-		var range = options.range;
-		var props = options.options;
-		var showPasteSpecial = options.showPasteSpecial;
-		var containTables = options.containTables;
-		var cellCoord;
-		if (!positionShapeContent) {
-			window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
-			window['AscCommon'].g_specialPasteHelper.buttonInfo.setRange(range);
-
-			var isVisible = null !== this.getCellVisibleRange(range.c2, range.r2);
-			cellCoord = this.getSpecialPasteCoords(range, isVisible);
-		} else {
-			//var isVisible = null !== this.getCellVisibleRange(range.c2, range.r2);
-			cellCoord = [new AscCommon.asc_CRect(positionShapeContent.x, positionShapeContent.y, 0, 0)];
-		}
-
-
-		specialPasteShowOptions.asc_setOptions(props);
-		specialPasteShowOptions.asc_setCellCoord(cellCoord);
-		specialPasteShowOptions.asc_setShowPasteSpecial(showPasteSpecial);
-		specialPasteShowOptions.asc_setContainTables(containTables);
-		this.handlers.trigger("showSpecialPasteOptions", specialPasteShowOptions);
+		this.cellPasteHelper.showSpecialPasteOptions(options);
 	};
 
 	WorksheetView.prototype.updateSpecialPasteButton = function () {
-		var specialPasteShowOptions, cellCoord;
-		var isIntoShape = this.objectRender.controller.getTargetDocContent();
-		if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton && isIntoShape) {
-			if (window['AscCommon'].g_specialPasteHelper.buttonInfo.shapeId === isIntoShape.Id) {
-				var curShape = isIntoShape.Parent.parent;
-
-				var mmToPx = asc_getcvt(3/*mm*/, 0/*px*/, this._getPPIX());
-
-				var cursorPos = window['AscCommon'].g_specialPasteHelper.buttonInfo.range;
-				var offsetX = this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
-				var offsetY = this._getRowTop(this.visibleRange.r1) - this.cellsTop;
-				var posX = curShape.transformText.TransformPointX(cursorPos.X, cursorPos.Y) * mmToPx - offsetX + this.cellsLeft;
-				var posY = curShape.transformText.TransformPointY(cursorPos.X, cursorPos.Y) * mmToPx - offsetY + this.cellsTop;
-
-				posX = AscCommon.AscBrowser.convertToRetinaValue(posX);
-				posY = AscCommon.AscBrowser.convertToRetinaValue(posY);
-
-				cellCoord = [new AscCommon.asc_CRect(posX, posY, 0, 0)];
-			}
-		} else if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton) {
-			var range = window['AscCommon'].g_specialPasteHelper.buttonInfo.range;
-			var isVisible = null !== this.getCellVisibleRange(range.c2, range.r2);
-			cellCoord = this.getSpecialPasteCoords(range, isVisible);
-		}
-
-		if (cellCoord) {
-			specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
-			specialPasteShowOptions.asc_setOptions(null);
-			specialPasteShowOptions.asc_setCellCoord(cellCoord);
-			this.handlers.trigger("showSpecialPasteOptions", specialPasteShowOptions);
-		}
+		this.cellPasteHelper.updateSpecialPasteButton();
 	};
 
 	WorksheetView.prototype.getSpecialPasteCoords = function (range, isVisible) {
-		var disableCoords = function () {
-			cellCoord._x = -1;
-			cellCoord._y = -1;
-		};
-
-		//TODO пересмотреть когда иконка вылезает за пределы области видимости
-		var cellCoord = this.getCellCoord(range.c2, range.r2);
-		if (window['AscCommon'].g_specialPasteHelper.buttonInfo.shapeId) {
-			disableCoords();
-			cellCoord = [cellCoord];
-		} else {
-			var visibleRange = this.getVisibleRange();
-			var intersectionVisibleRange = visibleRange.intersection(range);
-			if (!intersectionVisibleRange && this.topLeftFrozenCell) {
-				var cFrozen = this.topLeftFrozenCell.getCol0();
-				var rFrozen = this.topLeftFrozenCell.getRow0();
-				cFrozen -= 1;
-				rFrozen -= 1;
-
-				var frozenRange;
-				if (0 <= cFrozen && 0 <= rFrozen) {
-					frozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
-					intersectionVisibleRange = frozenRange.intersection(range);
-				}
-				if (!intersectionVisibleRange && 0 <= cFrozen) {
-					frozenRange = new asc_Range(0, this.visibleRange.r1, cFrozen, this.visibleRange.r2);
-					intersectionVisibleRange = frozenRange.intersection(range);
-
-				}
-				if (!intersectionVisibleRange && 0 <= rFrozen) {
-					frozenRange = new asc_Range(this.visibleRange.c1, 0, this.visibleRange.c2, rFrozen);
-					intersectionVisibleRange = frozenRange.intersection(range);
-				}
-			}
-
-			if (intersectionVisibleRange) {
-				cellCoord = [];
-				cellCoord[0] = this.getCellCoord(intersectionVisibleRange.c2, intersectionVisibleRange.r2);
-				cellCoord[1] = this.getCellCoord(range.c1, range.r1);
-			} else {
-				disableCoords();
-				cellCoord = [cellCoord];
-			}
-		}
-
-		return cellCoord;
+		this.cellPasteHelper.getSpecialPasteCoords(range, isVisible);
 	};
 
 	WorksheetView.prototype.changeSelectOnMultiSelect = function () {
@@ -27195,6 +27036,184 @@
 		}
 
 		return false;
+	};
+	CCellPasteHelper.prototype.specialPaste = function (props) {
+		var api = window["Asc"]["editor"];
+		var t = this;
+		let ws = this.ws;
+
+		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		var specialPasteData = specialPasteHelper.specialPasteData;
+
+		if (!specialPasteData) {
+			return;
+		}
+
+		var isIntoShape = ws.objectRender.controller.getTargetDocContent();
+		var onSelectionCallback = function (isSuccess) {
+			if (!isSuccess) {
+				return false;
+			}
+
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
+
+			//для того, чтобы была возможность делать несколько математических операций подряд
+			var doUndo = true;
+			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
+				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
+					doUndo = false;
+				}
+				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = true;
+				//specialPasteHelper.selectionRange = null;
+			} else {
+				window['AscCommon'].g_specialPasteHelper.isAppliedOperation = false;
+			}
+
+			//тут нужно откатить селект
+			if (doUndo) {
+				api.asc_Undo();
+			}
+			if (specialPasteHelper.selectionRange) {
+				ws.model.selectionRange = specialPasteHelper.selectionRange.clone();
+			}
+
+			//транзакция закроется в end_paste
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			//далее специальная вставка
+			specialPasteHelper.specialPasteProps = props;
+			//TODO пока для закрытия транзации выставляю флаг. пересмотреть!
+			window['AscCommon'].g_specialPasteHelper.bIsEndTransaction = true;
+			AscCommonExcel.g_clipboardExcel.pasteData(ws, specialPasteData._format, specialPasteData.data1, specialPasteData.data2, specialPasteData.text_data);
+
+			const cPasteProps = Asc.c_oSpecialPasteProps;
+			const pasteProp = props && props.property;
+			if (cPasteProps.none !== pasteProp && cPasteProps.link !== pasteProp && cPasteProps.picture !== pasteProp && cPasteProps.linkedPicture !== pasteProp) {
+				ws.traceDependentsManager && ws.traceDependentsManager.clearAll(true);
+			}
+		};
+
+		if (specialPasteData.activeRange && !isIntoShape) {
+			ws._isLockedCells(specialPasteData.activeRange.ranges, /*subType*/null, props && props.width ? ws._isLockedAll(onSelectionCallback) : onSelectionCallback);
+		} else {
+			onSelectionCallback(true);
+		}
+	};
+
+	CCellPasteHelper.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
+		var ws = this.ws;
+		var specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
+
+		var positionShapeContent = options.position;
+		var range = options.range;
+		var props = options.options;
+		var showPasteSpecial = options.showPasteSpecial;
+		var containTables = options.containTables;
+		var cellCoord;
+		if (!positionShapeContent) {
+			window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+			window['AscCommon'].g_specialPasteHelper.buttonInfo.setRange(range);
+
+			var isVisible = null !== ws.getCellVisibleRange(range.c2, range.r2);
+			cellCoord = this.getSpecialPasteCoords(range, isVisible);
+		} else {
+			//var isVisible = null !== ws.getCellVisibleRange(range.c2, range.r2);
+			cellCoord = [new AscCommon.asc_CRect(positionShapeContent.x, positionShapeContent.y, 0, 0)];
+		}
+
+
+		specialPasteShowOptions.asc_setOptions(props);
+		specialPasteShowOptions.asc_setCellCoord(cellCoord);
+		specialPasteShowOptions.asc_setShowPasteSpecial(showPasteSpecial);
+		specialPasteShowOptions.asc_setContainTables(containTables);
+		ws.handlers.trigger("showSpecialPasteOptions", specialPasteShowOptions);
+	};
+
+	CCellPasteHelper.prototype.updateSpecialPasteButton = function () {
+		var ws = this.ws;
+		var specialPasteShowOptions, cellCoord;
+		var isIntoShape = ws.objectRender.controller.getTargetDocContent();
+		if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton && isIntoShape) {
+			if (window['AscCommon'].g_specialPasteHelper.buttonInfo.shapeId === isIntoShape.Id) {
+				var curShape = isIntoShape.Parent.parent;
+
+				var mmToPx = asc_getcvt(3/*mm*/, 0/*px*/, ws._getPPIX());
+
+				var cursorPos = window['AscCommon'].g_specialPasteHelper.buttonInfo.range;
+				var offsetX = ws._getColLeft(ws.visibleRange.c1) - ws.cellsLeft;
+				var offsetY = ws._getRowTop(ws.visibleRange.r1) - ws.cellsTop;
+				var posX = curShape.transformText.TransformPointX(cursorPos.X, cursorPos.Y) * mmToPx - offsetX + ws.cellsLeft;
+				var posY = curShape.transformText.TransformPointY(cursorPos.X, cursorPos.Y) * mmToPx - offsetY + ws.cellsTop;
+
+				posX = AscCommon.AscBrowser.convertToRetinaValue(posX);
+				posY = AscCommon.AscBrowser.convertToRetinaValue(posY);
+
+				cellCoord = [new AscCommon.asc_CRect(posX, posY, 0, 0)];
+			}
+		} else if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton) {
+			var range = window['AscCommon'].g_specialPasteHelper.buttonInfo.range;
+			var isVisible = null !== ws.getCellVisibleRange(range.c2, range.r2);
+			cellCoord = this.getSpecialPasteCoords(range, isVisible);
+		}
+
+		if (cellCoord) {
+			specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
+			specialPasteShowOptions.asc_setOptions(null);
+			specialPasteShowOptions.asc_setCellCoord(cellCoord);
+			ws.handlers.trigger("showSpecialPasteOptions", specialPasteShowOptions);
+		}
+	};
+
+	CCellPasteHelper.prototype.getSpecialPasteCoords = function (range, isVisible) {
+		var disableCoords = function () {
+			cellCoord._x = -1;
+			cellCoord._y = -1;
+		};
+
+		var ws = this.ws;
+		//TODO пересмотреть когда иконка вылезает за пределы области видимости
+		var cellCoord = ws.getCellCoord(range.c2, range.r2);
+		if (window['AscCommon'].g_specialPasteHelper.buttonInfo.shapeId) {
+			disableCoords();
+			cellCoord = [cellCoord];
+		} else {
+			var visibleRange = ws.getVisibleRange();
+			var intersectionVisibleRange = visibleRange.intersection(range);
+			if (!intersectionVisibleRange && ws.topLeftFrozenCell) {
+				var cFrozen = ws.topLeftFrozenCell.getCol0();
+				var rFrozen = ws.topLeftFrozenCell.getRow0();
+				cFrozen -= 1;
+				rFrozen -= 1;
+
+				var frozenRange;
+				if (0 <= cFrozen && 0 <= rFrozen) {
+					frozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
+					intersectionVisibleRange = frozenRange.intersection(range);
+				}
+				if (!intersectionVisibleRange && 0 <= cFrozen) {
+					frozenRange = new asc_Range(0, ws.visibleRange.r1, cFrozen, ws.visibleRange.r2);
+					intersectionVisibleRange = frozenRange.intersection(range);
+
+				}
+				if (!intersectionVisibleRange && 0 <= rFrozen) {
+					frozenRange = new asc_Range(ws.visibleRange.c1, 0, ws.visibleRange.c2, rFrozen);
+					intersectionVisibleRange = frozenRange.intersection(range);
+				}
+			}
+
+			if (intersectionVisibleRange) {
+				cellCoord = [];
+				cellCoord[0] = ws.getCellCoord(intersectionVisibleRange.c2, intersectionVisibleRange.r2);
+				cellCoord[1] = ws.getCellCoord(range.c1, range.r1);
+			} else {
+				disableCoords();
+				cellCoord = [cellCoord];
+			}
+		}
+
+		return cellCoord;
 	};
 
 
