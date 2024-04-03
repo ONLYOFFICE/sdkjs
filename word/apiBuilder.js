@@ -18805,7 +18805,7 @@
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
-	ApiDateForm.prototype.GetDateFormat = function() {
+	ApiDateForm.prototype.GetFormat = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
 		return oDatePr.GetDateFormat();
 	};
@@ -18817,7 +18817,7 @@
 	 * @param {string} sFormat
 	 * @returns {boolean}
 	 */
-	ApiDateForm.prototype.SetDateFormat = function(sFormat) {
+	ApiDateForm.prototype.SetFormat = function(sFormat) {
 		if (typeof(sFormat) !== "string" || sFormat === "")
 			return false;
 
@@ -18825,6 +18825,46 @@
 		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
 
 		oNewDatePr.SetDateFormat(sFormat);
+		oNewCCPr.SetDateTimePr(oNewDatePr);
+		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
+
+		this.Sdt.SetContentControlPr(oNewCCPr);
+		return true;
+	};
+
+	/**
+	 * Gets used date language of current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {string}
+	 */
+	ApiDateForm.prototype.GetLanguage = function() {
+		let oDatePr = this.Sdt.GetDatePickerPr();
+		let nLcid	= oDatePr.GetLangId();
+
+		if (nLcid !== undefined)
+			return Asc.g_oLcidIdToNameMap[nLcid];
+
+		return undefined;
+	};
+
+	/**
+	 * Sets date language to current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @returns {boolean}
+	 */
+	ApiDateForm.prototype.SetLanguage = function(sLangId) {
+		var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
+		if (undefined == nLcid)
+			return false;
+
+		let oNewCCPr	= this.Sdt.GetContentControlPr();
+		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
+
+		oNewDatePr.SetLangId(nLcid);
 		oNewCCPr.SetDateTimePr(oNewDatePr);
 		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
 
