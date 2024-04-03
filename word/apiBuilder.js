@@ -3189,6 +3189,20 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
+	 * Class representing a document date field.
+	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @extends {ApiFormBase}
+	 */
+	function ApiDateForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiDateForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiDateForm.prototype.constructor = ApiDateForm;
+
+	/**
 	 * Class representing a complex field.
 	 * @param oSdt
 	 * @constructor
@@ -4032,7 +4046,7 @@
 
 	/**
 	 * Types of all supported forms.
-	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
+	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiDateForm | ApiComplexForm} ApiForm
 	 */
 
 	/**
@@ -17845,6 +17859,8 @@
 			return "checkBoxForm";
 		if (this.Sdt.IsPictureForm())
 			return "pictureForm";
+		if (this.Sdt.IsDatePicker())
+			return "dateForm";
 	};
 	/**
 	 * Returns the current form key.
@@ -18777,6 +18793,44 @@
 		this.Sdt.SetCheckBoxPr(oPr);
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiDateForm
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Gets date format of current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {string}
+	 */
+	ApiDateForm.prototype.GetDateFormat = function() {
+		let oDatePr = this.Sdt.GetDatePickerPr();
+		return oDatePr.GetDateFormat();
+	};
+
+	/**
+	 * Sets date format to current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {string} sFormat
+	 * @returns {boolean}
+	 */
+	ApiDateForm.prototype.SetDateFormat = function(sFormat) {
+		if (typeof(sFormat) !== "string" || sFormat === "")
+			return false;
+
+		let oNewCCPr	= this.Sdt.GetContentControlPr();
+		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
+
+		oNewDatePr.SetDateFormat(sFormat);
+		oNewCCPr.SetDateTimePr(oNewDatePr);
+		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
+
+		this.Sdt.SetContentControlPr(oNewCCPr);
+		return true;
+	};
 
 	/**
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
@@ -20891,6 +20945,8 @@
 			return new ApiCheckBoxForm(oForm);
 		else if (oForm.IsPictureForm())
 			return new ApiPictureForm(oForm);
+		else if (oForm.IsDatePicker())
+			return new ApiDateForm(oForm);
 
 		return null;
 	}
