@@ -85,6 +85,7 @@
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
+	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -2131,6 +2132,7 @@
 	 * @param {string} sTitle - The title which will be displayed for the current protected range.
 	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the protected range.
 	 * @returns {ApiProtectedRange | null}
+	 * @since 8.1.0
 	 */
 	ApiWorksheet.prototype.AddProtectedRange = function (sTitle, sDataRange) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -2169,11 +2171,12 @@
 
 
 	/**
-	 * Returns a protected range object.
+	 * Returns a protected range object by its title.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sTitle - The title which will be displayed for the current protected range.
+	 * @param {string} sTitle - The title of the protected range that will be returned.
 	 * @returns {ApiProtectedRange | null}
+	 * @since 8.1.0
 	 */
 	ApiWorksheet.prototype.GetProtectedRange = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -2193,9 +2196,10 @@
 
 	/**
 	 * Returns all protected ranges from the current worksheet.
-	 * @memberof Api
+	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiProtectedRange[] | null}
+	 * @since 8.1.0
 	 */
 	ApiWorksheet.prototype.GetAllProtectedRanges = function () {
 		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getProtectedRanges();
@@ -6748,7 +6752,7 @@
 	};
 
 	/**
-	 * Class representing user protected range.
+	 * Class representing a user-protected range.
 	 * @constructor
 	 */
 	function ApiProtectedRange(protectedRange) {
@@ -6760,7 +6764,8 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTitle - The title which will be displayed for the current protected range.
-	 * @return {boolean} - returns false if user don't have rules on change protected range.
+	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.SetTitle = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -6782,8 +6787,9 @@
 	 * Sets a range to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range of cells from the current protected range.
-	 * @return {boolean} - returns false if user don't have rules on change protected range.
+	 * @param {string} sRange - The cell range which will be set for the current protected range.
+	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.SetRange = function (sRange) {
 		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
@@ -6802,19 +6808,20 @@
 	};
 
 	/**
-	 * Specifies the user protected range type.
+	 * Specifies the user type of the protected range.
 	 * @typedef {("CanEdit" | "CanView" | "NotView")} ProtectedRangeUserType
 	 */
 
 
 	/**
-	 * Sets the user to the current protected range.
+	 * Sets a user to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sId - The user id.
+	 * @param {string} sId - The user ID.
 	 * @param {string} sName - The user name.
-	 * @param {ProtectedRangeUserType} protectedRangeUserType - Specifies the protected range user type.
-	 * @returns {ApiProtectedRangeUserInfo | null} - returns null if user don't have rules on change protected range.
+	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
+	 * @returns {ApiProtectedRangeUserInfo | null} - Returns null if a user doesn't have permission to modify the protected range.
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.AddUser = function (sId, sName, protectedRangeUserType) {
 		let isValidIdTitle = typeof (sId) === 'string' && sId.trim() !== '';
@@ -6847,10 +6854,11 @@
 	};
 
 	/**
-	 * Remove the user current protected range.
+	 * Removes a user from the current protected range.
 	 * @memberof ApiProtectedRange
-	 * @param {string} sId - The user id.
+	 * @param {string} sId - The user ID.
 	 * @returns {bool}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.DeleteUser = function (sId) {
 		let isValidId = typeof (sId) === 'string' && sId.trim() !== '';
@@ -6882,10 +6890,11 @@
 	};
 
 	/**
-	 * Returns all protected range users from the current worksheet.
+	 * Returns all users from the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiProtectedRangeUserInfo[] | null}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.GetAllUsers = function () {
 		let worksheet = this.protectedRange._ws;
@@ -6905,11 +6914,12 @@
 	};
 
 	/**
-	 * Sets protected type for anyone user.
+	 * Sets the type of the "Anyone" user to the current protected range.
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ProtectedRangeUserType} protectedRangeUserType - Specifies the protected range user type.
+	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
 	 * @returns {bool}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.SetAnyoneType = function (protectedRangeUserType) {
 		let nType = Asc.c_oSerUserProtectedRangeType.edit;
@@ -6933,10 +6943,11 @@
 	};
 
 	/**
-	 * Returns an object that represents the user protected range.
+	 * Returns an object that represents a user from the current protected range.
 	 * @memberof ApiProtectedRange
-	 * @param {string} sId - The user id.
+	 * @param {string} sId - The user ID.
 	 * @returns {ApiProtectedRangeUserInfo | null}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRange.prototype.GetUser = function (sId) {
 		let isValidRange = typeof (sId) === 'string' && sId.trim() !== '';
@@ -6954,7 +6965,7 @@
 	};
 
 	/**
-	 * Class representing user protected range.
+	 * Class representing a user from the current protected range.
 	 * @constructor
 	 */
 	function ApiProtectedRangeUserInfo(userInfo, protectedRange) {
@@ -6963,10 +6974,11 @@
 	}
 
 	/**
-	 * Returns the name property of the current user's info.
+	 * Returns the name property of the current user's information.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetName = function () {
 		//the sets methods are available from the parent
@@ -6975,10 +6987,11 @@
 	};
 
 	/**
-	 * Returns the type property of the current user's info.
+	 * Returns the type property of the current user's information.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {ProtectedRangeUserType}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetType = function () {
 		let nType = this.userInfo.asc_getType();
@@ -6993,10 +7006,11 @@
 
 
 	/**
-	 * Returns the id property of the current user's info.
+	 * Returns the ID property of the current user's information.
 	 * @memberof ApiProtectedRangeUserInfo
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
+	 * @since 8.1.0
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetId = function () {
 		return this.userInfo.asc_getId();
