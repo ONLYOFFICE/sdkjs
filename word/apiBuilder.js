@@ -18821,14 +18821,10 @@
 		if (typeof(sFormat) !== "string" || sFormat === "")
 			return false;
 
-		let oNewCCPr	= this.Sdt.GetContentControlPr();
-		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
-
+		let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
 		oNewDatePr.SetDateFormat(sFormat);
-		oNewCCPr.SetDateTimePr(oNewDatePr);
-		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
 
-		this.Sdt.SetContentControlPr(oNewCCPr);
+		this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
 		return true;
 	};
 
@@ -18861,14 +18857,10 @@
 		if (undefined == nLcid)
 			return false;
 
-		let oNewCCPr	= this.Sdt.GetContentControlPr();
-		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
-
+		let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
 		oNewDatePr.SetLangId(nLcid);
-		oNewCCPr.SetDateTimePr(oNewDatePr);
-		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
 
-		this.Sdt.SetContentControlPr(oNewCCPr);
+		this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
 		return true;
 	};
 
@@ -18897,14 +18889,10 @@
 		if (isNaN(nTime))
 			return false;
 
-		let oNewCCPr	= this.Sdt.GetContentControlPr();
-		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
-
+		let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
 		oNewDatePr.SetFullDate(new Date(nTimeStamp));
-		oNewCCPr.SetDateTimePr(oNewDatePr);
-		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
 
-		this.Sdt.SetContentControlPr(oNewCCPr);
+		this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
 		return true;
 	};
 
