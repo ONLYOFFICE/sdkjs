@@ -18873,6 +18873,42 @@
 	};
 
 	/**
+	 * Returns the timestamp setted in form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {Number}
+	 */
+	ApiDateForm.prototype.GetTime = function() {
+		let oDatePr	= this.Sdt.GetDatePickerPr();
+		let oDate	= new Date(oDatePr.GetFullDate());
+
+		return oDate.getTime();
+	};
+
+	/**
+	 * Sets the timestamp to the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {Number} nTimeStamp
+	 * @returns {boolean}
+	 */
+	ApiDateForm.prototype.SetTime = function(nTimeStamp) {
+		let nTime = parseInt(nTimeStamp);
+		if (isNaN(nTime))
+			return false;
+
+		let oNewCCPr	= this.Sdt.GetContentControlPr();
+		let oNewDatePr	= this.Sdt.GetDatePickerPr().Copy();
+
+		oNewDatePr.SetFullDate(new Date(nTimeStamp));
+		oNewCCPr.SetDateTimePr(oNewDatePr);
+		oNewCCPr.SetPlaceholderText(oNewDatePr.ToString());
+
+		this.Sdt.SetContentControlPr(oNewCCPr);
+		return true;
+	};
+
+	/**
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
@@ -20830,6 +20866,13 @@
 	ApiPictureForm.prototype["SetImage"]           = ApiPictureForm.prototype.SetImage;
 	ApiPictureForm.prototype["Copy"]               = ApiPictureForm.prototype.Copy;
 
+	ApiDateForm.prototype["GetFormat"]		= ApiDateForm.prototype.GetFormat;
+	ApiDateForm.prototype["SetFormat"]		= ApiDateForm.prototype.SetFormat;
+	ApiDateForm.prototype["GetLanguage"]	= ApiDateForm.prototype.GetLanguage;
+	ApiDateForm.prototype["SetLanguage"]	= ApiDateForm.prototype.SetLanguage;
+	ApiDateForm.prototype["GetTime"]		= ApiDateForm.prototype.GetTime;
+	ApiDateForm.prototype["SetTime"]		= ApiDateForm.prototype.SetTime;
+
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
 	ApiComboBoxForm.prototype["SelectListValue"]     = ApiComboBoxForm.prototype.SelectListValue;
@@ -20929,6 +20972,7 @@
 	window['AscBuilder'].ApiFormBase        = ApiFormBase;
 	window['AscBuilder'].ApiTextForm        = ApiTextForm;
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
+	window['AscBuilder'].ApiDateForm		= ApiDateForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
@@ -21090,6 +21134,8 @@
 			return new ApiCheckBoxForm(oSdt);
 		else if (oSdt.IsPictureForm())
 			return new ApiPictureForm(oSdt)
+		else if (oSdt.IsDatePicker())
+			return new ApiDateForm(oSdt);
 
 		return new ApiInlineLvlSdt(oSdt);
 	}
@@ -22004,6 +22050,9 @@
 	};
 	Api.prototype.private_CreatePictureForm = function(oCC){
 		return new ApiPictureForm(oCC);
+	};
+	Api.prototype.private_CreateDateForm = function(oCC){
+		return new ApiDateForm(oCC);
 	};
 	Api.prototype.private_CreateComplexForm = function(oCC)
 	{
