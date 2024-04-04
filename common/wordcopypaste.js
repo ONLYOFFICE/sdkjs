@@ -1192,7 +1192,7 @@ CopyProcessor.prototype =
             }
 			if("" != align)
 				DomTable.oAttributes["align"] = align;
-            if(null != Pr.TableInd)
+            if(null != Pr.TableInd && Pr.Jc !== align_Center)
                 tblStyle += "margin-left:"+(Pr.TableInd * g_dKoef_mm_to_pt)+"pt;";
             if (null != Pr.Shd && c_oAscShdNil !== Pr.Shd.Value && (null != Pr.Shd.Color || null != Pr.Shd.Unifill))
                 tblStyle += "background:" + this.RGBToCSS(Pr.Shd.Color, Pr.Shd.Unifill) + ";";
