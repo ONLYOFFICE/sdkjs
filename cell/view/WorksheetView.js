@@ -3467,7 +3467,10 @@
 				let bGraphics = !!(oDocRenderer instanceof AscCommon.CGraphics);
 				let clipL, clipT, clipR, clipB;
 				if (bGraphics) {
+					let oldTx, oldTy;
 					if (oDocRenderer.m_oCoordTransform) {
+						oldTx = oDocRenderer.m_oCoordTransform.tx;
+						oldTy = oDocRenderer.m_oCoordTransform.ty;
 						oDocRenderer.m_oCoordTransform.tx = (t.getCellLeft(0) - offsetX);
 						oDocRenderer.m_oCoordTransform.ty =  (t.getCellTop(0) - offsetY);
 					}
@@ -3489,8 +3492,13 @@
 					delete oDocRenderer.IsPrintPreview;
 					oDocRenderer.RestoreGrState();
 					if (oDocRenderer.m_oCoordTransform) {
-						oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
-						oDocRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * oDocRenderer.m_oCoordTransform.sy;
+						if (oOldBaseTransform) {
+							oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
+							oDocRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * oDocRenderer.m_oCoordTransform.sy;
+						} else if (oldTx != null && oldTy != null) {
+							oDocRenderer.m_oCoordTransform.tx = oldTx;
+							oDocRenderer.m_oCoordTransform.ty = oldTy;
+						}
 					}
 				}
 				else {
