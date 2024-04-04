@@ -210,21 +210,6 @@
 			}
 		}
 	}
-	
-	function skipFormFillingLockCheck(isSkip)
-	{
-		AscCommon.History.skipFormFillingLockCheck(isSkip);
-	}
-	
-	// В проверке на лок, которую мы делаем после выполнения скрипта, нужно различать действия сделанные через разрешенные
-	// методы, и действия, которые пользователь пытался сам сделать с формами
-	function executeNoFormLockCheck(fn, t)
-	{
-		AscCommon.History.skipFormFillingLockCheck(true);
-		let result = fn.call(t);
-		AscCommon.History.skipFormFillingLockCheck(false);
-		return result;
-	}
 
 	/**
 	 * Class representing a container for paragraphs and tables.
@@ -21068,10 +21053,26 @@
 
 		return defaultValue;
 	}
-	window['AscBuilder'].GetStringParameter = GetStringParameter;
-	window['AscBuilder'].GetBoolParameter   = GetBoolParameter;
-	window['AscBuilder'].GetNumberParameter = GetNumberParameter;
-	window['AscBuilder'].GetArrayParameter  = GetArrayParameter;
+	/**
+	 * В проверке на лок, которую мы делаем после выполнения скрипта, нужно различать действия сделанные через
+	 * разрешенные методы, и действия, которые пользователь пытался сам сделать с формами
+	 * @param fn
+	 * @param t
+	 * @returns {*}
+	 */
+	function executeNoFormLockCheck(fn, t)
+	{
+		AscCommon.History.skipFormFillingLockCheck(true);
+		let result = fn.call(t);
+		AscCommon.History.skipFormFillingLockCheck(false);
+		return result;
+	}
+	
+	window['AscBuilder'].GetStringParameter     = GetStringParameter;
+	window['AscBuilder'].GetBoolParameter       = GetBoolParameter;
+	window['AscBuilder'].GetNumberParameter     = GetNumberParameter;
+	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
+	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
