@@ -5905,6 +5905,7 @@
 
 	/**
 	 * Sets the bold property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
@@ -5985,6 +5986,7 @@
 
 	/**
 	 * Sets the italic property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
@@ -6065,6 +6067,7 @@
 
 	/**
 	 * Sets the font size property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - Font size.
@@ -6145,6 +6148,7 @@
 
 	/**
 	 * Sets the strikethrough property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
@@ -6256,6 +6260,7 @@
 
 	/**
 	 * Sets an underline of the type specified in the request to the current font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {XlUnderlineStyle} Underline - Underline type.
@@ -6361,6 +6366,7 @@
 
 	/**
 	 * Sets the subscript property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
@@ -6441,6 +6447,7 @@
 
 	/**
 	 * Sets the superscript property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
@@ -6521,6 +6528,7 @@
 
 	/**
 	 * Sets the font name property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {string} FontName - Font name.
@@ -6602,6 +6610,7 @@
 
 	/**
 	 * Sets the font color property to the specified font.
+	 * <note>This method will work only with the text format of the cell.</note>
 	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Font color.
