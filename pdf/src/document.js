@@ -3850,6 +3850,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetSelectionState = function(oState) {
         return;
     };
+    CPDFDoc.prototype.RefreshDocumentPositions = function() {};
     CPDFDoc.prototype.TrackDocumentPositions = function() {};
     CPDFDoc.prototype.RemoveSelection = function() {};
     CPDFDoc.prototype.Set_TargetPos = function() {};

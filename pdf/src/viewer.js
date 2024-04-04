@@ -733,7 +733,9 @@
 		};
 
 		this.checkReady = function() {
-			var _t = this;
+			let _t = this;
+			let oDoc = this.getPDFDoc();
+
 			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
 			setTimeout(function(){
 
@@ -750,7 +752,7 @@
 					_t.startTimer();
 				}
 
-				if (_t.isStarted && _t.isLoadFonts == false && _t.IsOpenFormsInProgress == false) {
+				if (_t.isStarted && oDoc.fontLoader.isWorking() == false && _t.IsOpenFormsInProgress == false) {
 					_t.sendEvent("onFileOpened");
 
 					_t.sendEvent("onPagesCount", _t.file.pages.length);
@@ -2573,7 +2575,9 @@
 
 		this._paint = function()
 		{
-			if (this.isLoadFonts || this.IsOpenFormsInProgress)
+			let oDoc = this.getPDFDoc();
+
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress)
 				return;
 			
 			if (!this.file || !this.file.isValid() || !this.canvas)
@@ -2593,7 +2597,6 @@
 			let lStartPage = -1;
 			let lEndPage = -1; 
 			
-			let oDoc = this.getPDFDoc();
 			let lPagesCount = this.drawingPages.length;
 			for (let i = 0; i < lPagesCount; i++)
 			{
@@ -3529,6 +3532,7 @@
 			oDoc.activeForm.content.RecalculateCurPos();
 	};
 	CHtmlPage.prototype._checkFontsOnPages = function(nStart, nEnd) {
+		let oDoc = this.getPDFDoc();
 		let fontMap = {};
 
 		for (let i = nStart; i <= nEnd; i++)
@@ -3572,20 +3576,11 @@
 		}
 
 		let oThis = this;
-		
-		// грузим шрифты для форм без внешнего вида
-		let isLoadedFontsSync;
-		oThis.isLoadFonts = !oThis.doc.checkFonts(Object.keys(fontMap), function() {
-			oThis.isLoadFonts = false;
-			isLoadedFontsSync = true;
+		oDoc.checkFonts(Object.keys(fontMap), function() {
 			oThis.scheduleRepaint();
 		});
 
-		// будет != undefined Только при синхронной загрузке
-		if (isLoadedFontsSync)
-			oThis.isLoadFonts = false;
-
-		return !oThis.isLoadFonts;
+		return !oDoc.fontLoader.isWorking();
 	};
 	CHtmlPage.prototype._paintAnnots = function()
 	{
