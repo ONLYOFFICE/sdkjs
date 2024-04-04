@@ -2149,7 +2149,7 @@
 					let user = new Asc.CUserProtectedRangeUserInfo();
 
 					user.asc_setId(userInfo.asc_getId());
-					user.asc_setName(userInfo.asc_getName());
+					user.asc_setName(userInfo.get_FullName());
 
 					users.push(user);
 					settings.asc_setUsers(users);
