@@ -35,6 +35,18 @@
 (function(window, undefined){
 
 	var darkModeEdge = 10;
+	function _darkModeCheckColor(r, g, b)
+	{
+		return (r < darkModeEdge && g < darkModeEdge && b < darkModeEdge) ? true : false;
+	}
+	function _darkModeCheckColor2(r, g, b)
+	{
+		if (r < darkModeEdge && g < darkModeEdge && b < darkModeEdge) return true;
+		var max = 255 - darkModeEdge;
+		if (r > max && g > max && b > max) return true;
+		return false;
+	}
+
 	AscCommon.darkModeCorrectColor = function(r, g, b)
 	{
 		if (r < darkModeEdge && g < darkModeEdge && b < darkModeEdge)
@@ -116,7 +128,7 @@
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
 			return function(r, g, b, a) {
-				if (_this.isDarkMode && AscCommon.darkModeCheckColor(r, g, b))
+				if (_this.isDarkMode && _darkModeCheckColor(r, g, b))
 					_func.call(_this, 255 - r, 255 - g, 255 - b, a);
 				else
 					_func.call(_this, r, g, b, a);
@@ -137,7 +149,7 @@
 				if (isCorrect && 0 !== this.shapeDrawCounter)
 					if (!(1 === this.shapeDrawCounter && this.isFormDraw)) //форму первого уровня не корректируем
 						isCorrect = false;
-				if (isCorrect && AscCommon.darkModeCheckColor2(r, g, b))
+				if (isCorrect && _darkModeCheckColor2(r, g, b))
 					_func.call(_this, 255 - r, 255 - g, 255 - b, a);
 				else
 					_func.call(_this, r, g, b, a);

@@ -645,6 +645,8 @@
 	WorksheetView.prototype.getRecommendedChartData = function() {
 		return AscFormat.ExecuteNoHistory(function() {
 			let aRanges = this.getRangesForCharts();
+			if(!aRanges)
+				return null;
 			let aResultCheckRange = aRanges;
 			if(aRanges.length === 1 && aRanges[0].isOneCell()) {
 				let oBBox = this.model.autoFilters.expandRange(aRanges[0].bbox, true);
@@ -818,6 +820,22 @@
 	WorksheetView.prototype.getChartData = function(nType) {
 		return AscFormat.ExecuteNoHistory(function() {
 			let aRanges = this.getRangesForCharts();
+
+			let aResult = [];
+			if(!aRanges) {
+				let oCurChart = this.getCurrentChart();
+				if(oCurChart) {
+					let oChartSpace = oCurChart.copy();
+					if(oChartSpace.changeChartType(nType)) {
+						oChartSpace.setWorksheet(this.model);
+						oChartSpace.allPreviewCharts = aResult;
+						AscFormat.CheckSpPrXfrm(oChartSpace);
+						aResult.push(oChartSpace);
+						return aResult;
+					}
+				}
+				return null;
+			}
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
 
 			const bIsScatter = AscFormat.isScatterChartType(nType);
@@ -825,7 +843,6 @@
 			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, bIsScatter);
 			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, bIsScatter);
 			let oChartSpace;
-			let aResult = [];
 			let aParams = [];
 			
 			function getSeriesMaxValCount(aSeries) {

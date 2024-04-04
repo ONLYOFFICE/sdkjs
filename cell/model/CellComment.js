@@ -226,6 +226,25 @@ function (window, undefined) {
 			this.aReplies.push(comment.aReplies[i].clone(uniqueGuid));
 		}
 	};
+	asc_CCommentData.prototype.ConvertToSimpleObject = function(bIsReply)
+	{
+		var obj = {};
+
+		obj["Text"]      = this.sText;
+		obj["Time"]      = this.sTime;
+		obj["UserName"]  = this.sUserName;
+		obj["QuoteText"] = bIsReply ? null : this.asc_getQuoteText();
+		obj["Solved"]    = this.bSolved;
+		obj["UserData"]  = this.m_sUserData;
+		obj["Replies"]   = [];
+
+		for (var nIndex = 0, nCount = this.aReplies.length; nIndex < nCount; ++nIndex)
+		{
+			obj["Replies"].push(this.aReplies[nIndex].ConvertToSimpleObject(true));
+		}
+
+		return obj;
+	};
 	asc_CCommentData.prototype.ReadFromSimpleObject = function(oData)
     {
         if (!oData)

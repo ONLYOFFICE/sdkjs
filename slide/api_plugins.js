@@ -124,6 +124,31 @@
 	};
 
 	/**
+	 * Returns all the comments from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GetAllComments
+	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 */
+	Api.prototype["pluginMethod_GetAllComments"] = function()
+	{
+		const oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		const arrResult = [];
+
+		const oComments = oLogicDocument.GetAllComments();
+		for (let index = 0; index < oComments.length; index++)
+		{
+			const oComment = oComments[index].comment;
+			arrResult.push({"Id" : oComment.GetId(), "Data" : oComment.GetData().ConvertToSimpleObject()});
+		}
+
+		return arrResult;
+	};
+
+	/**
 	 * Starts the presentation slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]

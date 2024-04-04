@@ -795,6 +795,8 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 	// после распределения. Причем тут важно, что мы пробегаемся по массиву подряд, а не на основе GridSpan, как
 	// у arrMergedPreferred, поэтому результат для одной и той же таблицы, с переставленными двумя строками может
 	// быть разным.
+	
+	let layoutCoeff = this.getLayoutScaleCoefficient();
 
 	var arrMergedColumns   = [];
 	var arrMergedPreferred = [];
@@ -861,7 +863,7 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 			var nCellMax    = oCellMinMax.Max;
 			var oCellW      = oCell.GetW();
 			var oMargins    = oCell.GetMargins();
-			var nPreferred  = oCellW.GetCalculatedValue(nPctWidth);
+			var nPreferred  = oCellW.GetCalculatedValue(nPctWidth) * layoutCoeff;
 
 			var nSpacingAdd = (0 === nCurCell || nCellsCount - 1 === nCurCell) ? 3 / 2 * nSpacingW : nSpacingW;
 			var nMarginsMin = nSpacingAdd + oMargins.Left.W + oMargins.Right.W;
@@ -1800,7 +1802,6 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 	var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), isHdtFtr);
 	
 	let tableInd = TablePr.TableInd;
-
     if ( true === this.Is_Inline() )
     {
         var Page = this.Pages[CurPage];
