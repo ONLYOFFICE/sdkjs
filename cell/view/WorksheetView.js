@@ -1804,7 +1804,7 @@
     };
 
     // Автодополняет формулу диапазоном, если это возможно
-	WorksheetView.prototype.autoCompleteFormula = function (functionName) {
+    WorksheetView.prototype.autoCompleteFormula = function (functionName) {
         const t = this;
         // ToDo autoComplete with multiselect
         let selection = this.model.getSelection();
@@ -1858,7 +1858,6 @@
 
             if (firstCell && firstCell.cellType === CellValueType.String && (amountRowElements === 1 || amountColElements === 1)) {
                 // если первая ячейка строка, обрезаем select до первого не пустого значения
-                // if (lastCell && lastCell.cellType === CellValueType.Number) {
                 if (hasNumberInLastColumn && hasNumberInLastRow) {
                     // Последнее значение - число
                     bIsUpdate = false;
@@ -1872,21 +1871,11 @@
                     startCol = hasNumber.arrCols[0];
                     bIsUpdate = true;
                 }
-            } else if ((amountRowElements === 1 && amountColElements === 1)) {
-                // TODO проверить не пустая ли ячейка, изменить получаемый массив?
-                if (hasNumberInLastColumn && hasNumberInLastRow) {
-                    // Последняя ячейка - число, нужно расширить селект
-                    startRow = ar.r1;
-                    startCol = ar.c1;
-                    bIsUpdate = true;
-                } 
-                // else {
-                // 	// TODO проверить пустая ли ячейка
-                // 	bIsUpdate = false;
-                // 	activeCell.row = ar.r2;
-                // 	activeCell.col = ar.c2;
-                // 	breakExec = true;
-                // }
+            } else if ((amountRowElements === 1 && amountColElements === 1) && (hasNumberInLastColumn && hasNumberInLastRow)) {
+                // Последняя ячейка - число, нужно расширить селект
+                startRow = ar.r1;
+                startCol = ar.c1;
+                bIsUpdate = true;
             }
 
 
