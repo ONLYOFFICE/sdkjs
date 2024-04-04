@@ -29075,6 +29075,35 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getValue(), 12, 'Result of FILTER(12,TRUE,#N/A)');
 
+		ws.getRange2("A100:Z200").cleanAll();
+		ws.getRange2("A100:A200").setValue("10");
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A102").setValue("2");
+		ws.getRange2("A105").setValue("3");
+		ws.getRange2("A110").setValue("4");
+		ws.getRange2("B100:B150").setValue("Str");
+		ws.getRange2("B100").setValue("Test");
+		ws.getRange2("B102").setValue("Test");
+		ws.getRange2("B105").setValue("Test");
+		ws.getRange2("B110").setValue("Test");
+
+		// for bug 64954
+		oParser = new parserFormula('FILTER(A:A,B:B="Test")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(A:A,B:B="Test")');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Result of FILTER(A:A,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, 'Result of FILTER(A:A,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), 3, 'Result of FILTER(A:A,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(3,0).getValue(), 4, 'Result of FILTER(A:A,B:B="Test")');
+
+		oParser = new parserFormula('FILTER(A:A<3,B:B="Test")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(A:A<3,B:B="Test")');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "TRUE", 'Result of FILTER(A:A<3,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "TRUE", 'Result of FILTER(A:A<3,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "FALSE", 'Result of FILTER(A:A<3,B:B="Test")');
+		assert.strictEqual(array.getElementRowCol(3,0).getValue(), "FALSE", 'Result of FILTER(A:A<3,B:B="Test")');
+
 	});
 
 	QUnit.test("Test: \"ARRAYTOTEXT\"", function (assert) {

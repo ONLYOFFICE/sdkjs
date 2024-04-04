@@ -999,7 +999,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j, true);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -1064,10 +1064,10 @@ function (window, undefined) {
 		}
 
 		if (rangeMode) {
-			const initialArrayDimensions = arg0.getDimensions(),
+			const initialArrayDimensions = arg0.getDimensions(true),
 				initRows = initialArrayDimensions.row,
 				initColumns = initialArrayDimensions.col,
-				lookingArrayDimensions = arg1.getDimensions();
+				lookingArrayDimensions = arg1.getDimensions(true);
 
 			// check for matching array sizes
 			if (lookingArrayDimensions.row === 1 && lookingArrayDimensions.col === initColumns) {
