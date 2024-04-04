@@ -25711,15 +25711,29 @@
 			}
 		}
 
+		let specialPasteProp = window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.specialPasteProps &&
+			window['AscCommon'].g_specialPasteHelper.specialPasteProps.property;
+
+		let fromSelectionRange = val.selectionRange.getLast();
+		let fromSelectionRangeType = fromSelectionRange.getType();
+		if (!isCheckSelection) {
+			if (fromSelectionRangeType === window["Asc"].c_oAscSelectionType.RangeMax || fromSelectionRangeType === window["Asc"].c_oAscSelectionType.RangeCol) {
+				if (specialPasteProp == null || specialPasteProp === Asc.c_oSpecialPasteProps.formulaAllFormatting || specialPasteProp ===
+					Asc.c_oSpecialPasteProps.formulaWithoutBorders || specialPasteProp === Asc.c_oSpecialPasteProps.valueAllFormating || specialPasteProp ===
+					Asc.c_oSpecialPasteProps.pasteOnlyFormating) {
+					window['AscCommon'].g_specialPasteHelper &&
+					window['AscCommon'].g_specialPasteHelper.specialPasteProps.asc_setProps(Asc.c_oSpecialPasteProps.formulaColumnWidth);
+				}
+			}
+		}
+
 		var res;
 		if (isCheckSelection) {
 			for (i = 0; i < selectRanges.length; i++) {
 				//если всталвляем ссылки, то в случае если изначально была выделена только 1 ячейка - подбираем диапазон вставки, в случае нескольких -
 				//оставляем первоначальный диапазон
-				var prop = window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.specialPasteProps &&
-					window['AscCommon'].g_specialPasteHelper.specialPasteProps.property;
 				var _selection;
-				if (prop === Asc.c_oSpecialPasteProps.link) {
+				if (specialPasteProp === Asc.c_oSpecialPasteProps.link) {
 					if (!selectRanges[i].isOneCell()) {
 						_selection = selectRanges[i].clone();
 					} else {
