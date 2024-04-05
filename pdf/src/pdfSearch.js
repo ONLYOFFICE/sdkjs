@@ -201,6 +201,8 @@
 		else {
 			this.TextAroundId    = -1;
 			this.TextAroundTimer = null;
+			
+			window['AscPDF'].PdfPageMatch.lastPartInfo = null;
 			this.LogicDocument.GetApi().sync_endTextAroundSearch();
 		}
 	};

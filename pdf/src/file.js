@@ -2831,4 +2831,7 @@ void main() {\n\
 		return new CFile();
 	};
 
+    //--------------------------------------------------------export----------------------------------------------------
+	window['AscPDF'].PdfPageMatch = PdfPageMatch;
+
 })(window, undefined);
