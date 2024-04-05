@@ -17003,8 +17003,9 @@ function RangeDataManagerElem(bbox, data)
 
 	function CCustomFunctionEngine(wb) {
 		this.wb = wb;
+		this.funcsMapInfo = {};
 
-		this.prefixName = "CUSTOMFUNCTION_";
+		this.prefixName = "";
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17041,10 +17042,14 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 
-		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
 		//prefix add for separate main function from custom function
 		//!!!_xldudf
 		funcName = this.prefixName + funcName;
+
+		let oFormulaList = AscCommonExcel.cFormulaFunction;
+		if (!this.funcsMapInfo[funcName] && oFormulaList[funcName]) {
+			console.log("REGISTRAION_ERROR_CONFLICTED_FUNCTION_NAME");
+		}
 
 		let params = options && options["params"];
 		let argsInfo = this._getParamsInfo(func, params);
@@ -17176,19 +17181,16 @@ function RangeDataManagerElem(bbox, data)
 		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
 	};
 
-	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc) {
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, translations) {
 		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
 
 		let funcName = newFunc.prototype.name;
 
-		let isDuplicateName = false;
-		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
-			AscCommonExcel.cFormulaFunction;
-		if (oFormulaList[funcName]) {
-			isDuplicateName = true;
-		}
+		//already added function
+		if (this.funcsMapInfo[funcName]) {
+			//reload translations
+			this.funcsMapInfo[funcName].translations = translations;
 
-		if (isDuplicateName) {
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
@@ -17196,11 +17198,26 @@ function RangeDataManagerElem(bbox, data)
 					break;
 				}
 			}
+		} else {
+			this.funcsMapInfo[funcName] = {};
+			this.funcsMapInfo[funcName].translations = translations;
 		}
+
+		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+			AscCommonExcel.cFormulaFunction;
 
 		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
 		window['AscCommonExcel'].getFormulasInfo();
 		this.wb.initFormulasList && this.wb.initFormulasList();
+
+		/*this.wb.formulasList.push();
+		var oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+			AscCommonExcel.cFormulaFunction;
+		for (var f in oFormulaList) {
+			this.formulasList.push(f);
+		}
+		this.arrExcludeFormulas = [cBoolLocal.t, cBoolLocal.f];*/
+
 	};
 
 	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {

@@ -4054,6 +4054,10 @@
     this.arrExcludeFormulas = [cBoolLocal.t, cBoolLocal.f];
   };
 
+  WorkbookView.prototype.addToFormulasList = function(func) {
+    this.formulasList.push(func);
+  };
+
   WorkbookView.prototype._setHintsProps = function(bIsHinting, bIsSubpixHinting) {
     var manager;
     for (var i = 0, length = this.fmgrGraphics.length; i < length; ++i) {
