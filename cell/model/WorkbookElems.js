@@ -17203,21 +17203,10 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].translations = translations;
 		}
 
-		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
-			AscCommonExcel.cFormulaFunction;
 
 		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
-		window['AscCommonExcel'].getFormulasInfo();
+		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
-
-		/*this.wb.formulasList.push();
-		var oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
-			AscCommonExcel.cFormulaFunction;
-		for (var f in oFormulaList) {
-			this.formulasList.push(f);
-		}
-		this.arrExcludeFormulas = [cBoolLocal.t, cBoolLocal.f];*/
-
 	};
 
 	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {
