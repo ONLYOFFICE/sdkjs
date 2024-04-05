@@ -5338,13 +5338,15 @@ function (window, undefined) {
 		Background: 1,  // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
 		Window: 2,      // Окно
 		Panel: 3,       // Панель
-		Invisible : 4   // Невидимый
+		Invisible : 4,  // Невидимый
+		PanelRight: 5   // Панель справа
 	};
 
 	PluginType["System"] = PluginType.System;
 	PluginType["Background"] = PluginType.Background;
 	PluginType["Window"] = PluginType.Window;
 	PluginType["Panel"] = PluginType.Panel;
+	PluginType["PanelRight"] = PluginType.PanelRight;
 	PluginType["Unvisible"] = PluginType.Unvisible;
 
 	function CPluginVariation() {
@@ -5379,7 +5381,6 @@ function (window, undefined) {
 
 		this.events = [];
 		this.eventsMap = {};
-		this.menu = null;
 	}
 
 	CPluginVariation.prototype["get_Description"] = function () {
@@ -5401,7 +5402,7 @@ function (window, undefined) {
 	};
 
 	CPluginVariation.prototype["get_Visual"] = function () {
-		return (this.type === PluginType.Window || this.type === PluginType.Panel) ? true : false;
+		return (this.type === PluginType.Window || this.type === PluginType.Panel || this.type === PluginType.PanelRight) ? true : false;
 	};
 
 	CPluginVariation.prototype["get_Viewer"] = function () {
@@ -5415,7 +5416,7 @@ function (window, undefined) {
 		return this.isModal;
 	};
 	CPluginVariation.prototype["get_InsideMode"] = function () {
-		return (this.type === PluginType.Panel) ? true : false;
+		return (this.type === PluginType.Panel || this.type === PluginType.PanelRight) ? true : false;
 	};
 	CPluginVariation.prototype["get_CustomWindow"] = function () {
 		return this.isCustomWindow;
@@ -5437,9 +5438,6 @@ function (window, undefined) {
 		this.eventsMap = {};
 		for (let i = 0; i < this.events.length; i++) this.eventsMap[this.events[i]] = true;
 	};
-	CPluginVariation.prototype["get_Menu"] = function () {
-		return this.menu;
-	};
 
 	CPluginVariation.prototype["serialize"] = function () {
 		let _object = {};
@@ -5457,7 +5455,6 @@ function (window, undefined) {
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		_object["menu"] = this.menu;
 		_object["type"] = this.type;
 
 		_object["isCustomWindow"] = this.isCustomWindow;
@@ -5489,7 +5486,6 @@ function (window, undefined) {
 		this.isViewer = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.isDisplayedInViewer = (_object["isDisplayedInViewer"] != null) ? _object["isDisplayedInViewer"] : this.isDisplayedInViewer;
 		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
-		this.menu = (_object["menu"] != null) ? _object["menu"] : this.menu;
 
 		// default: background
 		this.type = PluginType.Background;
@@ -5499,6 +5495,7 @@ function (window, undefined) {
 			if ("system" === _type) this.type = PluginType.System;
 			if ("window" === _type) this.type = PluginType.Window;
 			if ("panel" === _type) this.type = PluginType.Panel;
+			if ("panelRight" === _type) this.type = PluginType.PanelRight;
 			if ("invisible" === _type) this.type = PluginType.Invisible;
 		}
 		else {
