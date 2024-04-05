@@ -17194,7 +17194,7 @@ function RangeDataManagerElem(bbox, data)
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
-					customFunctionList.splice(i - 0, 0);
+					customFunctionList.splice(i - 0, 1);
 					break;
 				}
 			}
@@ -17203,6 +17203,17 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].translations = translations;
 		}
 
+		//add or reload
+		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
+			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
+			//TODO translation
+			//need get from interface short formula lang("en", ...)
+			let localName = this.getTranslationName(funcName);
+			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
+			AscCommonExcel.cFormulaFunctionToLocale[funcName] = localName;
+
+			this.funcsMapInfo[funcName].addLocalization = true;
+		}
 
 		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
@@ -17311,6 +17322,21 @@ function RangeDataManagerElem(bbox, data)
 			case "any[][]":
 				res = _elem.toArray(true, true);
 				break;
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype.getFunc = function (name) {
+		return this.funcsMapInfo[name];
+	};
+
+	CCustomFunctionEngine.prototype.getTranslationName = function (name, lang) {
+		let res = name;
+		if (this.funcsMapInfo[name]) {
+			name = this.funcsMapInfo[name].translations && this.funcsMapInfo[name].translations[lang];
+			if (name) {
+				res = name;
+			}
 		}
 		return res;
 	};
