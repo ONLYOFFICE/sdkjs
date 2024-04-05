@@ -30931,7 +30931,7 @@ $(function () {
 		ws.getRange2("H101").setValue("#DIV/0!");
 	}
 
-	let prefix = "CUSTOMFUNCTION_";
+	let prefix = "";
 	let sJsDoc, oDoc, fCustomFunc;
 	function initParamsCustomFunction(aInputTypes, sReturnType) {
 		//generate jsdoc
