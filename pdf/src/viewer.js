@@ -103,13 +103,14 @@
 	// страницы на экране в приоритете.
 	function CPageInfo()
 	{
-		this.isPainted = false;
-		this.links = null;
-		this.fields = null;
-		this.annots = null;
-		this.needRedrawForms = true;
-		this.needRedrawTextShapes = true;
-		this.needRedrawAnnots = true;
+		this.isPainted				= false;
+		this.links					= null;
+		this.fields					= null;
+		this.annots					= null;
+		this.drawings				= [];
+		this.needRedrawForms		= true;
+		this.needRedrawTextShapes	= true;
+		this.needRedrawAnnots		= true;
 	}
 	
 	function CDocumentPagesInfo()
@@ -2467,6 +2468,7 @@
 			if (!this.overlay)
 				return;
 
+			let oDoc = this.getPDFDoc();
 			this.overlay.Clear()
 
 			if (!this.file)
@@ -2479,9 +2481,9 @@
 			var ctx = this.overlay.m_oContext;
 			ctx.globalAlpha = 0.2;
 
-			if (this.file.SearchResults.IsSearch)
+			if (this.IsSearch)
 			{
-				if (this.file.SearchResults.Show)
+				if (oDoc.SearchEngine.Show)
 				{
 					ctx.globalAlpha = 0.5;
 					ctx.fillStyle = "rgba(255,200,0,1)";
@@ -2489,9 +2491,9 @@
 
 					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 					{
-						var searchingObj = this.file.SearchResults.Pages[i];
-						if (0 != searchingObj.length)
-							this.drawSearch(i, searchingObj);
+						var pageMatches = oDoc.SearchEngine.GetPdfPageMatches(i);
+						if (0 != pageMatches.length)
+							this.drawSearch(i, pageMatches);
 					}
 
 					ctx.fill();
@@ -2499,18 +2501,19 @@
 				}
 				ctx.beginPath();
 
-				if (this.CurrentSearchNavi && this.file.SearchResults.Show)
+				if (this.CurrentSearchNavi && oDoc.SearchEngine.Show)
 				{
-					var pageNum  = this.CurrentSearchNavi[0].PageNum;
-					ctx.fillStyle = "rgba(51,102,204,255)";
-					if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage)
-					{
-						this.drawSearchCur(pageNum, this.CurrentSearchNavi);
+					if (!(this.CurrentSearchNavi instanceof AscWord.Paragraph)) {
+						var pageNum  = this.CurrentSearchNavi[0].PageNum;
+						ctx.fillStyle = "rgba(51,102,204,255)";
+						if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage)
+						{
+							this.drawSearchCur(pageNum, this.CurrentSearchNavi);
+						}
 					}
 				}
 			}
 
-			let oDoc = this.getPDFDoc();
 			let oDrDoc = oDoc.GetDrawingDocument();
 			oDrDoc.private_StartDrawSelection(this.overlay);
 			
@@ -2708,8 +2711,9 @@
 					}
 				}
 
-				if (!page.isConvertedToShapes) {
-					if (!page.Image && !isStretchPaint && !page.isConvertedToShapes)
+				let oPageInfo = this.pagesInfo.pages[i];
+				if (!oPageInfo.isConvertedToShapes) {
+					if (!page.Image && !isStretchPaint && !oPageInfo.isConvertedToShapes)
 					{
 						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
 						if (this.bCachedMarkupAnnnots)
@@ -3041,23 +3045,31 @@
 			return (text_format.Text === "") ? false : true;
 		};
 
-		this.findText = function(text, isMachingCase, isWholeWords, isNext, callback)
+		this.findText = function(props, isNext, callback)
 		{
+			let oDoc = this.getPDFDoc();
+
 			if (!this.isFullText)
 			{
-				this.fullTextMessageCallbackArgs = [text, isMachingCase, isWholeWords, isNext, callback];
+				this.fullTextMessageCallbackArgs = [props, isNext, callback];
 				this.fullTextMessageCallback = function() {
-					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2], this.fullTextMessageCallbackArgs[3]);
+					let oSearchEnginge = oDoc.Search(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2]);
+					let nCurrentMatch = oDoc.GetSearchElementId(true);
+					oDoc.SelectSearchElement(nCurrentMatch);
+					
 					this.onUpdateOverlay();
 
 					if (this.fullTextMessageCallbackArgs[4])
-						this.fullTextMessageCallbackArgs[4].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
+						this.fullTextMessageCallbackArgs[4].call(this.Api, nCurrentMatch, oSearchEnginge.Count);
 				};
 				this.showTextMessage();
 				return true; // async
 			}
 
-			this.file.findText(text, isMachingCase, isWholeWords, isNext);
+			oDoc.Search(props, isNext);
+			let nCurrentMatch = oDoc.GetSearchElementId(isNext);
+			oDoc.SelectSearchElement(nCurrentMatch);
+
 			this.onUpdateOverlay();
 			return false;
 		};
@@ -3065,7 +3077,10 @@
 		this.ToSearchResult = function()
 		{
 			var naviG = this.CurrentSearchNavi;
-
+			if (!naviG) {
+				return null;
+			}
+			
 			var navi = naviG[0];
 			var x    = navi.X;
 			var y    = navi.Y;
@@ -3134,38 +3149,6 @@
 			}
 		};
 
-		this.SelectSearchElement = function(elmId)
-		{
-			var nSearchedId = 0, nPage;
-			var nMatchesCount = 0;
-			for (nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
-			{
-				for (var nMatch = 0; nMatch < this.SearchResults.Pages[nPage].length; nMatch++)
-				{
-					nMatchesCount++;
-
-					if (nMatchesCount - 1 == elmId)
-					{
-						nSearchedId = nMatch;
-						break;
-					}
-				}
-				if (nMatchesCount - 1 == elmId)
-				{
-					nSearchedId = nMatch;
-					break;
-				}
-			}
-
-			this.CurrentSearchNavi = this.SearchResults.Pages[nPage][nSearchedId];
-			this.SearchResults.CurrentPage = nPage;
-			this.SearchResults.Current = nSearchedId;
-			this.SearchResults.CurMatchIdx = elmId;
-            this.ToSearchResult();
-			this.onUpdateOverlay();
-			this.Api.sync_setSearchCurrent(elmId, this.SearchResults.Count);
-		};
-		
 		this.OnKeyDown = function(e)
 		{
 			var bRetValue	= false;

@@ -324,38 +324,18 @@
 		this.DocumentRenderer.SearchResults.IsSearch = isEnabled;
 		this.WordControl.OnUpdateOverlay();
 	};
-	PDFEditorApi.prototype.asc_findText = function(props, isNext, callback) {
-		if (!this.DocumentRenderer)
+	PDFEditorApi.prototype.asc_findText = function(props, isNext) {
+		let oViewer 		= this.getDocumentRenderer();
+		let oDoc			= this.getPDFDoc();
+		let oSearchEngine	= oDoc.SearchEngine;
+
+		if (!oViewer)
 			return 0;
 		
-		this.DocumentRenderer.SearchResults.IsSearch = true;
+		oViewer.IsSearch = true;
 
-		let isAsync = (true === this.DocumentRenderer.findText(props.GetText().trim(), props.IsMatchCase(), props.IsWholeWords(), isNext, this.sync_setSearchCurrent));
-		let result = this.DocumentRenderer.SearchResults.Count;
-		
-		var CurMatchIdx = 0;
-		if (this.DocumentRenderer.SearchResults.CurrentPage === 0) {
-			CurMatchIdx = this.DocumentRenderer.SearchResults.Current;
-		}
-		else {
-			// чтобы узнать, под каким номером в списке текущее совпадение
-			// нужно посчитать сколько совпадений было до текущего на текущей странице
-			for (var nPage = 0; nPage <= this.DocumentRenderer.SearchResults.CurrentPage; nPage++) {
-				for (var nMatch = 0; nMatch < this.DocumentRenderer.SearchResults.Pages[nPage].length; nMatch++) {
-					if (nPage === this.DocumentRenderer.SearchResults.CurrentPage && nMatch === this.DocumentRenderer.SearchResults.Current)
-						break;
-					
-					CurMatchIdx++;
-				}
-			}
-		}
-		
-		this.DocumentRenderer.SearchResults.CurMatchIdx = CurMatchIdx;
-		
-		this.sync_setSearchCurrent(CurMatchIdx, result);
-		
-		if (!isAsync && callback)
-			callback(result);
+		let isAsync	= (true === oViewer.findText(props, isNext));
+		let result	= oSearchEngine.Count;
 		
 		return result;
 	};
@@ -363,7 +343,7 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		this.DocumentRenderer.file.SearchResults.IsSearch = false;
+		this.DocumentRenderer.IsSearch = false;
 		this.DocumentRenderer.file.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.asc_isSelectSearchingResults = function() {
@@ -376,13 +356,15 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		this.DocumentRenderer.file.startTextAround();
+		let oDoc = this.getPDFDoc();
+		oDoc.SearchEngine.StartTextAround();
 	};
 	PDFEditorApi.prototype.asc_SelectSearchElement = function(id) {
 		if (!this.DocumentRenderer)
 			return false;
 		
-		this.DocumentRenderer.SelectSearchElement(id);
+		this.getPDFDoc().SelectSearchElement(id);
+		this.DocumentRenderer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.ContentToHTML = function() {
 		if (!this.DocumentRenderer)
@@ -1665,7 +1647,8 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		this.DocumentRenderer.SearchResults.Show = isShow;
+		let oDoc = this.getPDFDoc();
+		oDoc.SearchEngine.Show = isShow;
 		this.DocumentRenderer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype._printDesktop = function(options) {

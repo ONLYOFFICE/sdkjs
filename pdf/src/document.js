@@ -107,6 +107,7 @@ var CPresentation = CPresentation || function(){};
         this.maxApIdx               = -1;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.SearchEngine           = new AscPDF.CPdfSearch(this);
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
@@ -341,6 +342,56 @@ var CPresentation = CPresentation || function(){};
     
     ////////////////////////////////////
 
+    CPDFDoc.prototype.Search = function(oProps) {
+        if (true === this.SearchEngine.Compare(oProps))
+		    return this.SearchEngine;
+        
+        this.SearchEngine.Clear();
+        this.SearchEngine.Set(oProps);
+        this.SearchEngine.Search();
+
+        return this.SearchEngine;
+    };
+    CPDFDoc.prototype.SelectSearchElement = function(id) {
+        this.BlurActiveObject();
+        this.SearchEngine.Select(id);
+    };
+    CPDFDoc.prototype.GetSearchElementId = function(isNext) {
+        let nCurPage        = this.Viewer.currentPage;
+        let nCurMatchIdx    = this.SearchEngine.CurId;
+
+        if (this.SearchEngine.Count == 0) {
+            return -1;
+        }
+        
+        if (nCurMatchIdx == -1) {
+            nCurMatchIdx = 0;
+
+            // находим индекс найденного элемента на текущей странице
+            nCurMatchIdx += this.SearchEngine.PagesMatches.slice(0, nCurPage).reduce(function(accum, pageMatches) {
+                return accum + pageMatches.length;
+            }, 0);
+        }
+        else {
+            if (isNext) {
+                nCurMatchIdx = nCurMatchIdx + 1 < this.SearchEngine.Count ? nCurMatchIdx + 1 : 0;
+            }
+            else {
+                nCurMatchIdx = nCurMatchIdx - 1 >= 0 ? nCurMatchIdx - 1 : this.SearchEngine.Count - 1;
+            }
+        }
+
+        return nCurMatchIdx;
+    };
+    CPDFDoc.prototype.ClearSearch = function() {
+        let isPrevSearch = this.SearchEngine.Count > 0;
+
+        this.SearchEngine.Clear();
+
+        if (isPrevSearch) {
+            this.Api.sync_SearchEndCallback();
+        }
+    };
 
     CPDFDoc.prototype.GetId = function() {
         return this._id;
@@ -1236,6 +1287,7 @@ var CPresentation = CPresentation || function(){};
         
         if (AscCommon.History.Can_Undo())
         {
+            this.ClearSearch();
             this.TurnOffHistory();
             this.isUndoRedoInProgress = true;
             this.currInkInDrawingProcess = null;
@@ -1249,7 +1301,7 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.drawingPages[oTextConvert.page].isConvertedToShapes = false;
+                this.Viewer.pagesInfo.pages[oTextConvert.page].isConvertedToShapes = false;
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -1306,6 +1358,7 @@ var CPresentation = CPresentation || function(){};
 
         if (AscCommon.History.Can_Redo())
         {
+            this.ClearSearch();
             this.TurnOffHistory();
             this.isUndoRedoInProgress = true;
             this.currInkInDrawingProcess = null;
@@ -1318,7 +1371,7 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.drawingPages[oTextConvert.page].isConvertedToShapes = true;
+                this.Viewer.pagesInfo.pages[oTextConvert.page].isConvertedToShapes = true;
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -1976,6 +2029,8 @@ var CPresentation = CPresentation || function(){};
         if (this.activeDrawing == oDrawing) {
             this.activeDrawing = null;
         }
+
+        this.ClearSearch();
     };
     /**
 	 * Move page to annot (if annot is't visible)
@@ -3267,11 +3322,11 @@ var CPresentation = CPresentation || function(){};
 	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
-        if (null == this.Viewer.drawingPages[nPage] || this.Viewer.drawingPages[nPage].isConvertedToShapes) {
+        if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.pagesInfo.pages[nPage].isConvertedToShapes) {
             return;
         }
 
-        this.Viewer.drawingPages[nPage].isConvertedToShapes = true;
+        this.Viewer.pagesInfo.pages[nPage].isConvertedToShapes = true;
 
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
         let oDrDoc = this.GetDrawingDocument();
@@ -3335,6 +3390,7 @@ var CPresentation = CPresentation || function(){};
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oDrawing]));
 
         oDrawing.AddToRedraw();
+        this.ClearSearch();
     };
     CPDFDoc.prototype.AddTextArt = function(nStyle, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;

@@ -210,7 +210,10 @@
             this._needRecalc = false;
         }
         else {
-            this.GetDocument().SetNeedUpdateTarget(true);
+            let oDoc = this.GetDocument();
+            oDoc.ClearSearch();
+
+            oDoc.SetNeedUpdateTarget(true);
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
