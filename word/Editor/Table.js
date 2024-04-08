@@ -8538,7 +8538,7 @@ CTable.prototype.Internal_Compile_Pr = function()
 	
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument && logicDocument.IsDocumentEditor())
-		Pr.TablePr.TableInd = logicDocument.Layout.calculateIndent(Pr.TablePr.TableInd, this.Get_SectPr());
+		Pr.TablePr.TableInd = logicDocument.Layout.calculateIndent(Pr.TablePr.TableInd, this);
 
 	return Pr;
 };

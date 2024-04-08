@@ -704,6 +704,26 @@ function (window, undefined) {
 		}
 	};
 
+	CCommentData.prototype.ConvertToSimpleObject = function()
+	{
+		var obj = {};
+
+		obj["Text"]      = this.m_sText;
+		obj["Time"]      = this.m_sTime;
+		obj["UserName"]  = this.m_sUserName;
+		obj["QuoteText"] = this.m_sQuoteText;
+		obj["Solved"]    = this.m_bSolved;
+		obj["UserData"]  = this.m_sUserData;
+		obj["Replies"]   = [];
+
+		for (var nIndex = 0, nCount = this.m_aReplies.length; nIndex < nCount; ++nIndex)
+		{
+			obj["Replies"].push(this.m_aReplies[nIndex].ConvertToSimpleObject());
+		}
+
+		return obj;
+	};
+
 	CCommentData.prototype.ReadFromSimpleObject = function (oData) {
 		if (!oData) return;
 

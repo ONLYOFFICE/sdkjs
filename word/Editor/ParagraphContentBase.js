@@ -4908,9 +4908,9 @@ function private_ParagraphContentChangesCheckLock(lockData)
 	
 	if (this.IsContentChange())
 	{
-		if (isForm && lockData && !lockData.isFillingForm())
+		if (isForm && lockData && !lockData.isSkipFormCheck())
 			lockData.lock();
-		
+
 		if (!isCC && lockData && lockData.isFillingForm())
 			lockData.lock();
 	}

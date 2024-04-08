@@ -10825,11 +10825,10 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		let logicDocument = this.GetLogicDocument();
 		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
-			let sectPr = this.Get_SectPr();
 			let left = Pr.ParaPr.Ind.Left;
-			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, sectPr);
-			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, sectPr);
-			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, sectPr) - Pr.ParaPr.Ind.Left;
+			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, this);
+			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, this);
+			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, this) - Pr.ParaPr.Ind.Left;
 		}
 		
 		return Pr;

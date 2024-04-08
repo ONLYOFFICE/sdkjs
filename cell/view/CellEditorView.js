@@ -1771,25 +1771,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._findCursorPosition = function (coord) {
-		var t = this;
-		var lc = t.textRender.getLinesCount();
-		var i, h, w, li, chw;
-		var zoom = this.getZoom();
-		for (h = 0, i = Math.max(t.topLineIndex, 0); i < lc; ++i) {
-			li = t.textRender.getLineInfo(i);
-			h += asc_round(li.th * zoom);
-			if (coord.y <= h) {
-				for (w = li.startX, i = li.beg; i <= li.end; ++i) {
-					chw = t.textRender.getCharWidth(i);
-					if (coord.x <= w + chw) {
-						return coord.x <= w + chw / 2 ? i : i + 1 > li.end ? kEndOfLine : i + 1;
-					}
-					w += chw;
-				}
-				return i < t.textRender.getCharsCount() ? i - 1 : kEndOfText;
-			}
-		}
-		return kNextLine;
+		return this.textRender.getCharPosByXY(coord.x, coord.y, this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._updateTopLineCurPos = function () {

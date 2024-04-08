@@ -118,4 +118,31 @@
 
 	};
 
+	/**
+	 * Returns all the comments from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @alias GetAllComments
+	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 */
+	Api.prototype["pluginMethod_GetAllComments"] = function()
+	{
+		const arrResult = [];
+
+		for (let index = 0; index < this.wbModel.aComments.length; index++) {
+			const oComment = this.wbModel.aComments[index];
+			arrResult.push({"Id" : oComment.asc_getId(), "Data" : oComment.ConvertToSimpleObject()});
+		}
+
+		for(let nWS = 0; nWS < this.wbModel.aWorksheets.length; nWS++) {
+			const sheet = this.wbModel.aWorksheets[nWS];
+			for (let i = 0; i < sheet.aComments.length; i++) {
+				const oComment = sheet.aComments[i];
+				arrResult.push({"Id" : oComment.asc_getId(), "Data" : oComment.ConvertToSimpleObject()});
+			}
+
+		}
+		return arrResult;
+	};
+
 })(window);

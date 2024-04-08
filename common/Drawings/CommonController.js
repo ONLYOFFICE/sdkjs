@@ -2820,11 +2820,6 @@
 				pasteFormatting: function (oData) {
 					if (!oData)
 						return;
-					if(!oData.isDrawingData()) {
-						if(!AscFormat.getTargetTextObject(this)) {
-							return;
-						}
-					}
 					let aSelectedObjects = this.selectedObjects;
 					for (let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing) {
 						let oSelectedDrawing = aSelectedObjects[nDrawing];

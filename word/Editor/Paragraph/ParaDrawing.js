@@ -860,6 +860,14 @@ ParaDrawing.prototype.SetSizeRelV  = function(oSize)
 	History.Add(new CChangesParaDrawingSizeRelV(this, this.SizeRelV, oSize));
 	this.SizeRelV = oSize;
 };
+ParaDrawing.prototype.getExtX = function()
+{
+	return this.getXfrmExtX() * this.GetScaleCoefficient();
+};
+ParaDrawing.prototype.getExtY = function()
+{
+	return this.getXfrmExtY() * this.GetScaleCoefficient();
+};
 ParaDrawing.prototype.getXfrmExtX = function()
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && AscCommon.isRealObject(this.GraphicObj.spPr) && AscCommon.isRealObject(this.GraphicObj.spPr.xfrm) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX))

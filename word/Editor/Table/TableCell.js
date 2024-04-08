@@ -955,6 +955,8 @@ CTableCell.prototype =
 
 		if (true === this.IsVerticalText())
 			isRotated = true !== isRotated;
+		
+		let layoutCoeff = this.GetTable().getLayoutScaleCoefficient();
 
 		var oResult;
 		if (oLogicDocument && oLogicDocument.GetRecalcId() === this.CachedMinMax.RecalcId)
@@ -1014,6 +1016,8 @@ CTableCell.prototype =
 			{
 				nAdd = oMargins.Left.W + oMargins.Right.W;
 			}
+			
+			nAdd *= layoutCoeff;
 
 			oResult.Min += nAdd;
 			oResult.Max += nAdd;
@@ -1024,11 +1028,11 @@ CTableCell.prototype =
 			var oPrefW = this.GetW();
 			if (tblwidth_Mm === oPrefW.Type)
 			{
-				if (oResult.Min < oPrefW.W)
-					oResult.Min = oPrefW.W;
+				if (oResult.Min < oPrefW.W * layoutCoeff)
+					oResult.Min = oPrefW.W * layoutCoeff;
 
-				if (oResult.Max < oPrefW.W)
-					oResult.Max = oPrefW.W;
+				if (oResult.Max < oPrefW.W * layoutCoeff)
+					oResult.Max = oPrefW.W * layoutCoeff;
 			}
 			else if (tblwidth_Pct === oPrefW.Type && nPctWidth)
 			{

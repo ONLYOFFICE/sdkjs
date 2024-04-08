@@ -8739,6 +8739,7 @@ function(window, undefined) {
 			this.checkDlblsPosition();
 			this.resetToChartStyleSoft();
 		}
+		return this.getChartType() === nType;
 	};
 	CChartSpace.prototype.canChangeToStockChart = function () {
 		return this.chart.plotArea.canChangeToStockChart();
