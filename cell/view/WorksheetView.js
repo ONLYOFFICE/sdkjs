@@ -25037,17 +25037,17 @@
 
 						selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
 
-						AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+						AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 					} else {
 						oImageMap = pasteContent.props.oImageMap;
 						if (window["NATIVE_EDITOR_ENJINE"]) {
 							//TODO для мобильных приложений  - не рабочий код!
 							AscCommon.ResetNewUrls(pasteContent.props.data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 							selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
-							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 						} else {
 							selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
-							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 						}
 					}
 				} else {
