@@ -8734,7 +8734,7 @@ background-repeat: no-repeat;\
 			oAdditionalData["c"] = 'sendmm';
 			oAdditionalData["userindex"] = this.CoAuthoringApi.get_indexUser();
 		}
-		else if (!this.WordControl.m_oLogicDocument)
+		else if (this.isUseNativeViewer && this.isDocumentRenderer())
 		{
 			oAdditionalData["c"] = 'savefromorigin';
 			if (this.currentPassword) {
