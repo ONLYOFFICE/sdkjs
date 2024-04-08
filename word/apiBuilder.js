@@ -21542,7 +21542,7 @@
 
 	/**
 	 * Gets a document color object by color name.
-	 * @param {highlightColor} - available highlight color
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {object}
 	 */
 	function private_getHighlightColorByName(sColor)
@@ -21604,117 +21604,53 @@
 	}
 
 	/**
-	 * Gets a document higlight name by color object.
-	 * @param {object} - available highlight color
+	 * Gets a document highlight name by color object.
+	 * @param {object} oColor - available highlight color
 	 * @returns {highlightColor}
 	 */
 	function private_getHighlightNameByColor(oColor)
 	{
-		if (oColor === -1 || oColor === null) {
+		if (oColor === -1 || oColor === null)
 			return "none";
-		}
-
-		if (AscCommon.c_oEditorId.Word == Asc.editor.editorId) {
-			if (new CDocumentColor(0, 0, 0).IsIdentical(oColor)) {
-				return "black";
-			}
-			if (new CDocumentColor(0, 0, 255).IsIdentical(oColor)) {
-				return "blue";
-			}
-			if (new CDocumentColor(0, 255, 255).IsIdentical(oColor)) {
-				return "cyan";
-			}
-			if (new CDocumentColor(0, 255, 0).IsIdentical(oColor)) {
-				return "green";
-			}
-			if (new CDocumentColor(255, 0, 255).IsIdentical(oColor)) {
-				return "magenta";
-			}
-			if (new CDocumentColor(255, 0, 0).IsIdentical(oColor)) {
-				return "red";
-			}
-			if (new CDocumentColor(255, 255, 0).IsIdentical(oColor)) {
-				return "yellow";
-			}
-			if (new CDocumentColor(255, 255, 255).IsIdentical(oColor)) {
-				return "white";
-			}
-			if (new CDocumentColor(0, 0, 139).IsIdentical(oColor)) {
-				return "darkBlue";
-			}
-			if (new CDocumentColor(0, 139, 139).IsIdentical(oColor)) {
-				return "darkCyan";
-			}
-			if (new CDocumentColor(0, 100, 0).IsIdentical(oColor)) {
-				return "darkGreen";
-			}
-			if (new CDocumentColor(128, 0, 128).IsIdentical(oColor)) {
-				return "darkMagenta";
-			}
-			if (new CDocumentColor(139, 0, 0).IsIdentical(oColor)) {
-				return "darkRed";
-			}
-			if (new CDocumentColor(128, 128, 0).IsIdentical(oColor)) {
-				return "darkYellow";
-			}
-			if (new CDocumentColor(169, 169, 169).IsIdentical(oColor)) {
-				return "darkGray";
-			}
-			if (new CDocumentColor(211, 211, 211).IsIdentical(oColor)) {
-				return "lightGray";
+		
+		let colorMap = [
+			[0, 0, 0, "black"],
+			[0, 0, 255, "blue"],
+			[0, 255, 255, "cyan"],
+			[0, 255, 0, "green"],
+			[255, 0, 255, "magenta"],
+			[255, 0, 0, "red"],
+			[255, 255, 0, "yellow"],
+			[255, 255, 255, "white"],
+			[0, 0, 139, "darkBlue"],
+			[0, 139, 139, "darkCyan"],
+			[0, 100, 0, "darkGreen"],
+			[128, 0, 128, "darkMagenta"],
+			[139, 0, 0, "darkRed"],
+			[128, 128, 0, "darkYellow"],
+			[169, 169, 169, "darkGray"],
+			[211, 211, 211, "lightGray"]
+		];
+		
+		if (AscCommon.c_oEditorId.Word === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (new CDocumentColor(c[0], c[1], c[2]).IsEqual(oColor))
+					return c[3];
 			}
 		}
-		else if (AscCommon.c_oEditorId.Presentation == Asc.editor.editorId) {
-			if (AscFormat.CreateUniColorRGB(0, 0, 0).IsIdentical(oColor)) {
-				return "black";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 255).IsIdentical(oColor)) {
-				return "blue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 255).IsIdentical(oColor)) {
-				return "cyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 0).IsIdentical(oColor)) {
-				return "green";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 255).IsIdentical(oColor)) {
-				return "magenta";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 0).IsIdentical(oColor)) {
-				return "red";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 0).IsIdentical(oColor)) {
-				return "yellow";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 255).IsIdentical(oColor)) {
-				return "white";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 139).IsIdentical(oColor)) {
-				return "darkBlue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 139, 139).IsIdentical(oColor)) {
-				return "darkCyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 100, 0).IsIdentical(oColor)) {
-				return "darkGreen";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 0, 128).IsIdentical(oColor)) {
-				return "darkMagenta";
-			}
-			if (AscFormat.CreateUniColorRGB(139, 0, 0).IsIdentical(oColor)) {
-				return "darkRed";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 128, 0).IsIdentical(oColor)) {
-				return "darkYellow";
-			}
-			if (AscFormat.CreateUniColorRGB(169, 169, 169).IsIdentical(oColor)) {
-				return "darkGray";
-			}
-			if (AscFormat.CreateUniColorRGB(211, 211, 211).IsIdentical(oColor)) {
-				return "lightGray";
+		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (AscFormat.CreateUniColorRGB(c[0], c[1], c[2]).IsIdentical(oColor))
+					return c[3];
 			}
 		}
-
+		
 		return undefined;
 	}
 
