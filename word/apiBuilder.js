@@ -12492,7 +12492,7 @@
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
-		return this.TextPr.GetDoubleStrikeout();
+		return this.TextPr.GetDStrikeout();
 	};
 
 	/**
