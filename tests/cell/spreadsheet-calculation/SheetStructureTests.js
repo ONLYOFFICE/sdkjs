@@ -78,6 +78,13 @@ $(function () {
 	};
 	AscCommonExcel.WorksheetView.prototype._prepareCellTextMetricsCache = function () {
 	};
+	AscCommonExcel.WorksheetView.prototype._getCellCache = function (col, row) {
+		let _cell = this._getCell(col, row);
+		if (_cell) {
+			return {cellType: _cell.getType()}
+		}
+		return null;
+	};
 
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
@@ -2632,6 +2639,26 @@ $(function () {
 		assert.strictEqual(sTableData, tableName + "[#Headers]", "check selection Headers");
 
 		clearData(0, 99, 0, 105);
+	});
+
+	QUnit.test('autoCompleteFormula', function (assert) {
+		const testData = [
+			['1', 'Test', 'Test1', '01/01/2000']
+		];
+
+		// Asc cases
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		let fillRange = new Asc.Range(0, 0, 0, 3);
+		wsView.setSelection(fillRange);
+
+		wsView._initRowsCount();
+		wsView._initColsCount();
+
+		wsView.autoCompleteFormula("SUM");
+
+		assert.strictEqual(1, 1, "");
 	});
 
 	QUnit.module("Sheet structure");
