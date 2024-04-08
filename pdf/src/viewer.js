@@ -1782,13 +1782,13 @@
 				for (var i = 0, len = pageFields.fields.length; i < len; i++)
 				{
 					if (pageObject.x >= pageFields.fields[i]._origRect[0] && pageObject.x <= pageFields.fields[i]._origRect[2] &&
-						pageObject.y >= pageFields.fields[i]._origRect[1] && pageObject.y <= pageFields.fields[i]._origRect[3])
-					{
-						if (bGetHidden)
+					pageObject.y >= pageFields.fields[i]._origRect[1] && pageObject.y <= pageFields.fields[i]._origRect[3]) {
+						if (bGetHidden) {
 							return pageFields.fields[i];
-						else
-							return pageFields.fields[i].IsHidden() == false ? pageFields.fields[i] : null;
-						
+						}
+						else if (pageFields.fields[i].IsHidden() == false) {
+							return pageFields.fields[i];
+						}
 					}
 				}
 			}
@@ -1827,12 +1827,13 @@
 						continue;
 					
 					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
-						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
-					{
-						if (bGetHidden)
+					pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight) {
+						if (bGetHidden) {
 							return oAnnot;
-						else
-							return oAnnot.IsHidden() == false ? oAnnot : null;
+						}
+						else if (oAnnot.IsHidden() == false) {
+							return oAnnot;
+						}
 					}
 				}
 
