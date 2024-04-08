@@ -3576,15 +3576,19 @@
 		};
 
 		/** @constructor */
-		function asc_CCompleteMenu(name, type) {
+		function asc_CCompleteMenu(name, type, desc) {
 			this.name = name;
 			this.type = type;
+			this.description = desc;
 		}
 
 		asc_CCompleteMenu.prototype.asc_getName = function () {
 			return this.name;
 		};
 		asc_CCompleteMenu.prototype.asc_getType = function () {
+			return this.type;
+		};
+		asc_CCompleteMenu.prototype.asc_getDescription = function () {
 			return this.type;
 		};
 
@@ -4089,6 +4093,7 @@
 		prot = asc_CCompleteMenu.prototype;
 		prot["asc_getName"] = prot.asc_getName;
 		prot["asc_getType"] = prot.asc_getType;
+		prot["asc_getDescription"] = prot.asc_getDescription;
 
 		window["AscCommonExcel"].g_oCacheMeasureEmpty = g_oCacheMeasureEmpty;
 		window["AscCommonExcel"].g_oCacheMeasureEmpty2 = g_oCacheMeasureEmpty2;
