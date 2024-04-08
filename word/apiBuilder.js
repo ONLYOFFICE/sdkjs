@@ -7546,7 +7546,6 @@
 	{
 		var oParagraph = this.Paragraph.Copy(undefined, private_GetDrawingDocument(), {
 			SkipComments          : true,
-			SkipAnchors           : true,
 			SkipFootnoteReference : true,
 			SkipComplexFields     : true
 		});
