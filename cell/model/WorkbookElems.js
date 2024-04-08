@@ -17051,7 +17051,7 @@ function RangeDataManagerElem(bbox, data)
 			console.log("REGISTRAION_ERROR_CONFLICTED_FUNCTION_NAME");
 		}
 
-		let params = options && options["params"];
+		let params = options && options.params;
 		let argsInfo = this._getParamsInfo(func, params);
 
 		let argumentsType = [];
@@ -17134,10 +17134,11 @@ function RangeDataManagerElem(bbox, data)
 				let res = func.apply(this, args);
 
 				//prepare result
-				let returnInfo = options["returnInfo"];
+				let returnInfo = options.returnInfo;
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 			}
 		};
 
@@ -17163,11 +17164,11 @@ function RangeDataManagerElem(bbox, data)
 			let _isOptional = false;
 			let _defaultValue = null;
 			if (curParams) {
-				if (curParams["type"]) {
-					type = curParams["type"];
+				if (curParams.type) {
+					type = curParams.type;
 				}
-				_isOptional = curParams["isOptional"];
-				_defaultValue = curParams["defaultValue"];
+				_isOptional = curParams.isOptional;
+				_defaultValue = curParams.defaultValue;
 			}
 			argsInfo.push({type: type, isOptional: _isOptional, defaultValue: _defaultValue});
 		}
