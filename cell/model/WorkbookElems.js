@@ -17144,7 +17144,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 		};
 
-		this.addToFunctionsList(newFunc, params);
+		this.addToFunctionsList(newFunc, options);
 	};
 
 	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {

@@ -2809,7 +2809,7 @@
 			if (oThis.customFunctionEngine) {
 				desc = oThis.customFunctionEngine.getDescription(_name);
 			}
-			return new AscCommonExcel.asc_CCompleteMenu(_name, _type);
+			return new AscCommonExcel.asc_CCompleteMenu(_name, _type, _desc);
 		};
 
 		let defNamesList, defName, defNameStr, _lastFNameLength, _type;
