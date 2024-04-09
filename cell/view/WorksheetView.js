@@ -1846,15 +1846,15 @@
         let val, text;
 
         let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
-        let lastCell = this._getCellTextCache(ar.c1, ar.r1, true);
+        let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
 
         if (hasNumber) {
             let i;
             // Есть ли значения в последней строке и столбце
             let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
             let hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
-            let amountRowElements = hasNumber.arrCols.length;
-            let amountColElements = hasNumber.arrRows.length;
+            let realElementsInCol = hasNumber.arrRows.length;
+            let realElementsInRow = hasNumber.arrCols.length;
             let bIsVertical = (ar.c2 - ar.c1) === 0;
             // Нужно ли прервать выполнение
             let breakExec;
@@ -1875,9 +1875,9 @@
                 bIsUpdate = true;
             }
 
-            if (firstCell && firstCell.cellType === CellValueType.String && (amountRowElements === 1 || amountColElements === 1)) {
+            if (firstCell && firstCell.cellType === CellValueType.String) {
                 // если первая ячейка строка, обрезаем select до первого не пустого значения
-                if (hasNumberInLastColumn && hasNumberInLastRow) {
+                if (hasNumberInLastColumn && hasNumberInLastRow && (realElementsInRow === 1 && realElementsInCol === 1)) {
                     // Последнее значение - число
                     bIsUpdate = false;
                     // set active cell to the end of the select
@@ -1890,7 +1890,7 @@
                     startCol = hasNumber.arrCols[0];
                     bIsUpdate = true;
                 }
-            } else if ((amountRowElements === 1 && amountColElements === 1) && (hasNumberInLastColumn && hasNumberInLastRow)) {
+            } else if ((realElementsInRow === 1 && realElementsInCol === 1) && (hasNumberInLastColumn && hasNumberInLastRow)) {
                 // Последняя ячейка - число, нужно расширить селект
                 startRow = ar.r1;
                 startCol = ar.c1;

@@ -2642,23 +2642,207 @@ $(function () {
 	});
 
 	QUnit.test('autoCompleteFormula', function (assert) {
-		const testData = [
-			['1', 'Test', 'Test1', '01/01/2000']
+		let resCell, range, fillRange, autoCompleteRes;
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		let testData = [
+			// ['1', 'Test', 'Test1', '01/01/2000']
+			['1'],
+			['Test'],
+			['Test1'],
+			['01/01/2000']
 		];
 
 		// Asc cases
-		let range = ws.getRange4(0, 0);
+		range = ws.getRange2("A1");
 		range.fillData(testData);
+		// ws.getRange2("A1").setValue("1");
+		// ws.getRange2("A2").setValue("Test");
+		// ws.getRange2("A3").setValue("Test1");
+		// ws.getRange2("A4").setValue("01/01/2000");
 
-		let fillRange = new Asc.Range(0, 0, 0, 3);
+		// c1, r1, c2, r2
+		fillRange = new Asc.Range(0, 0, 0, 3);
 		wsView.setSelection(fillRange);
-
 		wsView._initRowsCount();
 		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+		
+		resCell = ws.getRange2("A5");
+		assert.strictEqual(resCell.getValueWithFormat(), "36527", "Value after A1:A4 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A1:A4)", "Formula after A1:A4 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A1:A5", "Selection after A1:A4 autosum");
 
+		range = ws.getRange2("B1");
+		ws.getRange2("B1").setValue("ds");
+		ws.getRange2("B2").setValue("1");
+
+		fillRange = new Asc.Range(1, 0, 1, 1);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
 		wsView.autoCompleteFormula("SUM");
 
-		assert.strictEqual(1, 1, "");
+		resCell = ws.getRange2("B3");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after B1:B2 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after B1:B2 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B1:B2", "Selection after B1:B2 autosum");
+
+
+		ws.getRange2("C1").setValue("ds");
+		ws.getRange2("C2").setValue("1");
+		ws.getRange2("C3").setValue("1");
+
+		fillRange = new Asc.Range(2, 0, 2, 2);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("C4");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after C1:C3 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(C2:C3)", "Formula after C1:C3 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "C2:C4", "Selection after C1:C3 autosum");
+
+
+		ws.getRange2("D2").setValue("ds");
+		ws.getRange2("D4").setValue("1");
+
+		fillRange = new Asc.Range(3, 0, 3, 3);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("D5");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after D1:D4 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(D1:D4)", "Formula after D1:D4 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "D1:D5", "Selection after D1:D4 autosum");
+
+
+		ws.getRange2("E1").setValue("ds");
+		ws.getRange2("E3").setValue("1");
+		ws.getRange2("E4").setValue("");
+
+		fillRange = new Asc.Range(4, 0, 4, 3);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		/*
+		resCell = ws.getRange2("E4");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after E1:E4 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E3)", "Formula after E1:E4 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "E2:E4", "Selection after E1:E4 autosum");
+		*/
+
+		ws.getRange2("F1").setValue("ds");
+		ws.getRange2("F3").setValue("1");
+		ws.getRange2("F4").setValue("1");
+
+		fillRange = new Asc.Range(5, 0, 5, 3);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("F5");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after F1:F4 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(F2:F4)", "Formula after F1:F4 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "F2:F5", "Selection after F1:F4 autosum");
+
+
+		ws.getRange2("G2").setValue("ds");
+		ws.getRange2("G4").setValue("1");
+		ws.getRange2("G5").setValue("1");
+
+		fillRange = new Asc.Range(6, 0, 6, 4);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("G6");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after G1:G5 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(G1:G5)", "Formula after G1:G5 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "G1:G6", "Selection after G1:G5 autosum");
+
+		// col tests
+		ws.getRange2("A10").setValue("ds");
+		ws.getRange2("B10").setValue("1");
+		ws.getRange2("C10").setValue("1");
+
+		fillRange = new Asc.Range(0, 9, 2, 9);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("D10");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after A10:C10 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B10:C10)", "Formula after A10:C10 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B10:D10", "Selection after A10:C10 autosum");
+
+
+		ws.getRange2("A11").setValue("ds");
+		ws.getRange2("B11").setValue("1");
+
+		fillRange = new Asc.Range(0, 10, 2, 10);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		/*
+		resCell = ws.getRange2("C11");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after A11:C11 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B11)", "Formula after A11:C11 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B11:C11", "Selection after A11:C11 autosum");
+		*/
+
+		ws.getRange2("B12").setValue("ds");
+		ws.getRange2("D12").setValue("1");
+		ws.getRange2("E12").setValue("1");
+
+		fillRange = new Asc.Range(0, 11, 4, 11);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("F12");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after A12:E12 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A12:E12)", "Formula after A12:E12 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A12:F12", "Selection after A12:E12 autosum");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text, "B2:B10", "Selection after A11:C11 autosum");
+		}
+
+		// row + col tests
+		ws.getRange2("A20").setValue("ds");
+		ws.getRange2("A21").setValue("1");
+		ws.getRange2("A22").setValue("1");
+		ws.getRange2("B20").setValue("ds");
+		ws.getRange2("B21").setValue("1");
+		ws.getRange2("B23").setValue("1");
+
+		fillRange = new Asc.Range(0, 19, 1, 22);
+		wsView.setSelection(fillRange);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A24");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after A20:B23 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A21:A23)", "Formula after A20:B23 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A21:B24", "Selection after A20:B23 autosum");
+		resCell = ws.getRange2("B24");
+		assert.strictEqual(resCell.getValueWithFormat(), "2", "Value after A20:B23 autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B21:B23)", "Formula after A20:B23 autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A21:B24", "Selection after A20:B23 autosum");
+		
 	});
 
 	QUnit.module("Sheet structure");
