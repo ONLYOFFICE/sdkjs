@@ -3457,7 +3457,7 @@ var CPresentation = CPresentation || function(){};
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
         let oDrDoc = this.GetDrawingDocument();
 
-        let aSpsXmls        = this.Viewer.file.nativeFile.scanPage(nPage);
+        let aSpsXmls        = this.Viewer.file.nativeFile.scanPage(nPage, 1);
         let oParserContext  = new AscCommon.XmlParserContext();
         let aPageShapes     = [];
         let oXmlReader;
@@ -3466,20 +3466,12 @@ var CPresentation = CPresentation || function(){};
 
         AscFormat.ExecuteNoHistory(function () {
             for (let i = 0; i < aSpsXmls.length; i++) {
-                let oPara   = new AscWord.Paragraph();
-                let oRun    = new ParaRun(oPara);
+                let oShape  = new AscPDF.CPdfShape();
 
                 oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
-                oXmlReader.ReadNextSiblingNode(0);
-                oRun.fromXml(oXmlReader);
-                
-                oRun.GetAllDrawingObjects().forEach(function(paraDrawing) {
-                    let oWordShape = paraDrawing.GraphicObj;
-
-                    oWordShape.getXfrm().setOffX(paraDrawing.GetPositionH().Value);
-                    oWordShape.getXfrm().setOffY(paraDrawing.GetPositionV().Value);
-                    aPageShapes.push(oWordShape.convertToPdf(oDrDoc));
-                });
+                oShape.fromXml(oXmlReader);
+                oShape.setBDeleted(false);
+                aPageShapes.push(oShape);
             }
         }, this);
 
