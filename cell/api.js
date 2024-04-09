@@ -6583,11 +6583,15 @@ var editor;
 				AscCommonExcel.cFormulaFunctionLocalized[localName] = AscCommonExcel.cFormulaFunction[i];
 				AscCommonExcel.cFormulaFunctionToLocale[i] = localName;
 			}
-			if (!this.wb) {
-				this.wb.initCustomEngine();
-				this.wb.customFunctionEngine.setActiveLocale(sLang);
-			}
 		}
+
+		if (this.wb) {
+			if (!this.wb.customFunctionEngine) {
+				this.wb.initCustomEngine();
+			}
+			this.wb.customFunctionEngine.setActiveLocale(sLang);
+		}
+
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
