@@ -5759,10 +5759,17 @@
 
 	WorkbookView.prototype.addCustomFunction = function(func, options) {
 		if (!this.customFunctionEngine) {
-			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+			this.initCustomEngine();
 		}
 		this.customFunctionEngine.add(func, options);
 	};
+
+	WorkbookView.prototype.initCustomEngine = function() {
+		if (!this.customFunctionEngine) {
+			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+		}
+	};
+
 
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch

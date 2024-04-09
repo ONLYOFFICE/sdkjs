@@ -3589,7 +3589,7 @@
 			return this.type;
 		};
 		asc_CCompleteMenu.prototype.asc_getDescription = function () {
-			return this.type;
+			return this.description;
 		};
 
 		function CCacheMeasureEmpty2() {

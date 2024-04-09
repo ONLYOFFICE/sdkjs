@@ -17008,6 +17008,7 @@ function RangeDataManagerElem(bbox, data)
 		this.localiztionMap = {};//{en: {"SUM": "SUMMA"}{"SUMMA": "SUM"}}
 
 		this.prefixName = "";
+		this.activeLocale = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17145,6 +17146,10 @@ function RangeDataManagerElem(bbox, data)
 		};
 
 		this.addToFunctionsList(newFunc, options);
+	};
+
+	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
+		this.activeLocale = sLocale;
 	};
 
 	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {

@@ -6558,7 +6558,7 @@ var editor;
   };
 
 	// Выставление локали
-	spreadsheet_api.prototype.asc_setLocalization = function (oLocalizedData) {
+	spreadsheet_api.prototype.asc_setLocalization = function (oLocalizedData, sLang) {
 		if (!this.isLoadFullApi) {
 			this.tmpLocalization = oLocalizedData;
 			return;
@@ -6578,10 +6578,14 @@ var editor;
 					if (oLocalizedData[localName]) {
 						continue;
 					}
-					localName = this.wb.customFunctionEngine.getTranslationName(localName/*, sLang*/);
+					localName = this.wb.customFunctionEngine.getTranslationName(localName, sLang);
 				}
 				AscCommonExcel.cFormulaFunctionLocalized[localName] = AscCommonExcel.cFormulaFunction[i];
 				AscCommonExcel.cFormulaFunctionToLocale[i] = localName;
+			}
+			if (!this.wb) {
+				this.wb.initCustomEngine();
+				this.wb.customFunctionEngine.setActiveLocale(sLang);
 			}
 		}
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
