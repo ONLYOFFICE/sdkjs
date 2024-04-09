@@ -2804,12 +2804,12 @@
 		};
 
 		let oThis = this;
-		let getCompleteMenu = function (_name, _type, _desc) {
+		let getCompleteMenu = function (_name, _type) {
 			let desc = null;
 			if (oThis.customFunctionEngine) {
 				desc = oThis.customFunctionEngine.getDescription(_name);
 			}
-			return new AscCommonExcel.asc_CCompleteMenu(_name, _type, _desc);
+			return new AscCommonExcel.asc_CCompleteMenu(_name, _type, desc);
 		};
 
 		let defNamesList, defName, defNameStr, _lastFNameLength, _type;
