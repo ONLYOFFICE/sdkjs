@@ -79,11 +79,13 @@ $(function () {
 	AscCommonExcel.WorksheetView.prototype._prepareCellTextMetricsCache = function () {
 	};
 	AscCommonExcel.WorksheetView.prototype._getCellCache = function (col, row) {
-		let _cell = this._getCell(col, row);
-		if (_cell) {
-			return {cellType: _cell.getType()}
-		}
-		return null;
+		let _cell = null;
+		this.model.getRange3(row, col, row, col)._foreachNoEmpty(function(cell, row, col) {
+			if (cell && !cell.isEmptyTextString()) {
+				_cell = {cellType: cell.getType()}
+			}
+		}, null, true);
+		return _cell;
 	};
 
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
@@ -2731,12 +2733,12 @@ $(function () {
 		wsView._initColsCount();
 		wsView.autoCompleteFormula("SUM");
 
-		/*
+
 		resCell = ws.getRange2("E4");
 		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after E1:E4 autosum");
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(E3)", "Formula after E1:E4 autosum");
 		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "E2:E4", "Selection after E1:E4 autosum");
-		*/
+
 
 		ws.getRange2("F1").setValue("ds");
 		ws.getRange2("F3").setValue("1");
