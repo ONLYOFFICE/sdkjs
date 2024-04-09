@@ -4105,7 +4105,7 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if ((aPages[i].drawings == null || aPages[i].drawings.length == 0) && (aPages[i].annots == null || aPages[i].annots.length === 0) && (aPages[i].fields == null || aPages[i].fields.length === 0) && !aDeleted[i])
+			if (aPages[i].drawings.length == 0 && aPages[i].annots.length === 0 && aPages[i].fields.length === 0 && !aDeleted[i])
 				continue;
 
 			if (!oMemory)

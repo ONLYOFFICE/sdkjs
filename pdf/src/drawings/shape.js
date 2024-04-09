@@ -179,14 +179,6 @@
             oContent.RemoveSelection();
     };
     
-    /////////////////////////////
-    /// saving
-    ////////////////////////////
-
-    CPdfShape.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
-    };
-
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();
 

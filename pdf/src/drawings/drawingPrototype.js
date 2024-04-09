@@ -547,6 +547,14 @@
         return Asc.editor.getPDFDoc().GetDrawingDocument();
     };
 
+    /////////////////////////////
+    /// saving
+    ////////////////////////////
+
+    CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
+        this.toXml(memory, '');
+    };
+
     window["AscPDF"].PdfDrawingPrototype = CPdfDrawingPrototype;
 })();
 

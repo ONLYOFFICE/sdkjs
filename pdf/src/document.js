@@ -3651,13 +3651,15 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.AddTable = function(nCol, nRow, sStyleId, nPage) {
-        let oPagesInfo = this.Viewer.pagesInfo;
+        let oPagesInfo  = this.Viewer.pagesInfo;
+        let oController = this.GetController();
         if (!oPagesInfo.pages[nPage])
             return;
 
         let oGrFrame = this.private_Create_TableGraphicFrame(nCol, nRow, sStyleId || this.DefaultTableStyleId, undefined, undefined, undefined, undefined, nPage);
-                
+        
         this.AddDrawing(oGrFrame, nPage);
+        oController.Check_GraphicFrameRowHeight(oGrFrame);
     };
     CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage, bInline) {
         let oDrDoc      = this.GetDrawingDocument();
