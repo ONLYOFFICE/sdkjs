@@ -4032,6 +4032,11 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetSelectionState = function(oState) {
         return;
     };
+    CPDFDoc.prototype.ContinueSpellCheck = function() {};
+    CPDFDoc.prototype.ContinueTrackRevisions = function() {};
+    CPDFDoc.prototype.Viewer_OnChangePosition = function() {};
+    CPDFDoc.prototype.Document_CreateFontMap = function() { return {}};
+    CPDFDoc.prototype.TurnOffSpellCheck = function() {};
     CPDFDoc.prototype.RefreshDocumentPositions = function() {};
     CPDFDoc.prototype.TrackDocumentPositions = function() {};
     CPDFDoc.prototype.RemoveSelection = function() {};
@@ -4068,7 +4073,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         let oActiveObj  = this.GetActiveObject();
-        let oContent    = oActiveObj.GetDocContent();
+        let oContent    = oActiveObj ? oActiveObj.GetDocContent() : null;
 
         if (oActiveObj && oContent) {
             if (oActiveObj.IsNeedRecalc() == false) {
@@ -4302,7 +4307,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Get_PageFields = function(nPage) {
         return this.Get_PageLimits(nPage);
     };
-
+    
 	
     function CActionQueue(oDoc) {
         this.doc                = oDoc;

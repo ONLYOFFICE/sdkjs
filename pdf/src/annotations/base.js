@@ -93,7 +93,9 @@
         this._rect = [aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY, aOrigRect[2] * nScaleX, aOrigRect[3] * nScaleY];
         this._origRect = aOrigRect;
     };
-
+    CAnnotationBase.prototype.GetDocContent = function() {
+        return null;
+    };
     CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
         this._inReplyTo = oAnnot;
     };
