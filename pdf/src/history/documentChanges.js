@@ -35,6 +35,8 @@
 
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]		= CChangesPDFDocumentAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]	= CChangesPDFDocumentRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]		= CChangesPDFDocumentAddPage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]	= CChangesPDFDocumentRemovePage;
 
 /**
  * @constructor
@@ -148,7 +150,19 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem.IsAnnot()) {
+		if (oItem.IsForm()) {
+			if (oItem.IsWidget()) {
+				let nPage = oItem.GetPage();
+				oItem.AddToRedraw();
+
+				oDocument.widgets.splice(nPos, 0, oItem);
+				oViewer.pagesInfo.pages[nPage].fields.splice(nPosInPage, 0, oItem);
+			}
+			else {
+				oDocument.widgetsParents.push(oItem);
+			}
+		}
+		else if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -182,7 +196,18 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem.IsAnnot()) {
+		if (oItem.IsForm()) {
+			if (oItem.IsWidget()) {
+				oDocument.RemoveForm(oItem);
+			}
+			else {
+				let nIdx = oDocument.widgetsParents.indexOf(oForm);
+				if (nIdx != -1) {
+					oDocument.widgetsParents.splice(nIdx, oForm);
+				}
+			}
+		}
+		else if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -201,4 +226,89 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 	}
 	
 	oDocument.mouseDownAnnot = null;
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentAddPage(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentAddPage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentAddPage.prototype.constructor = CChangesPDFDocumentAddPage;
+CChangesPDFDocumentAddPage.prototype.Type = AscDFH.historyitem_PDF_Document_AddPage;
+
+CChangesPDFDocumentAddPage.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		oDocument.RemovePage(nPos);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentAddPage.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		let oItem = this.Items[nIndex];
+		oDocument.AddPage(nPos, oItem)
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentRemovePage(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentRemovePage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentRemovePage.prototype.constructor = CChangesPDFDocumentRemovePage;
+CChangesPDFDocumentRemovePage.prototype.Type = AscDFH.historyitem_PDF_Document_RemovePage;
+
+CChangesPDFDocumentRemovePage.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		let oItem = this.Items[nIndex];
+		oDocument.AddPage(nPos, oItem);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentRemovePage.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		oDocument.RemovePage(nPos)
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };

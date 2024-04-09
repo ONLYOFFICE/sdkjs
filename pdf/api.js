@@ -479,8 +479,23 @@
 		let oViewer = this.getDocumentRenderer();
 		let oDoc 	= this.getPDFDoc();
 
-		oDoc.AddPage();
-		oViewer.navigateToPage(oViewer.file.pages.length - 1);
+		let nPos = oViewer.currentPage + 1;
+
+		oDoc.CreateNewHistoryPoint();
+		oDoc.AddPage(nPos);
+		oViewer.navigateToPage(nPos);
+		oDoc.TurnOffHistory();
+	};
+	PDFEditorApi.prototype.asc_RemovePage = function(nPage) {
+		let oViewer = this.getDocumentRenderer();
+		let oDoc 	= this.getPDFDoc();
+
+		nPage = nPage != undefined ? nPage : oViewer.currentPage;
+
+		oDoc.CreateNewHistoryPoint();
+		oDoc.RemovePage(nPage);
+		oViewer.navigateToPage(nPage - 1 >= 0 ? nPage - 1 : 0);
+		oDoc.TurnOffHistory();
 	};
 	PDFEditorApi.prototype.asc_GetSelectedText = function() {
 		if (!this.DocumentRenderer)
@@ -599,7 +614,13 @@
 		let oDoc = this.getPDFDoc();
 		return oDoc.GetPageHeightEMU();
 	};
+	/////////////////////////////////////////////////////////////
+	///////// For annots
+	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.StartAddShapeBasedAnnot = function(nAnnotType) {
 
+	};
+	
 	/////////////////////////////////////////////////////////////
 	///////// For drawings
 	////////////////////////////////////////////////////////////
@@ -1789,6 +1810,7 @@
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 	PDFEditorApi.prototype['asc_EditText']                 = PDFEditorApi.prototype.asc_EditText;
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
+	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;

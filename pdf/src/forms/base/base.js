@@ -322,6 +322,7 @@
 	 */
     CBaseField.prototype.AddKid = function(oField) {
         this._kids.push(oField);
+        AscCommon.History.Add(new CChangesPDFFormAddKid(this, this._kids.length - 1, [oField]))
         oField._parent = this;
     };
     CBaseField.prototype.GetKids = function() {
@@ -332,6 +333,24 @@
             return this;
 
         return this._kids[nPos];
+    };
+    /**
+	 * Removes field from kids.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+     * @param {CBaseField} oField - the field to remove.
+	 * @returns {boolean} - returns false if field isn't in the field kids.
+	 */
+    CBaseField.prototype.RemoveKid = function(oField) {
+        let nIndex = this._kids.indexOf(oField);
+        if (nIndex != -1) {
+            this._kids.splice(nIndex, 1);
+            AscCommon.History.Add(new CChangesPDFFormRemoveKid(this, nIndex, [oField]))
+            oField._parent = null;
+            return true;
+        }
+
+        return false;
     };
     
     /**
@@ -358,24 +377,7 @@
     };
 
     CBaseField.prototype.Recalculate = function() {};
-    /**
-	 * Removes field from kids.
-	 * @memberof CBaseField
-	 * @typeofeditors ["PDF"]
-     * @param {CBaseField} oField - the field to remove.
-	 * @returns {boolean} - returns false if field isn't in the field kids.
-	 */
-    CBaseField.prototype.RemoveKid = function(oField) {
-        let nIndex = this._kids.indexOf(oField);
-        if (nIndex != -1) {
-            this._kids.splice(nIndex, 1);
-            oField._parent = null;
-            return true;
-        }
-
-        return false;
-    };
-
+    
     CBaseField.prototype.GetDocContent = function(bFormatContent) {
         return bFormatContent ? this.contentFormat : this.content;
     };

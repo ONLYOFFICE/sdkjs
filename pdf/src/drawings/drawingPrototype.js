@@ -118,7 +118,7 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
         
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.drawings.indexOf(this) != -1) {
                 if (oViewer.pagesInfo.pages[nPage].drawings == null) {

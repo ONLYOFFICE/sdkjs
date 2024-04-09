@@ -105,8 +105,8 @@
 	{
 		this.isPainted				= false;
 		this.links					= null;
-		this.fields					= null;
-		this.annots					= null;
+		this.fields					= [];
+		this.annots					= [];
 		this.drawings				= [];
 		this.needRedrawForms		= true;
 		this.needRedrawTextShapes	= true;
@@ -1900,6 +1900,9 @@
 			let oDoc = oThis.getPDFDoc();
 			oDoc.HideComments();
 			
+			e.CtrlKey = e.ctrlKey;
+			e.ShiftKey = e.shiftKey;
+
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			if (mouseButton !== 0)
 			{
@@ -2577,6 +2580,43 @@
 			ctx.globalAlpha = 1.0;
 		};
 
+		this.checkVisiblePages = function() {
+			let oDoc = this.getPDFDoc();
+
+			let yPos = this.scrollY >> 0;
+			let yMax = yPos + this.height;
+			let xCenter = this.width >> 1;
+			if (this.documentWidth > this.width)
+			{
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+			}
+
+			let lStartPage = -1;
+			let lEndPage = -1; 
+			
+			let lPagesCount = this.drawingPages.length;
+			for (let i = 0; i < lPagesCount; i++)
+			{
+				let page = this.drawingPages[i];
+				let pageT = page.Y;
+				let pageB = page.Y + page.H;
+				
+				if (yPos < pageB && yMax > pageT)
+				{
+					// страница на экране
+
+					if (-1 == lStartPage)
+						lStartPage = i;
+					lEndPage = i;
+				}
+			}
+
+			let oDrDoc = oDoc.GetDrawingDocument();
+			oDrDoc.m_lDrawingFirst = lStartPage;
+			oDrDoc.m_lDrawingEnd = lEndPage;
+			this.startVisiblePage = lStartPage;
+			this.endVisiblePage = lEndPage;
+		};
 		this._paint = function()
 		{
 			let oDoc = this.getPDFDoc();
@@ -2632,7 +2672,13 @@
 				}
 			}
 
-			if (this._checkFontsOnPages(lStartPage, lEndPage) == false)
+			let oDrDoc = oDoc.GetDrawingDocument();
+			oDrDoc.m_lDrawingFirst = lStartPage;
+			oDrDoc.m_lDrawingEnd = lEndPage;
+			this.startVisiblePage = lStartPage;
+			this.endVisiblePage = lEndPage;
+
+			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false)
 				return;
 
 			this.canvas.width = this.canvas.width;
@@ -2642,17 +2688,11 @@
 
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
-			let oDrDoc = oDoc.GetDrawingDocument();
-			oDrDoc.m_lDrawingFirst = lStartPage;
-			oDrDoc.m_lDrawingEnd = lEndPage;
-			this.startVisiblePage = lStartPage;
-			this.endVisiblePage = lEndPage;
-
 			var isStretchPaint = this.Api.WordControl.NoneRepaintPages;
 			if (this.isClearPages)
 				isStretchPaint = false;
 
-			for (let i = lStartPage; i <= lEndPage; i++)
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				// отрисовываем страницу
 				let page = this.drawingPages[i];
@@ -2712,9 +2752,8 @@
 					}
 				}
 
-				let oPageInfo = this.pagesInfo.pages[i];
-				if (!oPageInfo.isConvertedToShapes) {
-					if (!page.Image && !isStretchPaint && !oPageInfo.isConvertedToShapes)
+				if (!this.file.pages[i].isConvertedToShapes) {
+					if (!page.Image && !isStretchPaint)
 					{
 						page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
 						if (this.bCachedMarkupAnnnots)

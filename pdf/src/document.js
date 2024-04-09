@@ -1301,13 +1301,14 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.pagesInfo.pages[oTextConvert.page].isConvertedToShapes = false;
+                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = false;
                 this.isUndoRedoInProgress = false;
                 return;
             }
 
             if (!aSourceObjects) {
                 this.isUndoRedoInProgress = false;
+                this.UpdateInterface();
                 return;
             }
                
@@ -1339,6 +1340,7 @@ var CPresentation = CPresentation || function(){};
             }
             
             this.isUndoRedoInProgress = false;
+            this.UpdateInterface();
         }
     };
     CPDFDoc.prototype.DoRedo = function() {
@@ -1371,13 +1373,14 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.pagesInfo.pages[oTextConvert.page].isConvertedToShapes = true;
+                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = true;
                 this.isUndoRedoInProgress = false;
                 return;
             }
 
             if (!aSourceObjects) {
                 this.isUndoRedoInProgress = false;
+                this.UpdateInterface();
                 return;
             }
 
@@ -1408,6 +1411,7 @@ var CPresentation = CPresentation || function(){};
             }
 
             this.isUndoRedoInProgress = false;
+            this.UpdateInterface();
         }
     };
     CPDFDoc.prototype.SetNeedUpdateTarget = function(bUpdate) {
@@ -1528,30 +1532,28 @@ var CPresentation = CPresentation || function(){};
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
      * @param {number} [nPos] - (optional) The page after which to add the new page in a 1-based page numbering
-     * system. The default is the last page of the document. Use 0 to add a page before the
-     * first page. An invalid page range is truncated to the valid range of pages.
-     * @param {points} [nWidth=612] - (optional) The width of the page in points. The default value is 612.
-     * @param {points} [nHeight=792] - (optional) The height of the page in points. The default value is 792.
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.AddPage = function(nPos, nWidth, nHeight) {
+    CPDFDoc.prototype.AddPage = function(nPos, oPage) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oController = this.GetController();
 
+        if (!oPage) {
+            oPage = {
+                Dpi: 72,
+                fonts: []
+            }
+        }
+
         if (nPos === undefined || -1 === nPos)
             nPos = oFile.pages.length;
-        if (nWidth === undefined)
-            nWidth = oFile.pages[nPos - 1].W;
-        if (nHeight === undefined)
-            nHeight = oFile.pages[nPos - 1].H;
+        if (oPage.W === undefined)
+            oPage.W = oFile.pages[nPos - 1].W;
+        if (oPage.H === undefined)
+            oPage.H = oFile.pages[nPos - 1].H;
 
-        oFile.pages.splice(nPos, 0, {
-            W: nWidth,
-            H: nHeight,
-            fonts: [],
-            Dpi: 72
-        });
+        oFile.pages.splice(nPos, 0, oPage);
 	
 		oViewer.drawingPages.splice(nPos, 0, {
 			X : 0,
@@ -1577,6 +1579,11 @@ var CPresentation = CPresentation || function(){};
                     annot.SetPage(nPage);
                 });
             }
+            if (oViewer.pagesInfo.pages[nPage].drawings) {
+                oViewer.pagesInfo.pages[nPage].drawings.forEach(function(drawing) {
+                    drawing.SetPage(nPage);
+                });
+            }
         }
             
         oViewer.resize();
@@ -1586,7 +1593,80 @@ var CPresentation = CPresentation || function(){};
         this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
 
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
+
+        this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
     };
+
+    /**
+	 * Removes a page from document.
+	 * @memberof CPDFDoc
+	 * @typeofeditors ["PDF"]
+     * @param {number} [nPos = 0] 
+	 * @returns {boolean}
+	 */
+    CPDFDoc.prototype.RemovePage = function(nPos) {
+        let oThis       = this;
+        let oViewer     = editor.getDocumentRenderer();
+        let oFile       = oViewer.file;
+        let oController = this.GetController();
+        
+        if (oFile.pages.length == 1)
+            return false;
+        if (!AscCommon.isNumber(nPos) || nPos < 0)
+            nPos = 0;
+
+        // сначала удаляем все объекты со страницы
+        if (oViewer.pagesInfo.pages[nPos].fields) {
+            oViewer.pagesInfo.pages[nPos].fields.slice().forEach(function(field) {
+                oThis.RemoveForm(field);
+            });
+        }
+        if (oViewer.pagesInfo.pages[nPos].annots) {
+            oViewer.pagesInfo.pages[nPos].annots.slice().forEach(function(annot) {
+                oThis.RemoveAnnot(annot.GetId());
+            });
+        }
+        if (oViewer.pagesInfo.pages[nPos].drawings) {
+            oViewer.pagesInfo.pages[nPos].drawings.slice().forEach(function(drawing) {
+                oThis.RemoveDrawing(drawing.GetId());
+            });
+        }
+
+        // убираем информацию о странице
+        let aPages = oFile.pages.splice(nPos, 1);
+		oViewer.drawingPages.splice(nPos, 1);
+        oViewer.pagesInfo.pages.splice(nPos, 1);
+
+        // проставляем новые номера страниц объектам на остальных страницах
+        for (let nPage = nPos; nPage < oViewer.pagesInfo.pages.length; nPage++) {
+            if (oViewer.pagesInfo.pages[nPage].fields) {
+                oViewer.pagesInfo.pages[nPage].fields.forEach(function(field) {
+                    field.SetPage(nPage);
+                });
+            }
+            if (oViewer.pagesInfo.pages[nPage].annots) {
+                oViewer.pagesInfo.pages[nPage].annots.forEach(function(annot) {
+                    annot.SetPage(nPage);
+                });
+            }
+            if (oViewer.pagesInfo.pages[nPage].drawings) {
+                oViewer.pagesInfo.pages[nPage].drawings.forEach(function(drawing) {
+                    drawing.SetPage(nPage);
+                });
+            }
+        }
+            
+        oViewer.checkVisiblePages();
+        oViewer.resize();
+        for (let i = 0; i < oViewer.file.pages.length; i++) {
+            oController.mergeDrawings(i);
+        }
+        this.GetDrawingDocument().m_lPagesCount = oViewer.file.pages.length;
+        oViewer.sendEvent("onPagesCount", oFile.pages.length);
+
+        this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
+    };
+
     /**
 	 * Adds an interactive field to document.
 	 * @memberof CPDFDoc
@@ -1872,6 +1952,8 @@ var CPresentation = CPresentation || function(){};
     };
     
     CPDFDoc.prototype.Remove = function(nDirection, isCtrlKey) {
+        this.CreateNewHistoryPoint();
+
         let oDrDoc = this.GetDrawingDocument();
         oDrDoc.UpdateTargetFromPaint = true;
 
@@ -1914,6 +1996,8 @@ var CPresentation = CPresentation || function(){};
         else {
             oDrDoc.TargetEnd();
         }
+
+        this.TurnOffHistory();
     };
     CPDFDoc.prototype.EnterDown = function(isShiftKey) {
         let oDrDoc      = this.GetDrawingDocument();
@@ -1986,10 +2070,8 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownAnnot == oAnnot)
             this.mouseDownAnnot = null;
 
-        this.CreateNewHistoryPoint();
         this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oAnnot]));
-        this.TurnOffHistory();
-
+        
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
         oController.resetSelection();
@@ -2019,9 +2101,7 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownAnnot == oDrawing)
             this.mouseDownAnnot = null;
 
-        this.CreateNewHistoryPoint();
         this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oDrawing]));
-        this.TurnOffHistory();
 
         oController.resetSelection();
         oController.resetTrackState();
@@ -2032,6 +2112,68 @@ var CPresentation = CPresentation || function(){};
 
         this.ClearSearch();
     };
+
+    CPDFDoc.prototype.RemoveForm = function(oForm) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oController = this.GetController();
+
+        this.BlurActiveObject();
+
+        if (!oForm.IsWidget())
+            return;
+
+        // надо перерисовать страницу
+        let nPage = oForm.GetPage();
+        oForm.AddToRedraw();
+
+        // удаляем поле из виджетов и со страницы
+        let nPos        = this.widgets.indexOf(oForm);
+        let nPosInPage  = oViewer.pagesInfo.pages[nPage].fields.indexOf(oForm);
+
+        this.widgets.splice(nPos, 1);
+        oViewer.pagesInfo.pages[nPage].fields.splice(nPosInPage, 1);
+
+        this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oForm]));
+
+        // удаляем из родителя
+        let oParent = oForm.GetParent();
+        if (oParent) {
+            oParent.RemoveKid(oForm);
+            this.CheckParentForm(oParent); // проверяем родителя
+        }
+
+        oController.resetSelection();
+        oController.resetTrackState();
+
+        this.ClearSearch();
+    };
+    
+    /**
+	 * Checks the parent form and deletes if necessary
+	 * @memberof CPDFDoc
+     * @param {Object} oForm - parent form
+	 * @typeofeditors ["PDF"]
+	 */
+    CPDFDoc.prototype.CheckParentForm = function(oForm) {
+        let aKids   = oForm.GetKids();
+        let oParent = oForm.GetParent();
+
+        if (aKids == 0) {
+            // удаляем поле из массива родительских полей
+            let nIdx = this.widgetsParents.indexOf(oForm);
+            if (nIdx != -1) {
+                this.widgetsParents.splice(nIdx, oForm);
+                this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, -1], [oForm]))
+            }
+
+            // проверяем родителя этого родителя
+            if (oParent) {
+                oParent.RemoveKid(oField);
+                this.CheckParentForm(oParent);
+            }
+        }
+    };
+
     /**
 	 * Move page to annot (if annot is't visible)
 	 * @memberof CPDFDoc
@@ -2198,7 +2340,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        this.private_checkField(oFieldParent);
+        this.CheckParentForm(oFieldParent);
         oField.SyncField();
         return oField;
     };
@@ -2354,23 +2496,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.IsAnnotsHidden = function() {
         return this.annotsHidden;
     };
-    /**
-	 * Checks the field for the field widget, if not then the field will be removed.
-	 * @memberof CPDFDoc
-	 * @typeofeditors ["PDF"]
-	 */
-    CPDFDoc.prototype.private_checkField = function(oField) {
-        if (oField._kids.length == 0) {
-            if (oField._parent) {
-                oField._parent.RemoveKid(oField);
-                this.private_checkField(oField._parent);
-            }
-            else if (this.rootFields.get(oField.name)) {
-                this.rootFields.delete(oField.name);
-            }
-        }
-    };
-
+    
     /**
 	 * Returns array with widgets fields by specified name.
 	 * @memberof CPDFDoc
@@ -3322,11 +3448,11 @@ var CPresentation = CPresentation || function(){};
 	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
-        if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.pagesInfo.pages[nPage].isConvertedToShapes) {
+        if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.file.pages[nPage].isConvertedToShapes) {
             return;
         }
 
-        this.Viewer.pagesInfo.pages[nPage].isConvertedToShapes = true;
+        this.Viewer.file.pages[nPage].isConvertedToShapes = true;
 
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
         let oDrDoc = this.GetDrawingDocument();
