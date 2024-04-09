@@ -746,6 +746,8 @@
 					AscCommon.addMouseEvent(_t.canvasForms, "move", _t.onMouseMove);
 					AscCommon.addMouseEvent(_t.canvasForms, "up", _t.onMouseUp);
 
+					global_mouseEvent.Sender = _t.canvasForms;
+
 					_t.parent.onmousewheel = _t.onMouseWhell;
 					if (_t.parent.addEventListener)
 						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
@@ -1966,7 +1968,7 @@
 				return;
 
 			AscCommon.check_MouseDownEvent(e, true);
-			e.IsLocked = true;
+			global_mouseEvent.LockMouse();
 
 			oThis.mouseDownCoords.X = AscCommon.global_mouseEvent.X;
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
