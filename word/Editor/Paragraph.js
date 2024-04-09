@@ -6267,7 +6267,9 @@ Paragraph.prototype.Get_LeftPos = function(SearchPos, ContentPos)
 Paragraph.prototype.GetCursorLeftPos = function(oSearchPos, oContentPos)
 {
 	this.Get_LeftPos(oSearchPos, oContentPos);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
 };
 Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 {
@@ -6319,7 +6321,9 @@ Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 Paragraph.prototype.GetCursorRightPos = function(oSearchPos, oContentPos, isStepEnd)
 {
 	this.Get_RightPos(oSearchPos, oContentPos, isStepEnd);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
 };
 Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 {
