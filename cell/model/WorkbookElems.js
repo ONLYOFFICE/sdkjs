@@ -17217,7 +17217,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		} else {
-			this.funcsMapInfo[funcName] = {};
+			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
 			isNewFunc = true;
@@ -17372,10 +17372,19 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-	CCustomFunctionEngine.prototype.getFunc = function (name) {
+	CCustomFunctionEngine.prototype.getFunc = function (name, bLocale) {
+		if (bLocale) {
+			let activeLocale = this.activeLocale;
+			if (this.localiztionMap[activeLocale]) {
+				if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+					name = this.localiztionMap[activeLocale].localNameToFullName[name];
+				}
+			}
+		}
+
 		return this.funcsMapInfo[name];
 	};
-
+	
 	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
 		let res = null;
 
@@ -17570,6 +17579,16 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+
+	function CCustomFunctionInfo(name) {
+		this.name = name;
+		this.description = null;
+
+		this.addLocalization = null;
+	}
+	CCustomFunctionInfo.prototype.asc_getDescription = function () {
+		return this.description;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -18088,6 +18107,9 @@ function RangeDataManagerElem(bbox, data)
 
 	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
 
+	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
+	prot = CCustomFunctionInfo.prototype;
+	prot["asc_getDescription"] = prot.asc_getDescription;
 
 
 })(window);
