@@ -17140,7 +17140,7 @@ function RangeDataManagerElem(bbox, data)
 				let returnInfo = options.returnInfo;
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
-				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+				console.log("ERROR CUSTOM FUNCTION CALCULATE");
 				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 			}
 		};
@@ -17192,7 +17192,7 @@ function RangeDataManagerElem(bbox, data)
 	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
 		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
 
-		let translations = params.translations;
+		let translations = params.nameLocale;
 		let description = params.description;
 
 		let funcName = newFunc.prototype.name;
@@ -17200,7 +17200,7 @@ function RangeDataManagerElem(bbox, data)
 		//already added function
 		if (this.funcsMapInfo[funcName]) {
 			//reload translations
-			this.pushTranslations(funcName, translations)
+			this.pushTranslations(funcName, translations);
 
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
 			for (let i in customFunctionList) {
@@ -17235,6 +17235,9 @@ function RangeDataManagerElem(bbox, data)
 
 	CCustomFunctionEngine.prototype.pushTranslations = function (funcName, translations) {
 		for (let i in translations) {
+			if (!translations[i]) {
+				continue;
+			}
 			if (!this.localiztionMap[i]) {
 				this.localiztionMap[i] = {};
 			}
@@ -17246,7 +17249,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 
 
-			this.localiztionMap[i].fullNameToLocalName[funcName] = translations[i];
+			this.localiztionMap[i].fullNameToLocalName[funcName] = (translations[i] + "").toUpperCase();
 			this.localiztionMap[i].localNameToFullName[translations[i]] = funcName;
 		}
 	};

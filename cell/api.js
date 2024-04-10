@@ -6574,11 +6574,11 @@ var editor;
 			for (var i in AscCommonExcel.cFormulaFunction) {
 				localName = oLocalizedData[i] ? oLocalizedData[i] : null;
 				localName = localName ? localName : i;
-				if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.getFunc(localName)) {
+				if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.getFunc(i)) {
+					localName = this.wb.customFunctionEngine.getTranslationName(i, sLang);
 					if (oLocalizedData[localName]) {
 						continue;
 					}
-					localName = this.wb.customFunctionEngine.getTranslationName(localName, sLang);
 				}
 				AscCommonExcel.cFormulaFunctionLocalized[localName] = AscCommonExcel.cFormulaFunction[i];
 				AscCommonExcel.cFormulaFunctionToLocale[i] = localName;
