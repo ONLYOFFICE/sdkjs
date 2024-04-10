@@ -3095,6 +3095,12 @@
 			if (!res) {
 				res = name ? new AscCommonExcel.CFunctionInfo(name) : null;
 			}
+			//check on custom function
+			let description = t.customFunctionEngine && t.customFunctionEngine.getDescription(name);
+			if (description) {
+				res.description = description;
+			}
+
 			t.handlers.trigger("asc_onSendFunctionWizardInfo", res);
         };
 
