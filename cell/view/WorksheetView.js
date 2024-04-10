@@ -4422,21 +4422,59 @@
             // Select row (top border)
             ctx.lineHorPrevPx(x, y, x2);
         }
+		ctx.stroke();
+
 
         // Right border
 		if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
-			ctx.lineVerPrevPx(x2, y, y2);
-		}
-        // Bottom border
-		if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
-			ctx.lineHorPrevPx(x, y2, x2);
+
+
+			if (style  === kHeaderActive && !isColHeader) {
+				ctx.setStrokeStyle(new CColor(72, 121, 92))
+					.setLineWidth(2)
+					.beginPath();
+				// Bottom border
+				ctx.lineVerPrevPx(x2, y, y2);
+				ctx.stroke();
+			} else {
+				ctx.setStrokeStyle(borderColor)
+					.setLineWidth(1)
+					.beginPath();
+				ctx.lineVerPrevPx(x2, y, y2);
+				ctx.stroke();
+			}
 		}
 
+
+		if (style  === kHeaderActive && isColHeader) {
+			ctx.setStrokeStyle(new CColor(72, 121, 92))
+				.setLineWidth(2)
+				.beginPath();
+			// Bottom border
+			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
+				ctx.lineHorPrevPx(x, y2, x2);
+			}
+			ctx.stroke();
+		} else {
+			ctx.setStrokeStyle(borderColor)
+				.setLineWidth(1)
+				.beginPath();
+			// Bottom border
+			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
+				ctx.lineHorPrevPx(x, y2, x2);
+			}
+			ctx.stroke();
+		}
+
+		ctx.setStrokeStyle(borderColor)
+			.setLineWidth(1)
+			.beginPath();
         if (style !== kHeaderDefault && isColHeader) {
             // Select col (left border)
             ctx.lineVerPrevPx(x, y, y2);
         }
-        ctx.stroke();
+		ctx.stroke();
+
 
         // Для невидимых кроме border-а ничего не рисуем
         if (isZeroHeader || -1 === index) {
@@ -7741,7 +7779,7 @@
 			}
         }
 
-        if (this.model.copySelection) {
+        if (this.model.copySelection) {b
             selectionRange = this.model.selectionRange;
         } else if (this.workbook.isDrawFormatPainter()) {
 			let oData = this.workbook.Api.getFormatPainterData();
