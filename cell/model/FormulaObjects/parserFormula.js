@@ -4510,7 +4510,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				//cFormulaFunctionGroup['NotRealised'] - массив ещё не реализованных формул
 				if (-1 === cFormulaFunctionGroup['NotRealised'].indexOf(cFormulaFunctionGroup[type][i])) {
 					f = new AscCommon.asc_CFormula(a);
-					if (type === "custom") {
+					if (type === "Custom") {
 						let wb = Asc["editor"] && Asc["editor"].wb;
 						let desc = wb && wb.customFunctionEngine && wb.customFunctionEngine.getDescription(a.name, true);
 						if (desc) {
