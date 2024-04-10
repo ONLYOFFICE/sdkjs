@@ -1644,6 +1644,7 @@ var editor;
    * asc_onLockPrintArea/asc_onUnLockPrintArea            - эвент о локе в меню опции print area во вкладке layout
    * asc_onPrintPreviewSheetChanged                 - эвент о смене печатаемого листа при предварительной печати
    * asc_onPrintPreviewPageChanged                  - эвент о смене печатаемой страницы при предварительной печати
+   * asc_onAddCustomFunction			()		    - add new custom function event
    */
 
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {

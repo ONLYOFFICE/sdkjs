@@ -17198,11 +17198,12 @@ function RangeDataManagerElem(bbox, data)
 		let funcName = newFunc.prototype.name;
 
 		//already added function
+		let isNewFunc = false;
 		if (this.funcsMapInfo[funcName]) {
 			//reload translations
 			this.pushTranslations(funcName, translations);
 
-			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["Custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
 					customFunctionList.splice(i - 0, 1);
@@ -17213,6 +17214,7 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName] = {};
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
+			isNewFunc = true;
 		}
 
 		//add or reload
@@ -17228,9 +17230,13 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName].description = description;
 		}
 
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
+		this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		if (isNewFunc) {
+			this.wb.handlers.trigger("asc_onAddCustomFunction");
+		}
 	};
 
 	CCustomFunctionEngine.prototype.pushTranslations = function (funcName, translations) {
