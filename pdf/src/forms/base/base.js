@@ -294,7 +294,7 @@
 
 
         let oViewer = editor.getDocumentRenderer();
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oViewer.pagesInfo.pages[nPage].fields == null) {
                 oViewer.pagesInfo.pages[nPage].fields = [];

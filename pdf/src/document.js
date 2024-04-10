@@ -1636,7 +1636,7 @@ var CPresentation = CPresentation || function(){};
         let aPages = oFile.pages.splice(nPos, 1);
 		oViewer.drawingPages.splice(nPos, 1);
         oViewer.pagesInfo.pages.splice(nPos, 1);
-
+        
         // проставляем новые номера страниц объектам на остальных страницах
         for (let nPage = nPos; nPage < oViewer.pagesInfo.pages.length; nPage++) {
             if (oViewer.pagesInfo.pages[nPage].fields) {
@@ -1655,7 +1655,7 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
-            
+        
         oViewer.checkVisiblePages();
         oViewer.resize();
         for (let i = 0; i < oViewer.file.pages.length; i++) {
@@ -2163,7 +2163,7 @@ var CPresentation = CPresentation || function(){};
             let nIdx = this.widgetsParents.indexOf(oForm);
             if (nIdx != -1) {
                 this.widgetsParents.splice(nIdx, oForm);
-                this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, -1], [oForm]))
+                this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nIdx, -1], [oForm]))
             }
 
             // проверяем родителя этого родителя
@@ -4028,6 +4028,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.ContinueSpellCheck = function() {};
     CPDFDoc.prototype.ContinueTrackRevisions = function() {};
+    CPDFDoc.prototype.StartCollaborationEditing = function() {};
     CPDFDoc.prototype.Viewer_OnChangePosition = function() {};
     CPDFDoc.prototype.Document_CreateFontMap = function() { return {}};
     CPDFDoc.prototype.TurnOffSpellCheck = function() {};

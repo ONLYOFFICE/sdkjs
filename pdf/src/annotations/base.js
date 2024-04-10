@@ -569,7 +569,7 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
         
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.annots.indexOf(this) != -1) {
                 if (oViewer.pagesInfo.pages[nPage].annots == null) {

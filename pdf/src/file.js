@@ -145,6 +145,7 @@
     {
     	this.nativeFile = 0;
     	this.pages = [];
+        this.originalPagesCount = 0;
     	this.zoom = 1;
     	this.isUse3d = false;
     	this.cacheManager = null;
@@ -2786,8 +2787,9 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
-                page.originIndex = i; // исходный индекс в файле
+                page.originIndex = page["originIndex"]; // исходный индекс в файле
             }
+            file.originalPagesCount = file.pages.length;
 
             //file.cacheManager = new AscCommon.CCacheManager();
             return file;   

@@ -2859,9 +2859,9 @@
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				var page = this.pagesInfo.pages[i];
-				if (page.isPainted && null === page.links)
+				if (page.isPainted && null === page.links && this.file.pages[i].originIndex != undefined)
 				{
-					page.links = this.file.getLinks(i);
+					page.links = this.file.getLinks(this.file.pages[i].originIndex);
 					return true;
 				}
 			}
@@ -4076,13 +4076,15 @@
 
 	CHtmlPage.prototype.Save = function()
 	{
-		let memoryInitSize = 1024 * 500; // 500Kb
-		let oMemory	= null;
-		let aPages	= this.pagesInfo.pages;
+		let memoryInitSize	= 1024 * 500; // 500Kb
+		let oMemory			= null;
+
+		let aPagesInfo	= this.pagesInfo.pages;
+		let oFile		= this.file;
 
 		// по информации аннотаций определим какие были удалены
 		let oDoc		= this.getPDFDoc();
-		let aAnnotsInfo	= this.file.nativeFile["getAnnotationsInfo"]();
+		let aAnnotsInfo	= oFile.nativeFile["getAnnotationsInfo"]();
 		let aDeleted	= [];
 		aAnnotsInfo.forEach(function(oInfo) {
 			if (oInfo["StateModel"] == AscPDF.TEXT_ANNOT_STATE_MODEL.Review)
@@ -4103,11 +4105,11 @@
 			}
 		});
 
-		for (let i = 0; i < aPages.length; i++)
-		{
-			if (aPages[i].drawings.length == 0 && aPages[i].annots.length === 0 && aPages[i].fields.length === 0 && !aDeleted[i])
-				continue;
+		// edit		- 0
+		// add		- 1
+		// delete	- 2
 
+		function writePageInfo(nPage, oPageInfo, nType) {
 			if (!oMemory)
 			{
 				oMemory = new AscCommon.CMemory(true);
@@ -4117,42 +4119,60 @@
 
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
-			oMemory.WriteByte(0); // Annotation
-			oMemory.WriteLong(i);
+			oMemory.WriteByte(nType);
+			oMemory.WriteLong(nPage);
 			
-			if (aPages[i].annots) {
-				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-					aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
-					aPages[i].annots[nAnnot].GetReplies().forEach(function(reply) {
+			// add page
+			if (nType == 1) {
+				oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
+				oMemory.WriteDouble(oFile.pages[nPage].W);
+				
+				oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
+				oMemory.WriteDouble(oFile.pages[nPage].H);
+			}
+			// remove page
+			if (nType == 2) {
+				let nEndPos = oMemory.GetCurPosition();
+				// длина комманд на стринице
+				oMemory.Seek(nStartPos);
+				oMemory.WriteLong(nEndPos - nStartPos);
+				oMemory.Seek(nEndPos);
+				return;
+			}
+
+			if (oPageInfo.annots) {
+				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
+					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
+					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {
 						reply.IsChanged() && reply.WriteToBinary(oMemory); 
 					});
 				}
 			}
 
-			if (aDeleted[i]) {
-				for (let j = 0; j < aDeleted[i].length; j++) {
+			if (aDeleted[nPage]) {
+				for (let j = 0; j < aDeleted[nPage].length; j++) {
 					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
 					oMemory.WriteLong(8);
-					oMemory.WriteLong(aDeleted[i][j]);
+					oMemory.WriteLong(aDeleted[nPage][j]);
 				}
 			}
 
 			// forms
-			if (aPages[i].fields) {
-				for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
-					if (aPages[i].fields[nForm].IsChanged())
-						aPages[i].fields[nForm].WriteToBinary(oMemory);
+			if (oPageInfo.fields) {
+				for (let nForm = 0; nForm < oPageInfo.fields.length; nForm++) {
+					if (oPageInfo.fields[nForm].IsChanged())
+						oPageInfo.fields[nForm].WriteToBinary(oMemory);
 				}
 			}
 
 			// drawings
-			if (aPages[i].drawings && aPages[i].drawings.length != 0) {
+			if (oPageInfo.drawings && oPageInfo.drawings.length != 0) {
 				let oRenderer			= this.InitDocRenderer(oMemory);
 				oMemory.context			= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
 				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
 				// graphics
-				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(this.GetPageWidthMM(i), this.GetPageHeightMM(i));
+				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(this.GetPageWidthMM(nPage), this.GetPageHeightMM(nPage));
 				oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
@@ -4167,8 +4187,8 @@
 				oRenderer.m_oBrush     = _page.m_oBrush;
 				oRenderer.m_oTransform = _page.m_oTransform;
 
-				for (let nShape = 0; nShape < aPages[i].drawings.length; nShape++) {
-					let oTextShape = aPages[i].drawings[nShape];
+				for (let nShape = 0; nShape < oPageInfo.drawings.length; nShape++) {
+					let oTextShape = oPageInfo.drawings[nShape];
 
 					oMemory.WriteByte(167); // shape start
 
@@ -4207,6 +4227,64 @@
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
+		}
+
+		function generateOperations(originalPageCount, finalPages) {
+			const operations = [];
+			let currentPageCount = originalPageCount;
+		  
+			// Сначала обрабатываем удаления
+			const finalPageIndexes = finalPages.flatMap(page => page.originIndex !== undefined ? [page.originIndex] : []);
+			let deletedCount = 0; // Считаем количество удаленных страниц для корректировки индексов
+			for (let i = 0; i < originalPageCount; i++) {
+				if (!finalPageIndexes.includes(i)) {
+					// Используем i - deletedCount для корректировки индекса страницы, учитывая уже удаленные страницы
+					operations.push([i - deletedCount, 2]);
+					deletedCount++;
+					currentPageCount--;
+				}
+			}
+		  
+			// Обрабатываем добавления
+			// Учитываем, что после удалений индексы могут измениться, поэтому используем смещение
+			let addedPagesCount = 0; // Количество добавленных страниц для корректировки индекса вставки
+			finalPages.forEach((page, index) => {
+				if (page.originIndex === undefined) { // Если страница новая (нет originIndex)
+					// Корректируем индекс для вставки, учитывая удаления и уже добавленные страницы
+					operations.push([index, 1]);
+					addedPagesCount++;
+				}
+			});
+		  
+			return operations;
+		}
+
+		function checkNeedEditPage(nPage) {
+			let aDrawings		= aPagesInfo[nPage].drawings;
+			let aAnnots			= aPagesInfo[nPage].annots;
+			let aForms			= aPagesInfo[nPage].fields;
+			let aPageDeleted	= aDeleted[nPage] || [];
+			let nOriginIndex	= oFile.pages[nPage].originIndex;
+
+			return nOriginIndex != undefined && (aDrawings.length != 0 || aAnnots.length != 0 || aForms.length != 0 || aPageDeleted.length != 0);
+		}
+
+		// сначала edit исходных страниц
+		for (let i = 0; i < aPagesInfo.length; i++) {
+			if (checkNeedEditPage(i)) {
+				writePageInfo.call(this, oFile.pages[i].originIndex, aPagesInfo[i], 0);
+			}
+		}
+
+		// составляем порядок операций удаления/добавления страниц
+		let aOrder = generateOperations(oFile.originalPagesCount, oFile.pages);
+
+		// пишем по порядку
+		for (let i = 0; i < aOrder.length; i++) {
+			let nPage = aOrder[i][0];
+			let nType = aOrder[i][1];
+
+			writePageInfo.call(this, nPage, aPagesInfo[nPage], nType);
 		}
 
 		if (oMemory) {
@@ -4265,7 +4343,6 @@
 			
 		return null;
 	};
-
 	CHtmlPage.prototype.GetPageWidth = function(nPage, bScaled) {
 		let aPages			= this.file.pages;
 		let aScaledPages	= this.drawingPages;
