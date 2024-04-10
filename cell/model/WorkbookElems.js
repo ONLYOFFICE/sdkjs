@@ -17376,11 +17376,11 @@ function RangeDataManagerElem(bbox, data)
 		return this.funcsMapInfo[name];
 	};
 
-	CCustomFunctionEngine.prototype.getDescription = function (name) {
+	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
 		let res = null;
 
 		let activeLocale = this.activeLocale;
-		if (this.localiztionMap[activeLocale]) {
+		if (!ignoreLocale && this.localiztionMap[activeLocale]) {
 			if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
 				name = this.localiztionMap[activeLocale].localNameToFullName[name];
 			}

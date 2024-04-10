@@ -186,12 +186,16 @@
 		/** @constructor */
 		function asc_CFormula(o){
 			this.name = o.name;
+			this.description = null;//by custom functions(formula dialog view description)
 		}
 		asc_CFormula.prototype.asc_getName = function () {
 			return this.name;
 		};
 		asc_CFormula.prototype.asc_getLocaleName = function () {
 			return AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[this.name] : this.name;
+		};
+		asc_CFormula.prototype.asc_getDescription = function () {
+			return this.description;
 		};
 
 		/** @constructor */
@@ -263,7 +267,9 @@
 		window["AscCommon"].asc_CFormula = asc_CFormula;
 		prot = asc_CFormula.prototype;
 		prot["asc_getName"]				= prot.asc_getName;
-		prot["asc_getLocaleName"]	= prot.asc_getLocaleName;
+		prot["asc_getLocaleName"]	    = prot.asc_getLocaleName;
+		prot["asc_getDescription"]	    = prot.asc_getDescription;
+
 
 		window["AscCommon"].asc_CTextParams = window["AscCommon"]["asc_CTextParams"] = asc_CTextParams;
 		prot = asc_CTextParams.prototype;
