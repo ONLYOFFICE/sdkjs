@@ -3791,7 +3791,7 @@
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.Address);
+			options.asc_setSpecificRange(this["Address"]);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
@@ -3947,7 +3947,7 @@
 			MatchCase && options.asc_setIsMatchCase(MatchCase);
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
-			options.asc_setSpecificRange(this.Address);
+			options.asc_setSpecificRange(this["Address"]);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
 			if (typeof ReplaceAll !== 'boolean')
