@@ -17190,7 +17190,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
-		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
 
 		let translations = params.nameLocale;
 		let description = params.description;
