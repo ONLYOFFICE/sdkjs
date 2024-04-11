@@ -3099,10 +3099,6 @@
 	 * Class representing a document form base.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {string} key - Form key.
-	 * @property {string} tip - Form tip text.
-	 * @property {boolean} required - Specifies if the form is required or not.
-	 * @property {string} placeholder - Form placeholder text.
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -3113,11 +3109,6 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text field.
-	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3132,12 +3123,6 @@
 	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} editable - Specifies if the combo box text can be edited.
-	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
-	 * @property {Array.<string | Array.<string>>} items - The combo box items.
-     * This array consists of strings or arrays of two strings where the first string is the displayed value and the second one is its meaning.
-     * If the array consists of single strings, then the displayed value and its meaning are the same.
-     * Example: ["First", ["Second", "2"], ["Third", "3"], "Fourth"].
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3152,7 +3137,6 @@
 	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3167,17 +3151,6 @@
 	 * Class representing a document picture form.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
-	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
-	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
-	 * @property {percentage} shiftX - Horizontal picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on the left;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right.
-	 * @property {percentage} shiftY - Vertical picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the bottom.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
