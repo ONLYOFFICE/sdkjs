@@ -4415,6 +4415,11 @@
               .fillRect(x, y, w, h);
         }
 
+        let t = this;
+		let _toRetina = function (val) {
+			return t.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
+
 		let drawTopBorder = function (_selected) {
 			if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
 				// Select row (top border)
@@ -4429,12 +4434,12 @@
 		};
 		let drawRightBorder = function (_selected) {
 			if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
-				ctx.lineVerPrevPx(x2, y - (_selected ? AscCommon.AscBrowser.convertToRetinaValue(1, true) : 0), y2);
+				ctx.lineVerPrevPx(x2, y - (_selected ? (_toRetina(1) + 1) : 0), y2 + (_selected ? _toRetina(1) : 0));
 			}
 		};
 		let drawBottomBorder = function (_selected) {
 			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
-				ctx.lineHorPrevPx(x - (_selected ? AscCommon.AscBrowser.convertToRetinaValue(1, true) : 0), y2, x2);
+				ctx.lineHorPrevPx(x - (_selected ? (_toRetina(1) + 1) : 0), y2, x2 + (_selected ? _toRetina(1) : 0));
 			}
 		};
 
