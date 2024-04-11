@@ -329,6 +329,20 @@ window.startPluginApi = function() {
 	 */
 
 	/**
+	 * The context menu type.
+	 * @typedef {("None" | "Target" | "Selection" | "Image" | "Shape" | "OleObject")} ContextMenuType
+	 */
+	/**
+	 * @typedef {Object} ContextMenuInfo
+	 * @description Defines the context menu information.
+	 * @property {ContextMenuType} type - The context menu type.
+	 * @property {string} guid - The plugin guid.
+	 * @property {boolean} footer - Specifies if the context menu is opened in the footer or not.
+	 * @property {boolean} header - Specifies if the context menu is opened in the header or not.
+	 * @property {boolean} headerArea - Specifies if the context menu is opened in the header area or not.
+	 * @property {boolean} footerArea - Specifies if the context menu is opened in the footer area or not.
+	 */
+	/**
 	 * Event: onContextMenuShow
 	 * WARNING! If plugin is listening this event, it MUST call AddContextMenuItem method (synchronously or not),
 	 * because editor wait answers from ALL plugins and then and only then fill contextmenu.
@@ -339,7 +353,7 @@ window.startPluginApi = function() {
 	 * 
 	 * <note>If a plugin is listening for this event, it must call the {@link /plugin/executeMethod/common/addcontextmenuitem AddContextMenuItem} method (synchronously or not),
 	 * because the editor waits for responses from all plugins before filling the context menu.</note>
-	 * @param {Object} options - Defines the options for the current selection.
+	 * @param {ContextMenuInfo} options - Defines the context menu information.
 	 * @since 7.4.0
 	 */
 
