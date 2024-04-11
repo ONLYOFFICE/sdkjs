@@ -112,10 +112,6 @@
 			this.header.cornerColor = this.getCColor(AscCommon.GlobalSkin.SelectAllIcon);
 			this.header.cornerColorSheetView = this.getCColor(AscCommon.GlobalSkin.SheetViewSelectAllIcon);
 		};
-
-
-		AscCommon.GlobalSkin.Background = "#f1f1f1"
-
 		this._generateStyle = function () {
 			return [// Header colors
 				{ // kHeaderDefault

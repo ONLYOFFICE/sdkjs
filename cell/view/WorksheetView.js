@@ -4473,7 +4473,7 @@
             // Select col (left border)
             ctx.lineVerPrevPx(x, y, y2);
         }
-		ctx.stroke();
+        ctx.stroke();
 
 
         // Для невидимых кроме border-а ничего не рисуем
@@ -7779,7 +7779,7 @@
 			}
         }
 
-        if (this.model.copySelection) {b
+        if (this.model.copySelection) {
             selectionRange = this.model.selectionRange;
         } else if (this.workbook.isDrawFormatPainter()) {
 			let oData = this.workbook.Api.getFormatPainterData();

@@ -388,6 +388,8 @@ function updateGlobalSkinColors(theme)
 		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
 
+	//theme["canvas-background"] = "#f7f7f7";
+
 	// корректируем цвета для старого хрома:
 	// в старых хромах (desktop windows XP)
 	// если начинается цвет с цифры (#0-9) - то помечается символом \3 (конец текста)
