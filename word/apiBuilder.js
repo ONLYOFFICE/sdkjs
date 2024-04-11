@@ -18071,7 +18071,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -18087,7 +18087,9 @@
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
-		this.Sdt.ClearContentControlExt();
+		return executeNoFormLockCheck(function() {
+			this.Sdt.ClearContentControlExt();
+		}, this);
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
@@ -18127,7 +18129,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -18145,7 +18147,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
