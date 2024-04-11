@@ -3099,10 +3099,6 @@
 	 * Class representing a document form base.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {string} key - Form key.
-	 * @property {string} tip - Form tip text.
-	 * @property {boolean} required - Specifies if the form is required or not.
-	 * @property {string} placeholder - Form placeholder text.
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -3113,11 +3109,6 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text field.
-	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3132,12 +3123,6 @@
 	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} editable - Specifies if the combo box text can be edited.
-	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
-	 * @property {Array.<string | Array.<string>>} items - The combo box items.
-     * This array consists of strings or arrays of two strings where the first string is the displayed value and the second one is its meaning.
-     * If the array consists of single strings, then the displayed value and its meaning are the same.
-     * Example: ["First", ["Second", "2"], ["Third", "3"], "Fourth"].
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3152,7 +3137,6 @@
 	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3167,17 +3151,6 @@
 	 * Class representing a document picture form.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
-	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
-	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
-	 * @property {percentage} shiftX - Horizontal picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on the left;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right.
-	 * @property {percentage} shiftY - Vertical picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the bottom.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
@@ -6946,11 +6919,11 @@
 	 */
 	ApiDocument.prototype.AddFootnote = function()
 	{
-		let oResult = this.Document.AddFootnote();
-		if (!oResult)
+		let footnote = this.Document._addFootnote();
+		if (!footnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(footnote);
 	};
 
 	/**
@@ -6961,11 +6934,11 @@
 	 */
 	ApiDocument.prototype.AddEndnote = function()
 	{
-		let oResult = this.Document.AddEndnote();
-		if (!oResult)
+		let endnote = this.Document._addEndnote();
+		if (!endnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(endnote);
 	};
 
 	/**
@@ -7546,7 +7519,6 @@
 	{
 		var oParagraph = this.Paragraph.Copy(undefined, private_GetDrawingDocument(), {
 			SkipComments          : true,
-			SkipAnchors           : true,
 			SkipFootnoteReference : true,
 			SkipComplexFields     : true
 		});
@@ -12504,7 +12476,7 @@
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
-		return this.TextPr.GetDoubleStrikeout();
+		return this.TextPr.GetDStrikeout();
 	};
 
 	/**
@@ -18119,7 +18091,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -18135,7 +18107,9 @@
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
-		this.Sdt.ClearContentControlExt();
+		return executeNoFormLockCheck(function() {
+			this.Sdt.ClearContentControlExt();
+		}, this);
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
@@ -18175,7 +18149,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -18193,7 +18167,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -21568,7 +21542,7 @@
 
 	/**
 	 * Gets a document color object by color name.
-	 * @param {highlightColor} - available highlight color
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {object}
 	 */
 	function private_getHighlightColorByName(sColor)
@@ -21630,117 +21604,53 @@
 	}
 
 	/**
-	 * Gets a document higlight name by color object.
-	 * @param {object} - available highlight color
+	 * Gets a document highlight name by color object.
+	 * @param {object} oColor - available highlight color
 	 * @returns {highlightColor}
 	 */
 	function private_getHighlightNameByColor(oColor)
 	{
-		if (oColor === -1 || oColor === null) {
+		if (oColor === -1 || oColor === null)
 			return "none";
-		}
-
-		if (AscCommon.c_oEditorId.Word == Asc.editor.editorId) {
-			if (new CDocumentColor(0, 0, 0).IsEqual(oColor)) {
-				return "black";
-			}
-			if (new CDocumentColor(0, 0, 255).IsEqual(oColor)) {
-				return "blue";
-			}
-			if (new CDocumentColor(0, 255, 255).IsEqual(oColor)) {
-				return "cyan";
-			}
-			if (new CDocumentColor(0, 255, 0).IsEqual(oColor)) {
-				return "green";
-			}
-			if (new CDocumentColor(255, 0, 255).IsEqual(oColor)) {
-				return "magenta";
-			}
-			if (new CDocumentColor(255, 0, 0).IsEqual(oColor)) {
-				return "red";
-			}
-			if (new CDocumentColor(255, 255, 0).IsEqual(oColor)) {
-				return "yellow";
-			}
-			if (new CDocumentColor(255, 255, 255).IsEqual(oColor)) {
-				return "white";
-			}
-			if (new CDocumentColor(0, 0, 139).IsEqual(oColor)) {
-				return "darkBlue";
-			}
-			if (new CDocumentColor(0, 139, 139).IsEqual(oColor)) {
-				return "darkCyan";
-			}
-			if (new CDocumentColor(0, 100, 0).IsEqual(oColor)) {
-				return "darkGreen";
-			}
-			if (new CDocumentColor(128, 0, 128).IsEqual(oColor)) {
-				return "darkMagenta";
-			}
-			if (new CDocumentColor(139, 0, 0).IsEqual(oColor)) {
-				return "darkRed";
-			}
-			if (new CDocumentColor(128, 128, 0).IsEqual(oColor)) {
-				return "darkYellow";
-			}
-			if (new CDocumentColor(169, 169, 169).IsEqual(oColor)) {
-				return "darkGray";
-			}
-			if (new CDocumentColor(211, 211, 211).IsEqual(oColor)) {
-				return "lightGray";
+		
+		let colorMap = [
+			[0, 0, 0, "black"],
+			[0, 0, 255, "blue"],
+			[0, 255, 255, "cyan"],
+			[0, 255, 0, "green"],
+			[255, 0, 255, "magenta"],
+			[255, 0, 0, "red"],
+			[255, 255, 0, "yellow"],
+			[255, 255, 255, "white"],
+			[0, 0, 139, "darkBlue"],
+			[0, 139, 139, "darkCyan"],
+			[0, 100, 0, "darkGreen"],
+			[128, 0, 128, "darkMagenta"],
+			[139, 0, 0, "darkRed"],
+			[128, 128, 0, "darkYellow"],
+			[169, 169, 169, "darkGray"],
+			[211, 211, 211, "lightGray"]
+		];
+		
+		if (AscCommon.c_oEditorId.Word === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (new CDocumentColor(c[0], c[1], c[2]).IsEqual(oColor))
+					return c[3];
 			}
 		}
-		else if (AscCommon.c_oEditorId.Presentation == Asc.editor.editorId) {
-			if (AscFormat.CreateUniColorRGB(0, 0, 0).IsEqual(oColor)) {
-				return "black";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 255).IsEqual(oColor)) {
-				return "blue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 255).IsEqual(oColor)) {
-				return "cyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 0).IsEqual(oColor)) {
-				return "green";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 255).IsEqual(oColor)) {
-				return "magenta";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 0).IsEqual(oColor)) {
-				return "red";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 0).IsEqual(oColor)) {
-				return "yellow";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 255).IsEqual(oColor)) {
-				return "white";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 139).IsEqual(oColor)) {
-				return "darkBlue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 139, 139).IsEqual(oColor)) {
-				return "darkCyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 100, 0).IsEqual(oColor)) {
-				return "darkGreen";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 0, 128).IsEqual(oColor)) {
-				return "darkMagenta";
-			}
-			if (AscFormat.CreateUniColorRGB(139, 0, 0).IsEqual(oColor)) {
-				return "darkRed";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 128, 0).IsEqual(oColor)) {
-				return "darkYellow";
-			}
-			if (AscFormat.CreateUniColorRGB(169, 169, 169).IsEqual(oColor)) {
-				return "darkGray";
-			}
-			if (AscFormat.CreateUniColorRGB(211, 211, 211).IsEqual(oColor)) {
-				return "lightGray";
+		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (AscFormat.CreateUniColorRGB(c[0], c[1], c[2]).IsIdentical(oColor))
+					return c[3];
 			}
 		}
-
+		
 		return undefined;
 	}
 

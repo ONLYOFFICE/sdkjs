@@ -1775,15 +1775,15 @@
 
     // Проверяет, есть ли числовые значения в диапазоне
     WorksheetView.prototype._hasNumberValueInActiveRange = function () {
-        var cell, cellType, exist = false, setCols = {}, setRows = {};
+        let cell, cellType, exist = false, setCols = {}, setRows = {};
         // ToDo multiselect
-		var selection = this.model.getSelection();
-        var selectionRange = selection.getLast();
+        let selection = this.model.getSelection();
+        let selectionRange = selection.getLast();
         if (selectionRange.isOneCell()) {
             // Для одной ячейки не стоит ничего делать
             return null;
         }
-        var mergedRange = this.model.getMergedByCell(selectionRange.r1, selectionRange.c1);
+        let mergedRange = this.model.getMergedByCell(selectionRange.r1, selectionRange.c1);
         if (mergedRange && mergedRange.isEqual(selectionRange)) {
             // Для одной ячейки не стоит ничего делать
             return null;
@@ -1793,15 +1793,15 @@
 			return null;
 		}
 
-		var c2 = Math.min(selectionRange.c2, this.nColsCount - 1);
-		var r2 = Math.min(selectionRange.r2, this.nRowsCount - 1);
-        for (var c = selectionRange.c1; c <= c2; ++c) {
-            for (var r = selectionRange.r1; r <= r2; ++r) {
+        let c2 = Math.min(selectionRange.c2, this.nColsCount - 1);
+        let r2 = Math.min(selectionRange.r2, this.nRowsCount - 1);
+        for (let c = selectionRange.c1; c <= c2; ++c) {
+            for (let r = selectionRange.r1; r <= r2; ++r) {
                 cell = this._getCellTextCache(c, r, true);
                 if (cell) {
                     // Нашли не пустую ячейку, проверим формат
                     cellType = cell.cellType;
-                    if (null == cellType || CellValueType.Number === cellType) {
+                    if (null == cellType || CellValueType.Number === cellType || CellValueType.Bool === cellType || CellValueType.Error === cellType) {
 						exist = setRows[r] = setCols[c] = true;
                     }
                 }
@@ -1809,7 +1809,7 @@
         }
         if (exist) {
             // Делаем массивы уникальными и сортируем
-            var i, arrCols = [], arrRows = [];
+            let i, arrCols = [], arrRows = [];
             for(i in setCols) {
 				arrCols.push(+i);
             }
@@ -1824,48 +1824,80 @@
 
     // Автодополняет формулу диапазоном, если это возможно
     WorksheetView.prototype.autoCompleteFormula = function (functionName) {
-        var t = this;
+        const t = this;
         // ToDo autoComplete with multiselect
-		var selection = this.model.getSelection();
-        var activeCell = selection.activeCell;
-        var ar = selection.getLast();
-        var arCopy = null;
-        var arHistorySelect = ar.clone(true);
-        var vr = this.visibleRange;
-
+        let selection = this.model.getSelection();
+        let activeCell = selection.activeCell;
+        let ar = selection.getLast();
+        let arCopy = null;
+        let arHistorySelect = ar.clone(true);
+        let vr = this.visibleRange;
         // Первая верхняя не числовая ячейка
-        var topCell = null;
+        let topCell = null;
         // Первая левая не числовая ячейка
-        var leftCell = null;
+        let leftCell = null;
 
-        var r = activeCell.row - 1;
-        var c = activeCell.col - 1;
-        var cell, cellType, isNumberFormat;
-        var result = {};
+        let r = activeCell.row - 1;
+        let c = activeCell.col - 1;
+        let cell, cellType, isNumberFormat;
+        let result = {};
         // Проверим, есть ли числовые значения в диапазоне
-        var hasNumber = this._hasNumberValueInActiveRange();
-        var val, text;
+        let hasNumber = this._hasNumberValueInActiveRange();
+        let val, text;
+
+        let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
+        let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
 
         if (hasNumber) {
-            var i;
+            let i;
             // Есть ли значения в последней строке и столбце
-            var hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
-            var hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
+            let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
+            let hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
+            let realElementsInCol = hasNumber.arrRows.length;
+            let realElementsInRow = hasNumber.arrCols.length;
+            let bIsVertical = (ar.c2 - ar.c1) === 0;
+            // Нужно ли прервать выполнение
+            let breakExec;
 
             // Нужно уменьшить зону выделения (если она реально уменьшилась)
-            var startCol = hasNumber.arrCols[0];
-            var startRow = hasNumber.arrRows[0];
+            let startRow = (ar.c2 - ar.c1) > 0 ? hasNumber.arrRows[0] : ar.r1;
+            let startCol = hasNumber.arrRows.length === 1 ? ar.c1 : hasNumber.arrCols[0];
             // Старые границы диапазона
-            var startColOld = ar.c1;
-            var startRowOld = ar.r1;
+            let startColOld = ar.c1;
+            let startRowOld = ar.r1;
             // Нужно ли перерисовывать
-            var bIsUpdate = false;
+            let bIsUpdate = false;
+
             if (startColOld !== startCol || startRowOld !== startRow) {
                 bIsUpdate = true;
             }
             if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
                 bIsUpdate = true;
             }
+
+            if (firstCell && firstCell.cellType === CellValueType.String) {
+                // если первая ячейка строка, обрезаем select до первого не пустого значения
+                if (hasNumberInLastColumn && hasNumberInLastRow && (realElementsInRow === 1 && realElementsInCol === 1)) {
+                    // Последнее значение - число
+                    bIsUpdate = false;
+                    // set active cell to the end of the select
+                    activeCell.row = ar.r2;
+                    activeCell.col = ar.c2;
+                    breakExec = true;
+                } else {
+                    // set selection by last number value
+                    startRow = hasNumber.arrRows[0];
+                    startCol = hasNumber.arrCols[0];
+                    bIsUpdate = true;
+                }
+            } else if ((realElementsInRow === 1 && realElementsInCol === 1) && (hasNumberInLastColumn && hasNumberInLastRow)) {
+                // Последняя ячейка - число, нужно расширить селект
+                startRow = ar.r1;
+                startCol = ar.c1;
+                bIsUpdate = true;
+            }
+
+
             if (bIsUpdate) {
                 this.cleanSelection();
                 ar.c1 = startCol;
@@ -1877,8 +1909,8 @@
                 }
                 if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
                     // Мы расширяем диапазон
-                    if (1 === hasNumber.arrRows.length) {
-                        // Одна строка или только в последней строке есть значения... (увеличиваем вправо)
+                    if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {
+                        // Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
                         ar.c2 += 1;
                     } else {
                         // Иначе вводим в строку вниз
@@ -1888,137 +1920,139 @@
                 this._drawSelection();
             }
 
-            arCopy = ar.clone(true);
+			if (!breakExec){
+				arCopy = ar.clone(true);
 
-            var functionAction = null;
-            var changedRange = null;
-
-            if (false === hasNumberInLastColumn && false === hasNumberInLastRow) {
-                // Значений нет ни в последней строке ни в последнем столбце (значит нужно сделать формулы в каждой последней ячейке)
-                changedRange =
-                  [new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
-                  1], arCopy.r2),
-                      new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
-                      1])];
-                functionAction = function () {
-                    // Пройдемся по последней строке
-                    for (i = 0; i < hasNumber.arrCols.length; ++i) {
-                        c = hasNumber.arrCols[i];
-                        cell = t._getVisibleCell(c, arCopy.r2);
-						text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                        val = t.generateAutoCompleteFormula(functionName, text);
-                        // ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
-                        cell.setValue(val);
-                    }
-                    // Пройдемся по последнему столбцу
-                    for (i = 0; i < hasNumber.arrRows.length; ++i) {
-                        r = hasNumber.arrRows[i];
-                        cell = t._getVisibleCell(arCopy.c2, r);
-                        text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
-                        val = t.generateAutoCompleteFormula(functionName, text);
-                        cell.setValue(val);
-                    }
-                    // Значение в правой нижней ячейке
-                    cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
-                    text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
-                    val = t.generateAutoCompleteFormula(functionName, text);
-                    cell.setValue(val);
-                };
-            } else if (true === hasNumberInLastRow && false === hasNumberInLastColumn) {
-                // Есть значения только в последней строке (значит нужно заполнить только последнюю колонку)
-                changedRange =
-                  new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
-                  1]);
-                functionAction = function () {
-                    // Пройдемся по последнему столбцу
-                    for (i = 0; i < hasNumber.arrRows.length; ++i) {
-                        r = hasNumber.arrRows[i];
-                        cell = t._getVisibleCell(arCopy.c2, r);
-                        text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
-                        val = t.generateAutoCompleteFormula(functionName, text);
-                        cell.setValue(val);
-                    }
-                };
-            } else if (false === hasNumberInLastRow && true === hasNumberInLastColumn) {
-                // Есть значения только в последнем столбце (значит нужно заполнить только последнюю строчку)
-                changedRange =
-                  new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
-                  1], arCopy.r2);
-                functionAction = function () {
-                    // Пройдемся по последней строке
-                    for (i = 0; i < hasNumber.arrCols.length; ++i) {
-                        c = hasNumber.arrCols[i];
-                        cell = t._getVisibleCell(c, arCopy.r2);
-                        text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                        val = t.generateAutoCompleteFormula(functionName, text);
-                        cell.setValue(val);
-                    }
-                };
-            } else {
-                // Есть значения и в последнем столбце, и в последней строке
-                if (1 === hasNumber.arrRows.length) {
-                    changedRange = new asc_Range(arCopy.c2, arCopy.r2, arCopy.c2, arCopy.r2);
-                    functionAction = function () {
-                        // Одна строка или только в последней строке есть значения...
-                        cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
-                        // ToDo вводить в первое свободное место, а не сразу за диапазоном
-                        text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
-                        val = t.generateAutoCompleteFormula(functionName, text);
-                        cell.setValue(val);
-                    };
-                } else {
-                    changedRange =
-                      new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
-                      1], arCopy.r2);
-                    functionAction = function () {
-                        // Иначе вводим в строку вниз
-                        for (i = 0; i < hasNumber.arrCols.length; ++i) {
-                            c = hasNumber.arrCols[i];
-                            cell = t._getVisibleCell(c, arCopy.r2);
-                            // ToDo вводить в первое свободное место, а не сразу за диапазоном
-                            text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
-                            val = t.generateAutoCompleteFormula(functionName, text);
-                            cell.setValue(val);
-                        }
-                    };
-                }
-            }
-
-            var onAutoCompleteFormula = function (isSuccess) {
-                if (false === isSuccess) {
-                    return;
-                }
-
-                History.Create_NewPoint();
-                History.SetSelection(arHistorySelect.clone());
-                History.SetSelectionRedo(arCopy.clone());
-                History.StartTransaction();
-
-                asc_applyFunction(functionAction);
-
-                History.EndTransaction();
-
-				t.getSelectionMathInfo(function (info) {
-					t.handlers.trigger("selectionMathInfoChanged", info);
-				});
-
-				let selectionType = ar.getType && ar.getType();
-				if (selectionType === c_oAscSelectionType.RangeCol) {
-					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
-				} else if (selectionType === c_oAscSelectionType.RangeRow) {
-					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-				} else if (selectionType === c_oAscSelectionType.RangeMax) {
-					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+				let functionAction = null;
+				let changedRange = null;
+	
+				if (false === hasNumberInLastColumn && false === hasNumberInLastRow) {
+					// Значений нет ни в последней строке ни в последнем столбце (значит нужно сделать формулы в каждой последней ячейке)
+					changedRange =
+					  [new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
+					  1], arCopy.r2),
+						  new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
+						  1])];
+					functionAction = function () {
+						// Пройдемся по последней строке
+						for (i = 0; i < hasNumber.arrCols.length; ++i) {
+							c = hasNumber.arrCols[i];
+							cell = t._getVisibleCell(c, arCopy.r2);
+							text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
+							cell.setValue(val);
+						}
+						// Пройдемся по последнему столбцу
+						for (i = 0; i < hasNumber.arrRows.length; ++i) {
+							r = hasNumber.arrRows[i];
+							cell = t._getVisibleCell(arCopy.c2, r);
+							text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+						// Значение в правой нижней ячейке
+						cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
+						text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
+						val = t.generateAutoCompleteFormula(functionName, text);
+						cell.setValue(val);
+					};
+				} else if (true === hasNumberInLastRow && false === hasNumberInLastColumn) {
+					// Есть значения только в последней строке (значит нужно заполнить только последнюю колонку)
+					changedRange =
+					  new asc_Range(arCopy.c2, hasNumber.arrRows[0], arCopy.c2, hasNumber.arrRows[hasNumber.arrRows.length -
+					  1]);
+					functionAction = function () {
+						// Пройдемся по последнему столбцу
+						for (i = 0; i < hasNumber.arrRows.length; ++i) {
+							r = hasNumber.arrRows[i];
+							cell = t._getVisibleCell(arCopy.c2, r);
+							text = (new asc_Range(arCopy.c1, r, arCopy.c2 - 1, r)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					};
+				} else if (false === hasNumberInLastRow && true === hasNumberInLastColumn) {
+					// Есть значения только в последнем столбце (значит нужно заполнить только последнюю строчку)
+					changedRange =
+					  new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
+					  1], arCopy.r2);
+					functionAction = function () {
+						// Пройдемся по последней строке
+						for (i = 0; i < hasNumber.arrCols.length; ++i) {
+							c = hasNumber.arrCols[i];
+							cell = t._getVisibleCell(c, arCopy.r2);
+							text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						}
+					};
+				} else {
+					// Есть значения и в последнем столбце, и в последней строке, выделенный диапазон по столбцам больше одной ячейки и только в одной строке есть значения
+					if (1 === hasNumber.arrRows.length && (ar.c2 - ar.c1) > 0) {
+						changedRange = new asc_Range(arCopy.c2, arCopy.r2, arCopy.c2, arCopy.r2);
+						functionAction = function () {
+							// Одна строка или только в последней строке есть значения...
+							cell = t._getVisibleCell(arCopy.c2, arCopy.r2);
+							// ToDo вводить в первое свободное место, а не сразу за диапазоном
+							text = (new asc_Range(arCopy.c1, arCopy.r2, arCopy.c2 - 1, arCopy.r2)).getName();
+							val = t.generateAutoCompleteFormula(functionName, text);
+							cell.setValue(val);
+						};
+					} else {
+						changedRange =
+						  new asc_Range(hasNumber.arrCols[0], arCopy.r2, hasNumber.arrCols[hasNumber.arrCols.length -
+						  1], arCopy.r2);
+						functionAction = function () {
+							// Иначе вводим в строку вниз
+							for (i = 0; i < hasNumber.arrCols.length; ++i) {
+								c = hasNumber.arrCols[i];
+								cell = t._getVisibleCell(c, arCopy.r2);
+								// ToDo вводить в первое свободное место, а не сразу за диапазоном
+								text = (new asc_Range(c, arCopy.r1, c, arCopy.r2 - 1)).getName();
+								val = t.generateAutoCompleteFormula(functionName, text);
+								cell.setValue(val);
+							}
+						};
+					}
 				}
-
-				t.draw();
-            };
-
-            // Можно ли применять автоформулу
-            this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
-
-            result.notEditCell = true;
-            return result;
+	
+				const onAutoCompleteFormula = function (isSuccess) {
+					if (false === isSuccess) {
+						return;
+					}
+	
+					History.Create_NewPoint();
+					History.SetSelection(arHistorySelect.clone());
+					History.SetSelectionRedo(arCopy.clone());
+					History.StartTransaction();
+	
+					asc_applyFunction(functionAction);
+	
+					History.EndTransaction();
+	
+					t.getSelectionMathInfo(function (info) {
+						t.handlers.trigger("selectionMathInfoChanged", info);
+					});
+	
+					let selectionType = ar.getType && ar.getType();
+					if (selectionType === c_oAscSelectionType.RangeCol) {
+						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+					} else if (selectionType === c_oAscSelectionType.RangeRow) {
+						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+					} else if (selectionType === c_oAscSelectionType.RangeMax) {
+						t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+					}
+	
+					t.draw();
+				};
+	
+				// Можно ли применять автоформулу
+				this._isLockedCells(changedRange, /*subType*/null, onAutoCompleteFormula);
+	
+				result.notEditCell = true;
+				return result;
+			}
         }
 
         // Ищем первую ячейку с числом
@@ -2028,8 +2062,8 @@
                 // Нашли не пустую ячейку, проверим формат
                 cellType = cell.cellType;
                 isNumberFormat = (null === cellType || CellValueType.Number === cellType);
-                var cellRange = this.model.getCell3(r, activeCell.col);
-                var isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
+                let cellRange = this.model.getCell3(r, activeCell.col);
+                let isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
                 if (isNumberFormat && !isDateFormat) {
                     // Это число, мы нашли то, что искали
                     topCell = {
@@ -2054,8 +2088,8 @@
                     // Нашли не пустую ячейку, проверим формат
                     cellType = cell.cellType;
                     isNumberFormat = (null === cellType || CellValueType.Number === cellType);
-                    var cellRange = this.model.getCell3(activeCell.row, c);
-                    var isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
+                    let cellRange = this.model.getCell3(activeCell.row, c);
+                    let isDateFormat = cellRange.getNumFormat().isDateTimeFormat();
                     if (isNumberFormat && !isDateFormat) {
                         // Это число, мы нашли то, что искали
                         leftCell = {
@@ -14162,10 +14196,6 @@
                         }
                         break;
                     case "format":
-						const pivotTables = t.model.getPivotTablesIntersectingRange(range.bbox);
-						pivotTables.forEach(function (pivotTable) {
-							pivotTable.formatsManager.setNum(range.bbox, val);
-						});
                         range.setNumFormat(val);
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;
@@ -14353,14 +14383,17 @@
                         t.model.workbook.dependencyFormulas.unlockRecal();
                         break;
 
-                    case "changeDigNum":
-                        res = [];
-                        for (c = item.c1; c <= item.c2; ++c) {
-							res.push(t.getColumnWidthInSymbols(c));
-                        }
-                        range.shiftNumFormat(val, res);
-                        canChangeColWidth = c_oAscCanChangeColWidth.numbers;
-                        break;
+					case "changeDigNum": {
+						//change format by active cell
+						let colWidth = t.getColumnWidthInSymbols(activeCell.col)
+						let cell = t.model.getRange3(activeCell.row, activeCell.col, activeCell.row, activeCell.col);
+						let newNumFormat = cell.getShiftedNumFormat(val, colWidth);
+						if (newNumFormat) {
+							range.setNumFormat(newNumFormat);
+							canChangeColWidth = c_oAscCanChangeColWidth.numbers;
+						}
+						break;
+					}
                     case "changeFontSize":
                         mc = t.model.getMergedByCell(activeCell.row, activeCell.col);
                         c = mc ? mc.c1 : activeCell.col;
@@ -25037,17 +25070,17 @@
 
 						selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
 
-						AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+						AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 					} else {
 						oImageMap = pasteContent.props.oImageMap;
 						if (window["NATIVE_EDITOR_ENJINE"]) {
 							//TODO для мобильных приложений  - не рабочий код!
 							AscCommon.ResetNewUrls(pasteContent.props.data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 							selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
-							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 						} else {
 							selectData = t._pasteData(isLargeRange, fromBinaryExcel, pasteContent, bIsUpdate, _pasteToRange, null, val);
-							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(t, pasteContent, oImageMap);
+							AscCommonExcel.g_clipboardExcel.pasteProcessor._insertImagesFromBinaryWord(ws, pasteContent, oImageMap);
 						}
 					}
 				} else {
