@@ -18961,7 +18961,7 @@
 	 * Sets the timestamp to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {number} nTimeStamp The timestamp in the current time zone format.
+	 * @param {number} nTimeStamp The timestamp that will be set to the current date form.
 	 * @returns {boolean}
 	 * @since 8.1.0
 	 */
