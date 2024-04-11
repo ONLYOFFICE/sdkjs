@@ -4414,66 +4414,60 @@
             ctx.setFillStyle(backgroundColor)
               .fillRect(x, y, w, h);
         }
-        // draw border
-        ctx.setStrokeStyle(borderColor)
-          .setLineWidth(1)
-          .beginPath();
-        if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
-            // Select row (top border)
-            ctx.lineHorPrevPx(x, y, x2);
-        }
-		ctx.stroke();
 
-
-        // Right border
-		if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
-
-
-			if (style  === kHeaderActive && !isColHeader) {
-				ctx.setStrokeStyle(new CColor(72, 121, 92))
-					.setLineWidth(2)
-					.beginPath();
-				// Bottom border
-				ctx.lineVerPrevPx(x2, y, y2);
-				ctx.stroke();
-			} else {
-				ctx.setStrokeStyle(borderColor)
-					.setLineWidth(1)
-					.beginPath();
-				ctx.lineVerPrevPx(x2, y, y2);
-				ctx.stroke();
+		let drawTopBorder = function (_selected) {
+			if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
+				// Select row (top border)
+				ctx.lineHorPrevPx(x, y, x2);
 			}
-		}
-
-
-		if (style  === kHeaderActive && isColHeader) {
-			ctx.setStrokeStyle(new CColor(72, 121, 92))
-				.setLineWidth(2)
-				.beginPath();
-			// Bottom border
+		};
+		let drawLeftBorder = function (_selected) {
+			if (style !== kHeaderDefault && isColHeader) {
+				// Select col (left border)
+				ctx.lineVerPrevPx(x, y, y2);
+			}
+		};
+		let drawRightBorder = function (_selected) {
+			if (isColHeader || !window["IS_NATIVE_EDITOR"]) {
+				ctx.lineVerPrevPx(x2, y - (_selected ? AscCommon.AscBrowser.convertToRetinaValue(1, true) : 0), y2);
+			}
+		};
+		let drawBottomBorder = function (_selected) {
 			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
-				ctx.lineHorPrevPx(x, y2, x2);
+				ctx.lineHorPrevPx(x - (_selected ? AscCommon.AscBrowser.convertToRetinaValue(1, true) : 0), y2, x2);
 			}
-			ctx.stroke();
-		} else {
-			ctx.setStrokeStyle(borderColor)
-				.setLineWidth(1)
-				.beginPath();
-			// Bottom border
-			if (!isColHeader || !window["IS_NATIVE_EDITOR"]) {
-				ctx.lineHorPrevPx(x, y2, x2);
-			}
-			ctx.stroke();
-		}
+		};
 
+
+		let needSelectTopBorder = false;
+		let needSelectRightBorder = style  === kHeaderActive && !isColHeader;
+		let needSelectBottomBorder = style  === kHeaderActive && isColHeader;
+		let needSelectLeftBorder = false;
+
+		let drawBorders = function (_selected) {
+			needSelectTopBorder === _selected && drawTopBorder(_selected);
+			needSelectRightBorder === _selected && drawRightBorder(_selected);
+			needSelectBottomBorder === _selected && drawBottomBorder(_selected);
+			needSelectLeftBorder === _selected && drawLeftBorder(_selected);
+		};
+
+		// draw borders
 		ctx.setStrokeStyle(borderColor)
 			.setLineWidth(1)
 			.beginPath();
-        if (style !== kHeaderDefault && isColHeader) {
-            // Select col (left border)
-            ctx.lineVerPrevPx(x, y, y2);
-        }
-        ctx.stroke();
+
+		drawBorders(false);
+
+		ctx.stroke();
+
+		// draw borders (selected bottom/right)
+		ctx.setStrokeStyle(this.settings.activeCellBorderColor)
+			.setLineWidth(AscCommon.AscBrowser.convertToRetinaValue(2, true))
+			.beginPath();
+
+		drawBorders(true);
+
+		ctx.stroke();
 
 
         // Для невидимых кроме border-а ничего не рисуем
