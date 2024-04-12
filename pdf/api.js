@@ -83,7 +83,7 @@
 		
 		this.WordControl.OnResize(true);
 
-		this.FontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}]);
+		this.FontLoader.LoadDocumentFonts([{name : AscPDF.DEFAULT_FIELD_FONT}]);
 
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
