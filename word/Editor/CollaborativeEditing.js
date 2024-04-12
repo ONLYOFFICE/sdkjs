@@ -68,6 +68,9 @@ CWordCollaborativeEditing.prototype.Clear = function()
 };
 CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
+	if (!this.canSendChanges())
+		return;
+	
     // Пересчитываем позиции
     this.Refresh_DCChanges();
 
@@ -271,7 +274,7 @@ CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(isDontLockInFastM
 		}
 	}
 
-	if (true === isDontLockInFastMode && true === this.Is_Fast())
+	if ((true === isDontLockInFastMode && true === this.Is_Fast()) || !this.canSendChanges())
 	{
 		if (fCallback)
 		{

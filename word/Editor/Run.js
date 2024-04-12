@@ -3606,17 +3606,20 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 				var oInstrText = Item;
 				if (!PRS.ComplexFields.isComplexFieldCode())
 				{
-					if (32 === Item.Value)
+					if (AscCommon.IsSpace(Item.Value))
 					{
-						Item     = new AscWord.CRunSpace();
+						Item     = new AscWord.CRunSpace(Item.Value);
 						ItemType = para_Space;
+						Item.Measure(g_oTextMeasurer, this.getCompiledPr());
 					}
 					else
 					{
+						// TODO: Пока для такого текста не шейпим по-нормальному, а как по-старому по одному отдельному символу
 						Item     = new AscWord.CRunText(Item.Value);
 						ItemType = para_Text;
+						AscWord.ParagraphTextShaper.ShapeRunTextItem(Item, this.getCompiledPr());
 					}
-					Item.Measure(g_oTextMeasurer, this.Get_CompiledPr(false));
+					
 					oInstrText.SetReplacementItem(Item);
 				}
 				else

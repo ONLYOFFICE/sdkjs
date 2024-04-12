@@ -30931,7 +30931,7 @@ $(function () {
 		ws.getRange2("H101").setValue("#DIV/0!");
 	}
 
-	let prefix = "CUSTOMFUNCTION_";
+	let prefix = "";
 	let sJsDoc, oDoc, fCustomFunc;
 	function initParamsCustomFunction(aInputTypes, sReturnType) {
 		//generate jsdoc
@@ -31005,7 +31005,7 @@ $(function () {
 
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
-		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
+		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction, initCustomEngine: AscCommonExcel.WorkbookView.prototype.initCustomEngine};
 
 		_func();
 

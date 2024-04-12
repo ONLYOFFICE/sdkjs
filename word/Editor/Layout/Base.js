@@ -45,7 +45,7 @@
 	function CDocumentLayoutBase(oLogicDocument)
 	{
 		this.LogicDocument = oLogicDocument;
-		this.SectInfo      = new CDocumentSectionsInfoElement(oLogicDocument.GetLastSection(), 0);
+		this.SectionsInfo  = oLogicDocument.GetSectionsInfo();
 	}
 	
 	CDocumentLayoutBase.prototype.IsPrintMode = function()
@@ -81,11 +81,36 @@
 	 */
 	CDocumentLayoutBase.prototype.GetSectionHdrFtr = function(nPageAbs, isFirst, isEven)
 	{
-		return {
-			Header : null,
-			Footer : null,
-			SectPr : this.LogicDocument.GetLastSection()
+		let oLogicDocument = this.LogicDocument;
+		
+		let nSectionIndex = this.SectionsInfo.Get_Index(oLogicDocument.GetPage(nPageAbs).GetStartPos());
+		let oSectPr       = this.SectionsInfo.Get_SectPr2(nSectionIndex).SectPr;
+		let startSectPr   = oSectPr;
+		
+		isEven  = isEven && oSectPr.IsEvenAndOdd();
+		isFirst = isFirst && oSectPr.IsTitlePage();
+		
+		let oHeader = null;
+		let oFooter = null;
+		while (nSectionIndex >= 0)
+		{
+			oSectPr = this.SectionsInfo.Get_SectPr2(nSectionIndex--).SectPr;
+			
+			if (!oHeader)
+				oHeader = oSectPr.GetHdrFtr(true, isFirst, isEven);
+			
+			if (!oFooter)
+				oFooter = oSectPr.GetHdrFtr(false, isFirst, isEven);
+			
+			if (oHeader && oFooter)
+				break;
 		}
+		
+		return {
+			Header : oHeader,
+			Footer : oFooter,
+			SectPr : startSectPr
+		};
 	};
 	/**
 	 * Получаем границы, внутри короторых должно быть расчитано содержимое основной части документа
@@ -128,15 +153,20 @@
 	 */
 	CDocumentLayoutBase.prototype.GetSection = function(nPageAbs, nContentIndex)
 	{
-		return this.LogicDocument.GetLastSection();
+		let oPage;
+		if (undefined === nContentIndex && (oPage = this.LogicDocument.GetPage(nPageAbs)))
+			nContentIndex = oPage.GetStartPos();
+		
+		return this.SectionsInfo.Get_SectPr(nContentIndex).SectPr;
 	};
 	CDocumentLayoutBase.prototype.GetSectionByPos = function(nContentIndex)
 	{
-		return this.LogicDocument.GetLastSection();
+		let sectInfo = this.SectionsInfo.Get_SectPr(nContentIndex);
+		return sectInfo ? sectInfo.SectPr : null;
 	};
 	CDocumentLayoutBase.prototype.GetSectionInfo = function(nContentIndex)
 	{
-		return this.SectInfo;
+		return this.SectionsInfo.Get_SectPr(nContentIndex);
 	};
 	/**
 	 * Получаем номер секции в общем списке секций
@@ -145,7 +175,7 @@
 	 */
 	CDocumentLayoutBase.prototype.GetSectionIndex = function(oSectPr)
 	{
-		return 0;
+		return this.SectionsInfo.Find(oSectPr);
 	};
 	/**
 	 * Получаем время (в миллисекундах) доступное для однократного синхронного пересчета страниц

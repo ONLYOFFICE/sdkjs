@@ -1802,7 +1802,6 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 	var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), isHdtFtr);
 	
 	let tableInd = TablePr.TableInd;
-
     if ( true === this.Is_Inline() )
     {
         var Page = this.Pages[CurPage];

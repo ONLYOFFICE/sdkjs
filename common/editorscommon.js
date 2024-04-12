@@ -13752,6 +13752,25 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+	CPluginCtxMenuInfo.prototype.setHdrFtr = function(isHeader) {
+		if (isHeader) {
+			delete this["footer"];
+			this["header"] = true;
+		} else {
+			delete this["header"];
+			this["footer"] = true;
+		}
+	};
+	CPluginCtxMenuInfo.prototype.setHdrFtrArea = function(isHeader) {
+		if (isHeader) {
+			delete this["footerArea"];
+			this["headerArea"] = true;
+		} else {
+			delete this["headerArea"];
+			this["footerArea"] = true;
+		}
+	};
+	
 
 
 	function deg2rad(deg)

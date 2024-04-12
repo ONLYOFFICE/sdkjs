@@ -65,6 +65,7 @@
 
 		this.isViewMode = false;
 		this.restrictions = Asc.c_oAscRestrictionType.None;
+		this.isCanSendChanges = true; // Флаг, говорит о возможности отсылать свои изменения (задается извне)
 
 		this.FontLoader  = null;
 		this.ImageLoader = null;
@@ -703,6 +704,14 @@
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+	};
+	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
+	{
+		this.isCanSendChanges = canSend;
+	};
+	baseEditorsApi.prototype.canSendChanges                  = function()
+	{
+		return this.isCanSendChanges;
 	};
 
 	baseEditorsApi.prototype.checkInputMode                  = function()
@@ -2624,7 +2633,7 @@
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		var t = this;
 		var res = false;
-		if (this.canSave && this._saveCheck()) {
+		if (this.canSave && this._saveCheck() && this.canSendChanges()) {
 			this.IsUserSave = !isAutoSave;
 
 			if (this.asc_isDocumentCanSave() || AscCommon.History.Have_Changes() || this._haveOtherChanges() ||
@@ -4512,15 +4521,15 @@
 	};
 
 
-	baseEditorsApi.prototype.getPluginContextMenuInfo = function()
+	baseEditorsApi.prototype.getPluginContextMenuInfo = function(e)
 	{
 		return new AscCommon.CPluginCtxMenuInfo();
 	};
 
 	// context menu items
-	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
+	baseEditorsApi.prototype["onPluginContextMenuShow"] = function(e)
 	{
-		let contextMenuInfo = this.getPluginContextMenuInfo();
+		let contextMenuInfo = this.getPluginContextMenuInfo(e);
 		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
 		if (0 === plugins.length)
 		{
@@ -4917,6 +4926,7 @@
 	prot['asc_setRestriction'] = prot.asc_setRestriction;
 	prot['asc_addRestriction'] = prot.asc_addRestriction;
 	prot['asc_removeRestriction'] = prot.asc_removeRestriction;
+	prot['asc_setCanSendChanges'] = prot.asc_setCanSendChanges;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_isSelectSearchingResults'] = prot.asc_isSelectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;

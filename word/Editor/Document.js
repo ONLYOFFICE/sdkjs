@@ -2444,7 +2444,7 @@ CDocument.prototype.Get_PageContentStartPos2 = function(StartPageIndex, StartCol
 CDocument.prototype.Get_PageLimits = function(nPageIndex)
 {
 	var nIndex  = this.Pages[nPageIndex] ? this.Pages[nPageIndex].Pos : 0;
-	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
+	var oSectPr = this.Layout.GetSectionByPos(nIndex);
 
 	return {
 		X      : 0,
@@ -2460,7 +2460,7 @@ CDocument.prototype.Get_PageFields = function(nPageIndex, isHdrFtr, oSectPr)
 	if (!oSectPr)
 	{
 		let nIndex = oPage ? oPage.Pos : 0;
-		oSectPr    = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
+		oSectPr    = this.Layout.GetSectionByPos(nIndex);
 	}
 
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
@@ -2510,7 +2510,7 @@ CDocument.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex, nPa
 		nPageIndex = this.Pages[nPageIndex].Pos;
 	}
 
-	var oSectPr = this.SectionsInfo.Get_SectPr(nElementIndex).SectPr;
+	var oSectPr = this.Layout.GetSectionByPos(nElementIndex);
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
 
 	var X      = oFrame.Left;
@@ -11461,6 +11461,22 @@ CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
 };
+CDocument.prototype.isHeaderEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Header === hdrFtr.Type;
+};
+CDocument.prototype.isFooterEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Footer === hdrFtr.Type;
+};
 CDocument.prototype.EndHdrFtrEditing = function(bCanStayOnPage)
 {
 	if (docpostype_HdrFtr === this.GetDocPosType())
@@ -18079,40 +18095,42 @@ CDocument.prototype.AddFootnote = function(sText)
 	if (oInfo.GetMath())
 		return null;
 
-	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-	{
-		let oFootnote = null;
-		this.StartAction(AscDFH.historydescription_Document_AddFootnote);
-
-		if (docpostype_Content === nDocPosType)
-		{
-			oFootnote = this.Footnotes.CreateFootnote();
-			oFootnote.AddDefaultFootnoteContent(sText);
-			if (true === this.IsSelectionUse())
-			{
-				this.MoveCursorRight(false, false, false);
-				this.RemoveSelection();
-			}
-
-			if (sText)
-				this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote, sText));
-			else
-				this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote));
-
-			this.SetDocPosType(docpostype_Footnotes);
-			this.Footnotes.Set_CurrentElement(true, 0, oFootnote);
-		}
-		else if (docpostype_Footnotes === nDocPosType)
-		{
-			this.Footnotes.AddFootnoteRef();
-			this.Recalculate();
-		}
-		this.FinalizeAction();
-
-		return oFootnote;
-	}
+	if (this.IsSelectionLocked(changestype_Paragraph_Content))
+		return null
 	
-	return null;
+	this.StartAction(AscDFH.historydescription_Document_AddFootnote);
+	let footnote = this._addFootnote(sText);
+	this.Recalculate();
+	this.FinalizeAction();
+	return footnote;
+};
+CDocument.prototype._addFootnote = function(text)
+{
+	let oFootnote = null;
+	let docPosType = this.GetDocPosType();
+	if (docpostype_Content === docPosType)
+	{
+		oFootnote = this.Footnotes.CreateFootnote();
+		oFootnote.AddDefaultFootnoteContent(text);
+		if (true === this.IsSelectionUse())
+		{
+			this.MoveCursorRight(false, false, false);
+			this.RemoveSelection();
+		}
+		
+		if (text)
+			this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote, text));
+		else
+			this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote));
+		
+		this.SetDocPosType(docpostype_Footnotes);
+		this.Footnotes.Set_CurrentElement(true, 0, oFootnote);
+	}
+	else if (docpostype_Footnotes === docPosType)
+	{
+		this.Footnotes.AddFootnoteRef();
+	}
+	return oFootnote;
 };
 CDocument.prototype.RemoveAllFootnotes = function(bRemoveFootnotes, bRemoveEndnotes)
 {
@@ -18316,42 +18334,43 @@ CDocument.prototype.AddEndnote = function(sText)
 	if (oInfo.GetMath())
 		return null;
 
-	if (!this.IsSelectionLocked(changestype_Paragraph_Content))
+	if (this.IsSelectionLocked(changestype_Paragraph_Content))
+		return null;
+	
+	this.StartAction(AscDFH.historydescription_Document_AddEndnote);
+	let endnote = this._addEndnote(sText);
+	this.Recalculate();
+	this.FinalizeAction();
+	return endnote;
+};
+CDocument.prototype._addEndnote = function(text)
+{
+	let oEndnote = null;
+	let docPosType = this.GetDocPosType();
+	if (docpostype_Content === docPosType)
 	{
-		let oEndnote = null;
-		this.StartAction(AscDFH.historydescription_Document_AddEndnote);
-
-		if (docpostype_Content === nDocPosType)
+		oEndnote = this.Endnotes.CreateEndnote();
+		oEndnote.AddDefaultEndnoteContent(text);
+		
+		if (true === this.IsSelectionUse())
 		{
-			oEndnote = this.Endnotes.CreateEndnote();
-			oEndnote.AddDefaultEndnoteContent(sText);
-
-			if (true === this.IsSelectionUse())
-			{
-				this.MoveCursorRight(false, false, false);
-				this.RemoveSelection();
-			}
-
-			if (sText)
-				this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote, sText));
-			else
-				this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote));
-
-			this.SetDocPosType(docpostype_Endnotes);
-			this.Endnotes.Set_CurrentElement(true, 0, oEndnote);
+			this.MoveCursorRight(false, false, false);
+			this.RemoveSelection();
 		}
-		else if (docpostype_Endnotes === nDocPosType)
-		{
-			this.Endnotes.AddEndnoteRef();
-		}
-
-		this.Recalculate();
-		this.FinalizeAction();
-
-		return oEndnote;
+		
+		if (text)
+			this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote, text));
+		else
+			this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote));
+		
+		this.SetDocPosType(docpostype_Endnotes);
+		this.Endnotes.Set_CurrentElement(true, 0, oEndnote);
 	}
-
-	return null;
+	else if (docpostype_Endnotes === docPosType)
+	{
+		this.Endnotes.AddEndnoteRef();
+	}
+	return oEndnote;
 };
 CDocument.prototype.GotoEndnote = function(isNext)
 {

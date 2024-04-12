@@ -94,6 +94,9 @@
 	PDFEditorApi.prototype.getLogicDocument = function() {
 		return this.getPDFDoc();
 	};
+	PDFEditorApi.prototype.getDrawingDocument = function () {
+		return this.WordControl.m_oDrawingDocument;
+	};
 	PDFEditorApi.prototype.getDocumentRenderer = function() {
 		return this.DocumentRenderer;
 	};

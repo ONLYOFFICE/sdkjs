@@ -13362,24 +13362,35 @@ background-repeat: no-repeat;\
 		}
 		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	};
-	asc_docs_api.prototype.getPluginContextMenuInfo = function (sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.getPluginContextMenuInfo = function(e)
 	{
-		const oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument)
-		{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return new AscCommon.CPluginCtxMenuInfo();
-		}
-		if (!oLogicDocument.IsSelectionUse())
+		
+		let menuInfo;
+		if (!logicDocument.IsSelectionUse())
 		{
-			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+			menuInfo = new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
 		}
-		const oDrawingObjects = oLogicDocument.DrawingObjects;
-		const aSelectedObjects = oDrawingObjects.selectedObjects;
-		if(aSelectedObjects.length < 1)
+		else
 		{
-			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+			let drawingObjects = logicDocument.getDrawingObjects();
+			if (drawingObjects.selectedObjects && drawingObjects.selectedObjects.length > 0)
+				menuInfo = drawingObjects.getPluginSelectionInfo();
+			else
+				menuInfo = new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection)
 		}
-		return oDrawingObjects.getPluginSelectionInfo();
+		
+		if (logicDocument.isHeaderEditing())
+			menuInfo.setHdrFtr(true);
+		else if (logicDocument.isFooterEditing())
+			menuInfo.setHdrFtr(false);
+		
+		if (e && e instanceof CContextMenuData && undefined !== e.is_Header())
+			menuInfo.setHdrFtrArea(e.is_Header());
+		
+		return menuInfo;
 	};
 
 	asc_docs_api.prototype.asc_getDocumentProtection = function () {
