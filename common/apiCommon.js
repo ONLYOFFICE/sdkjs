@@ -3062,6 +3062,7 @@ function (window, undefined) {
 		this.paddings = null;
 		this.canFill = true;
 		this.canChangeArrows = false;
+		this.canEditText = false; // used in pdf editor
 		this.bFromChart = false;
 		this.bFromGroup = false;
 		this.bFromImage = false;
@@ -3331,6 +3332,12 @@ function (window, undefined) {
 	};
 	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
 		return this.isMotionPath;
+	};
+	asc_CShapeProperty.prototype.asc_getCanEditText = function () {
+		return this.canEditText;
+	};
+	asc_CShapeProperty.prototype.asc_setCanEditText = function (v) {
+		this.canEditText = v;
 	};
 
 	/** @constructor */
@@ -6413,6 +6420,8 @@ function (window, undefined) {
 	prot["get_Position"] = prot["asc_getPosition"] = prot.asc_getPosition;
 	prot["put_Position"] = prot["asc_putPosition"] = prot.asc_putPosition;
 	prot["get_IsMotionPath"] = prot["asc_getIsMotionPath"] = prot.asc_getIsMotionPath;
+	prot["asc_getCanEditText"]		= prot.asc_getCanEditText;
+	prot["asc_setCanEditText"]		= prot.asc_setCanEditText;
 
 	window["Asc"]["asc_CAnnotProperty"] = window["Asc"].asc_CAnnotProperty = asc_CAnnotProperty;
 	prot = asc_CAnnotProperty.prototype;

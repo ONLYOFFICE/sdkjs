@@ -511,6 +511,14 @@ CGraphicObjectsPdf.prototype.getDrawingObjects = function(nPage) {
     return oPageInfo.drawings;
 };
 
+CGraphicObjectsPdf.prototype.canEditText = function () {
+    let content = this.getTargetDocContent();
+    if (content) {
+        let oShape = content.GetParent().parent;
+        return oShape.IsInTextBox();
+    }
+    return false;
+}
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
 

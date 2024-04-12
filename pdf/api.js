@@ -516,23 +516,21 @@
 		oDoc.AddToParagraph(oMathElement, false);
 	};
 	PDFEditorApi.prototype.sync_shapePropCallback = function(pr) {
+		let oDoc		= this.getPDFDoc();
+		let oController	= oDoc.GetController();
+
 		var obj = AscFormat.CreateAscShapePropFromProp(pr);
 		if (pr.fill != null && pr.fill.fill != null && pr.fill.fill.type == Asc.c_oAscFill.FILL_TYPE_BLIP) {
 			this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(pr.fill.fill.RasterImageId);
 		}
-		// else {
-		// 	this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(null);
-		// }
+		
+		obj.asc_setCanEditText(oController.canEditText());
 
 		var oTextArtProperties = pr.textArtProperties;
 		if (oTextArtProperties && oTextArtProperties.Fill && oTextArtProperties.Fill.fill && oTextArtProperties.Fill.fill.type == Asc.c_oAscFill.FILL_TYPE_BLIP) {
 			this.WordControl.m_oDrawingDocument.DrawImageTextureFillShape(oTextArtProperties.Fill.fill.RasterImageId);
 		}
-		// else {
-		// 	this.WordControl.m_oDrawingDocument.DrawImageTextureFillTextArt(null);
-		// }
-
-
+		
 		var _len = this.SelectedObjectsStack.length;
 		if (_len > 0) {
 			if (this.SelectedObjectsStack[_len - 1].Type == Asc.c_oAscTypeSelectElement.Shape) {
