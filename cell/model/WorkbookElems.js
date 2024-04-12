@@ -17234,9 +17234,11 @@ function RangeDataManagerElem(bbox, data)
 		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
 		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
-		this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		if (this.wb && this.wb.Api) {
+			this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		}
 		if (isNewFunc) {
-			this.wb.handlers.trigger("asc_onAddCustomFunction");
+			this.wb.handlers && this.wb.handlers.trigger("asc_onAddCustomFunction");
 		}
 	};
 

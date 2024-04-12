@@ -31005,7 +31005,7 @@ $(function () {
 
 		let api = window["Asc"]["editor"];
 		let trueWb = api.wb;
-		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction};
+		api.wb = {addCustomFunction: AscCommonExcel.WorkbookView.prototype.addCustomFunction, initCustomEngine: AscCommonExcel.WorkbookView.prototype.initCustomEngine};
 
 		_func();
 
