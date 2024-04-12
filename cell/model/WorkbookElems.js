@@ -14351,10 +14351,7 @@ function RangeDataManagerElem(bbox, data)
 		this.argumentsResult = null;
 		this.formulaResult = null;
 		this.functionResult = null;
-
-		//for custom functions
-		this.description = null;
-
+		
 		this._init(name);
 
 		return this;
@@ -17224,7 +17221,7 @@ function RangeDataManagerElem(bbox, data)
 		//add or reload
 		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
 			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
-			
+
 			//need get from interface short formula lang("en", ...)
 			let localName = this.getTranslationName(funcName, this.activeLocale);
 			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
