@@ -17224,9 +17224,9 @@ function RangeDataManagerElem(bbox, data)
 		//add or reload
 		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
 			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
-			//TODO translation
+			
 			//need get from interface short formula lang("en", ...)
-			let localName = this.getTranslationName(funcName);
+			let localName = this.getTranslationName(funcName, this.activeLocale);
 			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
 			AscCommonExcel.cFormulaFunctionToLocale[funcName] = localName;
 
