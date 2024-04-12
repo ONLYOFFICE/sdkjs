@@ -562,6 +562,18 @@
 	PDFEditorApi.prototype.canGroup = function() {
 		return false;
 	};
+	PDFEditorApi.prototype.shapes_bringToFront = function() {
+		this.getPDFDoc().BringToFront();
+	};
+	PDFEditorApi.prototype.shapes_bringForward = function() {
+		this.getPDFDoc().BringForward();
+	};
+	PDFEditorApi.prototype.shapes_bringToBack = function() {
+		this.getPDFDoc().SendToBack();
+	};
+	PDFEditorApi.prototype.shapes_bringBackward = function() {
+		this.getPDFDoc().BringBackward();
+	};
 
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
 		this.sendEvent("asc_onVerticalTextAlign", align);
@@ -1871,6 +1883,10 @@
 	PDFEditorApi.prototype['sync_annotPropCallback']	= PDFEditorApi.prototype.sync_annotPropCallback;
 	PDFEditorApi.prototype['canUnGroup']				= PDFEditorApi.prototype.canUnGroup;
 	PDFEditorApi.prototype['canGroup']					= PDFEditorApi.prototype.canGroup;
+	PDFEditorApi.prototype['shapes_bringToFront']		= PDFEditorApi.prototype.shapes_bringToFront;
+	PDFEditorApi.prototype['shapes_bringForward']		= PDFEditorApi.prototype.shapes_bringForward;
+	PDFEditorApi.prototype['shapes_bringToBack']		= PDFEditorApi.prototype.shapes_bringToBack;
+	PDFEditorApi.prototype['shapes_bringBackward']		= PDFEditorApi.prototype.shapes_bringBackward;
 
 
 	// table

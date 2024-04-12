@@ -33,10 +33,11 @@
 "use strict";
 
 
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]		= CChangesPDFDocumentAddItem;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]	= CChangesPDFDocumentRemoveItem;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]		= CChangesPDFDocumentAddPage;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]	= CChangesPDFDocumentRemovePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]			= CChangesPDFDocumentAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]		= CChangesPDFDocumentRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]			= CChangesPDFDocumentAddPage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]		= CChangesPDFDocumentRemovePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_ChangePosInTree]	= CChangesPDFDocumentChangePosInTree;
 
 /**
  * @constructor
@@ -307,6 +308,47 @@ CChangesPDFDocumentRemovePage.prototype.Redo = function()
 	{
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		oDocument.RemovePage(nPos)
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentChangePosInTree(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentChangePosInTree.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentChangePosInTree.prototype.constructor = CChangesPDFDocumentChangePosInTree;
+CChangesPDFDocumentChangePosInTree.prototype.Type = AscDFH.historyitem_PDF_Document_ChangePosInTree;
+
+CChangesPDFDocumentChangePosInTree.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nOldPos = this.Pos[0];
+		oDocument.ChangeObjectPosInPageTree(this.Items[0], nOldPos);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentChangePosInTree.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nNewPos = this.Pos[1];
+		oDocument.ChangeObjectPosInPageTree(this.Items[0], nNewPos);
 	}
 
 	oDocument.SetMouseDownObject(null);

@@ -3826,6 +3826,97 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetController = function() {
         return this.DrawingObjects;
     };
+    CPDFDoc.prototype.BringToFront = function() {
+        let oController = this.GetController();
+        
+        this.CreateNewHistoryPoint();
+        
+        if (!(oController.selection.groupSelection)) {
+            for (let i = oController.selectedObjects.length - 1; i > -1; --i) {
+                let oShape = oController.selectedObjects[i];
+                let oDrawings = oController.getDrawingObjects(oShape.GetPage());
+                this.ChangeObjectPosInPageTree(oShape, oDrawings.length - 1);
+            }
+        }
+        else {
+            oController.selection.groupSelection.bringToFront();
+        }
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.BringForward = function() {
+        let oController = this.GetController();
+        
+        this.CreateNewHistoryPoint();
+        
+        if (!(oController.selection.groupSelection)) {
+            for (let i = oController.selectedObjects.length - 1; i > -1; --i) {
+                let oShape = oController.selectedObjects[i];
+                let oDrawings = oController.getDrawingObjects(oShape.GetPage());
+                let nCurPos = oDrawings.indexOf(oShape);
+
+                this.ChangeObjectPosInPageTree(oShape, nCurPos + 1);
+            }
+        }
+        else {
+            oController.selection.groupSelection.bringToFront();
+        }
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.SendToBack = function() {
+        let oController = this.GetController();
+        
+        this.CreateNewHistoryPoint();
+        
+        if (!(oController.selection.groupSelection)) {
+            for (let i = oController.selectedObjects.length - 1; i > -1; --i) {
+                let oShape = oController.selectedObjects[i];
+                this.ChangeObjectPosInPageTree(oShape, 0);
+            }
+        }
+        else {
+            oController.selection.groupSelection.bringToFront();
+        }
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.BringBackward = function() {
+        let oController = this.GetController();
+        
+        this.CreateNewHistoryPoint();
+        
+        if (!(oController.selection.groupSelection)) {
+            for (let i = oController.selectedObjects.length - 1; i > -1; --i) {
+                let oShape = oController.selectedObjects[i];
+                let oDrawings = oController.getDrawingObjects(oShape.GetPage());
+                let nCurPos = oDrawings.indexOf(oShape);
+
+                this.ChangeObjectPosInPageTree(oShape, nCurPos - 1);
+            }
+        }
+        else {
+            oController.selection.groupSelection.bringToFront();
+        }
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.ChangeObjectPosInPageTree = function(oObject, nNewPos) {
+        let oController = this.GetController();
+
+        let oDrawings   = oController.getDrawingObjects(oObject.GetPage());
+        let nOldPos     = oDrawings.indexOf(oObject);
+
+        if (nNewPos >= oDrawings.length || nNewPos < 0 || nOldPos == nNewPos) {
+            return;
+        }
+
+        oDrawings.splice(nOldPos, 1);
+        oDrawings.splice(nNewPos, 0, oObject);
+
+        AscCommon.History.Add(new CChangesPDFDocumentChangePosInTree(this, [nOldPos, nNewPos], [oObject]));
+        oObject.AddToRedraw();
+    };
 
     //-----------------------------------------------------------------------------------
     // Функции для работы с таблицами

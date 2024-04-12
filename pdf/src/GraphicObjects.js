@@ -504,6 +504,13 @@ CGraphicObjectsPdf.prototype.getParagraphTextPr = function () {
     }
 };
 
+CGraphicObjectsPdf.prototype.getDrawingObjects = function(nPage) {
+    let oViewer     = Asc.editor.getDocumentRenderer();
+    let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+    
+    return oPageInfo.drawings;
+};
+
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
 
