@@ -556,6 +556,13 @@
 
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Annot, obj);
 	};
+	PDFEditorApi.prototype.canUnGroup = function() {
+		return false;
+	};
+	PDFEditorApi.prototype.canGroup = function() {
+		return false;
+	};
+
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
 		this.sendEvent("asc_onVerticalTextAlign", align);
 	};
@@ -1862,6 +1869,8 @@
 	PDFEditorApi.prototype['asc_FitImagesToPage']		= PDFEditorApi.prototype.asc_FitImagesToPage;
 	PDFEditorApi.prototype['sync_shapePropCallback']	= PDFEditorApi.prototype.sync_shapePropCallback;
 	PDFEditorApi.prototype['sync_annotPropCallback']	= PDFEditorApi.prototype.sync_annotPropCallback;
+	PDFEditorApi.prototype['canUnGroup']				= PDFEditorApi.prototype.canUnGroup;
+	PDFEditorApi.prototype['canGroup']					= PDFEditorApi.prototype.canGroup;
 
 
 	// table
