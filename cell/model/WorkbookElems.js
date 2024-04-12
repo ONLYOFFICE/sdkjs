@@ -14393,9 +14393,7 @@ function RangeDataManagerElem(bbox, data)
 	CFunctionInfo.prototype.asc_getName = function () {
 		return this.name;
 	};
-	CFunctionInfo.prototype.asc_getDescription = function () {
-		return this.description;
-	};
+
 
 	function CPrintPreviewState(wb) {
 		this.ctx = null;
@@ -17958,7 +17956,6 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getFormulaResult"] = prot.asc_getFormulaResult;
 	prot["asc_getFunctionResult"] = prot.asc_getFunctionResult;
 	prot["asc_getName"] = prot.asc_getName;
-	prot["asc_getDescription"] = prot.asc_getDescription;
 
 	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;
 	prot = asc_CExternalReference.prototype;

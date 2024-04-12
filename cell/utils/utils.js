@@ -3588,9 +3588,6 @@
 		asc_CCompleteMenu.prototype.asc_getType = function () {
 			return this.type;
 		};
-		asc_CCompleteMenu.prototype.asc_getDescription = function () {
-			return this.description;
-		};
 
 		function CCacheMeasureEmpty2() {
 			this.cache = {};
@@ -4093,7 +4090,6 @@
 		prot = asc_CCompleteMenu.prototype;
 		prot["asc_getName"] = prot.asc_getName;
 		prot["asc_getType"] = prot.asc_getType;
-		prot["asc_getDescription"] = prot.asc_getDescription;
 
 		window["AscCommonExcel"].g_oCacheMeasureEmpty = g_oCacheMeasureEmpty;
 		window["AscCommonExcel"].g_oCacheMeasureEmpty2 = g_oCacheMeasureEmpty2;
