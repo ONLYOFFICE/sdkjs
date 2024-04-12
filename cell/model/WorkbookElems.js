@@ -14351,7 +14351,7 @@ function RangeDataManagerElem(bbox, data)
 		this.argumentsResult = null;
 		this.formulaResult = null;
 		this.functionResult = null;
-		
+
 		this._init(name);
 
 		return this;
