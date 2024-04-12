@@ -2805,11 +2805,7 @@
 
 		let oThis = this;
 		let getCompleteMenu = function (_name, _type) {
-			let desc = null;
-			if (oThis.customFunctionEngine) {
-				desc = oThis.customFunctionEngine.getDescription(_name);
-			}
-			return new AscCommonExcel.asc_CCompleteMenu(_name, _type, desc);
+			return new AscCommonExcel.asc_CCompleteMenu(_name, _type);
 		};
 
 		let defNamesList, defName, defNameStr, _lastFNameLength, _type;
@@ -3094,11 +3090,6 @@
 			// ToDo send info from selection
 			if (!res) {
 				res = name ? new AscCommonExcel.CFunctionInfo(name) : null;
-			}
-			//check on custom function
-			let description = t.customFunctionEngine && t.customFunctionEngine.getDescription(name);
-			if (description) {
-				res.description = description;
 			}
 
 			t.handlers.trigger("asc_onSendFunctionWizardInfo", res);

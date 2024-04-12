@@ -3579,7 +3579,6 @@
 		function asc_CCompleteMenu(name, type, desc) {
 			this.name = name;
 			this.type = type;
-			this.description = desc;
 		}
 
 		asc_CCompleteMenu.prototype.asc_getName = function () {
