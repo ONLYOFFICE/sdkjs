@@ -673,6 +673,10 @@
 	{
 		return true;
 	};
+	CGraphicsBase.prototype.isSupportTextOutline = function()
+	{
+		return false;
+	};
 
 	CGraphicsBase.prototype.FillText = function(x,y,text)
 	{
