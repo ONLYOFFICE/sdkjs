@@ -4752,13 +4752,17 @@
         if (colEnd === undefined) {
             colEnd = colStart;
         }
+		let t = this;
+		let _toRetina = function (val) {
+			return t.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
         var colStartTmp = Math.max(this.visibleRange.c1, colStart);
         var colEndTmp = Math.min(this.visibleRange.c2, colEnd);
 		l = this._getColLeft(colStartTmp) - offsetX;
         for (i = colStartTmp; i <= colEndTmp; ++i) {
         	w = this._getColumnWidth(i);
         	if (0 !== w) {
-				this.drawingCtx.clearRectByX(l, this.headersTop, w, this.headersHeight);
+				this.drawingCtx.clearRectByX(l - _toRetina(1) + 1, this.headersTop, w, this.headersHeight);
 				l += w;
 			}
         }
