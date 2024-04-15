@@ -2179,8 +2179,8 @@
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
 		let result = null;
 		if (isValidTitle) {
-			let protectedRange = this.worksheet.getProtectedRangeByName(sTitle);
-			result = protectedRange && protectedRange.val ? new ApiProtectedRange(protectedRange.val.clone()) : null;
+			let protectedRange = this.worksheet.getUserProtectedRangeByName(sTitle);
+			result = protectedRange && protectedRange.obj ? new ApiProtectedRange(protectedRange.obj.clone(protectedRange.obj._ws, true)) : null;
 			if (result === null) {
 				logError(new Error('The range not found'));
 			}
@@ -2198,12 +2198,12 @@
 	 * @returns {ApiProtectedRange[] | null}
 	 */
 	ApiWorksheet.prototype.GetAllProtectedRanges = function () {
-		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getProtectedRanges();
+		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getUserProtectedRanges(this.worksheet.sName);
 		let result = null;
 		if (protectedRanges) {
 			result = [];
 			for (let i  = 0; i < protectedRanges.length; i++) {
-				result.push(new ApiProtectedRange(protectedRanges[i].clone()));
+				result.push(new ApiProtectedRange(protectedRanges[i].clone(protectedRanges[i]._ws, true)));
 			}
 		} else {
 			logError(new Error('Ranges not found'));
@@ -6777,7 +6777,7 @@
 		if (isValidTitle && sTitle !== this.protectedRange.asc_getName()) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone();
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setName(sTitle);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
 					result = true;
@@ -6800,7 +6800,7 @@
 		if (isValidRange /*asc_getRef !==*/) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone();
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setRef(sRange);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
 					result = true;
@@ -6832,7 +6832,7 @@
 		if (isValidTitle && isValidIdTitle) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone();
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 
 				let newUser = new Asc.CUserProtectedRangeUserInfo();
 				newUser.asc_setId(sId);
@@ -6869,7 +6869,7 @@
 			if (worksheet) {
 				let userInfo = this.protectedRange.getUserById(sId);
 				if (userInfo) {
-					let newProtectedRange = this.protectedRange.clone();
+					let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 					let users = this.protectedRange.asc_getUsers();
 					if (users) {
 						let newUsers = [];
@@ -6931,7 +6931,7 @@
 		if (this.protectedRange.asc_getType() !== nType) {
 			let worksheet = this.protectedRange._ws;
 			if (worksheet) {
-				let newProtectedRange = this.protectedRange.clone();
+				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setType(nType);
 				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
 					result = true;

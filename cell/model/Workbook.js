@@ -12779,6 +12779,22 @@
 		return res;
 	};
 
+	Worksheet.prototype.getUserProtectedRangeByName = function(name) {
+		var res = null;
+		if(!this.userProtectedRanges)
+			return res;
+
+		for(var i = 0; i < this.userProtectedRanges.length; i++)
+		{
+			if(this.userProtectedRanges[i].name === name)
+			{
+				res = {obj: this.userProtectedRanges[i], index: i};
+				break;
+			}
+		}
+		return res;
+	};
+
 	Worksheet.prototype.unlockUserProtectedRanges = function(){
 		if (this.userProtectedRanges) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
