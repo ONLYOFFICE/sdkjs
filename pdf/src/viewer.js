@@ -4173,7 +4173,7 @@
 				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
 				// graphics
-				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(this.GetPageWidthMM(nPage), this.GetPageHeightMM(nPage));
+				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
 				oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
@@ -4343,43 +4343,6 @@
 		}
 			
 		return null;
-	};
-	CHtmlPage.prototype.GetPageWidth = function(nPage, bScaled) {
-		let aPages			= this.file.pages;
-		let aScaledPages	= this.drawingPages;
-
-		if (aPages[nPage] == undefined)
-			return undefined;
-
-		return bScaled ? aScaledPages[nPage].W : aPages[nPage].W;
-	};
-	CHtmlPage.prototype.GetPageHeight = function(nPage, bScaled) {
-		let aPages			= this.file.pages;
-		let aScaledPages	= this.drawingPages;
-
-		if (aPages[nPage] == undefined)
-			return undefined;
-
-		return bScaled ? aScaledPages[nPage].H : aPages[nPage].H;
-	};
-
-	CHtmlPage.prototype.GetPageWidthMM = function(nPage, bScaled) {
-		let aPages			= this.file.pages;
-		let aScaledPages	= this.drawingPages;
-
-		if (aPages[nPage] == undefined)
-			return undefined;
-
-		return (bScaled ? aScaledPages[nPage].W : aPages[nPage].W) * g_dKoef_pix_to_mm;
-	};
-	CHtmlPage.prototype.GetPageHeightMM = function(nPage, bScaled) {
-		let aPages			= this.file.pages;
-		let aScaledPages	= this.drawingPages;
-
-		if (aPages[nPage] == undefined)
-			return undefined;
-
-		return (bScaled ? aScaledPages[nPage].H : aPages[nPage].H) * g_dKoef_pix_to_mm;
 	};
 
 	function CCurrentPageDetector(w, h)

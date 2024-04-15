@@ -11075,6 +11075,7 @@
 		window['AscFormat'].CreateBlipFillRasterImageId = CreateBlipFillRasterImageId;
 		window['AscFormat'].fResetConnectorsIds = fResetConnectorsIds;
 		window['AscFormat'].getAbsoluteRectBoundsArr = getAbsoluteRectBoundsArr;
+		window['AscFormat'].getAbsoluteRectBoundsObject = getAbsoluteRectBoundsObject;
 		window['AscFormat'].fCheckObjectHyperlink = fCheckObjectHyperlink;
 		window['AscFormat'].getNumberingType = getNumberingType;
 		window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;

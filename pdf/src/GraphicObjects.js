@@ -518,7 +518,276 @@ CGraphicObjectsPdf.prototype.canEditText = function () {
         return oShape.IsInTextBox();
     }
     return false;
-}
+};
+
+CGraphicObjectsPdf.prototype.alignLeft = AscFormat.DrawingObjectsController.prototype.alignLeft;
+
+CGraphicObjectsPdf.prototype.alignCenter = function(bSelected) {
+    let selected_objects = this.getSelectedArray(), i, boundsObject, centerPos;
+
+    if (selected_objects.length > 0) {
+        if (bSelected && selected_objects.length > 1) {
+            boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+            centerPos = boundsObject.minX + (boundsObject.maxX - boundsObject.minX) / 2;
+        }
+        else {
+            centerPos = this.document.GetPageWidthMM(selected_objects[0].GetPage()) / 2;
+        }
+
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+        
+        let move_state, oTrack, oDrawing, oBounds;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        } else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+        
+        for (i = 0; i < this.arrTrackObjects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            oTrack.track(centerPos - (oBounds.maxX - oBounds.minX) / 2 - oBounds.minX, 0, oDrawing.selectStartPage);
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+
+CGraphicObjectsPdf.prototype.alignRight = function(bSelected) {
+    let selected_objects = this.getSelectedArray(), i, boundsObject, rightPos;
+
+    if (selected_objects.length > 0) {
+        if (bSelected && selected_objects.length > 1) {
+            boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+            rightPos = boundsObject.maxX;
+        }
+        else {
+            rightPos = this.document.GetPageWidthMM(selected_objects[0].GetPage());
+        }
+
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+
+        let move_state, oTrack, oDrawing, oBounds;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        }
+        else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+
+        for (i = 0; i < this.arrTrackObjects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            oTrack.track(rightPos - oBounds.maxX, 0, oDrawing.selectStartPage);
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+
+CGraphicObjectsPdf.prototype.alignTop = AscFormat.DrawingObjectsController.prototype.alignTop;
+
+CGraphicObjectsPdf.prototype.alignMiddle = function(bSelected) {
+    let selected_objects = this.getSelectedArray(), i, boundsObject, middlePos;
+
+    if (selected_objects.length > 0) {
+        if (bSelected && selected_objects.length > 1) {
+            boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+            middlePos = boundsObject.minY + (boundsObject.maxY - boundsObject.minY) / 2;
+        }
+        else {
+            middlePos = this.document.GetPageHeightMM(selected_objects[0].GetPage()) / 2;
+        }
+        
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+        
+        let move_state, oTrack, oDrawing, oBounds;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        }
+        else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+        
+        for (i = 0; i < this.arrTrackObjects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            oTrack.track(0, middlePos - (oBounds.maxY - oBounds.minY) / 2 - oBounds.minY, oDrawing.selectStartPage);
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+
+CGraphicObjectsPdf.prototype.alignBottom = function(bSelected) {
+    var selected_objects = this.getSelectedArray(), i, boundsObject, bottomPos;
+
+    if (selected_objects.length > 0) {
+        if (bSelected && selected_objects.length > 1) {
+            boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+            bottomPos = boundsObject.maxY;
+        }
+        else {
+            bottomPos = this.document.GetPageHeightMM(selected_objects[0].GetPage());
+        }
+        
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+        
+        var move_state, oTrack, oDrawing, oBounds;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        }
+        else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+        
+        for (i = 0; i < this.arrTrackObjects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            oTrack.track(0, bottomPos - oBounds.maxY, oDrawing.selectStartPage);
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+CGraphicObjectsPdf.prototype.distributeHor = function(bSelected) {
+    let selected_objects = this.getSelectedArray(), i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
+    let oTrack, oDrawing, oBounds, oSortObject;
+
+    if (selected_objects.length > 0) {
+        let nPageW = this.document.GetPageWidthMM(selected_objects[0].GetPage());
+        console.log(`PageW: ${nPageW}`);
+        boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+
+        sortObjects = [];
+        for (i = 0; i < selected_objects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            sortObjects.push({trackObject: this.arrTrackObjects[i], bounds: oBounds});
+        }
+        sortObjects.sort(function (obj1, obj2) {
+            return (obj1.bounds.maxX + obj1.bounds.minX) / 2 - (obj2.bounds.maxX + obj2.bounds.minX) / 2
+        });
+        
+        if (bSelected && selected_objects.length > 2) {
+            pos1 = sortObjects[0].bounds.minX;
+            pos2 = sortObjects[sortObjects.length - 1].bounds.maxX;
+            gap = (pos2 - pos1 - boundsObject.summWidth) / (sortObjects.length - 1);
+        }
+        else {
+            if (boundsObject.summWidth < nPageW) {
+                gap = (nPageW - boundsObject.summWidth) / (sortObjects.length + 1);
+                pos1 = gap;
+                pos2 = nPageW - gap;
+            }
+            else {
+                pos1 = 0;
+                pos2 = nPageW;
+                gap = (nPageW - boundsObject.summWidth) / (sortObjects.length - 1);
+            }
+        }
+        
+        let move_state;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        }
+        else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+
+        lastPos = pos1;
+        for (i = 0; i < sortObjects.length; ++i) {
+            oSortObject = sortObjects[i];
+            oTrack = oSortObject.trackObject;
+            oDrawing = oTrack.originalObject;
+            oBounds = oSortObject.bounds;
+            oTrack.track(lastPos - oBounds.minX, 0, oDrawing.selectStartPage);
+            lastPos += (gap + (oBounds.maxX - oBounds.minX));
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+CGraphicObjectsPdf.prototype.distributeVer = function(bSelected) {
+    let selected_objects = this.getSelectedArray(), i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
+    let oTrack, oDrawing, oBounds, oSortObject;
+    
+    if (selected_objects.length > 0) {
+        let nPageH = this.document.GetPageHeightMM(selected_objects[0].GetPage());
+        console.log(`PageH: ${nPageH}`);
+
+        boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
+        this.checkSelectedObjectsForMove();
+        this.swapTrackObjects();
+        
+        sortObjects = [];
+        for (i = 0; i < selected_objects.length; ++i) {
+            oTrack = this.arrTrackObjects[i];
+            oDrawing = oTrack.originalObject;
+            oBounds = AscFormat.getAbsoluteRectBoundsObject(oDrawing);
+            sortObjects.push({trackObject: this.arrTrackObjects[i], bounds: oBounds});
+        }
+        sortObjects.sort(function (obj1, obj2) {
+            return (obj1.bounds.maxY + obj1.bounds.minY) / 2 - (obj2.bounds.maxY + obj2.bounds.minY) / 2
+        });
+        
+        if (bSelected && selected_objects.length > 2) {
+            pos1 = sortObjects[0].bounds.minY;
+            pos2 = sortObjects[sortObjects.length - 1].bounds.maxY;
+            gap = (pos2 - pos1 - boundsObject.summHeight) / (sortObjects.length - 1);
+        }
+        else {
+            if (boundsObject.summHeight < nPageH) {
+                gap = (nPageH - boundsObject.summHeight) / (sortObjects.length + 1);
+                pos1 = gap;
+                pos2 = nPageH - gap;
+            }
+            else {
+                pos1 = 0;
+                pos2 = nPageH;
+                gap = (nPageH - boundsObject.summHeight) / (sortObjects.length - 1);
+            }
+        }
+        
+        let move_state;
+        if (!this.selection.groupSelection) {
+            move_state = new AscFormat.MoveState(this, this.selectedObjects[0], 0, 0);
+        }
+        else {
+            move_state = new AscFormat.MoveInGroupState(this, this.selection.groupSelection.selectedObjects[0], this.selection.groupSelection, 0, 0);
+        }
+        
+        lastPos = pos1;
+        for (i = 0; i < sortObjects.length; ++i) {
+            oSortObject = sortObjects[i];
+            oTrack = oSortObject.trackObject;
+            oDrawing = oTrack.originalObject;
+            oBounds = oSortObject.bounds;
+            oTrack.track(0, lastPos - oBounds.minY, oDrawing.selectStartPage);
+            lastPos += (gap + (oBounds.maxY - oBounds.minY));
+        }
+        
+        move_state.bSamePos = false;
+        move_state.onMouseUp({}, 0, 0, 0);
+    }
+};
+
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 
 

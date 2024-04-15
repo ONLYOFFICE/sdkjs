@@ -1910,6 +1910,10 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.TurnOffHistory = function() {
+        if (AscCommon.History.Is_LastPointEmpty()) {
+            AscCommon.History.Remove_LastPoint();
+        }
+
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
@@ -3917,6 +3921,55 @@ var CPresentation = CPresentation || function(){};
         AscCommon.History.Add(new CChangesPDFDocumentChangePosInTree(this, [nOldPos, nNewPos], [oObject]));
         oObject.AddToRedraw();
     };
+    CPDFDoc.prototype.PutShapesAlign = function(nType, nAlignToType) {
+        let oController = this.GetController();
+        
+        if (!AscFormat.isRealNumber(nAlignToType)) {
+			nAlignToType = Asc.c_oAscObjectsAlignType.Page;
+		}
+
+        let bSelected = nAlignToType === Asc.c_oAscObjectsAlignType.Selected;
+		switch (nType) {
+			case c_oAscAlignShapeType.ALIGN_LEFT: {
+				oController.checkSelectedObjectsAndCallback(oController.alignLeft, [bSelected]);
+				break;
+			}
+			case c_oAscAlignShapeType.ALIGN_RIGHT: {
+				oController.checkSelectedObjectsAndCallback(oController.alignRight, [bSelected]);
+				break;
+			}
+			case c_oAscAlignShapeType.ALIGN_TOP: {
+				oController.checkSelectedObjectsAndCallback(oController.alignTop, [bSelected]);
+				break;
+			}
+			case c_oAscAlignShapeType.ALIGN_BOTTOM: {
+				oController.checkSelectedObjectsAndCallback(oController.alignBottom, [bSelected]);
+				break;
+			}
+			case c_oAscAlignShapeType.ALIGN_CENTER: {
+				oController.checkSelectedObjectsAndCallback(oController.alignCenter, [bSelected]);
+				break;
+			}
+			case c_oAscAlignShapeType.ALIGN_MIDDLE: {
+				oController.checkSelectedObjectsAndCallback(oController.alignMiddle, [bSelected]);
+				break;
+			}
+			default:
+				break;
+		}
+    };
+    CPDFDoc.prototype.DistributeDrawingsHorizontally = function(alignType) {
+        let oController = this.GetController();
+        let bSelected = alignType === Asc.c_oAscObjectsAlignType.Selected;
+
+        oController.checkSelectedObjectsAndCallback(oController.distributeHor, [bSelected]);
+    };
+    CPDFDoc.prototype.DistributeDrawingsVertically = function(alignType) {
+        let oController = this.GetController();
+        let bSelected = alignType === Asc.c_oAscObjectsAlignType.Selected;
+        
+        oController.checkSelectedObjectsAndCallback(oController.distributeVer, [bSelected]);
+    };
 
     //-----------------------------------------------------------------------------------
     // Функции для работы с таблицами
@@ -4127,8 +4180,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.TrackDocumentPositions = function() {};
     CPDFDoc.prototype.RemoveSelection = function() {};
     CPDFDoc.prototype.Set_TargetPos = function() {};
-    CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function() { 
-        return 0;
+    CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function () {
+        var oController = this.GetController();
+        var aSelectedObjects = oController.selection.groupSelection ? oController.selection.groupSelection.selectedObjects : oController.selectedObjects;
+        return aSelectedObjects.length;
     };
     CPDFDoc.prototype.isShapeChild = function() {};
     CPDFDoc.prototype.IsShowTableAdjustments = function() {
@@ -4247,23 +4302,27 @@ var CPresentation = CPresentation || function(){};
 	};
     CPDFDoc.prototype.GetPageWidthEMU = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
 
-        return this.Viewer.drawingPages[nPage].W * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+        return oNativePage.W * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
     };
     CPDFDoc.prototype.GetPageHeightEMU = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
 
-        return this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+        return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
     };
     CPDFDoc.prototype.GetPageWidthMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
 
-        return this.Viewer.drawingPages[nPage].W * g_dKoef_pix_to_mm;
+        return oNativePage.W * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm;
     };
     CPDFDoc.prototype.GetPageHeightMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
-
-        return this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm;
+        let oNativePage = this.Viewer.file.pages[nPage];
+        
+        return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm;
     };
 	CPDFDoc.prototype.GetApi = function() {
 		return editor;
