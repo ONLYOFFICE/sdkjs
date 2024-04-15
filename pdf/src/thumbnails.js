@@ -859,10 +859,18 @@
         {
             var drPage = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
             var hoverNum = drPage ? drPage.num : -1;
+            
             if (hoverNum !== this.hoverPage)
             {
                 this.hoverPage = hoverNum;
                 this._paint();
+            }
+
+            if (hoverNum != -1) {
+                this.canvas.style.cursor = 'pointer';
+            }
+            else {
+                this.canvas.style.cursor = 'default';
             }
         }
 
