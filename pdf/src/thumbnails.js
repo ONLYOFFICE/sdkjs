@@ -878,7 +878,10 @@
             e.preventDefault();
         return false;
     };
-
+    CDocument.prototype.getHoverPage = function()
+    {
+        return this.hoverPage;
+    };
     CDocument.prototype.onMouseWhell = function(e)
     {
         AscCommon.stopEvent(e);
@@ -981,4 +984,5 @@
     prot["resize"] = prot.resize;
     prot["setEnabled"] = prot.setEnabled;
     prot["registerEvent"] = prot.registerEvent;
+    prot["getHoverPage"] = prot.getHoverPage;
 })();
