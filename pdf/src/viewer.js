@@ -2547,9 +2547,9 @@
 				{
 					if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
 						ctx.beginPath();
+						oDrDoc.SetTextSelectionOutline(true);
 						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(0);
-						ctx.globalAlpha = 0.2;
-						ctx.fill();
+						oDrDoc.private_EndDrawSelection();
 					}
 					if (oDoc.mouseDownAnnot.IsTextMarkup())
 					{
@@ -2567,6 +2567,7 @@
 				}
 				else if (oDoc.activeDrawing) {
 					let nPage = oDoc.activeDrawing.GetPage();
+					oDrDoc.SetTextSelectionOutline(true);
 					oDrDoc.private_EndDrawSelection();
 					oDrDoc.AutoShapesTrack.PageIndex = nPage;
 					this.DrawingObjects.drawSelect(nPage);
