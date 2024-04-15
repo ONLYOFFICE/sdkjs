@@ -151,7 +151,7 @@
 	 */
 
 	/**
-	 * The OLE-object properties
+	 * The OLE object properties
 	 * @typed {Object} OLEProperties
 	 * @property {string} data - OLE object data (internal format).
 	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
