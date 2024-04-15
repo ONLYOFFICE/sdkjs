@@ -476,7 +476,7 @@
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		
-		oDoc.ConvertTextToShapes(oViewer.currentPage);
+		oDoc.EditPage(oViewer.currentPage);
 	};
 	PDFEditorApi.prototype.asc_AddPage = function() {
 		let oViewer = this.getDocumentRenderer();

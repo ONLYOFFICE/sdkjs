@@ -39,105 +39,16 @@
     function CPdfGraphicFrame()
     {
         AscFormat.CGraphicFrame.call(this);
-                
-        this._page          = undefined;
-        this._apIdx         = undefined; // индекс объекта в файле
-        this._rect          = [];       // scaled rect
-        this._richContents  = [];
-
-        this._isFromScan = false; // флаг, что был прочитан из скана текста 
-
-        this._doc                   = undefined;
-        this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
     }
     
     CPdfGraphicFrame.prototype.constructor = CPdfGraphicFrame;
     CPdfGraphicFrame.prototype = Object.create(AscFormat.CGraphicFrame.prototype);
+    Object.assign(CPdfGraphicFrame.prototype, AscPDF.PdfDrawingPrototype.prototype);
 
-    CPdfGraphicFrame.prototype.SetFromScan = function(bFromScan) {
-        this._isFromScan = bFromScan;
-
-        // выставляем пунктирный бордер если нет заливки и  
-        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
-            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
-            this.spPr.ln.setW(25.4 / 72.0 * 36000);
-            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-    };
-    CPdfGraphicFrame.prototype.IsFromScan = function() {
-        return this._isFromScan;
-    };
-    CPdfGraphicFrame.prototype.SetDocument = function(oDoc) {
-        this._doc = oDoc;
-    };
-    CPdfGraphicFrame.prototype.SetPage = function(nPage) {
-        this._page = nPage;
-    };
-    CPdfGraphicFrame.prototype.IsNeedDrawFromStream = function() {
-       return false; 
-    };
-    CPdfGraphicFrame.prototype.IsAnnot = function() {
-       return false;
-    };
-    CPdfGraphicFrame.prototype.IsForm = function() {
-       return false;
-    };
-    CPdfGraphicFrame.prototype.IsTextShape = function() {
-       return false;
-    };
-    CPdfGraphicFrame.prototype.IsImage = function() {
-        return false;
-    };
-    CPdfGraphicFrame.prototype.IsChart = function() {
-        return false;
-    };
-    CPdfGraphicFrame.prototype.IsDrawing = function() {
-        return true;
-    };
     CPdfGraphicFrame.prototype.IsGraphicFrame = function() {
         return true;
     };
 
-    CPdfGraphicFrame.prototype.ShowBorder = function(bShow) {
-        let oLine = this.pen;
-
-        if (bShow) {
-            oLine.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
-        else {
-            oLine.setFill(AscFormat.CreateNoFillUniFill());
-        }
-
-        this.AddToRedraw();
-    };
-    CPdfGraphicFrame.prototype.SetApIdx = function(nIdx) {
-        this.GetDocument().UpdateApIdx(nIdx);
-        this._apIdx = nIdx;
-    };
-    CPdfGraphicFrame.prototype.GetApIdx = function() {
-        return this._apIdx;
-    };
-    CPdfGraphicFrame.prototype.GetDocument = function() {
-        if (this.group)
-            return this.group.GetDocument();
-
-        return this._doc;
-    };
-    CPdfGraphicFrame.prototype.GetPage = function() {
-        if (this.group)
-            return this.group.GetPage();
-        
-        return this._page;
-    };
-    CPdfGraphicFrame.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
-    CPdfGraphicFrame.prototype.IsInTextBox = function() {
-        return this.isInTextBox;
-    };
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
@@ -181,19 +92,8 @@
             this.SetNeedRecalc(true);
         }
     };
-    CPdfGraphicFrame.prototype.AddToRedraw = function() {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let nPage   = this.GetPage();
-        
-        function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
-                oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
-        }
-
-        oViewer.paint(setRedrawPageOnRepaint);
-    };
-    CPdfGraphicFrame.prototype.GetRect = function() {
-        return this._rect;
+    CPdfGraphicFrame.prototype.SelectAllText = function() {
+        this.GetDocContent().SelectAll();
     };
     
     CPdfGraphicFrame.prototype.Recalculate = function() {
@@ -207,8 +107,8 @@
         this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
-    CPdfGraphicFrame.prototype.IsNeedRecalc = function() {
-        return this._needRecalc;
+    CPdfGraphicFrame.prototype.SetInTextBox = function(bIn) {
+        this.isInTextBox = bIn;
     };
     CPdfGraphicFrame.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
@@ -222,10 +122,6 @@
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
         }
-    };
-    CPdfGraphicFrame.prototype.Draw = function(oGraphicsWord) {
-        this.Recalculate();
-        this.draw(oGraphicsWord);
     };
     CPdfGraphicFrame.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -247,13 +143,6 @@
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
     
-    /**
-     * Exit from this drawing.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfGraphicFrame.prototype.Blur = function() {};
-
     CPdfGraphicFrame.prototype.onMouseUp = function(x, y, e) {
         let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
@@ -284,30 +173,10 @@
             oContent.RemoveSelection();
     };
     
-    /////////////////////////////
-    /// saving
-    ////////////////////////////
-
-    CPdfGraphicFrame.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
-    };
-
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////
     
-    CPdfGraphicFrame.prototype.Get_AbsolutePage = function() {
-        return this.GetPage();
-    };
-    CPdfGraphicFrame.prototype.getLogicDocument = function() {
-        return this.GetDocument();
-    };
-    CPdfGraphicFrame.prototype.IsThisElementCurrent = function() {
-        return true;
-    };
-    CPdfGraphicFrame.prototype.getDrawingDocument = function() {
-        return Asc.editor.getPDFDoc().GetDrawingDocument();
-    };
     CPdfGraphicFrame.prototype.Get_Styles = function (level) {
 		if (AscFormat.isRealNumber(level)) {
 			if (!this.compiledStyles[level]) {

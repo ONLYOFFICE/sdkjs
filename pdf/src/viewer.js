@@ -232,6 +232,7 @@
 		this.DrawingObjects		= new AscPDF.CGraphicObjectsPdf(this.doc, this.drawingDocument, this.Api);
 		this.doc.DrawingObjects	= this.DrawingObjects;
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
+		Asc.editor.WordControl.m_oDrawingDocument.m_oLogicDocument = this.doc;
 
 		CGraphicObjects.prototype.saveDocumentState = function() {};
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
@@ -4170,6 +4171,19 @@
 			if (oPageInfo.drawings && oPageInfo.drawings.length != 0) {
 				let oRenderer			= this.InitDocRenderer(oMemory);
 				oMemory.context			= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
+
+				for (let nDr = 0; nDr < oPageInfo.drawings.length; nDr++) {
+					let oDrawing = oPageInfo.drawings[nDr];
+
+					if (oDrawing.IsGraphicFrame()) {
+						let sTableStyle = oDrawing.graphicObject.GetTableStyle();
+						if (sTableStyle != undefined) {
+							oMemory.context.tableStylesIdToGuid[sTableStyle] = sTableStyle;
+						}
+					}
+				}
+				
+
 				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
 				// graphics

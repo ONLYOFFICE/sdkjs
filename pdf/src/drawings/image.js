@@ -30,7 +30,7 @@
  *
  */
 
-(function(){
+(function() {
 
     /**
 	 * Class representing a pdf text shape.
@@ -39,19 +39,6 @@
     function CPdfImage()
     {
         AscFormat.CImageShape.call(this);
-                
-        this._page          = undefined;
-        this._apIdx         = undefined; // индекс объекта в файле
-        this._rect          = [];       // scaled rect
-        this._richContents  = [];
-
-        this._isFromScan = false; // флаг, что был прочитан из скана текста 
-
-        this._doc                   = undefined;
-        this._needRecalc            = true;
-        this._wasChanged            = false; // была ли изменена
-        this._bDrawFromStream       = false; // нужно ли рисовать из стрима
-        this._hasOriginView         = false; // имеет ли внешний вид из файла
     }
     
     CPdfImage.prototype.constructor = CPdfImage;
@@ -91,23 +78,6 @@
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
     
-    /**
-     * Exit from this drawing.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfImage.prototype.Blur = function() {};
-
-    CPdfImage.prototype.onMouseUp = function(x, y, e) {};
-    
-    /////////////////////////////
-    /// saving
-    ////////////////////////////
-
-    CPdfImage.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
-    };
-
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////

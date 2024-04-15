@@ -3451,7 +3451,7 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// For drawings
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    CPDFDoc.prototype.ConvertTextToShapes = function(nPage) {
+    CPDFDoc.prototype.EditPage = function(nPage) {
         if (null == this.Viewer.pagesInfo.pages[nPage] || this.Viewer.file.pages[nPage].isConvertedToShapes) {
             return;
         }
@@ -3463,26 +3463,47 @@ var CPresentation = CPresentation || function(){};
 
         let aSpsXmls        = this.Viewer.file.nativeFile.scanPage(nPage, 1);
         let oParserContext  = new AscCommon.XmlParserContext();
-        let aPageShapes     = [];
+        let oTableStyles    = this.GetTableStyles();
+        Object.keys(this.TableStylesIdMap).forEach(function(styleId) {
+            oParserContext.addTableStyle(styleId, oTableStyles.Get(styleId));
+        });
+        let aPageDrawings   = [];
         let oXmlReader;
         
         oParserContext.DrawingDocument = oDrDoc;
 
         AscFormat.ExecuteNoHistory(function () {
             for (let i = 0; i < aSpsXmls.length; i++) {
-                let oShape  = new AscPDF.CPdfShape();
-
                 oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
-                oShape.fromXml(oXmlReader);
-                oShape.setBDeleted(false);
-                aPageShapes.push(oShape);
+                oXmlReader.parseNode(0);
+
+                let oDrawing;
+                switch (oXmlReader.GetName()) {
+                    case 'p:sp': {
+                        oDrawing = new AscPDF.CPdfShape();
+                        break;
+                    }
+                    case 'p:graphicFrame': {
+                        oDrawing = new AscPDF.CPdfGraphicFrame();
+                        break;
+                    }
+                    case 'p:pic': {
+                        oDrawing = new AscPDF.CPdfImage();
+                        break;
+                    }
+                }
+                
+                oDrawing.fromXml(oXmlReader);
+                oDrawing.setBDeleted(false);
+                aPageDrawings.push(oDrawing);
             }
         }, this);
 
         let _t = this;
-        aPageShapes.forEach(function(sp) {
-            sp.SetFromScan(true);
-            _t.AddDrawing(sp, nPage);
+        aPageDrawings.forEach(function(drawing) {
+            drawing.SetFromScan(true);
+            _t.AddDrawing(drawing, nPage);
+            drawing.SetNeedRecalc(true);
         });
 
         this.TurnOffHistory();
@@ -3500,6 +3521,7 @@ var CPresentation = CPresentation || function(){};
 
         oDrawing.SetDocument(this);
         oDrawing.SetPage(nPage);
+        oDrawing.setParent(this);
 
         if (oDrawing instanceof AscPDF.CPdfShape) {
             AscFormat.ExecuteNoHistory(function () {
@@ -3703,7 +3725,6 @@ var CPresentation = CPresentation || function(){};
 	    }
 
         let graphic_frame = new AscPDF.CPdfGraphicFrame();
-        graphic_frame.setParent(this);
         graphic_frame.setSpPr(new AscFormat.CSpPr());
         graphic_frame.spPr.setParent(graphic_frame);
         graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
@@ -3733,7 +3754,7 @@ var CPresentation = CPresentation || function(){};
         }
         graphic_frame.setGraphicObject(table);
         graphic_frame.setBDeleted(false);
-        table.LogicDocument = this;
+        
         return graphic_frame;
     };
     CPDFDoc.prototype.AddImages = function(arrImages) {
