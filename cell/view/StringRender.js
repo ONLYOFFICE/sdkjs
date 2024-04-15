@@ -981,7 +981,7 @@
 							}
 						}
 						
-						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || verticalText)) {
+						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || (verticalText && !self._isCombinedChar(chPos)))) {
 							// add hyphenation marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;
@@ -1320,6 +1320,12 @@
 
 		StringRender.prototype._setFont = function (ctx, font) {
 			ctx.setFont(font, this.angle);
+		};
+		
+		StringRender.prototype._isCombinedChar = function(pos) {
+			let p = this._getCharPropAt(pos);
+			let c = this.chars[pos];
+			return !p.nl && !this.codesSpace[c] && (AscFonts.NO_GRAPHEME === p.grapheme);
 		};
 
 

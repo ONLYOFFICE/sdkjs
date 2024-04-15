@@ -268,12 +268,6 @@
 			return this.charWidths[pos];
 		};
 		
-		CellTextRender.prototype._isCombinedChar = function(pos) {
-			let p = this._getCharPropAt(pos);
-			let c = this.chars[pos];
-			return !p.nl && !this.codesSpace[c] && (AscFonts.NO_GRAPHEME === p.grapheme);
-		};
-		
 		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
 			
 			let line = this.getLineByY(y, topLine, zoom);
