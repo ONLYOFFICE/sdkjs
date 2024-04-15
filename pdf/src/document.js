@@ -4268,6 +4268,9 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.Get_Styles = function() {
 		return this.styles;
 	};
+	CPDFDoc.prototype.GetTheme = function() {
+		return this.theme;
+	};
 	CPDFDoc.prototype.Get_Theme = function() {
 		return this.theme;
 	};
@@ -4289,6 +4292,9 @@ var CPresentation = CPresentation || function(){};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     CPDFDoc.prototype.Get_ColorMap = function() {
+        return this.clrSchemeMap;
+    };
+    CPDFDoc.prototype.GetColorMap = function() {
         return this.clrSchemeMap;
     };
     /**

@@ -1552,6 +1552,8 @@
 		this.ctDocumentEdit		= 204;
 		this.ctDocumentClose	= 205;
 		this.ctPageEdit			= 206;
+		this.ctPageClear		= 207;
+		this.ctPageRotate		= 208;
 
 		this.ctError = 255;
 	}

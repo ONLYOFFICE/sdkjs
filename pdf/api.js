@@ -472,7 +472,8 @@
 	};
 	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
 		return this.asc_enterText(newText);
-	};	PDFEditorApi.prototype.asc_EditText = function() {
+	};
+	PDFEditorApi.prototype.asc_EditPage = function() {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		
@@ -574,6 +575,64 @@
 	};
 	PDFEditorApi.prototype.shapes_bringBackward = function() {
 		this.getPDFDoc().BringBackward();
+	};
+	PDFEditorApi.prototype.AddImageUrlAction = function(url, imgProp, obj) {
+		var _image = this.ImageLoader.LoadImage(url, 1);
+		if (null != _image) {
+			this.AddImageUrlActionCallback(_image, obj);
+		}
+		else {
+			this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+			this.asyncImageEndLoaded2 = function(_image)
+			{
+				this.AddImageUrlActionCallback(_image, obj);
+				this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
+
+				this.asyncImageEndLoaded2 = null;
+			}
+		}
+	};
+	PDFEditorApi.prototype.AddImageUrlActionCallback = function(_image, obj) {
+		let oDoc = this.getPDFDoc();
+
+		let src = _image.src;
+		if (obj && obj.isShapeImageChangeUrl) {
+			let AscShapeProp       = new Asc.asc_CShapeProperty();
+			AscShapeProp.fill      = new Asc.asc_CShapeFill();
+			AscShapeProp.fill.type = Asc.c_oAscFill.FILL_TYPE_BLIP;
+			AscShapeProp.fill.fill = new Asc.asc_CFillBlip();
+			AscShapeProp.fill.fill.asc_putUrl(src);
+			if(obj.textureType !== null && obj.textureType !== undefined){
+                AscShapeProp.fill.fill.asc_putType(obj.textureType);
+			}
+			this.ShapeApply(AscShapeProp);
+		}
+		else if (obj && obj.isImageChangeUrl) {
+			let AscImageProp      = new Asc.asc_CImgProperty();
+			AscImageProp.ImageUrl = src;
+			this.ImgApply(AscImageProp);
+		}
+		else if (obj && obj.isTextArtChangeUrl) {
+			let AscShapeProp = new Asc.asc_CShapeProperty();
+			let oFill        = new Asc.asc_CShapeFill();
+			oFill.type       = Asc.c_oAscFill.FILL_TYPE_BLIP;
+			oFill.fill       = new Asc.asc_CFillBlip();
+			oFill.fill.asc_putUrl(src);
+            if(obj.textureType !== null && obj.textureType !== undefined){
+				oFill.fill.asc_putType(obj.textureType);
+            }
+			AscShapeProp.textArtProperties = new Asc.asc_TextArtProperties();
+			AscShapeProp.textArtProperties.asc_putFill(oFill);
+			this.ShapeApply(AscShapeProp);
+		}
+		else {
+			let srcLocal = g_oDocumentUrls.getImageLocal(src);
+			if (srcLocal) {
+				src = srcLocal;
+			}
+
+			oDoc.AddImages([_image], obj);
+		}
 	};
 
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
@@ -1828,7 +1887,7 @@
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
-	PDFEditorApi.prototype['asc_EditText']                 = PDFEditorApi.prototype.asc_EditText;
+	PDFEditorApi.prototype['asc_EditPage']                 = PDFEditorApi.prototype.asc_EditPage;
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
 	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
@@ -1888,6 +1947,8 @@
 	PDFEditorApi.prototype['shapes_bringForward']		= PDFEditorApi.prototype.shapes_bringForward;
 	PDFEditorApi.prototype['shapes_bringToBack']		= PDFEditorApi.prototype.shapes_bringToBack;
 	PDFEditorApi.prototype['shapes_bringBackward']		= PDFEditorApi.prototype.shapes_bringBackward;
+	PDFEditorApi.prototype['AddImageUrlAction']			= PDFEditorApi.prototype.AddImageUrlAction;
+	PDFEditorApi.prototype['AddImageUrlActionCallback']	= PDFEditorApi.prototype.AddImageUrlActionCallback;
 
 
 	// table

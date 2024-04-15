@@ -48,7 +48,12 @@
     CPdfShape.prototype.IsTextShape = function() {
         return true;
     };
-
+    CPdfShape.prototype.ShouldDrawImaginaryBorder = function() {
+        let bDraw = this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill));
+        bDraw &&= this.IsFromScan();
+        
+        return bDraw;
+    };
     CPdfShape.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
@@ -140,16 +145,6 @@
                 
         if (oContent.IsSelectionEmpty())
             oContent.RemoveSelection();
-    };
-    CPdfShape.prototype.SetFromScan = function(bFromScan) {
-        this._isFromScan = bFromScan;
-
-        // выставляем пунктирный бордер если нет заливки и  
-        if (this.spPr.Fill.isNoFill() && this.spPr.ln.Fill.isNoFill()) {
-            this.spPr.ln.setPrstDash(Asc.c_oDashType.sysDot);
-            this.spPr.ln.setW(25.4 / 72.0 * 36000);
-            this.spPr.ln.setFill(AscFormat.CreateSolidFillRGBA(0, 0, 0, 255));
-        }
     };
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();

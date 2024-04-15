@@ -4124,6 +4124,13 @@
 			oMemory.WriteByte(nType);
 			oMemory.WriteLong(nPage);
 			
+			// edit page
+			if (nType == 0) {
+				if (oFile.pages[nPage].isConvertedToShapes) {
+					oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
+					oMemory.WriteLong(4);
+				}
+			}
 			// add page
 			if (nType == 1) {
 				oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
@@ -4169,8 +4176,12 @@
 
 			// drawings
 			if (oPageInfo.drawings && oPageInfo.drawings.length != 0) {
-				let oRenderer			= this.InitDocRenderer(oMemory);
-				oMemory.context			= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
+				let oRenderer	= this.InitDocRenderer(oMemory);
+				// let jsZlibToSave = new AscCommon.ZLib();
+				// jsZlibToSave.create();
+				oMemory.context	= new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
+				// let oFilePart	= new AscCommon.openXml.OpenXmlPackage(jsZlibToSave, oMemory.context);
+				// oFilePart.addPart(AscCommon.openXml.Types.image);
 
 				for (let nDr = 0; nDr < oPageInfo.drawings.length; nDr++) {
 					let oDrawing = oPageInfo.drawings[nDr];
