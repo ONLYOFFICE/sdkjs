@@ -95,15 +95,19 @@
 			}
 			return h;
 		};
-
-
-		CellTextRender.prototype.getPrevChar = function (pos) {
+		
+		CellTextRender.prototype.getPrevChar = function (pos, skipCombined) {
 			if (pos <= 0)
 				return 0;
 			else if (pos > this.chars.length)
 				return this.chars.length;
 			
 			--pos;
+			
+			// By default we skip combined chars
+			if (false === skipCombined)
+				return pos;
+			
 			while (pos > 0 && this._isCombinedChar(pos)) {
 				--pos;
 			}
