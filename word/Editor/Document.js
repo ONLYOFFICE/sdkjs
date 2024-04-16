@@ -2040,7 +2040,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.StartCheckCCPlaceholder   = false; //
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
-
+	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -27215,6 +27215,10 @@ CDocument.prototype.IsCheckFormPlaceholder = function()
 		return false;
 	
 	return this.CheckFormPlaceHolder;
+};
+CDocument.prototype.isPreventedPreDelete = function()
+{
+	return this.PreventPreDelete;
 };
 
 function CDocumentSelectionState()

@@ -12535,6 +12535,9 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
  */
 Paragraph.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	// Поскольку данный элемент удаляется, поэтому надо удалить все записи о
 	// inline объектах в родительском классе, используемых в данном параграфе.
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже

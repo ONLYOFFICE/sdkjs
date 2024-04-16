@@ -3925,6 +3925,9 @@ CTable.prototype.SetCalculatedFrame = function(oFrame)
  */
 CTable.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	this.DrawingDocument.EndTrackTable(this, false);
 
 	var RowsCount = this.Content.length;

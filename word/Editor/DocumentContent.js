@@ -8456,6 +8456,10 @@ CDocumentContent.prototype.IsStartFromNewPage = function()
 };
 CDocumentContent.prototype.PreDelete = function()
 {
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isPreventedPreDelete())
+		return;
+	
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		this.Content[nIndex].PreDelete();
