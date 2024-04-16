@@ -262,16 +262,28 @@
 		CBaseFormatObject.prototype.getChildren = function () {
 			return [];
 		};
-		CBaseFormatObject.prototype.traverse = function (fCallback) {
+		CBaseFormatObject.prototype.traverse = function (fCallback, bReverseOrder) {
 			if (fCallback(this)) {
 				return true;
 			}
-			var aChildren = this.getChildren();
-			for (var nChild = aChildren.length - 1; nChild > -1; --nChild) {
-				var oChild = aChildren[nChild];
-				if (oChild && oChild.traverse) {
-					if (oChild.traverse(fCallback)) {
-						return true;
+			let aChildren = this.getChildren();
+			if(bReverseOrder === undefined || bReverseOrder === true) {
+				for (let nChild = aChildren.length - 1; nChild > -1; --nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
+					}
+				}
+			}
+			else {
+				for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+					let oChild = aChildren[nChild];
+					if (oChild && oChild.traverse) {
+						if (oChild.traverse(fCallback, bReverseOrder)) {
+							return true;
+						}
 					}
 				}
 			}

@@ -65,6 +65,7 @@
 
 		this.isViewMode = false;
 		this.restrictions = Asc.c_oAscRestrictionType.None;
+		this.isCanSendChanges = true; // Флаг, говорит о возможности отсылать свои изменения (задается извне)
 
 		this.FontLoader  = null;
 		this.ImageLoader = null;
@@ -703,6 +704,14 @@
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+	};
+	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
+	{
+		this.isCanSendChanges = canSend;
+	};
+	baseEditorsApi.prototype.canSendChanges                  = function()
+	{
+		return this.isCanSendChanges;
 	};
 
 	baseEditorsApi.prototype.checkInputMode                  = function()
@@ -2180,7 +2189,7 @@
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
-			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
+			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
 			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
@@ -2624,7 +2633,7 @@
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		var t = this;
 		var res = false;
-		if (this.canSave && this._saveCheck()) {
+		if (this.canSave && this._saveCheck() && this.canSendChanges()) {
 			this.IsUserSave = !isAutoSave;
 
 			if (this.asc_isDocumentCanSave() || AscCommon.History.Have_Changes() || this._haveOtherChanges() ||
@@ -4908,6 +4917,36 @@
 		this.onEndLoadFile(file);
 	};
 
+	// for native editors
+	baseEditorsApi.prototype.wrapFunction = function(name, types) 
+	{
+		this["native_" + name] = function() 
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
+					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
+			}
+			let result = this[name].apply(this, arguments);
+			if (result && result.toCValue)
+				result = result.toCValue();
+			return result;
+		}
+	};
+
+	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	{
+		this.asc_registerCallback(name, function()
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (arguments[i] && arguments[i].toCValue)
+					arguments[i] = arguments[i].toCValue();
+			}
+			window["native"]["onJsEvent"](name, arguments);
+		});
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4917,6 +4956,7 @@
 	prot['asc_setRestriction'] = prot.asc_setRestriction;
 	prot['asc_addRestriction'] = prot.asc_addRestriction;
 	prot['asc_removeRestriction'] = prot.asc_removeRestriction;
+	prot['asc_setCanSendChanges'] = prot.asc_setCanSendChanges;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_isSelectSearchingResults'] = prot.asc_isSelectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;

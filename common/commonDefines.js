@@ -1828,7 +1828,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Form         : 4,
 		Review       : 5,
 		Eyedropper   : 6,
-		Placeholder  : 7
+		Placeholder  : 7,
+		EffectInfo   : 8,
 	};
 
 	// selection type

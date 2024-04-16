@@ -2441,7 +2441,7 @@ NumFormat.prototype =
         return res;
     },
 	shiftFormat : function(output, nShift, useLocaleFormat) {
-		if (this.bDateTime || this.bSlash || this.bTextFormat || (nShift < 0 && 0 == this.aFracFormat.length))
+		if (this.bDateTime || this.bSlash || this.bTextFormat)
 			return false;
 		output.format = this.toString(nShift, useLocaleFormat);
 		return true;

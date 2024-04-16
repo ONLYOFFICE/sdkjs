@@ -708,6 +708,7 @@
 					window.g_asc_plugins.close();
 				}, 5000);
 			}
+
 			let iframe = document.getElementById(runObject.frameId);
 			if (iframe)
 			{
@@ -718,6 +719,15 @@
 				if (windowId)
 					pluginData.setAttribute("buttonWindowId", "" + windowId);
 				iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+			}
+			else if (runObject.isConnector)
+			{
+				let pluginDataTmp = new CPluginData();
+				pluginDataTmp.setAttribute("guid", guid);
+				pluginDataTmp.setAttribute("windowID", windowId);
+				pluginDataTmp.setAttribute("type", "onWindowButton");
+				pluginDataTmp.setAttribute("button", id);
+				this.sendMessageToFrame("", pluginDataTmp);
 			}
 		},
 

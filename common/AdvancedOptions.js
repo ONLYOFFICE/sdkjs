@@ -263,7 +263,8 @@
 		window["AscCommon"].asc_CFormula = asc_CFormula;
 		prot = asc_CFormula.prototype;
 		prot["asc_getName"]				= prot.asc_getName;
-		prot["asc_getLocaleName"]	= prot.asc_getLocaleName;
+		prot["asc_getLocaleName"]	    = prot.asc_getLocaleName;
+
 
 		window["AscCommon"].asc_CTextParams = window["AscCommon"]["asc_CTextParams"] = asc_CTextParams;
 		prot = asc_CTextParams.prototype;

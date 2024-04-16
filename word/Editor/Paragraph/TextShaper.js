@@ -285,6 +285,16 @@
 		
 		return script;
 	};
+	CParagraphTextShaper.prototype.ShapeRunTextItem = function(item, textPr)
+	{
+		let fontSlot = item.GetFontSlot(textPr);
+		let fontInfo = textPr.GetFontInfo(fontSlot);
+		let grapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(item.GetCodePoint(), fontInfo.Name, fontInfo.Style);
+		item.SetGrapheme(grapheme);
+		item.SetMetrics(fontInfo.Size, fontSlot, textPr);
+		item.SetCodePointType(CODEPOINT_TYPE.BASE);
+		item.SetWidth(AscFonts.GetGraphemeWidth(grapheme));
+	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

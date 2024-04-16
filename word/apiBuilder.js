@@ -3099,10 +3099,6 @@
 	 * Class representing a document form base.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {string} key - Form key.
-	 * @property {string} tip - Form tip text.
-	 * @property {boolean} required - Specifies if the form is required or not.
-	 * @property {string} placeholder - Form placeholder text.
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -3113,11 +3109,6 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text field.
-	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3132,12 +3123,6 @@
 	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} editable - Specifies if the combo box text can be edited.
-	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
-	 * @property {Array.<string | Array.<string>>} items - The combo box items.
-     * This array consists of strings or arrays of two strings where the first string is the displayed value and the second one is its meaning.
-     * If the array consists of single strings, then the displayed value and its meaning are the same.
-     * Example: ["First", ["Second", "2"], ["Third", "3"], "Fourth"].
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3152,7 +3137,6 @@
 	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3167,17 +3151,6 @@
 	 * Class representing a document picture form.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
-	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
-	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
-	 * @property {percentage} shiftX - Horizontal picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on the left;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right.
-	 * @property {percentage} shiftY - Vertical picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the bottom.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
@@ -6946,11 +6919,11 @@
 	 */
 	ApiDocument.prototype.AddFootnote = function()
 	{
-		let oResult = this.Document.AddFootnote();
-		if (!oResult)
+		let footnote = this.Document._addFootnote();
+		if (!footnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(footnote);
 	};
 
 	/**
@@ -6961,11 +6934,11 @@
 	 */
 	ApiDocument.prototype.AddEndnote = function()
 	{
-		let oResult = this.Document.AddEndnote();
-		if (!oResult)
+		let endnote = this.Document._addEndnote();
+		if (!endnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(endnote);
 	};
 
 	/**
@@ -12144,6 +12117,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiStyle} - The used style.
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStyle = function()
 	{
@@ -12177,6 +12151,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetBold = function()
 	{
@@ -12202,6 +12177,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetItalic = function()
 	{
@@ -12227,6 +12203,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStrikeout = function()
 	{
@@ -12253,6 +12230,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetUnderline = function()
 	{
@@ -12278,6 +12256,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontFamily = function()
 	{
@@ -12303,6 +12282,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontSize = function()
 	{
@@ -12335,6 +12315,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetColor = function()
 	{
@@ -12374,6 +12355,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetVertAlign = function()
 	{
@@ -12427,6 +12409,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetHighlight = function()
 	{
@@ -12458,6 +12441,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?twips}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSpacing = function()
 	{
@@ -12488,6 +12472,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
@@ -12513,6 +12498,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetCaps = function()
 	{
@@ -12539,6 +12525,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSmallCaps = function()
 	{
@@ -12566,6 +12553,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetPosition = function()
 	{
@@ -12603,6 +12591,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetLanguage = function()
 	{
@@ -12638,6 +12627,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetShd = function()
 	{
@@ -12668,6 +12658,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFill = function()
 	{
@@ -12698,6 +12689,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetTextFill = function()
 	{
@@ -12728,6 +12720,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiStroke}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetOutLine = function()
 	{
@@ -18098,7 +18091,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -18114,7 +18107,9 @@
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
-		this.Sdt.ClearContentControlExt();
+		return executeNoFormLockCheck(function() {
+			this.Sdt.ClearContentControlExt();
+		}, this);
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
@@ -18154,7 +18149,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -18172,7 +18167,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -18847,10 +18842,11 @@
 	//------------------------------------------------------------------------------------------------------------------
 	
 	/**
-	 * Gets date format of current form.
+	 * Gets the date format of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetFormat = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18858,11 +18854,12 @@
 	};
 
 	/**
-	 * Sets date format to current form.
+	 * Sets the date format to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sFormat
+	 * @param {string} sFormat - The date format. For example, mm.dd.yyyy
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetFormat = function(sFormat)
 	{
@@ -18879,10 +18876,11 @@
 	};
 
 	/**
-	 * Gets used date language of current form.
+	 * Gets the used date language of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetLanguage = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18895,12 +18893,13 @@
 	};
 
 	/**
-	 * Sets date language to current form.
+	 * Sets the date language to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
+	 * @param {string} sLangId - The date language. The possible value for this parameter is a language identifier as defined in
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetLanguage = function(sLangId)
 	{
@@ -18918,10 +18917,11 @@
 	};
 
 	/**
-	 * Returns the timestamp setted in form.
+	 * Returns the timestamp of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {Number}
+	 * @returns {number}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetTime = function()
 	{
@@ -18935,8 +18935,9 @@
 	 * Sets the timestamp to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {Number} nTimeStamp
+	 * @param {number} nTimeStamp The timestamp that will be set to the current date form.
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetTime = function(nTimeStamp)
 	{

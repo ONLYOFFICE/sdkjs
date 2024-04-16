@@ -260,6 +260,19 @@ function (window, undefined) {
 					description: returnMatch[2]
 				};
 			}
+
+			const regex = /@nameLocale\s+{([^}]+)}/;
+			const nameMatch = regex.exec(commentBlock);
+			const nameLocale = {};
+
+			if (nameMatch && nameMatch[1]) {
+				const localesAndNames = nameMatch[1].split(/\s*\|\s*/);
+				localesAndNames.forEach(localeAndName => {
+					const [locale, name] = localeAndName.split(':');
+					nameLocale[locale.trim()] = name.trim();
+				});
+			}
+
 	
 			// Parsing function description
 			const descriptionRegex = /\*\s*(.*)/g;
@@ -270,6 +283,7 @@ function (window, undefined) {
 			parsedData.properties = properties;
 			parsedData.returnInfo = returnInfo;
 			parsedData.description = description;
+			parsedData.nameLocale = nameLocale;
 			result.push(parsedData);
 		}
 	
@@ -4404,6 +4418,9 @@ function (window, undefined) {
 	CMouseMoveData.prototype.get_PlaceholderType = function () {
 		return this.PlaceholderType;
 	};
+	CMouseMoveData.prototype.get_Info = function () {
+		return this.Info;
+	};
 
 
 	/**
@@ -6599,6 +6616,7 @@ function (window, undefined) {
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
 	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
 	prot["get_PlaceholderType"] = prot.get_PlaceholderType;
+	prot["get_Info"] = prot.get_Info;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

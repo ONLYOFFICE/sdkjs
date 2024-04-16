@@ -1644,6 +1644,7 @@ var editor;
    * asc_onLockPrintArea/asc_onUnLockPrintArea            - эвент о локе в меню опции print area во вкладке layout
    * asc_onPrintPreviewSheetChanged                 - эвент о смене печатаемого листа при предварительной печати
    * asc_onPrintPreviewPageChanged                  - эвент о смене печатаемой страницы при предварительной печати
+   * asc_onAddCustomFunction			()		    - add new custom function event
    */
 
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {
@@ -6559,7 +6560,7 @@ var editor;
   };
 
 	// Выставление локали
-	spreadsheet_api.prototype.asc_setLocalization = function (oLocalizedData) {
+	spreadsheet_api.prototype.asc_setLocalization = function (oLocalizedData, sLang) {
 		if (!this.isLoadFullApi) {
 			this.tmpLocalization = oLocalizedData;
 			return;
@@ -6575,16 +6576,24 @@ var editor;
 			for (var i in AscCommonExcel.cFormulaFunction) {
 				localName = oLocalizedData[i] ? oLocalizedData[i] : null;
 				localName = localName ? localName : i;
-				if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.getFunc(localName)) {
+				if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.getFunc(i)) {
+					localName = this.wb.customFunctionEngine.getTranslationName(i, sLang);
 					if (oLocalizedData[localName]) {
 						continue;
 					}
-					localName = this.wb.customFunctionEngine.getTranslationName(localName/*, sLang*/);
 				}
 				AscCommonExcel.cFormulaFunctionLocalized[localName] = AscCommonExcel.cFormulaFunction[i];
 				AscCommonExcel.cFormulaFunctionToLocale[i] = localName;
 			}
 		}
+
+		if (this.wb) {
+			if (!this.wb.customFunctionEngine) {
+				this.wb.initCustomEngine();
+			}
+			this.wb.customFunctionEngine.setActiveLocale(sLang);
+		}
+
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
@@ -9135,6 +9144,14 @@ var editor;
 			return;
 		}
 		return wb.addCustomFunction(func, options);
+	};
+
+	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.getFunc(sName, !bIgnoreLocal);
 	};
 
   /*

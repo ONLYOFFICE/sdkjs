@@ -439,6 +439,7 @@
 			delete this.api.__content_control_worker;
 			this.api.decrementCounterLongAction();
 
+			this.api.WordControl.m_oLogicDocument.UpdateSelection();
 			this.api.WordControl.m_oLogicDocument.FinalizeAction();
 		};
 
@@ -727,6 +728,7 @@
 							_content_control_pr.Color = new Asc.asc_CColor(_current["Props"]["Color"]["R"], _current["Props"]["Color"]["G"], _current["Props"]["Color"]["B"]);
 
 						_blockStd.SetContentControlPr(_content_control_pr);
+						LogicDocument.Recalculate();
 
 						_obj = _blockStd.GetContentControlPr();
 						this.returnDocuments.push({

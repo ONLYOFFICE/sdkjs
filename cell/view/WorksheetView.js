@@ -14237,10 +14237,6 @@
                         }
                         break;
                     case "format":
-						const pivotTables = t.model.getPivotTablesIntersectingRange(range.bbox);
-						pivotTables.forEach(function (pivotTable) {
-							pivotTable.formatsManager.setNum(range.bbox, val);
-						});
                         range.setNumFormat(val);
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;
@@ -14428,14 +14424,17 @@
                         t.model.workbook.dependencyFormulas.unlockRecal();
                         break;
 
-                    case "changeDigNum":
-                        res = [];
-                        for (c = item.c1; c <= item.c2; ++c) {
-							res.push(t.getColumnWidthInSymbols(c));
-                        }
-                        range.shiftNumFormat(val, res);
-                        canChangeColWidth = c_oAscCanChangeColWidth.numbers;
-                        break;
+					case "changeDigNum": {
+						//change format by active cell
+						let colWidth = t.getColumnWidthInSymbols(activeCell.col)
+						let cell = t.model.getRange3(activeCell.row, activeCell.col, activeCell.row, activeCell.col);
+						let newNumFormat = cell.getShiftedNumFormat(val, colWidth);
+						if (newNumFormat) {
+							range.setNumFormat(newNumFormat);
+							canChangeColWidth = c_oAscCanChangeColWidth.numbers;
+						}
+						break;
+					}
                     case "changeFontSize":
                         mc = t.model.getMergedByCell(activeCell.row, activeCell.col);
                         c = mc ? mc.c1 : activeCell.col;

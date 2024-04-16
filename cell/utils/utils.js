@@ -3576,7 +3576,7 @@
 		};
 
 		/** @constructor */
-		function asc_CCompleteMenu(name, type) {
+		function asc_CCompleteMenu(name, type, desc) {
 			this.name = name;
 			this.type = type;
 		}
