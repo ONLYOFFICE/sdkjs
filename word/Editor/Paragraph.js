@@ -10878,6 +10878,17 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 
 	return Pr;
 };
+Paragraph.prototype.getCompiledPrFromStyle = function()
+{
+	let parent = this.Parent;
+	
+	let styleManager = parent.Get_Styles();
+	let tableStyle   = parent.Get_TableStyleForPara();
+	let shapeStyle   = parent.Get_ShapeStyleForPara();
+	let styleId      = this.Style_Get();
+	
+	return styleManager.Get_Pr(styleId, styletype_Paragraph, tableStyle, shapeStyle);
+};
 /**
  * Сообщаем параграфу, что ему надо будет пересчитать скомпилированный стиль
  * (Такое может случится, если у данного параграфа есть нумерация или задан стиль,

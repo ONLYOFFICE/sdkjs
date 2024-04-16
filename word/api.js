@@ -3522,8 +3522,168 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
-
-
+	
+	asc_docs_api.prototype._addRemoveSpaceBeforeAfterParagraph = function(event)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let paragraphs = logicDocument.GetSelectedParagraphs();
+		if (!paragraphs.length)
+			return;
+		
+		let p = paragraphs[0];
+		let finalPr = p.Get_CompiledPr2().ParaPr;
+		if (!event.check(finalPr))
+			return;
+		
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+			Type : AscCommon.changestype_2_ElementsArray_and_Type,
+			Elements : paragraphs,
+			CheckType : AscCommon.changestype_Paragraph_Properties
+		}))
+		{
+			return;
+		}
+		
+		let stylePr = p.getCompiledPrFromStyle().ParaPr;
+		let newVal = event.getNewValue(stylePr);
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_AddRemoveBeforeAfterParagraph);
+		for (let i = 0; i < paragraphs.length; ++i)
+		{
+			event.applyValue(paragraphs[i], newVal);
+		}
+		
+		logicDocument.Recalculate();
+		logicDocument.UpdateInterface();
+		logicDocument.FinalizeAction()
+	};
+	asc_docs_api.prototype.asc_addSpaceBeforeParagraph = function()
+	{
+		this._addRemoveSpaceBeforeAfterParagraph({
+			check : function(finalPr)
+			{
+				return finalPr.Spacing.Before < 0.001;
+			},
+			
+			getNewValue : function(stylePr)
+			{
+				let val = 12 * g_dKoef_pt_to_mm;
+				if (stylePr.Spacing.Before > 0.001)
+					val = stylePr.Spacing.Before;
+				
+				return val;
+			},
+			
+			applyValue : function(p, val)
+			{
+				let stylePr = p.getCompiledPrFromStyle().ParaPr;
+				if (Math.abs(stylePr.Spacing.Before - val) > 0.001)
+				{
+					p.Set_Spacing({Before : val}, false);
+				}
+				else
+				{
+					let sp = p.Pr.Spacing.Copy();
+					sp.Before = undefined;
+					p.Set_Spacing(sp, true);
+				}
+			}
+		});
+	};
+	asc_docs_api.prototype.asc_addSpaceAfterParagraph = function()
+	{
+		this._addRemoveSpaceBeforeAfterParagraph({
+			check : function(finalPr)
+			{
+				return finalPr.Spacing.After < 0.001;
+			},
+			
+			getNewValue : function(stylePr)
+			{
+				let val = 12 * g_dKoef_pt_to_mm;
+				if (stylePr.Spacing.After > 0.001)
+					val = stylePr.Spacing.After;
+				
+				return val;
+			},
+			
+			applyValue : function(p, val) {
+				let stylePr = p.getCompiledPrFromStyle().ParaPr;
+				if (Math.abs(stylePr.Spacing.After - val) > 0.001)
+				{
+					p.Set_Spacing({After : val}, false);
+				}
+				else
+				{
+					let sp = p.Pr.Spacing.Copy();
+					sp.After = undefined;
+					p.Set_Spacing(sp, true);
+				}
+			}
+		});
+	};
+	asc_docs_api.prototype.asc_removeSpaceBeforeParagraph = function()
+	{
+		this._addRemoveSpaceBeforeAfterParagraph({
+			check : function(finalPr)
+			{
+				return finalPr.Spacing.Before > 0.001;
+			},
+			
+			getNewValue : function(stylePr)
+			{
+				return 0;
+			},
+			
+			applyValue : function(p, val)
+			{
+				let stylePr = p.getCompiledPrFromStyle().ParaPr;
+				if (Math.abs(stylePr.Spacing.Before - val) > 0.001)
+				{
+					p.Set_Spacing({Before : val}, false);
+				}
+				else
+				{
+					let sp = p.Pr.Spacing.Copy();
+					sp.Before = undefined;
+					p.Set_Spacing(sp, true);
+				}
+			}
+		});
+	};
+	asc_docs_api.prototype.asc_removeSpaceAfterParagraph = function()
+	{
+		this._addRemoveSpaceBeforeAfterParagraph({
+			check : function(finalPr)
+			{
+				return finalPr.Spacing.After > 0.001;
+			},
+			
+			getNewValue : function(stylePr)
+			{
+				return 0;
+			},
+			
+			applyValue : function(p, val)
+			{
+				let stylePr = p.getCompiledPrFromStyle().ParaPr;
+				if (Math.abs(stylePr.Spacing.After - val) > 0.001)
+				{
+					p.Set_Spacing({After : val}, false);
+				}
+				else
+				{
+					let sp = p.Pr.Spacing.Copy();
+					sp.After = undefined;
+					p.Set_Spacing(sp, true);
+				}
+			}
+		});
+	};
+	
 	asc_docs_api.prototype.put_PrLineSpacing          = function(Type, Value)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
