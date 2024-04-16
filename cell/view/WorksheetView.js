@@ -4467,7 +4467,7 @@
 
 		// draw borders (selected bottom/right)
 		ctx.setStrokeStyle(this.settings.activeCellBorderColor)
-			.setLineWidth(AscCommon.AscBrowser.convertToRetinaValue(2, true))
+			.setLineWidth(_toRetina(2))
 			.beginPath();
 
 		drawBorders(true);
@@ -4752,17 +4752,24 @@
         if (colEnd === undefined) {
             colEnd = colStart;
         }
+
 		let t = this;
 		let _toRetina = function (val) {
 			return t.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
 		};
+		//by clean down thin border
+		let correctX = -1*(_toRetina(1) + 1);
+		let correctY = 0;
+		let correctW = _toRetina(2) + 1;
+		let correctH = (t.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
+
         var colStartTmp = Math.max(this.visibleRange.c1, colStart);
         var colEndTmp = Math.min(this.visibleRange.c2, colEnd);
 		l = this._getColLeft(colStartTmp) - offsetX;
         for (i = colStartTmp; i <= colEndTmp; ++i) {
         	w = this._getColumnWidth(i);
         	if (0 !== w) {
-				this.drawingCtx.clearRectByX(l - _toRetina(1) + 1, this.headersTop, w, this.headersHeight);
+				this.drawingCtx.clearRectByX(l + correctX, this.headersTop + correctY, w + correctW, this.headersHeight + correctH);
 				l += w;
 			}
         }
@@ -4775,7 +4782,7 @@
             for (i = colStart; i <= colEnd; ++i) {
 				w = this._getColumnWidth(i);
 				if (0 !== w) {
-					this.drawingCtx.clearRectByX(l, this.headersTop, w, this.headersHeight);
+					this.drawingCtx.clearRectByX(l + correctX, this.headersTop + correctY, w + correctW, this.headersHeight + correctH);
 					l += w;
 				}
             }
@@ -4793,13 +4800,24 @@
         if (rowEnd === undefined) {
             rowEnd = rowStart;
         }
+
+		let oThis = this;
+		let _toRetina = function (val) {
+			return oThis.getRetinaPixelRatio() >= 2 ? AscCommon.AscBrowser.convertToRetinaValue(val, true) : val;
+		};
+		//by clean down thin border
+		let correctX = 0;
+		let correctY = -1*(_toRetina(1) + 1);
+		let correctW = (this.getRetinaPixelRatio() >= 2 ? _toRetina(1) : 0);
+		let correctH = _toRetina(2) + 1;
+
         var rowStartTmp = Math.max(this.visibleRange.r1, rowStart);
         var rowEndTmp = Math.min(this.visibleRange.r2, rowEnd);
 		t = this._getRowTop(rowStartTmp) - offsetY;
         for (i = rowStartTmp; i <= rowEndTmp; ++i) {
 			h = this._getRowHeight(i);
             if (0 !== h) {
-				this.drawingCtx.clearRectByY(this.headersLeft, t, this.headersWidth, h);
+				this.drawingCtx.clearRectByY(this.headersLeft + correctX, t + correctY, this.headersWidth + correctW, h + correctH);
 				t += h;
             }
         }
@@ -4812,7 +4830,7 @@
             for (i = rowStart; i <= rowEnd; ++i) {
 				h = this._getRowHeight(i);
                 if (0 !== h) {
-					this.drawingCtx.clearRectByY(this.headersLeft, t, this.headersWidth, h);
+					this.drawingCtx.clearRectByY(this.headersLeft + correctX, t + correctY, this.headersWidth + correctW, h + correctH);
 					t += h;
                 }
             }

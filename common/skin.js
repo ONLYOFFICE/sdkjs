@@ -477,7 +477,7 @@ function updateGlobalSkinColors(theme)
 		SelectAllIcon                   : "canvas-select-all-icon",
 		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
-	
+
 	// корректируем цвета для старого хрома:
 	// в старых хромах (desktop windows XP)
 	// если начинается цвет с цифры (#0-9) - то помечается символом \3 (конец текста)
