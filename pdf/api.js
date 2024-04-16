@@ -697,7 +697,10 @@
 	///////// For annots
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
-		// to do	
+		let oDoc = this.getPDFDoc();
+		oDoc.CreateNewHistoryPoint();
+		oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
+		oDoc.TurnOffHistory();
 	};
 	
 	/////////////////////////////////////////////////////////////

@@ -2562,8 +2562,10 @@
 						oDrDoc.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
 
-						if (oDoc.mouseDownAnnot.IsFreeText())
-							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
+						let oAnnot = oDoc.mouseDownAnnot;
+
+						if (oAnnot.IsFreeText() && false == oAnnot.IsInTextBox() && oAnnot.spTree.length > 1)
+							oAnnot.DrawSelected(this.overlay)
 					}
 				}
 				else if (oDoc.activeDrawing) {

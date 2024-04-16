@@ -1753,7 +1753,10 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oAnnot = CreateAnnotByProps(oProps, this);
+        let oAnnot;
+        AscFormat.ExecuteNoHistory(function () {
+            oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
+        }, this);
 
         this.annots.push(oAnnot);
         oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
@@ -1764,9 +1767,6 @@ var CPresentation = CPresentation || function(){};
             oPagesInfo.pages[nPageNum].annots = [];
         }
         oPagesInfo.pages[nPageNum].annots.push(oAnnot);
-
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
 
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
         
@@ -3757,6 +3757,71 @@ var CPresentation = CPresentation || function(){};
         
         return graphic_frame;
     };
+    CPDFDoc.prototype.AddFreeTextAnnot = function(nType, nPage) {
+        let oController = this.GetController();
+        let oFile       = this.Viewer.file;
+        let oNativePage = oFile.pages[nPage];
+        let nPageW      = oNativePage.W;
+        let nPageH      = oNativePage.W;
+        let oUser       = Asc.editor.User;
+
+        let nWidth  = 170;
+        let nHeight = 85;
+
+        let nCurTime = new Date().getTime();
+
+        let oProps = {
+            rect:           [(nPageW - nWidth) / 2, nPageH / 10, nPageW - nWidth, nPageH / 10 + nHeight],
+            page:           nPage,
+            name:           AscCommon.CreateGUID(),
+            type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
+            author:         oUser.asc_getUserName(),
+            modDate:        nCurTime,
+            creationDate:   nCurTime,
+            contents:       '',
+            hidden:         false
+        }
+
+        let oFreeText = this.AddAnnot(oProps);
+        AscFormat.ExecuteNoHistory(function () {
+            oFreeText.SetFillColor([1, 1, 1]);
+            oFreeText.SetStrokeColor([0, 0, 0]);
+            oFreeText.SetWidth(1);
+            oFreeText.SetAlign(AscPDF.ALIGN_TYPE.left);
+            oFreeText.SetIntent(nType);
+            
+            this.SetMouseDownObject(oFreeText);
+            oController.selection.groupSelection = oFreeText;
+            oFreeText.SetInTextBox(true);
+
+            switch (nType) {
+                case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
+                    oFreeText.SetSubject('Text box');
+                    return;
+                }
+                // прописываем RD и Callout
+                case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
+                    oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
+                    oFreeText.SetSubject('Text callout');
+                    oFreeText.SetRectangleDiff([nWidth / 2, 3 / 4 * nHeight, 0.5, 0.5]);
+                    
+                    let oTxBoxRect = oFreeText.GetTextBoxRect();
+                    
+                    // дефолтный callout
+                    let x1 = (nPageW - nWidth) / 2;
+                    let y1 = nPageH / 10;
+                    let x2 = oTxBoxRect[0] - oFreeText.defaultPerpLength;
+                    let y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                    let x3 = oTxBoxRect[0];
+                    let y3 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                    
+                    oFreeText.SetCallout([x1, y1, x2, y2, x3, y3]);
+                    return;
+                }
+            }
+        }, this);
+    };
+
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
         let oDrDoc      = this.GetDrawingDocument();

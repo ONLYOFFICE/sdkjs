@@ -559,6 +559,12 @@
         this._richContents = aRCInfo;
         oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
 
+        if (!aRCInfo) {
+            this.SetNeedRecalc(true);
+            this.SetNeedUpdateRC(false);
+            return;
+        }
+
         for (let i = 0; i < aRCInfo.length; i++) {
             let oRCInfo = aRCInfo[i];
 
@@ -634,24 +640,36 @@
                 if (sText) {
                     let oUniColor   = oRun.Pr.Unifill;
                     let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
-                    let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : undefined;
+                    let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : [0, 0, 0];
 
-                    let sFont = oRun.Get_RFonts().Ascii.Name;
-                    let prefix = AscFonts.getEmbeddedFontPrefix();
-                    if (sFont.startsWith(prefix))
+                    let sFont   = oRun.Get_RFonts().Ascii.Name;
+                    let isEmbed = false;
+                    let prefix  = AscFonts.getEmbeddedFontPrefix();
+
+                    if (sFont.startsWith(prefix)) {
                         sFont = sFont.substr(prefix.length);
-
-                    aRCInfo.push({
+                        isEmbed = true;
+                    }
+                        
+                    let oRCInfo = {
                         "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
                         "bold":             oRun.Get_Bold(),
                         "italic":           oRun.Get_Italic(),
                         "strikethrough":    oRun.Get_Strikeout(),
                         "underlined":       oRun.Get_Underline(),
                         "size":             oRun.Get_FontSize(),
-                        "name":             sFont,
                         "color":            aPdfColor,
                         "text":             sText
-                    });
+                    };
+
+                    if (isEmbed) {
+                        oRCInfo["name"] = sFont;
+                    }
+                    else {
+                        oRCInfo["actual"] = sFont;
+                    }
+
+                    aRCInfo.push(oRCInfo);
                 }
             }
 
@@ -760,16 +778,15 @@
         this.draw(oGraphicsWord);
     };
     CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
-        let oViewer             = editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
-        let oDrawingObjects     = oViewer.DrawingObjects;
+        let oController         = oDoc.GetController();
         this.selectStartPage    = this.GetPage();
         
         if (this.IsInTextBox() == false) {
-            if (this.selectedObjects.length == 0) {
+            if (this.selectedObjects.length <= this.spTree.length - 1) {
                 let _t = this;
                 // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
-                oDrawingObjects.selection.groupSelection = this;
+                oController.selection.groupSelection = this;
                 this.selectedObjects.length = 0;
 
                 this.spTree.forEach(function(sp) {
@@ -1202,7 +1219,7 @@
         let nIntent = this.GetIntent();
         if (nIntent != null) {
             memory.annotFlags |= (1 << 20);
-            memory.WriteDouble(nIntent);
+            memory.WriteByte(nIntent);
         }
 
         let nEndPos = memory.GetCurPosition();
