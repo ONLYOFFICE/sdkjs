@@ -9739,6 +9739,7 @@ var editor;
   prot["asc_FillCells"]= prot.asc_FillCells;
   prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
 
+  prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
 
 
 })(window);
