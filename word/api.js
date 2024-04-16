@@ -9902,18 +9902,17 @@ background-repeat: no-repeat;\
 			Id = oContentControl.GetId();
 			oContentControl.SkipSpecialContentControlLock(false);
 		}
-
-		if (false === isLocked)
-		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_RemoveContentControlWrapper);
-			oLogicDocument.RemoveContentControlWrapper(Id);
-			oLogicDocument.Recalculate();
-			oLogicDocument.UpdateInterface();
-			oLogicDocument.UpdateSelection();
-			oLogicDocument.FinalizeAction();
-			return true;
-		}
-		return false;
+		
+		if (isLocked)
+			return false;
+		
+		oLogicDocument.StartAction(AscDFH.historydescription_Document_RemoveContentControlWrapper);
+		oLogicDocument.RemoveContentControlWrapper(Id);
+		oLogicDocument.Recalculate();
+		oLogicDocument.UpdateInterface();
+		oLogicDocument.UpdateSelection();
+		oLogicDocument.FinalizeAction();
+		return true;
 	};
 	asc_docs_api.prototype.asc_SetContentControlProperties = function(oContentControlPr, Id, isApplyToAll)
 	{

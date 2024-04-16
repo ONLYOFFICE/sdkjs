@@ -22305,14 +22305,9 @@ CDocument.prototype.RemoveContentControl = function(Id)
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
-	if (!this.CanPerformAction())
-		return;
-	
 	let contentControl = this.TableId.Get_ById(Id);
 	if (!contentControl)
 		return;
-	
-	this.StartAction();
 	
 	if (contentControl.IsForm())
 		contentControl.RemoveFormPr();
@@ -22321,11 +22316,6 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 		this.RemoveContentControl(Id);
 	else
 		contentControl.RemoveContentControlWrapper();
-	
-	this.Recalculate();
-	this.UpdateInterface();
-	this.UpdateSelection();
-	this.FinalizeAction();
 };
 CDocument.prototype.GetContentControl = function(Id)
 {
