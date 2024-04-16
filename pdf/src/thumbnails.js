@@ -842,6 +842,16 @@
         AscCommon.check_MouseUpEvent(e);
         if (e && e.preventDefault)
             e.preventDefault();
+
+        if (global_mouseEvent.Button == 2) {
+            this.viewer.Api.sync_ContextMenuCallback({
+                X_abs   : AscCommon.global_mouseEvent.X - this.viewer.x,
+                Y_abs   : AscCommon.global_mouseEvent.Y - this.viewer.y,
+                Type    : Asc.c_oAscPdfContextMenuTypes.Thumbnails,
+                PageNum : this.getHoverPage()
+            });
+        }
+
         return false;
     };
 

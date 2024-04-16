@@ -837,6 +837,12 @@
 	/////////////////////////////////////////////////////////////
 	///////// For table
 	////////////////////////////////////////////////////////////
+	PDFEditorApi.prototype.put_Table = function(col, row, placeholder, sStyleId) {
+		let oDoc = this.getPDFDoc();
+		oDoc.CreateNewHistoryPoint();
+		oDoc.AddTable(col, row, sStyleId, editor.getDocumentRenderer().currentPage);
+		oDoc.TurnOffHistory();
+	};
 	PDFEditorApi.prototype.tblApply = function(oPr) {
 		let oDoc = this.getPDFDoc();
 
@@ -1825,14 +1831,7 @@
 		return null;
 	};
 	PDFEditorApi.prototype.GenerateStyles = function() {};
-	/*----------------------------------------------------------------*/
-	/*functions for working with table*/
-	PDFEditorApi.prototype.put_Table = function(col, row, placeholder, sStyleId) {
-		let oDoc = this.getPDFDoc();
-		oDoc.CreateNewHistoryPoint();
-		oDoc.AddTable(col, row, sStyleId, editor.getDocumentRenderer().currentPage);
-		oDoc.TurnOffHistory();
-	};
+	
 	PDFEditorApi.prototype.Resize = function() {
 		if (!this.DocumentRenderer)
 			return;
@@ -1842,10 +1841,49 @@
 		this.sendMathToMenu();
 		this.sendStandartTextures();
 	};
+	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
+		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
+	};
 
 	PDFEditorApi.prototype._waitPrint = function(actionType, options)
 	{
 		return false;
+	};
+
+	function CPdfContextMenuData(obj) {
+		if (obj) {
+			this.Type  		= ( undefined != obj.Type ) ? obj.Type : Asc.c_oAscPdfContextMenuTypes.Common;
+			this.X_abs 		= ( undefined != obj.X_abs ) ? obj.X_abs : 0;
+			this.Y_abs 		= ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
+			this.PageNum	= ( undefined != obj.PageNum ) ? obj.PageNum : 0;
+		}
+		else {
+			this.Type	= Asc.c_oAscPdfContextMenuTypes.Common;
+			this.X_abs	= 0;
+			this.Y_abs	= 0;
+		}
+	}
+
+	CPdfContextMenuData.prototype.get_Type = function() {
+		return this.Type;
+	};
+	CPdfContextMenuData.prototype.get_X = function() {
+		return this.X_abs;
+	};
+	CPdfContextMenuData.prototype.get_Y = function() {
+		return this.Y_abs;
+	};
+	CPdfContextMenuData.prototype.get_PageNum = function() {
+		return this.PageNum;
+	};
+	CPdfContextMenuData.prototype.get_IsPageSelect = function() {
+		return this.PageNum != -1 && this.PageNum != undefined;
+	};
+
+	/** @enum {number} */
+	let c_oAscPdfContextMenuTypes = {
+		Common       	: 0,	// Обычное контекстное меню
+		Thumbnails		: 1		// контекстное меню тамбнейлов
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1854,6 +1892,17 @@
 	window['Asc']['PDFEditorApi'] = PDFEditorApi;
 	AscCommon.PDFEditorApi        = PDFEditorApi;
 	
+	prot = window['Asc']['c_oAscPdfContextMenuTypes'] = window['Asc'].c_oAscPdfContextMenuTypes = c_oAscPdfContextMenuTypes;
+	prot['Common']		= c_oAscPdfContextMenuTypes.Common;
+	prot['Thumbnails']	= c_oAscPdfContextMenuTypes.Thumbnails;
+
+	CPdfContextMenuData.prototype['get_Type']			= CPdfContextMenuData.prototype.get_Type;
+	CPdfContextMenuData.prototype['get_X']				= CPdfContextMenuData.prototype.get_X;
+	CPdfContextMenuData.prototype['get_Y']				= CPdfContextMenuData.prototype.get_Y;
+	CPdfContextMenuData.prototype['get_PageNum']		= CPdfContextMenuData.prototype.get_PageNum;
+	CPdfContextMenuData.prototype['get_IsPageSelect']	= CPdfContextMenuData.prototype.get_IsPageSelect;
+
+	PDFEditorApi.prototype['sync_ContextMenuCallback']     = PDFEditorApi.prototype.sync_ContextMenuCallback;
 	PDFEditorApi.prototype['asc_setAdvancedOptions']       = PDFEditorApi.prototype.asc_setAdvancedOptions;
 	PDFEditorApi.prototype['startGetDocInfo']              = PDFEditorApi.prototype.startGetDocInfo;
 	PDFEditorApi.prototype['stopGetDocInfo']               = PDFEditorApi.prototype.stopGetDocInfo;
@@ -1952,6 +2001,7 @@
 
 
 	// table
+	PDFEditorApi.prototype['put_Table']						= PDFEditorApi.prototype.put_Table;
 	PDFEditorApi.prototype['tblApply']						= PDFEditorApi.prototype.tblApply;
 	PDFEditorApi.prototype['asc_DistributeTableCells']		= PDFEditorApi.prototype.asc_DistributeTableCells;
 	PDFEditorApi.prototype['remColumn']						= PDFEditorApi.prototype.remColumn;

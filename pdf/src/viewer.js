@@ -1944,7 +1944,7 @@
 						oThis.Api.sync_EndCatchSelectedElements();
 
 						oThis.Api.sync_ContextMenuCallback({
-							Type: Asc.c_oAscContextMenuTypes.Common,
+							Type: Asc.c_oAscPdfContextMenuTypes.Common,
 							X_abs: x,
 							Y_abs: y
 						});
@@ -1954,7 +1954,7 @@
 						oThis.removeSelection();
 						oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 						oThis.Api.sync_ContextMenuCallback({
-							Type: Asc.c_oAscContextMenuTypes.Common,
+							Type: Asc.c_oAscPdfContextMenuTypes.Common,
 							X_abs: x,
 							Y_abs: y
 						});
