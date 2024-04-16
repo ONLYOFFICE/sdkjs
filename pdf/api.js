@@ -696,8 +696,8 @@
 	/////////////////////////////////////////////////////////////
 	///////// For annots
 	////////////////////////////////////////////////////////////
-	PDFEditorApi.prototype.StartAddShapeBasedAnnot = function(nAnnotType) {
-
+	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
+		// to do	
 	};
 	
 	/////////////////////////////////////////////////////////////
@@ -1981,6 +1981,9 @@
 	PDFEditorApi.prototype['UpdateParagraphProp']			= PDFEditorApi.prototype.UpdateParagraphProp;
 	PDFEditorApi.prototype['sync_ListType']					= PDFEditorApi.prototype.sync_ListType;
 	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
+
+	// freetext
+	PDFEditorApi.prototype['AddFreeTextAnnot'] = PDFEditorApi.prototype.AddFreeTextAnnot;
 
 	// drawings
 	PDFEditorApi.prototype['StartAddShape']				= PDFEditorApi.prototype.StartAddShape;

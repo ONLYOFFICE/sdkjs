@@ -1601,7 +1601,8 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationFreeText = CAnnotationFreeText;
-    window["AscPDF"].CALLOUT_EXIT_POS = CALLOUT_EXIT_POS;
+    window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
+    window["AscPDF"].FREE_TEXT_INTENT_TYPE  = FREE_TEXT_INTENT_TYPE;
+    window["AscPDF"].CALLOUT_EXIT_POS       = CALLOUT_EXIT_POS;
 })();
 
