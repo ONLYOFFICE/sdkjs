@@ -1064,18 +1064,6 @@ CMathText.prototype.ToSearchElement = function(oProps)
 CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 	var strPre = "";
 
-	if (this.Parent) {
-		var oParentMathPrp = this.Parent.MathPrp.scr;
-
-		if (1 === oParentMathPrp) {
-			strPre = '\\script';
-		} else if (2 === oParentMathPrp) {
-			strPre = '\\fraktur';
-		} else if (3 === oParentMathPrp) {
-			strPre = '\\double';
-		}
-	}
-
 	if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
 	{
 		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];

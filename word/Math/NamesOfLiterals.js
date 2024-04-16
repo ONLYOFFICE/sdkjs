@@ -986,8 +986,8 @@
 		["\\\\", true],
 
 		["\\sf",  oNamesOfLiterals.mathFontLiteral[0]],
-		["\\script",  oNamesOfLiterals.mathFontLiteral[0]],
 		["\\scr",  oNamesOfLiterals.mathFontLiteral[0]],
+		["\\script",  oNamesOfLiterals.mathFontLiteral[0]],
 		["\\rm",  oNamesOfLiterals.mathFontLiteral[0]],
 		["\\oldstyle", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\mathtt",  oNamesOfLiterals.mathFontLiteral[0]],
@@ -1207,6 +1207,17 @@
 		"₎": ")",
 	}
 	const GetTypeFont = {
+		// Standart Word functions with higher proirity for linear format
+		"\\mathcal": 7,
+		"\\mathsf": 3,
+		"\\mathrm": -1,
+		"\\mathit": 1,
+		"\\mathfrak": 9,
+		"\\mathbfcal": 8,
+		"\\mathbf": 0,
+		"\\mathbb": 12,
+
+		// other LaTeX functions
 		"\\sf": 3,
 		"\\script": 7,
 		"\\scr": 7,
@@ -1216,21 +1227,21 @@
 		"\\mathsfit": 5,
 		"\\mathsfbfit": 6,
 		"\\mathsfbf": 4,
-		"\\mathsf": 3,
-		"\\mathrm": -1,
-		"\\mathit": 1,
-		"\\mathfrak": 9,
-		"\\mathcal": 7,
 		"\\mathbfit": 2,
 		"\\mathbffrak": 10,
-		"\\mathbfcal": 8,
-		"\\mathbf": 0,
 		"\\mathbb": 12,
 		"\\it": 1,
 		"\\fraktur": 9,
 		"\\frak": 9,
 		"\\double": 12,
 	}
+
+	function GetNamesTypeFontLaTeX(nType)
+	{
+		let arrNamesGetTypeFont = Object.entries(GetTypeFont);
+		return arrNamesGetTypeFont.find(function (element){return element[1] === Number(nType)})
+	}
+
 	const GetMathFontChar = {
 		'A': { 0: '𝐀', 1: '𝐴', 2: '𝑨', 3: '𝖠', 4: '𝗔', 5: '𝘈', 6: '𝘼', 7: '𝒜', 8: '𝓐', 9: '𝔄', 10: '𝕬', 11: '𝙰', 12: '𝔸'},
 		'B': { 0: '𝐁', 1: '𝐵', 2: '𝑩', 3: '𝖡', 4: '𝗕', 5: '𝘉', 6: '𝘽', 7: 'ℬ', 8: '𝓑', 9: '𝔅', 10: '𝕭', 11: '𝙱', 12: '𝔹'},
@@ -1284,8 +1295,8 @@
 		'x': { 0: '𝐱', 1: '𝑥', 2: '𝒙', 3: '𝗑', 4: '𝘅', 5: '𝘹', 6: '𝙭', 7: '𝓍', 8: '𝔁', 9: '𝔵', 10: '𝖝', 11: '𝚡', 12: '𝕩'},
 		'y': { 0: '𝐲', 1: '𝑦', 2: '𝒚', 3: '𝗒', 4: '𝘆', 5: '𝘺', 6: '𝙮', 7: '𝓎', 8: '𝔂', 9: '𝔶', 10: '𝖞', 11: '𝚢', 12: '𝕪'},
 		'z': { 0: '𝐳', 1: '𝑧', 2: '𝒛', 3: '𝗓', 4: '𝘇', 5: '𝘻', 6: '𝙯', 7: '𝓏', 8: '𝔃', 9: '𝔷', 10: '𝖟', 11: '𝚣', 12: '𝕫'},
-		'ı': {mathit: '𝚤'},
-		'ȷ': {mathit: '𝚥'},
+		// 'ı': {mathit: '𝚤'},
+		// 'ȷ': {mathit: '𝚥'},
 		'Α': {0: '𝚨', 1: '𝛢', 2: '𝜜', 4: '𝝖', 6: '𝞐'},
 		'Β': {0: '𝚩', 1: '𝛣', 2: '𝜝', 4: '𝝗', 6: '𝞑'},
 		'Γ': {0: '𝚪', 1: '𝛤', 2: '𝜞', 4: '𝝘', 6: '𝞒'},
@@ -1357,6 +1368,23 @@
 		'8': {0: '𝟖', 12: '𝟠', 3: '𝟪', 4: '𝟴', 11: '𝟾'},
 		'9': {0: '𝟗', 12: '𝟡', 3: '𝟫', 4: '𝟵', 11: '𝟿'},
 	};
+
+	// Generate an inverse object to get the font type and original character from the math font symbol
+	// 𝟘 -> ["12", "0"]
+
+	let GetLaTeXFont = {};
+	let nameOfLaTeX = Object.keys(GetMathFontChar)
+	for (let i = 0; i < nameOfLaTeX.length; i++)
+	{
+		let part_font = GetMathFontChar[nameOfLaTeX[i]];
+		let part_keys = Object.keys(part_font);
+
+		for (let j = 0; j < part_keys.length; j++)
+		{
+			GetLaTeXFont[part_font[part_keys[j]]] = [part_keys[j], nameOfLaTeX[i]];
+		}
+	}
+	// ================================================================================================
 
 	let type = false;
 
@@ -1486,9 +1514,6 @@
 					}
 					break;
 				case oNamesOfLiterals.otherLiteral[num]:
-					let intCharCode = oTokens.value.codePointAt()
-					oContext.Add_Symbol(intCharCode);
-					break;
 				case oNamesOfLiterals.functionNameLiteral[num]:
 				case oNamesOfLiterals.specialScriptNumberLiteral[num]:
 				case oNamesOfLiterals.specialScriptCharLiteral[num]:
@@ -3411,5 +3436,7 @@
 	window["AscMath"].SetIsLaTeXGetParaRun 			= SetIsLaTeXGetParaRun;
 	window["AscMath"].GetIsLaTeXGetParaRun 			= GetIsLaTeXGetParaRun;
 	window["AscMath"].GetHBracket 					= GetHBracket;
+	window["AscMath"].GetLaTeXFont					= GetLaTeXFont;
+	window["AscMath"].GetNamesTypeFontLaTeX			= GetNamesTypeFontLaTeX;
 
 })(window);

@@ -532,31 +532,55 @@ ParaRun.prototype.GetText = function(oText)
 
 ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 {
-    let str = "";
+	let str = "";
+	let strCurrentStyleGroup = "";
+	let strCurrentTemp = "";
+
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		if (this.Content[i])
 		{
 			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
 
-			if (isLaTeX)
+			if (!isLaTeX)
 			{
-				let value = AscMath.GetLaTeXFromValue(strTemp);
-				if (value)
-				{
-					str += value;
-				}
-				else
-				{
-					str += strTemp;
-				}
-			}
-			else{
 				str += strTemp;
+				continue;
+			}
+			let arrCurrentToken = window.AscMath.GetLaTeXFont[strTemp];
+
+			if (!arrCurrentToken)
+			{
+				if (strCurrentStyleGroup)
+				{
+					str += strCurrentStyleGroup + "{" + strCurrentTemp + "}";
+					strCurrentStyleGroup = "";
+					strCurrentTemp = "";
+				}
+				str += strTemp;
+				continue;
+			}
+
+			let arrClassToken = arrCurrentToken[0];
+			let strNamesOfClassToken = window.AscMath.GetNamesTypeFontLaTeX(arrClassToken)[0];
+			let strDefaultLetter = arrCurrentToken[1];
+
+			if (strCurrentStyleGroup === "")
+			{
+				strCurrentStyleGroup = strNamesOfClassToken;
+				strCurrentTemp += strDefaultLetter;
+			}
+			else
+			{
+				strCurrentTemp += strDefaultLetter; 
 			}
 		}
 	}
-	return str;
+
+	if (strCurrentStyleGroup)
+		return str + strCurrentStyleGroup + "{" + strCurrentTemp + "}";
+	else
+		return str;
 };
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
 {

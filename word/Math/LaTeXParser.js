@@ -59,7 +59,8 @@
 		let arrLiterals = [];
 		let isOne = this.isReceiveOneTokenAtTime;
 
-		if (isOne) {
+		if (isOne)
+		{
 			let strValue = this.EatToken(arrTypeOfLiteral[0]).data;
 			let oLiteral = {
 				type: arrTypeOfLiteral[num],
@@ -69,9 +70,11 @@
 			};
 			arrLiterals.push(oLiteral);
 		}
-		else {
+		else
+		{
 			let strLiteral = "";
-			while (this.oLookahead.class === arrTypeOfLiteral[0]) {
+			while (this.oLookahead.class === arrTypeOfLiteral[0])
+			{
 				let strConvert = AscMath.AutoCorrection[this.oLookahead.data];
 				if (strConvert)
 				{
@@ -80,7 +83,18 @@
 				}
 				else
 				{
-					strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+					let oCurrentChar = this.EatToken(arrTypeOfLiteral[0]).data;
+
+					if (this.intMathFontType === -1
+						|| !GetMathFontChar[oCurrentChar]
+						|| !GetMathFontChar[oCurrentChar][this.intMathFontType])
+					{
+						strLiteral += oCurrentChar;
+					}
+					else
+					{
+						strLiteral += GetMathFontChar[oCurrentChar][this.intMathFontType];
+					}
 				}
 			}
 			arrLiterals.push({
@@ -952,12 +966,12 @@
 	{
 		let intPrevType = this.intMathFontType;
 		this.intMathFontType = GetTypeFont[this.oLookahead.data];
+		this.EatToken(this.oLookahead.class);
 
 		if (this.oLookahead.data !== "{") {
 			this.isReceiveOneTokenAtTime = true;
 		}
 
-		this.EatToken(this.oLookahead.class)
 		let oOutput = {
 			type: oLiteralNames.mathFontLiteral[num],
 			value: this.GetArguments(1)
