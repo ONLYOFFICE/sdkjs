@@ -159,7 +159,7 @@ var EditorSkins = {
 
 		/* spreadsheets */
 		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
-		Background               : "#F1F1F1",
+		Background               : "#F7F7F7",
 		BackgroundActive         : "#c1c1c1",
 		BackgroundHighlighted    : "#dfdfdf",
 
