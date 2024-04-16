@@ -159,7 +159,7 @@ var EditorSkins = {
 
 		/* spreadsheets */
 		//TODO названия не менял. использую такие же как и были ранее. пересмотреть!
-		Background               : "#F0F0F0",
+		Background               : "#F1F1F1",
 		BackgroundActive         : "#c1c1c1",
 		BackgroundHighlighted    : "#dfdfdf",
 
@@ -448,17 +448,17 @@ function updateGlobalSkinColors(theme)
 		DemTextColor                    : "text-normal",
 
 		/* spreadsheets */
-		Background                      : "canvas-background",
-		BackgroundActive                : "canvas-cell-title-selected",
-		BackgroundHighlighted           : "canvas-cell-title-hover",
+		Background                      : "canvas-cell-title-background",
+		BackgroundActive                : "canvas-cell-title-background-selected",
+		BackgroundHighlighted           : "canvas-cell-title-background-hover",
 
 		Border                          : "canvas-cell-title-border",
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
-		Color                           : "canvas-cell-title",
-		ColorActive                     : "canvas-cell-title",
-		ColorHighlighted                : "canvas-cell-title",
+		Color                           : "canvas-cell-title-text",
+		ColorActive                     : "canvas-cell-title-text",
+		ColorHighlighted                : "canvas-cell-title-text",
 
 		SheetViewCellBackground         : "canvas-sheet-view-cell-background",
 		SheetViewCellBackgroundPressed  : "canvas-sheet-view-cell-background-pressed",
@@ -477,9 +477,7 @@ function updateGlobalSkinColors(theme)
 		SelectAllIcon                   : "canvas-select-all-icon",
 		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
-
-	//theme["canvas-background"] = "#f7f7f7";
-
+	
 	// корректируем цвета для старого хрома:
 	// в старых хромах (desktop windows XP)
 	// если начинается цвет с цифры (#0-9) - то помечается символом \3 (конец текста)
