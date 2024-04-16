@@ -1086,7 +1086,7 @@
 			arrMatrixContent.push(oContent);
 		}
 
-		while(arrMatrixContent.length < nCounter + 1)
+		while(arrMatrixContent.length < 1)
 		{
 			arrMatrixContent.push([]);
 		}
@@ -1125,6 +1125,19 @@
 		}
 
 		this.isNowMatrix = false;
+
+		if (strMatrixType.length > 0)
+		{
+			return {
+				type: oLiteralNames.bracketBlockLiteral[num],
+				value: {
+					type: oLiteralNames.matrixLiteral[num],
+					value: arrMatrixContent,
+				},
+				left: strMatrixType.length === 1 ? strMatrixType : strMatrixType[0],
+				right: strMatrixType.length === 1 ? strMatrixType : strMatrixType[1],
+			}
+		}
 
 		return {
 			type: oLiteralNames.matrixLiteral[num],

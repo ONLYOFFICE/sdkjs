@@ -978,54 +978,86 @@ CMathMatrix.prototype.Get_DeletedItemsThroughInterface = function () {
 };
 CMathMatrix.prototype.GetTextOfElement = function (isLaTeX, strBrackets)
 {
-	var strMatrixSymbol;
+	let strMatrixSymbol,
+		oDelimiterParent;
+
+	if (this.Parent instanceof CDelimiter)
+		oDelimiterParent = this.Parent;
+	else if (this.Parent.Parent instanceof CDelimiter)
+		oDelimiterParent = this.Parent.Parent;
+
+	strBrackets = oDelimiterParent
+		? String.fromCharCode(oDelimiterParent.Pr.begChr) + String.fromCharCode(oDelimiterParent.Pr.endChr)
+		: undefined;
+
 	if (isLaTeX) {
-		switch (strBrackets) {
-			case undefined:
-				strMatrixSymbol = "\\matrix";
-				break;
-			case "()":
-				strMatrixSymbol = "\\pmatrix";
-				break;
-			case "[]":
-				strMatrixSymbol = "\\bmatrix";
-				break;
-			case "{}":
-				strMatrixSymbol = "\\Bmatrix";
-				break;
-			case "||":
-				strMatrixSymbol = "\\vmatrix";
-				break;
-			case "||":
-				strMatrixSymbol = "\\vmatrix";
-				break;
-			case "‖‖":
-				strMatrixSymbol = "\\Vmatrix";
-				break;
-		}
+		// bug #61007
+		// switch (strBrackets) {
+		// 	case undefined:
+		// 		strMatrixSymbol = "matrix";
+		// 		break;
+		// 	case "()":
+		// 		strMatrixSymbol = "pmatrix";
+		// 		break;
+		// 	case "[]":
+		// 		strMatrixSymbol = "bmatrix";
+		// 		break;
+		// 	case "{}":
+		// 		strMatrixSymbol = "Bmatrix";
+		// 		break;
+		// 	case "||":
+		// 		strMatrixSymbol = "vmatrix";
+		// 		break;
+		// 	case "||":
+		// 		strMatrixSymbol = "vmatrix";
+		// 		break;
+		// 	case "‖‖":
+		// 		strMatrixSymbol = "Vmatrix";
+		// 		break;
+		// }
+
+		strMatrixSymbol = strBrackets === "()" ? "pmatrix" : "matrix";
 	}
-	else {
+	else
+	{
 		strMatrixSymbol = "■";
 	}
 
 	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
 	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
 
-	var strTemp = strMatrixSymbol + strStartBracet;
+// 	Word поддерживает несколько типов ввода для матриц LaTeX:
+// 		1. Команды матриц с заданными скобками (matrix, pmatrix, bmatrix, Bmatrix, vmatrix, Vmatrix). В Word поддерживается только matrix и pmatrix.
+// 			- При получении линейного вида для матрицы pmatrix в Word мы будем получать так же pmatrix, однако если
+// 			переоткрыть документ для pmatrix. То при получении линейного вида матрица будет в формате matrix обёрнутая
+// 			в скобки. Можно ввести отдельное свойство матриц для отслеживания таких данных (без записи этих данных),
+// 			тогда поведение будет аналогичным Word.
 
-	for (var nRow = 0; nRow < this.nRow; nRow++) {
-		for (var nCol = 0; nCol < this.nCol; nCol++) {
+// 		2. Можно обернуть команду matrix (матрица без скобок) в скобку:
+// 			\left\langle \begin{matrix}  1 & 2 & 3 \end{matrix}  \right)
+//
+// 	На данный момент делаем получение линейного формата всегда в режиме pmatrix, если это возможно (используем обычные скобки)
 
+	var strTemp = isLaTeX
+		? "\\begin{" + strMatrixSymbol + "}"
+		: strMatrixSymbol + strStartBracet;
+
+	for (var nRow = 0; nRow < this.nRow; nRow++)
+	{
+		for (var nCol = 0; nCol < this.nCol; nCol++)
+		{
 			strTemp += this.getContentElement(nRow, nCol).GetTextOfElement(isLaTeX);
-			if (nCol < this.nCol - 1) {
-				strTemp += '&'
-			}
-			else if (nRow < this.nRow - 1) {
-				strTemp += isLaTeX ? "\\\\" : '@'
-			}
+
+			if (nCol < this.nCol - 1)
+				strTemp += '&';
+			else if (nRow < this.nRow - 1)
+				strTemp += isLaTeX ? "\\\\" : '@';
 		}
 	}
-	strTemp += strCloseBracet;
+
+	strTemp += isLaTeX
+		? "\\\\\\end{" + strMatrixSymbol + "}"
+		: strCloseBracet;
 
 	return strTemp;
 };
