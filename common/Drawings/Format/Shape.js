@@ -5187,7 +5187,7 @@
 			}
 
 			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)
-			|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)) {
+			|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)) {
 				var drawingObjects = this.getDrawingObjectsController();
 				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = _transform.GetRotation();

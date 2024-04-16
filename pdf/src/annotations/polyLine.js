@@ -630,6 +630,9 @@
         let maxY = -Infinity;
     
         rects.forEach(function(rect) {
+            if (!rect)
+                return;
+
             minX = Math.min(minX, rect[0]);
             minY = Math.min(minY, rect[1]);
             maxX = Math.max(maxX, rect[2]);

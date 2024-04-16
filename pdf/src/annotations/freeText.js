@@ -388,8 +388,8 @@
         }
         oFreeText._origRect = this._origRect.slice();
 
-        this.copy2(oFreeText);
-        oFreeText.recalculate();
+        // this.copy2(oFreeText);
+        // oFreeText.recalculate();
 
         oFreeText.pen = new AscFormat.CLn();
         oFreeText._apIdx = this._apIdx;
@@ -405,9 +405,10 @@
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.recalcInfo.recalculatePen = false;
         oFreeText.recalcInfo.recalculateGeometry = false;
-        oFreeText._callout = this._callout.slice();
-        oFreeText._rectDiff = this._rectDiff.slice();
+        oFreeText._callout = this._callout ? this._callout.slice() : undefined;
+        oFreeText._rectDiff = this._rectDiff ? this._rectDiff.slice() : undefined;
         oFreeText.SetWasChanged(oFreeText.IsChanged());
+        oFreeText.recalcGeometry();
         
         return oFreeText;
     };
@@ -683,6 +684,10 @@
         let aRCInfo = this.GetRichContents();
         fontMap = fontMap || {};
 
+        if (!aRCInfo) {
+            return fontMap;
+        }
+
         for (let i = 0; i < aRCInfo.length; i++) {
             let fontName = AscPDF.DEFAULT_FIELD_FONT;
             if (aRCInfo[i]["actual"]) {
@@ -761,7 +766,7 @@
         this.selectStartPage    = this.GetPage();
         
         if (this.IsInTextBox() == false) {
-            if (this.selectedObjects.length != this.spTree.length - 1) {
+            if (this.selectedObjects.length == 0) {
                 let _t = this;
                 // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
                 oDrawingObjects.selection.groupSelection = this;
@@ -1388,22 +1393,6 @@
         }
 
         return oSize;
-    }
-
-    function unionRectangles(rects) {
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-    
-        rects.forEach(function(rect) {
-            minX = Math.min(minX, rect[0]);
-            minY = Math.min(minY, rect[1]);
-            maxX = Math.max(maxX, rect[2]);
-            maxY = Math.max(maxY, rect[3]);
-        });
-    
-        return [minX, minY, maxX, maxY];
     }
 
     function initGroupShape(oParentFreeText) {

@@ -1763,12 +1763,17 @@ MoveInGroupState.prototype =
                 let oFreeText       = this.group;
                 let oFreeTextRect   = oFreeText.GetRect();
                 let aTextBoxRect    = oFreeText.GetTextBoxRect();
-                let aNewCallout     = oFreeText.GetCallout().slice();
+                let aCallout        = oFreeText.GetCallout();
+                let aNewCallout     = aCallout ? aCallout.slice() : null;
                 let aCurRD          = oFreeText.GetRectangleDiff();
                 let aNewRD          = [];
                 let aNewRect        = [];
 
                 function findBoundingRectangle(points) {
+                    if (!points) {
+                        return null;
+                    }
+                    
                     let minX = points[0];
                     let minY = points[1];
                     let maxX = points[0];
@@ -1924,7 +1929,7 @@ MoveInGroupState.prototype =
                     let aNewTextBoxRect = [xMin / nScaleX, yMin / nScaleY, xMax / nScaleX, yMax / nScaleY];
 
                     // находим рект стрелки, учитывая окончание линии
-                    let aArrowRect = oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]);
+                    let aArrowRect = aNewCallout ? oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
 
                     // находим результирующий rect аннотации
                     aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
