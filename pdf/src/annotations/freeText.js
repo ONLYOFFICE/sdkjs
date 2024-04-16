@@ -1235,6 +1235,9 @@
     CAnnotationFreeText.canRotate = function() {
         return false;
     };
+    CAnnotationFreeText.prototype.Get_AbsolutePage = function() {
+        return this.GetPage();
+    };
 
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMin = aShapeRect[0];

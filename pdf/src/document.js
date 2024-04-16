@@ -3765,13 +3765,13 @@ var CPresentation = CPresentation || function(){};
         let nPageH      = oNativePage.W;
         let oUser       = Asc.editor.User;
 
-        let nWidth  = 170;
+        let nWidth  = 200;
         let nHeight = 85;
 
         let nCurTime = new Date().getTime();
 
         let oProps = {
-            rect:           [(nPageW - nWidth) / 2, nPageH / 10, nPageW - nWidth, nPageH / 10 + nHeight],
+            rect:           [(nPageW - nWidth) / 2, nPageH / 10, (nPageW - nWidth) / 2 + nWidth, nPageH / 10 + nHeight],
             page:           nPage,
             name:           AscCommon.CreateGUID(),
             type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
