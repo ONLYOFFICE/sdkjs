@@ -791,7 +791,7 @@
 
                 this.spTree.forEach(function(sp) {
                     if (!(sp instanceof AscFormat.CConnectionShape)) {
-                        sp.selectStartPage = 0;
+                        sp.selectStartPage = _t.selectStartPage;
                         _t.selectedObjects.push(sp);
                     }
                 });
@@ -1145,7 +1145,7 @@
         if (isResize) {
             this.spTree.forEach(function(sp) {
                 if (sp.GetId() == sShapeId) {
-                    sp.selectStartPage = 0;
+                    sp.selectStartPage = _t.selectStartPage;
                     _t.selectedObjects.push(sp);
                 }
             });
@@ -1153,7 +1153,7 @@
         // иначе move 
         else {
             // если попали в стрелку, тогда селектим группу, т.к. будем перемещать всю аннотацию целиком
-            if (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line") {
+            if (this.spTree.length == 1 || (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line")) {
                 this.selectedObjects.length = 0;
                 oDrawingObjects.selection.groupSelection = null;
                 oDrawingObjects.selectedObjects.length = 0;

@@ -1126,8 +1126,18 @@ var CPresentation = CPresentation || function(){};
         let oCurObject      = this.GetActiveObject();
 
         // уже обновлён в oController
-        if (oCurObject && oCurObject.GetId && oCursorInfo.objectId == oCurObject.GetId() && (!oCurObject.IsAnnot() || !oCurObject.IsComment())) {
-            return true;
+        if (oCurObject && oCurObject.GetId) {
+            if (oCurObject.IsFreeText()) {
+                let isUnderCursor = oCurObject.spTree.find(function(sp) {
+                    return sp.GetId() == oCursorInfo.objectId;
+                });
+                if (isUnderCursor) {
+                    return true;
+                }
+            }
+            else if (oCurObject.GetId() == oCursorInfo.objectId) {
+                return true;
+            }
         }
 
         // курсор залочен для этих действий
