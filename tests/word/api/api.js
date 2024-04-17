@@ -289,6 +289,48 @@ $(function () {
 		]);
 		checkHaveSpace(true, true);
 		
+		let paraStyle = AscTest.CreateParagraphStyle("SpacingStyle");
+		paraStyle.SetParaPr(AscWord.CParaPr.fromObject({
+			Spacing : {
+				Before : 25 * g_dKoef_pt_to_mm,
+				After  : 0
+			}
+		}));
+		p[1].SetPStyle(paraStyle.GetId());
+		
+		AscTest.SelectDocumentRange(1, 2);
+		AscTest.Editor.asc_removeSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 0],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 0],
+			[25 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_addSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 12 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 12 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, true);
+		
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 0],
+			[25 * g_dKoef_pt_to_mm, 0]
+		]);
+		checkHaveSpace(true, false);
+		
 		
 	});
 });
