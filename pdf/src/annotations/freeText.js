@@ -1622,7 +1622,10 @@
     }
 
     window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
-    window["AscPDF"].FREE_TEXT_INTENT_TYPE  = FREE_TEXT_INTENT_TYPE;
+    window["AscPDF"].FREE_TEXT_INTENT_TYPE  = window["AscPDF"]["FREE_TEXT_INTENT_TYPE"] = FREE_TEXT_INTENT_TYPE;
+    FREE_TEXT_INTENT_TYPE['FreeText']           = FREE_TEXT_INTENT_TYPE.FreeText;
+    FREE_TEXT_INTENT_TYPE['FreeTextCallout']    = FREE_TEXT_INTENT_TYPE.FreeTextCallout;
+    
     window["AscPDF"].CALLOUT_EXIT_POS       = CALLOUT_EXIT_POS;
 })();
 

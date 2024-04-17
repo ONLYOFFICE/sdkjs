@@ -1989,6 +1989,7 @@
 	PDFEditorApi.prototype['AddFreeTextAnnot'] = PDFEditorApi.prototype.AddFreeTextAnnot;
 
 	// drawings
+	PDFEditorApi.prototype['AddTextArt']				= PDFEditorApi.prototype.AddTextArt;
 	PDFEditorApi.prototype['StartAddShape']				= PDFEditorApi.prototype.StartAddShape;
 	PDFEditorApi.prototype['ShapeApply']				= PDFEditorApi.prototype.ShapeApply;
 	PDFEditorApi.prototype['ChangeShapeType']			= PDFEditorApi.prototype.ChangeShapeType;

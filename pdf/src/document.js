@@ -165,6 +165,7 @@ var CPresentation = CPresentation || function(){};
 		this.defaultFontsLoaded     = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
 		this.fontLoaderCallbacks    = [];
         this.loadedFonts            = [];
+        this.Action                 = {};
     }
 
     /////////// методы для открытия //////////////
@@ -1127,7 +1128,7 @@ var CPresentation = CPresentation || function(){};
 
         // уже обновлён в oController
         if (oCurObject && oCurObject.GetId) {
-            if (oCurObject.IsFreeText()) {
+            if (oCurObject.IsAnnot() && oCurObject.IsFreeText()) {
                 let isUnderCursor = oCurObject.spTree.find(function(sp) {
                     return sp.GetId() == oCursorInfo.objectId;
                 });
@@ -3552,6 +3553,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         let oDrDoc      = this.GetDrawingDocument();
+        let oController = this.GetController();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
         let oTextArt    = this.GetController().createTextArt(nStyle, false);
@@ -3577,6 +3579,14 @@ var CPresentation = CPresentation || function(){};
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTextArt]));
 
         oTextArt.AddToRedraw();
+        
+        this.SetMouseDownObject(oTextArt);
+
+        oTextArt.select(oController, nPage);
+        oTextArt.SetInTextBox(true);
+        this.SetMouseDownObject(oTextArt);
+        oTextArt.SelectAllText();
+        oController.selection.textSelection = oTextArt;
     };
     CPDFDoc.prototype.AddSmartArt = function(nSmartArtType, oPlaceholder, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
@@ -3696,6 +3706,8 @@ var CPresentation = CPresentation || function(){};
         
         this.AddDrawing(oGrFrame, nPage);
         oController.Check_GraphicFrameRowHeight(oGrFrame);
+        this.SetMouseDownObject(oGrFrame);
+        oGrFrame.select(this.GetController(), nPage);
     };
     CPDFDoc.prototype.private_Create_TableGraphicFrame = function(Cols, Rows, StyleId, Width, Height, PosX, PosY, nPage, bInline) {
         let oDrDoc      = this.GetDrawingDocument();
