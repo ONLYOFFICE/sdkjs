@@ -3631,6 +3631,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
+		var areaIndexes = this.areaIndexes;
 		var arrayIndexes = this.arrayIndexes;
 		var replaceAreaByValue = cReturnFormulaType.value_replace_area === returnFormulaType;
 		var replaceAreaByRefs = cReturnFormulaType.area_to_ref === returnFormulaType;
@@ -3651,6 +3652,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							res = true;
 						}
 					}
+				}
+			}
+			return res;
+		};
+
+		const checkAreaIndex = function(index) {
+			let res = false;
+			if(areaIndexes) {
+				if(1 === areaIndexes[index]) {
+					res = true;
 				}
 			}
 			return res;
@@ -3691,7 +3702,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_checkArrayIndex = checkArrayIndex(j);
 				if (!_checkArrayIndex) {
 					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
-						if (replaceAreaByValue) {
+						if (checkAreaIndex(j)) {
+							tempArg = tempArg;
+						} else if (replaceAreaByValue) {
 							tempArg = tempArg.cross(opt_bbox);
 						} else if (replaceAreaByRefs) {
 							//добавляю специальные заглушки для функций row/column
@@ -3775,7 +3788,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					if (0 === argumentsCount && parserFormula.ref) {
 						temp_opt_bbox = new Asc.Range(c + parserFormula.ref.c1, r + parserFormula.ref.r1, c + parserFormula.ref.c1, r + parserFormula.ref.r1);
 					}
-					array.addElement(t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row, _col));
+					array.addElement(t.Calculate(newArgs, temp_opt_bbox, opt_defName, parserFormula.ws, null, _row ? _row : r, _col ? _col : c));
 				};
 
 				if (firstArray.foreach) {
