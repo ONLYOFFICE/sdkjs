@@ -3451,8 +3451,8 @@
 				let wb = api && api.wb;
 				if (wb) {
 					let searchEngine = wb.SearchEngine;
-					if (searchEngine && searchEngine.Elements && searchEngine.Id && searchEngine.Elements[searchEngine.Id]) {
-						return searchEngine.Elements[searchEngine.Id];
+					if (searchEngine && searchEngine.Elements && searchEngine.Id && searchEngine.Elements[searchEngine.Id - 1]) {
+						return searchEngine.Elements[searchEngine.Id - 1];
 					}
 				}
 			}
