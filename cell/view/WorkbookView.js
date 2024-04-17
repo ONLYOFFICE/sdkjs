@@ -6175,24 +6175,13 @@
 	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
 		if (this.wb.Api.selectSearchingResults && bbox && this.props) {
 			let t = this;
-			let aCells;
-			ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(function(cell) {
-				if (!aCells) {
-					aCells = [];
-				}
-				if (!aCells[cell.nRow]) {
-					aCells[cell.nRow] = [];
-				}
-				aCells[cell.nRow][cell.nCol] = cell;
-			});
-
+			
 			let newCell = new AscCommonExcel.Cell(ws);
-			for (let i = bbox.c1; i <= bbox.c2; i++) {
-				for (let j = bbox.r1; j <= bbox.r2; j++) {
-					newCell.nCol = i;
-					newCell.nRow = j;
-					let _cell = aCells && aCells[j] && aCells[j][i] ? aCells[j][i] : newCell;
-					this.changeCellValue(_cell);
+			for (let i in this.Elements) {
+				if (this.Elements[i].index === ws.index && bbox.contains(this.Elements[i].col, this.Elements[i].row)) {
+					newCell.nCol = this.Elements[i].col;
+					newCell.nRow = this.Elements[i].row;
+					this.changeCellValue(newCell);
 				}
 			}
 		}
