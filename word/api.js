@@ -3685,11 +3685,31 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_haveSpaceBeforeParagraph = function()
 	{
-		return true;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let paragraphs = logicDocument.GetSelectedParagraphs();
+		if (!paragraphs.length)
+			return false;
+		
+		let p = paragraphs[0];
+		let paraPr = p.Get_CompiledPr2().ParaPr;
+		return paraPr.Spacing.Before > 0.001;
 	};
 	asc_docs_api.prototype.asc_haveSpaceAfterParagraph = function()
 	{
-		return true;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let paragraphs = logicDocument.GetSelectedParagraphs();
+		if (!paragraphs.length)
+			return false;
+		
+		let p = paragraphs[0];
+		let paraPr = p.Get_CompiledPr2().ParaPr;
+		return paraPr.Spacing.After > 0.001;
 	};
 	
 	asc_docs_api.prototype.put_PrLineSpacing          = function(Type, Value)

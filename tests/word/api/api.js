@@ -210,7 +210,7 @@ $(function () {
 		for (let i = 0; i < 3; ++i)
 		{
 			p[i] = AscTest.CreateParagraph();
-			logicDocument.AddToContent(0, p[i]);
+			logicDocument.AddToContent(i, p[i]);
 		}
 		
 		function checkSpacing(spacings)
@@ -245,6 +245,50 @@ $(function () {
 			[0, 10 * g_dKoef_pt_to_mm],
 			[0, 10 * g_dKoef_pt_to_mm]
 		]);
-
+		checkHaveSpace(true, true);
+		
+		AscTest.MoveCursorToParagraph(p[1]);
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 0],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.SelectDocumentRange(0, 2);
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 0],
+			[0, 0],
+			[0, 0]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_removeSpaceBeforeParagraph();
+		checkSpacing([
+			[0, 0],
+			[0, 0],
+			[0, 0]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 0],
+			[12 * g_dKoef_pt_to_mm, 0],
+			[12 * g_dKoef_pt_to_mm, 0]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_addSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, true);
+		
+		
 	});
 });
