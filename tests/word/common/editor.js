@@ -144,6 +144,14 @@
 	{
 		return AscTest.GetLogicDocument().getSpeechDescription(...arguments);
 	};
+	editor._addRemoveSpaceBeforeAfterParagraph = AscCommon.DocumentEditorApi.prototype._addRemoveSpaceBeforeAfterParagraph.bind(editor);
+	editor.asc_addSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_addSpaceBeforeParagraph.bind(editor);
+	editor.asc_addSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_addSpaceAfterParagraph.bind(editor);
+	editor.asc_removeSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_removeSpaceBeforeParagraph.bind(editor);
+	editor.asc_removeSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_removeSpaceAfterParagraph.bind(editor);
+	editor.asc_haveSpaceBeforeParagraph = AscCommon.DocumentEditorApi.prototype.asc_haveSpaceBeforeParagraph.bind(editor);
+	editor.asc_haveSpaceAfterParagraph = AscCommon.DocumentEditorApi.prototype.asc_haveSpaceAfterParagraph.bind(editor);
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;

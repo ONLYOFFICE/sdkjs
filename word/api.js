@@ -3683,6 +3683,14 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
+	asc_docs_api.prototype.asc_haveSpaceBeforeParagraph = function()
+	{
+		return true;
+	};
+	asc_docs_api.prototype.asc_haveSpaceAfterParagraph = function()
+	{
+		return true;
+	};
 	
 	asc_docs_api.prototype.put_PrLineSpacing          = function(Type, Value)
 	{

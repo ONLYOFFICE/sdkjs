@@ -31,7 +31,7 @@
  */
 
 $(function () {
-
+	
 	let logicDocument = AscTest.CreateLogicDocument();
 
 	QUnit.module("Test api for the document editor");
@@ -190,5 +190,41 @@ $(function () {
 		
 		assert.strictEqual(!!p2.GetNumPr(), true, "Check paragraph 2 numbering");
 		assert.deepEqual(p2.GetNumPr().Lvl, 0, "Check level of second paragraph");
+	});
+	
+	QUnit.test("Test add/remove space before/after paragraph", function(assert)
+	{
+		const epsilon = 0.001;
+		
+		AscTest.ClearDocument();
+		let p = [];
+		
+		for (let i = 0; i < 3; ++i)
+		{
+			p[i] = AscTest.CreateParagraph();
+			logicDocument.AddToContent(0, p[i]);
+		}
+		
+		function check(spacings)
+		{
+			for (let i = 0; i < 3; ++i)
+			{
+				let paraPr = p[i].GetCompiledParaPr(false);
+				
+				assert.close(paraPr.Spacing.Before, spacings[i][0], epsilon, "Check paragraph " + (i + 1) + " spacing before");
+				assert.close(paraPr.Spacing.After, spacings[i][1], epsilon, "Check paragraph " + (i + 1) + " spacing after");
+			}
+		}
+		
+		check([
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		
+		
+		AscTest.MoveCursorToParagraph(p[0]);
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+
 	});
 });
