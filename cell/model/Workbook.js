@@ -12708,9 +12708,9 @@
 
 	//*****user range protect*****
 	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
-		
-		if ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
-			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref))) {
+		//if undo/redo - need apply changes
+		if (addToHistory && ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
+			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref)))) {
 			return false;
 		}
 
