@@ -1064,13 +1064,6 @@ CMathText.prototype.ToSearchElement = function(oProps)
 CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 	var strPre = "";
 
-	if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
-	{
-		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
-		if (str)
-			return str + " ";
-	}
-
 	if (this.value && this.value !== 11034)
 		return strPre + AscCommon.encodeSurrogateChar(this.value);
 

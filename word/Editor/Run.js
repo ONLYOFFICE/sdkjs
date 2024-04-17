@@ -551,6 +551,10 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 
 			if (!arrCurrentToken)
 			{
+				let strSymbol = AscMath.SymbolsToLaTeX[strTemp];
+				if (strSymbol)
+					strTemp = strSymbol + " ";
+
 				if (strCurrentStyleGroup)
 				{
 					str += strCurrentStyleGroup + "{" + strCurrentTemp + "}";

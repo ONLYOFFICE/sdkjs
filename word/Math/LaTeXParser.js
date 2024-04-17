@@ -79,7 +79,11 @@
 				if (strConvert)
 				{
 					this.EatToken(this.oLookahead.class);
-					strLiteral += strConvert
+					strLiteral += strConvert;
+					if (this.oLookahead.data === " ")
+					{
+						this.EatToken(this.oLookahead.class);
+					}
 				}
 				else
 				{
