@@ -16749,6 +16749,12 @@ function CParaPr()
 	this.SuppressLineNumbers = undefined;
 }
 
+CParaPr.fromObject = function(obj)
+{
+	let paraPr = new CParaPr();
+	paraPr.Set_FromObject(obj);
+	return paraPr;
+};
 CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var ParaPr = new CParaPr();

@@ -33,6 +33,14 @@
 $(function () {
 	
 	let logicDocument = AscTest.CreateLogicDocument();
+	// Выставим стандартные настройки для параграфа
+	logicDocument.GetStyles().Set_DefaultParaPr(AscWord.CParaPr.fromObject({
+		Spacing : {
+			After : 10 * g_dKoef_pt_to_mm,
+			LineRule : linerule_Auto,
+			Line : 259 / 240
+		}
+	}));
 
 	QUnit.module("Test api for the document editor");
 
@@ -205,7 +213,7 @@ $(function () {
 			logicDocument.AddToContent(0, p[i]);
 		}
 		
-		function check(spacings)
+		function checkSpacing(spacings)
 		{
 			for (let i = 0; i < 3; ++i)
 			{
@@ -215,16 +223,28 @@ $(function () {
 				assert.close(paraPr.Spacing.After, spacings[i][1], epsilon, "Check paragraph " + (i + 1) + " spacing after");
 			}
 		}
+		function checkHaveSpace(haveSpaceBefore, haveSpaceAfter)
+		{
+			assert.strictEqual(AscTest.Editor.asc_haveSpaceBeforeParagraph(), haveSpaceBefore, "Check have space before");
+			assert.strictEqual(AscTest.Editor.asc_haveSpaceAfterParagraph(), haveSpaceAfter, "Check have space after");
+		}
 		
-		check([
+		checkSpacing([
 			[0, 10 * g_dKoef_pt_to_mm],
 			[0, 10 * g_dKoef_pt_to_mm],
 			[0, 10 * g_dKoef_pt_to_mm]
 		]);
 		
-		
 		AscTest.MoveCursorToParagraph(p[0]);
+		checkHaveSpace(false, true);
+		
 		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
 
 	});
 });
