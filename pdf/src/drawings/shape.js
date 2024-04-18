@@ -58,12 +58,12 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalculateTransform();
-        this.updateTransformMatrix();
         this.recalcGeometry();
         this.recalculateContent();
         this.checkExtentsByDocContent(true, true);
         this.recalculate();
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };

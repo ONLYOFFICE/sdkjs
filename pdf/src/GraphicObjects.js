@@ -339,17 +339,18 @@ CGraphicObjectsPdf.prototype.getDrawingProps = function () {
     return this.getDrawingPropsFromArray(this.getSelectedArray());
 };
 
-CGraphicObjectsPdf.prototype.addTextWithPr = function(sText, oSettings) {
+CGraphicObjectsPdf.prototype.addTextWithPr = function (sText, oSettings) {
     if (this.checkSelectedObjectsProtectionText()) {
         return;
     }
+    let oController = this;
     this.checkSelectedObjectsAndCallback(function () {
 
         if (!oSettings)
             oSettings = new AscCommon.CAddTextSettings();
 
-        let oTargetDocContent = this.getTargetDocContent(true, false);
-        if (oTargetDocContent) {
+        let fContentFunction = function() {
+            let oTargetDocContent = this;
             oTargetDocContent.Remove(-1, true, true, true, undefined);
             let oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
             let oParagraph = oTargetDocContent.GetCurrentParagraph();
@@ -378,16 +379,21 @@ CGraphicObjectsPdf.prototype.addTextWithPr = function(sText, oSettings) {
                 oSelectedContent.PlaceCursorInLastInsertedRun(!oSettings.IsMoveCursorOutside());
                 oSelectedContent.Insert(oAnchorPos);
 
-                let oTargetTextObject = AscFormat.getTargetTextObject(this);
+                let oTargetTextObject = AscFormat.getTargetTextObject(oController);
                 if (oTargetTextObject) {
+                    oTargetTextObject.SetInTextBox(true);
                     oTargetTextObject.SetNeedRecalc(true);
                     
                     if (oTargetTextObject.checkExtentsByDocContent)
                         oTargetTextObject.checkExtentsByDocContent();
                 }
             }
-
-        }
+        };
+        let fTableFunction = function () {
+            let oContent = this.CurCell.Content;
+            fContentFunction.call(oContent);
+        };
+        this.applyTextFunction(fContentFunction, fTableFunction, []);
     }, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
 };
 
@@ -786,6 +792,121 @@ CGraphicObjectsPdf.prototype.distributeVer = function(bSelected) {
         move_state.bSamePos = false;
         move_state.onMouseUp({}, 0, 0, 0);
     }
+};
+CGraphicObjectsPdf.prototype.checkChartTextSelection = function (bNoRedraw) {
+    if (this.bNoCheckChartTextSelection === true)
+        return false;
+
+    let oViewer = Asc.editor.getDocumentRenderer();
+    let chart_selection, bRet = false;
+    let nPageNum1, nPageNum2;
+
+    if (this.selection.chartSelection) {
+        chart_selection = this.selection.chartSelection;
+    } else if (this.selection.groupSelection && this.selection.groupSelection.selection.chartSelection) {
+        chart_selection = this.selection.groupSelection.selection.chartSelection;
+    }
+
+    if (chart_selection && (chart_selection.selection.textSelection || chart_selection.selection.title)) {
+        let oTitle = chart_selection.selection.textSelection;
+
+        if (!oTitle) {
+            oTitle = chart_selection.selection.title;
+            nPageNum2 = this.drawingObjects.num;
+        }
+
+        let content = oTitle.getDocContent(), bDeleteTitle = false;
+        if (content) {
+            if (content.Is_Empty()) {
+                if (chart_selection.selection.title && chart_selection.selection.title.parent) {
+                    AscCommon.History.Create_NewPoint(AscDFH.historydescription_CommonControllerCheckChartText);
+                    chart_selection.selection.title.parent.setTitle(null);
+                    bDeleteTitle = true;
+                }
+            }
+        }
+
+        if (chart_selection.recalcInfo.bRecalculatedTitle || bDeleteTitle) {
+            chart_selection.recalcInfo.recalcTitle = null;
+            chart_selection.handleUpdateInternalChart(false);
+
+            chart_selection.recalculate();
+            nPageNum1 = chart_selection.selectStartPage;
+
+            chart_selection.recalcInfo.bRecalculatedTitle = false;
+        }
+    }
+    let oTargetTextObject = AscFormat.getTargetTextObject(this);
+    let nSelectStartPage = 0, bNoNeedRecalc = false;
+
+    if (oTargetTextObject) {
+        nSelectStartPage = oTargetTextObject.selectStartPage;
+    }
+    if ((!(oTargetTextObject instanceof AscFormat.CShape)) && this.document) {
+        if (this.selectedObjects.length === 1 && this.selectedObjects[0].parent) {
+            let oShape = this.selectedObjects[0].parent.isShapeChild(true);
+            if (oShape) {
+                oTargetTextObject = oShape;
+                nSelectStartPage = this.selectedObjects[0].selectStartPage;
+                bNoNeedRecalc = true;
+            }
+        }
+    }
+
+    if (oTargetTextObject) {
+        let bRedraw = false;
+        let warpGeometry = oTargetTextObject.recalcInfo && oTargetTextObject.recalcInfo.warpGeometry;
+        
+        if (warpGeometry && warpGeometry.preset !== "textNoShape" || oTargetTextObject.worksheet) {
+            if (oTargetTextObject.recalcInfo.bRecalculatedTitle) {
+                oTargetTextObject.recalcInfo.recalcTitle = null;
+                oTargetTextObject.recalcInfo.bRecalculatedTitle = false;
+                AscFormat.ExecuteNoHistory(function () {
+                    if (oTargetTextObject.bWordShape) {
+                        if (!bNoNeedRecalc) {
+                            oTargetTextObject.recalcInfo.oContentMetrics = oTargetTextObject.recalculateTxBoxContent();
+                            oTargetTextObject.recalcInfo.recalculateTxBoxContent = false;
+                            oTargetTextObject.recalcInfo.AllDrawings = [];
+                            let oContent = oTargetTextObject.getDocContent();
+                            if (oContent) {
+                                oContent.GetAllDrawingObjects(oTargetTextObject.recalcInfo.AllDrawings);
+                            }
+                        }
+                    } else {
+                        oTargetTextObject.recalcInfo.oContentMetrics = oTargetTextObject.recalculateContent();
+                        oTargetTextObject.recalcInfo.recalculateContent = false;
+                    }
+                }, this, []);
+
+            }
+            oTargetTextObject.AddToRedraw();
+            bRedraw = true;
+        }
+
+        let oDocContent = this.getTargetDocContent();
+        if (oDocContent) {
+            let oParagraph = oDocContent.GetElement(0);
+            let oForm;
+            if (oParagraph && oParagraph.IsParagraph() && oParagraph.IsInFixedForm() && (oForm = oParagraph.GetInnerForm())) {
+                oDocContent.ResetShiftView();
+                oTargetTextObject.AddToRedraw();
+                bRedraw = true;
+            }
+        }
+
+        if (bRedraw) {
+            nPageNum2 = nSelectStartPage;
+        }
+    }
+
+    if (AscFormat.isRealNumber(nPageNum1)) {
+        bRet = true;
+    }
+
+    if (AscFormat.isRealNumber(nPageNum2) && nPageNum2 !== nPageNum1) {
+        bRet = true;
+    }
+    return bRet;
 };
 
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;

@@ -1543,15 +1543,21 @@
 
 		oDoc.RemoveComment(Id);
 	};
+	PDFEditorApi.prototype.asc_remove = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.Remove(1, false);
+	};
 	PDFEditorApi.prototype.asc_changeComment = function(Id, AscCommentData)
 	{
 		var oDoc = this.getDocumentRenderer().getPDFDoc();
 		if (!oDoc)
 			return;
 
+		oDoc.CreateNewHistoryPoint();
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
+		oDoc.TurnOffHistory();
 	};
 	PDFEditorApi.prototype.asc_selectComment = function(Id)
 	{
@@ -1794,6 +1800,11 @@
 		}
 		
 		this.EndActionLoadImages = 0;
+		if (false === this.isPasteFonts_Images && false === this.isSaveFonts_Images && false === this.isLoadImagesCustom)
+		{
+			this.ServerImagesWaitComplete = true;
+			this._openDocumentEndCallback();
+		}
 		
 		this.WordControl.m_oDrawingDocument.OpenDocument();
 		
@@ -1841,6 +1852,9 @@
 		this.DocumentRenderer.resize();
 	};
 	PDFEditorApi.prototype._openDocumentEndCallback = function() {
+		if (this.isDocumentLoadComplete || !this.ServerImagesWaitComplete || !this.ServerIdWaitComplete || !this.WordControl || !this.WordControl.m_oLogicDocument)
+			return;
+
 		this.sendMathToMenu();
 		this.sendStandartTextures();
 	};
@@ -1937,6 +1951,7 @@
 	PDFEditorApi.prototype['asc_showComment']              = PDFEditorApi.prototype.asc_showComment;
 	PDFEditorApi.prototype['asc_hideComments']             = PDFEditorApi.prototype.asc_hideComments;
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
+	PDFEditorApi.prototype['asc_remove']            	   = PDFEditorApi.prototype.asc_remove;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
 	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 	PDFEditorApi.prototype['asc_EditPage']                 = PDFEditorApi.prototype.asc_EditPage;

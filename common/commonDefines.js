@@ -4600,6 +4600,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ContentControl']            = prot.ContentControl;
 	prot['Animation']                 = prot.Animation;
 	prot['Text']                      = prot.Text;
+	prot['Annot']                     = prot.Annot;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;

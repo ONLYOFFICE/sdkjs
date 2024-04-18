@@ -694,12 +694,8 @@
         return this._replies[nPos];
     };
     CAnnotationBase.prototype.RemoveComment = function() {
-        let oDoc = this.GetDocument();
-
-        oDoc.CreateNewHistoryPoint();
         this.SetContents(null);
         this.SetReplies([]);
-        oDoc.TurnOffHistory();
     };
     CAnnotationBase.prototype.EditCommentData = function(oCommentData) {
         let oFirstCommToEdit;

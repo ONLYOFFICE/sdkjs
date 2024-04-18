@@ -59,10 +59,10 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        this.recalculateTransform();
-        this.updateTransformMatrix();
         this.recalcGeometry();
         this.recalculate();
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
     CPdfImage.prototype.onMouseDown = function(x, y, e) {

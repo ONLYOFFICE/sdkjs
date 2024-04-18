@@ -7069,6 +7069,11 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
+						// skip sticky note for pdf editor
+						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment()) {
+							continue;
+						}
+
 						locked = undefined;
 						if (AscFormat.MoveAnimationDrawObject && drawing instanceof AscFormat.MoveAnimationDrawObject) {
 							bMotionPath = true;
@@ -8180,7 +8185,7 @@
 						oTextPr = oShape.getTextArtPreviewManager().getStylesToApply()[nStyle].Copy();
 						oTextPr.FontSize = nFontSize;
 						oTextPr.RFonts.Ascii = undefined;
-						if (!((typeof CGraphicObjects !== "undefined") && (this instanceof CGraphicObjects))) {
+						if (!((typeof CGraphicObjects !== "undefined") && (this instanceof CGraphicObjects)) || Asc.editor.isPdfEditor()) {
 							oTextPr.Unifill = oTextPr.TextFill;
 							oTextPr.TextFill = undefined;
 						}

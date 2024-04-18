@@ -518,11 +518,7 @@
         this.recalcInfo.recalculateGeometry = true;
 	};
     CAnnotationFreeText.prototype.RemoveComment = function() {
-        let oDoc = this.GetDocument();
-
-        oDoc.CreateNewHistoryPoint();
         this.SetReplies([]);
-        oDoc.TurnOffHistory();
     };
     CAnnotationFreeText.prototype.SetContents = function(contents) {
         if (this.GetContents() == contents)

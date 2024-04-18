@@ -459,7 +459,20 @@ NullState.prototype =
                 aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
             }
 
-            return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
+            ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
+
+            if(ret)
+            {
+                if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                {
+                    end_target_doc_content = this.drawingObjects.getTargetDocContent();
+                    if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
+
+                        this.drawingObjects.checkChartTextSelection();
+                    }
+                }
+                return ret;
+            }
         }
         
         if(start_target_doc_content)

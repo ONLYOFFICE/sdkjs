@@ -384,9 +384,15 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
 }
 
 function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
-    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && editor.getDocumentRenderer().getPageAnnotByMouse() == drawing) {
+    if (drawingObjectsController.handleEventMode != HANDLE_EVENT_MODE_HANDLE)
+        return false;
+    
+    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && Asc.editor.getPDFDoc().GetActiveObject() == drawing) {
         drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
         drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
+        if (drawingObjectsController.selectedObjects.indexOf(drawing) == -1) {
+            drawingObjectsController.selectedObjects.push(drawing);
+        }
         return true;
     }
     
