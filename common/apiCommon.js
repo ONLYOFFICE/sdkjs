@@ -5537,7 +5537,31 @@ function (window, undefined) {
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		_object["type"] = this.type;
+		switch (this.type) {
+			case PluginType.System:
+				_object["type"] = "system";
+				break;
+
+			case PluginType.Window:
+				_object["type"] = "window";
+				break;
+
+			case PluginType.Panel:
+				_object["type"] = "panel";
+				break;
+
+			case PluginType.PanelRight:
+				_object["type"] = "panelRight";
+				break;
+
+			case PluginType.Invisible:
+				_object["type"] = "invisible";
+				break;
+		
+			default:
+				_object["type"] = "background";
+				break;
+		}
 
 		_object["isCustomWindow"] = this.isCustomWindow;
 		_object["isModal"] = this.isModal;
@@ -5573,15 +5597,12 @@ function (window, undefined) {
 		this.type = PluginType.Background;
 
 		let _type = _object["type"];
-		if (typeof _type === "string") {
+		if (undefined !== _type) {
 			if ("system" === _type) this.type = PluginType.System;
 			if ("window" === _type) this.type = PluginType.Window;
 			if ("panel" === _type) this.type = PluginType.Panel;
 			if ("panelRight" === _type) this.type = PluginType.PanelRight;
 			if ("invisible" === _type) this.type = PluginType.Invisible;
-		}
-		else if (typeof _type === "number") {
-			this.type = _type
 		}
 		else {
 			// old version: not support background plugins
