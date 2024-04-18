@@ -983,10 +983,13 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.IsSelectionUse = function() {
         let oCurObject = this.GetActiveObject();
-        let oContent = oCurObject.GetDocContent();
+
+        if (oCurObject) {
+            let oContent = oCurObject.GetDocContent();
     
-        if (oContent) {
-            return oContent.IsSelectionUse();
+            if (oContent) {
+                return oContent.IsSelectionUse();
+            }
         }
 
         return false;
@@ -4291,6 +4294,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetSelectionState = function(oState) {
         return;
     };
+    
+    CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
+    CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
+    CPDFDoc.prototype.HaveRevisionChanges = function() {};
     CPDFDoc.prototype.ContinueSpellCheck = function() {};
     CPDFDoc.prototype.ContinueTrackRevisions = function() {};
     CPDFDoc.prototype.StartCollaborationEditing = function() {};
