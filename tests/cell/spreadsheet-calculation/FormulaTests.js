@@ -610,6 +610,7 @@ $(function () {
 		Asc.spreadsheet_api.prototype._init = function() {
 			this.isLoadFullApi = true;
 		};
+
 		
 		let api = new Asc.spreadsheet_api({
 			'id-view': 'editor_sdk'
@@ -32309,6 +32310,60 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"3d_ref_tests\"", function (assert) {
+		let wsName = "हरियाणवी";
+		let newWs = wb.createWorksheet(1, wsName);
+
+		oParser = new parserFormula(wsName + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), wsName + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "हरियाण.वी";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula(wsName + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), wsName + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "हरियाण वी";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula(wsName + '!A1', "A2", ws);
+		assert.notOk(oParser.parse(), wsName + '!A1');
+
+		oParser = new parserFormula("'" + wsName + "'" + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), "'" + wsName + "'" + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "हरियाणवी_test_тест_اختبار_123";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula(wsName + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), wsName + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "हरियाणवी_test_тест_اختبار_1 23";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula("'" + wsName + "'" + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), "'" + wsName + "'" + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "Ả, ẻ, Ỏ";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula("'" + wsName + "'" + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), "'" + wsName + "'" + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+		wsName = "@©™®†‡§";
+		newWs.setName(wsName);
+
+		oParser = new parserFormula("'" + wsName + "'" + '!A1', "A2", ws);
+		assert.ok(oParser.parse(), "'" + wsName + "'" + '!A1');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "", wsName + '!A1');
+
+	});
 
 
 	wb.dependencyFormulas.unlockRecal();
