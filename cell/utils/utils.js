@@ -3452,7 +3452,8 @@
 				if (wb) {
 					let searchEngine = wb.SearchEngine;
 					if (searchEngine && searchEngine.Elements && searchEngine.Id && searchEngine.Elements[searchEngine.Id - 1]) {
-						return searchEngine.Elements[searchEngine.Id - 1];
+						let element = searchEngine.Elements[searchEngine.Id - 1];
+						return [searchEngine.Id - 1, element.sheet, element.name, element.cell, element.text, element.formula];
 					}
 				}
 			}
