@@ -5573,12 +5573,15 @@ function (window, undefined) {
 		this.type = PluginType.Background;
 
 		let _type = _object["type"];
-		if (undefined !== _type) {
+		if (typeof _type === "string") {
 			if ("system" === _type) this.type = PluginType.System;
 			if ("window" === _type) this.type = PluginType.Window;
 			if ("panel" === _type) this.type = PluginType.Panel;
 			if ("panelRight" === _type) this.type = PluginType.PanelRight;
 			if ("invisible" === _type) this.type = PluginType.Invisible;
+		}
+		else if (typeof _type === "number") {
+			this.type = _type
 		}
 		else {
 			// old version: not support background plugins
