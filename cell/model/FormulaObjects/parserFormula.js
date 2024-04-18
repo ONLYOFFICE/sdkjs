@@ -3631,7 +3631,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		var areaIndexes = this.areaIndexes;
 		var arrayIndexes = this.arrayIndexes;
 		var replaceAreaByValue = cReturnFormulaType.value_replace_area === returnFormulaType;
 		var replaceAreaByRefs = cReturnFormulaType.area_to_ref === returnFormulaType;
@@ -3657,10 +3656,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return res;
 		};
 
-		const checkAreaIndex = function(index) {
+		const checkArayIndexType = function(index, argType) {
+			// check for type of argument - whether array and range can be processed or just one of them
 			let res = false;
-			if(areaIndexes) {
-				if(1 === areaIndexes[index]) {
+			if(arrayIndexes) {
+				if(argType === arrayIndexes[index]) {
 					res = true;
 				}
 			}
@@ -3702,7 +3702,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_checkArrayIndex = checkArrayIndex(j);
 				if (!_checkArrayIndex) {
 					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
-						if (checkAreaIndex(j)) {
+						if (checkArayIndexType(j, cElementType.cellsRange)) {
 							tempArg = tempArg;
 						} else if (replaceAreaByValue) {
 							tempArg = tempArg.cross(opt_bbox);
