@@ -658,8 +658,8 @@
 		let oViewer			= oDoc.Viewer;
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
-		if (value == true)
-			oDoc.BlurActiveObject();
+		oDoc.BlurActiveObject();
+		oDoc.UpdateInterface();
 
 		if (this.isMarkerFormat) {
 			let aSelQuads = oViewer.file.getSelectionQuads();
@@ -1626,10 +1626,7 @@
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 		oDoc.currInkInDrawingProcess = null;
 
-		if (this.isInkDrawerOn()) {
-			this.getPDFDoc().BlurActiveObject();
-		}
-		else {
+		if (false == this.isInkDrawerOn()) {
 			if (oViewer.MouseHandObject) {
 				oViewer.setCursorType("pointer");
 			}

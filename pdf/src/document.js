@@ -3088,6 +3088,11 @@ var CPresentation = CPresentation || function(){};
 
         oController.paragraphAdd(oParaItem, false);
         let oCurObject = this.GetActiveObject();
+        if (!oCurObject) {
+            this.TurnOffHistory();
+            return;
+        }
+
         oCurObject.SetNeedRecalc(true);
         if (oCurObject.IsAnnot() && oCurObject.IsFreeText()) {
             oCurObject.SetNeedUpdateRC(true);
