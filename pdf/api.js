@@ -648,25 +648,29 @@
 		this.isMarkerFormat	= value;
 
 		// from edit mode
-		if (nType == undefined) {
+		if (value == true && nType == undefined) {
 			this.getPDFDoc().SetHighlight(r, g, b, opacity);
 			return;
 		}
 
-		this.curMarkerType	= nType;
+		this.curMarkerType	= value ? nType : undefined;
 		let oDoc			= this.getPDFDoc();
+		let oViewer			= oDoc.Viewer;
+		let oDrDoc			= oDoc.GetDrawingDocument();
 		
 		if (value == true)
 			oDoc.BlurActiveObject();
 
 		if (this.isMarkerFormat) {
-			let aSelQuads = this.getDocumentRenderer().file.getSelectionQuads();
+			let aSelQuads = oViewer.file.getSelectionQuads();
         	if (aSelQuads.length == 0) {
 				oDoc.bOffMarkerAfterUsing = false;
 			}
 			else {
 				oDoc.bOffMarkerAfterUsing = true;
 			}
+
+			oDrDoc.LockCursorType(AscCommon.Cursors.MarkerFormat);
 
 			switch (this.curMarkerType) {
 				case AscPDF.ANNOTATIONS_TYPES.Highlight:
@@ -681,6 +685,8 @@
 			}
 		}
 		else {
+			oDrDoc.UnlockCursorType();
+			oViewer.setCursorType('default');
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};

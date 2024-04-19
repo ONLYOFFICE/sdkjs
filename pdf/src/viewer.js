@@ -1740,6 +1740,13 @@
 
 		this.setCursorType = function(cursor)
 		{
+			let oDoc = this.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
+
+			if (oDrDoc.m_sLockedCursorType) {
+				return;
+			}
+
 			if (this.Api.isDrawInkMode()) {
 				this.id_main.style.cursor = "";
 				return;
@@ -3226,7 +3233,8 @@
 				}
 				else if (this.Api.isMarkerFormat)
 				{
-					this.Api.sync_MarkerFormatCallback(false);
+					this.Api.sendEvent("asc_onMarkerFormatChanged", this.Api.curMarkerType, false);
+					this.Api.SetMarkerFormat(this.Api.curMarkerType, false);
 				}
 				
 				oDoc.EscapeForm();

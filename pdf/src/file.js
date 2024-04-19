@@ -582,7 +582,9 @@ void main() {\n\
         this.onUpdateOverlay();
 
         if (this.viewer.Api.isMarkerFormat) {
-            let oColor = this.viewer.getPDFDoc().GetMarkerColor(this.viewer.Api.curMarkerType);
+            let oDoc = this.viewer.getPDFDoc();
+            let oColor = oDoc.GetMarkerColor(this.viewer.Api.curMarkerType);
+            oDoc.CreateNewHistoryPoint();
             switch (this.viewer.Api.curMarkerType) {
 				case AscPDF.ANNOTATIONS_TYPES.Highlight:
 					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
@@ -594,6 +596,10 @@ void main() {\n\
 					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
 					break;
 			}
+
+            if (AscCommon.History.Is_LastPointEmpty())
+                AscCommon.History.Remove_LastPoint();
+            oDoc.TurnOffHistory();
         }
     };
 
