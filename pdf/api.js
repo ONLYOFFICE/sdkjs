@@ -1038,6 +1038,61 @@
 		this.sync_ListType(oParaPr.ListType);
 		this.sync_PrPropCallback(oParaPr);
 	};
+	PDFEditorApi.prototype.paraApply = function(Props) {
+		let oDoc			= this.getPDFDoc();
+		let oController		= oDoc.GetController();
+		let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+        
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        oDoc.CreateNewHistoryPoint({objects: aObjects});
+
+		let sLoadFont = null, sLoadText = null;
+		let fCallback = function() {
+			oController.paraApplyCallback(Props);
+			
+			aObjects.forEach(function(drawing) {
+				drawing.SetNeedRecalc(true);
+			});
+	
+			oDoc.TurnOffHistory();
+		};
+		
+		let oBullet = Props.asc_getBullet();
+		if(oBullet) {
+			sLoadFont = oBullet.asc_getFont();
+			sLoadText = oBullet.asc_getSymbol();
+		}
+
+		if(typeof sLoadFont === "string" && sLoadFont.length > 0
+		&& typeof sLoadText === "string" && sLoadText.length > 0) {
+			let loader   = AscCommon.g_font_loader;
+			let fontinfo = AscFonts.g_fontApplication.GetFontInfo(sLoadFont);
+			let isasync  = loader.LoadFont(fontinfo);
+
+			if (false === isasync) {
+				AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
+					oController.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
+				});
+			}
+			else {
+				this.asyncMethodCallback = function() {
+					AscFonts.FontPickerByCharacter.checkText(sLoadText, this, function () {
+						oController.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
+					});
+				}
+			}
+		}
+		else {
+			oController.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Presentation_ParaApply);
+		}
+	};
+
 
 	/////////////////////////////////////////////////////////////
 	///////// For text
@@ -1134,7 +1189,7 @@
 		let sBullet = oBullet.asc_getSymbol();
 
 		let fCallback = function() {
-			oDoc.SetNumbering(oBullet);
+			oDoc.SetParagraphNumbering(oBullet);
 		};
 
 		if(typeof sBullet === "string" && sBullet.length > 0) {
@@ -1144,6 +1199,7 @@
 			fCallback();
 		}
 	};
+	PDFEditorApi.prototype.asc_GetPossibleNumberingLanguage = function(){};
 	PDFEditorApi.prototype._addImageUrl = function(arrUrls, oOptionObject) {
 		let oDoc = this.getPDFDoc();
 		
@@ -2007,8 +2063,10 @@
 	PDFEditorApi.prototype['DecreaseIndent']				= PDFEditorApi.prototype.DecreaseIndent;
 	PDFEditorApi.prototype['ClearFormating']				= PDFEditorApi.prototype.ClearFormating;
 	PDFEditorApi.prototype['UpdateParagraphProp']			= PDFEditorApi.prototype.UpdateParagraphProp;
+	PDFEditorApi.prototype['paraApply']						= PDFEditorApi.prototype.paraApply;
 	PDFEditorApi.prototype['sync_ListType']					= PDFEditorApi.prototype.sync_ListType;
 	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
+	PDFEditorApi.prototype['asc_GetPossibleNumberingLanguage']= PDFEditorApi.prototype.asc_GetPossibleNumberingLanguage;
 
 	// freetext
 	PDFEditorApi.prototype['AddFreeTextAnnot'] = PDFEditorApi.prototype.AddFreeTextAnnot;

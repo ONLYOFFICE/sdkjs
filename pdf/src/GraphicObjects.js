@@ -797,7 +797,6 @@ CGraphicObjectsPdf.prototype.checkChartTextSelection = function (bNoRedraw) {
     if (this.bNoCheckChartTextSelection === true)
         return false;
 
-    let oViewer = Asc.editor.getDocumentRenderer();
     let chart_selection, bRet = false;
     let nPageNum1, nPageNum2;
 
@@ -841,16 +840,6 @@ CGraphicObjectsPdf.prototype.checkChartTextSelection = function (bNoRedraw) {
 
     if (oTargetTextObject) {
         nSelectStartPage = oTargetTextObject.selectStartPage;
-    }
-    if ((!(oTargetTextObject instanceof AscFormat.CShape)) && this.document) {
-        if (this.selectedObjects.length === 1 && this.selectedObjects[0].parent) {
-            let oShape = this.selectedObjects[0].parent.isShapeChild(true);
-            if (oShape) {
-                oTargetTextObject = oShape;
-                nSelectStartPage = this.selectedObjects[0].selectStartPage;
-                bNoNeedRecalc = true;
-            }
-        }
     }
 
     if (oTargetTextObject) {
@@ -908,6 +897,19 @@ CGraphicObjectsPdf.prototype.checkChartTextSelection = function (bNoRedraw) {
     }
     return bRet;
 };
+
+CGraphicObjectsPdf.prototype.setParagraphNumbering = function(Bullet) {
+    this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Set_ParagraphPresentationNumbering, [Bullet], AscWord.CTable.prototype.Set_ParagraphPresentationNumbering);
+};
+
+CGraphicObjectsPdf.prototype.paraApplyCallback      = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
+CGraphicObjectsPdf.prototype.setParagraphIndent     = AscFormat.DrawingObjectsController.prototype.setParagraphIndent;
+CGraphicObjectsPdf.prototype.setParagraphAlign      = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
+CGraphicObjectsPdf.prototype.setParagraphSpacing    = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
+CGraphicObjectsPdf.prototype.setParagraphTabs       = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
+CGraphicObjectsPdf.prototype.setDefaultTabSize      = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
+
+CGraphicObjectsPdf.prototype.startRecalculate = function() {};
 
 window["AscPDF"].CGraphicObjectsPdf = CGraphicObjectsPdf;
 

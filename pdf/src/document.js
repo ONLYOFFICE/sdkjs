@@ -3353,6 +3353,26 @@ var CPresentation = CPresentation || function(){};
 
         this.TurnOffHistory();
     };
+    CPDFDoc.prototype.SetParagraphNumbering = function(oBullet) {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+        
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.setParagraphNumbering, [oBullet], false, AscDFH.historydescription_Presentation_SetParagraphNumbering);
+
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
     CPDFDoc.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         let oController     = this.GetController();
         let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
@@ -4297,6 +4317,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.SetSelectionState = function(oState) {
         return;
     };
+    CPDFDoc.prototype.IsSelectionLocked = function() {};
     
     CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
     CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
