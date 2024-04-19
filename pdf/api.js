@@ -685,8 +685,8 @@
 			}
 		}
 		else {
-			// SetMarkerFormat вызывается при включении ластика, курсор не сбрасываем
-			if (false == this.isEraseInkMode()) {
+			// SetMarkerFormat вызывается при включении ластика/рисовалки, курсор не сбрасываем
+			if (false == this.isDrawInkMode() && false == this.isEraseInkMode()) {
 				oDrDoc.UnlockCursorType();
 				oViewer.setCursorType('default');
 			}

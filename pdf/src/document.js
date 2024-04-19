@@ -1018,7 +1018,9 @@ var CPresentation = CPresentation || function(){};
         return this.editMode.forms;
     };
     CPDFDoc.prototype.EraseInk = function(oInk) {
+        this.CreateNewHistoryPoint();
         this.RemoveAnnot(oInk.GetId());
+        this.TurnOffHistory();
     };
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
