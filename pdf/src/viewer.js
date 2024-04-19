@@ -757,7 +757,7 @@
 					_t.startTimer();
 				}
 
-				if (_t.isStarted && oDoc.fontLoader.isWorking() == false && _t.IsOpenFormsInProgress == false) {
+				if (_t.isStarted && _t.pageDetector && _t.IsOpenFormsInProgress == false) {
 					_t.sendEvent("onFileOpened");
 
 					_t.sendEvent("onPagesCount", _t.file.pages.length);
@@ -2477,6 +2477,9 @@
 				return;
 
 			let oDoc = this.getPDFDoc();
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress)
+				return;
+
 			this.overlay.Clear()
 
 			if (!this.file)

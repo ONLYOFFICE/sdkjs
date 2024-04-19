@@ -4297,6 +4297,9 @@ var CPresentation = CPresentation || function(){};
     
     CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
     CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
+    CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
+        this.UpdateUndoRedo();
+    };
     CPDFDoc.prototype.HaveRevisionChanges = function() {};
     CPDFDoc.prototype.ContinueSpellCheck = function() {};
     CPDFDoc.prototype.ContinueTrackRevisions = function() {};
