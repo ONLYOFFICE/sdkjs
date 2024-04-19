@@ -685,8 +685,12 @@
 			}
 		}
 		else {
-			oDrDoc.UnlockCursorType();
-			oViewer.setCursorType('default');
+			// SetMarkerFormat вызывается при включении ластика, курсор не сбрасываем
+			if (false == this.isEraseInkMode()) {
+				oDrDoc.UnlockCursorType();
+				oViewer.setCursorType('default');
+			}
+			
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
