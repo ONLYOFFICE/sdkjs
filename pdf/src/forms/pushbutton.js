@@ -223,7 +223,8 @@
         let nContentW = 0;
         let nContentH = 0;
 
-        switch (this._buttonPosition) {
+        let nHeaderPos = this.GetHeaderPosition();
+        switch (nHeaderPos) {
             case position["textOnly"]:
                 return;
             case position["iconTextH"]:
@@ -305,7 +306,7 @@
         let oRunForImg;
         let oTargetPara;
         let oCaptionRun;
-        switch (this._buttonPosition) {
+        switch (nHeaderPos) {
             case position["iconOnly"]:
                 oRunForImg = this.content.GetElement(0).GetElement(0);
                 break;

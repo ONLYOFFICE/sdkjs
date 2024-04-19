@@ -183,6 +183,7 @@
 	CTextBoxContent.prototype.Get_AbsolutePage = function() {
 		return this.ParentPDF.GetPage();
 	};
+	CTextBoxContent.prototype.Get_ParentTextTransform = function() {};
 	
 	function getInternalAlignByPdfType(nPdfType) {
 		let nInternalType = AscCommon.align_Left;
