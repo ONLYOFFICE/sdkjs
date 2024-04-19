@@ -7149,7 +7149,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
 			}
-			if (isFoundImportFunctions) {
+			if (isFoundImportFunctions && !parseResult.error) {
 				//share external links
 				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				this.calculate();
