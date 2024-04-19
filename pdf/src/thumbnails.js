@@ -490,7 +490,7 @@
             if (needPage)
             {
                 isNeedTasks = true;
-                needPage.page.image = this.viewer.file.getPage(needPage.num, needPage.pageRect.w, needPage.pageRect.h, undefined, this.viewer.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+                needPage.page.image = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
                 this.isRepaint = true;
             }
         }
@@ -687,6 +687,24 @@
         this.updateScroll(scrollV);
         this.calculateVisibleBlocks();
         this.repaint();
+    };
+    CDocument.prototype._repaintPage = function(nPage) {
+        this.pages[nPage].image = null;
+    };
+    CDocument.prototype._deletePage = function(nPage) {
+        this.pages.splice(nPage, 1);
+        this._resize();
+    };
+    CDocument.prototype._addPage = function(nPos) {
+        let pages = this.viewer.file.pages;
+        let koef = 1;
+        let filePage = pages[nPos];
+
+        if (filePage.Dpi > 1)
+            koef = 100 / filePage.Dpi;
+
+        this.pages.splice(nPos, 0, new CPage(koef * filePage.W, koef * filePage.H));
+        this._resize();
     };
 
     CDocument.prototype.calculateVisibleBlocks = function()

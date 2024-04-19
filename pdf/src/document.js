@@ -1198,7 +1198,7 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpLink        = oViewer.getPageLinkByMouse();
         let oMouseUpField       = oViewer.getPageFieldByMouse();
         let oMouseUpAnnot       = oViewer.getPageAnnotByMouse();
-        let oMouseUpDrawing   = oViewer.getPageDrawingByMouse();
+        let oMouseUpDrawing     = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
         let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
@@ -1584,6 +1584,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
+
+        oViewer.thumbnails._addPage(nPos);
     };
 
     /**
@@ -1654,6 +1656,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
+
+        oViewer.thumbnails._deletePage(nPos);
     };
 
     /**
@@ -4495,6 +4499,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.IsSelectionLocked = function() {};
     
+    CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {};
     CPDFDoc.prototype.SetHighlightRequiredFields = function() {};
     CPDFDoc.prototype.SetLocalTrackRevisions = function() {};
     CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
@@ -4649,6 +4654,18 @@ var CPresentation = CPresentation || function(){};
         let oNativePage = this.Viewer.file.pages[nPage];
 
         return oNativePage.H * (96 / oNativePage.Dpi) * g_dKoef_pix_to_mm * g_dKoef_mm_to_emu;
+    };
+    CPDFDoc.prototype.GetPageWidth = function(nPage) {
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
+
+        return oNativePage.W * (96 / oNativePage.Dpi);
+    };
+    CPDFDoc.prototype.GetPageHeight = function(nPage) {
+        nPage = nPage != undefined ? nPage : this.Viewer.currentPage;
+        let oNativePage = this.Viewer.file.pages[nPage];
+        
+        return oNativePage.H * (96 / oNativePage.Dpi);
     };
     CPDFDoc.prototype.GetPageWidthMM = function(nPage) {
         nPage = nPage != undefined ? nPage : this.Viewer.currentPage;

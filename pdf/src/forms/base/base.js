@@ -296,10 +296,6 @@
         let oViewer = editor.getDocumentRenderer();
         let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
-            if (oViewer.pagesInfo.pages[nPage].fields == null) {
-                oViewer.pagesInfo.pages[nPage].fields = [];
-            }
-
             if (nCurIdxOnPage != -1)
                 oViewer.pagesInfo.pages[nCurPage].fields.splice(nCurIdxOnPage, 1);
 
@@ -807,7 +803,6 @@
         AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
-        let oViewer     = editor.getDocumentRenderer();
         let aOringRect  = this.GetOrigRect();
         let aBgColor;
         if (this.GetType() == AscPDF.FIELD_TYPES.button)
@@ -900,7 +895,7 @@
                     if (color == null)
                         break;
 
-                    oGraphicsPDF.SetLineDash([5 * oViewer.zoom]);
+                    oGraphicsPDF.SetLineDash([3]);
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                     oGraphicsPDF.Stroke();
@@ -1034,7 +1029,7 @@
                     if (color == null)
                         break;
 
-                    oGraphicsPDF.SetLineDash([5 * oViewer.zoom]);
+                    oGraphicsPDF.SetLineDash([3]);
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
@@ -1316,8 +1311,10 @@
         let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
+            if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);
@@ -1759,14 +1756,14 @@
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
-    CBaseField.prototype.GetOriginView = function(nAPType) {
+    CBaseField.prototype.GetOriginView = function(nAPType, nPageW, nPageH) {
         if (this._apIdx == -1)
             return null;
 
         let oViewer = editor.getDocumentRenderer();
         let oFile   = oViewer.file;
         
-        let oApearanceInfo  = this.GetOriginViewInfo();
+        let oApearanceInfo  = this.GetOriginViewInfo(nPageW, nPageH);
         let oSavedView, oApInfoTmp;
         if (!oApearanceInfo)
             return null;
@@ -1871,7 +1868,7 @@
 	 * @typeofeditors ["PDF"]
      * @returns {Object}
 	 */
-    CBaseField.prototype.GetOriginViewInfo = function() {
+    CBaseField.prototype.GetOriginViewInfo = function(nPageW, nPageH) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
@@ -1879,15 +1876,12 @@
             return page.originIndex == nPage;
         });
 
-        let w = ((oOriginPage.W * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
-        let h = ((oOriginPage.H * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
-
-        if (oOriginPage.fieldsAPInfo == null || oOriginPage.fieldsAPInfo.size.w != w || oOriginPage.fieldsAPInfo.size.h != h) {
+        if (oOriginPage.fieldsAPInfo == null || oOriginPage.fieldsAPInfo.size.w != nPageW || oOriginPage.fieldsAPInfo.size.h != nPageH) {
             oOriginPage.fieldsAPInfo = {
-                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, w, h),
+                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, nPageW, nPageH),
                 size: {
-                    w: w,
-                    h: h
+                    w: nPageW,
+                    h: nPageH
                 }
             }
         }
@@ -1911,11 +1905,17 @@
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
-        let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
-        let nGrScale        = oGraphicsPDF.GetScale();
+        let nAPType = this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined;
+
+        let originView = this.GetOriginView(nAPType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
+
+        let aOringRect = this.GetOrigRect();
+
+        let X = (aOringRect[0] >> 0);
+        let Y = (aOringRect[1] >> 0);
 
         if (originView) {
-            oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+            oGraphicsPDF.DrawImageXY(originView, X, Y);
         }
     };
 	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {

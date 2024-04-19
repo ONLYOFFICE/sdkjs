@@ -113,17 +113,13 @@
         let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.drawings.indexOf(this) != -1) {
-                if (oViewer.pagesInfo.pages[nPage].drawings == null) {
-                    oViewer.pagesInfo.pages[nPage].drawings = [];
-                }
-    
-                if (nCurIdxOnPage != -1)
+                if (nCurIdxOnPage != -1) {
                     oViewer.pagesInfo.pages[nCurPage].drawings.splice(nCurIdxOnPage, 1);
+                    oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
+                }
     
                 if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].drawings.indexOf(this) == -1)
                     oViewer.pagesInfo.pages[nPage].drawings.push(this);
-
-                oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
 
                 // добавляем в перерисовку исходную страницу
                 this.AddToRedraw();
@@ -145,8 +141,10 @@
         let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
+            if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);

@@ -36,20 +36,18 @@
 
 function CPDFGraphics()
 {
-    this.context        = null;
-    this.widthPx        = undefined;
-    this.heightPx       = undefined;
-    this.widthMM        = undefined;
-    this.heightMM       = undefined;
-    this.lineWidth      = 1;
-    this.fillStyle      = null;
-    this.strokeStyle    = null;
-    this.globalAlpha    = 1;
-    this.bIntegerGrid   = false;
+    this.m_oContext         = null;
+    this.m_lWidthPix        = undefined;
+    this.m_lHeightPix       = undefined;
+    this.m_dPageWidthPix    = undefined;
+    this.m_dPageHeightPix   = undefined;
+    this.lineWidth          = 1;
+    this.fillStyle          = null;
+    this.strokeStyle        = null;
+    this.globalAlpha        = 1;
+    this.bIntegerGrid       = false;
 
-    this.m_oTransform  = new AscCommon.CMatrix();
-
-    this.drawedRect = {};
+    this.m_oCoordTransform = new AscCommon.CMatrix();
 }
 CPDFGraphics.prototype.SetCurPage = function(nPage) {
     this.curPage = nPage;
@@ -57,24 +55,14 @@ CPDFGraphics.prototype.SetCurPage = function(nPage) {
 CPDFGraphics.prototype.GetCurPage = function() {
     return this.curPage;
 };
-CPDFGraphics.prototype.GetScale = function() {
-    let oViewer = editor.getDocumentRenderer();
-    return AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetCurPage()].Dpi);
+CPDFGraphics.prototype.GetDrawingPageW = function() {
+    return this.m_lWidthPix;
 };
-CPDFGraphics.prototype.Transform = function(sx,shy,shx,sy,tx,ty)
-{
-    var _t = this.m_oTransform;
-    _t.sx    = sx;
-    _t.shx   = shx;
-    _t.shy   = shy;
-    _t.sy    = sy;
-    _t.tx    = tx;
-    _t.ty    = ty;
-
-    this.context.setTransform(_t.sx,_t.shy,_t.shx,_t.sy,_t.tx,_t.ty);
+CPDFGraphics.prototype.GetDrawingPageH = function() {
+    return this.m_lHeightPix;
 };
 CPDFGraphics.prototype.Clip = function() {
-    this.context.clip();
+    this.m_oContext.clip();
 };
 CPDFGraphics.prototype.SetIntegerGrid = function(bInteger) {
     this.bIntegerGrid = bInteger;
@@ -84,8 +72,8 @@ CPDFGraphics.prototype.GetIntegerGrid = function() {
 };
 
 CPDFGraphics.prototype.SetStrokeStyle = function(r,g,b) {
-    if (this.context)
-        this.context.strokeStyle = "rgb(" + r + "," + g + "," + b + ")";
+    if (this.m_oContext)
+        this.m_oContext.strokeStyle = "rgb(" + r + "," + g + "," + b + ")";
 
     this.strokeStyle = {
         r: r,
@@ -94,8 +82,8 @@ CPDFGraphics.prototype.SetStrokeStyle = function(r,g,b) {
     };
 };
 CPDFGraphics.prototype.SetFillStyle = function(r,g,b) {
-    if (this.context)
-        this.context.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+    if (this.m_oContext)
+        this.m_oContext.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
 
     this.fillStyle = {
         r: r,
@@ -104,244 +92,261 @@ CPDFGraphics.prototype.SetFillStyle = function(r,g,b) {
     };
 };
 CPDFGraphics.prototype.SetLineWidth = function(width) {
-    let nScale = this.GetScale();
-    if (this.context)
-        this.context.lineWidth = (nScale * width) + 0.5 >> 0;
+    if (this.m_oContext)
+        this.m_oContext.lineWidth = width + 0.5 >> 0;
         
     this.lineWidth = width;
 };
-CPDFGraphics.prototype.GetLineWidth = function(bScaled) {
-    if (bScaled)
-        return this.lineWidth * this.GetScale() + 0.5 >> 0;
+CPDFGraphics.prototype.GetLineWidth = function(bTransform) {
+    if (!bTransform)
+        return this.lineWidth;
 
-    return this.lineWidth;
+    let tr = this.GetTransform();
+    return this.lineWidth * tr.sy + 0.5 >> 0;
 };
-CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
-    this.context    = context;
-    this.widthPx    = nWidthPx;
-    this.heightPx   = nHeightPx;
-    this.widthMM    = nWidthPx * g_dKoef_pix_to_mm;
-    this.heightMM   = nHeightPx * g_dKoef_pix_to_mm;
+CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx, nPageWidthPx, nPageHeightPx) {
+    this.m_oContext     = context;
+    this.m_lWidthPix    = nWidthPx;
+    this.m_lHeightPix   = nHeightPx;
 
-    this.drawedRect = {
-        xMin: nWidthPx,
-        yMin: nHeightPx,
-        xMax: 0,
-        yMax: 0
-    }
-};
-CPDFGraphics.prototype.CheckPoint = function(x, y) {
-    return;
-    if (this.drawedRect.xMin > x)
-        this.drawedRect.xMin = x;
-    if (this.drawedRect.xMax < x)
-        this.drawedRect.xMax = x;
+    this.m_dPageWidthPix    = nPageWidthPx;
+    this.m_dPageHeightPix   = nPageHeightPx;
 
-    if (this.drawedRect.yMin > y)
-        this.drawedRect.yMin = y;
-    if (this.drawedRect.yMax < y)
-        this.drawedRect.yMax = y;
+    this.m_oCoordTransform.sx   = this.m_lWidthPix / this.m_dPageWidthPix;
+    this.m_oCoordTransform.sy   = this.m_lHeightPix / this.m_dPageHeightPix;
 };
-CPDFGraphics.prototype.GetDrawedRect = function(bScaled) {
-    if (bScaled) {
-        let nScale = this.GetScale();
-        return {
-            xMin: this.drawedRect.xMin * nScale >> 0,
-            yMin: this.drawedRect.yMin * nScale >> 0,
-            xMax: Math.round(this.drawedRect.xMax * nScale + 0.5),
-            yMax: Math.round(this.drawedRect.yMax * nScale + 0.5)
+CPDFGraphics.prototype.GetTransform = function() {
+    return this.m_oCoordTransform;
+};
+CPDFGraphics.prototype.GetContext = function() {
+    return this.m_oContext;
+}
+CPDFGraphics.prototype.Rect = function(x, y, w, h) {
+    let ctx = this.GetContext();
+    ctx.beginPath();
+
+    if (this.GetIntegerGrid())
+    {
+        let tr = this.GetTransform();
+        if (0.0 === tr.shx && 0.0 === tr.shy)
+        {
+            let _x = (tr.TransformPointX(x, y) + 0.5) >> 0;
+            let _y = (tr.TransformPointY(x, y) + 0.5) >> 0;
+            let _r = (tr.TransformPointX(x + w, y) + 0.5) >> 0;
+            let _b = (tr.TransformPointY(x, y + h) + 0.5) >> 0;
+
+            ctx.rect(_x, _y, _r - _x, _b - _y);
+        }
+        else
+        {
+            let x1 = tr.TransformPointX(x, y);
+            let y1 = tr.TransformPointY(x, y);
+            let x2 = tr.TransformPointX(x + w, y);
+            let y2 = tr.TransformPointY(x + w, y);
+            let x3 = tr.TransformPointX(x + w, y + h);
+            let y3 = tr.TransformPointY(x + w, y + h);
+            let x4 = tr.TransformPointX(x, y + h);
+            let y4 = tr.TransformPointY(x, y + h);
+
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.lineTo(x4, y4);
+            ctx.closePath();
         }
     }
-        
-    return this.drawedRect;
+    else {
+        ctx.save();
+        this.EnableTransform();
+        ctx.rect(x, y, w, h);
+        ctx.restore();
+    }
 };
-
-CPDFGraphics.prototype.Rect = function(x, y, w, h, isFill) {
-    let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth();
-    let bIntegerGrid    = this.GetIntegerGrid();
-
-    this.CheckPoint(x - nLineW, y - nLineW);
-    this.CheckPoint(x + w + nLineW, y + h + nLineW);
-
-    let X1 = bIntegerGrid ? x * nScale >> 0 : x * nScale;
-    let Y1 = bIntegerGrid ? y * nScale >> 0 : y * nScale;
-    let X2 = bIntegerGrid ? (x + w) * nScale >> 0 : (x + w) * nScale;
-    let Y2 = bIntegerGrid ? (y + h) * nScale >> 0 : (y + h) * nScale;
-
-    let nLineOffsetX = (bIntegerGrid && !isFill) ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
-    let nLineOffsetY = nLineOffsetX;
-
-    this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
-    this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);
-    this.context.lineTo(-nLineOffsetX + X2, -nLineOffsetY + Y2);
-    this.context.lineTo(nLineOffsetX + X1, -nLineOffsetY + Y2);
-    this.context.closePath();
-};
+CPDFGraphics.prototype.EnableTransform = function() {
+    let ctx = this.GetContext();
+    let tr = this.GetTransform();
+    
+    ctx.setTransform(
+        tr.sx,  // масштаб по оси X
+        tr.shy, // наклон по оси Y
+        tr.shx, // наклон по оси X
+        tr.sy,  // масштаб по оси Y
+        tr.tx,  // сдвиг по оси X
+        tr.ty   // сдвиг по оси Y
+    );
+}
 CPDFGraphics.prototype.BeginPath = function() {
-    this.context.beginPath();
+    this.m_oContext.beginPath();
 };
 CPDFGraphics.prototype.ClosePath = function() {
-    this.context.closePath();
+    this.m_oContext.closePath();
 };
 CPDFGraphics.prototype.Stroke = function() {
-    this.context.stroke();
+    let ctx = this.GetContext();
+    let tr = this.GetTransform();
+    let nLineW = this.lineWidth;
+
+    let _nLineW = nLineW * tr.sy + 0.5 >> 0;
+    
+    ctx.lineWidth = _nLineW;
+    ctx.stroke();
+    ctx.lineWidth = nLineW;
 };
 CPDFGraphics.prototype.MoveTo = function(x, y) {
-    let nScale = this.GetScale();
-    
-    this.CheckPoint(x, y);
+    let ctx = this.GetContext();
 
-    this.context.moveTo(x * nScale, y * nScale);
+    if (this.GetIntegerGrid()) {
+        let tr = this.GetTransform();
+        var _x = (tr.TransformPointX(x,y)) >> 0;
+        var _y = (tr.TransformPointY(x,y)) >> 0;
+        ctx.moveTo(_x + 0.5,_y + 0.5);
+    }
+    else {
+        ctx.save();
+        this.EnableTransform();
+        ctx.moveTo(x,y);
+        ctx.restore();
+    }  
 };
 CPDFGraphics.prototype.LineTo = function(x, y) {
-    let nScale = this.GetScale();
+    let ctx = this.GetContext();
 
-    this.CheckPoint(x, y);
-
-    this.context.lineTo(x * nScale, y * nScale);
+    if (this.GetIntegerGrid()) {
+        let tr = this.GetTransform();
+        var _x = (tr.TransformPointX(x,y)) >> 0;
+        var _y = (tr.TransformPointY(x,y)) >> 0;
+        ctx.lineTo(_x + 0.5,_y + 0.5);
+    }
+    else {
+        ctx.save();
+        this.EnableTransform();
+        ctx.lineTo(x,y);
+        ctx.restore();
+    }
 };
 CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
-    let nScale = this.GetScale();
+    var ctx = this.m_oContext;
 
-    this.CheckPoint(x, y);
-    this.CheckPoint(x + w, y + h);
+    if (this.GetIntegerGrid()) {
+        let tr = this.GetTransform();
 
-    this.context.beginPath();
-    this.context.fillRect(x * nScale, y * nScale, w * nScale, h * nScale);
+        var _x = (tr.TransformPointX(x,y) >> 0) + 0.5;
+        var _y = (tr.TransformPointY(x,y) >> 0) + 0.5;
+        var _r = (tr.TransformPointX(x+w,y) >> 0) + 0.5;
+        var _b = (tr.TransformPointY(x,y+h) >> 0) + 0.5;
+
+        ctx.fillRect(_x - 0.5, _y - 0.5, _r - _x + 1, _b - _y + 1);
+    }
+    else {
+        ctx.save();
+        this.EnableTransform();
+        ctx.fillRect(x, y, w, h);
+        ctx.restore();
+    }
 };
-	CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy) {
-		
-		let scale       = this.GetScale();
-		let integerGrid = this.GetIntegerGrid();
-		
-		this.CheckPoint(dx, dy);
-		this.CheckPoint(dx + image.width, dy + image.height);
-		
-		dx *= scale;
-		if (integerGrid)
-			dx = dx + 0.5 >> 0;
-		
-		dy *= scale;
-		if (integerGrid)
-			dy = dy + 0.5 >> 0;
-		
-		this.context.drawImage(image, dx, dy);
-	};
+CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy) {
+    let _x, _y;
+    let tr = this.GetTransform();
+
+    _x = (tr.TransformPointX(dx,dy) >> 0);
+    _y = (tr.TransformPointY(dx,dy) >> 0);
+
+    this.m_oContext.drawImage(image, _x, _y);
+};
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-    let nScale          = this.GetScale();
-    let bIntegerGrid    = this.GetIntegerGrid();
+    let ctx = this.GetContext();
+    let tr  = this.GetTransform();
+    
+    ctx.save();
 
-    this.CheckPoint(dx, dy);
-    this.CheckPoint(dx + dWidth, dy + dHeight);
+    ctx.setTransform(
+        tr.sx,  // масштаб по оси X
+        tr.shy, // наклон по оси Y
+        tr.shx, // наклон по оси X
+        tr.sy,  // масштаб по оси Y
+        tr.tx,  // сдвиг по оси X
+        tr.ty   // сдвиг по оси Y
+    );
 
-    if (sx != null) {
-        sx *= nScale;
-        if (bIntegerGrid)
-            sx = sx + 0.5 >> 0;
-    }
-    if (sy != null) {
-        sy *= nScale;
-        if (bIntegerGrid)
-            sy = sy + 0.5 >> 0;
-    }
-    if (sWidth != null) {
-        sWidth *= nScale;
-        if (bIntegerGrid)
-            sWidth = sWidth + 0.5 >> 0;
-    }
-    if (sHeight != null) {
-        sHeight *= nScale;
-        if (bIntegerGrid)
-            sHeight = sHeight + 0.5 >> 0;
-    }
-    if (dx != null) {
-        dx *= nScale;
-        if (bIntegerGrid)
-            dx = dx + 0.5 >> 0;
-    }
-    if (dy != null) {
-        dy *= nScale;
-        if (bIntegerGrid)
-            dy = dy + 0.5 >> 0;
-    }
-    if (dWidth != null) {
-        dWidth *= nScale;
-        if (bIntegerGrid)
-            dWidth = dWidth + 0.5 >> 0;
-    }
-    if (dHeight != null) {
-        dHeight *= nScale;
-        if (bIntegerGrid)
-            dHeight = dHeight + 0.5 >> 0;
-    }
-    this.context.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
+    ctx.restore();
 };
 CPDFGraphics.prototype.SetLineDash = function(dash) {
-    if (this.context)
-        this.context.setLineDash(dash);
+    let tr = this.GetTransform();
+    let ctx = this.GetContext();
+    ctx.setLineDash(dash.map(function(measure) {
+        return measure * tr.sy + 0.5 >> 0;
+    }));
 };
 CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
-    if (this.context)
-        this.context.globalAlpha = value;
+    if (this.m_oContext)
+        this.m_oContext.globalAlpha = value;
 };
 
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
-    let nScale = this.GetScale();
+    let ctx = this.GetContext();
 
-    this.CheckPoint(x - radius, y - radius);
-    this.CheckPoint(x - radius, y + radius);
-    this.CheckPoint(x + radius, y - radius);
-    this.CheckPoint(x + radius, y + radius);
-
-    this.context.arc(x * nScale, y * nScale, radius * nScale, startAng, endAng, counterClockwise);
+    ctx.save();
+    this.EnableTransform();
+    ctx.arc(x, y, radius, startAng, endAng, counterClockwise);
+    ctx.restore();
 };
 CPDFGraphics.prototype.ArcTo = function(x1, y1, x2, y2, r) {
-    let nScale = this.GetScale();
+    let ctx = this.GetContext();
 
-    this.context.arcTo(x1 * nScale, y1 * nScale, x2 * nScale, y2 * nScale, r * nScale);
+    ctx.save();
+    this.EnableTransform();
+    ctx.arcTo(x1, y1, x2, y2, r);
+    ctx.restore();
 };
 CPDFGraphics.prototype.Fill = function() {
-    this.context.fill();
+    let ctx = this.GetContext();
+
+    ctx.save();
+    this.EnableTransform();
+    ctx.fill();
+    ctx.restore();
 };
 CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
-    let nScale = this.GetScale();
+    let ctx = this.GetContext();
 
-    this.context.clearRect(x * nScale, y * nScale, w * nScale, h * nScale);
+    ctx.save();
+    this.EnableTransform();
+    ctx.clearRect(x, y, w, h);
+    ctx.restore();
 };
-CPDFGraphics.prototype.HorLine = function(x1, x2, y)
-{
-    let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth(true);
-    
-    this.CheckPoint(x1, y);
-    this.CheckPoint(x2, y);
+CPDFGraphics.prototype.HorLine = function(x1, x2, y) {
+    let ctx = this.GetContext();
 
-    let X1  = x1 * nScale >> 0;
-    let X2  = x2 * nScale >> 0;
-    let Y   = y * nScale >> 0;
+    let nLineW = this.GetLineWidth(true);
+
+    let tr = this.GetTransform();
     
+    var _x1 = (tr.TransformPointX(x1,y)) >> 0;
+    var _x2 = (tr.TransformPointX(x2,y)) >> 0;
+    var _y  = (tr.TransformPointY(x1,y)) >> 0;
+
     let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
 
-    this.context.moveTo(X1, nLineOffsetY + Y);
-    this.context.lineTo(X2, nLineOffsetY + Y);
+    ctx.moveTo(_x1, _y + nLineOffsetY);
+    ctx.lineTo(_x2, _y + nLineOffsetY);
 };
-CPDFGraphics.prototype.VerLine = function(y1, y2, x)
-{
-    let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth(true);
-    
-    this.CheckPoint(x, y1);
-    this.CheckPoint(x, y2);
+CPDFGraphics.prototype.VerLine = function(y1, y2, x) {
+    let ctx = this.GetContext();
 
-    let Y1  = y1 * nScale >> 0;
-    let Y2  = y2 * nScale >> 0;
-    let X   = x * nScale >> 0;
+    let nLineW = this.GetLineWidth(true);
+
+    let tr = this.GetTransform();
     
+    var _y1 = (tr.TransformPointX(x1,y1)) >> 0;
+    var _y2 = (tr.TransformPointX(x1,y2)) >> 0;
+    var _x  = (tr.TransformPointY(y1,x)) >> 0;
+
     let nLineOffsetX = (0 === (nLineW % 2) ? 0 : 0.5);
 
-    this.context.moveTo(nLineOffsetX + X, Y1);
-    this.context.lineTo(nLineOffsetX + X, Y2);
+    ctx.moveTo(nLineOffsetX + _x, _y1);
+    ctx.lineTo(nLineOffsetX + _x, _y2);
 };
 
     //------------------------------------------------------------export----------------------------------------------------

@@ -72,8 +72,10 @@
         let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
-                oViewer.pagesInfo.pages[nPage].needRedrawHighlights = true;
+            if (oViewer.pagesInfo.pages[nPage]) {
+                oViewer.pagesInfo.pages[nPage].needRedrawMarkups = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);

@@ -227,8 +227,8 @@
                 let nInsideW = nWidth - 2 * oMargins.bottom;
                 let nInsideH = nHeight - 2 * oMargins.bottom;
 
-                let nGrScale = oGraphicsPDF.GetScale();
-                let nScale = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
+                let oTr     = oGraphicsPDF.GetTransform();
+                let nScale  = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
 
                 let wScaled = Math.max(imgW * nScale, 1);
                 let hScaled = Math.max(imgH * nScale, 1);
@@ -240,8 +240,8 @@
                 var context = canvas.getContext('2d');
 
                 // Set the canvas dimensions to match the image
-                canvas.width = wScaled * nGrScale >> 0;
-                canvas.height = hScaled * nGrScale >> 0;
+                canvas.width = wScaled * oTr.sy >> 0;
+                canvas.height = hScaled * oTr.sy >> 0;
 
                 // Draw the image onto the canvas
                 context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, canvas.width, canvas.height);
