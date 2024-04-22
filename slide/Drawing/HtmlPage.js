@@ -4730,26 +4730,20 @@ function CEditorPage(api)
 		return this.GetAnimPaneHeight() > 0;
 	};
 
-	this.ShowAnimPane = function (bShow)
-	{
-		if(this.IsAnimPaneShown() === bShow)
-		{
-			return;
-		}
-		if(bShow)
-		{
-			this.Splitter3Pos = this.OldSplitter3Pos;
-			if (this.Splitter3Pos <= 1)
-				this.Splitter3Pos = this.Splitter3PosMin;
+	this.ShowAnimPane = function (bShow) {
+		if (this.IsAnimPaneShown() === bShow) { return }
+
+		if (bShow) {
+			this.Splitter3Pos = (this.OldSplitter3Pos > HIDDEN_PANE_HEIGHT) ? this.OldSplitter3Pos : this.Splitter3PosMin;
+			this.Splitter2Pos += this.Splitter3Pos;
 			this.OnResizeSplitter();
-		}
-		else
-		{
-			var old = this.OldSplitter3Pos;
+		} else {
+			const old = this.OldSplitter3Pos;
+			this.Splitter2Pos -= this.Splitter3Pos;
 			this.Splitter3Pos = 0;
 			this.OnResizeSplitter();
 			this.OldSplitter3Pos = old;
-			this.m_oLogicDocument.CheckAnimPaneShow()
+			this.m_oLogicDocument.CheckAnimPaneShow();
 		}
 	};
 	this.ChangeTimelineScale = function(bZoomOut) {
