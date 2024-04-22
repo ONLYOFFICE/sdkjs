@@ -531,6 +531,23 @@ var cReturnFormulaType = {
 	dynamic_array: 6
 };
 
+/*
+	arrayIndexesType - an supporting structure that shows what type of data (associated only with arrays) we expect to see in the argument
+	There are functions whose arguments only work with a certain type
+	For example, the argument can process an array, but a range with the same data will not be processed (as in the WORKDAY_INTL function for the first two arguments)
+	Each type is used to obtain that type in its pure form in a function, for example:
+	If the data type is array, we process only ranges, and pass the arrays unchanged into the formula
+	If the data type is range, we process only arrays, and pass ranges unchanged to the formula
+	If the data type is any - any data type is passed unchanged to the formula (analogous to the previous use of arrayIndex in the format {0: 1, 1: 1})
+*/
+
+/** @enum */
+const arrayIndexesType = {
+	array: 0,
+	any: 1,
+	range: 2,
+};
+
 var cExcelSignificantDigits = 15; //количество цифр в числе после запятой
 var cExcelMaxExponent = 308;
 var cExcelMinExponent = -308;
@@ -3637,15 +3654,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		//добавлен специальный тип для функции сT, она использует из области всегда первый аргумент
 		var replaceOnlyArray = cReturnFormulaType.replace_only_array === returnFormulaType;
 
-		var checkArrayIndex = function(index) {
-			var res = false;
+		// Проверка должен ли элемент поступать в формулу без изменени?
+		const checkArrayIndex = function(index) {
+			let res = false;
 			if(arrayIndexes) {
-				if(1 === arrayIndexes[index]) {
+				if(arrayIndexes[index] === arrayIndexesType.any) {
 					res = true;
 				} else if(typeof arrayIndexes[index] === "object") {
 					//для данной проверки запрашиваем у объекта 0 индекс, там хранится значение индекса аргумента
 					//от которого зависит стоит ли вопринимать данный аргумент как массив или нет
-					var tempsArgIndex = arrayIndexes[index][0];
+					let tempsArgIndex = arrayIndexes[index][0];
 					if(undefined !== tempsArgIndex && arg[tempsArgIndex]) {
 						if(cElementType.cellsRange === arg[tempsArgIndex].type || cElementType.cellsRange3D === arg[tempsArgIndex].type || cElementType.array === arg[tempsArgIndex].type) {
 							res = true;
@@ -3659,17 +3677,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		const checkArayIndexType = function(index, argType) {
 			// check for type of argument - whether array and range can be processed or just one of them
 			let res = false;
-			if(arrayIndexes) {
-				if(argType === arrayIndexes[index]) {
-					res = true;
-				}
+			if(arrayIndexes && argType === arrayIndexes[index]) {
+				res = true;
 			}
 			return res;
 		};
 
-		var checkOneRowCol = function() {
-			var res = false;
-			for (var j = 0; j < argumentsCount; j++) {
+		const checkOneRowCol = function() {
+			let res = false;
+			for (let j = 0; j < argumentsCount; j++) {
 				if(cElementType.array === arg[j].type) {
 					if(1 === arg[j].getRowCount() || 1 === arg[j].getCountElementInRow()) {
 						res = true;
@@ -3702,7 +3718,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				_checkArrayIndex = checkArrayIndex(j);
 				if (!_checkArrayIndex) {
 					if (cElementType.cellsRange === tempArg.type || cElementType.cellsRange3D === tempArg.type) {
-						if (checkArayIndexType(j, cElementType.cellsRange)) {
+						if (checkArayIndexType(j, arrayIndexesType.range)) {
+							// transfer range to argument without changing 
 							tempArg = tempArg;
 						} else if (replaceAreaByValue) {
 							tempArg = tempArg.cross(opt_bbox);
@@ -3725,18 +3742,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 							tempArg = window['AscCommonExcel'].convertAreaToArray(tempArg);
 						}
 					}
-				}
 
-				if (cElementType.array === tempArg.type && !_checkArrayIndex) {
-					//пытаемся найти массив, которые имеет более 1 столбца и более 1 строки
-					if (!firstArray) {
-						firstArray = tempArg;
-					} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
-						firstArray = tempArg;
-					} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
-						firstArray = tempArg;
+					if (cElementType.array === tempArg.type) {
+						if (checkArayIndexType(j, arrayIndexesType.array)) {
+							// transfer array to argument without changing
+							tempArg = tempArg;
+						} else if (!firstArray) {	//пытаемся найти массив, которые имеет более 1 столбца и более 1 строки
+							firstArray = tempArg;
+						} else if((1 === firstArray.getRowCount() || 1 === firstArray.getCountElementInRow()) && 1 !== tempArg.getRowCount() && 1 !== tempArg.getCountElementInRow()) {
+							firstArray = tempArg;
+						} else if((1 === firstArray.getRowCount() && 1 === firstArray.getCountElementInRow()) && (1 !== tempArg.getRowCount() || 1 !== tempArg.getCountElementInRow())){
+							firstArray = tempArg;
+						}
 					}
 				}
+
 				tempArgs.push(tempArg);
 			}
 
@@ -9587,6 +9607,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].g_cCalcRecursion = g_cCalcRecursion;
 	window['AscCommonExcel'].g_ProcessShared = false;
 	window['AscCommonExcel'].cReturnFormulaType = cReturnFormulaType;
+	window['AscCommonExcel'].arrayIndexesType = arrayIndexesType;
 
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
 	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;

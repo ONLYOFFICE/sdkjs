@@ -2203,7 +2203,7 @@ function (window, undefined) {
 	cWORKDAY_INTL.prototype.argumentsMin = 2;
 	cWORKDAY_INTL.prototype.argumentsMax = 4;
 	cWORKDAY_INTL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cWORKDAY_INTL.prototype.arrayIndexes = {0: AscCommonExcel.cElementType.cellsRange, 1: AscCommonExcel.cElementType.cellsRange, 3: 1};
+	cWORKDAY_INTL.prototype.arrayIndexes = {0: AscCommonExcel.arrayIndexesType.range, 1: AscCommonExcel.arrayIndexesType.range, 3: 1};
 	cWORKDAY_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
 	// cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
