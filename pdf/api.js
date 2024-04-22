@@ -403,13 +403,14 @@
 	PDFEditorApi.prototype.asc_getPdfProps = function() {
 		return  this.DocumentRenderer ? this.DocumentRenderer.getDocumentInfo() : null;
 	};
-	PDFEditorApi.prototype.asc_enterText = function(text) {
+	PDFEditorApi.prototype.asc_enterText = function(codePoints) {
 		if (!this.DocumentRenderer)
 			return false;
 		
-		let viewer	= this.DocumentRenderer;
-		let oDoc	= viewer.getPDFDoc();
-		let oDrDoc	= oDoc.GetDrawingDocument();
+		let viewer		= this.DocumentRenderer;
+		let oDoc		= viewer.getPDFDoc();
+		let oDrDoc		= oDoc.GetDrawingDocument();
+
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
@@ -420,16 +421,27 @@
 
 		let oContent;
 		if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
-			oActiveForm.EnterText(text);
+			oActiveForm.EnterText(codePoints);
 			oContent = oActiveForm.GetDocContent();
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			oActiveAnnot.EnterText(text);
+			oActiveAnnot.EnterText(codePoints);
 			oContent = oActiveAnnot.GetDocContent();
 		}
 		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			oActiveDrawing.EnterText(text);
 			oContent = oActiveDrawing.GetDocContent();
+
+			let nCode, oItem;
+			if (Array.isArray(codePoints)) {
+				for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+					nCode = codePoints[nIdx];
+					oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+					oDoc.AddToParagraph(oItem, false, true);
+				}
+			} else {
+				oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
+				oDoc.AddToParagraph(oItem, false, true);
+			}
 		}
 		
 		if (oContent) {

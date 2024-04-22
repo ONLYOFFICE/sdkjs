@@ -2945,7 +2945,8 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.SelectAll = function() {
-        let oDrDoc = this.GetDrawingDocument();
+        let oDrDoc      = this.GetDrawingDocument();
+        let oController = this.GetController();
 
         let oForm       = this.activeForm;
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
@@ -2961,8 +2962,8 @@ var CPresentation = CPresentation || function(){};
             oContent = oFreeText.GetDocContent();
         }
         else if (oDrawing) {
-            oDrawing.SelectAllText();
             oContent = oDrawing.GetDocContent();
+            oController.selectAll();
         }
 
         if (oContent) {
@@ -3089,8 +3090,9 @@ var CPresentation = CPresentation || function(){};
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
+        let oActiveObj = this.GetActiveObject();
         if (oParaItem.Type === para_Math) {
-			if (!(oController.selection.textSelection || (oController.selection.groupSelection && oController.selection.groupSelection.selection.textSelection))) {
+			if (oActiveObj.IsAnnot() || !(oController.selection.textSelection || (oController.selection.groupSelection && oController.selection.groupSelection.selection.textSelection))) {
 				oController.resetSelection();
                 oController.resetTrackState();
 
@@ -3401,8 +3403,15 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         let oController     = this.GetController();
         let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+        let oActiveObj      = this.GetActiveObject();
         
         let aObjects = [];
+        
+        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
+            oActiveObj.SetNeedUpdateRC(true);
+            aObjects.push(oActiveObj);
+        }
+
         Object.values(oObjectsByType).forEach(function(arr) {
             arr.forEach(function(drawing) {
                 aObjects.push(drawing);
@@ -3425,8 +3434,15 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.ChangeTextCase = function(nType) {
         let oController     = this.GetController();
         let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+        let oActiveObj      = this.GetActiveObject();
         
         let aObjects = [];
+        
+        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
+            oActiveObj.SetNeedUpdateRC(true);
+            aObjects.push(oActiveObj);
+        }
+
         Object.values(oObjectsByType).forEach(function(arr) {
             arr.forEach(function(drawing) {
                 aObjects.push(drawing);
@@ -4349,6 +4365,8 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
         this.UpdateUndoRedo();
     };
+    CPDFDoc.prototype.private_UpdateTargetForCollaboration = function() {};
+    CPDFDoc.prototype.RecalculateCurPos = function() {};
     CPDFDoc.prototype.HaveRevisionChanges = function() {};
     CPDFDoc.prototype.ContinueSpellCheck = function() {};
     CPDFDoc.prototype.ContinueTrackRevisions = function() {};

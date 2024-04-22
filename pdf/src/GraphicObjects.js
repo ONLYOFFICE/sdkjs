@@ -377,11 +377,17 @@ CGraphicObjectsPdf.prototype.addTextWithPr = function (sText, oSettings) {
 
                 let oTargetTextObject = AscFormat.getTargetTextObject(oController);
                 if (oTargetTextObject) {
-                    oTargetTextObject.SetInTextBox(true);
-                    oTargetTextObject.SetNeedRecalc(true);
-                    
-                    if (oTargetTextObject.checkExtentsByDocContent)
-                        oTargetTextObject.checkExtentsByDocContent();
+                    if (oTargetTextObject.group && oTargetTextObject.group.IsAnnot()) {
+                        oTargetTextObject.group.SetInTextBox(true);
+                        oTargetTextObject.group.SetNeedRecalc(true);
+                    }
+                    else {
+                        oTargetTextObject.SetInTextBox(true);
+                        oTargetTextObject.SetNeedRecalc(true);
+                        
+                        if (oTargetTextObject.checkExtentsByDocContent)
+                            oTargetTextObject.checkExtentsByDocContent();
+                    }
                 }
             }
         };
@@ -510,7 +516,7 @@ CGraphicObjectsPdf.prototype.getDrawingObjects = function(nPage) {
     let oViewer     = Asc.editor.getDocumentRenderer();
     let oPageInfo   = oViewer.pagesInfo.pages[nPage];
     
-    return oPageInfo.drawings;
+    return oPageInfo ? oPageInfo.drawings : [];
 };
 
 CGraphicObjectsPdf.prototype.canEditText = function () {
@@ -894,8 +900,52 @@ CGraphicObjectsPdf.prototype.setParagraphNumbering = function(Bullet) {
     this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Set_ParagraphPresentationNumbering, [Bullet], AscWord.CTable.prototype.Set_ParagraphPresentationNumbering);
 };
 
+CGraphicObjectsPdf.prototype.selectAll = function () {
+    var i;
+    var target_text_object = AscFormat.getTargetTextObject(this);
+    if (target_text_object) {
+        if (target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+            target_text_object.graphicObject.SelectAll();
+        } else {
+            var content = this.getTargetDocContent();
+            if (content) {
+                content.SelectAll();
+            }
+        }
+    }
+    else {
+        if (this.selection.groupSelection) {
+            if (!this.selection.groupSelection.selection.chartSelection) {
+                this.selection.groupSelection.resetSelection(this);
+                for (i = this.selection.groupSelection.arrGraphicObjects.length - 1; i > -1; --i) {
+                    this.selection.groupSelection.selectObject(this.selection.groupSelection.arrGraphicObjects[i], 0);
+                }
+            }
+        } else if (!this.selection.chartSelection) {
+            this.resetSelection();
+            var drawings = this.getDrawingObjects();
+            for (i = drawings.length - 1; i > -1; --i) {
+                this.selectObject(drawings[i], 0);
+            }
+        }
+    }
+};
+
+CGraphicObjectsPdf.prototype.getSelectedArray = function () {
+    if (this.selection.groupSelection) {
+        let oGroup = this.selection.groupSelection;
+        if (oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.IsFreeText() && oGroup.selection.textSelection) {
+            return oGroup;
+        }
+
+        return this.selection.groupSelection.selectedObjects;
+    }
+    return this.selectedObjects;
+};
+
+CGraphicObjectsPdf.prototype.loadDocumentStateAfterLoadChanges = function() {};
+
 CGraphicObjectsPdf.prototype.setEquationTrack       = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
-CGraphicObjectsPdf.prototype.getParagraphParaPr     = AscFormat.DrawingObjectsController.prototype.getParagraphParaPr;
 CGraphicObjectsPdf.prototype.getParagraphTextPr     = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
 CGraphicObjectsPdf.prototype.alignLeft              = AscFormat.DrawingObjectsController.prototype.alignLeft;
 CGraphicObjectsPdf.prototype.alignTop               = AscFormat.DrawingObjectsController.prototype.alignTop;
@@ -907,6 +957,7 @@ CGraphicObjectsPdf.prototype.setParagraphAlign      = AscFormat.DrawingObjectsCo
 CGraphicObjectsPdf.prototype.setParagraphSpacing    = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
 CGraphicObjectsPdf.prototype.setParagraphTabs       = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
 CGraphicObjectsPdf.prototype.setDefaultTabSize      = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
+CGraphicObjectsPdf.prototype.changeTextCase         = AscFormat.DrawingObjectsController.prototype.changeTextCase;
 
 CGraphicObjectsPdf.prototype.startRecalculate = function() {};
 

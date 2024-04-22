@@ -92,9 +92,6 @@
             this.SetNeedRecalc(true);
         }
     };
-    CPdfGraphicFrame.prototype.SelectAllText = function() {
-        this.GetDocContent().SelectAll();
-    };
     
     CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)

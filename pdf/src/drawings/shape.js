@@ -125,9 +125,6 @@
             this.SetNeedRecalc(true);
         }
     };
-    CPdfShape.prototype.SelectAllText = function() {
-        this.GetDocContent().SelectAll();
-    };
 
     CPdfShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
@@ -231,7 +228,8 @@
         let oController = oDoc.GetController();
 
         this.SetControllerTextSelection(oController, this.GetPage());
-        oDoc.SetMouseDownObject(this);
+        if (!this.group)
+            oDoc.SetMouseDownObject(this);
     };
     CPdfShape.prototype.setRecalculateInfo = function() {
         this.recalcInfo =

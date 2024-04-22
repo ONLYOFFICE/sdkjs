@@ -424,7 +424,6 @@
             this.RefillGeometry();
 
         this.recalculate();
-
         this.recalculateTransform();
         this.updateTransformMatrix();
         this.spTree.forEach(function(sp, idx) {
