@@ -106,6 +106,40 @@ $(function ()
 		);
 		
 		
+		let p2 = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p2);
+		AscTest.MoveCursorToParagraph(p2);
+		
+		let checkbox2 = logicDocument.AddContentControlCheckBox(checkboxPr);
+		assert.strictEqual(checkbox2.IsUseInDocument(), true, "Check if checkbox is added to the document");
+		assert.strictEqual(checkbox2.IsCheckBoxChecked(), false);
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p2),
+			[
+				[reviewtype_Add, "F"],
+			],
+			"Check adding a checkbox in review"
+		);
+		
+		checkbox2.ToggleCheckBox();
+		assert.strictEqual(checkbox2.IsCheckBoxChecked(), true);
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p2),
+			[
+				[reviewtype_Add, "T"]
+			],
+			"Check toggle checkbox in review (check box was added in review)"
+		);
+		
+		checkbox2.ToggleCheckBox();
+		assert.strictEqual(checkbox2.IsCheckBoxChecked(), false);
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p2),
+			[
+				[reviewtype_Add, "F"]
+			],
+			"Check toggle checkbox in review (check box was added in review)"
+		);
 		
 		
 		AscTest.SetTrackRevisions(false);
