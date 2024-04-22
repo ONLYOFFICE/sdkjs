@@ -1903,6 +1903,30 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
         this.AnnotTextPrTrackHandler.OnChangePosition();
     };
+    CPDFDoc.prototype.ConvertMathView = function (isToLinear, isAll) {
+        let oController = this.GetController();
+        let oShape      = AscFormat.getTargetTextObject(oController);
+
+        if (!oShape)
+            return;
+
+        oShape.SetNeedRecalc(true);
+        this.CreateNewHistoryPoint({objects: [oShape]});
+        oController.convertMathView(isToLinear, isAll);
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.Set_MathProps = function (oMathProps) {
+        let oController = this.GetController();
+        let oShape      = AscFormat.getTargetTextObject(oController);
+
+        if (!oShape)
+            return;
+
+        oShape.SetNeedRecalc(true);
+        this.CreateNewHistoryPoint({objects: [oShape]});
+        oController.setMathProps(oMathProps);
+        this.TurnOffHistory();
+    };
 
     CPDFDoc.prototype.CreateNewHistoryPoint = function(oAdditional) {
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || this.isUndoRedoInProgress)
@@ -2623,8 +2647,6 @@ var CPresentation = CPresentation || function(){};
                 let oSpPr       = oDrawingPr.shapeProps;
                 let oChartPr    = oDrawingPr.chartProps;
                 let oTblPr      = oDrawingPr.tableProps;
-                let oParaPr     = oController.getParagraphParaPr();
-                let oTextPr     = oController.getParagraphTextPr()
 
                 if (oImgPr) {
                     oImgPr.Width = oImgPr.w;
@@ -2660,6 +2682,8 @@ var CPresentation = CPresentation || function(){};
             }
         }
         
+        let oTargetDocContent = oController.getTargetDocContent(undefined, true);
+        
         this.UpdateUndoRedo();
         this.UpdateCommentPos();
         this.UpdateMathTrackPos();
@@ -2668,6 +2692,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateParagraphProps();
         this.UpdateTextProps();
         this.UpdateCanAddHyperlinkState();
+        oTargetDocContent && oTargetDocContent.Document_UpdateInterfaceState();
         this.Api.sync_EndCatchSelectedElements();
         
         Asc.editor.CheckChangedDocument();

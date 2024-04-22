@@ -33,7 +33,6 @@
 "use strict";
 
 // Import
-var History = AscCommon.History;
 
 var MATH_MC_JC = MCJC_CENTER;
 
@@ -509,7 +508,7 @@ CMatrixBase.prototype.Add_Row = function (Pos) {
 		Items.push(NewContent);
 	}
 
-	History.Add(new CChangesMathMatrixAddRow(this, Pos, Items));
+	AscCommon.History.Add(new CChangesMathMatrixAddRow(this, Pos, Items));
 	this.raw_AddRow(Pos, Items);
 };
 CMatrixBase.prototype.raw_AddRow = function (Pos, Items) {
@@ -543,13 +542,13 @@ CMatrixBase.prototype.Remove_Row = function (RowPos) {
 		var NextPos = RowPos * ColumnCount;
 		var Items = this.Content.slice(NextPos, NextPos + ColumnCount);
 
-		History.Add(new CChangesMathMatrixRemoveRow(this, NextPos, Items));
+		AscCommon.History.Add(new CChangesMathMatrixRemoveRow(this, NextPos, Items));
 		this.raw_RemoveRow(NextPos, Items.length);
 	}
 };
 CMatrixBase.prototype.SetBaseJc = function (Value) {
 	if (this.Pr.baseJc !== Value) {
-		History.Add(new CChangesMathMatrixBaseJc(this, this.Pr.baseJc, Value));
+		AscCommon.History.Add(new CChangesMathMatrixBaseJc(this, this.Pr.baseJc, Value));
 		this.raw_SetBaseJc(Value);
 	}
 };
@@ -569,7 +568,7 @@ CMatrixBase.prototype.Modify_Interval = function (Item, NewRule, NewGap) {
 	}
 
 	if (NewRule !== OldRule || NewGap !== OldGap) {
-		History.Add(new CChangesMathMatrixInterval(this, Item.Type, OldRule, OldGap, NewRule, NewGap));
+		AscCommon.History.Add(new CChangesMathMatrixInterval(this, Item.Type, OldRule, OldGap, NewRule, NewGap));
 		this.raw_SetInterval(Item.Type, NewRule, NewGap);
 	}
 };
@@ -761,7 +760,7 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 			}
 
 			if (CurrentMcJc !== McJc) {
-				History.Add(new CChangesMathMatrixColumnJc(this, CurrentMcJc, McJc, ColumnPos));
+				AscCommon.History.Add(new CChangesMathMatrixColumnJc(this, CurrentMcJc, McJc, ColumnPos));
 				this.raw_SetColumnJc(McJc, ColumnPos);
 			}
 		}
@@ -876,7 +875,7 @@ CMathMatrix.prototype.Apply_MenuProps = function (Props) {
 
 		if (Props.bHidePlh !== undefined) {
 			if (Props.bHidePlh !== this.Pr.plcHide) {
-				History.Add(new CChangesMathMatrixPlh(this, this.Pr.plcHide, Props.bHidePlh));
+				AscCommon.History.Add(new CChangesMathMatrixPlh(this, this.Pr.plcHide, Props.bHidePlh));
 				this.raw_HidePlh(Props.bHidePlh);
 			}
 		}
@@ -895,7 +894,7 @@ CMathMatrix.prototype.Add_Column = function (ColumnPos) {
 		Items.push(NewContent);
 	}
 
-	History.Add(new CChangesMathMatrixAddColumn(this, ColumnPos, Items));
+	AscCommon.History.Add(new CChangesMathMatrixAddColumn(this, ColumnPos, Items));
 	this.raw_AddColumn(ColumnPos, Items);
 };
 CMathMatrix.prototype.raw_AddColumn = function (Pos, Items) {
@@ -923,7 +922,7 @@ CMathMatrix.prototype.Remove_Column = function (ColumnPos) {
 		Items.push(this.Content[CountColumn * CurPos + ColumnPos]);
 	}
 
-	History.Add(new CChangesMathMatrixRemoveColumn(this, ColumnPos, Items));
+	AscCommon.History.Add(new CChangesMathMatrixRemoveColumn(this, ColumnPos, Items));
 	this.raw_RemoveColumn(ColumnPos, Items.length);
 };
 CMathMatrix.prototype.raw_RemoveColumn = function (Pos, CountItems) {

@@ -2026,10 +2026,6 @@
 			//if (e && e.preventDefault)
 			//	e.preventDefault();
 
-			var mouseButton = AscCommon.getMouseButton(e || {});
-			if (mouseButton !== 0)
-				return;
-
 			oThis.isMouseDown = false;
 
 			if (!oThis.file || !oThis.file.isValid())
@@ -2554,6 +2550,7 @@
 				}
 
 				this.DrawingObjects.updateSelectionState();
+
 				if (this.DrawingObjects.needUpdateOverlay())
 				{
 					oDrDoc.AutoShapesTrack.PageIndex = -1;
@@ -2597,6 +2594,14 @@
 				ctx.beginPath();
 				oDoc.activeForm.content.DrawSelectionOnPage(0);
 				oDrDoc.private_EndDrawSelection();
+			}
+
+			if (oDrDoc.MathTrack.IsActive())
+			{
+				var dGlobalAplpha = ctx.globalAlpha;
+				ctx.globalAlpha = 1.0;
+				oDrDoc.DrawMathTrack(this.overlay);
+				ctx.globalAlpha = dGlobalAplpha;
 			}
 			
 			ctx.globalAlpha = 1.0;

@@ -519,6 +519,11 @@
 		let oMathElement = new AscCommonWord.MathMenu(Type, oTextPr ? oTextPr.Copy() : null);
 		oDoc.AddToParagraph(oMathElement, false);
 	};
+	PDFEditorApi.prototype.asc_ConvertMathView = function(isToLinear, isAll)
+	{
+		let oDoc = this.getPDFDoc();
+		oDoc.ConvertMathView(isToLinear, isAll);
+	};
 	PDFEditorApi.prototype.sync_shapePropCallback = function(pr) {
 		let oDoc		= this.getPDFDoc();
 		let oController	= oDoc.GetController();
@@ -2067,6 +2072,10 @@
 	PDFEditorApi.prototype['sync_ListType']					= PDFEditorApi.prototype.sync_ListType;
 	PDFEditorApi.prototype['put_ListType']					= PDFEditorApi.prototype.put_ListType;
 	PDFEditorApi.prototype['asc_GetPossibleNumberingLanguage']= PDFEditorApi.prototype.asc_GetPossibleNumberingLanguage;
+
+	// math
+	PDFEditorApi.prototype['asc_AddMath2']			= PDFEditorApi.prototype.asc_AddMath2;
+	PDFEditorApi.prototype['asc_ConvertMathView']	= PDFEditorApi.prototype.asc_ConvertMathView;
 
 	// freetext
 	PDFEditorApi.prototype['AddFreeTextAnnot'] = PDFEditorApi.prototype.AddFreeTextAnnot;

@@ -200,10 +200,6 @@ CGraphicObjectsPdf.prototype.fitImagesToPage = function() {
     }, [], false, AscDFH.historydescription_Presentation_FitImagesToSlide)
 };
 
-CGraphicObjectsPdf.prototype.setEquationTrack   = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
-CGraphicObjectsPdf.prototype.getParagraphParaPr = AscFormat.DrawingObjectsController.prototype.getParagraphParaPr;
-CGraphicObjectsPdf.prototype.getParagraphTextPr = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
-
 CGraphicObjectsPdf.prototype.cursorMoveLeft = function(AddToSelect/*Shift*/, Word/*Ctrl*/) {
     let oViewer = Asc.editor.getDocumentRenderer();
 
@@ -526,8 +522,6 @@ CGraphicObjectsPdf.prototype.canEditText = function () {
     return false;
 };
 
-CGraphicObjectsPdf.prototype.alignLeft = AscFormat.DrawingObjectsController.prototype.alignLeft;
-
 CGraphicObjectsPdf.prototype.alignCenter = function(bSelected) {
     let selected_objects = this.getSelectedArray(), i, boundsObject, centerPos;
 
@@ -596,8 +590,6 @@ CGraphicObjectsPdf.prototype.alignRight = function(bSelected) {
         move_state.onMouseUp({}, 0, 0, 0);
     }
 };
-
-CGraphicObjectsPdf.prototype.alignTop = AscFormat.DrawingObjectsController.prototype.alignTop;
 
 CGraphicObjectsPdf.prototype.alignMiddle = function(bSelected) {
     let selected_objects = this.getSelectedArray(), i, boundsObject, middlePos;
@@ -902,6 +894,13 @@ CGraphicObjectsPdf.prototype.setParagraphNumbering = function(Bullet) {
     this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Set_ParagraphPresentationNumbering, [Bullet], AscWord.CTable.prototype.Set_ParagraphPresentationNumbering);
 };
 
+CGraphicObjectsPdf.prototype.setEquationTrack       = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+CGraphicObjectsPdf.prototype.getParagraphParaPr     = AscFormat.DrawingObjectsController.prototype.getParagraphParaPr;
+CGraphicObjectsPdf.prototype.getParagraphTextPr     = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
+CGraphicObjectsPdf.prototype.alignLeft              = AscFormat.DrawingObjectsController.prototype.alignLeft;
+CGraphicObjectsPdf.prototype.alignTop               = AscFormat.DrawingObjectsController.prototype.alignTop;
+CGraphicObjectsPdf.prototype.convertMathView        = AscFormat.DrawingObjectsController.prototype.convertMathView;
+CGraphicObjectsPdf.prototype.setMathProps           = AscFormat.DrawingObjectsController.prototype.setMathProps;
 CGraphicObjectsPdf.prototype.paraApplyCallback      = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
 CGraphicObjectsPdf.prototype.setParagraphIndent     = AscFormat.DrawingObjectsController.prototype.setParagraphIndent;
 CGraphicObjectsPdf.prototype.setParagraphAlign      = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
