@@ -4731,7 +4731,7 @@ function CEditorPage(api)
 	};
 
 	this.ShowAnimPane = function (bShow) {
-		if (this.IsAnimPaneShown() === bShow) { return }
+		if (this.IsAnimPaneShown() === bShow) { return; }
 
 		if (bShow) {
 			this.Splitter3Pos = (this.OldSplitter3Pos > HIDDEN_PANE_HEIGHT) ? this.OldSplitter3Pos : this.Splitter3PosMin;
@@ -4766,7 +4766,7 @@ function CEditorPage(api)
 	};
 
 	this.ShowNotes = function (bShow) {
-		if (this.IsNotesShown() === bShow) { return }
+		if (this.IsNotesShown() === bShow) { return; }
 
 		if (bShow) {
 			this.Splitter2Pos = (this.OldSplitter2Pos - this.Splitter3Pos <= HIDDEN_PANE_HEIGHT)
