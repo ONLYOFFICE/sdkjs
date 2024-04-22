@@ -4440,10 +4440,10 @@
 			}
 			let headerCell;
 			if (isColHeader) {
-				let firstRow = t.getVerticalScrollRange();
+				let firstRow = t.visibleRange.r1;
 				headerCell = new Asc.Range(index, firstRow, index, firstRow);
 			} else {
-				let firstCol = t.getHorizontalScrollRange();
+				let firstCol = t.visibleRange.c1;
 				headerCell = new Asc.Range(firstCol, index, firstCol, index);
 			}
 			for (let i = 0, l = ranges.length; i < l; ++i) {
@@ -4482,8 +4482,8 @@
 
 
 		let needSelectTopBorder = false;
-		let needSelectRightBorder = style  === kHeaderActive && !isColHeader;
-		let needSelectBottomBorder = style  === kHeaderActive && isColHeader;
+		let needSelectRightBorder = style  !== kHeaderDefault && !isColHeader;
+		let needSelectBottomBorder = style  !== kHeaderDefault && isColHeader;
 		let needSelectLeftBorder = false;
 
 		let drawBorders = function (_selected) {
