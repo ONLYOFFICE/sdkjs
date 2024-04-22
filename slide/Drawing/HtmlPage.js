@@ -1286,7 +1286,7 @@ function CEditorPage(api)
 		}
 
 		this.Splitter2Pos = (this.IsSupportNotes)
-			? Math.min(Math.max(this.Splitter2Pos, this.Splitter3Pos + this.Splitter2PosMin), this.Splitter2PosMax)
+			? Math.min(Math.max(this.Splitter2Pos, this.Splitter3Pos + HIDDEN_PANE_HEIGHT), this.Splitter2PosMax)
 			: 0;
 
 		if (this.IsUseNullThumbnailsSplitter || (0 != this.Splitter1Pos))
@@ -4771,22 +4771,16 @@ function CEditorPage(api)
 		return this.GetNotesHeight() > HIDDEN_PANE_HEIGHT;
 	};
 
-	this.ShowNotes = function (bShow)
-	{
-		if(this.IsNotesShown() === bShow)
-		{
-			return;
-		}
-		if(bShow)
-		{
-			this.Splitter2Pos = this.OldSplitter2Pos;
-			if (this.Splitter2Pos <= 1)
-				this.Splitter2Pos = 11;
+	this.ShowNotes = function (bShow) {
+		if (this.IsNotesShown() === bShow) { return }
+
+		if (bShow) {
+			this.Splitter2Pos = (this.OldSplitter2Pos - this.Splitter3Pos <= HIDDEN_PANE_HEIGHT)
+				? this.Splitter3Pos + 11
+				: this.OldSplitter2Pos;
 			this.OnResizeSplitter();
-		}
-		else
-		{
-			var old = this.OldSplitter2Pos;
+		} else {
+			const old = this.OldSplitter2Pos;
 			this.Splitter2Pos = 0;
 			this.OnResizeSplitter();
 			this.OldSplitter2Pos = old;
