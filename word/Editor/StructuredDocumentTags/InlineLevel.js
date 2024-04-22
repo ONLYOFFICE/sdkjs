@@ -2038,15 +2038,15 @@ CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 	{
 		var oFirstRun = this.GetFirstRun();
 		var oTextPr   = oFirstRun ? oFirstRun.GetDirectTextPr() : new CTextPr();
-
+		
 		this.SelectAll();
-		this.Remove();
+		this.Remove(AscWord.Direction.FORWARD, true);
 		this.RemoveSelection();
-
+		
 		oRun = new ParaRun(this.GetParagraph(), false);
 		oRun.SetPr(oTextPr);
 		this.AddToContent(0, oRun);
-
+		
 		if (2 === this.Content.length
 			&& para_Run === this.Content[0].Type
 			&& para_Run === this.Content[1].Type
@@ -2055,9 +2055,9 @@ CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 			&& this.Content[0].GetReviewInfo().IsCurrentUser()
 			&& this.Content[1].GetReviewInfo().IsCurrentUser()
 			&& ((isChecked
-			&& String.fromCharCode(this.Pr.CheckBox.CheckedSymbol) === this.Content[1].GetText())
-			|| (!isChecked
-			&& String.fromCharCode(this.Pr.CheckBox.UncheckedSymbol) === this.Content[1].GetText())))
+					&& String.fromCharCode(this.Pr.CheckBox.CheckedSymbol) === this.Content[1].GetText())
+				|| (!isChecked
+					&& String.fromCharCode(this.Pr.CheckBox.UncheckedSymbol) === this.Content[1].GetText())))
 		{
 			this.RemoveFromContent(1, 1);
 			oRun.SetReviewType(reviewtype_Common);
