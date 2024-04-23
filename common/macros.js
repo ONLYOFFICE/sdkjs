@@ -437,9 +437,18 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "setTimeout", "setInterval", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
+		const normalConstructor = Object.getPrototypeOf(function(){}).constructor;
+		const generatorNext = Object.getPrototypeOf(function*(){}).prototype.next;
 		Object.getPrototypeOf(function(){}).constructor = function(){};
+		Object.getPrototypeOf(function*(){}).prototype.next = function(){};
+		const timeout = function(cb, delay){
+			return setTimeout(cb.bind({}), delay);
+		};
+		const interval = function(cb, delay){
+			return setInterval(cb.bind({}), delay);
+		};
 		const Api = window.g_asc_plugins.api;
 		// clear this field on each run
 		delete Api.parsedJSDoc;
@@ -453,7 +462,10 @@ function (window, undefined)
 			if (Api.parsedJSDoc.length > countOfAdding)
 				Api.parsedJSDoc.length = countOfAdding;
 		}
-		return _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
+		const result = _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
+		Object.getPrototypeOf(function(){}).constructor = normalConstructor;
+		Object.getPrototypeOf(function*(){}).prototype.next = generatorNext;
+		return result;
 	};
 
 
