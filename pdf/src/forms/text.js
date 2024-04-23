@@ -620,7 +620,13 @@
         function callbackAfterFocus(x, y, e) {
             this.SetInForm(true);
             oDoc.SetLocalHistory();
-            oDoc.SelectionSetStart(x, y, e);
+            if (false == e.shiftKey) {
+                oDoc.SelectionSetStart(x, y, e);
+            }
+            else {
+                this.content.StartSelectionFromCurPos();
+                oDoc.SelectionSetEnd(x, y, e);
+            }
             
             let pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
 

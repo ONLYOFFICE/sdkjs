@@ -1993,7 +1993,7 @@
 			oDoc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 		};
 
-		this.onMouseDownEpsilon = function()
+		this.onMouseDownEpsilon = function(e)
 		{
 			if (oThis.MouseHandObject)
 			{
@@ -2013,7 +2013,13 @@
 			}
 
 			var pageObjectLogic = this.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
-			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			if (e.shiftKey) {
+				this.file.Selection.IsSelection = true;
+				this.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
+			else {
+				this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
 
 			if (-1 === this.timerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 			{
@@ -2100,20 +2106,6 @@
 
 			if (e && e.preventDefault)
 				e.preventDefault();
-
-			// если мышка нажата и еще не вышли за eps - то проверяем, модет вышли сейчас?
-			// и, если вышли - то эмулируем
-			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp && !oDoc.mouseDownAnnot && !oDoc.mouseDownField && !oThis.Api.isInkDrawerOn())
-			{
-				var offX = Math.abs(oThis.mouseDownCoords.X - AscCommon.global_mouseEvent.X);
-				var offY = Math.abs(oThis.mouseDownCoords.Y - AscCommon.global_mouseEvent.Y);
-
-				if (offX > oThis.mouseMoveEpsilon || offY > oThis.mouseMoveEpsilon)
-				{
-					oThis.isMouseMoveBetweenDownUp = true;
-					oThis.onMouseDownEpsilon();
-				}
-			}
 
 			if (oThis.MouseHandObject)
 			{

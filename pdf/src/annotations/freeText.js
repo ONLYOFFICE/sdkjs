@@ -812,7 +812,13 @@
             }
         }
         else {
-            oDoc.SelectionSetStart(x, y, e);
+            if (e.shiftKey) {
+                this.GetDocContent().StartSelectionFromCurPos();
+                oDoc.SelectionSetEnd(x, y, e);
+            }
+            else {
+                oDoc.SelectionSetStart(x, y, e);
+            }
         }
     };
     CAnnotationFreeText.prototype.SelectionSetStart = function(X, Y, e) {
