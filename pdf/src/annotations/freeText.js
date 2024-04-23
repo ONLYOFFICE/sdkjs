@@ -232,11 +232,21 @@
 	 * @constructor
     */
     CAnnotationFreeText.prototype.CheckInnerShapesProps = function() {
-        let oStrokeColor    = this.GetStrokeColor();
+        let oStrokeColor = this.GetStrokeColor();
         if (oStrokeColor) {
-            let oRGB            = this.GetRGBColor(oStrokeColor);
-            let oFill           = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-            for (let i = 0; i < this.spTree.length; i++) {
+            let oRGB    = this.GetRGBColor(oStrokeColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+
+            let oTxBoxShape = this.GetTextBoxShape();
+            let oLine = oTxBoxShape.spPr.ln;
+            if (this.GetWidth() == 0) {
+                oLine.setFill(AscFormat.CreateNoFillUniFill());
+            }
+            else {
+                oLine.setFill(oFill);
+            }
+
+            for (let i = 1; i < this.spTree.length; i++) {
                 let oLine = this.spTree[i].spPr.ln;
                 oLine.setFill(oFill);
             }
@@ -253,7 +263,7 @@
 
         let nWidthPt = this.GetWidth();
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        for (let i = 0; i < this.spTree.length; i++) {
+        for (let i = 1; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
         }
@@ -294,10 +304,9 @@
     CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
         this._width = nWidthPt; 
 
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        for (let i = 0; i < this.spTree.length; i++) {
+        for (let i = 1; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
-            oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+            oLine.setW((nWidthPt || 0.5) * g_dKoef_pt_to_mm * 36000.0);
         }
     };
     CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
@@ -306,7 +315,17 @@
         let oRGB    = this.GetRGBColor(aColor);
         let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
 
-        for (let i = 0; i < this.spTree.length; i++) {
+        let oTxBoxShape = this.GetTextBoxShape();
+        let oLine = oTxBoxShape.spPr.ln;
+        if (this.GetWidth() == 0) {
+            oLine.setFill(AscFormat.CreateNoFillUniFill());
+        }
+        else {
+            oLine.setFill(oFill);
+        }
+        
+
+        for (let i = 1; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setFill(oFill);
         }
