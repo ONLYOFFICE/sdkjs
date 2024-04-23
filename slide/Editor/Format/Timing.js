@@ -2620,19 +2620,32 @@
             oRoot.printTree();
         }
     };
-    CTiming.prototype.getEffectsForDemo = function () {
-        var aEffectsForDemo;
-        var aSelectedEffects = this.getSelectedEffects();
-        if (aSelectedEffects.length > 0 && !this.isAllSlideAnimations) {
-            aEffectsForDemo = aSelectedEffects;
-        } else {
-            aEffectsForDemo = this.getAllAnimEffects();
-        }
-        if (aEffectsForDemo.length === 0) {
-            return null;
-        }
-        return aEffectsForDemo;
-    };
+	CTiming.prototype.getEffectsForDemo = function () {
+		const aSelectedEffects = this.getSelectedEffects();
+		const aAllAnimEffects = this.getAllAnimEffects();
+
+		let aEffectsForDemo;
+		if (this.isAllSlideAnimations) {
+			aEffectsForDemo = aAllAnimEffects;
+		} else {
+			if (aSelectedEffects.length === 0) {
+				aEffectsForDemo = aAllAnimEffects;
+			}
+			if (aSelectedEffects.length === 1) {
+				if (this.bIncludeFollowing) {
+					const selectedEffectIndex = aAllAnimEffects.indexOf(aSelectedEffects[0]);
+					aEffectsForDemo = aAllAnimEffects.slice(selectedEffectIndex);
+				} else {
+					aEffectsForDemo = aSelectedEffects;
+				}
+			}
+			if (aSelectedEffects.length > 1) {
+				aEffectsForDemo = aSelectedEffects;
+			}
+		}
+
+		return (aEffectsForDemo.length === 0) ? null : aEffectsForDemo;
+	};
     CTiming.prototype.canStartDemo = function () {
         return this.getEffectsForDemo() !== null;
     };

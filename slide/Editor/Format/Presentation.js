@@ -9712,7 +9712,7 @@ CPresentation.prototype.CanStartAnimationPreview = function () {
 	}
 	return oTiming.canStartDemo();
 };
-CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations) {
+CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations, bIncludeFollowing) {
 	if (!this.CanStartAnimationPreview()) {
 		return false;
 	}
@@ -9720,7 +9720,8 @@ CPresentation.prototype.StartAnimationPreview = function (isAllSlideAnimations) 
 	if (!oTiming) {
 		return false;
 	}
-	oTiming.isAllSlideAnimations = isAllSlideAnimations
+	oTiming.isAllSlideAnimations = isAllSlideAnimations;
+	oTiming.bIncludeFollowing = bIncludeFollowing;
 	var oPlayer = oTiming.createDemoPlayer();
 	if (!oPlayer) {
 		return false;

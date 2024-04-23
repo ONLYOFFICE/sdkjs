@@ -4563,16 +4563,10 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.IsStartedPreview()
 	};
-	asc_docs_api.prototype.asc_StartAnimationPreview = function(bAll)
-	{
+	asc_docs_api.prototype.asc_StartAnimationPreview = function (bAll, bIncludeFollowing) {
 		this.asc_StopAnimationPreview();
-		let bStartAll = true;
-		if(bAll === false)
-		{
-			bStartAll = false;
-		}
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(bStartAll))
-		{
+		const bStartAll = (bAll === false) ? false : true; // if "bAll" is "undefined", then run preview of all effects
+		if (this.WordControl.m_oLogicDocument.StartAnimationPreview(bStartAll, bIncludeFollowing)) {
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}
 		//this.sendEvent("asc_onStartDemonstration");//todo

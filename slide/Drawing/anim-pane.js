@@ -926,13 +926,14 @@
 		// Event handlers for button of CAnimPaneHeader ---
 
 		function managePreview(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			if (this.isDisabled()) { return }
+			if (!this.hit(x, y)) { return; }
+			if (this.isDisabled()) { return; }
 			if(Asc.editor.asc_IsStartedAnimationPreview()) {
 				Asc.editor.asc_StopAnimationPreview();
-			}
-			else {
-				Asc.editor.asc_StartAnimationPreview(this.parentControl.isStartAllPreview());
+			} else {
+				const timing = this.parentControl.getTiming();
+				const bIncludeFollowing = timing && (timing.getSelectedEffects().length === 1);
+				Asc.editor.asc_StartAnimationPreview(this.parentControl.isStartAllPreview(), bIncludeFollowing);
 			}
 		}
 
@@ -969,29 +970,18 @@
 	}
 
 	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
-	CAnimPaneHeader.prototype.isStartAllPreview = function() {
+
+	CAnimPaneHeader.prototype.isStartAllPreview = function () {
 		const timing = this.getTiming();
 		if (!timing) { return true; }
 		const aSelectedEffects = timing.getSelectedEffects();
-		if(aSelectedEffects.length > 1) {
-			return false;
-		}
-		return true;
+		return aSelectedEffects.length === 0;
 	};
-	CAnimPaneHeader.prototype.getPlayButtonText = function() {
-		let sPlayButtonText = "";
-		if(Asc.editor.asc_IsStartedAnimationPreview()) {
-			sPlayButtonText = "Stop";
-		}
-		else {
-			if(this.isStartAllPreview()) {
-				sPlayButtonText = "Play All";
-			}
-			else {
-				sPlayButtonText = "Play Selected";
-			}
-		}
-		return sPlayButtonText;
+	CAnimPaneHeader.prototype.getPlayButtonText = function () {
+		if (Asc.editor.asc_IsStartedAnimationPreview()) { return 'Stop'; }
+		if (this.isStartAllPreview()) { return 'Play All'; } // No timing or zero selected effects
+		if (this.getTiming().getSelectedEffects().length === 1) { return 'Play From'; } // One selected
+		return 'Play Selected'; // Many selected
 	};
 	CAnimPaneHeader.prototype.getPlayButtonIcon = function() {
 		let sPlayButtonIcon = "";
