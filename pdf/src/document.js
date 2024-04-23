@@ -3692,8 +3692,8 @@ var CPresentation = CPresentation || function(){};
         oTextArt.select(oController, nPage);
         oTextArt.SetInTextBox(true);
         this.SetMouseDownObject(oTextArt);
-        oTextArt.SelectAllText();
         oController.selection.textSelection = oTextArt;
+        oController.selectAll();
     };
     CPDFDoc.prototype.AddSmartArt = function(nSmartArtType, oPlaceholder, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
