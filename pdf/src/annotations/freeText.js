@@ -943,7 +943,7 @@
         let oContent    = this.GetDocContent();
 
         oContent.SetApplyToAll(true);
-		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true}).replace(/\r\n$/, '');
+		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true, ParaSeparator: '\r'}).replace(/\r\n$/, '');
 		oContent.SetApplyToAll(false);
 
         this.SetInTextBox(false);
@@ -991,7 +991,7 @@
             let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
 
             // пересчитываем callout
-            let aNewCallout = this.GetCallout().slice();
+            let aNewCallout = this.GetCallout() ? this.GetCallout().slice() : null;
             switch (nCalloutExitPos) {
                 case AscPDF.CALLOUT_EXIT_POS.left: {
                     // точка выхода (x3, y3)
@@ -1030,6 +1030,10 @@
             }
 
             function findBoundingRectangle(points) {
+                if (!points) {
+                    return null;
+                }
+
                 let minX = points[0];
                 let minY = points[1];
                 let maxX = points[0];
@@ -1046,7 +1050,7 @@
             }
 
             // находим рект стрелки, учитывая окончание линии
-            let aArrowRect = this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]])
+            let aArrowRect = aNewCallout ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
 
             // находим результирующий rect аннотации
             let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
@@ -1061,7 +1065,7 @@
                 aNewRect[3] / nScaleY - yMax
             ];
 
-            this.SetCallout(aNewCallout);
+            aNewCallout && this.SetCallout(aNewCallout);
             this.SetRectangleDiff(aNewRD);
             this.SetRect(aNewRect);
         }

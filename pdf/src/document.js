@@ -3133,7 +3133,14 @@ var CPresentation = CPresentation || function(){};
         let oController     = this.GetController();
         let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
         
+        let oActiveObj      = this.GetActiveObject();
+        
         let aObjects = [];
+        
+        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
+            aObjects.push(oActiveObj);
+        }
+        
         Object.values(oObjectsByType).forEach(function(arr) {
             arr.forEach(function(drawing) {
                 aObjects.push(drawing);
@@ -3146,6 +3153,11 @@ var CPresentation = CPresentation || function(){};
         aObjects.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
+
+        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
+            oActiveObj.SetNeedUpdateRC(true);
+            oActiveObj.FitTextBox();
+        }
 
         this.TurnOffHistory();
     };
