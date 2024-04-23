@@ -18607,15 +18607,17 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
+	 * @param {EMU} nWidth - The image width in English measure units.
+	 * @param {EMU} nHeight - The image height in English measure units.
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc)
+	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
 	{
 		return executeNoFormLockCheck(function(){
 			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
 				return false;
-	
+			
 			var oImg;
 			var allDrawings = this.Sdt.GetAllDrawingObjects();
 			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
@@ -18629,6 +18631,34 @@
 	
 			if (oImg)
 			{
+				let spPr = oImg.spPr;
+				if (!spPr)
+				{
+					spPr = new AscFormat.CSpPr();
+					oImg.setSpPr(spPr);
+					spPr.setParent(oImg);
+				}
+				
+				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+				
+				let xfrm = spPr.xfrm;
+				if (!xfrm)
+				{
+					xfrm = new AscFormat.CXfrm();
+					spPr.setXfrm(xfrm);
+					xfrm.setParent(spPr);
+				}
+				
+				if (undefined !== nWidth && undefined !== nHeight)
+				{
+					let w = private_EMU2MM(nWidth);
+					let h = private_EMU2MM(nHeight);
+					xfrm.setOffX(0);
+					xfrm.setOffY(0);
+					xfrm.setExtX(w);
+					xfrm.setExtY(h);
+				}
+				
 				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
 				this.OnChangeValue();
 				return true;
@@ -20137,6 +20167,8 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
+	
+	Api.prototype["Px2Emu"]                          = Px2Emu;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -21381,6 +21413,11 @@
 	function private_Pt_8ToMM(pt)
 	{
 		return 25.4 / 72.0 / 8 * pt;
+	}
+	
+	function Px2Emu(px)
+	{
+		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
 	}
 
 	function private_StartSilentMode()
