@@ -443,11 +443,17 @@ function (window, undefined)
 		const generatorNext = Object.getPrototypeOf(function*(){}).prototype.next;
 		Object.getPrototypeOf(function(){}).constructor = function(){};
 		Object.getPrototypeOf(function*(){}).prototype.next = function(){};
-		const timeout = function(cb, delay){
-			return setTimeout(cb.bind({}), delay);
+		const timeout = function(cb, delay) {
+			var args = Array.prototype.slice.call(arguments, 2);
+			return setTimeout(function() {
+				cb.apply({}, args);
+			}, delay);
 		};
-		const interval = function(cb, delay){
-			return setInterval(cb.bind({}), delay);
+		const interval = function(cb, delay) {
+			var args = Array.prototype.slice.call(arguments, 2);
+			return setInterval(function() {
+				cb.apply({}, args);
+			}, delay);
 		};
 		const Api = window.g_asc_plugins.api;
 		// clear this field on each run
