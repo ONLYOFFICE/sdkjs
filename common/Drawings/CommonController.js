@@ -8091,7 +8091,7 @@
 
 
 				createImage: function (rasterImageId, x, y, extX, extY, sVideoUrl, sAudioUrl) {
-					var image = new AscFormat.CImageShape();
+					var image = Asc.editor.isPdfEditor() ? new AscPDF.CPdfImage() : new AscFormat.CImageShape();
 					AscFormat.fillImage(image, rasterImageId, x, y, extX, extY, sVideoUrl, sAudioUrl);
 					return image;
 				},

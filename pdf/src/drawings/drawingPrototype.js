@@ -173,7 +173,7 @@
             this._needRecalc = false;
         }
         else {
-            let oDoc = this.GetDocument();
+            let oDoc = Asc.editor.getPDFDoc();
             oDoc.ClearSearch();
 
             oDoc.SetNeedUpdateTarget(true);

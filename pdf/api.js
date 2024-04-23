@@ -1244,7 +1244,7 @@
 					const arrImages = [];
 					for (let i = 0; i < arrUrls.length; ++i) {
 						const oImage = oApi.ImageLoader.LoadImage(arrUrls[i], 1);
-						if(oImage)  {
+						if (oImage.Image) {
 							arrImages.push(oImage);
 						}
 					}

@@ -4353,10 +4353,24 @@ var CPresentation = CPresentation || function(){};
 		return false;
 	};
     CPDFDoc.prototype.GetSelectionState = function() {
-        return null;
+        const oSelectionState = {};
+
+        oSelectionState.CurPage = this.Viewer.currentPage;
+        let oController = this.GetController();
+        oSelectionState.activeObject = this.GetActiveObject();
+        oSelectionState.drawingSelection = oController.getSelectionState();
+        oSelectionState.HistoryIndex = this.History.Index;
+
+        return oSelectionState;
     };
     CPDFDoc.prototype.SetSelectionState = function(oState) {
-        return;
+        let oController = this.GetController();
+
+        this.SetMouseDownObject(oState.activeObject);
+        oController.setSelectionState(oState.drawingSelection);
+
+        if (oState.CurPage != -1 && oState.CurPage != this.Viewer.currentPage)
+	        this.Viewer.navigateToPage(oState.CurPage);
     };
     CPDFDoc.prototype.IsSelectionLocked = function() {};
     

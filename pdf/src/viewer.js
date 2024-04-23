@@ -3250,6 +3250,8 @@
 					this.Api.SetMarkerFormat(this.Api.curMarkerType, false);
 				}
 				
+				const oController = oDoc.GetController();
+				oController.resetSelection();
 				oDoc.EscapeForm();
 				
 				editor.sync_HideComment();
