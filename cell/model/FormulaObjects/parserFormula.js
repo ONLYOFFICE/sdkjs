@@ -7175,6 +7175,15 @@ function parserFormula( formula, parent, _ws ) {
 						}
 					}
 
+					if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						if (!AscCommonExcel.importRangeLinksState.notUpdateIdMap) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap = {};
+						}
+						for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap[i] = true;
+						}
+					}
+
 					AscCommonExcel.importRangeLinksState.importRangeLinks = null;
 				}
 			}
