@@ -966,6 +966,7 @@
             oDoc.TurnOffHistory();
         }
         
+        this.resetSelection();
         oDoc.GetDrawingDocument().TargetEnd();
     };
 

@@ -499,25 +499,7 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        if (oCurForm) {
-            if (oCurForm.IsNeedCommit()) {
-                let isCommited = this.CommitField(oCurForm);
-                if (!isCommited)
-                    oNextForm = null;
-            }
-            else if (oCurForm.IsChanged() == false) {
-                oCurForm.SetDrawFromStream(true);
-            }
-
-            if (oCurForm.IsNeedRevertShiftView()) {
-                oCurForm.RevertContentViewToOriginal();
-            }
-            oCurForm.SetDrawHighlight(true);
-            oCurForm.AddToRedraw();
-            oCurForm.Blur();
-            oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
-        }
-        
+        this.BlurActiveObject();
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);
@@ -602,23 +584,7 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextForm();}))
 			return;
 
-        if (oCurForm) {
-            if (oCurForm.IsNeedCommit()) {
-                oCurForm.Commit();
-            }
-            else if (oCurForm.IsChanged() == false) {
-                oCurForm.SetDrawFromStream(true);
-            }
-
-            if (oCurForm.IsNeedRevertShiftView()) {
-                oCurForm.RevertContentViewToOriginal();
-            }
-            oCurForm.SetDrawHighlight(true);
-            oCurForm.AddToRedraw();
-            oCurForm.Blur();
-            oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
-        }
-        
+        this.BlurActiveObject();
         this.activeForm = oNextForm;
         oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);

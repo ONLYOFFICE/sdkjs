@@ -3221,10 +3221,16 @@
 			else if (e.KeyCode === 9) // Tab
 			{
 				window.event.preventDefault();
-				if (true == e.ShiftKey)
-					this.SelectPrevForm();
-				else
-					this.SelectNextForm();
+				let oActiveObj = oDoc.GetActiveObject();
+				if (oActiveObj.IsDrawing()) {
+					oDoc.AddToParagraph(new AscWord.CRunTab());
+				}
+				else {
+					if (true == e.ShiftKey)
+						this.SelectPrevForm();
+					else
+						this.SelectNextForm();
+				}
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
