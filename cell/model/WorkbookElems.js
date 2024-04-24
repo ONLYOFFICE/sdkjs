@@ -14972,6 +14972,9 @@ function RangeDataManagerElem(bbox, data)
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
+			if (this.worksheets[null]) {
+				this.changeSheetName(null, sheetName);
+			}
 			if (this.worksheets && this.worksheets[sheetName]) {
 				let wsTo = this.worksheets[sheetName];
 				//меняем лист
@@ -15013,6 +15016,23 @@ function RangeDataManagerElem(bbox, data)
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 				null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneER, this));
+		}
+	};
+
+	ExternalReference.prototype.changeSheetName = function (from, to) {
+		for (let i in this.SheetNames) {
+			if (this.SheetNames[i] === from) {
+				this.SheetNames[i] = to;
+			}
+		}
+
+		for (let i in this.worksheets) {
+			if (i === from + "") {
+				let _val = this.worksheets[i];
+				_val.sName = to;
+				this.worksheets[to] = _val;
+				delete this.worksheets[from];
+			}
 		}
 	};
 
@@ -15202,7 +15222,7 @@ function RangeDataManagerElem(bbox, data)
 	ExternalReference.prototype.initRows = function (range) {
 
 		var sheetName = range && range.worksheet && range.worksheet.sName;
-		if (sheetName) {
+		if (sheetName !== undefined) {
 			var index = this.getSheetByName(sheetName);
 			if (index != null) {
 				var externalSheetDataSet = this.SheetDataSet[index];
