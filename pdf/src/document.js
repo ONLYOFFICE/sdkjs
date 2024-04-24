@@ -777,6 +777,8 @@ var CPresentation = CPresentation || function(){};
         }
         // если выделение текста на странице
         else if (oViewer.Api.curMarkerType != undefined) {
+            oViewer.isMouseMoveBetweenDownUp = true;
+            oViewer.onMouseDownEpsilon(e);
             return;
         }
         
