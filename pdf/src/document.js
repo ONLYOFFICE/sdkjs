@@ -1292,19 +1292,19 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc = this.GetDrawingDocument();
         oDrDoc.UpdateTargetFromPaint = true;
 
-        let oActive = this.GetActiveObject();
-        if (oActive) {
-            let oContent = oActive.GetDocContent();
-            if (oContent) {
-                oContent.RemoveSelection();
-            }
-        }
-
-        if (this.History.Can_Undo && !this.LocalHistory.Can_Undo())
+        if (this.History.Can_Undo() && !this.LocalHistory.Can_Undo())
             this.SetGlobalHistory();
         
         if (AscCommon.History.Can_Undo())
         {
+            let oActive = this.GetActiveObject();
+            if (oActive) {
+                let oContent = oActive.GetDocContent();
+                if (oContent) {
+                    oContent.RemoveSelection();
+                }
+            }
+
             this.ClearSearch();
             this.TurnOffHistory();
             this.isUndoRedoInProgress = true;
@@ -1365,19 +1365,19 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc = this.GetDrawingDocument();
         oDrDoc.UpdateTargetFromPaint = true;
 
-        let oActive = this.GetActiveObject();
-        if (oActive) {
-            let oContent = oActive.GetDocContent();
-            if (oContent) {
-                oContent.RemoveSelection();
-            }
-        }
-
-        if (this.History.Can_Redo && !this.LocalHistory.Can_Redo())
+        if (this.History.Can_Redo() && !this.LocalHistory.Can_Redo())
             this.SetGlobalHistory();
 
         if (AscCommon.History.Can_Redo())
         {
+            let oActive = this.GetActiveObject();
+            if (oActive) {
+                let oContent = oActive.GetDocContent();
+                if (oContent) {
+                    oContent.RemoveSelection();
+                }
+            }
+
             this.ClearSearch();
             this.TurnOffHistory();
             this.isUndoRedoInProgress = true;
@@ -3123,7 +3123,7 @@ var CPresentation = CPresentation || function(){};
             oCurObject.SetNeedUpdateRC(true);
         }
         
-        this.History.SetSourceObjectsToPointPdf([oCurObject]);
+        AscCommon.History.SetSourceObjectsToPointPdf([oCurObject]);
 
         this.TurnOffHistory();
     };
@@ -3900,6 +3900,10 @@ var CPresentation = CPresentation || function(){};
             this.SetMouseDownObject(oFreeText);
             oController.selection.groupSelection = oFreeText;
             oFreeText.SetInTextBox(true);
+            oFreeText.selectStartPage = nPage;
+            oFreeText.spTree.forEach(function(sp) {
+                sp.selectStartPage = nPage;
+            });
 
             switch (nType) {
                 case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
@@ -4378,11 +4382,12 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetSelectionState = function() {
         const oSelectionState = {};
 
-        oSelectionState.CurPage = this.Viewer.currentPage;
         let oController = this.GetController();
-        oSelectionState.activeObject = this.GetActiveObject();
-        oSelectionState.drawingSelection = oController.getSelectionState();
-        oSelectionState.HistoryIndex = this.History.Index;
+
+        oSelectionState.CurPage             = this.Viewer.currentPage;
+        oSelectionState.activeObject        = this.GetActiveObject();
+        oSelectionState.drawingSelection    = oController.getSelectionState();
+        oSelectionState.HistoryIndex        = this.History.Index;
 
         return oSelectionState;
     };
