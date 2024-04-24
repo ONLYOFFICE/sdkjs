@@ -353,6 +353,7 @@
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",
 			"pdf/src/drawings/smartArt.js",
+			"pdf/src/DrawingDocument.js",
 			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",

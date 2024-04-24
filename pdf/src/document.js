@@ -4379,6 +4379,24 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsActionStarted = function() {
 		return false;
 	};
+    CPDFDoc.prototype.Get_AbsolutePage = function () {
+        return 0;
+    };
+    CPDFDoc.prototype.Get_AbsoluteColumn = function () {
+        return 0;
+    };
+    CPDFDoc.prototype.GetPrevElementEndInfo = function (CurElement) {
+        return null;
+    };
+    CPDFDoc.prototype.Get_TextBackGroundColor = function () {
+        return new CDocumentColor(255, 255, 255, false);
+    };
+    CPDFDoc.prototype.IsCell = function (isReturnCell) {
+        if (isReturnCell)
+            return null;
+    
+        return false;
+    };
     CPDFDoc.prototype.GetSelectionState = function() {
         const oSelectionState = {};
 

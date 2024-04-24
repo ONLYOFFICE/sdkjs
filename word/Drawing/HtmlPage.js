@@ -172,7 +172,7 @@ function CEditorPage(api)
 
 	this.ScrollsWidthPx = 14;
 
-	this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
+	this.m_oDrawingDocument = Asc.editor.isPdfEditor() ? new AscPDF.CDrawingDocumentPdf() : new AscCommon.CDrawingDocument();
 	this.m_oLogicDocument   = null;
 
 	this.m_oDrawingDocument.m_oWordControl   = this;
