@@ -651,6 +651,40 @@
 			oDoc.AddImages([_image], obj);
 		}
 	};
+	PDFEditorApi.prototype.asc_addImage= function(obj){
+		if (this.isEditOleMode){
+			this.oSaveObjectForAddImage = obj;
+			this.sendFromFrameToGeneralEditor({
+				"type": AscCommon.c_oAscFrameDataType.ShowImageDialogInFrame,
+			});
+			return;
+		}
+
+		var t = this;
+        if (this.WordControl) // после показа диалога может не прийти mouseUp
+        	this.WordControl.m_bIsMouseLock = false;
+		
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
+		{
+			// ошибка может быть объектом в случае отмены добавления картинки в форму
+			if (typeof(error) == "object")
+				return;
+
+			t._uploadCallback(error, files, obj);
+		},
+		function(error) {
+			if (c_oAscError.ID.No !== error){
+				t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			}
+
+			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedChartFrame) {
+				t.sendStartUploadImageActionToFrameEditor();
+			}
+			
+			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
+			t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+		});
+	};
 
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
 		this.sendEvent("asc_onVerticalTextAlign", align);
@@ -2128,6 +2162,7 @@
 	PDFEditorApi.prototype['shapes_bringBackward']		= PDFEditorApi.prototype.shapes_bringBackward;
 	PDFEditorApi.prototype['AddImageUrlAction']			= PDFEditorApi.prototype.AddImageUrlAction;
 	PDFEditorApi.prototype['AddImageUrlActionCallback']	= PDFEditorApi.prototype.AddImageUrlActionCallback;
+	PDFEditorApi.prototype['asc_addImage']				= PDFEditorApi.prototype.asc_addImage;
 
 
 	// table
