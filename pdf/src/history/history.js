@@ -69,6 +69,21 @@
 			this.Points[this.Index].Additional.PdfConvertText = oConvertInfo;
 		}
 	};
+	History.prototype.Add = function(_Class, Data) {
+		if (!this.CanAddChanges())
+			return;
+
+		AscCommon.CHistory.prototype.Add.call(this, _Class, Data);
+		if (_Class.Class && _Class.Class.SetNeedRecalc) {
+			if (!this.Points[this.Index].Additional.Pdf) {
+				this.Points[this.Index].Additional.Pdf = [];
+			}
+			
+			if (false == this.Points[this.Index].Additional.Pdf.includes(_Class.Class)) {
+				this.Points[this.Index].Additional.Pdf.push(_Class.Class);
+			}
+		}
+	}	
 	
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};

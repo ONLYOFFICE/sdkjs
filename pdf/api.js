@@ -428,7 +428,7 @@
 			oActiveAnnot.EnterText(codePoints);
 			oContent = oActiveAnnot.GetDocContent();
 		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
+		else if (oActiveDrawing) {
 			oContent = oActiveDrawing.GetDocContent();
 
 			let nCode, oItem;
@@ -1047,7 +1047,26 @@
 		this.getPDFDoc().ClearParagraphFormatting(false, true);
 	};
 	PDFEditorApi.prototype.UpdateParagraphProp = function(oParaPr) {
-		oParaPr.ListType = AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
+		let oDoc			= this.getPDFDoc();
+		let TextPr			= oDoc.GetCalculatedTextPr(true);
+		let oDrawingProps	= oDoc.Get_GraphicObjectsProps();
+
+		if (oDrawingProps.shapeProps && oDrawingProps.shapeProps.locked
+		|| oDrawingProps.chartProps && oDrawingProps.chartProps.locked
+		|| oDrawingProps.tableProps && oDrawingProps.tableProps.Locked) {
+			oParaPr.Locked = true;
+		}
+		
+		oParaPr.Subscript   = ( TextPr.VertAlign === AscCommon.vertalign_SubScript ? true : false );
+		oParaPr.Superscript = ( TextPr.VertAlign === AscCommon.vertalign_SuperScript ? true : false );
+		oParaPr.Strikeout   = TextPr.Strikeout;
+		oParaPr.DStrikeout  = TextPr.DStrikeout;
+		oParaPr.AllCaps     = TextPr.Caps;
+		oParaPr.SmallCaps   = TextPr.SmallCaps;
+		oParaPr.TextSpacing = TextPr.Spacing;
+		oParaPr.Position    = TextPr.Position;
+		oParaPr.ListType	= AscFormat.fGetListTypeFromBullet(oParaPr.Bullet);
+
 		this.sync_ParaSpacingLine(oParaPr.Spacing);
 		this.Update_ParaInd(oParaPr.Ind);
 		this.sync_PrAlignCallBack(oParaPr.Jc);

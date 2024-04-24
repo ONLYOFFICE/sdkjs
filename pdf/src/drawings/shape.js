@@ -91,10 +91,11 @@
     };
     CPdfShape.prototype.createTextBody = function () {
         let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
         AscFormat.CShape.prototype.createTextBody.call(this);
+        if (oDoc.GetActiveObject() == this) {
+            this.SetInTextBox(true);
+        }
         this.SetNeedRecalc(true);
-        oDoc.TurnOffHistory();
     };
     CPdfShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();

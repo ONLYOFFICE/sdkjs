@@ -902,6 +902,10 @@ var CPresentation = CPresentation || function(){};
         this.Viewer.onUpdateOverlay();
     };
     CPDFDoc.prototype.SetMouseDownObject = function(oObject) {
+        if (this.GetActiveObject() == oObject) {
+            return;
+        }
+
         this.Viewer.file.Selection = {
 			Page1 : 0,
 			Line1 : 0,
@@ -3034,15 +3038,19 @@ var CPresentation = CPresentation || function(){};
             }
         }
     };
-    CPDFDoc.prototype.GetCalculatedParaPr = function() {
+    CPDFDoc.prototype.GetCalculatedParaPr = function(bInitIfNull) {
         let oController = this.GetController();
         let oParaPr     = oController.getParagraphParaPr();
 
         if (oParaPr) {
             return oParaPr;
         }
+
+        if (bInitIfNull) {
+            return new AscWord.CParaPr();
+        }
     };
-    CPDFDoc.prototype.GetCalculatedTextPr = function () {
+    CPDFDoc.prototype.GetCalculatedTextPr = function (bInitIfNull) {
         let oController = this.GetController();
         let oTextPr     = oController.getParagraphTextPr();
 
@@ -3053,6 +3061,13 @@ var CPresentation = CPresentation || function(){};
             }
             return oTextPr;
         }
+
+        if (bInitIfNull) {
+            return new AscWord.CTextPr();
+        }
+    };
+    CPDFDoc.prototype.Get_GraphicObjectsProps = function () {
+        return this.GetController().getDrawingProps();
     };
     CPDFDoc.prototype.GetDirectTextPr = function() {
         let oController = this.GetController();
@@ -3577,9 +3592,12 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
                 
-                oDrawing.fromXml(oXmlReader);
-                oDrawing.setBDeleted(false);
-                aPageDrawings.push(oDrawing);
+                if (oDrawing) {
+                    oDrawing.fromXml(oXmlReader);
+                    oDrawing.setBDeleted(false);
+                    aPageDrawings.push(oDrawing);
+                }
+                
             }
         }, this);
 

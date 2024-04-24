@@ -229,13 +229,12 @@
 		AscCommon.History.Document = this.doc;
 
 		this.drawingDocument		= Asc.editor.WordControl.m_oDrawingDocument;
-		this.DrawingObjects			= new AscPDF.CGraphicObjectsPdf(this.doc, this.drawingDocument, this.Api);
+		this.DrawingObjects			= new AscPDF.CGraphicObjects(this.doc, this.drawingDocument, this.Api);
 		this.doc.DrawingObjects		= this.DrawingObjects;
 		this.doc.DrawingDocument	= this.drawingDocument;
 		Asc.editor.WordControl.m_oLogicDocument = this.doc;
 		Asc.editor.WordControl.m_oDrawingDocument.m_oLogicDocument = this.doc;
 
-		CGraphicObjects.prototype.saveDocumentState = function() {};
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
 		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
 			this.isXP = true;
