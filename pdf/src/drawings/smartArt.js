@@ -406,7 +406,7 @@
                         drawing_document.TargetEnd();
                     } else {
                         if (false === content.IsSelectionEmpty()) {
-                            content.DrawSelectionOnPage(0);
+                            drawing_document.Overlay && content.DrawSelectionOnPage(0);
                             drawing_document.TargetEnd();
                         } else {
                             if (true !== content.Selection.Start) {

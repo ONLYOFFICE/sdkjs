@@ -227,7 +227,7 @@
 			if (true === graphicObject.IsSelectionUse() && !graphicObject.IsSelectionEmpty()) {
 				oDrDoc.UpdateTargetTransform(this.transform);
 				oDrDoc.TargetEnd();
-				graphicObject.DrawSelectionOnPage(0);
+				oDrDoc.Overlay && graphicObject.DrawSelectionOnPage(0);
 			} else {
 				graphicObject.RecalculateCurPos();
 				oDrDoc.UpdateTargetTransform(this.transform);
