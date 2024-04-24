@@ -673,8 +673,8 @@
 			t._uploadCallback(error, files, obj);
 		},
 		function(error) {
-			if (c_oAscError.ID.No !== error){
-				t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			if (Asc.c_oAscError.ID.No !== error){
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 			}
 
 			if (obj && obj.sendUrlsToFrameEditor && t.isOpenedChartFrame) {
@@ -682,7 +682,7 @@
 			}
 			
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
-			t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+			t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 		});
 	};
 
