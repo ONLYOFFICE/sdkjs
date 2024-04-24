@@ -89,6 +89,13 @@
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
+    CPdfShape.prototype.createTextBody = function () {
+        let oDoc = this.GetDocument();
+        oDoc.CreateNewHistoryPoint({objects: [this]});
+        AscFormat.CShape.prototype.createTextBody.call(this);
+        this.SetNeedRecalc(true);
+        oDoc.TurnOffHistory();
+    };
     CPdfShape.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();

@@ -1916,11 +1916,13 @@
 
 			let oDoc = oThis.getPDFDoc();
 			oDoc.HideComments();
-			
-			e.CtrlKey = e.ctrlKey;
-			e.ShiftKey = e.shiftKey;
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
+
+			e.CtrlKey	= e.ctrlKey;
+			e.ShiftKey	= e.shiftKey;
+			e.Button	= mouseButton;
+
 			if (mouseButton !== 0)
 			{
 				if (2 === mouseButton)

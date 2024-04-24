@@ -3607,14 +3607,6 @@ var CPresentation = CPresentation || function(){};
         oDrawing.SetPage(nPage);
         oDrawing.setParent(this);
 
-        if (oDrawing instanceof AscPDF.CPdfShape) {
-            AscFormat.ExecuteNoHistory(function () {
-                if (oDrawing.GetDocContent() == null) {
-                    oDrawing.createTextBody();
-                }
-            }, this);
-        }
-
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oDrawing]));
 
         oDrawing.AddToRedraw();

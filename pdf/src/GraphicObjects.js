@@ -66,7 +66,8 @@ CGraphicObjectsPdf.prototype.updateSelectionState = function(bNoCheck) {
     }
     else if (bNoCheck !== true) {
         drawingDocument.UpdateTargetTransform(null);
-        if (this.document.GetActiveObject() == null)
+        let oDocContent = this.getTargetDocContent();
+        if (oDocContent == null)
             drawingDocument.TargetEnd();
     }
 
