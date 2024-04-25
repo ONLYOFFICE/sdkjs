@@ -20512,6 +20512,44 @@ $(function () {
 		assert.ok(oParser.parse(), 'LOOKUP(1,A100:A110+A100:A110,B100:B107+B100:B105)');
 		assert.strictEqual(oParser.calculate().getValue(), 8, 'Result of LOOKUP(1,A100:A110+A100:A110,B100:B107+B100:B105)');
 
+		// for bug 67640 
+		// array mode - lookup by first row and return index from the last row
+		oParser = new parserFormula('LOOKUP("C",{"a","b","c","d";1,2,3,4})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP("C",{"a","b","c","d";1,2,3,4})');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of LOOKUP("C",{"a","b","c","d";1,2,3,4})');
+
+		oParser = new parserFormula('LOOKUP("bump",{"a",1;"b",2;"c",3})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP("bump",{"a",1;"b",2;"c",3})');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of LOOKUP("bump",{"a",1;"b",2;"c",3})');
+
+		oParser = new parserFormula('LOOKUP(20,{0,1,2;3,4,5;11,12,13;14,15,16})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{0,1,2;3,4,5;11,12,13;14,15,16})');
+		assert.strictEqual(oParser.calculate().getValue(), 16, 'Result of LOOKUP(20,{0,1,2;3,4,5;11,12,13;14,15,16})');
+
+		// array mode - lookup by first column and return index from the last column
+		oParser = new parserFormula('LOOKUP(20,{0,1;49.75,55.75;12,13})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{0,1;49.75,55.75;12,13})');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of LOOKUP(20,{0,1;49.75,55.75;12,13})');
+
+		oParser = new parserFormula('LOOKUP(20,{0,1;2,55.75;12,13;15,"ds"})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{0,1;2,55.75;12,13;15,"ds"})');
+		assert.strictEqual(oParser.calculate().getValue(), "ds", 'Result of LOOKUP(20,{0,1;2,55.75;12,13;15,"ds"})');
+
+		// single row array(arg1) && two dimension array(arg2)
+		oParser = new parserFormula('LOOKUP(20,{-1,20},{"KP","NB";"sd","sf"})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{-1,20},{"KP","NB";"sd","sf"})');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of LOOKUP(20,{-1,20},{"KP","NB";"sd","sf"})');
+
+		// two dimension array(arg1) && single row array(arg2)
+		oParser = new parserFormula('LOOKUP(20,{0,1;1,1},{"KP","NB","sd"})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{0,1;1,1},{"KP","NB","sd"})');
+		assert.strictEqual(oParser.calculate().getValue(), "NB", 'Result of LOOKUP(20,{0,1;1,1},{"KP","NB","sd"})');
+
+		// two dimension array(arg1) && two dimension array(arg2)
+		oParser = new parserFormula('LOOKUP(20,{0,1;1,1},{"KP","NB";"sd","sf"})', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(20,{0,1;1,1},{"KP","NB";"sd","sf"})');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of LOOKUP(20,{0,1;1,1},{"KP","NB";"sd","sf"})');
+
 	});
 
 
