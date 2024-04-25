@@ -522,7 +522,9 @@
 
         if (cCaption == "" || typeof(cCaption) != "string")
             return false;
-            
+        
+        AscFonts.FontPickerByCharacter.getFontsByString(cCaption);
+
         switch (nFace) {
             case 0:
                 this._buttonCaption = cCaption;

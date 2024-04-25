@@ -301,6 +301,8 @@
             }
 
             if (sCaption !== "") {
+                AscFonts.FontPickerByCharacter.getFontsByString(sCaption);
+
                 let oPara = new AscWord.Paragraph(this.content, false);
                 let oRun = new AscWord.ParaRun(oPara, false);
                 this.content.Internal_Content_Add(i, oPara);

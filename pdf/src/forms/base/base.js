@@ -562,7 +562,7 @@
         this.isInForm = bInField;
     };
     CBaseField.prototype.IsInForm = function() {
-        return this.isInForm;
+        return !!this.isInForm;
     };
     
     /**

@@ -268,7 +268,7 @@
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
-		AscFonts.FontPickerByCharacter.checkText(data, this, processPaste)
+		AscFonts.FontPickerByCharacter.checkText(data, this, processPaste);
 
 		function processPaste() {
 			let aChars = [];

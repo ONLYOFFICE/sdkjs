@@ -217,6 +217,8 @@
 		this._useDisplayValue   = true;
 		let _t                  = this;
 
+        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
+
         if (isOnOpen == true) {
             if (_t._displayValue !== displayValue)
 				return;
