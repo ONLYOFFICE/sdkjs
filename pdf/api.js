@@ -268,21 +268,25 @@
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
-		let aChars = [];
-		for (let i = 0; i < data.length; i++)
-			aChars.push(data[i].charCodeAt(0));
+		AscFonts.FontPickerByCharacter.checkText(data, this, processPaste)
 
-		if (oActiveForm && oActiveForm.IsCanEditText()) {
-			oActiveForm.EnterText(aChars);
-			oDoc.UpdateCopyCutState();
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			oActiveAnnot.EnterText(aChars);
-			oDoc.UpdateCopyCutState();
-		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			oActiveDrawing.EnterText(aChars);
-			oDoc.UpdateCopyCutState();
+		function processPaste() {
+			let aChars = [];
+			for (let i = 0; i < data.length; i++)
+				aChars.push(data[i].charCodeAt(0));
+
+			if (oActiveForm && oActiveForm.IsCanEditText()) {
+				oActiveForm.EnterText(aChars);
+				oDoc.UpdateCopyCutState();
+			}
+			else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
+				oActiveAnnot.EnterText(aChars);
+				oDoc.UpdateCopyCutState();
+			}
+			else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
+				oActiveDrawing.EnterText(aChars);
+				oDoc.UpdateCopyCutState();
+			}
 		}
 	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
