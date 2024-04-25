@@ -2642,11 +2642,15 @@
 		{
 			let oDoc = this.getPDFDoc();
 
-			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress)
+			if (oDoc.fontLoader.isWorking() || this.IsOpenFormsInProgress) {
+				this.paint();
 				return;
+			}
 			
-			if (!this.file || !this.file.isValid() || !this.canvas)
+			if (!this.file || !this.file.isValid() || !this.canvas) {
+				this.paint();
 				return;
+			}
 
 			let ctx = this.canvas.getContext("2d");
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
@@ -2699,8 +2703,10 @@
 			this.startVisiblePage = lStartPage;
 			this.endVisiblePage = lEndPage;
 
-			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false)
+			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false) {
+				this.paint();
 				return;
+			}
 
 			this.canvas.width = this.canvas.width;
 
