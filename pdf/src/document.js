@@ -3637,20 +3637,31 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPage])
             return;
 
-        let oDrDoc      = this.GetDrawingDocument();
         let oController = this.GetController();
+        let oDrDoc      = this.GetDrawingDocument();
         let oPageInfo   = oDrDoc.m_arrPages[nPage];
 
-        let oTextArt    = this.GetController().createTextArt(nStyle, false);
-        let oXfrm       = oTextArt.getXfrm();
-
-        let nExtX   = oXfrm.extX;
-        let nExtY   = oXfrm.extY;
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
-        oXfrm.setOffX((nPageW - nExtX) / 2);
-        oXfrm.setOffY((nPageH / 2 - nExtY) / 2);
+        let oTextArt    = this.GetController().createTextArt(nStyle, false);
+        oTextArt.SetDocument(this);
+        oTextArt.SetPage(nPage);
+        oTextArt.Recalculate();
+
+        let oXfrm       = oTextArt.getXfrm();
+        let nScale      = this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm / nPageH;
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+        let nExtX   = oXfrm.extX;
+        let nExtY   = oXfrm.extY;
+        let nPosX   = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+        let nPosY   = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+        nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+        nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
+
+        oXfrm.setOffX(nPosX);
+        oXfrm.setOffY(nPosY);
 
         this.drawings.push(oTextArt);
         if (oPagesInfo.pages[nPage].drawings == null) {
@@ -3658,12 +3669,9 @@ var CPresentation = CPresentation || function(){};
         }
         oPagesInfo.pages[nPage].drawings.push(oTextArt);
 
-        oTextArt.SetDocument(this);
-        oTextArt.SetPage(nPage);
-
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTextArt]));
 
-        oTextArt.AddToRedraw();
+        oTextArt.SetNeedRecalc(true);
         
         this.SetMouseDownObject(oTextArt);
 
@@ -3684,10 +3692,14 @@ var CPresentation = CPresentation || function(){};
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
         let nExtX   = nPageW * 2 /3;
         let nExtY   = nPageH / 5;
-        let nPosX   = (nPageW - nExtX) / 2;
-        let nPosY   = nPageH / 5;
+        let nPosX   = g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) - nExtX / 2;
+        let nPosY   = g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) - nExtY / 2;
+        nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+        nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
 
         let oController = this.GetController();
         let oSmartArt   = new AscPDF.CPdfSmartArt();
