@@ -3095,15 +3095,26 @@ var CPresentation = CPresentation || function(){};
                 oController.resetTrackState();
 
 				oMathShape = oController.createTextArt(0, false, null, "");
+                oMathShape.SetDocument(this);
+                oMathShape.SetPage(nCurPage);
+                oMathShape.Recalculate();
 
                 let oXfrm   = oMathShape.getXfrm();
-                let nPosX   = (nPageW - oXfrm.extX) / 2;
-                let nPosY   = nPageH / 5;
+                let nScale      = this.Viewer.drawingPages[nCurPage].H * g_dKoef_pix_to_mm / nPageH;
+                let oViewRect   = this.Viewer.getViewingRect(nCurPage);
+
+                let nExtX   = oXfrm.extX;
+                let nExtY   = oXfrm.extY;
+                let nPosX   = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+                let nPosY   = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+                nPosX = Math.max(nPosX > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(nPosX, 5));
+                nPosY = Math.max(nPosY > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(nPosY, 5));
                 
                 oXfrm.setOffX(nPosX);
                 oXfrm.setOffY(nPosY);
 
 				this.AddDrawing(oMathShape, nCurPage);
+                oMathShape.SetNeedRecalc(true);
 				oMathShape.select(oController, nCurPage);
                 oMathShape.SetInTextBox(true);
                 this.SetMouseDownObject(oMathShape);
