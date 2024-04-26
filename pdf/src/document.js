@@ -3813,31 +3813,34 @@ var CPresentation = CPresentation || function(){};
         let nPageW  = oPageInfo.width_mm;
         let nPageH  = oPageInfo.height_mm;
 
-        let W;
-        if (AscFormat.isRealNumber(Width)) {
-            W = Width;
-        } else {
-            W = nPageW * 2 / 3;
+        if (false == AscFormat.isRealNumber(Width)) {
+            Width = nPageW * 2 / 3;
         }
+
+        let Grid = [];
+    
+        for (let Index = 0; Index < Cols; Index++)
+            Grid[Index] = Width / Cols;
+    
+        let RowHeight = AscFormat.isRealNumber(Height) ? Height / Rows : 7.478268771701388;
+
         let X, Y;
         if (AscFormat.isRealNumber(PosX) && AscFormat.isRealNumber(PosY)) {
             X = PosX;
             Y = PosY;
         } else {
-            X = (nPageW - W) / 2;
-            Y = nPageH / 5;
+            let nScale      = this.Viewer.drawingPages[nPage].H * g_dKoef_pix_to_mm / nPageH;
+            let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+            let nExtX   = Width;
+            let nExtY   = RowHeight * Rows;
+
+            X = (g_dKoef_pix_to_mm * (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale) - nExtX / 2;
+            Y = (g_dKoef_pix_to_mm * (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale) - nExtY / 2;
+            X = Math.max(X > nPageW - nExtX ? nPageW - nExtX - 5 : Math.max(X, 5));
+            Y = Math.max(Y > nPageH - nExtY ? nPageH - nExtY - 5 : Math.max(Y, 5));
         }
         
-        let Grid = [];
-    
-        for (let Index = 0; Index < Cols; Index++)
-            Grid[Index] = W / Cols;
-    
-        let RowHeight;
-        if (AscFormat.isRealNumber(Height)) {
-            RowHeight = Height / Rows;
-        }
-    
         let Inline = false;
         if (AscFormat.isRealBool(bInline)) {
             Inline = bInline;
@@ -3850,12 +3853,12 @@ var CPresentation = CPresentation || function(){};
         graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
         graphic_frame.spPr.xfrm.setOffX(X);
         graphic_frame.spPr.xfrm.setOffY(Y);
-        graphic_frame.spPr.xfrm.setExtX(W);
-        graphic_frame.spPr.xfrm.setExtY(7.478268771701388 * Rows);
+        graphic_frame.spPr.xfrm.setExtX(Width);
+        graphic_frame.spPr.xfrm.setExtY(RowHeight * Rows);
         graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
     
         let table = new CTable(this.GetDrawingDocument(), graphic_frame, Inline, Rows, Cols, Grid, true);
-        table.Reset(Inline ? X : 0, Inline ? Y : 0, W, 100000, 0, 0, 1, 0);
+        table.Reset(Inline ? X : 0, Inline ? Y : 0, Width, 100000, 0, 0, 1, 0);
         if (!Inline) {
             table.Set_PositionH(Asc.c_oAscHAnchor.Page, false, 0);
             table.Set_PositionV(Asc.c_oAscVAnchor.Page, false, 0);
