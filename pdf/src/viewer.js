@@ -3902,6 +3902,20 @@
 			}
 		}
 	};
+	// возвращает видимый рект страницы
+	CHtmlPage.prototype.getViewingRect = function(nPage) {
+		let x1 = Math.max(-(this.drawingPages[nPage].X - this.scrollX), 0);
+		let y1 = -(this.drawingPages[nPage].Y - this.scrollY);
+		let x2 = Math.min(x1 + this.canvas.width / AscCommon.AscBrowser.retinaPixelRatio, this.drawingPages[nPage].W);
+		let y2 = y1 + this.canvas.height / AscCommon.AscBrowser.retinaPixelRatio;
+		
+		return {
+			x1: x1,
+			y1: y1,
+			x2: x2,
+			y2: y2
+		}
+	};
 	CHtmlPage.prototype.createComponents = function()
 	{
 		var elements = "<div id=\"id_main\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">";

@@ -3869,16 +3869,27 @@ var CPresentation = CPresentation || function(){};
         let oFile       = this.Viewer.file;
         let oNativePage = oFile.pages[nPage];
         let nPageW      = oNativePage.W;
-        let nPageH      = oNativePage.W;
+        let nPageH      = oNativePage.H;
         let oUser       = Asc.editor.User;
 
         let nWidth  = 200;
         let nHeight = 85;
 
+        let nScale      = this.Viewer.drawingPages[nPage].H / nPageH;
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+
+        let nYOffset    = (oViewRect.y1 + (oViewRect.y2 - oViewRect.y1) / 2) / nScale - nHeight / 2;
+        let nXOffset    = (oViewRect.x1 + (oViewRect.x2 - oViewRect.x1) / 2) / nScale - nWidth / 2;
+
+        let nX1Pos = Math.max(nXOffset > nPageW - nWidth ? nPageW - nWidth - 20 : Math.max(nXOffset, 20));
+        let nY1Pos = Math.max(nYOffset > nPageH - nHeight ? nPageH - nHeight - 20 : Math.max(nYOffset, 20));
+        let nX2Pos = nX1Pos + nWidth;
+        let nY2Pos = nY1Pos + nHeight;
+
         let nCurTime = new Date().getTime();
 
         let oProps = {
-            rect:           [(nPageW - nWidth) / 2, nPageH / 10, (nPageW - nWidth) / 2 + nWidth, nPageH / 10 + nHeight],
+            rect:           [nX1Pos, nY1Pos, nX2Pos, nY2Pos],
             page:           nPage,
             name:           AscCommon.CreateGUID(),
             type:           AscPDF.ANNOTATIONS_TYPES.FreeText,
@@ -3919,8 +3930,8 @@ var CPresentation = CPresentation || function(){};
                     let oTxBoxRect = oFreeText.GetTextBoxRect();
                     
                     // дефолтный callout
-                    let x1 = (nPageW - nWidth) / 2;
-                    let y1 = nPageH / 10;
+                    let x1 = nX1Pos;
+                    let y1 = nY1Pos;
                     let x2 = oTxBoxRect[0] - oFreeText.defaultPerpLength;
                     let y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
                     let x3 = oTxBoxRect[0];
