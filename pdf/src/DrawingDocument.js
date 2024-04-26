@@ -35,7 +35,7 @@
 (function (window) {
     function CDrawingDocument()
     {
-        AscCommon.CDrawingDocument.call(this, );
+        AscCommon.CDrawingDocument.call(this);
 
         this.DrawGuiCanvasTextProps = function(props) {
             var bIsChange = false;

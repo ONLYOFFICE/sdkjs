@@ -92,7 +92,7 @@
     CPdfShape.prototype.createTextBody = function () {
         let oDoc = this.GetDocument();
         AscFormat.CShape.prototype.createTextBody.call(this);
-        if (oDoc.GetActiveObject() == this) {
+        if (oDoc && oDoc.GetActiveObject() == this) {
             this.SetInTextBox(true);
         }
         this.SetNeedRecalc(true);
