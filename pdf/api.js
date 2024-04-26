@@ -297,6 +297,10 @@
 		
 		this.DocumentRenderer.open(null, option.asc_getPassword());
 	};
+	PDFEditorApi.prototype.getGraphicController = function () {
+		let oDoc = this.getPDFDoc();
+		return oDoc.GetController();
+	};
 	PDFEditorApi.prototype.can_CopyCut = function() {
 		if (!this.DocumentRenderer)
 			return false;
