@@ -542,6 +542,10 @@ void main() {\n\
 
     CFile.prototype.onMouseDown = function(pageIndex, x, y)
     {
+        if (this.pages[pageIndex].isConvertedToShapes) {
+            return;
+        }
+        
         let oDoc = this.viewer.getPDFDoc();
         var ret = this.getNearestPos(pageIndex, x, y);
         var sel = this.Selection;
@@ -559,6 +563,19 @@ void main() {\n\
         this.onUpdateSelection();
         this.onUpdateOverlay();
     };
+    CFile.prototype.removeSelection = function() {
+        this.Selection = {
+			Page1 : 0,
+			Line1 : 0,
+			Glyph1 : 0,
+
+			Page2 : 0,
+			Line2 : 0,
+			Glyph2 : 0,
+
+			IsSelection : false
+		}
+    }
 
     CFile.prototype.onMouseMove = function(pageIndex, x, y)
     {
