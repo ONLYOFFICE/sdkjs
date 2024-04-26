@@ -908,17 +908,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        this.Viewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+        this.Viewer.file.removeSelection();
         
         if (!oObject) {
             this.BlurActiveObject();
@@ -3622,6 +3612,8 @@ var CPresentation = CPresentation || function(){};
         });
 
         this.TurnOffHistory();
+
+        this.Viewer.file.removeSelection();
     };
     CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;

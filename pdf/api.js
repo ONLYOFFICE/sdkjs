@@ -1767,17 +1767,7 @@
 		if(!oDoc)
 			return;
 
-		oViewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+		oViewer.file.removeSelection();
 
 		oViewer.onUpdateOverlay();
 		oViewer.DrawingObjects.onInkDrawerChangeState();
@@ -1864,51 +1854,21 @@
 		let oDoc	= this.getPDFDoc();
 		oDoc.SetHighlight(r, g, b, opacity);
 
-		oViewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+		oViewer.file.removeSelection()
 	};
 	PDFEditorApi.prototype.SetStrikeout = function(r, g, b, opacity) {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		oDoc.SetStrikeout(r, g, b, opacity);
 
-		oViewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+		oViewer.file.removeSelection();
 	};
 	PDFEditorApi.prototype.SetUnderline = function(r, g, b, opacity) {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
 		oDoc.SetUnderline(r, g, b, opacity);
 
-		oViewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
+		oViewer.file.removeSelection();
 	};
 	PDFEditorApi.prototype.updateSkin = function() {
 		let obj_id_main = document.getElementById("id_main");
