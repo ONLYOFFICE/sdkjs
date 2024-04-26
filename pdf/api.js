@@ -251,7 +251,30 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.onUpdateRestrictions = function() { };
+	PDFEditorApi.prototype.onUpdateRestrictions = function() {
+		if (this.isRestrictionView()) {
+			let oDoc = this.getPDFDoc();
+			if (!oDoc) {
+				return;
+			}
+			
+			let oActiveObj = oDoc.GetActiveObject();
+
+			if (oActiveObj && oActiveObj.IsDrawing()) {
+				oDoc.BlurActiveObject();
+			}
+		}
+	};
+	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
+		this.sendEvent("asc_onCanUndo", canUndo);
+	};
+	PDFEditorApi.prototype.sync_CanRedoCallback = function(canRedo) {
+		if (true === AscCommon.CollaborativeEditing.Is_Fast() && true !== AscCommon.CollaborativeEditing.Is_SingleUser()) {
+			canRedo = false;
+		}
+
+		this.sendEvent("asc_onCanRedo", canRedo);
+	};
 	PDFEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {
 		if (!this.DocumentRenderer)
 			return;
@@ -2062,29 +2085,31 @@
 	CPdfContextMenuData.prototype['get_PageNum']		= CPdfContextMenuData.prototype.get_PageNum;
 	CPdfContextMenuData.prototype['get_IsPageSelect']	= CPdfContextMenuData.prototype.get_IsPageSelect;
 
-	PDFEditorApi.prototype['sync_ContextMenuCallback']     = PDFEditorApi.prototype.sync_ContextMenuCallback;
-	PDFEditorApi.prototype['asc_setAdvancedOptions']       = PDFEditorApi.prototype.asc_setAdvancedOptions;
-	PDFEditorApi.prototype['startGetDocInfo']              = PDFEditorApi.prototype.startGetDocInfo;
-	PDFEditorApi.prototype['stopGetDocInfo']               = PDFEditorApi.prototype.stopGetDocInfo;
-	PDFEditorApi.prototype['can_CopyCut']                  = PDFEditorApi.prototype.can_CopyCut;
-	PDFEditorApi.prototype['asc_searchEnabled']            = PDFEditorApi.prototype.asc_searchEnabled;
-	PDFEditorApi.prototype['asc_findText']                 = PDFEditorApi.prototype.asc_findText;
-	PDFEditorApi.prototype['asc_endFindText']              = PDFEditorApi.prototype.asc_endFindText;
-	PDFEditorApi.prototype['asc_isSelectSearchingResults'] = PDFEditorApi.prototype.asc_isSelectSearchingResults;
-	PDFEditorApi.prototype['asc_StartTextAroundSearch']    = PDFEditorApi.prototype.asc_StartTextAroundSearch;
-	PDFEditorApi.prototype['asc_SelectSearchElement']      = PDFEditorApi.prototype.asc_SelectSearchElement;
-	PDFEditorApi.prototype['ContentToHTML']                = PDFEditorApi.prototype.ContentToHTML;
-	PDFEditorApi.prototype['goToPage']                     = PDFEditorApi.prototype.goToPage;
-	PDFEditorApi.prototype['getCountPages']                = PDFEditorApi.prototype.getCountPages;
-	PDFEditorApi.prototype['getCurrentPage']               = PDFEditorApi.prototype.getCurrentPage;
-	PDFEditorApi.prototype['asc_getPdfProps']              = PDFEditorApi.prototype.asc_getPdfProps;
-	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
-	PDFEditorApi.prototype['asc_correctEnterText']         = PDFEditorApi.prototype.asc_correctEnterText;
-	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
-	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
-	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
-	PDFEditorApi.prototype['asc_getHeaderFooterProperties']= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
-	PDFEditorApi.prototype['ChangeReaderMode']			   = PDFEditorApi.prototype.ChangeReaderMode;
+	PDFEditorApi.prototype['sync_ContextMenuCallback']		= PDFEditorApi.prototype.sync_ContextMenuCallback;
+	PDFEditorApi.prototype['sync_CanUndoCallback']			= PDFEditorApi.prototype.sync_CanUndoCallback;
+	PDFEditorApi.prototype['sync_CanRedoCallback']			= PDFEditorApi.prototype.sync_CanRedoCallback;
+	PDFEditorApi.prototype['asc_setAdvancedOptions']		= PDFEditorApi.prototype.asc_setAdvancedOptions;
+	PDFEditorApi.prototype['startGetDocInfo']				= PDFEditorApi.prototype.startGetDocInfo;
+	PDFEditorApi.prototype['stopGetDocInfo']				= PDFEditorApi.prototype.stopGetDocInfo;
+	PDFEditorApi.prototype['can_CopyCut']					= PDFEditorApi.prototype.can_CopyCut;
+	PDFEditorApi.prototype['asc_searchEnabled']				= PDFEditorApi.prototype.asc_searchEnabled;
+	PDFEditorApi.prototype['asc_findText']					= PDFEditorApi.prototype.asc_findText;
+	PDFEditorApi.prototype['asc_endFindText']				= PDFEditorApi.prototype.asc_endFindText;
+	PDFEditorApi.prototype['asc_isSelectSearchingResults']	= PDFEditorApi.prototype.asc_isSelectSearchingResults;
+	PDFEditorApi.prototype['asc_StartTextAroundSearch']		= PDFEditorApi.prototype.asc_StartTextAroundSearch;
+	PDFEditorApi.prototype['asc_SelectSearchElement']		= PDFEditorApi.prototype.asc_SelectSearchElement;
+	PDFEditorApi.prototype['ContentToHTML']					= PDFEditorApi.prototype.ContentToHTML;
+	PDFEditorApi.prototype['goToPage']						= PDFEditorApi.prototype.goToPage;
+	PDFEditorApi.prototype['getCountPages']					= PDFEditorApi.prototype.getCountPages;
+	PDFEditorApi.prototype['getCurrentPage']				= PDFEditorApi.prototype.getCurrentPage;
+	PDFEditorApi.prototype['asc_getPdfProps']				= PDFEditorApi.prototype.asc_getPdfProps;
+	PDFEditorApi.prototype['asc_enterText']					= PDFEditorApi.prototype.asc_enterText;
+	PDFEditorApi.prototype['asc_correctEnterText']			= PDFEditorApi.prototype.asc_correctEnterText;
+	PDFEditorApi.prototype['asc_GetSelectedText']			= PDFEditorApi.prototype.asc_GetSelectedText;
+	PDFEditorApi.prototype['asc_SelectPDFFormListItem']		= PDFEditorApi.prototype.asc_SelectPDFFormListItem;
+	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']	= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
+	PDFEditorApi.prototype['asc_getHeaderFooterProperties']	= PDFEditorApi.prototype.asc_getHeaderFooterProperties;
+	PDFEditorApi.prototype['ChangeReaderMode']				= PDFEditorApi.prototype.ChangeReaderMode;
 
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;

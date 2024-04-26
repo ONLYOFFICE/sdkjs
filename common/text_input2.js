@@ -1182,7 +1182,7 @@
 
 		if (!this.isDisableKeyboard)
 		{
-			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms() && !this.Api.isPdfEditor())
 			{
 				this.isDisableKeyboard = true;
 			}

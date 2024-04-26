@@ -449,12 +449,15 @@ NullState.prototype =
             }
         }
         else {
-            let oViewer = editor.getDocumentRenderer();
+            let oViewer = Asc.editor.getDocumentRenderer();
 
             let aDrawings = [];
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
+            if (false == Asc.editor.isRestrictionView()) {
+                if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
+                    aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
+                }
             }
+            
             if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
                 aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
             }

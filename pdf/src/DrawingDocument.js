@@ -36,6 +36,7 @@
     function CDrawingDocument()
     {
         AscCommon.CDrawingDocument.call(this);
+        var oThis = this;
 
         this.DrawGuiCanvasTextProps = function(props) {
             var bIsChange = false;
@@ -208,10 +209,41 @@
                 editor.isViewMode = _oldTurn;
             }, this, []);
         };
+        this.DrawTarget = function() {
+            let oDoc            = Asc.editor.getPDFDoc();
+            let oActiveObj      = oDoc.GetActiveObject();
+            let isViewObject    = oActiveObj && (oActiveObj.IsAnnot() || oActiveObj.IsForm());
+
+            if (oThis.NeedTarget) {
+                let isActive = true;
+                let api = oThis.m_oWordControl.m_oApi;
+
+                if (!oThis.m_oWordControl.IsFocus)
+                    isActive = false;
+                else if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+                    isActive = false;
+                else if (api.isViewMode || (api.isRestrictionView() && !isViewObject))
+                    isActive = false;
+
+                if (isActive)
+                    oThis.showTarget(!oThis.isShowTarget());
+                else
+                    oThis.showTarget(true);
+            }
+        };
+        this.isHideTarget = function() {
+            let oDoc            = Asc.editor.getPDFDoc();
+            let oActiveObj      = oDoc.GetActiveObject();
+            let isViewObject    = oActiveObj && (oActiveObj.IsAnnot() || oActiveObj.IsForm());
+            let api             = this.m_oWordControl.m_oApi;
+
+            if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms() && !isViewObject))
+                return this.isHideTargetBeforeFirstClick;
+            return false;
+        };
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;
-    //CDrawingDocument.prototype = Object.create(AscCommon.CDrawingDocument.prototype);
 
     window["AscPDF"].CDrawingDocument = CDrawingDocument;
 

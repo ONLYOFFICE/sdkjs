@@ -4432,7 +4432,9 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
 
         this.SetMouseDownObject(oState.activeObject);
-        oController.setSelectionState(oState.drawingSelection);
+        if (false == this.Api.isRestrictionView()) {
+            oController.setSelectionState(oState.drawingSelection);
+        }
 
         if (oState.CurPage != -1 && oState.CurPage != this.Viewer.currentPage)
 	        this.Viewer.navigateToPage(oState.CurPage);

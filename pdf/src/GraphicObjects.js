@@ -78,7 +78,7 @@
         let oAnnotTextPrTrackHandler = this.document.AnnotTextPrTrackHandler;
 
         this.setEquationTrack(oMathTrackHandler, this.canEdit());
-        this.setAnnotTextPrTrack(oAnnotTextPrTrackHandler, this.canEdit());
+        this.setAnnotTextPrTrack(oAnnotTextPrTrackHandler, this.api.isRestrictionView());
     };
 
     CGraphicObjects.prototype.setAnnotTextPrTrack = function(oAnnotTextPrTrackHandler, IsShowAnnotTrack) {
@@ -423,6 +423,10 @@
                 let cur_pr, result_pr, content;
                 for (let i = 0; i < arr.length; ++i) {
                     cur_pr = null;
+                    if (arr[i].IsAnnot && arr[i].IsAnnot() || (arr[i].group && arr[i].group.IsAnnot && arr[i].group.IsAnnot())) {
+                        return result_pr;
+                    }
+
                     if (arr[i].getObjectType() === AscDFH.historyitem_type_GroupShape) {
                         cur_pr = getPropsFromArr(arr[i].arrGraphicObjects);
                     } else {
@@ -446,7 +450,7 @@
                 return result_pr;
             };
 
-            if (this.selection.groupSelection && !this.selection.groupSelection.IsAnnot) {
+            if (this.selection.groupSelection) {
                 result = getPropsFromArr(this.selection.groupSelection.selectedObjects);
             } else {
                 result = getPropsFromArr(this.selectedObjects);
