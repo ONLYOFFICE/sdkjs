@@ -38,8 +38,9 @@
     */
     function CAnnotationSquare(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Square, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
         this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
 
@@ -57,7 +58,7 @@
         TurnOffHistory();
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
-    AscFormat.InitClass(CAnnotationSquare, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationSquare.prototype.LazyCopy = function() {

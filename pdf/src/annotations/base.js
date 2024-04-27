@@ -73,9 +73,11 @@
 
         this._replies               = []; // тут будут храниться ответы (text аннотации)
 
+        if (this.Id == undefined)
+            this.Id = AscCommon.g_oIdCounter.Get_NewId();
+        
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
-        this._id                = AscCommon.g_oIdCounter.Get_NewId();
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -453,7 +455,7 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsShapeBased = function() {
-        return this instanceof AscFormat.CShape || this instanceof AscFormat.CGroupShape;
+        return this instanceof AscPDF.CPdfShape || this instanceof AscFormat.CGroupShape;
     };
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
@@ -547,7 +549,7 @@
         return this._rect;
     };
     CAnnotationBase.prototype.GetId = function() {
-        return this._id;
+        return this.Id;
     };
     CAnnotationBase.prototype.Get_Id = function() {
         return this.GetId();

@@ -459,7 +459,7 @@
 			oActiveAnnot.EnterText(codePoints);
 			oContent = oActiveAnnot.GetDocContent();
 		}
-		else if (oActiveDrawing) {
+		else if (oActiveDrawing && !this.isRestrictionView()) {
 			oContent = oActiveDrawing.GetDocContent();
 
 			let nCode, oItem;
@@ -1468,9 +1468,6 @@
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};
 	PDFEditorApi.prototype.asc_getSelectedDrawingObjectsCount = function() {
 		return this.WordControl.m_oLogicDocument.GetSelectedDrawingObjectsCount();
-	};
-	PDFEditorApi.prototype.isShowShapeAdjustments = function() {
-		return true;
 	};
 	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
 		let form = this._getActiveForm();

@@ -1763,6 +1763,7 @@ var CPresentation = CPresentation || function(){};
         
         let oAnnot;
         AscFormat.ExecuteNoHistory(function () {
+            AscCommon.g_oTableId.TurnOn();
             oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
         }, this);
 
@@ -1784,6 +1785,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetApIdx(oProps.apIdx);
 
         oAnnot.AddToRedraw();
+
         return oAnnot;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
@@ -4017,7 +4019,7 @@ var CPresentation = CPresentation || function(){};
         oObjectsByType.images.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
-        
+
         this.TurnOffHistory();
     };
     CPDFDoc.prototype.SetImageProps = function(oPr) {
@@ -4465,9 +4467,6 @@ var CPresentation = CPresentation || function(){};
         }).length;
     };
     CPDFDoc.prototype.isShapeChild = function() {};
-    CPDFDoc.prototype.IsShowTableAdjustments = function() {
-        return true;
-    };
     CPDFDoc.prototype.Document_Is_SelectionLocked = function() {
         return false;
     };
@@ -4613,9 +4612,18 @@ var CPresentation = CPresentation || function(){};
 		return editor;
 	};
 	CPDFDoc.prototype.CanEdit = function() {
-		return true;
+		return this.Api.canEdit();
 	};
-	CPDFDoc.prototype.IsFillingFormMode = function() {
+    CPDFDoc.prototype.IsShowShapeAdjustments = function() {
+        return this.Api.canEdit();
+    };
+    CPDFDoc.prototype.IsShowTableAdjustments = function() {
+        return this.Api.canEdit();;
+    };
+    CPDFDoc.prototype.IsViewerObject = function(oObject) {
+        return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.group && oObject.group.IsAnnot()));
+    };
+    CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;
 	};
 	CPDFDoc.prototype.getDrawingObjects = function() {

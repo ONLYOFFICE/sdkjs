@@ -38,8 +38,9 @@
     */
     function CAnnotationCircle(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Circle, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
         this.spPr.setGeometry(AscFormat.CreateGeometry("ellipse"));
         this.setStyle(AscFormat.CreateDefaultShapeStyle("ellipse"));
@@ -57,7 +58,7 @@
         TurnOffHistory();
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
-    AscFormat.InitClass(CAnnotationCircle, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationCircle.prototype.IsCircle = function() {

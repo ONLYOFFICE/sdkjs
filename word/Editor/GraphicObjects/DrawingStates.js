@@ -452,10 +452,9 @@ NullState.prototype =
             let oViewer = Asc.editor.getDocumentRenderer();
 
             let aDrawings = [];
-            if (false == Asc.editor.isRestrictionView()) {
-                if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
-                    aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
-                }
+
+            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
+                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
             }
             
             if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {

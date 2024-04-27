@@ -52,8 +52,9 @@
     */
     function CAnnotationFreeText(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, nPage, aRect, oDoc);
         AscFormat.CGroupShape.call(this);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, nPage, aRect, oDoc);
+        
         initGroupShape(this);
         
         this.GraphicObj     = this;
@@ -111,6 +112,20 @@
             }
         }
     };
+    CAnnotationFreeText.prototype.canMove = function () {
+		var oApi = Asc.editor || editor;
+		var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if (oApi.getPDFDoc().IsViewerObject(this))
+            return true;
+        
+		if (isDrawHandles === false) {
+			return false;
+		}
+		if (!this.canEdit()) {
+			return false;
+		}
+		return this.getNoMove() === false;
+	};
     CAnnotationFreeText.prototype.GetArrowRect = function(aArrowPts) {
         let aCallout = this.GetCallout();
         if (!aCallout && !aArrowPts)
@@ -949,7 +964,7 @@
         let oContent    = this.GetDocContent();
 
         oContent.SetApplyToAll(true);
-		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true, ParaSeparator: '\r'}).replace(/\r\n$/, '');
+		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true, ParaSeparator: '\r'}).replace('\r', '');
 		oContent.SetApplyToAll(false);
 
         this.SetInTextBox(false);

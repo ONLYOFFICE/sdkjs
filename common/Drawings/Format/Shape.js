@@ -178,6 +178,10 @@
 			if (isDrawHandles && object && object.isForm && object.isForm() && object.getInnerForm() && object.getInnerForm().IsFormLocked())
 				isDrawHandles = false;
 
+			if (Asc.editor.isPdfEditor() && Asc.editor.getPDFDoc().IsViewerObject(object)) {
+				isDrawHandles = true;
+			}
+
 			if (isDrawHandles === false) {
 				return -1;
 			}

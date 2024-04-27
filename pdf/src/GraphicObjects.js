@@ -951,6 +951,277 @@
         return this.selectedObjects;
     };
 
+    CGraphicObjects.prototype.updateCursorType = function(pageIndex, x, y, e, bTextFlag)
+    {
+        var ret;
+        this.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        ret = this.curState.onMouseDown(global_mouseEvent, x, y, pageIndex, bTextFlag);
+        this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+        if(ret)
+        {
+            if(ret.cursorType !== "text")
+            {
+                let oApi = Asc.editor || editor;
+                let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+                let oObject     = AscCommon.g_oTableId.Get_ById(ret.objectId);
+                let isViewerObj = this.document.IsViewerObject(oObject);
+
+                if (!isDrawHandles && isViewerObj) {
+                    isDrawHandles = true;
+                }
+
+                if(isDrawHandles === false)
+                {
+                    this.drawingDocument.SetCursorType("default");
+                    return true;
+                }
+				let sCursorType = ret.cursorType;
+				let oAPI = this.getEditorApi();
+				if(oAPI.isFormatPainterOn())
+				{
+					if(sCursorType !== "text")
+					{
+						let oData = oAPI.getFormatPainterData();
+						if(oData.isDrawingData())
+						{
+							sCursorType = AscCommon.Cursors.ShapeCopy;
+						}
+					}
+				}
+                this.drawingDocument.SetCursorType(sCursorType);
+            }
+            return true;
+        }
+        return false;
+    };
+    CGraphicObjects.prototype.drawSelect = function (pageIndex) {
+        let drawingDocument = this.drawingDocument;
+
+        if (undefined !== drawingDocument.BeginDrawTracking)
+            drawingDocument.BeginDrawTracking();
+
+        const oApi = this.getEditorApi();
+        let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        const nSelectedCount = this.selectedObjects;
+        const oFirstSelected = this.selectedObjects[0];
+
+        if (nSelectedCount === 1
+            && oFirstSelected.isForm()
+            && oFirstSelected.getInnerForm()
+            && oFirstSelected.getInnerForm().IsFormLocked())
+            isDrawHandles = false;
+
+        var i;
+        const oTx           = this.selection.textSelection;
+        const oCrop         = this.selection.cropSelection;
+        const oGm           = this.selection.geometrySelection;
+        const oGrp          = this.selection.groupSelection;
+        const oChart        = this.selection.chartSelection;
+        const oWrp          = this.selection.wrapPolygonSelection;
+        const oTrackDrawer  = drawingDocument.AutoShapesTrack;
+
+        if (oCrop) {
+            if (this.arrTrackObjects.length === 0) {
+                if (oCrop.selectStartPage === pageIndex) {
+                    const cropObject = oCrop.getCropObject();
+                    if (cropObject) {
+                        let oldGlobalAlpha;
+                        if (oTrackDrawer.Graphics) {
+                            oldGlobalAlpha = oTrackDrawer.Graphics.globalAlpha;
+                            oTrackDrawer.Graphics.put_GlobalAlpha(false, 1.0);
+                        }
+                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
+                        cropObject.draw(oTrackDrawer);
+                        oTrackDrawer.CorrectOverlayBounds();
+
+                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
+                        oCrop.draw(oTrackDrawer);
+                        oTrackDrawer.CorrectOverlayBounds();
+
+                        if (oTrackDrawer.Graphics) {
+                            oTrackDrawer.Graphics.put_GlobalAlpha(true, oldGlobalAlpha);
+                        }
+                        drawingDocument.DrawTrack(
+                            AscFormat.TYPE_TRACK.SHAPE,
+                            cropObject.getTransformMatrix(),
+                            0,
+                            0,
+                            cropObject.extX,
+                            cropObject.extY,
+                            false,
+                            false,
+                            undefined,
+                            isDrawHandles && cropObject.canEdit()
+                        );
+                        drawingDocument.DrawTrack(
+                            AscFormat.TYPE_TRACK.CROP,
+                            oCrop.getTransformMatrix(),
+                            0,
+                            0,
+                            oCrop.extX,
+                            oCrop.extY,
+                            false,
+                            false,
+                            undefined,
+                            isDrawHandles && oCrop.canEdit()
+                        );
+                    }
+                }
+            }
+        } else if (oGm) {
+            oGm.drawSelect(pageIndex, drawingDocument);
+        } else if (oTx) {
+            if (oTx.selectStartPage === pageIndex) {
+                if (!oTx.isForm()) {
+                    drawingDocument.DrawTrack(
+                        AscFormat.TYPE_TRACK.TEXT,
+                        oTx.getTransformMatrix(),
+                        0,
+                        0,
+                        oTx.extX,
+                        oTx.extY,
+                        AscFormat.CheckObjectLine(oTx),
+                        oTx.canRotate(),
+                        undefined,
+                        isDrawHandles && oTx.canEdit()
+                    );
+                    oTx.drawAdjustments(drawingDocument);
+                }
+            }
+        } else if (oGrp) {
+            if (oGrp.selectStartPage === pageIndex) {
+                !oGrp.IsAnnot && drawingDocument.DrawTrack(
+                    AscFormat.TYPE_TRACK.GROUP_PASSIVE,
+                    oGrp.getTransformMatrix(),
+                    0,
+                    0,
+                    oGrp.extX,
+                    oGrp.extY,
+                    false,
+                    oGrp.canRotate(),
+                    undefined,
+                    isDrawHandles && oGrp.canEdit()
+                );
+                const oGrpTx = oGrp.selection.textSelection;
+                const oGrpChart = oGrp.selection.chartSelection;
+                const aGrpSelected = oGrp.selectedObjects;
+                if (oGrpTx && !oGrp.IsAnnot) {
+                    drawingDocument.DrawTrack(
+                        AscFormat.TYPE_TRACK.TEXT,
+                        oGrpTx.transform,
+                        0,
+                        0,
+                        oGrpTx.extX,
+                        oGrpTx.extY,
+                        AscFormat.CheckObjectLine(oGrpTx),
+                        oGrpTx.canRotate(),
+                        undefined,
+                        isDrawHandles && this.selection.groupSelection.canEdit()
+                    );
+                } else if (oGrpChart) {
+                    oGrpChart.drawSelect(drawingDocument, pageIndex);
+                } else {
+                    for (i = 0; i < aGrpSelected.length; ++i) {
+                        let oDrawing = aGrpSelected[i];
+                        if (oDrawing instanceof AscFormat.CConnectionShape) {
+                            continue;
+                        }
+
+                        drawingDocument.DrawTrack(
+                            AscFormat.TYPE_TRACK.SHAPE,
+                            oDrawing.transform,
+                            0,
+                            0,
+                            oDrawing.extX,
+                            oDrawing.extY,
+                            AscFormat.CheckObjectLine(oDrawing),
+                            false,
+                            undefined,
+                            (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oGrp.canEdit());
+                    }
+                }
+                if (aGrpSelected.length === 1) {
+                    aGrpSelected[0].drawAdjustments(drawingDocument);
+                }
+            }
+        } else if (oChart) {
+            oChart.drawSelect(drawingDocument, pageIndex);
+        } else if (oWrp) {
+            if (oWrp.selectStartPage === pageIndex) {
+                if(oTrackDrawer.DrawEditWrapPointsPolygon) {
+                    oTrackDrawer.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+                }
+            }
+        } else {
+            for (i = 0; i < this.selectedObjects.length; ++i) {
+                let oDrawing = this.selectedObjects[i];
+                // if (oDrawing.selectStartPage === pageIndex) {
+                if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
+                    let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
+                    drawingDocument.DrawTrack(
+                        nType,
+                        oDrawing.getTransformMatrix(),
+                        0,
+                        0,
+                        oDrawing.extX,
+                        oDrawing.extY,
+                        AscFormat.CheckObjectLine(oDrawing),
+                        oDrawing.canRotate(),
+                        undefined,
+                        (isDrawHandles || this.document.IsViewerObject(oDrawing)) && oDrawing.canEdit()
+                    );
+                }
+            }
+            if (this.selectedObjects.length === 1 && this.selectedObjects[0].drawAdjustments && this.selectedObjects[0].selectStartPage === pageIndex) {
+                this.selectedObjects[0].drawAdjustments(drawingDocument);
+            }
+        }
+        if (this.document) {
+            if (!oGm) {
+                if (nSelectedCount === 1 && oFirstSelected.parent && !oFirstSelected.parent.Is_Inline()) {
+                    let anchor_pos;
+                    let oFirstTrack = this.arrTrackObjects[0];
+                    let page_index;
+                    if (this.arrTrackObjects.length === 1 &&
+                        !(oFirstTrack instanceof TrackPointWrapPointWrapPolygon || oFirstTrack instanceof TrackNewPointWrapPolygon)) {
+                        page_index = AscFormat.isRealNumber(oFirstTrack.pageIndex) ? this.arrTrackObjects[0].pageIndex : (AscFormat.isRealNumber(oFirstTrack.selectStartPage) ? oFirstTrack.selectStartPage : 0);
+                        if (page_index === pageIndex) {
+                            var bounds = oFirstTrack.getBounds();
+                            var nearest_pos = this.document.Get_NearestPos(page_index, bounds.min_x, bounds.min_y, true, this.selectedObjects[0].parent);
+                            nearest_pos.Page = page_index;
+                            oTrackDrawer.drawFlowAnchor(nearest_pos.X, nearest_pos.Y);
+                        }
+                    } else {
+                        page_index = oFirstSelected.selectStartPage;
+                        if (page_index === pageIndex) {
+                            var paragraph = oFirstSelected.parent.Get_ParentParagraph();
+                            anchor_pos = paragraph.Get_AnchorPos(oFirstSelected.parent);
+                            if (anchor_pos) {
+                                oTrackDrawer.drawFlowAnchor(anchor_pos.X, anchor_pos.Y);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (this.selectionRect) {
+            drawingDocument.DrawTrackSelectShapes(this.selectionRect.x, this.selectionRect.y, this.selectionRect.w, this.selectionRect.h);
+        }
+
+
+        if (this.connector) {
+            this.connector.drawConnectors(oTrackDrawer);
+            this.connector = null;
+        }
+
+
+        if (undefined !== drawingDocument.EndDrawTracking)
+            drawingDocument.EndDrawTracking();
+
+
+    }
+
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
 

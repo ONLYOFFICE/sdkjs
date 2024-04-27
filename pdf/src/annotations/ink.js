@@ -38,8 +38,9 @@
     */
     function CAnnotationInk(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         initShape(this);
 
         this._point         = undefined;
@@ -53,7 +54,7 @@
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
-    AscFormat.InitClass(CAnnotationInk, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationInk.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationInk.prototype.IsInk = function() {

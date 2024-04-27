@@ -1893,11 +1893,6 @@
 		};
 		this.getPageDrawingByMouse = function()
 		{
-			// режим view, не даем трогать drawings
-			if (this.Api.isRestrictionView()) {
-				return null;
-			}
-
 			let oDoc	= this.getPDFDoc();
 			let oDrDoc	= oDoc.GetDrawingDocument();
 			let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);

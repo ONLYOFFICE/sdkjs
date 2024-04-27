@@ -49,9 +49,10 @@
         return true;
     };
     CPdfShape.prototype.ShouldDrawImaginaryBorder = function() {
-        let bDraw = this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill));
+        let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
         bDraw &&= this.IsFromScan();
-        
+        bDraw &&= !Asc.editor.isRestrictionView();
+
         return bDraw;
     };
     CPdfShape.prototype.Recalculate = function() {
@@ -180,6 +181,69 @@
         
         return fontMap;
     };
+
+    CPdfShape.prototype.hitToAdjustment = function (x, y) {
+        if (!AscFormat.canSelectDrawing(this)) {
+            return false;
+        }
+        var oApi = Asc.editor || editor;
+        var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        let isViewerObj = oApi.getPDFDoc().IsViewerObject(this);
+
+        if (isViewerObj) {
+            isDrawHandles = true;
+        }
+
+        if (isDrawHandles === false) {
+            return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+        }
+        var invert_transform;
+        var t_x, t_y, ret;
+        var _calcGeom = this.getGeometry();
+        var _dist;
+        if (global_mouseEvent && global_mouseEvent.AscHitToHandlesEpsilon) {
+            _dist = global_mouseEvent.AscHitToHandlesEpsilon;
+        } else {
+            _dist = this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS);
+        }
+        if (_calcGeom) {
+            invert_transform = this.getInvertTransform();
+            if (!invert_transform) {
+                return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+            }
+            t_x = invert_transform.TransformPointX(x, y);
+            t_y = invert_transform.TransformPointY(x, y);
+            ret = _calcGeom.hitToAdj(t_x, t_y, _dist);
+            if (ret.hit) {
+                ret.warp = false;
+                return ret;
+            }
+        }
+        if (this.recalcInfo.warpGeometry && this.invertTransformTextWordArt) {
+            invert_transform = this.invertTransformTextWordArt;
+            t_x = invert_transform.TransformPointX(x, y);
+            t_y = invert_transform.TransformPointY(x, y);
+            ret = this.recalcInfo.warpGeometry.hitToAdj(t_x, t_y, _dist);
+            ret.warp = true;
+            return ret;
+        }
+
+        return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
+    };
+    CPdfShape.prototype.canMove = function () {
+		var oApi = Asc.editor || editor;
+		var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+        if (oApi.getPDFDoc().IsViewerObject(this))
+            return true;
+
+		if (isDrawHandles === false) {
+			return false;
+		}
+		if (!this.canEdit()) {
+			return false;
+		}
+		return this.getNoMove() === false;
+	};
 
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides

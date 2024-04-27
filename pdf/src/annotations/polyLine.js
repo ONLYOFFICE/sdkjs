@@ -44,8 +44,9 @@
     */
     function CAnnotationPolyLine(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.PolyLine, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._point         = undefined;
@@ -65,7 +66,7 @@
         TurnOffHistory();
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
-    AscFormat.InitClass(CAnnotationPolyLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {

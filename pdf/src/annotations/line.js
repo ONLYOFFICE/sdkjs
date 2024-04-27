@@ -66,8 +66,9 @@
     */
     function CAnnotationLine(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._popupOpen     = false;
@@ -93,7 +94,7 @@
         TurnOffHistory();
     }
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
-    AscFormat.InitClass(CAnnotationLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationLine.prototype.SetCaptionOffset = function(array) {

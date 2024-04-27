@@ -72,6 +72,11 @@
         this.SetNeedRecalc(true);
         return true;
     };
+    CPdfGraphicFrame.prototype.updateCursorType = function (x, y, e) {
+		var tx = this.invertTransform.TransformPointX(x, y);
+		var ty = this.invertTransform.TransformPointY(x, y);
+		this.graphicObject.UpdateCursorType(tx, ty, 0)
+	};
     /**
      * Removes char in current position by direction.
      * @memberof CTextField

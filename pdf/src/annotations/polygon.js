@@ -44,8 +44,9 @@
     */
     function CAnnotationPolygon(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Polygon, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._point         = undefined;
@@ -63,7 +64,7 @@
         TurnOffHistory();
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
-    AscFormat.InitClass(CAnnotationPolygon, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
