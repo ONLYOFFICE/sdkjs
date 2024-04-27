@@ -5085,8 +5085,8 @@ function (window, undefined) {
 				}
 				switch (oApi.getEditorId()) {
 					case AscCommon.c_oEditorId.Word: {
-						oShape.setWordShape(true);
-						bWord = true;
+						bWord = true && !oApi.isPdfEditor();
+						oShape.setWordShape(bWord);
 						break;
 					}
 					case AscCommon.c_oEditorId.Presentation: {
