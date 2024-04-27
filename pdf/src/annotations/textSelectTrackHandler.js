@@ -76,8 +76,8 @@
 
 		let x1 = aFirstQuads[0] * nScale;
 		let y1 = aFirstQuads[1] * nScale;
-		let x2 = aFirstQuads[4] * nScale;
-		let y2 = aFirstQuads[5] * nScale;
+		let x2 = aFirstQuads[6] * nScale;
+		let y2 = aFirstQuads[7] * nScale;
 
 		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, nPage);
 		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x2, y2, nPage);
