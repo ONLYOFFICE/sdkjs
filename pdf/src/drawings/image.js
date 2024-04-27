@@ -63,6 +63,7 @@
         this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
     CPdfImage.prototype.onMouseDown = function(x, y, e) {

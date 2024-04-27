@@ -3998,6 +3998,9 @@ var CPresentation = CPresentation || function(){};
         oObjectsByType.shapes.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
+        oObjectsByType.images.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
 
         this.TurnOffHistory();
     };
@@ -4011,7 +4014,10 @@ var CPresentation = CPresentation || function(){};
         oObjectsByType.shapes.forEach(function(drawing) {
             drawing.SetNeedRecalc(true);
         });
-
+        oObjectsByType.images.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+        
         this.TurnOffHistory();
     };
     CPDFDoc.prototype.SetImageProps = function(oPr) {
