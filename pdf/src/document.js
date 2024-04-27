@@ -107,6 +107,7 @@ var CPresentation = CPresentation || function(){};
         this.maxApIdx               = -1;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
+        this.TextSelectTrackHandler = new AscPDF.CTextSelectTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.SearchEngine           = new AscPDF.CPdfSearch(this);
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
@@ -142,11 +143,6 @@ var CPresentation = CPresentation || function(){};
         this.activeDrawing    = null;
         this.mouseDownField     = null;
         this.mouseDownAnnot     = null;
-
-        this.editMode = {
-            text: false,
-            forms: false
-        }
 
         this._id = AscCommon.g_oIdCounter.Get_NewId();
 		
@@ -973,24 +969,6 @@ var CPresentation = CPresentation || function(){};
         return false;
     };
     
-    CPDFDoc.prototype.SetTextEditMode = function(bEdit) {
-        this.editMode.text = bEdit;
-        this.editMode.forms = false;
-
-        this.BlurActiveObject();
-    };
-    CPDFDoc.prototype.IsTextEditMode = function() {
-        return this.editMode.text;
-    };
-    CPDFDoc.prototype.SetFormsEditMode = function(bEdit) {
-        this.editMode.text = false;
-        this.editMode.forms = bEdit;
-
-        this.BlurActiveObject();
-    };
-    CPDFDoc.prototype.IsFormsEditMode = function() {
-        return this.editMode.forms;
-    };
     CPDFDoc.prototype.EraseInk = function(oInk) {
         this.CreateNewHistoryPoint();
         this.RemoveAnnot(oInk.GetId());
@@ -1879,6 +1857,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
         this.AnnotTextPrTrackHandler.OnChangePosition();
     };
+    CPDFDoc.prototype.UpdateSelectionTrackPos = function() {
+        this.TextSelectTrackHandler.OnChangePosition();
+    };
     CPDFDoc.prototype.ConvertMathView = function (isToLinear, isAll) {
         let oController = this.GetController();
         let oShape      = AscFormat.getTargetTextObject(oController);
@@ -2665,6 +2646,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateCommentPos();
         this.UpdateMathTrackPos();
         this.UpdateAnnotTrackPos();
+        this.UpdateSelectionTrackPos();
         this.UpdateCopyCutState();
         this.UpdateParagraphProps();
         this.UpdateTextProps();

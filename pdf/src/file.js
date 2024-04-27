@@ -575,7 +575,12 @@ void main() {\n\
 
 			IsSelection : false
 		}
-    }
+
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
+    };
+    CFile.prototype.getSelection = function() {
+        return this.Selection;
+    };
 
     CFile.prototype.onMouseMove = function(pageIndex, x, y)
     {
@@ -594,6 +599,7 @@ void main() {\n\
 
     CFile.prototype.onMouseUp = function()
     {
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
         this.Selection.IsSelection = false;
         this.onUpdateSelection();
         this.onUpdateOverlay();

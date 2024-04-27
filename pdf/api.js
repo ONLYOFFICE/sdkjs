@@ -740,8 +740,10 @@
 		let oViewer			= oDoc.Viewer;
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
-		oDoc.BlurActiveObject();
-		oDoc.UpdateInterface();
+		if (value == true) {
+			oDoc.BlurActiveObject();
+			oDoc.UpdateInterface();
+		}
 
 		if (this.isMarkerFormat) {
 			let aSelQuads = oViewer.file.getSelectionQuads();
@@ -752,6 +754,7 @@
 				oDoc.bOffMarkerAfterUsing = true;
 			}
 
+			oDoc.CreateNewHistoryPoint();
 			oDrDoc.LockCursorType(AscCommon.Cursors.MarkerFormat);
 
 			switch (this.curMarkerType) {
@@ -765,6 +768,8 @@
 					this.SetStrikeout(r, g, b, opacity);
 					break;
 			}
+
+			oDoc.TurnOffHistory();
 		}
 		else {
 			// SetMarkerFormat вызывается при включении ластика/рисовалки, курсор не сбрасываем
@@ -1026,9 +1031,6 @@
 	///////// For text
 	////////////////////////////////////////////////////////////
 
-	PDFEditorApi.prototype.SetTextEditMode = function(bEdit) {
-		this.getPDFDoc().SetTextEditMode(bEdit);
-	};
 	PDFEditorApi.prototype.put_TextPrBold = function(value) {
 		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Bold : value}));
 	};
@@ -1766,6 +1768,7 @@
 
 		oViewer.file.removeSelection();
 
+		oDoc.BlurActiveObject();
 		oViewer.onUpdateOverlay();
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 		oDoc.currInkInDrawingProcess = null;
@@ -2090,7 +2093,6 @@
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
 	PDFEditorApi.prototype['get_PageWidth']                = PDFEditorApi.prototype.get_PageWidth;
 	PDFEditorApi.prototype['get_PageHeight']               = PDFEditorApi.prototype.get_PageHeight;
-	PDFEditorApi.prototype['SetTextEditMode']              = PDFEditorApi.prototype.SetTextEditMode;
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;

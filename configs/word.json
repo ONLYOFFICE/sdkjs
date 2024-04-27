@@ -353,6 +353,7 @@
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
 			"pdf/src/annotations/textPrTrackHandler.js",
+			"pdf/src/annotations/textSelectTrackHandler.js",
 			"pdf/src/DrawingDocument.js",
 			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
