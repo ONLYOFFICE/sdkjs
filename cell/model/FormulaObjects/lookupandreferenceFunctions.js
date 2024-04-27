@@ -1278,7 +1278,6 @@ function (window, undefined) {
 	cHLOOKUP.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cHLOOKUP.prototype.argumentsType = [argType.any, argType.number, argType.number, argType.logical];
 	cHLOOKUP.prototype.Calculate = function (arg) {
-		//TODO  с excel есть несоостветствие - в тестовом файле - E11:H13
 		
 		// if(this.bArrayFormula) {
 		// 	//исключение, когда в формуле массива берется из одного аргумента только 1 элемент
@@ -1288,7 +1287,6 @@ function (window, undefined) {
 		// 		arg[2] = arg[2].getValue2(0,0);
 		// 	}
 		// }
-		
 		
 		let retArr = new cArray();
 		let error = false;
@@ -1300,7 +1298,7 @@ function (window, undefined) {
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2]], arguments[1]));
+					retArr.addElement(g_oHLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
 				}
 			}
 
@@ -1313,7 +1311,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					if (!error) {
-						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c)], arguments[1]);
+						let res = g_oHLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
 						if (res.type === cElementType.error) {
 							error = true
 						}
@@ -2807,10 +2805,6 @@ function (window, undefined) {
 
 		if (!opt_xlookup) {
 			number = arg2.getValue() - 1;
-			// if (cElementType.array === arg2.type) {
-			// 	var arg2Val = arg2.getElementRowCol(0, 0);
-			// 	number = arg2Val ? arg2Val.getValue() - 1 : number;
-			// }
 
 			if (isNaN(number)) {
 				return new cError(cErrorType.bad_reference);
@@ -2851,7 +2845,6 @@ function (window, undefined) {
 			return new cError(cErrorType.not_available);
 		}
 
-		//TODO hlookup не правильно работает если первый агумент массив - раскомментировать тесты для hlookup
 		let found = false;
 		let arg0ValType = arg0Val.type
 		if (cElementType.array === arg1.type && !opt_xlookup) {
@@ -2859,38 +2852,7 @@ function (window, undefined) {
 			if (cElementType.string === arg0.type) {
 				regexp = searchRegExp(valueForSearching);
 			}
-			/*
-			let arrayToSearch, row, col;
-			let dimension = arg1.getDimensions();
 
-			row = this.bHor ? 0 : dimension.row;
-			col = this.bHor ? dimension.col : 0;
-
-			// if (this.bHor) {
-			// 	arrayToSearch = arg1.getRow(0);
-			// } else {
-			// 	arrayToSearch = arg1.getCol(0);
-			// }
-
-			// console.log(arrayToSearch);
-			let length = this.bHor ? arg1.getCountElementInRow() : arg1.getRowCount();
-			let i = 0, j = length, mid = Math.floor(length / 2) + 1;
-
-			if (arg3) {
-				// approximate(binary) search
-				while (i < j) {
-					
-				}
-			} else {
-				// exact (simple) search
-				for (let r = 0; r <= row; r++) {
-					for (let c = 0; c <= col; c++) {
-
-					}
-				}
-			}
-			
-			*/
 			let arrayToSearch, row, col, res = -1;
 			let dimension = arg1.getDimensions();
 
@@ -2906,9 +2868,6 @@ function (window, undefined) {
 			if (arrayToSearch) {
 				if (arg3) {
 					// approximate(binary) search
-					// TODO нужно ли менять бинарный поиск?
-					// TODO проверить тесты у HLOOKUP и добавить те же самые что и в VLOOKUP
-					// _func.binarySearch?
 					res = _func.binarySearch(arg0Val, arrayToSearch, false);
 				} else {
 					// exact (simple) search
@@ -2929,34 +2888,7 @@ function (window, undefined) {
 
 			}
 
-			// arg1.foreach(function (elem, r, c) {
-			// 	var v = ('' + elem.getValue()).toLowerCase();
-			// 	var i = t.bHor ? c : r;
-			// 	if (0 === i) {
-			// 		min = v;
-			// 	}
-
-			// 	if (arg3) {
-			// 		if (valueForSearching === v) {
-			// 			res = i;
-			// 			found = true;
-			// 		} else if (valueForSearching > v && !found) {
-			// 			res = i;
-			// 		}
-			// 	} else {
-			// 		if (cElementType.string === arg0.type) {
-			// 			if (regexp.test(v)) {
-			// 				res = i;
-			// 			}
-			// 		} else if (valueForSearching === v) {
-			// 			res = i;
-			// 		}
-			// 	}
-
-			// 	min = Math.min(min, v);
-			// });
-
-			if (/*min > valueForSearching ||*/ -1 === res) {
+			if (-1 === res) {
 				return new cError(cErrorType.not_available);
 			}
 
@@ -4162,7 +4094,7 @@ function (window, undefined) {
 			for (let r = 0; r < dimension.row; r++) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
-					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2]], arguments[1]));
+					retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2], arg[3]], arguments[1]));
 				}
 			}
 
@@ -4175,7 +4107,7 @@ function (window, undefined) {
 				retArr.addRow();
 				for (let c = 0; c < dimension.col; c++) {
 					if (!error) {
-						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c)], arguments[1]);
+						let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c), arg[3]], arguments[1]);
 						if (res.type === cElementType.error) {
 							error = true
 						}
@@ -4187,64 +4119,6 @@ function (window, undefined) {
 			}
 			return error ? new cError(cErrorType.bad_reference) : retArr
 		}
-
-		// if (arg[2] && arg[2].type === cElementType.cellsRange || arg[2].type === cElementType.cellsRange3D || arg[2].type === cElementType.array) {
-		// 	if (arg[0].type === cElementType.cellsRange || arg[0].type === cElementType.cellsRange3D || arg[0].type === cElementType.array) {
-		// 		arg[2] = arg[2].getValue2(0,0);
-		// 		// arg0.foreach
-		// 		let dimension = arg[0].getDimensions();
-		// 		for (let r = 0; r < dimension.row; r++) {
-		// 			retArr.addRow();
-		// 			for (let c = 0; c < dimension.col; c++) {
-		// 				retArr.addElement(g_oVLOOKUPCache.calculate([arg[0].getValue2(r, c), arg[1], arg[2]], arguments[1]));
-		// 			}
-		// 		}
-		// 	} else {
-		// 		// arg2.foreach
-		// 		let dimension = arg[2].getDimensions();
-		// 		for (let r = 0; r < dimension.row; r++) {
-		// 			retArr.addRow();
-		// 			for (let c = 0; c < dimension.col; c++) {
-		// 				if (!error) {
-		// 					let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], arg[2].getValue2(r, c)], arguments[1]);
-		// 					if (res.type === cElementType.error) {
-		// 						error = true
-		// 					}
-		// 					retArr.addElement(res);
-		// 				} else {
-		// 					break
-		// 				}
-		// 			}
-		// 		}
-
-
-		// 		// arg[2].foreach(function(elem, r, c) {
-		// 		// 	// g_oVLOOKUPCache.calculate([arg[0], arg[1], elem], arguments[1]);
-		// 		// 	if (!error) {
-		// 		// 		let res = g_oVLOOKUPCache.calculate([arg[0], arg[1], elem], arguments[1]);
-		// 		// 		// retArr.addElement(g_oVLOOKUPCache.calculate([arg[0], arg[1], elem], arguments[1]));
-		// 		// 		if (res.type === cElementType.error) {
-		// 		// 			error = true
-		// 		// 		}
-		// 		// 		retArr.addElement(res);
-		// 		// 	}
-		// 		// });
-		// 		// if (error) {
-		// 		// 	return new cError(cErrorType.bad_reference);
-		// 		// }
-		// 		// return retArr;
-		// 		// if (retArr) {
-		// 		// 	return retArr;
-		// 		// }
-		// 		// return new cError(cErrorType.not_available);
-		// 	}
-
-		// 	return error ? new cError(cErrorType.bad_reference) : retArr
-		// 	// if (error) {
-		// 	// 	return new cError(cErrorType.bad_reference);
-		// 	// }
-		// 	// return retArr;
-		// }
 
 		return g_oVLOOKUPCache.calculate(arg, arguments[1]);
 	};
