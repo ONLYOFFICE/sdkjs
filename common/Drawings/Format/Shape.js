@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -6670,25 +6670,28 @@
 			if(oDrawing) {
 				this.pasteDrawingFormatting(oFormatData.Drawing);
 			}
-			if(oFormatData.ParaPr || oFormatData.TextPr) {
-				let oContent = this.getDocContent();
-				if(oContent) {
-					let bApplyToAll = true;
-					let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
-					if(oController) {
-						if(AscFormat.getTargetTextObject(oController) === this) {
-							bApplyToAll = false;
-						}
+			let oContent = this.getDocContent();
+			if(oContent) {
+				let bApplyToAll = true;
+				let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+				if(oController) {
+					if(AscFormat.getTargetTextObject(oController) === this) {
+						bApplyToAll = false;
 					}
-					if(bApplyToAll) {
-						oContent.SetApplyToAll(true);
-					}
+				}
+				if(bApplyToAll) {
+					oContent.SetApplyToAll(true);
+				}
+				let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.ClearParagraphFormatting;
+				let fTableMethod = AscCommonWord.CTable.prototype.ClearParagraphFormatting;
+				this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
+				if(oFormatData.ParaPr || oFormatData.TextPr) {
 					let fDocContentMethod = AscCommonWord.CDocumentContent.prototype.PasteFormatting;
 					let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
 					this.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
-					if(bApplyToAll) {
-						oContent.SetApplyToAll(false);
-					}
+				}
+				if(bApplyToAll) {
+					oContent.SetApplyToAll(false);
 				}
 			}
 		};

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -9268,6 +9268,7 @@ function(window, undefined) {
 			this.checkDlblsPosition();
 			this.resetToChartStyleSoft();
 		}
+		return this.getChartType() === nType;
 	};
 	CChartSpace.prototype.canChangeToStockChart = function () {
 		return this.chart.plotArea.canChangeToStockChart();

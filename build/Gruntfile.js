@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -76,7 +76,13 @@ module.exports = function(grunt) {
 	function writeScripts(config, name) {
 		const develop = '../develop/sdkjs/';
 		const fileName = 'scripts.js';
-		const files = ['../vendor/polyfill.js', '../common/applyDocumentChanges.js', '../common/AllFonts.js'].concat(getFilesMin(config), getFilesAll(config));
+		let files = ['../vendor/polyfill.js', '../common/AllFonts.js'];
+		if (grunt.option('compiled')) {
+			//todo set window['AscNotLoadAllScript'] = false; (in applyDocumentChanges.js)
+			files.push(deploy + name + '/sdk-all-min.js');
+		} else {
+			files = files.concat(['../common/applyDocumentChanges.js'], getFilesMin(config), getFilesAll(config));
+		}
 		fixUrl(files, '../../../../sdkjs/build/');
 
 		grunt.file.write(path.join(develop, name, fileName), 'var sdk_scripts = [\n\t"' + files.join('",\n\t"') + '"\n];');

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -8499,10 +8499,10 @@ CPresentation.prototype.Document_Format_Copy = function () {
 
 CPresentation.prototype.Document_Format_Paste = function () {
 	let oData = this.Api.getFormatPainterData();
-	if (!oData || !oData.TextPr)
-		return;
+	if(!oData) return;
 	let oController = this.GetCurrentController();
-	oController && oController.pasteFormattingWithPoint(oData);
+	if(!oController) return;
+	oController.pasteFormattingWithPoint(oData);
 };
 
 // Возвращаем выделенный текст, если в выделении не более 1 параграфа, и там нет картинок, нумерации страниц и т.д.

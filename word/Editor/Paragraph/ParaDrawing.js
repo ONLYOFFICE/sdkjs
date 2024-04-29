@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -859,6 +859,14 @@ ParaDrawing.prototype.SetSizeRelV  = function(oSize)
 {
 	History.Add(new CChangesParaDrawingSizeRelV(this, this.SizeRelV, oSize));
 	this.SizeRelV = oSize;
+};
+ParaDrawing.prototype.getExtX = function()
+{
+	return this.getXfrmExtX() * this.GetScaleCoefficient();
+};
+ParaDrawing.prototype.getExtY = function()
+{
+	return this.getXfrmExtY() * this.GetScaleCoefficient();
 };
 ParaDrawing.prototype.getXfrmExtX = function()
 {

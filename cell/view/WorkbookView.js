@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -4054,6 +4054,10 @@
     this.arrExcludeFormulas = [cBoolLocal.t, cBoolLocal.f];
   };
 
+  WorkbookView.prototype.addToFormulasList = function(func) {
+    this.formulasList.push(func);
+  };
+
   WorkbookView.prototype._setHintsProps = function(bIsHinting, bIsSubpixHinting) {
     var manager;
     for (var i = 0, length = this.fmgrGraphics.length; i < length; ++i) {
@@ -5022,7 +5026,7 @@
 			let sheetsProps = this.printOptionsJson["spreadsheetLayout"] && this.printOptionsJson["spreadsheetLayout"]["sheetsProps"];
 			var ws = this.model.getWorksheet(index);
 			res = new Asc.CHeaderFooter(ws);
-			if (sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
+			if (sheetsProps && sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
 				res.initFromJson(sheetsProps[index]["pageSetup"]["headerFooter"]);
 			}
 		}
@@ -6122,7 +6126,7 @@
 				this.changeRangeValue(arg1, arg2);
 				break;
 			case AscCommonExcel.docChangedType.sheetContent:
-				this.changeSheetContent(arg1);
+				this.changeSheetContent(arg1, arg2);
 				break;
 			case AscCommonExcel.docChangedType.sheetRemove:
 				this.removeSheet(arg1);
@@ -6157,22 +6161,43 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
-		if (this.wb.Api.selectSearchingResults && bbox) {
+		if (this.wb.Api.selectSearchingResults && bbox && this.props) {
 			let t = this;
+			let aCells;
 			ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(function(cell) {
-				t.changeCellValue(cell);
+				if (!aCells) {
+					aCells = [];
+				}
+				if (!aCells[cell.nRow]) {
+					aCells[cell.nRow] = [];
+				}
+				aCells[cell.nRow][cell.nCol] = cell;
 			});
+
+			let newCell = new AscCommonExcel.Cell(ws);
+			for (let i = bbox.c1; i <= bbox.c2; i++) {
+				for (let j = bbox.r1; j <= bbox.r2; j++) {
+					newCell.nCol = i;
+					newCell.nRow = j;
+					let _cell = aCells && aCells[j] && aCells[j][i] ? aCells[j][i] : newCell;
+					this.changeCellValue(_cell);
+				}
+			}
 		}
 	};
-	CDocumentSearchExcel.prototype.changeSheetContent = function (ws) {
+	CDocumentSearchExcel.prototype.changeSheetContent = function (ws, range) {
 		if (this.wb.Api.selectSearchingResults && ws && this.props) {
 			if (this.isNotEmpty()) {
-				for (let i in this.Elements) {
-					if (this.Elements[i] && ws.index === this.Elements[i].index) {
-						this.wb.handlers.trigger("asc_onModifiedDocument");
-						this.setModifiedDocument(true);
-						this.mapFindCells = {};
-						break;
+				if (range) {
+					this.changeRangeValue(range, ws);
+				} else {
+					for (let i in this.Elements) {
+						if (this.Elements[i] && ws.index === this.Elements[i].index) {
+							this.wb.handlers.trigger("asc_onModifiedDocument");
+							this.setModifiedDocument(true);
+							this.mapFindCells = {};
+							break;
+						}
 					}
 				}
 			}

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -121,6 +121,31 @@
 				this.asc_removeComment(arrIds[comm]);
 			}
 		}
+	};
+
+	/**
+	 * Returns all the comments from the document.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias GetAllComments
+	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 */
+	Api.prototype["pluginMethod_GetAllComments"] = function()
+	{
+		const oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return;
+
+		const arrResult = [];
+
+		const oComments = oLogicDocument.GetAllComments();
+		for (let index = 0; index < oComments.length; index++)
+		{
+			const oComment = oComments[index].comment;
+			arrResult.push({"Id" : oComment.GetId(), "Data" : oComment.GetData().ConvertToSimpleObject()});
+		}
+
+		return arrResult;
 	};
 
 	/**

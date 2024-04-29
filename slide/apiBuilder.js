@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1375,6 +1375,87 @@
 			aApiComments.push(private_GetApi().private_CreateApiComment(aCommentsData[nComment].comment));
 		}
 		return aApiComments;
+	};
+
+	/**
+	 * Returns the document information:
+	 * * <b>Application</b> - the application the document has been created with.
+	 * * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * * <b>Created</b> - the parsed date and time when the file was created.
+	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * * <b>Autrors</b> - the persons who has created the file.
+	 * * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {object}
+	 */
+	ApiPresentation.prototype.GetDocumentInfo = function()
+	{
+		const oDocInfo = {
+			Application: '',
+			CreatedRaw: null,
+			Created: '',
+			LastModifiedRaw: null,
+			LastModified: '',
+			LastModifiedBy: '',
+			Autrors: [],
+			Title: '',
+			Tags: '',
+			Subject: '',
+			Comment: ''
+		};
+		const api = this.Presentation.Api;
+
+		let props = (api) ? api.asc_getAppProps() : null;
+		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+
+		let langCode = 1033; // en-US
+		let langName = 'en-us';
+		if (api.asc_getLocale) {
+			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
+		} else if (this.Presentation.GetDefaultLanguage && window['Common']) {
+			langCode = this.Presentation.GetDefaultLanguage();
+			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
+
+		}
+
+		props = api.asc_getCoreProps();
+		oDocInfo.CreatedRaw = props.asc_getCreated();
+		oDocInfo.LastModifiedRaw = props.asc_getModified();
+
+		try {
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		} catch (e) {
+			langName = 'en';
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		}
+
+		const LastModifiedBy = props.asc_getLastModifiedBy();
+		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+
+		oDocInfo.Title = (props.asc_getTitle() || '');
+		oDocInfo.Tags = (props.asc_getKeywords() || '');
+		oDocInfo.Subject = (props.asc_getSubject() || '');
+		oDocInfo.Comment = (props.asc_getDescription() || '');
+
+		const authors = props.asc_getCreator();
+		if (authors)
+			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
+
+		return oDocInfo;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4900,6 +4981,7 @@
     ApiPresentation.prototype["GetWidth"]                 = ApiPresentation.prototype.GetWidth;
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
     ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
+    ApiPresentation.prototype["GetDocumentInfo"]          = ApiPresentation.prototype.GetDocumentInfo;
 
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;

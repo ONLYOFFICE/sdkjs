@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -7068,8 +7068,8 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		var flags1 = 0;
 		flags1 |= (oSettings.BalanceSingleByteDoubleByteWidth ? 1 : 0) << 6;
 		flags1 |= (oSettings.UlTrailSpace ? 1 : 0) << 9;
-		if (this.saveParams.isCompatible) {
-			flags1 |= (oSettings.DoNotExpandShiftReturn ? 1 : 0) << 10;
+		if (oSettings.DoNotExpandShiftReturn) {
+			flags1 |= 1 << 10;
 		}
 		this.bs.WriteItem(c_oSerCompat.Flags1, function() {oThis.memory.WriteULong(flags1);});
 		var flags2 = 0;

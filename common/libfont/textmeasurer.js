@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -81,28 +81,33 @@
 				oFontStyle = FontStyle.FontStyleItalic;
 			else if ( bItalic && bBold )
 				oFontStyle = FontStyle.FontStyleBoldItalic;
-
+			
 			var _lastSetUp = this.m_oLastFont;
-			if (_lastSetUp.SetUpName != font.FontFamily.Name || _lastSetUp.SetUpSize != font.FontSize || _lastSetUp.SetUpStyle != oFontStyle)
+			if (_lastSetUp.SetUpName != font.FontFamily.Name || _lastSetUp.SetUpSize != font.FontSize || _lastSetUp.SetUpStyle != oFontStyle || _lastSetUp.SetUpDpi !== 72)
 			{
 				_lastSetUp.SetUpName = font.FontFamily.Name;
 				_lastSetUp.SetUpSize = font.FontSize;
 				_lastSetUp.SetUpStyle = oFontStyle;
+				_lastSetUp.SetUpDpi   = 72;
 
 				g_fontApplication.LoadFont(_lastSetUp.SetUpName, AscCommon.g_font_loader, this.m_oManager, _lastSetUp.SetUpSize, _lastSetUp.SetUpStyle, 72, 72, undefined, this.LastFontOriginInfo);
 			}
 		},
 
-		SetFontInternal : function(_name, _size, _style)
+		SetFontInternal : function(_name, _size, _style, _dpi)
 		{
+			if (undefined === _dpi)
+				_dpi = 72;
+			
 			var _lastSetUp = this.m_oLastFont;
-			if (_lastSetUp.SetUpName != _name || _lastSetUp.SetUpSize != _size || _lastSetUp.SetUpStyle != _style)
+			if (_lastSetUp.SetUpName != _name || _lastSetUp.SetUpSize != _size || _lastSetUp.SetUpStyle != _style || _lastSetUp.SetUpDpi !== _dpi)
 			{
 				_lastSetUp.SetUpName = _name;
 				_lastSetUp.SetUpSize = _size;
 				_lastSetUp.SetUpStyle = _style;
+				_lastSetUp.SetUpDpi   = undefined !== _dpi ? _dpi : 72;
 
-				g_fontApplication.LoadFont(_lastSetUp.SetUpName, AscCommon.g_font_loader, this.m_oManager, _lastSetUp.SetUpSize, _lastSetUp.SetUpStyle, 72, 72, undefined, this.LastFontOriginInfo);
+				g_fontApplication.LoadFont(_lastSetUp.SetUpName, AscCommon.g_font_loader, this.m_oManager, _lastSetUp.SetUpSize, _lastSetUp.SetUpStyle, _dpi, _dpi, undefined, this.LastFontOriginInfo);
 			}
 		},
 
@@ -366,6 +371,15 @@
 				rasterOffsetX: (Temp.oBBox.rasterDistances.dist_l + Temp.oBBox.fMinX) * 25.4 / 72,
 				rasterOffsetY: Temp.oBBox.rasterDistances.dist_t * 25.4 / 72
 			};
+		},
+		
+		GetBBox : function(gid)
+		{
+			let _stringGID = false;//this.m_oManager.GetStringGID();
+			this.m_oManager.SetStringGID(true);
+			let temp = this.m_oManager.MeasureChar(gid);
+			this.m_oManager.SetStringGID(_stringGID);
+			return temp.oBBox;
 		},
 
 		GetAscender : function()

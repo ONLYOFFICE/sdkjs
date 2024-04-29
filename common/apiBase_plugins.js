@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1740,6 +1740,28 @@
         return langName;
     };
 
+	function correctItemIcons(item, baseUrl)
+	{
+		if (item && item["icons"])
+		{
+			if ((0 === item["icons"].indexOf("http://")) ||
+				(0 === item["icons"].indexOf("https://")) ||
+				(0 === item["icons"].indexOf("file://")) ||
+				(0 === item["icons"].indexOf("www.")))
+			{
+				// nothing
+			}
+			else if (0 === item["icons"].indexOf("external://"))
+			{
+				item["icons"] = item["icons"].substr("external://".length);
+			}
+			else
+			{
+				item["icons"] = baseUrl + item["icons"];
+			}
+		}
+	}
+
 	function correctItemsWithData(items, baseUrl)
 	{
 		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
@@ -1747,8 +1769,7 @@
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
-			if (items[i]["icons"]) 
-				items[i]["icons"] = baseUrl + items[i]["icons"];
+			correctItemIcons(items[i], baseUrl);
 
 			if (items[i]["items"])
 				correctItemsWithData(items[i]["items"], baseUrl);
@@ -1863,8 +1884,26 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
-		variation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		variation["guid"] = guid;
+
+		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
+		correctItemIcons(variation["icons"], baseUrl);
+
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Activate (move to front) the plugin window/panel.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias ActivateWindow
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowActivate", frameId);
 	};
 
 	/**
