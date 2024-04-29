@@ -300,5 +300,6 @@
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CODEPOINT_TYPE      = CODEPOINT_TYPE;
 	window['AscWord'].ParagraphTextShaper = new CParagraphTextShaper();
+	window['AscWord'].stringShaper = new AscFonts.StringShaper();
 
 })(window);

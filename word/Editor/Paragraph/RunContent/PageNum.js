@@ -217,9 +217,28 @@
 				this.Widths[Index] = Widths[Index];
 		}
 	}
+	
+	/**
+	 * @constructor
+	 */
+	function PageNumRecalculateObject(type, graphemes, widths, totalWidth, isCopy)
+	{
+		this.type      = type;
+		this.graphemes = graphemes;
+		this.widths    = widths;
+		this.width     = totalWidth;
+		
+		if (isCopy)
+		{
+			this.graphemes = graphemes.slice();
+			this.widths    = widths.slice();
+		}
+	}
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunPageNum               = CRunPageNum;
 	window['AscWord'].CPageNumRecalculateObject = CPageNumRecalculateObject;
+	window['AscWord'].PageNumRecalculateObject  = PageNumRecalculateObject;
 
 })(window);
