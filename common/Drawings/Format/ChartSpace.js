@@ -1339,16 +1339,20 @@ function(window, undefined) {
 
 			// calculate the tick skip between axis labels
 			// default value for nLblTickSkip is 1
-			const calculateTickSkips = function(axisWidth, oLabels, labelsCount) {
-				if (!oLabels || !labelsCount || !axisWidth) {
+			const calculateTickSkips = function(axisWidth, oLabels, labelsCount, parameters) {
+				if (!oLabels || !labelsCount || !axisWidth || !parameters) {
 					return 1;
 				}
 
 				const cellHeight = getHeight(oLabels.aLabels);
+				// due to the rotation of the labels, the width necessary to place all of them is recalculated according to its height and some trigonometric formulas 
+				const degree = parameters.degree;
+				const radianAngle = AscFormat.isRealNumber(parameters.rot) ? (Math.abs(parameters.rot / degree) * Math.PI) / 180 : null;
+				const cellWidth = radianAngle ? cellHeight / Math.sin(radianAngle) : cellHeight;
 
 				// return minimum amount of skips needed to place a vertical labels into axisWidth
-				if (cellHeight) {
-					const nLblTickSkip = Math.floor((cellHeight * labelsCount) / (axisWidth)) + 1;
+				if (cellWidth) {
+					const nLblTickSkip = Math.floor((cellWidth * labelsCount) / (axisWidth)) + 1;
 					return (nLblTickSkip === 0) ? 1 : nLblTickSkip;
 				}
 
@@ -1358,12 +1362,11 @@ function(window, undefined) {
 
 			// if width is a little bit higher than height it is possible to have width instead of height
 			const updateRotation = function (axisWidth, oLabelsBox, labelsCount, parameters) {
-				
-				const degree = 60000;
-				const limit = 90 * degree;
+
+				const degree = parameters.degree;
 				const rot = parameters.rot;
 				const nLblTickSkip = parameters.nLblTickSkip;
-				if (AscFormat.isRealNumber(rot) && rot >= -limit && rot <= limit) {
+				if (AscFormat.isRealNumber(rot)) {
 					return rot;
 				}
 
@@ -1384,11 +1387,13 @@ function(window, undefined) {
 				const multiplier = 1.41421356237;
 				const diagonalRes = (multiplier * cellHeight) * updateLabelsCount;
 
+				// diagonal angle is 45 degree
 				if (diagonalRes && diagonalRes <= axisWidth) {
 					return -45 * degree;
 				}
 
-				return parameters.isUserDefinedTickSkip ? 0 : -limit;
+				// vertical angle is 90 degree
+				return parameters.isUserDefinedTickSkip ? 0 : -90 * degree;
 			}
 
 			// find rot parameter responsible for the rotation of axis labels
@@ -1397,15 +1402,19 @@ function(window, undefined) {
 			let bodyPr = false;
 			if (AscFormat.isRealNumber(nAxisType) && AscDFH.historyitem_type_CatAx) {
 				parameters = {};
+				// 1 degree = 60000
+				// the range is between [-90, 90]
+				parameters.degree = 60000;
+				const limit = 90 * parameters.degree;
 				bodyPr = oLabelsBox.axis.txPr && oLabelsBox.axis.txPr.bodyPr;
-				parameters.rot = bodyPr ? bodyPr.rot : null;
+				parameters.rot = bodyPr && bodyPr.rot >= -limit && bodyPr.rot <= limit ? bodyPr.rot : null;
 				// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
-				const heightMultiplier = 0.43;
+				const heightMultiplier = 0.37;
 				const titleHeight = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.title ? oLabelsBox.chartSpace.chart.title.extY : 0;
 				parameters.maxHeight = oLabelsBox.chartSpace ? heightMultiplier * (oLabelsBox.chartSpace.extY - titleHeight) : null;
 				const tickLblSkip = oLabelsBox.axis ? oLabelsBox.axis.tickLblSkip : null;
 				parameters.isUserDefinedTickSkip = AscFormat.isRealNumber(tickLblSkip);
-				parameters.nLblTickSkip = parameters.isUserDefinedTickSkip ? tickLblSkip : calculateTickSkips(fAxisLength, oLabelsBox, nLabelsCount);
+				parameters.nLblTickSkip = parameters.isUserDefinedTickSkip ? tickLblSkip : calculateTickSkips(fAxisLength, oLabelsBox, nLabelsCount, parameters);
 				parameters.rot = updateRotation(fAxisLength, oLabelsBox, nLabelsCount, parameters);
 				//save the updated rot
 				if (bodyPr) {
@@ -1413,6 +1422,7 @@ function(window, undefined) {
 				}
 			}
 			let statement = parameters ? !isRotate(parameters.rot) : fMaxMinWidth <= fCheckInterval;
+			console.log(parameters);
 			if (statement) {
 				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, oLabelsBox.maxMinWidth + 0.2, parameters);
 			} else {
