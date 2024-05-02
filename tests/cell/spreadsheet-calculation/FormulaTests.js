@@ -13555,6 +13555,95 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0, "RANDBETWEEN(-0.1,-0.00000000005)");
 
+		// for bug 67684
+		wb.dependencyFormulas.unlockRecal();
+		ws.getRange2("A100:D1002").cleanAll();
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("A101").setValue("2");
+		ws.getRange2("A102:A1002").setValue("=RANDBETWEEN(A100,A101)");		// [1,2]
+		ws.getRange2("B101").setValue("3");
+		ws.getRange2("B102:B1002").setValue("=RANDBETWEEN(A100,B101)");		// [1,3]
+		ws.getRange2("C101").setValue("4");	
+		ws.getRange2("C102:C1002").setValue("=RANDBETWEEN(A100,C101)");		// [1,4]
+		ws.getRange2("D101").setValue("5");	
+		ws.getRange2("D102:D1002").setValue("=RANDBETWEEN(A100,D101)");		// [1,5]
+
+		// spreading percentages for range [1,2]
+		oParser = new parserFormula("COUNTIF(A102:A1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 4 && res <= 5, "Spreading percentages for number 1 in COUNTIF(A102:A1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(A102:A1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 4 && res <= 5, "Spreading percentages for number 2 in COUNTIF(A102:A1002,2)/1000");
+
+		// spreading percentages for range [1,3]
+		oParser = new parserFormula("COUNTIF(B102:B1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 1 in COUNTIF(B102:B1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(B102:B1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 2 in COUNTIF(B102:B1002,2)/1000");
+
+		oParser = new parserFormula("COUNTIF(B102:B1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 10);
+		assert.ok(res >= 3 && res <= 3, "Spreading percentages for number 3 in COUNTIF(B102:B1002,3)/1000");
+
+		// spreading percentages for range [1,4]
+		oParser = new parserFormula("COUNTIF(C102:C1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 1 in COUNTIF(C102:C1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		console.log(res);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 2 in COUNTIF(C102:C1002,2)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 3 in COUNTIF(C102:C1002,3)/1000");
+
+		oParser = new parserFormula("COUNTIF(C102:C1002,4)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 4 in COUNTIF(C102:C1002,4)/1000");
+
+		// spreading percentages for range [1,5]
+		oParser = new parserFormula("COUNTIF(D102:D1002,1)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 1 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,2)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 2 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,3)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 3 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,4)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 4 in COUNTIF(D102:D1002,1)/1000");
+
+		oParser = new parserFormula("COUNTIF(D102:D1002,5)/1000", "A1", ws);
+		assert.ok(oParser.parse());
+		res = Math.round(oParser.calculate().getValue() * 100);
+		assert.ok(res >= 15 && res <= 22, "Spreading percentages for number 5 in COUNTIF(D102:D1002,1)/1000");
+
+		ws.getRange2("A100:D1002").cleanAll();
 	});
 
 	QUnit.test("Test: \"RANDARRAY\"", function (assert) {
