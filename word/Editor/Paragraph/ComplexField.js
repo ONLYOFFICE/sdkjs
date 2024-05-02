@@ -85,7 +85,7 @@ ParaFieldChar.prototype.Copy = function()
 };
 ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 {
-	if (!this.IsSeparate())// || null === this.NumValue)
+	if (!this.IsSeparate())
 		return;
 	
 	this.textPr = textPr;
@@ -211,7 +211,7 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 	let totalWidth = 0;
 	for (let index = 0; index < this.widths.length; ++index)
 	{
-		totalWidth += this.widths;
+		totalWidth += this.widths[index];
 	}
 	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
 	totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
@@ -225,7 +225,7 @@ ParaFieldChar.prototype.IsNumValue = function()
 };
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
-	return true;
+	return this.IsNumValue();
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
