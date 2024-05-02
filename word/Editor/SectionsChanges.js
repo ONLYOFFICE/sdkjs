@@ -70,6 +70,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumStart]    = CChanges
 AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumRestart]  = CChangesSectionEndnoteNumRestart;
 AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumFormat]   = CChangesSectionEndnoteNumFormat;
 AscDFH.changesFactory[AscDFH.historyitem_Section_LnNumType]           = CChangesSectionLnNumType;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_Format]  = CChangesSectionPageNumTypeFormat;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -112,6 +113,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumStart]    = [Asc
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumRestart]  = [AscDFH.historyitem_Section_Endnote_NumRestart];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumFormat]   = [AscDFH.historyitem_Section_Endnote_NumFormat];
 AscDFH.changesRelationMap[AscDFH.historyitem_Section_LnNumType]           = [AscDFH.historyitem_Section_LnNumType];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_Format]  = [AscDFH.historyitem_Section_PageNumType_Format];
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -985,4 +987,19 @@ CChangesSectionLnNumType.prototype.private_CreateObject = function()
 CChangesSectionLnNumType.prototype.private_SetValue = function(Value)
 {
 	this.Class.LnNumType = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongValue}
+ */
+function CChangesSectionPageNumTypeFormat(Class, Old, New)
+{
+	AscDFH.CChangesBaseLongValue.call(this, Class, Old, New);
+}
+CChangesSectionPageNumTypeFormat.prototype = Object.create(AscDFH.CChangesBaseLongValue.prototype);
+CChangesSectionPageNumTypeFormat.prototype.constructor = CChangesSectionPageNumTypeFormat;
+CChangesSectionPageNumTypeFormat.prototype.Type = AscDFH.historyitem_Section_PageNumType_Format;
+CChangesSectionPageNumTypeFormat.prototype.private_SetValue = function(Value)
+{
+	this.Class.PageNumType.Format = Value;
 };

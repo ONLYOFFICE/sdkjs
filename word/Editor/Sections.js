@@ -168,8 +168,9 @@ CSectionPr.prototype =
             this.Set_Footer_Even(Other.FooterEven);
             this.Set_Footer_Default(Other.FooterDefault);
         }
-
-        this.Set_PageNum_Start( Other.PageNumType.Start );
+	
+		this.Set_PageNum_Start(Other.PageNumType.Start);
+		this.SetPageNumFormat(Other.PageNumType.Format);
 
         this.Set_Columns_EqualWidth(Other.Columns.EqualWidth);
         this.Set_Columns_Num(Other.Columns.Num);
@@ -534,6 +535,20 @@ CSectionPr.prototype =
     {
         return this.PageNumType.Start;
     },
+	
+	SetPageNumFormat : function(format)
+	{
+		if (format === this.PageNumType.Format)
+			return;
+		
+		AscCommon.History(new CChangesSectionPageNumTypeFormat(this, this.PageNumType.Format, format));
+		this.PageNumType.Format = format;
+	},
+	
+	GetPageNumFormat : function()
+	{
+		return this.PageNumType.Format;
+	},
 
     Get_ColumnsCount : function()
     {
@@ -1565,24 +1580,19 @@ CSectionBorders.prototype.IsEmptyBorders = function()
 
 function CSectionPageNumType()
 {
-    this.Start = -1;
+	this.Start  = -1;
+	this.Format = Asc.c_oAscNumberingFormat.Decimal;
 }
 
-CSectionPageNumType.prototype = 
+CSectionPageNumType.prototype.Write_ToBinary = function(writer)
 {
-    Write_ToBinary : function(Writer)
-    {
-        // Long : Start
-        
-        Writer.WriteLong( this.Start );
-    },
-    
-    Read_FromBinary : function(Reader)
-    {
-        // Long : Start
-
-        this.Start = Reader.GetLong();
-    }    
+	writer.WriteLong(this.Start);
+	writer.WriteLong(this.Format);
+};
+CSectionPageNumType.prototype.Read_FromBinary = function(reader)
+{
+	this.Start  = reader.GetLong();
+	this.Format = reader.GetLong();
 };
 
 

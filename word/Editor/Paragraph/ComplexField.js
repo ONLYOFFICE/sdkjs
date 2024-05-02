@@ -50,10 +50,8 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Y             = 0;
 	this.PageAbs       = 0;
 
-	this.NumValue      = null;
-	
-	this.textPr = null;
-	this.format = Asc.c_oAscNumberingFormat.Decimal;
+	this.numText = null;
+	this.textPr  = null;
 }
 ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
@@ -96,7 +94,7 @@ ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 };
 ParaFieldChar.prototype.Draw = function(x, y, context)
 {
-	if (!this.IsSeparate() || null === this.NumValue)
+	if (!this.IsSeparate() || null === this.numText)
 		return;
 	
 	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
@@ -190,20 +188,20 @@ ParaFieldChar.prototype.GetTopDocumentContent = function()
 };
 /**
  * Специальная функция для работы с полями PAGE NUMPAGES в колонтитулах
- * @param nValue
+ * @param value {number}
+ * @param numFormat {Asc.c_oAscNumberingFormat}
  */
-ParaFieldChar.prototype.SetNumValue = function(nValue)
+ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 {
-	this.NumValue = nValue;
+	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
 	this.private_UpdateWidth();
 };
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
-	if (null === this.NumValue)
+	if (null === this.numText)
 		return;
 	
-	let text = AscCommon.IntToNumberFormat(this.NumValue, Asc.c_oAscNumberingFormat.UpperRoman);
-	AscWord.stringShaper.Shape(text.codePointsArray(), this.textPr);
+	AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
 	
 	this.graphemes = AscWord.stringShaper.GetGraphemes();
 	this.widths    = AscWord.stringShaper.GetWidths();
@@ -221,7 +219,7 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 };
 ParaFieldChar.prototype.IsNumValue = function()
 {
-	return (this.IsSeparate() && null !== this.NumValue ? true : false);
+	return (this.IsSeparate() && null !== this.numText);
 };
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {

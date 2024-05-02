@@ -4634,14 +4634,20 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									oHdrFtr.Add_PageCountElement(Item);
 
-									if (!Item.IsNumValue() && Para.LogicDocument && Para.LogicDocument.IsDocumentEditor())
-										Item.SetNumValue(Para.LogicDocument.Pages.length);
+									let logicDocument = Para.LogicDocument;
+									if (!Item.IsNumValue() && logicDocument && logicDocument.IsDocumentEditor())
+									{
+										let sectInfo = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+										let sectPr   = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+										Item.SetNumValue(logicDocument.Pages.length, sectPr.GetPageNumFormat());
+									}
 								}
 								else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
 								{
-									var LogicDocument = Para.LogicDocument;
-									var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-									Item.SetNumValue(SectionPage);
+									let logicDocument = Para.LogicDocument;
+									let sectInfo = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+									let sectPr   = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+									Item.SetNumValue(sectInfo.CurPage, sectPr.GetPageNumFormat());
 								}
 								else
 								{
