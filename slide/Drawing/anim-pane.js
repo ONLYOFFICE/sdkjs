@@ -2176,7 +2176,7 @@
 		}
 		this.effectTypeImage = this.addControl(new CImageControl(this, effectImg.src, effectImg.width, effectImg.height));
 
-		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
+		this.effectLabel = this.addControl(new CLabel(this, this.getEffectLabelText(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
 		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(this.contextMenuButton, menuButton, 20 * AscCommon.g_dKoef_pix_to_mm, 20 * AscCommon.g_dKoef_pix_to_mm));
 
@@ -2384,7 +2384,11 @@
 			return [eventType, presetClass, presetId, shapeName];
 		}
 	}
-
+	CAnimItem.prototype.getEffectLabelText = function () {
+		const objectName = this.effect.getObjectName();
+		const objectText = this.effect.getObjectText();
+		return objectText ? (objectName + ': ' + objectText) : objectName;
+	};
 	CAnimItem.prototype.handleScrollCondition = function (x, y) {
 		const leftBorder = this.getLeftBorder();
 		const rightBorder = this.getRightBorder();
