@@ -241,6 +241,8 @@
                 return this.isHideTargetBeforeFirstClick;
             return false;
         };
+        this.OnRecalculatePage = function() {};
+        this.OnEndRecalculate = function() {};
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;

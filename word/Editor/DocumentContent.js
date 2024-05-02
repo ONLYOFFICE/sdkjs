@@ -6516,8 +6516,15 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 						{
 							if (editor.isDocumentEditor)
 							{
-								for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
-									this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								if (false == editor.isPdfEditor()) {
+									for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
+										this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								}
+								else {
+									if (this.Parent && this.Parent.parent && this.Parent.parent.IsDrawing()) {
+										this.Parent.parent.SetNeedRecalc(true);	
+									}
+								}
 							}
 							else
 							{

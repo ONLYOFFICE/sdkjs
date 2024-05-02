@@ -1220,7 +1220,14 @@
             drawingDocument.EndDrawTracking();
 
 
-    }
+    };
+    CGraphicObjects.prototype.hyperlinkCanAdd = function (bCheckInHyperlink) {
+        var content = this.getTargetDocContent();
+        if (content) {
+            return content.CanAddHyperlink(bCheckInHyperlink);
+        }
+        return false;
+    };
 
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};

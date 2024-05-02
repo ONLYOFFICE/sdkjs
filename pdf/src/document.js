@@ -2658,6 +2658,67 @@ var CPresentation = CPresentation || function(){};
         
         Asc.editor.CheckChangedDocument();
     };
+
+    //-----------------------------------------------------------------------------------
+    // Функции для работы с гиперссылками
+    //-----------------------------------------------------------------------------------
+    CPDFDoc.prototype.AddHyperlink = function (HyperProps) {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkAdd, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkAdd);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.ModifyHyperlink = function (HyperProps) {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkModify, [HyperProps], false, AscDFH.historydescription_Presentation_HyperlinkModify);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
+    CPDFDoc.prototype.RemoveHyperlink = function () {
+        let oController     = this.GetController();
+        let oObjectsByType	= oController.getSelectedObjectsByTypes(true);
+
+        let aObjects = [];
+        Object.values(oObjectsByType).forEach(function(arr) {
+            arr.forEach(function(drawing) {
+                aObjects.push(drawing);
+            })
+        });
+
+        this.CreateNewHistoryPoint({objects: aObjects});
+        oController.checkSelectedObjectsAndCallback(oController.hyperlinkRemove, [], false, AscDFH.historydescription_Presentation_HyperlinkRemove);
+        aObjects.forEach(function(drawing) {
+            drawing.SetNeedRecalc(true);
+        });
+
+        this.TurnOffHistory();
+    };
     CPDFDoc.prototype.UpdateCanAddHyperlinkState = function() {
         this.Api.sync_CanAddHyperlinkCallback(this.CanAddHyperlink(false));
     };
@@ -2665,6 +2726,8 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
         return oController.hyperlinkCanAdd(bCheckInHyperlink);
     };
+    //-----------------------------------------------------------------------------------
+
     CPDFDoc.prototype.UpdateUndoRedo = function() {
 		Asc.editor.sync_CanUndoCallback(this.History.Can_Undo() || this.LocalHistory.Can_Undo());
 		Asc.editor.sync_CanRedoCallback(this.History.Can_Redo() || this.LocalHistory.Can_Redo());
