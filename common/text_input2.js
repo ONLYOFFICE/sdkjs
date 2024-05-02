@@ -600,7 +600,7 @@
 		window.TEXT_DRAW_INSTANCE = undefined;
 		window.TEXT_DRAW_INSTANCE_POS = 0;
 
-	}, 50);
+	}, 10);
 
 	CTextInputPrototype.addTextCodes = function(codes, codesRemove)
 	{

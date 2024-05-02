@@ -1221,12 +1221,13 @@ function (window, undefined) {
 	CellEditor.prototype._update = function () {
 		this._updateEditorState();
 
-		if (this._expand()) {
+		let isExpand = this._expand();
+		if (isExpand) {
 			this._adjustCanvas();
 			this._calculateCanvasSize();
 		}
 
-		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
+		this._renderText(null, isExpand);  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
@@ -1514,9 +1515,9 @@ function (window, undefined) {
 		}
 	};
 
-	CellEditor.prototype._renderText = function (dy) {
+	CellEditor.prototype._renderText = function (dy, forceRender) {
 
-		if (window.LOCK_DRAW)
+		if (window.LOCK_DRAW && !forceRender)
 		{
 			if (this.textRender.lines && this.textRender.lines[0]) {
 				this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth());
@@ -1536,6 +1537,7 @@ function (window, undefined) {
 
 		if (opt.fragments.length > 0) {
 			t.textRender.render(undefined, t._getContentLeft(), dy || 0, t._getContentWidth(), opt.font.getColor());
+			console.log("test");
 		}
 	};
 
