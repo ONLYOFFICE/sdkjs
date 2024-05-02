@@ -2649,7 +2649,7 @@
     CTiming.prototype.canStartDemo = function () {
         return this.getEffectsForDemo() !== null;
     };
-    CTiming.prototype.createDemoTiming = function () {
+    CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
         return AscFormat.ExecuteNoHistory(function () {
             if (!this.canStartDemo()) {
                 return null;
@@ -2666,22 +2666,22 @@
                 oEffect = aEffectsForDemo[nIdx];
                 var oCopyEffect = oEffect.createDuplicate();
                 oCopyEffect.originalNode = oEffect;
-                if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
-                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                if (!bDisableSmooth) {
+                    if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                        oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                    }
+                    var nRepeatCount = oCopyEffect.asc_getRepeatCount();
+                    if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
+                        oCopyEffect.cTn.changeRepeatCount(1000);
+                    }
+                    var nDur = oCopyEffect.asc_getDuration();
+                    if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
+                        oCopyEffect.cTn.changeEffectDuration(1000);
+                    }
+                    if (AscFormat.isRealNumber(nDur) && nDur < 50) {
+                        oCopyEffect.cTn.changeEffectDuration(750);
+                    }
                 }
-                var nRepeatCount = oCopyEffect.asc_getRepeatCount();
-                if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeRepeatCount(1000);
-                }
-                var nDur = oCopyEffect.asc_getDuration();
-                if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeEffectDuration(1000);
-                }
-                if (AscFormat.isRealNumber(nDur) && nDur < 50) {
-                    oCopyEffect.cTn.changeEffectDuration(750);
-                }
-
-                // oCopyEffect.originalNode = null;
                 aSeq.push(oCopyEffect);
             }
             var oTiming = new CTiming();
@@ -11805,6 +11805,10 @@
             var oDemoTiming = oTiming.createDemoTiming();
             if (oDemoTiming) {
                 this.timings.push(oDemoTiming);
+            }
+            const oRawDemoTiming = oTiming.createDemoTiming(true);
+            if (oRawDemoTiming) {
+                this.timings.push(oRawDemoTiming);
             }
         }
         var oTr = editor.WordControl.m_oDrawingDocument.TransitionSlide;

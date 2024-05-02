@@ -1569,11 +1569,16 @@
 	}
 
 	CTimeline.prototype.onPreviewStart = function() {
-		this.demoTiming = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings[0];
 		this.tmpScrollOffset = 0;
 		this.setStartTime(0);
 
-		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
+		this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
+		const rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
+
+		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.list.Control.recalculateByTiming(previewTimings[1]);
+
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
 		oPaneApi.timeline.OnPaint();
@@ -1585,7 +1590,9 @@
 		this.tmpScrollOffset = null;
 		this.setStartTime(0);
 
-		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.list.Control.recalculateByTiming(this.getTiming());
+
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
 		oPaneApi.timeline.OnPaint();
@@ -1742,7 +1749,14 @@
 		this.seqList.recalculate();
 		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 	};
-
+	CSeqListContainer.prototype.recalculateByTiming = function (customTiming) {
+		if (!customTiming) { return; }
+		this.seqList.recalculateChildren(customTiming);
+		this.seqList.recalculateChildrenLayout();
+		this.seqList.parentControl.recalculateChildrenLayout();
+		this.seqList.parentControl.onUpdate();
+		this.seqList.parentControl.drawer.CheckScroll();
+	};
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
@@ -1835,10 +1849,10 @@
 
 	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
 
-	CSeqList.prototype.recalculateChildren = function () {
+	CSeqList.prototype.recalculateChildren = function (oCustomTiming) {
 		this.clear();
 
-		const oTiming = this.getTiming();
+		const oTiming = oCustomTiming || this.getTiming();
 		if (!oTiming) { return }
 
 		const aAllSeqs = oTiming.getRootSequences();
