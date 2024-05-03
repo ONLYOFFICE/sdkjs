@@ -628,31 +628,140 @@ function (window, undefined) {
 				if (_arg0 < 1 || _arg0 > arg.length - 1) {
 					return new cError(cErrorType.wrong_value_type);
 				}
-
-				let returnVal = arg[Math.floor(_arg0)];
-				if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
-					returnVal = returnVal.getValue();
-				} else if (returnVal.type === cElementType.cellsRange || returnVal.type === cElementType.cellsRange3D) {
-					returnVal = returnVal.cross(args[1]);
-				}
 	
-				return returnVal;
+				return arg[Math.floor(_arg0)];
 			}
 
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (cElementType.array === arg0.type) {
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			// TODO refactor
 			// go through the array and return result for each element
 			let resArr = new cArray();
-			arg0.foreach(function(elem, r, c) {
-				if (!resArr.array[r]) {
-					resArr.addRow();
-				}
+			let tempArraySize, maxArraySize = arg0.getDimensions();
+			let arg0Rows = maxArraySize.row, arg0Cols = maxArraySize.col;
 
-				let res = chooseArgument(elem);
-				resArr.addElement(res);
+			// get max array size by first loop
+			arg0.foreach2(function (elem) {
+				let chosenArgument = chooseArgument(elem);
+				if (chosenArgument && chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D || chosenArgument.type === cElementType.array) {
+					tempArraySize = chosenArgument.getDimensions();
+					maxArraySize.row = tempArraySize.row > maxArraySize.row ? tempArraySize.row : maxArraySize.row;
+					maxArraySize.col = tempArraySize.col > maxArraySize.col ? tempArraySize.col : maxArraySize.col;
+				}
 			});
+
+			for (let r = 0; r < arg0Rows; r++) {
+				for (let c = 0; c < arg0Cols; c++) {
+					let elem = arg0.getValue2(r, c);
+					let chosenArgument = chooseArgument(elem);
+					let argDimensions = chosenArgument.getDimensions();
+					if (arg0Rows === 1) {
+						// get full col from chosen argument
+						let tempRow = [];
+						// form an array and then add it to resArr
+						for (let ir = 0; ir < maxArraySize.row; ir++) {
+							let elemFromChosenArgument;
+							if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
+								if (argDimensions.col === 1) {
+									// return first col
+									// elemFromChosenArgument = chosenArgument.getValue2(ir, 0);
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(ir, 0) : chosenArgument.getValueByRowCol(ir, 0);
+								} else if (argDimensions.row === 1) {
+									elemFromChosenArgument = chosenArgument.getValue2(0, c);
+								} else {
+									// elemFromChosenArgument = chosenArgument.getValue2(ir, c);
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(ir, c) : chosenArgument.getValueByRowCol(ir, c);
+								}
+								if (argDimensions.row - 1 < ir) {
+									elemFromChosenArgument = null;
+								}
+							} else {
+								elemFromChosenArgument = chosenArgument;
+							}
+							
+							if (!elemFromChosenArgument) {
+								elemFromChosenArgument = new cError(cErrorType.not_available);
+							}
+
+							tempRow.push([elemFromChosenArgument]);
+						}
+
+						resArr.pushCol(tempRow, 0);
+
+					} else if (arg0Cols === 1) {
+						// get full col from chosen argument
+						let tempCol = [];
+						// form an array and then add it to resArr
+						for (let ic = 0; ic < maxArraySize.col; ic++) {
+							let elemFromChosenArgument;
+							if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
+								if (argDimensions.row === 1) {
+									// return first row
+									// elemFromChosenArgument = chosenArgument.getValue2(0, ic);
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, ic) : chosenArgument.getValueByRowCol(0, ic);
+								} else if (argDimensions.col === 1) {
+									// elemFromChosenArgument = chosenArgument.getValue2(r, 0);
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, 0) : chosenArgument.getValueByRowCol(r, 0);
+								} else {
+									// elemFromChosenArgument = chosenArgument.getValue2(r, ic);
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, ic) : chosenArgument.getValueByRowCol(r, ic);
+								}
+								if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < ic) {
+									elemFromChosenArgument = null;
+								}
+							} else {
+								elemFromChosenArgument = chosenArgument;
+							}
+							
+							if (!elemFromChosenArgument) {
+								elemFromChosenArgument = new cError(cErrorType.not_available);
+							}
+
+							tempCol.push(elemFromChosenArgument);
+						}
+
+						resArr.pushRow([tempCol], 0);
+					} else {
+						// get r/c part from chosen argument
+						let elemFromChosenArgument;
+						if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
+							if (argDimensions.row === 1) {
+								// elemFromChosenArgument = chosenArgument.getValue2(0, c);
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, c) : chosenArgument.getValueByRowCol(0, c);
+							} else if (argDimensions.col === 1) {
+								// elemFromChosenArgument = chosenArgument.getValue2(r, 0);
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, 0) : chosenArgument.getValueByRowCol(r, 0);
+							} else {
+								// elemFromChosenArgument = chosenArgument.getValue2(r, c);
+								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, c) : chosenArgument.getValueByRowCol(r, c);
+							}
+							if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < c) {
+								elemFromChosenArgument = null;
+							}
+						} else {
+							elemFromChosenArgument = chosenArgument;
+						}
+
+						if (!resArr.array[r]) {
+							resArr.addRow();
+						}
+						resArr.addElement(elemFromChosenArgument);
+					}
+				}
+			}
+
+			if (resArr.getRowCount() < maxArraySize.row) {
+				// fill the rest of array with #N/A error
+				for (let i = resArr.getRowCount(); i < maxArraySize.row; i++) {
+					resArr.addRow();
+					for (let j = 0; j < resArr.getCountElementInRow(); j++) {
+						resArr.addElement(new cError(cErrorType.not_available));
+					}
+				}
+			}
+
 			return resArr;
 		}
 

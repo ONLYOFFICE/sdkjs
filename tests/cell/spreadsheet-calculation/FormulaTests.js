@@ -3250,11 +3250,11 @@ $(function () {
 
 		oParser = new parserFormula("CHOOSE(2,A2,A3,A4,A5)", "A1", ws);
 		assert.ok(oParser.parse(), "CHOOSE(2,A2,A3,A4,A5)");
-		assert.strictEqual(oParser.calculate().getValue(), "2nd", "CHOOSE(2,A2,A3,A4,A5)");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "2nd", "CHOOSE(2,A2,A3,A4,A5)");
 
 		oParser = new parserFormula("CHOOSE(4,B2,B3,B4,B5)", "A1", ws);
 		assert.ok(oParser.parse(), "CHOOSE(4,B2,B3,B4,B5)");
-		assert.strictEqual(oParser.calculate().getValue(), "Bolts", "CHOOSE(4,B2,B3,B4,B5))");
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "Bolts", "CHOOSE(4,B2,B3,B4,B5))");
 
 		oParser = new parserFormula('CHOOSE(3,"Wide",115,"world",8)', "A1", ws);
 		assert.ok(oParser.parse());
@@ -3288,7 +3288,7 @@ $(function () {
 
 		oParser = new parserFormula('CHOOSE(1,B2,2,3)', "A1", ws);
 		assert.ok(oParser.parse(), 'CHOOSE(1,B2,2,3)');
-		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of CHOOSE(1,B2,2,3)');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "#N/A", 'Result of CHOOSE(1,B2,2,3)');
 
 		oParser = new parserFormula('CHOOSE(B3,B2,2,3)', "A1", ws);
 		assert.ok(oParser.parse(), 'CHOOSE(B3,B2,2,3)');
@@ -3345,22 +3345,22 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G2").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,2},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,2},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
-
-		bbox = ws.getRange2("G3").bbox;
-		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
-		oParser = new parserFormula('CHOOSE({1,2},C1:C3,E1:E3)', cellWithFormula, ws);
-		assert.ok(oParser.parse(), 'CHOOSE({1,2},C1:C3,E1:E3)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "CBT-2", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
@@ -3368,31 +3368,157 @@ $(function () {
 		assert.ok(oParser.parse(), 'CHOOSE({"",2},C1:C3,E1:E3)');
 		array = oParser.calculate();
 		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "HIS0362", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "HIS0363", 'Result of CHOOSE({"",2},C1:C3,E1:E3)[2,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,1.1},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,1.1},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-3", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-1", 'Result of CHOOSE({1,1.1},C1:C3,E1:E3)[0,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,1.9},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,1.9},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-3", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "CBT-1", 'Result of CHOOSE({1,1.9},C1:C3,E1:E3)[0,1]');
 
 		bbox = ws.getRange2("G3").bbox;
 		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		oParser = new parserFormula('CHOOSE({1,2.1},C1:C3,E1:E3)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'CHOOSE({1,2.1},C1:C3,E1:E3)');
 		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-3", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0363", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "CBT-1", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "HIS0361", 'Result of CHOOSE({1,2.1},C1:C3,E1:E3)[0,1]');
+
+		// for bug 67639
+		let arraySize;
+		ws.getRange2("A102").setValue("23");
+		ws.getRange2("A103").setValue("45");
+		ws.getRange2("A104").setValue("12");
+		ws.getRange2("A105").setValue("10");
+		ws.getRange2("B102").setValue("1");
+		ws.getRange2("B103").setValue("2");
+		ws.getRange2("B104").setValue("3");
+		ws.getRange2("C102").setValue("2");
+		ws.getRange2("C103").setValue("1");
+		ws.getRange2("E102").setValue("ds");
+		ws.getRange2("E103").setValue("fasf");
+		ws.getRange2("E104").setValue("gas");
+		ws.getRange2("F102").setValue("123das");
+		ws.getRange2("F103").setValue("jkl");
+		ws.getRange2("F104").setValue("zcasd");
+		
+		oParser = new parserFormula('SUM(A102:CHOOSE(2,A103,A104,A105))', "A1", ws);
+		assert.ok(oParser.parse(), 'SUM(A102:CHOOSE(2,A103,A104,A105))');
+		assert.strictEqual(oParser.calculate().getValue(), 80, 'Result of SUM(A102:CHOOSE(2,A103,A104,A105))');
+
+		oParser = new parserFormula('SIN(A102:CHOOSE(2,A103,A104,A105))', "A1", ws);
+		assert.ok(oParser.parse(), 'SIN(A102:CHOOSE(2,A103,A104,A105))');
+		oParser.setArrayFormulaRef(ws.getRange2("E200:F210").bbox);
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 1, 'Array size in SIN(A102:CHOOSE(2,A103,A104,A105))');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue().toFixed(2), "-0.85", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue().toFixed(2), "0.85", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue().toFixed(2), "-0.54", 'Result of SIN(A102:CHOOSE(2,A103,A104,A105))[2,0]');
+
+		oParser = new parserFormula('CHOOSE({1,2},A102:A104,B102:B103)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({1,2},A102:A104,B102:B103)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE({1,2},A102:A104,B102:B103');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE({1,2},A102:A104,B102:B103[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE({1,2},A102:A104,B102:B103[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE({1,2},A102:A104,B102:B103[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE({1,2},A102:A104,B102:B103[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE({1,2},A102:A104,B102:B103[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE({1,2},A102:A104,B102:B103[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,A102:A104,B102:B103)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,A102:A104,B102:B103)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,A102:A104,B102:B103)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE({B102:C102,A102:A104,B102:B103[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:C102,A102:A104,B102:B103[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,A102:B104,9)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,A102:B104,9)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,A102:B104,9)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:C102,A102:B104,9)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE(B102:C102,A102:B104,9)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE(B102:C102,A102:B104,9)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 9, 'Result of CHOOSE(B102:C102,A102:B104,9)[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:C102,9,A102:B104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:C102,9,A102:B104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 3 && arraySize.col === 2, 'Array size in CHOOSE(B102:C102,9,A102:B104)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of CHOOSE(B102:C102,9,A102:B104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 2, 'Result of CHOOSE(B102:C102,9,A102:B104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 9, 'Result of CHOOSE(B102:C102,9,A102:B104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 3, 'Result of CHOOSE(B102:C102,9,A102:B104)[2,1]');
+
+		oParser = new parserFormula('CHOOSE(B102:B103,A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE(B102:B103,A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE(B102:B103,A102:A105,E102:F104)');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 23, 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "fasf", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "jkl", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE(B102:B103,A102:A105,E102:F104)[3,1]');
+
+		oParser = new parserFormula('CHOOSE({1;2},A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({1;2},A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE({1;2},A102:A105,E102:F104');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, 'Result of CHOOSE({1;2},A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 23, 'Result of CHOOSE({1;2},A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "fasf", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "jkl", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE({1;2},A102:A105,E102:F104)[3,1]');
+
+		oParser = new parserFormula('CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)', "A1", ws);
+		assert.ok(oParser.parse(), 'CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)');
+		array = oParser.calculate();
+		arraySize = array.getDimensions();
+		assert.ok(arraySize.row === 4 && arraySize.col === 2, 'Array size in CHOOSE({1;2},A102:A105,E102:F104');
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "ds", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "123das", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 45, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 45, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), 12, 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#N/A", 'Result of CHOOSE({2,2;1,1;1,1},A102:A105,E102:F104)[3,1]');
 
 		//функция возвращает ref
 		//testArrayFormula2(assert, "CHOOSE", 2, 9);
