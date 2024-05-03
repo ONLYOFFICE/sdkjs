@@ -1607,16 +1607,14 @@
 			if (posX > this.scrollMaxX)
 				posX = this.scrollMaxX;
 
-			let oDoc = this.getPDFDoc();
-			// выход из формы если вышли со страницы, где находится активная форма.
-			if (this.disabledPaintOnScroll == false && oDoc.activeForm && this.pageDetector.pages.map(function(item) {
+			let oDoc		= this.getPDFDoc();
+			let oActiveObj	= oDoc.GetActiveObject();
+
+			// выход из активного объекта если сместились на другую страницу
+			if (this.disabledPaintOnScroll == false && oActiveObj && this.pageDetector.pages.map(function(item) {
 				return item.num;
-			}).includes(oDoc.activeForm.GetPage()) == false) {
-				if (oDoc.activeForm.IsChanged() == false) {
-					oDoc.activeForm.SetDrawFromStream(true);
-				}
-				oDoc.activeForm.SetDrawHighlight(true);
-				oDoc.activeForm = null;
+			}).includes(oActiveObj.GetPage()) == false) {
+				oDoc.BlurActiveObject();
 			}
 
 			this.m_oScrollVerApi.scrollToY(posY);
@@ -2839,16 +2837,13 @@
 			
 			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
-			
-			// выход из формы если вышли со страницы, где находится активная форма.
-			if (oDoc.activeForm && this.pageDetector.pages.map(function(item) {
+			let oActiveObj = oDoc.GetActiveObject();
+
+			// выход из активного объекта если сместились на другую страницу
+			if (oActiveObj && this.pageDetector.pages.map(function(item) {
 				return item.num;
-			}).includes(oDoc.activeForm.GetPage()) == false) {
-				if (oDoc.activeForm.IsChanged() == false) {
-					oDoc.activeForm.SetDrawFromStream(true);
-				}
-				oDoc.activeForm.SetDrawHighlight(true);
-				oDoc.activeForm = null;
+			}).includes(oActiveObj.GetPage()) == false) {
+				oDoc.BlurActiveObject();
 			}
 
 			this._paintAnnots();

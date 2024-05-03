@@ -682,7 +682,7 @@
 			oDoc.AddImages([_image], obj);
 		}
 	};
-	PDFEditorApi.prototype.asc_addImage= function(obj){
+	PDFEditorApi.prototype.asc_addImage = function(obj){
 		if (this.isEditOleMode){
 			this.oSaveObjectForAddImage = obj;
 			this.sendFromFrameToGeneralEditor({
@@ -715,6 +715,48 @@
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 		});
+	};
+	PDFEditorApi.prototype.remove_Hyperlink = function() {
+		let oDoc = this.getPDFDoc();
+		oDoc.RemoveHyperlink();
+	};
+	PDFEditorApi.prototype.change_Hyperlink = function(HyperProps) {
+		let oDoc = this.getPDFDoc();
+		oDoc.ModifyHyperlink(HyperProps);
+	};
+	PDFEditorApi.prototype.sync_HyperlinkClickCallback = function(Url) {
+		if (AscCommon.IsLinkPPAction(Url)) {
+			let oViewer		= this.getDocumentRenderer();
+			let oDoc		= this.getPDFDoc();
+			let nCurPage	= oDoc.GetCurPage();
+			let nPagesCount	= oDoc.GetPagesCount();
+			
+			if (Url == "ppaction://hlinkshowjump?jump=firstslide") {
+				oViewer.navigateToPage(0);
+			}
+			else if (Url == "ppaction://hlinkshowjump?jump=lastslide") {
+				oViewer.navigateToPage(nPagesCount - 1);
+			}
+			else if (Url == "ppaction://hlinkshowjump?jump=nextslide") {
+				oViewer.navigateToPage(nCurPage + 1);
+			}
+			else if (Url == "ppaction://hlinkshowjump?jump=previousslide") {
+				oViewer.navigateToPage(nCurPage - 1);
+			}
+			else {
+				let mask	= "ppaction://hlinksldjumpslide";
+				let posStr	= Url.indexOf(mask);
+
+				if (0 == posStr) {
+					let pageNum = parseInt(Url.substring(mask.length));
+					if (pageNum >= 0 && pageNum < nPagesCount)
+						oViewer.navigateToPage(pageNum);
+				}
+			}
+			return;
+		}
+
+		this.sendEvent("asc_onHyperlinkClick", Url);
 	};
 
 	PDFEditorApi.prototype.sync_VerticalTextAlign = function(align) {
@@ -1782,13 +1824,12 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.UpdateInterfaceState = function()
-	{
+	PDFEditorApi.prototype.UpdateInterfaceState = function() {
 		let oDoc = this.getPDFDoc();
 		if (oDoc)
 			oDoc.UpdateInterface();
 	};
-
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2138,23 +2179,26 @@
 	PDFEditorApi.prototype['AddFreeTextAnnot'] = PDFEditorApi.prototype.AddFreeTextAnnot;
 
 	// drawings
-	PDFEditorApi.prototype['AddTextArt']				= PDFEditorApi.prototype.AddTextArt;
-	PDFEditorApi.prototype['StartAddShape']				= PDFEditorApi.prototype.StartAddShape;
-	PDFEditorApi.prototype['ShapeApply']				= PDFEditorApi.prototype.ShapeApply;
-	PDFEditorApi.prototype['ChangeShapeType']			= PDFEditorApi.prototype.ChangeShapeType;
-	PDFEditorApi.prototype['ImgApply']					= PDFEditorApi.prototype.ImgApply;
-	PDFEditorApi.prototype['asc_FitImagesToPage']		= PDFEditorApi.prototype.asc_FitImagesToPage;
-	PDFEditorApi.prototype['sync_shapePropCallback']	= PDFEditorApi.prototype.sync_shapePropCallback;
-	PDFEditorApi.prototype['sync_annotPropCallback']	= PDFEditorApi.prototype.sync_annotPropCallback;
-	PDFEditorApi.prototype['canUnGroup']				= PDFEditorApi.prototype.canUnGroup;
-	PDFEditorApi.prototype['canGroup']					= PDFEditorApi.prototype.canGroup;
-	PDFEditorApi.prototype['shapes_bringToFront']		= PDFEditorApi.prototype.shapes_bringToFront;
-	PDFEditorApi.prototype['shapes_bringForward']		= PDFEditorApi.prototype.shapes_bringForward;
-	PDFEditorApi.prototype['shapes_bringToBack']		= PDFEditorApi.prototype.shapes_bringToBack;
-	PDFEditorApi.prototype['shapes_bringBackward']		= PDFEditorApi.prototype.shapes_bringBackward;
-	PDFEditorApi.prototype['AddImageUrlAction']			= PDFEditorApi.prototype.AddImageUrlAction;
-	PDFEditorApi.prototype['AddImageUrlActionCallback']	= PDFEditorApi.prototype.AddImageUrlActionCallback;
-	PDFEditorApi.prototype['asc_addImage']				= PDFEditorApi.prototype.asc_addImage;
+	PDFEditorApi.prototype['AddTextArt']					= PDFEditorApi.prototype.AddTextArt;
+	PDFEditorApi.prototype['StartAddShape']					= PDFEditorApi.prototype.StartAddShape;
+	PDFEditorApi.prototype['ShapeApply']					= PDFEditorApi.prototype.ShapeApply;
+	PDFEditorApi.prototype['ChangeShapeType']				= PDFEditorApi.prototype.ChangeShapeType;
+	PDFEditorApi.prototype['ImgApply']						= PDFEditorApi.prototype.ImgApply;
+	PDFEditorApi.prototype['asc_FitImagesToPage']			= PDFEditorApi.prototype.asc_FitImagesToPage;
+	PDFEditorApi.prototype['sync_shapePropCallback']		= PDFEditorApi.prototype.sync_shapePropCallback;
+	PDFEditorApi.prototype['sync_annotPropCallback']		= PDFEditorApi.prototype.sync_annotPropCallback;
+	PDFEditorApi.prototype['canUnGroup']					= PDFEditorApi.prototype.canUnGroup;
+	PDFEditorApi.prototype['canGroup']						= PDFEditorApi.prototype.canGroup;
+	PDFEditorApi.prototype['shapes_bringToFront']			= PDFEditorApi.prototype.shapes_bringToFront;
+	PDFEditorApi.prototype['shapes_bringForward']			= PDFEditorApi.prototype.shapes_bringForward;
+	PDFEditorApi.prototype['shapes_bringToBack']			= PDFEditorApi.prototype.shapes_bringToBack;
+	PDFEditorApi.prototype['shapes_bringBackward']			= PDFEditorApi.prototype.shapes_bringBackward;
+	PDFEditorApi.prototype['AddImageUrlAction']				= PDFEditorApi.prototype.AddImageUrlAction;
+	PDFEditorApi.prototype['AddImageUrlActionCallback']		= PDFEditorApi.prototype.AddImageUrlActionCallback;
+	PDFEditorApi.prototype['asc_addImage']					= PDFEditorApi.prototype.asc_addImage;
+	PDFEditorApi.prototype['remove_Hyperlink']				= PDFEditorApi.prototype.remove_Hyperlink;
+	PDFEditorApi.prototype['change_Hyperlink']				= PDFEditorApi.prototype.change_Hyperlink;
+	PDFEditorApi.prototype['sync_HyperlinkClickCallback']	= PDFEditorApi.prototype.sync_HyperlinkClickCallback;
 
 
 	// table

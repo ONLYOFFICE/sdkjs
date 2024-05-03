@@ -981,6 +981,8 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
+        this.Api.sync_MouseMoveStartCallback();
+
         let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
         
@@ -1073,6 +1075,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
+        this.Api.sync_MouseMoveEndCallback();
         this.UpdateCursorType(x, y, e);
     };
     CPDFDoc.prototype.UpdateCursorType = function(x, y, e) {
@@ -4460,6 +4463,12 @@ var CPresentation = CPresentation || function(){};
             return null;
     
         return false;
+    };
+    CPDFDoc.prototype.GetCurPage = function() {
+        return this.Viewer.currentPage;
+    };
+    CPDFDoc.prototype.GetPagesCount = function() {
+        return this.Viewer.file.pages.length;
     };
     CPDFDoc.prototype.GetSelectionState = function() {
         const oSelectionState = {};
