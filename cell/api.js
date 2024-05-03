@@ -5965,17 +5965,6 @@ var editor;
       this.wb.setFontAttributes("b", isBold);
       this.wb.restoreFocus();
     }
-
-	let docInfo = this.DocInfo;
-	this.test = [];
-	let t = this;
-	  this.asc_getOpeningDocumentsList(function (item) {
-		  //compare with origial
-		  if (item && item[1] !== docInfo[1]) {
-			  t.test.push(item);
-		  }
-	  });
-
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
