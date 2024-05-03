@@ -393,6 +393,15 @@
 	let setupPpiX      = -1;
 	let setupPpiY      = -1;
 	
+	function resetDrawingContextFonts() {
+		setupFontSize  = -1;
+		setupFontName  = "";
+		setupFontStyle = -1;
+		setupRotated   = false;
+		setupPpiX      = -1;
+		setupPpiY      = -1;
+	}
+	
 	/**
 	 * Emulates scalable canvas context
 	 * -----------------------------------------------------------------------------
@@ -1383,4 +1392,8 @@
 	window["Asc"].FontMetrics = FontMetrics;
 	window["Asc"].DrawingContext = DrawingContext;
 	window["Asc"].Matrix = Matrix;
+	
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window["AscCommonExcel"].resetDrawingContextFonts = resetDrawingContextFonts;
+	
 })(window);

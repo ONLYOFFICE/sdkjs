@@ -32,9 +32,6 @@
 
 "use strict";
 
-// Import
-var History = AscCommon.History;
-
 //----------------------------------------------------------------------------------------------------------------------
 // Класс CTableRow
 //----------------------------------------------------------------------------------------------------------------------
@@ -133,7 +130,7 @@ CTableRow.prototype =
 		{
 			Row.Content[Index] = this.Content[Index].Copy(Row, oPr);
 			Row.Content[Index].Recalc_CompiledPr();
-			History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
+			AscCommon.History.Add(new CChangesTableRowAddCell(Row, Index, [Row.Content[Index]]));
 		}
 
 		Row.Internal_ReIndexing();
@@ -353,7 +350,7 @@ CTableRow.prototype =
 		let isHavePrChange = this.HavePrChange();
 		
 		this.private_AddPrChange();
-		History.Add(new CChangesTableRowPr(this, this.Pr, RowPr));
+		AscCommon.History.Add(new CChangesTableRowPr(this, this.Pr, RowPr));
 		this.Pr = RowPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
@@ -400,7 +397,7 @@ CTableRow.prototype =
 			}
 
 			this.private_AddPrChange();
-			History.Add(new CChangesTableRowBefore(this, OldBefore, NewBefore));
+			AscCommon.History.Add(new CChangesTableRowBefore(this, OldBefore, NewBefore));
 
 			this.Pr.GridBefore = GridBefore;
 			this.Pr.WBefore    = NewBefore.WBefore;
@@ -447,7 +444,7 @@ CTableRow.prototype =
 			}
 
 			this.private_AddPrChange();
-			History.Add(new CChangesTableRowAfter(this, OldAfter, NewAfter));
+			AscCommon.History.Add(new CChangesTableRowAfter(this, OldAfter, NewAfter));
 
 			this.Pr.GridAfter = GridAfter;
 			this.Pr.WAfter    = NewAfter.WAfter;
@@ -467,7 +464,7 @@ CTableRow.prototype =
 			return;
 
 		this.private_AddPrChange();
-		History.Add(new CChangesTableRowCellSpacing(this, this.Pr.TableCellSpacing, Value));
+		AscCommon.History.Add(new CChangesTableRowCellSpacing(this, this.Pr.TableCellSpacing, Value));
 		this.Pr.TableCellSpacing = Value;
 
 		this.Recalc_CompiledPr();
@@ -489,7 +486,7 @@ CTableRow.prototype =
 		var NewHeight = undefined != Value ? new CTableRowHeight(Value, HRule) : undefined;
 
 		this.private_AddPrChange();
-		History.Add(new CChangesTableRowHeight(this, OldHeight, NewHeight));
+		AscCommon.History.Add(new CChangesTableRowHeight(this, OldHeight, NewHeight));
 		this.Pr.Height = NewHeight;
 		this.Recalc_CompiledPr();
 	},
@@ -611,7 +608,7 @@ CTableRow.prototype =
 
 	Remove_Cell : function(Index)
 	{
-		History.Add(new CChangesTableRowRemoveCell(this, Index, [this.Content[Index]]));
+		AscCommon.History.Add(new CChangesTableRowRemoveCell(this, Index, [this.Content[Index]]));
 
 		this.Content.splice(Index, 1);
 		this.CellsInfo.splice(Index, 1);
@@ -628,7 +625,7 @@ CTableRow.prototype =
 		if ("undefined" === typeof(Cell) || null === Cell)
 			Cell = new CTableCell(Row);
 
-		History.Add(new CChangesTableRowAddCell(this, Index, [Cell]));
+		AscCommon.History.Add(new CChangesTableRowAddCell(this, Index, [Cell]));
 
 		this.Content.splice(Index, 0, Cell);
 		this.CellsInfo.splice(Index, 0, {});
@@ -1026,7 +1023,7 @@ CTableRow.prototype.SetHeader = function(isHeader)
 		return;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesTableRowTableHeader(this, this.Pr.TableHeader, isHeader));
+	AscCommon.History.Add(new CChangesTableRowTableHeader(this, this.Pr.TableHeader, isHeader));
 	this.Pr.TableHeader = isHeader;
 	this.Recalc_CompiledPr();
 	this.RecalcCopiledPrCells();
@@ -1078,7 +1075,7 @@ CTableRow.prototype.SetReviewType = function(nType, isCheckDeleteAdded)
 		this.ReviewType = nType;
 		this.ReviewInfo.Update();
 
-		History.Add(new CChangesTableRowReviewType(this, {
+		AscCommon.History.Add(new CChangesTableRowReviewType(this, {
 			ReviewType : OldReviewType,
 			ReviewInfo : OldReviewInfo
 		}, {
@@ -1096,7 +1093,7 @@ CTableRow.prototype.SetReviewType = function(nType, isCheckDeleteAdded)
  */
 CTableRow.prototype.SetReviewTypeWithInfo = function(nType, oInfo)
 {
-	History.Add(new CChangesTableRowReviewType(this, {
+	AscCommon.History.Add(new CChangesTableRowReviewType(this, {
 		ReviewType : this.ReviewType,
 		ReviewInfo : this.ReviewInfo ? this.ReviewInfo.Copy() : undefined
 	}, {
@@ -1124,7 +1121,7 @@ CTableRow.prototype.AddPrChange = function()
 	if (false === this.HavePrChange())
 	{
 		this.Pr.AddPrChange();
-		History.Add(new CChangesTableRowPrChange(this, {
+		AscCommon.History.Add(new CChangesTableRowPrChange(this, {
 			PrChange   : undefined,
 			ReviewInfo : undefined
 		}, {
@@ -1138,7 +1135,7 @@ CTableRow.prototype.RemovePrChange = function()
 {
 	if (true === this.HavePrChange())
 	{
-		History.Add(new CChangesTableRowPrChange(this, {
+		AscCommon.History.Add(new CChangesTableRowPrChange(this, {
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}, {

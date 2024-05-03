@@ -1616,11 +1616,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             }
         }
     };
-    Slide.prototype.drawAnimPane = function(oGraphics) {
-        if(this.timing) {
-            this.timing.drawAnimPane(oGraphics);
-        }
-    };
 	Slide.prototype.isAnimated = function() {
 		let oTr = this.transition;
 		if(oTr
@@ -1636,32 +1631,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		}
 		return false;
 	};
-    Slide.prototype.onAnimPaneResize = function(oGraphics) {
-        if(this.timing) {
-            this.timing.onAnimPaneResize(oGraphics);
-        }
-    };
-
-    Slide.prototype.onAnimPaneMouseDown = function(e, x, y) {
-        if(this.timing) {
-            this.timing.onAnimPaneMouseDown(e, x, y);
-        }
-    };
-    Slide.prototype.onAnimPaneMouseMove = function(e, x, y) {
-        if(this.timing) {
-            this.timing.onAnimPaneMouseMove(e, x, y);
-        }
-    };
-    Slide.prototype.onAnimPaneMouseUp = function(e, x, y) {
-        if(this.timing) {
-            this.timing.onAnimPaneMouseUp(e, x, y);
-        }
-    };
-    Slide.prototype.onAnimPaneMouseWheel = function(e, deltaY, X, Y) {
-        if(this.timing) {
-            this.timing.onAnimPaneMouseWheel(e, deltaY, X, Y);
-        }
-    };
     Slide.prototype.getTheme = function(){
         return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
     };

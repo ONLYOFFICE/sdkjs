@@ -7068,8 +7068,8 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		var flags1 = 0;
 		flags1 |= (oSettings.BalanceSingleByteDoubleByteWidth ? 1 : 0) << 6;
 		flags1 |= (oSettings.UlTrailSpace ? 1 : 0) << 9;
-		if (this.saveParams.isCompatible) {
-			flags1 |= (oSettings.DoNotExpandShiftReturn ? 1 : 0) << 10;
+		if (oSettings.DoNotExpandShiftReturn) {
+			flags1 |= 1 << 10;
 		}
 		this.bs.WriteItem(c_oSerCompat.Flags1, function() {oThis.memory.WriteULong(flags1);});
 		var flags2 = 0;
@@ -9284,7 +9284,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
                     var rPr = new CTextPr();
                     res = this.brPrr.Read(length, rPr, endRun, this.paragraph.TextPr);
 					endRun.SetPr(rPr);
-					this.paragraph.TextPr.SetPr(rPr);
+					this.paragraph.TextPr.SetPr(rPr.Copy());
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;

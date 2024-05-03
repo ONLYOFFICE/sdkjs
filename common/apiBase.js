@@ -65,6 +65,7 @@
 
 		this.isViewMode = false;
 		this.restrictions = Asc.c_oAscRestrictionType.None;
+		this.isCanSendChanges = true; // Флаг, говорит о возможности отсылать свои изменения (задается извне)
 
 		this.FontLoader  = null;
 		this.ImageLoader = null;
@@ -82,6 +83,7 @@
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
 		this.documentShardKey  = undefined;
+		this.documentWopiSrc  = undefined;
 		this.documentIsWopi = false;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
@@ -497,13 +499,13 @@
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
 
-				if (this.documentOpenOptions["WOPISrc"])
+				if (this.documentOpenOptions[Asc.c_sWopiSrcName])
 				{
-					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+					this.documentWopiSrc = this.documentOpenOptions[Asc.c_sWopiSrcName];
 					this.documentIsWopi = true;
 				}
 			}
-			if (!this.documentShardKey) {
+			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
 				this.documentShardKey = this.documentId;
 			}
@@ -703,6 +705,14 @@
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+	};
+	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
+	{
+		this.isCanSendChanges = canSend;
+	};
+	baseEditorsApi.prototype.canSendChanges                  = function()
+	{
+		return this.isCanSendChanges;
 	};
 
 	baseEditorsApi.prototype.checkInputMode                  = function()
@@ -1894,7 +1904,7 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2180,7 +2190,15 @@
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
-			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
+			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
+			}
+			oAdditionalData["jsonparams"] = jsonparams;
+		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
+			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+			let jsonparams = {};
+			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
+			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
 			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
@@ -2337,7 +2355,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2370,7 +2388,7 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
@@ -2624,7 +2642,7 @@
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {
 		var t = this;
 		var res = false;
-		if (this.canSave && this._saveCheck()) {
+		if (this.canSave && this._saveCheck() && this.canSendChanges()) {
 			this.IsUserSave = !isAutoSave;
 
 			if (this.asc_isDocumentCanSave() || AscCommon.History.Have_Changes() || this._haveOtherChanges() ||
@@ -4512,15 +4530,15 @@
 	};
 
 
-	baseEditorsApi.prototype.getPluginContextMenuInfo = function()
+	baseEditorsApi.prototype.getPluginContextMenuInfo = function(e)
 	{
 		return new AscCommon.CPluginCtxMenuInfo();
 	};
 
 	// context menu items
-	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
+	baseEditorsApi.prototype["onPluginContextMenuShow"] = function(e)
 	{
-		let contextMenuInfo = this.getPluginContextMenuInfo();
+		let contextMenuInfo = this.getPluginContextMenuInfo(e);
 		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
 		if (0 === plugins.length)
 		{
@@ -4908,6 +4926,36 @@
 		this.onEndLoadFile(file);
 	};
 
+	// for native editors
+	baseEditorsApi.prototype.wrapFunction = function(name, types) 
+	{
+		this["native_" + name] = function() 
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (types && types[i] && types[i].prototype && types[i].prototype.fromCValue)
+					arguments[i] = types[i].prototype.fromCValue(arguments[i]);
+			}
+			let result = this[name].apply(this, arguments);
+			if (result && result.toCValue)
+				result = result.toCValue();
+			return result;
+		}
+	};
+
+	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	{
+		this.asc_registerCallback(name, function()
+		{
+			for (let i = 0, len = arguments.length; i < len; i++) 
+			{
+				if (arguments[i] && arguments[i].toCValue)
+					arguments[i] = arguments[i].toCValue();
+			}
+			window["native"]["onJsEvent"](name, arguments);
+		});
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4917,6 +4965,7 @@
 	prot['asc_setRestriction'] = prot.asc_setRestriction;
 	prot['asc_addRestriction'] = prot.asc_addRestriction;
 	prot['asc_removeRestriction'] = prot.asc_removeRestriction;
+	prot['asc_setCanSendChanges'] = prot.asc_setCanSendChanges;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_isSelectSearchingResults'] = prot.asc_isSelectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;

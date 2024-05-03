@@ -1552,6 +1552,8 @@
 		this.ctDocumentEdit		= 204;
 		this.ctDocumentClose	= 205;
 		this.ctPageEdit			= 206;
+		this.ctPageClear		= 207;
+		this.ctPageRotate		= 208;
 
 		this.ctError = 255;
 	}
@@ -4030,6 +4032,7 @@
 	window['AscCommon'].CFontSetup               = CFontSetup;
 	window['AscCommon'].CGrState                 = CGrState;
 	window['AscCommon'].CMemory                  = CMemory;
+	window['AscCommon'].CMetafile				 = CMetafile;
 	window['AscCommon'].CDocumentRenderer        = CDocumentRenderer;
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;
 	window['AscCommon'].MATRIX_ORDER_APPEND      = MATRIX_ORDER_APPEND;

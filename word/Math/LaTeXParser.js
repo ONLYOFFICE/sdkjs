@@ -59,7 +59,8 @@
 		let arrLiterals = [];
 		let isOne = this.isReceiveOneTokenAtTime;
 
-		if (isOne) {
+		if (isOne)
+		{
 			let strValue = this.EatToken(arrTypeOfLiteral[0]).data;
 			let oLiteral = {
 				type: arrTypeOfLiteral[num],
@@ -69,18 +70,35 @@
 			};
 			arrLiterals.push(oLiteral);
 		}
-		else {
+		else
+		{
 			let strLiteral = "";
-			while (this.oLookahead.class === arrTypeOfLiteral[0]) {
+			while (this.oLookahead.class === arrTypeOfLiteral[0])
+			{
 				let strConvert = AscMath.AutoCorrection[this.oLookahead.data];
 				if (strConvert)
 				{
 					this.EatToken(this.oLookahead.class);
-					strLiteral += strConvert
+					strLiteral += strConvert;
+					if (this.oLookahead.data === " ")
+					{
+						this.EatToken(this.oLookahead.class);
+					}
 				}
 				else
 				{
-					strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+					let oCurrentChar = this.EatToken(arrTypeOfLiteral[0]).data;
+
+					if (this.intMathFontType === -1
+						|| !GetMathFontChar[oCurrentChar]
+						|| !GetMathFontChar[oCurrentChar][this.intMathFontType])
+					{
+						strLiteral += oCurrentChar;
+					}
+					else
+					{
+						strLiteral += GetMathFontChar[oCurrentChar][this.intMathFontType];
+					}
 				}
 			}
 			arrLiterals.push({
@@ -234,29 +252,25 @@
 	};
 	CLaTeXParser.prototype.IsFractionLiteral = function ()
 	{
-		return (this.oLookahead.class === "\\frac" || this.oLookahead.data === "\\binom" || this.oLookahead.class === "\\cfrac" || this.oLookahead.class === "\\sfrac");
+		return (
+			this.oLookahead.class === "\\frac"
+			|| this.oLookahead.data === "\\binom"
+			|| this.oLookahead.class === "\\cfrac"
+			|| this.oLookahead.class === "\\sfrac"
+		);
 	};
 	CLaTeXParser.prototype.GetFractionLiteral = function ()
 	{
-		let type;
-		if (this.oLookahead.data === "\\binom") {
-			type = oLiteralNames.binomLiteral[num];
-		}
-		else if (this.oLookahead.class === "\\sfrac") {
-			type = oLiteralNames.skewedFractionLiteral[num]
-		}
-		else {
-			type = oLiteralNames.fractionLiteral[num]
-		}
+		let intTypeFraction = AscMath.GetFractionType(this.oLookahead.data);
 		this.EatToken(this.oLookahead.class);
 		const oResult = this.GetArguments(2);
 
 		return {
-			type: type,
+			type: oLiteralNames.fractionLiteral[num],
 			up: oResult[0],
 			down: oResult[1],
+			fracType: intTypeFraction,
 		};
-
 	};
 	CLaTeXParser.prototype.IsExpBracket = function ()
 	{
@@ -952,12 +966,12 @@
 	{
 		let intPrevType = this.intMathFontType;
 		this.intMathFontType = GetTypeFont[this.oLookahead.data];
+		this.EatToken(this.oLookahead.class);
 
 		if (this.oLookahead.data !== "{") {
 			this.isReceiveOneTokenAtTime = true;
 		}
 
-		this.EatToken(this.oLookahead.class)
 		let oOutput = {
 			type: oLiteralNames.mathFontLiteral[num],
 			value: this.GetArguments(1)
@@ -1086,7 +1100,7 @@
 			arrMatrixContent.push(oContent);
 		}
 
-		while(arrMatrixContent.length < nCounter + 1)
+		while(arrMatrixContent.length < 1)
 		{
 			arrMatrixContent.push([]);
 		}
@@ -1125,6 +1139,19 @@
 		}
 
 		this.isNowMatrix = false;
+
+		if (strMatrixType.length > 0)
+		{
+			return {
+				type: oLiteralNames.bracketBlockLiteral[num],
+				value: {
+					type: oLiteralNames.matrixLiteral[num],
+					value: arrMatrixContent,
+				},
+				left: strMatrixType.length === 1 ? strMatrixType : strMatrixType[0],
+				right: strMatrixType.length === 1 ? strMatrixType : strMatrixType[1],
+			}
+		}
 
 		return {
 			type: oLiteralNames.matrixLiteral[num],

@@ -49,6 +49,7 @@ var ImageLoadStatus   = AscFonts.ImageLoadStatus;
 var FOCUS_OBJECT_THUMBNAILS = 0;
 var FOCUS_OBJECT_MAIN       = 1;
 var FOCUS_OBJECT_NOTES      = 2;
+var FOCUS_OBJECT_ANIM_PANE  = 3;
 
 var COMMENT_WIDTH  = 18;
 var COMMENT_HEIGHT = 16;
@@ -2686,6 +2687,14 @@ function CDrawingDocument()
 		}
 	};
 
+	this.ConvertAnimPaneCoordsToCursor = function(x, y)
+	{
+		const wc = this.m_oWordControl;
+		const x_pix = (x * g_dKoef_mm_to_pix + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oAnimationPaneContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+		const y_pix = (y * g_dKoef_mm_to_pix + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oAnimationPaneContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+		return {X: x_pix, Y: y_pix, Error: false};
+	};
+
 	this.ConvertCoordsToCursor3 = function (x, y, isGlobal)
 	{
 		var wc = this.m_oWordControl;
@@ -3420,20 +3429,7 @@ function CDrawingDocument()
         return bIsReturn;
 	};
 
-	// animation
-	this.OnAnimPaneChanged = function(nSlideNum, oRect)
-	{
-		if(!this.m_oWordControl || !this.m_oWordControl.m_oAnimPaneApi)
-		{
-			return;
-		}
-		if(nSlideNum !== this.SlideCurrent)
-		{
-			return;
-		}
 
-		this.m_oWordControl.m_oAnimPaneApi.OnAnimPaneChanged(nSlideNum, oRect);
-	};
 }
 
 function CThPage()
@@ -4614,6 +4610,11 @@ function CThumbnailsManager()
 				}
 				break;
 			}
+			case FOCUS_OBJECT_ANIM_PANE:
+			{
+				this.FocusObjType = FOCUS_OBJECT_ANIM_PANE;
+				break;
+			}
 			case FOCUS_OBJECT_NOTES:
 			{
 				break;
@@ -4785,10 +4786,13 @@ function CThumbnailsManager()
 			page.Draw(context, page.left, page.top, page.right - page.left, page.bottom - page.top);
 
 			var text_color = null;
+			let sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
 			if (!page.IsLocked)
-				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsPageNumberText);
+				sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
 			else
-				text_color = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.ThumbnailsLockColor);
+				sTextColor = AscCommon.GlobalSkin.ThumbnailsLockColor;
+
+			text_color = AscCommon.RgbaHexToRGBA(sTextColor);
 			g.b_color1(text_color.R, text_color.G, text_color.B, 255);
 
 			let dX = (_digit_distance - num_slide_text_width) / 2;
@@ -4796,13 +4800,17 @@ function CThumbnailsManager()
 			let _bounds = g.t("" + nSlideNumber, dX, dY, true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
-				context.lineWidth = 1;
-				context.strokeStyle = "#000000";
+				context.lineWidth =  AscCommon.AscBrowser.convertToRetinaValue(1, true);
+				context.strokeStyle = sTextColor;
 				context.beginPath();
 				context.moveTo(_bounds.x - 3, _bounds.y);
 				context.lineTo(_bounds.r + 3, _bounds.b);
 				context.stroke();
 				context.beginPath();
+				context.fillStyle = AscCommon.GlobalSkin.BackgroundColorThumbnails;
+				context.globalAlpha = 0.5;
+				context.fillRect(page.left, page.top, page.right - page.left, page.bottom - page.top);
+				context.globalAlpha = 1;
 			}
 			page.animateLabelRect = null;
 			if (_logicDocument.isSlideAnimated(i))
@@ -6398,23 +6406,12 @@ function CNotesDrawer(page)
 
 function CAnimPaneDrawTask()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 }
-CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
+CAnimPaneDrawTask.prototype.Check = function(oRect)
 {
-	if(this.Slide === null)
-	{
-		this.Slide = nSlide;
-		this.Rect = oRect;
-		return;
-	}
-	if(this.Slide !== nSlide)
-	{
-		this.Slide = nSlide;
-		this.Rect = null;
-		return;
-	}
+	this.bDraw = true;
 	if(this.Rect)
 	{
 		if(!oRect)
@@ -6429,11 +6426,11 @@ CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
 };
 CAnimPaneDrawTask.prototype.NeedRedraw = function()
 {
-	return this.Slide !== null;
+	return this.bDraw;
 };
 CAnimPaneDrawTask.prototype.Clear = function()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 };
 CAnimPaneDrawTask.prototype.GetRect = function()
@@ -6540,10 +6537,10 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{};
 	oThis.Init = function ()
 	{
-		var oHtmlElem = oThis.GetHtmlElement();
-		oHtmlElem.onmousedown = oThis.onMouseDown;
-		oHtmlElem.onmousemove = oThis.onMouseMove;
-		oHtmlElem.onmouseup =  oThis.onMouseUp;
+		//var oHtmlElem = oThis.GetHtmlElement();
+		//oHtmlElem.onmousedown = oThis.onMouseDown;
+		//oHtmlElem.onmousemove = oThis.onMouseMove;
+		//oHtmlElem.onmouseup =  oThis.onMouseUp;
 		oThis.CheckSubscribeMouseWheel();
 	};
 	oThis.GetCurrentSlideNumber = function ()
@@ -6598,6 +6595,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		{
 			ctx.clearRect(0, 0, element.width, element.height);
 		}
+		ctx.fillStyle = AscCommon.GlobalSkin.AnimPaneBackground;
+		ctx.fillRect(0, 0, element.width, element.height);
 		if(oClipRect)
 		{
 			ctx.save();
@@ -6614,7 +6613,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		}
 		oControl.draw(g);
 		g.RestoreGrState();
-		if(oClipRect) {
+		if(oClipRect)
+		{
 			ctx.restore();
 			ctx.restore();
 		}
@@ -6633,15 +6633,17 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	};
 	oThis.GetPosition = function ()
 	{
-		var _x = global_mouseEvent.X - oThis.HtmlPage.X - ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix + 0.5) >> 0);
-		var nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;
+		let nLeftPos = oThis.HtmlPage.m_oMainParent.AbsolutePosition.L;
+		let nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;
 		nTopPos += oThis.HtmlPage.m_oAnimationPaneContainer.AbsolutePosition.T;
 		if(oThis.PageParentControl)
 		{
+			nLeftPos += oThis.PageParentControl.AbsolutePosition.L;
 			nTopPos += oThis.PageParentControl.AbsolutePosition.T;
 		}
 
-		var _y = global_mouseEvent.Y - oThis.HtmlPage.Y - ((nTopPos * g_dKoef_mm_to_pix + 0.5) >> 0);
+		let _x = global_mouseEvent.X - oThis.HtmlPage.X - ((nLeftPos * g_dKoef_mm_to_pix + 0.5) >> 0);
+		let _y = global_mouseEvent.Y - oThis.HtmlPage.Y - ((nTopPos * g_dKoef_mm_to_pix + 0.5) >> 0);
 		_y += oThis.Scroll;
 		_x *= g_dKoef_pix_to_mm;
 		_y *= g_dKoef_pix_to_mm;
@@ -6671,6 +6673,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		}
 		oControl.onMouseDown(global_mouseEvent, _x, _y);
 		//oThis.GetPresentation().AnimPane_OnMouseDown(global_mouseEvent, _x, _y);
+
+		return oControl.hit(_x, _y);
 	};
 	oThis.onMouseMove = function (e)
 	{
@@ -6731,7 +6735,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 			return;
 
 
-		oControl.onMouseMove(global_mouseEvent, _x, _y);
+		oControl.onMouseUp(global_mouseEvent, _x, _y);
 		//oThis.GetPresentation().AnimPane_OnMouseUp(global_mouseEvent, _x, _y);
 
 		oThis.HtmlPage.m_bIsMouseLock = false;
@@ -6781,13 +6785,9 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		oControl.onResize();
 		oThis.CheckScroll();
 	};
-	oThis.OnAnimPaneChanged = function (nSlideNum, oRect)
+	oThis.OnAnimPaneChanged = function (oRect)
 	{
-		if(oThis.GetCurrentSlideNumber() !== nSlideNum)
-		{
-			return;
-		}
-		oThis.DrawTask.Check(nSlideNum, oRect);
+		oThis.DrawTask.Check(oRect);
 	};
 
 	oThis.GetWidth = function()
@@ -6809,6 +6809,19 @@ function CAnimPaneHeaderDrawer(page, htmlElement, parentDrawer)
 		oThis.Control = new AscCommon.CAnimPaneHeader(this);
 		oThis.Control.onResize();
 	};
+
+	oThis.UpdateButtonsState = function () {
+		Asc.editor.asc_canStartAnimationPreview() ?
+			oThis.Control.playButton.enable() : oThis.Control.playButton.disable()
+		Asc.editor.asc_canMoveAnimationEarlier() ?
+			oThis.Control.moveUpButton.enable() : oThis.Control.moveUpButton.disable()
+		Asc.editor.asc_canMoveAnimationLater() ?
+			oThis.Control.moveDownButton.enable() : oThis.Control.moveDownButton.disable()
+	}
+	oThis.UpdateState = function () {
+		oThis.Control.checkLayout();
+		oThis.UpdateButtonsState();
+	}
 }
 
 function CAnimPaneListDrawer(page, htmlElement, parentDrawer)
@@ -6924,12 +6937,29 @@ function CAnimPaneListDrawer(page, htmlElement, parentDrawer)
 function CAnimPaneTimelineDrawer(page, htmlElement, parentDrawer)
 {
 	CPaneDrawerBase.call(this, page, htmlElement, parentDrawer, page.m_oAnimPaneTimelineContainer);
-	var oThis = this;
+	const oThis = this;
+
+	// this.oCurSlide = editor.WordControl.m_oLogicDocument.GetCurrentSlide();
+	this.oCurSlide = editor.WordControl.m_oLogicDocument ? editor.WordControl.m_oLogicDocument.GetCurrentSlide() : {};
+
 	oThis.CreateControl = function()
 	{
 		oThis.Control = new AscCommon.CTimelineContainer(this);
 		oThis.Control.onResize();
 	};
+	oThis.UpdateState = function () {
+		const timing = oThis.Control.getTiming()
+		timing && timing.hasEffects() ?
+			oThis.Control.show() : oThis.Control.hide()
+
+		const actualCurrentSlide = Asc.editor.WordControl.m_oLogicDocument.GetCurrentSlide();
+		if (this.oCurSlide !== actualCurrentSlide) {
+			this.oCurSlide = actualCurrentSlide;
+			oThis.Control.timeline.setStartTime(0);
+			oThis.Control.timeline.setScrollOffset(0);
+		}
+
+	}
 }
 
 function CAnimationPaneDrawer(page, htmlElement)
@@ -6945,15 +6975,130 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.header.Init();
 		oThis.list.Init();
 		oThis.timeline.Init();
+
+		var oHtmlElem = oThis.GetHtmlElement();
+		oHtmlElem.onmousedown = oThis.onMouseDown;
+		oHtmlElem.onmousemove = oThis.onMouseMove;
+		oHtmlElem.onmouseup = oThis.onMouseUp;
+
+		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
+			// Here we need to check if all animEffects havent been changed
+			// If they were - recalculate corresponding elements
+			// If they were not - redraw animItems based on "selected" state of effects
+
+			const seqListContainer = oThis.list.Control;
+			if (!seqListContainer) { return; }
+
+			// Compare number of sequences (main and interactive ones)
+			const timing = seqListContainer.getTiming();
+			const newSeqList = timing ? timing.getRootSequences() : [];
+			const oldSeqList = seqListContainer.seqList
+				? seqListContainer.seqList.children.map(function (animSequence) {
+					return animSequence.getSeq();
+				})
+				: [];
+
+			if (oldSeqList.length !== newSeqList.length) {
+				recalculateSeqListContainer();
+				return;
+			}
+
+			oldSeqList.some(function (_, nSeq) {
+				// Compare sequences by Id
+				const oldSeq = oldSeqList[nSeq];
+				const newSeq = newSeqList[nSeq];
+
+				if (oldSeq.Id !== newSeq.Id) {
+					recalculateSeqListContainer();
+					return true;
+				}
+
+				// Compare number of groups in current sequence
+				const oldSeqGroups = seqListContainer.seqList.children[nSeq].animGroups.map(function (animGroup) {
+					return animGroup.effects;
+				});
+				const newSeqGroupsAsObject = AscFormat.groupBy(
+					newSeq.getAllEffects(),
+					function (effect) { return effect.getIndexInSequence(); }
+				);
+				const newSeqGroups = Object.keys(newSeqGroupsAsObject).map(function (groupIndex) {
+					return newSeqGroupsAsObject[groupIndex];
+				})
+
+				if (oldSeqGroups.length !== newSeqGroups.length) {
+					recalculateSeqListContainer();
+					return true;
+				}
+
+				for (let nGroup = 0; nGroup < oldSeqGroups.length; ++nGroup) {
+					// Compare number of effects in current group
+					const oldSeqGroup = oldSeqGroups[nGroup];
+					const newSeqGroup = newSeqGroups[nGroup];
+
+					if (oldSeqGroup.length !== newSeqGroup.length) {
+						recalculateSeqListContainer();
+						return true;
+					}
+
+					for (let nEffect = 0; nEffect < oldSeqGroup.length; ++nEffect) {
+						// Compare effects in currect group by Id
+						const oldEffect = oldSeqGroup[nEffect];
+						const newEffect = newSeqGroup[nEffect];
+
+						if (oldEffect.Id !== newEffect.Id) {
+							recalculateSeqListContainer();
+							return true;
+						}
+					}
+				}
+
+				seqListContainer.seqList.forEachAnimItem(function (animItem) {
+					animItem.onUpdate();
+				})
+
+				return false;
+			});
+
+			function recalculateSeqListContainer() {
+				oThis.list.Control.seqList.recalculateChildren();
+				oThis.list.Control.seqList.recalculateChildrenLayout();
+				oThis.list.Control.recalculateChildrenLayout();
+				oThis.list.Control.onUpdate();
+				oThis.list.CheckScroll();
+			}
+		})
 	};
 	oThis.onMouseDown = function (e)
 	{
+		oThis.HtmlPage.Thumbnails.SetFocusElement(FOCUS_OBJECT_ANIM_PANE);
+
+		// Order matters
+		if (oThis.header.onMouseDown(e)) { return true };
+		if (oThis.timeline.onMouseDown(e)) { return true };
+		if (oThis.list.onMouseDown(e)) { return true };
+		return false;
 	};
 	oThis.onMouseMove = function (e)
 	{
+		oThis.sentMouseMoveData = null; // can be overwritten in onMouseMove's below
+
+		oThis.header.onMouseMove(e);
+		oThis.list.onMouseMove(e);
+		oThis.timeline.onMouseMove(e);
+
+		if (oThis.sentMouseMoveData === null) {
+			const data = new AscCommon.CMouseMoveData();
+
+			Asc.editor.sync_MouseMoveStartCallback();
+			Asc.editor.sync_MouseMoveCallback(data);
+			Asc.editor.sync_MouseMoveEndCallback();
+		}
 	};
 	oThis.onMouseUp = function (e)
 	{
+		oThis.header.onMouseUp(e);
+		oThis.list.onMouseUp(e);
+		oThis.timeline.onMouseUp(e);
 	};
 	oThis.onMouseWhell = function(e)
 	{
@@ -6976,12 +7121,38 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.list.CheckPaint();
 		oThis.timeline.CheckPaint();
 	};
-
 	oThis.onMouseWhell = function(e)
 	{
 		return oThis.list.onMouseWhell(e);
 	};
+
+	oThis.UpdateState = function () {
+		if (!oThis.header.Control) { return }
+
+		oThis.header.UpdateState();
+		// TODO: oThis.list.UpdateState();
+		oThis.timeline.UpdateState();
+	};
+
+	oThis.SetCursorType = function(sType, Data) {
+		let elem = this.HtmlElement;
+		// if (Asc.editor.WordControl.DemonstrationManager.Mode)
+		// 	elem = Asc.editor.WordControl.DemonstrationManager.Canvas;
+
+		if (Asc.editor.WordControl.m_oDrawingDocument.m_sLockedCursorType === '') {
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+		} else
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+
+		if ("undefined" === typeof (Data) || null === Data)
+			Data = new AscCommon.CMouseMoveData();
+
+		Asc.editor.sync_MouseMoveStartCallback();
+		Asc.editor.sync_MouseMoveCallback(Data);
+		Asc.editor.sync_MouseMoveEndCallback();
+	};
 }
+
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
 
 //--------------------------------------------------------export----------------------------------------------------

@@ -33,8 +33,11 @@
 "use strict";
 
 
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]		= CChangesPDFDocumentAddItem;
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]	= CChangesPDFDocumentRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]			= CChangesPDFDocumentAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]		= CChangesPDFDocumentRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]			= CChangesPDFDocumentAddPage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]		= CChangesPDFDocumentRemovePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_ChangePosInTree]	= CChangesPDFDocumentChangePosInTree;
 
 /**
  * @constructor
@@ -50,8 +53,9 @@ CChangesPDFDocumentAddItem.prototype.Type = AscDFH.historyitem_PDF_Document_AddI
 
 CChangesPDFDocumentAddItem.prototype.Undo = function()
 {
-	var oDocument = this.Class;
-	let oViewer = editor.getDocumentRenderer();
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	let oViewer		= Asc.editor.getDocumentRenderer();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -70,14 +74,25 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			
 			oViewer.DrawingObjects.resetSelection();
 		}
-	}
+		else if (oItem.IsDrawing()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
 
-	oDocument.mouseDownAnnot = null;
+			oDocument.drawings.splice(nPos, 1);
+			this.PosInPage = oViewer.pagesInfo.pages[nPage].drawings.indexOf(oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 1);
+			oViewer.DrawingObjects.resetSelection();
+		}
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };
 CChangesPDFDocumentAddItem.prototype.Redo = function()
 {
-	var oDocument = this.Class;
-	let oViewer = editor.getDocumentRenderer();
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	let oViewer		= Asc.editor.getDocumentRenderer();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -97,8 +112,19 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 
 			oViewer.DrawingObjects.resetSelection();
 		}
+		else if (oItem.IsDrawing()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.drawings.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 0, oItem);
+
+			oViewer.DrawingObjects.resetSelection();
+		}
 	}
-	oDocument.mouseDownAnnot = null;
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };
 
 /**
@@ -125,7 +151,19 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem.IsAnnot()) {
+		if (oItem.IsForm()) {
+			if (oItem.IsWidget()) {
+				let nPage = oItem.GetPage();
+				oItem.AddToRedraw();
+
+				oDocument.widgets.splice(nPos, 0, oItem);
+				oViewer.pagesInfo.pages[nPage].fields.splice(nPosInPage, 0, oItem);
+			}
+			else {
+				oDocument.widgetsParents.push(oItem);
+			}
+		}
+		else if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -135,6 +173,13 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+		}
+		else if (oItem.IsDrawing()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.drawings.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 0, oItem);
 		}
 	}
 
@@ -152,7 +197,18 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem.IsAnnot()) {
+		if (oItem.IsForm()) {
+			if (oItem.IsWidget()) {
+				oDocument.RemoveForm(oItem);
+			}
+			else {
+				let nIdx = oDocument.widgetsParents.indexOf(oItem);
+				if (nIdx != -1) {
+					oDocument.widgetsParents.splice(nIdx, oItem);
+				}
+			}
+		}
+		else if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -161,7 +217,140 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 			if (oItem.GetReply(0) != null || oItem.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText && oItem.GetContents())
 				editor.sync_RemoveComment(oItem.GetId());
 		}
+		else if (oItem.IsDrawing()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.drawings.splice(nPos, 1);
+			oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
+		}
 	}
 	
 	oDocument.mouseDownAnnot = null;
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentAddPage(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentAddPage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentAddPage.prototype.constructor = CChangesPDFDocumentAddPage;
+CChangesPDFDocumentAddPage.prototype.Type = AscDFH.historyitem_PDF_Document_AddPage;
+
+CChangesPDFDocumentAddPage.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		oDocument.RemovePage(nPos);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentAddPage.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		let oItem = this.Items[nIndex];
+		oDocument.AddPage(nPos, oItem)
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentRemovePage(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentRemovePage.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentRemovePage.prototype.constructor = CChangesPDFDocumentRemovePage;
+CChangesPDFDocumentRemovePage.prototype.Type = AscDFH.historyitem_PDF_Document_RemovePage;
+
+CChangesPDFDocumentRemovePage.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		let oItem = this.Items[nIndex];
+		oDocument.AddPage(nPos, oItem);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentRemovePage.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
+		oDocument.RemovePage(nPos)
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentChangePosInTree(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentChangePosInTree.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentChangePosInTree.prototype.constructor = CChangesPDFDocumentChangePosInTree;
+CChangesPDFDocumentChangePosInTree.prototype.Type = AscDFH.historyitem_PDF_Document_ChangePosInTree;
+
+CChangesPDFDocumentChangePosInTree.prototype.Undo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nOldPos = this.Pos[0];
+		oDocument.ChangeObjectPosInPageTree(this.Items[0], nOldPos);
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFDocumentChangePosInTree.prototype.Redo = function()
+{
+	let oDocument	= this.Class;
+	let oDrDoc		= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nNewPos = this.Pos[1];
+		oDocument.ChangeObjectPosInPageTree(this.Items[0], nNewPos);
+	}
+
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
 };

@@ -37,7 +37,7 @@
 // Import
 var CShape = AscFormat.CShape;
 
-CShape.prototype.IsUseInDocument = function(drawingObjects)
+CShape.prototype.IsUseInDocument = function()
 {
     if(this.group)
     {

@@ -277,6 +277,14 @@
 		return false;
 	};
 	/**
+	 * Является ли данный элемент текстовым элементом внутри математического выражения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsMathText = function()
+	{
+		return false;
+	};
+	/**
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsTab = function()

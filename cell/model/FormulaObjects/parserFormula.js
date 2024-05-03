@@ -4519,6 +4519,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return list;
 	}
+	function addNewFunction(func) {
+		if (!func) {
+			return;
+		}
+		let a = new func();
+		let f = new AscCommon.asc_CFormula(a);
+		cFormulaFunction[f.asc_getName()] = func;
+		cAllFormulaFunction[a.name] = func;
+	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
@@ -7140,7 +7149,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
 			}
-			if (isFoundImportFunctions) {
+			if (isFoundImportFunctions && !parseResult.error) {
 				//share external links
 				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				this.calculate();
@@ -7163,6 +7172,15 @@ function parserFormula( formula, parent, _ws ) {
 							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
 								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
 							}
+						}
+					}
+
+					if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						if (!AscCommonExcel.importRangeLinksState.notUpdateIdMap) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap = {};
+						}
+						for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap[i] = true;
 						}
 					}
 
@@ -9102,6 +9120,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
+	window['AscCommonExcel'].addNewFunction = addNewFunction;
 
 	window['AscCommonExcel']._func = _func;
 

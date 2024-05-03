@@ -466,6 +466,14 @@ CParagraphContentBase.prototype.Cursor_Is_End = function()
 {
 	return true;
 };
+CParagraphContentBase.prototype.IsStartPos = function(contentPos, depth)
+{
+	return true;
+};
+CParagraphContentBase.prototype.IsEndPos = function(contentPos, depth)
+{
+	return true;
+};
 /**
  * TODO: Надо объединить эту функцию с  IsCursorPlaceable, поскольку они по смыслу одинаковые
  * и сделать тут по умолчанию false
@@ -3077,6 +3085,34 @@ CParagraphContentWithParagraphLikeContent.prototype.Cursor_Is_End = function()
 
     return this.Content[CurPos].Cursor_Is_End();
 };
+CParagraphContentWithParagraphLikeContent.prototype.IsStartPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	let pos = contentPos.Get(depth);
+	if (!this.Content[pos])
+		return false;
+	
+	if (pos !== 0)
+		return false;
+	
+	return this.Content[pos].IsStartPos(contentPos, depth + 1);
+};
+CParagraphContentWithParagraphLikeContent.prototype.IsEndPos = function(contentPos, depth)
+{
+	if (depth >= contentPos.Depth)
+		return true;
+	
+	let pos = contentPos.Get(depth);
+	if (!this.Content[pos])
+		return true;
+	
+	if (pos !== this.Content.length - 1)
+		return false;
+	
+	return this.Content[pos].IsEndPos(contentPos, depth + 1);
+};
 CParagraphContentWithParagraphLikeContent.prototype.MoveCursorToStartPos = function()
 {
     this.State.ContentPos = 0;
@@ -4908,9 +4944,9 @@ function private_ParagraphContentChangesCheckLock(lockData)
 	
 	if (this.IsContentChange())
 	{
-		if (isForm && lockData && !lockData.isFillingForm())
+		if (isForm && lockData && !lockData.isSkipFormCheck())
 			lockData.lock();
-		
+
 		if (!isCC && lockData && lockData.isFillingForm())
 			lockData.lock();
 	}

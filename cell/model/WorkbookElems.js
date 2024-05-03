@@ -5443,6 +5443,7 @@ CCellStyles.prototype._prepareCellStyle = function (name) {
 		return style.XfId;
 
 	if (defaultStyle) {
+		//todo add to history. it allows save XfId in history
 		this.CustomStyles[i] = defaultStyle.clone();
 		this.CustomStyles[i].XfId = ++maxXfId;
 		return this.CustomStyles[i].XfId;
@@ -6381,6 +6382,7 @@ StyleManager.prototype =
 		this.xfs = g_StyleCache.addXf(xfs);
 	};
 	Col.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6389,7 +6391,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, false, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6403,6 +6405,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Col.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));
@@ -6789,6 +6792,7 @@ StyleManager.prototype =
 		this._hasChanged = true;
 	};
 	Row.prototype.setCellStyle = function (val) {
+		var oStyle;
 		var newVal = this.ws.workbook.CellStyles._prepareCellStyle(val);
 		var oRes = this.ws.workbook.oStyleManager.setCellStyle(this, newVal);
 		if (History.Is_On() && oRes.oldVal != oRes.newVal) {
@@ -6797,7 +6801,7 @@ StyleManager.prototype =
 				this._getUpdateRange(), new UndoRedoData_IndexSimpleProp(this.index, true, oldStyleName, val));
 
 			// Выставляем стиль
-			var oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
+			oStyle = this.ws.workbook.CellStyles.getStyleByXfId(oRes.newVal);
 			if (oStyle.ApplyFont) {
 				this.setFont(oStyle.getFont());
 			}
@@ -6811,6 +6815,7 @@ StyleManager.prototype =
 				this.setNumFormat(oStyle.getNumFormatStr());
 			}
 		}
+		return oStyle;
 	};
 	Row.prototype.setNumFormat = function (val) {
 		var oRes = this.ws.workbook.oStyleManager.setNum(this, new Num({f: val}));
@@ -14391,6 +14396,7 @@ function RangeDataManagerElem(bbox, data)
 		return this.name;
 	};
 
+
 	function CPrintPreviewState(wb) {
 		this.ctx = null;
 		this.pages = null;
@@ -14966,6 +14972,9 @@ function RangeDataManagerElem(bbox, data)
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
+			if (this.worksheets[null]) {
+				this.changeSheetName(null, sheetName);
+			}
 			if (this.worksheets && this.worksheets[sheetName]) {
 				let wsTo = this.worksheets[sheetName];
 				//меняем лист
@@ -15000,13 +15009,31 @@ function RangeDataManagerElem(bbox, data)
 		//path also can changed
 		var path = oPortalData && oPortalData["path"];
 		if (path && this.Id !== path) {
-			!this.notUpdateId && this.setId(path);
+			let isNotUpdate = (AscCommonExcel.importRangeLinksState && AscCommonExcel.importRangeLinksState.notUpdateIdMap[this.Id]) || this.notUpdateId;
+			!isNotUpdate && this.setId(path);
 			isChanged = true;
 		}
 
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 				null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneER, this));
+		}
+	};
+
+	ExternalReference.prototype.changeSheetName = function (from, to) {
+		for (let i in this.SheetNames) {
+			if (this.SheetNames[i] === from) {
+				this.SheetNames[i] = to;
+			}
+		}
+
+		for (let i in this.worksheets) {
+			if (i === from + "") {
+				let _val = this.worksheets[i];
+				_val.sName = to;
+				this.worksheets[to] = _val;
+				delete this.worksheets[from];
+			}
 		}
 	};
 
@@ -15196,7 +15223,7 @@ function RangeDataManagerElem(bbox, data)
 	ExternalReference.prototype.initRows = function (range) {
 
 		var sheetName = range && range.worksheet && range.worksheet.sName;
-		if (sheetName) {
+		if (sheetName !== undefined) {
 			var index = this.getSheetByName(sheetName);
 			if (index != null) {
 				var externalSheetDataSet = this.SheetDataSet[index];
@@ -17003,8 +17030,12 @@ function RangeDataManagerElem(bbox, data)
 
 	function CCustomFunctionEngine(wb) {
 		this.wb = wb;
+		this.funcsMapInfo = {};
 
-		this.prefixName = "CUSTOMFUNCTION_";
+		this.localiztionMap = {};//{en: {"SUM": "SUMMA"}{"SUMMA": "SUM"}}
+
+		this.prefixName = "";
+		this.activeLocale = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17041,12 +17072,16 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 
-		//TODO while add prefix "CUSTOMFUNCTION_", later need change prefix name
 		//prefix add for separate main function from custom function
 		//!!!_xldudf
 		funcName = this.prefixName + funcName;
 
-		let params = options && options["params"];
+		let oFormulaList = AscCommonExcel.cFormulaFunction;
+		if (!this.funcsMapInfo[funcName] && oFormulaList[funcName]) {
+			console.log("REGISTRAION_ERROR_CONFLICTED_FUNCTION_NAME");
+		}
+
+		let params = options && options.params;
 		let argsInfo = this._getParamsInfo(func, params);
 
 		let argumentsType = [];
@@ -17129,14 +17164,19 @@ function RangeDataManagerElem(bbox, data)
 				let res = func.apply(this, args);
 
 				//prepare result
-				let returnInfo = options["returnInfo"];
+				let returnInfo = options.returnInfo;
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
-				console.log("ERROR CUSTOM FUNCTION CALCULATE")
+				console.log("ERROR CUSTOM FUNCTION CALCULATE");
+				return  new AscCommonExcel.cError(AscCommonExcel.cErrorType.wrong_value_type);
 			}
 		};
 
-		this.addToFunctionsList(newFunc);
+		this.addToFunctionsList(newFunc, options);
+	};
+
+	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
+		this.activeLocale = sLocale;
 	};
 
 	CCustomFunctionEngine.prototype._getParamsInfo = function (func, params) {
@@ -17158,11 +17198,11 @@ function RangeDataManagerElem(bbox, data)
 			let _isOptional = false;
 			let _defaultValue = null;
 			if (curParams) {
-				if (curParams["type"]) {
-					type = curParams["type"];
+				if (curParams.type) {
+					type = curParams.type;
 				}
-				_isOptional = curParams["isOptional"];
-				_defaultValue = curParams["defaultValue"];
+				_isOptional = curParams.isOptional;
+				_defaultValue = curParams.defaultValue;
 			}
 			argsInfo.push({type: type, isOptional: _isOptional, defaultValue: _defaultValue});
 		}
@@ -17176,31 +17216,77 @@ function RangeDataManagerElem(bbox, data)
 		return sFunc.slice(sFunc.indexOf('(') + 1, sFunc.indexOf(')')).match(funcArgsNamesRegExp);
 	};
 
-	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc) {
-		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+	CCustomFunctionEngine.prototype.addToFunctionsList = function (newFunc, params) {
+		AscCommonExcel.cFormulaFunctionGroup['Custom'] = AscCommonExcel.cFormulaFunctionGroup['Custom'] || [];
+
+		let translations = params.nameLocale;
+		let description = params.description;
 
 		let funcName = newFunc.prototype.name;
 
-		let isDuplicateName = false;
-		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
-			AscCommonExcel.cFormulaFunction;
-		if (oFormulaList[funcName]) {
-			isDuplicateName = true;
-		}
+		//already added function
+		let isNewFunc = false;
+		if (this.funcsMapInfo[funcName]) {
+			//reload translations
+			this.pushTranslations(funcName, translations);
 
-		if (isDuplicateName) {
-			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["custom"];
+			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["Custom"];
 			for (let i in customFunctionList) {
 				if (customFunctionList[i] && customFunctionList[i].prototype.name === funcName) {
-					customFunctionList.splice(i - 0, 0);
+					customFunctionList.splice(i - 0, 1);
 					break;
 				}
 			}
+		} else {
+			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
+			this.pushTranslations(funcName, translations);
+			this.funcsMapInfo[funcName].description = description;
+			isNewFunc = true;
 		}
 
-		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
-		window['AscCommonExcel'].getFormulasInfo();
+		//add or reload
+		if (AscCommonExcel.cFormulaFunctionToLocale && ((!this.funcsMapInfo[funcName].addLocalization
+			&& !AscCommonExcel.cFormulaFunctionToLocale[funcName]) || this.funcsMapInfo[funcName].addLocalization)) {
+
+			//need get from interface short formula lang("en", ...)
+			let localName = this.getTranslationName(funcName, this.activeLocale);
+			AscCommonExcel.cFormulaFunctionLocalized[localName] = newFunc;
+			AscCommonExcel.cFormulaFunctionToLocale[funcName] = localName;
+
+			this.funcsMapInfo[funcName].addLocalization = true;
+			this.funcsMapInfo[funcName].description = description;
+		}
+
+		AscCommonExcel.cFormulaFunctionGroup["Custom"].push(newFunc);
+		AscCommonExcel.addNewFunction(newFunc);
 		this.wb.initFormulasList && this.wb.initFormulasList();
+		if (this.wb && this.wb.Api) {
+			this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+		}
+		if (isNewFunc) {
+			this.wb.handlers && this.wb.handlers.trigger("asc_onAddCustomFunction");
+		}
+	};
+
+	CCustomFunctionEngine.prototype.pushTranslations = function (funcName, translations) {
+		for (let i in translations) {
+			if (!translations[i]) {
+				continue;
+			}
+			if (!this.localiztionMap[i]) {
+				this.localiztionMap[i] = {};
+			}
+			if (!this.localiztionMap[i].fullNameToLocalName) {
+				this.localiztionMap[i].fullNameToLocalName = {};
+			}
+			if (!this.localiztionMap[i].localNameToFullName) {
+				this.localiztionMap[i].localNameToFullName = {};
+			}
+
+
+			this.localiztionMap[i].fullNameToLocalName[funcName] = (translations[i] + "").toUpperCase();
+			this.localiztionMap[i].localNameToFullName[translations[i]] = funcName;
+		}
 	};
 
 	CCustomFunctionEngine.prototype.getTypeByString = function (_type) {
@@ -17305,6 +17391,47 @@ function RangeDataManagerElem(bbox, data)
 			case "any[][]":
 				res = _elem.toArray(true, true);
 				break;
+		}
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype.getFunc = function (name, bLocale) {
+		if (bLocale) {
+			let activeLocale = this.activeLocale;
+			if (this.localiztionMap[activeLocale]) {
+				if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+					name = this.localiztionMap[activeLocale].localNameToFullName[name];
+				}
+			}
+		}
+
+		return this.funcsMapInfo[name];
+	};
+	
+	CCustomFunctionEngine.prototype.getDescription = function (name, ignoreLocale) {
+		let res = null;
+
+		let activeLocale = this.activeLocale;
+		if (!ignoreLocale && this.localiztionMap[activeLocale]) {
+			if (this.localiztionMap[activeLocale].localNameToFullName[name]) {
+				name = this.localiztionMap[activeLocale].localNameToFullName[name];
+			}
+		}
+
+		if (this.funcsMapInfo[name]) {
+			res = this.funcsMapInfo[name].description;
+		}
+
+		return res;
+	};
+
+	CCustomFunctionEngine.prototype.getTranslationName = function (name, lang) {
+		let res = name;
+		if (this.localiztionMap[lang]) {
+			let localName = this.localiztionMap[lang].fullNameToLocalName[name];
+			if (localName) {
+				res = this.localiztionMap[lang].fullNameToLocalName[name];
+			}
 		}
 		return res;
 	};
@@ -17475,6 +17602,16 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+
+	function CCustomFunctionInfo(name) {
+		this.name = name;
+		this.description = null;
+
+		this.addLocalization = null;
+	}
+	CCustomFunctionInfo.prototype.asc_getDescription = function () {
+		return this.description;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -17992,6 +18129,9 @@ function RangeDataManagerElem(bbox, data)
 
 	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
 
+	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
+	prot = CCustomFunctionInfo.prototype;
+	prot["asc_getDescription"] = prot.asc_getDescription;
 
 
 })(window);

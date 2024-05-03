@@ -3099,10 +3099,6 @@
 	 * Class representing a document form base.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {string} key - Form key.
-	 * @property {string} tip - Form tip text.
-	 * @property {boolean} required - Specifies if the form is required or not.
-	 * @property {string} placeholder - Form placeholder text.
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -3113,11 +3109,6 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text field.
-	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3132,12 +3123,6 @@
 	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} editable - Specifies if the combo box text can be edited.
-	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
-	 * @property {Array.<string | Array.<string>>} items - The combo box items.
-     * This array consists of strings or arrays of two strings where the first string is the displayed value and the second one is its meaning.
-     * If the array consists of single strings, then the displayed value and its meaning are the same.
-     * Example: ["First", ["Second", "2"], ["Third", "3"], "Fourth"].
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3152,7 +3137,6 @@
 	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3167,17 +3151,6 @@
 	 * Class representing a document picture form.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
-	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
-	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
-	 * @property {percentage} shiftX - Horizontal picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on the left;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right.
-	 * @property {percentage} shiftY - Vertical picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the bottom.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
@@ -3187,6 +3160,20 @@
 
 	ApiPictureForm.prototype = Object.create(ApiFormBase.prototype);
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
+
+	/**
+	 * Class representing a document date field.
+	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @extends {ApiFormBase}
+	 */
+	function ApiDateForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiDateForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiDateForm.prototype.constructor = ApiDateForm;
 
 	/**
 	 * Class representing a complex field.
@@ -4032,7 +4019,7 @@
 
 	/**
 	 * Types of all supported forms.
-	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
+	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiDateForm | ApiComplexForm} ApiForm
 	 */
 
 	/**
@@ -6932,11 +6919,11 @@
 	 */
 	ApiDocument.prototype.AddFootnote = function()
 	{
-		let oResult = this.Document.AddFootnote();
-		if (!oResult)
+		let footnote = this.Document._addFootnote();
+		if (!footnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(footnote);
 	};
 
 	/**
@@ -6947,11 +6934,11 @@
 	 */
 	ApiDocument.prototype.AddEndnote = function()
 	{
-		let oResult = this.Document.AddEndnote();
-		if (!oResult)
+		let endnote = this.Document._addEndnote();
+		if (!endnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(endnote);
 	};
 
 	/**
@@ -7532,7 +7519,6 @@
 	{
 		var oParagraph = this.Paragraph.Copy(undefined, private_GetDrawingDocument(), {
 			SkipComments          : true,
-			SkipAnchors           : true,
 			SkipFootnoteReference : true,
 			SkipComplexFields     : true
 		});
@@ -12131,6 +12117,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiStyle} - The used style.
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStyle = function()
 	{
@@ -12164,6 +12151,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetBold = function()
 	{
@@ -12189,6 +12177,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetItalic = function()
 	{
@@ -12214,6 +12203,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStrikeout = function()
 	{
@@ -12240,6 +12230,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetUnderline = function()
 	{
@@ -12265,6 +12256,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontFamily = function()
 	{
@@ -12290,6 +12282,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontSize = function()
 	{
@@ -12322,6 +12315,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetColor = function()
 	{
@@ -12361,6 +12355,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetVertAlign = function()
 	{
@@ -12414,6 +12409,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetHighlight = function()
 	{
@@ -12445,6 +12441,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?twips}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSpacing = function()
 	{
@@ -12475,10 +12472,11 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
-		return this.TextPr.GetDoubleStrikeout();
+		return this.TextPr.GetDStrikeout();
 	};
 
 	/**
@@ -12500,6 +12498,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetCaps = function()
 	{
@@ -12526,6 +12525,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSmallCaps = function()
 	{
@@ -12553,6 +12553,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetPosition = function()
 	{
@@ -12590,6 +12591,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetLanguage = function()
 	{
@@ -12625,6 +12627,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetShd = function()
 	{
@@ -12655,6 +12658,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFill = function()
 	{
@@ -12685,6 +12689,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetTextFill = function()
 	{
@@ -12715,6 +12720,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiStroke}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetOutLine = function()
 	{
@@ -16760,6 +16766,17 @@
 		oDocument.UpdateSelection();
 		return new ApiComment(comment)
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 
 	/**
 	 * Returns a list of values of the combo box / dropdown list content control.
@@ -17809,6 +17826,17 @@
 		
 		return new ApiContentControlList(this);
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -17845,6 +17873,8 @@
 			return "checkBoxForm";
 		if (this.Sdt.IsPictureForm())
 			return "pictureForm";
+		if (this.Sdt.IsDatePicker())
+			return "dateForm";
 	};
 	/**
 	 * Returns the current form key.
@@ -17873,23 +17903,25 @@
 	 */
 	ApiFormBase.prototype.SetFormKey = function(sKey)
 	{
-		if (typeof(sKey) !== "string")
-			return false;
-
-		if (this.GetFormType() === "radioButtonForm")
-		{
-			sKey = sKey === "" ? "Group 1" : sKey;
-			this.Sdt.GetCheckBoxPr().SetGroupKey(sKey);
-		}
-		else
-		{
-			sKey = sKey === "" ? undefined : sKey;
-			var oFormPr = this.Sdt.GetFormPr().Copy();
-			oFormPr && oFormPr.SetKey(sKey);
-			this.Sdt.SetFormPr(oFormPr);
-		}
-		
-		return true;
+		return executeNoFormLockCheck(function() {
+			if (typeof (sKey) !== "string")
+				return false;
+			
+			if (this.GetFormType() === "radioButtonForm")
+			{
+				sKey = sKey === "" ? "Group 1" : sKey;
+				this.Sdt.GetCheckBoxPr().SetGroupKey(sKey);
+			}
+			else
+			{
+				sKey = sKey === "" ? undefined : sKey;
+				var oFormPr = this.Sdt.GetFormPr().Copy();
+				oFormPr && oFormPr.SetKey(sKey);
+				this.Sdt.SetFormPr(oFormPr);
+			}
+			
+			return true;
+		}, this);
 	};
 	/**
 	 * Returns the tip text of the current form.
@@ -17915,14 +17947,16 @@
 	 */
 	ApiFormBase.prototype.SetTipText = function(sText)
 	{
-		if (typeof(sText) !== "string")
-			return false;
-
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		oFormPr && oFormPr.SetHelpText(sText);
-
-		this.Sdt.SetFormPr(oFormPr);
-		return true;
+		return executeNoFormLockCheck(function() {
+			if (typeof (sText) !== "string")
+				return false;
+			
+			var oFormPr = this.Sdt.GetFormPr().Copy();
+			oFormPr && oFormPr.SetHelpText(sText);
+			
+			this.Sdt.SetFormPr(oFormPr);
+			return true;
+		}, this);
 	};
 	/**
 	 * Checks if the current form is required.
@@ -17943,16 +17977,18 @@
 	 */
 	ApiFormBase.prototype.SetRequired = function(bRequired)
 	{
-		if (typeof(bRequired) !== "boolean")
-			return false;
-		if (bRequired === this.IsRequired())
+		return executeNoFormLockCheck(function() {
+			if (typeof (bRequired) !== "boolean")
+				return false;
+			if (bRequired === this.IsRequired())
+				return true;
+			
+			var oFormPr = this.Sdt.GetFormPr().Copy();
+			oFormPr && oFormPr.SetRequired(bRequired);
+			
+			this.Sdt.SetFormPr(oFormPr);
 			return true;
-
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		oFormPr && oFormPr.SetRequired(bRequired);
-
-		this.Sdt.SetFormPr(oFormPr);
-		return true;
+		}, this);
 	};
 	/**
 	 * Checks if the current form is fixed size.
@@ -17974,11 +18010,13 @@
 	 */
 	ApiFormBase.prototype.ToFixed = function(nWidth, nHeight)
 	{
-		if (this.IsFixed())
-			return false;
-		
-		this.Sdt.ConvertFormToFixed(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
-		return true;
+		return executeNoFormLockCheck(function() {
+			if (this.IsFixed())
+				return false;
+			
+			this.Sdt.ConvertFormToFixed(private_Twips2MM(nWidth), private_Twips2MM(nHeight));
+			return true;
+		}, this);
 	};
 	/**
 	 * Converts the current form to an inline form.
@@ -17989,11 +18027,13 @@
 	 */
 	ApiFormBase.prototype.ToInline = function()
 	{
-		if (!this.IsFixed())
-			return false;
-
-		this.Sdt.ConvertFormToInline();
-		return true;
+		return executeNoFormLockCheck(function() {
+			if (!this.IsFixed())
+				return false;
+			
+			this.Sdt.ConvertFormToInline();
+			return true;
+		}, this);
 	};
 	/**
 	 * Sets the border color to the current form.
@@ -18007,22 +18047,24 @@
 	 */
 	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
 	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		var oBorder;
-		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
-		{
-			oBorder = new CDocumentBorder();
-			oBorder.Color = new CDocumentColor(r, g, b);
-		}
-		else if (bNone)
-			oBorder = undefined;
-		else
-			return false;
-
-		oFormPr.Border = oBorder;
-
-		this.Sdt.SetFormPr(oFormPr);
-		return true;
+		return executeNoFormLockCheck(function() {
+			var oFormPr = this.Sdt.GetFormPr().Copy();
+			var oBorder;
+			if (typeof (r) == "number" && typeof (g) == "number" && typeof (b) == "number" && !bNone)
+			{
+				oBorder       = new CDocumentBorder();
+				oBorder.Color = new CDocumentColor(r, g, b);
+			}
+			else if (bNone)
+				oBorder = undefined;
+			else
+				return false;
+			
+			oFormPr.Border = oBorder;
+			
+			this.Sdt.SetFormPr(oFormPr);
+			return true;
+		}, this);
 	};
 	/**
 	 * Sets the background color to the current form.
@@ -18071,7 +18113,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -18087,7 +18129,9 @@
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
-		this.Sdt.ClearContentControlExt();
+		return executeNoFormLockCheck(function() {
+			this.Sdt.ClearContentControlExt();
+		}, this);
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
@@ -18115,17 +18159,19 @@
 	 */
 	ApiFormBase.prototype.SetPlaceholderText = function(sText)
 	{
-		if (typeof(sText) !== "string" || sText === "")
-			return false;
-		if (this.Sdt.IsCheckBox() || this.Sdt.IsRadioButton())
-			return false;
-		
-		this.Sdt.SetPlaceholderText(sText);
-		return true;
+		return executeNoFormLockCheck(function() {
+			if (typeof (sText) !== "string" || sText === "")
+				return false;
+			if (this.Sdt.IsCheckBox() || this.Sdt.IsRadioButton())
+				return false;
+			
+			this.Sdt.SetPlaceholderText(sText);
+			return true;
+		}, this);
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -18143,7 +18189,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -18153,6 +18199,16 @@
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
 	};
 	/**
+	 * Place cursor before/after the current form.
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
+	/**
 	 * Copies the current form (copies with the shape if it exists).
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
@@ -18160,36 +18216,38 @@
 	 */
 	ApiFormBase.prototype.Copy = function()
 	{
-		let oSdt;
-		if (this.IsFixed())
-		{
-			var oParagraph = this.Sdt.GetParagraph();
-			var oShape     = oParagraph.Parent.Is_DrawingShape(true);
-			if (!oShape || !oShape.parent || !oShape.isForm())
+		return executeNoFormLockCheck(function(){
+			let oSdt;
+			if (this.IsFixed())
+			{
+				var oParagraph = this.Sdt.GetParagraph();
+				var oShape     = oParagraph.Parent.Is_DrawingShape(true);
+				if (!oShape || !oShape.parent || !oShape.isForm())
+					return null;
+	
+				var oDrawing = oShape.parent.Copy({
+					SkipComments          : true,
+					SkipAnchors           : true,
+					SkipFootnoteReference : true,
+					SkipComplexFields     : true
+				});
+				oSdt = oDrawing.GraphicObj.getInnerForm();
+			}
+			else
+			{
+				oSdt = this.Sdt.Copy(false, {
+					SkipComments          : true,
+					SkipAnchors           : true,
+					SkipFootnoteReference : true,
+					SkipComplexFields     : true
+				});
+			}
+	
+			if (!oSdt)
 				return null;
-
-			var oDrawing = oShape.parent.Copy({
-				SkipComments          : true,
-				SkipAnchors           : true,
-				SkipFootnoteReference : true,
-				SkipComplexFields     : true
-			});
-			oSdt = oDrawing.GraphicObj.getInnerForm();
-		}
-		else
-		{
-			oSdt = this.Sdt.Copy(false, {
-				SkipComments          : true,
-				SkipAnchors           : true,
-				SkipFootnoteReference : true,
-				SkipComplexFields     : true
-			});
-		}
-
-		if (!oSdt)
-			return null;
-
-		return new this.constructor(oSdt);
+	
+			return new this.constructor(oSdt);
+		}, this);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -18217,16 +18275,18 @@
 	 */
 	ApiTextForm.prototype.SetAutoFit = function(bAutoFit)
 	{
-		if (typeof(bAutoFit) !== "boolean" || !this.IsFixed())
-			return false;
-		if (bAutoFit === this.IsAutoFit())
+		return executeNoFormLockCheck(function(){
+			if (typeof (bAutoFit) !== "boolean" || !this.IsFixed())
+				return false;
+			if (bAutoFit === this.IsAutoFit())
+				return true;
+			
+			var oPr = this.Sdt.GetTextFormPr().Copy();
+			oPr.SetAutoFit(bAutoFit);
+			
+			this.Sdt.SetTextFormPr(oPr);
 			return true;
-
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.SetAutoFit(bAutoFit);
-
-		this.Sdt.SetTextFormPr(oPr);
-		return true;
+		}, this);
 	};
 	/**
 	 * Checks if the current text field is multiline.
@@ -18247,18 +18307,20 @@
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
-		if (typeof(bMultiline) !== "boolean" || !this.IsFixed())
-			return false;
-		if (!this.IsFixed())
-			return false;
-		if (bMultiline === this.IsMultiline())
+		return executeNoFormLockCheck(function(){
+			if (typeof (bMultiline) !== "boolean" || !this.IsFixed())
+				return false;
+			if (!this.IsFixed())
+				return false;
+			if (bMultiline === this.IsMultiline())
+				return true;
+			
+			var oPr = this.Sdt.GetTextFormPr().Copy();
+			oPr.SetMultiLine(bMultiline);
+			this.Sdt.SetTextFormPr(oPr);
+			
 			return true;
-
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.SetMultiLine(bMultiline);
-		this.Sdt.SetTextFormPr(oPr);
-
-		return true;
+		}, this);
 	};
 	/**
 	 * Returns a limit of the text field characters.
@@ -18285,24 +18347,26 @@
 	 */
 	ApiTextForm.prototype.SetCharactersLimit = function(nChars)
 	{
-		if (typeof(nChars) !== "number")
-			return false;
-
-		const nMax = 1000000;
-		nChars = nChars > nMax ? nMax : Math.floor(nChars);
-
-		if (nChars <= 0)
-			nChars = -1;
-
-		let oPr = this.Sdt.GetTextFormPr();
-		if (!oPr || (-1 === nChars && this.IsComb()))
-			return false;
-
-		oPr = oPr.Copy();
-		oPr.SetMaxCharacters(nChars);
-
-		this.Sdt.SetTextFormPr(oPr);
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (typeof (nChars) !== "number")
+				return false;
+			
+			const nMax = 1000000;
+			nChars     = nChars > nMax ? nMax : Math.floor(nChars);
+			
+			if (nChars <= 0)
+				nChars = -1;
+			
+			let oPr = this.Sdt.GetTextFormPr();
+			if (!oPr || (-1 === nChars && this.IsComb()))
+				return false;
+			
+			oPr = oPr.Copy();
+			oPr.SetMaxCharacters(nChars);
+			
+			this.Sdt.SetTextFormPr(oPr);
+			return true;
+		}, this);
 	};
 	/**
 	 * Checks if the text field is a comb of characters with the same cell width.
@@ -18325,24 +18389,26 @@
 	 */
 	ApiTextForm.prototype.SetComb = function(bComb)
 	{
-		if (typeof(bComb) !== "boolean")
-			return false;
-
-		let oPr = this.Sdt.GetTextFormPr();
-		if (!oPr)
-			return false;
-
-		if (oPr.IsComb() === bComb)
+		return executeNoFormLockCheck(function(){
+			if (typeof (bComb) !== "boolean")
+				return false;
+			
+			let oPr = this.Sdt.GetTextFormPr();
+			if (!oPr)
+				return false;
+			
+			if (oPr.IsComb() === bComb)
+				return true;
+			
+			oPr = oPr.Copy();
+			oPr.SetComb(bComb);
+			if (oPr.GetMaxCharacters() === -1)
+				oPr.SetMaxCharacters(10);
+			oPr.SetWidth(0);
+			
+			this.Sdt.SetTextFormPr(oPr);
 			return true;
-
-		oPr = oPr.Copy();
-		oPr.SetComb(bComb);
-		if (oPr.GetMaxCharacters() === -1)
-			oPr.SetMaxCharacters(10);
-		oPr.SetWidth(0);
-
-		this.Sdt.SetTextFormPr(oPr);
-		return true;
+		}, this);
 	};
 	/**
 	 * Sets the cell width to the applied comb of characters.
@@ -18354,18 +18420,20 @@
 	 */
 	ApiTextForm.prototype.SetCellWidth = function(nCellWidth)
 	{
-		if (typeof(nCellWidth) !== "number" || !this.IsComb())
-			return false;
-
-		var nWidthMax = 558.8;
-		nCellWidth = nCellWidth < 1 ? 1 : Math.floor(nCellWidth * 100) / 100;
-		nCellWidth = nCellWidth > nWidthMax ? nWidthMax : nCellWidth;
-
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.SetWidth(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
-
-		this.Sdt.SetTextFormPr(oPr);
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (typeof (nCellWidth) !== "number" || !this.IsComb())
+				return false;
+			
+			var nWidthMax = 558.8;
+			nCellWidth    = nCellWidth < 1 ? 1 : Math.floor(nCellWidth * 100) / 100;
+			nCellWidth    = nCellWidth > nWidthMax ? nWidthMax : nCellWidth;
+			
+			var oPr = this.Sdt.GetTextFormPr().Copy();
+			oPr.SetWidth(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
+			
+			this.Sdt.SetTextFormPr(oPr);
+			return true;
+		}, this);
 	};
 	/**
 	 * Sets the text to the current text field.
@@ -18376,13 +18444,15 @@
 	 */
 	ApiTextForm.prototype.SetText = function(sText)
 	{
-		let _sText = GetStringParameter(sText, null);
-		if (!_sText)
-			return false;
-
-		this.Sdt.SetInnerText(_sText);
-		this.OnChangeValue();
-		return true;
+		return executeNoFormLockCheck(function(){
+			let _sText = GetStringParameter(sText, null);
+			if (!_sText)
+				return false;
+	
+			this.Sdt.SetInnerText(_sText);
+			this.OnChangeValue();
+			return true;
+		}, this);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -18428,30 +18498,32 @@
 	 */
 	ApiPictureForm.prototype.SetScaleFlag = function(sScaleFlag)
 	{
-		let nScaleFlag;
-		switch (sScaleFlag)
-		{
-			case "always":
-				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Always;
-				break;
-			case "never":
-				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Never;
-				break;
-			case "tooBig":
-				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Bigger;
-				break;
-			case "tooSmall":
-				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Small;
-				break;
-			default:
-				return false;
-		}
-
-		var oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetScaleFlag(nScaleFlag);
-		this.Sdt.SetPictureFormPr(oPr);
-		this.Sdt.UpdatePictureFormLayout();
-		return true;
+		return executeNoFormLockCheck(function(){
+			let nScaleFlag;
+			switch (sScaleFlag)
+			{
+				case "always":
+					nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Always;
+					break;
+				case "never":
+					nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Never;
+					break;
+				case "tooBig":
+					nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Bigger;
+					break;
+				case "tooSmall":
+					nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Small;
+					break;
+				default:
+					return false;
+			}
+	
+			var oPr = this.Sdt.GetPictureFormPr().Copy();
+			oPr.SetScaleFlag(nScaleFlag);
+			this.Sdt.SetPictureFormPr(oPr);
+			this.Sdt.UpdatePictureFormLayout();
+			return true;
+		}, this);
 	};
 	/**
 	 * Locks the aspect ratio of the current picture form.
@@ -18462,11 +18534,13 @@
 	 */
 	ApiPictureForm.prototype.SetLockAspectRatio = function(isLock)
 	{
-		let oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetConstantProportions(GetBoolParameter(isLock, false));
-		this.Sdt.SetPictureFormPr(oPr);
-		this.Sdt.UpdatePictureFormLayout();
-		return true;
+		return executeNoFormLockCheck(function(){
+			let oPr = this.Sdt.GetPictureFormPr().Copy();
+			oPr.SetConstantProportions(GetBoolParameter(isLock, false));
+			this.Sdt.SetPictureFormPr(oPr);
+			this.Sdt.UpdatePictureFormLayout();
+			return true;
+		}, this);
 	};
 	/**
 	 * Checks if the aspect ratio of the current picture form is locked or not.
@@ -18491,12 +18565,14 @@
 	 */
 	ApiPictureForm.prototype.SetPicturePosition = function(nShiftX, nShiftY)
 	{
-		let oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetShiftX(Math.max(0, Math.min(100, GetNumberParameter(nShiftX, 50))) / 100);
-		oPr.SetShiftY(Math.max(0, Math.min(100, GetNumberParameter(nShiftY, 50))) / 100);
-		this.Sdt.SetPictureFormPr(oPr);
-		this.Sdt.UpdatePictureFormLayout();
-		return true;
+		return executeNoFormLockCheck(function(){
+			let oPr = this.Sdt.GetPictureFormPr().Copy();
+			oPr.SetShiftX(Math.max(0, Math.min(100, GetNumberParameter(nShiftX, 50))) / 100);
+			oPr.SetShiftY(Math.max(0, Math.min(100, GetNumberParameter(nShiftY, 50))) / 100);
+			this.Sdt.SetPictureFormPr(oPr);
+			this.Sdt.UpdatePictureFormLayout();
+			return true;
+		}, this);
 	};
 	/**
 	 * Returns the picture position inside the current form.
@@ -18518,11 +18594,13 @@
 	 */
 	ApiPictureForm.prototype.SetRespectBorders = function(isRespect)
 	{
-		let oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetRespectBorders(GetBoolParameter(isRespect, true));
-		this.Sdt.SetPictureFormPr(oPr);
-		this.Sdt.UpdatePictureFormLayout();
-		return true;
+		return executeNoFormLockCheck(function(){
+			let oPr = this.Sdt.GetPictureFormPr().Copy();
+			oPr.SetRespectBorders(GetBoolParameter(isRespect, true));
+			this.Sdt.SetPictureFormPr(oPr);
+			this.Sdt.UpdatePictureFormLayout();
+			return true;
+		}, this);
 	};
 	/**
 	 * Checks if the form border width is respected or not.
@@ -18561,33 +18639,65 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
+	 * @param {EMU} nWidth - The image width in English measure units.
+	 * @param {EMU} nHeight - The image height in English measure units.
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc)
+	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
 	{
-		if (typeof(sImageSrc) !== "string" || sImageSrc === "")
-			return false;
-
-		var oImg;
-		var allDrawings = this.Sdt.GetAllDrawingObjects();
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
-		{
-			if (allDrawings[nDrawing].IsPicture())
+		return executeNoFormLockCheck(function(){
+			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
+				return false;
+			
+			var oImg;
+			var allDrawings = this.Sdt.GetAllDrawingObjects();
+			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
 			{
-				oImg = allDrawings[nDrawing].GraphicObj;
-				break;
+				if (allDrawings[nDrawing].IsPicture())
+				{
+					oImg = allDrawings[nDrawing].GraphicObj;
+					break;
+				}
 			}
-		}
-
-		if (oImg)
-		{
-			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
-			this.OnChangeValue();
-			return true;
-		}
-
-		return false;
+	
+			if (oImg)
+			{
+				let spPr = oImg.spPr;
+				if (!spPr)
+				{
+					spPr = new AscFormat.CSpPr();
+					oImg.setSpPr(spPr);
+					spPr.setParent(oImg);
+				}
+				
+				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+				
+				let xfrm = spPr.xfrm;
+				if (!xfrm)
+				{
+					xfrm = new AscFormat.CXfrm();
+					spPr.setXfrm(xfrm);
+					xfrm.setParent(spPr);
+				}
+				
+				if (undefined !== nWidth && undefined !== nHeight)
+				{
+					let w = private_EMU2MM(nWidth);
+					let h = private_EMU2MM(nHeight);
+					xfrm.setOffX(0);
+					xfrm.setOffY(0);
+					xfrm.setExtX(w);
+					xfrm.setExtY(h);
+				}
+				
+				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+				this.OnChangeValue();
+				return true;
+			}
+	
+			return false;
+		}, this);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -18624,28 +18734,30 @@
 	 */
 	ApiComboBoxForm.prototype.SetListValues = function(aListString)
 	{
-		if (!Array.isArray(aListString))
-			return false;
-
-		let isComboBox = this.Sdt.IsComboBox();
-		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		if (!oSpecProps)
-			return false;
-
-		oSpecProps = oSpecProps.Copy();
-		oSpecProps.Clear();
-		for (let nValue = 0; nValue < aListString.length; nValue++)
-		{
-			if (typeof(aListString[nValue]) === "string" && aListString[nValue] !== "")
-				oSpecProps.AddItem(aListString[nValue], aListString[nValue]);
-		}
-
-		if (isComboBox)
-			this.Sdt.SetComboBoxPr(oSpecProps);
-		else
-			this.Sdt.SetDropDownListPr(oSpecProps);
-
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (!Array.isArray(aListString))
+				return false;
+	
+			let isComboBox = this.Sdt.IsComboBox();
+			let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
+			if (!oSpecProps)
+				return false;
+	
+			oSpecProps = oSpecProps.Copy();
+			oSpecProps.Clear();
+			for (let nValue = 0; nValue < aListString.length; nValue++)
+			{
+				if (typeof(aListString[nValue]) === "string" && aListString[nValue] !== "")
+					oSpecProps.AddItem(aListString[nValue], aListString[nValue]);
+			}
+	
+			if (isComboBox)
+				this.Sdt.SetComboBoxPr(oSpecProps);
+			else
+				this.Sdt.SetDropDownListPr(oSpecProps);
+	
+			return true;
+		}, this);
 	};
 	/**
 	 * Selects the specified value from the combo box list values. 
@@ -18656,19 +18768,21 @@
 	 */
 	ApiComboBoxForm.prototype.SelectListValue = function(sValue)
 	{
-		if (typeof(sValue) !== "string" || sValue === "")
-			return false;
-
-		var oSpecProps = this.Sdt.IsComboBox() ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
-		if (!oSpecProps)
-			return false;
-
-		if (null == oSpecProps.GetTextByValue(sValue))
-			return false;
-
-		this.Sdt.SelectListItem(sValue);
-		this.OnChangeValue();
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (typeof (sValue) !== "string" || sValue === "")
+				return false;
+			
+			var oSpecProps = this.Sdt.IsComboBox() ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
+			if (!oSpecProps)
+				return false;
+			
+			if (null == oSpecProps.GetTextByValue(sValue))
+				return false;
+			
+			this.Sdt.SelectListItem(sValue);
+			this.OnChangeValue();
+			return true;
+		}, this);
 	};
 	/**
 	 * Sets the text to the current combo box.
@@ -18680,21 +18794,23 @@
 	 */
 	ApiComboBoxForm.prototype.SetText = function(sText)
 	{
-		if (typeof (sText) !== "string" || sText === "")
-			return false;
-
-		if (!this.Sdt.IsComboBox())
-			return false;
-
-		if (this.Sdt.IsPlaceHolder())
-			this.Sdt.ReplacePlaceHolderWithContent();
-
-		let oRun = this.Sdt.MakeSingleRunElement();
-		oRun.ClearContent();
-		oRun.AddText(sText);
-		
-		this.OnChangeValue();
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (typeof (sText) !== "string" || sText === "")
+				return false;
+	
+			if (!this.Sdt.IsComboBox())
+				return false;
+			
+			if (this.Sdt.IsPlaceHolder())
+				this.Sdt.ReplacePlaceHolderWithContent();
+	
+			let oRun = this.Sdt.MakeSingleRunElement();
+			oRun.ClearContent();
+			oRun.AddText(sText);
+			
+			this.OnChangeValue();
+			return true;
+		}, this);
 	};
 	/**
 	 * Checks if the combo box text can be edited. If it is not editable, then this form is a dropdown list.
@@ -18722,12 +18838,14 @@
 	 */
 	ApiCheckBoxForm.prototype.SetChecked = function(isChecked)
 	{
-		if (typeof(isChecked) !== "boolean")
-			return false;
-
-		this.Sdt.ToggleCheckBox(isChecked);
-		this.OnChangeValue();
-		return true;
+		return executeNoFormLockCheck(function(){
+			if (typeof (isChecked) !== "boolean")
+				return false;
+			
+			this.Sdt.ToggleCheckBox(isChecked);
+			this.OnChangeValue();
+			return true;
+		}, this);
 	};
 	/**
 	 * Returns the state of the current checkbox (checked or not).
@@ -18768,15 +18886,135 @@
 	 */
 	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
 	{
-		let oPr = this.Sdt.GetCheckBoxPr();
-		if (!oPr)
-			return;
-
-		oPr = oPr.Copy();
-		oPr.SetGroupKey(sKey);
-		this.Sdt.SetCheckBoxPr(oPr);
+		return executeNoFormLockCheck(function(){
+			let oPr = this.Sdt.GetCheckBoxPr();
+			if (!oPr)
+				return;
+			
+			oPr = oPr.Copy();
+			oPr.SetGroupKey(sKey);
+			this.Sdt.SetCheckBoxPr(oPr);
+		}, this);
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiDateForm
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Gets the date format of the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {string}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.GetFormat = function() {
+		let oDatePr = this.Sdt.GetDatePickerPr();
+		return oDatePr.GetDateFormat();
+	};
+
+	/**
+	 * Sets the date format to the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {string} sFormat - The date format. For example, mm.dd.yyyy
+	 * @returns {boolean}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.SetFormat = function(sFormat)
+	{
+		return executeNoFormLockCheck(function(){
+			if (typeof(sFormat) !== "string" || sFormat === "")
+				return false;
+			
+			let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
+			oNewDatePr.SetDateFormat(sFormat);
+	
+			this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
+			return true;
+		}, this);
+	};
+
+	/**
+	 * Gets the used date language of the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {string}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.GetLanguage = function() {
+		let oDatePr = this.Sdt.GetDatePickerPr();
+		let nLcid	= oDatePr.GetLangId();
+
+		if (nLcid !== undefined)
+			return Asc.g_oLcidIdToNameMap[nLcid];
+
+		return undefined;
+	};
+
+	/**
+	 * Sets the date language to the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {string} sLangId - The date language. The possible value for this parameter is a language identifier as defined in
+	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @returns {boolean}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.SetLanguage = function(sLangId)
+	{
+		return executeNoFormLockCheck(function(){
+			var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
+			if (undefined === nLcid)
+				return false;
+			
+			let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
+			oNewDatePr.SetLangId(nLcid);
+			
+			this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
+			return true;
+		}, this);
+	};
+
+	/**
+	 * Returns the timestamp of the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {number}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.GetTime = function()
+	{
+		let oDatePr	= this.Sdt.GetDatePickerPr();
+		let oDate	= new Date(oDatePr.GetFullDate());
+
+		return oDate.getTime();
+	};
+
+	/**
+	 * Sets the timestamp to the current form.
+	 * @memberof ApiDateForm
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @param {number} nTimeStamp The timestamp that will be set to the current date form.
+	 * @returns {boolean}
+	 * @since 8.1.0
+	 */
+	ApiDateForm.prototype.SetTime = function(nTimeStamp)
+	{
+		return executeNoFormLockCheck(function(){
+			let nTime = parseInt(nTimeStamp);
+			if (isNaN(nTime))
+				return false;
+			
+			let oNewDatePr = this.Sdt.GetDatePickerPr().Copy();
+			oNewDatePr.SetFullDate(new Date(nTimeStamp));
+			
+			this.Sdt.ApplyDatePickerPr(oNewDatePr, true);
+			return true;
+		}, this);
+	};
 
 	/**
 	 * Converts the ApiBlockLvlSdt object into the JSON object.
@@ -19961,6 +20199,8 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
+	
+	Api.prototype["Px2Emu"]                          = Px2Emu;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -20547,16 +20787,16 @@
 	ApiChart.prototype["SetMinorVerticalGridlines"]    =  ApiChart.prototype.SetMinorVerticalGridlines;
 	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]     =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]    =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["GetNextChart"]                 =  ApiChart.prototype.GetNextChart;
-    ApiChart.prototype["GetPrevChart"]                 =  ApiChart.prototype.GetPrevChart;
-    ApiChart.prototype["RemoveSeria"]                  =  ApiChart.prototype.RemoveSeria;
-    ApiChart.prototype["SetSeriaValues"]               =  ApiChart.prototype.SetSeriaValues;
-    ApiChart.prototype["SetXValues"]                   =  ApiChart.prototype.SetXValues;
-    ApiChart.prototype["SetSeriaName"]                 =  ApiChart.prototype.SetSeriaName;
-    ApiChart.prototype["SetCategoryName"]              =  ApiChart.prototype.SetCategoryName;
-	ApiChart.prototype["ApplyChartStyle"]              =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]     = ApiChart.prototype.SetHorAxisLablesFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]    = ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
+	ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
+	ApiChart.prototype["RemoveSeria"]                  = ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["SetSeriaValues"]               = ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetXValues"]                   = ApiChart.prototype.SetXValues;
+	ApiChart.prototype["SetSeriaName"]                 = ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCategoryName"]              = ApiChart.prototype.SetCategoryName;
+	ApiChart.prototype["ApplyChartStyle"]              = ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetPlotAreaFill"]              =  ApiChart.prototype.SetPlotAreaFill;
 	ApiChart.prototype["SetPlotAreaOutLine"]           =  ApiChart.prototype.SetPlotAreaOutLine;
 	ApiChart.prototype["SetSeriesFill"]                =  ApiChart.prototype.SetSeriesFill;
@@ -20629,6 +20869,7 @@
 	ApiInlineLvlSdt.prototype["Copy"]                   = ApiInlineLvlSdt.prototype.Copy;
 	ApiInlineLvlSdt.prototype["ToJSON"]                 = ApiInlineLvlSdt.prototype.ToJSON;
 	ApiInlineLvlSdt.prototype["AddComment"]             = ApiInlineLvlSdt.prototype.AddComment;
+	ApiInlineLvlSdt.prototype["MoveCursorOutside"]      = ApiInlineLvlSdt.prototype.MoveCursorOutside;
 
 	ApiInlineLvlSdt.prototype["GetPlaceholderText"]     = ApiInlineLvlSdt.prototype.GetPlaceholderText;
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
@@ -20691,6 +20932,7 @@
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
+	ApiBlockLvlSdt.prototype["MoveCursorOutside"]       = ApiBlockLvlSdt.prototype.MoveCursorOutside;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
@@ -20711,6 +20953,7 @@
 	ApiFormBase.prototype["SetPlaceholderText"]  = ApiFormBase.prototype.SetPlaceholderText;
 	ApiFormBase.prototype["SetTextPr"]           = ApiFormBase.prototype.SetTextPr;
 	ApiFormBase.prototype["GetTextPr"]           = ApiFormBase.prototype.GetTextPr;
+	ApiFormBase.prototype["MoveCursorOutside"]   = ApiFormBase.prototype.MoveCursorOutside;
 
 	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
 	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
@@ -20735,6 +20978,13 @@
 	ApiPictureForm.prototype["GetImage"]           = ApiPictureForm.prototype.GetImage;
 	ApiPictureForm.prototype["SetImage"]           = ApiPictureForm.prototype.SetImage;
 	ApiPictureForm.prototype["Copy"]               = ApiPictureForm.prototype.Copy;
+
+	ApiDateForm.prototype["GetFormat"]		= ApiDateForm.prototype.GetFormat;
+	ApiDateForm.prototype["SetFormat"]		= ApiDateForm.prototype.SetFormat;
+	ApiDateForm.prototype["GetLanguage"]	= ApiDateForm.prototype.GetLanguage;
+	ApiDateForm.prototype["SetLanguage"]	= ApiDateForm.prototype.SetLanguage;
+	ApiDateForm.prototype["GetTime"]		= ApiDateForm.prototype.GetTime;
+	ApiDateForm.prototype["SetTime"]		= ApiDateForm.prototype.SetTime;
 
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
@@ -20835,6 +21085,7 @@
 	window['AscBuilder'].ApiFormBase        = ApiFormBase;
 	window['AscBuilder'].ApiTextForm        = ApiTextForm;
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
+	window['AscBuilder'].ApiDateForm		= ApiDateForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
@@ -20869,10 +21120,26 @@
 
 		return defaultValue;
 	}
-	window['AscBuilder'].GetStringParameter = GetStringParameter;
-	window['AscBuilder'].GetBoolParameter   = GetBoolParameter;
-	window['AscBuilder'].GetNumberParameter = GetNumberParameter;
-	window['AscBuilder'].GetArrayParameter  = GetArrayParameter;
+	/**
+	 * В проверке на лок, которую мы делаем после выполнения скрипта, нужно различать действия сделанные через
+	 * разрешенные методы, и действия, которые пользователь пытался сам сделать с формами
+	 * @param fn
+	 * @param t
+	 * @returns {*}
+	 */
+	function executeNoFormLockCheck(fn, t)
+	{
+		AscCommon.History.skipFormFillingLockCheck(true);
+		let result = fn.call(t);
+		AscCommon.History.skipFormFillingLockCheck(false);
+		return result;
+	}
+	
+	window['AscBuilder'].GetStringParameter     = GetStringParameter;
+	window['AscBuilder'].GetBoolParameter       = GetBoolParameter;
+	window['AscBuilder'].GetNumberParameter     = GetNumberParameter;
+	window['AscBuilder'].GetArrayParameter      = GetArrayParameter;
+	window['AscBuilder'].executeNoFormLockCheck = executeNoFormLockCheck;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20891,6 +21158,8 @@
 			return new ApiCheckBoxForm(oForm);
 		else if (oForm.IsPictureForm())
 			return new ApiPictureForm(oForm);
+		else if (oForm.IsDatePicker())
+			return new ApiDateForm(oForm);
 
 		return null;
 	}
@@ -20994,6 +21263,8 @@
 			return new ApiCheckBoxForm(oSdt);
 		else if (oSdt.IsPictureForm())
 			return new ApiPictureForm(oSdt)
+		else if (oSdt.IsDatePicker())
+			return new ApiDateForm(oSdt);
 
 		return new ApiInlineLvlSdt(oSdt);
 	}
@@ -21178,6 +21449,11 @@
 	{
 		return 25.4 / 72.0 / 8 * pt;
 	}
+	
+	function Px2Emu(px)
+	{
+		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
+	}
 
 	function private_StartSilentMode()
 	{
@@ -21338,7 +21614,7 @@
 
 	/**
 	 * Gets a document color object by color name.
-	 * @param {highlightColor} - available highlight color
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {object}
 	 */
 	function private_getHighlightColorByName(sColor)
@@ -21400,117 +21676,53 @@
 	}
 
 	/**
-	 * Gets a document higlight name by color object.
-	 * @param {object} - available highlight color
+	 * Gets a document highlight name by color object.
+	 * @param {object} oColor - available highlight color
 	 * @returns {highlightColor}
 	 */
 	function private_getHighlightNameByColor(oColor)
 	{
-		if (oColor === -1 || oColor === null) {
+		if (oColor === -1 || oColor === null)
 			return "none";
-		}
-
-		if (AscCommon.c_oEditorId.Word == Asc.editor.editorId) {
-			if (new CDocumentColor(0, 0, 0).IsEqual(oColor)) {
-				return "black";
-			}
-			if (new CDocumentColor(0, 0, 255).IsEqual(oColor)) {
-				return "blue";
-			}
-			if (new CDocumentColor(0, 255, 255).IsEqual(oColor)) {
-				return "cyan";
-			}
-			if (new CDocumentColor(0, 255, 0).IsEqual(oColor)) {
-				return "green";
-			}
-			if (new CDocumentColor(255, 0, 255).IsEqual(oColor)) {
-				return "magenta";
-			}
-			if (new CDocumentColor(255, 0, 0).IsEqual(oColor)) {
-				return "red";
-			}
-			if (new CDocumentColor(255, 255, 0).IsEqual(oColor)) {
-				return "yellow";
-			}
-			if (new CDocumentColor(255, 255, 255).IsEqual(oColor)) {
-				return "white";
-			}
-			if (new CDocumentColor(0, 0, 139).IsEqual(oColor)) {
-				return "darkBlue";
-			}
-			if (new CDocumentColor(0, 139, 139).IsEqual(oColor)) {
-				return "darkCyan";
-			}
-			if (new CDocumentColor(0, 100, 0).IsEqual(oColor)) {
-				return "darkGreen";
-			}
-			if (new CDocumentColor(128, 0, 128).IsEqual(oColor)) {
-				return "darkMagenta";
-			}
-			if (new CDocumentColor(139, 0, 0).IsEqual(oColor)) {
-				return "darkRed";
-			}
-			if (new CDocumentColor(128, 128, 0).IsEqual(oColor)) {
-				return "darkYellow";
-			}
-			if (new CDocumentColor(169, 169, 169).IsEqual(oColor)) {
-				return "darkGray";
-			}
-			if (new CDocumentColor(211, 211, 211).IsEqual(oColor)) {
-				return "lightGray";
+		
+		let colorMap = [
+			[0, 0, 0, "black"],
+			[0, 0, 255, "blue"],
+			[0, 255, 255, "cyan"],
+			[0, 255, 0, "green"],
+			[255, 0, 255, "magenta"],
+			[255, 0, 0, "red"],
+			[255, 255, 0, "yellow"],
+			[255, 255, 255, "white"],
+			[0, 0, 139, "darkBlue"],
+			[0, 139, 139, "darkCyan"],
+			[0, 100, 0, "darkGreen"],
+			[128, 0, 128, "darkMagenta"],
+			[139, 0, 0, "darkRed"],
+			[128, 128, 0, "darkYellow"],
+			[169, 169, 169, "darkGray"],
+			[211, 211, 211, "lightGray"]
+		];
+		
+		if (AscCommon.c_oEditorId.Word === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (new CDocumentColor(c[0], c[1], c[2]).IsEqual(oColor))
+					return c[3];
 			}
 		}
-		else if (AscCommon.c_oEditorId.Presentation == Asc.editor.editorId) {
-			if (AscFormat.CreateUniColorRGB(0, 0, 0).IsEqual(oColor)) {
-				return "black";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 255).IsEqual(oColor)) {
-				return "blue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 255).IsEqual(oColor)) {
-				return "cyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 255, 0).IsEqual(oColor)) {
-				return "green";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 255).IsEqual(oColor)) {
-				return "magenta";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 0, 0).IsEqual(oColor)) {
-				return "red";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 0).IsEqual(oColor)) {
-				return "yellow";
-			}
-			if (AscFormat.CreateUniColorRGB(255, 255, 255).IsEqual(oColor)) {
-				return "white";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 0, 139).IsEqual(oColor)) {
-				return "darkBlue";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 139, 139).IsEqual(oColor)) {
-				return "darkCyan";
-			}
-			if (AscFormat.CreateUniColorRGB(0, 100, 0).IsEqual(oColor)) {
-				return "darkGreen";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 0, 128).IsEqual(oColor)) {
-				return "darkMagenta";
-			}
-			if (AscFormat.CreateUniColorRGB(139, 0, 0).IsEqual(oColor)) {
-				return "darkRed";
-			}
-			if (AscFormat.CreateUniColorRGB(128, 128, 0).IsEqual(oColor)) {
-				return "darkYellow";
-			}
-			if (AscFormat.CreateUniColorRGB(169, 169, 169).IsEqual(oColor)) {
-				return "darkGray";
-			}
-			if (AscFormat.CreateUniColorRGB(211, 211, 211).IsEqual(oColor)) {
-				return "lightGray";
+		else if (AscCommon.c_oEditorId.Presentation === Asc.editor.editorId)
+		{
+			for (let i = 0; i < colorMap.length; ++i)
+			{
+				let c = colorMap[i];
+				if (AscFormat.CreateUniColorRGB(c[0], c[1], c[2]).IsIdentical(oColor))
+					return c[3];
 			}
 		}
-
+		
 		return undefined;
 	}
 
@@ -21519,13 +21731,13 @@
 			console.error(err);
 		else
 			console.log(err);
-	};
+	}
 
 	function throwException(err) {
 		if (!console.error)
 			logError(err);
 		throw err;
-	};
+	}
 
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
 	{
@@ -21908,6 +22120,9 @@
 	};
 	Api.prototype.private_CreatePictureForm = function(oCC){
 		return new ApiPictureForm(oCC);
+	};
+	Api.prototype.private_CreateDateForm = function(oCC){
+		return new ApiDateForm(oCC);
 	};
 	Api.prototype.private_CreateComplexForm = function(oCC)
 	{

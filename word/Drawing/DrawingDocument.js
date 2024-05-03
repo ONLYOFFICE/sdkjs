@@ -2338,7 +2338,7 @@ function CDrawingDocument()
 		}
 		// pdf
 		else
-			pos = this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage);
+			pos = this.ConvertCoordsToCursor5(this.TextMatrix.TransformPointX(x, y), this.TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
 
 		if (true == pos.Error && (false == bIsPageChanged))
 			return;
@@ -2617,7 +2617,11 @@ function CDrawingDocument()
 				this.GuiControlColorsMap[i] = arr_colors[i];
 			}
 
-			this.SendControlColors();
+			if (false == Asc.editor.isPdfEditor())
+			{
+				this.SendControlColors();
+			}
+			
 		}
 	};
 
@@ -4797,29 +4801,7 @@ function CDrawingDocument()
 		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var page = this.m_arrPages[pageIndex];
-		var drawPage;
-		if (!this.m_oDocumentRenderer)
-		{
-			drawPage = page.drawingPage;
-		}
-		else
-		{
-			let oViewer = this.m_oDocumentRenderer;
-			let oPdfDoc = oViewer.getPDFDoc();
-			let nPage	= oPdfDoc.activeForm.GetPage();
-
-			page = {
-				width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
-				height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
-			}
-			drawPage = {
-				left:	0,
-				right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
-				top:	0,
-				bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
-			}
-			this.Overlay = this.m_oDocumentRenderer.overlay;
-		}
+		var drawPage = page.drawingPage;
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
@@ -7414,6 +7396,9 @@ function CDrawingDocument()
                 TargetShow : function () {},
                 GetVisibleMMHeight : function () { return editor.WordControl.m_oDrawingDocument.GetVisibleMMHeight(); },
                 UpdateTargetTransform : function () {},
+				UpdateTarget : function() {},
+				SetTargetColor : function() {},
+				SetTargetSize : function() {},
                 SetTextSelectionOutline : function () {},
                 ClearCachePages : function () {},
                 FirePaint : function () {},

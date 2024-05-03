@@ -44,8 +44,9 @@
     */
     function CAnnotationPolygon(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Polygon, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._point         = undefined;
@@ -63,7 +64,7 @@
         TurnOffHistory();
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
-    AscFormat.InitClass(CAnnotationPolygon, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
@@ -183,13 +184,14 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationPolygon.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
         let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+
+        oPolygon.lazyCopy = true;
 
         oPolygon._pagePos = {
             x: this._pagePos.x,
@@ -220,20 +222,18 @@
 
         return oPolygon;
     };
-    CAnnotationPolygon.prototype.onMouseDown = function(e) {
+    CAnnotationPolygon.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolygon.prototype.GetGeometryEdit = function() {
@@ -300,7 +300,7 @@
         let nIntent = this.GetIntent();
         if (nIntent != null) {
             memory.annotFlags |= (1 << 20);
-            memory.WriteDouble(nIntent);
+            memory.WriteByte(nIntent);
         }
 
         let nEndPos = memory.GetCurPosition();

@@ -939,11 +939,11 @@
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 			let frShaper = this.fragmentShaper;
 			
-			function measureFragment(_chars, fragment) {
+			function measureFragment(_chars, format) {
 				
 				let chPos = self.chars.length;
-				let fontSize = fragment.format.getSize();
-				frShaper.shapeFragment(_chars, fragment.format, self, chPos);
+				let fontSize = format.getSize();
+				frShaper.shapeFragment(_chars, format, self, chPos);
 				
 				var chc, chw, isNL, isSP, isHP;
 				for (; chPos < self.chars.length; ++chPos) {
@@ -981,7 +981,7 @@
 							}
 						}
 						
-						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || verticalText)) {
+						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || (verticalText && !self._isCombinedChar(chPos)))) {
 							// add hyphenation marker
 							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;
@@ -1082,7 +1082,7 @@
 				if (chars.length < 1) {
 					continue;
 				}
-				measureFragment(chars, fr);
+				measureFragment(chars, fmt);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
@@ -1320,6 +1320,12 @@
 
 		StringRender.prototype._setFont = function (ctx, font) {
 			ctx.setFont(font, this.angle);
+		};
+		
+		StringRender.prototype._isCombinedChar = function(pos) {
+			let p = this._getCharPropAt(pos);
+			let c = this.chars[pos];
+			return !p.nl && !this.codesSpace[c] && (AscFonts.NO_GRAPHEME === p.grapheme);
 		};
 
 

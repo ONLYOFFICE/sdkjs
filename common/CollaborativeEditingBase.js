@@ -283,6 +283,11 @@
     {
         return (1 === this.m_nUseType);
     };
+	CCollaborativeEditingBase.prototype.canSendChanges = function()
+	{
+		let api = this.GetEditorApi();
+		return api && api.canSendChanges();
+	};
 	CCollaborativeEditingBase.prototype.getCoHistory = function()
 	{
 		return this.CoHistory;

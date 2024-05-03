@@ -711,6 +711,11 @@
 		}
 		return false;
 	};
+	asc_docs_api.prototype._loadSdkImages = function () {
+		const aImages = AscCommon.getIconsForLoad();
+		this.ImageLoader.LoadImagesWithCallback(aImages, function() {
+		}, []);
+	};
 
 	/////////////////////////////////////////////////////////////////////////
 	///////////////////CoAuthoring and Chat api//////////////////////////////
@@ -4561,16 +4566,20 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.GetCurSlideObjectsNames();
 	};
-	asc_docs_api.prototype.asc_StartAnimationPreview = function()
+
+	asc_docs_api.prototype.asc_IsStartedAnimationPreview = function()
 	{
+		return this.WordControl.m_oLogicDocument.IsStartedPreview()
+	};
+	asc_docs_api.prototype.asc_StartAnimationPreview = function (bAll, bIncludeFollowing) {
 		this.asc_StopAnimationPreview();
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(true))
-		{
+		const bStartAll = (bAll === false) ? false : true; // if "bAll" is "undefined", then run preview of all effects
+		if (this.WordControl.m_oLogicDocument.StartAnimationPreview(bStartAll, bIncludeFollowing)) {
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}
 		//this.sendEvent("asc_onStartDemonstration");//todo
 	};
-	
+
 	asc_docs_api.prototype.asc_canStartAnimationPreview = function()
 	{
 		return this.WordControl.m_oLogicDocument.CanStartAnimationPreview();
@@ -4583,13 +4592,13 @@ background-repeat: no-repeat;\
 	{
 		this.WordControl.m_oLogicDocument.SetAnimationProperties(oPr)
 	};
-	asc_docs_api.prototype.asc_canMoveAnimationEarlier = function() 
+	asc_docs_api.prototype.asc_canMoveAnimationEarlier = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.CanMoveAnimation(true);
+		return this.WordControl.m_oLogicDocument.CanMoveAnimation(true, nPositions);
 	};
-	asc_docs_api.prototype.asc_canMoveAnimationLater = function() 
+	asc_docs_api.prototype.asc_canMoveAnimationLater = function(nPositions) 
 	{
-		return this.WordControl.m_oLogicDocument.CanMoveAnimation(false);
+		return this.WordControl.m_oLogicDocument.CanMoveAnimation(false, nPositions);
 	};
 	asc_docs_api.prototype.asc_onShowAnimTab = function(bShow) 
 	{
@@ -4614,13 +4623,13 @@ background-repeat: no-repeat;\
 	{
 		return this.bIsShowAnimTab;
 	};
-	asc_docs_api.prototype.asc_moveAnimationEarlier = function() 
+	asc_docs_api.prototype.asc_moveAnimationEarlier = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.MoveAnimation(true);
+		return this.WordControl.m_oLogicDocument.MoveAnimation(true, nPositions);
 	};
-	asc_docs_api.prototype.asc_moveAnimationLater = function() 
+	asc_docs_api.prototype.asc_moveAnimationLater = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.MoveAnimation(false);
+		return this.WordControl.m_oLogicDocument.MoveAnimation(false, nPositions);
 	};
 	asc_docs_api.prototype.getImageDataFromSelection = function()
 	{
@@ -5567,6 +5576,56 @@ background-repeat: no-repeat;\
 	asc_CCommentData.prototype.asc_getUserData = function()
 	{
 		return this.m_sUserData;
+	};
+	asc_CCommentData.prototype.fromCValue = function (value) {
+		if (!value) {
+			return value;
+		}
+		let pr = new AscWord.CSdtPictureFormPr();
+		pr.asc_putText(value["Text"]);
+		pr.asc_putTime(value["Time"]);
+		pr.asc_putOnlyOfficeTime(value["OnlyOfficeTime"]);
+		pr.asc_putUserId(value["UserId"]);
+		pr.asc_putUserName(value["UserName"]);
+		pr.asc_putGuid(value["Guid"]);
+		pr.asc_putTimeZoneBias(value["TimeZoneBias"]);
+		pr.asc_putQuoteText(value["QuoteText"]);
+		pr.asc_putSolved(value["Solved"]);
+
+		if (Array.isArray(value["asc_getReplies"])) {
+			for (let nIdx = 0; nIdx < value["asc_getReplies"].length; ++nIdx) {
+				let reply = Asc.asc_CCommentData.prototype.fromCValue(value["asc_getReplies"][nIdx]);
+				if (reply) {
+					this.asc_addReply(reply);
+				}
+			}
+		}
+		pr.asc_putDocumentFlag(value["DocumentFlag"]);
+		pr.asc_putUserData(value["UserData"]);
+		return pr;
+	};
+	asc_CCommentData.prototype.toCValue = function () {
+		let value = {};
+		value["Text"] = this.asc_getText();
+		value["Time"] = this.asc_getTime();
+		value["OnlyOfficeTime"] = this.asc_getOnlyOfficeTime();
+		value["UserId"] = this.asc_getUserId();
+		value["UserName"] = this.asc_getUserName();
+		value["Guid"] = this.asc_getGuid();
+		value["TimeZoneBias"] = this.asc_getTimeZoneBias();
+		value["QuoteText"] = this.asc_getQuoteText();
+		value["Solved"] = this.asc_getSolved();
+		value["asc_getReplies"] = [];
+		let Count = this.m_aReplies.length;
+		for (let nIdx = 0; nIdx < Count; nIdx++) {
+			let val = this.m_aReplies[nIdx].toCValue();
+			if (val) {
+				value["asc_getReplies"].push(val);
+			}
+		}
+		value["DocumentFlag"] = this.asc_getDocumentFlag();
+		value["UserData"] = this.asc_getUserData();
+		return value;
 	};
 
 	asc_docs_api.prototype.asc_showComments = function()
@@ -6636,6 +6695,26 @@ background-repeat: no-repeat;\
 		this.WordControl.ShowAnimPane(bIsShow);
 	};
 
+	asc_docs_api.prototype.asc_ZoomOutTimeline = function() {
+		this.WordControl.ChangeTimelineScale(true);
+	}
+	asc_docs_api.prototype.asc_ZoomInTimeline = function() {
+		this.WordControl.ChangeTimelineScale(false);
+	}
+
+	asc_docs_api.prototype.asc_RemoveSelectedAnimEffects = function() {
+		this.asc_AddAnimation(null, AscFormat.ANIM_PRESET_NONE);
+	};
+	asc_docs_api.prototype.asc_SetSelectedAnimEffectsStartType = function(nStartType) {
+		const selectedElements = this.getSelectedElements();
+		for (let nElement = 0; nElement < selectedElements.length; nElement++) {
+			if (selectedElements[nElement].Value instanceof AscFormat.CPar) {
+				const par = selectedElements[nElement].Value.createDuplicate();
+				par.asc_putStartType(nStartType);
+				this.asc_SetAnimationProperties(par);
+			}
+		}
+	};
 	asc_docs_api.prototype.asc_DeleteVerticalScroll = function()
 	{
 		this.WordControl.DeleteVerticalScroll();
@@ -6650,6 +6729,10 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onThumbnailsShow", bIsShow);
 	};
 
+	asc_docs_api.prototype.getIsAnimPaneShow = function()
+	{
+		return this.WordControl.IsAnimPaneShown();
+	};
 	asc_docs_api.prototype.getIsNotesShow = function()
 	{
 		return this.WordControl.IsNotesShown();
@@ -8092,6 +8175,15 @@ background-repeat: no-repeat;\
 	{
 		return this.Guide;
 	};
+	CContextMenuData.prototype.get_EffectStartType = function() {
+		return this.EffectStartType;
+	};
+	CContextMenuData.prototype.get_ButtonWidth = function() {
+		return this.ButtonWidth;
+	}
+	CContextMenuData.prototype.get_ButtonHeight = function() {
+		return this.ButtonHeight;
+	}
 
 	asc_docs_api.prototype.sync_ContextMenuCallback = function(Data)
 	{
@@ -9462,6 +9554,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ShowThumbnails']                      = asc_docs_api.prototype.ShowThumbnails;
 	asc_docs_api.prototype['asc_ShowNotes']                       = asc_docs_api.prototype.asc_ShowNotes;
 	asc_docs_api.prototype['asc_ShowAnimPane']                    = asc_docs_api.prototype.asc_ShowAnimPane;
+	asc_docs_api.prototype['asc_ZoomOutTimeline']                 = asc_docs_api.prototype.asc_ZoomOutTimeline;
+	asc_docs_api.prototype['asc_ZoomInTimeline']                  = asc_docs_api.prototype.asc_ZoomInTimeline;
+	asc_docs_api.prototype['asc_SetSelectedAnimEffectsStartType'] = asc_docs_api.prototype.asc_SetSelectedAnimEffectsStartType;
+	asc_docs_api.prototype['asc_RemoveSelectedAnimEffects']       = asc_docs_api.prototype.asc_RemoveSelectedAnimEffects;
 	asc_docs_api.prototype['asc_DeleteVerticalScroll']            = asc_docs_api.prototype.asc_DeleteVerticalScroll;
 	asc_docs_api.prototype['syncOnThumbnailsShow']                = asc_docs_api.prototype.syncOnThumbnailsShow;
 	asc_docs_api.prototype['can_AddHyperlink']                    = asc_docs_api.prototype.can_AddHyperlink;
@@ -9680,6 +9776,10 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_IsSlideSelect']   = CContextMenuData.prototype.get_IsSlideSelect;
 	CContextMenuData.prototype['get_IsSlideHidden']   = CContextMenuData.prototype.get_IsSlideHidden;
 	CContextMenuData.prototype['get_Guide']           = CContextMenuData.prototype.get_Guide;
+	CContextMenuData.prototype['get_EffectStartType'] = CContextMenuData.prototype.get_EffectStartType;
+	CContextMenuData.prototype['get_ButtonWidth']     = CContextMenuData.prototype.get_ButtonWidth;
+	CContextMenuData.prototype['get_ButtonHeight']    = CContextMenuData.prototype.get_ButtonHeight;
+
 	window['Asc']['CAscSlideProps']                   = CAscSlideProps;
 	CAscSlideProps.prototype['get_background']        = CAscSlideProps.prototype.get_background;
 	CAscSlideProps.prototype['put_background']        = CAscSlideProps.prototype.put_background;

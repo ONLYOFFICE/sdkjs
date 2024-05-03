@@ -1991,7 +1991,7 @@ function (window, undefined) {
 		} else if (length === undefined) {
 			switch (pos) {
 				case kPrevChar:
-					b = t.textRender.getPrevChar(t.cursorPos);
+					b = t.textRender.getPrevChar(t.cursorPos, false);
 					e = t.cursorPos;
 					break;
 				case kNextChar:

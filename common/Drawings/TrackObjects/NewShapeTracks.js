@@ -625,7 +625,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             shape.nvSpPr.setUniSpPr(nvUniSpPr);
         }
         else{
-            shape = new AscFormat.CShape();
+            shape = Asc.editor.isPdfEditor() === false ? new AscFormat.CShape() : new AscPDF.CPdfShape();
             if(drawingObjects)
             {
                 shape.setDrawingObjects(drawingObjects);

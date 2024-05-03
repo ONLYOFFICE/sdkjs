@@ -145,6 +145,7 @@
     {
     	this.nativeFile = 0;
     	this.pages = [];
+        this.originalPagesCount = 0;
     	this.zoom = 1;
     	this.isUse3d = false;
     	this.cacheManager = null;
@@ -161,16 +162,7 @@
 
             IsSelection : false
         };
-        this.SearchResults = {
-            IsSearch    : false,
-            Text        : "",
-            MachingCase : false,
-            Pages       : [],
-            CurrentPage : -1,
-            Current     : -1,
-            Show        : false,
-            Count       : 0
-        };
+
         this.viewer = null;
 
         this.maxCanvasSize = 0;
@@ -550,6 +542,10 @@ void main() {\n\
 
     CFile.prototype.onMouseDown = function(pageIndex, x, y)
     {
+        if (this.pages[pageIndex].isConvertedToShapes) {
+            return;
+        }
+        
         let oDoc = this.viewer.getPDFDoc();
         var ret = this.getNearestPos(pageIndex, x, y);
         var sel = this.Selection;
@@ -566,6 +562,24 @@ void main() {\n\
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
+    };
+    CFile.prototype.removeSelection = function() {
+        this.Selection = {
+			Page1 : 0,
+			Line1 : 0,
+			Glyph1 : 0,
+
+			Page2 : 0,
+			Line2 : 0,
+			Glyph2 : 0,
+
+			IsSelection : false
+		}
+
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
+    };
+    CFile.prototype.getSelection = function() {
+        return this.Selection;
     };
 
     CFile.prototype.onMouseMove = function(pageIndex, x, y)
@@ -585,12 +599,15 @@ void main() {\n\
 
     CFile.prototype.onMouseUp = function()
     {
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
         this.Selection.IsSelection = false;
         this.onUpdateSelection();
         this.onUpdateOverlay();
 
         if (this.viewer.Api.isMarkerFormat) {
-            let oColor = this.viewer.getPDFDoc().GetMarkerColor(this.viewer.Api.curMarkerType);
+            let oDoc = this.viewer.getPDFDoc();
+            let oColor = oDoc.GetMarkerColor(this.viewer.Api.curMarkerType);
+            oDoc.CreateNewHistoryPoint();
             switch (this.viewer.Api.curMarkerType) {
 				case AscPDF.ANNOTATIONS_TYPES.Highlight:
 					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
@@ -602,6 +619,10 @@ void main() {\n\
 					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
 					break;
 			}
+
+            if (AscCommon.History.Is_LastPointEmpty())
+                AscCommon.History.Remove_LastPoint();
+            oDoc.TurnOffHistory();
         }
     };
 
@@ -2149,31 +2170,134 @@ void main() {\n\
         }
         this.viewer.EndSearch(false);
     };
+    
+
+    // класс элемента совпадения при поиске на странице
+    function PdfPageMatch() {
+        Array.apply(null, arguments);
+        
+        this.pdfPageMatch = true;
+    }
+
+
+    PdfPageMatch.prototype = Object.create(Array.prototype);
+    PdfPageMatch.prototype.constructor = PdfPageMatch;
+
+    PdfPageMatch.prototype.Get_AbsolutePage = function() {
+        if (this[0])
+            return this[0].PageNum;
+        return -1;
+    };
+    PdfPageMatch.prototype.GetTextAroundSearchResult = function(nId) {
+        let oDoc            = Asc.editor.getPDFDoc();
+        let oSearchEngine   = oDoc.SearchEngine;
+
+        let aMatches = oSearchEngine.Elements[nId];
+
+        let oPart, oLineInfo;
+        let aResult;
+
+        aResult = ["", "", ""];
+        // найденный текст может быть разбит на части (строки)
+        for (let nPart = 0; nPart < aMatches.length; nPart++) {
+            oPart = aMatches[nPart];
+            // знаем в какой строке было найдено совпадение
+            oLineInfo = oSearchEngine.PagesLines[oPart.PageNum][oPart.LineNum];
+
+            // если line изменился, тогда инфу обнуляем
+            if (PdfPageMatch.lastPartInfo && oPart.LineNum != PdfPageMatch.lastPartInfo.numLine)
+                PdfPageMatch.lastPartInfo = null;
+
+            let nPosInLine;
+            // запоминаем позицию в строке у первого совпадения, чтобы расчитывать позиции следующих
+            if (!PdfPageMatch.lastPartInfo) {
+                nPosInLine = oSearchEngine.MatchCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase());
+                if (oSearchEngine.Word){
+                    while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text)){
+                        nPosInLine = oSearchEngine.MatchCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                    }
+                }
+
+                PdfPageMatch.lastPartInfo = {
+                    posInLine:  nPosInLine,
+                    numLine:    oPart.LineNum,
+                    text:       oPart.Text 
+                }
+            }
+            else
+            {
+                nPosInLine = oSearchEngine.MatchCase ? oLineInfo.text.indexOf(oPart.Text, PdfPageMatch.lastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), PdfPageMatch.lastPartInfo.posInLine + 1);
+                if (oSearchEngine.Word) {
+                    while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text)) {
+                        nPosInLine = oSearchEngine.MatchCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                    }
+                }
+
+                PdfPageMatch.lastPartInfo = {
+                    posInLine:  nPosInLine,
+                    numLine:    oPart.LineNum,
+                    text:       oPart.Text
+                }
+            }
+
+            if (nPart == 0 && aMatches.length == 1) {
+                aResult[0] = oLineInfo.text.slice(0, PdfPageMatch.lastPartInfo.posInLine);
+                aResult[1] = oPart.Text;
+                aResult[2] = oLineInfo.text.slice(PdfPageMatch.lastPartInfo.posInLine + oPart.Text.length);
+            }
+            else if (nPart == 0) {
+                aResult[0] = oLineInfo.text.slice(0, PdfPageMatch.lastPartInfo.posInLine);
+                aResult[1] = oPart.Text;
+            }
+            else if (nPart == aMatches.length - 1) {
+                aResult[1] += oPart.Text;
+                aResult[2] += oLineInfo.text.slice(PdfPageMatch.lastPartInfo.posInLine + oPart.Text.length);
+            }
+            else {
+                aResult[2] += oPart.Text;
+            }
+        }
+
+        function CheckWholeWords(nMatchPos, sMatchStr, sParentSrt)
+        {
+            let charBeforeMatch = sParentSrt[nMatchPos - 1] ? sParentSrt[nMatchPos - 1].charCodeAt(0) : undefined;
+            let charAfterMatch = sParentSrt[nMatchPos + sMatchStr.length] ? sParentSrt[nMatchPos + sMatchStr.length].charCodeAt(0) : undefined;
+
+            if (charBeforeMatch !== " ".charCodeAt(0) && charBeforeMatch !== undefined && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+                return false;
+            if (charAfterMatch !== " ".charCodeAt(0) && charAfterMatch !== undefined && undefined === AscCommon.g_aPunctuation[charAfterMatch])
+                return false;
+
+            return true;
+        }
+
+        return aResult;
+    };
 
     CFile.prototype.searchPage = function(pageIndex)
     {
-        var stream = this.getPageTextStream(pageIndex);
+        let oDoc            = Asc.editor.getPDFDoc();
+        let oSearchEngine   = oDoc.SearchEngine;
+        let oResult = {
+            matches:    [],
+            pageLines:  []
+        };
+
+        let stream = this.getPageTextStream(pageIndex);
         if (!stream)
-            return;
-
-        var _searchResults = this.SearchResults;
-        var _navRects = _searchResults.Pages[pageIndex];
-        if (_searchResults.PagesLines == null)
-            _searchResults.PagesLines = {};
-
-        _searchResults.PagesLines[pageIndex] = [];
+            return oResult;
 
         var glyphsEqualFound = 0;
-        var text = _searchResults.Text;
+        var text = oSearchEngine.Text;
         var glyphsFindCount = text.length;
 
-        if (!_searchResults.MachingCase)
+        if (!oSearchEngine.MatchCase)
         {
             text = text.toLowerCase();
         }
 
         if (0 == glyphsFindCount)
-            return;
+            return oResult;
 
         var _numLine = -1;
         var _lineGidExist = false;
@@ -2235,8 +2359,8 @@ void main() {\n\
                     _linePrevCharX = 0;
                     _lineCharCount = 0;
 
-                    _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length] = new CLineInfo();
-                    curLine = _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length - 1];
+                    oResult.pageLines[oResult.pageLines.length] = new CLineInfo();
+                    curLine = oResult.pageLines[oResult.pageLines.length - 1];
 
                     var mask = stream.GetUChar();
                     curLine.X = stream.GetDouble();
@@ -2350,8 +2474,8 @@ void main() {\n\
                     _lineCharCount++;
                     tmpLineCharCount++;
 
-                    let curLine = _searchResults.PagesLines[pageIndex][_numLine];
-                    let prevLine = _searchResults.PagesLines[pageIndex][_numLine - 1]
+                    let curLine = oResult.pageLines[_numLine];
+                    let prevLine = oResult.pageLines[_numLine - 1]
                     // если текущий символ позади предыдущего (или впереди больше чем на ширину предыдущего символа) значит это новая строка (иначе был бы пробел), обнуляем поиск
                     if (tmpLineCurCharX < tmpLinePrevCharX || tmpLineCurCharX > tmpLinePrevCharX + tmpLinePrevGlyphWidth)
                     {
@@ -2364,7 +2488,7 @@ void main() {\n\
                     }
 
                     // если пробел или пунктуация (или начало строки), значит это старт для whole words
-                    if (_searchResults.WholeWords && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
+                    if (oSearchEngine.Word && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
                     {
                         isStartWhole = true;
                         oEqualStrByLine = {};
@@ -2378,11 +2502,11 @@ void main() {\n\
                     tmpLinePrevCharX = tmpLineCurCharX;
                     tmpLinePrevGlyphWidth = tmpLineCurGlyphWidth;
 
-                    if (_searchResults.WholeWords && isStartWhole === false)
+                    if (oSearchEngine.Word && isStartWhole === false)
                         break;
 
                     var _isFound = false;
-                    if (_searchResults.MachingCase)
+                    if (oSearchEngine.MatchCase)
                     {
                         if (_char == text.charCodeAt(glyphsEqualFound))
                             _isFound = true;
@@ -2415,7 +2539,7 @@ void main() {\n\
                         _findLineOffsetR = _linePrevCharX + _lineLastGlyphWidth;
                         if (glyphsFindCount == glyphsEqualFound)
                         {
-                            if (_searchResults.WholeWords)
+                            if (oSearchEngine.Word)
                             {
                                 var nCurStreamPos = stream.pos;
                                 var isWhole = CheckWholeNextChar(stream);
@@ -2431,7 +2555,7 @@ void main() {\n\
                                 }
                             }
 
-                            var _rects = [];
+                            var _rects = new PdfPageMatch();
                             var _prevL = null;
                             var isDiffLines = false;
                             for (var i = _findLine; i <= _numLine; i++)
@@ -2439,11 +2563,11 @@ void main() {\n\
                                 var ps = 0;
                                 if (_findLine == i)
                                     ps = _findLineOffsetX;
-                                var pe = _searchResults.PagesLines[pageIndex][i].W;
+                                var pe = oResult.pageLines[i].W;
                                 if (i == _numLine)
                                     pe = _findLineOffsetR;
 
-                                var _l = _searchResults.PagesLines[pageIndex][i];
+                                var _l = oResult.pageLines[i];
                                 if (_prevL && (_prevL.Y < _l.Y - (_l.H / 2) || _prevL.Y - (_prevL.H / 2) > _l.Y))
                                 {
                                     isDiffLines = true;
@@ -2453,26 +2577,17 @@ void main() {\n\
 
                                 if (_l.Ex == 1 && _l.Ey == 0)
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H, LineNum: i, Text: oEqualStrByLine[i]};
+                                    _rects.push({ PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H, LineNum: i, Text: oEqualStrByLine[i]});
                                 }
                                 else
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey, LineNum: i, Text: oEqualStrByLine[i]};
+                                    _rects.push({ PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey, LineNum: i, Text: oEqualStrByLine[i]});
                                 }
                             }
 
                             if (isDiffLines === false)
                             {
-                                _navRects[_navRects.length] = _rects;
-
-                                // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
-                                if (!isWhole)
-                                {
-                                    stream.pos = _SeekToNextPoint;
-                                    _linePrevCharX = _SeekLinePrevCharX;
-                                    _lineCharCount = _findGlyphIndex;
-                                    _numLine = _findLine;
-                                }
+                                oResult.matches.push(_rects);
                             }
                             
                             isStartWhole = false;
@@ -2602,8 +2717,8 @@ void main() {\n\
                         n_lineCharCount++;
                         nTmpLineCharCount++;
 
-                        let curLine = _searchResults.PagesLines[pageIndex][n_numLine];
-                        let prevLine = _searchResults.PagesLines[pageIndex][n_numLine - 1]
+                        let curLine = oResult.pageLines[n_numLine];
+                        let prevLine = oResult.pageLines[n_numLine - 1]
                         // если текущий символ позади предыдущего (или впереди) больше чем на ширину предыдущего символа значит это другая строка (иначе был бы пробел), 
                         // whole words условия выполнены
                         if (nTmpLineCurCharX < nTmpLinePrevCharX || nTmpLineCurCharX > nTmpLinePrevCharX + tmpLinePrevGlyphWidth)
@@ -2616,7 +2731,7 @@ void main() {\n\
                         }
 
                         // если пробел или пунктуация (или начало строки), значит это старт для whole words
-                        if (_searchResults.WholeWords && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
+                        if (oSearchEngine.Word && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
                             return true;
                         else if (nTmpLineCharCount == 1)
                             return true;
@@ -2664,265 +2779,8 @@ void main() {\n\
             }
             return true;
         }
-    };
 
-    CFile.prototype.findText = function(text, isMachingCase, isWholeWords, isNext)
-    {
-        this.SearchResults.IsSearch = true;
-        var pagesCount = this.pages.length;
-        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
-        {
-            if (this.SearchResults.Count === 0)
-            {
-                this.viewer.CurrentSearchNavi = null;
-                this.SearchResults.CurrentPage = -1;
-                this.SearchResults.Current = -1;
-                return;
-            }
-
-            // поиск совпал, просто делаем навигацию к нужному месту
-            if (isNext)
-            {
-                if ((this.SearchResults.Current + 1) < this.SearchResults.Pages[this.SearchResults.CurrentPage].length)
-                {
-                    // результат на этой же странице
-                    this.SearchResults.Current++;
-                }
-                else
-                {
-                    var _pageFind = this.SearchResults.CurrentPage + 1;
-                    var _bIsFound = false;
-                    for (var i = _pageFind; i < pagesCount; i++)
-                    {
-                        if (0 < this.SearchResults.Pages[i].length)
-                        {
-                            this.SearchResults.Current = 0;
-                            this.SearchResults.CurrentPage = i;
-                            _bIsFound = true;
-                            break;
-                        }
-                    }
-                    if (!_bIsFound)
-                    {
-                        for (var i = 0; i < _pageFind; i++)
-                        {
-                            if (0 < this.SearchResults.Pages[i].length)
-                            {
-                                this.SearchResults.Current = 0;
-                                this.SearchResults.CurrentPage = i;
-                                _bIsFound = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (this.SearchResults.Current > 0)
-                {
-                    // результат на этой же странице
-                    this.SearchResults.Current--;
-                }
-                else
-                {
-                    var _pageFind = this.SearchResults.CurrentPage - 1;
-                    var _bIsFound = false;
-                    for (var i = _pageFind; i >= 0; i--)
-                    {
-                        if (0 < this.SearchResults.Pages[i].length)
-                        {
-                            this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
-                            this.SearchResults.CurrentPage = i;
-                            _bIsFound = true;
-                            break;
-                        }
-                    }
-                    if (!_bIsFound)
-                    {
-                        for (var i = pagesCount - 1; i > _pageFind; i--)
-                        {
-                            if (0 < this.SearchResults.Pages[i].length)
-                            {
-                                this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
-                                this.SearchResults.CurrentPage = i;
-                                _bIsFound = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            this.viewer.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
-
-            this.viewer.ToSearchResult();
-            return;
-        }
-        // новый поиск
-        for (var i = 0; i < this.pages.length; i++)
-        {
-            this.SearchResults.Pages[i].splice(0, this.SearchResults.Pages[i].length);
-        }
-        this.SearchResults.Count = 0;
-
-        this.SearchResults.CurrentPage = -1;
-        this.SearchResults.Current = -1;
-
-        this.SearchResults.Text = text;
-        this.SearchResults.MachingCase = isMachingCase;
-        this.SearchResults.WholeWords = isWholeWords;
-
-        for (var i = 0; i < this.pages.length; i++)
-        {
-            this.searchPage(i);
-            this.SearchResults.Count += this.SearchResults.Pages[i].length;
-        }
-
-        if (this.SearchResults.Count == 0)
-        {
-            this.viewer.CurrentSearchNavi = null;
-            this.onUpdateOverlay();
-            return;
-        }
-
-        var currentPage = this.viewer.currentPage;
-        for (var i = currentPage; i < this.SearchResults.Pages.length; i++)
-        {
-            if (0 != this.SearchResults.Pages[i].length)
-            {
-                this.SearchResults.CurrentPage = i;
-                this.SearchResults.Current = 0;
-                break;
-            }
-        }
-        if (this.SearchResults.Current === -1)
-        {
-            for (var i = 0; i < currentPage; i++)
-            {
-                if (0 != this.SearchResults.Pages[i].length)
-                {
-                    this.SearchResults.CurrentPage = i;
-                    this.SearchResults.Current = 0;
-                    break;
-                }
-            }
-        }
-
-        this.viewer.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
-        this.viewer.ToSearchResult();
-    };
-
-    CFile.prototype.startTextAround = function()
-    {
-        var aTextAround = [];
-        var oPageMatches, oPart, oLineInfo, oLastPartInfo;
-        var aResult, nAroundAdded;
-        for (var nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
-        {
-            oPageMatches = this.SearchResults.Pages[nPage];
-            nAroundAdded = aTextAround.length;
-            // идём по всем совпадениям
-            for (var nMatch = 0; nMatch < oPageMatches.length; nMatch++)
-            {
-                aResult = ["", "", ""];
-                // найденный текст может быть разбит на части (строки)
-                for (var nPart = 0; nPart < oPageMatches[nMatch].length; nPart++)
-                {
-                    oPart = oPageMatches[nMatch][nPart];
-                    // знаем в какой строке было найдено совпадение
-                    oLineInfo = this.SearchResults.PagesLines[nPage][oPart.LineNum];
-
-                    // если line изменился, тогда инфу обнуляем
-                    if (oLastPartInfo && oPart.LineNum != oLastPartInfo.numLine)
-                        oLastPartInfo = null;
-
-                    var nPosInLine;
-                    // запоминаем позицию в строке у первого совпадения, чтобы расчитывать позиции следующих
-                    if (!oLastPartInfo)
-                    {
-                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase());
-                        if (this.SearchResults.WholeWords)
-                        {
-                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
-                            {
-                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
-                            }
-                        }
-
-                        oLastPartInfo = {
-                            posInLine: nPosInLine,
-                            numLine: oPart.LineNum,
-                            text: oPart.Text 
-                        };    
-                    }
-                    else
-                    {
-                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1);
-                        if (this.SearchResults.WholeWords)
-                        {
-                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
-                            {
-                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
-                            }
-                        }
-
-                        oLastPartInfo = {
-                            posInLine: nPosInLine,
-                            numLine: oPart.LineNum,
-                            text: oPart.Text
-                        }
-                    }
-
-                    if (nPart == 0 && oPageMatches[nMatch].length == 1)
-                    {
-                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
-                        aResult[1] = oPart.Text;
-                        aResult[2] = oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
-                    }
-                    else if (nPart == 0)
-                    {
-                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
-                        aResult[1] = oPart.Text;
-                    }
-                    else if (nPart == oPageMatches[nMatch].length - 1)
-                    {
-                        aResult[1] += oPart.Text;
-                        aResult[2] += oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
-                    }
-                    else
-                        aResult[2] += oPart.Text;
-                }
-
-                aTextAround.push([nAroundAdded + nMatch, aResult]);
-            }
-        }
-
-        function CheckWholeWords(nMatchPos, sMatchStr, sParentSrt)
-        {
-            var charBeforeMatch = sParentSrt[nMatchPos - 1] ? sParentSrt[nMatchPos - 1].charCodeAt(0) : undefined;
-            var charAfterMatch = sParentSrt[nMatchPos + sMatchStr.length] ? sParentSrt[nMatchPos + sMatchStr.length].charCodeAt(0) : undefined;
-
-            if (charBeforeMatch !== " ".charCodeAt(0) && charBeforeMatch !== undefined && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
-                return false;
-            if (charAfterMatch !== " ".charCodeAt(0) && charAfterMatch !== undefined && undefined === AscCommon.g_aPunctuation[charAfterMatch])
-                return false;
-
-            return true;
-        }
-
-        this.viewer.Api.sync_startTextAroundSearch();
-        this.viewer.Api.sync_getTextAroundSearchPack(aTextAround);
-        this.viewer.Api.sync_endTextAroundSearch();
-    };
-    
-    CFile.prototype.prepareSearch = function()
-    {
-        this.SearchResults.Pages = new Array(this.pages.length);
-        for (var i = this.pages.length - 1; i >= 0; i--)
-        {
-            this.SearchResults.Pages[i] = [];
-        }
+        return oResult;
     };
 
     window["AscViewer"] = window["AscViewer"] || {};
@@ -2958,10 +2816,10 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
-                page.originIndex = i; // исходный индекс в файле
+                page.originIndex = page["originIndex"]; // исходный индекс в файле
             }
+            file.originalPagesCount = file.pages.length;
 
-            file.prepareSearch();
             //file.cacheManager = new AscCommon.CCacheManager();
             return file;   
         }
@@ -2996,7 +2854,6 @@ void main() {\n\
                 page.originIndex = i; // исходный индекс в файле
             }
 
-            file.prepareSearch();
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };
@@ -3004,5 +2861,8 @@ void main() {\n\
 	{
 		return new CFile();
 	};
+
+    //--------------------------------------------------------export----------------------------------------------------
+	window['AscPDF'].PdfPageMatch = PdfPageMatch;
 
 })(window, undefined);

@@ -471,6 +471,7 @@
 		let r = (x + w);
 		let b = (y + h);
 
+		this._s();
 		this._m(x, y);
 		this._l(r, y);
 		this._l(r, b);
@@ -672,6 +673,10 @@
 	CGraphicsBase.prototype.isSupportTextDraw = function()
 	{
 		return true;
+	};
+	CGraphicsBase.prototype.isSupportTextOutline = function()
+	{
+		return false;
 	};
 
 	CGraphicsBase.prototype.FillText = function(x,y,text)

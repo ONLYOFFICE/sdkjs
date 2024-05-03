@@ -44,8 +44,9 @@
     */
     function CAnnotationPolyLine(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.PolyLine, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._point         = undefined;
@@ -65,7 +66,7 @@
         TurnOffHistory();
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
-    AscFormat.InitClass(CAnnotationPolyLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
@@ -175,57 +176,56 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationPolyLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oPolygon = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+        let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
-        oPolygon._pagePos = {
+        oPolyline.lazyCopy = true;
+
+        oPolyline._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
             w: this._pagePos.w,
             h: this._pagePos.h
         }
-        oPolygon._origRect = this._origRect.slice();
+        oPolyline._origRect = this._origRect.slice();
 
-        this.fillObject(oPolygon);
+        this.fillObject(oPolyline);
 
-        oPolygon.pen = new AscFormat.CLn();
-        oPolygon._apIdx = this._apIdx;
-        oPolygon._originView = this._originView;
-        oPolygon.SetOriginPage(this.GetOriginPage());
-        oPolygon.SetAuthor(this.GetAuthor());
-        oPolygon.SetModDate(this.GetModDate());
-        oPolygon.SetCreationDate(this.GetCreationDate());
-        oPolygon.SetWidth(this.GetWidth());
-        oPolygon.SetStrokeColor(this.GetStrokeColor().slice());
-        oPolygon.SetContents(this.GetContents());
-        oPolygon.SetFillColor(this.GetFillColor());
-        oPolygon.SetLineStart(this.GetLineStart());
-        oPolygon.SetLineEnd(this.GetLineEnd());
-        oPolygon.recalcInfo.recalculatePen = false;
-        oPolygon.recalcInfo.recalculateGeometry = true;
-        oPolygon._vertices = this._vertices.slice();
-        oPolygon.SetWasChanged(oPolygon.IsChanged());
-        return oPolygon;
+        oPolyline.pen = new AscFormat.CLn();
+        oPolyline._apIdx = this._apIdx;
+        oPolyline._originView = this._originView;
+        oPolyline.SetOriginPage(this.GetOriginPage());
+        oPolyline.SetAuthor(this.GetAuthor());
+        oPolyline.SetModDate(this.GetModDate());
+        oPolyline.SetCreationDate(this.GetCreationDate());
+        oPolyline.SetWidth(this.GetWidth());
+        oPolyline.SetStrokeColor(this.GetStrokeColor().slice());
+        oPolyline.SetContents(this.GetContents());
+        oPolyline.SetFillColor(this.GetFillColor());
+        oPolyline.SetLineStart(this.GetLineStart());
+        oPolyline.SetLineEnd(this.GetLineEnd());
+        oPolyline.recalcInfo.recalculatePen = false;
+        oPolyline.recalcInfo.recalculateGeometry = true;
+        oPolyline._vertices = this._vertices.slice();
+        oPolyline.SetWasChanged(oPolyline.IsChanged());
+        return oPolyline;
     };
-    CAnnotationPolyLine.prototype.onMouseDown = function(e) {
+    CAnnotationPolyLine.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolyLine.prototype.IsPolyLine = function() {
@@ -332,7 +332,7 @@
     CAnnotationPolyLine.prototype.GetMinShapeRect = function() {
         let oViewer     = editor.getDocumentRenderer();
         let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aVertices     = this.GetVertices();
+        let aVertices   = this.GetVertices();
         let nPage       = this.GetPage();
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
@@ -479,7 +479,7 @@
         let nIntent = this.GetIntent();
         if (nIntent != null) {
             memory.annotFlags |= (1 << 20);
-            memory.WriteDouble(nIntent);
+            memory.WriteByte(nIntent);
         }
 
         let nEndPos = memory.GetCurPosition();
@@ -631,6 +631,9 @@
         let maxY = -Infinity;
     
         rects.forEach(function(rect) {
+            if (!rect)
+                return;
+
             minX = Math.min(minX, rect[0]);
             minY = Math.min(minY, rect[1]);
             maxX = Math.max(maxX, rect[2]);

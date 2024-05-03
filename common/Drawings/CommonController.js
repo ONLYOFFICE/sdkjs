@@ -2159,7 +2159,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
+							!oGrp.IsAnnot && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2174,7 +2174,7 @@
 							const oGrpTx = oGrp.selection.textSelection;
 							const oGrpChart = oGrp.selection.chartSelection;
 							const aGrpSelected = oGrp.selectedObjects;
-							if (oGrpTx) {
+							if (oGrpTx && !oGrp.IsAnnot) {
 								drawingDocument.DrawTrack(
 									AscFormat.TYPE_TRACK.TEXT,
 									oGrpTx.transform,
@@ -2192,7 +2192,9 @@
 							} else {
 								for (i = 0; i < aGrpSelected.length; ++i) {
 									let oDrawing = aGrpSelected[i];
-
+									if (Asc.editor.isPdfEditor() && oDrawing instanceof AscFormat.CConnectionShape) {
+										continue;
+									}
 									drawingDocument.DrawTrack(
 										AscFormat.TYPE_TRACK.SHAPE,
 										oDrawing.transform,
@@ -2201,7 +2203,7 @@
 										oDrawing.extX,
 										oDrawing.extY,
 										AscFormat.CheckObjectLine(oDrawing),
-										oDrawing.canRotate(),
+										oDrawing.canRotate() && !Asc.editor.isPdfEditor(),
 										undefined,
 										isDrawHandles && oGrp.canEdit());
 								}
@@ -2820,11 +2822,6 @@
 				pasteFormatting: function (oData) {
 					if (!oData)
 						return;
-					if(!oData.isDrawingData()) {
-						if(!AscFormat.getTargetTextObject(this)) {
-							return;
-						}
-					}
 					let aSelectedObjects = this.selectedObjects;
 					for (let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing) {
 						let oSelectedDrawing = aSelectedObjects[nDrawing];
@@ -4065,7 +4062,7 @@
 						var oAscTextArtProperties = props.textArtProperties;
 						var oParaTextPr;
 						var nStyle = oAscTextArtProperties.asc_getStyle();
-						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects));
+						var bWord = (typeof CGraphicObjects !== "undefined" && (this instanceof CGraphicObjects) && false == Asc.editor.isPdfEditor());
 						if (this.selection.groupSelection && this.selection.groupSelection.isSmartArtObject()) {
 							bWord = false;
 						}
@@ -7072,13 +7069,18 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
+						// skip sticky note for pdf editor
+						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment()) {
+							continue;
+						}
+
 						locked = undefined;
 						if (AscFormat.MoveAnimationDrawObject && drawing instanceof AscFormat.MoveAnimationDrawObject) {
 							bMotionPath = true;
 						}
 						if (!drawing.group) {
 							locked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
-							if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+							if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 								if (drawing.Lock) {
 									locked = drawing.Lock.Is_Locked();
 								}
@@ -7087,7 +7089,7 @@
 							var oParentGroup = drawing.group.getMainGroup();
 							if (oParentGroup) {
 								locked = oParentGroup.lockType !== c_oAscLockTypes.kLockTypeNone && oParentGroup.lockType !== c_oAscLockTypes.kLockTypeMine;
-								if (typeof editor !== "undefined" && isRealObject(editor) && editor.isPresentationEditor) {
+								if (typeof editor !== "undefined" && isRealObject(editor) && (editor.isPresentationEditor || Asc.editor.isPdfEditor())) {
 									if (oParentGroup.Lock) {
 										locked = oParentGroup.Lock.Is_Locked();
 									}
@@ -8089,7 +8091,7 @@
 
 
 				createImage: function (rasterImageId, x, y, extX, extY, sVideoUrl, sAudioUrl) {
-					var image = new AscFormat.CImageShape();
+					var image = Asc.editor.isPdfEditor() ? new AscPDF.CPdfImage() : new AscFormat.CImageShape();
 					AscFormat.fillImage(image, rasterImageId, x, y, extX, extY, sVideoUrl, sAudioUrl);
 					return image;
 				},
@@ -8119,7 +8121,7 @@
 						MainLogicDocument.SetLocalTrackRevisions(false);
 					}
 
-					var oShape = new AscFormat.CShape();
+					var oShape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape() : new AscFormat.CShape();
 					oShape.setWordShape(bWord === true);
 					oShape.setBDeleted(false);
 					if (wsModel)
@@ -8158,7 +8160,7 @@
 							oSelectedContent.ReplaceContent(oContent);
 							oShape.bSelectedText = true;
 						} else {
-							sText = this.getDefaultText();
+							sText = bUseStartString ? sStartString : this.getDefaultText();
 							AscFormat.AddToContentFromString(oContent, sText);
 							oShape.bSelectedText = false;
 						}
@@ -8183,7 +8185,7 @@
 						oTextPr = oShape.getTextArtPreviewManager().getStylesToApply()[nStyle].Copy();
 						oTextPr.FontSize = nFontSize;
 						oTextPr.RFonts.Ascii = undefined;
-						if (!((typeof CGraphicObjects !== "undefined") && (this instanceof CGraphicObjects))) {
+						if (!((typeof CGraphicObjects !== "undefined") && (this instanceof CGraphicObjects)) || Asc.editor.isPdfEditor()) {
 							oTextPr.Unifill = oTextPr.TextFill;
 							oTextPr.TextFill = undefined;
 						}
@@ -11078,6 +11080,7 @@
 		window['AscFormat'].CreateBlipFillRasterImageId = CreateBlipFillRasterImageId;
 		window['AscFormat'].fResetConnectorsIds = fResetConnectorsIds;
 		window['AscFormat'].getAbsoluteRectBoundsArr = getAbsoluteRectBoundsArr;
+		window['AscFormat'].getAbsoluteRectBoundsObject = getAbsoluteRectBoundsObject;
 		window['AscFormat'].fCheckObjectHyperlink = fCheckObjectHyperlink;
 		window['AscFormat'].getNumberingType = getNumberingType;
 		window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;
