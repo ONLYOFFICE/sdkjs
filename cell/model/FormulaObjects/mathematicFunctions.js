@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3834,7 +3834,11 @@ function (window, undefined) {
 			let firstNumber = Math.ceil(a);
 			let secondNumber = Math.floor(b);
 
-			return new cNumber(Math.round(Math.random() * Math.abs(firstNumber - secondNumber)) + firstNumber);
+			if (firstNumber === secondNumber) {
+				return new cNumber(firstNumber);
+			}
+
+			return new cNumber(Math.floor(Math.random() * (secondNumber - firstNumber + 1)) + firstNumber);
 		}
 
 		function f(a, b, r, c) {

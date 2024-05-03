@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -4556,6 +4556,7 @@ function (window, undefined) {
 		this.IsEnabledMacroses = true;
 		this.IsWebOpening = false;
 		this.SupportsOnSaveDocument = false;
+		this.Wopi = null;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4714,6 +4715,12 @@ function (window, undefined) {
 	};
 	prot.get_SupportsOnSaveDocument = prot.asc_getSupportsOnSaveDocument = function () {
 		return this.SupportsOnSaveDocument;
+	};
+	prot.put_Wopi = prot.asc_putWopi = function (v) {
+		this.Wopi = v;
+	};
+	prot.get_Wopi = prot.asc_getWopi = function () {
+		return this.Wopi;
 	};
 
 	function COpenProgress() {
@@ -6660,6 +6667,8 @@ function (window, undefined) {
 	prot["get_IsWebOpening"] = prot["asc_getIsWebOpening"] = prot.asc_getIsWebOpening;
 	prot["put_SupportsOnSaveDocument"] = prot["asc_putSupportsOnSaveDocument"] = prot.asc_putSupportsOnSaveDocument;
 	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
+	prot["put_Wopi"] = prot["asc_putWopi"] = prot.asc_putWopi;
+	prot["get_Wopi"] = prot["asc_getWopi"] = prot.asc_getWopi;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;
