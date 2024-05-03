@@ -541,7 +541,7 @@ CSectionPr.prototype =
 		if (format === this.PageNumType.Format)
 			return;
 		
-		AscCommon.History(new CChangesSectionPageNumTypeFormat(this, this.PageNumType.Format, format));
+		AscCommon.History.Add(new CChangesSectionPageNumTypeFormat(this, this.PageNumType.Format, format));
 		this.PageNumType.Format = format;
 	},
 	

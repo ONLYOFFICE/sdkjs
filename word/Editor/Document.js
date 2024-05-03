@@ -11457,6 +11457,25 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 };
+CDocument.prototype.SetSectionPageNumFormat = function(format)
+{
+	let curHdrFtr = this.HdrFtr.CurHdrFtr;
+	if (!curHdrFtr)
+		return;
+	
+	let curPage = curHdrFtr.RecalcInfo.CurPage;
+	if (-1 === curPage)
+		return;
+	
+	let startIndex = this.Pages[curPage].Pos;
+	let sectPr     = this.SectionsInfo.Get_SectPr(startIndex).SectPr;
+	
+	sectPr.SetPageNumFormat(format);
+	
+	this.Recalculate();
+	this.UpdateSelection();
+	this.UpdateInterface();
+};
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();

@@ -4524,6 +4524,7 @@
 	window['AscDFH'].historydescription_Presentation_ShowMasterShapes               = 0x01ae;
 	window['AscDFH'].historydescription_BuilderScript                               = 0x01af;
 	window['AscDFH'].historydescription_Document_AddRemoveBeforeAfterParagraph      = 0x01b0;
+	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

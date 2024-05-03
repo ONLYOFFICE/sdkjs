@@ -5445,6 +5445,29 @@ background-repeat: no-repeat;\
 			oLogicDocument.FinalizeAction();
 		}
 	};
+	asc_docs_api.prototype.asc_SetSectionPageNumFormat = function(format)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return new Promise(function(resolve)
+		{
+			let symbols = AscWord.GetNumberingSymbolsByFormat(format);
+			if (symbols && symbols.length)
+				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
+			else
+				resolve();
+		}).then(function()
+		{
+			if (logicDocument.IsSelectionLocked(AscCommon.changestype_HdrFtr))
+				return;
+			
+			logicDocument.StartAction(AscDFH.historydescription_Document_SectionPageNumFormat);
+			logicDocument.SetSectionPageNumFormat(format);
+			logicDocument.FinalizeAction();
+		});
+	};
 
 	/*структура для передачи настроек колонтитулов
 	 {
