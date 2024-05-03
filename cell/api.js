@@ -3821,7 +3821,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets, arrNames, arrBooks) {
   	if (arrBooks) {
-  		this.asc_sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+  		this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
   		return;
 	}
 
@@ -3885,7 +3885,7 @@ var editor;
   spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets, arrBooks) {
 
 	  if (arrBooks) {
-		  this.asc_sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+		  this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
 		  return;
 	  }
 
@@ -5983,8 +5983,6 @@ var editor;
       this.wb.setFontAttributes("i", isItalic);
       this.wb.restoreFocus();
     }
-
-	this.asc_sendSheetsToOtherBooks(0, [this.test[0][2][0][0]],[this.test[0][2][0][1]], [this.test[0][1]]);
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
@@ -9198,7 +9196,6 @@ var editor;
 						val.addSheet(event.data.info.sheets[i].name, event.data.info.sheets[i].index);
 					}
 					callback([val]);
-					console.log(event.data.info.name)
 				}
 			};
 
@@ -9209,7 +9206,7 @@ var editor;
 			type: "GetDocuments"
 		})
 	};
-	spreadsheet_api.prototype.asc_sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
+	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
 		let arrBinary = this.getBinaryContentSheets(arrSheets);
 		if (arrBinary) {
 			this.broadcastChannel.postMessage({
@@ -9263,7 +9260,9 @@ var editor;
 						for (let i in event.data.info.aBooks) {
 							if (event.data.info.aBooks[i] === docId) {
 								let where = event.data.info.where != null ? event.data.info.where : (wb.aWorksheets && wb.aWorksheets.length);
-								oThis.asc_EndMoveSheet(event.data.info.where, event.data.info.aNames, event.data.info.aSheets);
+								oThis.handlers.trigger("asc_generateNewSheetNames", event.data.info.aNames, function (_aNames) {
+									oThis.asc_EndMoveSheet(where, _aNames, event.data.info.aSheets);
+								});
 							}
 						}
 					}
