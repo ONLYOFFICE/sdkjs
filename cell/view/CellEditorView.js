@@ -1227,12 +1227,13 @@ function (window, undefined) {
 			this._calculateCanvasSize();
 		}
 
-		this._renderText(null, isExpand);  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
+		//this._renderText(null, isExpand);  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
+		this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth());
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
-		this._updateCursorPosition(true);
+		this._updateCursorPosition(true, isExpand);
 		this._updateCursor();
 
 		this._updateUndoRedoChanged();
@@ -1651,7 +1652,7 @@ function (window, undefined) {
 		this.cursorStyle.display = "none";
 	};
 
-	CellEditor.prototype._updateCursorPosition = function (redrawText) {
+	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand) {
 		// ToDo стоит переправить данную функцию
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
@@ -1692,7 +1693,7 @@ function (window, undefined) {
 		}
 
 		if (dy !== undefined || redrawText) {
-			this._renderText(y);
+			this._renderText(y, isExpand);
 		}
 
 		curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
