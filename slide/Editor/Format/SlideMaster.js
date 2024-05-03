@@ -181,7 +181,7 @@ MasterSlide.prototype.sendGraphicObjectProps = function()
 };
 MasterSlide.prototype.showDrawingObjects = function()
 {
-    editor.WordControl.m_oDrawingDocument.OnRecalculatePage(this.getNum(), this);
+    editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.getNum());
 };
 MasterSlide.prototype.getNum = function () {
     let aSlides = this.presentation.GetAllSlides();

@@ -1066,6 +1066,10 @@
 			}
 		};
 
+	asc_docs_api.prototype.isMasterMode = function() {
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide;
+	};
+
     //----------------------------------------------------------------------------------------------------------------------
     // SpellCheck_CallBack
     //          Функция ответа от сервера.
@@ -3450,7 +3454,7 @@ background-repeat: no-repeat;\
 						var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
 						slide.graphicObjects.applyDrawingProps(prop);
 						this.WordControl.m_oLogicDocument.Recalculate();
-						this.WordControl.m_oDrawingDocument.OnRecalculatePage(this.WordControl.m_oLogicDocument.CurPage, slide);
+						this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
 						this.WordControl.m_oDrawingDocument.OnEndRecalculate();
 					}
 					else
@@ -3492,7 +3496,7 @@ background-repeat: no-repeat;\
 						var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
 						slide.graphicObjects.applyDrawingProps(prop);
 						this.WordControl.m_oLogicDocument.Recalculate();
-						this.WordControl.m_oDrawingDocument.OnRecalculatePage(this.WordControl.m_oLogicDocument.CurPage, slide);
+						this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
 						this.WordControl.m_oDrawingDocument.OnEndRecalculate();
 					}
 					else
@@ -3698,7 +3702,7 @@ background-repeat: no-repeat;\
 							}
 							for (i = 0; i < arr_ind.length; ++i)
 							{
-								oLogicDocument.DrawingDocument.OnRecalculatePage(arr_ind[i], oLogicDocument.Slides[arr_ind[i]]);
+								oLogicDocument.DrawingDocument.OnRecalculateSlide(arr_ind[i]);
 							}
 							oLogicDocument.DrawingDocument.OnEndRecalculate(true, false);
 						}, this, []);
@@ -4595,7 +4599,7 @@ background-repeat: no-repeat;\
 			var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
 			if(slide) 
 			{
-				this.WordControl.m_oDrawingDocument.OnRecalculatePage(this.WordControl.m_oLogicDocument.CurPage, slide);
+				this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
 				if(!bShow)
 				{
 					if(slide.timing)

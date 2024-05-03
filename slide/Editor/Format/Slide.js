@@ -1777,7 +1777,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.showDrawingObjects = function()
     {
-        editor.WordControl.m_oDrawingDocument.OnRecalculatePage(this.num, this);
+        editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.num);
     };
 
     Slide.prototype.showComment = function(Id, x, y)

@@ -639,7 +639,7 @@ CShape.prototype.OnContentReDraw = function(){
     if(AscCommonSlide){
         var oPresentation = editor.WordControl.m_oLogicDocument;
         if(this.parent instanceof AscCommonSlide.Slide) {
-            oPresentation.DrawingDocument.OnRecalculatePage(this.parent.num, this.parent);
+            oPresentation.DrawingDocument.OnRecalculateSlide(this.parent.num);
         }
         else if(this.parent instanceof AscCommonSlide.CNotes) {
             var oCurSlide = oPresentation.Slides[oPresentation.CurPage];

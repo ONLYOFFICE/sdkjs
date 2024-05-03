@@ -181,7 +181,7 @@ SlideLayout.prototype.drawSelect = function(_type)
 };
 SlideLayout.prototype.showDrawingObjects = function()
 {
-    editor.WordControl.m_oDrawingDocument.OnRecalculatePage(this.getNum(), this);
+    editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.getNum());
 };
 SlideLayout.prototype.sendGraphicObjectProps = function()
 {

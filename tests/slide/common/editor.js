@@ -48,7 +48,7 @@
 		Notes_OnRecalculate: function () {return 100;},
 		scrollToY: function () {},
 		OnStartRecalculate: function () {},
-		OnRecalculatePage: function () {},
+		OnRecalculateSlide: function () {},
 		OnEndRecalculate: function () {},
 		UpdateTargetTransform : function(){},
 		SetTargetColor : function(){},

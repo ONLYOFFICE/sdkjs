@@ -250,7 +250,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 
     for(var i = 0; i < num_arr.length; ++i)
     {
-        editor.WordControl.m_oDrawingDocument.OnRecalculatePage(num_arr[i], editor.WordControl.m_oLogicDocument.Slides[num_arr[i]]);
+        editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(num_arr[i]);
     }
     if(num_arr.length > 0)
     {

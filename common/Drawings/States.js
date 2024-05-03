@@ -277,7 +277,7 @@ StartAddNewShape.prototype =
                                 }
                             }
                             else {
-                                oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
+                                oPresentation.DrawingDocument.OnRecalculateSlide(oPresentation.CurPage);
                             }
                         }
                     }

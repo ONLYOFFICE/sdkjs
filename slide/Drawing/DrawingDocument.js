@@ -573,17 +573,6 @@ function CDrawingPage()
 	this.cachedImage = null;
 }
 
-function CMasterThumbnail(oMaster)
-{
-	this.Master = oMaster;
-
-	this.MasterPage = new CDrawingPage();
-	this.LayoutsPages = [];
-	for(let nIdx = 0; nIdx < this.Master.sldLayoutLst.length; ++nIdx)
-	{
-		this.LayoutsPages.push(new CDrawingPage());
-	}
-}
 
 function CDrawingCollaborativeTarget(DrawingDocument)
 {
@@ -1547,11 +1536,8 @@ function CDrawingDocument()
 			this.m_oWordControl.m_oApi.checkLastWork();
 	};
 
-	this.OnRecalculateSlide = function(oSlideLike)
-	{
-	};
 
-	this.OnRecalculatePage = function(index, pageObject)
+	this.OnRecalculateSlide = function(index)
 	{
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
@@ -3465,24 +3451,29 @@ function CThPage()
 	this.IsSelected = false;
 	this.IsFocused  = false;
 	this.IsLocked   = false;
-
-	this.Draw = function(context, xDst, yDst, wDst, hDst)
-	{
-		if (wDst <= 0 || hDst <= 0)
-			return;
-
-		if (null != this.cachedImage)
-		{
-			// потом посмотреть на кусочную отрисовку
-			context.drawImage(this.cachedImage.image, xDst, yDst, wDst, hDst);
-		}
-		else
-		{
-			context.fillStyle = "#FFFFFF";
-			context.fillRect(xDst, yDst, wDst, hDst);
-		}
-	};
 }
+
+
+CThPage.prototype.Draw = function(context, xDst, yDst, wDst, hDst)
+{
+	if (wDst <= 0 || hDst <= 0)
+		return;
+
+	if (null != this.cachedImage)
+	{
+		// потом посмотреть на кусочную отрисовку
+		context.drawImage(this.cachedImage.image, xDst, yDst, wDst, hDst);
+	}
+	else
+	{
+		context.fillStyle = "#FFFFFF";
+		context.fillRect(xDst, yDst, wDst, hDst);
+	}
+};
+CThPage.prototype.Hit = function(x, y)
+{
+	return y >= this.top && y <= this.bottom;
+};
 
 function DrawBackground(graphics, unifill, w, h)
 {
@@ -3633,6 +3624,82 @@ CMouseDownTrack.prototype.IsSamePos = function()
 
 
 
+function CThumbnailsBase() {
+
+}
+
+function CSlidesThumbnails() {
+	CThumbnailsBase.call(this);
+	this.slides = [];
+	this.cusSlide = -1;
+	this.firstVisible = -1;
+	this.lastVisible = -1;
+}
+AscFormat.InitClassWithoutType(CSlidesThumbnails, CThumbnailsBase);
+CSlidesThumbnails.prototype.clear = function () {
+	this.slides.length = 0;
+	this.cusSlide = -1;
+	this.firstVisible = -1;
+	this.lastVisible = -1;
+};
+
+
+function CMasterIndex() {
+	this.masterIdx = -1;
+	this.layoutIdx = -1;
+}
+function CMastersThumbnails() {
+	CThumbnailsBase.call(this);
+	this.masters = [];
+	this.curPos = new CMasterIndex();
+	this.firstVisible = new CMasterIndex();
+	this.lastVisible = new CMasterIndex();
+}
+AscFormat.InitClassWithoutType(CMastersThumbnails, CThumbnailsBase)
+
+
+CMastersThumbnails.prototype.clear = function () {
+	for(let nIdx = 0; nIdx < this.masters.length; ++nIdx) {
+		this.masters[nIdx].preDelete();
+	}
+	this.masters.length = 0;
+};
+
+function CMasterThumbnails(oMaster)
+{
+	this.master = oMaster;
+
+	this.masterPage = null;//new CThPage()
+	this.layoutPages = [];//new CThPage()[]
+
+	this.id = this.master.Id;
+
+	let oThis = this;
+	Asc.editor.attachEvent("slideMasterUpdate", function (oMaster) {
+		if(oMaster === this.master) {
+			oThis.update();
+		}
+	}, this.id);
+	this.update();
+}
+
+
+
+CMasterThumbnails.prototype.preDelete = function() {
+	Asc.editor.detachEvent("slideMasterUpdate", this.id);
+};
+CMasterThumbnails.prototype.update = function() {
+	if(!this.masterPage) {
+		this.masterPage = new CThPage();
+	}
+	let aLayouts = this.master.sldLayoutLst;
+	this.layoutPages.length = 0;
+	for(let nIdx = 0; nIdx < aLayouts.length; ++nIdx) {
+		this.layoutPages.push(new CThPage());
+	}
+};
+
+
 function CThumbnailsManager()
 {
 	this.isInit = false;
@@ -3664,13 +3731,24 @@ function CThumbnailsManager()
 	this.m_dScrollY_max = 0;
 
 	this.m_bIsVisible = false;
-	this.m_nCurrentPage = -1;
-	this.m_bIsUpdate = false;
-	this.m_arrPages = [];
-	this.m_arrMasters = [];
 
+
+	this.m_bIsUpdate = false;
+
+	//regular mode
+	this.thumbnails = new CSlidesThumbnails();
+
+	this.m_nCurrentPage = -1;
+	this.m_arrPages = [];
 	this.m_lDrawingFirst = -1;
 	this.m_lDrawingEnd = -1;
+
+	//master mode
+	this.m_arrMasters = [];
+	this.m_oCurPos = new CMasterIndex();
+	this.m_oDrawingFirstPos = new CMasterIndex();
+	this.m_oDrawingEndPos = new CMasterIndex();
+
 
 	this.bIsEmptyDrawed = false;
 
@@ -3693,6 +3771,10 @@ function CThumbnailsManager()
 	this.m_oWordControl = null;
 	var oThis = this;
 
+
+	this.IsMasterMode = function() {
+		return Asc.editor.isMasterMode();
+	};
 	// init
 	this.Init = function()
 	{
@@ -3889,7 +3971,7 @@ function CThumbnailsManager()
 
 		oThis.SetFocusElement(FOCUS_OBJECT_THUMBNAILS);
 
-		var pos = oThis.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y, true, true);
+		var pos = oThis.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 		if (pos.Page == -1)
 		{
 			if (global_mouseEvent.Button == 2)
@@ -4130,7 +4212,7 @@ function CThumbnailsManager()
 			return;
 		}
 
-		var pos = oThis.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y, true, true);
+		var pos = oThis.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
 
 		var _is_old_focused = false;
 
@@ -5122,7 +5204,7 @@ function CThumbnailsManager()
 	};
 
 	// position
-	this.ConvertCoords = function(x, y, isPage, isFixed)
+	this.ConvertCoords = function(x, y)
 	{
 		var Pos = {X: x, Y: y};
 		Pos.X -= this.m_oWordControl.X;
@@ -5131,44 +5213,15 @@ function CThumbnailsManager()
 		Pos.X = AscCommon.AscBrowser.convertToRetinaValue(Pos.X, true);
 		Pos.Y = AscCommon.AscBrowser.convertToRetinaValue(Pos.Y, true);
 
-		if (isFixed && isPage)
+		Pos
+		Pos.Page = -1;
+		let pages_count = this.m_arrPages.length;
+		for (let i = 0; i < pages_count; i++)
 		{
-			Pos.Page = -1;
-
-			var pages_count = this.m_arrPages.length;
-			for (var i = 0; i < pages_count; i++)
+			if(this.m_arrPages[i].Hit(Pos.X, Pos.Y))
 			{
-				var drawRect = this.m_arrPages[i];
-
-				if (Pos.Y >= drawRect.top && Pos.Y <= drawRect.bottom)
-				{
-					Pos.Page = i;
-					break;
-				}
-			}
-		} else if (isPage)
-		{
-			Pos.Page = 0;
-			var pages_count = this.m_arrPages.length;
-			for (var i = 0; i < pages_count; i++)
-			{
-				var drawRect = this.m_arrPages[i];
-
-				if (Pos.Y >= drawRect.top && Pos.Y <= drawRect.bottom)
-				{
-					Pos.Page = i;
-					break;
-				}
-
-				if (i == (pages_count - 1) && Pos.Y > drawRect.bottom)
-				{
-					Pos.Page = i;
-				}
-			}
-
-			if (Pos.Page >= pages_count)
-			{
-				Pos.Page = -1;
+				Pos.Page = i;
+				break;
 			}
 		}
 		return Pos;

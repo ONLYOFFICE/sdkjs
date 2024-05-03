@@ -6245,7 +6245,7 @@
 							this.document.DrawingDocument.OnRepaintPage(nPageNum1);
 						} else if (this.drawingObjects.cSld) {
 							if (!(bNoRedraw === true)) {
-								editor.WordControl.m_oDrawingDocument.OnRecalculatePage(nPageNum1, this.drawingObjects);
+								editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(nPageNum1);
 								editor.WordControl.m_oDrawingDocument.OnEndRecalculate(false, true);
 							}
 						} else {
@@ -6259,7 +6259,7 @@
 							this.document.DrawingDocument.OnRepaintPage(nPageNum2);
 						} else if (this.drawingObjects.cSld) {
 							if (!(bNoRedraw === true)) {
-								editor.WordControl.m_oDrawingDocument.OnRecalculatePage(nPageNum2, this.drawingObjects);
+								editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(nPageNum2);
 								editor.WordControl.m_oDrawingDocument.OnEndRecalculate(false, true);
 							}
 						} else {

@@ -9430,7 +9430,7 @@
 		function redrawSlide(slide, presentation, arrInd, pos, direction, arr_slides) {
 			if (slide) {
 				slide.recalculate();
-				presentation.DrawingDocument.OnRecalculatePage(slide.num, slide);
+				presentation.DrawingDocument.OnRecalculateSlide(slide.num);
 			}
 			if (direction === 0) {
 				if (pos > 0) {
