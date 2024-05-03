@@ -3821,7 +3821,14 @@ var editor;
 
   spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets, arrNames, arrBooks) {
   	if (arrBooks) {
-  		this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+		  if (arrBooks.length) {
+			  this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+			  this.asc_deleteWorksheet(arrSheets.slice());
+		  } else if (window["AscDesktopEditor"]) {
+			  //create new book
+			  //desktop function
+		  }
+
   		return;
 	}
 
