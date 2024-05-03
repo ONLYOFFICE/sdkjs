@@ -1234,6 +1234,13 @@ function(window, undefined) {
 			drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, this.x, this.y, this.extX, this.extY, false, false, undefined, isDrawHandles);
 		}
 	};
+	CLabelsBox.prototype.checkLabelsFormat = function () {
+		if (!this.chartSpace || !this.chartSpace.chart || !this.chartSpace.chart.plotArea || !this.axis) {
+			return false;
+		}
+		let oSeries = this.chartSpace.chart.plotArea.getSeriesWithSmallestIndexForAxis(this.axis);
+		return oSeries && !!oSeries.cat; // && oSeries.cat.getLit();
+	}
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {
 		var dlbl = new AscFormat.CDLbl();
@@ -1271,6 +1278,7 @@ function(window, undefined) {
 		let nIntervalCount = bOnTickMark_ ? nLabelsCount - 1 : nLabelsCount;
 		let fInterval = fAxisLength / nIntervalCount;
 		let fForceContentWidth_ = fForceContentWidth;
+
 		if (!bForceVertical || true) {//TODO: implement for vertical labels
 			let fMaxMinWidth = oLabelsBox.checkMaxMinWidth();
 			let fCheckInterval;
@@ -1360,8 +1368,12 @@ function(window, undefined) {
 				return 1;
 			}
 
-			// if width is a little bit higher than height it is possible to have width instead of height
+			// autoRotate labels if they can fit into the axisWidth
 			const updateRotation = function (axisWidth, oLabelsBox, labelsCount, parameters) {
+
+				if (!oLabelsBox || !parameters) {
+					return;
+				}
 
 				const degree = parameters.degree;
 				const rot = parameters.rot;
@@ -1378,18 +1390,22 @@ function(window, undefined) {
 					return 0;
 				}
 
-				// Check if diagonal labels can fit into axis width
-				// also other suggestions to calculate diagonal width can be found in this function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
-				const cellHeight = getHeight(oLabelsBox.aLabels);
+				// only string labels can be auto rotated to 45 degrees
+				const isLabelsString = oLabelsBox.checkLabelsFormat();
+				if (isLabelsString) {
+					// сheck if diagonal labels can fit into axis width
+					// also other suggestions to calculate diagonal width can be found in current function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
+					const cellHeight = getHeight(oLabelsBox.aLabels);
 
-				// multiplier is the square root of 2; 
-				// diagonal line of square with h is equal to root(2) * h;
-				const multiplier = 1.41421356237;
-				const diagonalRes = (multiplier * cellHeight) * updateLabelsCount;
+					// multiplier is the square root of 2; 
+					// diagonal rectangle with h is equal to root(2) * h;
+					const multiplier = 1.41421356237;
+					const diagonalRes = (multiplier * cellHeight) * updateLabelsCount;
 
-				// diagonal angle is 45 degree
-				if (diagonalRes && diagonalRes <= axisWidth) {
-					return -45 * degree;
+					// diagonal angle is 45 degree
+					if (diagonalRes && diagonalRes <= axisWidth) {
+						return -45 * degree;
+					}
 				}
 
 				// vertical angle is 90 degree
@@ -1401,20 +1417,30 @@ function(window, undefined) {
 			let parameters = null;
 			let bodyPr = false;
 			if (AscFormat.isRealNumber(nAxisType) && AscDFH.historyitem_type_CatAx) {
+				// parameters indecates necessary stuff such as rotation, label skip, degree
 				parameters = {};
+
 				// 1 degree = 60000
 				// the range is between [-90, 90]
 				parameters.degree = 60000;
 				const limit = 90 * parameters.degree;
+
+				// rotation
 				bodyPr = oLabelsBox.axis.txPr && oLabelsBox.axis.txPr.bodyPr;
 				parameters.rot = bodyPr && bodyPr.rot >= -limit && bodyPr.rot <= limit ? bodyPr.rot : null;
+
+				// find max possible space allowed to fill by label
 				// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
 				const heightMultiplier = 0.37;
 				const titleHeight = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.title ? oLabelsBox.chartSpace.chart.title.extY : 0;
 				parameters.maxHeight = oLabelsBox.chartSpace ? heightMultiplier * (oLabelsBox.chartSpace.extY - titleHeight) : null;
+
+				// find label skip
 				const tickLblSkip = oLabelsBox.axis ? oLabelsBox.axis.tickLblSkip : null;
 				parameters.isUserDefinedTickSkip = AscFormat.isRealNumber(tickLblSkip);
 				parameters.nLblTickSkip = parameters.isUserDefinedTickSkip ? tickLblSkip : calculateTickSkips(fAxisLength, oLabelsBox, nLabelsCount, parameters);
+
+				// update rotation
 				parameters.rot = updateRotation(fAxisLength, oLabelsBox, nLabelsCount, parameters);
 				//save the updated rot
 				if (bodyPr) {
@@ -1422,7 +1448,7 @@ function(window, undefined) {
 				}
 			}
 			let statement = parameters ? !isRotate(parameters.rot) : fMaxMinWidth <= fCheckInterval;
-			console.log(parameters);
+
 			if (statement) {
 				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, oLabelsBox.maxMinWidth + 0.2, parameters);
 			} else {
@@ -4745,7 +4771,7 @@ function(window, undefined) {
 					nPtsLength = 2;
 				}
 				let oLitFormatDate = null;
-				if (nAxisType === AscDFH.historyitem_type_DateAx && oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
+				if (oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
 					oLitFormatDate = oNumFormatCache.get(oAxis.numFmt.formatCode);
 				}
 
@@ -5749,7 +5775,7 @@ function(window, undefined) {
 						} else {
 							if (oAxisLabels.align) {
 								var labels_offset = oCatAx.labels.getLabelsOffset();
-								const rot = oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr ? oAxisLabels.axis.txPr.bodyPr.updatedRot : null;
+								const rot = oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr ? oAxisLabels.axis.txPr.bodyPr.updatedRot : oAxisLabels.axis.txPr.bodyPr.rot ;
 								let fAngle = getRotationAngle(rot);
 								for (i = 0; i < oAxisLabels.aLabels.length; ++i) {
 									if (oAxisLabels.aLabels[i]) {
