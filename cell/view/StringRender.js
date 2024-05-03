@@ -1308,9 +1308,18 @@
 			}
 		};
 
-		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth) {
+		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines) {
 			let align = this.flags ? this.flags.textAlign : null;
-			return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
+			if (initAllLines) {
+				if (this.lines) {
+					let lineWidth = this._calcLineWidth(startPos);
+					for (let i = 0; i < this.lines.length; ++i) {
+						this.lines[i].initStartX(lineWidth, x, maxWidth, align);
+					}
+				}
+			} else {
+				return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
+			}
 		};
 
 		StringRender.prototype.getInternalState = function () {

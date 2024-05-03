@@ -1229,7 +1229,7 @@ function (window, undefined) {
 
 		//this._renderText(null, isExpand);  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
-		this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth());
+		this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth(), true);
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
@@ -1520,12 +1520,14 @@ function (window, undefined) {
 
 		if (window.LOCK_DRAW && !forceRender)
 		{
-			if (this.textRender.lines && this.textRender.lines[0]) {
-				this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth());
-			}
+			this.textRender.initStartX(0, null, this._getContentLeft(), this._getContentWidth(), true);
 			window.TEXT_DRAW_INSTANCE = this;
 			window.TEXT_DRAW_INSTANCE_POS = dy;
 			return;
+		}
+
+		if (forceRender) {
+			window.TEXT_DRAW_INSTANCE = undefined;
 		}
 
 		var t = this, opt = t.options, ctx = t.drawingCtx;
