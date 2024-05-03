@@ -6456,11 +6456,15 @@
                      */
 					if (bCur.borders.dd) {
 						// draw diagonal line l,t - r,b
-						drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y1 - 1, x2Diagonal, y2Diagonal);
+						if (bCur.borders.d && bCur.borders.d.w > 0) {
+							drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y1 - 1, x2Diagonal, y2Diagonal);
+						}
 					}
 					if (bCur.borders.du) {
 						// draw diagonal line l,b - r,t
-						drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y2Diagonal, x2Diagonal, y1 - 1);
+						if (bCur.borders.d && bCur.borders.d.w > 0) {
+							drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y2Diagonal, x2Diagonal, y1 - 1);
+						}
 					}
 					// ToDo Clip diagonal borders
 					//ctx.restore();
