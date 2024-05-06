@@ -712,6 +712,10 @@ function (window, undefined) {
 							elemFromChosenArgument = chosenArgument;
 						}
 
+						if (!elemFromChosenArgument) {
+							elemFromChosenArgument = new cError(cErrorType.not_available);
+						}
+
 						if (!resArr.array[r]) {
 							resArr.addRow();
 						}
