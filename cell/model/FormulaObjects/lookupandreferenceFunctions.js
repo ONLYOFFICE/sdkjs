@@ -687,8 +687,13 @@ function (window, undefined) {
 								elemFromChosenArgument = chosenArgument;
 							}
 							
-							if (!elemFromChosenArgument) {
+							// null set manually to force the #N/A error to be returned to the array
+							if (elemFromChosenArgument === null) {
 								elemFromChosenArgument = new cError(cErrorType.not_available);
+							}
+							// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
+							if (elemFromChosenArgument === undefined) {
+								elemFromChosenArgument = new cEmpty();
 							}
 
 							singleRow ? tempArr.push([elemFromChosenArgument]) : tempArr.push(elemFromChosenArgument);
@@ -712,8 +717,13 @@ function (window, undefined) {
 							elemFromChosenArgument = chosenArgument;
 						}
 
-						if (!elemFromChosenArgument) {
+						// null set manually to force the #N/A error to be returned to the array
+						if (elemFromChosenArgument === null) {
 							elemFromChosenArgument = new cError(cErrorType.not_available);
+						}
+						// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
+						if (elemFromChosenArgument === undefined) {
+							elemFromChosenArgument = new cEmpty();
 						}
 
 						if (!resArr.array[r]) {
