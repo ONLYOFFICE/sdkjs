@@ -1020,7 +1020,8 @@
 			PLAY_BUTTON_MAX_LABEL_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
-		let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		// let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		let dLabelWidth = PLAY_BUTTON_MAX_LABEL_WIDTH;
 		oButtonLabel.setLayout(
 			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
 			0,
