@@ -54,42 +54,29 @@
 		this.WidthVisible = 0;
 
 		this.Parent = null;
+
+		this.numFormat = -1;
+		this.textPr    = null;
+		this.graphemes = [];
+		this.widths    = [];
 	}
 	CRunPageNum.prototype = Object.create(AscWord.CRunElementBase.prototype);
 	CRunPageNum.prototype.constructor = CRunPageNum;
 
 	CRunPageNum.prototype.Type = para_PageNum;
-	CRunPageNum.prototype.Draw = function(X, Y, Context)
+	CRunPageNum.prototype.Draw = function(x, y, context)
 	{
-		// Value - реальное значение, которое должно быть отрисовано.
-		// Align - прилегание параграфа, в котором лежит данный номер страницы.
-
-		var Len = this.String.length;
-
-		var _X = X;
-		var _Y = Y;
-
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-		for (var Index = 0; Index < Len; Index++)
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		for (let index = 0; index < this.graphemes.length; ++index)
 		{
-			var Char = this.String.charAt(Index);
-			Context.FillText(_X, _Y, Char);
-			_X += this.Widths[Index];
+			AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
+			x += this.widths[index] * fontSize;
 		}
 	};
 	CRunPageNum.prototype.Measure = function (Context, TextPr)
 	{
-		this.FontKoef = TextPr.getFontCoef();
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-
-		for (var Index = 0; Index < 10; Index++)
-		{
-			this.NumWidths[Index] = Context.Measure("" + Index).Width;
-		}
-
-		this.Width        = 0;
-		this.Height       = 0;
-		this.WidthVisible = 0;
+		this.textPr = TextPr;
+		this.Set_Page(1, Asc.c_oAscNumberingFormat.Decimal);
 	};
 	CRunPageNum.prototype.GetWidth = function()
 	{
@@ -103,43 +90,52 @@
 	{
 		this.WidthVisible = WidthVisible;
 	};
-	CRunPageNum.prototype.Set_Page = function(PageNum)
+	CRunPageNum.prototype.SetNumFormat = function(format)
 	{
-		this.String = "" + PageNum;
-		var Len     = this.String.length;
-
-		var RealWidth = 0;
-		for (var Index = 0; Index < Len; Index++)
+		this.numFormat = format;
+	};
+	CRunPageNum.prototype.Set_Page = function(pageNum, numFormat)
+	{
+		if (-1 !== this.numFormat)
+			numFormat = this.numFormat;
+		
+		let numText = AscCommon.IntToNumberFormat(pageNum, numFormat);
+		AscWord.stringShaper.Shape(numText.codePointsArray(), this.textPr);
+		
+		this.graphemes = AscWord.stringShaper.GetGraphemes();
+		this.widths    = AscWord.stringShaper.GetWidths();
+		
+		let totalWidth = 0;
+		for (let index = 0; index < this.widths.length; ++index)
 		{
-			var Char = parseInt(this.String.charAt(Index));
-
-			this.Widths[Index] = this.NumWidths[Char];
-			RealWidth += this.NumWidths[Char];
+			totalWidth += this.widths[index];
 		}
-
-		this.Width        = RealWidth;
-		this.WidthVisible = RealWidth;
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		
+		this.Width        = totalWidth;
+		this.WidthVisible = totalWidth;
+		
 	};
 	CRunPageNum.prototype.IsNeedSaveRecalculateObject = function()
 	{
 		return true;
 	};
-	CRunPageNum.prototype.SaveRecalculateObject = function(Copy)
+	CRunPageNum.prototype.SaveRecalculateObject = function(isCopy)
 	{
-		return new CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
+		return new AscWord.PageNumRecalculateObject(this.Type, this.graphemes, this.widths, this.Width, isCopy);
 	};
-	CRunPageNum.prototype.LoadRecalculateObject = function(RecalcObj)
+	CRunPageNum.prototype.LoadRecalculateObject = function(recalcObj)
 	{
-		this.Widths = RecalcObj.Widths;
-		this.String = RecalcObj.String;
-
-		this.Width        = RecalcObj.Width;
+		this.graphemes    = recalcObj.graphemes;
+		this.widths       = recalcObj.widths;
+		this.Width        = recalcObj.width;
 		this.WidthVisible = this.Width;
 	};
 	CRunPageNum.prototype.PrepareRecalculateObject = function()
 	{
-		this.Widths = [];
-		this.String = "";
+		this.graphemes = [];
+		this.widths    = [];
 	};
 	CRunPageNum.prototype.Document_CreateFontCharMap = function(FontCharMap)
 	{

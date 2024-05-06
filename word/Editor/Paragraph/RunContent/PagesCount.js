@@ -50,6 +50,7 @@
 		this.String    = "";
 		this.PageCount = undefined !== PageCount ? PageCount : 1;
 		this.Parent    = null;
+		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 	}
 	CRunPagesCount.prototype = Object.create(AscWord.CRunElementBase.prototype);
 	CRunPagesCount.prototype.constructor = CRunPagesCount;

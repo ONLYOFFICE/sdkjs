@@ -4340,10 +4340,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else if (para_PageNum === ItemType)
                     {
-                        var LogicDocument = Para.LogicDocument;
-                        var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
-
-                        Item.Set_Page(SectionPage);
+						let logicDocument = Para.LogicDocument;
+						let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
+						let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
+                        Item.Set_Page(sectInfo.CurPage, sectPr.GetPageNumFormat());
                     }
 
                     // Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,
