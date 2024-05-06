@@ -3542,7 +3542,9 @@
 			this.setStyle(null);
 		}
 	};
-
+	CGraphicObjectBase.prototype.getText = function () {
+		return "";
+	};
 	CGraphicObjectBase.prototype.getContentText = function () {
 		return "";
 	};
