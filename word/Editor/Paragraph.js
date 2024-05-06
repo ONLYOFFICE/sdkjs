@@ -2748,7 +2748,7 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 					{
 						if (AscCommon.IsLinkPPAction(sValue))
 						{
-							let oLogicDocument	= this.GetLogicDocument();
+							let oLogicDocument	= Asc.editor.private_GetLogicDocument();
 							let nCurPage		= Asc.editor.isPdfEditor() ? oLogicDocument.GetCurPage() : oLogicDocument.Get_CurPage();
 							let nPagesCount		= Asc.editor.isPdfEditor() ? oLogicDocument.GetPagesCount() : oLogicDocument.GetSlidesCount();
 							
