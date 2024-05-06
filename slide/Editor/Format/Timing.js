@@ -8727,7 +8727,7 @@
     CTimeNodeContainer.prototype.getObjectText = function () {
         const sObjectId = this.getObjectId();
         const oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
-        return oObject ? oObject.getText() : "";
+        return oObject && oObject.getText? oObject.getText() : "";
     };
     CTimeNodeContainer.prototype.asc_getStartType = function () {
         if (this.cTn) {
