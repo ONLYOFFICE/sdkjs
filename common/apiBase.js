@@ -83,6 +83,7 @@
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
 		this.documentShardKey  = undefined;
+		this.documentWopiSrc  = undefined;
 		this.documentIsWopi = false;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
@@ -498,13 +499,13 @@
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
 
-				if (this.documentOpenOptions["WOPISrc"])
+				if (this.documentOpenOptions[Asc.c_sWopiSrcName])
 				{
-					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+					this.documentWopiSrc = this.documentOpenOptions[Asc.c_sWopiSrcName];
 					this.documentIsWopi = true;
 				}
 			}
-			if (!this.documentShardKey) {
+			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
 				this.documentShardKey = this.documentId;
 			}
@@ -1903,7 +1904,7 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2189,6 +2190,14 @@
 			//todo move cmd from header to body and uncomment
 			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
+			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
+			}
+			oAdditionalData["jsonparams"] = jsonparams;
+		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
+			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
+			let jsonparams = {};
+			jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
 			oAdditionalData["jsonparams"] = jsonparams;
 		}
 		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
@@ -2346,7 +2355,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2379,7 +2388,7 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
@@ -5011,7 +5020,7 @@
 		}
 	};
 
-	baseEditorsApi.prototype.wrapEvent = function(name, types) 
+	baseEditorsApi.prototype.wrapEvent = function(name) 
 	{
 		this.asc_registerCallback(name, function()
 		{
@@ -5020,7 +5029,7 @@
 				if (arguments[i] && arguments[i].toCValue)
 					arguments[i] = arguments[i].toCValue();
 			}
-			window["native"]["onJsEvent"](name, arguments);
+			window["native"]["onJsEvent"](name, Array.from(arguments));
 		});
 	};
 

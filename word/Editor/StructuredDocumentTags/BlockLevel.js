@@ -599,6 +599,9 @@ CBlockLevelSdt.prototype.Add = function(oParaItem)
 };
 CBlockLevelSdt.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	if (this.IsPlaceHolder())
 		return;
 
@@ -1356,29 +1359,41 @@ CBlockLevelSdt.prototype.RemoveContentControlWrapper = function()
 	var nParentCurPos            = this.Parent.CurPos.ContentPos;
 	var nParentSelectionStartPos = this.Parent.Selection.StartPos;
 	var nParentSelectionEndPos   = this.Parent.Selection.EndPos;
-
+	
+	let contentPos     = this.Content.CurPos.ContentPos;
+	let selectionStart = this.Content.Selection.StartPos;
+	let selectionEnd   = this.Content.Selection.EndPos;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		logicDocument.PreventPreDelete = true;
+	else
+		logicDocument = null;
+	
 	this.Parent.Remove_FromContent(nElementPos, 1);
 	for (var nIndex = 0, nCount = this.Content.Content.length; nIndex < nCount; ++nIndex)
 	{
 		this.Parent.Add_ToContent(nElementPos + nIndex, this.Content.Content[nIndex]);
 	}
-
+	this.Content.RemoveFromContent(0, this.Content.Content.length, false);
+	
+	if (logicDocument)
+		logicDocument.PreventPreDelete = false;
+	
 	if (nParentCurPos === nElementPos)
-		this.Parent.CurPos.ContentPos = nParentCurPos + this.Content.CurPos.ContentPos;
+		this.Parent.CurPos.ContentPos = nParentCurPos + contentPos;
 	else if (nParentCurPos > nElementPos)
 		this.Parent.CurPos.ContentPos = nParentCurPos + nCount - 1;
 
 	if (nParentSelectionStartPos === nElementPos)
-		this.Parent.Selection.StartPos = nParentSelectionStartPos + this.Content.Selection.StartPos;
+		this.Parent.Selection.StartPos = nParentSelectionStartPos + selectionStart;
 	else if (nParentSelectionStartPos > nElementPos)
 		this.Parent.Selection.StartPos = nParentSelectionStartPos + nCount - 1;
 
 	if (nParentSelectionEndPos === nElementPos)
-		this.Parent.Selection.EndPos = nParentSelectionEndPos + this.Content.Selection.EndPos;
+		this.Parent.Selection.EndPos = nParentSelectionEndPos + selectionEnd;
 	else if (nParentSelectionEndPos > nElementPos)
 		this.Parent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
-
-	this.Content.RemoveFromContent(0, this.Content.Content.length, false);
 };
 CBlockLevelSdt.prototype.IsTableFirstRowOnNewPage = function()
 {

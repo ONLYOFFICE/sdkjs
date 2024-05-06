@@ -999,7 +999,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j, true) : arg1.getElementRowCol(i, j);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -3787,9 +3787,26 @@ function (window, undefined) {
 			}
 		}
 
+		function findIndexInArray(lookingValue, arr) {
+			let resIndex = -1;
+
+			if (arr.getRowCount() >= arr.getCountElementInRow()) {
+				// searching in the first column and return elem with same position (index) from last column
+				let arrCol = arr.getCol(0);
+				resIndex = _func.lookupBinarySearch(lookingValue, arrCol, false);
+			} else {
+				// searching in the first row and return elem with same position (index) from last row
+				let arrRow = arr.getRow(0);
+				resIndex = _func.lookupBinarySearch(lookingValue, arrRow, false);
+			}
+
+			return resIndex;
+		}
+
 		// .calculate - base args checks, dimensions checks and got to ._get func
 		// ._get - get noEmpty elements from range and add to cache, then get typed array and add calculation result to the cache
 		// ._calculate - calculate result(binary search)
+		let arrayMode = arg.length === 2 ? true : false;
 		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
 			t = this, res, arg2SingleElem;
 
@@ -3874,62 +3891,76 @@ function (window, undefined) {
 
 		
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {		/* arg1 & arg2 is arrays */
-			// check two dimensional array
-			if ((arg1.getRowCount() > 1 && arg1.getCountElementInRow() > 1) || (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
+			let lookingIndex = -1;
+			let arg1Rows = arg1.getRowCount(),
+				arg2Rows = arg2.getRowCount(),
+				arg1Cols = arg1.getCountElementInRow(),
+				arg2Cols = arg2.getCountElementInRow();
+
+			/* check two dimensional array but only in vector form */
+			if (!arrayMode && (((arg1Rows < arg2Rows) && arg2Cols > 1) || (arg1Rows > 1 && arg1Cols > 1 && arg2Rows > 1 && arg2Cols > 1))) {
 				return new cError(cErrorType.not_available);
 			}
 
-			arrFinder(arg1);
+			// arrFinder(arg1);
+			lookingIndex = findIndexInArray(arg0, arg1);
 
-			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
-				return new cError(cErrorType.not_available);
-			}
-
-			if (arg2.getRowCount() > 1) {
-				// return val by col
-				return arg2.getElementRowCol(resR > resC ? resR : resC, 0);
+			let byRow, byCol;
+			if (arg1Rows >= arg1Cols) {
+				// search by col
+				byCol = true
 			} else {
-				// return val by row
-				return arg2.getElementRowCol(0, resR > resC ? resR : resC);
+				byRow = true
 			}
 
-			// return arg2.getElementRowCol(resR, resC);
+			if (lookingIndex === -1) {
+				return new cError(cErrorType.not_available);
+			}
+
+			if (arg2Rows === 1) {
+				return arg2.getElementRowCol(0, lookingIndex);
+			} else if (arg2Cols === 1) {
+				return arg2.getElementRowCol(lookingIndex, 0);
+			} else {
+				// return from last row/col
+				return arg2.getElementRowCol(byCol ? lookingIndex : arg2Rows - 1, byCol ? arg2Cols - 1 : lookingIndex);
+			}
 
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {	/* arg1 || arg2 is array */
-			let _arg1, BBox;
-			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
-
-			if (cElementType.array === arg2.type) {
-				if (_arg1.getRowCount() !== arg2.getRowCount() && _arg1.getCountElementInRow() !== arg2.getCountElementInRow()) { 
-					return new cError(cErrorType.not_available);
-				}
-			} else {
-				BBox = arg2.getBBox0();
-				if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
-					return new cError(cErrorType.not_available);
-				}
-			}
+			let lookingIndex = -1;
+			let _arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
 
 			// find resR & resC position in array/area
-			arrFinder(_arg1);
+			// arrFinder(_arg1);	// old solution with finding resR and resC
+			lookingIndex = findIndexInArray(arg0, _arg1);
 
-			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
+			if (lookingIndex < 0) {
 				return new cError(cErrorType.not_available);
 			}
 
 			if (arg2SingleElem) {
-				return arg2SingleElem;
+				return lookingIndex === 0 ? arg2SingleElem : new cError(cErrorType.not_available);
 			}
 
-			if (cElementType.array === arg2.type) {
-				res = arg2.getElementRowCol(resR, resC);
+			let byRow, byCol;
+			let dimension = arg2.getDimensions ? arg2.getDimensions() : null;
+			if (dimension) {
+				if (dimension.row >= dimension.col) {
+					byCol = true
+				} else {
+					byRow = true
+				}
+
+				if (dimension.row === 1) {
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(0, lookingIndex, true) : arg2.getElementRowCol(0, lookingIndex);
+				} else if (dimension.col === 1) {
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(lookingIndex, 0, true) : arg2.getElementRowCol(lookingIndex, 0);
+				} else {
+					return new cError(cErrorType.not_available);
+				}
 			} else {
-				let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
-				arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
-					res = checkTypeCell(cell);
-				});
+				return new cError(cErrorType.not_available);
 			}
-			return res;
 		} else {		/* arg1 & arg2 is area */
 			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
 				cElementType.cellsRange3D === arg2.type && !arg2.isSingleSheet()) {
@@ -4194,7 +4225,7 @@ function (window, undefined) {
 					for (let i = 0; i < _length; i++) {
 						let _row = !bVertical ? i : res - _startRange;
 						let _col = bVertical ? i : res - _startRange;
-						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col, true);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);
@@ -4504,7 +4535,7 @@ function (window, undefined) {
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
 		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
-			arg3 = arg3.getValueByRowCol(0,0);
+			arg3 = arg3.getValueByRowCol(0,0,true);
 		} else if (cElementType.array === arg3.type) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}

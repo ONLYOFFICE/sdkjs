@@ -451,6 +451,25 @@ window.startPluginApi = function() {
 		return false;
 	};
 
+	Plugin._pushWindowMethodCommandCallback = function(callback)
+	{
+		if (this.windowCallbacks === undefined)
+		{
+			this.windowCallbacks = [];
+			this.attachEvent("on_private_window_method", function(retValue) {
+				var _retCallback = window.Asc.plugin.windowCallbacks.shift();
+				if (_retCallback)
+					_retCallback(retValue);
+			});
+			this.attachEvent("on_private_window_command", function(retValue) {
+				var _retCallback = window.Asc.plugin.windowCallbacks.shift();
+				if (_retCallback)
+					_retCallback(retValue);
+			});
+		}
+		this.windowCallbacks.push(callback);
+	};
+
 	/***********************************************************************
 	 * METHODS
 	 */
@@ -522,7 +541,12 @@ window.startPluginApi = function() {
 	 */
 	Plugin.executeMethod = function(name, params, callback)
     {
-		if (this._checkPluginOnWindow()) return;
+		if (this.windowID)
+		{
+			this._pushWindowMethodCommandCallback(callback);
+			this.sendToPlugin("private_window_method", { name : name, params : params });
+			return;
+		}
 
         if (window.Asc.plugin.isWaitMethod === true)
         {
@@ -618,9 +642,14 @@ window.startPluginApi = function() {
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
-		if (this._checkPluginOnWindow()) return;
+		var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
+		if (this.windowID)
+		{
+			this._pushWindowMethodCommandCallback(callback);
+			this.sendToPlugin("private_window_command", { code : _txtFunc, isCalc : isCalc });
+			return;
+		}
 
-        var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
         var _type = (isClose === true) ? "close" : "command";
         window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
         window.Asc.plugin.executeCommand(_type, _txtFunc, callback);

@@ -66,8 +66,9 @@
     */
     function CAnnotationLine(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         AscPDF.initShape(this);
 
         this._popupOpen     = false;
@@ -93,7 +94,7 @@
         TurnOffHistory();
     }
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
-    AscFormat.InitClass(CAnnotationLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationLine.prototype.SetCaptionOffset = function(array) {
@@ -170,9 +171,6 @@
         this.recalculate();
         this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
-    CAnnotationLine.prototype.SetNeedRecalc = function(bRecalc) {
-        this._needRecalc = bRecalc;
-    };
     CAnnotationLine.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
@@ -188,20 +186,18 @@
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
     };
-    CAnnotationLine.prototype.onMouseDown = function(e) {
+    CAnnotationLine.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationLine.prototype.LazyCopy = function() {
@@ -209,6 +205,8 @@
         oDoc.TurnOffHistory();
 
         let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+
+        oLine.lazyCopy = true;
 
         oLine._pagePos = {
             x: this._pagePos.x,
@@ -341,7 +339,6 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
@@ -561,7 +558,7 @@
         let nIntent = this.GetIntent();
         if (nIntent != null) {
             memory.annotFlags |= (1 << 20);
-            memory.WriteDouble(nIntent);
+            memory.WriteByte(nIntent);
         }
 
         // leader Line Offset

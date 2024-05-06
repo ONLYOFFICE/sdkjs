@@ -16766,6 +16766,17 @@
 		oDocument.UpdateSelection();
 		return new ApiComment(comment)
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 
 	/**
 	 * Returns a list of values of the combo box / dropdown list content control.
@@ -17815,6 +17826,17 @@
 		
 		return new ApiContentControlList(this);
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -18175,6 +18197,16 @@
 	ApiFormBase.prototype.GetTextPr = function()
 	{
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
+	};
+	/**
+	 * Place cursor before/after the current form.
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
 	};
 	/**
 	 * Copies the current form (copies with the shape if it exists).
@@ -18607,15 +18639,17 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
+	 * @param {EMU} nWidth - The image width in English measure units.
+	 * @param {EMU} nHeight - The image height in English measure units.
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc)
+	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
 	{
 		return executeNoFormLockCheck(function(){
 			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
 				return false;
-	
+			
 			var oImg;
 			var allDrawings = this.Sdt.GetAllDrawingObjects();
 			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
@@ -18629,6 +18663,34 @@
 	
 			if (oImg)
 			{
+				let spPr = oImg.spPr;
+				if (!spPr)
+				{
+					spPr = new AscFormat.CSpPr();
+					oImg.setSpPr(spPr);
+					spPr.setParent(oImg);
+				}
+				
+				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+				
+				let xfrm = spPr.xfrm;
+				if (!xfrm)
+				{
+					xfrm = new AscFormat.CXfrm();
+					spPr.setXfrm(xfrm);
+					xfrm.setParent(spPr);
+				}
+				
+				if (undefined !== nWidth && undefined !== nHeight)
+				{
+					let w = private_EMU2MM(nWidth);
+					let h = private_EMU2MM(nHeight);
+					xfrm.setOffX(0);
+					xfrm.setOffY(0);
+					xfrm.setExtX(w);
+					xfrm.setExtY(h);
+				}
+				
 				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
 				this.OnChangeValue();
 				return true;
@@ -20137,6 +20199,8 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
+	
+	Api.prototype["Px2Emu"]                          = Px2Emu;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -20723,16 +20787,16 @@
 	ApiChart.prototype["SetMinorVerticalGridlines"]    =  ApiChart.prototype.SetMinorVerticalGridlines;
 	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]     =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]    =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["GetNextChart"]                 =  ApiChart.prototype.GetNextChart;
-    ApiChart.prototype["GetPrevChart"]                 =  ApiChart.prototype.GetPrevChart;
-    ApiChart.prototype["RemoveSeria"]                  =  ApiChart.prototype.RemoveSeria;
-    ApiChart.prototype["SetSeriaValues"]               =  ApiChart.prototype.SetSeriaValues;
-    ApiChart.prototype["SetXValues"]                   =  ApiChart.prototype.SetXValues;
-    ApiChart.prototype["SetSeriaName"]                 =  ApiChart.prototype.SetSeriaName;
-    ApiChart.prototype["SetCategoryName"]              =  ApiChart.prototype.SetCategoryName;
-	ApiChart.prototype["ApplyChartStyle"]              =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]     = ApiChart.prototype.SetHorAxisLablesFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]    = ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
+	ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
+	ApiChart.prototype["RemoveSeria"]                  = ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["SetSeriaValues"]               = ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetXValues"]                   = ApiChart.prototype.SetXValues;
+	ApiChart.prototype["SetSeriaName"]                 = ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCategoryName"]              = ApiChart.prototype.SetCategoryName;
+	ApiChart.prototype["ApplyChartStyle"]              = ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetPlotAreaFill"]              =  ApiChart.prototype.SetPlotAreaFill;
 	ApiChart.prototype["SetPlotAreaOutLine"]           =  ApiChart.prototype.SetPlotAreaOutLine;
 	ApiChart.prototype["SetSeriesFill"]                =  ApiChart.prototype.SetSeriesFill;
@@ -20805,6 +20869,7 @@
 	ApiInlineLvlSdt.prototype["Copy"]                   = ApiInlineLvlSdt.prototype.Copy;
 	ApiInlineLvlSdt.prototype["ToJSON"]                 = ApiInlineLvlSdt.prototype.ToJSON;
 	ApiInlineLvlSdt.prototype["AddComment"]             = ApiInlineLvlSdt.prototype.AddComment;
+	ApiInlineLvlSdt.prototype["MoveCursorOutside"]      = ApiInlineLvlSdt.prototype.MoveCursorOutside;
 
 	ApiInlineLvlSdt.prototype["GetPlaceholderText"]     = ApiInlineLvlSdt.prototype.GetPlaceholderText;
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
@@ -20867,6 +20932,7 @@
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
+	ApiBlockLvlSdt.prototype["MoveCursorOutside"]       = ApiBlockLvlSdt.prototype.MoveCursorOutside;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
@@ -20887,6 +20953,7 @@
 	ApiFormBase.prototype["SetPlaceholderText"]  = ApiFormBase.prototype.SetPlaceholderText;
 	ApiFormBase.prototype["SetTextPr"]           = ApiFormBase.prototype.SetTextPr;
 	ApiFormBase.prototype["GetTextPr"]           = ApiFormBase.prototype.GetTextPr;
+	ApiFormBase.prototype["MoveCursorOutside"]   = ApiFormBase.prototype.MoveCursorOutside;
 
 	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
 	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
@@ -21382,6 +21449,11 @@
 	{
 		return 25.4 / 72.0 / 8 * pt;
 	}
+	
+	function Px2Emu(px)
+	{
+		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
+	}
 
 	function private_StartSilentMode()
 	{
@@ -21659,13 +21731,13 @@
 			console.error(err);
 		else
 			console.log(err);
-	};
+	}
 
 	function throwException(err) {
 		if (!console.error)
 			logError(err);
 		throw err;
-	};
+	}
 
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
 	{

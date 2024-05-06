@@ -9284,7 +9284,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
                     var rPr = new CTextPr();
                     res = this.brPrr.Read(length, rPr, endRun, this.paragraph.TextPr);
 					endRun.SetPr(rPr);
-					this.paragraph.TextPr.SetPr(rPr);
+					this.paragraph.TextPr.SetPr(rPr.Copy());
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;

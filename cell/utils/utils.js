@@ -3445,6 +3445,20 @@
 		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {
 			this.lastSearchElem = val;
 		};
+		asc_CFindOptions.prototype.asc_getLastSearchElem = function (bGetFromSearchEngine) {
+			if (bGetFromSearchEngine) {
+				let api = window.Asc.editor;
+				let wb = api && api.wb;
+				if (wb) {
+					let searchEngine = wb.SearchEngine;
+					if (searchEngine && searchEngine.Elements && searchEngine.Id && searchEngine.Elements[searchEngine.Id - 1]) {
+						let element = searchEngine.Elements[searchEngine.Id - 1];
+						return [searchEngine.Id - 1, element.sheet, element.name, element.cell, element.text, element.formula];
+					}
+				}
+			}
+			return this.lastSearchElem;
+		};
 		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {
 			this.isNotSearchEmptyCells = val;
 		};
@@ -4076,6 +4090,7 @@
 		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
 		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
 		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
+		prot["asc_getLastSearchElem"] = prot.asc_getLastSearchElem;
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
 		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;

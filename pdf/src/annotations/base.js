@@ -73,9 +73,11 @@
 
         this._replies               = []; // тут будут храниться ответы (text аннотации)
 
+        if (this.Id == undefined)
+            this.Id = AscCommon.g_oIdCounter.Get_NewId();
+        
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
-        this._id                = AscCommon.g_oIdCounter.Get_NewId();
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -93,7 +95,9 @@
         this._rect = [aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY, aOrigRect[2] * nScaleX, aOrigRect[3] * nScaleY];
         this._origRect = aOrigRect;
     };
-
+    CAnnotationBase.prototype.GetDocContent = function() {
+        return null;
+    };
     CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
         this._inReplyTo = oAnnot;
     };
@@ -243,6 +247,7 @@
 
         if (oViewer.IsOpenAnnotsInProgress == false) {
             this._wasChanged = isChanged;
+            this.SetDrawFromStream(!isChanged);
         }
     };
     CAnnotationBase.prototype.IsChanged = function() {
@@ -414,6 +419,15 @@
                 this._vertices[i+1] += nDeltaY / nScaleY;
             }
         }
+        else if (this.IsFreeText()) {
+            let aCallout = this.GetCallout();
+            if (aCallout) {
+                for (let i = 0; i < aCallout.length; i+=2) {
+                    aCallout[i] += nDeltaX / nScaleX;
+                    aCallout[i+1] += nDeltaY / nScaleY;
+                }
+            }
+        }
 
         oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
 
@@ -438,11 +452,10 @@
         };
 
         this.SetNeedRecalc(true);
-        this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsShapeBased = function() {
-        return this instanceof AscFormat.CShape || this instanceof AscFormat.CGroupShape;
+        return this instanceof AscPDF.CPdfShape || this instanceof AscFormat.CGroupShape;
     };
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
@@ -474,8 +487,16 @@
     CAnnotationBase.prototype.IsFreeText = function() {
         return false;
     };
-    CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {
-        this._needRecalc = bRecalc;
+    CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
+        if (bRecalc == false) {
+            this._needRecalc = false;
+        }
+        else {
+            this._needRecalc = true;
+            // note: lazyCopy флаг означает, что объект был скопирован для отрисовки на overlay
+            if (bSkipAddToRedraw != true && this.lazyCopy != true)
+                this.AddToRedraw();
+        }
     };
     CAnnotationBase.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
@@ -515,9 +536,6 @@
         this._origRect[3] = this._rect[3] / nScaleY;
 
         this.SetWasChanged(true);
-        if (oViewer.IsOpenAnnotsInProgress == false) {
-            this.SetDrawFromStream(false);
-        }
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
         if (this.GetDocument().annots.indexOf(this) == -1)
@@ -531,7 +549,7 @@
         return this._rect;
     };
     CAnnotationBase.prototype.GetId = function() {
-        return this._id;
+        return this.Id;
     };
     CAnnotationBase.prototype.Get_Id = function() {
         return this.GetId();
@@ -553,7 +571,7 @@
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
         
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.annots.indexOf(this) != -1) {
                 if (oViewer.pagesInfo.pages[nPage].annots == null) {
@@ -678,12 +696,8 @@
         return this._replies[nPos];
     };
     CAnnotationBase.prototype.RemoveComment = function() {
-        let oDoc = this.GetDocument();
-
-        oDoc.CreateNewHistoryPoint();
         this.SetContents(null);
         this.SetReplies([]);
-        oDoc.TurnOffHistory();
     };
     CAnnotationBase.prototype.EditCommentData = function(oCommentData) {
         let oFirstCommToEdit;
@@ -810,6 +824,12 @@
     CAnnotationBase.prototype.IsAnnot = function() {
         return true;
     };
+    CAnnotationBase.prototype.IsDrawing = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsForm = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
@@ -819,8 +839,14 @@
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawAnnots = true;
+        let nPage   = this.GetPage();
+
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[nPage])
+                oViewer.pagesInfo.pages[nPage].needRedrawAnnots = true;
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
     };
     /**
 	 * Gets rgb color object from internal color array.
@@ -872,6 +898,8 @@
 
         let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oNewAnnot.lazyCopy = true;
+        
         if (this._pagePos) {
             oNewAnnot._pagePos = {
                 x: this._pagePos.x,
@@ -895,33 +923,26 @@
         return oNewAnnot;
     };
 
-    CAnnotationBase.prototype.onMouseDown = function(e) {
+    CAnnotationBase.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
-        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
     CAnnotationBase.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
     };
 
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
-        let oViewer = editor.getDocumentRenderer();
-
         this._strokeColor = aColor;
         this.SetWasChanged(true);
-        if (oViewer.IsOpenAnnotsInProgress == false) {
-            this.SetDrawFromStream(false);
-        }
     };
     CAnnotationBase.prototype.GetStrokeColor = function() {
         return this._strokeColor;

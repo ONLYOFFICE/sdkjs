@@ -66,7 +66,9 @@ var c_oAscAlignType = {
 /** @enum {number} */
 var c_oAscContextMenuTypes = {
 	Main       : 0,
-	Thumbnails : 1
+	Thumbnails : 1,
+	TimelineZoom: 2,
+	AnimEffect: 3,
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
@@ -114,34 +116,34 @@ var c_oAscSlideTransitionTypes = {
 
 /** @enum {number} */
 var c_oAscSlideTransitionParams = {
-	Fade_Smoothly      : 0,
-	Fade_Through_Black : 1,
+	Fade_Smoothly          : 0,
+	Fade_Through_Black     : 1,
 
-	Param_Left        : 0,
-	Param_Top         : 1,
-	Param_Right       : 2,
-	Param_Bottom      : 3,
-	Param_TopLeft     : 4,
-	Param_TopRight    : 5,
-	Param_BottomLeft  : 6,
-	Param_BottomRight : 7,
+	Param_Left             : 2,
+	Param_Top              : 3,
+	Param_Right            : 4,
+	Param_Bottom           : 5,
+	Param_TopLeft          : 6,
+	Param_TopRight         : 7,
+	Param_BottomLeft       : 8,
+	Param_BottomRight      : 9,
 
-	Split_VerticalIn    : 8,
-	Split_VerticalOut   : 9,
-	Split_HorizontalIn  : 10,
-	Split_HorizontalOut : 11,
+	Split_VerticalIn       : 10,
+	Split_VerticalOut      : 11,
+	Split_HorizontalIn     : 12,
+	Split_HorizontalOut    : 13,
 
-	Clock_Clockwise        : 0,
-	Clock_Counterclockwise : 1,
-	Clock_Wedge            : 2,
+	Clock_Clockwise        : 14,
+	Clock_Counterclockwise : 15,
+	Clock_Wedge            : 16,
 
-	Zoom_In        : 0,
-	Zoom_Out       : 1,
-	Zoom_AndRotate : 2,
+	Zoom_In                : 17,
+	Zoom_Out               : 18,
+	Zoom_AndRotate         : 19,
 
-	Morph_Objects: 0,
-	Morph_Words: 1,
-	Morph_Letters:2
+	Morph_Objects          : 20,
+	Morph_Words            : 21,
+	Morph_Letters          : 22
 };
 
 /** @enum {number} */
@@ -521,6 +523,8 @@ prot['Bottom'] = c_oAscVertAlignJc.Bottom;
 prot = window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenuTypes = c_oAscContextMenuTypes;
 prot['Main']       = c_oAscContextMenuTypes.Main;
 prot['Thumbnails'] = c_oAscContextMenuTypes.Thumbnails;
+prot['TimelineZoom'] = c_oAscContextMenuTypes.TimelineZoom;
+prot['AnimEffect'] = c_oAscContextMenuTypes.AnimEffect;
 
 prot = window['Asc']['c_oAscAlignShapeType'] = c_oAscAlignShapeType;
 prot['ALIGN_LEFT']   = c_oAscAlignShapeType.ALIGN_LEFT;

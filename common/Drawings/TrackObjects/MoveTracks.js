@@ -707,7 +707,14 @@ function MoveAnnotationTrack(originalObject)
         {
             oDrawer.SetCurrentPage(this.objectToDraw.GetPage());
         }
-        
+
+        let oOverlay = oDrawer.m_oOverlay || oDrawer;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+
         let xCenter = this.viewer.width >> 1;
 		let yPos = this.viewer.scrollY >> 0;
 		if (this.viewer.documentWidth > this.viewer.width)
@@ -782,11 +789,11 @@ function MoveAnnotationTrack(originalObject)
             Y = nPageHeight - this.originalObject._pagePos.h;
         }
 
-        let oDoc = this.viewer.getPDFDoc();
-        oDoc.CreateNewHistoryPoint();
+        if (this.originalObject.IsFreeText())
+            this.originalObject.onAfterMove();
+        
         this.originalObject.SetPosition(X, Y);
         this.originalObject.SetPage(this.pageIndex);
-        oDoc.TurnOffHistory();
     };
 
     this.getBounds = function()

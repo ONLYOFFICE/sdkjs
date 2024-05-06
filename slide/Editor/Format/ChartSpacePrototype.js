@@ -41,7 +41,6 @@ CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingO
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CChartSpace.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CChartSpace.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
-CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 CChartSpace.prototype.getEditorType = function()
 {
     return 0;

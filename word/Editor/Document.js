@@ -2040,7 +2040,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.StartCheckCCPlaceholder   = false; //
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
-
+	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -19907,7 +19907,10 @@ CDocument.prototype.controller_MoveCursorToXY = function(X, Y, PageAbs, AddToSel
 	{
 		if (true === AddToSelect)
 		{
-			this.Selection_SetEnd(X, Y, true);
+			let mouseEvent = new AscCommon.CMouseEventHandler();
+			mouseEvent.Type = AscCommon.g_mouse_event_type_up;
+			mouseEvent.ClickCount = 1;
+			this.Selection_SetEnd(X, Y, mouseEvent);
 		}
 		else
 		{
@@ -19926,9 +19929,10 @@ CDocument.prototype.controller_MoveCursorToXY = function(X, Y, PageAbs, AddToSel
 		if (true === AddToSelect)
 		{
 			this.StartSelectionFromCurPos();
-			var oMouseEvent  = new AscCommon.CMouseEventHandler();
-			oMouseEvent.Type = AscCommon.g_mouse_event_type_up;
-			this.Selection_SetEnd(X, Y, oMouseEvent);
+			let mouseEvent = new AscCommon.CMouseEventHandler();
+			mouseEvent.Type = AscCommon.g_mouse_event_type_up;
+			mouseEvent.ClickCount = 1;
+			this.Selection_SetEnd(X, Y, mouseEvent);
 		}
 		else
 		{
@@ -22305,14 +22309,9 @@ CDocument.prototype.RemoveContentControl = function(Id)
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
-	if (!this.CanPerformAction())
-		return;
-	
 	let contentControl = this.TableId.Get_ById(Id);
 	if (!contentControl)
 		return;
-	
-	this.StartAction();
 	
 	if (contentControl.IsForm())
 		contentControl.RemoveFormPr();
@@ -22321,11 +22320,6 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 		this.RemoveContentControl(Id);
 	else
 		contentControl.RemoveContentControlWrapper();
-	
-	this.Recalculate();
-	this.UpdateInterface();
-	this.UpdateSelection();
-	this.FinalizeAction();
 };
 CDocument.prototype.GetContentControl = function(Id)
 {
@@ -27225,6 +27219,10 @@ CDocument.prototype.IsCheckFormPlaceholder = function()
 		return false;
 	
 	return this.CheckFormPlaceHolder;
+};
+CDocument.prototype.isPreventedPreDelete = function()
+{
+	return this.PreventPreDelete;
 };
 
 function CDocumentSelectionState()

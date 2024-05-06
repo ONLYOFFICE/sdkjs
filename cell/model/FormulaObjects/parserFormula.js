@@ -1127,7 +1127,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
-	cArea.prototype.getValueByRowCol = function (i, j) {
+	cArea.prototype.getValueByRowCol = function (i, j, checkEmpty) {
 		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
@@ -1135,6 +1135,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				res = checkTypeCell(cell);
 			}
 		});
+		if (checkEmpty && res == null) {
+			res = new cEmpty();
+		}
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1349,7 +1352,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getFirstElement = function () {
-		return this.getValueByRowCol(0, 0);
+		return this.getValueByRowCol(0, 0, true);
 	};
 	cArea.prototype._getCol = function (colIndex) {
 		let dimensions = this.getDimensions();
@@ -1518,7 +1521,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
-	cArea3D.prototype.getValueByRowCol = function (i, j) {
+	cArea3D.prototype.getValueByRowCol = function (i, j, checkEmpty) {
 		let r = this.getRanges(), res;
 
 		if (r[0]) {
@@ -1527,6 +1530,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					res = checkTypeCell(cell);
 				}
 			});
+		}
+
+		if (checkEmpty && res == null) {
+			res = new cEmpty();
 		}
 
 		return res;
@@ -1761,7 +1768,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea3D.prototype.getFirstElement = function () {
-		return this.getValueByRowCol(0, 0);
+		return this.getValueByRowCol(0, 0, true);
 	};
 	cArea3D.prototype._getCol = function (colIndex) {
 		let dimensions = this.getDimensions();
@@ -3258,7 +3265,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
 				newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
-				if (newArgs[i] == undefined) {
+				if (newArgs[i] == null) {
 					newArgs[i] = arg.cross(arg1);
 				}
 			} else if (cElementType.array === arg.type) {
@@ -7149,7 +7156,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
 			}
-			if (isFoundImportFunctions) {
+			if (isFoundImportFunctions && !parseResult.error) {
 				//share external links
 				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				this.calculate();
@@ -7172,6 +7179,15 @@ function parserFormula( formula, parent, _ws ) {
 							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
 								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
 							}
+						}
+					}
+
+					if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						if (!AscCommonExcel.importRangeLinksState.notUpdateIdMap) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap = {};
+						}
+						for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap[i] = true;
 						}
 					}
 
@@ -8639,7 +8655,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
 			return new cError(cErrorType.not_available);
 		}
-		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col);
 		return res;
 	}
 

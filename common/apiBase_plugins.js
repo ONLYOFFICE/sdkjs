@@ -688,7 +688,7 @@
                 }
                 case "hideContentControlTrack":
                 {
-                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument)
+                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument && !this.isPdfEditor())
                         this.WordControl.m_oLogicDocument.SetForceHideContentControlTrack(obj[prop]);
 
                     break;
@@ -702,7 +702,8 @@
 				{
 					if (this.editorId !== AscCommon.c_oEditorId.Word
 						|| !this.WordControl
-						|| !this.WordControl.m_oLogicDocument)
+						|| !this.WordControl.m_oLogicDocument
+						|| this.isPdfEditor())
 						break;
 
 					let oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -973,23 +974,17 @@
 			{
 				if (!this.WordControl || !this.WordControl.m_oLogicDocument)
 					return "none";
-				var logicDoc = this.WordControl.m_oLogicDocument;
-
+				
+				let logicDoc = this.WordControl.m_oLogicDocument;
 				if (!logicDoc.IsSelectionUse())
 					return "none";
 
-				var selectionBounds = logicDoc.GetSelectionBounds();
-				var eps = 0.0001;
-				if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
-					(Math.abs(selectionBounds.Start.W) > eps) &&
-					(Math.abs(selectionBounds.End.W) > eps))
-				{
+				if (logicDoc.IsTextSelectionUse())
 					return "text";
-				}
-
+				
 				if (logicDoc.DrawingObjects.getSelectedObjectsBounds())
 					return "drawing";
-
+				
 				return "none";
 			}
 			case AscCommon.c_oEditorId.Presentation:

@@ -60,15 +60,13 @@ var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var HIDDEN_PANE_HEIGHT = 1;
 
-var HEADER_HEIGHT = 45 * g_dKoef_pix_to_mm;
-var TIMELINE_HEIGHT = 36 * g_dKoef_pix_to_mm;
-var TIMELINE_LEFT_MARGIN = 14 * g_dKoef_pix_to_mm;
+var HEADER_HEIGHT = 40 * g_dKoef_pix_to_mm;
+var TIMELINE_HEIGHT = 40 * g_dKoef_pix_to_mm;
 var TIMELINE_LIST_RIGHT_MARGIN = 23 * g_dKoef_pix_to_mm;
 var TIMELINE_HEADER_RIGHT_MARGIN = 18 * g_dKoef_pix_to_mm;
 
 AscCommon.HIDDEN_PANE_HEIGHT = HIDDEN_PANE_HEIGHT;
 AscCommon.TIMELINE_HEIGHT = TIMELINE_HEIGHT;
-AscCommon.TIMELINE_LEFT_MARGIN = TIMELINE_LEFT_MARGIN;
 AscCommon.TIMELINE_LIST_RIGHT_MARGIN = TIMELINE_LIST_RIGHT_MARGIN;
 AscCommon.TIMELINE_HEADER_RIGHT_MARGIN = TIMELINE_HEADER_RIGHT_MARGIN;
 
@@ -77,7 +75,7 @@ function CEditorPage(api)
 	// ------------------------------------------------------------------
 	this.Name           = "";
 	this.IsSupportNotes = true;
-	this.IsSupportAnimPane = false;
+	this.IsSupportAnimPane = true;
 
 	this.EditorType = "presentations";
 
@@ -245,11 +243,16 @@ function CEditorPage(api)
 	this.Splitter2PosMin = 0;
 	this.Splitter2PosMax = 0;
 
+	this.Splitter3Pos = 0;
+	this.Splitter3PosMin = 0;
+	this.Splitter3PosMax = 0;
+
 	this.SplitterDiv  = null;
 	this.SplitterType = 0;
 
 	this.OldSplitter1Pos = 0;
 	this.OldSplitter2Pos = 0;
+	this.OldSplitter3Pos = 0;
 
 	this.IsUseNullThumbnailsSplitter = false;
 
@@ -346,21 +349,21 @@ function CEditorPage(api)
 		this.m_oBody = CreateControlContainer(this.Name);
 		this.m_oBody.HtmlElement.style.touchAction = "none";
 
-		this.Splitter1Pos    = 67.5;
-		this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
-		this.Splitter3Pos = 0;//top of animation pane
-
-		this.OldSplitter1Pos = this.Splitter1Pos;
-		this.OldSplitter2Pos = this.Splitter2Pos;
-		this.OldSplitter3Pos = this.Splitter3Pos;
-
 		this.Splitter1PosMin = 20;
 		this.Splitter1PosMax = 80;
 		this.Splitter2PosMin = 10;
 		this.Splitter2PosMax = 100;
-		this.Splitter3PosMin = 0;//10;
-		this.Splitter3PosMax = 0;//100;
+		this.Splitter3PosMin = 40;
+		this.Splitter3PosMax = 100 - HIDDEN_PANE_HEIGHT;
+
+		this.Splitter1Pos    = 67.5;
+		this.Splitter1PosSetUp = this.Splitter1Pos;
+		this.Splitter2Pos = (this.IsSupportNotes && !this.m_oApi.isEmbedVersion) ? this.Splitter2PosMin : 0;
+		this.Splitter3Pos = 0;
+
+		this.OldSplitter1Pos = this.Splitter1Pos;
+		this.OldSplitter2Pos = this.Splitter2Pos;
+		this.OldSplitter3Pos = this.Splitter3Pos;
 
 		if (this.m_oApi.isReporterMode)
 		{
@@ -547,7 +550,7 @@ function CEditorPage(api)
 		this.m_oAnimPaneHeaderContainer.AddControl(this.m_oAnimPaneHeader);
 
 		this.m_oAnimPaneListContainer = CreateControlContainer("id_anim_list_container");
-		this.m_oAnimPaneListContainer.Bounds.SetParams(TIMELINE_LEFT_MARGIN, HEADER_HEIGHT, TIMELINE_LIST_RIGHT_MARGIN, TIMELINE_HEIGHT, true, true, true, true, -1, -1);
+		this.m_oAnimPaneListContainer.Bounds.SetParams(0, HEADER_HEIGHT, 0, TIMELINE_HEIGHT, true, true, true, true, -1, -1);
 		this.m_oAnimPaneListContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oAnimationPaneContainer.AddControl(this.m_oAnimPaneListContainer);
 
@@ -1272,11 +1275,19 @@ function CEditorPage(api)
 		this.m_oThumbnailsContainer.Bounds.AbsW = this.Splitter1Pos;
 		this.m_oThumbnailsSplit.Bounds.L 		= this.Splitter1Pos;
 
-		if (!this.IsSupportNotes)
-			this.Splitter2Pos = 0;
-		else if (this.Splitter2Pos < 1)
-			this.Splitter2Pos = 1;
+		if (this.IsSupportAnimPane) {
+			if (this.Splitter3Pos < HIDDEN_PANE_HEIGHT) {
+				this.Splitter3Pos = 0;
+				Asc.editor.sendEvent('asc_onCloseAnimPane');
+			}
+			if (this.Splitter3Pos > this.Splitter3PosMax) this.Splitter3Pos = this.Splitter3PosMax;
+		} else {
+			this.Splitter3Pos = 0;
+		}
 
+		this.Splitter2Pos = (this.IsSupportNotes)
+			? Math.min(Math.max(this.Splitter2Pos, this.Splitter3Pos + HIDDEN_PANE_HEIGHT), this.Splitter2PosMax)
+			: 0;
 
 		if (this.IsUseNullThumbnailsSplitter || (0 != this.Splitter1Pos))
 		{
@@ -1401,7 +1412,7 @@ function CEditorPage(api)
 	{
 		var dDiff = this.Splitter2Pos - this.Splitter3Pos;
 		this.Splitter3Pos = dPos;
-		this.Splitter2Pos = this.Splitter3Pos + dDiff;
+		this.Splitter2Pos = Math.max(this.Splitter2Pos, this.Splitter3Pos + dDiff);
 	};
 	this.SetSplitter2Pos = function(dPos)
 	{
@@ -2278,7 +2289,7 @@ function CEditorPage(api)
 		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
-		if (oWordControl.m_oAnimPaneApi)
+		if (oWordControl.m_oAnimPaneApi && oWordControl.IsAnimPaneShown())
 			oWordControl.m_oAnimPaneApi.CheckPaint();
 
 		if (null != oWordControl.m_oLogicDocument)
@@ -4519,7 +4530,7 @@ function CEditorPage(api)
 				this.m_oNotesApi.OnRecalculateNote(-1, 0, 0);
 
 			if (this.m_oAnimPaneApi)
-				this.m_oAnimPaneApi.OnAnimPaneChanged(-1, null);
+				this.m_oAnimPaneApi.OnAnimPaneChanged(null);
 		}
 
 		if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
@@ -4549,7 +4560,7 @@ function CEditorPage(api)
 				this.m_oNotesApi.OnRecalculateNote(_curPage, oSlide.NotesWidth, oSlide.getNotesHeight());
 				if(this.m_oAnimPaneApi)
 				{
-					this.m_oAnimPaneApi.OnAnimPaneChanged(_curPage, null);
+					this.m_oAnimPaneApi.OnAnimPaneChanged(null);
 				}
 			}
 		}
@@ -4719,10 +4730,25 @@ function CEditorPage(api)
 		return this.GetAnimPaneHeight() > 0;
 	};
 
-	this.ShowAnimPane = function (bShow)
-	{
-		//TODO
+	this.ShowAnimPane = function (bShow) {
+		if (this.IsAnimPaneShown() === bShow) { return; }
+
+		if (bShow) {
+			this.Splitter3Pos = (this.OldSplitter3Pos > HIDDEN_PANE_HEIGHT) ? this.OldSplitter3Pos : this.Splitter3PosMin;
+			this.Splitter2Pos += this.Splitter3Pos;
+			this.OnResizeSplitter();
+		} else {
+			const old = this.OldSplitter3Pos;
+			this.Splitter2Pos -= this.Splitter3Pos;
+			this.Splitter3Pos = 0;
+			this.OnResizeSplitter();
+			this.OldSplitter3Pos = old;
+			this.m_oLogicDocument.CheckAnimPaneShow();
+		}
 	};
+	this.ChangeTimelineScale = function(bZoomOut) {
+		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
+	}
 
 	// notes panel
 	this.GetNotesHeight = function()
@@ -4739,22 +4765,16 @@ function CEditorPage(api)
 		return this.GetNotesHeight() > HIDDEN_PANE_HEIGHT;
 	};
 
-	this.ShowNotes = function (bShow)
-	{
-		if(this.IsNotesShown() === bShow)
-		{
-			return;
-		}
-		if(bShow)
-		{
-			this.Splitter2Pos = this.OldSplitter2Pos;
-			if (this.Splitter2Pos <= 1)
-				this.Splitter2Pos = 11;
+	this.ShowNotes = function (bShow) {
+		if (this.IsNotesShown() === bShow) { return; }
+
+		if (bShow) {
+			this.Splitter2Pos = (this.OldSplitter2Pos - this.Splitter3Pos <= HIDDEN_PANE_HEIGHT)
+				? this.Splitter3Pos + 11
+				: this.OldSplitter2Pos;
 			this.OnResizeSplitter();
-		}
-		else
-		{
-			var old = this.OldSplitter2Pos;
+		} else {
+			const old = this.OldSplitter2Pos;
 			this.Splitter2Pos = 0;
 			this.OnResizeSplitter();
 			this.OldSplitter2Pos = old;

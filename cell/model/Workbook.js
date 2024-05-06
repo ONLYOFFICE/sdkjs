@@ -6503,7 +6503,7 @@
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, new Asc.Range(0, start, gc_nMaxCol0, stop), this.getId());
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, new Asc.Range(0, start, gc_nMaxCol0, gc_nMaxRow0), this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -12708,9 +12708,9 @@
 
 	//*****user range protect*****
 	Worksheet.prototype.editUserProtectedRanges = function(oldObj, newObj, addToHistory) {
-		
-		if ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
-			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref))) {
+		//if undo/redo - need apply changes
+		if (addToHistory && ((newObj && this.isIntersectionOtherUserProtectedRanges(newObj.ref)) ||
+			(oldObj && this.isIntersectionOtherUserProtectedRanges(oldObj.ref)))) {
 			return false;
 		}
 
@@ -12771,6 +12771,22 @@
 		for(var i = 0; i < this.userProtectedRanges.length; i++)
 		{
 			if(this.userProtectedRanges[i].Id === id)
+			{
+				res = {obj: this.userProtectedRanges[i], index: i};
+				break;
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.getUserProtectedRangeByName = function(name) {
+		var res = null;
+		if(!this.userProtectedRanges)
+			return res;
+
+		for(var i = 0; i < this.userProtectedRanges.length; i++)
+		{
+			if(this.userProtectedRanges[i].name === name)
 			{
 				res = {obj: this.userProtectedRanges[i], index: i};
 				break;

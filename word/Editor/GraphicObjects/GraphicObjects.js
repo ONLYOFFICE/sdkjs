@@ -358,12 +358,6 @@ CGraphicObjects.prototype =
 
     swapTrackObjects: function()
     {
-        if (Asc.editor.isPdfEditor())
-        {
-            this.drawingObjects = this.drawingObjects.concat(this.selectedObjects);
-            AscFormat.DrawingObjectsController.prototype.checkConnectorsPreTrack.call(this);
-        }
-
         this.clearTrackObjects();
         for(var i = 0; i < this.arrPreTrackObjects.length; ++i)
         {
@@ -3071,6 +3065,7 @@ CGraphicObjects.prototype =
                 aPos = arrCenterPos[i];
                 var aDrawings = [];
                 var drawing;
+                this.document.Recalculate(true);
                 for(j = 0; j < sp_tree.length; ++j)
                 {
                     sp = sp_tree[j];
