@@ -657,24 +657,30 @@ function (window, undefined) {
 					let elem = arg0.getValue2(r, c);
 					let chosenArgument = chooseArgument(elem);
 					let argDimensions = chosenArgument.getDimensions();
-					if (arg0Rows === 1) {
-						// get full col from chosen argument
-						let tempRow = [];
-						// form an array and then add it to resArr
-						for (let ir = 0; ir < maxArraySize.row; ir++) {
+					let singleRow = arg0Rows === 1;
+					let singleCol = arg0Cols === 1;
+					let tempArr = [];
+
+					if (singleRow || singleCol) {
+						// if the first argument has one row or column we need to fully take this row or column and pass it to the resulting array
+						for (let i = 0; i < (singleRow ? maxArraySize.row : maxArraySize.col); i++) {
 							let elemFromChosenArgument;
 							if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
 								if (argDimensions.col === 1) {
-									// return first col
-									// elemFromChosenArgument = chosenArgument.getValue2(ir, 0);
-									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(ir, 0) : chosenArgument.getValueByRowCol(ir, 0);
+									// return elem from first col
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(singleRow ? i : r, 0) : chosenArgument.getValueByRowCol(singleRow ? i : r, 0);
 								} else if (argDimensions.row === 1) {
-									elemFromChosenArgument = chosenArgument.getValue2(0, c);
+									// return elem from first row
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, singleRow ? c : i) : chosenArgument.getValueByRowCol(0, singleRow ? c : i);
 								} else {
-									// elemFromChosenArgument = chosenArgument.getValue2(ir, c);
-									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(ir, c) : chosenArgument.getValueByRowCol(ir, c);
+									// return r/c elem
+									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(singleRow ? i : r, singleRow ? c : i) : chosenArgument.getValueByRowCol(singleRow ? i : r, singleRow ? c : i);
 								}
-								if (argDimensions.row - 1 < ir) {
+
+								// if we go outside the range, we must return the #N/A error to the array
+								if (singleRow && argDimensions.row - 1 !== 0 && argDimensions.row - 1 < i) {
+									elemFromChosenArgument = null;
+								} else if (singleCol && argDimensions.col - 1 !== 0 && argDimensions.col - 1 < i) {
 									elemFromChosenArgument = null;
 								}
 							} else {
@@ -685,56 +691,18 @@ function (window, undefined) {
 								elemFromChosenArgument = new cError(cErrorType.not_available);
 							}
 
-							tempRow.push([elemFromChosenArgument]);
+							singleRow ? tempArr.push([elemFromChosenArgument]) : tempArr.push(elemFromChosenArgument);
 						}
-
-						resArr.pushCol(tempRow, 0);
-
-					} else if (arg0Cols === 1) {
-						// get full col from chosen argument
-						let tempCol = [];
-						// form an array and then add it to resArr
-						for (let ic = 0; ic < maxArraySize.col; ic++) {
-							let elemFromChosenArgument;
-							if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
-								if (argDimensions.row === 1) {
-									// return first row
-									// elemFromChosenArgument = chosenArgument.getValue2(0, ic);
-									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, ic) : chosenArgument.getValueByRowCol(0, ic);
-								} else if (argDimensions.col === 1) {
-									// elemFromChosenArgument = chosenArgument.getValue2(r, 0);
-									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, 0) : chosenArgument.getValueByRowCol(r, 0);
-								} else {
-									// elemFromChosenArgument = chosenArgument.getValue2(r, ic);
-									elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, ic) : chosenArgument.getValueByRowCol(r, ic);
-								}
-								if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < ic) {
-									elemFromChosenArgument = null;
-								}
-							} else {
-								elemFromChosenArgument = chosenArgument;
-							}
-							
-							if (!elemFromChosenArgument) {
-								elemFromChosenArgument = new cError(cErrorType.not_available);
-							}
-
-							tempCol.push(elemFromChosenArgument);
-						}
-
-						resArr.pushRow([tempCol], 0);
+						singleRow ? resArr.pushCol(tempArr, 0) : resArr.pushRow([tempArr], 0);
 					} else {
 						// get r/c part from chosen argument
 						let elemFromChosenArgument;
 						if (chosenArgument.type === cElementType.array || chosenArgument.type === cElementType.cellsRange || chosenArgument.type === cElementType.cellsRange3D) {
 							if (argDimensions.row === 1) {
-								// elemFromChosenArgument = chosenArgument.getValue2(0, c);
 								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(0, c) : chosenArgument.getValueByRowCol(0, c);
 							} else if (argDimensions.col === 1) {
-								// elemFromChosenArgument = chosenArgument.getValue2(r, 0);
 								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, 0) : chosenArgument.getValueByRowCol(r, 0);
 							} else {
-								// elemFromChosenArgument = chosenArgument.getValue2(r, c);
 								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, c) : chosenArgument.getValueByRowCol(r, c);
 							}
 							if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < c) {
