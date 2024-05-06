@@ -678,19 +678,13 @@ function (window, undefined) {
 								}
 
 								// if we go outside the range, we must return the #N/A error to the array
-								if (singleRow && argDimensions.row - 1 !== 0 && argDimensions.row - 1 < i) {
-									elemFromChosenArgument = null;
-								} else if (singleCol && argDimensions.col - 1 !== 0 && argDimensions.col - 1 < i) {
-									elemFromChosenArgument = null;
+								if ((singleRow && argDimensions.row - 1 !== 0 && argDimensions.row - 1 < i) || (singleCol && argDimensions.col - 1 !== 0 && argDimensions.col - 1 < i)) {
+									elemFromChosenArgument = new cError(cErrorType.not_available);
 								}
 							} else {
 								elemFromChosenArgument = chosenArgument;
 							}
 							
-							// null set manually to force the #N/A error to be returned to the array
-							if (elemFromChosenArgument === null) {
-								elemFromChosenArgument = new cError(cErrorType.not_available);
-							}
 							// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
 							if (elemFromChosenArgument === undefined) {
 								elemFromChosenArgument = new cEmpty();
@@ -711,16 +705,12 @@ function (window, undefined) {
 								elemFromChosenArgument = chosenArgument.getElementRowCol ? chosenArgument.getElementRowCol(r, c) : chosenArgument.getValueByRowCol(r, c);
 							}
 							if (argDimensions.col - 1 !== 0 && argDimensions.col - 1 < c) {
-								elemFromChosenArgument = null;
+								elemFromChosenArgument = new cError(cErrorType.not_available);
 							}
 						} else {
 							elemFromChosenArgument = chosenArgument;
 						}
 
-						// null set manually to force the #N/A error to be returned to the array
-						if (elemFromChosenArgument === null) {
-							elemFromChosenArgument = new cError(cErrorType.not_available);
-						}
 						// undefined can be obtained when accessing an empty cell in the range, in which case we need to return cEmpty
 						if (elemFromChosenArgument === undefined) {
 							elemFromChosenArgument = new cEmpty();
