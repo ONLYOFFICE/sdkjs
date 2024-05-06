@@ -999,7 +999,7 @@ function (window, undefined) {
 
 			for (let i = 0; i < rows; i++) {
 				for (let j = 0; j < columns; j++) {
-					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j) : arg1.getElementRowCol(i, j);
+					let val = arg1.getValueByRowCol ? arg1.getValueByRowCol(i, j, true) : arg1.getElementRowCol(i, j);
 
 					val = val.tocBool();
 					val = val.toBool ? val.toBool() : new cError(cErrorType.wrong_value_type);
@@ -3952,9 +3952,9 @@ function (window, undefined) {
 				}
 
 				if (dimension.row === 1) {
-					return arg2.getValueByRowCol ? arg2.getValueByRowCol(0, lookingIndex) : arg2.getElementRowCol(0, lookingIndex);
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(0, lookingIndex, true) : arg2.getElementRowCol(0, lookingIndex);
 				} else if (dimension.col === 1) {
-					return arg2.getValueByRowCol ? arg2.getValueByRowCol(lookingIndex, 0) : arg2.getElementRowCol(lookingIndex, 0);
+					return arg2.getValueByRowCol ? arg2.getValueByRowCol(lookingIndex, 0, true) : arg2.getElementRowCol(lookingIndex, 0);
 				} else {
 					return new cError(cErrorType.not_available);
 				}
@@ -4225,7 +4225,7 @@ function (window, undefined) {
 					for (let i = 0; i < _length; i++) {
 						let _row = !bVertical ? i : res - _startRange;
 						let _col = bVertical ? i : res - _startRange;
-						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col, true);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);
@@ -4535,7 +4535,7 @@ function (window, undefined) {
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
 		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
-			arg3 = arg3.getValueByRowCol(0,0);
+			arg3 = arg3.getValueByRowCol(0,0,true);
 		} else if (cElementType.array === arg3.type) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}
