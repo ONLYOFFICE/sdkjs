@@ -3821,15 +3821,15 @@ var editor;
 
   spreadsheet_api.prototype.asc_moveWorksheet = function (where, arrSheets, arrNames, arrBooks) {
   	if (arrBooks) {
-		  if (arrBooks.length) {
-			  this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
-			  this.asc_deleteWorksheet(arrSheets.slice());
-		  } else if (window["AscDesktopEditor"]) {
-			  //create new book
-			  //desktop function
-		  }
-
-  		return;
+      if (arrBooks.length) {
+        this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+        this.asc_deleteWorksheet(arrSheets.slice());
+      } else if (window["AscDesktopEditor"]) {
+        //create new book
+        //desktop function
+      }
+	  this.removeDocumentInfoEvent();
+      return;
 	}
 
   	// Проверка глобального лока
@@ -3891,10 +3891,11 @@ var editor;
 
   spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets, arrBooks) {
 
-	  if (arrBooks) {
-		  this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
-		  return;
-	  }
+    if (arrBooks) {
+      this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+	  this.removeDocumentInfoEvent();
+      return;
+    }
 
 	  // Проверка глобального лока
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -3949,9 +3950,14 @@ var editor;
     this.collaborativeEditing.lock(arrLocks, copyWorksheet);
   };
 
-	spreadsheet_api.prototype.asc_cancelMoveCopyWorksheet = function () {
+  spreadsheet_api.prototype.asc_cancelMoveCopyWorksheet = function () {
+	this.removeDocumentInfoEvent();
+  };
 
-	};
+  spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
+	this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
+	window.fBroadcastChannelDocumentInfo = null;
+  };
 
   spreadsheet_api.prototype.asc_StartMoveSheet = function (arrSheets) {
 	  // Проверка глобального лока
@@ -9203,14 +9209,14 @@ var editor;
 		}
 
 		this.broadcastChannel.postMessage({
-			type: "GetDocuments"
+			type: "GetOpenedDocuments"
 		})
 	};
 	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
 		let arrBinary = this.getBinaryContentSheets(arrSheets);
 		if (arrBinary) {
 			this.broadcastChannel.postMessage({
-				type: "CopySheets",
+				type: "InsertSheets",
 				info: {
 					aBooks: arrBooks,
 					aSheets: arrBinary,
@@ -9222,7 +9228,7 @@ var editor;
 	};
 	spreadsheet_api.prototype.initBroadcastChannel = function() {
 		if (!this.broadcastChannel) {
-			this.broadcastChannel = new BroadcastChannel("testChannel");
+			this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
 		}
 	};
 	spreadsheet_api.prototype.closeBroadcastChannel = function() {
@@ -9238,7 +9244,7 @@ var editor;
 		let broadcastChannel = this.broadcastChannel;
 		if (broadcastChannel) {
 			broadcastChannel.onmessage = function(event) {
-				if ("GetDocuments" === event.data.type) {
+				if ("GetOpenedDocuments" === event.data.type) {
 					let sheets = [];
 					if (wb) {
 						wb.forEach(function (_ws, _index) {
@@ -9254,7 +9260,7 @@ var editor;
 						}
 					});
 				}
-				else if ("CopySheets" === event.data.type) {
+				else if ("InsertSheets" === event.data.type) {
 					if (wb) {
 						let docId = docInfo.Id + AscCommon.g_oIdCounter.m_sUserId;
 						for (let i in event.data.info.aBooks) {
