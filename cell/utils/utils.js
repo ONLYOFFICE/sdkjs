@@ -3097,6 +3097,8 @@
 			this.topLeftCell = null;
 			this.view = null;
 
+			this.tabSelected = null;
+
 			return this;
 		}
 

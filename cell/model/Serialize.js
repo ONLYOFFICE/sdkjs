@@ -4181,7 +4181,7 @@
 				hasColorFilter = ws.aNamedSheetViews.some(function(namedSheetView){
 					return namedSheetView.hasColorFilter();
 				});
-			}, this.isCopyPaste);
+			}, this.isCopyPaste, this.InitSaveManager.writeOnlySelectedTabs);
 
 			//Fix excel crash with colorFilter in NamedSheetView
             var dxfs = this.InitSaveManager.getDxfs();
@@ -12886,6 +12886,9 @@
 
         this.sharedFormulas = {};
         this.sharedFormulasIndex = 0;
+
+        //option settings for write only active tabs
+        this.writeOnlySelectedTabs = null;
 
         this.prepare();
     }

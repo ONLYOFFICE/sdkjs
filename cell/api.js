@@ -3825,8 +3825,7 @@ var editor;
         this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
         this.asc_deleteWorksheet(arrSheets.slice());
       } else if (window["AscDesktopEditor"]) {
-        //create new book
-        //desktop function
+		  this.copyToNewWorkbook(arrSheets);
       }
 	  this.removeDocumentInfoEvent();
       return;
@@ -3892,10 +3891,14 @@ var editor;
   spreadsheet_api.prototype.asc_copyWorksheet = function (where, arrNames, arrSheets, arrBooks) {
 
     if (arrBooks) {
-      this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
-	  this.removeDocumentInfoEvent();
-      return;
-    }
+		if (arrBooks.length) {
+			this.sendSheetsToOtherBooks(where, arrNames, arrSheets, arrBooks);
+		} else if (window["AscDesktopEditor"]) {
+			this.copyToNewWorkbook(arrSheets);
+		}
+		this.removeDocumentInfoEvent();
+		return;
+	}
 
 	  // Проверка глобального лока
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -3952,6 +3955,44 @@ var editor;
 
   spreadsheet_api.prototype.asc_cancelMoveCopyWorksheet = function () {
 	this.removeDocumentInfoEvent();
+  };
+
+  spreadsheet_api.prototype.copyToNewWorkbook = function (arrSheets) {
+	  let aBinaryWorkbook = null;
+	  let wb = this.wb;
+	  let wbModel = this.wbModel;
+	  wb.executeWithCurrentTopLeftCell(function () {
+		 let mapSheets = {};
+		 for (let i = 0; i < arrSheets.length; i++) {
+			 mapSheets[arrSheets[i]] = 1;
+		 }
+		 let trueTabSelected = [];
+		  wbModel.forEach(function (sheet, index) {
+			if (mapSheets[index]) {
+				for (let i in sheet.sheetViews) {
+					if (!trueTabSelected[index]) {
+						trueTabSelected[index] = [];
+					}
+					trueTabSelected[index][i] = sheet.sheetViews[i].tabSelected;
+					sheet.sheetViews[i].tabSelected = true;
+				}
+			}
+		  })
+
+		  let oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wbModel);
+		  oBinaryFileWriter.InitSaveManager.writeOnlySelectedTabs = true;
+		  aBinaryWorkbook = oBinaryFileWriter.Write(true);
+
+		  wbModel.forEach(function (sheet, index) {
+			  if (mapSheets[index]) {
+				  for (let i in sheet.sheetViews) {
+					  sheet.sheetViews[i].tabSelected = trueTabSelected[index][i];
+				  }
+			  }
+		  })
+	  });
+
+	  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
   };
 
   spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
