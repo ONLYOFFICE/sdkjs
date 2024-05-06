@@ -716,6 +716,9 @@
 			t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 		});
 	};
+	PDFEditorApi.prototype.ChangeArtImageFromFile = function(type) {
+		this.asc_addImage({isTextArtChangeUrl: true, textureType: type});
+	};
 	PDFEditorApi.prototype.remove_Hyperlink = function() {
 		let oDoc = this.getPDFDoc();
 		oDoc.RemoveHyperlink();
@@ -1353,7 +1356,7 @@
 				this.addImageUrlsFromGeneralToFrameEditor(arrUrls);
 				return;
 			}
-			else if (oOptionObject.isImageChangeUrl || oOptionObject.isShapeImageChangeUrl || oOptionObject["obj"] || (oOptionObject instanceof AscCommon.CContentControlPr && oOptionObject.GetInternalId()) || oOptionObject.fAfterUploadOleObjectImage) {
+			else if (oOptionObject.isImageChangeUrl || oOptionObject.isTextArtChangeUrl || oOptionObject.isShapeImageChangeUrl || oOptionObject["obj"] || (oOptionObject instanceof AscCommon.CContentControlPr && oOptionObject.GetInternalId()) || oOptionObject.fAfterUploadOleObjectImage) {
 				this.AddImageUrlAction(arrUrls[0], undefined, oOptionObject);
 				return;
 			}
@@ -2196,6 +2199,7 @@
 	PDFEditorApi.prototype['AddImageUrlAction']				= PDFEditorApi.prototype.AddImageUrlAction;
 	PDFEditorApi.prototype['AddImageUrlActionCallback']		= PDFEditorApi.prototype.AddImageUrlActionCallback;
 	PDFEditorApi.prototype['asc_addImage']					= PDFEditorApi.prototype.asc_addImage;
+	PDFEditorApi.prototype['ChangeArtImageFromFile']		= PDFEditorApi.prototype.ChangeArtImageFromFile;
 	PDFEditorApi.prototype['remove_Hyperlink']				= PDFEditorApi.prototype.remove_Hyperlink;
 	PDFEditorApi.prototype['change_Hyperlink']				= PDFEditorApi.prototype.change_Hyperlink;
 	PDFEditorApi.prototype['sync_HyperlinkClickCallback']	= PDFEditorApi.prototype.sync_HyperlinkClickCallback;
