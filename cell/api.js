@@ -3949,6 +3949,10 @@ var editor;
     this.collaborativeEditing.lock(arrLocks, copyWorksheet);
   };
 
+	spreadsheet_api.prototype.asc_cancelMoveCopyWorksheet = function () {
+
+	};
+
   spreadsheet_api.prototype.asc_StartMoveSheet = function (arrSheets) {
 	  // Проверка глобального лока
 	  // Лок каждого листа необходимо проверять в интерфейсе. если что-то залочено - не переносим
@@ -9858,6 +9862,10 @@ var editor;
   prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
 
   prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
+
+  prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
+
+
 
 
 })(window);
