@@ -1623,7 +1623,7 @@ CHeaderFooterController.prototype =
 
             Pr.Locked = this.Lock.Is_Locked();
 
-			Pr.StartPageNumber = SectPr.Get_PageNum_Start();
+			Pr.StartPageNumber = SectPr.GetPageNumStart();
 
             return Pr;
         }

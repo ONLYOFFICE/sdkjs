@@ -4868,7 +4868,7 @@
 					// other
 					oCurSectPr.Set_TitlePage(oNewSectPr.TitlePage);
 					oCurSectPr.Set_Type(oNewSectPr.Type);
-					oCurSectPr.Set_PageNum_Start(oNewSectPr.PageNumType.Start);
+					oCurSectPr.SetPageNumStart(oNewSectPr.PageNumType.Start);
 
 				}
 
@@ -5570,7 +5570,7 @@
 
 		oSectPr.Copy(oCurSectPr);
 		oCurSectPr.Set_Type(oSectPr.Type);
-		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.SetPageNumStart(-1);
 		oCurSectPr.Clear_AllHdrFtr();
 
 		oParagraph.private_GetImpl().Set_SectionPr(oSectPr);
@@ -9088,7 +9088,7 @@
 		let oCurSectPr = oDoc.SectionsInfo.Get_SectPr(nContentPos).SectPr;
 
 		oCurSectPr.Set_Type(oSectPr.Type);
-		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.SetPageNumStart(-1);
 		oCurSectPr.Clear_AllHdrFtr();
 
 		this.private_GetImpl().Set_SectionPr(oSectPr);

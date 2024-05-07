@@ -11449,7 +11449,7 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	var nIndex  = this.Pages[nCurPage].Pos;
 	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
 
-	oSectPr.Set_PageNum_Start(nStartPage);
+	oSectPr.SetPageNumStart(nStartPage);
 
 	this.Recalculate();
 
@@ -13946,7 +13946,7 @@ CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 
 	oSectPr.Copy(oCurSectPr);
 	oCurSectPr.Set_Type(SectionBreakType);
-	oCurSectPr.Set_PageNum_Start(-1);
+	oCurSectPr.SetPageNumStart(-1);
 	oCurSectPr.Clear_AllHdrFtr();
 
 	this.History.MinorChanges = false;
@@ -14019,7 +14019,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 
 	if (0 === SectIndex)
 	{
-		var PageNumStart = this.SectionsInfo.Get_SectPr2(0).SectPr.Get_PageNum_Start();
+		var PageNumStart = this.SectionsInfo.Get_SectPr2(0).SectPr.GetPageNumStart();
 		var BT           = this.SectionsInfo.Get_SectPr2(0).SectPr.Get_Type();
 
 		// Нумерация начинается с 1, если начальное значение не задано. Заметим, что в Word нумерация может начинаться и
@@ -14036,7 +14036,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 	var SectionFirstPage = this.Get_SectionFirstPage(SectIndex, Page_abs);
 
 	var FirstPage    = SectionFirstPage;
-	var PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_PageNum_Start();
+	var PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.GetPageNumStart();
 	var BreakType    = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_Type();
 
 	var StartInfo = [];
@@ -14047,7 +14047,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 		SectIndex--;
 
 		FirstPage    = this.Get_SectionFirstPage(SectIndex, Page_abs);
-		PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_PageNum_Start();
+		PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.GetPageNumStart();
 		BreakType    = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_Type();
 
 		StartInfo.push({FirstPage : FirstPage, BreakType : BreakType});

@@ -32,88 +32,92 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Orient]     = CChangesSectionPageOrient;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Size]       = CChangesSectionPageSize;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins]         = CChangesSectionPageMargins;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Type]                = CChangesSectionType;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Left]        = CChangesSectionBordersLeft;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Top]         = CChangesSectionBordersTop;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Right]       = CChangesSectionBordersRight;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Bottom]      = CChangesSectionBordersBottom;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Display]     = CChangesSectionBordersDisplay;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_OffsetFrom]  = CChangesSectionBordersOffsetFrom;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_ZOrder]      = CChangesSectionBordersZOrder;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Header_First]        = CChangesSectionHeaderFirst;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Header_Even]         = CChangesSectionHeaderEven;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Header_Default]      = CChangesSectionHeaderDefault;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_First]        = CChangesSectionFooterFirst;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_Even]         = CChangesSectionFooterEven;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_Default]      = CChangesSectionFooterDefault;
-AscDFH.changesFactory[AscDFH.historyitem_Section_TitlePage]           = CChangesSectionTitlePage;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Header]  = CChangesSectionPageMarginsHeader;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Footer]  = CChangesSectionPageMarginsFooter;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_Start]   = CChangesSectionPageNumTypeStart;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_EqualWidth]  = CChangesSectionColumnsEqualWidth;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Space]       = CChangesSectionColumnsSpace;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Num]         = CChangesSectionColumnsNum;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Sep]         = CChangesSectionColumnsSep;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Col]         = CChangesSectionColumnsCol;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_SetCols]     = CChangesSectionColumnsSetCols;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_Pos]        = CChangesSectionFootnotePos;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumStart]   = CChangesSectionFootnoteNumStart;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumRestart] = CChangesSectionFootnoteNumRestart;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumFormat]  = CChangesSectionFootnoteNumFormat;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Gutter]  = CChangesSectionPageMarginsGutter;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Gutter_RTL]          = CChangesSectionGutterRTL;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_Pos]         = CChangesSectionEndnotePos;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumStart]    = CChangesSectionEndnoteNumStart;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumRestart]  = CChangesSectionEndnoteNumRestart;
-AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumFormat]   = CChangesSectionEndnoteNumFormat;
-AscDFH.changesFactory[AscDFH.historyitem_Section_LnNumType]           = CChangesSectionLnNumType;
-AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_Format]  = CChangesSectionPageNumTypeFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Orient]       = CChangesSectionPageOrient;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Size]         = CChangesSectionPageSize;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins]           = CChangesSectionPageMargins;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Type]                  = CChangesSectionType;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Left]          = CChangesSectionBordersLeft;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Top]           = CChangesSectionBordersTop;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Right]         = CChangesSectionBordersRight;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Bottom]        = CChangesSectionBordersBottom;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_Display]       = CChangesSectionBordersDisplay;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_OffsetFrom]    = CChangesSectionBordersOffsetFrom;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Borders_ZOrder]        = CChangesSectionBordersZOrder;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Header_First]          = CChangesSectionHeaderFirst;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Header_Even]           = CChangesSectionHeaderEven;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Header_Default]        = CChangesSectionHeaderDefault;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_First]          = CChangesSectionFooterFirst;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_Even]           = CChangesSectionFooterEven;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footer_Default]        = CChangesSectionFooterDefault;
+AscDFH.changesFactory[AscDFH.historyitem_Section_TitlePage]             = CChangesSectionTitlePage;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Header]    = CChangesSectionPageMarginsHeader;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Footer]    = CChangesSectionPageMarginsFooter;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_Start]     = CChangesSectionPageNumTypeStart;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_EqualWidth]    = CChangesSectionColumnsEqualWidth;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Space]         = CChangesSectionColumnsSpace;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Num]           = CChangesSectionColumnsNum;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Sep]           = CChangesSectionColumnsSep;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_Col]           = CChangesSectionColumnsCol;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Columns_SetCols]       = CChangesSectionColumnsSetCols;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_Pos]          = CChangesSectionFootnotePos;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumStart]     = CChangesSectionFootnoteNumStart;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumRestart]   = CChangesSectionFootnoteNumRestart;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Footnote_NumFormat]    = CChangesSectionFootnoteNumFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageMargins_Gutter]    = CChangesSectionPageMarginsGutter;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Gutter_RTL]            = CChangesSectionGutterRTL;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_Pos]           = CChangesSectionEndnotePos;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumStart]      = CChangesSectionEndnoteNumStart;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumRestart]    = CChangesSectionEndnoteNumRestart;
+AscDFH.changesFactory[AscDFH.historyitem_Section_Endnote_NumFormat]     = CChangesSectionEndnoteNumFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_LnNumType]             = CChangesSectionLnNumType;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_Format]    = CChangesSectionPageNumTypeFormat;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_ChapStyle] = CChangesSectionPageNumTypeChapStyle;
+AscDFH.changesFactory[AscDFH.historyitem_Section_PageNumType_ChapSep]   = CChangesSectionPageNumTypeChapSep;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageSize_Orient]     = [AscDFH.historyitem_Section_PageSize_Orient];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageSize_Size]       = [AscDFH.historyitem_Section_PageSize_Size];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins]         = [AscDFH.historyitem_Section_PageMargins];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Type]                = [AscDFH.historyitem_Section_Type];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Left]        = [AscDFH.historyitem_Section_Borders_Left];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Top]         = [AscDFH.historyitem_Section_Borders_Top];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Right]       = [AscDFH.historyitem_Section_Borders_Right];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Bottom]      = [AscDFH.historyitem_Section_Borders_Bottom];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Display]     = [AscDFH.historyitem_Section_Borders_Display];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_OffsetFrom]  = [AscDFH.historyitem_Section_Borders_OffsetFrom];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_ZOrder]      = [AscDFH.historyitem_Section_Borders_ZOrder];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_First]        = [AscDFH.historyitem_Section_Header_First];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_Even]         = [AscDFH.historyitem_Section_Header_Even];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_Default]      = [AscDFH.historyitem_Section_Header_Default];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_First]        = [AscDFH.historyitem_Section_Footer_First];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_Even]         = [AscDFH.historyitem_Section_Footer_Even];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_Default]      = [AscDFH.historyitem_Section_Footer_Default];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_TitlePage]           = [AscDFH.historyitem_Section_TitlePage];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Header]  = [AscDFH.historyitem_Section_PageMargins_Header];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Footer]  = [AscDFH.historyitem_Section_PageMargins_Footer];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_Start]   = [AscDFH.historyitem_Section_PageNumType_Start];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_EqualWidth]  = [AscDFH.historyitem_Section_Columns_EqualWidth];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Space]       = [AscDFH.historyitem_Section_Columns_Space];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Num]         = [AscDFH.historyitem_Section_Columns_Num];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Sep]         = [AscDFH.historyitem_Section_Columns_Sep];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Col]         = [AscDFH.historyitem_Section_Columns_Col, AscDFH.historyitem_Section_Columns_SetCols];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_SetCols]     = [AscDFH.historyitem_Section_Columns_Col, AscDFH.historyitem_Section_Columns_SetCols];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_Pos]        = [AscDFH.historyitem_Section_Footnote_Pos];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumStart]   = [AscDFH.historyitem_Section_Footnote_NumStart];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumRestart] = [AscDFH.historyitem_Section_Footnote_NumRestart];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumFormat]  = [AscDFH.historyitem_Section_Footnote_NumFormat];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Gutter]  = [AscDFH.historyitem_Section_PageMargins_Gutter];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Gutter_RTL]          = [AscDFH.historyitem_Section_Gutter_RTL];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_Pos]         = [AscDFH.historyitem_Section_Endnote_Pos];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumStart]    = [AscDFH.historyitem_Section_Endnote_NumStart];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumRestart]  = [AscDFH.historyitem_Section_Endnote_NumRestart];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumFormat]   = [AscDFH.historyitem_Section_Endnote_NumFormat];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_LnNumType]           = [AscDFH.historyitem_Section_LnNumType];
-AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_Format]  = [AscDFH.historyitem_Section_PageNumType_Format];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageSize_Orient]       = [AscDFH.historyitem_Section_PageSize_Orient];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageSize_Size]         = [AscDFH.historyitem_Section_PageSize_Size];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins]           = [AscDFH.historyitem_Section_PageMargins];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Type]                  = [AscDFH.historyitem_Section_Type];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Left]          = [AscDFH.historyitem_Section_Borders_Left];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Top]           = [AscDFH.historyitem_Section_Borders_Top];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Right]         = [AscDFH.historyitem_Section_Borders_Right];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Bottom]        = [AscDFH.historyitem_Section_Borders_Bottom];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_Display]       = [AscDFH.historyitem_Section_Borders_Display];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_OffsetFrom]    = [AscDFH.historyitem_Section_Borders_OffsetFrom];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Borders_ZOrder]        = [AscDFH.historyitem_Section_Borders_ZOrder];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_First]          = [AscDFH.historyitem_Section_Header_First];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_Even]           = [AscDFH.historyitem_Section_Header_Even];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Header_Default]        = [AscDFH.historyitem_Section_Header_Default];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_First]          = [AscDFH.historyitem_Section_Footer_First];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_Even]           = [AscDFH.historyitem_Section_Footer_Even];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footer_Default]        = [AscDFH.historyitem_Section_Footer_Default];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_TitlePage]             = [AscDFH.historyitem_Section_TitlePage];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Header]    = [AscDFH.historyitem_Section_PageMargins_Header];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Footer]    = [AscDFH.historyitem_Section_PageMargins_Footer];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_Start]     = [AscDFH.historyitem_Section_PageNumType_Start];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_EqualWidth]    = [AscDFH.historyitem_Section_Columns_EqualWidth];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Space]         = [AscDFH.historyitem_Section_Columns_Space];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Num]           = [AscDFH.historyitem_Section_Columns_Num];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Sep]           = [AscDFH.historyitem_Section_Columns_Sep];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_Col]           = [AscDFH.historyitem_Section_Columns_Col, AscDFH.historyitem_Section_Columns_SetCols];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Columns_SetCols]       = [AscDFH.historyitem_Section_Columns_Col, AscDFH.historyitem_Section_Columns_SetCols];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_Pos]          = [AscDFH.historyitem_Section_Footnote_Pos];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumStart]     = [AscDFH.historyitem_Section_Footnote_NumStart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumRestart]   = [AscDFH.historyitem_Section_Footnote_NumRestart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Footnote_NumFormat]    = [AscDFH.historyitem_Section_Footnote_NumFormat];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageMargins_Gutter]    = [AscDFH.historyitem_Section_PageMargins_Gutter];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Gutter_RTL]            = [AscDFH.historyitem_Section_Gutter_RTL];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_Pos]           = [AscDFH.historyitem_Section_Endnote_Pos];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumStart]      = [AscDFH.historyitem_Section_Endnote_NumStart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumRestart]    = [AscDFH.historyitem_Section_Endnote_NumRestart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_Endnote_NumFormat]     = [AscDFH.historyitem_Section_Endnote_NumFormat];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_LnNumType]             = [AscDFH.historyitem_Section_LnNumType];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_Format]    = [AscDFH.historyitem_Section_PageNumType_Format];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_ChapStyle] = [AscDFH.historyitem_Section_PageNumType_ChapStyle];
+AscDFH.changesRelationMap[AscDFH.historyitem_Section_PageNumType_ChapSep]   = [AscDFH.historyitem_Section_PageNumType_ChapSep];
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -1003,3 +1007,34 @@ CChangesSectionPageNumTypeFormat.prototype.private_SetValue = function(Value)
 {
 	this.Class.PageNumType.Format = Value;
 };
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesSectionPageNumTypeChapStyle(Class, Old, New)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+}
+CChangesSectionPageNumTypeChapStyle.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesSectionPageNumTypeChapStyle.prototype.constructor = CChangesSectionPageNumTypeChapStyle;
+CChangesSectionPageNumTypeChapStyle.prototype.Type = AscDFH.historyitem_Section_PageNumType_ChapStyle;
+CChangesSectionPageNumTypeChapStyle.prototype.private_SetValue = function(Value)
+{
+	this.Class.PageNumType.ChapStyle = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseByteProperty}
+ */
+function CChangesSectionPageNumTypeChapSep(Class, Old, New)
+{
+	AscDFH.CChangesBaseByteProperty.call(this, Class, Old, New);
+}
+CChangesSectionPageNumTypeChapSep.prototype = Object.create(AscDFH.CChangesBaseByteProperty.prototype);
+CChangesSectionPageNumTypeChapSep.prototype.constructor = CChangesSectionPageNumTypeChapSep;
+CChangesSectionPageNumTypeChapSep.prototype.Type = AscDFH.historyitem_Section_PageNumType_ChapSep;
+CChangesSectionPageNumTypeChapSep.prototype.private_SetValue = function(Value)
+{
+	this.Class.PageNumType.ChapSep = Value;
+};
+
