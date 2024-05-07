@@ -49,7 +49,7 @@
 	CRunPagesCount.prototype.Type = para_PageCount;
 	CRunPagesCount.prototype.UpdatePageCount = function(pageCount)
 	{
-		this.SetValue(pageCount);
+		this.SetValue(pageCount, Asc.c_oAscNumberingFormat.Decimal);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
