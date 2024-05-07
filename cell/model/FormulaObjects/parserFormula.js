@@ -4535,6 +4535,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		cFormulaFunction[f.asc_getName()] = func;
 		cAllFormulaFunction[a.name] = func;
 	}
+	function removeCustomFunction(sName) {
+		if (!sName) {
+			return;
+		}
+		delete cFormulaFunction[sName];
+		delete cAllFormulaFunction[sName];
+	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
@@ -9128,6 +9135,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
 	window['AscCommonExcel'].addNewFunction = addNewFunction;
+	window['AscCommonExcel'].removeCustomFunction = removeCustomFunction;
 
 	window['AscCommonExcel']._func = _func;
 

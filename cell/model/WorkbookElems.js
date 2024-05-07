@@ -17175,6 +17175,33 @@ function RangeDataManagerElem(bbox, data)
 		this.addToFunctionsList(newFunc, options);
 	};
 
+	CCustomFunctionEngine.prototype.remove = function (sName) {
+		sName = sName.toUpperCase();
+
+		let isFound = false;
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"]) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i in aCustomFunc) {
+				if (aCustomFunc[i] && aCustomFunc[i].prototype && aCustomFunc[i].prototype.name === sName) {
+					aCustomFunc.splice(i - 0, 1);
+					isFound = true;
+					break;
+				}
+			}
+		}
+
+		if (isFound) {
+			AscCommonExcel.removeCustomFunction(sName);
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+			return true;
+		}
+		return false;
+	};
+
 	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
 		this.activeLocale = sLocale;
 	};
