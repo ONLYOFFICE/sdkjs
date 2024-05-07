@@ -3992,7 +3992,9 @@ var editor;
 		  })
 	  });
 
-	  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
+	  if (aBinaryWorkbook) {
+		  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
+	  }
   };
 
   spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
