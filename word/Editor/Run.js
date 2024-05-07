@@ -4343,7 +4343,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						let logicDocument = Para.LogicDocument;
 						let sectInfo  = logicDocument.Get_SectionPageNumInfo2(Para.GetAbsolutePage(PRS.Page));
 						let sectPr    = logicDocument.GetSectionsInfo().Get(sectInfo.SectIndex).SectPr;
-                        Item.Set_Page(sectInfo.CurPage, sectPr.GetPageNumFormat());
+                        Item.SetValue(sectInfo.CurPage, sectPr.GetPageNumFormat());
                     }
 
                     // Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,

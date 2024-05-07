@@ -5657,9 +5657,8 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 				this.bs.WriteItem(c_oSerParType.FldSimple, function(){oThis.WriteFldSimple(Instr, null, function(){
                     oThis.WriteRun2(function () {
                         //todo не писать через fldsimple
-						var num = elem.pageNum.Type == para_PageCount ? elem.pageNum.GetPageCountValue() : elem.pageNum.GetPageNumValue();
 						var textType = delText ? c_oSerRunType.delText : c_oSerRunType.run;
-						oThis.WriteText(num.toString(), textType);
+						oThis.WriteText(elem.pageNum.ToString(), textType);
                     }, oRun);
 				});});
             }

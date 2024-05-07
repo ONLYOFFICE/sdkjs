@@ -42,20 +42,14 @@
 	function CRunPageNum()
 	{
 		AscWord.CRunElementBase.call(this);
-
-		this.FontKoef = 1;
-
-		this.NumWidths = [];
-
-		this.Widths = [];
-		this.String = [];
-
+		
 		this.Width        = 0;
 		this.WidthVisible = 0;
-
-		this.Parent = null;
-
+		
+		this.parent    = null;
 		this.numFormat = -1;
+		this.numText   = "1";
+		this.pageNum   = 1;
 		this.textPr    = null;
 		this.graphemes = [];
 		this.widths    = [];
@@ -76,31 +70,20 @@
 	CRunPageNum.prototype.Measure = function (Context, TextPr)
 	{
 		this.textPr = TextPr;
-		this.Set_Page(1, Asc.c_oAscNumberingFormat.Decimal);
-	};
-	CRunPageNum.prototype.GetWidth = function()
-	{
-		return this.Width;
-	};
-	CRunPageNum.prototype.GetWidthVisible = function()
-	{
-		return this.WidthVisible;
-	};
-	CRunPageNum.prototype.SetWidthVisible = function(WidthVisible)
-	{
-		this.WidthVisible = WidthVisible;
+		this.SetValue(1, Asc.c_oAscNumberingFormat.Decimal);
 	};
 	CRunPageNum.prototype.SetNumFormat = function(format)
 	{
 		this.numFormat = format;
 	};
-	CRunPageNum.prototype.Set_Page = function(pageNum, numFormat)
+	CRunPageNum.prototype.SetValue = function(pageNum, numFormat)
 	{
 		if (-1 !== this.numFormat)
 			numFormat = this.numFormat;
 		
-		let numText = AscCommon.IntToNumberFormat(pageNum, numFormat);
-		AscWord.stringShaper.Shape(numText.codePointsArray(), this.textPr);
+		this.value   = pageNum;
+		this.numText = AscCommon.IntToNumberFormat(pageNum, numFormat);
+		AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
 		
 		this.graphemes = AscWord.stringShaper.GetGraphemes();
 		this.widths    = AscWord.stringShaper.GetWidths();
@@ -115,7 +98,6 @@
 		
 		this.Width        = totalWidth;
 		this.WidthVisible = totalWidth;
-		
 	};
 	CRunPageNum.prototype.IsNeedSaveRecalculateObject = function()
 	{
@@ -137,50 +119,30 @@
 		this.graphemes = [];
 		this.widths    = [];
 	};
-	CRunPageNum.prototype.Document_CreateFontCharMap = function(FontCharMap)
+	CRunPageNum.prototype.Document_CreateFontCharMap = function(charMap)
 	{
-		var sValue = "1234567890";
-		for (var Index = 0; Index < sValue.length; Index++)
+		let numFormat = (-1 !== this.numFormat ? this.numFormat : Asc.c_oAscNumberingFormat.Decimal);
+		let symbols = AscWord.GetNumberingSymbolsByFormat(numFormat);
+		for (let iter = symbols.getUnicodeIterator(); iter.check(); iter.next())
 		{
-			var Char = sValue.charAt(Index);
-			FontCharMap.AddChar(Char);
+			charMap.AddChar(String.fromCodePoint(iter.value()));
 		}
 	};
 	CRunPageNum.prototype.CanAddNumbering = function()
 	{
 		return true;
 	};
-	CRunPageNum.prototype.Copy = function()
+	CRunPageNum.prototype.GetValue = function()
 	{
-		return new CRunPageNum();
-	};
-	CRunPageNum.prototype.Write_ToBinary = function(Writer)
-	{
-		// Long   : Type
-		Writer.WriteLong(para_PageNum);
-	}
-	CRunPageNum.prototype.Read_FromBinary = function(Reader)
-	{
-	};
-	CRunPageNum.prototype.GetPageNumValue = function()
-	{
-		var nPageNum = parseInt(this.String);
-		if (isNaN(nPageNum))
-			return 1;
-
-		return nPageNum;
-	};
-	CRunPageNum.prototype.GetType = function()
-	{
-		return this.Type;
+		return this.value;
 	};
 	/**
 	 * Выставляем родительский класс
-	 * @param {ParaRun} oParent
+	 * @param {ParaRun} parent
 	 */
-	CRunPageNum.prototype.SetParent = function(oParent)
+	CRunPageNum.prototype.SetParent = function(parent)
 	{
-		this.Parent = oParent;
+		this.parent = parent;
 	};
 	/**
 	 * Получаем родительский класс
@@ -188,32 +150,17 @@
 	 */
 	CRunPageNum.prototype.GetParent = function()
 	{
-		return this.Parent;
+		return this.parent;
 	};
-	CRunPageNum.prototype.GetFontSlot = function(oTextPr)
+	CRunPageNum.prototype.GetFontSlot = function(textPr)
 	{
 		return AscWord.fontslot_Unknown;
 	};
-
-	/**
-	 * @constructor
-	 */
-	function CPageNumRecalculateObject(Type, Widths, String, Width, Copy)
+	CRunPageNum.prototype.ToString = function()
 	{
-		this.Type   = Type;
-		this.Widths = Widths;
-		this.String = String;
-		this.Width  = Width;
+		return this.numText;
+	};
 
-		if ( true === Copy )
-		{
-			this.Widths = [];
-			var Len = Widths.length;
-			for ( var Index = 0; Index < Len; Index++ )
-				this.Widths[Index] = Widths[Index];
-		}
-	}
-	
 	/**
 	 * @constructor
 	 */
@@ -234,7 +181,6 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunPageNum               = CRunPageNum;
-	window['AscWord'].CPageNumRecalculateObject = CPageNumRecalculateObject;
 	window['AscWord'].PageNumRecalculateObject  = PageNumRecalculateObject;
 
 })(window);

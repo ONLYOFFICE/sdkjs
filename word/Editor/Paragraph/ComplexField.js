@@ -196,6 +196,20 @@ ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
 	this.private_UpdateWidth();
 };
+ParaFieldChar.prototype.GetNumFormat = function()
+{
+	let numFormat = Asc.c_oAscNumberingFormat.Decimal;
+	let cf = this.ComplexField;
+	let instruction = cf.IsValid() ? cf.GetInstruction() : null;
+	if (instruction && instruction.haveNumericFormat())
+		numFormat = instruction.getNumericFormat();
+	
+	return numFormat;
+};
+ParaFieldChar.prototype.UpdatePageCount = function(pageCount)
+{
+	this.SetNumValue(pageCount, this.GetNumFormat());
+};
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
 	if (null === this.numText)
