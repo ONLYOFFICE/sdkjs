@@ -128,6 +128,7 @@
 			this.LinkToPrevious   = (undefined != obj.LinkToPrevious) ? obj.LinkToPrevious : null;
 			this.Locked           = (undefined != obj.Locked) ? obj.Locked : false;
 			this.StartPageNumber  = (undefined != obj.StartPageNumber) ? obj.StartPageNumber : -1;
+			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
 		}
 		else
 		{
@@ -138,6 +139,7 @@
 			this.LinkToPrevious   = null;
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
+			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
 		}
 	}
 
@@ -188,6 +190,14 @@
 	CHeaderProp.prototype.put_StartPageNumber = function(nStartPage)
 	{
 		this.StartPageNumber = nStartPage;
+	};
+	CHeaderProp.prototype.get_NumFormat = function()
+	{
+		return this.NumFormat;
+	};
+	CHeaderProp.prototype.put_NumFormat = function(format)
+	{
+		this.NumFormat = format;
 	};
 
 	var DocumentPageSize = new function()
@@ -13943,6 +13953,8 @@ background-repeat: no-repeat;\
 	CHeaderProp.prototype['get_Locked']                                 = CHeaderProp.prototype.get_Locked;
 	CHeaderProp.prototype['get_StartPageNumber']                        = CHeaderProp.prototype.get_StartPageNumber;
 	CHeaderProp.prototype['put_StartPageNumber']                        = CHeaderProp.prototype.put_StartPageNumber;
+	CHeaderProp.prototype['get_NumFormat']                              = CHeaderProp.prototype.get_NumFormat;
+	CHeaderProp.prototype['put_NumFormat']                              = CHeaderProp.prototype.put_NumFormat;
 	window['Asc']['CMailMergeSendData'] = window['Asc'].CMailMergeSendData = CMailMergeSendData;
 	CMailMergeSendData.prototype['get_From']                            = CMailMergeSendData.prototype.get_From;
 	CMailMergeSendData.prototype['put_From']                            = CMailMergeSendData.prototype.put_From;

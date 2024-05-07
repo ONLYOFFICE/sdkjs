@@ -1624,6 +1624,7 @@ CHeaderFooterController.prototype =
             Pr.Locked = this.Lock.Is_Locked();
 
 			Pr.StartPageNumber = SectPr.GetPageNumStart();
+			Pr.NumFormat = SectPr.GetPageNumFormat();
 
             return Pr;
         }
