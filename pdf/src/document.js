@@ -1606,6 +1606,8 @@ var CPresentation = CPresentation || function(){};
         if (!AscCommon.isNumber(nPos) || nPos < 0)
             nPos = 0;
 
+        oFile.removeSelection();
+        
         // сначала удаляем все объекты со страницы
         if (oViewer.pagesInfo.pages[nPos].fields) {
             oViewer.pagesInfo.pages[nPos].fields.slice().forEach(function(field) {

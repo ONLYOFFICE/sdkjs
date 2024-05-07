@@ -253,6 +253,12 @@
         let canvas = document.createElement('canvas');
         let context = canvas.getContext('2d');
 
+        if (oGraphics.isThumbnails) {
+            let oTr = oGraphics.GetTransform();
+            wScaled *= oTr.sy;
+            hScaled *= oTr.sy;
+        }
+        
         // Set the canvas dimensions to match the image
         canvas.width = wScaled;
         canvas.height = hScaled;

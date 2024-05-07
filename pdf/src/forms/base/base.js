@@ -1313,7 +1313,7 @@
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
-                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+                // oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }
 
@@ -1898,10 +1898,15 @@
 		if (this.IsHidden())
 			return;
 		
-		if (this.IsNeedDrawFromStream())
-			this.DrawFromStream(pdfGraphics);
-		else
-			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+        if (pdfGraphics.isThumbnails) {
+            this.DrawBorders(pdfGraphics);
+        }
+        else {
+            if (this.IsNeedDrawFromStream())
+                this.DrawFromStream(pdfGraphics);
+            else
+                this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+        }
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {

@@ -339,8 +339,8 @@ CPDFGraphics.prototype.VerLine = function(y1, y2, x) {
 
     let tr = this.GetTransform();
     
-    var _y1 = (tr.TransformPointX(x1,y1)) >> 0;
-    var _y2 = (tr.TransformPointX(x1,y2)) >> 0;
+    var _y1 = (tr.TransformPointX(x,y1)) >> 0;
+    var _y2 = (tr.TransformPointX(x,y2)) >> 0;
     var _x  = (tr.TransformPointY(y1,x)) >> 0;
 
     let nLineOffsetX = (0 === (nLineW % 2) ? 0 : 0.5);

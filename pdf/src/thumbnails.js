@@ -478,7 +478,7 @@
                 for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
                 {
                     drPage = block.pages[pageNum];
-                    if (drPage.page.image === null ||
+                    if (drPage.page.image === null || drPage.page.needRedraw ||
                         (drPage.page.image.requestWidth != drPage.pageRect.w || drPage.page.image.requestHeight != drPage.pageRect.h))
                     {
                         needPage = drPage;
@@ -491,7 +491,9 @@
             {
                 isNeedTasks = true;
                 needPage.page.image = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
+                needPage.page.needRedraw = false;
                 this.isRepaint = true;
+                
             }
         }
 
@@ -689,7 +691,7 @@
         this.repaint();
     };
     CDocument.prototype._repaintPage = function(nPage) {
-        this.pages[nPage].image = null;
+        this.pages[nPage].needRedraw = true;
     };
     CDocument.prototype._deletePage = function(nPage) {
         this.pages.splice(nPage, 1);

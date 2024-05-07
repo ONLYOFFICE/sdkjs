@@ -258,7 +258,7 @@
             let rotationAngle   = angle1;
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-            AscPDF.startMultiplyMode(oGraphicsPDF.context);
+            AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
@@ -279,7 +279,7 @@
             }
 
             oGraphicsPDF.Fill();
-            AscPDF.endMultiplyMode(oGraphicsPDF.context);
+            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
     };
         

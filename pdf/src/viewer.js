@@ -3843,7 +3843,8 @@
 			x2: x2,
 			y2: y2
 		}
-	};CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
+	};
+	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
         let image = this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
         if (!image) {
 			image = document.createElement('canvas');
@@ -3864,17 +3865,18 @@
 
 		this._drawMarkupAnnotsOnCtx(nPage, ctx);
 		this._drawDrawingsOnCtx(nPage, ctx);
-        this._drawAnnotsOnCtx(nPage, ctx);
-        this._drawFieldsOnCtx(nPage, ctx);
+        this._drawAnnotsOnCtx(nPage, ctx, true);
+        this._drawFieldsOnCtx(nPage, ctx, true);
 
         return ctx.canvas;
     };
-    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx) {
+    CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx	= ctx.canvas.height;
         
 		let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isThumbnails = isThumbnails;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
@@ -3898,12 +3900,13 @@
             });
         }
     };
-    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx) {
+    CHtmlPage.prototype._drawFieldsOnCtx = function(nPage, ctx, isThumbnails) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
         let heightPx    = ctx.canvas.height;
         
         let oGraphicsPDF = new AscPDF.CPDFGraphics();
+		oGraphicsPDF.isThumbnails = isThumbnails;
         oGraphicsPDF.Init(ctx, widthPx, heightPx, this.file.getPageWidth(nPage) , this.file.getPageHeight(nPage));
         oGraphicsPDF.SetCurPage(nPage);
 
