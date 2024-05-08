@@ -105,6 +105,8 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
+        this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
+        this.CollaborativeEditing.m_oLogicDocument = this;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.TextSelectTrackHandler = new AscPDF.CTextSelectTrackHandler(this.GetDrawingDocument(), Asc.editor);
@@ -4516,8 +4518,22 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Viewer_OnChangePosition = function() {};
     CPDFDoc.prototype.Document_CreateFontMap = function() { return {}};
     CPDFDoc.prototype.TurnOffSpellCheck = function() {};
-    CPDFDoc.prototype.RefreshDocumentPositions = function() {};
-    CPDFDoc.prototype.TrackDocumentPositions = function() {};
+    CPDFDoc.prototype.TrackDocumentPositions = function (arrPositions) {
+        this.CollaborativeEditing.Clear_DocumentPositions();
+    
+        for (var nIndex = 0, nCount = arrPositions.length; nIndex < nCount; ++nIndex) {
+            this.CollaborativeEditing.Add_DocumentPosition(arrPositions[nIndex]);
+        }
+    };
+    /**
+     * Обновляем отслеживаемые позиции
+     * @param arrPositions
+     */
+    CPDFDoc.prototype.RefreshDocumentPositions = function (arrPositions) {
+        for (var nIndex = 0, nCount = arrPositions.length; nIndex < nCount; ++nIndex) {
+            this.CollaborativeEditing.Update_DocumentPosition(arrPositions[nIndex]);
+        }
+    };
     CPDFDoc.prototype.RemoveSelection = function() {};
     CPDFDoc.prototype.Set_TargetPos = function() {};
     CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function () {
