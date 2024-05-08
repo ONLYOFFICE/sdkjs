@@ -3330,12 +3330,13 @@ function (window, undefined) {
 
 	CellEditor.prototype.moveAccurate = function(x, y)
 	{
+		let oThis = this;
 		if (!this.moveAccurateFunc)
 		{
 			this.moveAccurateFunc = function() {
 				let ctx = AscCommon.g_inputContext;
-				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
-				ctx.moveAccurateInfo.id = -1;
+				ctx.move(oThis.moveAccurateInfo.x, oThis.moveAccurateInfo.y);
+				oThis.moveAccurateInfo.id = -1;
 			};
 		}
 
