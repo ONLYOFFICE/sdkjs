@@ -3115,7 +3115,7 @@ function CDrawingDocument()
 		this.FirePaint();
 	};
 
-	this.IsCursorInTableCur = function(x, y, page)
+	this.IsCursorInTableCur = function(x, y, page, checkArea)
 	{
 		var _table = this.TableOutlineDr.TableOutline;
 		if (_table == null)
@@ -3134,7 +3134,7 @@ function CDrawingDocument()
 
 		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
 		{
-			if ((x < _x) || (y < _y))
+			if ((x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
 				return true;
 		}
 		return false;
