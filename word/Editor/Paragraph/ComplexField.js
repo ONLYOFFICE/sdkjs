@@ -193,6 +193,12 @@ ParaFieldChar.prototype.GetTopDocumentContent = function()
  */
 ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 {
+	if (null === value)
+	{
+		this.numText = null;
+		return;
+	}
+	
 	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
 	this.private_UpdateWidth();
 };
