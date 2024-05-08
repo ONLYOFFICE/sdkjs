@@ -52,6 +52,7 @@
 	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
+	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -262,6 +263,11 @@
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
+
+	/**
+	 * The page orientation type.
+	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
+	 * */
 
 	/**
 	 * Class representing a base class for the color types.
@@ -1073,7 +1079,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			logError(new Error('Invalid parametr "FreezePaneType".'));
+			logError(new Error('Invalid parameter "FreezePaneType".'));
 		}
 	};
 
@@ -1113,6 +1119,51 @@
 			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
+
+	/**
+	 * Returns the page orientation.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ReferenceStyle}
+	 * */
+	Api.prototype.GetReferenceStyle = function () {
+		let bReferenceStyle = this.asc_getR1C1Mode();
+		return bReferenceStyle ? "xlR1C1" : "xlA1";
+	};
+
+	/**
+	 * Returns all comments related to the whole workbook.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
+	 */
+	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
+		let bReferenceMode = null;
+		switch (sReferenceStyle) {
+			case "xlA1":
+				bReferenceMode = false;
+				break;
+			case "xlR1C1":
+				bReferenceMode = true;
+				break;
+		}
+
+		if (bReferenceMode !== null) {
+			this.asc_setR1C1Mode(bReferenceMode);
+		} else {
+			logError(new Error('Invalid parameter "ReferenceStyle"'));
+		}
+	};
+
+	Object.defineProperty(Api.prototype, "ReferenceStyle", {
+		get: function () {
+			return this.GetReferenceStyle();
+		},
+		set: function (ReferenceStyle) {
+			this.SetReferenceStyle(ReferenceStyle);
+		}
+	});
+
 
 	/**
 	 * Returns the state of sheet visibility.
