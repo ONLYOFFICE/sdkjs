@@ -185,6 +185,12 @@ function (window, undefined) {
 		//temporary - for safari rendering. remove after fixed
 		this._originalCanvasWidth = null;
 
+		this.moveAccurateInfo = {
+			id : -1,
+			x : 0,
+			y : 0
+		};
+
 		this._init();
 
 		return this;
@@ -363,6 +369,18 @@ function (window, undefined) {
 		 */
 		this.setFocus(this.isTopLineActive ? true : (null === options.enterOptions.focus) ? this._haveTextInEdit() : options.enterOptions.focus);
 		this._updateUndoRedoChanged();
+
+		this.renderIntervalId = setInterval(function(){
+
+			window.LOCK_DRAW = false;
+
+			if (undefined !== window.TEXT_DRAW_INSTANCE)
+				window.TEXT_DRAW_INSTANCE._renderText(window.TEXT_DRAW_INSTANCE_POS);
+
+			window.TEXT_DRAW_INSTANCE = undefined;
+			window.TEXT_DRAW_INSTANCE_POS = 0;
+
+		}, 50);
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -418,6 +436,10 @@ function (window, undefined) {
 
 		if (this.isStartCompositeInput()) {
 			this.End_CompositeInput();
+		}
+
+		if (this.renderIntervalId) {
+			clearInterval(this.renderIntervalId);
 		}
 
 		if (saveValue) {
@@ -1227,7 +1249,6 @@ function (window, undefined) {
 			this._calculateCanvasSize();
 		}
 
-		//this._renderText(null, isExpand);  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
 		this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth(), true);
 		if (!this.getMenuEditorMode()) {
@@ -1715,7 +1736,7 @@ function (window, undefined) {
 		}
 
 		if (AscCommon.g_inputContext) {
-			AscCommon.g_inputContext.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
+			this.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
 		}
 
 		if (cur) {
@@ -3305,6 +3326,25 @@ function (window, undefined) {
 			return;
 		}
 		api.sendEvent('asc_onUserActionEnd');
+	};
+
+	CellEditor.prototype.moveAccurate = function(x, y)
+	{
+		if (!this.moveAccurateFunc)
+		{
+			this.moveAccurateFunc = function() {
+				let ctx = AscCommon.g_inputContext;
+				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
+				ctx.moveAccurateInfo.id = -1;
+			};
+		}
+
+		if (-1 !== this.moveAccurateInfo.id)
+			clearTimeout(this.moveAccurateInfo.id);
+
+		this.moveAccurateInfo.x = x;
+		this.moveAccurateInfo.y = y;
+		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 50);
 	};
 
 

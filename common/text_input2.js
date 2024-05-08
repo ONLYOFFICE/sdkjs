@@ -590,18 +590,6 @@
 		return isAsync;
 	};
 
-	setInterval(function(){
-
-		window.LOCK_DRAW = false;
-
-		if (undefined !== window.TEXT_DRAW_INSTANCE)
-			window.TEXT_DRAW_INSTANCE._renderText(window.TEXT_DRAW_INSTANCE_POS);
-
-		window.TEXT_DRAW_INSTANCE = undefined;
-		window.TEXT_DRAW_INSTANCE_POS = 0;
-
-	}, 10);
-
 	CTextInputPrototype.addTextCodes = function(codes, codesRemove)
 	{
 		if (codesRemove && codesRemove.length !== 0)
@@ -1124,25 +1112,6 @@
 			if (document.activeElement != this.HtmlArea)
 				focusHtmlElement(this.HtmlArea);
 		}
-	};
-
-	CTextInputPrototype.moveAccurate = function(x, y)
-	{
-		if (!this.moveAccurateFunc)
-		{
-			this.moveAccurateFunc = function() {
-				let ctx = AscCommon.g_inputContext;
-				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
-				ctx.moveAccurateInfo.id = -1;
-			};
-		}
-
-		if (-1 !== this.moveAccurateInfo.id)
-			clearTimeout(this.moveAccurateInfo.id);
-
-		this.moveAccurateInfo.x = x;
-		this.moveAccurateInfo.y = y;
-		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 50);
 	};
 
 	CTextInputPrototype.move = function(x, y)
