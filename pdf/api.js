@@ -263,6 +263,10 @@
 			if (oActiveObj && oActiveObj.IsDrawing()) {
 				oDoc.BlurActiveObject();
 			}
+
+			oDoc.drawings.forEach(function(drawing) {
+				drawing.AddToRedraw();
+			});
 		}
 	};
 	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
