@@ -655,6 +655,7 @@ $(function () {
 	QUnit.module("Formula");
 	QUnit.test('Iterative calculation', function (assert) {
 		const g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+		g_cCalcRecursion.setMaxIterations(10);
 		let nExpectedCellIndex, oFactCellIndex, oCell, bCaFromSelectedCell;
 		// Init necessary functions
 		const selectCell = function (sRange, oWs) {
@@ -1193,26 +1194,58 @@ $(function () {
 		ws.getRange2("L1031").setValue("=R1031*100/69.9");
 		ws.getRange2("Q1031").setValue("=L1031*1.07");
 		ws.getRange2("R1031").setValue("=K1031*100/94.7");
-		assert.strictEqual(ws.getRange2("J1031").getValue(), "53.268529249844036", "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. J1031 - 53.26854488596814");
-		assert.strictEqual(ws.getRange2("K1031").getValue(), "1261.1327827483556", "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. K1031 - 1261.1328010362201");
-		assert.strictEqual(ws.getRange2("L1031").getValue(), "1905.1696763189466", "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. L1031 - 1905.1697026454983");
-		assert.strictEqual(ws.getRange2("Q1031").getValue(), "2038.531553661273", "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. Q1031 - 2038.5315818306833");
-		assert.strictEqual(ws.getRange2("R1031").getValue(), "1331.7136037469436", "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. R1031 - 1331.7136230583105");
+		assert.strictEqual(ws.getRange2("J1031").getValue(), "53.268529249844036", "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. J1031 - 53.26854488596814");
+		assert.strictEqual(ws.getRange2("K1031").getValue(), "1261.1327827483556", "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. K1031 - 1261.1328010362201");
+		assert.strictEqual(ws.getRange2("L1031").getValue(), "1905.1696763189466", "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. L1031 - 1905.1697026454983");
+		assert.strictEqual(ws.getRange2("Q1031").getValue(), "2038.531553661273", "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. Q1031 - 2038.5315818306833");
+		assert.strictEqual(ws.getRange2("R1031").getValue(), "1331.7136037469436", "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031. Bug-42873, Comment #2. R1031 - 1331.7136230583105");
 		// Check work isFormulaRecursive function
 		bCaFromSelectedCell = getCaFromSelectedCell("J1031");
-		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. J1031 - flag ca: true");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. J1031 - flag ca: true");
 		bCaFromSelectedCell = null;
 		bCaFromSelectedCell = getCaFromSelectedCell("K1031");
-		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. K1031 - flag ca: true");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. K1031 - flag ca: true");
 		bCaFromSelectedCell = null;
 		bCaFromSelectedCell = getCaFromSelectedCell("L1031");
-		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. L1031 - flag ca: true");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. L1031 - flag ca: true");
 		bCaFromSelectedCell = null;
 		bCaFromSelectedCell = getCaFromSelectedCell("Q1031");
-		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. Q1031 - flag ca: true");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. Q1031 - flag ca: true");
 		bCaFromSelectedCell = null;
 		bCaFromSelectedCell = getCaFromSelectedCell("R1031");
-		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recrusive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. R1031 - flag ca: true");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Recursive cell chain formula: J1031->R1031->K1031->J1031, Bug-42873, Comment #2. isFormulaRecursion test. R1031 - flag ca: true");
+		bCaFromSelectedCell = null;
+		// - Case: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc.
+		ws.getRange2("A1032").setValue("0"); // P
+		ws.getRange2("A1033").setValue("10"); // deltaY
+		ws.getRange2("A1034").setValue("1"); // X
+		ws.getRange2("B1032").setValue("10"); // mu
+		ws.getRange2("C1032").setValue("10"); // u start
+		ws.getRange2("D1032").setValue("=C1032"); // u
+		ws.getRange2("B1033").setValue("10"); // mu
+		ws.getRange2("C1033").setValue("-10");// u start
+		ws.getRange2("D1033").setValue("=IF($A$1034=0, C1033, -(($A$1032*$A$1033*$A$1033-(D1034-D1032)*(B1034-B1032)/4)/B1033-(D1034+D1032))/2)"); // u
+		ws.getRange2("B1034").setValue("10"); // mu
+		ws.getRange2("C1034").setValue("-10"); // u start
+		ws.getRange2("D1034").setValue("=IF($A$1034=0, C1034, -(($A$1032*$A$1033*$A$1033-(D1035-D1033)*(B1035-B1033)/4)/B1034-(D1035+D1033))/2)"); // u
+		ws.getRange2("B1035").setValue("10"); // mu
+		ws.getRange2("C1035").setValue("-10"); // u start
+		ws.getRange2("D1035").setValue("=IF($A$1034=0, C1035, -(($A$1032*$A$1033*$A$1033-(D1036-D1034)*(B1036-B1034)/4)/B1035-(D1036+D1034))/2)"); // u
+		ws.getRange2("B1036").setValue("10"); // mu
+		ws.getRange2("C1036").setValue("0"); // u start
+		ws.getRange2('D1036').setValue("=C1035"); // u
+		assert.strictEqual(ws.getRange2("D1033").getValue(), "7.499728735325547", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1033 - 7.499728735325547");
+		assert.strictEqual(ws.getRange2("D1034").getValue(), "4.999728735325547", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1034 - 4.999728735325547");
+		assert.strictEqual(ws.getRange2("D1035").getValue(), "2.4998643676627736", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1035 - 2.4998643676627736");
+		// Check work  isFormulaRecursion function
+		bCaFromSelectedCell = getCaFromSelectedCell("D1033");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1033 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("D1034");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1034 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("D1035");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1035 - flag ca: true");
 		bCaFromSelectedCell = null;
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");

@@ -8901,7 +8901,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.oDiffBetweenIter = null;
 
 		this.bIsEnabledRecursion = true;
-		this.nMaxIterations = 10; // Max iterations of recursion calculations. Default value: 100.
+		this.nMaxIterations = 100; // Max iterations of recursion calculations. Default value: 100.
 		this.nRelativeError = 1e-3; // Relative error between current and previous cell value. Default value: 1e-3.
 		this.nCalcMode = Asc.c_oAscCalcMode.auto; // Calculation mode. Default value: Asc.c_oAscCalcMode.auto
 		/*for chrome63(real maximum call stack size is 12575) nMaxRecursion that cause exception is 783

@@ -14551,6 +14551,12 @@
 			return oSheetListeners.areaMap[sAreaIndex];
 		} else if (oSheetListeners.cellMap.hasOwnProperty(nCellIndex)) {
 			return oSheetListeners.cellMap[nCellIndex];
+		} else {
+			for (let nIndex in oSheetListeners.areaMap) {
+				if (oSheetListeners.areaMap[nIndex].bbox.contains(this.nCol, this.nRow)) {
+					return oSheetListeners.areaMap[nIndex];
+				}
+			}
 		}
 	};
 
@@ -14784,6 +14790,10 @@
 			return false;
 		}
 		const oFormulaParsed = this.getFormulaParsed();
+		if (oFormulaParsed.ca) {
+			g_cCalcRecursion.resetRecursionCounter();
+			return true;
+		}
 		const aRefElements = _getRefElements(oFormulaParsed);
 		const oThis = this;
 		let bRecursiveFormula = false;
@@ -14808,7 +14818,7 @@
 				}
 			});
 			if (bRecursiveFormula) {
-				if (g_cCalcRecursion.getRecursionCounter() === 0) {
+				if (g_cCalcRecursion.getRecursionCounter() === 0 && aPassedCell.length) {
 					const oWs = oThis.ws;
 					let oSourceCell = null;
 					oWs._getCell(oCellWithFormula.nRow, oCellWithFormula.nCol, function (oCell) {
