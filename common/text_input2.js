@@ -128,12 +128,6 @@
 		this.checkClearTextOnFocusTimerId = -1;
 
 		this.isDisableKeyboard = false;
-
-		this.moveAccurateInfo = {
-			id : -1,
-			x : 0,
-			y : 0
-		};
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -1113,7 +1107,6 @@
 				focusHtmlElement(this.HtmlArea);
 		}
 	};
-
 	CTextInputPrototype.move = function(x, y)
 	{
 		if (this.Api.isMobileVersion)
