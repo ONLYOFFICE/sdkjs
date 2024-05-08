@@ -200,7 +200,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let sText = oActiveDrawing.GetDocContent().GetSelectedText(true);
+			let sText = oActiveDrawing.GetDocContent().GetSelectedText(false);
 			if (!sText)
 				return;
 

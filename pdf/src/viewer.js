@@ -1770,6 +1770,11 @@
 			if (!pageObject)
 				return null;
 
+			// после конвертации не даем кликать линки на странице
+			if (this.file.pages[pageObject.index].isConvertedToShapes) {
+				return null;
+			}
+
 			var pageLinks = this.pagesInfo.pages[pageObject.index];
 			if (pageLinks.links)
 			{
