@@ -773,7 +773,22 @@
         if (null == aBgColor)
             oCtx.globalAlpha = 0.8;
 
+        let rotateAngle = oViewer.getPageRotate(this.GetPage());
+        if (rotateAngle) {
+            oCtx.save();
+            let cx = indLeft + 0.5 * w;
+            let cy = indTop + 0.5 * h;
+
+            var radians = rotateAngle * Math.PI / 180;
+            var cos = Math.cos(radians);
+            var sin = Math.sin(radians);
+
+            // setTransform(a, b, c, d, e, f)
+            oCtx.setTransform(cos, sin, -sin, cos, cx, cy);
+        }
+        
         oCtx.globalCompositeOperation = "destination-over";
+        
         if (this.IsNeedDrawFromStream())
             AscPDF.startMultiplyMode(oCtx);
         
@@ -801,6 +816,10 @@
             oCtx.closePath();
         }
         AscPDF.endMultiplyMode(oCtx);
+
+        if (rotateAngle) {
+            oCtx.restore();
+        }
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let aOringRect  = this.GetOrigRect();

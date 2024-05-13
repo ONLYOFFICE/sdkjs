@@ -125,6 +125,8 @@ var CPresentation = CPresentation || function(){};
         this.lastDatePickerInfo     = null;
         this.AutoCorrectSettings    = new AscCommon.CAutoCorrectSettings();
 
+        this.pagesTransform = [];
+
         Object.defineProperties(this.event, {
             "change": {
                 set: function(value) {
@@ -168,6 +170,61 @@ var CPresentation = CPresentation || function(){};
         this.loadedFonts            = [];
         this.Action                 = {};
     }
+
+    CPDFDoc.prototype.UpdatePagesTransform = function() {
+        this.pagesTransform = [];
+
+        let oFile = this.Viewer.file;
+        for (let i = 0; i < oFile.pages.length; i++) {
+            let oPage   = this.Viewer.drawingPages[i];
+            let nAngle  = this.Viewer.getPageRotate(i);
+
+            let oPageTr = new AscCommon.CMatrix();
+            let oPageTrInvert = new AscCommon.CMatrix();
+
+            let nPageW  = AscCommon.AscBrowser.convertToRetinaValue(oPage.W, true);
+            let nPageH  = AscCommon.AscBrowser.convertToRetinaValue(oPage.H, true);
+            let xInd    = (this.Viewer.width >> 1) * AscCommon.AscBrowser.retinaPixelRatio - (AscCommon.AscBrowser.convertToRetinaValue(oPage.W, true) >> 1);
+            let yInd    = (this.Viewer.betweenPages - this.Viewer.scrollY) * AscCommon.AscBrowser.retinaPixelRatio;
+            
+            let shx = 0, shy = 0, sx = 1, sy = 1, tx = 0, ty = 0;
+
+            switch (nAngle) {
+                case 0: {
+                    tx = -xInd;
+                    ty = -yInd;
+                    sx = 1;
+                    sy = 1;
+                    shx = 0;
+                    shy = 0;
+                    break;
+                }
+                case 90: {
+                    // Новый отступ слева после поворота
+                    let newXInd = xInd + (nPageW - nPageH) / 2;
+                    tx = -yInd;
+                    ty = nPageH + newXInd;
+                    sx = 0;
+                    sy = 0;
+                    shx = 1;
+                    shy = -1;
+                    break;
+                }
+            }
+            
+            oPageTr.shx = shx;
+            oPageTr.shy = shy;
+            oPageTr.sx  = sx;
+            oPageTr.sy  = sy;
+            oPageTr.tx  = tx;
+            oPageTr.ty  = ty;
+            
+            this.pagesTransform.push({
+                normal: oPageTr,
+                invert: AscCommon.global_MatrixTransformer.Invert(oPageTr)
+            });
+        }
+    };
 
     /////////// методы для открытия //////////////
     CPDFDoc.prototype.AddFieldToChildsMap = function(oField, nParentIdx) {
@@ -5176,6 +5233,12 @@ var CPresentation = CPresentation || function(){};
         return [xMin, yMin, xMax, yMax];
     }
 
+    function rotatePagePoint(cursorX, cursorY, width, height) {
+        const newCursorX = cursorY;
+        const newCursorY = height - cursorX;
+        return { x: newCursorX, y: newCursorY };
+    }
+
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 	
@@ -5262,9 +5325,10 @@ var CPresentation = CPresentation || function(){};
 		}
 	};
 
-    window["AscPDF"].CPDFDoc = CPDFDoc;
-    window["AscPDF"].CreateAnnotByProps = CreateAnnotByProps;
-    window["AscPDF"].CreateAscAnnotPropFromObj = CreateAscAnnotPropFromObj;
+    window["AscPDF"].CPDFDoc                    = CPDFDoc;
+    window["AscPDF"].CreateAnnotByProps         = CreateAnnotByProps;
+    window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
+    window["AscPDF"].rotatePagePoint            = rotatePagePoint;
 	window["AscPDF"].CPDFCompositeInput = CPDFCompositeInput;
 
 })();

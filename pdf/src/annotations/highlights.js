@@ -681,20 +681,10 @@
 
     function fillRegion(polygon, overlay, pageIndex)
     {
-        let oViewer = editor.getDocumentRenderer();
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageIndex].Dpi);
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[pageIndex];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        let oTr     = oDoc.pagesTransform[pageIndex].invert;
+        let nScale  = oViewer.file.pages[pageIndex].W / oViewer.drawingPages[pageIndex].W / AscCommon.AscBrowser.retinaPixelRatio;
 
         // рисуем всегда в пиксельной сетке. при наклонных линиях - +- 1 пиксел - ничего страшного
         let pointOffset = (overlay.m_oContext.lineWidth & 1) ? 0.5 : 0;
@@ -707,8 +697,8 @@
             if (2 > countPoints)
                 continue;
 
-            let X = indLeft + region[0][0] * nScale;
-            let Y = indTop + region[0][1] * nScale;
+            let X = oTr.TransformPointX(region[0][0] / nScale, region[0][1] / nScale);
+            let Y = oTr.TransformPointY(region[0][0] / nScale, region[0][1] / nScale);
 
             overlay.m_oContext.moveTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
 
@@ -717,8 +707,8 @@
 
             for (let j = 1, countPoints = region.length; j < countPoints; j++)
             {
-                X = indLeft + region[j][0] * nScale;
-                Y = indTop + region[j][1] * nScale;;
+                X = oTr.TransformPointX(region[j][0] / nScale, region[j][1] / nScale);
+                Y = oTr.TransformPointY(region[j][0] / nScale, region[j][1] / nScale);
 
                 overlay.m_oContext.lineTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
                 overlay.CheckPoint1(X, Y);

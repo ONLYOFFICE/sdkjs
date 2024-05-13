@@ -72,17 +72,17 @@
 		let nPage		= aSelQuads[0].page;
 		let aFirstQuads	= aSelQuads[0].quads[0];
 
-		let nScale = oFile.viewer.drawingPages[nPage].W / oFile.pages[nPage].W * g_dKoef_pix_to_mm / oFile.viewer.zoom;
+		let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        let oTr     = oDoc.pagesTransform[nPage].invert;
+        let nScale  = oViewer.file.pages[nPage].W / oViewer.drawingPages[nPage].W / AscCommon.AscBrowser.retinaPixelRatio;
 
-		let x1 = aFirstQuads[0] * nScale;
-		let y1 = aFirstQuads[1] * nScale;
-		let x2 = aFirstQuads[6] * nScale;
-		let y2 = aFirstQuads[7] * nScale;
+		let x1 = oTr.TransformPointX(aFirstQuads[0] / nScale, aFirstQuads[1] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
+		let y1 = oTr.TransformPointY(aFirstQuads[0] / nScale, aFirstQuads[1] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
+		let x2 = oTr.TransformPointX(aFirstQuads[6] / nScale, aFirstQuads[7] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
+		let y2 = oTr.TransformPointY(aFirstQuads[6] / nScale, aFirstQuads[7] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
 
-		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, nPage);
-		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x2, y2, nPage);
-
-		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
+		return [x1, y1, x2, y2];
 	};
 	CTextSelectTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideTextSelectTrack");
