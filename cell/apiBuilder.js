@@ -2268,6 +2268,34 @@
 		}
 	});
 
+	/**
+	 * Pastes the contents of the Clipboard onto the sheet.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Object that specifies where the Clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.Paste = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+				let ws =  destination.range.worksheet;
+				private_executeOtherActiveSheet(ws, destination.range, function () {
+					oApi && oApi.asc_Paste();
+				});
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+			let ws = this.worksheet;
+			private_executeOtherActiveSheet(ws, null, function () {
+				oApi && oApi.asc_Paste();
+			});
+		}
+	};
+
 
 
 	/**
@@ -3741,51 +3769,18 @@
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} [rangeFrom] - Specifies the range to be pasted to the current range. If this argument is omitted, Onlyoffice pastes the range from the Clipboard.
-	 * @param {ApiRange} [rangeTo] - Specifies the range to be pasted to the current range
+	 * @param {ApiRange} rangeFrom - Specifies the range to be pasted to the current range
 	 */
-	ApiRange.prototype.Paste = function (rangeFrom, rangeTo) {
-		let oApi = Asc["editor"];
-		if (rangeFrom) {
-			if (rangeFrom instanceof ApiRange) {
-				let bbox;
-				if (rangeTo) {
-					if (rangeTo instanceof ApiRange) {
-						bbox = rangeTo.range.bbox;
-					} else {
-						logError(new Error('Invalid range'));
-						return;
-					}
-				} else {
-					bbox = rangeFrom.range.bbox;
-				}
-
-				let bboxFrom = rangeFrom.range.bbox;
-				let cols = bboxFrom.c2 - bboxFrom.c1;
-				let rows = bboxFrom.r2 - bboxFrom.r1;
-				let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
-
-				rangeFrom.range.move(bbox, true, range.worksheet);
-			} else {
-				logError(new Error('Invalid range'));
-			}
+	ApiRange.prototype.Paste = function (rangeFrom) {
+		if (rangeFrom && rangeFrom instanceof ApiRange) {
+			let bboxFrom = rangeFrom.range.bbox;
+			let cols = bboxFrom.c2 - bboxFrom.c1;
+			let rows = bboxFrom.r2 - bboxFrom.r1;
+			let bbox = this.range.bbox;
+			let range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			//try paste from clipboard
-			if (rangeTo) {
-				if (rangeTo instanceof ApiRange) {
-					let ws =  rangeTo.range.worksheet;
-					private_executeOtherActiveSheet(ws, rangeTo, function () {
-						oApi && oApi.asc_Paste();
-					});
-				} else {
-					logError(new Error('Invalid range'));
-				}
-			} else {
-				let ws = this.range.worksheet;
-				private_executeOtherActiveSheet(ws, this.range, function () {
-					oApi && oApi.asc_Paste();
-				});
-			}
+			logError(new Error('Invalid range'));
 		}
 	};
 
@@ -7203,7 +7198,7 @@
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 
-	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
+	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
@@ -7623,27 +7618,26 @@
 		throw err;
 	};
 	function private_executeOtherActiveSheet(ws, range, func) {
-		let oldActiveSheet = range.worksheet.workbook.getActive();
+		let oldActiveSheet = ws && ws.workbook && ws.workbook.getActive();
 		let isChangedActiveSheet;
-		if (oldActiveSheet !== ws.index) {
-			range.worksheet.workbook.setActive(ws.index);
+		if (oldActiveSheet != null && ws && oldActiveSheet !== ws.index) {
+			ws.workbook.setActive(ws.index);
 			isChangedActiveSheet = true;
 		}
 
-		//only copy to clipboard
-		let oldSelection = ws.selectionRange.clone();
-
-		let newSelection = new AscCommonExcel.SelectionRange(ws);
-		let bbox = this.range.bbox;
-		newSelection.assign2(bbox);
-		newSelection.Select(true);
+		let oldSelection;
+		if (range) {
+			oldSelection = ws.selectionRange.clone();
+			let newSelection = new AscCommonExcel.SelectionRange(ws);
+			let bbox = range.bbox;
+			newSelection.assign2(bbox);
+			newSelection.Select(true);
+		}
 
 		func();
 
-		if (isChangedActiveSheet) {
-			this.range.worksheet.workbook.setActive(oldActiveSheet);
-		}
-		oldSelection.Select(true);
+		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
+		oldSelection && oldSelection.Select(true);
 	};
 
 }(window, null));
