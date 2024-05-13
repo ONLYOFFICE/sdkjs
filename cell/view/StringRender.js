@@ -834,29 +834,6 @@
 		StringRender.prototype._insertRepeatChars = function (maxWidth) {
 			var self = this, width, w, pos, charProp;
 
-			function shiftCharPropsLeft(fromPos, delta) {
-				// delta - отрицательная
-				var length = self.charProps.length;
-				for (var i = fromPos; i < length; ++i) {
-					var p = self.charProps[i];
-					if (p) {
-						delete self.charProps[i];
-						self.charProps[i + delta] = p;
-					}
-				}
-			}
-
-			function shiftCharPropsRight(fromPos, delta) {
-				// delta - положительная
-				for (var i = self.charProps.length - 1; i >= fromPos; --i) {
-					var p = self.charProps[i];
-					if (p) {
-						delete self.charProps[i];
-						self.charProps[i + delta] = p;
-					}
-				}
-			}
-
 			function insertRepeatChars() {
 				if (0 === charProp.total)
 					return;	// Символ уже изначально лежит в строке и в списке
@@ -870,8 +847,11 @@
 					self.charWidths.slice(0, repeatEnd),
 					self.charWidths.slice(pos, pos + 1),
 					self.charWidths.slice(repeatEnd));
-
-				shiftCharPropsRight(pos + 1, 1);
+				
+				self.charProps = [].concat(
+					self.charProps.slice(0, repeatEnd),
+					self.charProps.slice(pos, pos + 1),
+					self.charProps.slice(repeatEnd));
 			}
 
 			function removeRepeatChar() {
@@ -882,9 +862,10 @@
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, pos),
 					self.charWidths.slice(pos + 1));
-
-				delete self.charProps[pos];
-				shiftCharPropsLeft(pos + 1, -1);
+				
+				self.charProps = [].concat(
+					self.charProps.slice(0, pos),
+					self.charProps.slice(pos + 1));
 			}
 
 			width = this._calcTextMetrics(true).width;
