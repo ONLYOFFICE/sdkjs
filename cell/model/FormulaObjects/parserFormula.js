@@ -561,7 +561,10 @@ var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
-const c_nMaxDate = AscCommon.bDate1904 ? 2957003 : 2958465; // Максимальная используемая в расчетах дата в ms (эквивалент 31/12/9999)
+
+function getMaxDate () {
+	return AscCommon.bDate1904 ? 2957003 : 2958465;		// Maximum date used in calculations in ms (equivalent 31/12/9999)
+}
 
 
 // set type weight of base types
@@ -9603,7 +9606,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].c_Date1904Const = c_Date1904Const;
 	window['AscCommonExcel'].c_Date1900Const = c_Date1900Const;
 	window['AscCommonExcel'].c_DateCorrectConst = c_Date1900Const;
-	window['AscCommonExcel'].c_nMaxDate = c_nMaxDate;
 	window['AscCommonExcel'].cNumFormatFirstCell = cNumFormatFirstCell;
 	window['AscCommonExcel'].cNumFormatNone = cNumFormatNone;
 	window['AscCommonExcel'].g_cCalcRecursion = g_cCalcRecursion;
@@ -9662,6 +9664,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+	window['AscCommonExcel'].getMaxDate = getMaxDate;
 
 	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 

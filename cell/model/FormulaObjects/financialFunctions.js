@@ -679,7 +679,8 @@ function (window, undefined) {
 		calcMethod = calcMethod.toBool();
 
 		// checking for out-of-date dates
-		if (issue > AscCommonExcel.c_nMaxDate || firstInterest > AscCommonExcel.c_nMaxDate || settlement > AscCommonExcel.c_nMaxDate) {
+		let maxDate = AscCommonExcel.getMaxDate();
+		if (issue > maxDate || firstInterest > maxDate || settlement > maxDate) {
 			return new cError(cErrorType.not_numeric);
 		}
 

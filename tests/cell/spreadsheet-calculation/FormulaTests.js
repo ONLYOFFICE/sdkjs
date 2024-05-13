@@ -23649,7 +23649,7 @@ $(function () {
 		assert.ok(oParser.parse(), "ACCRINT(61,44261,44567,0.05,1000,2,0,TRUE)");
 		assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 6093.611, "Result of ACCRINT(61,44261,44567,0.05,1000,2,0,TRUE)");
 
-		// Исправление последней ошибки в баге 24266 ломает этот тест (теряется точность)
+		// Fixing the last problem in bug 24266 breaks this test (presumably the accuracy is lost due to the date basis)
 		// oParser = new parserFormula("ACCRINT(DATE(2012,8,1),DATE(2013,3,1),DATE(2012,8,30),0.05,100,2,1)", "A2", ws);
 		// assert.ok(oParser.parse(), "ACCRINT(DATE(2012,8,1),DATE(2013,3,1),DATE(2012,8,30),0.05,100,2,1)");
 		// assert.strictEqual(oParser.calculate().getValue().toFixed(3) - 0, 0.394, "Result of ACCRINT(DATE(2012,8,1),DATE(2013,3,1),DATE(2012,8,30),0.05,100,2,1)");
