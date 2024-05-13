@@ -4054,11 +4054,13 @@ var CPresentation = CPresentation || function(){};
 
             switch (nType) {
                 case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
+                    oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeText);
                     oFreeText.SetSubject('Text box');
                     return;
                 }
                 // прописываем RD и Callout
                 case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
+                    oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout);
                     oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
                     oFreeText.SetSubject('Text callout');
                     oFreeText.SetRectangleDiff([nWidth / 2, 3 / 4 * nHeight, 0.5, 0.5]);

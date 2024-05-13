@@ -1319,6 +1319,9 @@
 
 					if (oAnnotInfo["RefTo"] == null)
 						oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
+					
+					if (oAnnotInfo["IT"] != null)
+						oAnnot.SetIntent(oAnnotInfo["IT"]);
 
 					if (oAnnotInfo["InkList"]) {
 						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
