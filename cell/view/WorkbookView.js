@@ -5754,7 +5754,11 @@
 		}
 		this.customFunctionEngine.add(func, options);
 	};
-
+	/**
+	 * Updates calculating settings properties
+	 * @memberof WorkbookView
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 */
 	WorkbookView.prototype.updateCalcSettings = function (oCalcSettings) {
 		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
 			return;

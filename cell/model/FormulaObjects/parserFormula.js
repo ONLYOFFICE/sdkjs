@@ -9028,6 +9028,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method checks the recursion counter exceeds max level of recursion or not.
+	 * @memberof CalcRecursion
 	 * @returns {boolean}
 	 */
 	CalcRecursion.prototype.checkRecursionCounter = function () {
@@ -9231,6 +9232,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method updates array with recursive cells in the group changed cells object.
+	 * @memberof CalcRecursion
 	 * @param {{cellId: number, wsName: string}} oCellIndex
 	 * @param {{cellId: number, wsName: string}[]} aRecursiveCells
 	 */
@@ -9243,6 +9245,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method removes array with recursive cells in the group changed cells object.
+	 * @memberof CalcRecursion
 	 * @param {Cell} oCell
 	 */
 	CalcRecursion.prototype.removeRecursionCell = function (oCell) {

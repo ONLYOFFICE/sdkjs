@@ -17023,7 +17023,7 @@ function RangeDataManagerElem(bbox, data)
 
 	/**
 	 * Method clones calculation options
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @returns {CCalcPr}
 	 */
 	CCalcPr.prototype.clone = function () {
@@ -17048,7 +17048,7 @@ function RangeDataManagerElem(bbox, data)
 	/**
 	 * Method returns "iterate" attribute specifies whether the application should attempt to calculate formulas
 	 * that contain circular references.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @returns {boolean}
 	 */
 	CCalcPr.prototype.getIterate = function () {
@@ -17057,7 +17057,7 @@ function RangeDataManagerElem(bbox, data)
 	/**
 	 * Method returns "iterateCount" attribute specifies the number of iterations attempts when calculating a
 	 * workbook with circular references, when the "iterate" attribute is true.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @returns {number}
 	 */
 	CCalcPr.prototype.getIterateCount = function () {
@@ -17065,7 +17065,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method returns "iterateDelta" attribute specifies the maximum change for iterative calculations.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @returns {number}
 	 */
 	CCalcPr.prototype.getIterateDelta = function () {
@@ -17073,7 +17073,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method returns "calcMode" attribute specifies when the application should calculate formulas in the workbook.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @returns {Asc.c_oAscCalcMode}
 	 */
 	CCalcPr.prototype.getCalcMode = function () {
@@ -17082,40 +17082,39 @@ function RangeDataManagerElem(bbox, data)
 	/**
 	 * Method sets "iterate" attribute specifies whether the application should attempt to calculate formulas
 	 * that contain circular references.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @param {boolean} bIterate
 	 */
 	CCalcPr.prototype.setIterate = function (bIterate) {
-		this.iterate = bIterate;
+		const DEFAULT_ITERATE = false;
+		this.iterate = DEFAULT_ITERATE !== bIterate ? bIterate : null;
 	};
 	/**
 	 * Method sets "iterateCount" attribute specifies the number of iterations attempts when calculating a
 	 * workbook with circular references, when the "iterate" attribute is true.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @param {number} nIterateCount
 	 */
 	CCalcPr.prototype.setIterateCount = function (nIterateCount) {
-		this.iterateCount = nIterateCount;
+		const DEFAULT_ITER_COUNT = 100;
+		this.iterateCount = DEFAULT_ITER_COUNT !== nIterateCount ? nIterateCount : null;
 	};
 	/**
 	 * Method sets "iterateDelta" attribute specifies the maximum change for iterative calculations.
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @param {number} nIterateDelta
 	 */
 	CCalcPr.prototype.setIterateDelta = function (nIterateDelta) {
-		this.iterateDelta = nIterateDelta;
+		const DEFAULT_ITER_DELTA = 1e-3;
+		this.iterateDelta = DEFAULT_ITER_DELTA !== nIterateDelta ? nIterateDelta : null;
 	};
 	/**
 	 * Method updates calcPr attributes
-	 * @memberOf CCalcPr
+	 * @memberof CCalcPr
 	 * @param {asc_CCalcSettings} oCalcSettings
 	 * @param {Workbook} oWbModel
 	 */
 	CCalcPr.prototype.updateCalcProperties = function (oCalcSettings, oWbModel) {
-		const DEFAULT_ITERATE = false;
-		const DEFAULT_ITER_COUNT = 100;
-		const DEFAULT_ITER_DELTA = 0.001;
-
 		let bIterativeCalc = oCalcSettings.asc_getIterativeCalc();
 		let nMaxIterations = oCalcSettings.asc_getMaxIterations();
 		let nMaxChange = oCalcSettings.asc_getMaxChange();
@@ -17124,15 +17123,9 @@ function RangeDataManagerElem(bbox, data)
 		let nOldIterateCount = this.getIterateCount();
 		let nOldIterateDelta = this.getIterateDelta();
 
-		if (bIterativeCalc !== DEFAULT_ITERATE) {
-			this.setIterate(bIterativeCalc);
-		}
-		if (nMaxIterations !== DEFAULT_ITER_COUNT) {
-			this.setIterateCount(nMaxIterations);
-		}
-		if (nMaxChange !== DEFAULT_ITER_DELTA) {
-			this.setIterateDelta(nMaxChange);
-		}
+		this.setIterate(bIterativeCalc);
+		this.setIterateCount(nMaxIterations);
+		this.setIterateDelta(nMaxChange);
 
 		if (History.Is_On()) {
 			let oUpdateSheet = oWbModel.getActiveWs();
@@ -17155,16 +17148,18 @@ function RangeDataManagerElem(bbox, data)
 
 	/**
 	 * Class representing calculation settings for UI interface
+	 * @constructor
 	 */
 	function asc_CCalcSettings() {
 		// Default values if calcPr is empty
 		this.bIterativeCalc = false;
 		this.nMaxIterations = 100;
-		this.nMaxChange = 0.001;
+		this.nMaxChange = 1e-3;
 	}
 
 	/**
 	 * Method sets "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
 	 * @param {boolean} bIterativeCalc
 	 */
 	asc_CCalcSettings.prototype.asc_setIterativeCalc = function (bIterativeCalc) {
@@ -17172,6 +17167,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method returns "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
 	 * @returns {boolean}
 	 */
 	asc_CCalcSettings.prototype.asc_getIterativeCalc = function () {
@@ -17179,6 +17175,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method sets "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
 	 * @param {number} nMaxIterations
 	 */
 	asc_CCalcSettings.prototype.asc_setMaxIterations = function (nMaxIterations) {
@@ -17186,6 +17183,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method returns "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
 	 * @returns {number}
 	 */
 	asc_CCalcSettings.prototype.asc_getMaxIterations = function () {
@@ -17193,6 +17191,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method sets "Maximum change" setting
+	 * @memberof asc_CCalcSettings
 	 * @param {number} nMaxChange
 	 */
 	asc_CCalcSettings.prototype.asc_setMaxChange = function (nMaxChange) {
@@ -17200,6 +17199,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method returns "Maximum change" setting
+	 * @memberof asc_CCalcSettings
 	 * @returns {number}
 	 */
 	asc_CCalcSettings.prototype.asc_getMaxChange = function () {
@@ -17207,6 +17207,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method initializes settings according CalcPr
+	 * @memberof asc_CCalcSettings
 	 * @param {Workbook} oWbModel
 	 */
 	asc_CCalcSettings.prototype.asc_initSettings = function (oWbModel) {
@@ -17223,15 +17224,24 @@ function RangeDataManagerElem(bbox, data)
 	};
 	/**
 	 * Method checks if the given CalcPr object is equal to the current object.
+	 * @memberof asc_CCalcSettings
 	 * @param {CCalcPr} oCalcPr - The CalcPr to compare with.
 	 * @returns {boolean} - True if the objects are equal, false otherwise.
 	 */
 	asc_CCalcSettings.prototype.asc_isEqual = function (oCalcPr) {
+		const DEFAULT_ITERATE = false;
+		const DEFAULT_MAX_ITERATE = 100;
+		const DEFAULT_MAX_CHANGE = 1e-3;
+
 		const bIterativeCalcEqual = this.asc_getIterativeCalc() === oCalcPr.getIterate();
 		const bMaxIterationEqual = this.asc_getMaxIterations() === oCalcPr.getIterateCount();
 		const bMaxChangeEqual = this.asc_getMaxChange() === oCalcPr.getIterateDelta();
+		const bIterCalcDefaultVal = this.asc_getIterativeCalc() === DEFAULT_ITERATE && oCalcPr.getIterate() == null;
+		const bMaxIterDefaultVal = this.asc_getMaxIterations() === DEFAULT_MAX_ITERATE && oCalcPr.getIterateCount() == null;
+		const bMaxChangeDefaultVal = this.asc_getMaxChange() === DEFAULT_MAX_CHANGE && oCalcPr.getIterateDelta() == null;
 
-		return bIterativeCalcEqual && bMaxIterationEqual && bMaxChangeEqual;
+		return (bIterativeCalcEqual && bMaxIterationEqual && bMaxChangeEqual) ||
+			(bIterCalcDefaultVal && bMaxIterDefaultVal && bMaxChangeDefaultVal);
 	};
 
 	//****metadata****
