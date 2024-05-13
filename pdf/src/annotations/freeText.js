@@ -1,3 +1,4 @@
+
 /*
  * (c) Copyright Ascensio System SIA 2010-2019
  *
@@ -1267,6 +1268,15 @@
         if (nIntent != null) {
             memory.annotFlags |= (1 << 20);
             memory.WriteByte(nIntent);
+        }
+
+        // its stroke color
+        let aFillColor = this.GetFillColor();
+        if (aFillColor != null) {
+            memory.annotFlags |= (1 << 21);
+            memory.WriteLong(aFillColor.length);
+            for (let i = 0; i < aFillColor.length; i++)
+                memory.WriteDouble(aFillColor[i]);
         }
 
         let nEndPos = memory.GetCurPosition();

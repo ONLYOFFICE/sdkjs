@@ -82,8 +82,7 @@
 		}
 		
 		this.WordControl.OnResize(true);
-
-		this.FontLoader.LoadDocumentFonts([{name : AscPDF.DEFAULT_FIELD_FONT}]);
+		this.FontLoader.LoadDocumentFonts();
 
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
@@ -1302,13 +1301,11 @@
 		}
 	};
 	PDFEditorApi.prototype.put_TextColor = function(color) {
-		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({
-			Color : {
-				r : color.r,
-				g : color.g,
-				b : color.b
-			}
-		}), false);
+		var _unifill        = new AscFormat.CUniFill();
+		_unifill.fill       = new AscFormat.CSolidFill();
+		_unifill.fill.color = AscFormat.CorrectUniColor(color, _unifill.fill.color, 0);
+
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Unifill : _unifill}), false);
 	};
 	PDFEditorApi.prototype.asc_ChangeTextCase = function(nType) {
 		this.getPDFDoc().ChangeTextCase(nType);

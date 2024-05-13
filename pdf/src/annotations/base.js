@@ -998,7 +998,7 @@
         let sContents       = this.GetContents();
         let BES             = this.GetBorderEffectStyle();
         let BEI             = this.GetBorderEffectIntensity();
-        let aStrokeColor    = this.IsFreeText() || this.IsComment() ? this.GetFillColor() : this.GetStrokeColor();
+        let aStrokeColor    = this.GetStrokeColor();
         let nBorder         = this.GetBorder();
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);
@@ -1072,7 +1072,7 @@
             let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
-            let sRC             = this.GetRichContents();
+            let aRC             = this.GetRichContents();
             let CrDate          = this.GetCreationDate(true);
             let oRefTo          = this.GetReplyTo();
             let nRefToReason    = this.GetRefType();
@@ -1093,9 +1093,51 @@
                 memory.WriteDouble(nOpacity);
             }
                 
-            if (sRC != null) {
+            if (aRC != null) {
                 memory.annotFlags |= (1 << 3);
-                memory.WriteString(sRC);
+                memory.WriteLong(aRC.length);
+
+                for (let i = 0; i < aRC.length; i++) {
+                    memory.WriteByte(aRC[i]["alignment"]);
+                    let nFontStylePos = memory.GetCurPosition();
+                    memory.Skip(4);
+
+                    // font style
+                    let nStyle = 0;
+                    if (aRC[i]["bold"]) {
+                        nStyle |= (1 << 0);
+                    }
+                    if (aRC[i]["italic"]) {
+                        nStyle |= (1 << 1);
+                    }
+                    if (aRC[i]["strikethrough"]) {
+                        nStyle |= (1 << 3);
+                    }
+                    if (aRC[i]["underlined"]) {
+                        nStyle |= (1 << 4);
+                    }
+                    if (aRC[i]["vertical"]) {
+                        nStyle |= (1 << 5);
+                        memory.WriteDouble(aRC[i]["vertical"]);
+                    }
+                    if (aRC[i]["actual"]) {
+                        nStyle |= (1 << 6);
+                        memory.WriteString(aRC[i]["actual"]);
+                    }
+                    // запись флагов настроек шрифта
+                    let nEndPos = memory.GetCurPosition();
+                    memory.Seek(nFontStylePos);
+                    memory.WriteLong(nStyle);
+                    memory.Seek(nEndPos);
+
+                    memory.WriteDouble(aRC[i]["size"]);
+                    aRC[i]["color"].forEach(function(component) {
+                        memory.WriteDouble(component);
+                    });
+
+                    memory.WriteString(aRC[i]["name"]);
+                    memory.WriteString(aRC[i]["text"]);
+                }
             }
 
             if (CrDate != null) {
