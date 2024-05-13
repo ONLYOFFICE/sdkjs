@@ -494,6 +494,7 @@ function (window, undefined) {
 	cACCRINT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cACCRINT.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any, argType.any];
 	cACCRINT.prototype.Calculate = function (arg) {
+		// the ACCRINT formula in ms does not always match the calculation using the formula manually
 		let issue = arg[0],
 			firstInterest = arg[1],
 			settlement = arg[2],
@@ -677,6 +678,11 @@ function (window, undefined) {
 		basis = Math.floor(basis.getValue());
 		calcMethod = calcMethod.toBool();
 
+		// checking for out-of-date dates
+		if (issue > AscCommonExcel.c_nMaxDate || firstInterest > AscCommonExcel.c_nMaxDate || settlement > AscCommonExcel.c_nMaxDate) {
+			return new cError(cErrorType.not_numeric);
+		}
+
 		if (issue < startRangeCurrentDateSystem || issue <= 0 || issue >= settlement || firstInterest < startRangeCurrentDateSystem ||
 			settlement < startRangeCurrentDateSystem || rate <= 0 || par <= 0 || basis < 0 ||
 			basis > 4 || (frequency != 1 && frequency != 2 && frequency != 4) || (!calcMethod && firstInterest < 366 / frequency)) {
@@ -692,6 +698,11 @@ function (window, undefined) {
 			return newDate;
 		}
 
+		// The function calculates accrued interest on a security on which interest is paid at a certain frequency
+		// Argument calc_method = 0 (we calculate the accumulated interest from the first payment date (first_interest) to the date of purchase of the security (settlement))
+		// calc_method = 1 (we calculate the accumulated interest from the issue date to the date of purchase of the security (settlement))
+		// calc_method = 0 is taken into account only if the date of the first payment (first_interest) is greater than the release date (issue)
+
 		// exception for 1900/1/29 date
 		let iss = issue === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(issue),
 			fInter = firstInterest === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(firstInterest),
@@ -705,6 +716,12 @@ function (window, undefined) {
 		if (mainCoupPcd.getExcelDate() <= 0) {
 			return new cNumber(0);
 		}
+
+		// if (fInter < iss) {
+		// 	firstDate = new cDate(iss);
+		// 	calcMethod = true;
+		// 	fInter = iss;
+		// }
 
 		if (settl > fInter && calcMethod) {
 			coupPCD = new cDate(fInter);
@@ -724,10 +741,15 @@ function (window, undefined) {
 		mainCoupPcd = lcl_GetCouppcd(settl, fInter, frequency);
 
 		// if first coup period, get date difference by default
-		if (mainCoupPcd < iss) {
-			days = AscCommonExcel.diffDate(firstDate, settl, basis)
-		} else if (mainCoupPcd >= iss) {
+		if (calcMethod) {
 			days = AscCommonExcel.days360(firstDate, settl, basis, true);
+		} else {
+			// find first interest lesser than settlement date
+			if (mainCoupPcd < iss) {
+				days = AscCommonExcel.diffDate(firstDate, settl, basis).getValue();
+			} else {
+				days = AscCommonExcel.days360(firstDate, settl, basis, true);
+			}
 		}
 
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
@@ -744,8 +766,7 @@ function (window, undefined) {
 				coupDays = getcoupdays(startDate, endDate, frequency, basis).getValue();
 			} else {
 				days = AscCommonExcel.diffDate(firstDate, endDate, basis).getValue();
-				coupDays = (basis == AscCommonExcel.DayCountBasis.Actual365) ? (365 / frequency) :
-					AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
+				coupDays = (basis == AscCommonExcel.DayCountBasis.Actual365) ? (365 / frequency) : AscCommonExcel.diffDate(startDate, endDate, basis).getValue();
 			}
 
 			res += (iss <= startDate) ? calcMethod : days / coupDays;
