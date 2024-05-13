@@ -265,7 +265,7 @@
 	 */
 
 	/**
-	 * The page orientation type.
+	 * The cell references type.
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
 	 * */
 
