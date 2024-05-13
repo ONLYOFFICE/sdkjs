@@ -655,6 +655,8 @@ $(function () {
 	QUnit.module("Formula");
 	QUnit.test('Iterative calculation', function (assert) {
 		const g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+		g_cCalcRecursion.initCalcProperties(wb.calcPr);
+		g_cCalcRecursion.setIsEnabledRecursion(true);
 		g_cCalcRecursion.setMaxIterations(10);
 		let nExpectedCellIndex, oFactCellIndex, oCell, bCaFromSelectedCell;
 		// Init necessary functions
@@ -14260,7 +14262,6 @@ $(function () {
 		oParser = new parserFormula("COUNTIF(C102:C1002,2)/1000", "A1", ws);
 		assert.ok(oParser.parse());
 		res = Math.round(oParser.calculate().getValue() * 100);
-		console.log(res);
 		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 2 in COUNTIF(C102:C1002,2)/1000");
 
 		oParser = new parserFormula("COUNTIF(C102:C1002,3)/1000", "A1", ws);

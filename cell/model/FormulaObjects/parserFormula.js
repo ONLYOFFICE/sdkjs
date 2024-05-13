@@ -8900,9 +8900,9 @@ function parserFormula( formula, parent, _ws ) {
 		this.oPrevIterResult = null;
 		this.oDiffBetweenIter = null;
 
-		this.bIsEnabledRecursion = true;
-		this.nMaxIterations = 100; // Max iterations of recursion calculations. Default value: 100.
-		this.nRelativeError = 1e-3; // Relative error between current and previous cell value. Default value: 1e-3.
+		this.bIsEnabledRecursion = null;
+		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
+		this.nRelativeError = null; // Relative error between current and previous cell value. Default value: 1e-3.
 		this.nCalcMode = Asc.c_oAscCalcMode.auto; // Calculation mode. Default value: Asc.c_oAscCalcMode.auto
 		/*for chrome63(real maximum call stack size is 12575) nMaxRecursion that cause exception is 783
 		by measurement: stack size in doctrenderer is one fourth smaller than chrome*/
@@ -8989,7 +8989,7 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.resetIterStep = function () {
 		this.nIterStep = 1;
-	}
+	};
 	/**
 	 * Method returns iteration step.
 	 * @memberof CalcRecursion
@@ -9013,7 +9013,7 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.decRecursionCounter = function () {
 		this.nRecursionCounter--;
-	}
+	};
 	/**
 	 * Method resets recursion counter.
 	 * Uses for control recursion level of initStartCellForIterCalc method.
@@ -9022,7 +9022,26 @@ function parserFormula( formula, parent, _ws ) {
 	CalcRecursion.prototype.resetRecursionCounter = function () {
 		if (this.getRecursionCounter() > 0) {
 			this.decRecursionCounter();
+		} else if (this.getIsForceBacktracking()) {
+			this.setIsForceBacktracking(false);
 		}
+	};
+	/**
+	 * Method checks the recursion counter exceeds max level of recursion or not.
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.checkRecursionCounter = function () {
+		if (this.getIsForceBacktracking()) {
+			return true;
+		}
+
+		let bRecursionExceeded = g_cCalcRecursion.getRecursionCounter() >= g_cCalcRecursion.getMaxRecursion();
+
+		if (bRecursionExceeded) {
+			this.setIsForceBacktracking(true);
+		}
+
+		return bRecursionExceeded;
 	}
 	/**
 	 * Method returns recursion counter.
@@ -9032,7 +9051,7 @@ function parserFormula( formula, parent, _ws ) {
 	 */
 	CalcRecursion.prototype.getRecursionCounter = function () {
 		return this.nRecursionCounter;
-	}
+	};
 	/**
 	 * Method sets a flag who recognizes an iteration calculations setting is enabled or not.
 	 * @memberof CalcRecursion
@@ -9153,6 +9172,9 @@ function parserFormula( formula, parent, _ws ) {
 		const sCellWsName = oCell.ws.getName().toLowerCase();
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
 
+		if (oGroupChangedCell == null) {
+			return [];
+		}
 		for (let sSheetName in oGroupChangedCell) {
 			let oGroupChangedSheet = oGroupChangedCell[sSheetName];
 			for (let sLinkedCellIndex in oGroupChangedSheet) {
@@ -9194,10 +9216,14 @@ function parserFormula( formula, parent, _ws ) {
 	 * @param {{cellId: number, wsName: string}[]} aRecursiveCells
 	 */
 	CalcRecursion.prototype.addRecursiveCells = function (oCell, aRecursiveCells) {
-		const oGroupChangedCell = this.getGroupChangedCells();
 		const sCellWsName = oCell.ws.getName().toLowerCase();
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
+		let oGroupChangedCell = this.getGroupChangedCells();
 
+		if (oGroupChangedCell == null) {
+			this.initGroupChangedCells(oCell);
+			oGroupChangedCell = this.getGroupChangedCells();
+		}
 		if (!oGroupChangedCell.hasOwnProperty(sCellWsName)) {
 			oGroupChangedCell[sCellWsName] = {};
 		}
@@ -9350,19 +9376,15 @@ function parserFormula( formula, parent, _ws ) {
 	 * @param {CCalcPr} oCalcPr
 	 */
 	CalcRecursion.prototype.initCalcProperties = function (oCalcPr) {
-		if (oCalcPr.getIterate()) {
-			this.setIsEnabledRecursion(oCalcPr.getIterate());
-		}
-		if (oCalcPr.getIterateDelta()) {
-			this.setRelativeError(oCalcPr.getIterateDelta());
-		}
-		if (oCalcPr.getIterateCount()) {
-			this.setMaxIterations(oCalcPr.getIterateCount());
-		}
+		const oCalcSettings = new Asc.asc_CCalcSettings(); // Object with default values
+
+		this.setIsEnabledRecursion(oCalcPr.getIterate() ? oCalcPr.getIterate() : oCalcSettings.asc_getIterativeCalc());
+		this.setRelativeError(oCalcPr.getIterateDelta() != null ? oCalcPr.getIterateDelta() : oCalcSettings.asc_getMaxChange());
+		this.setMaxIterations(oCalcPr.getIterateCount() ? oCalcPr.getIterateCount() : oCalcSettings.asc_getMaxIterations());
 		if (oCalcPr.getCalcMode()) {
 			this.setCalcMode(oCalcPr.getCalcMode());
 		}
-	}
+	};
 
 	const g_cCalcRecursion = new CalcRecursion();
 
