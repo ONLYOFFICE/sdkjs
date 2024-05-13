@@ -1121,7 +1121,7 @@
 	});
 
 	/**
-	 * Returns the page orientation.
+	 * Returns the cell references style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ReferenceStyle}
@@ -1132,7 +1132,7 @@
 	};
 
 	/**
-	 * Returns all comments related to the whole workbook.
+	 * Sets the cell references style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
