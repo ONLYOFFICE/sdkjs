@@ -7776,7 +7776,9 @@
 					let hyperlink_properties = null;
 					if(drawings.length === 1) {
 						let oDrawing = drawings[0];
-						if(oDrawing.isShape() || oDrawing.isImage()) {
+						let isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment(); // skip pdf text annot
+
+						if(!isStickyNote && (oDrawing.isShape() || oDrawing.isImage())) {
 
 							let oNvPr = oDrawing.getCNvProps();
 							if (oNvPr) {
