@@ -106,6 +106,34 @@
         }
         this.SetNeedRecalc(true);
     };
+
+    CPdfShape.prototype.getTrackGeometry = function () {
+        // заглушка для трека геометрии с клауд бордером для FreeText
+        if (this.group && this.group.IsAnnot && this.group.IsAnnot() && this.group.GetTextBoxShape() == this) {
+            return AscFormat.ExecuteNoHistory(
+                function () {
+                    var _ret = AscFormat.CreateGeometry("rect");
+                    _ret.Recalculate(this.extX, this.extY);
+                    return _ret;
+                }, this, []
+            );
+        }
+
+		const oOwnGeometry = this.getGeometry();
+		if(oOwnGeometry) {
+			return oOwnGeometry;
+		}
+		if(this.rectGeometry) {
+			return this.rectGeometry;
+		}
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				var _ret = AscFormat.CreateGeometry("rect");
+				_ret.Recalculate(this.extX, this.extY);
+				return _ret;
+			}, this, []
+		);
+	};
     CPdfShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         

@@ -262,7 +262,7 @@
                 oLine.setFill(oFill);
             }
 
-            for (let i = 1; i < this.spTree.length; i++) {
+            for (let i = 0; i < this.spTree.length; i++) {
                 let oLine = this.spTree[i].spPr.ln;
                 oLine.setFill(oFill);
             }
@@ -279,7 +279,7 @@
 
         let nWidthPt = this.GetWidth();
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        for (let i = 1; i < this.spTree.length; i++) {
+        for (let i = 0; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
         }
@@ -805,7 +805,30 @@
         if (this.IsInTextBox())
             this.GetDocContent().RecalculateCurPos();
 
-        this.draw(oGraphicsWord);
+        if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {
+            return;
+        }
+        if (oGraphicsWord.animationDrawer) {
+            oGraphicsWord.animationDrawer.drawObject(this, oGraphicsWord);
+            return;
+        }
+        var oClipRect;
+        if (!oGraphicsWord.isBoundsChecker()) {
+            oClipRect = this.getClipRect();
+        }
+        if (oClipRect) {
+            oGraphicsWord.SaveGrState();
+            oGraphicsWord.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
+        }
+        for (var i = this.spTree.length - 1; i >= 0; i--)
+            this.spTree[i].draw(oGraphicsWord);
+
+        this.drawLocks(this.transform, oGraphicsWord);
+        if (oClipRect) {
+            oGraphicsWord.RestoreGrState();
+        }
+        oGraphicsWord.reset();
+        oGraphicsWord.SetIntegerGrid(true);
     };
     CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
@@ -1016,6 +1039,20 @@
             let yMax = aCurTextBoxRect[3] + (nContentH - oTextBoxShape.extY + 0.5) * g_dKoef_mm_to_pix / nScaleY;
 
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
+            // расширяем рект на ширину линии (или на радиус cloud бордера)
+            let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+                aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
+                aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
+                aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
+                aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
+            }
+            else {
+                aNewTextBoxRect[0] -= nLineWidth * nScaleX;
+                aNewTextBoxRect[1] -= nLineWidth * nScaleY;
+                aNewTextBoxRect[2] += nLineWidth * nScaleX;
+                aNewTextBoxRect[3] += nLineWidth * nScaleY;
+            }
 
             // находит точку выхода callout для нового ректа textbox
             let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
@@ -1525,7 +1562,7 @@
 
         
         let aShapeBounds = findMinRect(aPoints);
-
+        
         let xMax = aShapeBounds[2];
         let xMin = aShapeBounds[0];
         let yMin = aShapeBounds[1];
@@ -1554,7 +1591,9 @@
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
-        let geometry = generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
+        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud && aPoints.length == 4;
+
+        let geometry = bCloudy ? AscPDF.generateCloudyGeometry(aPoints, aShapeBounds, null, oParentAnnot.GetBorderEffectIntensity()) : generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
         oShape.spPr.setGeometry(geometry);
 
         return oShape;
