@@ -529,13 +529,16 @@ ParaRun.prototype.GetText = function(oText)
 	return oText.Text;
 };
 
-ParaRun.prototype.GetTextOfElement = function(isLaTeX)
+ParaRun.prototype.GetTextOfElement = function(isLaTeX, isSelected)
 {
 	let str = "";
 	let strCurrentStyleGroup = "";
 	let strCurrentTemp = "";
+	
+	let startPos = isSelected ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0;
+	let endPos   = isSelected ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length;
 
-	for (let i = 0; i < this.Content.length; i++)
+	for (let i = startPos; i < endPos; i++)
 	{
 		if (this.Content[i])
 		{

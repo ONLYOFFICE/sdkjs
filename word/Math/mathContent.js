@@ -7048,7 +7048,7 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 	{
 		if (this.Content[i] !== undefined)
 		{
-			str += this.Content[i].GetTextOfElement(isLaTeX);
+			str += this.Content[i].GetTextOfElement(isLaTeX, bSelectedText);
 		}
 	}
 
