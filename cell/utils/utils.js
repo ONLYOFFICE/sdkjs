@@ -1485,9 +1485,9 @@
 			this.activeCellId = r.GetLong();
 			this.update();
 		};
-		SelectionRange.prototype.Select = function () {
+		SelectionRange.prototype.Select = function (doNotUpdate) {
 			this.worksheet.selectionRange = this.clone();
-			this.worksheet.workbook.handlers.trigger('updateSelection');
+			!doNotUpdate && this.worksheet.workbook.handlers.trigger('updateSelection');
 		};
 		SelectionRange.prototype.isContainsOnlyFullRowOrCol = function (byCol) {
 			var res = true;

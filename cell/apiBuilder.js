@@ -3709,21 +3709,39 @@
 	});
 
 	/**
-	 * Copies a range to the specified range.
+	 * Copies the range to the specified range or to the Clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} destination - Specifies a new range to which the specified range will be copied.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
-		if (destination && destination instanceof ApiRange) {
-			let bboxFrom = this.range.bbox;
-			let cols = bboxFrom.c2 - bboxFrom.c1;
-			let rows = bboxFrom.r2 - bboxFrom.r1;
-			let bbox = destination.range.bbox;
-			let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
-			this.range.move(range.bbox, true, destination.range.worksheet);
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, true, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
 		} else {
-			logError(new Error('Invalid destination'));
+			let ws =  this.range.worksheet;
+			//only copy to clipboard
+			let oldSelection = ws.selectionRange.clone();
+
+			let newSelection = new AscCommonExcel.SelectionRange(ws);
+			let bbox = this.range.bbox;
+			newSelection.assign2(bbox);
+			newSelection.Select(true);
+
+			oApi && oApi.asc_Copy();
+
+			oldSelection.Select(true);
+			oApi && oApi.wb.cleanCopyData();
 		}
 	};
 
