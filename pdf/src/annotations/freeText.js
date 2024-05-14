@@ -1005,7 +1005,11 @@
             this.GetContents() != sText && this.SetContents(sText);
             
             if (this.IsNeedUpdateRC()) {
-                oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), this.GetRichContents(true)));
+                let aCurRc = this.GetRichContents();
+                let aNewRc = this.GetRichContents(true);
+                
+                this._richContents = aNewRc;
+                oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
                 this.SetNeedUpdateRC(false);
             }
 
