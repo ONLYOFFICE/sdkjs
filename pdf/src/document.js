@@ -3637,6 +3637,16 @@ var CPresentation = CPresentation || function(){};
                 oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
                 oXmlReader.parseNode(0);
 
+                let _t = this;
+                oXmlReader.rels = {
+                    getRelationship : function(rId) {
+                        return {
+                            targetMode : "Internal",
+                            base64 : _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)))
+                        }
+                    }
+                };
+
                 let oDrawing;
                 switch (oXmlReader.GetName()) {
                     case 'p:sp': {
@@ -3660,7 +3670,7 @@ var CPresentation = CPresentation || function(){};
                 }
                 
             }
-        }, this);
+        }, this, this);
 
         let _t = this;
         aPageDrawings.forEach(function(drawing) {
