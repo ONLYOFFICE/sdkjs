@@ -6981,7 +6981,28 @@ function CAnimationPaneDrawer(page, htmlElement)
 				oThis.list.Control.onUpdate();
 				oThis.list.CheckScroll();
 			}
-		})
+		});
+
+		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
+			/*
+				Update effectLabel if needed
+				(when shape name has been changed)
+			*/
+
+			if (!oThis.list.Control) return;
+
+			let changedLabelsCount = 0;
+			oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
+				if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
+					animItem.effectLabel.string = animItem.getEffectLabelText();
+					changedLabelsCount++;
+				}
+			});
+
+			if (changedLabelsCount > 0) {
+				oThis.list.Control.recalculateChildrenLayout();
+			}
+		});
 	};
 	oThis.onMouseDown = function (e)
 	{
