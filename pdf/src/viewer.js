@@ -2784,11 +2784,11 @@
 					}
 				}
 
+				let pageColor = this.Api.getPageBackgroundColor();
 				let oImageToDraw = null;
 				if (!this.file.pages[i].isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
-						let pageColor = this.Api.getPageBackgroundColor();
 						page.Image = this.file.getPage(i, natW, natH, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);
 						if (this.bCachedMarkupAnnnots) {
 							this._drawMarkupAnnotsOnCtx(i, page.Image.getContext("2d"));
@@ -2816,7 +2816,7 @@
 						markupContext.drawImage(page.Image, 0, 0);
 					}
 					else {
-						markupContext.fillStyle = "#FFFFFF";
+						markupContext.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 						markupContext.fillRect(0, 0, w, h);
 					}
 
@@ -3852,6 +3852,8 @@
 	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
         let image = this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
         if (!image) {
+			let pageColor = this.Api.getPageBackgroundColor();
+
 			image = document.createElement('canvas');
 
 			let ctx = image.getContext('2d');
@@ -3859,7 +3861,7 @@
 			image.width = nWidthPx;
 			image.height = nHeightPx;
 
-			ctx.fillStyle = "#FFFFFF";
+			ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 			ctx.fillRect(0, 0, nWidthPx, nHeightPx);
         }
 
