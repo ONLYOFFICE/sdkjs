@@ -3859,22 +3859,43 @@
 		if (sPasteSpecialOperation) {
 			switch (sPasteSpecialOperation) {
 				case "xlPasteSpecialOperationAdd":
-					nPasteType = Asc.c_oSpecialPasteOperation.add;
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.add;
 					break;
 				case "xlPasteSpecialOperationDivide":
-					nPasteType = Asc.c_oSpecialPasteOperation.divide;
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.divide;
 					break;
 				case "xlPasteSpecialOperationMultiply":
-					nPasteType = Asc.c_oSpecialPasteOperation.multiply;
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.multiply;
 					break;
 				case "xlPasteSpecialOperationNone":
 					break;
 				case "xlPasteSpecialOperationSubtract":
-					nPasteType = Asc.c_oSpecialPasteOperation.subtract;
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.subtract;
 					break;
 			}
 		}
 
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		if (!specialPasteHelper.specialPasteProps) {
+			specialPasteHelper.specialPasteProps = new Asc.SpecialPasteProps();
+		}
+		let specialPasteProps = specialPasteHelper.specialPasteProps;
+
+		if (nPasteType != null) {
+			specialPasteProps.asc_setProps(nPasteType);
+		}
+		if (nPasteSpecialOperation != null) {
+			specialPasteProps.asc_setOperation(nPasteSpecialOperation);
+		}
+		specialPasteProps.asc_setSkipBlanks(!!bSkipBlanks);
+		specialPasteProps.asc_setTranspose(!!bTranspose);
+
+		let oApi = Asc["editor"];
+		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+		let ws =  this.range.worksheet;
+		private_executeOtherActiveSheet(ws, this.range, function () {
+			oApi && oApi.asc_Paste();
+		});
 	};
 
 	/**
@@ -7234,6 +7255,9 @@
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
+
+	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
+	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
 	
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -7290,6 +7314,7 @@
 	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
+	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -7352,6 +7377,7 @@
 	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
+	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
