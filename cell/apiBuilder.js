@@ -270,6 +270,20 @@
 	 * */
 
 	/**
+	 * Specifies the part of the range to be pasted.
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" | "xlPasteAllMergingConditionalFormats"|
+	 * "xlPasteAllUsingSourceTheme" | "xlPasteColumnWidths" | "xlPasteComments"
+	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
+	 * | "xlPasteValidation" | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
+	 * */
+
+	/**
+	 * Specifies how numeric data will be calculated with the destinations cells on the worksheet.
+	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
+	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
+	 * */
+
+	/**
 	 * Class representing a base class for the color types.
 	 * @constructor
 	 */
@@ -3782,6 +3796,85 @@
 		} else {
 			logError(new Error('Invalid range'));
 		}
+	};
+
+	/**
+	 * Pastes the Range object to the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Type of special paste
+	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - Operation of special paste
+	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Case sensitive or not. The default value is "false".
+	 * @param {boolean} bTranspose [bTranspose=false] - Case sensitive or not. The default value is "false".
+	 */
+	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
+		if (sPasteType && typeof sPasteType !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteType".'));
+			return;
+		}
+		if (sPasteSpecialOperation && typeof sPasteSpecialOperation !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
+			return;
+		}
+
+
+		let nPasteType = null;
+		if (sPasteType) {
+			switch (sPasteType) {
+				case "xlPasteAll":
+					break;
+				case "xlPasteAllExceptBorders":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaWithoutBorders;
+					break;
+				//case "xlPasteAllUsingSourceTheme":
+				//	break;
+				case "xlPasteColumnWidths":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+					break;
+				case "xlPasteComments":
+					nPasteType = Asc.c_oSpecialPasteProps.comments;
+					break;
+				case "xlPasteFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormating;
+					break;
+				case "xlPasteFormulas":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormula;
+					break;
+				case "xlPasteFormulasAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaNumberFormat;
+					break;
+				// case "xlPasteValidation":
+				// 	nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+				// 	break;
+				case "xlPasteValues":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyValues;
+					break;
+				case "xlPasteValuesAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.valueNumberFormat;
+					break;
+			}
+		}
+
+		let nPasteSpecialOperation = null;
+		if (sPasteSpecialOperation) {
+			switch (sPasteSpecialOperation) {
+				case "xlPasteSpecialOperationAdd":
+					nPasteType = Asc.c_oSpecialPasteOperation.add;
+					break;
+				case "xlPasteSpecialOperationDivide":
+					nPasteType = Asc.c_oSpecialPasteOperation.divide;
+					break;
+				case "xlPasteSpecialOperationMultiply":
+					nPasteType = Asc.c_oSpecialPasteOperation.multiply;
+					break;
+				case "xlPasteSpecialOperationNone":
+					break;
+				case "xlPasteSpecialOperationSubtract":
+					nPasteType = Asc.c_oSpecialPasteOperation.subtract;
+					break;
+			}
+		}
+
 	};
 
 	/**
