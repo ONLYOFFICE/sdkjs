@@ -2860,6 +2860,7 @@
 		if(this.editorId === c_oEditorId.Word)
 		{
 			arrToDownload.push(AscCommon.g_sWordPlaceholderImage);
+			arrToDownload.push(AscCommon.g_sWordPlaceholderFormImage);
 		}
 		this.ImageLoader.LoadImagesWithCallback(arrToDownload, function () {
 

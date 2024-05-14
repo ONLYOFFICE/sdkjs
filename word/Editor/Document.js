@@ -25776,6 +25776,8 @@ CDocument.prototype.SetHighlightRequiredFields = function(isHighlight)
  */
 CDocument.prototype.GetRequiredFieldsBorder = function()
 {
+	this.RequiredFieldsBorder.Size = this.DrawingDocument.GetMMPerDot(2);
+	this.RequiredFieldsBorder.Value = border_Single;
 	return this.RequiredFieldsBorder;
 };
 /**
