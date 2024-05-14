@@ -91,7 +91,7 @@ CHeaderFooter.prototype =
     {
         return this.LogicDocument.Get_ColorMap();
     },
-    
+
     Copy : function(oLogicDocument, oCopyPr)
 	{
 		if (!oLogicDocument)
@@ -121,14 +121,14 @@ CHeaderFooter.prototype =
             var HdrFtrPage = this.Parent.Pages[Page_abs];
             if ( undefined === HdrFtrPage || ( this !== HdrFtrPage.Header && this !== HdrFtrPage.Footer ) )
                 return;
-            
+
             var RecalcObj = this.RecalcInfo.RecalcObj[Page_abs];
             if ( undefined !== RecalcObj )
             {
                 this.RecalcInfo.CurPage = Page_abs;
                 this.Content.LoadRecalculateObject( RecalcObj );
-            }            
-        }        
+            }
+        }
     },
 
 	SetPage : function(nPageAbs)
@@ -179,14 +179,14 @@ CHeaderFooter.prototype =
         //    не false, тогда пересчитывать нужно, а если нет, тогда выходим
         // 3. Если нужно пересчитывать, пересчитываем заново и смотрим, изменились ли границы пересчета и позиции плавающих
         //    картинок, и выставляем RecalcInfo.NeedRecalc[Page_abs] = false.
-        
-        var bChanges = false;                
+
+        var bChanges = false;
         var RecalcObj = this.RecalcInfo.RecalcObj[Page_abs];
-        
+
         var OldSumH    = 0;
         var OldBounds  = null;
         var OldFlowPos = [];
-            
+
         if ( undefined === RecalcObj )
             bChanges = true;
         else
@@ -195,8 +195,8 @@ CHeaderFooter.prototype =
             OldBounds = RecalcObj.Get_PageBounds(0);
             RecalcObj.Get_DrawingFlowPos( OldFlowPos );
         }
-        
-        // Пересчитаем заново данный колонтитул        
+
+        // Пересчитаем заново данный колонтитул
         this.Content.Set_StartPage( Page_abs );
         this.Content.PrepareRecalculateObject();
 
@@ -207,13 +207,13 @@ CHeaderFooter.prototype =
         var RecalcResult = recalcresult2_NextPage;
         while ( recalcresult2_End != RecalcResult  )
             RecalcResult = this.Content.Recalculate_Page( CurPage++, true );
-        
+
         this.RecalcInfo.RecalcObj[Page_abs]   = this.Content.SaveRecalculateObject();
         this.RecalcInfo.PageNumInfo[Page_abs] = this.LogicDocument.Get_SectionPageNumInfo(Page_abs);
         this.RecalcInfo.SectPr[Page_abs]      = SectPr;
 		this.RecalcInfo.NeedRecalc[Page_abs]  = false;
 		this.RecalcInfo.LastPage              = Page_abs;
-        
+
         // Если у нас до этого был какой-то пересчет, тогда сравним его с текущим.
         // 1. Сравним границы: у верхнего колонтитула смотрим на изменение нижней границы, а нижнего - верхней
         // 2. Сравним положение и размер Flow-объектов
@@ -273,7 +273,7 @@ CHeaderFooter.prototype =
             if ( Math.abs( OldSumH - NewSumH ) > 0.001 )
                 bChanges = true;
         }
-        
+
         // Ежели текущая страница не задана, тогда выставляем ту, которая оказалась пересчитанной первой. В противном
         // случае, выставляем рассчет страницы, которая была до этого.
 		if (-1 === this.RecalcInfo.CurPage
@@ -305,7 +305,7 @@ CHeaderFooter.prototype =
 
         return bChanges;
     },
-    
+
     RecalculateContent : function(nPageAbs)
     {
 		if (this.IsRecalculateInProgress())
@@ -449,17 +449,17 @@ CHeaderFooter.prototype =
     {
         return this.Content.Get_PageBounds(0);
     },
-    
+
     Get_DividingLine : function(PageIndex)
     {
         var OldPage = this.RecalcInfo.CurPage;
-        
+
         this.Set_Page( PageIndex );
         var Bounds = this.Get_Bounds();
-        
+
         if ( -1 !== OldPage )
             this.Set_Page( OldPage );
-        
+
         if ( hdrftr_Footer === this.Type )
             return Bounds.Top;
         else
@@ -631,11 +631,11 @@ CHeaderFooter.prototype =
     {
         if ( -1 === this.RecalcInfo.CurPage )
             return;
-        
-        var Index  = this.LogicDocument.Pages[this.RecalcInfo.CurPage].Pos; 
+
+        var Index  = this.LogicDocument.Pages[this.RecalcInfo.CurPage].Pos;
         var SectPr = this.LogicDocument.SectionsInfo.Get_SectPr(Index).SectPr;
         var Bounds = this.Get_Bounds();
-        
+
         // нужно обновить линейку
         if ( this.Type === hdrftr_Header )
         {
@@ -1184,7 +1184,7 @@ CHeaderFooter.prototype =
 	},
 //-----------------------------------------------------------------------------------
 // Undo/Redo функции
-//-----------------------------------------------------------------------------------    
+//-----------------------------------------------------------------------------------
     Get_ParentObject_or_DocumentPos : function()
     {
         return { Type : AscDFH.historyitem_recalctype_HdrFtr, Data : this };
@@ -1204,23 +1204,23 @@ CHeaderFooter.prototype =
 		this.RecalcInfo.NeedRecalc    = {};
 		this.RecalcInfo.LastPage      = -1;
 		this.RecalcInfo.RequestedPage = -1;
-        
+
         History.RecalcData_Add( { Type : AscDFH.historyitem_recalctype_HdrFtr, Data : this } );
     },
-    
+
     Refresh_RecalcData_BySection : function(SectPr)
     {
         // Найдем среди пересчитанных страниц те, которые пересчитывались в заданной секции,
         // и среди них найдем ключ с наименьшим номером. Далее, отметим все страницы с номером большим, чем найденный,
         // как не пересчитанные.
-        
+
         var MinPageIndex = -1;
         for ( var PageIndex in this.RecalcInfo.PageNumInfo )
         {
             if ( SectPr === this.RecalcInfo.SectPr[PageIndex] && ( -1 === MinPageIndex || PageIndex < MinPageIndex ) )
-                MinPageIndex = PageIndex;                
+                MinPageIndex = PageIndex;
         }
-        
+
         for ( var PageIndex in this.RecalcInfo.PageNumInfo )
         {
             if ( PageIndex >= MinPageIndex )
@@ -1320,6 +1320,30 @@ CHeaderFooter.prototype =
 	{
 		return this.Content.CanAddComment();
 	}
+};
+CHeaderFooter.prototype.SetWatermarkPropsAction = function (oProps) {
+    const oLogicDocument = this.LogicDocument;
+    let oWatermark = this.FindWatermark();
+    if(oWatermark)
+    {
+        if(oWatermark.GraphicObj.selected)
+        {
+            this.RemoveSelection(true);
+        }
+        oWatermark.Remove_FromDocument(false);
+    }
+    oWatermark = oLogicDocument.DrawingObjects.createWatermark(oProps);
+    if(oWatermark)
+    {
+        const oDocState = oLogicDocument.Get_SelectionState2();
+        const oContent = this.Content;
+        var paraRun = new ParaRun(null, false);
+        paraRun.Add(oWatermark);
+        var oFirstParagraph = oContent.GetFirstParagraph();
+        oFirstParagraph.AddToContentToEnd(paraRun);
+        oLogicDocument.Set_SelectionState2(oDocState);
+        return oWatermark;
+    }
 };
 CHeaderFooter.prototype.UpdateContentToDefaults = function()
 {
@@ -1482,7 +1506,7 @@ function CHeaderFooterController(LogicDocument, DrawingDocument)
 
     this.WaitMouseDown = true;
 
-    this.Lock = new AscCommon.CLock();   
+    this.Lock = new AscCommon.CLock();
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     AscCommon.g_oTableId.Add( this, this.Id );
@@ -1496,7 +1520,7 @@ CHeaderFooterController.prototype =
     },
 //-----------------------------------------------------------------------------------
 // Функции для работы с колонтитулами
-//-----------------------------------------------------------------------------------        
+//-----------------------------------------------------------------------------------
     GoTo_NextHdrFtr : function()
     {
         var CurHdrFtr = this.CurHdrFtr;
@@ -1531,28 +1555,28 @@ CHeaderFooterController.prototype =
 
             return true;
         }
-        
+
         return false;
     },
-    
+
     GoTo_PrevHdrFtr : function()
     {
         var CurHdrFtr = this.CurHdrFtr;
         if (null === CurHdrFtr || -1 === CurHdrFtr.RecalcInfo.CurPage)
             return;
-        
+
         var CurPage = CurHdrFtr.RecalcInfo.CurPage;
         var Pages = this.Pages;
-        
+
         if (hdrftr_Footer === CurHdrFtr.Type && undefined !== Pages[CurPage].Header)
             CurHdrFtr = Pages[CurPage].Header;
         else
             CurHdrFtr = null;
-        
+
         while (null === CurHdrFtr)
         {
             CurPage--;
-            
+
             if (undefined === Pages[CurPage])
                 return;
             else if (undefined !== Pages[CurPage].Footer && null !== Pages[CurPage].Footer)
@@ -1560,19 +1584,19 @@ CHeaderFooterController.prototype =
             else if (undefined !== Pages[CurPage].Header && null !== Pages[CurPage].Header)
                 CurHdrFtr = Pages[CurPage].Header;
         }
-        
+
         if (null !== CurHdrFtr)
         {
             this.CurHdrFtr = CurHdrFtr;
             CurHdrFtr.Set_Page(CurPage);
             CurHdrFtr.Content.MoveCursorToStartPos(false);
-            
+
             return true;
         }
-        
+
         return false;
     },
-    
+
     Get_CurPage : function()
     {
         if ( null != this.CurHdrFtr )
@@ -1588,21 +1612,21 @@ CHeaderFooterController.prototype =
         {
             var Pr = {};
             Pr.Type = this.CurHdrFtr.Type;
-            
+
             if ( undefined === this.LogicDocument.Pages[this.CurHdrFtr.RecalcInfo.CurPage] )
                 return Pr;
-            
-            var Index  = this.LogicDocument.Pages[this.CurHdrFtr.RecalcInfo.CurPage].Pos;            
+
+            var Index  = this.LogicDocument.Pages[this.CurHdrFtr.RecalcInfo.CurPage].Pos;
             var SectPr = this.LogicDocument.SectionsInfo.Get_SectPr(Index).SectPr;
 
             if ( hdrftr_Footer === Pr.Type )
                 Pr.Position = SectPr.GetPageMarginFooter();
             else
                 Pr.Position = SectPr.GetPageMarginHeader();
-            
+
             Pr.DifferentFirst   = SectPr.Get_TitlePage();
             Pr.DifferentEvenOdd = EvenAndOddHeaders;
-            
+
             if ( SectPr === this.LogicDocument.SectionsInfo.Get_SectPr2(0).SectPr )
             {
                 // У первой секции не может быть повторяющихся колонтитулов. Посылаем особое значение (null) в меню
@@ -1630,21 +1654,21 @@ CHeaderFooterController.prototype =
         else
             return null;
     },
-	
+
 	Set_CurHdrFtr_ById : function(Id)
 	{
 		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
 		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
 			return false;
-		
+
 		this.CurHdrFtr = HdrFtr;
 		HdrFtr.Content.MoveCursorToStartPos();
-		
+
 		return true;
 	},
 //-----------------------------------------------------------------------------------
 //
-//-----------------------------------------------------------------------------------   
+//-----------------------------------------------------------------------------------
     RecalculateCurPos : function(bUpdateX, bUpdateY, isUpdateTarget)
 	{
 		if (this.CurHdrFtr)
@@ -1656,17 +1680,17 @@ CHeaderFooterController.prototype =
     Recalculate : function(PageIndex)
     {
 		let logicDocument = this.LogicDocument;
-		
-        // Определим четность страницы и является ли она первой в данной секции. Заметим, что четность страницы 
+
+        // Определим четность страницы и является ли она первой в данной секции. Заметим, что четность страницы
         // отсчитывается от начала текущей секции и не зависит от настроек нумерации страниц для данной секции.
         var SectionPageInfo = logicDocument.Get_SectionPageNumInfo( PageIndex );
-        
+
         var bFirst = SectionPageInfo.bFirst;
         var bEven  = SectionPageInfo.bEven;
-        
-        // Запросим нужный нам колонтитул 
+
+        // Запросим нужный нам колонтитул
         var HdrFtr = logicDocument.Get_SectionHdrFtr( PageIndex, bFirst, bEven );
-        
+
         var Header = HdrFtr.Header;
         var Footer = HdrFtr.Footer;
         var SectPr = HdrFtr.SectPr;
@@ -1678,11 +1702,11 @@ CHeaderFooterController.prototype =
         var oFrame = SectPr.GetContentFrame(PageIndex);
         var X      = oFrame.Left;
         var XLimit = oFrame.Right;
-		
+
 		let maxContentH = SectPr.GetPageHeight() / 2;
 		if (logicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
 			maxContentH = AscWord.MAX_MM_VALUE;
-		
+
 		var bRecalcHeader = false;
 
         var HeaderDrawings, HeaderTables, FooterDrawings, FooterTables;
@@ -1705,9 +1729,9 @@ CHeaderFooterController.prototype =
             HeaderDrawings = Header.Content.GetAllDrawingObjects([]);
             HeaderTables = Header.Content.GetAllFloatElements();
         }
-        
+
         var bRecalcFooter = false;
-        
+
         // Рассчитываем нижний колонтитул
         if ( null !== Footer )
         {
@@ -1744,7 +1768,7 @@ CHeaderFooterController.prototype =
 
         if ( true === bRecalcHeader || true === bRecalcFooter )
             return true;
-        
+
         return false;
     },
 
@@ -1833,7 +1857,7 @@ CHeaderFooterController.prototype =
             return [];
 
         var Header = this.Pages[PageIndex].Header;
-        var Footer = this.Pages[PageIndex].Footer;              
+        var Footer = this.Pages[PageIndex].Footer;
 
         var HeaderRange = [];
         var FooterRange = [];
@@ -1852,21 +1876,21 @@ CHeaderFooterController.prototype =
     {
         var Header = null;
         var Footer = null;
-        
+
         if ( undefined !== this.Pages[PageIndex] )
         {
             Header = this.Pages[PageIndex].Header;
             Footer = this.Pages[PageIndex].Footer;
         }
-        
-        var Top = null; 
+
+        var Top = null;
         if ( null !== Header )
             Top = Header.Get_DividingLine(PageIndex);
-        
+
         var Bottom = null;
         if ( null !== Footer )
             Bottom = Footer.Get_DividingLine(PageIndex);
-        
+
         return { Top : Top, Bottom : Bottom };
     },
 
@@ -2337,7 +2361,7 @@ CHeaderFooterController.prototype =
         // активировать работу с самим документом (просто вернуть false здесь)
 
         var PageMetrics = this.LogicDocument.Get_PageContentStartPos( PageIndex );
-        
+
         if ( MouseEvent.ClickCount >= 2 && (!editor.isStartAddShape && !editor.isInkDrawerOn()) &&
             !( Y <= PageMetrics.Y      || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) &&
             !( Y >= PageMetrics.YLimit || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Footer ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) )
@@ -2507,7 +2531,7 @@ CHeaderFooterController.prototype =
     Get_NearestPos : function(PageNum, X, Y, bAnchor, Drawing)
     {
         var HdrFtr = (editor.isStartAddShape || editor.isInkDrawerOn() ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
-        
+
         if ( null != HdrFtr )
             return HdrFtr.Get_NearestPos( X, Y, bAnchor, Drawing );
         else
@@ -2547,7 +2571,7 @@ CHeaderFooterController.prototype =
             Header = this.Pages[PageIndex].Header;
             Footer = this.Pages[PageIndex].Footer;
         }
-        
+
         var PageH = this.LogicDocument.Get_PageLimits( PageIndex).YLimit;
 
         if ( Y <= PageH / 2 && null != Header )
@@ -2676,7 +2700,7 @@ CHeaderFooterController.prototype =
 	{
 		if (null != this.CurHdrFtr)
 			return this.CurHdrFtr.AddHyperlink(HyperProps);
-		
+
 		return null;
 	},
 
@@ -2747,7 +2771,7 @@ CHeaderFooterController.prototype.GetSimilarNumbering = function(oEngine)
 {
 	if (!this.CurHdrFtr)
 		return null;
-	
+
 	let docContent = this.CurHdrFtr.GetContent();
 	if (docpostype_DrawingObjects === docContent.GetDocPosType() && this.LogicDocument)
 		return this.LogicDocument.DrawingsController.GetSimilarNumbering(oEngine);
@@ -2798,7 +2822,7 @@ CHeaderFooterController.prototype.RecalculatePageCountUpdate = function(nPageAbs
 	var oPage = this.Pages[nPageAbs];
 	if (!oPage)
 		return false;
-	
+
 	var oHeader = oPage.Header;
 	var oFooter = oPage.Footer;
 
