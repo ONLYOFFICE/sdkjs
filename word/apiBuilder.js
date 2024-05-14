@@ -1446,8 +1446,8 @@
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		var Document = private_GetLogicDocument();
-		Document.RemoveSelection();
+		let oDocument = private_GetLogicDocument();
+		oDocument.RemoveSelection();
 
 		if (this.isEmpty || this.isEmpty === undefined || typeof(sText) !== "string")
 			return false;
@@ -1457,35 +1457,66 @@
 		
 		if (sPosition === "after")
 		{
-			var lastRun				= this.EndPos[this.EndPos.length - 1].Class;
-			var lastRunPos			= this.EndPos[this.EndPos.length - 1].Position;
-			var lastRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
-			var lastRunParent		= lastRun.GetParent();
-			var newRunPos			= lastRunPos;
-			if (lastRunPos === 0)
+			let oTargetRun	= this.EndPos[this.EndPos.length - 1].Class;
+			let oPrevApiRun	= null;
+
+			if (oTargetRun.IsParaEndRun())
 			{
-				if (lastRunPosInParent - 1 >= 0)
+				oPrevApiRun = new ApiRun(oTargetRun).private_GetPreviousInParent();
+				
+				if (oPrevApiRun)
 				{
-					lastRunPosInParent--;
-					lastRun		= lastRunParent.GetElement(lastRunPosInParent);
-					lastRunPos	= lastRun.Content.length;
+					oTargetRun = oPrevApiRun.Run;
+				}
+				else
+				{
+					oTargetRun = null;
 				}
 			}
-			else 
-				for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
-					newRunPos++;
 
-			lastRun.AddText(sText, lastRunPos);
-			this.EndPos[this.EndPos.length - 1].Class = lastRun;
-			this.EndPos[this.EndPos.length - 1].Position = newRunPos;
-			this.EndPos[this.EndPos.length - 2].Position = lastRunPosInParent;
+			if (!oTargetRun)
+			{
+				return false; 	
+			}
+
+			let nPosInRun		= this.EndPos[this.EndPos.length - 1].Position;
+			let nRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
+			let oRunParent		= oTargetRun.GetParent();
+			let nNewPosInRun	= nPosInRun;
+
+			if (nPosInRun === 0)
+			{
+				if (nRunPosInParent - 1 >= 0)
+				{
+					nRunPosInParent--;
+					oTargetRun		= oRunParent.GetElement(nRunPosInParent);
+					nPosInRun	= oTargetRun.Content.length;
+				}
+			}
+			else {
+				for (let oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+					nNewPosInRun++;
+			}
+
+			// если ран окончания параграфа, позиция в нём не изменится
+			if (null == oPrevApiRun) {
+				oTargetRun.AddText(sText, nPosInRun);
+				this.EndPos[this.EndPos.length - 1].Class = oTargetRun;
+				this.EndPos[this.EndPos.length - 1].Position = nNewPosInRun;
+				this.EndPos[this.EndPos.length - 2].Position = nRunPosInParent;
+			}
+			else {
+				nPosInRun = oTargetRun.Content.length;
+				oTargetRun.AddText(sText, nPosInRun);
+			}
+			
 			private_TrackRangesPositions(true);
 		}
 		else if (sPosition === "before")
 		{
-			var firstRun		= this.StartPos[this.StartPos.length - 1].Class;
-			var firstRunPos		= this.StartPos[this.StartPos.length - 1].Position;
-			firstRun.AddText(sText, firstRunPos);
+			let oTargetRun	= this.StartPos[this.StartPos.length - 1].Class;
+			let nPosInRun	= this.StartPos[this.StartPos.length - 1].Position;
+			oTargetRun.AddText(sText, nPosInRun);
 		}
 
 		return true;
