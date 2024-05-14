@@ -178,8 +178,13 @@
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
+
+            if (this.group) {
+                this.group.SetNeedRecalc(true);
+            }
         }
     };
+    CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
     CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         this.draw(oGraphicsWord);

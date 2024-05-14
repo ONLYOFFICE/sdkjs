@@ -87,17 +87,27 @@
         oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
+        if (oContent) {
+            oContent.Remove(nDirection, true, false, false, isCtrlKey);
+        }
+        else {
+            this.graphicObject.Remove(nDirection, true, false, false, isCtrlKey);
+        }
+        
         this.SetNeedRecalc(true);
 
         if (AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
         }
-        else {
-            this.SetNeedRecalc(true);
+    };
+    CPdfGraphicFrame.prototype.CheckTextOnOpen = function() {
+        let oTable = this.graphicObject;
+        if (oTable) {
+            oTable.SetApplyToAll(true);
+            AscFonts.FontPickerByCharacter.getFontsByString(oTable.GetSelectedText(false));
+            oTable.SetApplyToAll(false);
         }
     };
-    
     CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

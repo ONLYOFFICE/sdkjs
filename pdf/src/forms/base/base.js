@@ -1432,7 +1432,7 @@
 		
         let oDoc = this.GetDocument();
             
-		oDoc.CreateNewHistoryPoint({objects: [this]});
+		oDoc.CreateNewHistoryPoint({objects: [this], description: AscDFH.historydescription_Document_CompositeInput});
 		this.beforeCompositeInput();
 		let run = this.getRunForCompositeInput();
 		if (!run) {
@@ -1473,7 +1473,6 @@
 		this.compositeReplaceCount++;
 		this.compositeInput.add(codePoint);
 		this.SetNeedRecalc(true);
-		this.AddToRedraw();
 	};
 	CBaseField.prototype.removeCompositeText = function(count) {
 		if (!this.compositeInput)
@@ -1485,7 +1484,6 @@
 		this.compositeReplaceCount++;
 		this.compositeInput.remove(count);
 		this.SetNeedRecalc(true);
-		this.AddToRedraw();
 	};
 	CBaseField.prototype.replaceCompositeText = function(codePoints) {
 		if (!this.compositeInput)
@@ -1493,11 +1491,12 @@
 		
         let oDoc = this.GetDocument();
 
-		oDoc.CreateNewHistoryPoint({objects: [this]});
+		oDoc.CreateNewHistoryPoint({objects: [this], description: AscDFH.historydescription_Document_CompositeInputReplace});
 		this.compositeReplaceCount++;
 		this.compositeInput.replace(codePoints);
 		this.SetNeedRecalc(true);
-		this.AddToRedraw();
+        if (!AscCommon.History.CheckUnionLastPoints())
+            this.compositeInput.CanUndo = false;
 	};
 	CBaseField.prototype.setPosInCompositeInput = function(pos) {
 		if (this.compositeInput)

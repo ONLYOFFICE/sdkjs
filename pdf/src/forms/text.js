@@ -906,6 +906,7 @@
 		
         aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
         if (aChars.length == 0) {
+            AscCommon.History.Remove_LastPoint();
             return false;
         }
 
@@ -915,8 +916,10 @@
 
         if (this.IsDoNotScroll()) {
             let isOutOfForm = this.IsTextOutOfForm(this.content);
-            if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false))
+            if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false)) {
                 AscCommon.History.Undo();
+                AscCommon.History.Clear_Redo();
+            }
 
             this.AddToRedraw();
         }

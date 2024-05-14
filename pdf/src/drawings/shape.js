@@ -55,6 +55,14 @@
 
         return bDraw;
     };
+    CPdfShape.prototype.CheckTextOnOpen = function() {
+        let oContent = this.GetDocContent();
+        if (oContent) {
+            oContent.SetApplyToAll(true);
+            AscFonts.FontPickerByCharacter.getFontsByString(oContent.GetSelectedText());
+            oContent.SetApplyToAll(false);
+        }
+    };
     CPdfShape.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

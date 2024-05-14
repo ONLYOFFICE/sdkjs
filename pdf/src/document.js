@@ -1900,10 +1900,14 @@ var CPresentation = CPresentation || function(){};
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || this.isUndoRedoInProgress)
             return;
 
-        if (!AscCommon.History.IsOn())
+        if (!AscCommon.History.IsOn()) {
             AscCommon.History.TurnOn();
+        }
+        if (AscCommon.History.Is_LastPointEmpty()) {
+            AscCommon.History.Remove_LastPoint();
+        }
         
-        AscCommon.History.Create_NewPoint();
+        AscCommon.History.Create_NewPoint(oAdditional ? oAdditional.description : undefined);
 
         if (oAdditional) {
             if (oAdditional.textConvert) {
@@ -3002,7 +3006,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oContent) {
-            if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
+            if (false == oContent.IsEmpty()) {
                 oDrDoc.TargetEnd();
                 this.Viewer.onUpdateOverlay();
             }
@@ -3657,6 +3661,7 @@ var CPresentation = CPresentation || function(){};
                     oDrawing.fromXml(oXmlReader);
                     oDrawing.setBDeleted(false);
                     aPageDrawings.push(oDrawing);
+                    oDrawing.CheckTextOnOpen();
                 }
                 
             }
@@ -4838,8 +4843,203 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
+
+    /// composite input
+    CPDFDoc.prototype.Begin_CompositeInput = function () {
+        if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, undefined, undefined, true)) {
+            
+            if (this.activeForm && this.activeForm.IsCanEditText()) {
+                let oThis = this;
+                function begin() {
+                    oThis.activeForm.beginCompositeInput();
+                }
+                
+                if (!this.checkFieldFont(this.activeForm, begin))
+                    return true;
+                
+                begin();
+
+                return true;
+            }
+
+            let oDrDoc = this.GetDrawingDocument();
+            let oController = this.GetController();
+            if (oController) {
+                oController.CreateDocContent();
+            }
     
-	
+            let oContent = oController.getTargetDocContent();
+            if (!oContent) {
+                this.History.Remove_LastPoint();
+                return false;
+            }
+            
+            let oTargetTextObj = oController.getTargetTextObject();
+            this.CreateNewHistoryPoint({objects: [oTargetTextObj], description: AscDFH.historydescription_Document_CompositeInput});
+
+            oDrDoc.TargetStart();
+            oDrDoc.TargetShow();
+
+            let oPara = oContent.GetCurrentParagraph();
+            if (!oPara) {
+                this.History.Remove_LastPoint();
+                return false;
+            }
+
+            if (true === oContent.IsSelectionUse())
+                oContent.Remove(1, true, false, true);
+
+            let oRun = oPara.Get_ElementByPos(oPara.Get_ParaContentPos(false, false));
+            if (!oRun || !(oRun instanceof ParaRun)) {
+                this.History.Remove_LastPoint();
+                return false;
+            }
+    
+            this.CompositeInput = new AscWord.RunCompositeInput_Old(oRun);
+            this.CompositeInput.Object = oTargetTextObj;
+
+            oRun.Set_CompositeInput(this.CompositeInput);
+    
+            return true;
+        }
+    
+        return false;
+    };
+    CPDFDoc.prototype.addCompositeText = function (nCharCode) {
+        // TODO: При таком вводе не меняется язык в зависимости от раскладки, не учитывается режим рецензирования.
+    
+        if (null == this.CompositeInput)
+            return;
+    
+        var oRun = this.CompositeInput.Run;
+        var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
+        var oChar;
+        if (para_Math_Run === oRun.Type) {
+            oChar = new CMathText();
+            oChar.add(nCharCode);
+        } else {
+            if (32 == nCharCode || 12288 == nCharCode)
+                oChar = new AscWord.CRunSpace();
+            else
+                oChar = new AscWord.CRunText(nCharCode);
+        }
+        oRun.AddToContent(nPos, oChar, true);
+        this.CompositeInput.Length++;
+    };
+    CPDFDoc.prototype.Add_CompositeText = function (nCharCode) {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            this.activeForm.addCompositeText(nCharCode);
+            return;
+        }
+
+        if (null == this.CompositeInput)
+            return;
+
+        this.CreateNewHistoryPoint({objects: [this.CompositeInput.Object]});
+        this.addCompositeText(nCharCode);
+        this.CompositeInput.Object.SetNeedRecalc(true);
+    };
+    CPDFDoc.prototype.removeCompositeText = function (nCount) {
+        if (null == this.CompositeInput)
+            return;
+    
+        var oRun = this.CompositeInput.Run;
+        var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
+    
+        var nDelCount = Math.max(0, Math.min(nCount, this.CompositeInput.Length, oRun.Content.length, nPos));
+        oRun.Remove_FromContent(nPos - nDelCount, nDelCount, true);
+        this.CompositeInput.Length -= nDelCount;
+    };
+    
+    CPDFDoc.prototype.Remove_CompositeText = function (nCount) {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            this.activeForm.removeCompositeText(nCount);
+            return;
+        }
+
+        this.removeCompositeText(nCount);
+        this.CompositeInput.Object.SetNeedRecalc(true);
+    };
+    CPDFDoc.prototype.Replace_CompositeText = function (arrCharCodes) {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            this.activeForm.replaceCompositeText(arrCharCodes);
+            return;
+        }
+
+        if (null == this.CompositeInput)
+            return;
+
+        this.CreateNewHistoryPoint({objects: [this.CompositeInput.Object], description: AscDFH.historydescription_Document_CompositeInputReplace});
+        this.removeCompositeText(this.CompositeInput.Length);
+        for (var nIndex = 0, nCount = arrCharCodes.length; nIndex < nCount; ++nIndex) {
+            this.addCompositeText(arrCharCodes[nIndex]);
+        }
+
+        this.CompositeInput.Object.SetNeedRecalc(true);
+        if (!AscCommon.History.CheckUnionLastPoints())
+            this.CompositeInput.CanUndo = false;
+    };
+    CPDFDoc.prototype.Set_CursorPosInCompositeText = function (nPos) {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            this.activeForm.setPosInCompositeInput(nPos);
+            return;
+        }
+
+        if (null == this.CompositeInput)
+            return;
+    
+        var oRun = this.CompositeInput.Run;
+    
+        var nInRunPos = Math.max(Math.min(this.CompositeInput.Pos + nPos, this.CompositeInput.Pos + this.CompositeInput.Length, oRun.Content.length), this.CompositeInput.Pos);
+        oRun.State.ContentPos = nInRunPos;
+        this.CompositeInput.Object.GetDocContent().RecalculateCurPos(true, true);
+    };
+    CPDFDoc.prototype.Get_CursorPosInCompositeText = function () {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            return this.activeForm.getPosInCompositeInput();
+        }
+
+        if (null == this.CompositeInput)
+            return 0;
+    
+        var oRun = this.CompositeInput.Run;
+        var nInRunPos = oRun.State.ContentPos;
+        var nPos = Math.min(this.CompositeInput.Length, Math.max(0, nInRunPos - this.CompositeInput.Pos));
+        return nPos;
+    };
+    CPDFDoc.prototype.Get_MaxCursorPosInCompositeText = function () {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            return this.activeForm.getMaxPosInCompositeInput();
+        }
+
+        if (null == this.CompositeInput)
+            return 0;
+    
+        return this.CompositeInput.Length;
+    };
+    CPDFDoc.prototype.End_CompositeInput = function () {
+        if (this.activeForm && this.activeForm.IsCanEditText()) {
+            this.activeForm.endCompositeInput();
+            return;
+        }
+
+        if (null == this.CompositeInput)
+            return;
+    
+        var nLen = this.CompositeInput.Length;
+    
+        var oRun = this.CompositeInput.Run;
+        oRun.Set_CompositeInput(null);
+    
+        if (0 === nLen && true === this.History.CanRemoveLastPoint() && true === this.CompositeInput.CanUndo) {
+            this.DoUndo();
+            this.History.Clear_Redo();
+        }
+    
+        this.CompositeInput.Object.SetNeedRecalc(true);
+        this.CompositeInput = null;
+    };
+
     function CActionQueue(oDoc) {
         this.doc                = oDoc;
         this.actions            = [];

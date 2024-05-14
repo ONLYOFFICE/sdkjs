@@ -114,6 +114,10 @@
         return false;
     };
 
+    CGraphicObjects.prototype.getTargetTextObject = function() {
+        return AscFormat.getTargetTextObject(this);
+    };
+
     CGraphicObjects.prototype.setTableProps = function(props) {
         let by_type = this.getSelectedObjectsByTypes();
         if(by_type.tables.length === 1) {
