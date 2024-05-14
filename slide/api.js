@@ -4614,7 +4614,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.isDrawAnimLabels = function() 
 	{
-		return this.bIsShowAnimTab;
+		return this.bIsShowAnimTab || this.getIsAnimPaneShow();
 	};
 	asc_docs_api.prototype.asc_moveAnimationEarlier = function(nPositions)
 	{
