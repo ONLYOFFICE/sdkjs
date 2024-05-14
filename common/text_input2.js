@@ -128,6 +128,12 @@
 		this.checkClearTextOnFocusTimerId = -1;
 
 		this.isDisableKeyboard = false;
+
+		this.moveAccurateInfo = {
+			id : -1,
+			x : 0,
+			y : 0
+		};
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -1107,6 +1113,24 @@
 				focusHtmlElement(this.HtmlArea);
 		}
 	};
+	CTextInputPrototype.moveAccurate = function(x, y)
+	{
+		if (!this.moveAccurateFunc)
+		{
+			this.moveAccurateFunc = function() {
+				let ctx = AscCommon.g_inputContext;
+				ctx.move(ctx.moveAccurateInfo.x, ctx.moveAccurateInfo.y);
+				ctx.moveAccurateInfo.id = -1;
+			};
+		}
+
+		if (-1 !== this.moveAccurateInfo.id)
+			clearTimeout(this.moveAccurateInfo.id);
+
+		this.moveAccurateInfo.x = x;
+		this.moveAccurateInfo.y = y;
+		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 20);
+	};
 	CTextInputPrototype.move = function(x, y)
 	{
 		if (this.Api.isMobileVersion)
@@ -1131,7 +1155,6 @@
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onTargetPositionChanged");
 	};
-
 	// virtual keyboard
 	CTextInputPrototype.preventVirtualKeyboard = function(e)
 	{
@@ -1395,5 +1418,23 @@
 
 		window['AscCommon'].g_inputContext.debugInputEnable(true);
 		window['AscCommon'].g_inputContext.show();
+	};
+
+	window['AscCommon'].StartIntervalDrawText = function (isStart) {
+		if (isStart) {
+			window.renderIntervalId = setInterval(function(){
+
+				window.LOCK_DRAW = false;
+
+				if (undefined !== window.TEXT_DRAW_INSTANCE)
+					window.TEXT_DRAW_INSTANCE._renderText(window.TEXT_DRAW_INSTANCE_POS);
+
+				window.TEXT_DRAW_INSTANCE = undefined;
+				window.TEXT_DRAW_INSTANCE_POS = 0;
+
+			}, 20);
+		} else {
+			clearInterval(window.renderIntervalId);
+		}
 	};
 })(window);

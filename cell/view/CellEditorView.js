@@ -370,17 +370,7 @@ function (window, undefined) {
 		this.setFocus(this.isTopLineActive ? true : (null === options.enterOptions.focus) ? this._haveTextInEdit() : options.enterOptions.focus);
 		this._updateUndoRedoChanged();
 
-		this.renderIntervalId = setInterval(function(){
-
-			window.LOCK_DRAW = false;
-
-			if (undefined !== window.TEXT_DRAW_INSTANCE)
-				window.TEXT_DRAW_INSTANCE._renderText(window.TEXT_DRAW_INSTANCE_POS);
-
-			window.TEXT_DRAW_INSTANCE = undefined;
-			window.TEXT_DRAW_INSTANCE_POS = 0;
-
-		}, 50);
+		AscCommon.StartIntervalDrawText(true);
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -438,9 +428,7 @@ function (window, undefined) {
 			this.End_CompositeInput();
 		}
 
-		if (this.renderIntervalId) {
-			clearInterval(this.renderIntervalId);
-		}
+		AscCommon.StartIntervalDrawText(false);
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
@@ -1561,7 +1549,6 @@ function (window, undefined) {
 
 		if (opt.fragments.length > 0) {
 			t.textRender.render(undefined, t._getContentLeft(), dy || 0, t._getContentWidth(), opt.font.getColor());
-			console.log("test");
 		}
 	};
 
@@ -1736,7 +1723,7 @@ function (window, undefined) {
 		}
 
 		if (AscCommon.g_inputContext) {
-			this.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
+			AscCommon.g_inputContext.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
 		}
 
 		if (cur) {
