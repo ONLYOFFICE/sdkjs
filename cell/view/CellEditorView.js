@@ -185,12 +185,6 @@ function (window, undefined) {
 		//temporary - for safari rendering. remove after fixed
 		this._originalCanvasWidth = null;
 
-		this.moveAccurateInfo = {
-			id : -1,
-			x : 0,
-			y : 0
-		};
-
 		this._init();
 
 		return this;
@@ -3315,25 +3309,6 @@ function (window, undefined) {
 		api.sendEvent('asc_onUserActionEnd');
 	};
 
-	CellEditor.prototype.moveAccurate = function(x, y)
-	{
-		let oThis = this;
-		if (!this.moveAccurateFunc)
-		{
-			this.moveAccurateFunc = function() {
-				let ctx = AscCommon.g_inputContext;
-				ctx.move(oThis.moveAccurateInfo.x, oThis.moveAccurateInfo.y);
-				oThis.moveAccurateInfo.id = -1;
-			};
-		}
-
-		if (-1 !== this.moveAccurateInfo.id)
-			clearTimeout(this.moveAccurateInfo.id);
-
-		this.moveAccurateInfo.x = x;
-		this.moveAccurateInfo.y = y;
-		this.moveAccurateInfo.id = setTimeout(this.moveAccurateFunc, 50);
-	};
 
 
 	//------------------------------------------------------------export---------------------------------------------------

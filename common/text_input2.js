@@ -1155,6 +1155,7 @@
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onTargetPositionChanged");
 	};
+	
 	// virtual keyboard
 	CTextInputPrototype.preventVirtualKeyboard = function(e)
 	{
