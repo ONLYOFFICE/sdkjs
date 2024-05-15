@@ -517,8 +517,27 @@
 
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
-		return this.asc_enterText(newText);
+	PDFEditorApi.prototype.asc_correctEnterText = function(oldValue, newValue) {
+		
+		if (!this.DocumentRenderer)
+			return false;
+		
+		let viewer = this.DocumentRenderer;
+		let doc    = viewer.getPDFDoc();
+		
+		let textController = doc.getTextController();
+		if (!textController)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [textController]});
+		let docContent = textController.GetDocContent();
+		
+		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
+		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
+			return true;
+		});
+		textController.OnChangeTextContent();
+		return result;
 	};
 	PDFEditorApi.prototype.asc_EditPage = function() {
 		let oViewer	= this.getDocumentRenderer();

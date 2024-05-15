@@ -905,6 +905,15 @@
 
         return null;
     };
+	CAnnotationFreeText.prototype.OnChangeTextContent = function() {
+		
+		this.FitTextBox();
+		this.SetNeedRecalc(true);
+		this.SetNeedUpdateRC(true);
+		
+		let docContent = this.GetDocContent();
+		docContent.RecalculateCurPos();
+	};
     CAnnotationFreeText.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();

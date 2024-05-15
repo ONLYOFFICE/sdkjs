@@ -4844,6 +4844,23 @@ var CPresentation = CPresentation || function(){};
         return [];
     };
 
+	CPDFDoc.prototype.getTextController = function() {
+		let activeForm    = this.activeForm;
+		let activeAnnot   = this.mouseDownAnnot;
+		let activeDrawing = this.activeDrawing;
+		
+		if (activeForm && this.checkFieldFont(activeForm) && activeForm.IsCanEditText()) {
+			return activeForm;
+		}
+		else if (activeAnnot && activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) {
+			return activeAnnot;
+		}
+		else if (activeDrawing) {
+			return activeDrawing;
+		}
+		
+		return null;
+	};
     /// composite input
     CPDFDoc.prototype.Begin_CompositeInput = function () {
         if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, undefined, undefined, true)) {
