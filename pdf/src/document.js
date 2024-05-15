@@ -4575,7 +4575,12 @@ var CPresentation = CPresentation || function(){};
             this.CollaborativeEditing.Update_DocumentPosition(arrPositions[nIndex]);
         }
     };
-    CPDFDoc.prototype.RemoveSelection = function() {};
+    CPDFDoc.prototype.RemoveSelection = function(bNoResetChartSelection) {
+        let oController = this.GetController();
+        if (oController) {
+            oController.resetSelection(undefined, bNoResetChartSelection);
+        }
+    };
     CPDFDoc.prototype.Set_TargetPos = function() {};
     CPDFDoc.prototype.GetSelectedDrawingObjectsCount = function () {
         var oController = this.GetController();
