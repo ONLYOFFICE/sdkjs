@@ -1866,10 +1866,14 @@
 			this.tempGetByCells = [];
 		},
 
-
-
+		/**
+		 * Method starts preparing for calculate cells with formula. Recognizes what cells need to calculate.
+		 * @memberof DependencyGraph
+		 * @private
+		 */
 		_calculateDirty: function() {
 			const t = this;
+			const aCycleCells = [];
 			let needUpdateCells = [];
 			this._foreachChanged(function (oCell) {
 				if (oCell && oCell.isFormula()) {
@@ -1933,11 +1937,25 @@
 								return;
 							}
 						}
+					} else if (oCell.getFormulaParsed().ca === true) {
+						oCell.initStartCellForIterCalc();
+						if (g_cCalcRecursion.getStartCellIndex()) {
+							aCycleCells.push(oCell);
+							oCell.setValueNumberInternal(0);
+							oCell.setIsDirty(false);
+							return;
+						}
+						g_cCalcRecursion.setStartCellIndex(null);
 					}
 					oCell.setIsDirty(true);
 				}
 			});
 
+			if (aCycleCells.length && g_cCalcRecursion.getShowCycleWarn()) {
+				const oApi = Asc.editor;
+				oApi.sendEvent("asc_onError", c_oAscError.ID.CircularReference, c_oAscError.Level.NoCritical);
+				g_cCalcRecursion.setShowCycleWarn(false);
+			}
 			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
 
 			this._foreachChanged(function (oCell) {
@@ -14569,14 +14587,18 @@
 			let nListenerCellIndex = null;
 			if (oListenerCell instanceof DefName) {
 				let oParserRef = oListenerCell.parsedRef;
-				let oRange = oParserRef.outStack[0].getRange();
-				if (oRange.isOneCell()) {
+				let aRef = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
+				let oOutStackElem = oParserRef.outStack.find(function (oElem) {
+					return aRef.includes(oElem.type);
+				});
+				let oRange = oOutStackElem && oOutStackElem.getRange();
+				if (oRange && oRange.isOneCell()) {
 					nListenerCellIndex = getCellIndex(oRange.bbox.r1, oRange.bbox.c1);
 					let oWs = oRange.worksheet;
 					oWs._getCell(oRange.bbox.r1, oRange.bbox.c1, function (oCell) {
 						oListenerCell = oCell;
 					});
-				} else {
+				} else if (oRange) {
 					oRange._foreachNoEmpty(function (oCell) {
 						if (oCell.isFormula()) {
 							nListenerCellIndex = getCellIndex(oCell.nRow, oCell.nCol);
@@ -14649,6 +14671,7 @@
 				g_cCalcRecursion.incRecursionCounter();
 				oCellFromListener.initStartCellForIterCalc(oThis, oFirstCell);
 				if (g_cCalcRecursion.getStartCellIndex() != null) {
+					g_cCalcRecursion.resetRecursionCounter();
 					return true;
 				}
 			}
@@ -14900,6 +14923,11 @@
 		}, aRefElements);
 		g_cCalcRecursion.resetRecursionCounter();
 	};
+	/**
+	 * Method calculates cells with formula aren't calculated yet.
+	 * @memberof Cell
+	 * @private
+	 */
 	Cell.prototype._checkDirty = function() {
 		const t = this;
 		// Checks cell contains formula or formula is not calculated yet
@@ -14932,9 +14960,9 @@
 						} else {
 							parsed.calculate();
 						}
-					} else if (!g_cCalcRecursion.getIsEnabledRecursion()) {
+					} /*else if (!g_cCalcRecursion.getIsEnabledRecursion()) {
 						parsed.calculateCycleError();
-					}
+					}*/
 				});
 
 				g_cCalcRecursion.decLevel();

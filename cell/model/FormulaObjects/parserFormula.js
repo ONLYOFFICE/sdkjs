@@ -8899,6 +8899,7 @@ function parserFormula( formula, parent, _ws ) {
 		this.oGroupChangedCells = null;
 		this.oPrevIterResult = null;
 		this.oDiffBetweenIter = null;
+		this.bShowCycleWarn = true;
 
 		this.bIsEnabledRecursion = null;
 		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
@@ -9379,7 +9380,7 @@ function parserFormula( formula, parent, _ws ) {
 	 * @param {CCalcPr} oCalcPr
 	 */
 	CalcRecursion.prototype.initCalcProperties = function (oCalcPr) {
-		const oCalcSettings = new Asc.asc_CCalcSettings(); // Object with default values
+		const oCalcSettings = Asc.editor.asc_GetCalcSettings(); // Object with default values
 
 		this.setIsEnabledRecursion(oCalcPr.getIterate() ? oCalcPr.getIterate() : oCalcSettings.asc_getIterativeCalc());
 		this.setRelativeError(oCalcPr.getIterateDelta() != null ? oCalcPr.getIterateDelta() : oCalcSettings.asc_getMaxChange());
@@ -9388,6 +9389,20 @@ function parserFormula( formula, parent, _ws ) {
 			this.setCalcMode(oCalcPr.getCalcMode());
 		}
 	};
+	/**
+	 * Method returns a flag who recognizes show warn about cycle reference error or not.
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.getShowCycleWarn = function () {
+		return this.bShowCycleWarn;
+	};
+	/**
+	 * Method sets a flag who recognizes show warn about cycle reference error or not.
+	 * @param {boolean} bShowCycleWarn
+	 */
+	CalcRecursion.prototype.setShowCycleWarn = function (bShowCycleWarn) {
+		this.bShowCycleWarn = bShowCycleWarn;
+	}
 
 	const g_cCalcRecursion = new CalcRecursion();
 

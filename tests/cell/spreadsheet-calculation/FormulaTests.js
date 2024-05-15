@@ -1249,6 +1249,25 @@ $(function () {
 		bCaFromSelectedCell = getCaFromSelectedCell("D1035");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1035 - flag ca: true");
 		bCaFromSelectedCell = null;
+		// - Case: With disabled iterative calculation.
+		g_cCalcRecursion.setIsEnabledRecursion(false);
+		ws.getRange2("A1037").setValue("=A1037+1");
+		ws.getRange2("A1038").setValue("=A1038+B1038");
+		ws.getRange2("B1038").setValue("=B1038+C1038");
+		ws.getRange2("C1038").setValue("1");
+		assert.strictEqual(ws.getRange2("A1037").getValue(), "0", "Test: Loop cell with disabled iterative calculation. A1037 - 0");
+		assert.strictEqual(ws.getRange2("A1038").getValue(), "0", "Test: Sequence chain with disabled iterative calculation. A1038 - 0");
+		assert.strictEqual(ws.getRange2("B1038").getValue(), "0", "Test: Sequence chain with disabled iterative calculation. B1038 - 0");
+		// Check work isFormulaRecursion function
+		bCaFromSelectedCell = getCaFromSelectedCell("A1037");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Loop cell with disabled iterative calculation. A1037 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("A1038");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence chain with disabled iterative calculation. A1038 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("B1038");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence chain with disabled iterative calculation. B1038 - flag ca: true");
+		bCaFromSelectedCell = null;
 		// -- Test changeLinkedCell method.
 		oCell = selectCell("A1000");
 		let oCellNeedEnableRecalc = selectCell("B1000");
@@ -1392,7 +1411,7 @@ $(function () {
 		var newNameW = new Asc.asc_CDefName("w", "'" + ws.getName() + "'!A1");
 		wb.editDefinesNames(null, newNameW);
 		ws.getRange2("Q4").setValue("=w");
-		assert.strictEqual(ws.getRange2("Q4").getValueWithFormat(), "#REF!");
+		assert.strictEqual(ws.getRange2("Q4").getValueWithFormat(), "#NUM!");
 		//clean up
 		ws.getRange2("Q1:Q4").cleanAll();
 		wb.delDefinesNames(newNameW);
