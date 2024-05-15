@@ -7598,11 +7598,6 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
-	parserFormula.prototype.calculateCycleError = function () {
-			this.value = new cError(cErrorType.bad_reference);
-			this._endCalculate();
-			return this.value;
-	};
 	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect) {
 		if (this.outStack.length < 1) {
 			this.value = new cError(cErrorType.wrong_name);

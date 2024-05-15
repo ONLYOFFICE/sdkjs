@@ -14960,9 +14960,7 @@
 						} else {
 							parsed.calculate();
 						}
-					} /*else if (!g_cCalcRecursion.getIsEnabledRecursion()) {
-						parsed.calculateCycleError();
-					}*/
+					}
 				});
 
 				g_cCalcRecursion.decLevel();
