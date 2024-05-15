@@ -1975,7 +1975,7 @@
 			let oColor = AscCommon.RgbaHexToRGBA(sColor);
 			graphics.p_color(oColor.R, oColor.G, oColor.B, 255);
 			const xCord = timeline.getLeft() + timeline.getZeroShift() + timeline.tmpScrollOffset;
-			const height = this.parentControl.drawer.GetHeight();
+			const height = this.parentControl.drawer.GetHeight() + editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm;
 			graphics.drawVerLine(1, xCord, this.getTop(), this.getTop() + height, this.getPenWidth(graphics));
 
 			graphics.RestoreGrState();
