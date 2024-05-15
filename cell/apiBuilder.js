@@ -3781,6 +3781,37 @@
 	};
 
 	/**
+	 * Cuts the range to the specified range or to the Clipboard.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be cuted. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 */
+	ApiRange.prototype.Cut = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, false, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			let ws =  this.range.worksheet;
+			private_executeOtherActiveSheet(ws, this.range, function () {
+				AscCommon.g_clipboardBase.forceCutSelection = true;
+				oApi && oApi.asc_Cut();
+				AscCommon.g_clipboardBase.forceCutSelection = false;
+			});
+			oApi && oApi.wb.cleanCutData();
+		}
+	};
+
+	/**
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -7374,6 +7405,7 @@
 	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
+	ApiRange.prototype["Cut"] = ApiRange.prototype.Cut;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
 	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
 	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;

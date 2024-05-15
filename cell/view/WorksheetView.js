@@ -14139,7 +14139,7 @@
 
 	WorksheetView.prototype.isNeedSelectionCut = function () {
 		var res = true;
-		if (AscCommon.g_clipboardBase.bCut && !this.objectRender.selectedGraphicObjectsExists()) {
+		if (AscCommon.g_clipboardBase.bCut && !this.objectRender.selectedGraphicObjectsExists() && !AscCommon.g_clipboardBase.forceCutSelection) {
 			res = false;
 		}
 		return res;
