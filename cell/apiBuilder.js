@@ -269,12 +269,13 @@
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
 	 * */
 
+	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
 	/**
 	 * Specifies the part of the range to be pasted.
-	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" | "xlPasteAllMergingConditionalFormats"|
-	 * "xlPasteAllUsingSourceTheme" | "xlPasteColumnWidths" | "xlPasteComments"
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
+	 *  | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
-	 * | "xlPasteValidation" | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
+	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
 	 * */
 
 	/**
@@ -3821,6 +3822,8 @@
 		let nPasteType = null;
 		if (sPasteType) {
 			switch (sPasteType) {
+				// case "xlPasteAllMergingConditionalFormats":
+				// 	break;
 				case "xlPasteAll":
 					break;
 				case "xlPasteAllExceptBorders":
