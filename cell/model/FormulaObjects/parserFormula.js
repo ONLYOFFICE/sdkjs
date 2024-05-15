@@ -9377,6 +9377,9 @@ function parserFormula( formula, parent, _ws ) {
 	CalcRecursion.prototype.initCalcProperties = function (oCalcPr) {
 		const oCalcSettings = Asc.editor.asc_GetCalcSettings(); // Object with default values
 
+		if (!oCalcSettings) {
+			return;
+		}
 		this.setIsEnabledRecursion(oCalcPr.getIterate() ? oCalcPr.getIterate() : oCalcSettings.asc_getIterativeCalc());
 		this.setRelativeError(oCalcPr.getIterateDelta() != null ? oCalcPr.getIterateDelta() : oCalcSettings.asc_getMaxChange());
 		this.setMaxIterations(oCalcPr.getIterateCount() ? oCalcPr.getIterateCount() : oCalcSettings.asc_getMaxIterations());
