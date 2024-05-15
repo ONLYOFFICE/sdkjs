@@ -1075,29 +1075,27 @@
 		CTopControl.call(this, oDrawer);
 		this.drawer = oDrawer;
 
-		this.scaleButton = this.addControl(new CButton(this, null, null, manageTimelineScale));
-		this.scaleButton.label = this.scaleButton.addControl(new CLabel(this.scaleButton, 'Seconds', SCALE_BUTTON_LABEL_FONTSIZE));
-		this.scaleButton.icon = this.scaleButton.addControl(new CImageControl(this.scaleButton, dropDownIcon, SCALE_BUTTON_ICON_SIZE, SCALE_BUTTON_ICON_SIZE));
+		this.zoomOutButton = this.addControl(
+			new CButton(this, null, null, function (e, x, y) {
+				if (this.hit(x, y)) editor.asc_ZoomOutTimeline();
+			})
+		);
+		this.zoomOutButton.icon = this.zoomOutButton.addControl(
+			new CImageControl(this.zoomOutButton, zoomOutIcon, 10 * AscCommon.g_dKoef_pix_to_mm, 1 * AscCommon.g_dKoef_pix_to_mm) /* 10x1 svg image */
+		);
+
+		this.zoomLabel = this.addControl(new CLabel(this, 'Zoom', ZOOM_LABEL_FONTSIZE, false, AscCommon.align_Center));
+
+		this.zoomInButton = this.addControl(
+			new CButton(this, null, null, function (e, x, y) {
+				if (this.hit(x, y)) editor.asc_ZoomInTimeline();
+			})
+		);
+		this.zoomInButton.icon = this.zoomInButton.addControl(
+			new CImageControl(this.zoomInButton, zoomInIcon, 11 * AscCommon.g_dKoef_pix_to_mm, 11 * AscCommon.g_dKoef_pix_to_mm) /* 11x11 svg image */
+		);
 
 		this.timeline = this.addControl(new CTimeline(this));
-
-		function manageTimelineScale(event, x, y) {
-			if (!this.hit(x, y)) { return }
-
-			const animPaneAbsPosition = editor.WordControl.m_oAnimationPaneContainer.AbsolutePosition;
-			const animPaneHeight = animPaneAbsPosition.B - animPaneAbsPosition.T;
-			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
-				this.getLeft(),
-				animPaneHeight - TIMELINE_HEIGHT + this.getTop()
-			);
-
-			const data = new AscCommonSlide.CContextMenuData();
-			data.Type = Asc.c_oAscContextMenuTypes.TimelineZoom;
-			data.X_abs = coords.X;
-			data.Y_abs = coords.Y;
-
-			editor.sync_ContextMenuCallback(data);
-		}
 
 		this.onMouseDownCallback = function (event, x, y) {
 			if(Asc.editor.asc_IsStartedAnimationPreview()) {
@@ -1109,25 +1107,34 @@
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
 
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
-		this.scaleButton.setLayout(
-			COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN,
-			(TIMELINE_HEIGHT - SCALE_BUTTON_HEIGHT) / 2,
-			SCALE_BUTTON_WIDTH,
-			SCALE_BUTTON_HEIGHT
+		this.zoomInButton.setLayout(
+			TIMELINE_SCROLL_ABSOLUTE_LEFT - TIMELINE_HEIGHT + (TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			ZOOM_BUTTON_SIZE,
+			ZOOM_BUTTON_SIZE
 		);
-		this.scaleButton.label.setLayout(
-			SCALE_BUTTON_LEFT_PADDING,
+		this.zoomInButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
+
+		this.zoomLabel.setLayout(
+			this.zoomInButton.getLeft() - ZOOM_LABEL_WIDTH,
 			0,
-			SCALE_BUTTON_LABEL_WIDTH,
-			SCALE_BUTTON_HEIGHT
+			ZOOM_LABEL_WIDTH,
+			this.getHeight()
 		);
-		this.scaleButton.icon.setLayout(this.scaleButton.label.getRight(), 0, SCALE_BUTTON_HEIGHT, SCALE_BUTTON_HEIGHT);
+
+		this.zoomOutButton.setLayout(
+			this.zoomLabel.getLeft() - ZOOM_BUTTON_SIZE,
+			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			ZOOM_BUTTON_SIZE,
+			ZOOM_BUTTON_SIZE
+		);
+		this.zoomOutButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
 
 		const timelineWidth = this.getWidth() -
 			(COMMON_LEFT_MARGIN + COMMON_RIGHT_MARGIN) -
 			(SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN) - (ANIM_ITEM_HEIGHT - MENU_BUTTON_SIZE) / 2;
 		this.timeline.setLayout(
-			this.scaleButton.getRight() + TIMELINE_SCROLL_LEFT_MARGIN,
+			TIMELINE_SCROLL_ABSOLUTE_LEFT,
 			(TIMELINE_HEIGHT - TIMELINE_SCROLL_HEIGHT) / 2,
 			timelineWidth,
 			TIMELINE_SCROLL_HEIGHT
@@ -2898,19 +2905,18 @@
 	// TIMELINE
 	const TIMELINE_HEIGHT = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_HEIGHT = 17 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_ABSOLUTE_LEFT = 143 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_LEFT_MARGIN = 10 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_RIGHT_MARGIN = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_BUTTON_SIZE = 17 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLLER_WIDTH = 16 * AscCommon.g_dKoef_pix_to_mm;
-	
-	const SCALE_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+
+	const ZOOM_BUTTON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;
+	const ZOOM_LABEL_FONTSIZE = 9;
+	const ZOOM_LABEL_WIDTH = 40 * AscCommon.g_dKoef_pix_to_mm;
+
 	const SCALE_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
 	const SCALE_BUTTON_LEFT_MARGIN = 43 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LEFT_PADDING = 4 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LABEL_WIDTH = 50 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LABEL_FONTSIZE = 9;
-	const SCALE_BUTTON_ICON_LEFT_MARGIN = 17 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_ICON_SIZE = 5 * AscCommon.g_dKoef_pix_to_mm;
 
 	const TIMELINE_LABEL_WIDTH = 100;
 	const TIMELINE_LABEL_FONTSIZE = 7.5;
@@ -2986,6 +2992,9 @@
 	const arrowLeft = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNNSA5LjUzNjc0ZS0wN0w1IDlMMC41IDQuNUw1IDkuNTM2NzRlLTA3WiIgZmlsbD0iYmxhY2siIGZpbGwtb3BhY2l0eT0iMC44Ii8+Cjwvc3ZnPgo=';
 	const arrowRight = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMCA5TDAgMEw0LjUgNC41TDAgOVoiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
+	const zoomInIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTEiIHZpZXdCb3g9IjAgMCAxMSAxMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA2TDExIDVMNiA1TDYgLTIuMTg1NTdlLTA3TDUgLTIuNjIyNjhlLTA3TDUgNUwtMi4xODU1N2UtMDcgNUwtMi42MjI2OGUtMDcgNkw1IDZMNSAxMUw2IDExTDYgNkwxMSA2WiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+Cg==';
+	const zoomOutIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDEwIDEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjEwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxMCIgdHJhbnNmb3JtPSJyb3RhdGUoOTAgMTAgMCkiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=';
+
 	const getIconsForLoad = function () {
 		return [
 			clickEffectIcon, afterEffectIcon,
@@ -2993,7 +3002,8 @@
 			playIcon, stopIcon, arrowUpIcon, arrowDownIcon, closeIcon,
 			menuButton,
 			dropDownIcon,
-			arrowLeft, arrowRight
+			arrowLeft, arrowRight,
+			zoomInIcon, zoomOutIcon,
 		];
 	}
 
