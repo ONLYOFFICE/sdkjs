@@ -518,6 +518,1158 @@
 			this.asc_addWorksheet(sName);
 	};
 
+
+	function calculateFunction (func, arg) {
+		//check
+		let argsCount = arg.length;
+		if (!func.checkArguments(argsCount)) {
+			throwException(new Error('Arguments count error.'));
+			return null;
+		}
+		//prepare arguments
+		let newArguments = [];
+		for (let i = 0; i < argsCount; i++) {
+			if ('number' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cNumber(arg[i]));
+			} else if ('string' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cString(arg[i]));
+			} else if ('boolean' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cBool(arg[i]));
+			} else if (arg[i] instanceof ApiRange ) {
+				//cArea/cRef/cArea3D/cRef3d
+			} else {
+				throwException(new Error('Arguments type error.'));
+				return null;
+			}
+		}
+
+		let result = func.Calculate(newArguments);
+
+		//prepare result
+
+		return result;
+	}
+
+	function allFunctions() {
+		return this;
+	}
+
+	allFunctions.prototype.init = function () {
+		for (let i in AscCommonExcel.cFormulaFunction) {
+			allFunctions.prototype[i] = function () {
+				//let _func = AscCommonExcel.cFormulaFunction[i].prototype;
+				return calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
+			}
+		}
+	};
+
+
+
+
+	allFunctions.prototype.accrInt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.accrIntM = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.acos = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.acosh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.acot = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.acoth = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.amorDegrc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.amorLinc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.and = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.arabic = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.areas = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.asc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.asin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.asinh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.atan = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.atan2 = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.atanh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.aveDev = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.average = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.averageA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.averageIf = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.averageIfs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bahtText = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.base = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.besselI = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.besselJ = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.besselK = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.besselY = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.beta_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.beta_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bin2Dec = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bin2Hex = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bin2Oct = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.binom_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.binom_Dist_Range = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.binom_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bitand = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bitlshift = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bitor = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bitrshift = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.bitxor = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ceiling_Math = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ceiling_Precise = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.char = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.chiSq_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.chiSq_Dist_RT = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.chiSq_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.chiSq_Inv_RT = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.choose = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.clean = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.code = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.columns = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.combin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.combina = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.complex = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.concatenate = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.confidence_Norm = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.confidence_T = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.convert = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.cos = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.cosh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.cot = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coth = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.count = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.countA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.countBlank = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.countIf = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.countIfs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupDayBs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupDays = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupDaysNc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupNcd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupNum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.coupPcd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.csc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.csch = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.cumIPmt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.cumPrinc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.daverage = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dcount = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dcountA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dget = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dmax = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dmin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dproduct = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dstDev = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dstDevP = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dsum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dvar = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dvarP = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.date = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.datevalue = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.day = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.days = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.days360 = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.db = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dbcs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ddb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dec2Bin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dec2Hex = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dec2Oct = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.decimal = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.degrees = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.delta = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.devSq = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.disc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dollar = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dollarDe = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.dollarFr = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.duration = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ecma_Ceiling = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.edate = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.effect = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.eoMonth = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.erf = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.erfC = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.erfC_Precise = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.erf_Precise = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.error_Type = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.even = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.exact = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.exp = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.expon_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fvschedule = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.f_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.f_Dist_RT = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.f_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.f_Inv_RT = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fact = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.factDouble = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.false = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.find = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.findB = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fisher = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fisherInv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fixed = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.floor_Math = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.floor_Precise = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.fv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gamma = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gammaLn = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gammaLn_Precise = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gamma_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gamma_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gauss = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.gcd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.geStep = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.geoMean = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hlookup = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.harMean = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hex2Bin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hex2Dec = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hex2Oct = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hour = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hypGeom_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.hyperlink = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.iso_Ceiling = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.if = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imAbs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imArgument = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imConjugate = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imCos = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imCosh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imCot = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imCsc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imCsch = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imDiv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imExp = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imLn = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imLog10 = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imLog2 = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imPower = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imProduct = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imReal = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSec = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSech = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSinh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSqrt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSub = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imSum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imTan = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.imaginary = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.int = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.intRate = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ipmt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.irr = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isErr = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isError = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isEven = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isFormula = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isLogical = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isNA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isNonText = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isNumber = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isOdd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isText = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isoWeekNum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ispmt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.isref = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.kurt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.large = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.lcm = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.left = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.leftb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.len = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.lenb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ln = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.log = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.log10 = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.logNorm_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.logNorm_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.lookup = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.lower = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.mduration = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.mirr = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.mround = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.match = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.max = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.maxA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.median = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.mid = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.midb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.min = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.minA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.minute = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.mod = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.month = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.multiNomial = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.n = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.nper = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.na = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.negBinom_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.networkDays = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.networkDays_Intl = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.nominal = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.norm_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.norm_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.norm_S_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.norm_S_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.not = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.now = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.npv = function () {
+
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.numberValue = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oct2Bin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oct2Dec = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oct2Hex = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.odd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oddFPrice = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oddFYield = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oddLPrice = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.oddLYield = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.or = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.pduration = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.percentRank_Exc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.percentRank_Inc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.percentile_Exc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.percentile_Inc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.permut = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.permutationa = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.phi = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.pi = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.pmt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.poisson_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.power = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.ppmt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.price = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.priceDisc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.priceMat = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.product = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.proper = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.pv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.quartile_Exc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.quartile_Inc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.quotient = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.radians = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rand = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.randBetween = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rank_Avg = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rank_Eq = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rate = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.received = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.replace = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.replaceB = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rept = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.right = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rightb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.roman = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.round = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.roundDown = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.roundUp = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rows = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.rri = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sec = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sech = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.second = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.seriesSum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sheet = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sheets = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sign = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sin = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sinh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.skew = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.skew_p = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sln = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.small = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sqrt = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sqrtPi = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.stDevA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.stDevPA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.stDev_P = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.stDev_S = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.standardize = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.substitute = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.subtotal = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sumIf = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sumIfs = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.sumSq = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.syd = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.tbillEq = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.tbillPrice = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.tbillYield = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t_Dist_2T = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t_Dist_RT = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t_Inv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.t_Inv_2T = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.tan = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.tanh = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.text = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.time = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.timevalue = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.today = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.trim = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.trimMean = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.true = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.trunc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.type = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.usdollar = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.unichar = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.unicode = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.upper = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.vlookup = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.value = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.varA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.varPA = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.var_P = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.var_S = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.vdb = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.weekNum = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.weekday = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.weibull_Dist = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.workDay = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.workDay_Intl = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.xirr = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.xnpv = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.xor = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.year = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.yearFrac = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.yield = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.yieldDisc = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.yieldMat = function () {
+		return calculateFunction(arguments)
+	};
+	allFunctions.prototype.z_Test = function () {
+		return calculateFunction(arguments)
+	};
+
+
+
+
+
+	Api.prototype.WorksheetFunction = new allFunctions();
+
+
 	/**
 	 * Returns a sheet collection that represents all the sheets in the active workbook.
 	 * @memberof Api

@@ -6616,6 +6616,8 @@ var editor;
 				this._loadFonts([], function() {});
 			}
 		}
+
+		this.WorksheetFunction.init();
 	};
 
   spreadsheet_api.prototype.asc_nativeOpenFile = function(base64File, version, isUser, xlsxPath) {
