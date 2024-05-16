@@ -1603,6 +1603,13 @@
 				}
 			});
 		},
+		forEachFormula: function(callback) {
+			this._foreachDefName(function(defName) {
+				if (defName.parsedRef) {
+					callback(defName.parsedRef);
+				}
+			});
+		},
 		updateSharedFormulas: function() {
 			var newRef;
 			for (var indexNumber in this.changedShared) {
@@ -3172,6 +3179,33 @@
 		this.dependencyFormulas.getAllFormulas(res);
 		this.forEach(function (ws) {
 			ws.getAllFormulas(res, needReturnCellProps);
+		});
+		return res;
+	};
+	Workbook.prototype.addCustomFunctionToChanged = function() {
+		var res = null;
+		let t = this;
+		this.dependencyFormulas.forEachFormula(function (fP) {
+			if (fP && fP.bUnknownOrCustomFunction) {
+				fP.isParsed = false;
+				fP.parse();
+				if (/*DefName*/fP.parent.getNodeId) {
+					t.dependencyFormulas.addToChangedDefName(fP.parent);
+				}
+				res = true;
+			}
+		});
+		this.forEach(function (ws) {
+			ws.forEachFormula(function (fP) {
+				if (fP && fP.bUnknownOrCustomFunction) {
+					fP.isParsed = false;
+					fP.parse();
+					if (/*CCellWithFormula*/fP.parent.nCol != null) {
+						t.dependencyFormulas.addToChangedCell(fP.parent);
+					}
+					res = true;
+				}
+			});
 		});
 		return res;
 	};
@@ -8749,6 +8783,18 @@
 		for (var i = 0; i < this.TableParts.length; ++i) {
 			var table = this.TableParts[i];
 			table.getAllFormulas(formulas);
+		}
+	};
+	Worksheet.prototype.forEachFormula = function(callback) {
+		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
+		range._setPropertyNoEmpty(null, null, function(cell) {
+			if (cell.isFormula()) {
+				callback(cell.getFormulaParsed());
+			}
+		});
+		for (var i = 0; i < this.TableParts.length; ++i) {
+			var table = this.TableParts[i];
+			table.forEachFormula(callback);
 		}
 	};
 	Worksheet.prototype.setTableStyleAfterOpen = function () {

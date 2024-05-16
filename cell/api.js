@@ -6953,7 +6953,19 @@ var editor;
 		return this.asc_canPaste();
 	};
 	spreadsheet_api.prototype.onEndBuilderScript = function() {
+		let needDraw = null;
+		if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.needRecalculate) {
+			if (this.wbModel.addCustomFunctionToChanged()) {
+				needDraw = true;
+			}
+			this.wb.customFunctionEngine.needRecalculate = false;
+		}
 		this.asc_endPaste(true);
+		if (needDraw) {
+			const ws = this.wb && this.wb.getWorksheet();
+			ws && ws.draw();
+		}
+
 		return true;
 	};
 

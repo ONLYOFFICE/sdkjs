@@ -8437,6 +8437,11 @@ function RangeDataManagerElem(bbox, data)
 			this.TableColumns[i].getAllFormulas(formulas);
 		}
 	};
+	TablePart.prototype.forEachFormula = function (callback) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
+			this.TableColumns[i].forEachFormula(callback);
+		}
+	};
 	TablePart.prototype.moveRef = function (col, row) {
 		let ref = this.Ref.clone();
 		ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
@@ -9899,6 +9904,11 @@ function RangeDataManagerElem(bbox, data)
 	TableColumn.prototype.getAllFormulas = function (formulas) {
 		if (this.TotalsRowFormula) {
 			formulas.push(this.TotalsRowFormula);
+		}
+	};
+	TableColumn.prototype.forEachFormula = function (callback) {
+		if (this.TotalsRowFormula) {
+			callback(this.TotalsRowFormula);
 		}
 	};
 	TableColumn.prototype.clone = function () {
@@ -17036,6 +17046,8 @@ function RangeDataManagerElem(bbox, data)
 
 		this.prefixName = "";
 		this.activeLocale = null;
+
+		this.needRecalculate = null;
 	}
 	CCustomFunctionEngine.prototype.add = function (func, options) {
 		//options ->
@@ -17061,6 +17073,7 @@ function RangeDataManagerElem(bbox, data)
 		*/
 
 		this._add(func, options);
+		this.needRecalculate = true;
 	};
 
 	CCustomFunctionEngine.prototype._add = function (func, options) {
