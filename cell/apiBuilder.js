@@ -526,6 +526,7 @@
 			throwException(new Error('Arguments count error.'));
 			return null;
 		}
+
 		//prepare arguments
 		let newArguments = [];
 		for (let i = 0; i < argsCount; i++) {
@@ -537,15 +538,38 @@
 				newArguments.push(new AscCommonExcel.cBool(arg[i]));
 			} else if (arg[i] instanceof ApiRange ) {
 				//cArea/cRef/cArea3D/cRef3d
+				newArguments.push(new AscCommonExcel.cArea3D(arg[i].bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
 			} else {
 				throwException(new Error('Arguments type error.'));
 				return null;
 			}
 		}
 
+		//prepare result
 		let result = func.Calculate(newArguments);
 
-		//prepare result
+		if (!result) {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
+
+		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
+			result = result.getValue();
+			if (cElementType.empty === result.type) {
+				result = new cNumber(0);
+			}
+		} else if (AscCommonExcel.cElementType.array === result.type) {
+			result = result.getElement(0);
+		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
+			result = result.getValue2(0, 0);
+		}
+
+		if (result) {
+			result = result.getValue();
+		} else {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
 
 		return result;
 	}
@@ -557,7 +581,6 @@
 	allFunctions.prototype.init = function () {
 		for (let i in AscCommonExcel.cFormulaFunction) {
 			allFunctions.prototype[i] = function () {
-				//let _func = AscCommonExcel.cFormulaFunction[i].prototype;
 				return calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
 			}
 		}
@@ -3698,7 +3721,7 @@
 		let r1, c1, result;
 		if (typeof col == "number" && typeof row == "number") {
 			row--;
-			col--
+			col--;
 			r1 = bbox.r1 + row;
 			c1 = bbox.c1 + col;
 		} else if (typeof row == "number") {
