@@ -1400,8 +1400,8 @@ function(window, undefined) {
 					// multiplier is the square root of 2; 
 					// diagonal rectangle with h is equal to root(2) * h;
 					const multiplier = 1.41421356237;
-					const diagonalRes = (multiplier * cellHeight) * updateLabelsCount;
-
+					const diagonalRes = (multiplier  * cellHeight) * updateLabelsCount;
+					console.log(diagonalRes, axisWidth);
 					// diagonal angle is 45 degree
 					if (diagonalRes && diagonalRes <= axisWidth) {
 						return -45 * degree;
@@ -1416,7 +1416,7 @@ function(window, undefined) {
 			const nAxisType = oLabelsBox && oLabelsBox.axis ? oLabelsBox.axis.getObjectType() : null;
 			let parameters = null;
 			let bodyPr = false;
-			if (AscFormat.isRealNumber(nAxisType) && AscDFH.historyitem_type_CatAx) {
+			if (AscFormat.isRealNumber(nAxisType) && nAxisType === AscDFH.historyitem_type_CatAx) {
 				// parameters indecates necessary stuff such as rotation, label skip, degree
 				parameters = {};
 
