@@ -574,8 +574,8 @@
 		return result;
 	}
 
-	//1. vba
-	let functionsMap = {
+	//vba
+	/*let functionsMap = {
 		"ACCRINT": "AccrInt",
 		"ACCRINTM": "AccrIntM",
 		"ACOS": "Acos",
@@ -602,16 +602,16 @@
 		"BESSELJ": "BesselJ",
 		"BESSELK": "BesselK",
 		"BESSELY": "BesselY",
-		"BETA_DIST": "Beta_Dist",
-		"BETA_INV": "Beta_Inv",
+		"BETA.DIST": "Beta.Dist",
+		"BETA.INV": "Beta.Inv",
 		"BETADIST": "BetaDist",
 		"BETAINV": "BetaInv",
 		"BIN2DEC": "Bin2Dec",
 		"BIN2HEX": "Bin2Hex",
 		"BIN2OCT": "Bin2Oct",
-		"BINOM_DIST": "Binom_Dist",
-		"BINOM_DIST_RANGE": "Binom_Dist_Range",
-		"BINOM_INV": "Binom_Inv",
+		"BINOM.DIST": "Binom.Dist",
+		"BINOM.DIST.RANGE": "Binom.Dist.Range",
+		"BINOM.INV": "Binom.Inv",
 		"BINOMDIST": "BinomDist",
 		"BITAND": "Bitand",
 		"BITLSHIFT": "Bitlshift",
@@ -619,15 +619,15 @@
 		"BITRSHIFT": "Bitrshift",
 		"BITXOR": "Bitxor",
 		"CEILING": "Ceiling",
-		"CEILING_MATH": "Ceiling_Math",
-		"CEILING_PRECISE": "Ceiling_Precise",
+		"CEILING.MATH": "Ceiling.Math",
+		"CEILING.PRECISE": "Ceiling.Precise",
 		"CHIDIST": "ChiDist",
 		"CHIINV": "ChiInv",
-		"CHISQ_DIST": "ChiSq_Dist",
-		"CHISQ_DIST_RT": "ChiSq_Dist_RT",
-		"CHISQ_INV": "ChiSq_Inv",
-		"CHISQ_INV_RT": "ChiSq_Inv_RT",
-		"CHISQ_TEST": "ChiSq_Test",
+		"CHISQ.DIST": "ChiSq.Dist",
+		"CHISQ.DIST.RT": "ChiSq.Dist.RT",
+		"CHISQ.INV": "ChiSq.Inv",
+		"CHISQ.INV.RT": "ChiSq.Inv.RT",
+		"CHISQ.TEST": "ChiSq.Test",
 		"CHITEST": "ChiTest",
 		"CHOOSE": "Choose",
 		"CLEAN": "Clean",
@@ -635,8 +635,8 @@
 		"COMBINA": "Combina",
 		"COMPLEX": "Complex",
 		"CONFIDENCE": "Confidence",
-		"CONFIDENCE_NORM": "Confidence_Norm",
-		"CONFIDENCE_T": "Confidence_T",
+		"CONFIDENCE.NORM": "Confidence.Norm",
+		"CONFIDENCE.T": "Confidence.T",
 		"CONVERT": "Convert",
 		"CORREL": "Correl",
 		"COSH": "Cosh",
@@ -654,8 +654,8 @@
 		"COUPNUM": "CoupNum",
 		"COUPPCD": "CoupPcd",
 		"COVAR": "Covar",
-		"COVARIANCE_P": "Covariance_P",
-		"COVARIANCE_S": "Covariance_S",
+		"COVARIANCE.P": "Covariance.P",
+		"COVARIANCE.S": "Covariance.S",
 		"CRITBINOM": "CritBinom",
 		"CSC": "Csc",
 		"CSCH": "Csch",
@@ -695,17 +695,17 @@
 		"ENCODEURL": "EncodeUrl",
 		"EOMONTH": "EoMonth",
 		"ERF": "Erf",
-		"ERF_PRECISE": "Erf_Precise",
+		"ERF.PRECISE": "Erf.Precise",
 		"ERFC": "ErfC",
-		"ERFC_PRECISE": "ErfC_Precise",
+		"ERFC.PRECISE": "ErfC.Precise",
 		"EVEN": "Even",
-		"EXPON_DIST": "Expon_Dist",
+		"EXPON.DIST": "Expon.Dist",
 		"EXPONDIST": "ExponDist",
-		"F_DIST": "F_Dist",
-		"F_DIST_RT": "F_Dist_RT",
-		"F_INV": "F_Inv",
-		"F_INV_RT": "F_Inv_RT",
-		"F_TEST": "F_Test",
+		"F.DIST": "F.Dist",
+		"F.DIST.RT": "F.Dist.RT",
+		"F.INV": "F.Inv",
+		"F.INV.RT": "F.Inv.RT",
+		"F.TEST": "F.Test",
 		"FACT": "Fact",
 		"FACTDOUBLE": "FactDouble",
 		"FDIST": "FDist",
@@ -717,25 +717,25 @@
 		"FISHERINV": "FisherInv",
 		"FIXED": "Fixed",
 		"FLOOR": "Floor",
-		"FLOOR_MATH": "Floor_Math",
-		"FLOOR_PRECISE": "Floor_Precise",
+		"FLOOR.MATH": "Floor.Math",
+		"FLOOR.PRECISE": "Floor.Precise",
 		"FORECAST": "Forecast",
-		"FORECAST_ETS": "Forecast_ETS",
-		"FORECAST_ETS_CONFINT": "Forecast_ETS_ConfInt",
-		"FORECAST_ETS_SEASONALITY": "Forecast_ETS_Seasonality",
-		"FORECAST_ETS_STAT": "Forecast_ETS_STAT",
-		"FORECAST_LINEAR": "Forecast_Linear",
+		"FORECAST.ETS": "Forecast.ETS",
+		"FORECAST.ETS.CONFINT": "Forecast.ETS.ConfInt",
+		"FORECAST.ETS.SEASONALITY": "Forecast.ETS.Seasonality",
+		"FORECAST.ETS.STAT": "Forecast.ETS.STAT",
+		"FORECAST.LINEAR": "Forecast.Linear",
 		"FREQUENCY": "Frequency",
 		"FTEST": "FTest",
 		"FV": "Fv",
 		"FVSCHEDULE": "FVSchedule",
 		"GAMMA": "Gamma",
-		"GAMMA_DIST": "Gamma_Dist",
-		"GAMMA_INV": "Gamma_Inv",
+		"GAMMA.DIST": "Gamma.Dist",
+		"GAMMA.INV": "Gamma.Inv",
 		"GAMMADIST": "GammaDist",
 		"GAMMAINV": "GammaInv",
 		"GAMMALN": "GammaLn",
-		"GAMMALN_PRECISE": "GammaLn_Precise",
+		"GAMMALN.PRECISE": "GammaLn.Precise",
 		"GAUSS": "Gauss",
 		"GCD": "Gcd",
 		"GEOMEAN": "GeoMean",
@@ -746,7 +746,7 @@
 		"HEX2DEC": "Hex2Dec",
 		"HEX2OCT": "Hex2Oct",
 		"HLOOKUP": "HLookup",
-		"HYPGEOM_DIST": "HypGeom_Dist",
+		"HYPGEOM.DIST": "HypGeom.Dist",
 		"HYPGEOMDIST": "HypGeomDist",
 		"IFERROR": "IfError",
 		"IFNA": "IfNa",
@@ -788,7 +788,7 @@
 		"ISNA": "IsNA",
 		"ISNONTEXT": "IsNonText",
 		"ISNUMBER": "IsNumber",
-		"ISO_CEILING": "ISO_Ceiling",
+		"ISO.CEILING": "ISO.Ceiling",
 		"ISODD": "IsOdd",
 		"ISOWEEKNUM": "IsoWeekNum",
 		"ISPMT": "Ispmt",
@@ -802,8 +802,8 @@
 		"LOG10": "Log10",
 		"LOGEST": "LogEst",
 		"LOGINV": "LogInv",
-		"LOGNORM_DIST": "LogNorm_Dist",
-		"LOGNORM_INV": "LogNorm_Inv",
+		"LOGNORM.DIST": "LogNorm.Dist",
+		"LOGNORM.INV": "LogNorm.Inv",
 		"LOGNORMDIST": "LogNormDist",
 		"LOOKUP": "Lookup",
 		"MATCH": "Match",
@@ -816,20 +816,20 @@
 		"MIRR": "MIrr",
 		"MMULT": "MMult",
 		"MODE": "Mode",
-		"MODE_MULT": "Mode_Mult",
-		"MODE_SNGL": "Mode_Sngl",
+		"MODE.MULT": "Mode.Mult",
+		"MODE.SNGL": "Mode.Sngl",
 		"MROUND": "MRound",
 		"MULTINOMIAL": "MultiNomial",
 		"MUNIT": "Munit",
-		"NEGBINOM_DIST": "NegBinom_Dist",
+		"NEGBINOM.DIST": "NegBinom.Dist",
 		"NEGBINOMDIST": "NegBinomDist",
 		"NETWORKDAYS": "NetworkDays",
-		"NETWORKDAYS_INTL": "NetworkDays_Intl",
+		"NETWORKDAYS.INTL": "NetworkDays.Intl",
 		"NOMINAL": "Nominal",
-		"NORM_DIST": "Norm_Dist",
-		"NORM_INV": "Norm_Inv",
-		"NORM_S_DIST": "Norm_S_Dist",
-		"NORM_S_INV": "Norm_S_Inv",
+		"NORM.DIST": "Norm.Dist",
+		"NORM.INV": "Norm.Inv",
+		"NORM.S.DIST": "Norm.S.Dist",
+		"NORM.S.INV": "Norm.S.Inv",
 		"NORMDIST": "NormDist",
 		"NORMINV": "NormInv",
 		"NORMSDIST": "NormSDist",
@@ -849,11 +849,11 @@
 		"PDURATION": "PDuration",
 		"PEARSON": "Pearson",
 		"PERCENTILE": "Percentile",
-		"PERCENTILE_EXC": "Percentile_Exc",
-		"PERCENTILE_INC": "Percentile_Inc",
+		"PERCENTILE.EXC": "Percentile.Exc",
+		"PERCENTILE.INC": "Percentile.Inc",
 		"PERCENTRANK": "PercentRank",
-		"PERCENTRANK_EXC": "PercentRank_Exc",
-		"PERCENTRANK_INC": "PercentRank_Inc",
+		"PERCENTRANK.EXC": "PercentRank.Exc",
+		"PERCENTRANK.INC": "PercentRank.Inc",
 		"PERMUT": "Permut",
 		"PERMUTATIONA": "Permutationa",
 		"PHI": "Phi",
@@ -861,7 +861,7 @@
 		"PI": "Pi",
 		"PMT": "Pmt",
 		"POISSON": "Poisson",
-		"POISSON_DIST": "Poisson_Dist",
+		"POISSON.DIST": "Poisson.Dist",
 		"POWER": "Power",
 		"PPMT": "Ppmt",
 		"PRICE": "Price",
@@ -872,14 +872,14 @@
 		"PROPER": "Proper",
 		"PV": "Pv",
 		"QUARTILE": "Quartile",
-		"QUARTILE_EXC": "Quartile_Exc",
-		"QUARTILE_INC": "Quartile_Inc",
+		"QUARTILE.EXC": "Quartile.Exc",
+		"QUARTILE.INC": "Quartile.Inc",
 		"QUOTIENT": "Quotient",
 		"RADIANS": "Radians",
 		"RANDBETWEEN": "RandBetween",
 		"RANK": "Rank",
-		"RANK_AVG": "Rank_Avg",
-		"RANK_EQ": "Rank_Eq",
+		"RANK.AVG": "Rank.Avg",
+		"RANK.EQ": "Rank.Eq",
 		"RATE": "Rate",
 		"RECEIVED": "Received",
 		"REPLACE": "Replace",
@@ -899,15 +899,15 @@
 		"SERIESSUM": "SeriesSum",
 		"SINH": "Sinh",
 		"SKEW": "Skew",
-		"SKEW_P": "Skew_p",
+		"SKEW.P": "Skew.p",
 		"SLN": "Sln",
 		"SLOPE": "Slope",
 		"SMALL": "Small",
 		"SQRTPI": "SqrtPi",
 		"STANDARDIZE": "Standardize",
 		"STDEV": "StDev",
-		"STDEV_P": "StDev_P",
-		"STDEV_S": "StDev_S",
+		"STDEV.P": "StDev.P",
+		"STDEV.S": "StDev.S",
 		"STDEVP": "StDevP",
 		"STEYX": "StEyx",
 		"SUBSTITUTE": "Substitute",
@@ -921,12 +921,12 @@
 		"SUMX2PY2": "SumX2PY2",
 		"SUMXMY2": "SumXMY2",
 		"SYD": "Syd",
-		"T_DIST": "T_Dist",
-		"T_DIST_2T": "T_Dist_2T",
-		"T_DIST_RT": "T_Dist_RT",
-		"T_INV": "T_Inv",
-		"T_INV_2T": "T_Inv_2T",
-		"T_TEST": "T_Test",
+		"T.DIST": "T.Dist",
+		"T.DIST.2T": "T.Dist.2T",
+		"T.DIST.RT": "T.Dist.RT",
+		"T.INV": "T.Inv",
+		"T.INV.2T": "T.Inv.2T",
+		"T.TEST": "T.Test",
 		"TANH": "Tanh",
 		"TBILLEQ": "TBillEq",
 		"TBILLPRICE": "TBillPrice",
@@ -943,8 +943,8 @@
 		"UNICODE": "Unicode",
 		"USDOLLAR": "USDollar",
 		"VAR": "Var",
-		"VAR_P": "Var_P",
-		"VAR_S": "Var_S",
+		"VAR.P": "Var.P",
+		"VAR.S": "Var.S",
 		"VARP": "VarP",
 		"VDB": "Vdb",
 		"VLOOKUP": "VLookup",
@@ -952,21 +952,21 @@
 		"WEEKDAY": "Weekday",
 		"WEEKNUM": "WeekNum",
 		"WEIBULL": "Weibull",
-		"WEIBULL_DIST": "Weibull_Dist",
+		"WEIBULL.DIST": "Weibull.Dist",
 		"WORKDAY": "WorkDay",
-		"WORKDAY_INTL": "WorkDay_Intl",
+		"WORKDAY.INTL": "WorkDay.Intl",
 		"XIRR": "Xirr",
 		"XNPV": "Xnpv",
 		"XOR": "Xor",
 		"YEARFRAC": "YearFrac",
 		"YIELDDISC": "YieldDisc",
 		"YIELDMAT": "YieldMat",
-		"Z_TEST": "Z_Test",
+		"Z.TEST": "Z.Test",
 		"ZTEST": "ZTest"
-	};
+	};*/
 
-	//2. js
-	let functionsMap2 = {
+	//js
+	/*let functionsMap2 = {
 		"INIT": "init",
 		"ACCRINT": "accrInt",
 		"ACCRINTM": "accrIntM",
@@ -990,32 +990,32 @@
 		"AVERAGEA": "averageA",
 		"AVERAGEIF": "averageIf",
 		"AVERAGEIFS": "averageIfs",
-		"BAHTTEXT": "bahtText",
+		//"BAHTTEXT": "bahtText",
 		"BASE": "base",
 		"BESSELI": "besselI",
 		"BESSELJ": "besselJ",
 		"BESSELK": "besselK",
 		"BESSELY": "besselY",
-		"BETA_DIST": "beta_Dist",
-		"BETA_INV": "beta_Inv",
+		"BETA.DIST": "beta.Dist",
+		"BETA.INV": "beta.Inv",
 		"BIN2DEC": "bin2Dec",
 		"BIN2HEX": "bin2Hex",
 		"BIN2OCT": "bin2Oct",
-		"BINOM_DIST": "binom_Dist",
-		"BINOM_DIST_RANGE": "binom_Dist_Range",
-		"BINOM_INV": "binom_Inv",
+		"BINOM.DIST": "binom.Dist",
+		"BINOM.DIST.RANGE": "binom.Dist.Range",
+		"BINOM.INV": "binom.Inv",
 		"BITAND": "bitand",
 		"BITLSHIFT": "bitlshift",
 		"BITOR": "bitor",
 		"BITRSHIFT": "bitrshift",
 		"BITXOR": "bitxor",
-		"CEILING_MATH": "ceiling_Math",
-		"CEILING_PRECISE": "ceiling_Precise",
+		"CEILING.MATH": "ceiling.Math",
+		"CEILING.PRECISE": "ceiling.Precise",
 		"CHAR": "char",
-		"CHISQ_DIST": "chiSq_Dist",
-		"CHISQ_DIST_RT": "chiSq_Dist_RT",
-		"CHISQ_INV": "chiSq_Inv",
-		"CHISQ_INV_RT": "chiSq_Inv_RT",
+		"CHISQ.DIST": "chiSq.Dist",
+		"CHISQ.DIST.RT": "chiSq.Dist.RT",
+		"CHISQ.INV": "chiSq.Inv",
+		"CHISQ.INV.RT": "chiSq.Inv.RT",
 		"CHOOSE": "choose",
 		"CLEAN": "clean",
 		"CODE": "code",
@@ -1024,8 +1024,8 @@
 		"COMBINA": "combina",
 		"COMPLEX": "complex",
 		"CONCATENATE": "concatenate",
-		"CONFIDENCE_NORM": "confidence_Norm",
-		"CONFIDENCE_T": "confidence_T",
+		"CONFIDENCE.NORM": "confidence.Norm",
+		"CONFIDENCE.T": "confidence.T",
 		"CONVERT": "convert",
 		"COS": "cos",
 		"COSH": "cosh",
@@ -1064,7 +1064,7 @@
 		"DAYS": "days",
 		"DAYS360": "days360",
 		"DB": "db",
-		"DBCS": "dbcs",
+		//"DBCS": "dbcs",
 		"DDB": "ddb",
 		"DEC2BIN": "dec2Bin",
 		"DEC2HEX": "dec2Hex",
@@ -1078,24 +1078,24 @@
 		"DOLLARDE": "dollarDe",
 		"DOLLARFR": "dollarFr",
 		"DURATION": "duration",
-		"ECMA_CEILING": "ecma_Ceiling",
+		"ECMA.CEILING": "ecma.Ceiling",
 		"EDATE": "edate",
 		"EFFECT": "effect",
 		"EOMONTH": "eoMonth",
 		"ERF": "erf",
 		"ERFC": "erfC",
-		"ERFC_PRECISE": "erfC_Precise",
-		"ERF_PRECISE": "erf_Precise",
-		"ERROR_TYPE": "error_Type",
+		"ERFC.PRECISE": "erfC.Precise",
+		"ERF.PRECISE": "erf.Precise",
+		"ERROR.TYPE": "error.Type",
 		"EVEN": "even",
 		"EXACT": "exact",
 		"EXP": "exp",
-		"EXPON_DIST": "expon_Dist",
+		"EXPON.DIST": "expon.Dist",
 		"FVSCHEDULE": "fvschedule",
-		"F_DIST": "f_Dist",
-		"F_DIST_RT": "f_Dist_RT",
-		"F_INV": "f_Inv",
-		"F_INV_RT": "f_Inv_RT",
+		"F.DIST": "f.Dist",
+		"F.DIST.RT": "f.Dist.RT",
+		"F.INV": "f.Inv",
+		"F.INV.RT": "f.Inv.RT",
 		"FACT": "fact",
 		"FACTDOUBLE": "factDouble",
 		"FALSE": "false",
@@ -1104,14 +1104,14 @@
 		"FISHER": "fisher",
 		"FISHERINV": "fisherInv",
 		"FIXED": "fixed",
-		"FLOOR_MATH": "floor_Math",
-		"FLOOR_PRECISE": "floor_Precise",
+		"FLOOR.MATH": "floor.Math",
+		"FLOOR.PRECISE": "floor.Precise",
 		"FV": "fv",
 		"GAMMA": "gamma",
 		"GAMMALN": "gammaLn",
-		"GAMMALN_PRECISE": "gammaLn_Precise",
-		"GAMMA_DIST": "gamma_Dist",
-		"GAMMA_INV": "gamma_Inv",
+		"GAMMALN.PRECISE": "gammaLn.Precise",
+		"GAMMA.DIST": "gamma.Dist",
+		"GAMMA.INV": "gamma.Inv",
 		"GAUSS": "gauss",
 		"GCD": "gcd",
 		"GESTEP": "geStep",
@@ -1122,9 +1122,9 @@
 		"HEX2DEC": "hex2Dec",
 		"HEX2OCT": "hex2Oct",
 		"HOUR": "hour",
-		"HYPGEOM_DIST": "hypGeom_Dist",
+		"HYPGEOM.DIST": "hypGeom.Dist",
 		"HYPERLINK": "hyperlink",
-		"ISO_CEILING": "iso_Ceiling",
+		"ISO.CEILING": "iso.Ceiling",
 		"IF": "if",
 		"IMABS": "imAbs",
 		"IMARGUMENT": "imArgument",
@@ -1178,8 +1178,8 @@
 		"LN": "ln",
 		"LOG": "log",
 		"LOG10": "log10",
-		"LOGNORM_DIST": "logNorm_Dist",
-		"LOGNORM_INV": "logNorm_Inv",
+		"LOGNORM.DIST": "logNorm.Dist",
+		"LOGNORM.INV": "logNorm.Inv",
 		"LOOKUP": "lookup",
 		"LOWER": "lower",
 		"MDURATION": "mduration",
@@ -1200,14 +1200,14 @@
 		"N": "n",
 		"NPER": "nper",
 		"NA": "na",
-		"NEGBINOM_DIST": "negBinom_Dist",
+		"NEGBINOM.DIST": "negBinom.Dist",
 		"NETWORKDAYS": "networkDays",
-		"NETWORKDAYS_INTL": "networkDays_Intl",
+		"NETWORKDAYS.INTL": "networkDays.Intl",
 		"NOMINAL": "nominal",
-		"NORM_DIST": "norm_Dist",
-		"NORM_INV": "norm_Inv",
-		"NORM_S_DIST": "norm_S_Dist",
-		"NORM_S_INV": "norm_S_Inv",
+		"NORM.DIST": "norm.Dist",
+		"NORM.INV": "norm.Inv",
+		"NORM.S.DIST": "norm.S.Dist",
+		"NORM.S.INV": "norm.S.Inv",
 		"NOT": "not",
 		"NOW": "now",
 		"NPV": "npv",
@@ -1222,16 +1222,16 @@
 		"ODDLYIELD": "oddLYield",
 		"OR": "or",
 		"PDURATION": "pduration",
-		"PERCENTRANK_EXC": "percentRank_Exc",
-		"PERCENTRANK_INC": "percentRank_Inc",
-		"PERCENTILE_EXC": "percentile_Exc",
-		"PERCENTILE_INC": "percentile_Inc",
+		"PERCENTRANK.EXC": "percentRank.Exc",
+		"PERCENTRANK.INC": "percentRank.Inc",
+		"PERCENTILE.EXC": "percentile.Exc",
+		"PERCENTILE.INC": "percentile.Inc",
 		"PERMUT": "permut",
 		"PERMUTATIONA": "permutationa",
 		"PHI": "phi",
 		"PI": "pi",
 		"PMT": "pmt",
-		"POISSON_DIST": "poisson_Dist",
+		"POISSON.DIST": "poisson.Dist",
 		"POWER": "power",
 		"PPMT": "ppmt",
 		"PRICE": "price",
@@ -1240,14 +1240,14 @@
 		"PRODUCT": "product",
 		"PROPER": "proper",
 		"PV": "pv",
-		"QUARTILE_EXC": "quartile_Exc",
-		"QUARTILE_INC": "quartile_Inc",
+		"QUARTILE.EXC": "quartile.Exc",
+		"QUARTILE.INC": "quartile.Inc",
 		"QUOTIENT": "quotient",
 		"RADIANS": "radians",
 		"RAND": "rand",
 		"RANDBETWEEN": "randBetween",
-		"RANK_AVG": "rank_Avg",
-		"RANK_EQ": "rank_Eq",
+		"RANK.AVG": "rank.Avg",
+		"RANK.EQ": "rank.Eq",
 		"RATE": "rate",
 		"RECEIVED": "received",
 		"REPLACE": "replace",
@@ -1271,15 +1271,15 @@
 		"SIN": "sin",
 		"SINH": "sinh",
 		"SKEW": "skew",
-		"SKEW_P": "skew_p",
+		"SKEW.P": "skew.p",
 		"SLN": "sln",
 		"SMALL": "small",
 		"SQRT": "sqrt",
 		"SQRTPI": "sqrtPi",
 		"STDEVA": "stDevA",
 		"STDEVPA": "stDevPA",
-		"STDEV_P": "stDev_P",
-		"STDEV_S": "stDev_S",
+		"STDEV.P": "stDev.P",
+		"STDEV.S": "stDev.S",
 		"STANDARDIZE": "standardize",
 		"SUBSTITUTE": "substitute",
 		"SUBTOTAL": "subtotal",
@@ -1292,11 +1292,11 @@
 		"TBILLEQ": "tbillEq",
 		"TBILLPRICE": "tbillPrice",
 		"TBILLYIELD": "tbillYield",
-		"T_DIST": "t_Dist",
-		"T_DIST_2T": "t_Dist_2T",
-		"T_DIST_RT": "t_Dist_RT",
-		"T_INV": "t_Inv",
-		"T_INV_2T": "t_Inv_2T",
+		"T.DIST": "t.Dist",
+		"T.DIST.2T": "t.Dist.2T",
+		"T.DIST.RT": "t.Dist.RT",
+		"T.INV": "t.Inv",
+		"T.INV.2T": "t.Inv.2T",
 		"TAN": "tan",
 		"TANH": "tanh",
 		"TEXT": "text",
@@ -1316,14 +1316,14 @@
 		"VALUE": "value",
 		"VARA": "varA",
 		"VARPA": "varPA",
-		"VAR_P": "var_P",
-		"VAR_S": "var_S",
+		"VAR.P": "var.P",
+		"VAR.S": "var.S",
 		"VDB": "vdb",
 		"WEEKNUM": "weekNum",
 		"WEEKDAY": "weekday",
-		"WEIBULL_DIST": "weibull_Dist",
+		"WEIBULL.DIST": "weibull.Dist",
 		"WORKDAY": "workDay",
-		"WORKDAY_INTL": "workDay_Intl",
+		"WORKDAY.INTL": "workDay.Intl",
 		"XIRR": "xirr",
 		"XNPV": "xnpv",
 		"XOR": "xor",
@@ -1332,1129 +1332,483 @@
 		"YIELD": "yield",
 		"YIELDDISC": "yieldDisc",
 		"YIELDMAT": "yieldMat",
-		"Z_TEST": "z_Test"
+		"Z.TEST": "z.Test"
+	};*/
+
+	//vba + js
+	let supportedFunctionsMap = {
+		"ACCRINT": "AccrInt",
+		"ACCRINTM": "AccrIntM",
+		"ACOS": "Acos",
+		"ACOSH": "Acosh",
+		"ACOT": "Acot",
+		"ACOTH": "Acoth",
+		"AGGREGATE": "Aggregate",//not js
+		"AMORDEGRC": "AmorDegrc",
+		"AMORLINC": "AmorLinc",
+		"AND": "And",
+		"ARABIC": "Arabic",
+		"ASC": "Asc",
+		"ASIN": "Asin",
+		"ASINH": "Asinh",
+		"ATAN2": "Atan2",
+		"ATANH": "Atanh",
+		"AVEDEV": "AveDev",
+		"AVERAGE": "Average",
+		"AVERAGEIF": "AverageIf",
+		"AVERAGEIFS": "AverageIfs",
+		//"BAHTTEXT": "BahtText",//not support by OO
+		"BASE": "Base",
+		"BESSELI": "BesselI",
+		"BESSELJ": "BesselJ",
+		"BESSELK": "BesselK",
+		"BESSELY": "BesselY",
+		"BETA.DIST": "Beta.Dist",
+		"BETA.INV": "Beta.Inv",
+		"BETADIST": "BetaDist",//not js
+		"BETAINV": "BetaInv",//not js
+		"BIN2DEC": "Bin2Dec",
+		"BIN2HEX": "Bin2Hex",
+		"BIN2OCT": "Bin2Oct",
+		"BINOM.DIST": "Binom.Dist",
+		"BINOM.DIST.RANGE": "Binom.Dist.Range",
+		"BINOM.INV": "Binom.Inv",
+		"BINOMDIST": "BinomDist",//not js
+		"BITAND": "Bitand",
+		"BITLSHIFT": "Bitlshift",
+		"BITOR": "Bitor",
+		"BITRSHIFT": "Bitrshift",
+		"BITXOR": "Bitxor",
+		"CEILING": "Ceiling",//not js
+		"CEILING.MATH": "Ceiling.Math",
+		"CEILING.PRECISE": "Ceiling.Precise",
+		"CHIDIST": "ChiDist",//not js
+		"CHIINV": "ChiInv",//not js
+		"CHISQ.DIST": "ChiSq.Dist",
+		"CHISQ.DIST.RT": "ChiSq.Dist.RT",
+		"CHISQ.INV": "ChiSq.Inv",
+		"CHISQ.INV.RT": "ChiSq.Inv.RT",
+		"CHISQ.TEST": "ChiSq.Test",//not js
+		"CHITEST": "ChiTest",//not js
+		"CHOOSE": "Choose",
+		"CLEAN": "Clean",
+		"COMBIN": "Combin",
+		"COMBINA": "Combina",
+		"COMPLEX": "Complex",
+		"CONFIDENCE": "Confidence",//not js
+		"CONFIDENCE.NORM": "Confidence.Norm",
+		"CONFIDENCE.T": "Confidence.T",
+		"CONVERT": "Convert",
+		"CORREL": "Correl",//not js
+		"COSH": "Cosh",
+		"COT": "Cot",
+		"COTH": "Coth",
+		"COUNT": "Count",
+		"COUNTA": "CountA",
+		"COUNTBLANK": "CountBlank",
+		"COUNTIF": "CountIf",
+		"COUNTIFS": "CountIfs",
+		"COUPDAYBS": "CoupDayBs",
+		"COUPDAYS": "CoupDays",
+		"COUPDAYSNC": "CoupDaysNc",
+		"COUPNCD": "CoupNcd",
+		"COUPNUM": "CoupNum",
+		"COUPPCD": "CoupPcd",
+		"COVAR": "Covar",//not js
+		"COVARIANCE.P": "Covariance.P",//not js
+		"COVARIANCE.S": "Covariance.S",//not js
+		"CRITBINOM": "CritBinom",//not js
+		"CSC": "Csc",
+		"CSCH": "Csch",
+		"CUMIPMT": "CumIPmt",
+		"CUMPRINC": "CumPrinc",
+		"DAVERAGE": "DAverage",
+		"DAYS": "Days",
+		"DAYS360": "Days360",
+		"DB": "Db",
+		//"DBCS": "Dbcs", //not support by OO
+		"DCOUNT": "DCount",
+		"DCOUNTA": "DCountA",
+		"DDB": "Ddb",
+		"DEC2BIN": "Dec2Bin",
+		"DEC2HEX": "Dec2Hex",
+		"DEC2OCT": "Dec2Oct",
+		"DECIMAL": "Decimal",
+		"DEGREES": "Degrees",
+		"DELTA": "Delta",
+		"DEVSQ": "DevSq",
+		"DGET": "DGet",
+		"DISC": "Disc",
+		"DMAX": "DMax",
+		"DMIN": "DMin",
+		"DOLLAR": "Dollar",
+		"DOLLARDE": "DollarDe",
+		"DOLLARFR": "DollarFr",
+		"DPRODUCT": "DProduct",
+		"DSTDEV": "DStDev",
+		"DSTDEVP": "DStDevP",
+		"DSUM": "DSum",
+		"DURATION": "Duration",
+		"DVAR": "DVar",
+		"DVARP": "DVarP",
+		"EDATE": "EDate",
+		"EFFECT": "Effect",
+		"ENCODEURL": "EncodeUrl",//not js
+		"EOMONTH": "EoMonth",
+		"ERF": "Erf",
+		"ERF.PRECISE": "Erf.Precise",
+		"ERFC": "ErfC",
+		"ERFC.PRECISE": "ErfC.Precise",
+		"EVEN": "Even",
+		"EXPON.DIST": "Expon.Dist",
+		"EXPONDIST": "ExponDist",//not js
+		"F.DIST": "F.Dist",
+		"F.DIST.RT": "F.Dist.RT",
+		"F.INV": "F.Inv",
+		"F.INV.RT": "F.Inv.RT",
+		"F.TEST": "F.Test",//not js
+		"FACT": "Fact",
+		"FACTDOUBLE": "FactDouble",
+		"FDIST": "FDist",//not js
+		"FILTERXML": "FilterXML",//not js
+		"FIND": "Find",
+		"FINDB": "FindB",
+		"FINV": "FInv",//not js
+		"FISHER": "Fisher",
+		"FISHERINV": "FisherInv",
+		"FIXED": "Fixed",
+		"FLOOR": "Floor",//not js
+		"FLOOR.MATH": "Floor.Math",
+		"FLOOR.PRECISE": "Floor.Precise",
+		"FORECAST": "Forecast",//not js
+		"FORECAST.ETS": "Forecast.ETS",//not js
+		"FORECAST.ETS.CONFINT": "Forecast.ETS.ConfInt",//not js
+		"FORECAST.ETS.SEASONALITY": "Forecast.ETS.Seasonality",//not js
+		"FORECAST.ETS.STAT": "Forecast.ETS.STAT",//not js
+		"FORECAST.LINEAR": "Forecast.Linear",//not js
+		"FREQUENCY": "Frequency",//not js
+		"FTEST": "FTest",//not js
+		"FV": "Fv",
+		"FVSCHEDULE": "FVSchedule",
+		"GAMMA": "Gamma",
+		"GAMMA.DIST": "Gamma.Dist",
+		"GAMMA.INV": "Gamma.Inv",
+		"GAMMADIST": "GammaDist",//not js
+		"GAMMAINV": "GammaInv",//not js
+		"GAMMALN": "GammaLn",
+		"GAMMALN.PRECISE": "GammaLn.Precise",
+		"GAUSS": "Gauss",
+		"GCD": "Gcd",
+		"GEOMEAN": "GeoMean",
+		"GESTEP": "GeStep",
+		"GROWTH": "Growth",//not js
+		"HARMEAN": "HarMean",
+		"HEX2BIN": "Hex2Bin",
+		"HEX2DEC": "Hex2Dec",
+		"HEX2OCT": "Hex2Oct",
+		"HLOOKUP": "HLookup",
+		"HYPGEOM.DIST": "HypGeom.Dist",
+		"HYPGEOMDIST": "HypGeomDist",//not js
+		"IFERROR": "IfError",//not js
+		"IFNA": "IfNa",//not js
+		"IMABS": "ImAbs",
+		"IMAGINARY": "Imaginary",
+		"IMARGUMENT": "ImArgument",
+		"IMCONJUGATE": "ImConjugate",
+		"IMCOS": "ImCos",
+		"IMCOSH": "ImCosh",
+		"IMCOT": "ImCot",
+		"IMCSC": "ImCsc",
+		"IMCSCH": "ImCsch",
+		"IMDIV": "ImDiv",
+		"IMEXP": "ImExp",
+		"IMLN": "ImLn",
+		"IMLOG10": "ImLog10",
+		"IMLOG2": "ImLog2",
+		"IMPOWER": "ImPower",
+		"IMPRODUCT": "ImProduct",
+		"IMREAL": "ImReal",
+		"IMSEC": "ImSec",
+		"IMSECH": "ImSech",
+		"IMSIN": "ImSin",
+		"IMSINH": "ImSinh",
+		"IMSQRT": "ImSqrt",
+		"IMSUB": "ImSub",
+		"IMSUM": "ImSum",
+		"IMTAN": "ImTan",
+		"INDEX": "Index",//not js
+		"INTERCEPT": "Intercept",//not js
+		"INTRATE": "IntRate",
+		"IPMT": "Ipmt",
+		"IRR": "Irr",
+		"ISERR": "IsErr",
+		"ISERROR": "IsError",
+		"ISEVEN": "IsEven",
+		"ISFORMULA": "IsFormula",
+		"ISLOGICAL": "IsLogical",
+		"ISNA": "IsNA",
+		"ISNONTEXT": "IsNonText",
+		"ISNUMBER": "IsNumber",
+		"ISO.CEILING": "ISO.Ceiling",
+		"ISODD": "IsOdd",
+		"ISOWEEKNUM": "IsoWeekNum",
+		"ISPMT": "Ispmt",
+		"ISTEXT": "IsText",
+		"KURT": "Kurt",
+		"LARGE": "Large",
+		"LCM": "Lcm",
+		"LINEST": "LinEst",//not js
+		"LN": "Ln",
+		"LOG": "Log",
+		"LOG10": "Log10",
+		"LOGEST": "LogEst",//not js
+		"LOGINV": "LogInv",//not js
+		"LOGNORM.DIST": "LogNorm.Dist",
+		"LOGNORM.INV": "LogNorm.Inv",
+		"LOGNORMDIST": "LogNormDist",//not js
+		"LOOKUP": "Lookup",
+		"MATCH": "Match",
+		"MAX": "Max",
+		"MDETERM": "MDeterm",//not js
+		"MDURATION": "MDuration",
+		"MEDIAN": "Median",
+		"MIN": "Min",
+		"MINVERSE": "MInverse",//not js
+		"MIRR": "MIrr",
+		"MMULT": "MMult",//not js
+		"MODE": "Mode",//not js
+		"MODE.MULT": "Mode.Mult",//not js
+		"MODE.SNGL": "Mode.Sngl",//not js
+		"MROUND": "MRound",
+		"MULTINOMIAL": "MultiNomial",
+		"MUNIT": "Munit",//not js
+		"NEGBINOM.DIST": "NegBinom.Dist",
+		"NEGBINOMDIST": "NegBinomDist",//not js
+		"NETWORKDAYS": "NetworkDays",
+		"NETWORKDAYS.INTL": "NetworkDays.Intl",
+		"NOMINAL": "Nominal",
+		"NORM.DIST": "Norm.Dist",
+		"NORM.INV": "Norm.Inv",
+		"NORM.S.DIST": "Norm.S.Dist",
+		"NORM.S.INV": "Norm.S.Inv",
+		"NORMDIST": "NormDist",//not js
+		"NORMINV": "NormInv",//not js
+		"NORMSDIST": "NormSDist",//not js
+		"NORMSINV": "NormSInv",//not js
+		"NPER": "NPer",
+		"NPV": "Npv",
+		"NUMBERVALUE": "NumberValue",
+		"OCT2BIN": "Oct2Bin",
+		"OCT2DEC": "Oct2Dec",
+		"OCT2HEX": "Oct2Hex",
+		"ODD": "Odd",
+		"ODDFPRICE": "OddFPrice",
+		"ODDFYIELD": "OddFYield",
+		"ODDLPRICE": "OddLPrice",
+		"ODDLYIELD": "OddLYield",
+		"OR": "Or",
+		"PDURATION": "PDuration",
+		"PEARSON": "Pearson",//not js
+		"PERCENTILE": "Percentile",//not js
+		"PERCENTILE.EXC": "Percentile.Exc",
+		"PERCENTILE.INC": "Percentile.Inc",
+		"PERCENTRANK": "PercentRank",//not js
+		"PERCENTRANK.EXC": "PercentRank.Exc",
+		"PERCENTRANK.INC": "PercentRank.Inc",
+		"PERMUT": "Permut",
+		"PERMUTATIONA": "Permutationa",
+		"PHI": "Phi",
+		"PHONETIC": "Phonetic",//not js
+		"PI": "Pi",
+		"PMT": "Pmt",
+		"POISSON": "Poisson",//not js
+		"POISSON.DIST": "Poisson.Dist",
+		"POWER": "Power",
+		"PPMT": "Ppmt",
+		"PRICE": "Price",
+		"PRICEDISC": "PriceDisc",
+		"PRICEMAT": "PriceMat",
+		"PROB": "Prob",//not js
+		"PRODUCT": "Product",
+		"PROPER": "Proper",
+		"PV": "Pv",
+		"QUARTILE": "Quartile",//not js
+		"QUARTILE.EXC": "Quartile.Exc",
+		"QUARTILE.INC": "Quartile.Inc",
+		"QUOTIENT": "Quotient",
+		"RADIANS": "Radians",
+		"RANDBETWEEN": "RandBetween",
+		"RANK": "Rank",//not js
+		"RANK.AVG": "Rank.Avg",
+		"RANK.EQ": "Rank.Eq",
+		"RATE": "Rate",
+		"RECEIVED": "Received",
+		"REPLACE": "Replace",
+		"REPLACEB": "ReplaceB",
+		"REPT": "Rept",
+		"ROMAN": "Roman",
+		"ROUND": "Round",
+		"ROUNDDOWN": "RoundDown",
+		"ROUNDUP": "RoundUp",
+		"RRI": "Rri",
+		"RSQ": "RSq",//not js
+		"RTD": "RTD",//not js
+		"SEARCH": "Search",//not js
+		"SEARCHB": "SearchB",//not js
+		"SEC": "Sec",
+		"SECH": "Sech",
+		"SERIESSUM": "SeriesSum",
+		"SINH": "Sinh",
+		"SKEW": "Skew",
+		"SKEW.P": "Skew.p",
+		"SLN": "Sln",
+		"SLOPE": "Slope",//not js
+		"SMALL": "Small",
+		"SQRTPI": "SqrtPi",
+		"STANDARDIZE": "Standardize",
+		"STDEV": "StDev",//not js
+		"STDEV.P": "StDev.P",//not js
+		"STDEV.S": "StDev.S",
+		"STDEVP": "StDevP",
+		"STEYX": "StEyx",//not js
+		"SUBSTITUTE": "Substitute",
+		"SUBTOTAL": "Subtotal",
+		"SUM": "Sum",
+		"SUMIF": "SumIf",
+		"SUMIFS": "SumIfs",
+		"SUMPRODUCT": "SumProduct",//not js
+		"SUMSQ": "SumSq",
+		"SUMX2MY2": "SumX2MY2",//not js
+		"SUMX2PY2": "SumX2PY2",//not js
+		"SUMXMY2": "SumXMY2",//not js
+		"SYD": "Syd",
+		"T.DIST": "T.Dist",
+		"T.DIST.2T": "T.Dist.2T",
+		"T.DIST.RT": "T.Dist.RT",
+		"T.INV": "T.Inv",
+		"T.INV.2T": "T.Inv.2T",
+		"T.TEST": "T.Test",//not js
+		"TANH": "Tanh",
+		"TBILLEQ": "TBillEq",
+		"TBILLPRICE": "TBillPrice",
+		"TBILLYIELD": "TBillYield",
+		"TDIST": "TDist",//not js
+		"TEXT": "Text",
+		"TINV": "TInv",//not js
+		"TRANSPOSE": "Transpose",//not js
+		"TREND": "Trend",//not js
+		"TRIM": "Trim",
+		"TRIMMEAN": "TrimMean",
+		"TTEST": "TTest",//not js
+		"UNICHAR": "Unichar",
+		"UNICODE": "Unicode",
+		//"USDOLLAR": "USDollar", //not support by OO
+		"VAR": "Var",//not js
+		"VAR.P": "Var.P",//not js
+		"VAR.S": "Var.S",
+		"VARP": "VarP",
+		"VDB": "Vdb",
+		"VLOOKUP": "VLookup",
+		"WEBSERVICE": "WebService",//not js
+		"WEEKDAY": "Weekday",
+		"WEEKNUM": "WeekNum",
+		"WEIBULL": "Weibull",//not js
+		"WEIBULL.DIST": "Weibull.Dist",
+		"WORKDAY": "WorkDay",
+		"WORKDAY.INTL": "WorkDay.Intl",
+		"XIRR": "Xirr",
+		"XNPV": "Xnpv",
+		"XOR": "Xor",
+		"YEARFRAC": "YearFrac",
+		"YIELDDISC": "YieldDisc",
+		"YIELDMAT": "YieldMat",
+		"Z.TEST": "Z.Test",
+		"ZTEST": "ZTest",//not js
+
+
+		//not in vba, only js:
+		//"INIT": "init", //not support by OO
+		//"AREAS": "areas", //not support by OO
+		"ATAN": "atan",
+		"AVERAGEA": "averageA",
+		"CHAR": "char",
+		"CODE": "code",
+		"COLUMNS": "columns",
+		"CONCATENATE": "concatenate",
+		"COS": "cos",
+		"DATE": "date",
+		"DATEVALUE": "datevalue",
+		"DAY": "day",
+		"ECMA.CEILING": "ecma.Ceiling",
+		"ERROR.TYPE": "error.Type",
+		"EXACT": "exact",
+		"EXP": "exp",
+		"FALSE": "false",
+		"HOUR": "hour",
+		"HYPERLINK": "hyperlink",
+		"IF": "if",
+		"INT": "int",
+		"ISREF": "isref",
+		"LEFT": "left",
+		"LEFTB": "leftb",
+		"LEN": "len",
+		"LENB": "lenb",
+		"LOWER": "lower",
+		"MAXA": "maxA",
+		"MID": "mid",
+		"MIDB": "midb",
+		"MINA": "minA",
+		"MINUTE": "minute",
+		"MOD": "mod",
+		"MONTH": "month",
+		"N": "n",
+		"NA": "na",
+		"NOT": "not",
+		"NOW": "now",
+		"RAND": "rand",
+		"RIGHT": "right",
+		"RIGHTB": "rightb",
+		"ROWS": "rows",
+		"SECOND": "second",
+		"SHEET": "sheet",
+		"SHEETS": "sheets",
+		"SIGN": "sign",
+		"SIN": "sin",
+		"SQRT": "sqrt",
+		"STDEVA": "stDevA",
+		"STDEVPA": "stDevPA",
+		"T": "t",
+		"TAN": "tan",
+		"TIME": "time",
+		"TIMEVALUE": "timevalue",
+		"TODAY": "today",
+		"TRUE": "true",
+		"TRUNC": "trunc",
+		"TYPE": "type",
+		"UPPER": "upper",
+		"VALUE": "value",
+		"VARA": "varA",
+		"VARPA": "varPA",
+		"YEAR": "year",
+		"YIELD": "yield"
 	};
 
-	function allFunctions() {
+	function CWorksheetFunctions() {
 		return this;
 	}
 
-	allFunctions.prototype.init = function () {
+	CWorksheetFunctions.prototype.init = function () {
 		for (let i in AscCommonExcel.cFormulaFunction) {
-			if (functionsMap[i]) {
-				let displayFunctionName = functionsMap[i];
-				allFunctions.prototype[displayFunctionName] = function () {
+			if (supportedFunctionsMap[i]) {
+				let displayFunctionName = supportedFunctionsMap[i];
+				CWorksheetFunctions.prototype[displayFunctionName] = function () {
 					return calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
 				}
 			}
 		}
 	};
 
-
-
-
-	allFunctions.prototype.accrInt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.accrIntM = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.acos = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.acosh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.acot = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.acoth = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.amorDegrc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.amorLinc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.and = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.arabic = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.areas = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.asc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.asin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.asinh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.atan = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.atan2 = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.atanh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.aveDev = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.average = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.averageA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.averageIf = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.averageIfs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bahtText = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.base = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.besselI = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.besselJ = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.besselK = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.besselY = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.beta_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.beta_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bin2Dec = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bin2Hex = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bin2Oct = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.binom_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.binom_Dist_Range = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.binom_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bitand = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bitlshift = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bitor = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bitrshift = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.bitxor = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ceiling_Math = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ceiling_Precise = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.char = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.chiSq_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.chiSq_Dist_RT = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.chiSq_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.chiSq_Inv_RT = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.choose = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.clean = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.code = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.columns = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.combin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.combina = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.complex = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.concatenate = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.confidence_Norm = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.confidence_T = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.convert = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.cos = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.cosh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.cot = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coth = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.count = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.countA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.countBlank = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.countIf = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.countIfs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupDayBs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupDays = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupDaysNc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupNcd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupNum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.coupPcd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.csc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.csch = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.cumIPmt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.cumPrinc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.daverage = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dcount = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dcountA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dget = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dmax = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dmin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dproduct = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dstDev = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dstDevP = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dsum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dvar = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dvarP = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.date = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.datevalue = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.day = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.days = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.days360 = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.db = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dbcs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ddb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dec2Bin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dec2Hex = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dec2Oct = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.decimal = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.degrees = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.delta = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.devSq = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.disc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dollar = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dollarDe = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.dollarFr = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.duration = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ecma_Ceiling = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.edate = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.effect = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.eoMonth = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.erf = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.erfC = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.erfC_Precise = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.erf_Precise = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.error_Type = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.even = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.exact = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.exp = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.expon_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fvschedule = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.f_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.f_Dist_RT = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.f_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.f_Inv_RT = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fact = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.factDouble = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.false = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.find = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.findB = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fisher = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fisherInv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fixed = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.floor_Math = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.floor_Precise = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.fv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gamma = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gammaLn = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gammaLn_Precise = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gamma_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gamma_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gauss = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.gcd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.geStep = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.geoMean = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hlookup = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.harMean = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hex2Bin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hex2Dec = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hex2Oct = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hour = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hypGeom_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.hyperlink = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.iso_Ceiling = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.if = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imAbs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imArgument = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imConjugate = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imCos = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imCosh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imCot = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imCsc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imCsch = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imDiv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imExp = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imLn = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imLog10 = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imLog2 = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imPower = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imProduct = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imReal = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSec = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSech = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSinh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSqrt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSub = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imSum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imTan = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.imaginary = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.int = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.intRate = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ipmt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.irr = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isErr = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isError = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isEven = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isFormula = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isLogical = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isNA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isNonText = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isNumber = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isOdd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isText = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isoWeekNum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ispmt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.isref = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.kurt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.large = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.lcm = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.left = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.leftb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.len = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.lenb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ln = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.log = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.log10 = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.logNorm_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.logNorm_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.lookup = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.lower = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.mduration = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.mirr = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.mround = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.match = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.max = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.maxA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.median = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.mid = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.midb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.min = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.minA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.minute = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.mod = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.month = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.multiNomial = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.n = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.nper = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.na = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.negBinom_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.networkDays = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.networkDays_Intl = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.nominal = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.norm_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.norm_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.norm_S_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.norm_S_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.not = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.now = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.npv = function () {
-
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.numberValue = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oct2Bin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oct2Dec = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oct2Hex = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.odd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oddFPrice = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oddFYield = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oddLPrice = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.oddLYield = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.or = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.pduration = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.percentRank_Exc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.percentRank_Inc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.percentile_Exc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.percentile_Inc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.permut = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.permutationa = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.phi = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.pi = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.pmt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.poisson_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.power = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.ppmt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.price = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.priceDisc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.priceMat = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.product = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.proper = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.pv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.quartile_Exc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.quartile_Inc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.quotient = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.radians = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rand = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.randBetween = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rank_Avg = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rank_Eq = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rate = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.received = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.replace = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.replaceB = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rept = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.right = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rightb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.roman = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.round = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.roundDown = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.roundUp = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rows = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.rri = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sec = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sech = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.second = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.seriesSum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sheet = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sheets = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sign = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sin = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sinh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.skew = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.skew_p = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sln = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.small = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sqrt = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sqrtPi = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.stDevA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.stDevPA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.stDev_P = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.stDev_S = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.standardize = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.substitute = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.subtotal = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sumIf = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sumIfs = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.sumSq = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.syd = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.tbillEq = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.tbillPrice = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.tbillYield = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t_Dist_2T = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t_Dist_RT = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t_Inv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.t_Inv_2T = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.tan = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.tanh = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.text = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.time = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.timevalue = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.today = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.trim = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.trimMean = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.true = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.trunc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.type = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.usdollar = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.unichar = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.unicode = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.upper = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.vlookup = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.value = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.varA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.varPA = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.var_P = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.var_S = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.vdb = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.weekNum = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.weekday = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.weibull_Dist = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.workDay = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.workDay_Intl = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.xirr = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.xnpv = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.xor = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.year = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.yearFrac = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.yield = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.yieldDisc = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.yieldMat = function () {
-		return calculateFunction(arguments)
-	};
-	allFunctions.prototype.z_Test = function () {
-		return calculateFunction(arguments)
-	};
-
-
-
-
-
-	Api.prototype.WorksheetFunction = new allFunctions();
+	Api.prototype.WorksheetFunction = new CWorksheetFunctions();
 
 
 	/**
