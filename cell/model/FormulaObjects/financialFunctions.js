@@ -710,19 +710,14 @@ function (window, undefined) {
 			settl = settlement === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(settlement),
 			numMonths = 12 / frequency,
 			numMonthsNeg = -numMonths,
-			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
+			endMonth = fInter.lastDayOfMonth() || (fInter.getUTCDate() === 30 && basis === AscCommonExcel.DayCountBasis.UsPsa30_360), 
+			coupPCD, firstDate, startDate, endDate, res, days, coupDays;
 
 		let mainCoupPcd = lcl_GetCouppcd(iss, fInter, frequency);
 		// if the first coupon period === 0, return 0 as in MS
 		if (mainCoupPcd.getExcelDate() <= 0) {
 			return new cNumber(0);
 		}
-
-		// if (fInter < iss) {
-		// 	firstDate = new cDate(iss);
-		// 	calcMethod = true;
-		// 	fInter = iss;
-		// }
 
 		if (settl > fInter && calcMethod) {
 			coupPCD = new cDate(fInter);
@@ -742,22 +737,26 @@ function (window, undefined) {
 		mainCoupPcd = lcl_GetCouppcd(settl, fInter, frequency);
 
 		// if first coup period, get date difference by default
-		if (calcMethod) {
-			days = AscCommonExcel.days360(firstDate, settl, basis, true);
+		if (mainCoupPcd < iss) {
+			days = AscCommonExcel.diffDate(firstDate, settl, basis).getValue();
 		} else {
-			// find first interest lesser than settlement date
-			if (mainCoupPcd < iss) {
-				days = AscCommonExcel.diffDate(firstDate, settl, basis).getValue();
-			} else {
-				days = AscCommonExcel.days360(firstDate, settl, basis, true);
-			}
+			days = AscCommonExcel.days360(firstDate, settl, basis, true);
 		}
+		
+		// if the first date was greater, change the sign of the day difference to minus
+		days = Math.abs(days) * (firstDate > settl ? -1 : 1);
 
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
 		res = days / coupDays;
 		startDate = new cDate(coupPCD);
 		endDate = iss;
-
+	
+		// res - the coefficient that we use in the formula res * par * rate / frequency
+		// is found by iterating from the first coupon date to the issue date of the bond
+		// 1 step equals the number of months in the coupon period (12, 6, 3)
+		// at each iteration, the issue date and the current coupon date (with the step) are checked, and depending on the result, a number is added to the coefficient:
+		// - 1 or 0 depending on the calc_method used
+		// - or a fraction - the result of dividing the difference in days between the previous step's date and the current date by the number of days in the coupon period
 		while (!(numMonthsNeg > 0 ? startDate >= iss : startDate <= iss)) {
 			endDate = startDate;
 			startDate = addMonth(startDate, numMonthsNeg, endMonth);
