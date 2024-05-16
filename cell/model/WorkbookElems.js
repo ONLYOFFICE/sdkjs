@@ -47,6 +47,7 @@ var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 var UndoRedoDataTypes = AscCommonExcel.UndoRedoDataTypes;
 var UndoRedoData_IndexSimpleProp = AscCommonExcel.UndoRedoData_IndexSimpleProp;
+var UndoRedoData_FromTo = AscCommonExcel.UndoRedoData_FromTo;
 
 var UndoRedoData_Layout = AscCommonExcel.UndoRedoData_Layout;
 
@@ -17000,6 +17001,249 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	/**
+	 * Class representing "Formulas" properties specifies calculation options
+	 * @constructor
+	 */
+	function CCalcPr() {
+		this.calcId = null;
+		this.calcMode = null;
+		this.fullCalcOnLoad = null;
+		this.refMode = null;
+		this.iterate = null;
+		this.iterateCount = null;
+		this.iterateDelta = null;
+		this.fullPrecision = null;
+		this.calcCompleted = null;
+		this.calcOnSave = null;
+		this.concurrentCalc = null;
+		this.concurrentManualCount = null;
+		this.forceFullCalc = null;
+	}
+
+	/**
+	 * Method clones calculation options
+	 * @memberof CCalcPr
+	 * @returns {CCalcPr}
+	 */
+	CCalcPr.prototype.clone = function () {
+		var res = new CCalcPr();
+
+		res.calcId = this.calcId;
+		res.calcMode = this.calcMode;
+		res.fullCalcOnLoad = this.fullCalcOnLoad;
+		res.refMode = this.refMode;
+		res.iterate = this.iterate;
+		res.iterateCount = this.iterateCount;
+		res.iterateDelta = this.iterateDelta;
+		res.fullPrecision = this.fullPrecision;
+		res.calcCompleted = this.calcCompleted;
+		res.calcOnSave = this.calcOnSave;
+		res.concurrentCalc = this.concurrentCalc;
+		res.concurrentManualCount = this.concurrentManualCount;
+		res.forceFullCalc = this.forceFullCalc;
+
+		return res;
+	};
+	/**
+	 * Method returns "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @returns {boolean}
+	 */
+	CCalcPr.prototype.getIterate = function () {
+		return this.iterate;
+	};
+	/**
+	 * Method returns "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateCount = function () {
+		return this.iterateCount;
+	};
+	/**
+	 * Method returns "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateDelta = function () {
+		return this.iterateDelta;
+	};
+	/**
+	 * Method returns "calcMode" attribute specifies when the application should calculate formulas in the workbook.
+	 * @memberof CCalcPr
+	 * @returns {Asc.c_oAscCalcMode}
+	 */
+	CCalcPr.prototype.getCalcMode = function () {
+		return this.calcMode;
+	};
+	/**
+	 * Method sets "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @param {boolean} bIterate
+	 */
+	CCalcPr.prototype.setIterate = function (bIterate) {
+		const DEFAULT_ITERATE = false;
+		this.iterate = DEFAULT_ITERATE !== bIterate ? bIterate : null;
+	};
+	/**
+	 * Method sets "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateCount
+	 */
+	CCalcPr.prototype.setIterateCount = function (nIterateCount) {
+		const DEFAULT_ITER_COUNT = 100;
+		this.iterateCount = DEFAULT_ITER_COUNT !== nIterateCount ? nIterateCount : null;
+	};
+	/**
+	 * Method sets "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateDelta
+	 */
+	CCalcPr.prototype.setIterateDelta = function (nIterateDelta) {
+		const DEFAULT_ITER_DELTA = 1e-3;
+		this.iterateDelta = DEFAULT_ITER_DELTA !== nIterateDelta ? nIterateDelta : null;
+	};
+	/**
+	 * Method updates calcPr attributes
+	 * @memberof CCalcPr
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	CCalcPr.prototype.updateCalcProperties = function (oCalcSettings, oWbModel) {
+		let bIterativeCalc = oCalcSettings.asc_getIterativeCalc();
+		let nMaxIterations = oCalcSettings.asc_getMaxIterations();
+		let nMaxChange = oCalcSettings.asc_getMaxChange();
+
+		let bOldIterate = this.getIterate();
+		let nOldIterateCount = this.getIterateCount();
+		let nOldIterateDelta = this.getIterateDelta();
+
+		this.setIterate(bIterativeCalc);
+		this.setIterateCount(nMaxIterations);
+		this.setIterateDelta(nMaxChange);
+
+		if (History.Is_On()) {
+			let oUpdateSheet = oWbModel.getActiveWs();
+			let oUpdateRange = new Asc.Range(0, 0, oUpdateSheet.getColsCount(), oUpdateSheet.getRowsCount());
+
+			if (this.getIterate() !== bOldIterate) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterate,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(bOldIterate, this.getIterate()));
+			}
+			if (this.getIterateCount() !== nOldIterateCount) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateCount,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateCount, this.getIterateCount()));
+			}
+			if (this.getIterateDelta() !== nOldIterateDelta) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateDelta,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateDelta, this.getIterateDelta()));
+			}
+		}
+	};
+
+	/**
+	 * Class representing calculation settings for UI interface
+	 * @constructor
+	 */
+	function asc_CCalcSettings() {
+		// Default values if calcPr is empty
+		this.bIterativeCalc = false;
+		this.nMaxIterations = 100;
+		this.nMaxChange = 1e-3;
+	}
+
+	/**
+	 * Method sets "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {boolean} bIterativeCalc
+	 */
+	asc_CCalcSettings.prototype.asc_setIterativeCalc = function (bIterativeCalc) {
+		this.bIterativeCalc = bIterativeCalc
+	};
+	/**
+	 * Method returns "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {boolean}
+	 */
+	asc_CCalcSettings.prototype.asc_getIterativeCalc = function () {
+		return this.bIterativeCalc;
+	};
+	/**
+	 * Method sets "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxIterations
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxIterations = function (nMaxIterations) {
+		this.nMaxIterations = nMaxIterations;
+	};
+	/**
+	 * Method returns "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxIterations = function () {
+		return this.nMaxIterations;
+	};
+	/**
+	 * Method sets "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxChange
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxChange = function (nMaxChange) {
+		this.nMaxChange = nMaxChange;
+	};
+	/**
+	 * Method returns "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxChange = function () {
+		return this.nMaxChange;
+	};
+	/**
+	 * Method initializes settings according CalcPr
+	 * @memberof asc_CCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	asc_CCalcSettings.prototype.asc_initSettings = function (oWbModel) {
+		const oCalcPr = oWbModel.calcPr;
+		if (oCalcPr.getIterate() != null) {
+			this.asc_setIterativeCalc(oCalcPr.getIterate());
+		}
+		if (oCalcPr.getIterateCount() != null) {
+			this.asc_setMaxIterations(oCalcPr.getIterateCount());
+		}
+		if (oCalcPr.getIterateDelta() != null) {
+			this.asc_setMaxChange(oCalcPr.getIterateDelta());
+		}
+	};
+	/**
+	 * Method checks if the given CalcPr object is equal to the current object.
+	 * @memberof asc_CCalcSettings
+	 * @param {CCalcPr} oCalcPr - The CalcPr to compare with.
+	 * @returns {boolean} - True if the objects are equal, false otherwise.
+	 */
+	asc_CCalcSettings.prototype.asc_isEqual = function (oCalcPr) {
+		const DEFAULT_ITERATE = false;
+		const DEFAULT_MAX_ITERATE = 100;
+		const DEFAULT_MAX_CHANGE = 1e-3;
+
+		const bIterativeCalcEqual = this.asc_getIterativeCalc() === oCalcPr.getIterate();
+		const bMaxIterationEqual = this.asc_getMaxIterations() === oCalcPr.getIterateCount();
+		const bMaxChangeEqual = this.asc_getMaxChange() === oCalcPr.getIterateDelta();
+		const bIterCalcDefaultVal = this.asc_getIterativeCalc() === DEFAULT_ITERATE && oCalcPr.getIterate() == null;
+		const bMaxIterDefaultVal = this.asc_getMaxIterations() === DEFAULT_MAX_ITERATE && oCalcPr.getIterateCount() == null;
+		const bMaxChangeDefaultVal = this.asc_getMaxChange() === DEFAULT_MAX_CHANGE && oCalcPr.getIterateDelta() == null;
+
+		return (bIterativeCalcEqual && bMaxIterationEqual && bMaxChangeEqual) ||
+			(bIterCalcDefaultVal && bMaxIterDefaultVal && bMaxChangeDefaultVal);
+	};
+
 	//****metadata****
 	function CMetadata() {
 		this.metadataTypes = null;
@@ -17450,7 +17694,7 @@ function RangeDataManagerElem(bbox, data)
 		if (!aArgs) {
 			return argsInfo;
 		}
-		
+
 		let paramsMap = {};
 		if (params) {
 			for (let i in params) {
@@ -18321,6 +18565,19 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
+
+	window["AscCommonExcel"].CCalcPr = CCalcPr;
+
+	window["Asc"]["asc_CCalcSettings"] = window["Asc"].asc_CCalcSettings = asc_CCalcSettings;
+	prot = asc_CCalcSettings.prototype;
+	prot["asc_getIterativeCalc"] = prot.asc_getIterativeCalc;
+	prot["asc_getMaxIterations"] = prot.asc_getMaxIterations;
+	prot["asc_getMaxChange"] = prot.asc_getMaxChange;
+
+	prot["asc_setIterativeCalc"] = prot.asc_setIterativeCalc;
+	prot["asc_setMaxIterations"] = prot.asc_setMaxIterations;
+	prot["asc_setMaxChange"] = prot.asc_setMaxChange;
+	prot["asc_initSettings"] = prot.asc_initSettings;
 
 	window["AscCommonExcel"].CMetadata = CMetadata;
 	window["AscCommonExcel"].CMetadataType = CMetadataType;

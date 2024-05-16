@@ -636,6 +636,12 @@ var c_oAscPopUpSelectorType = {
     changeSeries : 1  // fill right click mouse - series menu
   };
 
+  var c_oAscCalcMode = {
+    auto: 0,
+    autoNoTable: 1,
+    manual: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -1091,5 +1097,11 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscContextMenuTypes;
   prot['common'] = prot.common;
   prot['changeSeries'] = prot.changeSeries;
+
+  window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+  prot = c_oAscCalcMode;
+  prot['auto'] = prot.auto;
+  prot['autoNoTable'] = prot.autoNoTable;
+  prot['manual'] = prot.manual;
 
 })(window);

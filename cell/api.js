@@ -9138,6 +9138,29 @@ var editor;
 		return ws && ws.cleanFillHandleProps();
 	};
 
+	/**
+	 * Returns values of calculation options
+	 * @returns {asc_CCalcSettings}
+	 */
+	spreadsheet_api.prototype.asc_GetCalcSettings = function () {
+		let wbModel = this.wbModel
+		if (!wbModel) {
+			return;
+		}
+		let res = new Asc.asc_CCalcSettings();
+
+		res.asc_initSettings(wbModel);
+
+		return res;
+	};
+	/**
+	 * Updates the calculation options.
+	 * @param {asc_CCalcSettings} oCalcSettings - The calculation options changed from UI.
+	 */
+	spreadsheet_api.prototype.asc_UpdateCalcSettings = function (oCalcSettings) {
+		this.wb.updateCalcSettings(oCalcSettings);
+	};
+
 	spreadsheet_api.prototype.addCustomFunction = function(func, options) {
 		let wb = this.wb;
 		if (!wb) {
@@ -9721,15 +9744,18 @@ var editor;
 
   prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
-  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
-  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
-  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
-  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
-  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
+  prot["asc_StartGoalSeek"] = prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"] = prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"] = prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"] = prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"] = prot.asc_StepGoalSeek;
 
-  prot["asc_GetSeriesSettings"]= prot.asc_GetSeriesSettings;
-  prot["asc_FillCells"]= prot.asc_FillCells;
-  prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
+  prot["asc_GetSeriesSettings"] = prot.asc_GetSeriesSettings;
+  prot["asc_FillCells"] = prot.asc_FillCells;
+  prot["asc_CancelFillCells"] = prot.asc_CancelFillCells;
+
+  prot["asc_GetCalcSettings"] = prot.asc_GetCalcSettings;
+  prot["asc_UpdateCalcSettings"] = prot.asc_UpdateCalcSettings;
 
 
 

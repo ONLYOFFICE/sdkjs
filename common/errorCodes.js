@@ -167,6 +167,8 @@
 			PivotGroup					: -315,
 			PivotWithoutUnderlyingData	: -316,
 
+			CircularReference			: -320,
+
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,
 			Submit: -333,

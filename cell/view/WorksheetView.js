@@ -16777,19 +16777,6 @@
 				ret = r;
 			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? dynamicSelectionRange : null);
 
-			if (!applyByArray) {
-				t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
-					let formulaParsed = cell && cell.formulaParsed;
-					if(formulaParsed && !formulaParsed.ref) {
-						formulaParsed.calculate();
-						if (formulaParsed.ref) {
-							applyByArray = true;
-							ctrlKey = true;
-						}
-					}
-				});
-			}
-
 			// recalc all volatile arrays on page
 			t.model.recalculateVolatileArrays();
 

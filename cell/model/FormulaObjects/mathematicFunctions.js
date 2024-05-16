@@ -3834,7 +3834,11 @@ function (window, undefined) {
 			let firstNumber = Math.ceil(a);
 			let secondNumber = Math.floor(b);
 
-			return new cNumber(Math.round(Math.random() * Math.abs(firstNumber - secondNumber)) + firstNumber);
+			if (firstNumber === secondNumber) {
+				return new cNumber(firstNumber);
+			}
+
+			return new cNumber(Math.floor(Math.random() * (secondNumber - firstNumber + 1)) + firstNumber);
 		}
 
 		function f(a, b, r, c) {
