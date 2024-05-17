@@ -973,10 +973,14 @@
 			this.shapeSmartArtInfo.setParent(this);
 		}
 		CShape.prototype.isActiveBlipFillPlaceholder = function () {
-			var shapePoint = this.getSmartArtShapePoint();
+			const shapePoint = this.getSmartArtShapePoint();
 			if (shapePoint) {
-				var isNotBlipFill = shapePoint.isBlipFillPlaceholder() && (shapePoint.spPr && !shapePoint.spPr.Fill || !shapePoint.spPr);
-				return isNotBlipFill;
+				let isContentFill = false;
+				const contentPoints = this.getSmartArtPointContent();
+				if (contentPoints && contentPoints[0]) {
+					isContentFill = contentPoints[0].spPr && contentPoints[0].spPr.Fill;
+				}
+				return shapePoint.isBlipFillPlaceholder() && !(shapePoint.spPr && shapePoint.spPr.Fill) && !isContentFill;
 			}
 		}
 		CShape.prototype.getSmartArtInfo = function () {
