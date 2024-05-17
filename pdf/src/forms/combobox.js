@@ -398,64 +398,43 @@
             }
         }
     };
-    CComboBoxField.prototype.UpdateTextSelection = function() {
-		// убираем селект, выставляем из nSelStart/nSelEnd
-		let oDoc = this.GetDocument();
-		let nSelStart = oDoc.event["selStart"];
-		let nSelEnd = oDoc.event["selEnd"];
-	
-		let oDocPos  = this.CalcDocPos(nSelStart, nSelEnd);
-		let startPos = oDocPos.startPos;
-		let endPos   = oDocPos.endPos;
-	
-		this.content.RemoveSelection();
-		if (nSelStart === nSelEnd)
-			this.content.SetContentPosition(startPos, 0, 0);
-		else
-			this.content.SetSelectionByContentPositions(startPos, endPos);
-	};
 	CComboBoxField.prototype.EnterText = function(aChars) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        if (this.DoKeystrokeAction(aChars) == false) {
-            AscCommon.History.Remove_LastPoint();
-            return false;
-        }
-
-        let nSelStart = oDoc.event["selStart"];
-        let nSelEnd = oDoc.event["selEnd"];
-
-        // убираем селект, выставляем из nSelStart/nSelEnd
-        if (this.content.IsSelectionUse())
-            this.content.RemoveSelection();
-
-        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
-        let startPos    = oDocPos.startPos;
-        let endPos      = oDocPos.endPos;
-        
-        if (nSelStart == nSelEnd) {
-            this.content.SetContentPosition(startPos, 0, 0);
-            this.content.RecalculateCurPos();
-        }
-        else
-            this.content.SetSelectionByContentPositions(startPos, endPos);
-
-        if (nSelStart != nSelEnd)
-            this.content.Remove(-1, true, false, false, false);
-
-        this.SetNeedRecalc(true);
-        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
-        if (aChars.length == 0) {
-            return false;
-        }
-
-        this.InsertChars(aChars);
-        this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
-        this._bAutoShiftContentView = true && this._doNotScroll == false;
-
-        return true;
-    };
+		if (!this.DoKeystrokeAction(aChars))
+			return false;
+		
+		let doc = this.GetDocument();
+		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		if (!aChars.length)
+			return false;
+		
+		this.UpdateTextSelection();
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		this.content.EnterText(aChars);
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this._doNotScroll == false;
+		return true;
+	};
+	CComboBoxField.prototype.CorrectEnterText = function(oldValue, newValue) {
+		if (!this.DoKeystrokeAction(newValue))
+			return false;
+		
+		let doc = this.GetDocument();
+		newValue = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		if (!newValue.length && !oldValue.length)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this._doNotScroll == false;
+		return true;
+	};
     /**
 	 * Applies value of this field to all field with the same name.
 	 * @memberof CComboBoxField
@@ -527,21 +506,9 @@
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
-    CComboBoxField.prototype.InsertChars = function(aChars) {
-        let oPara = this.content.GetElement(0);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let codePoint = aChars[index];
-            if (9 === codePoint) // \t
-				oPara.AddToParagraph(new AscWord.CRunTab(), true);
-			else if (10 === codePoint || 13 === codePoint) // \n \r
-				oPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), true);
-			else if (AscCommon.IsSpace(codePoint)) // space
-				oPara.AddToParagraph(new AscWord.CRunSpace(codePoint), true);
-			else
-				oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
-        }
-    };
+	CComboBoxField.prototype.InsertChars = function(aChars) {
+		this.content.EnterText(aChars);
+	};
 	CComboBoxField.prototype.canBeginCompositeInput = function() {
 		return this.IsEditable();
 	};
@@ -804,6 +771,7 @@
     CComboBoxField.prototype.UpdateDisplayValue     = AscPDF.CTextField.prototype.UpdateDisplayValue;
     CComboBoxField.prototype.onMouseUp              = AscPDF.CTextField.prototype.onMouseUp;
     CComboBoxField.prototype.OnContentChange        = AscPDF.CTextField.prototype.OnContentChange;
+	CComboBoxField.prototype.UpdateTextSelection    = AscPDF.CTextField.prototype.UpdateTextSelection;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

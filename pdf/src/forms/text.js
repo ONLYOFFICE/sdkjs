@@ -1517,7 +1517,24 @@
 
         return { startPos: StartPos, endPos: EndPos }
     };
-    CTextField.prototype.WriteToBinary = function(memory) {
+	CTextField.prototype.UpdateTextSelection = function() {
+		// убираем селект, выставляем из nSelStart/nSelEnd
+		let doc = this.GetDocument();
+		
+		let selStart = doc.event["selStart"];
+		let selEnd   = doc.event["selEnd"];
+		
+		let docPos = this.CalcDocPos(selStart, selEnd);
+		let startPos = docPos.startPos;
+		let endPos   = docPos.endPos;
+		
+		this.content.RemoveSelection();
+		if (selStart === selEnd)
+			this.content.SetContentPosition(startPos, 0, 0);
+		else
+			this.content.SetSelectionByContentPositions(startPos, endPos);
+	};
+	CTextField.prototype.WriteToBinary = function(memory) {
 		memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
         // длина комманд
