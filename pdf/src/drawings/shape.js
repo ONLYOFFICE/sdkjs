@@ -106,43 +106,6 @@
         }
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun) {
-                oContent.AddToParagraph(oRun, false);
-            }
-        }
-
-        this.SetNeedRecalc(true);
-        return true;
-    };
-    /**
-     * Removes char in current position by direction.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfShape.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        this.SetNeedRecalc(true);
-
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-        else {
-            this.SetNeedRecalc(true);
-        }
-    };
-
     CPdfShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         

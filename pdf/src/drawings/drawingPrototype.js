@@ -200,6 +200,45 @@
     CPdfDrawingPrototype.prototype.IsInTextBox = function() {
         return this.isInTextBox;
     };
+	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		
+		if (!doc || !content)
+			return;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		content.Remove(direction, true, false, false, isWord);
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		
+		if (AscCommon.History.Is_LastPointEmpty())
+			AscCommon.History.Remove_LastPoint();
+	};
+	CPdfDrawingPrototype.prototype.EnterText = function(value) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		if (!doc || !content)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		let result = content.EnterText(value);
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		return result;
+	};
+	CPdfDrawingPrototype.prototype.CorrectEnterText = function(oldValue, newValue) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		if (!doc || !content)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		let result = content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		return result;
+	};
     
     /////////////////////////////
     /// saving

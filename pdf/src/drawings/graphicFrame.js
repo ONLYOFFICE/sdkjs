@@ -52,26 +52,6 @@
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
-    CPdfGraphicFrame.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun)
-                oParagraph.AddToParagraph(oRun, true);
-        }
-
-        this.SetNeedRecalc(true);
-        return true;
-    };
     CPdfGraphicFrame.prototype.updateCursorType = function (x, y, e) {
 		var tx = this.invertTransform.TransformPointX(x, y);
 		var ty = this.invertTransform.TransformPointY(x, y);
