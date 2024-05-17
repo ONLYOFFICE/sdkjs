@@ -753,7 +753,7 @@
 	Api.prototype.GetWorksheetFunction = function () {
 		if (!this.oWorksheetFunction) {
 			this.oWorksheetFunction = new ApiWorksheetFunction();
-			this.oWorksheetFunction.init();
+			//this.oWorksheetFunction.init();
 		}
 		return this.oWorksheetFunction;
 	};
@@ -1230,8 +1230,12 @@
 		"YIELD": "yield"
 	};
 
-	function calculateFunction (func, arg) {
+	function calculateFunction (sFunc, arg) {
 		//check
+		let func = AscCommonExcel.cFormulaFunction[sFunc].prototype;
+		if (!func) {
+			return;
+		}
 		let argsCount = arg.length;
 		if (!func.checkArguments(argsCount)) {
 			throwException(new Error('Arguments count error.'));
@@ -1289,14 +1293,5008 @@
 	}
 
 	ApiWorksheetFunction.prototype.init = function () {
+		let getArgType = function (_arg) {
+
+			let res = "any";
+			if (_arg === Asc.c_oAscFormulaArgumentType.number) {
+				res = "number"
+			} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
+				res = "string"
+			} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
+				res = "ApiRange"
+			} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
+				res = "boolean"
+			}
+			return res;
+		};
+
+		let test = ""
 		for (let i in AscCommonExcel.cFormulaFunction) {
 			if (supportedFunctionsMap[i]) {
+
+				//if (i === "SERIESSUM") {
+					let test1 = "";
+					let test2 = ""
+					let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax
+					let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin
+					if (maxArg < 10) {
+						for (let j = 1; j <= maxArg; j++) {
+							let test12 = "arg" + (j)
+
+							test1 += "\t * @param {" + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
+							if (j <= minArg) {
+								test1 += test12;
+							} else {
+								test1 += "[" + test12 + "]";
+							}
+							test1 +=  ".\n";
+
+							test2 += j === maxArg ? test12 : (test12 + ",")
+						}
+					}
+
+
+					test += "/**\n" + "\t * Returns the result of calculating the function.\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
+						+ "\t * @returns {}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\tcalculateFunction(\"" + i + "\", arguments);\n" + "\t};"
+				//}
+
+				test += "\n"
+
+
+
 				ApiWorksheetFunction.prototype[i] = function () {
 					return calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
 				}
 			}
 		}
+		console.log(test)
 	};
+
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ASC = function (arg1) {
+		return calculateFunction("ASC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
+		return calculateFunction("CHAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
+		return calculateFunction("CLEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CODE = function (arg1) {
+		return calculateFunction("CODE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CONCATENATE = function () {
+		return calculateFunction("CONCATENATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
+		return calculateFunction("DOLLAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
+		return calculateFunction("EXACT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
+		return calculateFunction("FIND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
+		return calculateFunction("FINDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {boolean} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
+		return calculateFunction("FIXED", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
+		return calculateFunction("LEFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
+		return calculateFunction("LEFTB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LEN = function (arg1) {
+		return calculateFunction("LEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LENB = function (arg1) {
+		return calculateFunction("LENB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
+		return calculateFunction("LOWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
+		return calculateFunction("MID", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
+		return calculateFunction("MIDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} [arg2].
+	 * @param {string} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
+		return calculateFunction("NUMBERVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
+		return calculateFunction("PROPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {string} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("REPLACE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {string} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("REPLACEB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
+		return calculateFunction("REPT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
+		return calculateFunction("RIGHT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
+		return calculateFunction("RIGHTB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
+		return calculateFunction("SEARCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
+		return calculateFunction("SEARCHB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {string} arg3.
+	 * @param {string} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("SUBSTITUTE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T = function (arg1) {
+		return calculateFunction("T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {string} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
+		return calculateFunction("TEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
+		return calculateFunction("TRIM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
+		return calculateFunction("UNICHAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
+		return calculateFunction("UNICODE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
+		return calculateFunction("UPPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
+		return calculateFunction("VALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AVEDEV = function () {
+		return calculateFunction("AVEDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGE = function () {
+		return calculateFunction("AVERAGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEA = function () {
+		return calculateFunction("AVERAGEA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEIF = function (arg1, arg2, arg3) {
+		return calculateFunction("AVERAGEIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEIFS = function () {
+		return calculateFunction("AVERAGEIFS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BETADIST = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("BETADIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BETA_DIST = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("BETA.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BETA_INV = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("BETA.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BETAINV = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("BETAINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BINOMDIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("BINOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("BINOM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_DIST.RANGE = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("BINOM.DIST.RANGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_INV = function (arg1, arg2, arg3) {
+		return calculateFunction("BINOM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHIDIST = function (arg1, arg2) {
+		return calculateFunction("CHIDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHIINV = function (arg1, arg2) {
+		return calculateFunction("CHIINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_DIST = function (arg1, arg2, arg3) {
+		return calculateFunction("CHISQ.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_DIST.RT = function (arg1, arg2) {
+		return calculateFunction("CHISQ.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_INV = function (arg1, arg2) {
+		return calculateFunction("CHISQ.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_INV.RT = function (arg1, arg2) {
+		return calculateFunction("CHISQ.INV.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
+		return calculateFunction("CHITEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_TEST = function (arg1, arg2) {
+		return calculateFunction("CHISQ.TEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE = function (arg1, arg2, arg3) {
+		return calculateFunction("CONFIDENCE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE_NORM = function (arg1, arg2, arg3) {
+		return calculateFunction("CONFIDENCE.NORM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
+		return calculateFunction("CONFIDENCE.T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CORREL = function (arg1, arg2) {
+		return calculateFunction("CORREL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUNT = function () {
+		return calculateFunction("COUNT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUNTA = function () {
+		return calculateFunction("COUNTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUNTBLANK = function (arg1) {
+		return calculateFunction("COUNTBLANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUNTIF = function (arg1, arg2) {
+		return calculateFunction("COUNTIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUNTIFS = function () {
+		return calculateFunction("COUNTIFS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COVAR = function (arg1, arg2) {
+		return calculateFunction("COVAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COVARIANCE_P = function (arg1, arg2) {
+		return calculateFunction("COVARIANCE.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COVARIANCE_S = function (arg1, arg2) {
+		return calculateFunction("COVARIANCE.S", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CRITBINOM = function (arg1, arg2, arg3) {
+		return calculateFunction("CRITBINOM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DEVSQ = function () {
+		return calculateFunction("DEVSQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EXPON_DIST = function (arg1, arg2, arg3) {
+		return calculateFunction("EXPON.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EXPONDIST = function (arg1, arg2, arg3) {
+		return calculateFunction("EXPONDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.F_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("F.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FDIST = function (arg1, arg2, arg3) {
+		return calculateFunction("FDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.F_DIST.RT = function (arg1, arg2, arg3) {
+		return calculateFunction("F.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.F_INV = function (arg1, arg2, arg3) {
+		return calculateFunction("F.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FINV = function (arg1, arg2, arg3) {
+		return calculateFunction("FINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.F_INV.RT = function (arg1, arg2, arg3) {
+		return calculateFunction("F.INV.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FISHER = function (arg1) {
+		return calculateFunction("FISHER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
+		return calculateFunction("FISHERINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST = function (arg1, arg2, arg3) {
+		return calculateFunction("FORECAST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("FORECAST.ETS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @param {number} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.CONFINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("FORECAST.ETS.CONFINT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {number} [arg3].
+	 * @param {number} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.SEASONALITY = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("FORECAST.ETS.STAT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_LINEAR = function (arg1, arg2, arg3) {
+		return calculateFunction("FORECAST.LINEAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
+		return calculateFunction("FREQUENCY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FTEST = function (arg1, arg2) {
+		return calculateFunction("FTEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.F_TEST = function (arg1, arg2) {
+		return calculateFunction("F.TEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA = function (arg1) {
+		return calculateFunction("GAMMA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("GAMMA.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMADIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("GAMMADIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA_INV = function (arg1, arg2, arg3) {
+		return calculateFunction("GAMMA.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMAINV = function (arg1, arg2, arg3) {
+		return calculateFunction("GAMMAINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMALN = function (arg1) {
+		return calculateFunction("GAMMALN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAMMALN_PRECISE = function (arg1) {
+		return calculateFunction("GAMMALN.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GAUSS = function (arg1) {
+		return calculateFunction("GAUSS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GEOMEAN = function () {
+		return calculateFunction("GEOMEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {ApiRange} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("GROWTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HARMEAN = function () {
+		return calculateFunction("HARMEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HYPGEOMDIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("HYPGEOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {boolean} arg5.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("HYPGEOM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.INTERCEPT = function (arg1, arg2) {
+		return calculateFunction("INTERCEPT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.KURT = function () {
+		return calculateFunction("KURT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
+		return calculateFunction("LARGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {boolean} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("LINEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {boolean} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOGEST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("LOGEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOGINV = function (arg1, arg2, arg3) {
+		return calculateFunction("LOGINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORM_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("LOGNORM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORM_INV = function (arg1, arg2, arg3) {
+		return calculateFunction("LOGNORM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORMDIST = function (arg1, arg2, arg3) {
+		return calculateFunction("LOGNORMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MAX = function () {
+		return calculateFunction("MAX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MAXA = function () {
+		return calculateFunction("MAXA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MEDIAN = function () {
+		return calculateFunction("MEDIAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MIN = function () {
+		return calculateFunction("MIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MINA = function () {
+		return calculateFunction("MINA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MODE = function () {
+		return calculateFunction("MODE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MODE_MULT = function () {
+		return calculateFunction("MODE.MULT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MODE_SNGL = function () {
+		return calculateFunction("MODE.SNGL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NEGBINOMDIST = function (arg1, arg2, arg3) {
+		return calculateFunction("NEGBINOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NEGBINOM_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("NEGBINOM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORMDIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("NORMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORM_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("NORM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORMINV = function (arg1, arg2, arg3) {
+		return calculateFunction("NORMINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORM_INV = function (arg1, arg2, arg3) {
+		return calculateFunction("NORM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORMSDIST = function (arg1) {
+		return calculateFunction("NORMSDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {boolean} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORM_S_DIST = function (arg1, arg2) {
+		return calculateFunction("NORM.S.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORMSINV = function (arg1) {
+		return calculateFunction("NORMSINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
+		return calculateFunction("NORM.S.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PEARSON = function (arg1, arg2) {
+		return calculateFunction("PEARSON", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE = function (arg1, arg2) {
+		return calculateFunction("PERCENTILE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE_EXC = function (arg1, arg2) {
+		return calculateFunction("PERCENTILE.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE_INC = function (arg1, arg2) {
+		return calculateFunction("PERCENTILE.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK = function (arg1, arg2, arg3) {
+		return calculateFunction("PERCENTRANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK_EXC = function (arg1, arg2, arg3) {
+		return calculateFunction("PERCENTRANK.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK_INC = function (arg1, arg2, arg3) {
+		return calculateFunction("PERCENTRANK.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERMUT = function (arg1, arg2) {
+		return calculateFunction("PERMUT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PERMUTATIONA = function (arg1, arg2) {
+		return calculateFunction("PERMUTATIONA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PHI = function (arg1) {
+		return calculateFunction("PHI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.POISSON = function (arg1, arg2, arg3) {
+		return calculateFunction("POISSON", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
+		return calculateFunction("POISSON.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("PROB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE = function (arg1, arg2) {
+		return calculateFunction("QUARTILE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE_EXC = function (arg1, arg2) {
+		return calculateFunction("QUARTILE.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE_INC = function (arg1, arg2) {
+		return calculateFunction("QUARTILE.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RANK = function (arg1, arg2, arg3) {
+		return calculateFunction("RANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RANK_AVG = function (arg1, arg2, arg3) {
+		return calculateFunction("RANK.AVG", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
+		return calculateFunction("RANK.EQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RSQ = function (arg1, arg2) {
+		return calculateFunction("RSQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SKEW = function () {
+		return calculateFunction("SKEW", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SKEW_P = function () {
+		return calculateFunction("SKEW.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SLOPE = function (arg1, arg2) {
+		return calculateFunction("SLOPE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
+		return calculateFunction("SMALL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STANDARDIZE = function (arg1, arg2, arg3) {
+		return calculateFunction("STANDARDIZE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEV = function () {
+		return calculateFunction("STDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEV_S = function () {
+		return calculateFunction("STDEV.S", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEVA = function () {
+		return calculateFunction("STDEVA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEVP = function () {
+		return calculateFunction("STDEVP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEV_P = function () {
+		return calculateFunction("STDEV.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STDEVPA = function () {
+		return calculateFunction("STDEVPA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.STEYX = function (arg1, arg2) {
+		return calculateFunction("STEYX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TDIST = function (arg1, arg2, arg3) {
+		return calculateFunction("TDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST = function (arg1, arg2, arg3) {
+		return calculateFunction("T.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST_2T = function (arg1, arg2) {
+		return calculateFunction("T.DIST.2T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST_RT = function (arg1, arg2) {
+		return calculateFunction("T.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_INV = function (arg1, arg2) {
+		return calculateFunction("T.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_INV_2T = function (arg1, arg2) {
+		return calculateFunction("T.INV.2T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TINV = function (arg1, arg2) {
+		return calculateFunction("TINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {ApiRange} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("TREND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
+		return calculateFunction("TRIMMEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TTEST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("TTEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.T_TEST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("T.TEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VAR = function () {
+		return calculateFunction("VAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VARA = function () {
+		return calculateFunction("VARA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VARP = function () {
+		return calculateFunction("VARP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VAR_P = function () {
+		return calculateFunction("VAR.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VAR_S = function () {
+		return calculateFunction("VAR.S", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VARPA = function () {
+		return calculateFunction("VARPA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WEIBULL = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("WEIBULL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WEIBULL_DIST = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("WEIBULL.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ZTEST = function (arg1, arg2, arg3) {
+		return calculateFunction("ZTEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.Z_TEST = function (arg1, arg2, arg3) {
+		return calculateFunction("Z.TEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
+		return calculateFunction("DATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
+		return calculateFunction("DATEVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DAY = function (arg1) {
+		return calculateFunction("DAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
+		return calculateFunction("DAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
+		return calculateFunction("DAYS360", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
+		return calculateFunction("EDATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
+		return calculateFunction("EOMONTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HOUR = function (arg1) {
+		return calculateFunction("HOUR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISOWEEKNUM = function (arg1) {
+		return calculateFunction("ISOWEEKNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MINUTE = function (arg1) {
+		return calculateFunction("MINUTE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MONTH = function (arg1) {
+		return calculateFunction("MONTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NETWORKDAYS = function (arg1, arg2, arg3) {
+		return calculateFunction("NETWORKDAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NETWORKDAYS_INTL = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("NETWORKDAYS.INTL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NOW = function () {
+		return calculateFunction("NOW", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SECOND = function (arg1) {
+		return calculateFunction("SECOND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TIME = function (arg1, arg2, arg3) {
+		return calculateFunction("TIME", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TIMEVALUE = function (arg1) {
+		return calculateFunction("TIMEVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TODAY = function () {
+		return calculateFunction("TODAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WEEKDAY = function (arg1, arg2) {
+		return calculateFunction("WEEKDAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WEEKNUM = function (arg1, arg2) {
+		return calculateFunction("WEEKNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WORKDAY = function (arg1, arg2, arg3) {
+		return calculateFunction("WORKDAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.WORKDAY_INTL = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("WORKDAY.INTL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.YEAR = function (arg1) {
+		return calculateFunction("YEAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.YEARFRAC = function (arg1, arg2, arg3) {
+		return calculateFunction("YEARFRAC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BESSELI = function (arg1, arg2) {
+		return calculateFunction("BESSELI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BESSELJ = function (arg1, arg2) {
+		return calculateFunction("BESSELJ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BESSELK = function (arg1, arg2) {
+		return calculateFunction("BESSELK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BESSELY = function (arg1, arg2) {
+		return calculateFunction("BESSELY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BIN2DEC = function (arg1) {
+		return calculateFunction("BIN2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
+		return calculateFunction("BIN2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
+		return calculateFunction("BIN2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BITAND = function (arg1, arg2) {
+		return calculateFunction("BITAND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BITLSHIFT = function (arg1, arg2) {
+		return calculateFunction("BITLSHIFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BITOR = function (arg1, arg2) {
+		return calculateFunction("BITOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BITRSHIFT = function (arg1, arg2) {
+		return calculateFunction("BITRSHIFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BITXOR = function (arg1, arg2) {
+		return calculateFunction("BITXOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
+		return calculateFunction("COMPLEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CONVERT = function (arg1, arg2, arg3) {
+		return calculateFunction("CONVERT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
+		return calculateFunction("DEC2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
+		return calculateFunction("DEC2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
+		return calculateFunction("DEC2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DELTA = function (arg1, arg2) {
+		return calculateFunction("DELTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ERF = function (arg1, arg2) {
+		return calculateFunction("ERF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ERF_PRECISE = function (arg1) {
+		return calculateFunction("ERF.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ERFC = function (arg1) {
+		return calculateFunction("ERFC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ERFC_PRECISE = function (arg1) {
+		return calculateFunction("ERFC.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GESTEP = function (arg1, arg2) {
+		return calculateFunction("GESTEP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
+		return calculateFunction("HEX2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HEX2DEC = function (arg1) {
+		return calculateFunction("HEX2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
+		return calculateFunction("HEX2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMABS = function (arg1) {
+		return calculateFunction("IMABS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMAGINARY = function (arg1) {
+		return calculateFunction("IMAGINARY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMARGUMENT = function (arg1) {
+		return calculateFunction("IMARGUMENT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
+		return calculateFunction("IMCONJUGATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
+		return calculateFunction("IMCOS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
+		return calculateFunction("IMCOSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
+		return calculateFunction("IMCOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
+		return calculateFunction("IMCSC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
+		return calculateFunction("IMCSCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
+		return calculateFunction("IMDIV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
+		return calculateFunction("IMEXP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
+		return calculateFunction("IMLN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
+		return calculateFunction("IMLOG10", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
+		return calculateFunction("IMLOG2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
+		return calculateFunction("IMPOWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
+		return calculateFunction("IMPRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMREAL = function (arg1) {
+		return calculateFunction("IMREAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
+		return calculateFunction("IMSEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
+		return calculateFunction("IMSECH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
+		return calculateFunction("IMSIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
+		return calculateFunction("IMSINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
+		return calculateFunction("IMSQRT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
+		return calculateFunction("IMSUB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMSUM = function () {
+		return calculateFunction("IMSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
+		return calculateFunction("IMTAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
+		return calculateFunction("OCT2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.OCT2DEC = function (arg1) {
+		return calculateFunction("OCT2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
+		return calculateFunction("OCT2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DAVERAGE = function (arg1, arg2, arg3) {
+		return calculateFunction("DAVERAGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DCOUNT = function (arg1, arg2, arg3) {
+		return calculateFunction("DCOUNT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DCOUNTA = function (arg1, arg2, arg3) {
+		return calculateFunction("DCOUNTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DGET = function (arg1, arg2, arg3) {
+		return calculateFunction("DGET", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DMAX = function (arg1, arg2, arg3) {
+		return calculateFunction("DMAX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DMIN = function (arg1, arg2, arg3) {
+		return calculateFunction("DMIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DPRODUCT = function (arg1, arg2, arg3) {
+		return calculateFunction("DPRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DSTDEV = function (arg1, arg2, arg3) {
+		return calculateFunction("DSTDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DSTDEVP = function (arg1, arg2, arg3) {
+		return calculateFunction("DSTDEVP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DSUM = function (arg1, arg2, arg3) {
+		return calculateFunction("DSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DVAR = function (arg1, arg2, arg3) {
+		return calculateFunction("DVAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DVARP = function (arg1, arg2, arg3) {
+		return calculateFunction("DVARP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @param {any} [arg8].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACCRINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return calculateFunction("ACCRINT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACCRINTM = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("ACCRINTM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AMORDEGRC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("AMORDEGRC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AMORLINC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("AMORLINC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYBS = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPDAYBS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYS = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPDAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYSNC = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPDAYSNC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPNCD = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPNCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPNUM = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COUPPCD = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("COUPPCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CUMIPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("CUMIPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CUMPRINC = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("CUMPRINC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DB = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("DB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DDB = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("DDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("DISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DOLLARDE = function (arg1, arg2) {
+		return calculateFunction("DOLLARDE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DOLLARFR = function (arg1, arg2) {
+		return calculateFunction("DOLLARFR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("DURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EFFECT = function (arg1, arg2) {
+		return calculateFunction("EFFECT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FV = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("FV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FVSCHEDULE = function (arg1, arg2) {
+		return calculateFunction("FVSCHEDULE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.INTRATE = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("INTRATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("IPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IRR = function (arg1, arg2) {
+		return calculateFunction("IRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISPMT = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("ISPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MDURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("MDURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MIRR = function (arg1, arg2, arg3) {
+		return calculateFunction("MIRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NOMINAL = function (arg1, arg2) {
+		return calculateFunction("NOMINAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NPER = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("NPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NPV = function () {
+		return calculateFunction("NPV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} arg8.
+	 * @param {any} [arg9].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ODDFPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+		return calculateFunction("ODDFPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} arg8.
+	 * @param {any} [arg9].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ODDFYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+		return calculateFunction("ODDFYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} [arg8].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ODDLPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return calculateFunction("ODDLPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} [arg8].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ODDLYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return calculateFunction("ODDLYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PDURATION = function (arg1, arg2, arg3) {
+		return calculateFunction("PDURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PMT = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("PMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("PPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("PRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PRICEDISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("PRICEDISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PRICEMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("PRICEMAT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PV = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("PV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RATE = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("RATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RECEIVED = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("RECEIVED", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RRI = function (arg1, arg2, arg3) {
+		return calculateFunction("RRI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SLN = function (arg1, arg2, arg3) {
+		return calculateFunction("SLN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SYD = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("SYD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TBILLEQ = function (arg1, arg2, arg3) {
+		return calculateFunction("TBILLEQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TBILLPRICE = function (arg1, arg2, arg3) {
+		return calculateFunction("TBILLPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TBILLYIELD = function (arg1, arg2, arg3) {
+		return calculateFunction("TBILLYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} arg5.
+	 * @param {number} [arg6].
+	 * @param {boolean} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VDB = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("VDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.XIRR = function (arg1, arg2, arg3) {
+		return calculateFunction("XIRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.XNPV = function (arg1, arg2, arg3) {
+		return calculateFunction("XNPV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.YIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return calculateFunction("YIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.YIELDDISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return calculateFunction("YIELDDISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.YIELDMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return calculateFunction("YIELDMAT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ABS = function (arg1) {
+		return calculateFunction("ABS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACOS = function (arg1) {
+		return calculateFunction("ACOS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACOSH = function (arg1) {
+		return calculateFunction("ACOSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACOT = function (arg1) {
+		return calculateFunction("ACOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ACOTH = function (arg1) {
+		return calculateFunction("ACOTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AGGREGATE = function () {
+		return calculateFunction("AGGREGATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ARABIC = function (arg1) {
+		return calculateFunction("ARABIC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ASIN = function (arg1) {
+		return calculateFunction("ASIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ASINH = function (arg1) {
+		return calculateFunction("ASINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ATAN = function (arg1) {
+		return calculateFunction("ATAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
+		return calculateFunction("ATAN2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ATANH = function (arg1) {
+		return calculateFunction("ATANH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
+		return calculateFunction("BASE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CEILING = function (arg1, arg2) {
+		return calculateFunction("CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CEILING_MATH = function (arg1, arg2, arg3) {
+		return calculateFunction("CEILING.MATH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CEILING_PRECISE = function (arg1, arg2) {
+		return calculateFunction("CEILING.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COMBIN = function (arg1, arg2) {
+		return calculateFunction("COMBIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COMBINA = function (arg1, arg2) {
+		return calculateFunction("COMBINA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COS = function (arg1) {
+		return calculateFunction("COS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COSH = function (arg1) {
+		return calculateFunction("COSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COT = function (arg1) {
+		return calculateFunction("COT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COTH = function (arg1) {
+		return calculateFunction("COTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CSC = function (arg1) {
+		return calculateFunction("CSC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CSCH = function (arg1) {
+		return calculateFunction("CSCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DECIMAL = function (arg1, arg2) {
+		return calculateFunction("DECIMAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.DEGREES = function (arg1) {
+		return calculateFunction("DEGREES", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ECMA_CEILING = function (arg1, arg2) {
+		return calculateFunction("ECMA.CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EVEN = function (arg1) {
+		return calculateFunction("EVEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.EXP = function (arg1) {
+		return calculateFunction("EXP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FACT = function (arg1) {
+		return calculateFunction("FACT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FACTDOUBLE = function (arg1) {
+		return calculateFunction("FACTDOUBLE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR = function (arg1, arg2) {
+		return calculateFunction("FLOOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR_PRECISE = function (arg1, arg2) {
+		return calculateFunction("FLOOR.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR_MATH = function (arg1, arg2, arg3) {
+		return calculateFunction("FLOOR.MATH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.GCD = function () {
+		return calculateFunction("GCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.INT = function (arg1) {
+		return calculateFunction("INT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISO_CEILING = function (arg1, arg2) {
+		return calculateFunction("ISO.CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LCM = function () {
+		return calculateFunction("LCM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LN = function (arg1) {
+		return calculateFunction("LN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOG = function (arg1, arg2) {
+		return calculateFunction("LOG", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
+		return calculateFunction("LOG10", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MDETERM = function (arg1) {
+		return calculateFunction("MDETERM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MINVERSE = function (arg1) {
+		return calculateFunction("MINVERSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MMULT = function (arg1, arg2) {
+		return calculateFunction("MMULT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MOD = function (arg1, arg2) {
+		return calculateFunction("MOD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MROUND = function (arg1, arg2) {
+		return calculateFunction("MROUND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MULTINOMIAL = function () {
+		return calculateFunction("MULTINOMIAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
+		return calculateFunction("MUNIT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ODD = function (arg1) {
+		return calculateFunction("ODD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PI = function () {
+		return calculateFunction("PI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.POWER = function (arg1, arg2) {
+		return calculateFunction("POWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.PRODUCT = function () {
+		return calculateFunction("PRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.QUOTIENT = function (arg1, arg2) {
+		return calculateFunction("QUOTIENT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RADIANS = function (arg1) {
+		return calculateFunction("RADIANS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RAND = function () {
+		return calculateFunction("RAND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.RANDBETWEEN = function (arg1, arg2) {
+		return calculateFunction("RANDBETWEEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ROMAN = function (arg1, arg2) {
+		return calculateFunction("ROMAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ROUND = function (arg1, arg2) {
+		return calculateFunction("ROUND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ROUNDDOWN = function (arg1, arg2) {
+		return calculateFunction("ROUNDDOWN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ROUNDUP = function (arg1, arg2) {
+		return calculateFunction("ROUNDUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SEC = function (arg1) {
+		return calculateFunction("SEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SECH = function (arg1) {
+		return calculateFunction("SECH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SERIESSUM = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("SERIESSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SIGN = function (arg1) {
+		return calculateFunction("SIGN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SIN = function (arg1) {
+		return calculateFunction("SIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SINH = function (arg1) {
+		return calculateFunction("SINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SQRT = function (arg1) {
+		return calculateFunction("SQRT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SQRTPI = function (arg1) {
+		return calculateFunction("SQRTPI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUBTOTAL = function () {
+		return calculateFunction("SUBTOTAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUM = function () {
+		return calculateFunction("SUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMIF = function (arg1, arg2, arg3) {
+		return calculateFunction("SUMIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMIFS = function () {
+		return calculateFunction("SUMIFS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMPRODUCT = function () {
+		return calculateFunction("SUMPRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMSQ = function () {
+		return calculateFunction("SUMSQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMX2MY2 = function (arg1, arg2) {
+		return calculateFunction("SUMX2MY2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMX2PY2 = function (arg1, arg2) {
+		return calculateFunction("SUMX2PY2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SUMXMY2 = function (arg1, arg2) {
+		return calculateFunction("SUMXMY2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TAN = function (arg1) {
+		return calculateFunction("TAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TANH = function (arg1) {
+		return calculateFunction("TANH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TRUNC = function (arg1, arg2) {
+		return calculateFunction("TRUNC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.CHOOSE = function () {
+		return calculateFunction("CHOOSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.COLUMNS = function (arg1) {
+		return calculateFunction("COLUMNS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HLOOKUP = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("HLOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {any} [arg2].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.HYPERLINK = function (arg1, arg2) {
+		return calculateFunction("HYPERLINK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.INDEX = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("INDEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.LOOKUP = function (arg1, arg2, arg3) {
+		return calculateFunction("LOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.MATCH = function (arg1, arg2, arg3) {
+		return calculateFunction("MATCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ROWS = function (arg1) {
+		return calculateFunction("ROWS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
+		return calculateFunction("TRANSPOSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} [arg4].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.VLOOKUP = function (arg1, arg2, arg3, arg4) {
+		return calculateFunction("VLOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ERROR_TYPE = function (arg1) {
+		return calculateFunction("ERROR.TYPE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISERR = function (arg1) {
+		return calculateFunction("ISERR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISERROR = function (arg1) {
+		return calculateFunction("ISERROR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISEVEN = function (arg1) {
+		return calculateFunction("ISEVEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISFORMULA = function (arg1) {
+		return calculateFunction("ISFORMULA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISLOGICAL = function (arg1) {
+		return calculateFunction("ISLOGICAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISNA = function (arg1) {
+		return calculateFunction("ISNA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISNONTEXT = function (arg1) {
+		return calculateFunction("ISNONTEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISNUMBER = function (arg1) {
+		return calculateFunction("ISNUMBER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISODD = function (arg1) {
+		return calculateFunction("ISODD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISREF = function (arg1) {
+		return calculateFunction("ISREF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.ISTEXT = function (arg1) {
+		return calculateFunction("ISTEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.N = function (arg1) {
+		return calculateFunction("N", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NA = function () {
+		return calculateFunction("NA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} [arg1].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SHEET = function (arg1) {
+		return calculateFunction("SHEET", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} [arg1].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.SHEETS = function (arg1) {
+		return calculateFunction("SHEETS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TYPE = function (arg1) {
+		return calculateFunction("TYPE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.AND = function () {
+		return calculateFunction("AND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.FALSE = function () {
+		return calculateFunction("FALSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IF = function (arg1, arg2, arg3) {
+		return calculateFunction("IF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IFERROR = function (arg1, arg2) {
+		return calculateFunction("IFERROR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.IFNA = function (arg1, arg2) {
+		return calculateFunction("IFNA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} arg1.
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.NOT = function (arg1) {
+		return calculateFunction("NOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.OR = function () {
+		return calculateFunction("OR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.TRUE = function () {
+		return calculateFunction("TRUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {}
+	 */
+	ApiWorksheetFunction.prototype.XOR = function () {
+		return calculateFunction("XOR", arguments);
+	};
+
 
 
 	/**
