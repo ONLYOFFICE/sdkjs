@@ -518,825 +518,262 @@
 			this.asc_addWorksheet(sName);
 	};
 
-
-	function calculateFunction (func, arg) {
-		//check
-		let argsCount = arg.length;
-		if (!func.checkArguments(argsCount)) {
-			throwException(new Error('Arguments count error.'));
-			return null;
+	/**
+	 * Returns a sheet collection that represents all the sheets in the active workbook.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet[]}
+	 */
+	Api.prototype.GetSheets = function () {
+		var result = [];
+		for (var i = 0; i < this.wbModel.getWorksheetCount(); ++i) {
+			result.push(new ApiWorksheet(this.wbModel.getWorksheet(i)));
 		}
-
-		//prepare arguments
-		let newArguments = [];
-		for (let i = 0; i < argsCount; i++) {
-			if ('number' === typeof arg[i]) {
-				newArguments.push(new AscCommonExcel.cNumber(arg[i]));
-			} else if ('string' === typeof arg[i]) {
-				newArguments.push(new AscCommonExcel.cString(arg[i]));
-			} else if ('boolean' === typeof arg[i]) {
-				newArguments.push(new AscCommonExcel.cBool(arg[i]));
-			} else if (arg[i] instanceof ApiRange ) {
-				//cArea/cRef/cArea3D/cRef3d
-				newArguments.push(new AscCommonExcel.cArea3D(arg[i].bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
-			} else {
-				throwException(new Error('Arguments type error.'));
-				return null;
-			}
+		return result;
+	};
+	Object.defineProperty(Api.prototype, "Sheets", {
+		get: function () {
+			return this.GetSheets();
 		}
+	});
 
-		//prepare result
-		let result = func.Calculate(newArguments);
+	/**
+	 * Sets a locale to the document.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {number} LCID - The locale specified.
+	 */
+	Api.prototype.SetLocale = function (LCID) {
+		this.asc_setLocale(LCID, null, null);
+	};
 
-		if (!result) {
-			throwException(new Error('Result type error.'));
-			return null;
+	/**
+	 * Returns the current locale ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	Api.prototype.GetLocale = function () {
+		return this.asc_getLocale();
+	};
+
+	/**
+	 * Returns an object that represents the active sheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet}
+	 */
+	Api.prototype.GetActiveSheet = function () {
+		var index = this.wbModel.getActive();
+		return new ApiWorksheet(this.wbModel.getWorksheet(index));
+	};
+	Object.defineProperty(Api.prototype, "ActiveSheet", {
+		get: function () {
+			return this.GetActiveSheet();
 		}
+	});
 
-		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
-			result = result.getValue();
-			if (cElementType.empty === result.type) {
-				result = new cNumber(0);
-			}
-		} else if (AscCommonExcel.cElementType.array === result.type) {
-			result = result.getElement(0);
-		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
-			result = result.getValue2(0, 0);
-		}
+	/**
+	 * Returns an object that represents a sheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} nameOrIndex - Sheet name or sheet index.
+	 * @returns {ApiWorksheet | null}
+	 */
+	Api.prototype.GetSheet = function (nameOrIndex) {
+		var ws = ('string' === typeof nameOrIndex) ? this.wbModel.getWorksheetByName(nameOrIndex) :
+			this.wbModel.getWorksheet(nameOrIndex);
+		return ws ? new ApiWorksheet(ws) : null;
+	};
 
-		if (result) {
-			result = result.getValue();
-		} else {
-			throwException(new Error('Result type error.'));
-			return null;
-		}
+	/**
+	 * Returns a list of all the available theme colors for the spreadsheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {string[]}
+	 */
+	Api.prototype.GetThemesColors = function () {
+		var result = [];
+		AscCommon.g_oUserColorScheme.forEach(function (item) {
+			result.push(item.get_name());
+		});
 
 		return result;
-	}
+	};
+
+	/**
+	 * Sets the theme colors to the current spreadsheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sTheme - The color scheme that will be set to the current spreadsheet.
+	 * @returns {boolean} - returns false if sTheme isn't a string.
+	 */
+	Api.prototype.SetThemeColors = function (sTheme) {
+		if ('string' === typeof sTheme) {
+			this.wbModel.changeColorScheme(sTheme);
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Creates a new history point.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 */
+	Api.prototype.CreateNewHistoryPoint = function () {
+		History.Create_NewPoint();
+	};
+
+	/**
+	 * Creates an RGB color setting the appropriate values for the red, green and blue color components.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @returns {ApiColor}
+	 */
+	Api.prototype.CreateColorFromRGB = function (r, g, b) {
+		return new ApiColor(AscCommonExcel.createRgbColor(r, g, b));
+	};
+
+	/**
+	 * Creates a color selecting it from one of the available color presets.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
+	 * @returns {ApiColor}
+	 */
+	Api.prototype.CreateColorByName = function (sPresetColor) {
+		var rgb = AscFormat.mapPrstColor[sPresetColor];
+		return new ApiColor(AscCommonExcel.createRgbColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF));
+	};
+
+	/**
+	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges. If one or more ranges from a different worksheet are specified, an error will be returned.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
+	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
+	 * @returns {ApiRange | null}
+	 */
+	Api.prototype.Intersect = function (Range1, Range2) {
+		let result = null;
+		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
+			var res = Range1.range.bbox.intersection(Range2.range.bbox);
+			if (!res) {
+				logError(new Error('Ranges do not intersect.'));
+			} else {
+				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
+			}
+		} else {
+			logError(new Error('Ranges should be from one worksheet.'));
+		}
+		return result;
+	};
+
+	/**
+	 * Returns an object that represents the selected range.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 */
+	Api.prototype.GetSelection = function () {
+		return this.GetActiveSheet().GetSelection();
+	};
+	Object.defineProperty(Api.prototype, "Selection", {
+		get: function () {
+			return this.GetSelection();
+		}
+	});
+
+	/**
+	 * Adds a new name to a range of cells.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The range name.
+	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells.
+	 * Example: "Sheet1!$A$1:$B$2".
+	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
+	 * @returns {boolean} - returns false if sName or sRef are invalid.
+	 */
+	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
+		return private_AddDefName(this.wbModel, sName, sRef, null, isHidden);
+	};
+
+	/**
+	 * Returns the ApiName object by the range name.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} defName - The range name.
+	 * @returns {ApiName}
+	 */
+	Api.prototype.GetDefName = function (defName) {
+		if (defName && typeof defName === "string") {
+			defName = this.wbModel.getDefinesNames(defName);
+		}
+		return new ApiName(defName);
+	};
+
+	/**
+	 * Saves changes to the specified document.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 */
+	Api.prototype.Save = function () {
+		this.SaveAfterMacros = true;
+	};
+
+	/**
+	 * Returns the ApiRange object by the range reference.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The range of cells from the current sheet.
+	 * @returns {ApiRange}
+	 */
+	Api.prototype.GetRange = function (sRange) {
+		var ws;
+		var res = AscCommon.parserHelp.parse3DRef(sRange);
+		if (res) {
+			ws = this.wbModel.getWorksheetByName(res.sheet);
+			sRange = res.range;
+		} else {
+			ws = this.wbModel.getActiveWs();
+		}
+		return new ApiRange(ws ? ws.getRange2(sRange) : null);
+	};
+
+	/**
+	 * Returns the ApiWorksheetFunction object.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheetFunction}
+	 */
+	Api.prototype.GetWorksheetFunction = function () {
+		if (!this.oWorksheetFunction) {
+			this.oWorksheetFunction = new ApiWorksheetFunction();
+			this.oWorksheetFunction.init();
+		}
+		return this.oWorksheetFunction;
+	};
+	Object.defineProperty(Api.prototype, "WorksheetFunction", {
+		get: function () {
+			return this.GetWorksheetFunction();
+		}
+	});
 
 	//vba
-	/*let functionsMap = {
-		"ACCRINT": "AccrInt",
-		"ACCRINTM": "AccrIntM",
-		"ACOS": "Acos",
-		"ACOSH": "Acosh",
-		"ACOT": "Acot",
-		"ACOTH": "Acoth",
-		"AGGREGATE": "Aggregate",
-		"AMORDEGRC": "AmorDegrc",
-		"AMORLINC": "AmorLinc",
-		"AND": "And",
-		"ARABIC": "Arabic",
-		"ASC": "Asc",
-		"ASIN": "Asin",
-		"ASINH": "Asinh",
-		"ATAN2": "Atan2",
-		"ATANH": "Atanh",
-		"AVEDEV": "AveDev",
-		"AVERAGE": "Average",
-		"AVERAGEIF": "AverageIf",
-		"AVERAGEIFS": "AverageIfs",
-		"BAHTTEXT": "BahtText",
-		"BASE": "Base",
-		"BESSELI": "BesselI",
-		"BESSELJ": "BesselJ",
-		"BESSELK": "BesselK",
-		"BESSELY": "BesselY",
-		"BETA.DIST": "Beta.Dist",
-		"BETA.INV": "Beta.Inv",
-		"BETADIST": "BetaDist",
-		"BETAINV": "BetaInv",
-		"BIN2DEC": "Bin2Dec",
-		"BIN2HEX": "Bin2Hex",
-		"BIN2OCT": "Bin2Oct",
-		"BINOM.DIST": "Binom.Dist",
-		"BINOM.DIST.RANGE": "Binom.Dist.Range",
-		"BINOM.INV": "Binom.Inv",
-		"BINOMDIST": "BinomDist",
-		"BITAND": "Bitand",
-		"BITLSHIFT": "Bitlshift",
-		"BITOR": "Bitor",
-		"BITRSHIFT": "Bitrshift",
-		"BITXOR": "Bitxor",
-		"CEILING": "Ceiling",
-		"CEILING.MATH": "Ceiling.Math",
-		"CEILING.PRECISE": "Ceiling.Precise",
-		"CHIDIST": "ChiDist",
-		"CHIINV": "ChiInv",
-		"CHISQ.DIST": "ChiSq.Dist",
-		"CHISQ.DIST.RT": "ChiSq.Dist.RT",
-		"CHISQ.INV": "ChiSq.Inv",
-		"CHISQ.INV.RT": "ChiSq.Inv.RT",
-		"CHISQ.TEST": "ChiSq.Test",
-		"CHITEST": "ChiTest",
-		"CHOOSE": "Choose",
-		"CLEAN": "Clean",
-		"COMBIN": "Combin",
-		"COMBINA": "Combina",
-		"COMPLEX": "Complex",
-		"CONFIDENCE": "Confidence",
-		"CONFIDENCE.NORM": "Confidence.Norm",
-		"CONFIDENCE.T": "Confidence.T",
-		"CONVERT": "Convert",
-		"CORREL": "Correl",
-		"COSH": "Cosh",
-		"COT": "Cot",
-		"COTH": "Coth",
-		"COUNT": "Count",
-		"COUNTA": "CountA",
-		"COUNTBLANK": "CountBlank",
-		"COUNTIF": "CountIf",
-		"COUNTIFS": "CountIfs",
-		"COUPDAYBS": "CoupDayBs",
-		"COUPDAYS": "CoupDays",
-		"COUPDAYSNC": "CoupDaysNc",
-		"COUPNCD": "CoupNcd",
-		"COUPNUM": "CoupNum",
-		"COUPPCD": "CoupPcd",
-		"COVAR": "Covar",
-		"COVARIANCE.P": "Covariance.P",
-		"COVARIANCE.S": "Covariance.S",
-		"CRITBINOM": "CritBinom",
-		"CSC": "Csc",
-		"CSCH": "Csch",
-		"CUMIPMT": "CumIPmt",
-		"CUMPRINC": "CumPrinc",
-		"DAVERAGE": "DAverage",
-		"DAYS": "Days",
-		"DAYS360": "Days360",
-		"DB": "Db",
-		"DBCS": "Dbcs",
-		"DCOUNT": "DCount",
-		"DCOUNTA": "DCountA",
-		"DDB": "Ddb",
-		"DEC2BIN": "Dec2Bin",
-		"DEC2HEX": "Dec2Hex",
-		"DEC2OCT": "Dec2Oct",
-		"DECIMAL": "Decimal",
-		"DEGREES": "Degrees",
-		"DELTA": "Delta",
-		"DEVSQ": "DevSq",
-		"DGET": "DGet",
-		"DISC": "Disc",
-		"DMAX": "DMax",
-		"DMIN": "DMin",
-		"DOLLAR": "Dollar",
-		"DOLLARDE": "DollarDe",
-		"DOLLARFR": "DollarFr",
-		"DPRODUCT": "DProduct",
-		"DSTDEV": "DStDev",
-		"DSTDEVP": "DStDevP",
-		"DSUM": "DSum",
-		"DURATION": "Duration",
-		"DVAR": "DVar",
-		"DVARP": "DVarP",
-		"EDATE": "EDate",
-		"EFFECT": "Effect",
-		"ENCODEURL": "EncodeUrl",
-		"EOMONTH": "EoMonth",
-		"ERF": "Erf",
-		"ERF.PRECISE": "Erf.Precise",
-		"ERFC": "ErfC",
-		"ERFC.PRECISE": "ErfC.Precise",
-		"EVEN": "Even",
-		"EXPON.DIST": "Expon.Dist",
-		"EXPONDIST": "ExponDist",
-		"F.DIST": "F.Dist",
-		"F.DIST.RT": "F.Dist.RT",
-		"F.INV": "F.Inv",
-		"F.INV.RT": "F.Inv.RT",
-		"F.TEST": "F.Test",
-		"FACT": "Fact",
-		"FACTDOUBLE": "FactDouble",
-		"FDIST": "FDist",
-		"FILTERXML": "FilterXML",
-		"FIND": "Find",
-		"FINDB": "FindB",
-		"FINV": "FInv",
-		"FISHER": "Fisher",
-		"FISHERINV": "FisherInv",
-		"FIXED": "Fixed",
-		"FLOOR": "Floor",
-		"FLOOR.MATH": "Floor.Math",
-		"FLOOR.PRECISE": "Floor.Precise",
-		"FORECAST": "Forecast",
-		"FORECAST.ETS": "Forecast.ETS",
-		"FORECAST.ETS.CONFINT": "Forecast.ETS.ConfInt",
-		"FORECAST.ETS.SEASONALITY": "Forecast.ETS.Seasonality",
-		"FORECAST.ETS.STAT": "Forecast.ETS.STAT",
-		"FORECAST.LINEAR": "Forecast.Linear",
-		"FREQUENCY": "Frequency",
-		"FTEST": "FTest",
-		"FV": "Fv",
-		"FVSCHEDULE": "FVSchedule",
-		"GAMMA": "Gamma",
-		"GAMMA.DIST": "Gamma.Dist",
-		"GAMMA.INV": "Gamma.Inv",
-		"GAMMADIST": "GammaDist",
-		"GAMMAINV": "GammaInv",
-		"GAMMALN": "GammaLn",
-		"GAMMALN.PRECISE": "GammaLn.Precise",
-		"GAUSS": "Gauss",
-		"GCD": "Gcd",
-		"GEOMEAN": "GeoMean",
-		"GESTEP": "GeStep",
-		"GROWTH": "Growth",
-		"HARMEAN": "HarMean",
-		"HEX2BIN": "Hex2Bin",
-		"HEX2DEC": "Hex2Dec",
-		"HEX2OCT": "Hex2Oct",
-		"HLOOKUP": "HLookup",
-		"HYPGEOM.DIST": "HypGeom.Dist",
-		"HYPGEOMDIST": "HypGeomDist",
-		"IFERROR": "IfError",
-		"IFNA": "IfNa",
-		"IMABS": "ImAbs",
-		"IMAGINARY": "Imaginary",
-		"IMARGUMENT": "ImArgument",
-		"IMCONJUGATE": "ImConjugate",
-		"IMCOS": "ImCos",
-		"IMCOSH": "ImCosh",
-		"IMCOT": "ImCot",
-		"IMCSC": "ImCsc",
-		"IMCSCH": "ImCsch",
-		"IMDIV": "ImDiv",
-		"IMEXP": "ImExp",
-		"IMLN": "ImLn",
-		"IMLOG10": "ImLog10",
-		"IMLOG2": "ImLog2",
-		"IMPOWER": "ImPower",
-		"IMPRODUCT": "ImProduct",
-		"IMREAL": "ImReal",
-		"IMSEC": "ImSec",
-		"IMSECH": "ImSech",
-		"IMSIN": "ImSin",
-		"IMSINH": "ImSinh",
-		"IMSQRT": "ImSqrt",
-		"IMSUB": "ImSub",
-		"IMSUM": "ImSum",
-		"IMTAN": "ImTan",
-		"INDEX": "Index",
-		"INTERCEPT": "Intercept",
-		"INTRATE": "IntRate",
-		"IPMT": "Ipmt",
-		"IRR": "Irr",
-		"ISERR": "IsErr",
-		"ISERROR": "IsError",
-		"ISEVEN": "IsEven",
-		"ISFORMULA": "IsFormula",
-		"ISLOGICAL": "IsLogical",
-		"ISNA": "IsNA",
-		"ISNONTEXT": "IsNonText",
-		"ISNUMBER": "IsNumber",
-		"ISO.CEILING": "ISO.Ceiling",
-		"ISODD": "IsOdd",
-		"ISOWEEKNUM": "IsoWeekNum",
-		"ISPMT": "Ispmt",
-		"ISTEXT": "IsText",
-		"KURT": "Kurt",
-		"LARGE": "Large",
-		"LCM": "Lcm",
-		"LINEST": "LinEst",
-		"LN": "Ln",
-		"LOG": "Log",
-		"LOG10": "Log10",
-		"LOGEST": "LogEst",
-		"LOGINV": "LogInv",
-		"LOGNORM.DIST": "LogNorm.Dist",
-		"LOGNORM.INV": "LogNorm.Inv",
-		"LOGNORMDIST": "LogNormDist",
-		"LOOKUP": "Lookup",
-		"MATCH": "Match",
-		"MAX": "Max",
-		"MDETERM": "MDeterm",
-		"MDURATION": "MDuration",
-		"MEDIAN": "Median",
-		"MIN": "Min",
-		"MINVERSE": "MInverse",
-		"MIRR": "MIrr",
-		"MMULT": "MMult",
-		"MODE": "Mode",
-		"MODE.MULT": "Mode.Mult",
-		"MODE.SNGL": "Mode.Sngl",
-		"MROUND": "MRound",
-		"MULTINOMIAL": "MultiNomial",
-		"MUNIT": "Munit",
-		"NEGBINOM.DIST": "NegBinom.Dist",
-		"NEGBINOMDIST": "NegBinomDist",
-		"NETWORKDAYS": "NetworkDays",
-		"NETWORKDAYS.INTL": "NetworkDays.Intl",
-		"NOMINAL": "Nominal",
-		"NORM.DIST": "Norm.Dist",
-		"NORM.INV": "Norm.Inv",
-		"NORM.S.DIST": "Norm.S.Dist",
-		"NORM.S.INV": "Norm.S.Inv",
-		"NORMDIST": "NormDist",
-		"NORMINV": "NormInv",
-		"NORMSDIST": "NormSDist",
-		"NORMSINV": "NormSInv",
-		"NPER": "NPer",
-		"NPV": "Npv",
-		"NUMBERVALUE": "NumberValue",
-		"OCT2BIN": "Oct2Bin",
-		"OCT2DEC": "Oct2Dec",
-		"OCT2HEX": "Oct2Hex",
-		"ODD": "Odd",
-		"ODDFPRICE": "OddFPrice",
-		"ODDFYIELD": "OddFYield",
-		"ODDLPRICE": "OddLPrice",
-		"ODDLYIELD": "OddLYield",
-		"OR": "Or",
-		"PDURATION": "PDuration",
-		"PEARSON": "Pearson",
-		"PERCENTILE": "Percentile",
-		"PERCENTILE.EXC": "Percentile.Exc",
-		"PERCENTILE.INC": "Percentile.Inc",
-		"PERCENTRANK": "PercentRank",
-		"PERCENTRANK.EXC": "PercentRank.Exc",
-		"PERCENTRANK.INC": "PercentRank.Inc",
-		"PERMUT": "Permut",
-		"PERMUTATIONA": "Permutationa",
-		"PHI": "Phi",
-		"PHONETIC": "Phonetic",
-		"PI": "Pi",
-		"PMT": "Pmt",
-		"POISSON": "Poisson",
-		"POISSON.DIST": "Poisson.Dist",
-		"POWER": "Power",
-		"PPMT": "Ppmt",
-		"PRICE": "Price",
-		"PRICEDISC": "PriceDisc",
-		"PRICEMAT": "PriceMat",
-		"PROB": "Prob",
-		"PRODUCT": "Product",
-		"PROPER": "Proper",
-		"PV": "Pv",
-		"QUARTILE": "Quartile",
-		"QUARTILE.EXC": "Quartile.Exc",
-		"QUARTILE.INC": "Quartile.Inc",
-		"QUOTIENT": "Quotient",
-		"RADIANS": "Radians",
-		"RANDBETWEEN": "RandBetween",
-		"RANK": "Rank",
-		"RANK.AVG": "Rank.Avg",
-		"RANK.EQ": "Rank.Eq",
-		"RATE": "Rate",
-		"RECEIVED": "Received",
-		"REPLACE": "Replace",
-		"REPLACEB": "ReplaceB",
-		"REPT": "Rept",
-		"ROMAN": "Roman",
-		"ROUND": "Round",
-		"ROUNDDOWN": "RoundDown",
-		"ROUNDUP": "RoundUp",
-		"RRI": "Rri",
-		"RSQ": "RSq",
-		"RTD": "RTD",
-		"SEARCH": "Search",
-		"SEARCHB": "SearchB",
-		"SEC": "Sec",
-		"SECH": "Sech",
-		"SERIESSUM": "SeriesSum",
-		"SINH": "Sinh",
-		"SKEW": "Skew",
-		"SKEW.P": "Skew.p",
-		"SLN": "Sln",
-		"SLOPE": "Slope",
-		"SMALL": "Small",
-		"SQRTPI": "SqrtPi",
-		"STANDARDIZE": "Standardize",
-		"STDEV": "StDev",
-		"STDEV.P": "StDev.P",
-		"STDEV.S": "StDev.S",
-		"STDEVP": "StDevP",
-		"STEYX": "StEyx",
-		"SUBSTITUTE": "Substitute",
-		"SUBTOTAL": "Subtotal",
-		"SUM": "Sum",
-		"SUMIF": "SumIf",
-		"SUMIFS": "SumIfs",
-		"SUMPRODUCT": "SumProduct",
-		"SUMSQ": "SumSq",
-		"SUMX2MY2": "SumX2MY2",
-		"SUMX2PY2": "SumX2PY2",
-		"SUMXMY2": "SumXMY2",
-		"SYD": "Syd",
-		"T.DIST": "T.Dist",
-		"T.DIST.2T": "T.Dist.2T",
-		"T.DIST.RT": "T.Dist.RT",
-		"T.INV": "T.Inv",
-		"T.INV.2T": "T.Inv.2T",
-		"T.TEST": "T.Test",
-		"TANH": "Tanh",
-		"TBILLEQ": "TBillEq",
-		"TBILLPRICE": "TBillPrice",
-		"TBILLYIELD": "TBillYield",
-		"TDIST": "TDist",
-		"TEXT": "Text",
-		"TINV": "TInv",
-		"TRANSPOSE": "Transpose",
-		"TREND": "Trend",
-		"TRIM": "Trim",
-		"TRIMMEAN": "TrimMean",
-		"TTEST": "TTest",
-		"UNICHAR": "Unichar",
-		"UNICODE": "Unicode",
-		"USDOLLAR": "USDollar",
-		"VAR": "Var",
-		"VAR.P": "Var.P",
-		"VAR.S": "Var.S",
-		"VARP": "VarP",
-		"VDB": "Vdb",
-		"VLOOKUP": "VLookup",
-		"WEBSERVICE": "WebService",
-		"WEEKDAY": "Weekday",
-		"WEEKNUM": "WeekNum",
-		"WEIBULL": "Weibull",
-		"WEIBULL.DIST": "Weibull.Dist",
-		"WORKDAY": "WorkDay",
-		"WORKDAY.INTL": "WorkDay.Intl",
-		"XIRR": "Xirr",
-		"XNPV": "Xnpv",
-		"XOR": "Xor",
-		"YEARFRAC": "YearFrac",
-		"YIELDDISC": "YieldDisc",
-		"YIELDMAT": "YieldMat",
-		"Z.TEST": "Z.Test",
-		"ZTEST": "ZTest"
+	/*let functionsMap = {"ACCRINT": "AccrInt","ACCRINTM": "AccrIntM","ACOS": "Acos","ACOSH": "Acosh","ACOT": "Acot","ACOTH": "Acoth","AGGREGATE": "Aggregate","AMORDEGRC": "AmorDegrc","AMORLINC": "AmorLinc","AND": "And","ARABIC": "Arabic","ASC": "Asc","ASIN": "Asin","ASINH": "Asinh","ATAN2": "Atan2","ATANH": "Atanh","AVEDEV": "AveDev","AVERAGE": "Average","AVERAGEIF": "AverageIf","AVERAGEIFS": "AverageIfs","BAHTTEXT": "BahtText","BASE": "Base","BESSELI": "BesselI","BESSELJ": "BesselJ","BESSELK": "BesselK","BESSELY": "BesselY","BETA.DIST": "Beta.Dist","BETA.INV": "Beta.Inv","BETADIST": "BetaDist","BETAINV": "BetaInv","BIN2DEC": "Bin2Dec","BIN2HEX": "Bin2Hex","BIN2OCT": "Bin2Oct","BINOM.DIST": "Binom.Dist","BINOM.DIST.RANGE": "Binom.Dist.Range","BINOM.INV": "Binom.Inv","BINOMDIST": "BinomDist","BITAND": "Bitand","BITLSHIFT": "Bitlshift","BITOR": "Bitor","BITRSHIFT": "Bitrshift","BITXOR": "Bitxor","CEILING": "Ceiling","CEILING.MATH": "Ceiling.Math","CEILING.PRECISE": "Ceiling.Precise","CHIDIST": "ChiDist","CHIINV": "ChiInv","CHISQ.DIST": "ChiSq.Dist","CHISQ.DIST.RT": "ChiSq.Dist.RT","CHISQ.INV": "ChiSq.Inv","CHISQ.INV.RT": "ChiSq.Inv.RT","CHISQ.TEST": "ChiSq.Test","CHITEST": "ChiTest","CHOOSE": "Choose","CLEAN": "Clean","COMBIN": "Combin","COMBINA": "Combina","COMPLEX": "Complex","CONFIDENCE": "Confidence","CONFIDENCE.NORM": "Confidence.Norm","CONFIDENCE.T": "Confidence.T","CONVERT": "Convert","CORREL": "Correl","COSH": "Cosh","COT": "Cot","COTH": "Coth","COUNT": "Count","COUNTA": "CountA","COUNTBLANK": "CountBlank","COUNTIF": "CountIf","COUNTIFS": "CountIfs","COUPDAYBS": "CoupDayBs","COUPDAYS": "CoupDays","COUPDAYSNC": "CoupDaysNc","COUPNCD": "CoupNcd","COUPNUM": "CoupNum","COUPPCD": "CoupPcd","COVAR": "Covar","COVARIANCE.P": "Covariance.P","COVARIANCE.S": "Covariance.S","CRITBINOM": "CritBinom","CSC": "Csc","CSCH": "Csch","CUMIPMT": "CumIPmt","CUMPRINC": "CumPrinc","DAVERAGE": "DAverage","DAYS": "Days","DAYS360": "Days360","DB": "Db","DBCS": "Dbcs","DCOUNT": "DCount","DCOUNTA": "DCountA","DDB": "Ddb","DEC2BIN": "Dec2Bin","DEC2HEX": "Dec2Hex","DEC2OCT": "Dec2Oct","DECIMAL": "Decimal","DEGREES": "Degrees","DELTA": "Delta","DEVSQ": "DevSq","DGET": "DGet","DISC": "Disc","DMAX": "DMax","DMIN": "DMin","DOLLAR": "Dollar","DOLLARDE": "DollarDe","DOLLARFR": "DollarFr","DPRODUCT": "DProduct","DSTDEV": "DStDev","DSTDEVP": "DStDevP","DSUM": "DSum","DURATION": "Duration","DVAR": "DVar","DVARP": "DVarP","EDATE": "EDate","EFFECT": "Effect","ENCODEURL": "EncodeUrl","EOMONTH": "EoMonth","ERF": "Erf","ERF.PRECISE": "Erf.Precise","ERFC": "ErfC","ERFC.PRECISE": "ErfC.Precise","EVEN": "Even","EXPON.DIST": "Expon.Dist","EXPONDIST": "ExponDist","F.DIST": "F.Dist","F.DIST.RT": "F.Dist.RT","F.INV": "F.Inv","F.INV.RT": "F.Inv.RT","F.TEST": "F.Test","FACT": "Fact","FACTDOUBLE": "FactDouble","FDIST": "FDist","FILTERXML": "FilterXML","FIND": "Find","FINDB": "FindB","FINV": "FInv","FISHER": "Fisher","FISHERINV": "FisherInv","FIXED": "Fixed","FLOOR": "Floor","FLOOR.MATH": "Floor.Math","FLOOR.PRECISE": "Floor.Precise","FORECAST": "Forecast","FORECAST.ETS": "Forecast.ETS","FORECAST.ETS.CONFINT": "Forecast.ETS.ConfInt","FORECAST.ETS.SEASONALITY": "Forecast.ETS.Seasonality","FORECAST.ETS.STAT": "Forecast.ETS.STAT","FORECAST.LINEAR": "Forecast.Linear","FREQUENCY": "Frequency","FTEST": "FTest","FV": "Fv","FVSCHEDULE": "FVSchedule","GAMMA": "Gamma","GAMMA.DIST": "Gamma.Dist","GAMMA.INV": "Gamma.Inv","GAMMADIST": "GammaDist","GAMMAINV": "GammaInv","GAMMALN": "GammaLn","GAMMALN.PRECISE": "GammaLn.Precise","GAUSS": "Gauss","GCD": "Gcd","GEOMEAN": "GeoMean","GESTEP": "GeStep","GROWTH": "Growth","HARMEAN": "HarMean","HEX2BIN": "Hex2Bin","HEX2DEC": "Hex2Dec","HEX2OCT": "Hex2Oct","HLOOKUP": "HLookup","HYPGEOM.DIST": "HypGeom.Dist","HYPGEOMDIST": "HypGeomDist","IFERROR": "IfError","IFNA": "IfNa","IMABS": "ImAbs","IMAGINARY": "Imaginary","IMARGUMENT": "ImArgument","IMCONJUGATE": "ImConjugate","IMCOS": "ImCos","IMCOSH": "ImCosh","IMCOT": "ImCot","IMCSC": "ImCsc","IMCSCH": "ImCsch","IMDIV": "ImDiv","IMEXP": "ImExp","IMLN": "ImLn","IMLOG10": "ImLog10","IMLOG2": "ImLog2","IMPOWER": "ImPower","IMPRODUCT": "ImProduct","IMREAL": "ImReal","IMSEC": "ImSec","IMSECH": "ImSech","IMSIN": "ImSin","IMSINH": "ImSinh","IMSQRT": "ImSqrt","IMSUB": "ImSub","IMSUM": "ImSum","IMTAN": "ImTan","INDEX": "Index","INTERCEPT": "Intercept","INTRATE": "IntRate","IPMT": "Ipmt","IRR": "Irr","ISERR": "IsErr","ISERROR": "IsError","ISEVEN": "IsEven","ISFORMULA": "IsFormula","ISLOGICAL": "IsLogical","ISNA": "IsNA","ISNONTEXT": "IsNonText","ISNUMBER": "IsNumber","ISO.CEILING": "ISO.Ceiling","ISODD": "IsOdd","ISOWEEKNUM": "IsoWeekNum","ISPMT": "Ispmt","ISTEXT": "IsText","KURT": "Kurt","LARGE": "Large","LCM": "Lcm","LINEST": "LinEst","LN": "Ln","LOG": "Log","LOG10": "Log10","LOGEST": "LogEst","LOGINV": "LogInv","LOGNORM.DIST": "LogNorm.Dist","LOGNORM.INV": "LogNorm.Inv","LOGNORMDIST": "LogNormDist","LOOKUP": "Lookup","MATCH": "Match","MAX": "Max","MDETERM": "MDeterm","MDURATION": "MDuration","MEDIAN": "Median","MIN": "Min","MINVERSE": "MInverse","MIRR": "MIrr","MMULT": "MMult","MODE": "Mode","MODE.MULT": "Mode.Mult","MODE.SNGL": "Mode.Sngl","MROUND": "MRound","MULTINOMIAL": "MultiNomial","MUNIT": "Munit","NEGBINOM.DIST": "NegBinom.Dist","NEGBINOMDIST": "NegBinomDist","NETWORKDAYS": "NetworkDays","NETWORKDAYS.INTL": "NetworkDays.Intl","NOMINAL": "Nominal","NORM.DIST": "Norm.Dist","NORM.INV": "Norm.Inv","NORM.S.DIST": "Norm.S.Dist","NORM.S.INV": "Norm.S.Inv","NORMDIST": "NormDist","NORMINV": "NormInv","NORMSDIST": "NormSDist","NORMSINV": "NormSInv","NPER": "NPer","NPV": "Npv","NUMBERVALUE": "NumberValue","OCT2BIN": "Oct2Bin","OCT2DEC": "Oct2Dec","OCT2HEX": "Oct2Hex","ODD": "Odd","ODDFPRICE": "OddFPrice","ODDFYIELD": "OddFYield","ODDLPRICE": "OddLPrice","ODDLYIELD": "OddLYield","OR": "Or","PDURATION": "PDuration","PEARSON": "Pearson","PERCENTILE": "Percentile","PERCENTILE.EXC": "Percentile.Exc","PERCENTILE.INC": "Percentile.Inc","PERCENTRANK": "PercentRank","PERCENTRANK.EXC": "PercentRank.Exc","PERCENTRANK.INC": "PercentRank.Inc","PERMUT": "Permut","PERMUTATIONA": "Permutationa","PHI": "Phi","PHONETIC": "Phonetic","PI": "Pi","PMT": "Pmt","POISSON": "Poisson","POISSON.DIST": "Poisson.Dist","POWER": "Power","PPMT": "Ppmt","PRICE": "Price","PRICEDISC": "PriceDisc","PRICEMAT": "PriceMat","PROB": "Prob","PRODUCT": "Product","PROPER": "Proper","PV": "Pv","QUARTILE": "Quartile","QUARTILE.EXC": "Quartile.Exc","QUARTILE.INC": "Quartile.Inc","QUOTIENT": "Quotient","RADIANS": "Radians","RANDBETWEEN": "RandBetween","RANK": "Rank","RANK.AVG": "Rank.Avg","RANK.EQ": "Rank.Eq","RATE": "Rate","RECEIVED": "Received","REPLACE": "Replace","REPLACEB": "ReplaceB","REPT": "Rept","ROMAN": "Roman","ROUND": "Round","ROUNDDOWN": "RoundDown","ROUNDUP": "RoundUp","RRI": "Rri","RSQ": "RSq","RTD": "RTD","SEARCH": "Search","SEARCHB": "SearchB","SEC": "Sec","SECH": "Sech","SERIESSUM": "SeriesSum","SINH": "Sinh","SKEW": "Skew","SKEW.P": "Skew.p","SLN": "Sln","SLOPE": "Slope","SMALL": "Small","SQRTPI": "SqrtPi","STANDARDIZE": "Standardize","STDEV": "StDev","STDEV.P": "StDev.P","STDEV.S": "StDev.S","STDEVP": "StDevP","STEYX": "StEyx","SUBSTITUTE": "Substitute","SUBTOTAL": "Subtotal","SUM": "Sum","SUMIF": "SumIf","SUMIFS": "SumIfs","SUMPRODUCT": "SumProduct","SUMSQ": "SumSq","SUMX2MY2": "SumX2MY2","SUMX2PY2": "SumX2PY2","SUMXMY2": "SumXMY2","SYD": "Syd","T.DIST": "T.Dist","T.DIST.2T": "T.Dist.2T","T.DIST.RT": "T.Dist.RT","T.INV": "T.Inv","T.INV.2T": "T.Inv.2T","T.TEST": "T.Test","TANH": "Tanh","TBILLEQ": "TBillEq","TBILLPRICE": "TBillPrice","TBILLYIELD": "TBillYield","TDIST": "TDist","TEXT": "Text","TINV": "TInv","TRANSPOSE": "Transpose","TREND": "Trend","TRIM": "Trim","TRIMMEAN": "TrimMean","TTEST": "TTest","UNICHAR": "Unichar","UNICODE": "Unicode","USDOLLAR": "USDollar","VAR": "Var","VAR.P": "Var.P","VAR.S": "Var.S","VARP": "VarP","VDB": "Vdb","VLOOKUP": "VLookup","WEBSERVICE": "WebService","WEEKDAY": "Weekday","WEEKNUM": "WeekNum","WEIBULL": "Weibull","WEIBULL.DIST": "Weibull.Dist","WORKDAY": "WorkDay","WORKDAY.INTL": "WorkDay.Intl","XIRR": "Xirr","XNPV": "Xnpv","XOR": "Xor","YEARFRAC": "YearFrac","YIELDDISC": "YieldDisc","YIELDMAT": "YieldMat","Z.TEST": "Z.Test","ZTEST": "ZTest"
 	};*/
 
 	//js
-	/*let functionsMap2 = {
-		"INIT": "init",
-		"ACCRINT": "accrInt",
-		"ACCRINTM": "accrIntM",
-		"ACOS": "acos",
-		"ACOSH": "acosh",
-		"ACOT": "acot",
-		"ACOTH": "acoth",
-		"AMORDEGRC": "amorDegrc",
-		"AMORLINC": "amorLinc",
-		"AND": "and",
-		"ARABIC": "arabic",
-		"AREAS": "areas",
-		"ASC": "asc",
-		"ASIN": "asin",
-		"ASINH": "asinh",
-		"ATAN": "atan",
-		"ATAN2": "atan2",
-		"ATANH": "atanh",
-		"AVEDEV": "aveDev",
-		"AVERAGE": "average",
-		"AVERAGEA": "averageA",
-		"AVERAGEIF": "averageIf",
-		"AVERAGEIFS": "averageIfs",
-		//"BAHTTEXT": "bahtText",
-		"BASE": "base",
-		"BESSELI": "besselI",
-		"BESSELJ": "besselJ",
-		"BESSELK": "besselK",
-		"BESSELY": "besselY",
-		"BETA.DIST": "beta.Dist",
-		"BETA.INV": "beta.Inv",
-		"BIN2DEC": "bin2Dec",
-		"BIN2HEX": "bin2Hex",
-		"BIN2OCT": "bin2Oct",
-		"BINOM.DIST": "binom.Dist",
-		"BINOM.DIST.RANGE": "binom.Dist.Range",
-		"BINOM.INV": "binom.Inv",
-		"BITAND": "bitand",
-		"BITLSHIFT": "bitlshift",
-		"BITOR": "bitor",
-		"BITRSHIFT": "bitrshift",
-		"BITXOR": "bitxor",
-		"CEILING.MATH": "ceiling.Math",
-		"CEILING.PRECISE": "ceiling.Precise",
-		"CHAR": "char",
-		"CHISQ.DIST": "chiSq.Dist",
-		"CHISQ.DIST.RT": "chiSq.Dist.RT",
-		"CHISQ.INV": "chiSq.Inv",
-		"CHISQ.INV.RT": "chiSq.Inv.RT",
-		"CHOOSE": "choose",
-		"CLEAN": "clean",
-		"CODE": "code",
-		"COLUMNS": "columns",
-		"COMBIN": "combin",
-		"COMBINA": "combina",
-		"COMPLEX": "complex",
-		"CONCATENATE": "concatenate",
-		"CONFIDENCE.NORM": "confidence.Norm",
-		"CONFIDENCE.T": "confidence.T",
-		"CONVERT": "convert",
-		"COS": "cos",
-		"COSH": "cosh",
-		"COT": "cot",
-		"COTH": "coth",
-		"COUNT": "count",
-		"COUNTA": "countA",
-		"COUNTBLANK": "countBlank",
-		"COUNTIF": "countIf",
-		"COUNTIFS": "countIfs",
-		"COUPDAYBS": "coupDayBs",
-		"COUPDAYS": "coupDays",
-		"COUPDAYSNC": "coupDaysNc",
-		"COUPNCD": "coupNcd",
-		"COUPNUM": "coupNum",
-		"COUPPCD": "coupPcd",
-		"CSC": "csc",
-		"CSCH": "csch",
-		"CUMIPMT": "cumIPmt",
-		"CUMPRINC": "cumPrinc",
-		"DAVERAGE": "daverage",
-		"DCOUNT": "dcount",
-		"DCOUNTA": "dcountA",
-		"DGET": "dget",
-		"DMAX": "dmax",
-		"DMIN": "dmin",
-		"DPRODUCT": "dproduct",
-		"DSTDEV": "dstDev",
-		"DSTDEVP": "dstDevP",
-		"DSUM": "dsum",
-		"DVAR": "dvar",
-		"DVARP": "dvarP",
-		"DATE": "date",
-		"DATEVALUE": "datevalue",
-		"DAY": "day",
-		"DAYS": "days",
-		"DAYS360": "days360",
-		"DB": "db",
-		//"DBCS": "dbcs",
-		"DDB": "ddb",
-		"DEC2BIN": "dec2Bin",
-		"DEC2HEX": "dec2Hex",
-		"DEC2OCT": "dec2Oct",
-		"DECIMAL": "decimal",
-		"DEGREES": "degrees",
-		"DELTA": "delta",
-		"DEVSQ": "devSq",
-		"DISC": "disc",
-		"DOLLAR": "dollar",
-		"DOLLARDE": "dollarDe",
-		"DOLLARFR": "dollarFr",
-		"DURATION": "duration",
-		"ECMA.CEILING": "ecma.Ceiling",
-		"EDATE": "edate",
-		"EFFECT": "effect",
-		"EOMONTH": "eoMonth",
-		"ERF": "erf",
-		"ERFC": "erfC",
-		"ERFC.PRECISE": "erfC.Precise",
-		"ERF.PRECISE": "erf.Precise",
-		"ERROR.TYPE": "error.Type",
-		"EVEN": "even",
-		"EXACT": "exact",
-		"EXP": "exp",
-		"EXPON.DIST": "expon.Dist",
-		"FVSCHEDULE": "fvschedule",
-		"F.DIST": "f.Dist",
-		"F.DIST.RT": "f.Dist.RT",
-		"F.INV": "f.Inv",
-		"F.INV.RT": "f.Inv.RT",
-		"FACT": "fact",
-		"FACTDOUBLE": "factDouble",
-		"FALSE": "false",
-		"FIND": "find",
-		"FINDB": "findB",
-		"FISHER": "fisher",
-		"FISHERINV": "fisherInv",
-		"FIXED": "fixed",
-		"FLOOR.MATH": "floor.Math",
-		"FLOOR.PRECISE": "floor.Precise",
-		"FV": "fv",
-		"GAMMA": "gamma",
-		"GAMMALN": "gammaLn",
-		"GAMMALN.PRECISE": "gammaLn.Precise",
-		"GAMMA.DIST": "gamma.Dist",
-		"GAMMA.INV": "gamma.Inv",
-		"GAUSS": "gauss",
-		"GCD": "gcd",
-		"GESTEP": "geStep",
-		"GEOMEAN": "geoMean",
-		"HLOOKUP": "hlookup",
-		"HARMEAN": "harMean",
-		"HEX2BIN": "hex2Bin",
-		"HEX2DEC": "hex2Dec",
-		"HEX2OCT": "hex2Oct",
-		"HOUR": "hour",
-		"HYPGEOM.DIST": "hypGeom.Dist",
-		"HYPERLINK": "hyperlink",
-		"ISO.CEILING": "iso.Ceiling",
-		"IF": "if",
-		"IMABS": "imAbs",
-		"IMARGUMENT": "imArgument",
-		"IMCONJUGATE": "imConjugate",
-		"IMCOS": "imCos",
-		"IMCOSH": "imCosh",
-		"IMCOT": "imCot",
-		"IMCSC": "imCsc",
-		"IMCSCH": "imCsch",
-		"IMDIV": "imDiv",
-		"IMEXP": "imExp",
-		"IMLN": "imLn",
-		"IMLOG10": "imLog10",
-		"IMLOG2": "imLog2",
-		"IMPOWER": "imPower",
-		"IMPRODUCT": "imProduct",
-		"IMREAL": "imReal",
-		"IMSEC": "imSec",
-		"IMSECH": "imSech",
-		"IMSIN": "imSin",
-		"IMSINH": "imSinh",
-		"IMSQRT": "imSqrt",
-		"IMSUB": "imSub",
-		"IMSUM": "imSum",
-		"IMTAN": "imTan",
-		"IMAGINARY": "imaginary",
-		"INT": "int",
-		"INTRATE": "intRate",
-		"IPMT": "ipmt",
-		"IRR": "irr",
-		"ISERR": "isErr",
-		"ISERROR": "isError",
-		"ISEVEN": "isEven",
-		"ISFORMULA": "isFormula",
-		"ISLOGICAL": "isLogical",
-		"ISNA": "isNA",
-		"ISNONTEXT": "isNonText",
-		"ISNUMBER": "isNumber",
-		"ISODD": "isOdd",
-		"ISTEXT": "isText",
-		"ISOWEEKNUM": "isoWeekNum",
-		"ISPMT": "ispmt",
-		"ISREF": "isref",
-		"KURT": "kurt",
-		"LARGE": "large",
-		"LCM": "lcm",
-		"LEFT": "left",
-		"LEFTB": "leftb",
-		"LEN": "len",
-		"LENB": "lenb",
-		"LN": "ln",
-		"LOG": "log",
-		"LOG10": "log10",
-		"LOGNORM.DIST": "logNorm.Dist",
-		"LOGNORM.INV": "logNorm.Inv",
-		"LOOKUP": "lookup",
-		"LOWER": "lower",
-		"MDURATION": "mduration",
-		"MIRR": "mirr",
-		"MROUND": "mround",
-		"MATCH": "match",
-		"MAX": "max",
-		"MAXA": "maxA",
-		"MEDIAN": "median",
-		"MID": "mid",
-		"MIDB": "midb",
-		"MIN": "min",
-		"MINA": "minA",
-		"MINUTE": "minute",
-		"MOD": "mod",
-		"MONTH": "month",
-		"MULTINOMIAL": "multiNomial",
-		"N": "n",
-		"NPER": "nper",
-		"NA": "na",
-		"NEGBINOM.DIST": "negBinom.Dist",
-		"NETWORKDAYS": "networkDays",
-		"NETWORKDAYS.INTL": "networkDays.Intl",
-		"NOMINAL": "nominal",
-		"NORM.DIST": "norm.Dist",
-		"NORM.INV": "norm.Inv",
-		"NORM.S.DIST": "norm.S.Dist",
-		"NORM.S.INV": "norm.S.Inv",
-		"NOT": "not",
-		"NOW": "now",
-		"NPV": "npv",
-		"NUMBERVALUE": "numberValue",
-		"OCT2BIN": "oct2Bin",
-		"OCT2DEC": "oct2Dec",
-		"OCT2HEX": "oct2Hex",
-		"ODD": "odd",
-		"ODDFPRICE": "oddFPrice",
-		"ODDFYIELD": "oddFYield",
-		"ODDLPRICE": "oddLPrice",
-		"ODDLYIELD": "oddLYield",
-		"OR": "or",
-		"PDURATION": "pduration",
-		"PERCENTRANK.EXC": "percentRank.Exc",
-		"PERCENTRANK.INC": "percentRank.Inc",
-		"PERCENTILE.EXC": "percentile.Exc",
-		"PERCENTILE.INC": "percentile.Inc",
-		"PERMUT": "permut",
-		"PERMUTATIONA": "permutationa",
-		"PHI": "phi",
-		"PI": "pi",
-		"PMT": "pmt",
-		"POISSON.DIST": "poisson.Dist",
-		"POWER": "power",
-		"PPMT": "ppmt",
-		"PRICE": "price",
-		"PRICEDISC": "priceDisc",
-		"PRICEMAT": "priceMat",
-		"PRODUCT": "product",
-		"PROPER": "proper",
-		"PV": "pv",
-		"QUARTILE.EXC": "quartile.Exc",
-		"QUARTILE.INC": "quartile.Inc",
-		"QUOTIENT": "quotient",
-		"RADIANS": "radians",
-		"RAND": "rand",
-		"RANDBETWEEN": "randBetween",
-		"RANK.AVG": "rank.Avg",
-		"RANK.EQ": "rank.Eq",
-		"RATE": "rate",
-		"RECEIVED": "received",
-		"REPLACE": "replace",
-		"REPLACEB": "replaceB",
-		"REPT": "rept",
-		"RIGHT": "right",
-		"RIGHTB": "rightb",
-		"ROMAN": "roman",
-		"ROUND": "round",
-		"ROUNDDOWN": "roundDown",
-		"ROUNDUP": "roundUp",
-		"ROWS": "rows",
-		"RRI": "rri",
-		"SEC": "sec",
-		"SECH": "sech",
-		"SECOND": "second",
-		"SERIESSUM": "seriesSum",
-		"SHEET": "sheet",
-		"SHEETS": "sheets",
-		"SIGN": "sign",
-		"SIN": "sin",
-		"SINH": "sinh",
-		"SKEW": "skew",
-		"SKEW.P": "skew.p",
-		"SLN": "sln",
-		"SMALL": "small",
-		"SQRT": "sqrt",
-		"SQRTPI": "sqrtPi",
-		"STDEVA": "stDevA",
-		"STDEVPA": "stDevPA",
-		"STDEV.P": "stDev.P",
-		"STDEV.S": "stDev.S",
-		"STANDARDIZE": "standardize",
-		"SUBSTITUTE": "substitute",
-		"SUBTOTAL": "subtotal",
-		"SUM": "sum",
-		"SUMIF": "sumIf",
-		"SUMIFS": "sumIfs",
-		"SUMSQ": "sumSq",
-		"SYD": "syd",
-		"T": "t",
-		"TBILLEQ": "tbillEq",
-		"TBILLPRICE": "tbillPrice",
-		"TBILLYIELD": "tbillYield",
-		"T.DIST": "t.Dist",
-		"T.DIST.2T": "t.Dist.2T",
-		"T.DIST.RT": "t.Dist.RT",
-		"T.INV": "t.Inv",
-		"T.INV.2T": "t.Inv.2T",
-		"TAN": "tan",
-		"TANH": "tanh",
-		"TEXT": "text",
-		"TIME": "time",
-		"TIMEVALUE": "timevalue",
-		"TODAY": "today",
-		"TRIM": "trim",
-		"TRIMMEAN": "trimMean",
-		"TRUE": "true",
-		"TRUNC": "trunc",
-		"TYPE": "type",
-		"USDOLLAR": "usdollar",
-		"UNICHAR": "unichar",
-		"UNICODE": "unicode",
-		"UPPER": "upper",
-		"VLOOKUP": "vlookup",
-		"VALUE": "value",
-		"VARA": "varA",
-		"VARPA": "varPA",
-		"VAR.P": "var.P",
-		"VAR.S": "var.S",
-		"VDB": "vdb",
-		"WEEKNUM": "weekNum",
-		"WEEKDAY": "weekday",
-		"WEIBULL.DIST": "weibull.Dist",
-		"WORKDAY": "workDay",
-		"WORKDAY.INTL": "workDay.Intl",
-		"XIRR": "xirr",
-		"XNPV": "xnpv",
-		"XOR": "xor",
-		"YEAR": "year",
-		"YEARFRAC": "yearFrac",
-		"YIELD": "yield",
-		"YIELDDISC": "yieldDisc",
-		"YIELDMAT": "yieldMat",
-		"Z.TEST": "z.Test"
+	/*let functionsMap2 = {"INIT": "init","ACCRINT": "accrInt","ACCRINTM": "accrIntM","ACOS": "acos","ACOSH": "acosh","ACOT": "acot","ACOTH": "acoth","AMORDEGRC": "amorDegrc","AMORLINC": "amorLinc","AND": "and","ARABIC": "arabic","AREAS": "areas","ASC": "asc","ASIN": "asin","ASINH": "asinh","ATAN": "atan","ATAN2": "atan2","ATANH": "atanh","AVEDEV": "aveDev","AVERAGE": "average","AVERAGEA": "averageA","AVERAGEIF": "averageIf","AVERAGEIFS": "averageIfs",//"BAHTTEXT": "bahtText","BASE": "base","BESSELI": "besselI","BESSELJ": "besselJ","BESSELK": "besselK","BESSELY": "besselY","BETA.DIST": "beta.Dist","BETA.INV": "beta.Inv","BIN2DEC": "bin2Dec","BIN2HEX": "bin2Hex","BIN2OCT": "bin2Oct","BINOM.DIST": "binom.Dist","BINOM.DIST.RANGE": "binom.Dist.Range","BINOM.INV": "binom.Inv","BITAND": "bitand","BITLSHIFT": "bitlshift","BITOR": "bitor","BITRSHIFT": "bitrshift","BITXOR": "bitxor","CEILING.MATH": "ceiling.Math","CEILING.PRECISE": "ceiling.Precise","CHAR": "char","CHISQ.DIST": "chiSq.Dist","CHISQ.DIST.RT": "chiSq.Dist.RT","CHISQ.INV": "chiSq.Inv","CHISQ.INV.RT": "chiSq.Inv.RT","CHOOSE": "choose","CLEAN": "clean","CODE": "code","COLUMNS": "columns","COMBIN": "combin","COMBINA": "combina","COMPLEX": "complex","CONCATENATE": "concatenate","CONFIDENCE.NORM": "confidence.Norm","CONFIDENCE.T": "confidence.T","CONVERT": "convert","COS": "cos","COSH": "cosh","COT": "cot","COTH": "coth","COUNT": "count","COUNTA": "countA","COUNTBLANK": "countBlank","COUNTIF": "countIf","COUNTIFS": "countIfs","COUPDAYBS": "coupDayBs","COUPDAYS": "coupDays","COUPDAYSNC": "coupDaysNc","COUPNCD": "coupNcd","COUPNUM": "coupNum","COUPPCD": "coupPcd","CSC": "csc","CSCH": "csch","CUMIPMT": "cumIPmt","CUMPRINC": "cumPrinc","DAVERAGE": "daverage","DCOUNT": "dcount","DCOUNTA": "dcountA","DGET": "dget","DMAX": "dmax","DMIN": "dmin","DPRODUCT": "dproduct","DSTDEV": "dstDev","DSTDEVP": "dstDevP","DSUM": "dsum","DVAR": "dvar","DVARP": "dvarP","DATE": "date","DATEVALUE": "datevalue","DAY": "day","DAYS": "days","DAYS360": "days360","DB": "db",//"DBCS": "dbcs","DDB": "ddb","DEC2BIN": "dec2Bin","DEC2HEX": "dec2Hex","DEC2OCT": "dec2Oct","DECIMAL": "decimal","DEGREES": "degrees","DELTA": "delta","DEVSQ": "devSq","DISC": "disc","DOLLAR": "dollar","DOLLARDE": "dollarDe","DOLLARFR": "dollarFr","DURATION": "duration","ECMA.CEILING": "ecma.Ceiling","EDATE": "edate","EFFECT": "effect","EOMONTH": "eoMonth","ERF": "erf","ERFC": "erfC","ERFC.PRECISE": "erfC.Precise","ERF.PRECISE": "erf.Precise","ERROR.TYPE": "error.Type","EVEN": "even","EXACT": "exact","EXP": "exp","EXPON.DIST": "expon.Dist","FVSCHEDULE": "fvschedule","F.DIST": "f.Dist","F.DIST.RT": "f.Dist.RT","F.INV": "f.Inv","F.INV.RT": "f.Inv.RT","FACT": "fact","FACTDOUBLE": "factDouble","FALSE": "false","FIND": "find","FINDB": "findB","FISHER": "fisher","FISHERINV": "fisherInv","FIXED": "fixed","FLOOR.MATH": "floor.Math","FLOOR.PRECISE": "floor.Precise","FV": "fv","GAMMA": "gamma","GAMMALN": "gammaLn","GAMMALN.PRECISE": "gammaLn.Precise","GAMMA.DIST": "gamma.Dist","GAMMA.INV": "gamma.Inv","GAUSS": "gauss","GCD": "gcd","GESTEP": "geStep","GEOMEAN": "geoMean","HLOOKUP": "hlookup","HARMEAN": "harMean","HEX2BIN": "hex2Bin","HEX2DEC": "hex2Dec","HEX2OCT": "hex2Oct","HOUR": "hour","HYPGEOM.DIST": "hypGeom.Dist","HYPERLINK": "hyperlink","ISO.CEILING": "iso.Ceiling","IF": "if","IMABS": "imAbs","IMARGUMENT": "imArgument","IMCONJUGATE": "imConjugate","IMCOS": "imCos","IMCOSH": "imCosh","IMCOT": "imCot","IMCSC": "imCsc","IMCSCH": "imCsch","IMDIV": "imDiv","IMEXP": "imExp","IMLN": "imLn","IMLOG10": "imLog10","IMLOG2": "imLog2","IMPOWER": "imPower","IMPRODUCT": "imProduct","IMREAL": "imReal","IMSEC": "imSec","IMSECH": "imSech","IMSIN": "imSin","IMSINH": "imSinh","IMSQRT": "imSqrt","IMSUB": "imSub","IMSUM": "imSum","IMTAN": "imTan","IMAGINARY": "imaginary","INT": "int","INTRATE": "intRate","IPMT": "ipmt","IRR": "irr","ISERR": "isErr","ISERROR": "isError","ISEVEN": "isEven","ISFORMULA": "isFormula","ISLOGICAL": "isLogical","ISNA": "isNA","ISNONTEXT": "isNonText","ISNUMBER": "isNumber","ISODD": "isOdd","ISTEXT": "isText","ISOWEEKNUM": "isoWeekNum","ISPMT": "ispmt","ISREF": "isref","KURT": "kurt","LARGE": "large","LCM": "lcm","LEFT": "left","LEFTB": "leftb","LEN": "len","LENB": "lenb","LN": "ln","LOG": "log","LOG10": "log10","LOGNORM.DIST": "logNorm.Dist","LOGNORM.INV": "logNorm.Inv","LOOKUP": "lookup","LOWER": "lower","MDURATION": "mduration","MIRR": "mirr","MROUND": "mround","MATCH": "match","MAX": "max","MAXA": "maxA","MEDIAN": "median","MID": "mid","MIDB": "midb","MIN": "min","MINA": "minA","MINUTE": "minute","MOD": "mod","MONTH": "month","MULTINOMIAL": "multiNomial","N": "n","NPER": "nper","NA": "na","NEGBINOM.DIST": "negBinom.Dist","NETWORKDAYS": "networkDays","NETWORKDAYS.INTL": "networkDays.Intl","NOMINAL": "nominal","NORM.DIST": "norm.Dist","NORM.INV": "norm.Inv","NORM.S.DIST": "norm.S.Dist","NORM.S.INV": "norm.S.Inv","NOT": "not","NOW": "now","NPV": "npv","NUMBERVALUE": "numberValue","OCT2BIN": "oct2Bin","OCT2DEC": "oct2Dec","OCT2HEX": "oct2Hex","ODD": "odd","ODDFPRICE": "oddFPrice","ODDFYIELD": "oddFYield","ODDLPRICE": "oddLPrice","ODDLYIELD": "oddLYield","OR": "or","PDURATION": "pduration","PERCENTRANK.EXC": "percentRank.Exc","PERCENTRANK.INC": "percentRank.Inc","PERCENTILE.EXC": "percentile.Exc","PERCENTILE.INC": "percentile.Inc","PERMUT": "permut","PERMUTATIONA": "permutationa","PHI": "phi","PI": "pi","PMT": "pmt","POISSON.DIST": "poisson.Dist","POWER": "power","PPMT": "ppmt","PRICE": "price","PRICEDISC": "priceDisc","PRICEMAT": "priceMat","PRODUCT": "product","PROPER": "proper","PV": "pv","QUARTILE.EXC": "quartile.Exc","QUARTILE.INC": "quartile.Inc","QUOTIENT": "quotient","RADIANS": "radians","RAND": "rand","RANDBETWEEN": "randBetween","RANK.AVG": "rank.Avg","RANK.EQ": "rank.Eq","RATE": "rate","RECEIVED": "received","REPLACE": "replace","REPLACEB": "replaceB","REPT": "rept","RIGHT": "right","RIGHTB": "rightb","ROMAN": "roman","ROUND": "round","ROUNDDOWN": "roundDown","ROUNDUP": "roundUp","ROWS": "rows","RRI": "rri","SEC": "sec","SECH": "sech","SECOND": "second","SERIESSUM": "seriesSum","SHEET": "sheet","SHEETS": "sheets","SIGN": "sign","SIN": "sin","SINH": "sinh","SKEW": "skew","SKEW.P": "skew.p","SLN": "sln","SMALL": "small","SQRT": "sqrt","SQRTPI": "sqrtPi","STDEVA": "stDevA","STDEVPA": "stDevPA","STDEV.P": "stDev.P","STDEV.S": "stDev.S","STANDARDIZE": "standardize","SUBSTITUTE": "substitute","SUBTOTAL": "subtotal","SUM": "sum","SUMIF": "sumIf","SUMIFS": "sumIfs","SUMSQ": "sumSq","SYD": "syd","T": "t","TBILLEQ": "tbillEq","TBILLPRICE": "tbillPrice","TBILLYIELD": "tbillYield","T.DIST": "t.Dist","T.DIST.2T": "t.Dist.2T","T.DIST.RT": "t.Dist.RT","T.INV": "t.Inv","T.INV.2T": "t.Inv.2T","TAN": "tan","TANH": "tanh","TEXT": "text","TIME": "time","TIMEVALUE": "timevalue","TODAY": "today","TRIM": "trim","TRIMMEAN": "trimMean","TRUE": "true","TRUNC": "trunc","TYPE": "type","USDOLLAR": "usdollar","UNICHAR": "unichar","UNICODE": "unicode","UPPER": "upper","VLOOKUP": "vlookup","VALUE": "value","VARA": "varA","VARPA": "varPA","VAR.P": "var.P","VAR.S": "var.S","VDB": "vdb","WEEKNUM": "weekNum","WEEKDAY": "weekday","WEIBULL.DIST": "weibull.Dist","WORKDAY": "workDay","WORKDAY.INTL": "workDay.Intl","XIRR": "xirr","XNPV": "xnpv","XOR": "xor","YEAR": "year","YEARFRAC": "yearFrac","YIELD": "yield","YIELDDISC": "yieldDisc","YIELDMAT": "yieldMat","Z.TEST": "z.Test"
 	};*/
 
 	//vba + js
 	let supportedFunctionsMap = {
+		"ABS": "ABS",
 		"ACCRINT": "AccrInt",
 		"ACCRINTM": "AccrIntM",
 		"ACOS": "Acos",
@@ -1793,249 +1230,74 @@
 		"YIELD": "yield"
 	};
 
-	function CWorksheetFunctions() {
-		return this;
+	function calculateFunction (func, arg) {
+		//check
+		let argsCount = arg.length;
+		if (!func.checkArguments(argsCount)) {
+			throwException(new Error('Arguments count error.'));
+			return null;
+		}
+
+		//prepare arguments
+		let newArguments = [];
+		for (let i = 0; i < argsCount; i++) {
+			if ('number' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cNumber(arg[i]));
+			} else if ('string' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cString(arg[i]));
+			} else if ('boolean' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cBool(arg[i]));
+			} else if (arg[i] instanceof ApiRange ) {
+				//cArea/cRef/cArea3D/cRef3d
+				newArguments.push(new AscCommonExcel.cArea3D(arg[i].bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
+			} else {
+				throwException(new Error('Arguments type error.'));
+				return null;
+			}
+		}
+
+		//prepare result
+		let result = func.Calculate(newArguments);
+
+		if (!result) {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
+
+		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
+			result = result.getValue();
+			if (cElementType.empty === result.type) {
+				result = new cNumber(0);
+			}
+		} else if (AscCommonExcel.cElementType.array === result.type) {
+			result = result.getElement(0);
+		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
+			result = result.getValue2(0, 0);
+		}
+
+		if (result) {
+			result = result.getValue();
+		} else {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
+
+		return result;
 	}
 
-	CWorksheetFunctions.prototype.init = function () {
+	function ApiWorksheetFunction() {
+	}
+
+	ApiWorksheetFunction.prototype.init = function () {
 		for (let i in AscCommonExcel.cFormulaFunction) {
 			if (supportedFunctionsMap[i]) {
-				let displayFunctionName = supportedFunctionsMap[i];
-				CWorksheetFunctions.prototype[displayFunctionName] = function () {
+				ApiWorksheetFunction.prototype[i] = function () {
 					return calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
 				}
 			}
 		}
 	};
 
-	Api.prototype.WorksheetFunction = new CWorksheetFunctions();
-
-
-	/**
-	 * Returns a sheet collection that represents all the sheets in the active workbook.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiWorksheet[]}
-	 */
-	Api.prototype.GetSheets = function () {
-		var result = [];
-		for (var i = 0; i < this.wbModel.getWorksheetCount(); ++i) {
-			result.push(new ApiWorksheet(this.wbModel.getWorksheet(i)));
-		}
-		return result;
-	};
-	Object.defineProperty(Api.prototype, "Sheets", {
-		get: function () {
-			return this.GetSheets();
-		}
-	});
-
-	/**
-	 * Sets a locale to the document.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {number} LCID - The locale specified.
-	 */
-	Api.prototype.SetLocale = function (LCID) {
-		this.asc_setLocale(LCID, null, null);
-	};
-
-	/**
-	 * Returns the current locale ID.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @returns {number}
-	 */
-	Api.prototype.GetLocale = function () {
-		return this.asc_getLocale();
-	};
-
-	/**
-	 * Returns an object that represents the active sheet.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiWorksheet}
-	 */
-	Api.prototype.GetActiveSheet = function () {
-		var index = this.wbModel.getActive();
-		return new ApiWorksheet(this.wbModel.getWorksheet(index));
-	};
-	Object.defineProperty(Api.prototype, "ActiveSheet", {
-		get: function () {
-			return this.GetActiveSheet();
-		}
-	});
-
-	/**
-	 * Returns an object that represents a sheet.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string | number} nameOrIndex - Sheet name or sheet index.
-	 * @returns {ApiWorksheet | null}
-	 */
-	Api.prototype.GetSheet = function (nameOrIndex) {
-		var ws = ('string' === typeof nameOrIndex) ? this.wbModel.getWorksheetByName(nameOrIndex) :
-			this.wbModel.getWorksheet(nameOrIndex);
-		return ws ? new ApiWorksheet(ws) : null;
-	};
-
-	/**
-	 * Returns a list of all the available theme colors for the spreadsheet.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @returns {string[]}
-	 */
-	Api.prototype.GetThemesColors = function () {
-		var result = [];
-		AscCommon.g_oUserColorScheme.forEach(function (item) {
-			result.push(item.get_name());
-		});
-
-		return result;
-	};
-
-	/**
-	 * Sets the theme colors to the current spreadsheet.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} sTheme - The color scheme that will be set to the current spreadsheet.
-	 * @returns {boolean} - returns false if sTheme isn't a string.
-	 */
-	Api.prototype.SetThemeColors = function (sTheme) {
-		if ('string' === typeof sTheme) {
-			this.wbModel.changeColorScheme(sTheme);
-			return true;
-		}
-		return false;
-	};
-
-	/**
-	 * Creates a new history point.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 */
-	Api.prototype.CreateNewHistoryPoint = function () {
-		History.Create_NewPoint();
-	};
-
-	/**
-	 * Creates an RGB color setting the appropriate values for the red, green and blue color components.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @returns {ApiColor}
-	 */
-	Api.prototype.CreateColorFromRGB = function (r, g, b) {
-		return new ApiColor(AscCommonExcel.createRgbColor(r, g, b));
-	};
-
-	/**
-	 * Creates a color selecting it from one of the available color presets.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
-	 * @returns {ApiColor}
-	 */
-	Api.prototype.CreateColorByName = function (sPresetColor) {
-		var rgb = AscFormat.mapPrstColor[sPresetColor];
-		return new ApiColor(AscCommonExcel.createRgbColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF));
-	};
-
-	/**
-	 * Returns the ApiRange object that represents the rectangular intersection of two or more ranges. If one or more ranges from a different worksheet are specified, an error will be returned.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
-	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
-	 * @returns {ApiRange | null}
-	 */
-	Api.prototype.Intersect = function (Range1, Range2) {
-		let result = null;
-		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
-			var res = Range1.range.bbox.intersection(Range2.range.bbox);
-			if (!res) {
-				logError(new Error('Ranges do not intersect.'));
-			} else {
-				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
-			}
-		} else {
-			logError(new Error('Ranges should be from one worksheet.'));
-		}
-		return result;
-	};
-
-	/**
-	 * Returns an object that represents the selected range.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRange}
-	 */
-	Api.prototype.GetSelection = function () {
-		return this.GetActiveSheet().GetSelection();
-	};
-	Object.defineProperty(Api.prototype, "Selection", {
-		get: function () {
-			return this.GetSelection();
-		}
-	});
-
-	/**
-	 * Adds a new name to a range of cells.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} sName - The range name.
-	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells.
-	 * Example: "Sheet1!$A$1:$B$2".
-	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
-	 * @returns {boolean} - returns false if sName or sRef are invalid.
-	 */
-	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
-		return private_AddDefName(this.wbModel, sName, sRef, null, isHidden);
-	};
-
-	/**
-	 * Returns the ApiName object by the range name.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} defName - The range name.
-	 * @returns {ApiName}
-	 */
-	Api.prototype.GetDefName = function (defName) {
-		if (defName && typeof defName === "string") {
-			defName = this.wbModel.getDefinesNames(defName);
-		}
-		return new ApiName(defName);
-	};
-
-	/**
-	 * Saves changes to the specified document.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 */
-	Api.prototype.Save = function () {
-		this.SaveAfterMacros = true;
-	};
-
-	/**
-	 * Returns the ApiRange object by the range reference.
-	 * @memberof Api
-	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range of cells from the current sheet.
-	 * @returns {ApiRange}
-	 */
-	Api.prototype.GetRange = function (sRange) {
-		var ws;
-		var res = AscCommon.parserHelp.parse3DRef(sRange);
-		if (res) {
-			ws = this.wbModel.getWorksheetByName(res.sheet);
-			sRange = res.range;
-		} else {
-			ws = this.wbModel.getActiveWs();
-		}
-		return new ApiRange(ws ? ws.getRange2(sRange) : null);
-	};
 
 	/**
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
