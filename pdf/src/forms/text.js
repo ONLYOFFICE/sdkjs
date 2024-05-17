@@ -1264,37 +1264,20 @@
 	 * @memberof CTextField
 	 * @typeofeditors ["PDF"]
 	 */
-    CTextField.prototype.Remove = function(nDirection, isCtrlKey) {
-        if (this.IsCanEditText() == false)
-            return false;
-
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        if (this.DoKeystrokeAction(null, nDirection, false, isCtrlKey) == false) {
-            AscCommon.History.Remove_LastPoint();
-            return false;
-        }
-        
-        let nSelStart = oDoc.event["selStart"];
-        let nSelEnd = oDoc.event["selEnd"];
-
-        if (this.content.IsSelectionUse())
-            this.content.RemoveSelection();
-
-        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
-        let startPos    = oDocPos.startPos;
-        let endPos      = oDocPos.endPos;
-
-        if (nSelStart == nSelEnd) {
-            this.content.SetContentPosition(startPos, 0, 0);
-            this.content.RecalculateCurPos();
-        }
-        else
-            this.content.SetSelectionByContentPositions(startPos, endPos);
-
-        if (nSelStart != nSelEnd)
-            this.content.Remove(nDirection, true, false, false, isCtrlKey);
+	CTextField.prototype.Remove = function(nDirection, isCtrlKey) {
+		if (this.IsCanEditText() == false)
+			return false;
+		
+		if (!this.DoKeystrokeAction(null, nDirection, false, isCtrlKey))
+			return false;
+		
+		let oDoc = this.GetDocument();
+		oDoc.CreateNewHistoryPoint({objects : [this]});
+		
+		this.UpdateSelectionByEvent();
+		
+		if (this.content.IsSelectionUse())
+			this.content.Remove(nDirection, true, false, false, isCtrlKey);
 
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
@@ -1517,7 +1500,7 @@
 
         return { startPos: StartPos, endPos: EndPos }
     };
-	CTextField.prototype.UpdateTextSelection = function() {
+	CTextField.prototype.UpdateSelectionByEvent = function() {
 		// убираем селект, выставляем из nSelStart/nSelEnd
 		let doc = this.GetDocument();
 		
