@@ -906,7 +906,6 @@
         return null;
     };
 	CAnnotationFreeText.prototype.OnChangeTextContent = function() {
-		
 		this.FitTextBox();
 		this.SetNeedRecalc(true);
 		this.SetNeedUpdateRC(true);
@@ -914,30 +913,29 @@
 		let docContent = this.GetDocContent();
 		docContent.RecalculateCurPos();
 	};
-    CAnnotationFreeText.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
-		for (let index = 0; index < aChars.length; ++index) {
-			let oRun = AscPDF.codePointToRunElement(aChars[index]);
-			if (oRun)
-				oParagraph.AddToParagraph(oRun, true);
-		}
-
-        this.FitTextBox();
-        this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
-        oContent.RecalculateCurPos();
-
-        return true;
-    };
+	CAnnotationFreeText.prototype.EnterText = function(value) {
+		let doc        = this.GetDocument();
+		let docContent = this.GetDocContent();
+		
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		let result = docContent.EnterText(value);
+		this.OnChangeTextContent();
+		return result;
+	};
+	CAnnotationFreeText.prototype.CorrectEnterText = function(oldValue, newValue) {
+		let doc = this.GetDocument();
+		let docContent = this.GetDocContent();
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		
+		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
+		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
+			return true;
+		});
+		this.OnChangeTextContent();
+		return result;
+	};
     /**
 	 * Removes char in current position by direction.
 	 * @memberof CTextField

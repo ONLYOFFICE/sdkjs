@@ -873,59 +873,90 @@
         
         this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
     };
-    CTextField.prototype.EnterText = function(aChars)
-    {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        let nChars = 0;
-        function countChars(oRun) {
-            var nCurPos = oRun.Content.length;
-			for (var nPos = 0; nPos < nCurPos; ++nPos)
-			{
+    CTextField.prototype.getRemainCharCount = function(removeCount) {
+		if (0 === this._charLimit)
+			return -1;
+		
+		let charCount = 0;
+		this.content.CheckRunContent(function(oRun) {
+			var nCurPos = oRun.Content.length;
+			for (var nPos = 0; nPos < nCurPos; ++nPos) {
 				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
-                    nChars++;
-            }
-        }
-        // считаем символы в форме
-        if (this._charLimit != 0)
-            this.content.CheckRunContent(countChars);
-
-        // считаем максимум символов для вставки
-        let nSelChars = this.content.GetSelectedText(true, {NewLine: true}).length;
-        let nMaxCharsToAdd = Math.min(this._charLimit != 0 ? this._charLimit - (nChars - nSelChars) : aChars.length, aChars.length);
-        if (nMaxCharsToAdd > 0) aChars.length = nMaxCharsToAdd;
-        else aChars.length = 0;
-
-        if (this.DoKeystrokeAction(aChars) == false) {
-            AscCommon.History.Remove_LastPoint();
-            return false;
-        }
+					++charCount;
+			}
+		});
 		
-		this.removeBeforePaste();
+		if (removeCount > charCount)
+			removeCount = charCount;
 		
-        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
-        if (aChars.length == 0) {
-            AscCommon.History.Remove_LastPoint();
-            return false;
-        }
-
-        this.InsertChars(aChars);
-        this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
-        this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
-
-        if (this.IsDoNotScroll()) {
-            let isOutOfForm = this.IsTextOutOfForm(this.content);
-            if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false)) {
-                AscCommon.History.Undo();
-                AscCommon.History.Clear_Redo();
-            }
-
-            this.AddToRedraw();
-        }
-
-        return true;
-    };
+		return Math.max(0, this._charLimit - (charCount - removeCount));
+	};
+	CTextField.prototype.EnterText = function(aChars) {
+		let selectedCount = this.content.GetSelectedText(true, {NewLine: true}).length;
+		let maxToAdd      = this.getRemainCharCount(selectedCount);
+		
+		if (-1 !== maxToAdd && aChars.length > maxToAdd)
+			aChars.length = maxToAdd;
+		
+		if (!this.DoKeystrokeAction(aChars))
+			return false;
+		
+		let doc = this.GetDocument();
+		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		if (0 === aChars.length)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		
+		if (!this.content.EnterText(aChars))
+			return false;
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
+		
+		if (this.IsDoNotScroll()) {
+			let isOutOfForm = this.IsTextOutOfForm(this.content);
+			if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false)) {
+				AscCommon.History.Undo();
+				AscCommon.History.Clear_Redo();
+			}
+			this.AddToRedraw();
+		}
+		
+		return true;
+	};
+	CTextField.prototype.CorrectEnterText = function(oldValue, newValue) {
+		let maxToAdd = this.getRemainCharCount(oldValue.length);
+		
+		if (-1 !== maxToAdd && newValue.length > maxToAdd)
+			newValue.length = maxToAdd;
+		
+		if (!this.DoKeystrokeAction(newValue))
+			return false;
+		
+		let doc = this.GetDocument();
+		newValue = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		
+		if (!this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;}))
+			return false;
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
+		
+		if (this.IsDoNotScroll()) {
+			let isOutOfForm = this.IsTextOutOfForm(this.content);
+			if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false)) {
+				AscCommon.History.Undo();
+				AscCommon.History.Clear_Redo();
+			}
+			this.AddToRedraw();
+		}
+		return true;
+	};
     CTextField.prototype.CheckAlignInternal = function() {
         // если выравнивание по центру или справа, то оно должно переключаться на left если ширина контента выходит за пределы формы
         // вызывается на момент коммита формы
@@ -955,12 +986,7 @@
         }
     };
     CTextField.prototype.InsertChars = function(aChars) {
-		let paragraph = this.getParagraph();
-		for (let index = 0; index < aChars.length; ++index) {
-			let runElement = AscPDF.codePointToRunElement(aChars[index]);
-			if (runElement)
-				paragraph.AddToParagraph(runElement, true);
-		}
+		this.content.EnterText(aChars);
 	};
 	CTextField.prototype.canBeginCompositeInput = function() {
 		return true;
@@ -1123,8 +1149,10 @@
         return true;
     };
     CTextField.prototype.DoKeystrokeAction = function(aChars, nRemoveType, isOnCommit, isCtrlKey) {
-        if (!aChars)
-            aChars = [];
+		if (!aChars)
+			aChars = [];
+		else if (typeof (aChars) === "string")
+			aChars = aChars.codePointsArray();
 
         let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
         let oActionRunScript = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;

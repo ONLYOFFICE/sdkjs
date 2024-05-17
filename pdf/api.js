@@ -442,52 +442,74 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		let viewer		= this.DocumentRenderer;
-		let oDoc		= viewer.getPDFDoc();
-		let oDrDoc		= oDoc.GetDrawingDocument();
-
-		let oActiveForm		= oDoc.activeForm;
-		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveDrawing	= oDoc.activeDrawing;
-		oDrDoc.UpdateTargetFromPaint = true;
+		let viewer = this.DocumentRenderer;
+		let doc    = viewer.getPDFDoc();
+		let drDoc  = doc.GetDrawingDocument();
 		
-		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
+		let textController = doc.getTextController();
+		if (!textController)
 			return false;
-
-		let oContent;
-		if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
-			oActiveForm.EnterText(codePoints);
-			oContent = oActiveForm.GetDocContent();
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			oActiveAnnot.EnterText(codePoints);
-			oContent = oActiveAnnot.GetDocContent();
-		}
-		else if (oActiveDrawing && !this.isRestrictionView()) {
-			oContent = oActiveDrawing.GetDocContent();
-
-			let nCode, oItem;
-			if (Array.isArray(codePoints)) {
-				for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
-					nCode = codePoints[nIdx];
-					oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
-					oDoc.AddToParagraph(oItem, false, true);
-				}
-			} else {
-				oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
-				oDoc.AddToParagraph(oItem, false, true);
-			}
-		}
 		
-		if (oContent) {
-			oDrDoc.showTarget(true);
-			oDrDoc.TargetStart();
-
-			if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-				oDrDoc.TargetEnd();
-		}
-
-		return true;
+		let result = textController.EnterText(codePoints);
+		
+		drDoc.showTarget(true);
+		drDoc.TargetStart();
+		let docContent = textController.GetDocContent();
+		
+		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
+			drDoc.TargetEnd();
+		
+		return result;
+		
+		// if (!this.DocumentRenderer)
+		// 	return false;
+		//
+		// let viewer		= this.DocumentRenderer;
+		// let oDoc		= viewer.getPDFDoc();
+		// let oDrDoc		= oDoc.GetDrawingDocument();
+		//
+		// let oActiveForm		= oDoc.activeForm;
+		// let oActiveAnnot	= oDoc.mouseDownAnnot;
+		// let oActiveDrawing	= oDoc.activeDrawing;
+		// oDrDoc.UpdateTargetFromPaint = true;
+		//
+		// if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
+		// 	return false;
+		//
+		// let oContent;
+		// if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
+		// 	oActiveForm.EnterText(codePoints);
+		// 	oContent = oActiveForm.GetDocContent();
+		// }
+		// else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
+		// 	oActiveAnnot.EnterText(codePoints);
+		// 	oContent = oActiveAnnot.GetDocContent();
+		// }
+		// else if (oActiveDrawing && !this.isRestrictionView()) {
+		// 	oContent = oActiveDrawing.GetDocContent();
+		//
+		// 	let nCode, oItem;
+		// 	if (Array.isArray(codePoints)) {
+		// 		for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+		// 			nCode = codePoints[nIdx];
+		// 			oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
+		// 			oDoc.AddToParagraph(oItem, false, true);
+		// 		}
+		// 	} else {
+		// 		oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
+		// 		oDoc.AddToParagraph(oItem, false, true);
+		// 	}
+		// }
+		//
+		// if (oContent) {
+		// 	oDrDoc.showTarget(true);
+		// 	oDrDoc.TargetStart();
+		//
+		// 	if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+		// 		oDrDoc.TargetEnd();
+		// }
+		//
+		// return true;
 	};
 	PDFEditorApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		let oViewer	= this.getDocumentRenderer();
@@ -529,15 +551,7 @@
 		if (!textController)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects: [textController]});
-		let docContent = textController.GetDocContent();
-		
-		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
-		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
-			return true;
-		});
-		textController.OnChangeTextContent();
-		return result;
+		return textController.CorrectEnterText(oldValue, newValue);
 	};
 	PDFEditorApi.prototype.asc_EditPage = function() {
 		let oViewer	= this.getDocumentRenderer();

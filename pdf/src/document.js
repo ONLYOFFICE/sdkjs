@@ -4843,6 +4843,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetAllSignatures = function() {
         return [];
     };
+	CPDFDoc.prototype.IsWordSelection = function() {
+		return false;
+	};
 
 	CPDFDoc.prototype.getTextController = function() {
 		let activeForm    = this.activeForm;

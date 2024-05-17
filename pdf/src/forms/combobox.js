@@ -398,8 +398,23 @@
             }
         }
     };
-    CComboBoxField.prototype.EnterText = function(aChars)
-    {
+    CComboBoxField.prototype.UpdateTextSelection = function() {
+		// убираем селект, выставляем из nSelStart/nSelEnd
+		let oDoc = this.GetDocument();
+		let nSelStart = oDoc.event["selStart"];
+		let nSelEnd = oDoc.event["selEnd"];
+	
+		let oDocPos  = this.CalcDocPos(nSelStart, nSelEnd);
+		let startPos = oDocPos.startPos;
+		let endPos   = oDocPos.endPos;
+	
+		this.content.RemoveSelection();
+		if (nSelStart === nSelEnd)
+			this.content.SetContentPosition(startPos, 0, 0);
+		else
+			this.content.SetSelectionByContentPositions(startPos, endPos);
+	};
+	CComboBoxField.prototype.EnterText = function(aChars) {
         let oDoc = this.GetDocument();
         oDoc.CreateNewHistoryPoint({objects: [this]});
 
