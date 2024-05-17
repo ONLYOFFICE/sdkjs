@@ -1520,11 +1520,8 @@ void main() {\n\
 
         var _numLine = -1;
 
-        var dKoefX = height / this.pages[pageIndex].W;
-        var dKoefY = width / this.pages[pageIndex].H;
-
-        var mmToPix = this.pages[pageIndex].Dpi / 25.4;
-        
+        var dKoefX = width / this.pages[pageIndex].W;
+        var dKoefY = height / this.pages[pageIndex].H;
         dKoefX *= (this.pages[pageIndex].Dpi / 25.4);
         dKoefY *= (this.pages[pageIndex].Dpi / 25.4);
 
@@ -1655,22 +1652,10 @@ void main() {\n\
                     // а для горизонтальной линии все можно пооптимизировать
                     if (_lineEx == 1 && _lineEy == 0)
                     {
-                        let oViewer = this.viewer;
-                        let oDoc    = oViewer.getPDFDoc();
-                        let oTr     = oDoc.pagesTransform[pageIndex].invert;
-                        let nScale  = this.pages[pageIndex].W / oViewer.drawingPages[pageIndex].W / AscCommon.AscBrowser.retinaPixelRatio;
-
-                        var _x = oTr.TransformPointX((mmToPix * (_lineX + off1)) / nScale, (mmToPix * (_lineY - _lineAscent)) / nScale) + 0.5 >> 0;
-                        var _r = oTr.TransformPointX((mmToPix * (_lineX + off2)) / nScale, (mmToPix * (_lineY + _lineDescent)) / nScale) + 0.5 >> 0;
-                        var _y = oTr.TransformPointY((mmToPix * (_lineX + off1)) / nScale, (mmToPix * (_lineY - _lineAscent)) / nScale) + 0.5 >> 0;
-                        var _b = oTr.TransformPointY((mmToPix * (_lineX + off2)) / nScale, (mmToPix * (_lineY + _lineDescent)) / nScale) + 0.5 >> 0;
-
-                        if (_x > _r) {
-                            [_x, _r] = [_r, _x]
-                        }
-                        if (_y > _b) {
-                            [_y, _b] = [_b, _y]
-                        }
+                        var _x = (x + dKoefX * (_lineX + off1)) >> 0;
+                        var _r = (x + dKoefX * (_lineX + off2)) >> 0;
+                        var _y = (y + dKoefY * (_lineY - _lineAscent)) >> 0;
+                        var _b = (y + dKoefY * (_lineY + _lineDescent)) >> 0;
 
                         if (_x < overlay.min_x)
                             overlay.min_x = _x;

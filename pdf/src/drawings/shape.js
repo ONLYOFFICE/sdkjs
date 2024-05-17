@@ -79,13 +79,18 @@
     };
     CPdfShape.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
+        let oViewer             = oDoc.Viewer;
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
         let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
             this.SetInTextBox(false);

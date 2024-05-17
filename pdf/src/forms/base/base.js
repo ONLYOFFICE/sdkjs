@@ -2402,7 +2402,7 @@
     function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
         // конвертация из глобальных x, y к mm кординатам самой страницы
         let oViewer = editor.getDocumentRenderer();
-        var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
+        var pageObject = oViewer.getPageByCoords(x, y);
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;

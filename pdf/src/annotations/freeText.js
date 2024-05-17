@@ -1229,7 +1229,7 @@
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 
         let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
         if (oCursorInfo.cursorType == null) {

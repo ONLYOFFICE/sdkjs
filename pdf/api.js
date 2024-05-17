@@ -1814,7 +1814,7 @@
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
-		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
 		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;

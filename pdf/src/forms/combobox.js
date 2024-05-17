@@ -251,7 +251,7 @@
             
             this.SetInForm(true);
 
-            var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
+            var pageObject = oViewer.getPageByCoords(x, y);
 
             if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && this._options.length != 0) {
                 editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);

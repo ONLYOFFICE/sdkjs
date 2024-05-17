@@ -180,7 +180,6 @@ var CPresentation = CPresentation || function(){};
             let nAngle  = this.Viewer.getPageRotate(i);
 
             let oPageTr = new AscCommon.CMatrix();
-            let oPageTrInvert = new AscCommon.CMatrix();
 
             let nPageW  = AscCommon.AscBrowser.convertToRetinaValue(oPage.W, true);
             let nPageH  = AscCommon.AscBrowser.convertToRetinaValue(oPage.H, true);
@@ -791,7 +790,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');
 
-        let oViewer         = this.Viewer;
+        let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
             return;
         }
@@ -810,9 +809,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownDrawing   = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
         
         // если ластик
         if (IsOnEraser) {
@@ -825,12 +827,12 @@ var CPresentation = CPresentation || function(){};
         // если добавление шейпа
         else if (IsOnAddAddShape) {
             oController.startAddShape(this.Api.addShapePreset);
-            oController.OnMouseDown(e, X, Y, oPos.DrawPage);
+            oController.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
         // если рисование
         else if (IsOnDrawer == true) {
-            oController.OnMouseDown(e, X, Y, oPos.DrawPage);
+            oController.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
         // если выделение текста на странице
@@ -1038,7 +1040,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
-        let oViewer = editor.getDocumentRenderer();
+        let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
             return;
         }
@@ -1059,9 +1061,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         // при зажатой мышке
         if (oViewer.isMouseDown)
@@ -1076,7 +1081,7 @@ var CPresentation = CPresentation || function(){};
             }
             // рисуем ink линию или добавляем фигугу
             else if (IsOnDrawer || IsOnAddAddShape) {
-                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, pageObject.index);
             }
             // обработка mouseMove в полях
             else if (this.activeForm) {
@@ -1107,11 +1112,11 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
 
-                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, pageObject.index);
             }
             else if (this.activeDrawing) {
-                oController.OnMouseMove(e, X, Y, oPos.DrawPage);
-                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, oPos.DrawPage);
+                oController.OnMouseMove(e, X, Y, pageObject.index);
+                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, pageObject.index);
                 if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
                     return;
                 }
@@ -1141,7 +1146,7 @@ var CPresentation = CPresentation || function(){};
         this.UpdateCursorType(x, y, e);
     };
     CPDFDoc.prototype.UpdateCursorType = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = this.Viewer;
         let oController     = this.GetController();
         let oDrDoc          = this.GetDrawingDocument();
         
@@ -1155,12 +1160,15 @@ var CPresentation = CPresentation || function(){};
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
 
-        let isCursorUpdated = oController.updateCursorType(oPos.DrawPage, X, Y, e, false);
-        let oCursorInfo     = oController.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        let X       = pageObject.x;
+        let Y       = pageObject.y;
+
+        let isCursorUpdated = oController.updateCursorType(pageObject.index, X, Y, e, false);
+        let oCursorInfo     = oController.getGraphicInfoUnderCursor(pageObject.index, X, Y);
         let oCurObject      = this.GetActiveObject();
 
         // уже обновлён в oController
@@ -1186,7 +1194,7 @@ var CPresentation = CPresentation || function(){};
         let cursorType;
 
         if (oMouseMoveField) {
-            let pageObject = oViewer.getPageByCoords3(x - oViewer.x, y - oViewer.y);
+            let pageObject = oViewer.getPageByCoords3(x, y);
             if (!pageObject)
                 return false;
 
@@ -1245,7 +1253,7 @@ var CPresentation = CPresentation || function(){};
         return true;
     };
     CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
             return;
         }
@@ -1263,9 +1271,12 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpDrawing     = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         // ластик работает на mousedown
         if (IsOnEraser) {
@@ -1273,7 +1284,7 @@ var CPresentation = CPresentation || function(){};
         }
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
-            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.OnMouseUp(e, X, Y, pageObject.index);
             return;
         }
 
@@ -1281,7 +1292,7 @@ var CPresentation = CPresentation || function(){};
             this.OnMouseUpField(oMouseUpField, e);
         }
         else if (this.mouseDownAnnot) {
-            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.OnMouseUp(e, X, Y, pageObject.index);
             if (this.mouseDownAnnot == oMouseUpAnnot)
                 oMouseUpAnnot.onMouseUp(x, y, e);
         }
@@ -1292,12 +1303,12 @@ var CPresentation = CPresentation || function(){};
                 this.activeDrawing.SetNeedRecalc(true);
             }
 
-            oController.OnMouseUp(e, X, Y, oPos.DrawPage);
+            oController.OnMouseUp(e, X, Y, pageObject.index);
             if (this.Api.isMarkerFormat && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
                 this.SetHighlight(this.HighlightColor.r, this.HighlightColor.g, this.HighlightColor.b);
             }
 
-            oController.updateCursorType(oPos.DrawPage, X, Y, e, false);
+            oController.updateCursorType(pageObject.index, X, Y, e, false);
             oDrDoc.UnlockCursorType();
             this.TurnOffHistory();
         }
@@ -1839,7 +1850,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer     = editor.getDocumentRenderer();
-        let pageObject  = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+        let pageObject  = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         let nGrScale    = 1.25 * (96 / oViewer.file.pages[pageObject.index].Dpi);
         let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
         
@@ -3097,9 +3108,13 @@ var CPresentation = CPresentation || function(){};
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oDrawing  = this.activeDrawing;
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        // координаты клика на странице в MM
+        var pageObject = this.Viewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
             oForm.SelectionSetStart(X, Y, e);
@@ -3124,9 +3139,13 @@ var CPresentation = CPresentation || function(){};
         let oFreeText   = this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() ? this.mouseDownAnnot : null;
         let oDrawing  = this.activeDrawing;
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        // координаты клика на странице в MM
+        var pageObject = this.Viewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         let oContent;
         if (oForm && oForm.IsInForm() && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oForm.GetType())) {
