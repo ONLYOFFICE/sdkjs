@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -383,7 +383,25 @@
 	NativeContext.prototype.clearRect = function (x, y, w, h) {};
 	NativeContext.prototype.getImageData = function (sx,sy,sw,sh) {};
 	NativeContext.prototype.putImageData = function (image_data,dx,dy,dirtyX,dirtyY,dirtyWidth,dirtyHeight) {};
-
+	
+	// В текущей реализации используется несколько разных DrawingContext, но ссылающихся на одни и те же
+	// FontManager, чтобы разрулить правильное выставление шрифта используем здесь локальные переменные
+	let setupFontSize  = -1;
+	let setupFontName  = "";
+	let setupFontStyle = -1;
+	let setupRotated   = false;
+	let setupPpiX      = -1;
+	let setupPpiY      = -1;
+	
+	function resetDrawingContextFonts() {
+		setupFontSize  = -1;
+		setupFontName  = "";
+		setupFontStyle = -1;
+		setupRotated   = false;
+		setupPpiX      = -1;
+		setupPpiY      = -1;
+	}
+	
 	/**
 	 * Emulates scalable canvas context
 	 * -----------------------------------------------------------------------------
@@ -402,6 +420,7 @@
 
 		this.setCanvas(settings.canvas);
 
+		this.textRotated = false;
 		this.ppiX = 96;
 		this.ppiY = 96;
 		this.scaleFactor = 1;
@@ -737,6 +756,7 @@
 		var _g = val.getG();
 		var _b = val.getB();
 		var _a = val.getA();
+		
 		this.fillColor = new AscCommon.CColor(_r, _g, _b, _a);
 		if (this.ctx.fillStyle) {
 			this.ctx.fillStyle = "rgba(" + _r + "," + _g + "," + _b + "," + _a + ")";
@@ -873,7 +893,6 @@
 	 */
 	DrawingContext.prototype.setFont = function (font, angle) {
 
-		var r;
 		this.font.assign(font);
 
 		var italic = this.font.getItalic();
@@ -888,11 +907,41 @@
 		} else {
 			fontStyle = FontStyle.FontStyleRegular;
 		}
-
+		
+		this.setTextRotated(!!angle);
+		this._setFont(this.font.getName(), this.font.getSize(), fontStyle);
+		return this;
+	};
+	
+	
+	DrawingContext.prototype._setFont = function(fontName, fontSize, fontStyle) {
+		let isRotated = this.textRotated;
+		
+		if (setupFontName === fontName
+			&& setupFontSize === fontSize
+			&& setupFontStyle === fontStyle
+			&& setupPpiX === this.ppiX
+			&& setupPpiY === this.ppiY
+			&& setupRotated === isRotated) {
+			return;
+		}
+		
+		setupFontSize  = fontSize;
+		setupFontName  = fontName;
+		setupFontStyle = fontStyle;
+		setupRotated   = isRotated;
+		setupPpiX      = this.ppiX;
+		setupPpiY      = this.ppiY;
+		
+		this.font.setName(fontName);
+		this.font.setSize(fontSize);
+		this.font.setBold(fontStyle & FontStyle.FontStyleBold);
+		this.font.setItalic(fontStyle & FontStyle.FontStyleItalic);
+		
 		if (window["IS_NATIVE_EDITOR"]) {
-			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);
+			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName, fontStyle, this.LastFontOriginInfo);
 			fontInfo = AscCommon.GetLoadInfoForMeasurer(fontInfo, fontStyle);
-
+			
 			var flag = 0;
 			if (fontInfo.NeedBold) {
 				flag |= 0x01;
@@ -906,41 +955,43 @@
 			if (fontInfo.SrcItalic) {
 				flag |= 0x08;
 			}
-
-			// выставляем шрифт и отрисовщику...
-			var drawFontSize = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
-			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
-
-			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
-			if (angle)
-				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
-
-			// ...и измерятелю
-			AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
-				this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
 			
-			return this;
+			// выставляем шрифт и отрисовщику...
+			var drawFontSize = fontSize * this.scaleFactor * 96.0 / 25.4;
+			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
+			
+			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
+			if (isRotated)
+				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+			
+			// ...и измерятелю
+			AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[3], fontSize, fontStyle, this.ppiX, this.ppiY);
 		} else {
-			if (angle) {
-				r = AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[1],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
+			let r;
+			if (isRotated) {
+				r = AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[1], fontSize, fontStyle, this.ppiX, this.ppiY);
 			} else {
-				r = AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[0],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
-				AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
+				r = AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[0], fontSize, fontStyle, this.ppiX, this.ppiY);
+				AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[3], fontSize, fontStyle, this.ppiX, this.ppiY);
+			}
+			
+			if (isRotated) {
+				this.fmgrGraphics[1].SetTextMatrix(this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+			}
+			
+			if (r === false) {
+				throw "Can not use " + fontName + " font. (Check whether font file is loaded)";
 			}
 		}
-
-		if (angle) {
-			this.fmgrGraphics[1].SetTextMatrix(this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
-		}
-
-		if (r === false) {
-			throw "Can not use " + this.font.getName() + " font. (Check whether font file is loaded)";
-		}
-
-		return this;
+		
+	};
+	
+	DrawingContext.prototype.SetFontInternal = function(name, size, style) {
+		this._setFont(name, size, style);
+	};
+	
+	DrawingContext.prototype.setTextRotated = function(isRotated) {
+		this.textRotated = isRotated;
 	};
 
 	/**
@@ -1026,7 +1077,29 @@
 	DrawingContext.prototype.fillTextCode = function (text, x, y, maxWidth, charWidths, angle) {
 		return this.fillText(text, x, y, maxWidth, charWidths, angle);
 	};
-
+	
+	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
+		
+		var _x = this._mift.transformPointX(x, y);
+		var _y = this._mift.transformPointY(x, y);
+		
+		if (window["IS_NATIVE_EDITOR"]) {
+			window["native"]["PD_FillTextG"](_x, _y, gid);
+		} else {
+			let fontManager = this.textRotated ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
+			try {
+				fontManager.LoadString3C(gid, _x, _y, codePoints);
+			}
+			catch(err){}
+			
+			let glyph = fontManager.m_oGlyphString.m_pGlyphsBuffer[0];
+			if (!glyph || !glyph.oBitmap)
+				return this;
+			
+			this.fillGlyph(glyph, fontManager);
+		}
+		return this;
+	};
 
 	// Path methods
 
@@ -1319,4 +1392,8 @@
 	window["Asc"].FontMetrics = FontMetrics;
 	window["Asc"].DrawingContext = DrawingContext;
 	window["Asc"].Matrix = Matrix;
+	
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window["AscCommonExcel"].resetDrawingContextFonts = resetDrawingContextFonts;
+	
 })(window);

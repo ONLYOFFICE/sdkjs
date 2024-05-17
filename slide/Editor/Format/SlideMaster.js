@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -169,7 +169,7 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 		}
 	}
 	this.cSld.forEachSp(function(oSp) {
-		if (!oSp.isPlaceholder()) {
+		if (!oSp.isPlaceholder() && !AscCommon.IsHiddenObj(oSp)) {
 			oSp.draw(graphics);
 		}
 	});
@@ -537,7 +537,6 @@ MasterSlide.prototype.scale = function (kw, kh) {
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;
-    this.IsRetina       = false;
     this.WidthMM        = 0;
     this.HeightMM       = 0;
 
@@ -715,7 +714,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {
@@ -886,7 +885,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {

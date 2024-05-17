@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -41,11 +41,11 @@
 	var c_oAscAdvancedOptionsAction      = AscCommon.c_oAscAdvancedOptionsAction;
 	var DownloadType                     = AscCommon.DownloadType;
 	var c_oAscFormatPainterState         = AscCommon.c_oAscFormatPainterState;
-	var locktype_None                    = AscCommon.locktype_None;
-	var locktype_Mine                    = AscCommon.locktype_Mine;
-	var locktype_Other                   = AscCommon.locktype_Other;
-	var locktype_Other2                  = AscCommon.locktype_Other2;
-	var locktype_Other3                  = AscCommon.locktype_Other3;
+	var locktype_None                    = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine                    = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other                   = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2                  = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3                  = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var changestype_None                 = AscCommon.changestype_None;
 	var changestype_Paragraph_Content    = AscCommon.changestype_Paragraph_Content;
 	var changestype_Paragraph_Properties = AscCommon.changestype_Paragraph_Properties;
@@ -485,7 +485,10 @@
 					_blockStd = null;
 					if (undefined !== _current["Props"]["InternalId"])
 					{
-						_blockStd   = LogicDocument.ClearContentControl(_current["Props"]["InternalId"]);
+						_blockStd = LogicDocument.GetContentControl(_current["Props"]["InternalId"]);
+						if (_blockStd && !_blockStd.IsPlaceHolder())
+							_blockStd.ReplaceContentWithPlaceHolder();
+						
 						_isReplaced = true;
 					}
 
@@ -586,6 +589,7 @@
 					}
 
 					_blockStd.SetContentControlPr(_content_control_pr);
+					_blockStd.SelectContentControl();
 
 					_obj = _blockStd.GetContentControlPr();
 					this.returnDocuments.push({"Tag" : _obj.Tag, "Id" : _obj.Id, "Lock" : _obj.Lock, "InternalId" : _obj.InternalId, "Alias" : _obj.Alias, "Appearance" : _obj.Appearance });
@@ -619,9 +623,11 @@
 							}, false);
 						}, "arraybuffer");
 					}, endCallback : function(_api) {
-						_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1 , 1);
-						_blockStd.MoveCursorToEndPos(false, false);
-
+						if (_isReplaced)
+							_blockStd.MoveCursorToContentControl(false);
+						else
+							_blockStd.MoveCursorOutsideForm(false);
+						
 						var _worker = _api.__content_control_worker;
 						if (_worker.documents[_worker.current]["Props"])
 							_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -646,7 +652,7 @@
 						console.error('Invalid JS.');
 						return;	
 					}
-
+					
 					try
 					{
 						AscCommon.safePluginEval(_current["Script"]);
@@ -655,48 +661,12 @@
 					{
 						console.error(err);
 					}
-
-					if (c_oAscSdtLevelType.Block === _blockStd.GetContentControlType())
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos(false);
-						}
-						else
-						{
-							if (_blockStd.Content.GetElementsCount() > 1)
-							{
-								_blockStd.Content.Remove_FromContent(_blockStd.Content.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos(false, false);
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
+					
+					if (_isReplaced)
+						_blockStd.MoveCursorToContentControl(false);
 					else
-					{
-						if (_isReplaced)
-						{
-							if (_blockStd.GetElementsCount() > 1)
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-
-							_blockStd.MoveCursorToStartPos();
-							_blockStd.SetThisElementCurrent();
-						}
-						else
-						{
-							if (_blockStd.GetElementsCount() > 1)
-							{
-								_blockStd.Remove_FromContent(_blockStd.GetElementsCount() - 1, 1);
-								_blockStd.MoveCursorToEndPos();
-								_blockStd.SetThisElementCurrent();
-							}
-							LogicDocument.MoveCursorRight(false, false, true);
-						}
-					}
-
+						_blockStd.MoveCursorOutsideForm(false);
+					
 					var _worker = _api.__content_control_worker;
 					if (_worker.documents[_worker.current]["Props"])
 						_blockStd.SetContentControlPr({ Lock : _worker.documents[_worker.current]["Props"]["Lock"] });
@@ -800,11 +770,11 @@
 			var _current = this.documents[this.current];
 			if (undefined === _current["Props"])
 				_current["Props"] = {};
-
-			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && undefined !== _current["Props"]["InternalId"])
+			
+			var _internalId     = _current["Props"]["InternalId"];
+			var _contentControl = _internalId ? g_oTableId.Get_ById(_internalId) : null;
+			if ((_current["Url"] !== undefined || _current["Script"] !== undefined) && _contentControl)
 			{
-				var _internalId     = _current["Props"]["InternalId"];
-				var _contentControl = g_oTableId.Get_ById(_internalId);
 				LogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 					Elements  : [_contentControl],
@@ -962,6 +932,8 @@
 		this.isDarkMode = false;
 
 		this.TableStylesPreviewGenerator = null;
+		
+		this.isHandMode = false;
 
 		//g_clipboardBase.Init(this);
 
@@ -1512,8 +1484,11 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigate(value);
 	};
 	asc_docs_api.prototype["asc_setViewerTargetType"] = function(type) {
-		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.setTargetType(type);
+		
+		this.isHandMode = ("hand" === type);
+		this.WordControl.checkMouseHandMode();
+		this.WordControl.onMouseMove();
+		let logicDocument = this.private_GetLogicDocument();
 	};
 
 	function BeforeOpenDocument()
@@ -2780,15 +2755,24 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
 	};
-	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
+	asc_docs_api.prototype.asc_DownloadOrigin = function(options)
 	{
+		if (!options) {
+			options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.UNKNOWN);
+		}
+		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
 		if (this.isUseNativeViewer && this.isDocumentRenderer())
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 
 		if (changes) {
-			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF, bIsDownloadEvent);
+			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
+			this.asc_DownloadAs(options);
+			return;
+		} else if((this.documentIsWopi && options.isSaveAs) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
+			//todo add new server request wopi_putRelativeOrigin
+			options.asc_setFileType(AscCommon.getFormatByExtention(this.documentFormat));
 			this.asc_DownloadAs(options);
 			return;
 		}
@@ -3819,8 +3803,8 @@ background-repeat: no-repeat;\
 				var Unifill        = new AscFormat.CUniFill();
 				Unifill.fill       = new AscFormat.CSolidFill();
 				Unifill.fill.color = AscFormat.CorrectUniColor(Props.Shd.Color, Unifill.fill.color, 1);
-
-				this.WordControl.m_oLogicDocument.SetParagraphShd({
+				
+				let shd = {
 					Value   : Asc.c_oAscShd.Clear,
 					Color   : {
 						r    : Props.Shd.Color.asc_getR(),
@@ -3835,7 +3819,17 @@ background-repeat: no-repeat;\
 						Auto : false
 					},
 					Unifill : Unifill
-				});
+				};
+
+				if (Asc.c_oAscShd.Nil === Props.Shd.Value)
+				{
+					shd.Color.Auto = true;
+					shd.Fill.Auto  = true;
+					shd.Unifill    = undefined;
+					shd.ThemeFill  = undefined;
+				}
+				
+				this.WordControl.m_oLogicDocument.SetParagraphShd(shd);
 			}
 
 			if ("undefined" != typeof(Props.Brd) && null != Props.Brd)
@@ -8011,7 +8005,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.pre_Paste = function(_fonts, _images, callback)
 	{
-		if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
+		if (undefined !== window["native"] && undefined !== window["native"]["GetImageUrl"])
 		{
 			callback();
 			return;
@@ -8658,6 +8652,8 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.ClearCachePages();
 			this.WordControl.OnResize(true);
 		}
+
+		this.checkInputMode();
 	};
 
 	asc_docs_api.prototype.OnMouseUp = function(x, y)
@@ -8749,12 +8745,17 @@ background-repeat: no-repeat;\
 			}
 		}
 
+		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData
+			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
 			dataContainer.data = options.pdfChanges;
 		}
-		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
+		else if ((c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) &&
+			null == options.oDocumentMailMerge && (options.isPdfPrint || !(this.DocInfo && this.DocInfo.isFormatWithForms())))
 		{
             var isSelection = false;
             if (options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
@@ -8796,11 +8797,7 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML === fileType
-			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
-			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
-			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
-			&& !AscCommon.AscBrowser.isAndroidNativeApp)
+		else if (c_oAscFileType.HTML === fileType && canDownloadFromBytes)
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
@@ -8818,12 +8815,12 @@ background-repeat: no-repeat;\
 			}
 			return true;
 		}
-		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
+		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
+			this.saveLogicDocumentToZip(fileType, options, function(data) {
 				if (data) {
-					if (c_oAscFileType.DOCX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.DOCX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
 					} else {
 						dataContainer.data = data;
@@ -8842,7 +8839,7 @@ background-repeat: no-repeat;\
 				if (actionType) {
 					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-			}, fileType, options);
+			});
 			return true;
 		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
@@ -9544,6 +9541,24 @@ background-repeat: no-repeat;\
 
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 		return true;
+	};
+	asc_docs_api.prototype.canRunBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
+		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
+		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		return true;
+	};
+	asc_docs_api.prototype.onEndBuilderScript = function()
+	{
+		let logicDocument = this.getLogicDocument();
+		logicDocument.Recalculate();
+		logicDocument.CheckActionLock();
+		return logicDocument.FinalizeAction();
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями
@@ -12443,9 +12458,6 @@ background-repeat: no-repeat;\
 			};
 		}
 
-		if (undefined != window["Native"])
-			return;
-
 		//callback
 		this.DocumentOrientation = (null == editor.WordControl.m_oLogicDocument) ? true : !editor.WordControl.m_oLogicDocument.Orientation;
 		var sizeMM;
@@ -12619,9 +12631,9 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+		if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 			let res;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+			this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				res = data;
 			});
 			if (res) {
@@ -12638,7 +12650,7 @@ background-repeat: no-repeat;\
 			var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
 			window["native"]["Save_End"](_header, _memory.GetCurPosition());
 
-			return _memory.ImData.data;
+			return _memory.data;
 		}
 	};
 	
@@ -12776,6 +12788,10 @@ background-repeat: no-repeat;\
 			var page = this.WordControl.m_oDrawingDocument.m_arrPages[_page];
 			_printer.BeginPage(page.width_mm, page.height_mm);
 			oLogicDocument.DrawPage(_page, _printer);
+
+			if (this.watermarkDraw)
+				this.watermarkDraw.DrawOnRenderer(_printer, page.width_mm, page.height_mm);
+
 			_printer.EndPage();
 			oLogicDocument.RestoreAfterNativePrint();
 		}
@@ -12788,6 +12804,16 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetPDF"] = function(options)
 	{
+		if (options && options["watermark"])
+		{
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.generateNative();
+		}
+		else
+		{
+			this.watermarkDraw = null;
+		}
+
 		var pagescount = this["asc_nativePrintPagesCount"]();
 		if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
             pagescount = 1;
@@ -12817,6 +12843,25 @@ background-repeat: no-repeat;\
 		window["native"]["Save_End"]("", _renderer.Memory.GetCurPosition());
 
 		return _renderer.Memory.data;
+	};
+
+	window["asc_docs_api"].prototype["asc_nativeGetWatermark"] = function(options)
+	{
+		if (options && options["watermark"])
+		{
+			if (!this.User)
+			{
+				this.User = new AscCommon.asc_CUser();
+				this.User.setId("TM");
+				this.User.setUserName("native");
+			}
+
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.isNativeGlobalAlpha = true;
+			this.watermarkDraw.generateNative();
+			return this.watermarkDraw.imageBase64;
+		}
+		return "";
 	};
 
 	// cool api (autotests)
@@ -13225,8 +13270,8 @@ background-repeat: no-repeat;\
     {
     	// TODO: get color from theme
 		if (this.isDarkMode)
-			return [0x3A, 0x3A, 0x3A];
-		return [0xFF, 0xFF, 0xFF];
+			return { R: 0x3A, G : 0x3A, B : 0x3A };
+		return { R: 0xFF, G : 0xFF, B : 0xFF };
     };
 	asc_docs_api.prototype.getPageStrokeColor = function()
 	{
@@ -13317,24 +13362,35 @@ background-repeat: no-repeat;\
 		}
 		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	};
-	asc_docs_api.prototype.getPluginContextMenuInfo = function (sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.getPluginContextMenuInfo = function(e)
 	{
-		const oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument)
-		{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return new AscCommon.CPluginCtxMenuInfo();
-		}
-		if (!oLogicDocument.IsSelectionUse())
+		
+		let menuInfo;
+		if (!logicDocument.IsSelectionUse())
 		{
-			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+			menuInfo = new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
 		}
-		const oDrawingObjects = oLogicDocument.DrawingObjects;
-		const aSelectedObjects = oDrawingObjects.selectedObjects;
-		if(aSelectedObjects.length < 1)
+		else
 		{
-			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+			let drawingObjects = logicDocument.getDrawingObjects();
+			if (drawingObjects.selectedObjects && drawingObjects.selectedObjects.length > 0)
+				menuInfo = drawingObjects.getPluginSelectionInfo();
+			else
+				menuInfo = new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection)
 		}
-		return oDrawingObjects.getPluginSelectionInfo();
+		
+		if (logicDocument.isHeaderEditing())
+			menuInfo.setHdrFtr(true);
+		else if (logicDocument.isFooterEditing())
+			menuInfo.setHdrFtr(false);
+		
+		if (e && e instanceof CContextMenuData && undefined !== e.is_Header())
+			menuInfo.setHdrFtrArea(e.is_Header());
+		
+		return menuInfo;
 	};
 
 	asc_docs_api.prototype.asc_getDocumentProtection = function () {
@@ -13592,6 +13648,11 @@ background-repeat: no-repeat;\
 			return null;
 		
 		return logicDocument.getSpeechDescription(prevState, action);
+	};
+	
+	asc_docs_api.prototype.isTargetHandMode = function()
+	{
+		return this.isHandMode && this.isRestrictionForms();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -14348,10 +14409,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_RemoveAllSignatures"] 					= asc_docs_api.prototype.asc_RemoveAllSignatures;
 	asc_docs_api.prototype["asc_gotoSignature"] 						= asc_docs_api.prototype.asc_gotoSignature;
 	asc_docs_api.prototype["asc_getSignatureSetup"] 					= asc_docs_api.prototype.asc_getSignatureSetup;
-
-	// passwords
-	asc_docs_api.prototype["asc_setCurrentPassword"] 					= asc_docs_api.prototype.asc_setCurrentPassword;
-	asc_docs_api.prototype["asc_resetPassword"] 						= asc_docs_api.prototype.asc_resetPassword;
 
 	// view modes
     asc_docs_api.prototype["asc_setContentDarkMode"]					= asc_docs_api.prototype.asc_setContentDarkMode;

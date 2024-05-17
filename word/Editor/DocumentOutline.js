@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -345,7 +345,7 @@ CDocumentOutline.prototype.InsertHeader = function(nIndex, isBefore)
 	{
 		this.LogicDocument.StartAction(AscDFH.historydescription_Document_AddElementToOutline);
 
-		var oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument);
+		var oParagraph = new AscWord.Paragraph();
 		oParagraph.SetParagraphStyleById(this.LogicDocument.GetStyles().GetDefaultHeading(nLevel));
 		this.LogicDocument.AddToContent(nPos, oParagraph);
 		this.LogicDocument.Recalculate();
@@ -372,7 +372,7 @@ CDocumentOutline.prototype.InsertSubHeader = function(nIndex)
 	{
 		this.LogicDocument.StartAction(AscDFH.historydescription_Document_AddElementToOutline);
 
-		var oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument);
+		var oParagraph = new AscWord.Paragraph();
 		oParagraph.SetParagraphStyleById(this.LogicDocument.GetStyles().GetDefaultHeading(nLevel + 1));
 		this.LogicDocument.AddToContent(nPos, oParagraph);
 		this.LogicDocument.Recalculate();

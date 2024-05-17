@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -318,8 +318,8 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.RENDERER_PDF_FLAG) {
-                if(graphics.IsNoSupportTextDraw) {
+            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+                if(!graphics.isSupportTextDraw()) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();
                     graphics.rect(this.content2.X, this.content2.Y, _w2, _h2);
@@ -331,7 +331,7 @@
             }
         }
         else if(this.content) {
-            if(graphics.IsNoSupportTextDraw) {
+            if(!graphics.isSupportTextDraw()) {
                 let bEmpty = this.content.IsEmpty();
                 let _w = bEmpty ? 0.1 : this.content.XLimit;
                 let _h = this.content.GetSummaryHeight();
@@ -595,6 +595,9 @@
         }
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
+    };
+    CTextBody.prototype.getDrawingDocument = function() {
+        return Asc.editor.getDrawingDocument();
     };
 
     function GetContentOneStringSizes(oContent) {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -97,15 +97,31 @@
             AscCommon.History.Points[i].Additional.CanUnion = !bForbidToUnion; // запрещаем объединять последнюю добавленную точку
     };
 
+    CBaseListField.prototype.SetApiCurIdxs = function(aIdxs) {
+        let oParent = this.GetParent();
+        if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
+            oParent.SetApiCurIdxs(aIdxs);
+        else
+            this._currentValueIndices = aIdxs;
+    };
+    CBaseListField.prototype.GetApiCurIdxs = function(bInherit) {
+        let oParent = this.GetParent();
+        if (oParent == null)
+            return this._currentValueIndices;
+        else if (bInherit === false || (this.GetPartialName() != null)) {
+            return this._currentValueIndices;
+        }
+        
+        if (oParent)
+            return oParent.GetApiCurIdxs();
+    };
+
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         this._commitOnSelChange = bValue;
+        this.SetWasChanged(true);
     };
     CBaseListField.prototype.IsCommitOnSelChange = function() {
         return this._commitOnSelChange;
-    };
-    CBaseListField.prototype.GetApiCurIdxs = function() {
-        // значение здесь всегда обновлено после commit
-        return this._currentValueIndices;
     };
 
     CBaseListField.prototype.GetOptions = function() {

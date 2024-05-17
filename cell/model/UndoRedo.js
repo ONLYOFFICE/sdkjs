@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -351,6 +351,41 @@ function (window, undefined) {
 			}
 			nCurPos = oBinaryReader.GetCurPos();
 		}
+	};
+
+	UndoRedoItemSerializable.prototype.GetChangedRange = function () {
+		let res = null;
+		let nActionType = this.nActionType;
+		let classType = this.oClass.nType;
+		if (classType === AscCommonExcel.g_oUndoRedoCell.nType) {
+			res = this.oRange;
+		} else if (classType === AscCommonExcel.g_oUndoRedoWorksheet.nType) {
+			if (nActionType === AscCH.historyitem_Worksheet_Sort) {
+				if (this.oData.bbox) {
+					res = new Asc.Range(this.oData.bbox.c1, this.oData.bbox.r1, this.oData.bbox.c2, this.oData.bbox.r2);
+				}
+			} else if (nActionType === AscCH.historyitem_Worksheet_MoveRange) {
+				//TODO all cols/rows in this.oRange
+				if (this.oData) {
+					res = [];
+					if (this.oData.from) {
+						res.push(new Asc.Range(this.oData.from.c1, this.oData.from.r1, this.oData.from.c2, this.oData.from.r2));
+					}
+					if (this.oData.to) {
+						res.push(new Asc.Range(this.oData.to.c1, this.oData.to.r1, this.oData.to.c2, this.oData.to.r2));
+					}
+				}
+			}
+		} else if (classType === AscCommonExcel.g_oUndoRedoComment.nType) {
+			res = new Asc.Range(this.oData.nCol, this.oData.nRow, this.oData.nCol, this.oData.nRow);
+		} else if (classType === AscCommonExcel.g_oUndoRedoSortState.nType) {
+		} else if (classType === AscCommonExcel.g_oUndoRedoCF.nType) {
+		} else if (classType === AscCommonExcel.g_oUndoRedoAutoFilters.nType) {
+		} else if (classType === AscCommonExcel.g_oUndoRedoCol.nType) {
+		} else if (classType === AscCommonExcel.g_oUndoRedoRow.nType) {
+		}
+
+		return res;
 	};
 
 //для сохранения в историю и пересылки изменений
@@ -2523,6 +2558,18 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
+		} else if (AscCH.historyitem_Workbook_TimelineCacheDelete === Type) {
+			if (bUndo) {
+				wb.timelineCaches.push(Data.from);
+			} else {
+				wb.onTimelineCacheDelete(Data.from.name);
+			}
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterate === Type) {
+			wb.calcPr.setIterate(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterateCount === Type) {
+			wb.calcPr.setIterateCount(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterateDelta === Type) {
+			wb.calcPr.setIterateDelta(bUndo ? Data.from : Data.to);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3493,6 +3540,12 @@ function (window, undefined) {
 				ws.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(ws);
 			}
 			ws.legacyDrawingHF.changePicture(from, to);
+		} else if (AscCH.historyitem_Worksheet_TimelineDelete === Type) {
+			if (bUndo) {
+				ws.timelines.push(Data.from);
+			} else {
+				wb.onTimelinesDelete(Data.from.name);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {

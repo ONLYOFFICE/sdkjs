@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -437,11 +437,23 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	var _safe_eval_closure = new Function("Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
-
-		return _safe_eval_closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
-
+		Object.getPrototypeOf(function(){}).constructor = function(){};
+		const Api = window.g_asc_plugins.api;
+		// clear this field on each run
+		delete Api.parsedJSDoc;
+		// check if we add a custom function into this macros we will parse a jsdoc
+		if (value.includes('AddCustomFunction') && value.includes('@customfunction')) {
+			// calculate how any times the function of adding will be called
+			const countOfAdding = (value.match(/\.AddCustomFunction\(/g) || []).length;
+			// parse JSDOC and put it to Api
+			Api.parsedJSDoc = AscCommon.parseJSDoc(value);
+			// remove extra parsed JSDOC
+			if (Api.parsedJSDoc.length > countOfAdding)
+				Api.parsedJSDoc.length = countOfAdding;
+		}
+		return _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
 	};
 
 

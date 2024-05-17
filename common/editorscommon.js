@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -40,11 +40,11 @@
 {
 // Import
 	var AscBrowser = AscCommon.AscBrowser;
-	var locktype_None = AscCommon.locktype_None;
-	var locktype_Mine = AscCommon.locktype_Mine;
-	var locktype_Other = AscCommon.locktype_Other;
-	var locktype_Other2 = AscCommon.locktype_Other2;
-	var locktype_Other3 = AscCommon.locktype_Other3;
+	var locktype_None = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2 = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3 = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var contentchanges_Add = AscCommon.contentchanges_Add;
 	var CColor = AscCommon.CColor;
 	var g_oCellAddressUtils = AscCommon.g_oCellAddressUtils;
@@ -53,6 +53,12 @@
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
 	const fontslot_ASCII    = 0x01;
+
+	let scriptDirectory = "";
+	if (document.currentScript) {
+		scriptDirectory = document.currentScript.src;
+		scriptDirectory = scriptDirectory.substring(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/") + 1);
+	}
 
 	Number.isInteger = Number.isInteger || function(value) {
 		return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
@@ -952,9 +958,12 @@
 			return;
 		}
 		rdata["userconnectionid"] = editor.CoAuthoringApi.getUserConnectionId();
+		let url = sDownloadServiceLocalUrl + '/' + rdata["id"];
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(rdata));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sDownloadServiceLocalUrl + '/' + rdata["id"] + '?cmd=' + encodeURIComponent(JSON.stringify(rdata)),
+			url:         url,
 			data:        dataContainer.part || dataContainer.data,
 			contentType: "application/octet-stream",
 			error:       function (httpRequest, statusText, status)
@@ -974,12 +983,15 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, data, fError, fsuccess)
 	{
-		var cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let url =sSaveFileLocalUrl + '/' + docId;
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sSaveFileLocalUrl + '/' + docId + '?cmd=' + encodeURIComponent(JSON.stringify(cmd)),
+			url:         url,
 			data:        data,
 			contentType: "application/octet-stream",
 			error:       fError,
@@ -1423,7 +1435,9 @@
 		"num": "#NUM!",
 		"na": "#N\/A",
 		"getdata": "#GETTING_DATA",
-		"uf": "#UNSUPPORTED_FUNCTION!"
+		"uf": "#UNSUPPORTED_FUNCTION!",
+		"calc": "#CALC!",
+		"spill": "#SPILL!",
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1460,7 +1474,22 @@
 			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
 			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + '|' + loc_this_row + ')|@');
 
-		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName>{{columnName}})?\\]', {
+
+		//Table4[[#Data];[#Totals]]
+		//Table1[[#Headers],[#Data],[Column1]]
+		//Table4[[#Headers];[Column1]:[Column2]]
+		//Table1[[#Data],[#Totals],[Column1]]
+		//Table4[[#Totals];[Column1]:[Column2]]
+
+		//Table1[[#All];[Column1]:[Column2]]
+
+		//Table1[[#Data],[#Totals]]
+		//Table1[[#Headers],[#Data]]
+
+		//Table1[[#Headers],[#Data],[Column1]:[Column2]]
+
+		let argsSeparator = FormulaSeparators.functionArgumentSeparator;
+		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
 			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
 				"userColumn":      structured_tables_userColumn,
@@ -1468,7 +1497,10 @@
 				"userColumnRange": XRegExp.build('\\[(?<colStart>{{uc}})\\]\\:\\[(?<colEnd>{{uc}})\\]', {
 					"uc": structured_tables_userColumn
 				}),
-				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + FormulaSeparators.functionArgumentSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
+				//fixed: added [{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\] for:
+				//Table1[[#Data],[#Totals]]
+				//Table1[[#Headers],[#Data]]
+				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + argsSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
 					"rc": structured_tables_reservedColumn,
 					"hd": structured_tables_headata,
 					"dt": structured_tables_datals,
@@ -1498,7 +1530,9 @@
 			"num":     "#NUM!",
 			"na":      "#N\/A",
 			"getdata": "#GETTING_DATA",
-			"uf":      "#UNSUPPORTED_FUNCTION!"
+			"uf":      "#UNSUPPORTED_FUNCTION!",
+			"calc":    "#CALC!",
+			"spill":   "#SPILL!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1509,6 +1543,8 @@
 		cErrorLocal['na'] = local['na'];
 		cErrorLocal['getdata'] = local['getdata'];
 		cErrorLocal['uf'] = local['uf'];
+		cErrorLocal['calc'] = local['calc'];
+		cErrorLocal['spill'] = local['spill'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1518,7 +1554,9 @@
 			cErrorLocal["num"] + "|" +
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
-			cErrorLocal["uf"] + ")", "i");
+			cErrorLocal["uf"] + "|" +
+			cErrorLocal["calc"] + "|" +
+			cErrorLocal["spill"] + ")", "i")
 	}
 
 	function build_rx_cell_func(local)
@@ -1538,18 +1576,18 @@
 			"type": "type",
 			"width": "width"
 		};
-		cCellFunctionLocal['address'] = local['address'];
-		cCellFunctionLocal['col'] = local['col'];
-		cCellFunctionLocal['color'] = local['color'];
-		cCellFunctionLocal['contents'] = local['contents'];
-		cCellFunctionLocal['filename'] = local['filename'];
-		cCellFunctionLocal['format'] = local['format'];
-		cCellFunctionLocal['parentheses'] = local['parentheses'];
-		cCellFunctionLocal['prefix'] = local['prefix'];
-		cCellFunctionLocal['protect'] = local['protect'];
-		cCellFunctionLocal['row'] = local['row'];
-		cCellFunctionLocal['type'] = local['type'];
-		cCellFunctionLocal['width'] = local['width'];
+		cCellFunctionLocal['address'] = local['address'] && local['address'].toLowerCase();
+		cCellFunctionLocal['col'] =  local['col'] && local['col'].toLowerCase();
+		cCellFunctionLocal['color'] = local['color'] && local['color'].toLowerCase();
+		cCellFunctionLocal['contents'] = local['contents'] && local['contents'].toLowerCase();
+		cCellFunctionLocal['filename'] = local['filename'] && local['filename'].toLowerCase();
+		cCellFunctionLocal['format'] = local['format'] && local['format'].toLowerCase();
+		cCellFunctionLocal['parentheses'] = local['parentheses'] && local['parentheses'].toLowerCase();
+		cCellFunctionLocal['prefix'] = local['prefix'] && local['prefix'].toLowerCase();
+		cCellFunctionLocal['protect'] = local['protect'] && local['protect'].toLowerCase();
+		cCellFunctionLocal['row'] =  local['row'] && local['row'].toLowerCase();
+		cCellFunctionLocal['type'] = local['type'] && local['type'].toLowerCase();
+		cCellFunctionLocal['width'] = local['width'] && local['width'].toLowerCase();
 
 		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
 			cCellFunctionLocal["col"] + "|" +
@@ -1634,7 +1672,7 @@
 
 	var c_oAscSpreadsheetUploadProp = {
 		MaxFileSize:      104857600, //100 mb
-		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlt", "fods", "ots"]
+		SupportedFormats: ["xlsx", "xlsm", "xls", "ods", "csv", "xltx", "xltm", "xlsb", "xlt", "fods", "ots"]
 	};
 
 	var c_oAscTextUploadProp = {
@@ -1788,6 +1826,9 @@
 			case c_oAscFileType.XLTM:
 				return 'xltm';
 				break;
+			case c_oAscFileType.XLSB:
+				return 'xlsb';
+				break;
 			case c_oAscFileType.FODS:
 				return 'fods';
 				break;
@@ -1873,6 +1914,141 @@
 				break;
 		}
 		return '';
+	}
+
+	function getFormatByExtention(ext)
+	{
+		switch (ext.toLowerCase()) {
+			case 'docx':
+				return c_oAscFileType.DOCX;
+			case 'doc':
+			case 'wps':
+				return c_oAscFileType.DOC;
+			case 'odt':
+				return c_oAscFileType.ODT;
+			case 'rtf':
+				return c_oAscFileType.RTF;
+			case 'txt':
+			case 'xml':
+			case 'xslt':
+				return c_oAscFileType.TXT;
+			case 'htm':
+			case 'html':
+				return c_oAscFileType.HTML;
+			case 'mht':
+			case 'mhtml':
+				return c_oAscFileType.MHT;
+			case 'epub':
+				return c_oAscFileType.MHT;
+			case 'fb2':
+				return c_oAscFileType.FB2;
+			case 'mobi':
+				return c_oAscFileType.MOBI;
+			case 'docm':
+				return c_oAscFileType.DOCM;
+			case 'dotx':
+				return c_oAscFileType.DOTX;
+			case 'dotm':
+				return c_oAscFileType.DOTM;
+			case 'fodt':
+				return c_oAscFileType.FODT;
+			case 'ott':
+				return c_oAscFileType.OTT;
+			case 'oform':
+				return c_oAscFileType.OFORM;
+			case 'docxf':
+				return c_oAscFileType.DOCXF;
+
+			case 'pptx':
+				return c_oAscFileType.PPTX;
+			case 'ppt':
+			case 'dps':
+				return c_oAscFileType.PPT;
+			case 'odp':
+				return c_oAscFileType.ODP;
+			case 'ppsx':
+				return c_oAscFileType.PPSX;
+			case 'pptm':
+				return c_oAscFileType.PPTM;
+			case 'ppsm':
+				return c_oAscFileType.PPSM;
+			case 'potx':
+				return c_oAscFileType.POTX;
+			case 'potm':
+				return c_oAscFileType.POTM;
+			case 'fodp':
+				return c_oAscFileType.FODP;
+			case 'otp':
+				return c_oAscFileType.OTP;
+
+			case 'xlsx':
+				return c_oAscFileType.XLSX;
+			case 'xls':
+			case 'et':
+				return c_oAscFileType.XLS;
+			case 'ods':
+				return c_oAscFileType.ODS;
+			case 'csv':
+				return c_oAscFileType.CSV;
+			case 'xlsm':
+				return c_oAscFileType.XLSM;
+			case 'xltx':
+				return c_oAscFileType.XLTX;
+			case 'xltm':
+				return c_oAscFileType.XLTM;
+			case 'xltb':
+				return c_oAscFileType.XLSB;
+			case 'fods':
+				return c_oAscFileType.FODS;
+			case 'ots':
+				return c_oAscFileType.OTS;
+
+			case 'jpeg':
+			case 'jpe':
+			case 'jpg':
+				return c_oAscFileType.JPG;
+			case 'tif':
+			case 'tiff':
+				return c_oAscFileType.TIFF;
+			case 'tga':
+				return c_oAscFileType.TGA;
+			case 'gif':
+				return c_oAscFileType.GIF;
+			case 'png':
+				return c_oAscFileType.PNG;
+			case 'emf':
+				return c_oAscFileType.EMF;
+			case 'wmf':
+				return c_oAscFileType.WMF;
+			case 'bmp':
+				return c_oAscFileType.BMP;
+			case 'cr2':
+				return c_oAscFileType.CR2;
+			case 'pcx':
+				return c_oAscFileType.PCX;
+			case 'ras':
+				return c_oAscFileType.RAS;
+			case 'psd':
+				return c_oAscFileType.PSD;
+			case 'ico':
+				return c_oAscFileType.ICO;
+
+			case 'pdf':
+				return c_oAscFileType.PDF;
+			case 'pdfa':
+				return c_oAscFileType.PDFA;
+			case 'djvu':
+				return c_oAscFileType.DJVU;
+			case 'xps':
+				return c_oAscFileType.XPS;
+			case 'doct':
+				return c_oAscFileType.DOCY;
+			case 'xlst':
+				return c_oAscFileType.XLSY;
+			case 'pptt':
+				return c_oAscFileType.PPTY;
+		}
+		return c_oAscFileType.UNKNOWN;
 	}
 
 	function InitOnMessage(callback)
@@ -2022,12 +2198,13 @@
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId;
+			let url = sUploadServiceLocalUrlOld + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			if (jwt)
 			{
 				url += '?token=' + encodeURIComponent(jwt);
@@ -2172,13 +2349,15 @@
 	}
 
 	function DownloadOriginalFile(documentId, url, urlPathInToken, token, fError, fSuccess) {
+		let data = JSON.stringify({
+			"url": url,
+			"token": token
+		});
 		asc_ajax({
 			url: sDownloadFileLocalUrl + '/' + documentId,
+			type: "POST",
 			responseType: "arraybuffer",
-			headers: {
-				'Authorization': 'Bearer ' + token,
-				'x-url': encodeURI(url)
-			},
+			data: data,
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
@@ -2237,12 +2416,12 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, callback)
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId;
-
+			let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2269,8 +2448,6 @@
                         else{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2303,12 +2480,12 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, callback)
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId;
-
+            let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2340,8 +2517,6 @@
 						{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -3150,7 +3325,7 @@
 			this.operand_str = match[1];
 			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
@@ -10189,7 +10364,7 @@
 
 	function loadScript(url, onSuccess, onError)
 	{
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["native"] !== undefined)
 		{
 			onSuccess();
 			return;
@@ -10243,7 +10418,11 @@
 		}
 		else
 		{
-			loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			if (scriptDirectory) {
+				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
+			} else {
+				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			}
 		}
 	}
 
@@ -11179,7 +11358,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -13587,6 +13766,25 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+	CPluginCtxMenuInfo.prototype.setHdrFtr = function(isHeader) {
+		if (isHeader) {
+			delete this["footer"];
+			this["header"] = true;
+		} else {
+			delete this["header"];
+			this["footer"] = true;
+		}
+	};
+	CPluginCtxMenuInfo.prototype.setHdrFtrArea = function(isHeader) {
+		if (isHeader) {
+			delete this["footerArea"];
+			this["headerArea"] = true;
+		} else {
+			delete this["headerArea"];
+			this["footerArea"] = true;
+		}
+	};
+	
 
 
 	function deg2rad(deg)
@@ -13597,6 +13795,14 @@
 	function rad2deg(rad)
 	{
 		return rad * 180.0 / Math.PI;
+	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
 	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
@@ -13629,6 +13835,7 @@
 	window["AscCommon"]['GetFileExtension'] = window["AscCommon"].GetFileExtension = GetFileExtension;
 	window["AscCommon"].changeFileExtention = changeFileExtention;
 	window["AscCommon"].getExtentionByFormat = getExtentionByFormat;
+	window["AscCommon"].getFormatByExtention = getFormatByExtention;
 	window["AscCommon"].InitOnMessage = InitOnMessage;
 	window["AscCommon"].ShowImageFileDialog = ShowImageFileDialog;
 	window["AscCommon"].ShowDocumentFileDialog = ShowDocumentFileDialog;
@@ -13807,7 +14014,7 @@
 		word = word.replaceAll("\"", "&#34;");
 		word = word.replaceAll("\'", "&#39;");
 		return word;
-	}
+	};
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
 	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
@@ -13818,6 +14025,8 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
+	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -14035,7 +14244,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);

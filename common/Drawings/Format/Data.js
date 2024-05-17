@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -10255,6 +10255,7 @@ Because of this, the display is sometimes not correct.
         const oLogicDocument = oApi.getLogicDocument();
 
         const pReader = new AscCommon.BinaryPPTYLoader();
+	      pReader.IsFillingSmartArt = true;
 	      pReader.presentation = oLogicDocument;
 	      pReader.DrawingDocument = oDrawingDocument;
 
@@ -10281,6 +10282,8 @@ Because of this, the display is sometimes not correct.
         this.extX = smXfrm.extX;
         this.extY = smXfrm.extY;
         this.drawing.setXfrmByParent();
+
+	      pReader.IsFillingSmartArt = false;
       }
       return this;
     }
@@ -11613,9 +11616,6 @@ Because of this, the display is sometimes not correct.
       }
     }
 
-    SmartArt.prototype.isPlaceholder = function () {
-      return false;
-    };
     SmartArt.prototype.canRotate = function () {
       return false;
     };

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -552,6 +552,14 @@ CDocPart.prototype.AddDocPartBehavior = function(nType)
 CDocPart.prototype.CheckDocPartBehavior = function(nType)
 {
 	return !!(this.Pr.Behavior & nType);
+};
+CDocPart.prototype.IsTableCellContent = function()
+{
+	return false;
+};
+CDocPart.prototype.Is_DrawingShape = function(returnShape)
+{
+	return returnShape ? null : false;
 };
 
 /** @enum {number} */

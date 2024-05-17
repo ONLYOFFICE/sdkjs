@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -136,6 +136,14 @@
 		glyphstateDefault : 1, // символ отрисовался в дефолтовом шрифте
 		glyphstateMiss : 2  	// символ не отрисовался
 	};
+
+	function get_raster_bounds_safe(rasterBitmap)
+	{
+		if (!rasterBitmap)
+			return {dist_l: 0, dist_t: 0, dist_r: 0, dist_b: 0};
+
+		return get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+	}
 
 	function get_raster_bounds(data, width, height, stride)
 	{
@@ -1196,7 +1204,7 @@
 					if (rasterInfo)
 					{
 						var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, false);
-						oSizes.oBBox.rasterDistances = get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+						oSizes.oBBox.rasterDistances = get_raster_bounds_safe(rasterBitmap);
 					}
 				}
 				return oSizes;

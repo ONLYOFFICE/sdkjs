@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -47,7 +47,7 @@ function CAbstractNum()
 	this.Lock = new AscCommon.CLock();
 	if (false === AscCommon.g_oIdCounter.m_bLoad)
 	{
-		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 		if (typeof AscCommon.CollaborativeEditing !== "undefined")
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 	}

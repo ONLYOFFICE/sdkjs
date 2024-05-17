@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -353,7 +353,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     Promote     : 8,
     Dash        : 16,
     DashThick   : 32,
-    ResizeRange : 64
+    ResizeRange : 64,
+    NotStroke   : 128
   };
 
   var docChangedType = {
@@ -609,7 +610,7 @@ var c_oAscPopUpSelectorType = {
     dependent: 2
   };
 
-  var c_oAscFillRightClickOptions = {
+  var c_oAscFillType = {
     copyCells: 0,
     fillSeries: 1,
     fillFormattingOnly: 2,
@@ -621,7 +622,24 @@ var c_oAscPopUpSelectorType = {
     linearTrend: 8,
     growthTrend: 9,
     flashFill: 10,
-    series: 11
+    series: 11,
+    fillDown: 12,
+    fillRight: 13,
+    fillUp: 14,
+    fillLeft: 15,
+    justify: 16
+  };
+
+  /** @enum {number} */
+  var c_oAscContextMenuTypes = {
+    common       : 0, // default context menu
+    changeSeries : 1  // fill right click mouse - series menu
+  };
+
+  var c_oAscCalcMode = {
+    auto: 0,
+    autoNoTable: 1,
+    manual: 2
   };
 
   //----------------------------------------------------------export----------------------------------------------------
@@ -1055,8 +1073,8 @@ var c_oAscPopUpSelectorType = {
   prot['month'] = prot.month;
   prot['year'] = prot.year;
 
-  window['Asc']['c_oAscFillRightClickOptions'] = window['Asc'].c_oAscFillRightClickOptions = c_oAscFillRightClickOptions;
-  prot = c_oAscFillRightClickOptions;
+  window['Asc']['c_oAscFillType'] = window['Asc'].c_oAscFillType = c_oAscFillType;
+  prot = c_oAscFillType;
   prot['copyCells'] = prot.copyCells;
   prot['fillSeries'] = prot.fillSeries;
   prot['fillFormattingOnly'] = prot.fillFormattingOnly;
@@ -1069,5 +1087,21 @@ var c_oAscPopUpSelectorType = {
   prot['growthTrend'] = prot.growthTrend;
   prot['flashFill'] = prot.flashFill;
   prot['series'] = prot.series;
+  prot['fillDown'] = prot.fillDown;
+  prot['fillRight'] = prot.fillRight;
+  prot['fillUp'] = prot.fillUp;
+  prot['fillLeft'] = prot.fillLeft;
+  prot['justify'] = prot.justify;
+
+  window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenuTypes = c_oAscContextMenuTypes;
+  prot = c_oAscContextMenuTypes;
+  prot['common'] = prot.common;
+  prot['changeSeries'] = prot.changeSeries;
+
+  window['Asc']['c_oAscCalcMode'] = window['Asc'].c_oAscCalcMode = c_oAscCalcMode;
+  prot = c_oAscCalcMode;
+  prot['auto'] = prot.auto;
+  prot['autoNoTable'] = prot.autoNoTable;
+  prot['manual'] = prot.manual;
 
 })(window);

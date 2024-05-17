@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2762,7 +2762,6 @@ function CVerRuler()
     this.IsCanMoveMargins = true;
 
     this.m_oWordControl = null;
-    this.IsRetina = false;
 
     this.SimpleChanges = new RulerCheckSimpleChanges();
 

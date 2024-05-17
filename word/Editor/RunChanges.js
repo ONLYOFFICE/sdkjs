@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -244,7 +244,15 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RTL] = [
 	AscDFH.historyitem_ParaRun_RTL
 ];
 
-
+/**
+ * Общая функция для загрузки измнения настроек текста
+ */
+function private_ParaRunChangesLoadTextPr(color)
+{
+	this.Redo();
+	if (this.Color && color)
+		this.Class.setCollPrChangeColor(color);
+}
 /**
  * Общая функция объединения изменений, которые зависят только от себя и AscDFH.historyitem_ParaRun_TextPr
  * @param oChange
@@ -292,6 +300,7 @@ function private_ParaRunChangesOnMergeLangTextPr(oChange)
 
 	return true;
 }
+
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -388,6 +397,7 @@ CChangesRunAddItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesRunRemoveItem);
 };
+CChangesRunAddItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseContentChange}
@@ -500,6 +510,7 @@ CChangesRunRemoveItem.prototype.CreateReverseChange = function()
 {
 	return this.private_CreateReverseChange(CChangesRunAddItem);
 };
+CChangesRunRemoveItem.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -520,14 +531,9 @@ CChangesRunBold.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 	oRun.OnContentChange();
 };
-CChangesRunBold.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunBold.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunBold.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunBold.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -547,14 +553,9 @@ CChangesRunItalic.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunItalic.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunItalic.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunItalic.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunItalic.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -574,14 +575,9 @@ CChangesRunStrikeout.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunStrikeout.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunStrikeout.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunStrikeout.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunStrikeout.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -601,14 +597,9 @@ CChangesRunUnderline.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunUnderline.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunUnderline.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunUnderline.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunUnderline.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
@@ -632,14 +623,9 @@ CChangesRunFontSize.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunFontSize.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunFontSize.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunFontSize.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunFontSize.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -663,14 +649,9 @@ CChangesRunColor.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunColor.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunColor.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunColor.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunColor.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -690,14 +671,9 @@ CChangesRunVertAlign.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunVertAlign.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunVertAlign.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunVertAlign.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunVertAlign.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -797,14 +773,9 @@ CChangesRunHighLight.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunHighLight.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunHighLight.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunHighLight.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunHighLight.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -873,14 +844,9 @@ CChangesRunHighlightColor.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(false);
 };
-CChangesRunHighlightColor.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunHighlightColor.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunHighlightColor.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunHighlightColor.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}
@@ -900,14 +866,9 @@ CChangesRunRStyle.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRStyle.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRStyle.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRStyle.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunRStyle.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
@@ -927,14 +888,9 @@ CChangesRunSpacing.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunSpacing.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunSpacing.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunSpacing.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunSpacing.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -954,14 +910,9 @@ CChangesRunDStrikeout.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunDStrikeout.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunDStrikeout.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunDStrikeout.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunDStrikeout.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -981,14 +932,9 @@ CChangesRunCaps.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunCaps.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunCaps.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunCaps.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunCaps.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -1008,14 +954,9 @@ CChangesRunSmallCaps.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunSmallCaps.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunSmallCaps.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunSmallCaps.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunSmallCaps.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
@@ -1035,14 +976,9 @@ CChangesRunPosition.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunPosition.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunPosition.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunPosition.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunPosition.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -1070,13 +1006,7 @@ CChangesRunRFonts.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFonts.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFonts.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFonts.prototype.Merge = function(oChange)
 {
 	if (this.Class !== oChange.Class)
@@ -1119,6 +1049,7 @@ CChangesRunRFonts.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunRFonts.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -1148,13 +1079,7 @@ CChangesRunLang.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateShapeText();
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunLang.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunLang.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunLang.prototype.Merge = function(oChange)
 {
 	if (this.Class !== oChange.Class)
@@ -1187,6 +1112,7 @@ CChangesRunLang.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunLang.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1274,14 +1200,9 @@ CChangesRunRFontsAscii.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsAscii.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsAscii.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsAscii.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsAscii.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1369,14 +1290,9 @@ CChangesRunRFontsHAnsi.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsHAnsi.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsHAnsi.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsHAnsi.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsHAnsi.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1464,14 +1380,9 @@ CChangesRunRFontsCS.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsCS.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsCS.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsCS.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsCS.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -1559,14 +1470,9 @@ CChangesRunRFontsEastAsia.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsEastAsia.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsEastAsia.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsEastAsia.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsEastAsia.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1586,14 +1492,9 @@ CChangesRunRFontsHint.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsHint.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsHint.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsHint.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsHint.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1615,14 +1516,9 @@ CChangesRunLangBidi.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateShapeText();
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunLangBidi.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunLangBidi.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunLangBidi.prototype.Merge = private_ParaRunChangesOnMergeLangTextPr;
+CChangesRunLangBidi.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1644,14 +1540,9 @@ CChangesRunLangEastAsia.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateShapeText();
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunLangEastAsia.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunLangEastAsia.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunLangEastAsia.prototype.Merge = private_ParaRunChangesOnMergeLangTextPr;
+CChangesRunLangEastAsia.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -1673,14 +1564,9 @@ CChangesRunLangVal.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateShapeText();
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunLangVal.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunLangVal.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunLangVal.prototype.Merge = private_ParaRunChangesOnMergeLangTextPr;
+CChangesRunLangVal.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -1724,7 +1610,7 @@ CChangesRunTextPr.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunTextPr.prototype.Merge = function(oChange)
 {
@@ -1943,6 +1829,7 @@ CChangesRunTextPr.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunTextPr.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -1982,9 +1869,10 @@ CChangesRunUnifill.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunUnifill.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunUnifill.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -2024,9 +1912,10 @@ CChangesRunShd.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunShd.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunShd.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -2056,6 +1945,7 @@ CChangesRunMathStyle.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunMathStyle.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -2114,6 +2004,7 @@ CChangesRunMathPrp.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunMathPrp.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -2164,7 +2055,7 @@ CChangesRunReviewType.prototype.private_SetValue = function(Value)
 
 	oRun.ReviewType = Value.ReviewType;
 	oRun.ReviewInfo = Value.ReviewInfo;
-	oRun.private_UpdateTrackRevisions();
+	oRun.updateTrackRevisions();
 };
 CChangesRunReviewType.prototype.Merge = function(oChange)
 {
@@ -2297,7 +2188,7 @@ CChangesRunPrChange.prototype.private_SetValue = function(Value)
 
 	oRun.Pr.PrChange   = Value.PrChange;
 	oRun.Pr.ReviewInfo = Value.ReviewInfo;
-	oRun.private_UpdateTrackRevisions();
+	oRun.updateTrackRevisions();
 };
 CChangesRunPrChange.prototype.Merge = function(oChange)
 {
@@ -2335,14 +2226,9 @@ CChangesRunTextFill.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunTextFill.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunTextFill.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunTextFill.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunTextFill.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -2366,14 +2252,9 @@ CChangesRunTextOutline.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(false);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunTextOutline.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunTextOutline.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunTextOutline.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunTextOutline.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseObjectProperty}
@@ -2585,6 +2466,7 @@ CChangesRunMathAlnAt.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunMathAlnAt.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBase}
@@ -2672,6 +2554,7 @@ CChangesRunMathForcedBreak.prototype.Merge = function(oChange)
 
 	return true;
 };
+CChangesRunMathForcedBreak.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * Базовый класс для изменений ссылок на шрифт из темы
  * @constructor
@@ -2730,14 +2613,9 @@ CChangesRunRFontsThemeBase.prototype.private_SetValue = function(sValue)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRFontsThemeBase.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRFontsThemeBase.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRFontsThemeBase.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+CChangesRunRFontsThemeBase.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
@@ -2821,14 +2699,9 @@ CChangesRunBoldCS.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunBoldCS.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunBoldCS.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunBoldCS.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunBoldCS.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -2848,14 +2721,9 @@ CChangesRunItalicCS.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunItalicCS.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunItalicCS.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunItalicCS.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunItalicCS.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
@@ -2875,14 +2743,9 @@ CChangesRunFontSizeCS.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunFontSizeCS.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunFontSizeCS.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunFontSizeCS.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunFontSizeCS.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseLongProperty}
@@ -2904,6 +2767,7 @@ CChangesRunLigatures.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
 CChangesRunLigatures.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunLigatures.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -2923,14 +2787,9 @@ CChangesRunCS.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunCS.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunCS.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunCS.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunCS.prototype.CheckLock = private_ParagraphContentChangesCheckLock;
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
@@ -2950,11 +2809,6 @@ CChangesRunRTL.prototype.private_SetValue = function(Value)
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
-CChangesRunRTL.prototype.Load = function(Color)
-{
-	this.Redo();
-
-	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
-};
+CChangesRunRTL.prototype.Load = private_ParaRunChangesLoadTextPr;
 CChangesRunRTL.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+CChangesRunRTL.prototype.CheckLock = private_ParagraphContentChangesCheckLock;

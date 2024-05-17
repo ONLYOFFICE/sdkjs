@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1185,6 +1185,7 @@
 				nPos = oNum.Pos;
 
 				var oNumberingLvl = new CNumberingLvl();
+				oNumberingLvl.InitDefault(0, c_oAscMultiLevelNumbering.Numbered);
 				if ('.' === oNum.Char)
 					oNumberingLvl.SetByType(c_oAscNumberingLevel.DecimalDot_Left, nCurLvl);
 				else if (')' === oNum.Char)

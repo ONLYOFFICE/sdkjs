@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -34,6 +34,13 @@
 var c_oAscSectionBreakType    = Asc.c_oAscSectionBreakType;
 CTable.prototype.Recalculate_Page = function(PageIndex)
 {
+	//-------------------------------------------------------------------------------------------------------------
+	// Обрабатываем настройку "не отрывать от следующего"
+	//-------------------------------------------------------------------------------------------------------------
+	let result = this.RecalculateKeepNext(PageIndex);
+	if (result !== recalcresult_NextElement)
+		return result;
+
 	this.SetIsRecalculated(true);
 
 	if (0 === PageIndex)
@@ -52,20 +59,20 @@ CTable.prototype.Recalculate_Page = function(PageIndex)
 		return recalcresult_NextPage | recalcresultflags_Column;
 
 	this.private_RecalculatePositionX(PageIndex);
-
-	var Result = this.private_RecalculatePage(PageIndex);
-	if (Result & recalcresult_CurPage)
-		return Result;
+	
+	result = this.private_RecalculatePage(PageIndex);
+	if (result & recalcresult_CurPage)
+		return result;
 
 	this.private_RecalculatePositionY(PageIndex);
 
-	if (Result & recalcresult_NextElement)
+	if (result & recalcresult_NextElement)
 		this.RecalcInfo.Reset(false);
 
-	if (Result & recalcresult_NextElement && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
+	if (result & recalcresult_NextElement && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 
-	return Result;
+	return result;
 };
 CTable.prototype.Recalculate_SkipPage = function(PageIndex)
 {
@@ -248,20 +255,22 @@ CTable.prototype.private_RecalculateGrid = function()
 
 		// Запускаем пересчет границ, потому что там пересчитываются метрики ячеек, которые зависят от X, XLimit
 	}
-
+	
 	if (this.RecalcInfo.TableGrid)
 	{
+		let layoutCoeff = this.getLayoutScaleCoefficient();
+		
 		var arrSumGrid = [];
 		var nTempSum   = 0;
 		arrSumGrid[-1] = 0;
 		for (var nIndex = 0, nCount = this.TableGrid.length; nIndex < nCount; ++nIndex)
 		{
-			nTempSum += this.TableGrid[nIndex];
+			nTempSum += this.TableGrid[nIndex] * layoutCoeff;
 			arrSumGrid[nIndex] = nTempSum;
 		}
 
 		PctWidth = this.private_RecalculatePercentWidth();
-		MinWidth = this.private_GetTableMinWidth();
+		MinWidth = this.private_GetTableMinWidth() * layoutCoeff;
 
 		nTableW = 0;
 		if (tblwidth_Auto === TablePr.TableW.Type)
@@ -277,7 +286,7 @@ CTable.prototype.private_RecalculateGrid = function()
 			if (tblwidth_Pct === TablePr.TableW.Type)
 				nTableW = PctWidth * TablePr.TableW.W / 100;
 			else
-				nTableW = TablePr.TableW.W;
+				nTableW = TablePr.TableW.W * layoutCoeff;
 
 			if (0.001 > nTableW)
 				nTableW = 0;
@@ -334,7 +343,7 @@ CTable.prototype.private_RecalculateGrid = function()
 					if (tblwidth_Pct === oCellW.Type)
 						nCellWidth = PctWidth * oCellW.W / 100;
 					else
-						nCellWidth = oCellW.W;
+						nCellWidth = oCellW.W * layoutCoeff;
 
 					if (null !== nCellSpacing)
 					{
@@ -786,6 +795,8 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 	// после распределения. Причем тут важно, что мы пробегаемся по массиву подряд, а не на основе GridSpan, как
 	// у arrMergedPreferred, поэтому результат для одной и той же таблицы, с переставленными двумя строками может
 	// быть разным.
+	
+	let layoutCoeff = this.getLayoutScaleCoefficient();
 
 	var arrMergedColumns   = [];
 	var arrMergedPreferred = [];
@@ -852,7 +863,7 @@ CTable.prototype.private_RecalculateGridMinContent = function(nPctWidth, arrMinM
 			var nCellMax    = oCellMinMax.Max;
 			var oCellW      = oCell.GetW();
 			var oMargins    = oCell.GetMargins();
-			var nPreferred  = oCellW.GetCalculatedValue(nPctWidth);
+			var nPreferred  = oCellW.GetCalculatedValue(nPctWidth) * layoutCoeff;
 
 			var nSpacingAdd = (0 === nCurCell || nCellsCount - 1 === nCurCell) ? 3 / 2 * nSpacingW : nSpacingW;
 			var nMarginsMin = nSpacingAdd + oMargins.Left.W + oMargins.Right.W;
@@ -1332,6 +1343,8 @@ CTable.prototype.private_RecalculateBorders = function()
     this.MaxTopBorder = MaxTopBorder;
     this.MaxBotBorder = MaxBotBorder;
     this.MaxBotMargin = MaxBotMargin;
+	
+	let layoutCoeff = this.getLayoutScaleCoefficient();
 
     // Также для каждой ячейки обсчитаем ее метрики и левую и правую границы
     for ( var CurRow = 0; CurRow < this.Content.length; CurRow++  )
@@ -1417,21 +1430,21 @@ CTable.prototype.private_RecalculateBorders = function()
             var CellBorders = Cell.Get_Borders();
             if ( null != CellSpacing )
             {
-                X_content_start += CellMar.Left.W;
-                X_content_end   -= CellMar.Right.W;
+                X_content_start += CellMar.Left.W * layoutCoeff;
+                X_content_end   -= CellMar.Right.W * layoutCoeff;
 
                 if ( border_Single === CellBorders.Left.Value )
-                    X_content_start += CellBorders.Left.Size;
+                    X_content_start += CellBorders.Left.Size * layoutCoeff;
 
                 if ( border_Single === CellBorders.Right.Value )
-                    X_content_end -= CellBorders.Right.Size;
+                    X_content_end -= CellBorders.Right.Size * layoutCoeff;
             }
             else
             {
                 if ( vmerge_Continue === Vmerge )
                 {
-                    X_content_start += CellMar.Left.W;
-                    X_content_end   -= CellMar.Right.W;
+                    X_content_start += CellMar.Left.W * layoutCoeff;
+                    X_content_end   -= CellMar.Right.W * layoutCoeff;
 					
 					// Границы для этих ячеек рассчитываются во время расчета границ первой ячейки в вертикальном
 					// объединении. Но может случиться, что если что-то пошло не так и у нас первая же ячейка первой строки
@@ -1522,14 +1535,14 @@ CTable.prototype.private_RecalculateBorders = function()
                     Borders_Info.Left_Max  = Max_l_w;
 
                     if ( Max_l_w / 2 > CellMar.Left.W )
-                        X_content_start += Max_l_w / 2;
+                        X_content_start += Max_l_w / 2 * layoutCoeff;
                     else
-                        X_content_start += CellMar.Left.W;
+                        X_content_start += CellMar.Left.W * layoutCoeff;
 
                     if ( Max_r_w / 2 > CellMar.Right.W )
-                        X_content_end -= Max_r_w / 2;
+                        X_content_end -= Max_r_w / 2 * layoutCoeff;
                     else
-                        X_content_end -= CellMar.Right.W;
+                        X_content_end -= CellMar.Right.W * layoutCoeff;
 
                     Cell.Set_BorderInfo_Left ( Borders_Info.Left,  Max_l_w );
                     Cell.Set_BorderInfo_Right( Borders_Info.Right, Max_r_w );
@@ -1787,13 +1800,14 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 
 	var LD_PageLimits = this.LogicDocument.Get_PageLimits(this.Get_StartPage_Absolute());
 	var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), isHdtFtr);
-
+	
+	let tableInd = TablePr.TableInd;
     if ( true === this.Is_Inline() )
     {
         var Page = this.Pages[CurPage];
         if (0 === CurPage)
         {
-            this.AnchorPosition.CalcX = this.X_origin + TablePr.TableInd;
+            this.AnchorPosition.CalcX = this.X_origin + tableInd;
             this.AnchorPosition.Set_X(this.TableSumGrid[this.TableSumGrid.length - 1], this.X_origin, LD_PageFields.X, LD_PageFields.XLimit, LD_PageLimits.XLimit, PageLimits.X, PageLimits.XLimit);
         }
 
@@ -1801,7 +1815,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
         {
             case AscCommon.align_Left :
             {
-                Page.X = Page.X_origin + this.GetTableOffsetCorrection() + TablePr.TableInd;
+                Page.X = Page.X_origin + this.GetTableOffsetCorrection() + tableInd;
                 break;
             }
             case AscCommon.align_Right :
@@ -1836,7 +1850,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 
             // Непонятно по какой причине, но Word для плавающих таблиц добаляется значение TableInd
 			this.AnchorPosition.Calculate_X(this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value);
-			this.AnchorPosition.CalcX += TablePr.TableInd;
+			this.AnchorPosition.CalcX += tableInd;
 
             this.X        = this.AnchorPosition.CalcX;
             this.X_origin = this.X - OffsetCorrection_Left;
@@ -1912,7 +1926,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
         LastRow = FirstRow;
     }
-
+	
     var MaxTopBorder     = this.MaxTopBorder;
     var MaxBotBorder     = this.MaxBotBorder;
     var MaxBotMargin     = this.MaxBotMargin;
@@ -2387,6 +2401,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 	var arrSavedTableHeight  = [];
 	var arrFootnotesObject   = [];
 	var nResetFootnotesIndex = -1;
+	
+	var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
 
     for (var CurRow = FirstRow; CurRow < this.Content.length; ++CurRow)
     {
@@ -3151,9 +3167,18 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         {
             LastRow = CurRow;
             this.Pages[CurPage].LastRow = CurRow;
-
-            if  ( -1 === this.HeaderInfo.PageIndex && this.HeaderInfo.Count > 0 && CurRow >= this.HeaderInfo.Count )
-                this.HeaderInfo.PageIndex = CurPage;
+			
+			if (-1 === this.HeaderInfo.PageIndex && this.HeaderInfo.Count > 0 && CurRow >= this.HeaderInfo.Count)
+				this.HeaderInfo.PageIndex = CurPage;
+			
+			if ((CurRow < this.HeaderInfo.Count || (CurRow === this.HeaderInfo.Count && !this.RowsInfo[CurRow].FirstPage && nCompatibilityMode >= AscCommon.document_compatibility_mode_Word14))
+				&& (0 === CurPage && null !== this.Get_DocumentPrev() && !this.Parent.IsFirstElementOnPage(this.private_GetRelativePageIndex(CurPage), this.GetIndex())))
+			{
+				this.HeaderInfo.PageIndex = -1;
+				LastRow = 0;
+				this.RowsInfo[0].FirstPage = false;
+				this.Pages[CurPage].LastRow = 0;
+			}
 
             break;
         }
@@ -3163,8 +3188,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
             this.Pages[CurPage].LastRow = this.Content.length - 1;
         }
     }
-
-    var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
+	
     // Сделаем вертикальное выравнивание ячеек в таблице. Делаем как Word, если ячейка разбилась на несколько
     // страниц, тогда вертикальное выравнивание применяем только к первой странице.
     // Делаем это не в общем цикле, потому что объединенные вертикально ячейки могут вносить поправки в значения

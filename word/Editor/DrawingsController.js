@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -119,7 +119,7 @@ CDrawingsController.prototype.AddTextArt = function(nStyle)
 	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
 	if (ParaDrawing)
 	{
-		ParaDrawing.GoTo_Text(undefined, false);
+		ParaDrawing.GoToText(undefined, false);
 		this.LogicDocument.AddTextArt(nStyle);
 	}
 };
@@ -380,7 +380,7 @@ CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 				oParaDrawing = arrDrawings[0];
 		}
 
-		oParaDrawing.GoTo_Text(undefined, false);
+		oParaDrawing.GoToText(undefined, false);
 	}
 };
 CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -215,7 +215,7 @@ ParaDrawing.prototype.Get_Type = function()
 };
 ParaDrawing.prototype.GetWidth = function()
 {
-	return this.Width;
+	return this.Width * this.GetScaleCoefficient();
 };
 ParaDrawing.prototype.GetInlineWidth = function()
 {
@@ -226,11 +226,15 @@ ParaDrawing.prototype.GetInlineWidth = function()
 };
 ParaDrawing.prototype.Get_Height = function()
 {
-	return this.Height;
+	return this.Height * this.GetScaleCoefficient();
+};
+ParaDrawing.prototype.getHeight = function()
+{
+	return this.Get_Height();
 };
 ParaDrawing.prototype.GetWidthVisible = function()
 {
-	return this.WidthVisible;
+	return this.WidthVisible * this.GetScaleCoefficient();
 };
 ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
@@ -856,6 +860,14 @@ ParaDrawing.prototype.SetSizeRelV  = function(oSize)
 	History.Add(new CChangesParaDrawingSizeRelV(this, this.SizeRelV, oSize));
 	this.SizeRelV = oSize;
 };
+ParaDrawing.prototype.getExtX = function()
+{
+	return this.getXfrmExtX() * this.GetScaleCoefficient();
+};
+ParaDrawing.prototype.getExtY = function()
+{
+	return this.getXfrmExtY() * this.GetScaleCoefficient();
+};
 ParaDrawing.prototype.getXfrmExtX = function()
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && AscCommon.isRealObject(this.GraphicObj.spPr) && AscCommon.isRealObject(this.GraphicObj.spPr.xfrm) && AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX))
@@ -1201,7 +1213,7 @@ ParaDrawing.prototype.Draw = function( X, Y, pGraphics, PDSE)
 	{
 		nPageIndex = PDSE.Page;
 	}
-	if (pGraphics.Start_Command)
+	if (pGraphics.isTextDrawer())
 	{
 		pGraphics.m_aDrawings.push(new AscFormat.ParaDrawingStruct(undefined, this));
 		return;
@@ -1212,10 +1224,8 @@ ParaDrawing.prototype.Draw = function( X, Y, pGraphics, PDSE)
 		this.draw(pGraphics, PDSE);
 		pGraphics.shapePageIndex = null;
 	}
-	if (pGraphics.End_Command)
-	{
-		pGraphics.End_Command();
-	}
+
+	pGraphics.End_Command();
 };
 
 ParaDrawing.prototype.Measure = function()
@@ -1279,25 +1289,8 @@ ParaDrawing.prototype.Measure = function()
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
-	let oParagraph = this.GetParagraph();
-	let oLogicDocument;
-
-	if (oParagraph
-		&& (oLogicDocument = oParagraph.GetLogicDocument())
-		&& oLogicDocument.IsDocumentEditor())
-	{
-		let oLayout = oLogicDocument.Layout;
-		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
-		let oSectPr = oParagraph.Get_SectPr();
-		oLogicDocument.Layout = oLayout;
-
-		if (!oSectPr)
-			return 1;
-
-		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
-	}
-
-	return 1;
+	let paragraph = this.GetParagraph();
+	return paragraph ? paragraph.getLayoutScaleCoefficient() : 1;
 };
 ParaDrawing.prototype.createPlaceholderControl = function (arrObjects)
 {
@@ -1947,7 +1940,7 @@ ParaDrawing.prototype.Get_ParentTextTransform = function()
 	}
 	return null;
 };
-ParaDrawing.prototype.GoTo_Text = function(bBefore, bUpdateStates)
+ParaDrawing.prototype.GoToText = function(bBefore, bUpdateStates)
 {
 	var Paragraph = this.Get_ParentParagraph();
 	if (Paragraph)
@@ -2098,7 +2091,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 	let oAnchorParagraph = oAnchorPos.Paragraph;
 	oAnchorParagraph.Check_NearestPos(oAnchorPos);
 
-	let oInsertParagraph = new AscCommonWord.Paragraph(this.DrawingDocument);
+	let oInsertParagraph = new AscWord.Paragraph();
 	var oDrawingRun = new AscCommonWord.ParaRun();
 	oDrawingRun.AddToContent(0, this);
 

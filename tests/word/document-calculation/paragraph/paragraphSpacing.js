@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -36,8 +36,8 @@ $(function () {
 	let dc = new AscWord.CDocumentContent();
 	dc.ClearContent(false);
 
-	let p1 = new AscWord.CParagraph();
-	let p2 = new AscWord.CParagraph();
+	let p1 = new AscWord.Paragraph();
+	let p2 = new AscWord.Paragraph();
 
 	dc.AddToContent(0, p1);
 	dc.AddToContent(1, p2);

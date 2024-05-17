@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -48,8 +48,9 @@ window.startPluginApi = function() {
 	 * The editors which the plugin is available for:
 	 * * <b>word</b> - text document editor,
 	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor.
-	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * * <b>slide</b> - presentation editor,
+	 * * <b>pdf</b> - pdf editor.
+	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
 	 * */
 
 	/**
@@ -329,6 +330,8 @@ window.startPluginApi = function() {
 
 	/**
 	 * Event: onContextMenuShow
+	 * WARNING! If plugin is listening this event, it MUST call AddContextMenuItem method (synchronously or not),
+	 * because editor wait answers from ALL plugins and then and only then fill contextmenu.
 	 * @event Plugin#onContextMenuShow
 	 * @memberof Plugin
 	 * @alias onContextMenuShow
@@ -345,6 +348,16 @@ window.startPluginApi = function() {
 	 * @description The function called when the context menu item has been clicked.
 	 * @param {string} id - Item ID.
 	 * @since 7.4.0
+	 */
+
+	/**
+	 * Event: onToolbarMenuClick
+	 * @event Plugin#onToolbarMenuClick
+	 * @memberof Plugin
+	 * @alias onToolbarMenuClick
+	 * @description The function called when the context menu item has been clicked.
+	 * @param {string} id - Item ID.
+	 * @since 8.1.0
 	 */
 
 	/**
@@ -647,17 +660,17 @@ window.startPluginApi = function() {
     };
 
 	/**
-	 * attachEvent
+	 * @function attachEvent
 	 * @memberof Plugin
 	 * @alias attachEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
-	 * The list of all the available events can be found {@link Plugin#events here}.
+	 * The list of all the available events can be found {@link /plugin/events here}.
      * @param {string} id - The event name.
 	 * @param {Function} action - The event listener.
 	 */
 
 	/**
-	 * attachContextMenuClickEvent
+	 * @function attachContextMenuClickEvent
 	 * @memberof Plugin
 	 * @alias attachContextMenuClickEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.

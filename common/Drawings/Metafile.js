@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -34,7 +34,6 @@
 
 (function(window, undefined)
 {
-
 	// Import
 	var g_fontApplication = AscFonts.g_fontApplication;
 
@@ -115,11 +114,13 @@
 		this.Size   = 12;
 		this.Bold   = false;
 		this.Italic = false;
+		this.Dpi    = 72;
 
 		this.SetUpName  = "";
 		this.SetUpIndex = -1;
 		this.SetUpSize  = 12;
 		this.SetUpStyle = -1;
+		this.SetUpDpi   = 72;
 
 		this.SetUpMatrix = new CMatrix();
 	}
@@ -397,6 +398,9 @@
 			if (null == this.Parent || -1 == _ind)
 				return;
 
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
+
 			var _state = this.States[_ind];
 			if (_state.Type === gr_state_state)
 			{
@@ -418,6 +422,9 @@
 				this.Parent.transform3(_state.Transform);
 				this.Parent.SetIntegerGrid(_state.IsIntegerGrid);
 			}
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 
 		RemoveLastClip : function()
@@ -425,6 +432,9 @@
 			// цель - убрать примененные this.Clips
 			if (this.Clips.length === 0)
 				return;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
 
 			this.lastState = new CGrState_State();
 			this.lastState.Init(this.Parent.m_oTransform, !!this.Parent.m_bIntegerGrid, this.Clips);
@@ -439,12 +449,18 @@
 			this.Clips = [];
 			this.Parent.transform3(this.lastState.Transform);
 			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 		RestoreLastClip : function()
 		{
 			// цель - вернуть примененные this.lastState.Clips
 			if (!this.lastState)
 				return;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
 
 			this.lastState.Apply(this.Parent);
 
@@ -453,6 +469,9 @@
 			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
 
 			this.lastState = null;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 
 		Save : function()
@@ -511,20 +530,14 @@
 	{
 		this.Init = function(len)
 		{
-			var _canvas = document.createElement('canvas');
-			var _ctx    = _canvas.getContext('2d');
-			this.len    = (len === undefined) ? 1024 * 1024 * 5 : len;
-			this.ImData = _ctx.createImageData(this.len / 4, 1);
-			this.data   = this.ImData.data;
-			this.pos    = 0;
+			this.len  = (len === undefined) ? 1024 * 1024 * 5 : len;
+			this.data = new Uint8Array(this.len);
+			this.pos  = 0;
 		}
 
-		this.ImData = null;
-		this.data   = null;
-		this.len    = 0;
-		this.pos    = 0;
-
-		this.context = null;
+		this.data = null;
+		this.len  = 0;
+		this.pos  = 0;
 
 		if (true !== bIsNoInit)
 			this.Init();
@@ -542,21 +555,13 @@
 		{
 			if (this.pos + count >= this.len)
 			{
-				var _canvas = document.createElement('canvas');
-				var _ctx    = _canvas.getContext('2d');
+				var oldData = this.data;
 
-				var oldImData = this.ImData;
-				var oldData   = this.data;
-				var oldPos    = this.pos;
-
-				this.len = Math.max(this.len * 2, this.pos + ((3 * count / 2) >> 0));
-
-				this.ImData = _ctx.createImageData(this.len / 4, 1);
-				this.data   = this.ImData.data;
-				var newData = this.data;
+				this.len  = Math.max(this.len * 2, this.pos + ((3 * count / 2) >> 0));
+				this.data = new Uint8Array(this.len);
 
 				for (var i = 0; i < this.pos; i++)
-					newData[i] = oldData[i];
+					this.data[i] = oldData[i];
 			}
 		}
 		this.GetBase64Memory    = function()
@@ -574,14 +579,8 @@
 		};
 		this.GetData   = function(nPos, nLen)
 		{
-			var _canvas = document.createElement('canvas');
-			var _ctx    = _canvas.getContext('2d');
-
 			var len = this.GetCurPosition();
-
-			//todo ImData.data.length multiple of 4
-			var ImData = _ctx.createImageData(Math.ceil(len / 4), 1);
-			var res = ImData.data;
+			var res = new Uint8Array(len);
 
 			for (var i = 0; i < len; i++)
 				res[i] = this.data[i];
@@ -840,7 +839,7 @@
 		}
 		this.WriteStringA = function(text)
 		{
-			var count = text.length & 0xFFFF;
+			var count = text.length;
 			this.WriteULong(count);
 			this.CheckSize(count);
 			for (var i=0;i<count;i++)
@@ -873,7 +872,7 @@
 
 		this.WriteUtf8Char = function(code)
 		{
-			this.CheckSize(1);
+			this.CheckSize(6);
 			if (code < 0x80) {
 				this.data[this.pos++] = code;
 			}
@@ -1543,6 +1542,7 @@
 		this.ctDocInfo			= 163;
 		this.ctAnnotField		= 164;
 		this.ctAnnotFieldDelete	= 165;
+		this.ctWidgetsInfo		= 166;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -2804,20 +2804,15 @@
 
 	function CDocumentRenderer()
 	{
+		AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.PDF, true);
+
 		this.m_arrayPages         = [];
 		this.m_lPagesCount        = 0;
 		//this.DocumentInfo = "";
 		this.Memory               = new CMemory();
 		this.VectorMemoryForPrint = null;
 
-		this.ClipManager            = new CClipManager();
-		this.ClipManager.BaseObject = this;
-
-		this.RENDERER_PDF_FLAG = true;
 		this.ArrayPoints       = null;
-
-		this.GrState        = new CGrState();
-		this.GrState.Parent = this;
 
 		this.m_oPen       = null;
 		this.m_oBrush     = null;
@@ -2834,876 +2829,550 @@
         this.isPrintMode = false;
 	}
 
-	CDocumentRenderer.prototype =
+	CDocumentRenderer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+	CDocumentRenderer.prototype.constructor = CDocumentRenderer;
+
+	CDocumentRenderer.prototype.InitPicker = function(_manager)
 	{
-		InitPicker : function(_manager)
-		{
-			this.FontPicker = new CMetafileFontPicker(_manager);
-		},
+		this.FontPicker = new CMetafileFontPicker(_manager);
+	};
 
-		SetBaseTransform : function(_matrix)
-		{
-			this.m_oBaseTransform = _matrix;
-		},
-		BeginPage        : function(width, height)
-		{
-			this.m_arrayPages[this.m_arrayPages.length]                    = new CMetafile(width, height);
-			this.m_lPagesCount                                             = this.m_arrayPages.length;
-			this.m_arrayPages[this.m_lPagesCount - 1].Memory               = this.Memory;
-			this.m_arrayPages[this.m_lPagesCount - 1].StartOffset          = this.Memory.pos;
-			this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = this.VectorMemoryForPrint;
-            this.m_arrayPages[this.m_lPagesCount - 1].FontPicker		   = this.FontPicker;
+	CDocumentRenderer.prototype.SetBaseTransform = function(_matrix)
+	{
+		this.m_oBaseTransform = _matrix;
+	};
+	CDocumentRenderer.prototype.BeginPage = function(width, height)
+	{
+		this.m_arrayPages[this.m_arrayPages.length]                    = new CMetafile(width, height);
+		this.m_lPagesCount                                             = this.m_arrayPages.length;
+		this.m_arrayPages[this.m_lPagesCount - 1].Memory               = this.Memory;
+		this.m_arrayPages[this.m_lPagesCount - 1].StartOffset          = this.Memory.pos;
+		this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = this.VectorMemoryForPrint;
+		this.m_arrayPages[this.m_lPagesCount - 1].FontPicker		   = this.FontPicker;
 
-            if (this.FontPicker)
-            	this.m_arrayPages[this.m_lPagesCount - 1].FontPicker.Metafile  = this.m_arrayPages[this.m_lPagesCount - 1];
+		if (this.FontPicker)
+			this.m_arrayPages[this.m_lPagesCount - 1].FontPicker.Metafile  = this.m_arrayPages[this.m_lPagesCount - 1];
 
-			this.Memory.WriteByte(CommandType.ctPageStart);
+		this.Memory.WriteByte(CommandType.ctPageStart);
 
-			this.Memory.WriteByte(CommandType.ctPageWidth);
-			this.Memory.WriteDouble(width);
-			this.Memory.WriteByte(CommandType.ctPageHeight);
-			this.Memory.WriteDouble(height);
+		this.Memory.WriteByte(CommandType.ctPageWidth);
+		this.Memory.WriteDouble(width);
+		this.Memory.WriteByte(CommandType.ctPageHeight);
+		this.Memory.WriteDouble(height);
 
-			var _page         = this.m_arrayPages[this.m_lPagesCount - 1];
-			this.m_oPen       = _page.m_oPen;
-			this.m_oBrush     = _page.m_oBrush;
-			this.m_oTransform = _page.m_oTransform;
-		},
-		EndPage          : function()
-		{
-			this.Memory.WriteByte(CommandType.ctPageEnd);
-		},
+		var _page         = this.m_arrayPages[this.m_lPagesCount - 1];
+		this.m_oPen       = _page.m_oPen;
+		this.m_oBrush     = _page.m_oBrush;
+		this.m_oTransform = _page.m_oTransform;
+	};
+	CDocumentRenderer.prototype.EndPage = function()
+	{
+		this.Memory.WriteByte(CommandType.ctPageEnd);
+	};
 
-		p_color    : function(r, g, b, a)
+	CDocumentRenderer.prototype.p_color = function(r, g, b, a)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].p_color(r, g, b, a);
+	};
+	CDocumentRenderer.prototype.p_width = function(w)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].p_width(w);
+	};
+	CDocumentRenderer.prototype.p_dash = function(params)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].p_dash(params);
+	};
+	// brush methods
+	CDocumentRenderer.prototype.b_color1 = function(r, g, b, a)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].b_color1(r, g, b, a);
+	};
+	CDocumentRenderer.prototype.b_color2 = function(r, g, b, a)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].b_color2(r, g, b, a);
+	};
+	CDocumentRenderer.prototype.transform = function(sx, shy, shx, sy, tx, ty)
+	{
+		if (0 != this.m_lPagesCount)
 		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].p_color(r, g, b, a);
-		},
-		p_width    : function(w)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].p_width(w);
-		},
-		p_dash : function(params)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].p_dash(params);
-		},
-		// brush methods
-		b_color1   : function(r, g, b, a)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].b_color1(r, g, b, a);
-		},
-		b_color2   : function(r, g, b, a)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].b_color2(r, g, b, a);
-		},
-		transform  : function(sx, shy, shx, sy, tx, ty)
-		{
-			if (0 != this.m_lPagesCount)
+			if (null == this.m_oBaseTransform)
+				this.m_arrayPages[this.m_lPagesCount - 1].transform(sx, shy, shx, sy, tx, ty);
+			else
 			{
-				if (null == this.m_oBaseTransform)
-					this.m_arrayPages[this.m_lPagesCount - 1].transform(sx, shy, shx, sy, tx, ty);
-				else
+				var _transform = new CMatrix();
+				_transform.sx  = sx;
+				_transform.shy = shy;
+				_transform.shx = shx;
+				_transform.sy  = sy;
+				_transform.tx  = tx;
+				_transform.ty  = ty;
+				AscCommon.global_MatrixTransformer.MultiplyAppend(_transform, this.m_oBaseTransform);
+				this.m_arrayPages[this.m_lPagesCount - 1].transform(_transform.sx, _transform.shy, _transform.shx, _transform.sy, _transform.tx, _transform.ty);
+			}
+		}
+	};
+	CDocumentRenderer.prototype.transform3 = function(m)
+	{
+		this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+	};
+	CDocumentRenderer.prototype.reset = function()
+	{
+		this.transform(1, 0, 0, 1, 0, 0);
+	};
+	// path commands
+	CDocumentRenderer.prototype._s = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._s();
+	};
+	CDocumentRenderer.prototype._e = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._e();
+	};
+	CDocumentRenderer.prototype._z = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._z();
+	};
+	CDocumentRenderer.prototype._m = function(x, y)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._m(x, y);
+
+		if (this.ArrayPoints != null)
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
+	};
+	CDocumentRenderer.prototype._l = function(x, y)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._l(x, y);
+
+		if (this.ArrayPoints != null)
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
+	};
+	CDocumentRenderer.prototype._c = function(x1, y1, x2, y2, x3, y3)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._c(x1, y1, x2, y2, x3, y3);
+
+		if (this.ArrayPoints != null)
+		{
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x3, y : y3};
+		}
+	};
+	CDocumentRenderer.prototype._c2 = function(x1, y1, x2, y2)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1]._c2(x1, y1, x2, y2);
+
+		if (this.ArrayPoints != null)
+		{
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
+			this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
+		}
+	};
+	CDocumentRenderer.prototype.ds= function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].ds();
+	};
+	CDocumentRenderer.prototype.df = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].df();
+	};
+	CDocumentRenderer.prototype.drawpath = function(type)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].drawpath(type);
+	};
+
+	// images
+	CDocumentRenderer.prototype.drawImage = function(img, x, y, w, h, alpha, srcRect)
+	{
+		if (img == null || img == undefined || img == "")
+			return;
+
+		if (0 != this.m_lPagesCount)
+		{
+			if (!srcRect)
+				this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, w, h, this.UseOriginImageUrl);
+			else
+			{
+				/*
+				 if (!window.editor)
+				 {
+				 this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img,x,y,w,h);
+				 return;
+				 }
+				 */
+
+				/*
+				var _img = undefined;
+				if (window.editor)
+					_img = window.editor.ImageLoader.map_image_index[img];
+				else if (window["Asc"]["editor"])
+					_img = window["Asc"]["editor"].ImageLoader.map_image_index[img];
+
+				var w0 = 0;
+				var h0 = 0;
+				if (_img != undefined && _img.Image != null)
 				{
-					var _transform = new CMatrix();
-					_transform.sx  = sx;
-					_transform.shy = shy;
-					_transform.shx = shx;
-					_transform.sy  = sy;
-					_transform.tx  = tx;
-					_transform.ty  = ty;
-					AscCommon.global_MatrixTransformer.MultiplyAppend(_transform, this.m_oBaseTransform);
-					this.m_arrayPages[this.m_lPagesCount - 1].transform(_transform.sx, _transform.shy, _transform.shx, _transform.sy, _transform.tx, _transform.ty);
+					w0 = _img.Image.width;
+					h0 = _img.Image.height;
+				}
+
+				if (w0 == 0 || h0 == 0)
+				{
+					this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, w, h);
+					return;
+				}
+				*/
+
+				var bIsClip = false;
+				if (srcRect.l > 0 || srcRect.t > 0 || srcRect.r < 100 || srcRect.b < 100)
+					bIsClip = true;
+
+				if (bIsClip)
+				{
+					this.SaveGrState();
+					this.AddClipRect(x, y, w, h);
+				}
+
+				var __w   = w;
+				var __h   = h;
+				var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
+				var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
+
+				if (srcRect.l < 0)
+				{
+					var _off = ((-srcRect.l / _delW) * __w);
+					x += _off;
+					w -= _off;
+				}
+				if (srcRect.t < 0)
+				{
+					var _off = ((-srcRect.t / _delH) * __h);
+					y += _off;
+					h -= _off;
+				}
+				if (srcRect.r > 100)
+				{
+					var _off = ((srcRect.r - 100) / _delW) * __w;
+					w -= _off;
+				}
+				if (srcRect.b > 100)
+				{
+					var _off = ((srcRect.b - 100) / _delH) * __h;
+					h -= _off;
+				}
+
+				var _wk = 100;
+				if (srcRect.l > 0)
+					_wk -= srcRect.l;
+				if (srcRect.r < 100)
+					_wk -= (100 - srcRect.r);
+				_wk = 100 / _wk;
+
+				var _hk = 100;
+				if (srcRect.t > 0)
+					_hk -= srcRect.t;
+				if (srcRect.b < 100)
+					_hk -= (100 - srcRect.b);
+				_hk = 100 / _hk;
+
+				var _r = x + w;
+				var _b = y + h;
+
+				if (srcRect.l > 0)
+				{
+					x -= ((srcRect.l * _wk * w) / 100);
+				}
+				if (srcRect.t > 0)
+				{
+					y -= ((srcRect.t * _hk * h) / 100);
+				}
+				if (srcRect.r < 100)
+				{
+					_r += (((100 - srcRect.r) * _wk * w) / 100);
+				}
+				if (srcRect.b < 100)
+				{
+					_b += (((100 - srcRect.b) * _hk * h) / 100);
+				}
+
+				this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, _r - x, _b - y);
+
+				if (bIsClip)
+				{
+					this.RestoreGrState();
 				}
 			}
-		},
-		transform3 : function(m)
-		{
-			this.transform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
-		},
-		reset      : function()
-		{
-			this.transform(1, 0, 0, 1, 0, 0);
-		},
-		// path commands
-		_s         : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._s();
-		},
-		_e         : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._e();
-		},
-		_z         : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._z();
-		},
-		_m         : function(x, y)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._m(x, y);
+		}
+	};
 
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
-		},
-		_l         : function(x, y)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._l(x, y);
+	CDocumentRenderer.prototype.SetFont = function(font)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].SetFont(font);
+	};
+	CDocumentRenderer.prototype.FillText = function(x, y, text, cropX, cropW)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].FillText(x, y, text);
+	};
+	CDocumentRenderer.prototype.FillTextCode = function(x, y, text, cropX, cropW)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].FillTextCode(x, y, text);
+	};
+	CDocumentRenderer.prototype.tg = function(gid, x, y, codePoints)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y, codePoints);
+	};
+	CDocumentRenderer.prototype.FillText2 = function(x, y, text)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].FillText(x, y, text);
+	};
+	CDocumentRenderer.prototype.GetFont = function()
+	{
+		if (0 != this.m_lPagesCount)
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oFont;
+		return null;
+	};
 
-			if (this.ArrayPoints != null)
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x, y : y};
-		},
-		_c         : function(x1, y1, x2, y2, x3, y3)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._c(x1, y1, x2, y2, x3, y3);
+	CDocumentRenderer.prototype.put_PenLineJoin = function(_join)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_PenLineJoin(_join);
+	};
+	CDocumentRenderer.prototype.put_TextureBounds = function(x, y, w, h)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_TextureBounds(x, y, w, h);
+	};
+	CDocumentRenderer.prototype.put_TextureBoundsEnabled = function(val)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_TextureBoundsEnabled(val);
+	};
+	CDocumentRenderer.prototype.put_brushTexture = function(src, mode)
+	{
+		if (src == null || src == undefined)
+			src = "";
 
-			if (this.ArrayPoints != null)
-			{
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x3, y : y3};
-			}
-		},
-		_c2        : function(x1, y1, x2, y2)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1]._c2(x1, y1, x2, y2);
-
-			if (this.ArrayPoints != null)
-			{
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x1, y : y1};
-				this.ArrayPoints[this.ArrayPoints.length] = {x : x2, y : y2};
-			}
-		},
-		ds         : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].ds();
-		},
-		df         : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].df();
-		},
-		drawpath   : function(type)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].drawpath(type);
-		},
-
-		// canvas state
-		save    : function()
-		{
-		},
-		restore : function()
-		{
-		},
-		clip    : function()
-		{
-		},
-
-		// images
-		drawImage : function(img, x, y, w, h, alpha, srcRect)
-		{
-			if (img == null || img == undefined || img == "")
-				return;
-
-			if (0 != this.m_lPagesCount)
-			{
-				if (!srcRect)
-					this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, w, h, this.UseOriginImageUrl);
-				else
-				{
-					/*
-					 if (!window.editor)
-					 {
-					 this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img,x,y,w,h);
-					 return;
-					 }
-					 */
-
-					/*
-					var _img = undefined;
-					if (window.editor)
-						_img = window.editor.ImageLoader.map_image_index[img];
-					else if (window["Asc"]["editor"])
-						_img = window["Asc"]["editor"].ImageLoader.map_image_index[img];
-
-					var w0 = 0;
-					var h0 = 0;
-					if (_img != undefined && _img.Image != null)
-					{
-						w0 = _img.Image.width;
-						h0 = _img.Image.height;
-					}
-
-					if (w0 == 0 || h0 == 0)
-					{
-						this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, w, h);
-						return;
-					}
-					*/
-
-					var bIsClip = false;
-					if (srcRect.l > 0 || srcRect.t > 0 || srcRect.r < 100 || srcRect.b < 100)
-						bIsClip = true;
-
-					if (bIsClip)
-					{
-						this.SaveGrState();
-						this.AddClipRect(x, y, w, h);
-					}
-
-					var __w   = w;
-					var __h   = h;
-					var _delW = Math.max(0, -srcRect.l) + Math.max(0, srcRect.r - 100) + 100;
-					var _delH = Math.max(0, -srcRect.t) + Math.max(0, srcRect.b - 100) + 100;
-
-					if (srcRect.l < 0)
-					{
-						var _off = ((-srcRect.l / _delW) * __w);
-						x += _off;
-						w -= _off;
-					}
-					if (srcRect.t < 0)
-					{
-						var _off = ((-srcRect.t / _delH) * __h);
-						y += _off;
-						h -= _off;
-					}
-					if (srcRect.r > 100)
-					{
-						var _off = ((srcRect.r - 100) / _delW) * __w;
-						w -= _off;
-					}
-					if (srcRect.b > 100)
-					{
-						var _off = ((srcRect.b - 100) / _delH) * __h;
-						h -= _off;
-					}
-
-					var _wk = 100;
-					if (srcRect.l > 0)
-						_wk -= srcRect.l;
-					if (srcRect.r < 100)
-						_wk -= (100 - srcRect.r);
-					_wk = 100 / _wk;
-
-					var _hk = 100;
-					if (srcRect.t > 0)
-						_hk -= srcRect.t;
-					if (srcRect.b < 100)
-						_hk -= (100 - srcRect.b);
-					_hk = 100 / _hk;
-
-					var _r = x + w;
-					var _b = y + h;
-
-					if (srcRect.l > 0)
-					{
-						x -= ((srcRect.l * _wk * w) / 100);
-					}
-					if (srcRect.t > 0)
-					{
-						y -= ((srcRect.t * _hk * h) / 100);
-					}
-					if (srcRect.r < 100)
-					{
-						_r += (((100 - srcRect.r) * _wk * w) / 100);
-					}
-					if (srcRect.b < 100)
-					{
-						_b += (((100 - srcRect.b) * _hk * h) / 100);
-					}
-
-					this.m_arrayPages[this.m_lPagesCount - 1].drawImage(img, x, y, _r - x, _b - y);
-
-					if (bIsClip)
-					{
-						this.RestoreGrState();
-					}
-				}
-			}
-		},
-
-		SetFont                  : function(font)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].SetFont(font);
-		},
-		FillText                 : function(x, y, text, cropX, cropW)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].FillText(x, y, text);
-		},
-		FillTextCode             : function(x, y, text, cropX, cropW)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].FillTextCode(x, y, text);
-		},
-		tg                       : function(gid, x, y, codePoints)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y, codePoints);
-		},
-		FillText2                : function(x, y, text)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].FillText(x, y, text);
-		},
-		charspace                : function(space)
-		{
-		},
-		SetIntegerGrid           : function(param)
-		{
-		},
-		GetIntegerGrid           : function()
-		{
-		},
-		GetFont                  : function()
-		{
-			if (0 != this.m_lPagesCount)
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oFont;
-			return null;
-		},
-		put_GlobalAlpha          : function(enable, alpha)
-		{
-		},
-		Start_GlobalAlpha        : function()
-		{
-		},
-		End_GlobalAlpha          : function()
-		{
-		},
-		DrawHeaderEdit           : function(yPos)
-		{
-		},
-		DrawFooterEdit           : function(yPos)
-		{
-		},
-		drawCollaborativeChanges : function(x, y, w, h)
-		{
-		},
-		drawSearchResult         : function(x, y, w, h)
-		{
-		},
-
-		DrawEmptyTableLine : function(x1, y1, x2, y2)
-		{
-			// эта функция не для печати или сохранения вообще
-		},
-		DrawLockParagraph  : function(lock_type, x, y1, y2)
-		{
-			// эта функция не для печати или сохранения вообще
-		},
-
-		DrawLockObjectRect : function(lock_type, x, y, w, h)
-		{
-			// эта функция не для печати или сохранения вообще
-		},
-
-		DrawSpellingLine : function(y0, x0, x1, w)
-		{
-		},
-
-		// smart methods for horizontal / vertical lines
-		drawHorLine  : function(align, y, x, r, penW)
-		{
-			this.p_width(1000 * penW);
-			this._s();
-
-			var _y = y;
-			switch (align)
-			{
-				case 0:
-				{
-					_y = y + penW / 2;
-					break;
-				}
-				case 1:
-				{
-					break;
-				}
-				case 2:
-				{
-					_y = y - penW / 2;
-				}
-			}
-			this._m(x, y);
-			this._l(r, y);
-
-			this.ds();
-
-			this._e();
-		},
-		drawHorLine2 : function(align, y, x, r, penW)
-		{
-			this.p_width(1000 * penW);
-
-			var _y = y;
-			switch (align)
-			{
-				case 0:
-				{
-					_y = y + penW / 2;
-					break;
-				}
-				case 1:
-				{
-					break;
-				}
-				case 2:
-				{
-					_y = y - penW / 2;
-					break;
-				}
-			}
-
-			this._s();
-			this._m(x, (_y - penW));
-			this._l(r, (_y - penW));
-			this.ds();
-
-			this._s();
-			this._m(x, (_y + penW));
-			this._l(r, (_y + penW));
-			this.ds();
-
-			this._e();
-		},
-
-		drawVerLine : function(align, x, y, b, penW)
-		{
-			this.p_width(1000 * penW);
-			this._s();
-
-			var _x = x;
-			switch (align)
-			{
-				case 0:
-				{
-					_x = x + penW / 2;
-					break;
-				}
-				case 1:
-				{
-					break;
-				}
-				case 2:
-				{
-					_x = x - penW / 2;
-				}
-			}
-			this._m(_x, y);
-			this._l(_x, b);
-
-			this.ds();
-		},
-		
-		DrawPolygon : function(oPath, lineWidth, shift)
-		{
-			this.p_width(lineWidth);
-			this._s();
-			
-			var Points = oPath.Points;
-			var nCount = Points.length;
-			// берем предпоследнюю точку, т.к. последняя совпадает с первой
-			var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
-			var _x    = Points[nCount - 2].X,    _y = Points[nCount - 2].Y;
-			var StartX, StartY;
-			
-			for (var nIndex = 0; nIndex < nCount; nIndex++)
-			{
-				if(PrevX > Points[nIndex].X)
-				{
-					_y = Points[nIndex].Y - shift;
-				}
-				else if(PrevX < Points[nIndex].X)
-				{
-					_y  = Points[nIndex].Y + shift;
-				}
-				
-				if(PrevY < Points[nIndex].Y)
-				{
-					_x = Points[nIndex].X - shift;
-				}
-				else if(PrevY > Points[nIndex].Y)
-				{
-					_x = Points[nIndex].X + shift;
-				}
-				
-				PrevX = Points[nIndex].X;
-				PrevY = Points[nIndex].Y;
-				
-				if(nIndex > 0)
-				{
-					if (1 == nIndex)
-					{
-						StartX = _x;
-						StartY = _y;
-						this._m(_x, _y);
-					}
-					else
-					{
-						this._l(_x, _y);
-					}
-				}
-			}
-			
-			this._l(StartX, StartY);
-			this._z();
-			this.ds();
-		},
-
-		// мега крутые функции для таблиц
-		drawHorLineExt : function(align, y, x, r, penW, leftMW, rightMW)
-		{
-			this.drawHorLine(align, y, x + leftMW, r + rightMW, penW);
-		},
-
-		rect : function(x, y, w, h)
-		{
-			var _x = x;
-			var _y = y;
-			var _r = (x + w);
-			var _b = (y + h);
-
-			this._s();
-			this._m(_x, _y);
-			this._l(_r, _y);
-			this._l(_r, _b);
-			this._l(_x, _b);
-			this._l(_x, _y);
-		},
-
-		TableRect : function(x, y, w, h)
-		{
-			this.rect(x, y, w, h);
-			this.df();
-		},
-
-		put_PenLineJoin          : function(_join)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_PenLineJoin(_join);
-		},
-		put_TextureBounds        : function(x, y, w, h)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_TextureBounds(x, y, w, h);
-		},
-		put_TextureBoundsEnabled : function(val)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_TextureBoundsEnabled(val);
-		},
-		put_brushTexture         : function(src, mode)
-		{
-			if (src == null || src == undefined)
-				src = "";
-
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_brushTexture(src, mode);
-		},
-		put_BrushTextureAlpha    : function(alpha)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_BrushTextureAlpha(alpha);
-		},
-		put_BrushGradient        : function(gradFill, points, transparent)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].put_BrushGradient(gradFill, points, transparent);
-		},
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_brushTexture(src, mode);
+	};
+	CDocumentRenderer.prototype.put_BrushTextureAlpha = function(alpha)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_BrushTextureAlpha(alpha);
+	};
+	CDocumentRenderer.prototype.put_BrushGradient = function(gradFill, points, transparent)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].put_BrushGradient(gradFill, points, transparent);
+	};
 
 		// функции клиппирования
-		AddClipRect    : function(x, y, w, h)
-		{
-			/*
-			 this.b_color1(0, 0, 0, 255);
-			 this.rect(x, y, w, h);
-			 this.df();
-			 return;
-			 */
+	CDocumentRenderer.prototype.SetClip = function(r)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(32);
 
-			var __rect = new _rect();
-			__rect.x   = x;
-			__rect.y   = y;
-			__rect.w   = w;
-			__rect.h   = h;
-			this.GrState.AddClipRect(__rect);
-			//this.ClipManager.AddRect(x, y, w, h);
-		},
-		RemoveClipRect : function()
-		{
-			//this.ClipManager.RemoveRect();
-		},
+		this.rect(r.x, r.y, r.w, r.h);
 
-		SetClip    : function(r)
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].endCommand(32);
+
+		//this._s();
+	};
+	CDocumentRenderer.prototype.RemoveClip = function()
+	{
+		if (0 != this.m_lPagesCount)
 		{
+			this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(64);
+			this.m_arrayPages[this.m_lPagesCount - 1].endCommand(64);
+		}
+	};
+
+	CDocumentRenderer.prototype.GetTransform = function()
+	{
+		if (0 != this.m_lPagesCount)
+		{
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oTransform;
+		}
+		return null;
+	};
+	CDocumentRenderer.prototype.GetLineWidth = function()
+	{
+		if (0 != this.m_lPagesCount)
+		{
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oPen.Size;
+		}
+		return 0;
+	};
+	CDocumentRenderer.prototype.GetPen = function()
+	{
+		if (0 != this.m_lPagesCount)
+		{
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oPen;
+		}
+		return 0;
+	};
+	CDocumentRenderer.prototype.GetBrush = function()
+	{
+		if (0 != this.m_lPagesCount)
+		{
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oBrush;
+		}
+		return 0;
+	};
+
+	CDocumentRenderer.prototype.StartClipPath = function()
+	{
+		this.private_removeVectors();
+
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(32);
+	};
+
+	CDocumentRenderer.prototype.EndClipPath = function()
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].endCommand(32);
+
+		this.private_restoreVectors();
+	};
+
+	CDocumentRenderer.prototype.SetTextPr = function(textPr, theme)
+	{
+		if (0 != this.m_lPagesCount)
+		{
+			var _page = this.m_arrayPages[this.m_lPagesCount - 1];
+
+			if (theme && textPr && textPr.ReplaceThemeFonts)
+				textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
+			_page.m_oTextPr = textPr;
+			if (theme)
+				_page.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, _page.m_oTextPr.RFonts);
+			else
+				_page.m_oGrFonts = _page.m_oTextPr.RFonts;
+		}
+	};
+
+	CDocumentRenderer.prototype.SetFontInternal = function(name, size, style)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].SetFontInternal(name, size, style);
+	};
+
+	CDocumentRenderer.prototype.SetFontSlot = function(slot, fontSizeKoef)
+	{
+		if (0 != this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].SetFontSlot(slot, fontSizeKoef);
+	};
+
+	CDocumentRenderer.prototype.GetTextPr = function()
+	{
+		if (0 != this.m_lPagesCount)
+			return this.m_arrayPages[this.m_lPagesCount - 1].m_oTextPr;
+		return null;
+	};
+
+	CDocumentRenderer.prototype.private_removeVectors = function()
+	{
+		this._restoreDumpedVectors = this.VectorMemoryForPrint;
+
+		if (this._restoreDumpedVectors != null)
+		{
+			this.VectorMemoryForPrint = null;
 			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(32);
+				this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = null;
+		}
+	};
 
-			this.rect(r.x, r.y, r.w, r.h);
-
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].endCommand(32);
-
-			//this._s();
-		},
-		RemoveClip : function()
+	CDocumentRenderer.prototype.private_restoreVectors = function()
+	{
+		if (null != this._restoreDumpedVectors)
 		{
+			this.VectorMemoryForPrint = this._restoreDumpedVectors;
 			if (0 != this.m_lPagesCount)
+				this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = this._restoreDumpedVectors;
+		}
+		this._restoreDumpedVectors = null;
+	};
+
+	CDocumentRenderer.prototype.AddHyperlink = function(x, y, w, h, url, tooltip)
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].AddHyperlink(x, y, w, h, url, tooltip);
+	};
+
+	CDocumentRenderer.prototype.AddLink = function(x, y, w, h, dx, dy, dPage)
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].AddLink(x, y, w, h, dx, dy, dPage);
+	};
+
+	CDocumentRenderer.prototype.AddFormField = function(nX, nY, nW, nH, nBaseLineOffset, oForm)
+	{
+		if (0 !== this.m_lPagesCount)
+			this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
+	};
+
+	CDocumentRenderer.prototype.DocInfo = function(props)
+	{
+		if (props)
+		{
+			this.Memory.WriteByte(CommandType.ctDocInfo);
+
+			var nFlagPos = this.Memory.GetCurPosition();
+			this.Memory.Skip(4);
+			var nFlag = 0;
+
+			if (props.asc_getTitle())
 			{
-				this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(64);
-				this.m_arrayPages[this.m_lPagesCount - 1].endCommand(64);
+				nFlag |= 1;
+				this.Memory.WriteString(props.asc_getTitle());
 			}
-		},
-
-		GetTransform : function()
-		{
-			if (0 != this.m_lPagesCount)
+			if (props.asc_getCreator())
 			{
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oTransform;
+				nFlag |= (1 << 1);
+				this.Memory.WriteString(props.asc_getCreator());
 			}
-			return null;
-		},
-		GetLineWidth : function()
-		{
-			if (0 != this.m_lPagesCount)
+			if (props.asc_getSubject())
 			{
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oPen.Size;
+				nFlag |= (1 << 2);
+				this.Memory.WriteString(props.asc_getSubject());
 			}
-			return 0;
-		},
-		GetPen       : function()
-		{
-			if (0 != this.m_lPagesCount)
+			if (props.asc_getKeywords())
 			{
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oPen;
+				nFlag |= (1 << 3);
+				this.Memory.WriteString(props.asc_getKeywords());
 			}
-			return 0;
-		},
-		GetBrush     : function()
-		{
-			if (0 != this.m_lPagesCount)
-			{
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oBrush;
-			}
-			return 0;
-		},
 
-		drawFlowAnchor : function(x, y)
-		{
-		},
-
-		SavePen    : function()
-		{
-			this.GrState.SavePen();
-		},
-		RestorePen : function()
-		{
-			this.GrState.RestorePen();
-		},
-
-		SaveBrush    : function()
-		{
-			this.GrState.SaveBrush();
-		},
-		RestoreBrush : function()
-		{
-			this.GrState.RestoreBrush();
-		},
-
-		SavePenBrush    : function()
-		{
-			this.GrState.SavePenBrush();
-		},
-		RestorePenBrush : function()
-		{
-			this.GrState.RestorePenBrush();
-		},
-
-		SaveGrState    : function()
-		{
-			this.GrState.SaveGrState();
-		},
-		RestoreGrState : function()
-		{
-			var _t                = this.m_oBaseTransform;
-			this.m_oBaseTransform = null;
-			this.GrState.RestoreGrState();
-			this.m_oBaseTransform = _t;
-		},
-
-		RemoveLastClip : function()
-		{
-			var _t                = this.m_oBaseTransform;
-			this.m_oBaseTransform = null;
-			this.GrState.RemoveLastClip();
-			this.m_oBaseTransform = _t;
-		},
-		RestoreLastClip : function()
-		{
-			var _t                = this.m_oBaseTransform;
-			this.m_oBaseTransform = null;
-			this.GrState.RestoreLastClip();
-			this.m_oBaseTransform = _t;
-		},
-
-		StartClipPath : function()
-		{
-			this.private_removeVectors();
-
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].beginCommand(32);
-		},
-
-		EndClipPath : function()
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].endCommand(32);
-
-			this.private_restoreVectors();
-		},
-
-		SetTextPr : function(textPr, theme)
-		{
-			if (0 != this.m_lPagesCount)
-			{
-				var _page = this.m_arrayPages[this.m_lPagesCount - 1];
-
-				if (theme && textPr && textPr.ReplaceThemeFonts)
-					textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
-
-				_page.m_oTextPr = textPr;
-				if (theme)
-					_page.m_oGrFonts.checkFromTheme(theme.themeElements.fontScheme, _page.m_oTextPr.RFonts);
-				else
-					_page.m_oGrFonts = _page.m_oTextPr.RFonts;
-			}
-		},
-
-		SetFontInternal : function(name, size, style)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].SetFontInternal(name, size, style);
-		},
-
-		SetFontSlot : function(slot, fontSizeKoef)
-		{
-			if (0 != this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].SetFontSlot(slot, fontSizeKoef);
-		},
-
-		GetTextPr : function()
-		{
-			if (0 != this.m_lPagesCount)
-				return this.m_arrayPages[this.m_lPagesCount - 1].m_oTextPr;
-			return null;
-		},
-
-		DrawPresentationComment : function(type, x, y, w, h)
-		{
-
-		},
-
-		private_removeVectors : function()
-		{
-			this._restoreDumpedVectors = this.VectorMemoryForPrint;
-
-			if (this._restoreDumpedVectors != null)
-			{
-				this.VectorMemoryForPrint = null;
-				if (0 != this.m_lPagesCount)
-					this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = null;
-			}
-		},
-
-		private_restoreVectors : function()
-		{
-			if (null != this._restoreDumpedVectors)
-			{
-				this.VectorMemoryForPrint = this._restoreDumpedVectors;
-				if (0 != this.m_lPagesCount)
-					this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = this._restoreDumpedVectors;
-			}
-			this._restoreDumpedVectors = null;
-		},
-
-		AddHyperlink : function(x, y, w, h, url, tooltip)
-		{
-			if (0 !== this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].AddHyperlink(x, y, w, h, url, tooltip);
-		},
-
-		AddLink : function(x, y, w, h, dx, dy, dPage)
-		{
-			if (0 !== this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].AddLink(x, y, w, h, dx, dy, dPage);
-		},
-
-		AddFormField : function(nX, nY, nW, nH, nBaseLineOffset, oForm)
-		{
-			if (0 !== this.m_lPagesCount)
-				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
-		},
-
-		DocInfo : function(props)
-		{
-			if (props)
-			{
-				this.Memory.WriteByte(CommandType.ctDocInfo);
-
-				var nFlagPos = this.Memory.GetCurPosition();
-				this.Memory.Skip(4);
-				var nFlag = 0;
-
-				if (props.asc_getTitle())
-				{
-					nFlag |= 1;
-					this.Memory.WriteString(props.asc_getTitle());
-				}
-				if (props.asc_getCreator())
-				{
-					nFlag |= (1 << 1);
-					this.Memory.WriteString(props.asc_getCreator());
-				}
-				if (props.asc_getSubject())
-				{
-					nFlag |= (1 << 2);
-					this.Memory.WriteString(props.asc_getSubject());
-				}
-				if (props.asc_getKeywords())
-				{
-					nFlag |= (1 << 3);
-					this.Memory.WriteString(props.asc_getKeywords());
-				}
-
-				var nEndPos = this.Memory.GetCurPosition();
-				this.Memory.Seek(nFlagPos);
-				this.Memory.WriteLong(nFlag);
-				this.Memory.Seek(nEndPos);
-			}
-		},
-		
-		IsPdfRenderer : function()
-		{
-			return this.RENDERER_PDF_FLAG;
+			var nEndPos = this.Memory.GetCurPosition();
+			this.Memory.Seek(nFlagPos);
+			this.Memory.WriteLong(nFlag);
+			this.Memory.Seek(nEndPos);
 		}
 	};
 
 	var MATRIX_ORDER_PREPEND = 0;
 	var MATRIX_ORDER_APPEND  = 1;
-
 
 	function CMatrix()
 	{
@@ -3725,6 +3394,33 @@
 			this.sy  = 1.0;
 			this.tx  = 0.0;
 			this.ty  = 0.0;
+		},
+		CopyTo          : function(m)
+		{
+			m.sx  = this.sx;
+			m.shx = this.shx;
+			m.shy = this.shy;
+			m.sy  = this.sy;
+			m.tx  = this.tx;
+			m.ty  = this.ty;
+		},
+		CopyFrom        : function(m)
+		{
+			this.sx  = m.sx;
+			this.shx = m.shx;
+			this.shy = m.shy;
+			this.sy  = m.sy;
+			this.tx  = m.tx;
+			this.ty  = m.ty;
+		},
+		SetValues       : function(sx,shy,shx,sy,tx,ty)
+		{
+			this.sx  = sx;
+			this.shx = shx;
+			this.shy = shy;
+			this.sy  = sy;
+			this.tx  = tx;
+			this.ty  = ty;
 		},
 		// трансформ
 		Multiply        : function(matrix, order)
@@ -3962,8 +3658,6 @@
 		return a * 60000;
 	};
 
-	var CMatrixL = CMatrix;
-
 	function CGlobalMatrixTransformer()
 	{
 		this.TranslateAppend = function(m, _tx, _ty)
@@ -4041,7 +3735,7 @@
 
 		this.MultiplyPrepend = function(m1, m2)
 		{
-			var m = new CMatrixL();
+			var m = new CMatrix();
 			m.sx  = m2.sx;
 			m.shx = m2.shx;
 			m.shy = m2.shy;
@@ -4057,8 +3751,9 @@
 			m1.ty  = m.ty;
 		}
 
-		this.Reflect = function (matrix, isHorizontal, isVertical) {
-			var m = new CMatrixL();
+		this.Reflect = function (matrix, isHorizontal, isVertical)
+		{
+			var m = new CMatrix();
 			m.shx = 0;
 			m.sy  = 1;
 			m.tx  = 0;
@@ -4080,13 +3775,8 @@
 
 		this.CreateDublicateM = function(matrix)
 		{
-			var m = new CMatrixL();
-			m.sx  = matrix.sx;
-			m.shx = matrix.shx;
-			m.shy = matrix.shy;
-			m.sy  = matrix.sy;
-			m.tx  = matrix.tx;
-			m.ty  = matrix.ty;
+			let m = new CMatrix();
+			m.CopyFrom(matrix);
 			return m;
 		}
 
@@ -4344,7 +4034,6 @@
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;
 	window['AscCommon'].MATRIX_ORDER_APPEND      = MATRIX_ORDER_APPEND;
 	window['AscCommon'].CMatrix                  = CMatrix;
-	window['AscCommon'].CMatrixL                 = CMatrixL;
 	window['AscCommon'].CGlobalMatrixTransformer = CGlobalMatrixTransformer;
 	window['AscCommon'].CClipManager             = CClipManager;
 	window['AscCommon'].CPen                     = CPen;

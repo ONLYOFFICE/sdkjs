@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -182,6 +182,9 @@ function (window, undefined) {
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
 
+		//temporary - for safari rendering. remove after fixed
+		this._originalCanvasWidth = null;
+
 		this._init();
 
 		return this;
@@ -234,22 +237,22 @@ function (window, undefined) {
 
 		// bind event handlers
 		if (t.canvasOuter && t.canvasOuter.addEventListener) {
-			var eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousedown", function () {
+			var eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("down"), function () {
 				return t._onMouseDown.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseup", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("up"), function () {
 				return t._onMouseUp.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousemove", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("move"), function () {
 				return t._onMouseMove.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseleave", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, AscCommon.getPtrEvtName("leave"), function () {
 				return t._onMouseLeave.apply(t, arguments);
 			}, false);
 			t.eventListeners.push(eventInfo);
@@ -262,12 +265,12 @@ function (window, undefined) {
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mousedown", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, AscCommon.getPtrEvtName("down"), function () {
 				return t.isOpened ? (t.callTopLineMouseup = true) : true;
 			}, false);
 			t.eventListeners.push(eventInfo);
 
-			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mouseup", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, AscCommon.getPtrEvtName("up"), function () {
 				return t.isOpened ? t._topLineMouseUp.apply(t, arguments) : true;
 			}, false);
 			t.eventListeners.push(eventInfo);
@@ -324,8 +327,8 @@ function (window, undefined) {
 
 		this.isOpened = true;
 		if (window.addEventListener) {
-			window.addEventListener("mouseup", this.fKeyMouseUp, false);
-			window.addEventListener("mousemove", this.fKeyMouseMove, false);
+			window.addEventListener(AscCommon.getPtrEvtName("up"), this.fKeyMouseUp, false);
+			window.addEventListener(AscCommon.getPtrEvtName("move"), this.fKeyMouseMove, false);
 		}
 		this._setOptions(options);
 		this._cleanLastRangeInfo();
@@ -388,8 +391,8 @@ function (window, undefined) {
 
 			if (!window['IS_NATIVE_EDITOR']) {
 				if (window.removeEventListener) {
-					window.removeEventListener("mouseup", t.fKeyMouseUp, false);
-					window.removeEventListener("mousemove", t.fKeyMouseMove, false);
+					window.removeEventListener(AscCommon.getPtrEvtName("up"), t.fKeyMouseUp, false);
+					window.removeEventListener(AscCommon.getPtrEvtName("move"), t.fKeyMouseMove, false);
 				}
 				t._blur();
 				t._updateTopLineActive(false);
@@ -444,8 +447,8 @@ function (window, undefined) {
 
 		if (!window['IS_NATIVE_EDITOR']) {
 			if (window.removeEventListener) {
-				window.removeEventListener("mouseup", this.fKeyMouseUp, false);
-				window.removeEventListener("mousemove", this.fKeyMouseMove, false);
+				window.removeEventListener(AscCommon.getPtrEvtName("up"), this.fKeyMouseUp, false);
+				window.removeEventListener(AscCommon.getPtrEvtName("move"), this.fKeyMouseMove, false);
 			}
 			this._blur();
 			this._updateTopLineActive(false);
@@ -632,10 +635,10 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype.checkSymbolBeforeRange = function (char) {
-		if (!char.trim) {
+		if (char && !char.trim) {
 			char = AscCommon.convertUnicodeToUTF16(char);
 		}
-		return this.rangeChars.indexOf(char) >= 0 || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
+		return (this.rangeChars && this.rangeChars.indexOf(char) >= 0) || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
 	CellEditor.prototype.changeCellRange = function (range, moveEndOfText) {
@@ -1479,8 +1482,14 @@ function (window, undefined) {
 		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
 		//
 		// в новой версии сафари увеличиваем не только canvas'ы, но и дивку тоже.
-		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
-			widthStyle = ((5000 / heightStyle) >> 0) + 1;
+		if (AscCommon.AscBrowser.isSafariMacOs) {
+			if ((widthStyle * heightStyle) < 5000) {
+				this._originalCanvasWidth = width;
+				widthStyle = ((5000 / heightStyle) >> 0) + 1;
+			} else {
+				this._originalCanvasWidth = null;
+			}
+		}
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
@@ -1509,8 +1518,9 @@ function (window, undefined) {
 		var t = this, opt = t.options, ctx = t.drawingCtx;
 
 		if (!window['IS_NATIVE_EDITOR']) {
+			let _width = this._originalCanvasWidth ? this._originalCanvasWidth : ctx.getWidth();
 			ctx.setFillStyle(opt.background)
-				.fillRect(0, 0, ctx.getWidth(), ctx.getHeight());
+				.fillRect(0, 0, _width, ctx.getHeight());
 		}
 
 		if (opt.fragments.length > 0) {
@@ -1761,25 +1771,7 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype._findCursorPosition = function (coord) {
-		var t = this;
-		var lc = t.textRender.getLinesCount();
-		var i, h, w, li, chw;
-		var zoom = this.getZoom();
-		for (h = 0, i = Math.max(t.topLineIndex, 0); i < lc; ++i) {
-			li = t.textRender.getLineInfo(i);
-			h += asc_round(li.th * zoom);
-			if (coord.y <= h) {
-				for (w = li.startX, i = li.beg; i <= li.end; ++i) {
-					chw = t.textRender.getCharWidth(i);
-					if (coord.x <= w + chw) {
-						return coord.x <= w + chw / 2 ? i : i + 1 > li.end ? kEndOfLine : i + 1;
-					}
-					w += chw;
-				}
-				return i < t.textRender.getCharsCount() ? i - 1 : kEndOfText;
-			}
-		}
-		return kNextLine;
+		return this.textRender.getCharPosByXY(coord.x, coord.y, this.topLineIndex, this.getZoom());
 	};
 
 	CellEditor.prototype._updateTopLineCurPos = function () {
@@ -2862,7 +2854,7 @@ function (window, undefined) {
 		}
 		if (t.textRender.getEndOfText() === t.cursorPos && !t.isFormula()) {
 			var s = AscCommonExcel.getFragmentsText(t.options.fragments);
-			if (!AscCommon.isNumber(s)) {
+			if (!AscCommon.isNumber(s) && s.length !== 0) {
 				var arrAutoComplete = t._getAutoComplete(s.toLowerCase());
 				var lengthInput = s.length;
 				if (1 === arrAutoComplete.length) {
@@ -3091,8 +3083,8 @@ function (window, undefined) {
 		if (checkFragments) {
 			this.selectionBegin = this.beginCompositePos;
 			this.selectionEnd = this.beginCompositePos + this.compositeLength;
-			this.setTextStyle('u', Asc.EUnderline.underlineNone);
 		}
+		this.setTextStyle('u', Asc.EUnderline.underlineNone);
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;

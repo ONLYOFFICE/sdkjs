@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -43,20 +43,23 @@
 	function CDocumentReadView(oLogicDocument)
 	{
 		AscWord.CDocumentLayoutBase.call(this, oLogicDocument);
-
+		
 		this.W        = 297;
 		this.H        = 210;
 		this.Scale    = 1;
 		this.SectPr   = null;
 		this.SectInfo = null;
-
+		
 		let oThis = this;
 		AscCommon.ExecuteNoHistory(function()
 		{
 			oThis.SectPr   = new CSectionPr(oLogicDocument);
 			oThis.SectInfo = new CDocumentSectionsInfoElement(oThis.SectPr, 0);
 		}, oLogicDocument);
+		
+		this.OriginalSectPr = false;
 	}
+	
 	CDocumentReadView.prototype = Object.create(AscWord.CDocumentLayoutBase.prototype);
 	CDocumentReadView.prototype.constructor = CDocumentReadView;
 	CDocumentReadView.prototype.IsReadMode = function()
@@ -68,9 +71,9 @@
 		this.W     = nW;
 		this.H     = nH;
 		this.Scale = nScale;
-
+		
 		let oSectPr = this.SectPr;
-
+		
 		AscCommon.ExecuteNoHistory(function()
 		{
 			oSectPr.SetPageSize(nW, nH);
@@ -87,6 +90,9 @@
 	};
 	CDocumentReadView.prototype.GetSectionHdrFtr = function(nPageAbs, isFirst, isEven)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionHdrFtr.apply(this, arguments);
+		
 		return {
 			Header : null,
 			Footer : null,
@@ -96,7 +102,6 @@
 	CDocumentReadView.prototype.GetPageContentFrame = function(nPageAbs, oSectPr)
 	{
 		let oFrame = this.SectPr.GetContentFrame(0);
-
 		return {
 			X      : oFrame.Left,
 			Y      : oFrame.Top,
@@ -107,7 +112,6 @@
 	CDocumentReadView.prototype.GetColumnContentFrame = function(nPageAbs, nColumnAbs, oSectPr)
 	{
 		let oFrame = oSectPr.GetContentFrame(nPageAbs);
-
 		return {
 			X                 : oFrame.Left,
 			Y                 : oFrame.Top,
@@ -119,18 +123,30 @@
 	};
 	CDocumentReadView.prototype.GetSection = function(nPageAbs, nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSection.apply(this, arguments);
+		
 		return this.SectPr;
 	};
 	CDocumentReadView.prototype.GetSectionByPos = function(nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionByPos.apply(this, arguments);
+		
 		return this.SectPr;
 	};
 	CDocumentReadView.prototype.GetSectionInfo = function(nContentIndex)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionInfo.apply(this, arguments);
+		
 		return this.SectInfo;
 	};
 	CDocumentReadView.prototype.GetSectionIndex = function(oSectPr)
 	{
+		if (this.OriginalSectPr)
+			return AscWord.CDocumentLayoutBase.prototype.GetSectionIndex.apply(this, arguments);
+		
 		return 0;
 	};
 	CDocumentReadView.prototype.GetCalculateTimeLimit = function()
@@ -141,16 +157,31 @@
 	{
 		let nW = oSectPr.GetPageWidth();
 		let nH = oSectPr.GetPageHeight();
-
+		
 		let nCoef = 1;
 		if (this.W < nW)
 			nCoef = this.W / nW;
-
+		
 		if (this.H < nH)
 			nCoef = Math.min(this.H / nH, nCoef);
-
+		
 		return nCoef;
 	};
+	CDocumentReadView.prototype.calculateIndent = function(ind, element)
+	{
+		if (!element || !element.Get_SectPr)
+			return ind;
+		
+		this.OriginalSectPr = true;
+		let sectPr = element.Get_SectPr();
+		this.OriginalSectPr = false;
+		
+		if (ind > 0 && sectPr)
+			return ind * this.W / sectPr.GetPageWidth();
+		
+		return Math.max(ind, -2);
+	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;
 

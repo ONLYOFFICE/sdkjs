@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -225,6 +225,25 @@ function (window, undefined) {
 		for (var i = 0; i < comment.aReplies.length; i++) {
 			this.aReplies.push(comment.aReplies[i].clone(uniqueGuid));
 		}
+	};
+	asc_CCommentData.prototype.ConvertToSimpleObject = function(bIsReply)
+	{
+		var obj = {};
+
+		obj["Text"]      = this.sText;
+		obj["Time"]      = this.sTime;
+		obj["UserName"]  = this.sUserName;
+		obj["QuoteText"] = bIsReply ? null : this.asc_getQuoteText();
+		obj["Solved"]    = this.bSolved;
+		obj["UserData"]  = this.m_sUserData;
+		obj["Replies"]   = [];
+
+		for (var nIndex = 0, nCount = this.aReplies.length; nIndex < nCount; ++nIndex)
+		{
+			obj["Replies"].push(this.aReplies[nIndex].ConvertToSimpleObject(true));
+		}
+
+		return obj;
 	};
 	asc_CCommentData.prototype.ReadFromSimpleObject = function(oData)
     {

@@ -69,6 +69,7 @@
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
 
+			"common/Drawings/GraphicsBase.js",
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
@@ -185,6 +186,11 @@
 			"word/Editor/Paragraph/RunContent/Tab.js",
 			"word/Editor/Paragraph/RunContent/ParagraphMark.js",
 			"word/Editor/ParagraphContent.js",
+			"word/Editor/Paragraph/bidi-flow.js",
+			"word/Editor/Paragraph/complex-field-stack.js",
+			"word/Editor/Paragraph/draw-selection.js",
+			"word/Editor/Paragraph/position-calculator.js",
+			"word/Editor/Paragraph/search-position-by-coords.js",
 			"word/Editor/Paragraph/ParaTextPr.js",
 			"word/Editor/Paragraph/ParaTextPrChanges.js",
 			"word/Editor/Paragraph/ParaDrawing.js",
@@ -218,6 +224,10 @@
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
 			"word/Editor/Paragraph_Recalculate.js",
+			"word/Editor/Paragraph/draw/content-draw-state.js",
+			"word/Editor/Paragraph/draw/highlight-draw-state.js",
+			"word/Editor/Paragraph/draw/line-draw-state.js",
+			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
 			"word/Editor/Numbering/NumberingApplicator.js",
@@ -289,8 +299,8 @@
 			"word/Editor/FootnotesChanges.js",
 			"word/Editor/Endnotes.js",
 			"word/Editor/EndnotesChanges.js",
-		    "word/Editor/GlossaryDocument.js",
-		    "word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/GlossaryDocument.js",
+			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
@@ -337,9 +347,9 @@
 			"pdf/src/annotations/square.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
-			"pdf/src/documentChanges.js",
-			"pdf/src/annotations/annotsChanges.js",
-			"pdf/src/forms/formsChanges.js",
+			"pdf/src/history/documentChanges.js",
+			"pdf/src/history/annotsChanges.js",
+			"pdf/src/history/formsChanges.js",
 			"pdf/src/apiPDF.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
@@ -388,24 +398,7 @@
 				"word/Local/api.js"
 			]
 		},
-		"mobile_banners": {
-			"min": [
-				"common/Native/Wrappers/memory.js"
-			],
-			"common": []
-		},
 		"mobile": [
-			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js",
-			
-			"common/Native/Wrappers/serialize.js",
-			"common/Native/Wrappers/DrawingStream.js",
-			"common/Native/Wrappers/ShapeDrawer.js",
-			"common/Native/Wrappers/Overlay.js",
-
-			"word/Native/HtmlPage.js",
-			"word/Native/DrawingDocument.js",
-			"word/Native/api.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -38,7 +38,7 @@ $(function () {
 		logicDocument = AscTest.CreateLogicDocument();
         logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
 
-        let p1 = new AscWord.CParagraph(editor.WordControl);
+        let p1 = new AscWord.Paragraph();
         logicDocument.AddToContent(0, p1);
 
         MathContent = new ParaMath();

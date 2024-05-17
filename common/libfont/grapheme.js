@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -63,32 +63,43 @@
 		GRAPHEME_BUFFER[1] += nAdvanceX;
 		GRAPHEME_BUFFER[2] += 1;
 	}
-	function DrawGrapheme(nGraphemeId, oContext, nX, nY, nFontSize)
+	function DrawGrapheme(nGraphemeId, oContext, nX, nY, nFontSize, coeff)
 	{
 		let oGrapheme = GRAPHEMES[nGraphemeId];
 		if (!oGrapheme)
 			return;
+		
+		if (undefined === coeff)
+			coeff = 1;
 
 		let nFontId = oGrapheme[0] >> 8;
 		let nStyle  = oGrapheme[0] & 0xF;
 
 		let sFontName = AscCommon.FontNameMap.GetName(nFontId);
 		oContext.SetFontInternal(sFontName, nFontSize, nStyle);
-
-		let nKoef = COEF * nFontSize;
-		let nPos  = 3;
-		for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
+		
+		let nKoef = COEF * nFontSize * coeff;
+		if (1 === oGrapheme[2])
 		{
-			let nGID          = oGrapheme[nPos++];
-			let nAdvanceX     = oGrapheme[nPos++];
-			let nAdvanceY     = oGrapheme[nPos++];
-			let nOffsetX      = oGrapheme[nPos++];
-			let nOffsetY      = oGrapheme[nPos++];
-			let arrCodePoints = oGrapheme[nPos++];
-
-			oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
-			nX += nAdvanceX * nKoef;
-			nY += nAdvanceY * nKoef;
+			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8]);
+		}
+		else
+		{
+			let nKoef = COEF * nFontSize * coeff;
+			let nPos  = 3;
+			for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
+			{
+				let nGID          = oGrapheme[nPos++];
+				let nAdvanceX     = oGrapheme[nPos++];
+				let nAdvanceY     = oGrapheme[nPos++];
+				let nOffsetX      = oGrapheme[nPos++];
+				let nOffsetY      = oGrapheme[nPos++];
+				let arrCodePoints = oGrapheme[nPos++];
+				
+				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
+				nX += nAdvanceX * nKoef;
+				nY += nAdvanceY * nKoef;
+			}
 		}
 	}
 	function CompareGraphemes(g)
@@ -187,6 +198,59 @@
 
 		return oGrapheme[1] * COEF;
 	}
+	function GetGraphemeBBox(graphemeId, fontSize, dpi)
+	{
+		let grapheme = GRAPHEMES[graphemeId];
+		if (!grapheme || grapheme[2] <= 0)
+			return {minX : 0, maxX : 0, minY : 0, maxY : 0};
+		
+		let measurer = AscCommon.g_oTextMeasurer;
+		
+		if (undefined === dpi)
+			dpi = 72;
+		
+		let fontId    = grapheme[0] >> 8;
+		let fontStyle = grapheme[0] & 0xF;
+		
+		let fontName = AscCommon.FontNameMap.GetName(fontId);
+		measurer.SetFontInternal(fontName, fontSize, fontStyle, dpi);
+		
+		let bbox = measurer.GetBBox(grapheme[3]);
+		
+		let minX = bbox.fMinX;
+		let maxX = bbox.fMaxX;
+		let minY = bbox.fMinY;
+		let maxY = bbox.fMaxY;
+		
+		if (grapheme[2] > 1)
+		{
+			let x = 0;
+			let y = 0;
+			
+			let grCoeff = COEF * fontSize * dpi / 25.4;
+			for (let pos = 3, index = 0, count = grapheme[2]; index < count; ++index)
+			{
+				let bbox = measurer.GetBBox(grapheme[pos++]);
+				
+				minX = Math.min(minX, x + bbox.fMinX);
+				maxX = Math.max(maxX, x + bbox.fMaxX);
+				minY = Math.min(minY, y + bbox.fMinY);
+				maxY = Math.max(maxY, y + bbox.fMaxY);
+				
+				x += grapheme[pos++] * grCoeff; // advanceX
+				y += grapheme[pos++] * grCoeff; // advanceY
+				
+				pos += 3;
+			}
+		}
+		
+		return {
+			minX : minX,
+			maxX : maxX,
+			minY : minY,
+			maxY : maxY
+		};
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
 	window['AscFonts'].NO_GRAPHEME        = NO_GRAPHEME;
@@ -196,5 +260,6 @@
 	window['AscFonts'].AddGlyphToGrapheme = AddGlyphToGrapheme;
 	window['AscFonts'].GetGrapheme        = GetGrapheme;
 	window['AscFonts'].GetGraphemeWidth   = GetGraphemeWidth;
+	window['AscFonts'].GetGraphemeBBox    = GetGraphemeBBox;
 
 })(window);

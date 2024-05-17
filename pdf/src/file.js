@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2940,6 +2940,13 @@ void main() {\n\
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
+            file.nativeFile["onRepaintAnnotations"] = function(pages) {
+                file.onRepaintAnnotations && file.onRepaintAnnotations(pages);
+            };
+            file.nativeFile["onRepaintForms"] = function(pages) {
+                file.onRepaintForms && file.onRepaintForms(pages);
+            };
+
             file.nativeFile["onUpdateStatistics"] = function(par, word, symbol, space) {
                 file.onUpdateStatistics && file.onUpdateStatistics(par, word, symbol, space);
             };

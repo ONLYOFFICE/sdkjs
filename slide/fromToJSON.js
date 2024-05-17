@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2176,7 +2176,7 @@
 		// установим MasterSlide для Layout, если не задан
 		if (!oLayout.Master)
 		{
-			oMaster = oPresentation.lastMaster ? oPresentation.lastMaster : oPresentation.slideMasters[0];
+			oMaster = oPresentation.getDefaultMasterSlide();
 			oLayout.setMaster(oMaster);
 			oMaster.addToSldLayoutLstToPos(oMaster.length, oLayout);
 		}

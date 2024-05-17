@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1128,9 +1128,12 @@ function CDrawingDocument()
 		let isShow = false;
 		if (isNeedTarget)
 		{
-			if (oThis.m_oWordControl.m_oApi.isBlurEditor)
+			let api = oThis.m_oWordControl.m_oApi;
+			if (api.isBlurEditor)
 				isShow = true;
-			else if ("block" != oThis.TargetHtmlElement.style.display)
+			else if (api.isViewMode || api.isRestrictionView())
+				isShow = true;
+			else if ("block" !== oThis.TargetHtmlElement.style.display)
 				isShow = true;
 		}
 
@@ -3030,11 +3033,12 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if (true === isSelection)
-			{
-				if (!this.m_oWordControl.Thumbnails.isSelectedPage(i))
-					continue;
-			}
+			if ((true === isSelection) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+				continue;
+
+			if (!this.m_oLogicDocument.IsVisibleSlide(i))
+				continue;
+
 			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, renderer);
 			renderer.EndPage();
@@ -3504,6 +3508,102 @@ function DrawBackground(graphics, unifill, w, h)
 	shape_drawer.draw(null);
 }
 
+function CMouseDownTrack(Thumbnails)
+{
+	this.Thumbnails = Thumbnails;
+	this.SetDefault();
+}
+CMouseDownTrack.prototype.Check = function()
+{
+	if(this.Started)
+	{
+		let aThPages = this.Thumbnails.m_arrPages;
+		if(!aThPages[this.Page])
+		{
+			this.Reset();
+		}
+	}
+};
+CMouseDownTrack.prototype.SetDefault = function()
+{
+	this.Started = false;
+	this.StartedSimple = true;
+	this.Page = -1;
+	this.X = -1;
+	this.Y = -1;
+	this.Position = -1;
+};
+CMouseDownTrack.prototype.Reset = function()
+{
+	this.SetDefault();
+};
+CMouseDownTrack.prototype.Start = function(Page, X, Y)
+{
+	this.Started = true;
+	this.StartedSimple = true;
+	this.Page = Page;
+	this.X = X;
+	this.Y = Y;
+};
+CMouseDownTrack.prototype.IsStarted = function()
+{
+	this.Check();
+	return this.Started;
+};
+CMouseDownTrack.prototype.IsSimple = function()
+{
+	this.Check();
+	return this.StartedSimple;
+};
+CMouseDownTrack.prototype.IsDragged = function()
+{
+	return this.IsStarted() && !this.IsSimple() && this.GetPosition() !== -1;
+};
+CMouseDownTrack.prototype.ResetSimple = function(Position)
+{
+	this.StartedSimple = false;
+	this.Position = Position;
+};
+CMouseDownTrack.prototype.SetPosition = function(Position)
+{
+	this.Position = Position;
+};
+CMouseDownTrack.prototype.GetPosition = function()
+{
+	this.Check();
+	return this.Position;
+};
+CMouseDownTrack.prototype.GetPage = function()
+{
+	this.Check();
+	return this.Page;
+};
+CMouseDownTrack.prototype.GetX = function()
+{
+	this.Check();
+	return this.X;
+};
+CMouseDownTrack.prototype.GetY = function()
+{
+	this.Check();
+	return this.Y;
+};
+
+CMouseDownTrack.prototype.IsMoved = function(X, Y)
+{
+	this.Check();
+	if (Math.abs(this.X - X) > 10 || Math.abs(this.Y - Y) > 10)
+		return true;
+	return false;
+};
+CMouseDownTrack.prototype.IsSamePos = function()
+{
+	this.Check();
+	return this.Position === this.Page || this.Position === (this.Page + 1);
+};
+
+
+
 function CThumbnailsManager()
 {
 	this.isInit = false;
@@ -3552,12 +3652,7 @@ function CThumbnailsManager()
 
 	this.SelectPageEnabled = true;
 
-	this.IsMouseDownTrack = false;
-	this.IsMouseDownTrackSimple = true;
-	this.MouseDownTrackPage = -1;
-	this.MouseDownTrackX = -1;
-	this.MouseDownTrackY = -1;
-	this.MouseDownTrackPosition = 0; // это для трека, актуально только когда (this.IsMouseDownTrack == true && this.IsMouseDownTrackSimple = false)
+	this.MouseDownTrack = new CMouseDownTrack(this);
 
 	this.MouseTrackCommonImage = null;
 
@@ -3852,11 +3947,7 @@ function CThumbnailsManager()
 				
 				if (!isMouseDownOnAnimPreview) // приготавливаемся к треку
 				{
-					oThis.IsMouseDownTrack = true;
-					oThis.IsMouseDownTrackSimple = true;
-					oThis.MouseDownTrackPage = pos.Page;
-					oThis.MouseDownTrackX = global_mouseEvent.X;
-					oThis.MouseDownTrackY = global_mouseEvent.Y;
+					oThis.MouseDownTrack.Start(pos.Page, global_mouseEvent.X, global_mouseEvent.Y);
 				}
 			}
 
@@ -3956,20 +4047,23 @@ function CThumbnailsManager()
 			return;
 		}
 
-		if (oThis.IsMouseDownTrack)
+		if (oThis.MouseDownTrack.IsStarted())
 		{
 			// это трек для перекидывания слайдов
-			if (oThis.IsMouseDownTrackSimple && !oThis.m_oWordControl.m_oApi.isViewMode)
+			if (oThis.MouseDownTrack.IsSimple() && !oThis.m_oWordControl.m_oApi.isViewMode)
 			{
-				if (Math.abs(oThis.MouseDownTrackX - global_mouseEvent.X) > 10 || Math.abs(oThis.MouseDownTrackY - global_mouseEvent.Y) > 10)
-					oThis.IsMouseDownTrackSimple = false;
+				if (Math.abs(oThis.MouseDownTrack.GetX() - global_mouseEvent.X) > 10 || Math.abs(oThis.MouseDownTrack.GetY() - global_mouseEvent.Y) > 10)
+					oThis.MouseDownTrack.ResetSimple(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
+			}
+			else
+			{
+				if (!oThis.MouseDownTrack.IsSimple())
+				{
+					// нужно определить активная позиция между слайдами
+					oThis.MouseDownTrack.SetPosition(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
+				}
 			}
 
-			if (!oThis.IsMouseDownTrackSimple)
-			{
-				// нужно определить активная позиция между слайдами
-				oThis.MouseDownTrackPosition = oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y);
-			}
 
 			oThis.OnUpdateOverlay();
 
@@ -3981,10 +4075,10 @@ function CThumbnailsManager()
 				var _YMax = (_abs_pos.B - _abs_pos.T) * g_dKoef_mm_to_pix;
 
 				var _check_type = -1;
-				if (/*oThis.MouseDownTrackPosition != -1 && _Y >= 0 && */_Y < 30)
+				if (/*oThis.MouseDownTrack.GetPosition() != -1 && _Y >= 0 && */_Y < 30)
 				{
 					_check_type = 0;
-				} else if (/*oThis.MouseDownTrackPosition != -1 &&*/_Y >= (_YMax - 30)/* && _Y < _YMax*/)
+				} else if (/*oThis.MouseDownTrack.GetPosition() != -1 &&*/_Y >= (_YMax - 30)/* && _Y < _YMax*/)
 				{
 					_check_type = 1;
 				}
@@ -3992,7 +4086,7 @@ function CThumbnailsManager()
 				oThis.CheckNeedAnimateScrolls(_check_type);
 			}
 
-			if (!oThis.IsMouseDownTrackSimple)
+			if (!oThis.MouseDownTrack.IsSimple())
 			{
 				var cursor_dragged = "default";
 				if (AscCommon.AscBrowser.isWebkit)
@@ -4057,17 +4151,17 @@ function CThumbnailsManager()
 
 		oThis.CheckNeedAnimateScrolls(-1);
 
-		if (!oThis.IsMouseDownTrack)
+		if (!oThis.MouseDownTrack.IsStarted())
 			return;
 
 		// теперь смотрим, просто ли это селект, или же это трек
-		if (oThis.IsMouseDownTrackSimple)
+		if (oThis.MouseDownTrack.IsSimple())
 		{
-			if (Math.abs(oThis.MouseDownTrackX - global_mouseEvent.X) > 10 || Math.abs(oThis.MouseDownTrackY - global_mouseEvent.Y) > 10)
-				oThis.IsMouseDownTrackSimple = false;
+			if (oThis.MouseDownTrack.IsMoved(global_mouseEvent.X, global_mouseEvent.Y))
+				oThis.MouseDownTrack.ResetSimple(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
 		}
 
-		if (oThis.IsMouseDownTrackSimple)
+		if (oThis.MouseDownTrack.IsSimple())
 		{
 			// это просто селект
 			var pages_count = oThis.m_arrPages.length;
@@ -4076,35 +4170,30 @@ function CThumbnailsManager()
 				oThis.m_arrPages[i].IsSelected = false;
 			}
 
-			oThis.m_arrPages[oThis.MouseDownTrackPage].IsSelected = true;
+			oThis.m_arrPages[oThis.MouseDownTrack.GetPage()].IsSelected = true;
 
 			oThis.OnUpdateOverlay();
 
 			// послали уже на mouseDown
 			//oThis.SelectPageEnabled = false;
-			//oThis.m_oWordControl.GoToPage(oThis.MouseDownTrackPage);
+			//oThis.m_oWordControl.GoToPage(oThis.MouseDownTrack.GetPage());
 			//oThis.SelectPageEnabled = true;
 		} else
 		{
 			// это трек
-			oThis.MouseDownTrackPosition = oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y);
+			oThis.MouseDownTrack.SetPosition(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
 
-			if (-1 != oThis.MouseDownTrackPosition)
+			if (-1 !== oThis.MouseDownTrack.GetPosition() && !oThis.MouseDownTrack.IsSamePos())
 			{
 				// вызвать функцию апи для смены слайдов местами
 				var _array = oThis.GetSelectedArray();
-				oThis.m_oWordControl.m_oLogicDocument.shiftSlides(oThis.MouseDownTrackPosition, _array);
+				oThis.m_oWordControl.m_oLogicDocument.shiftSlides(oThis.MouseDownTrack.GetPosition(), _array);
 				oThis.ClearCacheAttack();
 			}
 
 			oThis.OnUpdateOverlay();
 		}
-		oThis.IsMouseDownTrack = false;
-		oThis.IsMouseDownTrackSimple = true;
-		oThis.MouseDownTrackPage = -1;
-		oThis.MouseDownTrackX = -1;
-		oThis.MouseDownTrackY = -1;
-		oThis.MouseDownTrackPosition = -1;
+		oThis.MouseDownTrack.Reset();
 
 		oThis.onMouseMove(e);
 	};
@@ -4771,13 +4860,15 @@ function CThumbnailsManager()
 			}
 		}
 
-		if (this.IsMouseDownTrack && !this.IsMouseDownTrackSimple && -1 != this.MouseDownTrackPosition)
+		if (this.MouseDownTrack.IsDragged())
 		{
 			// теперь нужно просто нарисовать линию
 			context.strokeStyle = "#DEDEDE";
-			var y = (0.5 * this.const_offset_y) >> 0;
-			if (this.MouseDownTrackPosition != 0)
-				y = (this.m_arrPages[this.MouseDownTrackPosition - 1].bottom + 1.5 * this.const_border_w) >> 0;
+			let y = (0.5 * this.const_offset_y) >> 0;
+			let nPosition = this.MouseDownTrack.GetPosition();
+			let oPage = this.m_arrPages[nPosition - 1];
+			if (oPage)
+				y = (oPage.bottom + 1.5 * this.const_border_w) >> 0;
 
 			var _left_pos = 0;
 			var _right_pos = _width;
@@ -5660,9 +5751,6 @@ function CSlideDrawer()
 			g.init(this.CachedCanvasCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
 
-			if (AscCommon.AscBrowser.isCustomScalingAbove2())
-				g.IsRetina = true;
-
 			g.m_oCoordTransform.tx = -this.BoundsChecker.Bounds.min_x + this.SlideEps;
 			g.m_oCoordTransform.ty = -this.BoundsChecker.Bounds.min_y + this.SlideEps;
 			g.transform(1, 0, 0, 1, 0, 0);
@@ -5765,9 +5853,6 @@ function CSlideDrawer()
 			var g = new AscCommon.CGraphics();
 			g.init(outputCtx, w_px, h_px, w_mm, h_mm);
 			g.m_oFontManager = AscCommon.g_fontManager;
-
-			if (AscCommon.AscBrowser.isCustomScalingAbove2())
-				g.IsRetina = true;
 
 			g.m_oCoordTransform.tx = _x - _bounds.min_x;
 			g.m_oCoordTransform.ty = _y - _bounds.min_y;
@@ -5920,7 +6005,7 @@ function CNotesDrawer(page)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 
 		g.SaveGrState();
@@ -6036,7 +6121,7 @@ function CNotesDrawer(page)
 		_y += oThis.Scroll;
 		_x *= g_dKoef_pix_to_mm;
 		_y *= g_dKoef_pix_to_mm;
-		return { Page : oThis.GetCurrentSlideNumber(), X : _x, Y : _y, isNotes : false };
+		return { Page : oThis.GetCurrentSlideNumber(), X : _x, Y : _y, isNotes : true };
 	};
 
 	this.GetNotesWidth = function()
@@ -6440,7 +6525,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 
 		if (AscCommon.GlobalSkin.Type === "dark")
 		{
-			g.darkModeOverride();
+			g.setDarkMode(1);
 		}
 		oControl.draw(g);
 		g.RestoreGrState();
@@ -6461,7 +6546,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{
 		return -1 === oThis.GetCurrentSlideNumber();
 	};
-	oThis.GetPosition = function (e)
+	oThis.GetPosition = function ()
 	{
 		var _x = global_mouseEvent.X - oThis.HtmlPage.X - ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix + 0.5) >> 0);
 		var nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;

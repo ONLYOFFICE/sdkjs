@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -169,6 +169,7 @@ function (window, undefined) {
 	cCell.prototype.ca = true;
 	cCell.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCell.prototype.argumentsType = [argType.text, argType.reference];
+	cCell.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCell.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws) {
 		//специально ввожу ограничения - минимум 2 аргумента
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
@@ -212,25 +213,30 @@ function (window, undefined) {
 			let _cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
 			let res, numFormat;
 			switch (str) {
+				case "col":
 				case _cCellFunctionLocal["col"]: {
 					res = new cNumber(bbox.c1 + 1);
 					break;
 				}
+				case "row":
 				case _cCellFunctionLocal["row"]: {
 					res = new cNumber(bbox.r1 + 1);
 					break;
 				}
+				case "sheet":
 				case _cCellFunctionLocal["sheet"]: {
 					//нет в офф. документации
 					//ms excel returns 1?
 					res = new cNumber(1);
 					break;
 				}
+				case "address":
 				case _cCellFunctionLocal["address"]: {
 					res = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
 					res = new cString(res.getAbsName());
 					break;
 				}
+				case "filename":
 				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
 					let docInfo = window["Asc"]["editor"].DocInfo;
@@ -244,10 +250,12 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "coord":
 				case _cCellFunctionLocal["coord"]: {
 					//нет в офф. документации
 					break;
 				}
+				case "contents":
 				case _cCellFunctionLocal["contents"]: {
 					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 						res = arg1.getValue();
@@ -259,6 +267,7 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "type":
 				case _cCellFunctionLocal["type"]: {
 					// b = blank; l = string (label); v = otherwise (value)
 					res = arg1.getValue();
@@ -271,6 +280,7 @@ function (window, undefined) {
 					}
 					break;
 				}
+				case "width":
 				case _cCellFunctionLocal["width"]: {
 					//return array
 					//{width 1 column; is default}
@@ -296,6 +306,7 @@ function (window, undefined) {
 
 					break;
 				}
+				case "prefix":
 				case _cCellFunctionLocal["prefix"]: {
 					// ' = left; " = right; ^ = centered; \ =
 					cell = ws.getCell3(bbox.r1, bbox.c1);
@@ -317,20 +328,32 @@ function (window, undefined) {
 
 					break;
 				}
+				case "protect":
 				case _cCellFunctionLocal["protect"]: {
 					//default - protect, do not support on open
+					let isLocked = true;
 					cell = ws.getCell3(bbox.r1, bbox.c1);
-					if (cell.getLocked()) {
+					cell._foreachNoEmpty(function (cell) {
+						if (cell) {
+							let xfs = cell.xfs ? cell.xfs : cell.getCompiledStyle();
+							if (xfs) {
+								isLocked = xfs.getLocked();
+							}
+						}
+					});
+					if (isLocked) {
 						res = new cNumber(1);
 					} else {
 						res = new cNumber(0);
 					}
 					break;
 				}
+				case "format":
 				case _cCellFunctionLocal["format"]: {
 					res = getCellFormat(ws, bbox.r1, bbox.c1);
 					break
 				}
+				case "color":
 				case _cCellFunctionLocal["color"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if (numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
@@ -340,6 +363,7 @@ function (window, undefined) {
 					}
 					break
 				}
+				case "parentheses":
 				case _cCellFunctionLocal["parentheses"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if (numFormat && numFormat.oPositiveFormat && numFormat.oPositiveFormat.formatString.indexOf('(') != -1) {

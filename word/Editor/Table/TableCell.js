@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -955,6 +955,8 @@ CTableCell.prototype =
 
 		if (true === this.IsVerticalText())
 			isRotated = true !== isRotated;
+		
+		let layoutCoeff = this.GetTable().getLayoutScaleCoefficient();
 
 		var oResult;
 		if (oLogicDocument && oLogicDocument.GetRecalcId() === this.CachedMinMax.RecalcId)
@@ -1014,6 +1016,8 @@ CTableCell.prototype =
 			{
 				nAdd = oMargins.Left.W + oMargins.Right.W;
 			}
+			
+			nAdd *= layoutCoeff;
 
 			oResult.Min += nAdd;
 			oResult.Max += nAdd;
@@ -1024,11 +1028,11 @@ CTableCell.prototype =
 			var oPrefW = this.GetW();
 			if (tblwidth_Mm === oPrefW.Type)
 			{
-				if (oResult.Min < oPrefW.W)
-					oResult.Min = oPrefW.W;
+				if (oResult.Min < oPrefW.W * layoutCoeff)
+					oResult.Min = oPrefW.W * layoutCoeff;
 
-				if (oResult.Max < oPrefW.W)
-					oResult.Max = oPrefW.W;
+				if (oResult.Max < oPrefW.W * layoutCoeff)
+					oResult.Max = oPrefW.W * layoutCoeff;
 			}
 			else if (tblwidth_Pct === oPrefW.Type && nPctWidth)
 			{
@@ -1195,7 +1199,7 @@ CTableCell.prototype =
 		this.private_UpdateTableGrid();
 		
 		if (isHavePrChange || this.HavePrChange())
-			this.private_UpdateTrackRevisions();
+			this.updateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -2602,11 +2606,11 @@ CTableCell.prototype.GetColumn = function()
 
 	return oTable.GetColumn(this.GetIndex(), this.GetRow().GetIndex());
 };
-CTableCell.prototype.private_UpdateTrackRevisions = function()
+CTableCell.prototype.updateTrackRevisions = function()
 {
 	var oTable = this.GetTable();
 	if (oTable)
-		oTable.UpdateTrackRevisions();
+		oTable.updateTrackRevisions();
 };
 CTableCell.prototype.HavePrChange = function()
 {
@@ -2624,7 +2628,7 @@ CTableCell.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.RemovePrChange = function()
@@ -2639,7 +2643,7 @@ CTableCell.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.private_UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTableCell.prototype.private_AddPrChange = function()

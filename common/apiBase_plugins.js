@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -58,8 +58,9 @@
      * The editors which the plugin is available for:
 	 * * <b>word</b> - text document editor,
 	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor.
-	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * * <b>slide</b> - presentation editor,
+	 * * <b>pdf</b> - pdf editor.
+	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      */
 
     /**
@@ -149,6 +150,18 @@
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
+	/**
+	 * OLE-object properties
+	 * @typed {Object} OLEProperties
+	 * @property {string} data - OLE object data (internal format).
+	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+	 * @property {number} width - The OLE object width measured in millimeters.
+	 * @property {number} height - The OLE object height measured in millimeters.
+	 * @property {number} widthPix - The OLE object image width in pixels.
+	 * @property {number} heightPix - The OLE object image height in pixels.
+	 */
+
     /**
      * Base class
      * @global
@@ -173,14 +186,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -189,16 +195,30 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.objectId - The OLE object identifier.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
+
+
+	/**
+	 * Returns an array of selected ole-objects.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectedOleObjects
+	 * @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 */
+	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
+	{
+		let oDrawingsController = this.getGraphicController();
+		let aRes = [];
+		if(!oDrawingsController) return aRes;
+		let aSelectedOle = oDrawingsController.getSelectedOleObjects();
+		for(let nIdx = 0; nIdx < aSelectedOle.length; ++nIdx)
+		{
+			aRes.push(aSelectedOle[nIdx].getPluginDataObject());
+		}
+		return aRes;
+	};
 
     /**
 	 * An object containing the font information.
@@ -250,7 +270,7 @@
      */
     Api.prototype["pluginMethod_InputText"] = function(text, textReplace)
     {
-        if (this.isViewMode || !AscCommon.g_inputContext)
+        if (!this.canEdit() || this.isPdfEditor() || !AscCommon.g_inputContext)
             return;
 
         if (textReplace)
@@ -274,7 +294,7 @@
 		if (!AscCommon.g_clipboardBase)
 			return null;
 
-		if (this.isViewMode)
+		if (!this.canEdit() || this.isPdfEditor())
 			return null;
 
 		let _elem = document.getElementById("pmpastehtml");
@@ -556,7 +576,7 @@
 	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
 	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
 	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
-	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
+	 * @property {number} paragraphs.linespacing The text linespacing in the current paragraph.
 	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
 	 * @property {string} paragraphs.runs.text The run text.
 	 * @property {Array.<number>} paragraphs.runs.fill The text highlight in the RGB format. The empty array [] means that the text is not highlighted.
@@ -1204,7 +1224,7 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-		if(this.isViewMode || this.isPdfEditor())
+		if(!this.canEdit() || this.isPdfEditor())
 		{
 			return;
 		}
@@ -1297,6 +1317,28 @@
 			"guid" : config["guid"]
 		};
 	}
+
+	Api.prototype.getUsedBackgroundPlugins = function()
+	{
+		let services = [];
+		try
+		{
+			services = JSON.parse(window.localStorage.getItem("asc_plugins_background"));
+			if (!services)
+				services = [];
+		}
+		catch (e)
+		{
+			services = [];
+		}
+		return services;
+	};
+	Api.prototype["getUsedBackgroundPlugins"] = Api.prototype.getUsedBackgroundPlugins;
+
+	Api.prototype.setUsedBackgroundPlugins = function(services)
+	{
+		window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+	};
 
 	Api.prototype.checkInstalledPlugins = function()
 	{
@@ -1698,24 +1740,50 @@
         return langName;
     };
 
-	function correctItemsWithData(items)
+	function correctItemIcons(item, baseUrl)
+	{
+		if (item && item["icons"])
+		{
+			if ((0 === item["icons"].indexOf("http://")) ||
+				(0 === item["icons"].indexOf("https://")) ||
+				(0 === item["icons"].indexOf("file://")) ||
+				(0 === item["icons"].indexOf("www.")))
+			{
+				// nothing
+			}
+			else if (0 === item["icons"].indexOf("external://"))
+			{
+				item["icons"] = item["icons"].substr("external://".length);
+			}
+			else
+			{
+				item["icons"] = baseUrl + item["icons"];
+			}
+		}
+	}
+
+	function correctItemsWithData(items, baseUrl)
 	{
 		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
 		{
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
+			correctItemIcons(items[i], baseUrl);
+
 			if (items[i]["items"])
-				correctItemsWithData(items[i]["items"]);
+				correctItemsWithData(items[i]["items"], baseUrl);
 		}
-	}
+	};
 
 	/**
 	 * @typedef {Object} ContextMenuItem
 	 * The context menu item.
 	 * @property {string} id - The item ID.
-	 * @property {localeTranslate} text - The item text.
+	 * @property {string} text - The item text.
+	 * @property {string} [data] - The item data (this data will be sended to click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 */
 
@@ -1729,7 +1797,8 @@
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
-		if (items["items"]) correctItemsWithData(items["items"]);
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginAddContextMenuItem(items);
 	};
 
@@ -1743,8 +1812,65 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		if (items["items"]) correctItemsWithData(items["items"]);
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
+	 * @typedef {("button" | "...")} ToolbarMenuItemType
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuItem
+	 * The toolbar menu item.
+	 * @property {string} id - The item ID.
+	 * @property {ToolbarMenuItemType} The item type
+	 * @property {string} text - The item text.
+	 * @property {string} hint - The item text.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle]
+	 * @property {boolean} [lockInViewMode]
+	 * @property {boolean} [separator]
+	 * @property {boolean} [split]
+	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuTab
+	 * The toolbar menu item.
+	 * @property {string} id - The tab ID.
+	 * @property {string} text - The tab text.
+	 * @property {ToolbarMenuItem[]} [items] - The tab items.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuMainItem
+	 * The toolbar menu item.
+	 * @property {string} giud - The plugin guid.
+	 * @property {ToolbarMenuTab[]} tabs
+	 */
+
+	/**
+	 * Adds an item to the toolbar menu.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddToolbarMenuItem
+	 * @param {ToolbarMenuMainItem[]} items - An array containing the context menu items for the current item.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		for (let i = 0, len = items.tabs.length; i < len; i++)
+		{
+			if (items.tabs[i]["items"])
+				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+		}
+
+		this.sendEvent("onPluginToolbarMenu", [items]);
 	};
 
 	/**
@@ -1758,8 +1884,26 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
-		variation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		variation["guid"] = guid;
+
+		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
+		correctItemIcons(variation["icons"], baseUrl);
+
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Activate (move to front) the plugin window/panel.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias ActivateWindow
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowActivate", frameId);
 	};
 
 	/**

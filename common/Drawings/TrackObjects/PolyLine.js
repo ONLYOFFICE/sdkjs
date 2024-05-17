@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -62,8 +62,8 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
 
         this.drawingObjects = drawingObjects;
         this.arrPoint = [];
-        this.Matrix = new AscCommon.CMatrixL();
-        this.TransformMatrix = new AscCommon.CMatrixL();
+        this.Matrix = new AscCommon.CMatrix();
+        this.TransformMatrix = new AscCommon.CMatrix();
 
         this.pageIndex = pageIndex;
         this.style  = AscFormat.CreateDefaultShapeStyle();

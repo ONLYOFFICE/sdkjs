@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -227,11 +227,11 @@ ParaHyperlink.prototype.Draw_Lines = function(PDSL)
 	PDSL.VisitedHyperlink = false;
 	PDSL.Hyperlink        = false;
 };
-ParaHyperlink.prototype.Draw_HighLights = function(PDSH)
+ParaHyperlink.prototype.Draw_HighLights = function(drawState)
 {
-	PDSH.Hyperlink = this;
+	drawState.pushHyperlink(this);
 	CParagraphContentWithParagraphLikeContent.prototype.Draw_HighLights.apply(this, arguments);
-	PDSH.Hyperlink = null;
+	drawState.popHyperlink();
 };
 //-----------------------------------------------------------------------------------
 // Работаем со значениями

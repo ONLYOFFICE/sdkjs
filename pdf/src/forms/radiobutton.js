@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -63,45 +63,57 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.UpdateAll = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let oParent     = this.GetParent();
+        let aParentOpt  = oParent ? oParent.GetOptions() : undefined;
+        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
+        let value       = this.GetApiValue();
+
+        let bFromOpt = false;
+        let sExportValue;
         
-        if (this.IsRadiosInUnison()) {
-            // отмечаем все radiobuttons с тем же экспортом, что и отмеченные
-            let sExportValue;
-            for (let i = 0; i < aFields.length; i++) {
-                if (!sExportValue && aFields[i]._value != "Off") {
-                    sExportValue = aFields[i]._exportValue;
-                    break;
-                }
-            }
-            if (!sExportValue) {
-                aFields.forEach(function(field) {
-                    field.SetChecked(false);
-                });
-            }
-            else {
-                aFields.forEach(function(field) {
-                    if (field._exportValue != sExportValue) {
-                        field.SetChecked(false);
-                    }
-                    else {
-                        field.SetChecked(true);
-                    }
-                });
-            }
+        // если есть массив опт, то value в 99% случаев - это индекс в массиве opt (export values)
+        if (aParentOpt && aParentOpt[value]) {
+            sExportValue = aParentOpt[value];
+            bFromOpt = true;
         }
         else {
-            let oCheckedFld = null;
-            // оставляем активной первую отмеченную radiobutton
-            for (let i = 0; i < aFields.length; i++) {
-                if (!oCheckedFld && aFields[i]._value != "Off") {
-                    oCheckedFld = aFields[i];
-                    continue;
+            sExportValue = value;
+        }
+
+        if (this.IsRadiosInUnison()) {
+            aFields.forEach(function(field) {
+                if (field.GetExportValue() == sExportValue) {
+                    field.SetChecked(true);
                 }
-                if (oCheckedFld) {
-                    aFields[i].SetChecked(false);
+                else {
+                    field.SetChecked(false);
                 }
-            }
+            });
+        }
+        else {
+            let oFirstField = null;
+            aFields.forEach(function(field, index) {
+                // выставляем по индексу из Opt
+                if (bFromOpt) {
+                    if (index == value) {
+                        field.SetChecked(true);
+                    }
+                    else {
+                        field.SetChecked(false);
+                    }
+                }
+                else {
+                    // оставляем отмеченным только первую если не по индексу из Opt
+                    if (oFirstField == null && field.GetExportValue() == sExportValue) {
+                        field.SetChecked(true);
+                        oFirstField = field;
+                    }
+                    else {
+                        field.SetChecked(false);
+                    }
+                }
+                
+            })
         }
     };
     
@@ -122,7 +134,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.Commit2 = function() {
-        let aFields = this.GetDocument().GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThis = this;
 
         if (false == this.IsRadiosInUnison()) {
@@ -141,15 +153,15 @@
                 if (field == oThis)
                     return;
 
-                if (field._exportValue != oThis._exportValue && field.IsChecked() == true) {
+                if (field.GetExportValue() != oThis.GetExportValue() && field.IsChecked() == true) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
-                else if (field._exportValue == oThis._exportValue && oThis.IsChecked() == false) {
+                else if (field.GetExportValue() == oThis.GetExportValue() && oThis.IsChecked() == false) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
-                else if (field._exportValue == oThis._exportValue && field.IsChecked() == false) {
+                else if (field.GetExportValue() == oThis.GetExportValue() && field.IsChecked() == false) {
                     field.SetChecked(true);
                     field.SetNeedRecalc(true);
                 }
@@ -162,6 +174,7 @@
     
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
         this._radiosInUnison = bValue;
+        this.SetWasChanged(true);
     };
     CRadioButtonField.prototype.IsRadiosInUnison = function() {
         return this._radiosInUnison;

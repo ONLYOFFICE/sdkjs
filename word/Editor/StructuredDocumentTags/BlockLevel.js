@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -192,7 +192,7 @@ CBlockLevelSdt.prototype.Read_FromBinary2 = function(Reader)
 };
 CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 {
-	if (this.LogicDocument.GetSdtGlobalShowHighlight() && undefined === oGraphics.RENDERER_PDF_FLAG)
+	if (this.LogicDocument.GetSdtGlobalShowHighlight() && !oGraphics.isPdf())
 	{
 		var oBounds = this.GetContentBounds(CurPage);
 		var oColor  = this.LogicDocument.GetSdtGlobalColor();
@@ -215,7 +215,7 @@ CBlockLevelSdt.prototype.Draw = function(CurPage, oGraphics)
 	if (isPlaceHolder && oGraphics.setTextGlobalAlpha)
 		oGraphics.setTextGlobalAlpha(nTextAlpha);
 
-	if (AscCommon.locktype_None !== this.Lock.Get_Type())
+	if (AscCommon.c_oAscLockTypes.kLockTypeNone !== this.Lock.Get_Type())
 	{
 		var oBounds = this.GetContentBounds(CurPage);
 		oGraphics.DrawLockObjectRect(this.Lock.Get_Type(), oBounds.Left, oBounds.Top, oBounds.Right - oBounds.Left, oBounds.Bottom - oBounds.Top);
@@ -1605,7 +1605,7 @@ CBlockLevelSdt.prototype.GetSearchElementId = function(bNext, bCurrent)
 //----------------------------------------------------------------------------------------------------------------------
 CBlockLevelSdt.prototype.ClearContentControl = function()
 {
-	var oParagraph = new Paragraph(this.LogicDocument.Get_DrawingDocument(), this.Content);
+	var oParagraph = new AscWord.Paragraph(this.Content);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1689,7 +1689,7 @@ CBlockLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(isSkip
 
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
-	var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+	var oParagraph = new AscWord.Paragraph(this.Content, false);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1762,7 +1762,7 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 	}
 	else
 	{
-		var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+		var oParagraph = new AscWord.Paragraph(this.Content, false);
 		oParagraph.Correct_Content();
 
 		oParagraph.SelectAll();
@@ -1944,7 +1944,7 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 		var oDocContent = this.Content;
 		if (oDocContent.Content.length <= 0 || !oDocContent.Content[0].IsParagraph())
 		{
-			oFirstParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), oDocContent);
+			oFirstParagraph = new AscWord.Paragraph(oDocContent);
 			oDocContent.AddToContent(0, oFirstParagraph);
 		}
 		else
@@ -2234,7 +2234,7 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 
@@ -2380,7 +2380,7 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 

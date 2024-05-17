@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -196,6 +196,8 @@ CGraphicObjects.prototype =
 
     getSelectedArray: DrawingObjectsController.prototype.getSelectedArray,
 
+    getSelectedOleObjects: DrawingObjectsController.prototype.getSelectedOleObjects,
+
     getTheme: function()
     {
         return this.document.theme;
@@ -352,6 +354,12 @@ CGraphicObjects.prototype =
 
     swapTrackObjects: function()
     {
+        if (Asc.editor.isPdfEditor())
+        {
+            this.drawingObjects = this.drawingObjects.concat(this.selectedObjects);
+            AscFormat.DrawingObjectsController.prototype.checkConnectorsPreTrack.call(this);
+        }
+
         this.clearTrackObjects();
         for(var i = 0; i < this.arrPreTrackObjects.length; ++i)
         {
@@ -897,7 +905,7 @@ CGraphicObjects.prototype =
             || AscFormat.isRealNumber(oApplyProps.rotAdd)
             || AscFormat.isRealBool(oApplyProps.flipH)|| AscFormat.isRealBool(oApplyProps.flipV)
             || AscFormat.isRealBool(oApplyProps.flipHInvert)|| AscFormat.isRealBool(oApplyProps.flipVInvert) || (typeof oApplyProps.type === "string")
-            || AscCommon.isRealObject(oApplyProps.shadow) || oApplyProps.shadow === null)
+            || AscCommon.isRealObject(oApplyProps.shadow) || oApplyProps.shadow === null || oApplyProps.bSetOriginalSize)
         {
             /*в случае если в насторойках ParaDrawing стоит UseAlign - пересчитываем drawing, т. к. ширина и высото ParaDrawing рассчитывается по bounds*/
             var aSelectedObjects = this.selectedObjects;
@@ -920,6 +928,7 @@ CGraphicObjects.prototype =
     },
 
     applyDrawingProps: DrawingObjectsController.prototype.applyDrawingProps,
+    updateConnectors: function (bMoveFlag) {},
     sendCropState: DrawingObjectsController.prototype.sendCropState,
 
     CheckAutoFit : function()
@@ -1664,15 +1673,7 @@ CGraphicObjects.prototype =
             }
             else
             {
-                var pluginData = new Asc.CPluginData();
-                pluginData.setAttribute("data", oleObject.m_sData);
-                pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-                pluginData.setAttribute("width", oleObject.extX);
-                pluginData.setAttribute("height", oleObject.extY);
-                pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-                pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-                pluginData.setAttribute("objectId", oleObject.Id);
-                editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+                oleObject.runPlugin();
             }
             this.clearTrackObjects();
             this.clearPreTrackObjects();
@@ -1681,21 +1682,15 @@ CGraphicObjects.prototype =
         }
     },
 
-    startEditCurrentOleObject: function(){
-        var oSelector = this.selection.groupSelection ? this.selection.groupSelection : this;
-        var oThis = this;
-        if(oSelector.selectedObjects.length === 1 && oSelector.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_OleObject){
-            var oleObject = oSelector.selectedObjects[0];
-            if(false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props)){
-                var pluginData = new Asc.CPluginData();
-                pluginData.setAttribute("data", oleObject.m_sData);
-                pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-                pluginData.setAttribute("width", oleObject.extX);
-                pluginData.setAttribute("height", oleObject.extY);
-                pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-                pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-                pluginData.setAttribute("objectId", oleObject.Id);
-                editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+    startEditCurrentOleObject: function()
+    {
+        let aSelectedObjects = this.getSelectedArray();
+        if(aSelectedObjects.length === 1 && aSelectedObjects[0].isOleObject())
+        {
+            let oleObject = aSelectedObjects[0];
+            if(!this.document.IsSelectionLocked(changestype_Drawing_Props))
+            {
+                oleObject.runPlugin();
             }
         }
     },
@@ -1929,7 +1924,7 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var para = new Paragraph(this.document.DrawingDocument, this.document);
+            var para = new AscWord.Paragraph();
             var selectedObjects, run, drawing, i;
             var aDrawings = [];
             if(this.selection.groupSelection)
@@ -2168,6 +2163,14 @@ CGraphicObjects.prototype =
 		{
 			return this.selectedObjects[0].parent;
 		}
+        if(this.lastSelectedObject)
+        {
+            let oParaDrawing = this.lastSelectedObject.parent;
+            if(oParaDrawing && oParaDrawing.IsUseInDocument())
+            {
+                return oParaDrawing;
+            }
+        }
 		return null;
     },
 
@@ -2232,19 +2235,19 @@ CGraphicObjects.prototype =
 
     updateParentParagraphParaPr : function()
     {
-        var majorParaDrawing = this.getMajorParaDrawing();
-        if(majorParaDrawing)
+        let oDrawing = this.getMajorParaDrawing();
+        if(oDrawing)
         {
-            var parent_para = this.selectedObjects[0].parent.Get_ParentParagraph(), ParaPr;
-            if(parent_para)
+            let oParagraph = oDrawing.Get_ParentParagraph(), ParaPr;
+            if(oParagraph)
             {
-                ParaPr = parent_para.Get_CompiledPr2(true).ParaPr;
-                if (ParaPr)
+                let oParaPr = oParagraph.Get_CompiledPr2(true).ParaPr;
+                if (oParaPr)
                 {
-                    editor.sync_ParaSpacingLine( ParaPr.Spacing );
-                    editor.Update_ParaInd(ParaPr.Ind);
-                    editor.sync_PrAlignCallBack(ParaPr.Jc);
-                    editor.sync_ParaStyleName(ParaPr.StyleName);
+                    editor.sync_ParaSpacingLine( oParaPr.Spacing );
+                    editor.Update_ParaInd(oParaPr.Ind);
+                    editor.sync_PrAlignCallBack(oParaPr.Jc);
+                    editor.sync_ParaStyleName(oParaPr.StyleName);
                 }
             }
         }
@@ -3206,25 +3209,35 @@ CGraphicObjects.prototype =
 
     resetSelection2: function()
     {
-        var sel_arr = this.selectedObjects;
-        if(sel_arr.length > 0)
+        if(this.selectedObjects.length > 0)
         {
-            var top_obj = sel_arr[0];
-            for(var i = 1; i < sel_arr.length; ++i)
+            let oTopDrawing = this.selectedObjects[0];
+            for(let nDrawing = 1; nDrawing < this.selectedObjects.length; ++nDrawing)
             {
-                var cur_obj = sel_arr[i];
-                if(cur_obj.selectStartPage < top_obj.selectStartPage)
+                let oCurDrawing = this.selectedObjects[nDrawing];
+                if(oCurDrawing.selectStartPage < oTopDrawing.selectStartPage)
                 {
-                    top_obj = cur_obj;
+                    oTopDrawing = oCurDrawing;
                 }
-                else if(cur_obj.selectStartPage === top_obj.selectStartPage)
+                else if(oCurDrawing.selectStartPage === oTopDrawing.selectStartPage)
                 {
-                    if(cur_obj.parent.Get_ParentParagraph().Y < top_obj.parent.Get_ParentParagraph().Y)
-                        top_obj = cur_obj;
+                    if(oCurDrawing.parent.Get_ParentParagraph().Y < oTopDrawing.parent.Get_ParentParagraph().Y)
+                        oTopDrawing = oCurDrawing;
                 }
             }
             this.resetSelection();
-            top_obj.parent.GoTo_Text();
+            oTopDrawing.parent.GoToText();
+        }
+        else
+        {
+            if(this.lastSelectedObject)
+            {
+                let oParaDrawing = this.lastSelectedObject.parent;
+                if(oParaDrawing && oParaDrawing.IsUseInDocument())
+                {
+                    oParaDrawing.GoToText();
+                }
+            }
         }
     },
 
@@ -3459,7 +3472,7 @@ CGraphicObjects.prototype =
                 this.resetSelection();
                 if(oFirstParaDrawing) 
                 {
-                    oFirstParaDrawing.GoTo_Text();
+                    oFirstParaDrawing.GoToText();
                 }
                 for(let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing)
                 {

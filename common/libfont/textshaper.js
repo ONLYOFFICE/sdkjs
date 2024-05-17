@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -66,17 +66,24 @@
 		this.FontSlot       = AscWord.fontslot_None;
 		this.FontSize       = 10;
 		this.ForceCheckFont = false;
+		this.Direction      = AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
 	}
 	CTextShaper.prototype.ClearBuffer = function()
 	{
 		this.Buffer.length = 0;
 		this.BufferIndex   = 0;
 
-		this.Script   = -1;
-		this.FontId   = -1;
-		this.FontSlot = AscWord.fontslot_None;
+		this.Script    = -1;
+		this.FontId    = -1;
+		this.FontSlot  = AscWord.fontslot_None;
+		this.Direction = AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
 
 		this.StartString();
+	};
+	CTextShaper.prototype.ResetBuffer = function()
+	{
+		if (this.IsRtlDirection())
+			this.BufferIndex = this.Buffer.length;
 	};
 	CTextShaper.prototype.StartString = function()
 	{
@@ -101,16 +108,17 @@
 		this.EndString();
 
 		let nScript = AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED === this.Script ? AscFonts.HB_SCRIPT.HB_SCRIPT_COMMON : this.Script;
-
-		let nDirection = AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;//this.GetDirection(nScript);
-
+		
+		this.Direction = this.GetDirection(nScript);
+		this.ResetBuffer();
+		
 		let oFontInfo = this.GetFontInfo(this.FontSlot);
 		let nFontId   = AscCommon.FontNameMap.GetId(this.FontId.m_pFaceInfo.family_name);
 		AscCommon.g_oTextMeasurer.SetFontInternal(this.FontId.m_pFaceInfo.family_name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
 
 		this.FontSize = oFontInfo.Size;
 
-		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, nDirection, "en");
+		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, this.Direction, "en");
 
 		// Значит шрифт был подобран, возвращаем назад состояние отрисовщика
 		if (this.FontId.m_pFaceInfo.family_name !== oFontInfo.Name)
@@ -141,12 +149,16 @@
 	{
 		if (this.Buffer.length >= AscFonts.HB_STRING_MAX_LEN)
 			this.FlushWord();
-
+		
+		// TODO: Check bugs 66317 66435
 		let nScript = this.GetTextScript(nUnicode);
 		if (nScript !== this.Script
 			&& -1 !== this.Script
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== nScript
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== this.Script)
+			this.FlushWord();
+		
+		if (this.GetDirection(this.Script) !== this.GetDirection(nScript))
 			this.FlushWord();
 
 		let nFontSlot = this.GetFontSlot(nUnicode);
@@ -233,7 +245,14 @@
 	};
 	CTextShaper.prototype.FlushGrapheme = function(nGrapheme, nWidth, nCodePointsCount, isLigature)
 	{
-		this.BufferIndex += nCodePointsCount;
+		if (this.IsRtlDirection())
+			this.BufferIndex -= nCodePointsCount;
+		else
+			this.BufferIndex += nCodePointsCount;
+	};
+	CTextShaper.prototype.IsRtlDirection = function()
+	{
+		return this.Direction === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
 	};
 	CTextShaper.prototype.PrintAllUnicodesByScript = function(nScript)
 	{
@@ -259,11 +278,17 @@
 
 		Flush(true);
 	};
+	
+	function isRtlScript(unicode)
+	{
+		return AscFonts.hb_get_script_horizontal_direction(AscFonts.hb_get_script_by_unicode(unicode)) === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
 	window['AscFonts'].CTextFontInfo        = CTextFontInfo;
 	window['AscFonts'].CTextShaper          = CTextShaper;
 	window['AscFonts'].DEFAULT_TEXTFONTINFO = DEFAULT_TEXTFONTINFO;
+	window['AscFonts'].isRtlScript          = isRtlScript;
 
 })(window);

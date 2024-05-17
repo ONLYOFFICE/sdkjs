@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1321,7 +1321,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
 
     Geometry.prototype.draw = function(shape_drawer)
     {
-        if(shape_drawer.Graphics && shape_drawer.Graphics.bDrawSmart || this.bDrawSmart)
+        if(shape_drawer.Graphics && shape_drawer.Graphics.IsDrawSmart || this.bDrawSmart)
         {
             this.drawSmart(shape_drawer);
             return;

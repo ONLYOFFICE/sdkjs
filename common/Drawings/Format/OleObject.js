@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -593,6 +593,39 @@ function (window, undefined) {
             "InternalId": this.Id,
             "ParaDrawingId": oParaDrawing ? oParaDrawing.Id : ""
         }
+    };
+    COleObject.prototype.convertDataObjectToPluginData = function(oDataObject) {
+        var pluginData = new Asc.CPluginData();
+        pluginData.setAttribute("data", oDataObject["Data"]);
+        pluginData.setAttribute("guid", oDataObject["ApplicationId"]);
+        pluginData.setAttribute("width", oDataObject["Width"]);
+        pluginData.setAttribute("height", oDataObject["Height"]);
+        pluginData.setAttribute("widthPix", oDataObject["WidthPix"]);
+        pluginData.setAttribute("heightPix", oDataObject["HeightPix"]);
+        pluginData.setAttribute("objectId", oDataObject["InternalId"]);
+        return pluginData;
+    };
+    COleObject.prototype.runPlugin = function() {
+        let pluginData = this.getPluginData();
+        Asc.editor.asc_pluginRun(pluginData.getAttribute("guid"), 0, pluginData);
+    };
+    COleObject.prototype.callPluginOnResize = function() {
+        let pluginData = this.getPluginData();
+        let width = this.getXfrmExtX();
+        let height = this.getXfrmExtX();
+        if(width && height) {
+            pluginData.setAttribute("width", width);
+            pluginData.setAttribute("height", height);
+        }
+        Asc.editor.asc_pluginResize(pluginData);
+    };
+    COleObject.prototype.getPluginData = function() {
+        let oDataObject = this.getDataObject();
+        return this.convertDataObjectToPluginData(oDataObject);
+    };
+    COleObject.prototype.getPluginDataObject = function() {
+        let oPluginData = this.getPluginData();
+        return oPluginData.getDataObject();
     };
 
     COleObject.prototype.canEditTableOleObject = function(bReturnOle) {

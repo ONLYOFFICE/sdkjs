@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -65,7 +65,7 @@
 	};
 	CRunPagesCount.prototype.Measure = function(Context, TextPr)
 	{
-		this.FontKoef = TextPr.Get_FontKoef();
+		this.FontKoef = TextPr.getFontCoef();
 		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 
 		for (var Index = 0; Index < 10; Index++)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -45,45 +45,12 @@
   var c_oAscForceSaveTypes = AscCommon.c_oAscForceSaveTypes;
 
   // Класс надстройка, для online и offline работы
-  function CDocsCoApi(options) {
+  function CDocsCoApi() {
     this._CoAuthoringApi = new DocsCoApi();
     this._onlineWork = false;
-
-    if (options) {
-      this.onAuthParticipantsChanged = options.onAuthParticipantsChanged;
-      this.onParticipantsChanged = options.onParticipantsChanged;
-      this.onParticipantsChangedOrigin = options.onParticipantsChangedOrigin;
-      this.onMessage = options.onMessage;
-      this.onServerVersion = options.onServerVersion;
-      this.onCursor =  options.onCursor;
-      this.onMeta =  options.onMeta;
-      this.onSession =  options.onSession;
-      this.onExpiredToken =  options.onExpiredToken;
-	  this.onForceSave =  options.onForceSave;
-      this.onHasForgotten =  options.onHasForgotten;
-      this.onLocksAcquired = options.onLocksAcquired;
-      this.onLocksReleased = options.onLocksReleased;
-      this.onLocksReleasedEnd = options.onLocksReleasedEnd; // ToDo переделать на массив release locks
-      this.onDisconnect = options.onDisconnect;
-      this.onWarning = options.onWarning;
-      this.onFirstLoadChangesEnd = options.onFirstLoadChangesEnd;
-      this.onConnectionStateChanged = options.onConnectionStateChanged;
-      this.onSetIndexUser = options.onSetIndexUser;
-      this.onSpellCheckInit = options.onSpellCheckInit;
-      this.onSaveChanges = options.onSaveChanges;
-      this.onChangesIndex = options.onChangesIndex;
-      this.onStartCoAuthoring = options.onStartCoAuthoring;
-      this.onEndCoAuthoring = options.onEndCoAuthoring;
-      this.onUnSaveLock = options.onUnSaveLock;
-      this.onRecalcLocks = options.onRecalcLocks;
-      this.onDocumentOpen = options.onDocumentOpen;
-      this.onFirstConnect = options.onFirstConnect;
-      this.onLicense = options.onLicense;
-      this.onLicenseChanged = options.onLicenseChanged;
-    }
   }
 
-  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo) {
+  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey) {
     if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL()) {
       var t = this;
       this._CoAuthoringApi.onAuthParticipantsChanged = function(e, id) {
@@ -178,7 +145,7 @@
         t.callback_OnLicenseChanged(res);
 	  };
 
-      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo);
+      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey);
       this._onlineWork = true;
     } else {
       // Фиктивные вызовы
@@ -597,39 +564,7 @@
     this._callback = callback;
   }
 
-  function DocsCoApi(options) {
-    if (options) {
-      this.onAuthParticipantsChanged = options.onAuthParticipantsChanged;
-      this.onParticipantsChanged = options.onParticipantsChanged;
-      this.onParticipantsChangedOrigin = options.onParticipantsChangedOrigin;
-      this.onMessage = options.onMessage;
-      this.onServerVersion = options.onServerVersion;
-      this.onCursor = options.onCursor;
-      this.onMeta = options.onMeta;
-      this.onSession =  options.onSession;
-      this.onExpiredToken =  options.onExpiredToken;
-	  this.onForceSave =  options.onForceSave;
-      this.onHasForgotten =  options.onHasForgotten;
-      this.onLocksAcquired = options.onLocksAcquired;
-      this.onLocksReleased = options.onLocksReleased;
-      this.onLocksReleasedEnd = options.onLocksReleasedEnd; // ToDo переделать на массив release locks
-      this.onRelockFailed = options.onRelockFailed;
-      this.onDisconnect = options.onDisconnect;
-      this.onWarning = options.onWarning;
-      this.onSetIndexUser = options.onSetIndexUser;
-      this.onSpellCheckInit = options.onSpellCheckInit;
-      this.onSaveChanges = options.onSaveChanges;
-      this.onChangesIndex = options.onChangesIndex;
-      this.onFirstLoadChangesEnd = options.onFirstLoadChangesEnd;
-      this.onConnectionStateChanged = options.onConnectionStateChanged;
-      this.onUnSaveLock = options.onUnSaveLock;
-      this.onRecalcLocks = options.onRecalcLocks;
-      this.onDocumentOpen = options.onDocumentOpen;
-      this.onFirstConnect = options.onFirstConnect;
-      this.onLicense = options.onLicense;
-      this.onLicenseChanged = options.onLicenseChanged;
-      this.binaryChanges = options.binaryChanges;
-    }
+  function DocsCoApi() {
     this._state = ConnectionState.None;
     // Online-пользователи в документе
     this._participants = {};
@@ -652,7 +587,7 @@
     this._id = null;
     this._sessionTimeConnect = null;
 	this._allChangesSaved = null;
-	this._lastForceSaveButtonTime = null;
+	this._lastForceSaveButtonTime = -2;//-2 to allow first save without changes
 	this._lastForceSaveTimeoutTime = null;
     this._indexUser = -1;
     // Если пользователей больше 1, то совместно редактируем
@@ -1706,7 +1641,7 @@
     this._authOtherChanges = [];
   };
 
-  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo) {
+  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey) {
     this._user = user;
     this._docid = null;
     this._documentCallbackUrl = documentCallbackUrl;
@@ -1722,9 +1657,10 @@
 	this.permissions = docInfo.get_Permissions();
 	this.lang = docInfo.get_Lang();
 	this.jwtOpen = docInfo.get_Token();
-    this.encrypted = docInfo.get_Encrypted();
+    this.encrypted = docInfo.get_Encrypted() || docInfo.get_IsWebOpening();
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
     this.coEditingMode = docInfo.asc_getCoEditingMode();
+    this.shardKey = shardKey;
 
     this.setDocId(docid);
     this._initSocksJs();
@@ -1850,6 +1786,9 @@
           "session": this.jwtSession
         }
       };
+      options["query"] = {};
+      options["query"][Asc.c_sShardKeyName] = this.shardKey;
+
       if (window['IS_NATIVE_EDITOR']) {
         socket = this.sockjs = new CNativeSocket(options);
         socket.open();

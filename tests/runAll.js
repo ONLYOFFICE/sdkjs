@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -45,18 +45,21 @@ const allTests = [
 	'word/document-calculation/table/correctBadTable.html',
 	'word/document-calculation/table/flowTablePosition.html',
 	'word/document-calculation/table/pageBreak.html',
+	'word/document-calculation/table/table-header.html',
 	'word/document-calculation/textShaper/textShaper.html',
 	'word/document-calculation/text-hyphenator/text-hyphenator.html',
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
 	'word/numbering/numberingApplicator.html',
 	'word/numbering/numberingCalculation.html',
+	'word/numbering/numberingAutocorrect.html',
 	'word/api/api.html',
 	'word/api/textInput.html',
 	'word/styles/displayStyle.html',
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
+	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
 
 	'cell/shortcuts/shortcuts.html',

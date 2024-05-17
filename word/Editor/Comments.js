@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -425,7 +425,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
 		if (false === AscCommon.g_oIdCounter.m_bLoad)
 		{
-			this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+			this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 			AscCommon.CollaborativeEditing.Add_Unlock2(this);
 		}
 
@@ -725,10 +725,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return null;
 	};
-
-	var comments_NoComment        = 0;
-	var comments_NonActiveComment = 1;
-	var comments_ActiveComment    = 2;
+	
+	// Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
+	let marksToCheck = [];
 
 	/**
 	 * Класс для работы с комментариями документов
@@ -749,8 +748,6 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	this.m_arrComments     = [];    // Массив
 
     this.Pages = [];
-
-    this.MarksToCheck = []; // Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
 
     this.Get_Id = function()
     {
@@ -830,12 +827,20 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add( this, this.Id );
 }
+	CComments.prototype.isUse = function()
+	{
+		return this.Is_Use();
+	};
 	CComments.prototype.GetById = function(sId)
 	{
 		if (this.m_arrCommentsById[sId])
 			return this.m_arrCommentsById[sId];
 
 		return null;
+	};
+	CComments.prototype.getCurrentCommentId = function()
+	{
+		return this.m_sCurrent;
 	};
 	CComments.prototype.Add = function(oComment)
 	{
@@ -969,6 +974,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		this.m_bUseSolved = isUse;
 	};
 	CComments.prototype.IsUseSolved                 = function()
+	{
+		return this.m_bUseSolved;
+	};
+	CComments.prototype.isUseSolved = function()
 	{
 		return this.m_bUseSolved;
 	};
@@ -1149,15 +1158,11 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		return this.m_arrComments.length;
 	};
-	CComments.prototype.AddMarkToCheck = function(oMark)
-	{
-		this.MarksToCheck.push(oMark);
-	};
 	CComments.prototype.CheckMarks = function()
 	{
-		for (var nIndex = 0, nCount = this.MarksToCheck.length; nIndex < nCount; ++nIndex)
+		for (var nIndex = 0, nCount = marksToCheck.length; nIndex < nCount; ++nIndex)
 		{
-			var oMark      = this.MarksToCheck[nIndex];
+			var oMark      = marksToCheck[nIndex];
 			var sCommentId = oMark.GetCommentId();
 			var oComment   = this.Get_ById(sCommentId);
 			var oParagraph = oMark.GetParagraph();
@@ -1166,8 +1171,8 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				oComment.SetRangeMark(oMark);
 			}
 		}
-
-		this.MarksToCheck.length = 0;
+		
+		marksToCheck.length = 0;
 	};
 
 /**
@@ -1298,9 +1303,9 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 ParaComment.prototype.Draw_HighLights = function(PDSH)
 {
 	if (true === this.Start)
-		PDSH.AddComment(this.CommentId);
+		PDSH.addComment(this.CommentId);
 	else
-		PDSH.RemoveComment(this.CommentId);
+		PDSH.removeComment(this.CommentId);
 };
 ParaComment.prototype.Refresh_RecalcData = function()
 {
@@ -1339,19 +1344,14 @@ ParaComment.prototype.IsCommentStart = function()
 {
 	return this.Start;
 };
-ParaComment.prototype.SetParagraph = function(oParagraph)
+ParaComment.prototype.SetParagraph = function(paragraph)
 {
-	this.Paragraph = oParagraph;
-
-	var oLogicDocument = oParagraph.GetLogicDocument();
-	if (oLogicDocument)
-	{
-		// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
-		// создаются копии ParaComment, которые ломают эту связь, т.к. для них
-		// еще не создан свой комментарий и они пока "привязаны" к старому
-		var oDocComments = oLogicDocument.Comments;
-		oDocComments.AddMarkToCheck(this);
-	}
+	this.Paragraph = paragraph;
+	
+	// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
+	// создаются копии ParaComment, которые ломают эту связь, т.к. для них
+	// еще не создан свой комментарий и они пока "привязаны" к старому
+	marksToCheck.push(this);
 };
 ParaComment.prototype.IsUseInDocument = function()
 {
@@ -1379,10 +1379,6 @@ ParaComment.prototype.MoveCursorToMark = function()
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
-
-window['AscCommon'].comments_NoComment = comments_NoComment;
-window['AscCommon'].comments_NonActiveComment = comments_NonActiveComment;
-window['AscCommon'].comments_ActiveComment = comments_ActiveComment;
 
 window['AscCommon'].comment_type_Common = comment_type_Common;
 window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;

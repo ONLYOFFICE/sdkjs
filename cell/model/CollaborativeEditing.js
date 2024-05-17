@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -273,7 +273,7 @@
 		};
 
 		// Возвращает - нужно ли отправлять end action
-		CCollaborativeEditing.prototype.applyChanges = function () {
+		CCollaborativeEditing.prototype.applyChanges = function (oColor) {
 			var t = this;
 			var length = this.m_arrChanges.length;
 			var oApi = Asc.editor;
@@ -284,7 +284,7 @@
 				var changes = t.m_arrChanges.splice(0, length);
 				this.handlers.trigger("applyChanges", changes, function () {
 					t.handlers.trigger("updateAfterApplyChanges");
-				});
+				}, oColor);
 				oApi.sendEvent("asc_onApplyChanges");
 
 				return false;

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -93,9 +93,6 @@
 		g.init(this.pageImage.getContext("2d"), w, h, w_mm, h_mm);
 		g.m_oFontManager = AscCommon.g_fontManager;
 		g.transform(1, 0, 0, 1, 0, 0);
-
-		if (AscCommon.AscBrowser.isCustomScalingAbove2())
-			g.IsRetina = true;
 
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;

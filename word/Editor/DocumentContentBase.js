@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -58,7 +58,7 @@ CDocumentContentBase.prototype.GetId = function()
 };
 CDocumentContentBase.prototype.GetApi = function()
 {
-	return editor;
+	return Asc.editor;
 };
 /**
  * Получаем ссылку на основной объект документа
@@ -70,6 +70,10 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 		return this;
 
 	return this.LogicDocument;
+};
+CDocumentContentBase.prototype.getDrawingDocument = function()
+{
+	return this.GetApi().getDrawingDocument();
 };
 /**
  * Получаем тип активной части документа.
@@ -192,17 +196,18 @@ CDocumentContentBase.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 	}
 };
 
+
 /**
- * Finds a paragraph with a given style
- * @param {string} sStyleId - id of paragraph style
- * @param {boolean} bBackward - whether to search backward or forward
+ * Finds a paragraph which satisfies the specific condition
+ * @param {function} fCondition - represents the condition which paragraph should satisfy.
+ * @param {boolean} bBackward - whether to search backward or forward.
  * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
  * @returns {?Paragraph}
  */
-CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+CDocumentContentBase.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
-	var nIdx, oElement, oResultPara = null, oContent;
-	var nSearchStartIdx;
+	let nIdx, oElement, oResultPara = null, oContent;
+	let nSearchStartIdx;
 	if(bBackward)
 	{
 		if(nStartIdx !== null)
@@ -218,19 +223,19 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 			oElement = this.Content[nIdx];
 			if(oElement.GetType() === type_Paragraph)
 			{
-				if(oElement.GetParagraphStyle() === sStyleId)
+				if(fCondition(oElement))
 				{
 					oResultPara = oElement;
 				}
 			}
 			else if(oElement.GetType() === type_Table)
 			{
-				oResultPara = oElement.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oElement.FindParagraph(fCondition, bBackward, null);
 			}
 			else if(oElement.GetType() === type_BlockLevelSdt)
 			{
 				oContent = oElement.GetContent();
-				oResultPara = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oContent.FindParagraph(fCondition, bBackward, null);
 			}
 			if(oResultPara !== null)
 			{
@@ -253,19 +258,19 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 			oElement = this.Content[nIdx];
 			if(oElement.GetType() === type_Paragraph)
 			{
-				if(oElement.GetParagraphStyle() === sStyleId)
+				if(fCondition(oElement))
 				{
 					oResultPara = oElement;
 				}
 			}
 			else if(oElement.GetType() === type_Table)
 			{
-				oResultPara = oElement.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oElement.FindParagraph(fCondition, bBackward, null);
 			}
 			else if(oElement.GetType() === type_BlockLevelSdt)
 			{
 				oContent = oElement.GetContent();
-				oResultPara = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oContent.FindParagraph(fCondition, bBackward, null);
 			}
 			if(oResultPara !== null)
 			{
@@ -274,6 +279,37 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 		}
 	}
 	return null;
+};
+
+/**
+ * Finds a paragraph with a given style
+ * @param {string} sStyleId - id of paragraph style
+ * @param {boolean} bBackward - whether to search backward or forward
+ * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
+ * @returns {?Paragraph}
+ */
+CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+/**
+ * Finds a paragraph with a given outline level
+ * @param {number} nOutlineLvl - outline level of paragraph
+ * @param {boolean} bBackward - whether to search backward or forward
+ * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
+ * @returns {?Paragraph}
+ */
+CDocumentContentBase.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 
 /**
@@ -411,7 +447,7 @@ CDocumentContentBase.prototype.MoveCursorToNearestPos = function(oNearestPos)
 };
 CDocumentContentBase.prototype.private_CreateNewParagraph = function()
 {
-	var oPara = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
+	var oPara = new AscWord.Paragraph(this, this.bPresentation === true);
 	oPara.Correct_Content();
 	oPara.MoveCursorToStartPos(false);
 	return oPara;
@@ -1255,7 +1291,7 @@ CDocumentContentBase.prototype.private_AddContentControl = function(nContentCont
 				}
 				else
 				{
-					var oNewParagraph = new Paragraph(this.DrawingDocument, this);
+					var oNewParagraph = new AscWord.Paragraph();
 					oElement.Split(oNewParagraph);
 
 					this.AddToContent(nContentPos + 1, oNewParagraph);
@@ -1502,8 +1538,9 @@ CDocumentContentBase.prototype.GetTablesOfFigures = function(arrComplexFields)
 /**
  * Добавляем заданный текст в текущей позиции
  * @param {String} sText
+ * @param {AscWord.CTextPr} textPr
  */
-CDocumentContentBase.prototype.AddText = function(sText)
+CDocumentContentBase.prototype.AddText = function(sText, textPr)
 {
 	if (this.IsSelectionUse())
 		this.Remove(1, true, false, true, false);
@@ -1512,12 +1549,14 @@ CDocumentContentBase.prototype.AddText = function(sText)
 	if (!oParagraph)
 		return;
 
-	var oTextPr = oParagraph.GetDirectTextPr();
-	if (!oTextPr)
-		oTextPr = new CTextPr();
-
+	if (!textPr)
+		textPr = oParagraph.GetDirectTextPr();
+	
 	var oRun = new ParaRun(oParagraph);
-	oRun.SetPr(oTextPr);
+	
+	if (textPr)
+		oRun.SetPr(textPr);
+	
 	oRun.AddText(sText);
 	oParagraph.Add(oRun);
 };
@@ -2397,7 +2436,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 	paraPr.CanAddDropCap = this.CanAddDropCap();
 	
 	let logicDocument = this.GetLogicDocument();
-	if (logicDocument)
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
 		let selectedInfo = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
 
@@ -2426,18 +2465,18 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 		paraPr.Shd.Unifill.check(this.GetTheme(), this.GetColorMap());
 	
 	// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
-	if (logicDocument
-		&& logicDocument.IsDocumentEditor()
-		&& docpostype_DrawingObjects === logicDocument.GetDocPosType()
-		&& true !== paraPr.Locked)
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
-		if (drawing)
-			paraPr.Locked = drawing.Lock.Is_Locked();
+		if(docpostype_DrawingObjects === logicDocument.GetDocPosType() && true !== paraPr.Locked)
+		{
+			let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
+			if (drawing)
+				paraPr.Locked = drawing.Lock.Is_Locked();
+		}
+		paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
+		api.sync_ParaStyleName(paraPr.StyleName);
 	}
-	
-	paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
-	api.sync_ParaStyleName(paraPr.StyleName);
+
 	api.UpdateParagraphProp(paraPr);
 };
 CDocumentContentBase.prototype.CanAddDropCap = function()
@@ -2613,6 +2652,20 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
+CDocumentContentBase.prototype.setSelectionStateSilent = function(state)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && !logicDocument.IsDocumentEditor())
+		logicDocument = null;
+
+	if (logicDocument)
+		logicDocument.Start_SilentMode();
+	
+	this.SetSelectionState(state);
+	
+	if (logicDocument)
+		logicDocument.End_SilentMode(false);
+};
 CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action)
 {
 	if (!prevState)
@@ -2629,10 +2682,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	let obj  = {};
 	let type = AscCommon.SpeechWorkerCommands.Text;
 	
-	this.SetSelectionState(prevState);
+	this.setSelectionStateSilent(prevState);
 	let prevInfo = this.getSelectionInfo();
 	
-	this.SetSelectionState(curState);
+	this.setSelectionStateSilent(curState);
 	let curInfo = this.getSelectionInfo();
 	
 	let isActionSelectionChange = action && action.type === AscCommon.SpeakerActionType.keyDown && action.event.ShiftKey;
@@ -2666,10 +2719,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 		if (prevInfo.isSelection && !curInfo.isSelection && isActionSelectionChange)
 		{
 			obj.cancelSelection = true;
-			this.SetSelectionState(prevState);
+			this.setSelectionStateSilent(prevState);
 			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 			obj.text = this.GetSelectedText(false);
-			this.SetSelectionState(curState);
+			this.setSelectionStateSilent(curState);
 		}
 		else if (!curInfo.isSelection || 0 === AscWord.CompareDocumentPositions(curInfo.selectionStart, curInfo.selectionEnd))
 		{
@@ -2680,10 +2733,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 			{
 				if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
 				{
-					this.SetSelectionState(prevState);
+					this.setSelectionStateSilent(prevState);
 					type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
-					this.SetSelectionState(curState);
+					this.setSelectionStateSilent(curState);
 				}
 				else
 				{
@@ -2750,10 +2803,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) < 0)))
 				{
 					// TODO: Нужно ли посылать два ивента?
-					// this.SetSelectionState(prevState);
+					// this.setSelectionStateSilent(prevState);
 					// type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 					// obj.text = this.GetSelectedText(false);
-					// this.SetSelectionState(curState);
+					// this.setSelectionStateSilent(curState);
 					
 					type     = AscCommon.SpeechWorkerCommands.TextSelected;
 					obj.text = this.GetSelectedText(false);
@@ -2771,7 +2824,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
 					
-					this.SetSelectionState(curState);
+					this.setSelectionStateSilent(curState);
 				}
 			}
 		}

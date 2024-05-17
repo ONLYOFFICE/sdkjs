@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -60,7 +60,7 @@ function (window, undefined) {
 
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
 	cFormulaFunctionGroup['TextAndData'].push(cARRAYTOTEXT, cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
-		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
+		cEXACT, cFIND, cFINDB, cFIXED, cIMPORTRANGE, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
 		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
 
@@ -189,7 +189,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.isXLFN = true;
 	cARRAYTOTEXT.prototype.argumentsMin = 1;
 	cARRAYTOTEXT.prototype.argumentsMax = 2;
-	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
 		function arrayToTextGeneral(args, isRange) {
@@ -547,19 +547,32 @@ function (window, undefined) {
 	cCONCAT.prototype.argumentsType = [[argType.text]];
 	cCONCAT.prototype.isXLFN = true;
 	cCONCAT.prototype.Calculate = function (arg) {
-		var arg0 = new cString(""), argI;
+		let arg0 = new cString(""), argI;
 
-		for (var i = 0; i < arg.length; i++) {
+
+		let _checkMaxStringLength = function () {
+			let maxStringLength = 32767;
+			let _str = arg0 && arg0.toString && arg0.toString();
+			if (_str && _str.length > maxStringLength) {
+				return false;
+			}
+			return true;
+		};
+
+		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
 
 			if (cElementType.cellsRange === argI.type || cElementType.cellsRange3D === argI.type) {
-				var _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
-				for (var j = 0; j < _arrVal.length; j++) {
-					var _arrElem = _arrVal[j].toLocaleString();
+				let _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
+				for (let j = 0; j < _arrVal.length; j++) {
+					let _arrElem = _arrVal[j].toLocaleString();
 					if (cElementType.error === _arrElem.type) {
 						return _arrVal[j];
 					} else {
 						arg0 = new cString(arg0.toString().concat(_arrElem));
+					}
+					if (!_checkMaxStringLength()) {
+						return new cError(cErrorType.wrong_value_type)
 					}
 				}
 			} else if (cElementType.cell === argI.type || cElementType.cell3D === argI.type) {
@@ -580,6 +593,10 @@ function (window, undefined) {
 
 						arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
 
+						if (!_checkMaxStringLength()) {
+							arg0 = new cError(cErrorType.wrong_value_type);
+							return true;
+						}
 					});
 					if (cElementType.error === arg0.type) {
 						return arg0;
@@ -589,6 +606,11 @@ function (window, undefined) {
 				}
 			}
 		}
+
+		if (!_checkMaxStringLength()) {
+			return new cError(cErrorType.wrong_value_type)
+		}
+
 		return arg0;
 	};
 
@@ -1148,6 +1170,104 @@ function (window, undefined) {
 		return new cString(oNumFormatCache.get("#" + (arg2.toBool() ? "" : ",") + "##0" + cNull)
 			.format(roundHelper(number, num_digits).getValue(), CellValueType.Number,
 				AscCommon.gc_nMaxDigCount)[0].text)
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cIMPORTRANGE() {
+	}
+
+	cIMPORTRANGE.prototype = Object.create(cBaseFunction.prototype);
+	cIMPORTRANGE.prototype.constructor = cIMPORTRANGE;
+	cIMPORTRANGE.prototype.name = 'IMPORTRANGE';
+	cIMPORTRANGE.prototype.argumentsMin = 2;
+	cIMPORTRANGE.prototype.argumentsMax = 2;
+	cIMPORTRANGE.prototype.isXLUDF = true;
+	cIMPORTRANGE.prototype.argumentsType = [argType.reference, argType.text];
+	cIMPORTRANGE.prototype.Calculate = function (arg) {
+		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
+		//not allow area/area3d
+		//if first argument - link, when - text only inside " "
+		//if second argument - link, when - text only without " "
+
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			return new cError(cErrorType.not_available);
+		}
+
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		}
+
+		arg0 = arg0.tocString();
+		arg1 = arg1.tocString();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		//check valid arguments strings
+		let is3DRef = AscCommon.parserHelp.parse3DRef(arg1.toString());
+		if (!is3DRef) {
+			return new cError(cErrorType.bad_reference);
+		}
+
+		if (AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks) {
+			if (!AscCommonExcel.importRangeLinksState.importRangeLinks) {
+				AscCommonExcel.importRangeLinksState.importRangeLinks = {};
+			}
+			let linkName = arg0.toString();
+			if (!AscCommonExcel.importRangeLinksState.importRangeLinks[linkName]) {
+				AscCommonExcel.importRangeLinksState.importRangeLinks[linkName] = [];
+			}
+			AscCommonExcel.importRangeLinksState.importRangeLinks[linkName].push(is3DRef);
+		}
+
+		let api = window["Asc"]["editor"];
+		let wb = api && api.wbModel;
+		let eR = wb && wb.getExternalLinkByName(arg0.toString());
+		let ret = new cArray();
+		if (eR) {
+			let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
+			if (externalWs) {
+				let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
+
+				if (is3DRef.sheet) {
+					let index = eR.getSheetByName(is3DRef.sheet);
+					if (index != null) {
+						let externalSheetDataSet = eR.SheetDataSet[index];
+						for (let i = bbox.r1; i <= bbox.r2; i++) {
+							let row = externalSheetDataSet.getRow(i + 1);
+							if (!row) {
+								continue;
+							}
+							if (!ret.array[i - bbox.r1]) {
+								ret.addRow();
+							}
+							for (let j = bbox.c1; j <= bbox.c2; j++) {
+								let externalCell = row.getCell(j);
+								if (externalCell) {
+									let cellValue = externalCell.getFormulaValue();
+									ret.addElement(cellValue);
+								}
+							}
+						}
+					}
+				}
+				return ret;
+			}
+		}
+		return new cError(cErrorType.bad_reference);
 	};
 
 	/**

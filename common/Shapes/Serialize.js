@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -155,6 +155,7 @@ function BinaryPPTYLoader()
     this.TempGroupObject = null;
     this.TempMainObject = null;
 
+    this.IsFillingSmartArt = false;
     this.IsThemeLoader = false;
     this.Api = null;
 
@@ -5780,7 +5781,7 @@ function BinaryPPTYLoader()
                             if (AscCommonWord.c_oSer_OMathContentType.OMath === type2)
                             {
                                 var oReadResult = new AscCommonWord.DocReadResult(null);
-                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscCommonWord.Paragraph(this.DrawingDocument, null, true));
+                                var oMathPara = this.ReadMathObject(s, oReadResult, new AscWord.Paragraph(null, true));
                                 ole.setMathObject(oMathPara);
                             }
                             else
@@ -6617,6 +6618,7 @@ function BinaryPPTYLoader()
 
         s.Skip2(5); // type SPTREE + len
 
+        let bIsNoSlideSpTree = this.TempMainObject && AscFormat.isRealNumber(this.TempMainObject.kind) && (this.TempMainObject.kind !== AscFormat.TYPE_KIND.SLIDE);
         while (s.cur < _end_rec)
         {
             var _at = s.GetUChar();
@@ -6652,7 +6654,7 @@ function BinaryPPTYLoader()
                             case 1:
                             {
                                 var _object = this.ReadShape();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
@@ -6665,7 +6667,7 @@ function BinaryPPTYLoader()
                             case 8:
                             {
                                 var _object = this.ReadPic(_type);
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     if(_type !== 6 || _object.checkCorrect())
                                     {
@@ -6678,7 +6680,7 @@ function BinaryPPTYLoader()
                             case 3:
                             {
                                 var _object = this.ReadCxn();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
@@ -6688,7 +6690,7 @@ function BinaryPPTYLoader()
                             case 4:
                             {
                                 var _object = this.ReadGroupShape();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
@@ -7039,6 +7041,7 @@ function BinaryPPTYLoader()
         var _table = null;
         var _chart = null;
         var _slicer = null;
+        var _timeslicer = null;
         var _smartArt = null;
 
         while (s.cur < _end_rec)
@@ -7107,6 +7110,19 @@ function BinaryPPTYLoader()
                     _smartArt = this.ReadSmartArt();
                     break;
                 }
+                case 9:
+                {
+                    if (typeof AscFormat.CTimeslicer !== "undefined")
+                    {
+                        _timeslicer = new AscFormat.CTimeslicer();
+                        _timeslicer.fromStream(s);
+                    }
+                    else
+                    {
+                        s.SkipRecord();
+                    }
+                    break;
+                }
                 case 0xA1:
                 {
                     _graphic_frame.readMacro(s);
@@ -7123,7 +7139,7 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
 
         this.TempGroupObject = null;
-        if (_table == null && _chart == null && _slicer == null && _smartArt == null)
+        if (_table == null && _chart == null && _slicer == null && _smartArt == null && _timeslicer == null)
             return null;
 
         if (_table != null)
@@ -7167,6 +7183,20 @@ function BinaryPPTYLoader()
                 }
             }
             return _slicer;
+        }
+        else if(_timeslicer != null)
+        {
+            _timeslicer.setBDeleted(false);
+            _timeslicer.checkEmptySpPrAndXfrm(_xfrm);
+            if(AscCommon.isRealObject(_nvGraphicFramePr) )
+            {
+                _timeslicer.setNvSpPr(_nvGraphicFramePr);
+                if(AscFormat.isRealNumber(_nvGraphicFramePr.locks))
+                {
+                    _timeslicer.setLocks(_nvGraphicFramePr.locks);
+                }
+            }
+            return _timeslicer;
         }
         else if(_smartArt != null)
         {
@@ -8521,7 +8551,7 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    if(!this.IsThemeLoader)
+                    if(!(this.IsThemeLoader || this.IsFillingSmartArt))
                     {
                         var nLcid = Asc.g_oLcidNameToIdMap[lang];
                         if(nLcid)
@@ -9713,7 +9743,6 @@ function BinaryPPTYLoader()
                     {
                         s.Skip2(1); // type
                         var _paragraph = this.ReadParagraph(txbody.content);
-                        _paragraph.Correct_Content();
                         txbody.content.Internal_Content_Add(txbody.content.Content.length, _paragraph);
 
                     }
@@ -9852,7 +9881,7 @@ function BinaryPPTYLoader()
 
     this.ReadParagraph = function(DocumentContent)
     {
-        var par = new Paragraph(DocumentContent.DrawingDocument, DocumentContent, true);
+        var par = new AscWord.Paragraph(DocumentContent, true);
 
         var EndPos = 0;
 
@@ -10182,6 +10211,7 @@ function BinaryPPTYLoader()
             }
         }
         s.Seek2(_end_rec);
+        par.Correct_Content();
         return par;
     };
 

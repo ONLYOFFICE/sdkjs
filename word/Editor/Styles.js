@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -7742,7 +7742,7 @@ CStyle.prototype.wholeToTablePr = function() {
 };
 /**
  * Получаем список параграфов, использующих данный стиль, либо стиль, основанный на данном
- * @returns {AscWord.CParagraph[]}
+ * @returns {AscWord.Paragraph[]}
  */
 CStyle.prototype.GetRelatedParagraphs = function()
 {
@@ -10421,6 +10421,10 @@ CDocumentColor.prototype =
         return true;
     }
 };
+CDocumentColor.prototype.isBlackAutoColor = function()
+{
+	return this.Check_BlackAutoColor();
+};
 CDocumentColor.prototype.WriteToBinary = function(oWriter)
 {
 	this.Write_ToBinary(oWriter);
@@ -10687,7 +10691,7 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 		var RGBA = this.ThemeFill.getRGBAColor();
 		oFillColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
-	else if (undefined !== this.Fill)
+	else if (this.Fill && !this.Fill.IsAuto())
 	{
 		oFillColor = this.Fill;
 	}
@@ -10700,7 +10704,7 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 		var RGBA = this.Unifill.getRGBAColor();
 		oStrokeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
-	else if (undefined !== this.Color)
+	else if (this.Color && !this.Color.IsAuto())
 	{
 		oStrokeColor = this.Color;
 	}
@@ -10870,13 +10874,13 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 
 	return oResultColor;
 };
-CDocumentShd.prototype.private_GetPctShdColor = function(nPct, oColor1, oColor2)
+CDocumentShd.prototype.private_GetPctShdColor = function(nPct, strokeColor, fillColor)
 {
 	var _nPct = 1 - nPct;
 	return new CDocumentColor(
-		(oColor1.r * nPct + oColor2.r * _nPct) | 0,
-		(oColor1.g * nPct + oColor2.g * _nPct) | 0,
-		(oColor1.b * nPct + oColor2.b * _nPct) | 0,
+		(strokeColor.r * nPct + fillColor.r * _nPct) | 0,
+		(strokeColor.g * nPct + fillColor.g * _nPct) | 0,
+		(strokeColor.b * nPct + fillColor.b * _nPct) | 0,
 		false
 	);
 };
@@ -14679,26 +14683,9 @@ CTextPr.prototype.Check_NeedRecalc = function()
 
 	return false;
 };
-CTextPr.prototype.Get_FontKoef = function()
+CTextPr.prototype.getFontCoef = function()
 {
-	var dFontKoef = 1;
-
-	switch (this.VertAlign)
-	{
-		case AscCommon.vertalign_Baseline:
-		{
-			dFontKoef = 1;
-			break;
-		}
-		case AscCommon.vertalign_SubScript:
-		case AscCommon.vertalign_SuperScript:
-		{
-			dFontKoef = AscCommon.vaKSize;
-			break;
-		}
-	}
-
-	return dFontKoef;
+	return (AscCommon.vertalign_SubScript === this.VertAlign || AscCommon.vertalign_SubScript === this.VertAlign ? AscCommon.vaKSize : 1);
 };
 CTextPr.prototype.Document_Get_AllFontNames = function(AllFonts)
 {
@@ -15177,7 +15164,8 @@ CTextPr.prototype.FillFromExcelFont = function(oFont)
 	this.SetFontSize(oFont.getSize());
 	this.SetBold(oFont.getBold());
 	this.SetItalic(oFont.getItalic());
-	this.SetUnderline(oFont.getUnderline());
+	let bUnderline = (oFont.getUnderline() !== Asc.EUnderline.underlineNone);
+	this.SetUnderline(bUnderline);
 	var oColor = oFont.getColor();
 	this.SetUnifill(AscFormat.CreateSolidFillRGBA(oColor.getR(), oColor.getG(), oColor.getB(), 255));
 };
@@ -18345,6 +18333,9 @@ window["AscWord"].DEFAULT_TABLE_PR       = g_oDocumentDefaultTablePr;
 window["AscWord"].DEFAULT_TABLE_CELL_PR  = g_oDocumentDefaultTableCellPr;
 window["AscWord"].DEFAULT_TABLE_ROW_PR   = g_oDocumentDefaultTableRowPr;
 window["AscWord"].DEFAULT_TABLE_STYLE_PR = g_oDocumentDefaultTableStylePr;
+
+AscWord.BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0, false);
+AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
 
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);

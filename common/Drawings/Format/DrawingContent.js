@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -468,10 +468,7 @@
             var oSection = this.Pages[0].Sections[0];
             if(oSection){
 
-                if (pGraphics.Start_Command)
-                {
-                    pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
-                }
+                pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
 
                 for (var ColumnIndex = 0, ColumnsCount = oSection.Columns.length; ColumnIndex < ColumnsCount; ++ColumnIndex)
                 {
@@ -503,10 +500,7 @@
                      }*/
                 }
 
-                if (pGraphics.End_Command)
-                {
-                    pGraphics.End_Command();
-                }
+                pGraphics.End_Command();
             }
 
             else{
@@ -820,6 +814,18 @@
 			oField.Refresh_RecalcData2();
 		}
 	};
+
+    CDrawingDocContent.prototype.getDrawingDocument = function() {
+        if(this.Parent && this.Parent.getDrawingDocument) {
+            return this.Parent.getDrawingDocument();
+        }
+        return null;
+    };
+    CDrawingDocContent.prototype.GetLogicDocument = function() {
+        if(Asc.editor.private_GetLogicDocument)
+            return Asc.editor.private_GetLogicDocument();
+        return null;
+    };
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {

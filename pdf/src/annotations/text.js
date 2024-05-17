@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -86,7 +86,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._strokeColor   = [1, 0.82, 0];
+        this._fillColor     = [1, 0.82, 0];
 
         // internal
         TurnOffHistory();
@@ -197,7 +197,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         if (this._pagePos) {
             oNewAnnot._pagePos = {
@@ -214,7 +214,7 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetStrokeColor(this.GetStrokeColor());
+        oNewAnnot.SetFillColor(this.GetFillColor());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
@@ -231,7 +231,7 @@
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        let oRGB            = this.GetRGBColor(this.GetStrokeColor());
+        let oRGB            = this.GetRGBColor(this.GetFillColor());
         let ICON_TO_DRAW    = this.GetIconImg();
 
         let aRect       = this.GetRect();
@@ -311,6 +311,9 @@
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
+    CAnnotationText.prototype.getObjectType = function() {
+        return -1;
+    };
     
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -349,10 +352,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
     // CAnnotationText.prototype.ClearCache = function() {};
     function TurnOffHistory() {

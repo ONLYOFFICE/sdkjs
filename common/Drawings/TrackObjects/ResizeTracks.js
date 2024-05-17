@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -862,7 +862,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipV = false;
             }
             
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && this.originalObject.IsPdfObject) {
                 let xMin = this.resizedPosX;
                 let xMax = this.resizedPosX + this.resizedExtX;
                 let yMin = this.resizedPosY;
@@ -1234,7 +1234,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 {
                     oObjectToSet.setLayout(new AscFormat.CLayout());
                 }
-                var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                let pos;
+                if(this.originalObject.parent && this.originalObject.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject.parent);
+                    pos = {x: pos.coordinate.catVal, y: pos.coordinate.valVal};
+                }
+                else {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                }
                 oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
                 oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
                 if(oObjectToSet instanceof AscFormat.CPlotArea)
@@ -1352,17 +1359,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 }
                 if(this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_OleObject)
                 {
-                    var api = window.editor || window["Asc"]["editor"];
-                    if(api)
-                    {
-                        var pluginData = new Asc.CPluginData();
-                        pluginData.setAttribute("data", this.originalObject.m_sData);
-                        pluginData.setAttribute("guid", this.originalObject.m_sApplicationId);
-                        pluginData.setAttribute("width", xfrm.extX);
-                        pluginData.setAttribute("height", xfrm.extY);
-                        pluginData.setAttribute("objectId", this.originalObject.Get_Id());
-                        api.asc_pluginResize(pluginData);
-                    }
+                    this.originalObject.callPluginOnResize();
                 }
 
                 if(this.bConnector){
