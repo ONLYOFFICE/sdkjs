@@ -15893,6 +15893,14 @@
 
     function AddToContentFromString(content, str) {
         content.MoveCursorToStartPos(false);
+        if(content.IsEmpty()) {
+            let aFirstPara = content.Content[0];
+            if(aFirstPara.Content.length === 2) {// 0 - empty run, 1 - paraEnd run
+                let oFirstRun = aFirstPara.Content[0];
+                oFirstRun.AddText(str);
+                return;
+            }
+        }
         content.AddText(str);
     }
 

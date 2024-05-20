@@ -710,7 +710,7 @@ function(window, undefined) {
 				this.aLabels[i].updatePosition(x, y);
 		}
 	};
-	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth) {
+	CLabelsBox.prototype.layoutHorNormal = function (fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth, parameters) {
 		this.bRotated = false;
 		this.align = (fDistance >= 0);
 		let fMaxHeight = 0.0;
@@ -720,41 +720,50 @@ function(window, undefined) {
 		}
 		let oFirstLabel = null, fFirstLabelCenterX = null, oLastLabel = null, fLastLabelCenterX = null;
 		let fContentWidth = fForceContentWidth ? fForceContentWidth : Math.abs(fInterval);
+		let nLblTickSkip = 1;
+		if (parameters) {
+			nLblTickSkip = parameters.nLblTickSkip;
+			fContentWidth = fContentWidth * nLblTickSkip;
+		}
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
 		for (let i = 0; i < this.aLabels.length; ++i) {
 			if (this.aLabels[i]) {
-				var oLabel = this.aLabels[i];
-				var oContent = oLabel.tx.rich.content;
-				oContent.Reset(0, 0, fContentWidth, 20000.0);
-				oContent.Recalculate_Page(0, true);
-				var fCurHeight = oContent.GetSummaryHeight();
-				if (fCurHeight > fMaxHeight) {
-					fMaxHeight = fCurHeight;
-				}
-				var fX, fY;
-				fX = fCurX + fHorShift;
-				if (fDistance >= 0.0) {
-					fY = fAxisY + fDistance;
+				if (i % nLblTickSkip != 0) {
+					this.aLabels[i] = null;
 				} else {
-					fY = fAxisY + fDistance - fCurHeight;
+					var oLabel = this.aLabels[i];
+					var oContent = oLabel.tx.rich.content;
+					oContent.Reset(0, 0, fContentWidth, 20000.0);
+					oContent.Recalculate_Page(0, true);
+					var fCurHeight = oContent.GetSummaryHeight();
+					if (fCurHeight > fMaxHeight) {
+						fMaxHeight = fCurHeight;
+					}
+					var fX, fY;
+					fX = fCurX + fHorShift;
+					if (fDistance >= 0.0) {
+						fY = fAxisY + fDistance;
+					} else {
+						fY = fAxisY + fDistance - fCurHeight;
+					}
+					let oTransform = oLabel.transformText;
+					oTransform.Reset();
+					global_MatrixTransformer.TranslateAppend(oTransform, fX, fY);
+					oTransform = oLabel.localTransformText;
+					oTransform.Reset();
+					global_MatrixTransformer.TranslateAppend(oTransform, fX, fY);
+	
+	
+					if (oFirstLabel === null) {
+						oFirstLabel = oLabel;
+						fFirstLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
+					}
+					oLastLabel = oLabel;
+					fLastLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
+	
+					fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
 				}
-				let oTransform = oLabel.transformText;
-				oTransform.Reset();
-				global_MatrixTransformer.TranslateAppend(oTransform, fX, fY);
-				oTransform = oLabel.localTransformText;
-				oTransform.Reset();
-				global_MatrixTransformer.TranslateAppend(oTransform, fX, fY);
-
-
-				if (oFirstLabel === null) {
-					oFirstLabel = oLabel;
-					fFirstLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
-				}
-				oLastLabel = oLabel;
-				fLastLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
-
-				fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
 			}
 			fCurX += fInterval;
 		}
@@ -787,99 +796,259 @@ function(window, undefined) {
 			this.extY = fMaxHeight - fDistance;
 		}
 	};
-	CLabelsBox.prototype.layoutHorRotated = function (fAxisY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark) {
+	CLabelsBox.prototype.layoutHorRotated = function (fAxisY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark, parameters) {
 		this.bRotated = true;
 		this.align = (fDistance >= 0);
 		var bTickLblSkip = AscFormat.isRealNumber(this.axis.tickLblSkip);
 		if (bTickLblSkip) {
-			this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
+			this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark, parameters);
 		} else {
+			if (parameters) {
+				this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark, parameters);
+			} else {
+				// manually search for parameters 
+				var fAngle = Math.PI / 4.0, fMultiplier = Math.sin(fAngle);
+				var aLabelsSource = [].concat(this.aLabels);
+				var oLabel = aLabelsSource[0];
+				var i = 1;
+				while (!oLabel && i < aLabelsSource.length) {
+					oLabel = aLabelsSource[i++];
+				}
+				if (oLabel) {
+					var oContent = oLabel.tx.rich.content;
+					oContent.SetApplyToAll(true);
+					oContent.SetParagraphAlign(AscCommon.align_Left);
+					oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
+					oContent.SetApplyToAll(false);
+					var oSize = oLabel.tx.rich.getContentOneStringSizes();
+					var fInset = fMultiplier * (oSize.h);
+					fInset *= 2;
+					if (fInset <= fInterval) {
+						this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
+					} else {
 
-			var fAngle = Math.PI / 4.0, fMultiplier = Math.sin(fAngle);
-			var aLabelsSource = [].concat(this.aLabels);
-			var oLabel = aLabelsSource[0];
-			var i = 1;
-			while (!oLabel && i < aLabelsSource.length) {
-				oLabel = aLabelsSource[i++];
-			}
-			if (oLabel) {
-				var oContent = oLabel.tx.rich.content;
-				oContent.SetApplyToAll(true);
-				oContent.SetParagraphAlign(AscCommon.align_Left);
-				oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
-				oContent.SetApplyToAll(false);
-				var oSize = oLabel.tx.rich.getContentOneStringSizes();
-				var fInset = fMultiplier * (oSize.h);
-				fInset *= 2;
-				if (fInset <= fInterval) {
-					this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
-				} else {
 
-
-					var nIntervalCount = bOnTickMark ? this.count - 1 : this.count;
-					var fInterval_ = Math.abs(fXEnd - fXStart) / nIntervalCount;
-					var nLblTickSkip = (fInset / fInterval_ + 0.5) >> 0;
-					var aLabels = [].concat(aLabelsSource);
-					var index = 0;
-					if (nLblTickSkip > 1) {
-						for (i = 0; i < aLabels.length; ++i) {
-							if (aLabels[i]) {
-								if ((index % nLblTickSkip) !== 0) {
-									aLabels[i] = null;
+						var nIntervalCount = bOnTickMark ? this.count - 1 : this.count;
+						var fInterval_ = Math.abs(fXEnd - fXStart) / nIntervalCount;
+						var nLblTickSkip = (fInset / fInterval_ + 0.5) >> 0;
+						var aLabels = [].concat(aLabelsSource);
+						var index = 0;
+						if (nLblTickSkip > 1) {
+							for (i = 0; i < aLabels.length; ++i) {
+								if (aLabels[i]) {
+									if ((index % nLblTickSkip) !== 0) {
+										aLabels[i] = null;
+									}
+									index++;
 								}
-								index++;
 							}
 						}
+						this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
 					}
-					this.layoutHorRotated2(aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
 				}
 			}
 		}
-
 	};
-	CLabelsBox.prototype.layoutHorRotated2 = function (aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark) {
+	CLabelsBox.prototype.layoutHorRotated2 = function (aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark, parameters) {
 		this.bRotated = true;
 		this.align = (fDistance >= 0);
-		var i;
 		var fMaxHeight = 0.0;
 		var fCurX = bOnTickMark ? fXStart : fXStart + fInterval / 2.0;
-		var fAngle = Math.PI / 4.0, fMultiplier = Math.sin(fAngle);
+		let fAngle = parameters ? Math.PI : Math.PI / 4.0;
+		const fMultiplier = Math.sin(fAngle);
+		let sinAlpha = null;
+		let cosAlpha = null;
 		var fMinLeft = null, fMaxRight = null;
-		for (i = 0; i < aLabels.length; ++i) {
-			if (aLabels[i]) {
-				var oLabel = aLabels[i];
-				var oContent = oLabel.tx.rich.content;
-				oContent.SetApplyToAll(true);
-				oContent.SetParagraphAlign(AscCommon.align_Left);
-				oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
-				oContent.SetApplyToAll(false);
-				var oSize = oLabel.tx.rich.getContentOneStringSizes();
-				var fBoxW = fMultiplier * (oSize.w + oSize.h);
-				var fBoxH = fBoxW;
-				if (fBoxH > fMaxHeight) {
-					fMaxHeight = fBoxH;
-				}
-				var fX1, fY0, fXC, fYC;
-				fY0 = fAxisY + fDistance;
-				if (fDistance >= 0.0) {
-					fXC = fCurX - oSize.w * fMultiplier / 2.0;
-					fYC = fY0 + fBoxH / 2.0;
+		let nLblTickSkip = 1;
+		let rotatedMaxWidth = null;
+		let direction = 1;
+
+		if (parameters) {
+			fAngle = getRotationAngle(parameters.rot);
+			sinAlpha = Math.abs(Math.sin(fAngle));
+			cosAlpha = Math.abs(Math.cos(fAngle));
+			// direction indecates whether angle is positive or negative. 
+			// direction = isRot && parameters.rot > 0 ? 1 : -1;
+			rotatedMaxWidth = (cosAlpha + sinAlpha) * parameters.maxHeight;
+			nLblTickSkip = parameters.nLblTickSkip;
+			direction =  parameters.rot > 0 ? 1 : -1;
+		}
+
+		const getSquareWidth = function (direction, oLabel, labelheight) {
+			const contents = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0].Content : null;
+			let oSize = oLabel.tx.rich.getContentOneStringSizes();
+			if (!contents) {
+				return;
+			}
+
+			let runTexts = contents[0].Content;
+			let squareWidth = 0;
+			let size = runTexts.length;
+			if (size > 0) {
+				if (direction) {
+					squareWidth = runTexts[0].GetWidth(oLabel.txPr);
 				} else {
-					//fX1 = fCurX - oSize.h*fMultiplier;
-					fXC = fCurX + oSize.w * fMultiplier / 2.0;
-					fYC = fY0 - fBoxH / 2.0;
+					squareWidth = runTexts[size - 1].GetWidth(oLabel.txPr);
 				}
-				var oTransform = oLabel.localTransformText;
-				oTransform.Reset();
-				global_MatrixTransformer.TranslateAppend(oTransform, -oSize.w / 2.0, -oSize.h / 2.0);
-				global_MatrixTransformer.RotateRadAppend(oTransform, fAngle);
-				global_MatrixTransformer.TranslateAppend(oTransform, fXC, fYC);
-				oLabel.transformText = oTransform.CreateDublicate();
-				if (null === fMinLeft || (fXC - fBoxW / 2.0) < fMinLeft) {
-					fMinLeft = fXC - fBoxW / 2.0;
+
+				// we need lowest out of height and width;
+				squareWidth = squareWidth > labelheight ? labelheight : squareWidth;
+			}
+
+			return squareWidth;
+		}
+
+		const getTranslationX = function (direction, squareWidth, labelWidth) {
+			return direction > 0 ? -squareWidth / 2.0 : (squareWidth / 2.0) - labelWidth;
+		}
+
+		const addDots = function (sliced, oLabel) {
+			const contents = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0].Content : null;
+			if (!sliced || !contents) {
+				return;
+			}
+			let size = contents[0].Content.length;
+			contents[0].AddToContent(size++,new AscWord.CRunText(46), true);
+			contents[0].AddToContent(size++,new AscWord.CRunText(46), true);
+			contents[0].AddToContent(size++,new AscWord.CRunText(46), true);
+			oLabel.txBody.content.Recalculate_Page(0, true);
+		}
+
+		const sliceLabel = function (oLabel, maxWidth) {
+			const paragraph = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0] : null
+			const contents = paragraph ? paragraph.Content : null;
+			let oSize = oLabel.tx.rich.getContentOneStringSizes();
+			if (!paragraph || !contents || !maxWidth) {
+				return;
+			}
+
+			let runTexts = contents[0].Content;
+			// runTexts.push(dot);
+			oLabel.txBody.content.RecalculateContent(maxWidth, oSize.h, 2);
+
+			// check if space exists
+			let multiLine = paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1;
+			let addDots = false;
+
+			// multilines should be spliced with rotation
+			if (runTexts && multiLine) {
+				contents[0].Content = [];
+				let left = 0;
+				let right = runTexts.length;
+				let mid = null;
+				while(right - left > 1) {
+					mid = (right + left) / 2 + 0.5 >> 0;
+					contents[0].Content = runTexts.slice(0, mid - 1);
+					oSize = oLabel.tx.rich.getContentOneStringSizes();
+					multiLine = paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1;
+					if(multiLine) {
+						right = mid;
+					} else {
+						left = mid;
+					}
 				}
-				if (null === fMaxRight || (fXC + fBoxW / 2.0) > fMaxRight) {
-					fMaxRight = fXC + fBoxW / 2.0;
+				contents[0].Content = runTexts.slice(0, left);
+				oSize = oLabel.tx.rich.getContentOneStringSizes();
+				if (paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1 && left > 0) {
+					contents[0].Content = runTexts.slice(0, --left);
+				}
+				addDots = true;
+			}
+
+
+			// obtain some parameter that indicates overWidth
+			let overWidth = oSize.w > maxWidth;
+
+
+			if (runTexts && overWidth) {
+				contents[0].Content = [];
+				let left = 0;
+				let right = runTexts.length;
+				let mid = null;
+				while(right - left > 1) {
+					mid = (right + left) / 2 + 0.5 >> 0;
+					contents[0].Content = runTexts.slice(0, mid - 1);
+					oSize = oLabel.tx.rich.getContentOneStringSizes();
+					overWidth = oSize.w > maxWidth;
+					if(overWidth) {
+						right = mid;
+					} else {
+						left = mid;
+					}
+				}
+				contents[0].Content = runTexts.slice(0, left);
+				oSize = oLabel.tx.rich.getContentOneStringSizes();
+				if (oSize.w > maxWidth && left > 0) {
+					contents[0].Content = runTexts.slice(0, --left);
+				}
+				return true;
+			}
+
+			return addDots;
+
+			// here is the manual iteration through all the runtext items to find a proper width
+			// // remove all characters after maxWidth achieved
+			// if (runTexts) {
+			// 	let sum = 0;
+			// 	let i = 0;
+			// 	// add the sizes of each element, to find the index of last possible element
+			// 	while (sum < maxWidth && i < runTexts.length) {
+			// 		const width = runTexts[i].GetWidth(oLabel.txPr);
+			// 		sum += width;
+			// 		i++;
+			// 	}
+			// 	//count items that must be removed
+			// 	const countItems = runTexts.length - i;
+			// 	runTexts.splice(i, countItems);
+			// }
+		}
+
+		for (let i = 0; i < aLabels.length; ++i) {
+			if (aLabels[i]) {
+				if (i % nLblTickSkip !== 0) {
+					this.aLabels[i] = null;
+				} else {
+					var oLabel = aLabels[i];
+					const sliced = sliceLabel(oLabel, rotatedMaxWidth);
+					var oContent = oLabel.tx.rich.content;
+					oContent.SetApplyToAll(true);
+					oContent.SetParagraphAlign(AscCommon.align_Left);
+					oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
+					oContent.SetApplyToAll(false);
+					var oSize = oLabel.tx.rich.getContentOneStringSizes();
+					// create a square around which rotation will be made;
+					const squareWidth = getSquareWidth(direction, oLabel, oSize.h);
+					addDots(sliced, oLabel);
+					let fBoxW = parameters ? (cosAlpha * oSize.w) + (sinAlpha * oSize.h) : fMultiplier * (oSize.w + oSize.h);
+					var fBoxH = parameters ? (sinAlpha * oSize.w) + (cosAlpha * oSize.h) : fBoxW;
+					if (fBoxH > fMaxHeight) {
+						fMaxHeight = fBoxH;
+					}
+					var fX1, fY0, fXC, fYC;
+					fY0 = fAxisY + fDistance;
+					if (fDistance >= 0.0) {
+						fXC = parameters ? fCurX : fCurX - oSize.w * fMultiplier / 2.0;
+						fYC = parameters ? fY0 + squareWidth / 2.0 : fY0 + fBoxH / 2.0;
+					} else {
+						//fX1 = fCurX - oSize.h*fMultiplier;
+						fXC = fCurX + oSize.w * fMultiplier / 2.0;
+						fYC = fY0 - fBoxH / 2.0;
+					}
+					var oTransform = oLabel.localTransformText;
+					oTransform.Reset();
+					
+					const translateInX = parameters ? getTranslationX(direction, squareWidth, oSize.w) : -oSize.w / 2.0;
+					global_MatrixTransformer.TranslateAppend(oTransform, translateInX, -oSize.h / 2.0);
+					global_MatrixTransformer.RotateRadAppend(oTransform, fAngle);
+					global_MatrixTransformer.TranslateAppend(oTransform, fXC, fYC);
+					
+					oLabel.transformText = oTransform.CreateDublicate();
+					if (null === fMinLeft || (fXC - fBoxW / 2.0) < fMinLeft) {
+						fMinLeft = fXC - fBoxW / 2.0;
+					}
+					if (null === fMaxRight || (fXC + fBoxW / 2.0) > fMaxRight) {
+						fMaxRight = fXC + fBoxW / 2.0;
+					}
 				}
 			}
 			fCurX += fInterval;
@@ -1096,6 +1265,18 @@ function(window, undefined) {
 			drawingDocument.DrawTrack(AscFormat.TYPE_TRACK.CHART_TEXT, this.chartSpace.transform, this.x, this.y, this.extX, this.extY, false, false, undefined, isDrawHandles);
 		}
 	};
+	CLabelsBox.prototype.checkLabelsFormat = function () {
+		if (!this.chartSpace || !this.chartSpace.chart || !this.chartSpace.chart.plotArea || !this.axis) {
+			return false;
+		}
+		let oSeries = this.chartSpace.chart.plotArea.getSeriesWithSmallestIndexForAxis(this.axis);
+		// in case if string labels passed
+		// check variations of those types!! num ref and str ref
+		const statement1 = oSeries && !!oSeries.cat && (oSeries.cat.strRef || oSeries.cat.strLit); // && oSeries.cat.getLit();
+		// in case if format code is changed
+		const statement2 = this.axis && this.axis.numFmt && this.axis.numFmt.formatCode !== 'General';
+		return statement1 || statement2; 
+	}
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {
 		var dlbl = new AscFormat.CDLbl();
@@ -1116,14 +1297,24 @@ function(window, undefined) {
 		return dlbl;
 	}
 
+	function getRotationAngle(rot) {
+		// one degree of rot is equal to 60000
+		// therefore fullRange is 180 * 60000
+		// regular range is between [-90 * 60000; 90 * 60000]
+		const fullRange = 10800000;
+		const halfRange = 5400000;
+		const isRot = AscFormat.isRealNumber(rot);
+		return isRot && rot >= -halfRange && rot <= halfRange ? - (Math.PI * rot) / fullRange : Math.PI / 4.0;
+	}
+
 	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth) {
 		let fAxisLength = fXEnd - fXStart;
 		let nLabelsCount = oLabelsBox.aLabels.length;
-
 		let bOnTickMark_ = bOnTickMark && nLabelsCount > 1;
 		let nIntervalCount = bOnTickMark_ ? nLabelsCount - 1 : nLabelsCount;
 		let fInterval = fAxisLength / nIntervalCount;
 		let fForceContentWidth_ = fForceContentWidth;
+
 		if (!bForceVertical || true) {//TODO: implement for vertical labels
 			let fMaxMinWidth = oLabelsBox.checkMaxMinWidth();
 			let fCheckInterval;
@@ -1160,11 +1351,166 @@ function(window, undefined) {
 					}
 				}
 			}
-			if (fMaxMinWidth <= fCheckInterval) {
-				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_);
-			} else {
-				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_);
+			
+			// check if rotations is needed
+			const isRotate = function (rot) {
+				// each degree has value 60000
+				// the range of rotation is [-90;90] or [-5400000:5400000]
+				const limit = 5400000
 
+				//case when rot parameter is unset
+				if (!AscFormat.isRealNumber(rot) || rot < -limit) {
+					return false;
+				}
+				// case when labels are rotated 0 degree
+				if (rot === 0) {
+					return false;
+				}
+
+				return true;
+			} 
+
+			// get Height of the first label
+			const getHeight = function (aLabels) {
+				for (let i = 0; i < aLabels.length; i++) {
+					//check if there multiple lines exist
+					//if so, take the height of first line
+					const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
+					const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
+					const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
+					if (AscFormat.isRealNumber(height)) {
+						return height;
+					}
+
+					//check the height of the label
+					const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
+					if (AscFormat.isRealNumber(labelSize.h)) {
+						return labelSize.h;
+					}
+				}
+				return null;
+			}
+
+			// calculate the tick skip between axis labels
+			// default value for nLblTickSkip is 1
+			const calculateTickSkips = function(axisWidth, oLabels, labelsCount, parameters) {
+				if (!oLabels || !labelsCount || !axisWidth || !parameters) {
+					return 1;
+				}
+
+				const cellHeight = getHeight(oLabels.aLabels);
+				// due to the rotation of the labels, the width necessary to place all of them is recalculated according to its height and some trigonometric formulas 
+				const degree = parameters.degree;
+				const radianAngle = AscFormat.isRealNumber(parameters.rot) ? (Math.abs(parameters.rot / degree) * Math.PI) / 180 : null;
+				// if the rotation parameter is set then we need to measure the new width of the label
+				const rotationWidth = cellHeight / Math.sin(radianAngle);
+				// if the rotation width is higher than normal width, then take normal width 
+				const updatedCellWidth = rotationWidth && oLabelsBox.maxMinWidth ? Math.min(rotationWidth, oLabelsBox.maxMinWidth) : null;
+				const cellWidth = radianAngle && updatedCellWidth ? updatedCellWidth : cellHeight;
+
+				// return minimum amount of skips needed to place a vertical labels into axisWidth
+				if (cellWidth) {
+					const nLblTickSkip = Math.floor((cellWidth * labelsCount) / (axisWidth)) + 1;
+					return (nLblTickSkip === 0) ? 1 : nLblTickSkip;
+				}
+
+				// default is always 1
+				return 1;
+			}
+
+			// autoRotate labels if they can fit into the axisWidth
+			const updateRotation = function (axisWidth, oLabelsBox, labelsCount, parameters) {
+
+				if (!oLabelsBox || !parameters) {
+					return;
+				}
+
+				const degree = parameters.degree;
+				const rot = parameters.rot;
+				const nLblTickSkip = parameters.nLblTickSkip;
+				if (AscFormat.isRealNumber(rot)) {
+					return rot;
+				}
+
+				const updateLabelsCount = Math.ceil(labelsCount / nLblTickSkip)
+
+				// Check if horizontal labels can fit into axis width
+				const cellHeight = getHeight(oLabelsBox.aLabels);
+				const labelWidth = oLabelsBox.maxMinWidth * updateLabelsCount;
+
+				if (labelWidth && labelWidth <= axisWidth) {
+					return 0;
+				}
+
+				// only string labels can be auto rotated to 45 degrees
+				const isLabelsString = oLabelsBox.checkLabelsFormat();
+
+				// сheck if diagonal labels can fit into axis width
+				// also other suggestions to calculate diagonal width can be found in current function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
+				if (isLabelsString) {
+					// multiplier is the square root of 2; 
+					// diagonal rectangle with h is equal to root(2) * h;
+					const multiplier = 1.41421356237;
+					const diagonalRes = (multiplier  * cellHeight) * updateLabelsCount;
+
+					// diagonal angle is 45 degree
+					if (diagonalRes && diagonalRes <= axisWidth) {
+						return -45 * degree;
+					}
+				}
+
+				// vertical angle is 90 degree
+				return parameters.isUserDefinedTickSkip && oLabelsBox.maxMinWidth < cellHeight? 0 : -90 * degree;
+			}
+
+			// find rot parameter responsible for the rotation of axis labels
+			const nAxisType = oLabelsBox && oLabelsBox.axis ? oLabelsBox.axis.getObjectType() : null;
+			let parameters = null;
+			let bodyPr = false;
+			if (AscFormat.isRealNumber(nAxisType) && nAxisType === AscDFH.historyitem_type_CatAx) {
+				// parameters indecates necessary stuff such as rotation, label skip, degree
+				parameters = {};
+
+				// 1 degree = 60000
+				// the range is between [-90, 90]
+				parameters.degree = 60000;
+				const limit = 90 * parameters.degree;
+
+				// rotation
+				bodyPr = oLabelsBox.axis.txPr && oLabelsBox.axis.txPr.bodyPr;
+				parameters.rot = bodyPr && bodyPr.rot >= -limit && bodyPr.rot <= limit ? bodyPr.rot : null;
+
+				// find max possible space allowed to fill by label
+				const titleHeight = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.title ? oLabelsBox.chartSpace.chart.title.extY : 0;
+				const diagramHeight = oLabelsBox.chartSpace.extY;
+				if (oLabelsBox.chartSpace) {
+					const chartHeight = oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.plotArea && oLabelsBox.chartSpace.chart.plotArea.layout ? oLabelsBox.chartSpace.chart.plotArea.layout.h : null;
+					// max height depends on the type of the label
+					const isLabelsString = oLabelsBox.checkLabelsFormat();
+					// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
+					const heightMultiplier = chartHeight && isLabelsString ? 0.25 : 0.37;
+
+					parameters.maxHeight = chartHeight && isLabelsString ? diagramHeight * heightMultiplier * (1 - chartHeight) : heightMultiplier * (diagramHeight - titleHeight);
+				}
+
+				// find label skip
+				const tickLblSkip = oLabelsBox.axis ? oLabelsBox.axis.tickLblSkip : null;
+				parameters.isUserDefinedTickSkip = AscFormat.isRealNumber(tickLblSkip);
+				parameters.nLblTickSkip = parameters.isUserDefinedTickSkip ? tickLblSkip : calculateTickSkips(fAxisLength, oLabelsBox, nLabelsCount, parameters);
+
+				// update rotation
+				parameters.rot = updateRotation(fAxisLength, oLabelsBox, nLabelsCount, parameters);
+				//save the updated rot
+				if (bodyPr) {
+					bodyPr.updatedRot = parameters ? parameters.rot : bodyPr.rot;
+				}
+			}
+			let statement = parameters ? !isRotate(parameters.rot) : fMaxMinWidth <= fCheckInterval;
+
+			if (statement) {
+				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, oLabelsBox.maxMinWidth + 0.2, parameters);
+			} else {
+				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, parameters);
 			}
 		}
 	}
@@ -4483,7 +4829,7 @@ function(window, undefined) {
 					nPtsLength = 2;
 				}
 				let oLitFormatDate = null;
-				if (nAxisType === AscDFH.historyitem_type_DateAx && oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
+				if (oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
 					oLitFormatDate = oNumFormatCache.get(oAxis.numFmt.formatCode);
 				}
 
@@ -4491,6 +4837,14 @@ function(window, undefined) {
 					let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLength >= SKIP_LBL_LIMIT;
 					let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
 					let nStartLength = aStrings.length;
+
+					// different label skip implementation for catAxis
+					const nAxisType = oAxis.getObjectType();
+					if (AscFormat.isRealNumber(nAxisType) && AscDFH.historyitem_type_CatAx) {
+						nTickLblSkip = 1;
+					}
+
+
 					for (i = aStrings.length; i < nPtsLength; ++i) {
 						if (!bCat && (!bTickSkip || (((nStartLength + i) % nTickLblSkip) === 0))) {
 							if (oLitFormatDate) {
@@ -5479,6 +5833,8 @@ function(window, undefined) {
 						} else {
 							if (oAxisLabels.align) {
 								var labels_offset = oCatAx.labels.getLabelsOffset();
+								const rot = oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr ? oAxisLabels.axis.txPr.bodyPr.updatedRot : oAxisLabels.axis.txPr.bodyPr.rot ;
+								let fAngle = getRotationAngle(rot);
 								for (i = 0; i < oAxisLabels.aLabels.length; ++i) {
 									if (oAxisLabels.aLabels[i]) {
 										oLabel = oAxisLabels.aLabels[i];
@@ -5499,7 +5855,7 @@ function(window, undefined) {
 										var local_text_transform = oLabel.localTransformText;
 										local_text_transform.Reset();
 										global_MatrixTransformer.TranslateAppend(local_text_transform, -wh.w / 2, -wh.h / 2);
-										global_MatrixTransformer.RotateRadAppend(local_text_transform, Math.PI / 4);
+										global_MatrixTransformer.RotateRadAppend(local_text_transform, fAngle );
 										global_MatrixTransformer.TranslateAppend(local_text_transform, xc, yc);
 
 										var fBottomContent = y0t + h2;
@@ -5530,7 +5886,7 @@ function(window, undefined) {
 										local_text_transform = oLabel.localTransformText;
 										local_text_transform.Reset();
 										global_MatrixTransformer.TranslateAppend(local_text_transform, -wh.w / 2, -wh.h / 2);
-										global_MatrixTransformer.RotateRadAppend(local_text_transform, Math.PI / 4);//TODO
+										global_MatrixTransformer.RotateRadAppend(local_text_transform, fAngle );//TODO
 										global_MatrixTransformer.TranslateAppend(local_text_transform, xc, yc);
 									}
 								}
