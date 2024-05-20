@@ -805,31 +805,35 @@
         if (this.IsInTextBox())
             this.GetDocContent().RecalculateCurPos();
 
+        this.draw(oGraphicsWord);
+    };
+    CAnnotationFreeText.prototype.draw = function(graphics) {
         if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {
             return;
         }
-        if (oGraphicsWord.animationDrawer) {
-            oGraphicsWord.animationDrawer.drawObject(this, oGraphicsWord);
+        if (graphics.animationDrawer) {
+            graphics.animationDrawer.drawObject(this, graphics);
             return;
         }
         var oClipRect;
-        if (!oGraphicsWord.isBoundsChecker()) {
+        if (!graphics.isBoundsChecker()) {
             oClipRect = this.getClipRect();
         }
         if (oClipRect) {
-            oGraphicsWord.SaveGrState();
-            oGraphicsWord.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
+            graphics.SaveGrState();
+            graphics.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
         }
         for (var i = this.spTree.length - 1; i >= 0; i--)
-            this.spTree[i].draw(oGraphicsWord);
+            this.spTree[i].draw(graphics);
 
-        this.drawLocks(this.transform, oGraphicsWord);
+        this.drawLocks(this.transform, graphics);
         if (oClipRect) {
-            oGraphicsWord.RestoreGrState();
+            graphics.RestoreGrState();
         }
-        oGraphicsWord.reset();
-        oGraphicsWord.SetIntegerGrid(true);
+        graphics.reset();
+        graphics.SetIntegerGrid(true);
     };
+
     CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oController         = oDoc.GetController();
@@ -1319,6 +1323,10 @@
             for (let i = 0; i < aFillColor.length; i++)
                 memory.WriteDouble(aFillColor[i]);
         }
+
+        // render
+        memory.annotFlags |= (1 << 22);
+        this.WriteRenderToBinary(memory);
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);

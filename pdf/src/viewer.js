@@ -4149,9 +4149,38 @@
 		this.m_oDocRenderer								= new AscCommon.CDocumentRenderer();
 		this.m_oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 		this.m_oDocRenderer.Memory        				= oMemory;
-		this.m_lCurrentRendererPage                     = 0;
 
 		return this.m_oDocRenderer;
+	};
+	CHtmlPage.prototype.InitAnnotsRenderer = function(oMemory, nPage) {
+		let oDoc        = this.getPDFDoc();
+        let oRenderer   = new AscCommon.CDocumentRenderer();
+		oRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
+
+		oRenderer.Memory		= oMemory;
+		oMemory.AnnotsRenderer	= oRenderer;
+
+        oMemory.context = new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
+        oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
+
+        oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
+        oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
+        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
+        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
+        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].VectorMemoryForPrint	= oRenderer.VectorMemoryForPrint;
+        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker				= oRenderer.FontPicker;
+
+        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker				= oRenderer.FontPicker;
+
+        if (oRenderer.FontPicker)
+            oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker.Metafile  = oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1];
+
+        let _page = oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1];
+        oRenderer.m_oPen       = _page.m_oPen;
+        oRenderer.m_oBrush     = _page.m_oBrush;
+        oRenderer.m_oTransform = _page.m_oTransform;
+
+		return oRenderer;
 	};
 
 	CHtmlPage.prototype.Save = function()
@@ -4227,7 +4256,10 @@
 				return;
 			}
 
+			// annots
 			if (oPageInfo.annots) {
+				this.InitAnnotsRenderer(oMemory, nPage);
+				
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
 					oPageInfo.annots[nAnnot].GetReplies().forEach(function(reply) {

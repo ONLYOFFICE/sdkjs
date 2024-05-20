@@ -1161,6 +1161,24 @@
             }
         }
     };
+    CAnnotationBase.prototype.WriteRenderToBinary = function(memory) {
+        // пока только для основанных на фигурах
+        if (false == this.IsShapeBased()) {
+            return;
+        }
+
+        // тут будет длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.draw(memory.AnnotsRenderer); // для каждой страницы инициализируется свой renderer
+
+        // запись длины комманд
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
 
     function ConvertPt2Px(pt) {
         return (96 / 72) * pt;
