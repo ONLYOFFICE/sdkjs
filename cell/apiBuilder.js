@@ -1253,7 +1253,12 @@
 				newArguments.push(new AscCommonExcel.cBool(arg[i]));
 			} else if (arg[i] instanceof ApiRange ) {
 				//cArea/cRef/cArea3D/cRef3d
-				newArguments.push(new AscCommonExcel.cArea3D(arg[i].bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
+				if (arg[i].range && arg[i].range.bbox && arg[i].range.worksheet) {
+					newArguments.push(new AscCommonExcel.cArea3D(arg[i].range.bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
+				} else {
+					throwException(new Error('Arguments type error.'));
+					return null;
+				}
 			} else {
 				throwException(new Error('Arguments type error.'));
 				return null;
@@ -1261,12 +1266,13 @@
 		}
 
 		//prepare result
-		let result = func.Calculate(newArguments);
+		let result = func.Calculate(newArguments, new Asc.Range(0, 0, 0, 0));
 
 		if (!result) {
 			throwException(new Error('Result type error.'));
 			return null;
 		}
+
 
 		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
 			result = result.getValue();
@@ -1276,10 +1282,14 @@
 		} else if (AscCommonExcel.cElementType.array === result.type) {
 			result = result.getElement(0);
 		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
-			result = result.getValue2(0, 0);
+			if (cElementType.cellsRange === val.type) {
+				result = result.getValue2(0, 0);
+			} else {
+				result = result.getValue2(new CellAddress(result.getBBox0().r1, result.getBBox0().c1, 0));
+			}
 		}
 
-		if (result) {
+		if (result && result.getValue) {
 			result = result.getValue();
 		} else {
 			throwException(new Error('Result type error.'));
