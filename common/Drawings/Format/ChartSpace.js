@@ -915,9 +915,10 @@ function(window, undefined) {
 		}
 
 		const sliceLabel = function (oLabel, maxWidth) {
-			const contents = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0].Content : null;
+			const paragraph = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0] : null
+			const contents = paragraph ? paragraph.Content : null;
 			let oSize = oLabel.tx.rich.getContentOneStringSizes();
-			if (!contents || !maxWidth) {
+			if (!paragraph || !contents || !maxWidth) {
 				return;
 			}
 
@@ -925,11 +926,12 @@ function(window, undefined) {
 			// runTexts.push(dot);
 			oLabel.txBody.content.RecalculateContent(maxWidth, oSize.h, 2);
 
-			// obtain some parameter that indicates overWidth -> XPar
-			let xPar = oSize.w > maxWidth;
+			// check if space exists
+			let multiLine = paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1;
+			let addDots = false;
 
-
-			if (runTexts && xPar) {
+			// multilines should be spliced with rotation
+			if (runTexts && multiLine) {
 				contents[0].Content = [];
 				let left = 0;
 				let right = runTexts.length;
@@ -938,8 +940,37 @@ function(window, undefined) {
 					mid = (right + left) / 2 + 0.5 >> 0;
 					contents[0].Content = runTexts.slice(0, mid - 1);
 					oSize = oLabel.tx.rich.getContentOneStringSizes();
-					xPar = oSize.w > maxWidth;
-					if(xPar) {
+					multiLine = paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1;
+					if(multiLine) {
+						right = mid;
+					} else {
+						left = mid;
+					}
+				}
+				contents[0].Content = runTexts.slice(0, left);
+				oSize = oLabel.tx.rich.getContentOneStringSizes();
+				if (paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1 && left > 0) {
+					contents[0].Content = runTexts.slice(0, --left);
+				}
+				addDots = true;
+			}
+
+
+			// obtain some parameter that indicates overWidth
+			let overWidth = oSize.w > maxWidth;
+
+
+			if (runTexts && overWidth) {
+				contents[0].Content = [];
+				let left = 0;
+				let right = runTexts.length;
+				let mid = null;
+				while(right - left > 1) {
+					mid = (right + left) / 2 + 0.5 >> 0;
+					contents[0].Content = runTexts.slice(0, mid - 1);
+					oSize = oLabel.tx.rich.getContentOneStringSizes();
+					overWidth = oSize.w > maxWidth;
+					if(overWidth) {
 						right = mid;
 					} else {
 						left = mid;
@@ -953,7 +984,7 @@ function(window, undefined) {
 				return true;
 			}
 
-			return false;
+			return addDots;
 
 			// here is the manual iteration through all the runtext items to find a proper width
 			// // remove all characters after maxWidth achieved
@@ -1239,7 +1270,12 @@ function(window, undefined) {
 			return false;
 		}
 		let oSeries = this.chartSpace.chart.plotArea.getSeriesWithSmallestIndexForAxis(this.axis);
-		return oSeries && !!oSeries.cat; // && oSeries.cat.getLit();
+		// in case if string labels passed
+		// check variations of those types!! num ref and str ref
+		const statement1 = oSeries && !!oSeries.cat && (oSeries.cat.strRef || oSeries.cat.strLit); // && oSeries.cat.getLit();
+		// in case if format code is changed
+		const statement2 = this.axis && this.axis.numFmt && this.axis.numFmt.formatCode !== 'General';
+		return statement1 || statement2; 
 	}
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {
@@ -1337,6 +1373,16 @@ function(window, undefined) {
 			// get Height of the first label
 			const getHeight = function (aLabels) {
 				for (let i = 0; i < aLabels.length; i++) {
+					//check if there multiple lines exist
+					//if so, take the height of first line
+					const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
+					const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
+					const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
+					if (AscFormat.isRealNumber(height)) {
+						return height;
+					}
+
+					//check the height of the label
 					const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
 					if (AscFormat.isRealNumber(labelSize.h)) {
 						return labelSize.h;
@@ -1356,7 +1402,11 @@ function(window, undefined) {
 				// due to the rotation of the labels, the width necessary to place all of them is recalculated according to its height and some trigonometric formulas 
 				const degree = parameters.degree;
 				const radianAngle = AscFormat.isRealNumber(parameters.rot) ? (Math.abs(parameters.rot / degree) * Math.PI) / 180 : null;
-				const cellWidth = radianAngle ? cellHeight / Math.sin(radianAngle) : cellHeight;
+				// if the rotation parameter is set then we need to measure the new width of the label
+				const rotationWidth = cellHeight / Math.sin(radianAngle);
+				// if the rotation width is higher than normal width, then take normal width 
+				const updatedCellWidth = rotationWidth && oLabelsBox.maxMinWidth ? Math.min(rotationWidth, oLabelsBox.maxMinWidth) : null;
+				const cellWidth = radianAngle && updatedCellWidth ? updatedCellWidth : cellHeight;
 
 				// return minimum amount of skips needed to place a vertical labels into axisWidth
 				if (cellWidth) {
@@ -1385,23 +1435,24 @@ function(window, undefined) {
 				const updateLabelsCount = Math.ceil(labelsCount / nLblTickSkip)
 
 				// Check if horizontal labels can fit into axis width
-				const horRes = oLabelsBox.maxMinWidth * updateLabelsCount;
-				if (horRes && horRes <= axisWidth) {
+				const cellHeight = getHeight(oLabelsBox.aLabels);
+				const labelWidth = oLabelsBox.maxMinWidth * updateLabelsCount;
+
+				if (labelWidth && labelWidth <= axisWidth) {
 					return 0;
 				}
 
 				// only string labels can be auto rotated to 45 degrees
 				const isLabelsString = oLabelsBox.checkLabelsFormat();
-				if (isLabelsString) {
-					// сheck if diagonal labels can fit into axis width
-					// also other suggestions to calculate diagonal width can be found in current function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
-					const cellHeight = getHeight(oLabelsBox.aLabels);
 
+				// сheck if diagonal labels can fit into axis width
+				// also other suggestions to calculate diagonal width can be found in current function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
+				if (isLabelsString) {
 					// multiplier is the square root of 2; 
 					// diagonal rectangle with h is equal to root(2) * h;
 					const multiplier = 1.41421356237;
 					const diagonalRes = (multiplier  * cellHeight) * updateLabelsCount;
-					console.log(diagonalRes, axisWidth);
+
 					// diagonal angle is 45 degree
 					if (diagonalRes && diagonalRes <= axisWidth) {
 						return -45 * degree;
@@ -1409,7 +1460,7 @@ function(window, undefined) {
 				}
 
 				// vertical angle is 90 degree
-				return parameters.isUserDefinedTickSkip ? 0 : -90 * degree;
+				return parameters.isUserDefinedTickSkip && oLabelsBox.maxMinWidth < cellHeight? 0 : -90 * degree;
 			}
 
 			// find rot parameter responsible for the rotation of axis labels
@@ -1430,10 +1481,17 @@ function(window, undefined) {
 				parameters.rot = bodyPr && bodyPr.rot >= -limit && bodyPr.rot <= limit ? bodyPr.rot : null;
 
 				// find max possible space allowed to fill by label
-				// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
-				const heightMultiplier = 0.37;
 				const titleHeight = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.title ? oLabelsBox.chartSpace.chart.title.extY : 0;
-				parameters.maxHeight = oLabelsBox.chartSpace ? heightMultiplier * (oLabelsBox.chartSpace.extY - titleHeight) : null;
+				const diagramHeight = oLabelsBox.chartSpace.extY;
+				if (oLabelsBox.chartSpace) {
+					const chartHeight = oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.plotArea && oLabelsBox.chartSpace.chart.plotArea.layout ? oLabelsBox.chartSpace.chart.plotArea.layout.h : null;
+					// max height depends on the type of the label
+					const isLabelsString = oLabelsBox.checkLabelsFormat();
+					// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
+					const heightMultiplier = chartHeight && isLabelsString ? 0.25 : 0.37;
+
+					parameters.maxHeight = chartHeight && isLabelsString ? diagramHeight * heightMultiplier * (1 - chartHeight) : heightMultiplier * (diagramHeight - titleHeight);
+				}
 
 				// find label skip
 				const tickLblSkip = oLabelsBox.axis ? oLabelsBox.axis.tickLblSkip : null;
