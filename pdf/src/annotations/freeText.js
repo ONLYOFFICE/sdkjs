@@ -964,6 +964,16 @@
 		this.OnChangeTextContent();
 		return result;
 	};
+	CAnnotationFreeText.prototype.canBeginCompositeInput = function() {
+		return true;
+	};
+	CAnnotationFreeText.prototype.beforeCompositeInput = function() {
+		let docContent = this.GetDocContent();
+		if (docContent.IsSelectionUse()) {
+			docContent.Remove(1, true, false, false);
+			docContent.RemoveSelection();
+		}
+	};
     /**
 	 * Removes char in current position by direction.
 	 * @memberof CTextField

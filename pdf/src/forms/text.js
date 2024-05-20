@@ -998,9 +998,6 @@
 		this.DoKeystrokeAction();
 		this.removeBeforePaste();
 	};
-	CTextField.prototype.getRunForCompositeInput = function() {
-		return this.content.getCurrentRun();
-	};
     /**
 	 * Checks is text in form is out of form bounds.
      * Note: in vertical case one line always be valid even if form is very short.

@@ -4921,201 +4921,6 @@ var CPresentation = CPresentation || function(){};
 		
 		return null;
 	};
-    /// composite input
-    CPDFDoc.prototype.Begin_CompositeInput = function () {
-        if (false === this.Document_Is_SelectionLocked(changestype_Drawing_Props, null, undefined, undefined, true)) {
-            
-            if (this.activeForm && this.activeForm.IsCanEditText()) {
-                let oThis = this;
-                function begin() {
-                    oThis.activeForm.beginCompositeInput();
-                }
-                
-                if (!this.checkFieldFont(this.activeForm, begin))
-                    return true;
-                
-                begin();
-
-                return true;
-            }
-
-            let oDrDoc = this.GetDrawingDocument();
-            let oController = this.GetController();
-            if (oController) {
-                oController.CreateDocContent();
-            }
-    
-            let oContent = oController.getTargetDocContent();
-            if (!oContent) {
-                this.History.Remove_LastPoint();
-                return false;
-            }
-            
-            let oTargetTextObj = oController.getTargetTextObject();
-            this.CreateNewHistoryPoint({objects: [oTargetTextObj], description: AscDFH.historydescription_Document_CompositeInput});
-
-            oDrDoc.TargetStart();
-            oDrDoc.TargetShow();
-
-            let oPara = oContent.GetCurrentParagraph();
-            if (!oPara) {
-                this.History.Remove_LastPoint();
-                return false;
-            }
-
-            if (true === oContent.IsSelectionUse())
-                oContent.Remove(1, true, false, true);
-
-            let oRun = oPara.Get_ElementByPos(oPara.Get_ParaContentPos(false, false));
-            if (!oRun || !(oRun instanceof ParaRun)) {
-                this.History.Remove_LastPoint();
-                return false;
-            }
-    
-            this.CompositeInput = new AscWord.RunCompositeInput_Old(oRun);
-            this.CompositeInput.Object = oTargetTextObj;
-
-            oRun.Set_CompositeInput(this.CompositeInput);
-    
-            return true;
-        }
-    
-        return false;
-    };
-    CPDFDoc.prototype.addCompositeText = function (nCharCode) {
-        // TODO: При таком вводе не меняется язык в зависимости от раскладки, не учитывается режим рецензирования.
-    
-        if (null == this.CompositeInput)
-            return;
-    
-        var oRun = this.CompositeInput.Run;
-        var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
-        var oChar;
-        if (para_Math_Run === oRun.Type) {
-            oChar = new CMathText();
-            oChar.add(nCharCode);
-        } else {
-            if (32 == nCharCode || 12288 == nCharCode)
-                oChar = new AscWord.CRunSpace();
-            else
-                oChar = new AscWord.CRunText(nCharCode);
-        }
-        oRun.AddToContent(nPos, oChar, true);
-        this.CompositeInput.Length++;
-    };
-    CPDFDoc.prototype.Add_CompositeText = function (nCharCode) {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            this.activeForm.addCompositeText(nCharCode);
-            return;
-        }
-
-        if (null == this.CompositeInput)
-            return;
-
-        this.CreateNewHistoryPoint({objects: [this.CompositeInput.Object]});
-        this.addCompositeText(nCharCode);
-        this.CompositeInput.Object.SetNeedRecalc(true);
-    };
-    CPDFDoc.prototype.removeCompositeText = function (nCount) {
-        if (null == this.CompositeInput)
-            return;
-    
-        var oRun = this.CompositeInput.Run;
-        var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
-    
-        var nDelCount = Math.max(0, Math.min(nCount, this.CompositeInput.Length, oRun.Content.length, nPos));
-        oRun.Remove_FromContent(nPos - nDelCount, nDelCount, true);
-        this.CompositeInput.Length -= nDelCount;
-    };
-    
-    CPDFDoc.prototype.Remove_CompositeText = function (nCount) {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            this.activeForm.removeCompositeText(nCount);
-            return;
-        }
-
-        this.removeCompositeText(nCount);
-        this.CompositeInput.Object.SetNeedRecalc(true);
-    };
-    CPDFDoc.prototype.Replace_CompositeText = function (arrCharCodes) {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            this.activeForm.replaceCompositeText(arrCharCodes);
-            return;
-        }
-
-        if (null == this.CompositeInput)
-            return;
-
-        this.CreateNewHistoryPoint({objects: [this.CompositeInput.Object], description: AscDFH.historydescription_Document_CompositeInputReplace});
-        this.removeCompositeText(this.CompositeInput.Length);
-        for (var nIndex = 0, nCount = arrCharCodes.length; nIndex < nCount; ++nIndex) {
-            this.addCompositeText(arrCharCodes[nIndex]);
-        }
-
-        this.CompositeInput.Object.SetNeedRecalc(true);
-        if (!AscCommon.History.CheckUnionLastPoints())
-            this.CompositeInput.CanUndo = false;
-    };
-    CPDFDoc.prototype.Set_CursorPosInCompositeText = function (nPos) {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            this.activeForm.setPosInCompositeInput(nPos);
-            return;
-        }
-
-        if (null == this.CompositeInput)
-            return;
-    
-        var oRun = this.CompositeInput.Run;
-    
-        var nInRunPos = Math.max(Math.min(this.CompositeInput.Pos + nPos, this.CompositeInput.Pos + this.CompositeInput.Length, oRun.Content.length), this.CompositeInput.Pos);
-        oRun.State.ContentPos = nInRunPos;
-        this.CompositeInput.Object.GetDocContent().RecalculateCurPos(true, true);
-    };
-    CPDFDoc.prototype.Get_CursorPosInCompositeText = function () {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            return this.activeForm.getPosInCompositeInput();
-        }
-
-        if (null == this.CompositeInput)
-            return 0;
-    
-        var oRun = this.CompositeInput.Run;
-        var nInRunPos = oRun.State.ContentPos;
-        var nPos = Math.min(this.CompositeInput.Length, Math.max(0, nInRunPos - this.CompositeInput.Pos));
-        return nPos;
-    };
-    CPDFDoc.prototype.Get_MaxCursorPosInCompositeText = function () {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            return this.activeForm.getMaxPosInCompositeInput();
-        }
-
-        if (null == this.CompositeInput)
-            return 0;
-    
-        return this.CompositeInput.Length;
-    };
-    CPDFDoc.prototype.End_CompositeInput = function () {
-        if (this.activeForm && this.activeForm.IsCanEditText()) {
-            this.activeForm.endCompositeInput();
-            return;
-        }
-
-        if (null == this.CompositeInput)
-            return;
-    
-        var nLen = this.CompositeInput.Length;
-    
-        var oRun = this.CompositeInput.Run;
-        oRun.Set_CompositeInput(null);
-    
-        if (0 === nLen && true === this.History.CanRemoveLastPoint() && true === this.CompositeInput.CanUndo) {
-            this.DoUndo();
-            this.History.Clear_Redo();
-        }
-    
-        this.CompositeInput.Object.SetNeedRecalc(true);
-        this.CompositeInput = null;
-    };
 
     function CActionQueue(oDoc) {
         this.doc                = oDoc;
@@ -5358,9 +5163,93 @@ var CPresentation = CPresentation || function(){};
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
+	
+	/**
+	 * Speical class for handling the composite input in the pdf-editor
+	 * @param textController
+	 * @constructor
+	 */
+	function CPDFCompositeInput(textController) {
+		this.textController = textController;
+		this.runInput       = new AscWord.RunCompositeInput(false);
+		this.pointCount     = 0;
+		this.contentState   = textController.GetDocContent().GetSelectionState();
+	}
+	CPDFCompositeInput.begin = function(pdfDocument) {
+		if (!pdfDocument)
+			return null;
+		
+		if (pdfDocument.IsNeedSkipHistory() || pdfDocument.Viewer.IsOpenFormsInProgress || pdfDocument.Viewer.IsOpenAnnotsInProgress || pdfDocument.isUndoRedoInProgress)
+			return null
+		
+		let textController = pdfDocument.getTextController();
+		if (!textController || !textController.canBeginCompositeInput())
+			return null;
+		
+		let compositeInput = new CPDFCompositeInput(textController);
+		compositeInput.createNewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);
+		textController.beforeCompositeInput();
+		let docContent = textController.GetDocContent();
+		let run = docContent.GetCurrentRun();
+		if (!run) {
+			compositeInput.undoAll();
+			return null;
+		}
+		compositeInput.runInput.begin(run);
+		return compositeInput;
+	};
+	CPDFCompositeInput.prototype.end = function() {
+		let codePoints = this.runInput.getCodePoints();
+		this.runInput.end();
+		this.runInput = null;
+		
+		this.undoAll();
+		
+		this.textController.GetDocContent().SetSelectionState(this.contentState);
+		this.textController.EnterText(codePoints);
+	};
+	CPDFCompositeInput.prototype.add = function(codePoint) {
+		this.createNewHistoryPoint();
+		this.runInput.add(codePoint);
+		this.textController.SetNeedRecalc(true);
+	};
+	CPDFCompositeInput.prototype.remove = function(count) {
+		this.createNewHistoryPoint();
+		this.runInput.remove(count);
+		this.textController.SetNeedRecalc(true);
+	};
+	CPDFCompositeInput.prototype.replace = function(codePoints) {
+		this.createNewHistoryPoint();
+		this.runInput.replace(codePoints);
+		this.textController.SetNeedRecalc(true);
+	};
+	CPDFCompositeInput.prototype.setPos = function(pos) {
+		return this.runInput.setPos(pos);
+	};
+	CPDFCompositeInput.prototype.get = function(pos) {
+		return this.runInput.getPos(pos);
+	};
+	CPDFCompositeInput.prototype.getMaxPos = function() {
+		return this.runInput.getLength();
+	};
+	CPDFCompositeInput.prototype.createNewHistoryPoint = function(description) {
+		if (!AscCommon.History.IsOn())
+			AscCommon.History.TurnOn();
+		
+		AscCommon.History.Create_NewPoint(description);
+		AscCommon.History.SetSourceObjectsToPointPdf(this.textController);
+		this.pointCount++;
+	};
+	CPDFCompositeInput.prototype.undoAll = function() {
+		while (this.pointCount > 0) {
+			AscCommon.History.Undo();
+			--this.pointCount;
+		}
+	};
 
     window["AscPDF"].CPDFDoc = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps = CreateAnnotByProps;
     window["AscPDF"].CreateAscAnnotPropFromObj = CreateAscAnnotPropFromObj;
+	window["AscPDF"].CPDFCompositeInput = CPDFCompositeInput;
 
 })();

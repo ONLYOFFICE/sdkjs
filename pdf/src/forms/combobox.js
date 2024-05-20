@@ -516,9 +516,6 @@
 		this.DoKeystrokeAction();
 		this.content.Remove(1, true, false, false);
 	};
-	CComboBoxField.prototype.getRunForCompositeInput = function() {
-		return this.content.getCurrentRun();
-	};
 	/**
 	 * Checks curValueIndex, corrects it and return.
 	 * @memberof CComboBoxField

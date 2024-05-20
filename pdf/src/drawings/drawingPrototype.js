@@ -238,6 +238,16 @@
 		content.RecalculateCurPos();
 		return result;
 	};
+	CPdfDrawingPrototype.prototype.canBeginCompositeInput = function() {
+		return true;
+	};
+	CPdfDrawingPrototype.prototype.beforeCompositeInput = function() {
+		let docContent = this.GetDocContent();
+		if (docContent.IsSelectionUse()) {
+			docContent.Remove(1, true, false, false);
+			docContent.RemoveSelection();
+		}
+	};
     
     /////////////////////////////
     /// saving

@@ -49,6 +49,8 @@
 		
 		this.DocumentRenderer = null;
 		this.DocumentType     = 1;
+		
+		this.compositeInput = null;
 	}
 	
 	PDFEditorApi.prototype = Object.create(AscCommon.DocumentEditorApi.prototype);
@@ -459,56 +461,6 @@
 			drDoc.TargetEnd();
 		
 		return result;
-		
-		// if (!this.DocumentRenderer)
-		// 	return false;
-		//
-		// let viewer		= this.DocumentRenderer;
-		// let oDoc		= viewer.getPDFDoc();
-		// let oDrDoc		= oDoc.GetDrawingDocument();
-		//
-		// let oActiveForm		= oDoc.activeForm;
-		// let oActiveAnnot	= oDoc.mouseDownAnnot;
-		// let oActiveDrawing	= oDoc.activeDrawing;
-		// oDrDoc.UpdateTargetFromPaint = true;
-		//
-		// if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
-		// 	return false;
-		//
-		// let oContent;
-		// if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
-		// 	oActiveForm.EnterText(codePoints);
-		// 	oContent = oActiveForm.GetDocContent();
-		// }
-		// else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-		// 	oActiveAnnot.EnterText(codePoints);
-		// 	oContent = oActiveAnnot.GetDocContent();
-		// }
-		// else if (oActiveDrawing && !this.isRestrictionView()) {
-		// 	oContent = oActiveDrawing.GetDocContent();
-		//
-		// 	let nCode, oItem;
-		// 	if (Array.isArray(codePoints)) {
-		// 		for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
-		// 			nCode = codePoints[nIdx];
-		// 			oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
-		// 			oDoc.AddToParagraph(oItem, false, true);
-		// 		}
-		// 	} else {
-		// 		oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
-		// 		oDoc.AddToParagraph(oItem, false, true);
-		// 	}
-		// }
-		//
-		// if (oContent) {
-		// 	oDrDoc.showTarget(true);
-		// 	oDrDoc.TargetStart();
-		//
-		// 	if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-		// 		oDrDoc.TargetEnd();
-		// }
-		//
-		// return true;
 	};
 	PDFEditorApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		let oViewer	= this.getDocumentRenderer();
@@ -1659,41 +1611,57 @@
 	};
 	
 	// composite input
-	PDFEditorApi.prototype.Begin_CompositeInput = function()
-	{
-		let oDoc = this.getPDFDoc();
-		oDoc.Begin_CompositeInput();
+	PDFEditorApi.prototype.Begin_CompositeInput = function() {
+		if (this.compositeInput)
+			return;
+		
+		this.compositeInput = AscPDF.CPDFCompositeInput.begin(this.getPDFDoc());
+	};
+	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.add(codePoint);
+	};
+	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.remove(count);
+	};
+	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.replace(codePoints);
+	};
+	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.setPos(pos);
+	};
+	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
+		if (!this.compositeInput)
+			return 0;
+		
+		return this.compositeInput.getPos();
+	};
+	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
+		if (!this.compositeInput)
+			return 0;
+		
+		return this.compositeInput.getMaxPos();
+	};
+	PDFEditorApi.prototype.End_CompositeInput = function() {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.end();
+		this.compositeInput = null;
 	};
 	PDFEditorApi.prototype.getAddedTextOnKeyDown = function() {
 		return [];
-	};
-	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
-		let oDoc = this.getPDFDoc();
-		oDoc.Add_CompositeText(codePoint);
-	};
-	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
-		let oDoc = this.getPDFDoc();
-		oDoc.Remove_CompositeText(count);
-	};
-	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
-		let oDoc = this.getPDFDoc();
-		oDoc.Replace_CompositeText(codePoints);
-	};
-	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
-		let oDoc = this.getPDFDoc();
-		oDoc.Set_CursorPosInCompositeText(pos);
-	};
-	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
-		let oDoc = this.getPDFDoc();
-		return oDoc.Get_CursorPosInCompositeText();
-	};
-	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
-		let oDoc = this.getPDFDoc();
-		return oDoc.Get_MaxCursorPosInCompositeText();
-	};
-	PDFEditorApi.prototype.End_CompositeInput = function() {
-		let oDoc = this.getPDFDoc();
-		oDoc.End_CompositeInput();
 	};
 	PDFEditorApi.prototype._getActiveForm = function() {
 		let viewer = this.DocumentRenderer;
