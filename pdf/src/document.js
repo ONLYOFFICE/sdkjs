@@ -4619,31 +4619,26 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetDocPosType = function() {};
     CPDFDoc.prototype.GetSelectedContent = function() {};
     CPDFDoc.prototype.Is_ShowParagraphMarks = function() {};
-    CPDFDoc.prototype.CheckTargetUpdate = function() {
-        let oDrDoc = this.GetDrawingDocument();
-
-        // Проверим можно ли вообще пересчитывать текущее положение.
-        if (oDrDoc.UpdateTargetFromPaint === true) {
-            if (true === oDrDoc.UpdateTargetCheck)
-                this.NeedUpdateTarget = oDrDoc.UpdateTargetCheck;
-            
-            oDrDoc.UpdateTargetCheck = false;
-        }
-
-        if (!this.NeedUpdateTarget)
-            return;
-
-        let oActiveObj  = this.GetActiveObject();
-        let oContent    = oActiveObj ? oActiveObj.GetDocContent() : null;
-
-        if (oActiveObj && oContent) {
-            if (oActiveObj.IsNeedRecalc() == false) {
-                // Обновляем курсор сначала, чтобы обновить текущую страницу
-                oContent.RecalculateCurPos();
-                this.NeedUpdateTarget = false;
-            }
-        }
-    };
+    CPDFDoc.prototype.CheckTargetUpdate = function(force) {
+		if (force)
+			this.NeedUpdateTarget = true;
+		
+		if (!this.NeedUpdateTarget)
+			return
+		
+		let textController = this.getTextController();
+		if (!textController)
+		{
+			this.NeedUpdateTarget = false;
+			return;
+		}
+		
+		if (textController.IsNeedRecalc())
+			return;
+		
+		textController.GetDocContent().RecalculateCurPos();
+		this.NeedUpdateTarget = false;
+	};
     CPDFDoc.prototype.SetWordSelection = function(){};
     
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -80,7 +80,6 @@
 
         return true;
     };
-
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
     };

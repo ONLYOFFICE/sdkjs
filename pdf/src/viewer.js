@@ -2874,6 +2874,23 @@
 			this._paintFormsHighlight();
 			this._paintFormsMarkers();
 			oDoc.UpdateInterface();
+			
+			// Обязательно делаем в конце, т.к. во время отрисовки происходит пересчет
+			this._checkTargetUpdate();
+		};
+		this._checkTargetUpdate = function() {
+			let pdfDocument = this.getPDFDoc();
+			let docApi = pdfDocument.GetApi();
+			let drawingDocument = pdfDocument.GetDrawingDocument();
+			if (docApi.isLockTargetUpdate)
+				return;
+			
+			drawingDocument.UpdateTargetFromPaint = true;
+			pdfDocument.CheckTargetUpdate(drawingDocument.UpdateTargetCheck);
+			drawingDocument.UpdateTargetCheck = false;
+			drawingDocument.UpdateTargetFromPaint = false;
+			drawingDocument.CheckTargetShow();
+			drawingDocument.CheckTrackTable();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;

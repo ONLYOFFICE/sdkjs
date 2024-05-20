@@ -94,6 +94,9 @@
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+		let docContent = this.GetDocContent();
+		if (docContent)
+			docContent.RecalculateCurPos();
     };
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
@@ -120,8 +123,10 @@
                 oContent.RemoveSelection();
         }
                 
-        if (oContent.IsSelectionEmpty())
-            oContent.RemoveSelection();
+        if (oContent.IsSelectionEmpty()) {
+			oContent.RemoveSelection();
+			oContent.RecalculateCurPos();
+		}
     };
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();
