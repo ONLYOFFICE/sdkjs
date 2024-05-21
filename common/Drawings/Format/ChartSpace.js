@@ -820,7 +820,7 @@ function(window, undefined) {
 					oContent.SetParagraphAlign(AscCommon.align_Left);
 					oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
 					oContent.SetApplyToAll(false);
-					var oSize = oLabel.tx.rich.getContentOneStringSizes();
+					var oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 					var fInset = fMultiplier * (oSize.h);
 					fInset *= 2;
 					if (fInset <= fInterval) {
@@ -920,7 +920,7 @@ function(window, undefined) {
 		const sliceLabel = function (oLabel, maxWidth) {
 			const paragraph = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0] : null
 			const contents = paragraph ? paragraph.Content : null;
-			let oSize = oLabel.tx.rich.getContentOneStringSizes();
+			let oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 			if (!paragraph || !contents || !maxWidth) {
 				return;
 			}
@@ -951,7 +951,7 @@ function(window, undefined) {
 					while(right - left > 1) {
 						mid = (right + left) / 2 + 0.5 >> 0;
 						contents[0].Content = runTexts.slice(0, mid - 1);
-						oSize = oLabel.tx.rich.getContentOneStringSizes();
+						oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 						condition = getCondition(multiLine);
 						if(condition) {
 							right = mid;
@@ -960,7 +960,7 @@ function(window, undefined) {
 						}
 					}
 					contents[0].Content = runTexts.slice(0, left);
-					oSize = oLabel.tx.rich.getContentOneStringSizes();
+					oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 					if (getCondition(multiLine) && left > 0) {
 						contents[0].Content = runTexts.slice(0, --left);
 					}
@@ -990,7 +990,7 @@ function(window, undefined) {
 					oContent.SetParagraphAlign(AscCommon.align_Left);
 					oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
 					oContent.SetApplyToAll(false);
-					var oSize = oLabel.tx.rich.getContentOneStringSizes();
+					var oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 					// create a square around which rotation will be made;
 					const squareWidth = getSquareWidth(direction, oLabel, oSize.h);
 					addDots(sliced, oLabel);
