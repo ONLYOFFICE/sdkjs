@@ -4079,12 +4079,9 @@ CMathContent.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth, U
 	var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : 0;
 
 	var Count = this.Content.length;
-	
+	this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepEnd);
 	if (true === SearchPos.UpdatePos)
 		SearchPos.Pos.Update(CurPos, Depth);
-	
-	this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepEnd);
-
 
 	if (true === SearchPos.Found)
 		return;
