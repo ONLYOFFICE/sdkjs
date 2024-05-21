@@ -969,7 +969,7 @@ function(window, undefined) {
 
 			}
 
-			// is rotation is applied then multiline labels should be sliced
+			// hen rotation is applied then multiline labels should be sliced
 			slice(true);
 
 			// if overfitting is detected then label should be sliced
@@ -1283,6 +1283,10 @@ function(window, undefined) {
 	}
 
 	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth) {
+		if (!oLabelsBox) {
+			return;
+		}
+
 		let fAxisLength = fXEnd - fXStart;
 		let nLabelsCount = oLabelsBox.aLabels.length;
 		let bOnTickMark_ = bOnTickMark && nLabelsCount > 1;
@@ -11427,7 +11431,7 @@ function(window, undefined) {
 	};
 
 	CLabelsParameters.prototype.setLabelType = function (oLabels) {
-		this.isString = oLabels.isString();
+		this.isString = oLabels ? oLabels.isString() : false;
 	}
 
 	CLabelsParameters.prototype.setMaxHeight = function (diagramHeight, chartHeight, titleHeight) {
