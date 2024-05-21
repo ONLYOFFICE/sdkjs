@@ -9235,16 +9235,24 @@ var editor;
 
 	spreadsheet_api.prototype.asc_getOpeningDocumentsList = function(callback) {
 		let docInfo = this.DocInfo;
-
+		let addedMapDocs = {};
 		if (!window.fBroadcastChannelDocumentInfo) {
 			window.fBroadcastChannelDocumentInfo = function (event) {
-				let docId = docInfo.Id + AscCommon.g_oIdCounter.m_sUserId;
-				if ("DocumentInfo" === event.data.type && event.data.info.id !== docId) {
-					let val = new AscCommonExcel.CWorkbookInfo(event.data.info.name, event.data.info.id);
-					for (let i in event.data.info.sheets) {
-						val.addSheet(event.data.info.sheets[i].name, event.data.info.sheets[i].index);
+				if (event && event.data && event.data.info && event.data.info.id) {
+					let docId = docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId;
+					let lastIndexSeparator = event.data.info.id.lastIndexOf("_");
+					let sentDocId;
+					if (lastIndexSeparator !== -1) {
+						sentDocId = event.data.info.id.substring(0, lastIndexSeparator);
 					}
-					callback([val]);
+					if ("DocumentInfo" === event.data.type && event.data.info.id !== docId && (!sentDocId || !addedMapDocs[sentDocId])) {
+						let val = new AscCommonExcel.CWorkbookInfo(event.data.info.name, event.data.info.id);
+						for (let i in event.data.info.sheets) {
+							val.addSheet(event.data.info.sheets[i].name, event.data.info.sheets[i].index);
+						}
+						addedMapDocs[sentDocId] = 1;
+						callback([val]);
+					}
 				}
 			};
 
@@ -9297,7 +9305,7 @@ var editor;
 					broadcastChannel.postMessage({
 						type: "DocumentInfo",
 						info: {
-							id: docInfo.Id + AscCommon.g_oIdCounter.m_sUserId,
+							id: docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId,
 							name: docInfo.Title,
 							sheets: sheets
 						}
@@ -9305,7 +9313,7 @@ var editor;
 				}
 				else if ("InsertSheets" === event.data.type) {
 					if (wb) {
-						let docId = docInfo.Id + AscCommon.g_oIdCounter.m_sUserId;
+						let docId = docInfo.Id + "_" + AscCommon.g_oIdCounter.m_sUserId;
 						for (let i in event.data.info.aBooks) {
 							if (event.data.info.aBooks[i] === docId) {
 								let where = event.data.info.where != null ? event.data.info.where : (wb.aWorksheets && wb.aWorksheets.length);
