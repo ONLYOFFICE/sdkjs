@@ -1706,7 +1706,7 @@
 
 			function isLandscape(angle) {
 				// Углы поворота, указывающие на ландшафтную ориентацию
-				const landscapeAngles = [90, -90, 270, -270];
+				const landscapeAngles = [90, 270];
 				return landscapeAngles.includes(angle);
 			}
 
@@ -1840,14 +1840,18 @@
 		this.getPageAnnotByMouse = function(bGetHidden)
 		{
 			let oDoc = this.getPDFDoc();
-			let oDrDoc = oDoc.GetDrawingDocument();
-			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			let pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 			if (!pageObject)
 				return null;
 
 			const nPage	= pageObject.index;
 
-			var page = this.pagesInfo.pages[nPage];
+			// координаты клика на странице в MM
+			let pageObject2 = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			let X = pageObject2.x;
+			let Y = pageObject2.y;
+
+			let page = this.pagesInfo.pages[nPage];
 			
 			// если есть заселекченная shape base аннотация под мышкой, то возвращаем её, а не первую попавшуюся
 			if (oDoc.mouseDownAnnot) {
@@ -1858,7 +1862,7 @@
 			if (page.annots)
 			{
 				// сначала ищем text annot (sticky note)
-				for (var i = page.annots.length -1; i >= 0; i--)
+				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
 					let nAnnotWidth		= Math.max(oAnnot._origRect[2] - oAnnot._origRect[0], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
@@ -1878,7 +1882,7 @@
 					}
 				}
 
-				for (var i = page.annots.length -1; i >= 0; i--)
+				for (let i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
 					let nAnnotWidth		= (oAnnot._origRect[2] - oAnnot._origRect[0]);
@@ -2822,21 +2826,7 @@
 
 				if (oImageToDraw)
 				{
-					if (0 === rotateAngle)
-					{
-						ctx.drawImage(oImageToDraw, 0, 0, oImageToDraw.width, oImageToDraw.height, x, y, w, h);
-					}
-					else
-					{
-						let cx = x + 0.5 * w;
-						let cy = y;
-
-						ctx.save();
-						ctx.translate(cx, cy);
-						ctx.rotate(rotateAngle * Math.PI / 180);
-						ctx.drawImage(oImageToDraw, 0, -0.5 * h, w, h);
-						ctx.restore();
-					}
+					this.blitPageToCtx(ctx, oImageToDraw, i);
 					this.pagesInfo.setPainted(i);
 				}
 				else
@@ -2892,6 +2882,48 @@
 			drawingDocument.UpdateTargetFromPaint = false;
 			drawingDocument.CheckTargetShow();
 			drawingDocument.CheckTrackTable();
+		};
+		this.blitPageToCtx = function(ctx, imagePage, pageIndex) {
+			let angle = this.getPageRotate(pageIndex);
+			let angleRad = angle * Math.PI / 180;
+
+			let pageHeight = imagePage.height;
+			let pageWidth = imagePage.width;
+
+			let page = this.drawingPages[pageIndex];
+
+			let xCenter = this.width >> 1;
+			let yPos = this.scrollY >> 0;
+			if (this.documentWidth > this.width) {
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+			}
+
+			let cx = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
+			let yInd = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			
+			ctx.save();
+			switch (angle) {
+				case 90:
+					ctx.translate(cx, yInd);
+					ctx.rotate(angleRad);
+					ctx.drawImage(imagePage, 0, -0.5 * pageHeight >> 0, pageWidth, pageHeight);
+					break;
+				case 180:
+					ctx.translate(cx, yInd + pageHeight / 2 >> 0);
+					ctx.rotate(angleRad);
+					ctx.drawImage(imagePage, -pageWidth / 2 >> 0, -pageHeight / 2 >> 0, pageWidth, pageHeight);
+					break;
+				case 270:
+					ctx.translate(cx, yInd + pageWidth >> 0);
+					ctx.rotate(angleRad);
+					ctx.drawImage(imagePage, 0, -0.5 * pageHeight >> 0, pageWidth, pageHeight);
+					break;
+				default: // 0 градусов, по умолчанию
+					ctx.drawImage(imagePage, cx - pageWidth / 2 >> 0, yInd, pageWidth, pageHeight);
+					break;
+			}
+
+			ctx.restore();
 		};
 		this.isLandscapePage = function(nPage) {
 			const angle = this.getPageRotate(nPage);
@@ -3002,8 +3034,8 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
 
-			var x = (xInp - this.x) * AscCommon.AscBrowser.retinaPixelRatio;
-			var y = (yInp - this.y) * AscCommon.AscBrowser.retinaPixelRatio;
+			var x = xInp - this.x;
+			var y = yInp - this.y;
 
 			let oDoc = this.getPDFDoc();
 
@@ -3013,14 +3045,14 @@
 				if (!pageCoords)
 					continue;
 
-				if (x >= pageCoords.x && x <= (pageCoords.x + pageCoords.w) &&
-					y >= pageCoords.y && y <= (pageCoords.y + pageCoords.h))
+				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
+					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 				{
-					let nScale = this.file.pages[i].W / this.drawingPages[i].W / AscCommon.AscBrowser.retinaPixelRatio;
+					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y);
+					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y);
 
-					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y) * nScale;
-					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y) * nScale;
-
+					console.log(`x: ${_x}`);
+					console.log(`y: ${_y}`);
 
 					// console.log(`page x: ${_x}`);
 					// console.log(`page y: ${_y}`);
@@ -3042,8 +3074,8 @@
 
 		this.getPageByCoords2 = function(xInp, yInp)
 		{
-			let x = (xInp - this.x) * AscCommon.AscBrowser.retinaPixelRatio;
-			let y = (yInp - this.y) * AscCommon.AscBrowser.retinaPixelRatio;
+			let x = xInp - this.x;
+			let y = yInp - this.y;
 
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
@@ -3053,7 +3085,7 @@
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
 				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-				if ((pageCoords.y + pageCoords.h) > yInp)
+				if ((pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio > yInp)
 					break;
 			}
 			if (pageIndex > this.endVisiblePage)
@@ -3065,10 +3097,9 @@
 			let oDoc = this.getPDFDoc();
 
 			let pixToMM = (25.4 / this.file.pages[pageIndex].Dpi);
-			let nScale = this.file.pages[pageIndex].W / this.drawingPages[pageIndex].W / AscCommon.AscBrowser.retinaPixelRatio * pixToMM;
 
-			let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y) * nScale;
-			let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y) * nScale;
+			let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y) * pixToMM;
+			let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y) * pixToMM;
 
 			return {
 				index : pageIndex,
@@ -3582,13 +3613,6 @@
 		const ctx = this.canvasForms.getContext('2d');
 		ctx.globalAlpha = 1;
 		
-		let xCenter = this.width >> 1;
-		let yPos = this.scrollY >> 0;
-		if (this.documentWidth > this.width)
-		{
-			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-		}
-		
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let page = this.drawingPages[i];
@@ -3606,14 +3630,6 @@
 			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
 
 			let cachedImg = page.ImageForms;
-			let rotateAngle = this.getPageRotate(i);
-			let natW = w;
-			let natH = h;
-			if (rotateAngle & 1)
-			{
-				natW = h;
-				natH = w;
-			}
 
 			if (!cachedImg || this.pagesInfo.pages[i].needRedrawForms || cachedImg.width != w || cachedImg.height != h)
 			{
@@ -3632,24 +3648,7 @@
 				this.pagesInfo.pages[i].needRedrawForms = false;
 			}
 			
-			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			
-			if (0 === rotateAngle)
-			{
-				ctx.drawImage(page.ImageForms, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
-			}
-			else
-			{
-				let cx = x + 0.5 * w;
-				let cy = y;
-
-				ctx.save();
-				ctx.translate(cx, cy);
-				ctx.rotate(rotateAngle * Math.PI / 180);
-				ctx.drawImage(page.ImageForms, 0, -0.5 * natH, natW, natH);
-				ctx.restore();
-			}
+			this.blitPageToCtx(ctx, page.ImageForms, i);
 		}
 		
 		let oDoc = this.getPDFDoc();
@@ -3720,14 +3719,6 @@
 		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
 		ctx.globalAlpha = 1;
 		
-		let xCenter = this.width >> 1;
-		let yPos = this.scrollY >> 0;
-		if (this.documentWidth > this.width)
-		{
-			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-		}
-		
-		//let time1 = performance.now();
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let page = this.drawingPages[i];
@@ -3748,8 +3739,6 @@
 			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) >> 0;
             let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
 			
-			let rotateAngle = this.getPageRotate(i);
-
 			if (!cachedImg || this.pagesInfo.pages[i].needRedrawAnnots || cachedImg.width != w || cachedImg.height != h)
 			{
 				tmpCanvas.width = w;
@@ -3761,24 +3750,7 @@
 				this.pagesInfo.pages[i].needRedrawAnnots = false;
 			}
 			
-			let x = (((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0)) - (w >> 1);
-			let y = (((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
-						
-			if (0 === rotateAngle)
-			{
-				ctx.drawImage(page.ImageAnnots, 0, 0, page.ImageAnnots.width, page.ImageAnnots.height, x, y, w, h);
-			}
-			else
-			{
-				let cx = x + 0.5 * w;
-				let cy = y;
-
-				ctx.save();
-				ctx.translate(cx, cy);
-				ctx.rotate(rotateAngle * Math.PI / 180);
-				ctx.drawImage(page.ImageAnnots, 0, -0.5 * h, w, h);
-				ctx.restore();
-			}
+			this.blitPageToCtx(ctx, page.ImageAnnots, i);
 		}
 		
 		if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText()) {
@@ -3825,13 +3797,6 @@
 		const ctx = this.canvas.getContext('2d');
 		ctx.globalAlpha = 1;
 		
-		let xCenter = this.width >> 1;
-		let yPos = this.scrollY >> 0;
-		if (this.documentWidth > this.width)
-		{
-			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-		}
-		
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let page = this.drawingPages[i];
@@ -3847,8 +3812,6 @@
 
 			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) >> 0;
 			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
-
-			let rotateAngle = this.getPageRotate(i)
 
 			let cachedImg = page.ImageTextShapes;
 			if (!cachedImg || this.pagesInfo.pages[i].needRedrawTextShapes || cachedImg.width != w || cachedImg.height != h)
@@ -3868,24 +3831,7 @@
 				this.pagesInfo.pages[i].needRedrawTextShapes = false;
 			}
 			
-			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			
-			if (0 === rotateAngle)
-			{
-				ctx.drawImage(page.ImageTextShapes, 0, 0, page.ImageTextShapes.width, page.ImageTextShapes.height, x, y, w, h);
-			}
-			else
-			{
-				let cx = x + 0.5 * w;
-				let cy = y;
-
-				ctx.save();
-				ctx.translate(cx, cy);
-				ctx.rotate(rotateAngle * Math.PI / 180);
-				ctx.drawImage(page.ImageTextShapes, 0, -0.5 * h, w, h);
-				ctx.restore();
-			}
+			this.blitPageToCtx(ctx, page.ImageTextShapes, i);
 		}
 		
 		if (this.doc.activeDrawing) {

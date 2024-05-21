@@ -1811,6 +1811,29 @@
 			this.sendEvent("asc_onTextColor", color);
 		}
 	};
+	PDFEditorApi.prototype.asc_RotatePage = function(angle) {
+		if (angle % 90 != 0) {
+			return false;
+		}
+		if (angle < 0) {
+			angle = 360 + angle;
+		}
+
+		let oViewer = this.getDocumentRenderer();
+		let oThumbnails = oViewer.Thumbnails;
+		let oFile = oViewer.file;
+		oFile.pages[oThumbnails.selectPage].Rotate = angle % 360;
+
+		oViewer.resize();
+	};
+	PDFEditorApi.prototype.asc_GetPageRotate = function(nPage) {
+		let oViewer = this.getDocumentRenderer();
+		if (!oViewer) {
+			return;
+		}
+
+		return oViewer.getPageRotate(nPage);
+	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
@@ -2234,6 +2257,8 @@
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
+	PDFEditorApi.prototype['asc_GetPageRotate']			   = PDFEditorApi.prototype.asc_GetPageRotate;
+	PDFEditorApi.prototype['asc_RotatePage']        	   = PDFEditorApi.prototype.asc_RotatePage;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
 	PDFEditorApi.prototype['get_PageWidth']                = PDFEditorApi.prototype.get_PageWidth;
 	PDFEditorApi.prototype['get_PageHeight']               = PDFEditorApi.prototype.get_PageHeight;

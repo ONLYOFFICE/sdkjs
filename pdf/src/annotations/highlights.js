@@ -684,7 +684,6 @@
         let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
         let oTr     = oDoc.pagesTransform[pageIndex].invert;
-        let nScale  = oViewer.file.pages[pageIndex].W / oViewer.drawingPages[pageIndex].W / AscCommon.AscBrowser.retinaPixelRatio;
 
         // рисуем всегда в пиксельной сетке. при наклонных линиях - +- 1 пиксел - ничего страшного
         let pointOffset = (overlay.m_oContext.lineWidth & 1) ? 0.5 : 0;
@@ -697,8 +696,8 @@
             if (2 > countPoints)
                 continue;
 
-            let X = oTr.TransformPointX(region[0][0] / nScale, region[0][1] / nScale);
-            let Y = oTr.TransformPointY(region[0][0] / nScale, region[0][1] / nScale);
+            let X = oTr.TransformPointX(region[0][0], region[0][1]) * AscCommon.AscBrowser.retinaPixelRatio;
+            let Y = oTr.TransformPointY(region[0][0], region[0][1]) * AscCommon.AscBrowser.retinaPixelRatio;
 
             overlay.m_oContext.moveTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
 
@@ -707,8 +706,8 @@
 
             for (let j = 1, countPoints = region.length; j < countPoints; j++)
             {
-                X = oTr.TransformPointX(region[j][0] / nScale, region[j][1] / nScale);
-                Y = oTr.TransformPointY(region[j][0] / nScale, region[j][1] / nScale);
+                X = oTr.TransformPointX(region[j][0], region[j][1]) * AscCommon.AscBrowser.retinaPixelRatio;
+                Y = oTr.TransformPointY(region[j][0], region[j][1]) * AscCommon.AscBrowser.retinaPixelRatio;
 
                 overlay.m_oContext.lineTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
                 overlay.CheckPoint1(X, Y);

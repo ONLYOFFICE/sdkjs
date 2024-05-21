@@ -75,14 +75,11 @@
 		let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
         let oTr     = oDoc.pagesTransform[nPage].invert;
-        let nScale  = oViewer.file.pages[nPage].W / oViewer.drawingPages[nPage].W / AscCommon.AscBrowser.retinaPixelRatio;
 
-		let x1 = oTr.TransformPointX(aFirstQuads[0] / nScale, aFirstQuads[1] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
-		let y1 = oTr.TransformPointY(aFirstQuads[0] / nScale, aFirstQuads[1] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
-		let x2 = oTr.TransformPointX(aFirstQuads[6] / nScale, aFirstQuads[7] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
-		let y2 = oTr.TransformPointY(aFirstQuads[6] / nScale, aFirstQuads[7] / nScale) / AscCommon.AscBrowser.retinaPixelRatio;
+		let oPoint1 = oTr.TransformPoint(aFirstQuads[0], aFirstQuads[1]);
+		let oPoint2 = oTr.TransformPoint(aFirstQuads[6], aFirstQuads[7]);
 
-		return [x1, y1, x2, y2];
+		return [Math.min(oPoint1.x, oPoint2.x), Math.min(oPoint1.y, oPoint2.y), Math.max(oPoint1.x, oPoint2.x), Math.max(oPoint1.y, oPoint2.y)];
 	};
 	CTextSelectTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideTextSelectTrack");

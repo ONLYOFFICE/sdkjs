@@ -181,19 +181,21 @@ var CPresentation = CPresentation || function(){};
 
             let oPageTr = new AscCommon.CMatrix();
 
-            let nPageW  = AscCommon.AscBrowser.convertToRetinaValue(oPage.W, true);
-            let nPageH  = AscCommon.AscBrowser.convertToRetinaValue(oPage.H, true);
-            let xInd    = (this.Viewer.width >> 1) * AscCommon.AscBrowser.retinaPixelRatio - (AscCommon.AscBrowser.convertToRetinaValue(oPage.W, true) >> 1);
-            let yInd    = (this.Viewer.betweenPages - this.Viewer.scrollY) * AscCommon.AscBrowser.retinaPixelRatio;
+            let nPageW  = oPage.W;
+            let nPageH  = oPage.H;
+            let xInd    = (this.Viewer.width >> 1) - (oPage.W >> 1);
+            let yInd    = (this.Viewer.betweenPages - this.Viewer.scrollY);
             
+            let nScale = this.Viewer.file.pages[i].W / this.Viewer.drawingPages[i].W;
+
             let shx = 0, shy = 0, sx = 1, sy = 1, tx = 0, ty = 0;
 
             switch (nAngle) {
                 case 0: {
-                    tx = -xInd;
-                    ty = -yInd;
-                    sx = 1;
-                    sy = 1;
+                    tx = -xInd * nScale;
+                    ty = -yInd * nScale;
+                    sx = nScale;
+                    sy = nScale;
                     shx = 0;
                     shy = 0;
                     break;
@@ -201,12 +203,32 @@ var CPresentation = CPresentation || function(){};
                 case 90: {
                     // Новый отступ слева после поворота
                     let newXInd = xInd + (nPageW - nPageH) / 2;
-                    tx = -yInd;
-                    ty = nPageH + newXInd;
+                    tx = -yInd * nScale;
+                    ty = (nPageH + newXInd) * nScale;
                     sx = 0;
                     sy = 0;
-                    shx = 1;
-                    shy = -1;
+                    shx = 1 * nScale;
+                    shy = -1 * nScale;
+                    break;
+                }
+                case 180: {
+                    tx = (xInd + nPageW) * nScale;
+                    ty = (yInd + nPageH) * nScale;
+                    sx = -nScale;
+                    sy = -nScale;
+                    shx = 0;
+                    shy = 0;
+                    break;
+                }
+                case 270: {
+                    // Новый отступ слева после поворота
+                    let newXInd = xInd + (nPageW - nPageH) / 2;
+                    tx = (nPageW + yInd) * nScale;
+                    ty = -newXInd * nScale;
+                    sx = 0;
+                    sy = 0;
+                    shx = -1 * nScale;
+                    shy = 1 * nScale;
                     break;
                 }
             }
