@@ -4915,7 +4915,7 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) {
 			return activeAnnot;
 		}
-		else if (activeDrawing) {
+		else if (activeDrawing && activeDrawing.GetDocContent()) {
 			return activeDrawing;
 		}
 		
