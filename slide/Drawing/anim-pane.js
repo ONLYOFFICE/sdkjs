@@ -1069,6 +1069,17 @@
 		);
 		this.closeButton.recalculate();
 	};
+	CAnimPaneHeader.prototype.onMouseMove = function (e, x, y) {
+		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
+		animPane.SetCursorType('default', new CMouseMoveData());
+
+		for (var nChild = this.children.length - 1; nChild >= 0; --nChild) {
+			if (this.children[nChild].onMouseMove(e, x, y)) {
+				return true;
+			}
+		}
+		return CControl.prototype.onMouseMove.call(this, e, x, y);
+	};
 
 
 	function CTimelineContainer(oDrawer) {
@@ -2809,6 +2820,11 @@
 		return null;
 	};
 	CAnimItem.prototype.hit = function (x, y) {
+		const headerY = y + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+		if (editor.WordControl.m_oAnimPaneApi.header.Control.hit(x, headerY)) {
+			return false;
+		}
+
 		if (this.parentControl && !this.parentControl.hit(x, y)) { return false; }
 
 		const oInv = this.invertTransform;
