@@ -6241,7 +6241,7 @@ function (window, undefined) {
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 
 
-		argClone[0] = argClone[0].getMatrix();
+		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
 
 		let argError;
 		if (argError = this._checkErrorArg(argClone)) {

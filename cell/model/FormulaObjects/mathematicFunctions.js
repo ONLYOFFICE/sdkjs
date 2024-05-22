@@ -1070,6 +1070,7 @@ function (window, undefined) {
 	cCEILING_PRECISE.prototype.argumentsMin = 1;
 	cCEILING_PRECISE.prototype.argumentsMax = 2;
 	cCEILING_PRECISE.prototype.isXLFN = true;
+	cCEILING_PRECISE.prototype.argumentsType = [argType.number, argType.number];
 	cCEILING_PRECISE.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
@@ -1990,6 +1991,7 @@ function (window, undefined) {
 	cFLOOR_PRECISE.prototype.argumentsMin = 1;
 	cFLOOR_PRECISE.prototype.argumentsMax = 2;
 	cFLOOR_PRECISE.prototype.isXLFN = true;
+	cFLOOR_PRECISE.prototype.argumentsType = [argType.number, argType.number];
 	cFLOOR_PRECISE.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
@@ -2221,6 +2223,7 @@ function (window, undefined) {
 	cISO_CEILING.prototype.name = 'ISO.CEILING';
 	cISO_CEILING.prototype.argumentsMin = 1;
 	cISO_CEILING.prototype.argumentsMax = 2;
+	cISO_CEILING.prototype.argumentsType = [argType.number, argType.number];
 	//cISO_CEILING.prototype.isXLFN = true;
 	cISO_CEILING.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
