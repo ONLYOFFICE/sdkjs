@@ -140,6 +140,9 @@ var CPresentation = CPresentation || function(){};
         this._parentsMap = {}; // map при открытии форм
         this.api = this.GetDocumentApi();
 		
+
+        this.CurPosition = {X: 0, Y: 0}; // для graphic frame
+
         // internal
         this.activeForm         = null;
         this.activeDrawing    = null;
@@ -4903,6 +4906,12 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsWordSelection = function() {
 		return false;
 	};
+    CPDFDoc.prototype.GetCursorRealPosition = function() {
+        return {
+            X: this.CurPosition.X,
+            Y: this.CurPosition.Y
+        };
+    };
 
 	CPDFDoc.prototype.getTextController = function() {
 		let activeForm    = this.activeForm;
