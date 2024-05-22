@@ -1234,63 +1234,63 @@
 		this.api = api;
 	}
 
-	ApiWorksheetFunction.prototype.init = function () {
-		let getArgType = function (_arg) {
-
-			let res = "any";
-			if (_arg === Asc.c_oAscFormulaArgumentType.number) {
-				res = "number"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
-				res = "string"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
-				res = "ApiRange"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
-				res = "boolean"
-			}
-			return res;
-		};
-
-		let test = ""
-		for (let i in AscCommonExcel.cFormulaFunction) {
-			if (supportedFunctionsMap[i]) {
-
-				//if (i === "SERIESSUM") {
-					let test1 = "";
-					let test2 = ""
-					let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax
-					let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin
-					if (maxArg < 10) {
-						for (let j = 1; j <= maxArg; j++) {
-							let test12 = "arg" + (j)
-
-							test1 += "\t * @param {" + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
-							if (j <= minArg) {
-								test1 += test12;
-							} else {
-								test1 += "[" + test12 + "]";
-							}
-							test1 +=  ".\n";
-
-							test2 += j === maxArg ? test12 : (test12 + ",")
-						}
-					}
-
-
-					test += "/**\n" + "\t * Returns the result of calculating the function.\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
-						+ "\t * @returns {}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\tthis.private_calculateFunction(\"" + i + "\", arguments);\n" + "\t};"
-				//}
-
-				test += "\n"
-
-
-
-				ApiWorksheetFunction.prototype[i] = function () {
-					return this.private_calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
-				}
-			}
-		}
-		console.log(test)
-	};
+	// ApiWorksheetFunction.prototype.init = function () {
+	// 	let getArgType = function (_arg) {
+	//
+	// 		let res = "any";
+	// 		if (_arg === Asc.c_oAscFormulaArgumentType.number) {
+	// 			res = "number"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
+	// 			res = "string"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
+	// 			res = "ApiRange"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
+	// 			res = "boolean"
+	// 		}
+	// 		return res;
+	// 	};
+	//
+	// 	let test = ""
+	// 	for (let i in AscCommonExcel.cFormulaFunction) {
+	// 		if (supportedFunctionsMap[i]) {
+	//
+	// 			//if (i === "SERIESSUM") {
+	// 				let test1 = "";
+	// 				let test2 = ""
+	// 				let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax
+	// 				let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin
+	// 				if (maxArg < 10) {
+	// 					for (let j = 1; j <= maxArg; j++) {
+	// 						let test12 = "arg" + (j)
+	//
+	// 						test1 += "\t * @param {" + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
+	// 						if (j <= minArg) {
+	// 							test1 += test12;
+	// 						} else {
+	// 							test1 += "[" + test12 + "]";
+	// 						}
+	// 						test1 +=  ".\n";
+	//
+	// 						test2 += j === maxArg ? test12 : (test12 + ",")
+	// 					}
+	// 				}
+	//
+	//
+	// 				test += "/**\n" + "\t * Returns the result of calculating the function.\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
+	// 					+ "\t * @returns {}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\tthis.private_calculateFunction(\"" + i + "\", arguments);\n" + "\t};"
+	// 			//}
+	//
+	// 			test += "\n"
+	//
+	//
+	//
+	// 			ApiWorksheetFunction.prototype[i] = function () {
+	// 				return this.private_calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
+	// 			}
+	// 		}
+	// 	}
+	// 	console.log(test)
+	// };
 
 
 	ApiWorksheetFunction.prototype.private_calculateFunction = function (sFunc, arg) {
@@ -1329,7 +1329,11 @@
 		}
 
 		//prepare result
-		let result = func.Calculate(newArguments, new Asc.Range(0, 0, 0, 0), null, this.api && this.api.wb && this.api.wb.getWorksheet().model);
+		let ws = this.api && this.api.wb && this.api.wb.getWorksheet();
+		if (ws) {
+			ws = ws.model;
+		}
+		let result = func.Calculate(newArguments, new Asc.Range(0, 0, 0, 0), null, ws);
 
 		if (!result) {
 			throwException(new Error('Result type error.'));
@@ -12973,6 +12977,8 @@
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
+
+	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
 	
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -13262,6 +13268,360 @@
 	ApiProtectedRangeUserInfo.prototype["GetName"]  = ApiProtectedRangeUserInfo.prototype.GetName;
 	ApiProtectedRangeUserInfo.prototype["GetType"]  = ApiProtectedRangeUserInfo.prototype.GetType;
 	ApiProtectedRangeUserInfo.prototype["GetId"]    = ApiProtectedRangeUserInfo.prototype.GetId;
+
+	ApiWorksheetFunction.prototype["ASC"]             =  ApiWorksheetFunction.prototype.ASC;
+	ApiWorksheetFunction.prototype["CHAR"]            =  ApiWorksheetFunction.prototype.CHAR;
+	ApiWorksheetFunction.prototype["CLEAN"]           =  ApiWorksheetFunction.prototype.CLEAN;
+	ApiWorksheetFunction.prototype["CODE"]            =  ApiWorksheetFunction.prototype.CODE;
+	ApiWorksheetFunction.prototype["CONCATENATE"]     =  ApiWorksheetFunction.prototype.CONCATENATE;
+	ApiWorksheetFunction.prototype["DOLLAR"]          =  ApiWorksheetFunction.prototype.DOLLAR;
+	ApiWorksheetFunction.prototype["EXACT"]           =  ApiWorksheetFunction.prototype.EXACT;
+	ApiWorksheetFunction.prototype["FIND"]            =  ApiWorksheetFunction.prototype.FIND;
+	ApiWorksheetFunction.prototype["FINDB"]           =  ApiWorksheetFunction.prototype.FINDB;
+	ApiWorksheetFunction.prototype["FIXED"]           =  ApiWorksheetFunction.prototype.FIXED;
+	ApiWorksheetFunction.prototype["LEFT"]            =  ApiWorksheetFunction.prototype.LEFT;
+	ApiWorksheetFunction.prototype["LEFTB"]           =  ApiWorksheetFunction.prototype.LEFTB;
+	ApiWorksheetFunction.prototype["LEN"]             =  ApiWorksheetFunction.prototype.LEN;
+	ApiWorksheetFunction.prototype["LENB"]            =  ApiWorksheetFunction.prototype.LENB;
+	ApiWorksheetFunction.prototype["LOWER"]           =  ApiWorksheetFunction.prototype.LOWER;
+	ApiWorksheetFunction.prototype["MID"]             =  ApiWorksheetFunction.prototype.MID;
+	ApiWorksheetFunction.prototype["MIDB"]            =  ApiWorksheetFunction.prototype.MIDB;
+	ApiWorksheetFunction.prototype["NUMBERVALUE"]     =  ApiWorksheetFunction.prototype.NUMBERVALUE;
+	ApiWorksheetFunction.prototype["PROPER"]          =  ApiWorksheetFunction.prototype.PROPER;
+	ApiWorksheetFunction.prototype["REPLACE"]         =  ApiWorksheetFunction.prototype.REPLACE;
+	ApiWorksheetFunction.prototype["REPLACEB"]        =  ApiWorksheetFunction.prototype.REPLACEB;
+	ApiWorksheetFunction.prototype["REPT"]            =  ApiWorksheetFunction.prototype.REPT;
+	ApiWorksheetFunction.prototype["RIGHT"]           =  ApiWorksheetFunction.prototype.RIGHT;
+	ApiWorksheetFunction.prototype["RIGHTB"]          =  ApiWorksheetFunction.prototype.RIGHTB;
+	ApiWorksheetFunction.prototype["SEARCH"]          =  ApiWorksheetFunction.prototype.SEARCH;
+	ApiWorksheetFunction.prototype["SEARCHB"]         =  ApiWorksheetFunction.prototype.SEARCHB;
+	ApiWorksheetFunction.prototype["SUBSTITUTE"]      =  ApiWorksheetFunction.prototype.SUBSTITUTE;
+	ApiWorksheetFunction.prototype["T"]               =  ApiWorksheetFunction.prototype.T;
+	ApiWorksheetFunction.prototype["TEXT"]            =  ApiWorksheetFunction.prototype.TEXT;
+	ApiWorksheetFunction.prototype["TRIM"]            =  ApiWorksheetFunction.prototype.TRIM;
+	ApiWorksheetFunction.prototype["UNICHAR"]         =  ApiWorksheetFunction.prototype.UNICHAR;
+	ApiWorksheetFunction.prototype["UNICODE"]         =  ApiWorksheetFunction.prototype.UNICODE;
+	ApiWorksheetFunction.prototype["UPPER"]           =  ApiWorksheetFunction.prototype.UPPER;
+	ApiWorksheetFunction.prototype["VALUE"]           =  ApiWorksheetFunction.prototype.VALUE;
+	ApiWorksheetFunction.prototype["AVEDEV"]          =  ApiWorksheetFunction.prototype.AVEDEV;
+	ApiWorksheetFunction.prototype["AVERAGE"]         =  ApiWorksheetFunction.prototype.AVERAGE;
+	ApiWorksheetFunction.prototype["AVERAGEA"]        =  ApiWorksheetFunction.prototype.AVERAGEA;
+	ApiWorksheetFunction.prototype["AVERAGEIF"]       =  ApiWorksheetFunction.prototype.AVERAGEIF;
+	ApiWorksheetFunction.prototype["AVERAGEIFS"]      =  ApiWorksheetFunction.prototype.AVERAGEIFS;
+	ApiWorksheetFunction.prototype["BETADIST"]        =  ApiWorksheetFunction.prototype.BETADIST;
+	ApiWorksheetFunction.prototype["BETAINV"]         =  ApiWorksheetFunction.prototype.BETAINV;
+	ApiWorksheetFunction.prototype["BINOMDIST"]       =  ApiWorksheetFunction.prototype.BINOMDIST;
+	ApiWorksheetFunction.prototype["CHIDIST"]         =  ApiWorksheetFunction.prototype.CHIDIST;
+	ApiWorksheetFunction.prototype["CHIINV"]          =  ApiWorksheetFunction.prototype.CHIINV;
+	ApiWorksheetFunction.prototype["CONFIDENCE"]      =  ApiWorksheetFunction.prototype.CONFIDENCE;
+	ApiWorksheetFunction.prototype["COUNT"]           =  ApiWorksheetFunction.prototype.COUNT;
+	ApiWorksheetFunction.prototype["COUNTA"]          =  ApiWorksheetFunction.prototype.COUNTA;
+	ApiWorksheetFunction.prototype["COUNTBLANK"]      =  ApiWorksheetFunction.prototype.COUNTBLANK;
+	ApiWorksheetFunction.prototype["COUNTIF"]         =  ApiWorksheetFunction.prototype.COUNTIF;
+	ApiWorksheetFunction.prototype["COUNTIFS"]        =  ApiWorksheetFunction.prototype.COUNTIFS;
+	ApiWorksheetFunction.prototype["CRITBINOM"]       =  ApiWorksheetFunction.prototype.CRITBINOM;
+	ApiWorksheetFunction.prototype["DEVSQ"]           =  ApiWorksheetFunction.prototype.DEVSQ;
+	ApiWorksheetFunction.prototype["EXPONDIST"]       =  ApiWorksheetFunction.prototype.EXPONDIST;
+	ApiWorksheetFunction.prototype["FDIST"]           =  ApiWorksheetFunction.prototype.FDIST;
+	ApiWorksheetFunction.prototype["FINV"]            =  ApiWorksheetFunction.prototype.FINV;
+	ApiWorksheetFunction.prototype["FISHER"]          =  ApiWorksheetFunction.prototype.FISHER;
+	ApiWorksheetFunction.prototype["FISHERINV"]       =  ApiWorksheetFunction.prototype.FISHERINV;
+	ApiWorksheetFunction.prototype["FREQUENCY"]       =  ApiWorksheetFunction.prototype.FREQUENCY;
+	ApiWorksheetFunction.prototype["GAMMA"]           =  ApiWorksheetFunction.prototype.GAMMA;
+	ApiWorksheetFunction.prototype["GAMMADIST"]       =  ApiWorksheetFunction.prototype.GAMMADIST;
+	ApiWorksheetFunction.prototype["GAMMAINV"]        =  ApiWorksheetFunction.prototype.GAMMAINV;
+	ApiWorksheetFunction.prototype["GAMMALN"]         =  ApiWorksheetFunction.prototype.GAMMALN;
+	ApiWorksheetFunction.prototype["GAUSS"]           =  ApiWorksheetFunction.prototype.GAUSS;
+	ApiWorksheetFunction.prototype["GEOMEAN"]         =  ApiWorksheetFunction.prototype.GEOMEAN;
+	ApiWorksheetFunction.prototype["GROWTH"]          =  ApiWorksheetFunction.prototype.GROWTH;
+	ApiWorksheetFunction.prototype["HARMEAN"]         =  ApiWorksheetFunction.prototype.HARMEAN;
+	ApiWorksheetFunction.prototype["HYPGEOMDIST"]     =  ApiWorksheetFunction.prototype.HYPGEOMDIST;
+	ApiWorksheetFunction.prototype["KURT"]            =  ApiWorksheetFunction.prototype.KURT;
+	ApiWorksheetFunction.prototype["LARGE"]           =  ApiWorksheetFunction.prototype.LARGE;
+	ApiWorksheetFunction.prototype["LINEST"]          =  ApiWorksheetFunction.prototype.LINEST;
+	ApiWorksheetFunction.prototype["LOGEST"]          =  ApiWorksheetFunction.prototype.LOGEST;
+	ApiWorksheetFunction.prototype["LOGINV"]          =  ApiWorksheetFunction.prototype.LOGINV;
+	ApiWorksheetFunction.prototype["LOGNORMDIST"]     =  ApiWorksheetFunction.prototype.LOGNORMDIST;
+	ApiWorksheetFunction.prototype["MAX"]             =  ApiWorksheetFunction.prototype.MAX;
+	ApiWorksheetFunction.prototype["MAXA"]            =  ApiWorksheetFunction.prototype.MAXA;
+	ApiWorksheetFunction.prototype["MEDIAN"]          =  ApiWorksheetFunction.prototype.MEDIAN;
+	ApiWorksheetFunction.prototype["MIN"]             =  ApiWorksheetFunction.prototype.MIN;
+	ApiWorksheetFunction.prototype["MINA"]            =  ApiWorksheetFunction.prototype.MINA;
+	ApiWorksheetFunction.prototype["NEGBINOMDIST"]    =  ApiWorksheetFunction.prototype.NEGBINOMDIST;
+	ApiWorksheetFunction.prototype["NORMDIST"]        =  ApiWorksheetFunction.prototype.NORMDIST;
+	ApiWorksheetFunction.prototype["NORMINV"]         =  ApiWorksheetFunction.prototype.NORMINV;
+	ApiWorksheetFunction.prototype["NORMSDIST"]       =  ApiWorksheetFunction.prototype.NORMSDIST;
+	ApiWorksheetFunction.prototype["NORMSINV"]        =  ApiWorksheetFunction.prototype.NORMSINV;
+	ApiWorksheetFunction.prototype["PERCENTILE"]      =  ApiWorksheetFunction.prototype.PERCENTILE;
+	ApiWorksheetFunction.prototype["PERCENTRANK"]     =  ApiWorksheetFunction.prototype.PERCENTRANK;
+	ApiWorksheetFunction.prototype["PERMUT"]          =  ApiWorksheetFunction.prototype.PERMUT;
+	ApiWorksheetFunction.prototype["PERMUTATIONA"]    =  ApiWorksheetFunction.prototype.PERMUTATIONA;
+	ApiWorksheetFunction.prototype["PHI"]             =  ApiWorksheetFunction.prototype.PHI;
+	ApiWorksheetFunction.prototype["POISSON"]         =  ApiWorksheetFunction.prototype.POISSON;
+	ApiWorksheetFunction.prototype["QUARTILE"]        =  ApiWorksheetFunction.prototype.QUARTILE;
+	ApiWorksheetFunction.prototype["RANK"]            =  ApiWorksheetFunction.prototype.RANK;
+	ApiWorksheetFunction.prototype["SKEW"]            =  ApiWorksheetFunction.prototype.SKEW;
+	ApiWorksheetFunction.prototype["SMALL"]           =  ApiWorksheetFunction.prototype.SMALL;
+	ApiWorksheetFunction.prototype["STANDARDIZE"]     =  ApiWorksheetFunction.prototype.STANDARDIZE;
+	ApiWorksheetFunction.prototype["STDEV"]           =  ApiWorksheetFunction.prototype.STDEV;
+	ApiWorksheetFunction.prototype["STDEVA"]          =  ApiWorksheetFunction.prototype.STDEVA;
+	ApiWorksheetFunction.prototype["STDEVP"]          =  ApiWorksheetFunction.prototype.STDEVP;
+	ApiWorksheetFunction.prototype["STDEVPA"]         =  ApiWorksheetFunction.prototype.STDEVPA;
+	ApiWorksheetFunction.prototype["TDIST"]           =  ApiWorksheetFunction.prototype.TDIST;
+	ApiWorksheetFunction.prototype["TINV"]            =  ApiWorksheetFunction.prototype.TINV;
+	ApiWorksheetFunction.prototype["TREND"]           =  ApiWorksheetFunction.prototype.TREND;
+	ApiWorksheetFunction.prototype["TRIMMEAN"]        =  ApiWorksheetFunction.prototype.TRIMMEAN;
+	ApiWorksheetFunction.prototype["VAR"]             =  ApiWorksheetFunction.prototype.VAR;
+	ApiWorksheetFunction.prototype["VARA"]            =  ApiWorksheetFunction.prototype.VARA;
+	ApiWorksheetFunction.prototype["VARP"]            =  ApiWorksheetFunction.prototype.VARP;
+	ApiWorksheetFunction.prototype["VARPA"]           =  ApiWorksheetFunction.prototype.VARPA;
+	ApiWorksheetFunction.prototype["WEIBULL"]         =  ApiWorksheetFunction.prototype.WEIBULL;
+	ApiWorksheetFunction.prototype["ZTEST"]           =  ApiWorksheetFunction.prototype.ZTEST;
+	ApiWorksheetFunction.prototype["DATE"]            =  ApiWorksheetFunction.prototype.DATE;
+	ApiWorksheetFunction.prototype["DATEVALUE"]       =  ApiWorksheetFunction.prototype.DATEVALUE;
+	ApiWorksheetFunction.prototype["DAY"]             =  ApiWorksheetFunction.prototype.DAY;
+	ApiWorksheetFunction.prototype["DAYS"]            =  ApiWorksheetFunction.prototype.DAYS;
+	ApiWorksheetFunction.prototype["DAYS360"]         =  ApiWorksheetFunction.prototype.DAYS360;
+	ApiWorksheetFunction.prototype["EDATE"]           =  ApiWorksheetFunction.prototype.EDATE;
+	ApiWorksheetFunction.prototype["EOMONTH"]         =  ApiWorksheetFunction.prototype.EOMONTH;
+	ApiWorksheetFunction.prototype["HOUR"]            =  ApiWorksheetFunction.prototype.HOUR;
+	ApiWorksheetFunction.prototype["ISOWEEKNUM"]      =  ApiWorksheetFunction.prototype.ISOWEEKNUM;
+	ApiWorksheetFunction.prototype["MINUTE"]          =  ApiWorksheetFunction.prototype.MINUTE;
+	ApiWorksheetFunction.prototype["MONTH"]           =  ApiWorksheetFunction.prototype.MONTH;
+	ApiWorksheetFunction.prototype["NETWORKDAYS"]     =  ApiWorksheetFunction.prototype.NETWORKDAYS;
+	ApiWorksheetFunction.prototype["NOW"]             =  ApiWorksheetFunction.prototype.NOW;
+	ApiWorksheetFunction.prototype["SECOND"]          =  ApiWorksheetFunction.prototype.SECOND;
+	ApiWorksheetFunction.prototype["TIME"]            =  ApiWorksheetFunction.prototype.TIME;
+	ApiWorksheetFunction.prototype["TIMEVALUE"]       =  ApiWorksheetFunction.prototype.TIMEVALUE;
+	ApiWorksheetFunction.prototype["TODAY"]           =  ApiWorksheetFunction.prototype.TODAY;
+	ApiWorksheetFunction.prototype["WEEKDAY"]         =  ApiWorksheetFunction.prototype.WEEKDAY;
+	ApiWorksheetFunction.prototype["WEEKNUM"]         =  ApiWorksheetFunction.prototype.WEEKNUM;
+	ApiWorksheetFunction.prototype["WORKDAY"]         =  ApiWorksheetFunction.prototype.WORKDAY;
+	ApiWorksheetFunction.prototype["YEAR"]            =  ApiWorksheetFunction.prototype.YEAR;
+	ApiWorksheetFunction.prototype["YEARFRAC"]        =  ApiWorksheetFunction.prototype.YEARFRAC;
+	ApiWorksheetFunction.prototype["BESSELI"]         =  ApiWorksheetFunction.prototype.BESSELI;
+	ApiWorksheetFunction.prototype["BESSELJ"]         =  ApiWorksheetFunction.prototype.BESSELJ;
+	ApiWorksheetFunction.prototype["BESSELK"]         =  ApiWorksheetFunction.prototype.BESSELK;
+	ApiWorksheetFunction.prototype["BESSELY"]         =  ApiWorksheetFunction.prototype.BESSELY;
+	ApiWorksheetFunction.prototype["BIN2DEC"]         =  ApiWorksheetFunction.prototype.BIN2DEC;
+	ApiWorksheetFunction.prototype["BIN2HEX"]         =  ApiWorksheetFunction.prototype.BIN2HEX;
+	ApiWorksheetFunction.prototype["BIN2OCT"]         =  ApiWorksheetFunction.prototype.BIN2OCT;
+	ApiWorksheetFunction.prototype["BITAND"]          =  ApiWorksheetFunction.prototype.BITAND;
+	ApiWorksheetFunction.prototype["BITLSHIFT"]       =  ApiWorksheetFunction.prototype.BITLSHIFT;
+	ApiWorksheetFunction.prototype["BITOR"]           =  ApiWorksheetFunction.prototype.BITOR;
+	ApiWorksheetFunction.prototype["BITRSHIFT"]       =  ApiWorksheetFunction.prototype.BITRSHIFT;
+	ApiWorksheetFunction.prototype["BITXOR"]          =  ApiWorksheetFunction.prototype.BITXOR;
+	ApiWorksheetFunction.prototype["COMPLEX"]         =  ApiWorksheetFunction.prototype.COMPLEX;
+	ApiWorksheetFunction.prototype["CONVERT"]         =  ApiWorksheetFunction.prototype.CONVERT;
+	ApiWorksheetFunction.prototype["DEC2BIN"]         =  ApiWorksheetFunction.prototype.DEC2BIN;
+	ApiWorksheetFunction.prototype["DEC2HEX"]         =  ApiWorksheetFunction.prototype.DEC2HEX;
+	ApiWorksheetFunction.prototype["DEC2OCT"]         =  ApiWorksheetFunction.prototype.DEC2OCT;
+	ApiWorksheetFunction.prototype["DELTA"]           =  ApiWorksheetFunction.prototype.DELTA;
+	ApiWorksheetFunction.prototype["ERF"]             =  ApiWorksheetFunction.prototype.ERF;
+	ApiWorksheetFunction.prototype["ERFC"]            =  ApiWorksheetFunction.prototype.ERFC;
+	ApiWorksheetFunction.prototype["GESTEP"]          =  ApiWorksheetFunction.prototype.GESTEP;
+	ApiWorksheetFunction.prototype["HEX2BIN"]         =  ApiWorksheetFunction.prototype.HEX2BIN;
+	ApiWorksheetFunction.prototype["HEX2DEC"]         =  ApiWorksheetFunction.prototype.HEX2DEC;
+	ApiWorksheetFunction.prototype["HEX2OCT"]         =  ApiWorksheetFunction.prototype.HEX2OCT;
+	ApiWorksheetFunction.prototype["IMABS"]           =  ApiWorksheetFunction.prototype.IMABS;
+	ApiWorksheetFunction.prototype["IMAGINARY"]       =  ApiWorksheetFunction.prototype.IMAGINARY;
+	ApiWorksheetFunction.prototype["IMARGUMENT"]      =  ApiWorksheetFunction.prototype.IMARGUMENT;
+	ApiWorksheetFunction.prototype["IMCONJUGATE"]     =  ApiWorksheetFunction.prototype.IMCONJUGATE;
+	ApiWorksheetFunction.prototype["IMCOS"]           =  ApiWorksheetFunction.prototype.IMCOS;
+	ApiWorksheetFunction.prototype["IMCOSH"]          =  ApiWorksheetFunction.prototype.IMCOSH;
+	ApiWorksheetFunction.prototype["IMCOT"]           =  ApiWorksheetFunction.prototype.IMCOT;
+	ApiWorksheetFunction.prototype["IMCSC"]           =  ApiWorksheetFunction.prototype.IMCSC;
+	ApiWorksheetFunction.prototype["IMCSCH"]          =  ApiWorksheetFunction.prototype.IMCSCH;
+	ApiWorksheetFunction.prototype["IMDIV"]           =  ApiWorksheetFunction.prototype.IMDIV;
+	ApiWorksheetFunction.prototype["IMEXP"]           =  ApiWorksheetFunction.prototype.IMEXP;
+	ApiWorksheetFunction.prototype["IMLN"]            =  ApiWorksheetFunction.prototype.IMLN;
+	ApiWorksheetFunction.prototype["IMLOG10"]         =  ApiWorksheetFunction.prototype.IMLOG10;
+	ApiWorksheetFunction.prototype["IMLOG2"]          =  ApiWorksheetFunction.prototype.IMLOG2;
+	ApiWorksheetFunction.prototype["IMPOWER"]         =  ApiWorksheetFunction.prototype.IMPOWER;
+	ApiWorksheetFunction.prototype["IMPRODUCT"]       =  ApiWorksheetFunction.prototype.IMPRODUCT;
+	ApiWorksheetFunction.prototype["IMREAL"]          =  ApiWorksheetFunction.prototype.IMREAL;
+	ApiWorksheetFunction.prototype["IMSEC"]           =  ApiWorksheetFunction.prototype.IMSEC;
+	ApiWorksheetFunction.prototype["IMSECH"]          =  ApiWorksheetFunction.prototype.IMSECH;
+	ApiWorksheetFunction.prototype["IMSIN"]           =  ApiWorksheetFunction.prototype.IMSIN;
+	ApiWorksheetFunction.prototype["IMSINH"]          =  ApiWorksheetFunction.prototype.IMSINH;
+	ApiWorksheetFunction.prototype["IMSQRT"]          =  ApiWorksheetFunction.prototype.IMSQRT;
+	ApiWorksheetFunction.prototype["IMSUB"]           =  ApiWorksheetFunction.prototype.IMSUB;
+	ApiWorksheetFunction.prototype["IMSUM"]           =  ApiWorksheetFunction.prototype.IMSUM;
+	ApiWorksheetFunction.prototype["IMTAN"]           =  ApiWorksheetFunction.prototype.IMTAN;
+	ApiWorksheetFunction.prototype["OCT2BIN"]         =  ApiWorksheetFunction.prototype.OCT2BIN;
+	ApiWorksheetFunction.prototype["OCT2DEC"]         =  ApiWorksheetFunction.prototype.OCT2DEC;
+	ApiWorksheetFunction.prototype["OCT2HEX"]         =  ApiWorksheetFunction.prototype.OCT2HEX;
+	ApiWorksheetFunction.prototype["DAVERAGE"]        =  ApiWorksheetFunction.prototype.DAVERAGE;
+	ApiWorksheetFunction.prototype["DCOUNT"]          =  ApiWorksheetFunction.prototype.DCOUNT;
+	ApiWorksheetFunction.prototype["DCOUNTA"]         =  ApiWorksheetFunction.prototype.DCOUNTA;
+	ApiWorksheetFunction.prototype["DGET"]            =  ApiWorksheetFunction.prototype.DGET;
+	ApiWorksheetFunction.prototype["DMAX"]            =  ApiWorksheetFunction.prototype.DMAX;
+	ApiWorksheetFunction.prototype["DMIN"]            =  ApiWorksheetFunction.prototype.DMIN;
+	ApiWorksheetFunction.prototype["DPRODUCT"]        =  ApiWorksheetFunction.prototype.DPRODUCT;
+	ApiWorksheetFunction.prototype["DSTDEV"]          =  ApiWorksheetFunction.prototype.DSTDEV;
+	ApiWorksheetFunction.prototype["DSTDEVP"]         =  ApiWorksheetFunction.prototype.DSTDEVP;
+	ApiWorksheetFunction.prototype["DSUM"]            =  ApiWorksheetFunction.prototype.DSUM;
+	ApiWorksheetFunction.prototype["DVAR"]            =  ApiWorksheetFunction.prototype.DVAR;
+	ApiWorksheetFunction.prototype["DVARP"]           =  ApiWorksheetFunction.prototype.DVARP;
+	ApiWorksheetFunction.prototype["ACCRINT"]         =  ApiWorksheetFunction.prototype.ACCRINT;
+	ApiWorksheetFunction.prototype["ACCRINTM"]        =  ApiWorksheetFunction.prototype.ACCRINTM;
+	ApiWorksheetFunction.prototype["AMORDEGRC"]       =  ApiWorksheetFunction.prototype.AMORDEGRC;
+	ApiWorksheetFunction.prototype["AMORLINC"]        =  ApiWorksheetFunction.prototype.AMORLINC;
+	ApiWorksheetFunction.prototype["COUPDAYBS"]       =  ApiWorksheetFunction.prototype.COUPDAYBS;
+	ApiWorksheetFunction.prototype["COUPDAYS"]        =  ApiWorksheetFunction.prototype.COUPDAYS;
+	ApiWorksheetFunction.prototype["COUPDAYSNC"]      =  ApiWorksheetFunction.prototype.COUPDAYSNC;
+	ApiWorksheetFunction.prototype["COUPNCD"]         =  ApiWorksheetFunction.prototype.COUPNCD;
+	ApiWorksheetFunction.prototype["COUPNUM"]         =  ApiWorksheetFunction.prototype.COUPNUM;
+	ApiWorksheetFunction.prototype["COUPPCD"]         =  ApiWorksheetFunction.prototype.COUPPCD;
+	ApiWorksheetFunction.prototype["CUMIPMT"]         =  ApiWorksheetFunction.prototype.CUMIPMT;
+	ApiWorksheetFunction.prototype["CUMPRINC"]        =  ApiWorksheetFunction.prototype.CUMPRINC;
+	ApiWorksheetFunction.prototype["DB"]              =  ApiWorksheetFunction.prototype.DB;
+	ApiWorksheetFunction.prototype["DDB"]             =  ApiWorksheetFunction.prototype.DDB;
+	ApiWorksheetFunction.prototype["DISC"]            =  ApiWorksheetFunction.prototype.DISC;
+	ApiWorksheetFunction.prototype["DOLLARDE"]        =  ApiWorksheetFunction.prototype.DOLLARDE;
+	ApiWorksheetFunction.prototype["DOLLARFR"]        =  ApiWorksheetFunction.prototype.DOLLARFR;
+	ApiWorksheetFunction.prototype["DURATION"]        =  ApiWorksheetFunction.prototype.DURATION;
+	ApiWorksheetFunction.prototype["EFFECT"]          =  ApiWorksheetFunction.prototype.EFFECT;
+	ApiWorksheetFunction.prototype["FV"]              =  ApiWorksheetFunction.prototype.FV;
+	ApiWorksheetFunction.prototype["FVSCHEDULE"]      =  ApiWorksheetFunction.prototype.FVSCHEDULE;
+	ApiWorksheetFunction.prototype["INTRATE"]         =  ApiWorksheetFunction.prototype.INTRATE;
+	ApiWorksheetFunction.prototype["IPMT"]            =  ApiWorksheetFunction.prototype.IPMT;
+	ApiWorksheetFunction.prototype["IRR"]             =  ApiWorksheetFunction.prototype.IRR;
+	ApiWorksheetFunction.prototype["ISPMT"]           =  ApiWorksheetFunction.prototype.ISPMT;
+	ApiWorksheetFunction.prototype["MDURATION"]       =  ApiWorksheetFunction.prototype.MDURATION;
+	ApiWorksheetFunction.prototype["MIRR"]            =  ApiWorksheetFunction.prototype.MIRR;
+	ApiWorksheetFunction.prototype["NOMINAL"]         =  ApiWorksheetFunction.prototype.NOMINAL;
+	ApiWorksheetFunction.prototype["NPER"]            =  ApiWorksheetFunction.prototype.NPER;
+	ApiWorksheetFunction.prototype["NPV"]             =  ApiWorksheetFunction.prototype.NPV;
+	ApiWorksheetFunction.prototype["ODDFPRICE"]       =  ApiWorksheetFunction.prototype.ODDFPRICE;
+	ApiWorksheetFunction.prototype["ODDFYIELD"]       =  ApiWorksheetFunction.prototype.ODDFYIELD;
+	ApiWorksheetFunction.prototype["ODDLPRICE"]       =  ApiWorksheetFunction.prototype.ODDLPRICE;
+	ApiWorksheetFunction.prototype["ODDLYIELD"]       =  ApiWorksheetFunction.prototype.ODDLYIELD;
+	ApiWorksheetFunction.prototype["PDURATION"]       =  ApiWorksheetFunction.prototype.PDURATION;
+	ApiWorksheetFunction.prototype["PMT"]             =  ApiWorksheetFunction.prototype.PMT;
+	ApiWorksheetFunction.prototype["PPMT"]            =  ApiWorksheetFunction.prototype.PPMT;
+	ApiWorksheetFunction.prototype["PRICE"]           =  ApiWorksheetFunction.prototype.PRICE;
+	ApiWorksheetFunction.prototype["PRICEDISC"]       =  ApiWorksheetFunction.prototype.PRICEDISC;
+	ApiWorksheetFunction.prototype["PRICEMAT"]        =  ApiWorksheetFunction.prototype.PRICEMAT;
+	ApiWorksheetFunction.prototype["PV"]              =  ApiWorksheetFunction.prototype.PV;
+	ApiWorksheetFunction.prototype["RATE"]            =  ApiWorksheetFunction.prototype.RATE;
+	ApiWorksheetFunction.prototype["RECEIVED"]        =  ApiWorksheetFunction.prototype.RECEIVED;
+	ApiWorksheetFunction.prototype["RRI"]             =  ApiWorksheetFunction.prototype.RRI;
+	ApiWorksheetFunction.prototype["SLN"]             =  ApiWorksheetFunction.prototype.SLN;
+	ApiWorksheetFunction.prototype["SYD"]             =  ApiWorksheetFunction.prototype.SYD;
+	ApiWorksheetFunction.prototype["TBILLEQ"]         =  ApiWorksheetFunction.prototype.TBILLEQ;
+	ApiWorksheetFunction.prototype["TBILLPRICE"]      =  ApiWorksheetFunction.prototype.TBILLPRICE;
+	ApiWorksheetFunction.prototype["TBILLYIELD"]      =  ApiWorksheetFunction.prototype.TBILLYIELD;
+	ApiWorksheetFunction.prototype["VDB"]             =  ApiWorksheetFunction.prototype.VDB;
+	ApiWorksheetFunction.prototype["XIRR"]            =  ApiWorksheetFunction.prototype.XIRR;
+	ApiWorksheetFunction.prototype["XNPV"]            =  ApiWorksheetFunction.prototype.XNPV;
+	ApiWorksheetFunction.prototype["YIELD"]           =  ApiWorksheetFunction.prototype.YIELD;
+	ApiWorksheetFunction.prototype["YIELDDISC"]       =  ApiWorksheetFunction.prototype.YIELDDISC;
+	ApiWorksheetFunction.prototype["YIELDMAT"]        =  ApiWorksheetFunction.prototype.YIELDMAT;
+	ApiWorksheetFunction.prototype["ABS"]             =  ApiWorksheetFunction.prototype.ABS;
+	ApiWorksheetFunction.prototype["ACOS"]            =  ApiWorksheetFunction.prototype.ACOS;
+	ApiWorksheetFunction.prototype["ACOSH"]           =  ApiWorksheetFunction.prototype.ACOSH;
+	ApiWorksheetFunction.prototype["ACOT"]            =  ApiWorksheetFunction.prototype.ACOT;
+	ApiWorksheetFunction.prototype["ACOTH"]           =  ApiWorksheetFunction.prototype.ACOTH;
+	ApiWorksheetFunction.prototype["AGGREGATE"]       =  ApiWorksheetFunction.prototype.AGGREGATE;
+	ApiWorksheetFunction.prototype["ARABIC"]          =  ApiWorksheetFunction.prototype.ARABIC;
+	ApiWorksheetFunction.prototype["ASIN"]            =  ApiWorksheetFunction.prototype.ASIN;
+	ApiWorksheetFunction.prototype["ASINH"]           =  ApiWorksheetFunction.prototype.ASINH;
+	ApiWorksheetFunction.prototype["ATAN"]            =  ApiWorksheetFunction.prototype.ATAN;
+	ApiWorksheetFunction.prototype["ATAN2"]           =  ApiWorksheetFunction.prototype.ATAN2;
+	ApiWorksheetFunction.prototype["ATANH"]           =  ApiWorksheetFunction.prototype.ATANH;
+	ApiWorksheetFunction.prototype["BASE"]            =  ApiWorksheetFunction.prototype.BASE;
+	ApiWorksheetFunction.prototype["CEILING"]         =  ApiWorksheetFunction.prototype.CEILING;
+	ApiWorksheetFunction.prototype["COMBIN"]          =  ApiWorksheetFunction.prototype.COMBIN;
+	ApiWorksheetFunction.prototype["COMBINA"]         =  ApiWorksheetFunction.prototype.COMBINA;
+	ApiWorksheetFunction.prototype["COS"]             =  ApiWorksheetFunction.prototype.COS;
+	ApiWorksheetFunction.prototype["COSH"]            =  ApiWorksheetFunction.prototype.COSH;
+	ApiWorksheetFunction.prototype["COT"]             =  ApiWorksheetFunction.prototype.COT;
+	ApiWorksheetFunction.prototype["COTH"]            =  ApiWorksheetFunction.prototype.COTH;
+	ApiWorksheetFunction.prototype["CSC"]             =  ApiWorksheetFunction.prototype.CSC;
+	ApiWorksheetFunction.prototype["CSCH"]            =  ApiWorksheetFunction.prototype.CSCH;
+	ApiWorksheetFunction.prototype["DECIMAL"]         =  ApiWorksheetFunction.prototype.DECIMAL;
+	ApiWorksheetFunction.prototype["DEGREES"]         =  ApiWorksheetFunction.prototype.DEGREES;
+	ApiWorksheetFunction.prototype["EVEN"]            =  ApiWorksheetFunction.prototype.EVEN;
+	ApiWorksheetFunction.prototype["EXP"]             =  ApiWorksheetFunction.prototype.EXP;
+	ApiWorksheetFunction.prototype["FACT"]            =  ApiWorksheetFunction.prototype.FACT;
+	ApiWorksheetFunction.prototype["FACTDOUBLE"]      =  ApiWorksheetFunction.prototype.FACTDOUBLE;
+	ApiWorksheetFunction.prototype["FLOOR"]           =  ApiWorksheetFunction.prototype.FLOOR;
+	ApiWorksheetFunction.prototype["GCD"]             =  ApiWorksheetFunction.prototype.GCD;
+	ApiWorksheetFunction.prototype["INT"]             =  ApiWorksheetFunction.prototype.INT;
+	ApiWorksheetFunction.prototype["LCM"]             =  ApiWorksheetFunction.prototype.LCM;
+	ApiWorksheetFunction.prototype["LN"]              =  ApiWorksheetFunction.prototype.LN;
+	ApiWorksheetFunction.prototype["LOG"]             =  ApiWorksheetFunction.prototype.LOG;
+	ApiWorksheetFunction.prototype["LOG10"]           =  ApiWorksheetFunction.prototype.LOG10;
+	ApiWorksheetFunction.prototype["MOD"]             =  ApiWorksheetFunction.prototype.MOD;
+	ApiWorksheetFunction.prototype["MROUND"]          =  ApiWorksheetFunction.prototype.MROUND;
+	ApiWorksheetFunction.prototype["MULTINOMIAL"]     =  ApiWorksheetFunction.prototype.MULTINOMIAL;
+	ApiWorksheetFunction.prototype["MUNIT"]           =  ApiWorksheetFunction.prototype.MUNIT;
+	ApiWorksheetFunction.prototype["ODD"]             =  ApiWorksheetFunction.prototype.ODD;
+	ApiWorksheetFunction.prototype["PI"]              =  ApiWorksheetFunction.prototype.PI;
+	ApiWorksheetFunction.prototype["POWER"]           =  ApiWorksheetFunction.prototype.POWER;
+	ApiWorksheetFunction.prototype["PRODUCT"]         =  ApiWorksheetFunction.prototype.PRODUCT;
+	ApiWorksheetFunction.prototype["QUOTIENT"]        =  ApiWorksheetFunction.prototype.QUOTIENT;
+	ApiWorksheetFunction.prototype["RADIANS"]         =  ApiWorksheetFunction.prototype.RADIANS;
+	ApiWorksheetFunction.prototype["RAND"]            =  ApiWorksheetFunction.prototype.RAND;
+	ApiWorksheetFunction.prototype["RANDBETWEEN"]     =  ApiWorksheetFunction.prototype.RANDBETWEEN;
+	ApiWorksheetFunction.prototype["ROMAN"]           =  ApiWorksheetFunction.prototype.ROMAN;
+	ApiWorksheetFunction.prototype["ROUND"]           =  ApiWorksheetFunction.prototype.ROUND;
+	ApiWorksheetFunction.prototype["ROUNDDOWN"]       =  ApiWorksheetFunction.prototype.ROUNDDOWN;
+	ApiWorksheetFunction.prototype["ROUNDUP"]         =  ApiWorksheetFunction.prototype.ROUNDUP;
+	ApiWorksheetFunction.prototype["SEC"]             =  ApiWorksheetFunction.prototype.SEC;
+	ApiWorksheetFunction.prototype["SECH"]            =  ApiWorksheetFunction.prototype.SECH;
+	ApiWorksheetFunction.prototype["SERIESSUM"]       =  ApiWorksheetFunction.prototype.SERIESSUM;
+	ApiWorksheetFunction.prototype["SIGN"]            =  ApiWorksheetFunction.prototype.SIGN;
+	ApiWorksheetFunction.prototype["SIN"]             =  ApiWorksheetFunction.prototype.SIN;
+	ApiWorksheetFunction.prototype["SINH"]            =  ApiWorksheetFunction.prototype.SINH;
+	ApiWorksheetFunction.prototype["SQRT"]            =  ApiWorksheetFunction.prototype.SQRT;
+	ApiWorksheetFunction.prototype["SQRTPI"]          =  ApiWorksheetFunction.prototype.SQRTPI;
+	ApiWorksheetFunction.prototype["SUBTOTAL"]        =  ApiWorksheetFunction.prototype.SUBTOTAL;
+	ApiWorksheetFunction.prototype["SUM"]             =  ApiWorksheetFunction.prototype.SUM;
+	ApiWorksheetFunction.prototype["SUMIF"]           =  ApiWorksheetFunction.prototype.SUMIF;
+	ApiWorksheetFunction.prototype["SUMIFS"]          =  ApiWorksheetFunction.prototype.SUMIFS;
+	ApiWorksheetFunction.prototype["SUMSQ"]           =  ApiWorksheetFunction.prototype.SUMSQ;
+	ApiWorksheetFunction.prototype["TAN"]             =  ApiWorksheetFunction.prototype.TAN;
+	ApiWorksheetFunction.prototype["TANH"]            =  ApiWorksheetFunction.prototype.TANH;
+	ApiWorksheetFunction.prototype["TRUNC"]           =  ApiWorksheetFunction.prototype.TRUNC;
+	ApiWorksheetFunction.prototype["CHOOSE"]          =  ApiWorksheetFunction.prototype.CHOOSE;
+	ApiWorksheetFunction.prototype["COLUMNS"]         =  ApiWorksheetFunction.prototype.COLUMNS;
+	ApiWorksheetFunction.prototype["HLOOKUP"]         =  ApiWorksheetFunction.prototype.HLOOKUP;
+	ApiWorksheetFunction.prototype["HYPERLINK"]       =  ApiWorksheetFunction.prototype.HYPERLINK;
+	ApiWorksheetFunction.prototype["INDEX"]           =  ApiWorksheetFunction.prototype.INDEX;
+	ApiWorksheetFunction.prototype["LOOKUP"]          =  ApiWorksheetFunction.prototype.LOOKUP;
+	ApiWorksheetFunction.prototype["MATCH"]           =  ApiWorksheetFunction.prototype.MATCH;
+	ApiWorksheetFunction.prototype["ROWS"]            =  ApiWorksheetFunction.prototype.ROWS;
+	ApiWorksheetFunction.prototype["TRANSPOSE"]       =  ApiWorksheetFunction.prototype.TRANSPOSE;
+	ApiWorksheetFunction.prototype["VLOOKUP"]         =  ApiWorksheetFunction.prototype.VLOOKUP;
+	ApiWorksheetFunction.prototype["ISERR"]           =  ApiWorksheetFunction.prototype.ISERR;
+	ApiWorksheetFunction.prototype["ISERROR"]         =  ApiWorksheetFunction.prototype.ISERROR;
+	ApiWorksheetFunction.prototype["ISEVEN"]          =  ApiWorksheetFunction.prototype.ISEVEN;
+	ApiWorksheetFunction.prototype["ISFORMULA"]       =  ApiWorksheetFunction.prototype.ISFORMULA;
+	ApiWorksheetFunction.prototype["ISLOGICAL"]       =  ApiWorksheetFunction.prototype.ISLOGICAL;
+	ApiWorksheetFunction.prototype["ISNA"]            =  ApiWorksheetFunction.prototype.ISNA;
+	ApiWorksheetFunction.prototype["ISNONTEXT"]       =  ApiWorksheetFunction.prototype.ISNONTEXT;
+	ApiWorksheetFunction.prototype["ISNUMBER"]        =  ApiWorksheetFunction.prototype.ISNUMBER;
+	ApiWorksheetFunction.prototype["ISODD"]           =  ApiWorksheetFunction.prototype.ISODD;
+	ApiWorksheetFunction.prototype["ISREF"]           =  ApiWorksheetFunction.prototype.ISREF;
+	ApiWorksheetFunction.prototype["ISTEXT"]          =  ApiWorksheetFunction.prototype.ISTEXT;
+	ApiWorksheetFunction.prototype["N"]               =  ApiWorksheetFunction.prototype.N;
+	ApiWorksheetFunction.prototype["NA"]              =  ApiWorksheetFunction.prototype.NA;
+	ApiWorksheetFunction.prototype["SHEET"]           =  ApiWorksheetFunction.prototype.SHEET;
+	ApiWorksheetFunction.prototype["SHEETS"]          =  ApiWorksheetFunction.prototype.SHEETS;
+	ApiWorksheetFunction.prototype["TYPE"]            =  ApiWorksheetFunction.prototype.TYPE;
+	ApiWorksheetFunction.prototype["AND"]             =  ApiWorksheetFunction.prototype.AND;
+	ApiWorksheetFunction.prototype["FALSE"]           =  ApiWorksheetFunction.prototype.FALSE;
+	ApiWorksheetFunction.prototype["IF"]              =  ApiWorksheetFunction.prototype.IF;
+	ApiWorksheetFunction.prototype["IFERROR"]         =  ApiWorksheetFunction.prototype.IFERROR;
+	ApiWorksheetFunction.prototype["IFNA"]            =  ApiWorksheetFunction.prototype.IFNA;
+	ApiWorksheetFunction.prototype["NOT"]             =  ApiWorksheetFunction.prototype.NOT;
+	ApiWorksheetFunction.prototype["OR"]              =  ApiWorksheetFunction.prototype.OR;
+	ApiWorksheetFunction.prototype["TRUE"]            =  ApiWorksheetFunction.prototype.TRUE;
+	ApiWorksheetFunction.prototype["XOR"]             =  ApiWorksheetFunction.prototype.XOR;
+
+
 
 
 
