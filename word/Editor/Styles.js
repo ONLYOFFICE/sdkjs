@@ -6331,6 +6331,49 @@ CStyle.prototype =
         }
     }
 };
+CStyle.fromObject = function(obj)
+{
+	if (!obj || !obj.Name)
+		return null;
+	
+	let style = new CStyle(obj.Name, null, null, obj.Type, true);
+	if (!obj)
+		return style;
+	
+	if (undefined !== obj.QFormat)
+		style.SetQFormat(obj.QFormat);
+	
+	if (undefined !== obj.UiPriority)
+		style.SetUiPriority(obj.UiPriority);
+	
+	if (undefined !== obj.Hidden)
+		style.SetHidden(obj.Hidden);
+	
+	if (undefined !== obj.SemiHidden)
+		style.SetSemiHidden(obj.SemiHidden);
+	
+	if (undefined !== obj.UnhideWhenUsed)
+		style.SetUnhideWhenUsed(obj.UnhideWhenUsed);
+	
+	if (undefined !== obj.TextPr)
+		style.SetTextPr(obj.TextPr);
+	
+	if (undefined !== obj.ParaPr)
+		style.SetParaPr(obj.ParaPr);
+	
+	if (undefined !== obj.TablePr)
+		style.Set_TablePr(obj.TablePr);
+	
+	if (undefined !== obj.TableRowPr)
+		style.Set_TableRowPr(obj.TableRowPr);
+	
+	if (undefined !== obj.TableCellPr)
+		style.Set_TableCellPr(obj.TableCellPr);
+	
+	// TODO: Table conditional
+	
+	return style;
+};
 /**
  * Получаем ссылку на основной класс документа
  * @returns {?AscWord.CDocument}
@@ -6354,6 +6397,22 @@ CStyle.prototype.SetBasedOn = function(styleId)
 CStyle.prototype.GetBasedOn = function()
 {
 	return this.BasedOn;
+};
+CStyle.prototype.SetNext = function(styleId)
+{
+	return this.Set_Next(styleId);
+};
+CStyle.prototype.GetNext = function()
+{
+	return this.Next;
+};
+CStyle.prototype.SetLink = function(styleId)
+{
+	return this.Set_Link(styleId);
+};
+CStyle.prototype.GetLink = function()
+{
+	return this.Link;
 };
 /**
  * Устаналиваем форматный идентификатор стиля
@@ -6596,13 +6655,12 @@ CStyle.prototype.CreateNoSpacing = function()
 {
 	this.SetUiPriority(1);
 	this.SetQFormat(true);
-
+	
 	this.SetParaPr({
 		Spacing : {
 			Line     : 1,
 			LineRule : linerule_Auto,
-			After    : 0,
-			Before   : 0
+			After    : 0
 		}
 	});
 };
@@ -6645,26 +6703,23 @@ CStyle.prototype.CreateFooter = function()
 {
 	this.SetUiPriority(99);
 	this.SetUnhideWhenUsed(true);
-
-	var RPos = 297 - 30 - 15; // Ширина страницы - левое поле - правое поле
-	var CPos = RPos / 2;
-
+	
 	this.SetParaPr({
 		Spacing : {
 			After    : 0,
 			Line     : 1,
 			LineRule : linerule_Auto
 		},
-
+		
 		Tabs : {
 			Tabs : [
 				{
 					Value : tab_Center,
-					Pos   : CPos
+					Pos   : 4844 * g_dKoef_twips_to_mm
 				},
 				{
 					Value : tab_Right,
-					Pos   : RPos
+					Pos   : 9689 * g_dKoef_twips_to_mm
 				}
 			]
 		}
@@ -7089,272 +7144,109 @@ CStyle.prototype.CreateListParagraph = function()
  */
 CStyle.prototype.CreateHeading = function(nLvl)
 {
+	let spacingBefore = undefined;
+	let spacingAfter  = undefined;
+	let fontSize      = undefined;
+	let italic        = undefined;
+	let color         = undefined;
+	let themeColor    = undefined;
+	
 	if (0 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before   : 480 * g_dKoef_twips_to_mm,
-				After    : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 0
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 20,
-			FontSizeCS : 20,
-			RFonts     : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			}
-		});
+		spacingBefore = 360 * g_dKoef_twips_to_mm;
+		spacingAfter  = 200 * g_dKoef_twips_to_mm;
+		fontSize      = 20;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
 	}
 	else if (1 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before   : 360 * g_dKoef_twips_to_mm,
-				After    : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 1
-		});
-
-		this.SetTextPr({
-			FontSize : 17,
-			RFonts   : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			}
-		});
+		spacingBefore = 160 * g_dKoef_twips_to_mm;
+		spacingAfter  = 80 * g_dKoef_twips_to_mm;
+		fontSize      = 16;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
 	}
 	else if (2 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 2
-		});
-
-		this.SetTextPr({
-			FontSize   : 15,
-			FontSizeCS : 15,
-			RFonts     : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			}
-		});
+		spacingBefore = 160 * g_dKoef_twips_to_mm;
+		spacingAfter  = 80 * g_dKoef_twips_to_mm;
+		fontSize      = 14;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
 	}
 	else if (3 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 3
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 13,
-			FontSizeCS : 13,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			},
-
-			Bold   : true,
-			BoldCS : true
-		});
+		spacingBefore = 80 * g_dKoef_twips_to_mm;
+		spacingAfter  = 40 * g_dKoef_twips_to_mm;
+		italic        = true;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
 	}
 	else if (4 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 4
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 12,
-			FontSizeCS : 12,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			},
-
-			Bold   : true,
-			BoldCS : true
-		});
+		spacingBefore = 80 * g_dKoef_twips_to_mm;
+		spacingAfter  = 40 * g_dKoef_twips_to_mm;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
 	}
 	else if (5 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 5
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 11,
-			FontSizeCS : 11,
-
-			Bold   : true,
-			BoldCS : true,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			}
-		});
+		spacingBefore = 80 * g_dKoef_twips_to_mm;
+		spacingAfter  = 40 * g_dKoef_twips_to_mm;
+		italic        = true;
+		color         = {r : 0x59, g : 0x59, b : 0x59}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
 	}
 	else if (6 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext   : true,
-			KeepLines  : true,
-
-			Spacing    : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 6
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 11,
-			FontSizeCS : 11,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			},
-
-			Bold     : true,
-			BoldCS   : true,
-			Italic   : true,
-			ItalicCS : true
-		});
+		spacingBefore = 80 * g_dKoef_twips_to_mm;
+		spacingAfter  = 40 * g_dKoef_twips_to_mm;
+		color         = {r : 0x59, g : 0x59, b : 0x59}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
 	}
 	else if (7 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 7
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 11,
-			FontSizeCS : 11,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			},
-
-			Italic   : true,
-			ItalicCS : true
-		});
+		spacingAfter  = 0;
+		color         = {r : 0x27, g : 0x27, b : 0x27}
+		italic        = true;
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
 	}
 	else if (8 === nLvl)
 	{
-		this.SetParaPr({
-
-			KeepNext  : true,
-			KeepLines : true,
-
-			Spacing : {
-				Before : 320 * g_dKoef_twips_to_mm,
-				After  : 200 * g_dKoef_twips_to_mm
-			},
-
-			OutlineLvl : 8
-		});
-
-		this.SetTextPr({
-
-			FontSize   : 10.5,
-			FontSizeCS : 10.5,
-
-			RFonts : {
-				Ascii    : {Name : Default_Heading_Font, Index : -1},
-				EastAsia : {Name : Default_Heading_Font, Index : -1},
-				HAnsi    : {Name : Default_Heading_Font, Index : -1},
-				CS       : {Name : Default_Heading_Font, Index : -1}
-			},
-
-			Italic   : true,
-			ItalicCS : true
-		});
+		spacingAfter  = 0;
+		color         = {r : 0x27, g : 0x27, b : 0x27}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
 	}
+	
+	this.SetParaPr({
+		
+		KeepNext  : true,
+		KeepLines : true,
+		
+		Spacing : {
+			Before   : spacingBefore,
+			After    : spacingAfter
+		},
+		
+		OutlineLvl : nLvl
+	});
+	
+	this.SetTextPr({
+		
+		FontSize   : fontSize,
+		FontSizeCS : fontSize,
+		Italic     : italic,
+		RFonts     : {
+			Ascii    : {Name : Default_Heading_Font, Index : -1},
+			EastAsia : {Name : Default_Heading_Font, Index : -1},
+			HAnsi    : {Name : Default_Heading_Font, Index : -1},
+			CS       : {Name : Default_Heading_Font, Index : -1}
+		},
+		
+		Color   : color,
+		Unifill : themeColor
+	});
 
 	this.SetQFormat(true);
 	this.SetUiPriority(9);
@@ -7368,71 +7260,78 @@ CStyle.prototype.CreateHeading = function(nLvl)
  */
 CStyle.prototype.CreateHeadingLinkStyle = function(nLvl)
 {
-	var TextPr = {
+	let fontSize   = undefined;
+	let color      = undefined;
+	let themeColor = undefined;
+	let italic     = undefined;
+	
+	if (0 === nLvl)
+	{
+		fontSize      = 20;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
+	}
+	else if (1 === nLvl)
+	{
+		fontSize      = 16;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
+	}
+	else if (2 === nLvl)
+	{
+		fontSize      = 14;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
+	}
+	else if (3 === nLvl)
+	{
+		italic        = true;
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
+	}
+	else if (4 === nLvl)
+	{
+		color         = {r : 0x0F, g : 0x47, b : 0x61}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
+	}
+	else if (5 === nLvl)
+	{
+		italic        = true;
+		color         = {r : 0x59, g : 0x59, b : 0x59}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
+	}
+	else if (6 === nLvl)
+	{
+		color         = {r : 0x59, g : 0x59, b : 0x59}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
+	}
+	else if (7 === nLvl)
+	{
+		color         = {r : 0x27, g : 0x27, b : 0x27}
+		italic        = true;
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
+	}
+	else if (8 === nLvl)
+	{
+		color         = {r : 0x27, g : 0x27, b : 0x27}
+		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
+	}
+	
+	this.Set_TextPr({
+		FontSize   : fontSize,
+		FontSizeCS : fontSize,
+		Italic     : italic,
 		RFonts     : {
 			Ascii    : {Name : Default_Heading_Font, Index : -1},
 			EastAsia : {Name : Default_Heading_Font, Index : -1},
 			HAnsi    : {Name : Default_Heading_Font, Index : -1},
 			CS       : {Name : Default_Heading_Font, Index : -1}
-		}
-	};
-
-	if (0 === nLvl)
-	{
-		TextPr.FontSize   = 20;
-		TextPr.FontSizeCS = 20;
-	}
-	else if (1 === nLvl)
-	{
-		TextPr.FontSize   = 17;
-		TextPr.FontSizeCS = 17;
-	}
-	else if (2 === nLvl)
-	{
-		TextPr.FontSize   = 15;
-		TextPr.FontSizeCS = 15;
-	}
-	else if (3 === nLvl)
-	{
-		TextPr.FontSize   = 13;
-		TextPr.FontSizeCS = 13;
-		TextPr.Bold       = true;
-		TextPr.BoldCd     = true;
-	}
-	else if (4 === nLvl)
-	{
-		TextPr.FontSize   = 12;
-		TextPr.FontSizeCS = 12;
-		TextPr.Bold       = true;
-		TextPr.BoldCS     = true;
-	}
-	else if (5 === nLvl)
-	{
-		TextPr.FontSize   = 11;
-		TextPr.FontSizeCS = 11;
-		TextPr.Bold       = true;
-		TextPr.BoldCS     = true;
-	}
-	else if (6 === nLvl)
-	{
-		TextPr.FontSize   = 11;
-		TextPr.FontSizeCS = 11;
-		TextPr.Bold       = true;
-		TextPr.BoldCS     = true;
-	}
-	else if (7 === nLvl)
-	{
-		TextPr.FontSize   = 11;
-		TextPr.FontSizeCS = 11;
-	}
-	else if (8 === nLvl)
-	{
-		TextPr.FontSize   = 10.5;
-		TextPr.FontSizeCS = 10.5;
-	}
-
+		},
+		Color      : color,
+		Unifill    : themeColor
+	});
+	
 	this.Set_UiPriority(9);
-	this.Set_TextPr(TextPr);
 };
 /**
  * Дефолтовые настройки для стиля Title
@@ -7441,17 +7340,20 @@ CStyle.prototype.CreateTitle = function()
 {
 	this.SetQFormat(true);
 	this.SetUiPriority(10);
-
+	
 	this.SetTextPr({
-		FontSize   : 24,
-		FontSizeCS : 24
+		FontSize   : 28,
+		FontSizeCS : 28,
+		Spacing    : -10 * g_dKoef_twips_to_mm
 	});
-
+	
 	this.SetParaPr({
-		Spacing           : {
-			Before : 300 * g_dKoef_twips_to_mm,
-			After  : 200 * g_dKoef_twips_to_mm
+		Spacing : {
+			After    : 80 * g_dKoef_twips_to_mm,
+			Line     : 1,
+			LineRule : linerule_Auto
 		},
+		
 		ContextualSpacing : true
 	});
 };
@@ -7464,14 +7366,14 @@ CStyle.prototype.CreateSubtitle = function()
 	this.SetUiPriority(11);
 
 	this.SetTextPr({
-		FontSize   : 12,
-		FontSizeCS : 12
+		FontSize   : 14,
+		FontSizeCS : 14,
+		Spacing    : 15 * g_dKoef_twips_to_mm
 	});
 
 	this.SetParaPr({
-		Spacing : {
-			After  : 200 * g_dKoef_twips_to_mm,
-			Before : 200 * g_dKoef_twips_to_mm
+		NumPr : {
+			Lvl : 1
 		}
 	});
 };
@@ -7482,16 +7384,21 @@ CStyle.prototype.CreateQuote = function()
 {
 	this.SetQFormat(true);
 	this.SetUiPriority(29);
-
+	
 	this.SetTextPr({
 		Italic : true
 	});
-
+	
 	this.SetParaPr({
-		Ind : {
-			Left  : 720 * g_dKoef_twips_to_mm,
-			Right : 720 * g_dKoef_twips_to_mm
+		Jc      : AscCommon.align_Center,
+		Spacing : {
+			Before : 160 * g_dKoef_twips_to_mm
 		}
+	});
+	this.SetTextPr({
+		Italic  : true,
+		Color   : {r : 0x40, g : 0x40, b : 0x40},
+		Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xBF, null),
 	});
 };
 /**
@@ -7501,51 +7408,40 @@ CStyle.prototype.CreateIntenseQuote = function()
 {
 	this.SetQFormat(true);
 	this.SetUiPriority(30);
-
+	
 	this.SetTextPr({
-		Italic : true
+		Italic  : true,
+		Color   : {r : 0x07, g : 0x47, b : 0x61},
+		Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
 	});
-
+	
 	this.SetParaPr({
-
+		
+		Jc : AscCommon.align_Center,
+		
 		ContextualSpacing : false,
-
+		
 		Ind : {
-			Left  : 720 * g_dKoef_twips_to_mm,
-			Right : 720 * g_dKoef_twips_to_mm
+			Left  : 864 * g_dKoef_twips_to_mm,
+			Right : 864 * g_dKoef_twips_to_mm
 		},
-
-		Shd : {
-			Value : c_oAscShdClear,
-			Fill  : {r : 0xF2, g : 0xF2, b : 0xF2},
-			Color : {r : 0xff, g : 0xff, b : 0xff, Auto : true}
+		
+		Spacing : {
+			Before : 360 * g_dKoef_twips_to_mm,
+			After  : 360 * g_dKoef_twips_to_mm
 		},
-
+		
 		Brd : {
-
-			Left : {
-				Color   : {r : 0xFF, g : 0xFF, b : 0xFF},
-				Space   : 10 * g_dKoef_pt_to_mm,
-				Size    : 0.5 * g_dKoef_pt_to_mm,
-				Value   : border_Single
-			},
-
-			Top : {
-				Color   : {r : 0xFF, g : 0xFF, b : 0xFF},
+			Top    : {
+				Color   : {r : 0x07, g : 0x47, b : 0x61},
+				Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
 				Space   : 5 * g_dKoef_pt_to_mm,
 				Size    : 0.5 * g_dKoef_pt_to_mm,
 				Value   : border_Single
 			},
-
-			Right : {
-				Color   : {r : 0xFF, g : 0xFF, b : 0xFF},
-				Space   : 10 * g_dKoef_pt_to_mm,
-				Size    : 0.5 * g_dKoef_pt_to_mm,
-				Value   : border_Single
-			},
-
 			Bottom : {
-				Color   : {r : 0xFF, g : 0xFF, b : 0xFF},
+				Color   : {r : 0x07, g : 0x47, b : 0x61},
+				Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
 				Space   : 5 * g_dKoef_pt_to_mm,
 				Size    : 0.5 * g_dKoef_pt_to_mm,
 				Value   : border_Single
@@ -7559,20 +7455,20 @@ CStyle.prototype.CreateIntenseQuote = function()
 CStyle.prototype.CreateCaption = function()
 {
 	this.SetUiPriority(35);
-	this.SetSemiHidden(true);
 	this.SetUnhideWhenUsed(true);
 	this.SetQFormat(true);
 	this.SetParaPr({
 		Spacing : {
-			Line     : 1.15,
+			After    : 200 * g_dKoef_twips_to_mm,
+			Line     : 1,
 			LineRule : linerule_Auto
 		}
 	});
 	this.SetTextPr({
-		Bold       : true,
-		BoldCS     : true,
-		Color      : { r : 0x4F, g : 0x81, b : 0xBD },
-		Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, null),
+		Italic     : true,
+		ItalicCS   : true,
+		Color      : {r : 0x0E, g : 0x28, b : 0x41},
+		Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText2, null, null),
 		FontSize   : 9,
 		FontSizeCS : 9
 	});
@@ -10042,6 +9938,85 @@ CStyles.prototype.Is_DefaultStyleChanged = function(sStyleName)
 	this.LogicDocument.TurnOnHistory();
 
 	return (true === Style.Is_Equal(CurrentStyle) ? false : true);
+};
+CStyles.prototype.AddStylesFromObject = function(obj)
+{
+	let styleMap = {};
+	
+	for (let i = 0; i < obj.length; ++i)
+	{
+		let style = AscWord.CStyle.fromObject(obj[i]);
+		if (!style)
+			continue;
+		
+		let styleId = styleManager.Add(style);
+		styleMap[style.GetName()] = {
+			style   : style,
+			styleId : styleId,
+			next    : undefined !== obj[i].Next ? obj[i].Next : undefined,
+			basedOn : undefined !== obj[i].BasedOn ? obj[i].BasedOn : undefined,
+			link    : undefined !== obj[i].Link ? obj[i].Link : undefined
+		};
+	}
+	
+	
+	for (let styleName in styleMap)
+	{
+		let entry = styleMap[styleName];
+		let style = entry.style;
+		
+		if (entry.next && styleMap[entry.next])
+			style.SetNext(styleMap[entry.next]);
+		
+		if (entry.basedOn && styleMap[entry.basedOn])
+			style.SetBasedOn(styleMap[entry.basedOn]);
+		
+		if (entry.link)
+		{
+			if (styleMap[entry.link])
+				style.SetLink(styleMap[entry.link]);
+			else
+			{
+				// TODO: Generate linked pair
+			}
+		}
+	}
+};
+/**
+ * Обновляем ссылки на все дефолтные стили
+ */
+CStyle.prototype.UpdateDefaultLinks = function()
+{
+	return (styleId === this.Default.Paragraph
+		|| styleId === this.Default.Character
+		|| styleId === this.Default.Numbering
+		|| styleId === this.Default.Table
+		|| styleId === this.Default.TableGrid
+		|| styleId === this.Default.Headings[0]
+		|| styleId === this.Default.Headings[1]
+		|| styleId === this.Default.Headings[2]
+		|| styleId === this.Default.Headings[3]
+		|| styleId === this.Default.Headings[4]
+		|| styleId === this.Default.Headings[5]
+		|| styleId === this.Default.Headings[6]
+		|| styleId === this.Default.Headings[7]
+		|| styleId === this.Default.Headings[8]
+		|| styleId === this.Default.ParaList
+		|| styleId === this.Default.Header
+		|| styleId === this.Default.Footer
+		|| styleId === this.Default.Hyperlink
+		|| styleId === this.Default.FootnoteText
+		|| styleId === this.Default.FootnoteTextChar
+		|| styleId === this.Default.FootnoteReference
+		|| styleId === this.Default.NoSpacing
+		|| styleId === this.Default.Title
+		|| styleId === this.Default.Subtitle
+		|| styleId === this.Default.Quote
+		|| styleId === this.Default.IntenseQuote
+		|| styleId === this.Default.Caption
+		|| styleId === this.Default.EndnoteText
+		|| styleId === this.Default.EndnoteTextChar
+		|| styleId === this.Default.EndnoteReference);
 };
 /**
  * Получаем идентификатор стиля по умолчанию для параграфов
@@ -18339,6 +18314,11 @@ window["AscWord"].DEFAULT_TABLE_PR       = g_oDocumentDefaultTablePr;
 window["AscWord"].DEFAULT_TABLE_CELL_PR  = g_oDocumentDefaultTableCellPr;
 window["AscWord"].DEFAULT_TABLE_ROW_PR   = g_oDocumentDefaultTableRowPr;
 window["AscWord"].DEFAULT_TABLE_STYLE_PR = g_oDocumentDefaultTableStylePr;
+
+window["AscWord"].styletype_Paragraph = styletype_Paragraph;
+window["AscWord"].styletype_Numbering = styletype_Numbering;
+window["AscWord"].styletype_Table     = styletype_Table;
+window["AscWord"].styletype_Character = styletype_Character;
 
 AscWord.BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0, false);
 AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
