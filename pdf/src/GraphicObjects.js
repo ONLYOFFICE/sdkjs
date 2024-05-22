@@ -999,6 +999,33 @@
         }
         return false;
     };
+    CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
+        if (object.IsAnnot() && !object.IsShapeBased())
+            return;
+        
+        object.select(this, pageIndex);
+        if (AscFormat.MoveAnimationDrawObject) {
+            if (object instanceof AscFormat.MoveAnimationDrawObject) {
+                for (let i = this.selectedObjects.length - 1; i > -1; --i) {
+                    if (!this.selectedObjects[i].isMoveAnimObject()) {
+                        object.selected = false;
+                        this.selectedObjects.splice(i, 1);
+                        return;
+                    }
+                }
+            } else {
+                for (let i = this.selectedObjects.length - 1; i > -1; --i) {
+                    if (this.selectedObjects[i].isMoveAnimObject()) {
+                        object.selected = false;
+                        this.selectedObjects.splice(i, 1);
+                        return;
+                    }
+                }
+            }
+        }
+        this.lastSelectedObject = null;
+        this.checkShowMediaControlOnSelect();
+    }
     CGraphicObjects.prototype.drawSelect = function (pageIndex) {
         let drawingDocument = this.drawingDocument;
 
@@ -1096,7 +1123,9 @@
             }
         } else if (oGrp) {
             if (oGrp.selectStartPage === pageIndex) {
-                !oGrp.IsAnnot && drawingDocument.DrawTrack(
+                isDrawHandles = !oGrp.IsAnnot;
+
+                drawingDocument.DrawTrack(
                     AscFormat.TYPE_TRACK.GROUP_PASSIVE,
                     oGrp.getTransformMatrix(),
                     0,

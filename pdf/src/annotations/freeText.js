@@ -63,7 +63,7 @@
         this._popupOpen     = false;
         this._popupRect     = undefined;
         this._richContents  = undefined;
-        this._rotate        = undefined;
+        this._rotate        = 0;
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
@@ -112,6 +112,36 @@
                 return CALLOUT_EXIT_POS.bottom;
             }
         }
+    };
+    CAnnotationFreeText.prototype.SetRotate = function(nAngle) {
+        let oTxShape = this.GetTextBoxShape();
+        if (!oTxShape) {
+            return;
+        }
+
+        let oBodyPr = oTxShape.txBody.bodyPr;
+        
+        switch (nAngle) {
+            case 0:
+                oBodyPr.setVert();
+                break;
+            case 90:
+                oBodyPr.setVert(AscFormat.nVertTTvert270);
+                break;
+            case 180:
+                oBodyPr.setRot(-nAngle * 60000);
+                oBodyPr.setVert(AscFormat.nVertTTwordArtVert);
+                oBodyPr.anchor = AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM;
+                break;
+            case 270:
+                oBodyPr.setVert(AscFormat.nVertTTeaVert);
+                break;
+        }
+        this._rotate = nAngle;
+        this.SetNeedRecalc(true);
+    };
+    CAnnotationFreeText.prototype.GetRotate = function() {
+        return this._rotate;
     };
     CAnnotationFreeText.prototype.canMove = function () {
 		var oApi = Asc.editor || editor;
@@ -1035,15 +1065,19 @@
     };
 
     CAnnotationFreeText.prototype.FitTextBox = function() {
+        let oDoc            = this.GetDocument();
         let oDocContent     = this.GetDocContent();
         let oTextBoxShape   = this.GetTextBoxShape();
         let nPage           = this.GetPage();
+        let nRotAngle       = this.GetRotate();
         oTextBoxShape.recalculateContent();                
 
         let oContentBounds  = oDocContent.GetContentBounds(nPage);
         let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
 
-        if (nContentH > oTextBoxShape.extY) {
+        let nLengthToCheck = oDoc.Viewer.isLandscapePage(nPage) ? oTextBoxShape.extX : oTextBoxShape.extY;
+
+        if (nContentH > nLengthToCheck) {
             let oViewer = Asc.editor.getDocumentRenderer();
             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -1054,7 +1088,7 @@
             let xMin = aCurTextBoxRect[0];
             let yMin = aCurTextBoxRect[1];
             let xMax = aCurTextBoxRect[2];
-            let yMax = aCurTextBoxRect[3] + (nContentH - oTextBoxShape.extY + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+            let yMax = aCurTextBoxRect[3] + (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
 
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
             // расширяем рект на ширину линии (или на радиус cloud бордера)
@@ -1160,8 +1194,10 @@
         return this.spTree[0];
     };
 
-    CAnnotationFreeText.prototype.onMouseUp = function(e) {
-        this.GetDocument().ShowComment([this.GetId()]);
+    CAnnotationFreeText.prototype.onMouseUp = function(x, y, e) {
+        if (e.button != 2) {
+            this.GetDocument().ShowComment([this.GetId()]);
+        }
 
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
@@ -1169,9 +1205,14 @@
         this.isInMove       = false;
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
         
         let oTextBoxShape = this.GetTextBoxShape();
         if (oTextBoxShape.hitInTextRect(X, Y)) {
@@ -1213,7 +1254,7 @@
         this.onMouseDown();
         this.isInMove = false;
     };
-    CAnnotationFreeText.prototype.onPreMove = function(e) {
+    CAnnotationFreeText.prototype.onPreMove = function(x, y, e) {
         if (this.isInMove)
             return;
 
@@ -1221,17 +1262,18 @@
 
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
 
-        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        let X = pageObject.x;
+        let Y = pageObject.y;
+
+        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(pageObject.index, X, Y);
         if (oCursorInfo.cursorType == null) {
             this.isInMove = false;
             return;
@@ -1285,6 +1327,10 @@
         let nAlign = this.GetAlign();
         if (nAlign != null)
             memory.WriteByte(nAlign);
+
+        // rotate
+        let nAngle = this.GetRotate();
+        memory.WriteLong(nAngle);
 
         // rectangle diff
         let aRD = this.GetRectangleDiff();

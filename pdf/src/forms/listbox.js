@@ -510,7 +510,7 @@
     CListBoxField.prototype.UpdateScroll = function(bShow) {
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
-        let oFormRect       = this.getFormRect();
+        let aOrigRect       = this.GetOrigRect();
 
         let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
         let oScroll, oScrollDocElm, oScrollSettings;
@@ -527,8 +527,8 @@
 
         let oViewer = editor.getDocumentRenderer();
         
-        let oGlobalCoords1  = AscPDF.GetGlobalCoordsByPageCoords(oFormRect.X, oFormRect.Y, this.GetPage());
-        let oGlobalCoords2  = AscPDF.GetGlobalCoordsByPageCoords(oFormRect.X + oFormRect.W, oFormRect.Y + oFormRect.H, this.GetPage());
+        let oGlobalCoords1  = AscPDF.GetGlobalCoordsByPageCoords(aOrigRect[0], aOrigRect[1], this.GetPage());
+        let oGlobalCoords2  = AscPDF.GetGlobalCoordsByPageCoords(aOrigRect[2], aOrigRect[3], this.GetPage());
         let oBorderWidth    = this.GetBordersWidth(true);
         
         if (this._scrollInfo == null && oContentBounds.Bottom - oContentBounds.Top > oContentRect.H) {

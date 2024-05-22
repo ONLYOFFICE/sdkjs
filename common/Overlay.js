@@ -915,20 +915,20 @@
     {
         if(Asc.editor.isPdfEditor())
         {
-            let oDocument = Asc.editor.WordControl.m_oLogicDocument;
+            let oDocument = Asc.editor.getPDFDoc();
             let oPageTransform = oDocument.pagesTransform[nPageIndex];
             if(oPageTransform)
             {
-                if(oPageTransform.normal.GetRotation() === 0)
-                {
-                    return null;
-                }
+                // if(oPageTransform.normal.GetRotation() === 0)
+                // {
+                //     return null;
+                // }
                 let c = this.Graphics.m_oCoordTransform;
                 let oInvertC = AscCommon.global_MatrixTransformer.Invert(c);
                 let ScaleRetina = new AscCommon.CMatrix();
                 let r = AscCommon.AscBrowser.retinaPixelRatio;
                 AscCommon.global_MatrixTransformer.ScaleAppend(ScaleRetina, r, r);
-                let inchC = (25.4 / Asc.editor.WordControl.m_oLogicDocument.Viewer.file.pages[nPageIndex].Dpi);
+                let inchC = (25.4 / Asc.editor.getDocumentRenderer().file.pages[nPageIndex].Dpi);
                 let ScaleInch = new AscCommon.CMatrix();
                 AscCommon.global_MatrixTransformer.ScaleAppend(ScaleInch, inchC, inchC);
                 let ScaleRetinaInv = AscCommon.global_MatrixTransformer.Invert(ScaleRetina);

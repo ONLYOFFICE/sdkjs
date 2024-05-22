@@ -177,50 +177,7 @@
         return this._borderEffectStyle;
     };
 
-    CAnnotationBase.prototype.DrawSelected = function(overlay) {
-        let rPR         = AscCommon.AscBrowser.retinaPixelRatio;
-        let style_blue  = "#939393";
-        let indent      = 0.5 * Math.round(rPR);
-
-        let nPage       = this.GetPage();
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[nPage].Dpi);
-        let aOrigRect   = this.GetOrigRect();
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[nPage];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        const angle         = oViewer.getPageRotate(nPage);
-        const rotatedPoint1 = AscPDF.rotatePoint(aOrigRect[0] * nScale, aOrigRect[1] * nScale, w, h, angle);
-        const rotatedPoint2 = AscPDF.rotatePoint(aOrigRect[2] * nScale, aOrigRect[3] * nScale, w, h, angle);
-
-        let x1 = Math.round(indLeft + rotatedPoint1.x);
-        let y1 = Math.round(indTop + rotatedPoint1.y);
-        let x2 = Math.round(indLeft + rotatedPoint2.x + 0.5);
-        let y2 = Math.round(indTop + rotatedPoint2.y + 0.5);
-
-        overlay.m_oContext.lineWidth    = Math.round(rPR);
-        overlay.m_oContext.globalAlpha  = 1;
-        overlay.m_oContext.strokeStyle  = style_blue;
-        overlay.m_oContext.beginPath();
-
-        overlay.CheckPoint1(x1, y1);
-        overlay.CheckPoint1(x2, y2);
-        overlay.CheckPoint2(x1, y1);
-        overlay.CheckPoint2(x2, y2);
-        
-        overlay.m_oContext.rect(x1 + indent, y1 + indent, x2 - x1, y2 - y1);
-        overlay.m_oContext.stroke();
-    };
+    CAnnotationBase.prototype.DrawSelected = function() {};
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
     };
@@ -607,8 +564,10 @@
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
     };
-    CAnnotationBase.prototype.onMouseUp = function() {
-        this.GetDocument().ShowComment([this.GetId()]);
+    CAnnotationBase.prototype.onMouseUp = function(e) {
+        if (e.button != 2) {
+            this.GetDocument().ShowComment([this.GetId()]);
+        }
     };
     CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
@@ -919,15 +878,17 @@
     };
 
     CAnnotationBase.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };

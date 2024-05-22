@@ -2210,7 +2210,7 @@ function CDrawingDocument()
 				y += TextMatrix.ty;
 			}
 
-			var pos = this.m_oDocumentRenderer == null ? this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true) :  this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage, true);
+			var pos = this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true);
 			this.TargetHtmlElementLeft = pos.X >> 0;
 			this.TargetHtmlElementTop = (pos.Y + 0.5) >> 0;
 
@@ -2339,9 +2339,6 @@ function CDrawingDocument()
 					TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
 			}
 		}
-		// pdf
-		else
-			pos = this.ConvertCoordsToCursor5(TextMatrix.TransformPointX(x, y), TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
 
 		if (true == pos.Error && (false == bIsPageChanged))
 			return;
@@ -4664,27 +4661,6 @@ function CDrawingDocument()
 		if (true !== isNoRound)
 			return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, 0.5, 0.5);
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, false);
-	};
-	// for pdf viewer
-	this.ConvertCoordsToCursor5 = function (x, y, pageIndex, isNoRound)
-	{
-		// теперь крутить всякие циклы нет смысла
-		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
-		{
-			return {X: 0, Y: 0, Error: true};
-		}
-
-		let oPos	= AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
-		let X		= oPos["X"];
-		let Y		= oPos["Y"];
-
-		if (true !== isNoRound)
-		{
-			X = (X + 0.5) >> 0;
-			Y = (Y + 0.5) >> 0;
-		}
-
-		return {X: X, Y: Y, Error: false};
 	};
 	this.ConvertCoordsToCursorWR = function (x, y, pageIndex, transform, id_ruler_no_use)
 	{

@@ -1412,7 +1412,7 @@ void main() {\n\
         
         return aInfo;
     };
-    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
+    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
@@ -1519,6 +1519,9 @@ void main() {\n\
         var _arrayGlyphOffsets = [];
 
         var _numLine = -1;
+
+        let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
+        let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
 
         var dKoefX = width / this.pages[pageIndex].W;
         var dKoefY = height / this.pages[pageIndex].H;

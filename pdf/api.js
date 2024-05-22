@@ -1847,7 +1847,7 @@
 		let oDoc			= oViewer.getPDFDoc();
 
 		if (!pageObject) {
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage);
 			oDoc.anchorPositionToAdd = {
 				x: 10,
 				y: 10
@@ -1861,8 +1861,8 @@
 		};
 
 		if (oDoc.mouseDownAnnot) {
-			let aRect = oDoc.mouseDownAnnot.GetRect();
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage);
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		

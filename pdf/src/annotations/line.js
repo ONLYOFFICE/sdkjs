@@ -187,15 +187,17 @@
         return this._points;
     };
     CAnnotationLine.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
         oDrawingObjects.startEditGeometry();

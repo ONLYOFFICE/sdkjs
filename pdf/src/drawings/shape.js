@@ -81,7 +81,6 @@
         let oDoc                = this.GetDocument();
         let oViewer             = oDoc.Viewer;
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
         // координаты клика на странице в MM

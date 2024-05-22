@@ -171,6 +171,11 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        if (isLandscape) {
+            indLeft = indLeft + (w - h) / 2;
+        }
+        
         let X       = aOrigRect[0] * nScale + indLeft;
         let Y       = aOrigRect[1] * nScale + indTop;
         let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
