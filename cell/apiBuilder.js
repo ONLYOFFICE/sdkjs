@@ -53,6 +53,7 @@
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
