@@ -34,111 +34,72 @@
 
 (function()
 {
-	const DEFAULT_STYLES = {
-		PARAGRAPH : {
-			"Normal" : {
-				QFormat : true
-			},
-			
-			"Heading 1" : {
-				BasedOn : "Normal",
-				Next    : "Normal",
-				
-				ParaPr : {
-					KeepNext : true,
-					KeepLines : true,
-					Spacing : {
-						Before : 360 * g_dKoef_twips_to_mm,
-						After  : 80 * g_dKoef_twips_to_mm
-					},
-					OutlineLvl : 0
-				},
-				
-				TextPr : {
-				
-				}
-			},
-			
-			"Heading 2" : {
-			
-			},
-			
-			"Heading 3" : {
-			
-			},
-			
-			"Heading 4" : {
-			
-			},
-			
-			"Heading 5" : {
-			
-			},
-			
-			"Heading 6" : {
-			
-			},
-			
-			"Heading 7" : {
-			
-			},
-			"Heading 8" : {
-			
-			},
-			"Heading 9" : {
-			
-			},
-		},
-		
-		
-		
-	};
-	
-	
-	function generateDefaultStyles(styleManager)
+	function tw2mm(tw)
 	{
-		let styleMap = {};
-		
-		for (let i = 0; i < DEFAULT_STYLES.length; ++i)
-		{
-			let style = AscWord.CStyle.fromObject(DEFAULT_STYLES[i]);
-			if (!style)
-				continue;
-			
-			let styleId = styleManager.Add(style);
-			styleMap[style.GetName()] = {
-				style   : style,
-				styleId : styleId,
-				next    : undefined !== DEFAULT_STYLES[i].Next ? DEFAULT_STYLES[i].Next : undefined,
-				basedOn : undefined !== DEFAULT_STYLES[i].BasedOn ? DEFAULT_STYLES[i].BasedOn : undefined,
-				link    : undefined !== DEFAULT_STYLES[i].Link ? DEFAULT_STYLES[i].Link : undefined;
-			};
-		}
-		
-		
-		for (let styleName in styleMap)
-		{
-			let entry = styleMap[styleName];
-			let style = entry.style;
-			
-			if (entry.next && styleMap[entry.next])
-				style.SetNext(styleMap[entry.next]);
-			
-			if (entry.basedOn && styleMap[entry.basedOn])
-				style.SetBasedOn(styleMap[entry.basedOn]);
-			
-			if (entry.link)
-			{
-				if (styleMap[entry.link])
-					style.SetLink(styleMap[entry.link]);
-				else
-				{
-					// TODO: Generate linked pair
-				}
-			}
-		}
+		return tw * g_dKoef_twips_to_mm
 	}
 	
+	const DEFAULT_STYLES = [
+		{
+			StyleId : "Normal",
+			Default : true,
+			Type    : AscWord.styletype_Paragraph,
+			Name    : "Normal",
+			QFormat : true
+		},
+		{
+			StyleId    : "NoSpacing",
+			Type       : AscWord.styletype_Paragraph,
+			Name       : "No Spacing",
+			UiPriority : 1,
+			QFormat    : true,
+			ParaPr     : {
+				Spacing : {
+					After    : 0,
+					Line     : 1,
+					LineRule : Asc.linerule_Auto
+				}
+			}
+		},
+		{
+			StyleId    : "Title",
+			Type       : AscWord.styletype_Paragraph,
+			Name       : "Title",
+			BasedOn    : "Normal",
+			Next       : "Normal",
+			Link       : "TitleChar",
+			UiPriority : 10,
+			QFormat    : true,
+			ParaPr     : {
+				Spacing : {
+					After    : tw2mm(80),
+					Line     : 1,
+					LineRule : Asc.linerule_Auto
+				},
+				
+				ContextualSpacing : true
+			},
+			
+			TextPr : {
+				Spacing    : tw2mm(-10),
+				FontSize   : 28,
+				FontSizeCS : 28
+			}
+		},
+		{
+			StyleId    : "TitleChar",
+			Type       : AscWord.styletype_Character,
+			Name       : "Title Char",
+			BasedOn    : "DefaultParagraphFont",
+			Link       : "Title",
+			UiPriority : 10,
+			TextPr     : {
+				Spacing    : tw2mm(-10),
+				FontSize   : 28,
+				FontSizeCS : 28
+			}
+		},
+	];
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DEFAULT_STYLES = DEFAULT_STYLES;
 })(window);

@@ -7786,16 +7786,16 @@ function CStyles(bCreateDefault)
 		Style_Table.Create_NormalTable();
 		this.Default.Table = this.Add(Style_Table);
 
-		// Создаем стиль "Без интервала"
-		var oNoSpacing = new CStyle("No Spacing", null, null, styletype_Paragraph);
-		oNoSpacing.CreateNoSpacing();
-		this.Default.NoSpacing = this.Add(oNoSpacing);
+		// // Создаем стиль "Без интервала"
+		// var oNoSpacing = new CStyle("No Spacing", null, null, styletype_Paragraph);
+		// oNoSpacing.CreateNoSpacing();
+		// this.Default.NoSpacing = this.Add(oNoSpacing);
 
-		// Создаем стиль "Заголовок"
-		var oTitle = new CStyle("Title", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		oTitle.CreateTitle();
-		this.Default.Title = this.Add(oTitle);
-		this.Add(oTitle.CreateLinkedCharacterStyle("Title Char", this.Default.Character));
+		// // Создаем стиль "Заголовок"
+		// var oTitle = new CStyle("Title", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
+		// oTitle.CreateTitle();
+		// this.Default.Title = this.Add(oTitle);
+		// this.Add(oTitle.CreateLinkedCharacterStyle("Title Char", this.Default.Character));
 
 		// Создаем стиль "Подзаголовок"
 		var oSubtitle = new CStyle("Subtitle", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
@@ -8393,6 +8393,8 @@ function CStyles(bCreateDefault)
 		var oStyleTOF = new CStyle("table of figures", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
 		oStyleTOF.CreateTOF();
 		this.Default.TOF = this.Add(oStyleTOF);
+		
+		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
 
         // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
         AscCommon.g_oTableId.Add( this, this.Id );
@@ -9946,40 +9948,51 @@ CStyles.prototype.AddStylesFromObject = function(obj)
 	for (let i = 0; i < obj.length; ++i)
 	{
 		let style = AscWord.CStyle.fromObject(obj[i]);
-		if (!style)
+		if (!style || !obj[i].StyleId)
 			continue;
 		
-		let styleId = styleManager.Add(style);
-		styleMap[style.GetName()] = {
+		let styleId = this.Add(style);
+		styleMap[obj[i].StyleId] = {
 			style   : style,
 			styleId : styleId,
 			next    : undefined !== obj[i].Next ? obj[i].Next : undefined,
 			basedOn : undefined !== obj[i].BasedOn ? obj[i].BasedOn : undefined,
 			link    : undefined !== obj[i].Link ? obj[i].Link : undefined
 		};
+		
+		if (obj[i].Default)
+		{
+			switch (obj[i].Type)
+			{
+				case styletype_Paragraph:
+					this.Default.Paragraph = styleId;
+					break;
+				case styletype_Character:
+					this.Default.Character = styleId;
+					break;
+				case styletype_Numbering:
+					this.Default.Numbering = styleId;
+					break;
+				case styletype_Table:
+					this.Default.Table = styleId;
+					break;
+			}
+		}
 	}
 	
-	
-	for (let styleName in styleMap)
+	for (let styleId in styleMap)
 	{
-		let entry = styleMap[styleName];
+		let entry = styleMap[styleId];
 		let style = entry.style;
 		
 		if (entry.next && styleMap[entry.next])
-			style.SetNext(styleMap[entry.next]);
+			style.SetNext(styleMap[entry.next].styleId);
 		
 		if (entry.basedOn && styleMap[entry.basedOn])
-			style.SetBasedOn(styleMap[entry.basedOn]);
+			style.SetBasedOn(styleMap[entry.basedOn].styleId);
 		
-		if (entry.link)
-		{
-			if (styleMap[entry.link])
-				style.SetLink(styleMap[entry.link]);
-			else
-			{
-				// TODO: Generate linked pair
-			}
-		}
+		if (entry.link && styleMap[entry.link])
+			style.SetLink(styleMap[entry.link].styleId);
 	}
 };
 /**

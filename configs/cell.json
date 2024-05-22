@@ -353,6 +353,7 @@
 			"word/Math/mathTrackHandler.js",
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"word/apiBuilder.js",
