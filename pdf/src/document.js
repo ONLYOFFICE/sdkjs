@@ -181,9 +181,13 @@ var CPresentation = CPresentation || function(){};
 
             let oPageTr = new AscCommon.CMatrix();
 
+            let xCenter = this.Viewer.width >> 1;
+			if (this.Viewer.documentWidth > this.Viewer.width)
+				xCenter = (this.Viewer.documentWidth >> 1) - (this.Viewer.scrollX) >> 0;
+
             let nPageW  = oPage.W;
             let nPageH  = oPage.H;
-            let xInd    = (this.Viewer.width >> 1) - (oPage.W >> 1);
+            let xInd    = xCenter - (oPage.W >> 1);
             let yInd    = (this.Viewer.betweenPages - this.Viewer.scrollY);
             
             let nScale = this.Viewer.file.pages[i].W / this.Viewer.drawingPages[i].W;
@@ -1670,8 +1674,10 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
-            
+
+        oViewer.thumbnails._addPage(nPos);
         oViewer.resize();
+
         for (let i = 0; i < oViewer.file.pages.length; i++) {
             oController.mergeDrawings(i);
         }
@@ -1680,8 +1686,6 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
-
-        oViewer.thumbnails._addPage(nPos);
     };
 
     /**
@@ -1745,6 +1749,8 @@ var CPresentation = CPresentation || function(){};
             }
         }
         
+        oViewer.thumbnails._deletePage(nPos);
+
         oViewer.checkVisiblePages();
         oViewer.resize();
         for (let i = 0; i < oViewer.file.pages.length; i++) {
@@ -1754,10 +1760,15 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
-
-        oViewer.thumbnails._deletePage(nPos);
     };
+    CPDFDoc.prototype.SetPageRotate = function(nPage, nAngle) {
+		let oViewer     = this.Viewer;
+		let oFile       = oViewer.file;
 
+        this.History.Add(new CChangesPDFDocumentRotatePage(this, [nPage, oFile.pages[nPage].Rotate], [nPage, nAngle]));
+		oFile.pages[nPage].Rotate = nAngle;
+		oViewer.resize();
+    };
     /**
 	 * Adds an interactive field to document.
 	 * @memberof CPDFDoc

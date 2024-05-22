@@ -4279,26 +4279,35 @@
 				oMemory.images = [];
 			}
 
+			let nRotAngle = this.getPageRotate(nPage);
+
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			oMemory.WriteByte(nType);
 			oMemory.WriteLong(nPage);
 			
-			// edit page
-			if (nType == 0) {
-				if (oFile.pages[nPage].isConvertedToShapes) {
-					oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
-					oMemory.WriteLong(4);
+			if (nType == 0 || nType == 1) {
+				oMemory.WriteByte(AscCommon.CommandType.ctPageRotate);
+				oMemory.WriteLong(8);
+				oMemory.WriteLong(nRotAngle);
+
+				// edit page
+				if (nType == 0) {
+					if (oFile.pages[nPage].isConvertedToShapes) {
+						oMemory.WriteByte(AscCommon.CommandType.ctPageClear);
+						oMemory.WriteLong(4);
+					}
+				}
+				// add page
+				if (nType == 1) {
+					oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
+					oMemory.WriteDouble(oFile.pages[nPage].W);
+					
+					oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
+					oMemory.WriteDouble(oFile.pages[nPage].H);
 				}
 			}
-			// add page
-			if (nType == 1) {
-				oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
-				oMemory.WriteDouble(oFile.pages[nPage].W);
-				
-				oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
-				oMemory.WriteDouble(oFile.pages[nPage].H);
-			}
+			
 			// remove page
 			if (nType == 2) {
 				let nEndPos = oMemory.GetCurPosition();
@@ -4454,8 +4463,10 @@
 			let aForms			= aPagesInfo[nPage].fields;
 			let aPageDeleted	= aDeleted[nPage] || [];
 			let nOriginIndex	= oFile.pages[nPage].originIndex;
+			let nOrigRotAngle	= oFile.pages[nPage].originRotate;
+			let nRotAnge		= oFile.pages[nPage].Rotate;
 
-			return nOriginIndex != undefined && (aDrawings.length != 0 || aAnnots.length != 0 || aForms.length != 0 || aPageDeleted.length != 0);
+			return nOriginIndex != undefined && (nRotAnge != nOrigRotAngle || aDrawings.length != 0 || aAnnots.length != 0 || aForms.length != 0 || aPageDeleted.length != 0);
 		}
 
 		// сначала edit исходных страниц

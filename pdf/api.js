@@ -1819,12 +1819,12 @@
 			angle = 360 + angle;
 		}
 
-		let oViewer = this.getDocumentRenderer();
-		let oThumbnails = oViewer.Thumbnails;
-		let oFile = oViewer.file;
-		oFile.pages[oThumbnails.selectPage].Rotate = angle % 360;
+		let oDoc = this.getPDFDoc();
+		let oThumbnails = oDoc.Viewer.Thumbnails;
 
-		oViewer.resize();
+		oDoc.CreateNewHistoryPoint();
+		oDoc.SetPageRotate(oThumbnails.selectPage, angle % 360);
+		oDoc.TurnOffHistory();
 	};
 	PDFEditorApi.prototype.asc_GetPageRotate = function(nPage) {
 		let oViewer = this.getDocumentRenderer();
