@@ -3129,7 +3129,11 @@ function (window, undefined) {
 			})
 		} else if (arg0 instanceof cArea3D) {
 			if (arg0.isSingleSheet()) {
-				valueArray = arg0.getMatrix()[0];
+				arg0.foreach2(function (c) {
+					if (c instanceof cNumber || c instanceof cError) {
+						valueArray.push(c);
+					}
+				})
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}

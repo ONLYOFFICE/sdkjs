@@ -1395,6 +1395,7 @@ function (window, undefined) {
 	cCOTH.prototype.argumentsMax = 1;
 	cCOTH.prototype.isXLFN = true;
 	cCOTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cCOTH.prototype.argumentsType = [argType.number];
 	cCOTH.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -1889,7 +1890,7 @@ function (window, undefined) {
 	cFLOOR.prototype.name = 'FLOOR';
 	cFLOOR.prototype.argumentsMin = 2;
 	cFLOOR.prototype.argumentsMax = 2;
-	cFLOOR.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cFLOOR.prototype.argumentsType = [argType.number, argType.number];
 	cFLOOR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -5426,7 +5427,7 @@ function (window, undefined) {
 	cSUMX2PY2.prototype.argumentsMin = 2;
 	cSUMX2PY2.prototype.argumentsMax = 2;
 	cSUMX2PY2.prototype.arrayIndexes = {0: 1, 1: 1};
-	cSUMX2MY2.prototype.argumentsType = [argType.array, argType.array];
+	cSUMX2PY2.prototype.argumentsType = [argType.array, argType.array];
 	cSUMX2PY2.prototype.Calculate = function (arg) {
 
 		var func = function (a, b) {

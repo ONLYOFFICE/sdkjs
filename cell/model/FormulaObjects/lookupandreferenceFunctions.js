@@ -2805,7 +2805,7 @@ function (window, undefined) {
 		}
 
 		if (cElementType.error === arg0Val.type) {
-			return arg0;
+			return arg0Val;
 		}
 		//TODO не тестировал на hlookup/x - поэтому поставил условия
 		if (!opt_xlookup && false === this.bHor && cElementType.empty === arg0Val.type) {
