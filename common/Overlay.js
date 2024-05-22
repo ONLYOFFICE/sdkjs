@@ -126,7 +126,31 @@
                 else
                 {
                     var _eps = 5;
-                    this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
+                    if(this.CanvasTransform)
+                    {
+                        let m = this.CanvasTransform;
+                        let x_min = this.min_x - _eps;
+                        let y_min = this.min_y - _eps;
+                        let x_max = this.max_x + _eps;
+                        let y_max = this.max_y + _eps;
+                        let x1 = m.TransformPointX(x_min, y_min);
+                        let y1 = m.TransformPointY(x_min, y_min);
+                        let x2 = m.TransformPointX(x_max, y_min);
+                        let y2 = m.TransformPointY(x_max, y_min);
+                        let x3 = m.TransformPointX(x_max, y_max);
+                        let y3 = m.TransformPointY(x_max, y_max);
+                        let x4 = m.TransformPointX(x_min, y_max);
+                        let y4 = m.TransformPointY(x_min, y_max);
+                        let l = Math.min(x1, x2, x3, x4);
+                        let t = Math.min(y1, y2, y3, y4);
+                        let r = Math.max(x1, x2, x3, x4);
+                        let b = Math.max(y1, y2, y3, y4);
+                        this.m_oContext.clearRect(l, t, r - l, b - t);
+                    }
+                    else
+                    {
+                        this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
+                    }
                 }
             }
             this.min_x = 0xFFFF;
@@ -818,9 +842,39 @@
     {
         this.Graphics.reset();
     };
+    CAutoshapeTrack.prototype.transformPageMatrix = function(m)
+    {
+        if(!this.Graphics)
+        {
+            return m;
+        }
+        let t = this.CanvasTransform;
+        if(t)
+        {
+            let t3;
+            if(m)
+            {
+                t3 = m.CreateDublicate();
+            }
+            else
+            {
+                t3 = new AscCommon.CMatrix();
+            }
+            AscCommon.global_MatrixTransformer.MultiplyAppend(t3, this.Graphics.m_oCoordTransform);
+            AscCommon.global_MatrixTransformer.MultiplyAppend(t3, t);
+            let oInvCoord = AscCommon.global_MatrixTransformer.Invert(this.Graphics.m_oCoordTransform)
+            AscCommon.global_MatrixTransformer.MultiplyAppend(t3, oInvCoord);
+            return t3;
+        }
+        else
+        {
+            return m;
+        }
+    };
     CAutoshapeTrack.prototype.transform3 = function(m)
     {
-        this.Graphics.transform3(m);
+        let mt = this.transformPageMatrix(m);
+        this.Graphics.transform3(mt);
     };
     CAutoshapeTrack.prototype.transform = function(sx,shy,shx,sy,tx,ty)
     {
@@ -857,6 +911,53 @@
         this.m_oOverlay.max_y += this.MaxEpsLine;
     };
 
+    CAutoshapeTrack.prototype.GetCanvasTransform = function(nPageIndex)
+    {
+        if(Asc.editor.isPdfEditor())
+        {
+            let oDocument = Asc.editor.WordControl.m_oLogicDocument;
+            let oPageTransform = oDocument.pagesTransform[nPageIndex];
+            if(oPageTransform)
+            {
+                if(oPageTransform.normal.GetRotation() === 0)
+                {
+                    return null;
+                }
+                let c = this.Graphics.m_oCoordTransform;
+                let oInvertC = AscCommon.global_MatrixTransformer.Invert(c);
+                let ScaleRetina = new AscCommon.CMatrix();
+                let r = AscCommon.AscBrowser.retinaPixelRatio;
+                AscCommon.global_MatrixTransformer.ScaleAppend(ScaleRetina, r, r);
+                let inchC = (25.4 / Asc.editor.WordControl.m_oLogicDocument.Viewer.file.pages[nPageIndex].Dpi);
+                let ScaleInch = new AscCommon.CMatrix();
+                AscCommon.global_MatrixTransformer.ScaleAppend(ScaleInch, inchC, inchC);
+                let ScaleRetinaInv = AscCommon.global_MatrixTransformer.Invert(ScaleRetina);
+                let M = new AscCommon.CMatrix();
+                AscCommon.global_MatrixTransformer.MultiplyAppend(M, ScaleRetinaInv);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(M, oPageTransform.normal);
+                AscCommon.global_MatrixTransformer.MultiplyAppend(M, ScaleInch);
+                let MInvert = AscCommon.global_MatrixTransformer.Invert(M);
+                let oCanvasT = oInvertC.CreateDublicate();
+                AscCommon.global_MatrixTransformer.MultiplyAppend(oCanvasT, MInvert);
+                return oCanvasT;
+            }
+        }
+        return null;
+    };
+    CAutoshapeTrack.prototype.CheckCanvasTransform = function()
+    {
+        this.CanvasTransform = this.GetCanvasTransform(this.PageIndex);
+        if(this.CanvasTransform)
+        {
+            let m = this.CanvasTransform;
+            this.m_oContext.setTransform(m.sx,m.shy,m.shx,m.sy,m.tx,m.ty);
+        }
+        else
+        {
+            this.m_oContext.resetTransform();
+        }
+        this.m_oOverlay.CanvasTransform = this.CanvasTransform;
+    };
     CAutoshapeTrack.prototype.SetCurrentPage = function(nPageIndex, isAttack)
     {
         if (nPageIndex == this.PageIndex && !isAttack)
@@ -876,10 +977,13 @@
         this.Graphics.m_oCoordTransform.tx = _scale * drawPage.left;
         this.Graphics.m_oCoordTransform.ty = _scale * drawPage.top;
 
-        this.Graphics.SetIntegerGrid(false);
 
         this.Graphics.globalAlpha = 0.5;
         this.m_oContext.globalAlpha = 0.5;
+
+        this.Graphics.SetIntegerGrid(false);
+
+        this.CheckCanvasTransform();
     };
 
     CAutoshapeTrack.prototype.init2 = function(overlay)
@@ -2860,7 +2964,6 @@
     {
         var overlay = this.m_oOverlay;
         var ctx = overlay.m_oContext;
-        ctx.lineWidth = Math.round(rPR);
 
         //todo: remove duplicate code
         this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);

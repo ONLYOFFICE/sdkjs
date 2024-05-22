@@ -3051,8 +3051,8 @@
 					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y);
 					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y);
 
-					console.log(`x: ${_x}`);
-					console.log(`y: ${_y}`);
+					//console.log(`x: ${_x}`);
+					//console.log(`y: ${_y}`);
 
 					// console.log(`page x: ${_x}`);
 					// console.log(`page y: ${_y}`);

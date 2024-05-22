@@ -1326,6 +1326,7 @@ var CPresentation = CPresentation || function(){};
             }
 
             oController.OnMouseUp(e, X, Y, pageObject.index);
+            this.activeDrawing.Recalculate();
             if (this.Api.isMarkerFormat && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
                 this.SetHighlight(this.HighlightColor.r, this.HighlightColor.g, this.HighlightColor.b);
             }

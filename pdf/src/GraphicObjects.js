@@ -1005,6 +1005,10 @@
         if (undefined !== drawingDocument.BeginDrawTracking)
             drawingDocument.BeginDrawTracking();
 
+
+        const oTrackDrawer  = drawingDocument.AutoShapesTrack;
+        oTrackDrawer.SetCurrentPage(pageIndex, true);
+
         const oApi = this.getEditorApi();
         let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
         const nSelectedCount = this.selectedObjects;
@@ -1023,7 +1027,6 @@
         const oGrp          = this.selection.groupSelection;
         const oChart        = this.selection.chartSelection;
         const oWrp          = this.selection.wrapPolygonSelection;
-        const oTrackDrawer  = drawingDocument.AutoShapesTrack;
 
         if (oCrop) {
             if (this.arrTrackObjects.length === 0) {
@@ -1035,11 +1038,9 @@
                             oldGlobalAlpha = oTrackDrawer.Graphics.globalAlpha;
                             oTrackDrawer.Graphics.put_GlobalAlpha(false, 1.0);
                         }
-                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
                         cropObject.draw(oTrackDrawer);
                         oTrackDrawer.CorrectOverlayBounds();
 
-                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
                         oCrop.draw(oTrackDrawer);
                         oTrackDrawer.CorrectOverlayBounds();
 
