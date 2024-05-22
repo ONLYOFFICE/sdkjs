@@ -80,7 +80,6 @@
 
         return true;
     };
-
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;
     };
@@ -113,17 +112,13 @@
         let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.drawings.indexOf(this) != -1) {
-                if (oViewer.pagesInfo.pages[nPage].drawings == null) {
-                    oViewer.pagesInfo.pages[nPage].drawings = [];
-                }
-    
-                if (nCurIdxOnPage != -1)
+                if (nCurIdxOnPage != -1) {
                     oViewer.pagesInfo.pages[nCurPage].drawings.splice(nCurIdxOnPage, 1);
+                    oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
+                }
     
                 if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].drawings.indexOf(this) == -1)
                     oViewer.pagesInfo.pages[nPage].drawings.push(this);
-
-                oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
 
                 // добавляем в перерисовку исходную страницу
                 this.AddToRedraw();
@@ -145,8 +140,10 @@
         let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
+            if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);
@@ -180,8 +177,13 @@
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
+
+            if (this.group) {
+                this.group.SetNeedRecalc(true);
+            }
         }
     };
+    CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
     CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();
         this.draw(oGraphicsWord);
@@ -197,6 +199,55 @@
     CPdfDrawingPrototype.prototype.IsInTextBox = function() {
         return this.isInTextBox;
     };
+	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		
+		if (!doc || !content)
+			return;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		content.Remove(direction, true, false, false, isWord);
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		
+		if (AscCommon.History.Is_LastPointEmpty())
+			AscCommon.History.Remove_LastPoint();
+	};
+	CPdfDrawingPrototype.prototype.EnterText = function(value) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		if (!doc || !content)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		let result = content.EnterText(value);
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		return result;
+	};
+	CPdfDrawingPrototype.prototype.CorrectEnterText = function(oldValue, newValue) {
+		let doc = this.GetDocument();
+		let content = this.GetDocContent();
+		if (!doc || !content)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		let result = content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
+		this.SetNeedRecalc(true);
+		content.RecalculateCurPos();
+		return result;
+	};
+	CPdfDrawingPrototype.prototype.canBeginCompositeInput = function() {
+		return true;
+	};
+	CPdfDrawingPrototype.prototype.beforeCompositeInput = function() {
+		let docContent = this.GetDocContent();
+		if (docContent.IsSelectionUse()) {
+			docContent.Remove(1, true, false, false);
+			docContent.RemoveSelection();
+		}
+	};
     
     /////////////////////////////
     /// saving

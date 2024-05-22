@@ -3596,7 +3596,7 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	{
 		// Случай, когда у нас уже есть трэк вложенной таблицы и курсор выходит во внешнюю. Чтобы трэк сразу не пропадал,
 		// пока курсор находится в области табличного трэка для вложенной таблицы.
-		if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage))
+		if (true !== this.DrawingDocument.IsCursorInTableCur(X, Y, this.GetAbsolutePage(CurPage), true)
 			&& true === this.Check_EmptyPages(CurPage - 1)
 			&& true !== this.IsEmptyPage(CurPage))
 		{

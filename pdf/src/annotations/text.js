@@ -126,7 +126,7 @@
         this._replies.push(oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        let oAscCommData = new Asc.asc_CCommentDataWord(null);
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)
@@ -253,6 +253,12 @@
         let canvas = document.createElement('canvas');
         let context = canvas.getContext('2d');
 
+        if (oGraphics.isThumbnails) {
+            let oTr = oGraphics.GetTransform();
+            wScaled *= oTr.sy;
+            hScaled *= oTr.sy;
+        }
+        
         // Set the canvas dimensions to match the image
         canvas.width = wScaled;
         canvas.height = hScaled;

@@ -71,6 +71,17 @@
 			}
 		};
 
+		LineInfo.prototype.initStartX = function (lineWidth ,x, maxWidth, align) {
+			var x_ = x;
+			if (align === AscCommon.align_Right) {
+				x_ = x + maxWidth - lineWidth - 1/*px*/;
+			} else if (align === AscCommon.align_Center) {
+				x_ = x + 0.5 * (maxWidth - lineWidth);
+			}
+			this.startX = x_;
+			return x_;
+		};
+
 		/** @constructor */
 		function lineMetrics() {
 			this.th = 0;
@@ -834,29 +845,6 @@
 		StringRender.prototype._insertRepeatChars = function (maxWidth) {
 			var self = this, width, w, pos, charProp;
 
-			function shiftCharPropsLeft(fromPos, delta) {
-				// delta - отрицательная
-				var length = self.charProps.length;
-				for (var i = fromPos; i < length; ++i) {
-					var p = self.charProps[i];
-					if (p) {
-						delete self.charProps[i];
-						self.charProps[i + delta] = p;
-					}
-				}
-			}
-
-			function shiftCharPropsRight(fromPos, delta) {
-				// delta - положительная
-				for (var i = self.charProps.length - 1; i >= fromPos; --i) {
-					var p = self.charProps[i];
-					if (p) {
-						delete self.charProps[i];
-						self.charProps[i + delta] = p;
-					}
-				}
-			}
-
 			function insertRepeatChars() {
 				if (0 === charProp.total)
 					return;	// Символ уже изначально лежит в строке и в списке
@@ -870,8 +858,11 @@
 					self.charWidths.slice(0, repeatEnd),
 					self.charWidths.slice(pos, pos + 1),
 					self.charWidths.slice(repeatEnd));
-
-				shiftCharPropsRight(pos + 1, 1);
+				
+				self.charProps = [].concat(
+					self.charProps.slice(0, repeatEnd),
+					self.charProps.slice(pos, pos + 1),
+					self.charProps.slice(repeatEnd));
 			}
 
 			function removeRepeatChar() {
@@ -882,9 +873,10 @@
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, pos),
 					self.charWidths.slice(pos + 1));
-
-				delete self.charProps[pos];
-				shiftCharPropsLeft(pos + 1, -1);
+				
+				self.charProps = [].concat(
+					self.charProps.slice(0, pos),
+					self.charProps.slice(pos + 1));
 			}
 
 			width = this._calcTextMetrics(true).width;
@@ -920,7 +912,7 @@
 			let ppiy = this.drawingCtx.getPPIY();
 			let width = AscFonts.GetGraphemeWidth(grapheme) * ppiy / 25.4 * fontSize;
 			let bbox = AscFonts.GetGraphemeBBox(grapheme, fontSize, ppiy);
-			return width + bbox.maxX - bbox.minX + 1 - width;
+			return bbox.maxX - bbox.minX + 1 - width;
 		};
 
 		/**
@@ -1150,7 +1142,7 @@
 			var ppiy = ctx.getPPIY();
 			var align = this.flags ? this.flags.textAlign : null;
 			var i, j, p, p_, strBeg;
-			var n = 0, l = this.lines[0], x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
+			var n = 0, l = this.lines[0], x1 = l ? this.initStartX(0, l, x, maxWidth) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
 			
 			ctx.setTextRotated(!!this.angle);
 			
@@ -1286,7 +1278,7 @@
 						// begin new line
 						y1 += asc_round(l.th * zoom);
 						l = self.lines[++n];
-						x1 = initX(i);
+						x1 = self.initStartX(i, l, x, maxWidth);
 						dx = computeWordDeltaX();
 					}
 				}
@@ -1294,6 +1286,20 @@
 			if (strBeg < i) {
 				// render text remainder
 				renderFragment(strBeg, i, p_, this.angle);
+			}
+		};
+
+		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines) {
+			let align = this.flags ? this.flags.textAlign : null;
+			if (initAllLines) {
+				if (this.lines) {
+					let lineWidth = this._calcLineWidth(startPos);
+					for (let i = 0; i < this.lines.length; ++i) {
+						this.lines[i].initStartX(lineWidth, x, maxWidth, align);
+					}
+				}
+			} else {
+				return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
 			}
 		};
 

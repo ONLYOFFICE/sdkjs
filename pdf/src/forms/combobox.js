@@ -398,49 +398,43 @@
             }
         }
     };
-    CComboBoxField.prototype.EnterText = function(aChars)
-    {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        if (this.DoKeystrokeAction(aChars) == false) {
-            AscCommon.History.Remove_LastPoint();
-            return false;
-        }
-
-        let nSelStart = oDoc.event["selStart"];
-        let nSelEnd = oDoc.event["selEnd"];
-
-        // убираем селект, выставляем из nSelStart/nSelEnd
-        if (this.content.IsSelectionUse())
-            this.content.RemoveSelection();
-
-        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
-        let startPos    = oDocPos.startPos;
-        let endPos      = oDocPos.endPos;
-        
-        if (nSelStart == nSelEnd) {
-            this.content.SetContentPosition(startPos, 0, 0);
-            this.content.RecalculateCurPos();
-        }
-        else
-            this.content.SetSelectionByContentPositions(startPos, endPos);
-
-        if (nSelStart != nSelEnd)
-            this.content.Remove(-1, true, false, false, false);
-
-        this.SetNeedRecalc(true);
-        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
-        if (aChars.length == 0) {
-            return false;
-        }
-
-        this.InsertChars(aChars);
-        this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
-        this._bAutoShiftContentView = true && this._doNotScroll == false;
-
-        return true;
-    };
+	CComboBoxField.prototype.EnterText = function(aChars) {
+		if (!this.DoKeystrokeAction(aChars))
+			return false;
+		
+		let doc = this.GetDocument();
+		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		if (!aChars.length)
+			return false;
+		
+		this.UpdateSelectionByEvent();
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		this.content.EnterText(aChars);
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this._doNotScroll == false;
+		return true;
+	};
+	CComboBoxField.prototype.CorrectEnterText = function(oldValue, newValue) {
+		if (!this.DoKeystrokeAction(newValue))
+			return false;
+		
+		let doc = this.GetDocument();
+		newValue = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
+		if (!newValue.length && !oldValue.length)
+			return false;
+		
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		let result = this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
+		
+		this.SetNeedRecalc(true);
+		this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
+		this._bAutoShiftContentView = true && this._doNotScroll == false;
+		return result;
+	};
     /**
 	 * Applies value of this field to all field with the same name.
 	 * @memberof CComboBoxField
@@ -512,30 +506,15 @@
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
-    CComboBoxField.prototype.InsertChars = function(aChars) {
-        let oPara = this.content.GetElement(0);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let codePoint = aChars[index];
-            if (9 === codePoint) // \t
-				oPara.AddToParagraph(new AscWord.CRunTab(), true);
-			else if (10 === codePoint || 13 === codePoint) // \n \r
-				oPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), true);
-			else if (AscCommon.IsSpace(codePoint)) // space
-				oPara.AddToParagraph(new AscWord.CRunSpace(codePoint), true);
-			else
-				oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
-        }
-    };
+	CComboBoxField.prototype.InsertChars = function(aChars) {
+		this.content.EnterText(aChars);
+	};
 	CComboBoxField.prototype.canBeginCompositeInput = function() {
 		return this.IsEditable();
 	};
 	CComboBoxField.prototype.beforeCompositeInput = function() {
 		this.DoKeystrokeAction();
 		this.content.Remove(1, true, false, false);
-	};
-	CComboBoxField.prototype.getRunForCompositeInput = function() {
-		return this.content.getCurrentRun();
 	};
 	/**
 	 * Checks curValueIndex, corrects it and return.
@@ -757,38 +736,43 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
+	CComboBoxField.prototype.IsDoNotScroll = function() {
+		return true;
+	};
+	
+	
+	function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
-
-    if (!window["AscPDF"])
-	    window["AscPDF"] = {};
-    
-    CComboBoxField.prototype.Remove                 = AscPDF.CTextField.prototype.Remove;
-    CComboBoxField.prototype.MoveCursorLeft         = AscPDF.CTextField.prototype.MoveCursorLeft;
-    CComboBoxField.prototype.MoveCursorRight        = AscPDF.CTextField.prototype.MoveCursorRight;
-    CComboBoxField.prototype.SelectionSetStart      = AscPDF.CTextField.prototype.SelectionSetStart;
-    CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
-    CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
-    CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
-    CComboBoxField.prototype.GetAlign               = AscPDF.CTextField.prototype.GetAlign;
-    CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
-    CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
-    CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;
-    CComboBoxField.prototype.IsDoNotSpellCheck      = AscPDF.CTextField.prototype.IsDoNotSpellCheck;
-    CComboBoxField.prototype.DoValidateAction       = AscPDF.CTextField.prototype.DoValidateAction;
-    CComboBoxField.prototype.DoKeystrokeAction      = AscPDF.CTextField.prototype.DoKeystrokeAction;
-    CComboBoxField.prototype.DoFormatAction         = AscPDF.CTextField.prototype.DoFormatAction;
-    CComboBoxField.prototype.CalcDocPos             = AscPDF.CTextField.prototype.CalcDocPos;
-    CComboBoxField.prototype.GetCalcOrderIndex      = AscPDF.CTextField.prototype.GetCalcOrderIndex;
-    CComboBoxField.prototype.SetCalcOrderIndex      = AscPDF.CTextField.prototype.SetCalcOrderIndex;
-    CComboBoxField.prototype.UndoNotAppliedChanges  = AscPDF.CTextField.prototype.UndoNotAppliedChanges;
-    CComboBoxField.prototype.SelectAllText          = AscPDF.CTextField.prototype.SelectAllText;
-    CComboBoxField.prototype.UpdateDisplayValue     = AscPDF.CTextField.prototype.UpdateDisplayValue;
-    CComboBoxField.prototype.onMouseUp              = AscPDF.CTextField.prototype.onMouseUp;
-    CComboBoxField.prototype.OnContentChange        = AscPDF.CTextField.prototype.OnContentChange;
+	
+	if (!window["AscPDF"])
+		window["AscPDF"] = {};
+	
+	CComboBoxField.prototype.Remove                 = AscPDF.CTextField.prototype.Remove;
+	CComboBoxField.prototype.MoveCursorLeft         = AscPDF.CTextField.prototype.MoveCursorLeft;
+	CComboBoxField.prototype.MoveCursorRight        = AscPDF.CTextField.prototype.MoveCursorRight;
+	CComboBoxField.prototype.SelectionSetStart      = AscPDF.CTextField.prototype.SelectionSetStart;
+	CComboBoxField.prototype.SelectionSetEnd        = AscPDF.CTextField.prototype.SelectionSetEnd;
+	CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
+	CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
+	CComboBoxField.prototype.GetAlign               = AscPDF.CTextField.prototype.GetAlign;
+	CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
+	CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
+	CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;
+	CComboBoxField.prototype.IsDoNotSpellCheck      = AscPDF.CTextField.prototype.IsDoNotSpellCheck;
+	CComboBoxField.prototype.DoValidateAction       = AscPDF.CTextField.prototype.DoValidateAction;
+	CComboBoxField.prototype.DoKeystrokeAction      = AscPDF.CTextField.prototype.DoKeystrokeAction;
+	CComboBoxField.prototype.DoFormatAction         = AscPDF.CTextField.prototype.DoFormatAction;
+	CComboBoxField.prototype.CalcDocPos             = AscPDF.CTextField.prototype.CalcDocPos;
+	CComboBoxField.prototype.GetCalcOrderIndex      = AscPDF.CTextField.prototype.GetCalcOrderIndex;
+	CComboBoxField.prototype.SetCalcOrderIndex      = AscPDF.CTextField.prototype.SetCalcOrderIndex;
+	CComboBoxField.prototype.UndoNotAppliedChanges  = AscPDF.CTextField.prototype.UndoNotAppliedChanges;
+	CComboBoxField.prototype.SelectAllText          = AscPDF.CTextField.prototype.SelectAllText;
+	CComboBoxField.prototype.UpdateDisplayValue     = AscPDF.CTextField.prototype.UpdateDisplayValue;
+	CComboBoxField.prototype.onMouseUp              = AscPDF.CTextField.prototype.onMouseUp;
+	CComboBoxField.prototype.OnContentChange        = AscPDF.CTextField.prototype.OnContentChange;
+	CComboBoxField.prototype.UpdateSelectionByEvent = AscPDF.CTextField.prototype.UpdateSelectionByEvent;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

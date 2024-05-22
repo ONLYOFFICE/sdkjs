@@ -260,7 +260,12 @@
         image.requestHeight = requestH;
         return image;
     };
-
+    CFile.prototype.getPageWidth = function(nPage) {
+        return this.pages[nPage].W;
+    };
+    CFile.prototype.getPageHeight = function(nPage) {
+        return this.pages[nPage].H;
+    };
     CFile.prototype.getLinks = function(pageIndex)
     {
         return this.nativeFile ? this.nativeFile["getLinks"](pageIndex) : [];

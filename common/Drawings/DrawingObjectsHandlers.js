@@ -2135,22 +2135,6 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-        if(!bRightButton && !state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
-        {
-            var sMediaName = state.majorObject.getMediaFileName();
-            if(sMediaName)
-            {
-                var oApi = state.drawingObjects.getEditorApi();
-                if(oApi && oApi.showVideoControl)
-                {
-                    oApi.showVideoControl(sMediaName, state.majorObject.extX, state.majorObject.extY, state.majorObject.transform);
-                    bHandle = true;
-                }
-            }
-        }
-    }
-    if(!bHandle)
-    {
         if(e.CtrlKey && state.majorObjectIsSelected && !state.bGroupSelection)
         {
             drawingObjects.deselectObject(state.majorObject);

@@ -7108,7 +7108,7 @@ PasteProcessor.prototype =
 
 				oTempNode = oTempNode.parentNode;
 				let _nodeName = oTempNode && oTempNode.nodeName && oTempNode.nodeName.toLowerCase();
-				if (!oTempNode || this.oRootNode === oTempNode || "body" === _nodeName || true === this._IsBlockElem(_nodeName)) {
+				if (!oTempNode || this.oRootNode === oTempNode || "body" === _nodeName) {
 					break;
 				}
 			}

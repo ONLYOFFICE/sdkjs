@@ -494,6 +494,16 @@
 		}, this, []);
 	};
 
+
+	CGraphicBounds.prototype.toObject = function () {
+		return {
+			"X": this.x,
+			"Y": this.y,
+			"W": this.w,
+			"H": this.h
+		};
+	};
+
 	function CCopyObjectProperties() {
 		this.drawingDocument = null;
 		this.idMap = null;
@@ -2624,6 +2634,28 @@
 	CGraphicObjectBase.prototype.getMediaFileName = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.getMediaData = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.getMediaStartTime = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.getMediaEndTime = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.isVideo = function() {
+		return false;
+	};
+	CGraphicObjectBase.prototype.getUniMedia = function() {
+		let oUniPr = this.getUniNvProps();
+		if (oUniPr) {
+			let oNvPr = oUniPr.nvPr;
+			if (oNvPr && oNvPr.unimedia) {
+				return oNvPr.unimedia;
+			}
+		}
+		return null;
+	};
 	CGraphicObjectBase.prototype.getLogicDocument = function () {
 		var oApi = editor || Asc['editor'];
 		if (oApi && oApi.WordControl) {
@@ -3542,7 +3574,9 @@
 			this.setStyle(null);
 		}
 	};
-
+	CGraphicObjectBase.prototype.getText = function () {
+		return "";
+	};
 	CGraphicObjectBase.prototype.getContentText = function () {
 		return "";
 	};

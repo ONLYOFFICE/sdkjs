@@ -3604,6 +3604,18 @@
 			var x2 = this.TransformPointX(1, 1);
 			var y2 = this.TransformPointY(1, 1);
 			return Math.sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+		},
+
+		exportToObject : function()
+		{
+			return {
+				"SX": this.sx,
+				"SHX": this.shx,
+				"SHY": this.shy,
+				"SY": this.sy,
+				"TX": this.tx,
+				"TY": this.ty
+			};
 		}
 	};
 

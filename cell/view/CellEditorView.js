@@ -363,6 +363,8 @@ function (window, undefined) {
 		 */
 		this.setFocus(this.isTopLineActive ? true : (null === options.enterOptions.focus) ? this._haveTextInEdit() : options.enterOptions.focus);
 		this._updateUndoRedoChanged();
+
+		AscCommon.StartIntervalDrawText(true);
 	};
 
 	CellEditor.prototype.close = function (saveValue, callback) {
@@ -419,6 +421,8 @@ function (window, undefined) {
 		if (this.isStartCompositeInput()) {
 			this.End_CompositeInput();
 		}
+
+		AscCommon.StartIntervalDrawText(false);
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
@@ -1221,17 +1225,18 @@ function (window, undefined) {
 	CellEditor.prototype._update = function () {
 		this._updateEditorState();
 
-		if (this._expand()) {
+		let isExpand = this._expand();
+		if (isExpand) {
 			this._adjustCanvas();
 			this._calculateCanvasSize();
 		}
 
-		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
+		this.textRender.initStartX(0, this.textRender.lines[0], this._getContentLeft(), this._getContentWidth(), true);
 		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
-		this._updateCursorPosition(true);
+		this._updateCursorPosition(true, isExpand);
 		this._updateCursor();
 
 		this._updateUndoRedoChanged();
@@ -1514,7 +1519,20 @@ function (window, undefined) {
 		}
 	};
 
-	CellEditor.prototype._renderText = function (dy) {
+	CellEditor.prototype._renderText = function (dy, forceRender) {
+
+		if (window.LOCK_DRAW && !forceRender)
+		{
+			this.textRender.initStartX(0, null, this._getContentLeft(), this._getContentWidth(), true);
+			window.TEXT_DRAW_INSTANCE = this;
+			window.TEXT_DRAW_INSTANCE_POS = dy;
+			return;
+		}
+
+		if (forceRender) {
+			window.TEXT_DRAW_INSTANCE = undefined;
+		}
+
 		var t = this, opt = t.options, ctx = t.drawingCtx;
 
 		if (!window['IS_NATIVE_EDITOR']) {
@@ -1638,7 +1656,7 @@ function (window, undefined) {
 		this.cursorStyle.display = "none";
 	};
 
-	CellEditor.prototype._updateCursorPosition = function (redrawText) {
+	CellEditor.prototype._updateCursorPosition = function (redrawText, isExpand) {
 		// ToDo стоит переправить данную функцию
 		let h = this.canvas.height;
 		let y = -this.textRender.calcLineOffset(this.topLineIndex);
@@ -1679,7 +1697,7 @@ function (window, undefined) {
 		}
 
 		if (dy !== undefined || redrawText) {
-			this._renderText(y);
+			this._renderText(y, isExpand);
 		}
 
 		curLeft = AscCommon.AscBrowser.convertToRetinaValue(curLeft);
@@ -1699,7 +1717,7 @@ function (window, undefined) {
 		}
 
 		if (AscCommon.g_inputContext) {
-			AscCommon.g_inputContext.move(this.left * this.kx + curLeft, this.top * this.ky + curTop);
+			AscCommon.g_inputContext.moveAccurate(this.left * this.kx + curLeft, this.top * this.ky + curTop);
 		}
 
 		if (cur) {
@@ -3290,6 +3308,7 @@ function (window, undefined) {
 		}
 		api.sendEvent('asc_onUserActionEnd');
 	};
+
 
 
 	//------------------------------------------------------------export---------------------------------------------------

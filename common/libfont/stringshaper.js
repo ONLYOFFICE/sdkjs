@@ -35,24 +35,72 @@
 (function(window)
 {
 	/**
-	 * Класс представляющий элемент "количество страниц"
+	 * Класс для шейпинга простой текстовой строки, идущей с одном шрифте
 	 * @constructor
-	 * @extends {AscWord.CRunElementBase}
 	 */
-	function CRunPagesCount()
+	function StringShaper()
 	{
-		AscWord.CRunPageNum.call(this);
+		AscFonts.CTextShaper.call(this);
+		
+		this.textPr    = null;
+		this.graphemes = [];
+		this.widths    = [];
 	}
-	CRunPagesCount.prototype = Object.create(AscWord.CRunPageNum.prototype);
-	CRunPagesCount.prototype.constructor = CRunPagesCount;
-
-	CRunPagesCount.prototype.Type = para_PageCount;
-	CRunPagesCount.prototype.UpdatePageCount = function(pageCount)
+	StringShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
+	StringShaper.prototype.constructor = StringShaper;
+	StringShaper.prototype.Shape = function(codePoints, textPr)
 	{
-		this.SetValue(pageCount, Asc.c_oAscNumberingFormat.Decimal);
+		this.textPr     = textPr;
+		this.codePoints = codePoints.slice();
+		this.graphemes  = [];
+		this.widths     = [];
+		
+		for (let i = 0; i < codePoints.length; ++i)
+		{
+			this.AppendToString(codePoints[i]);
+		}
+		this.FlushWord();
+	};
+	StringShaper.prototype.FlushGrapheme = function(grapheme, width, codePointCount, isLigature)
+	{
+		if (codePointCount <= 0)
+			return
+		
+		this.graphemes.push(grapheme);
+		this.widths.push(width);
+		
+		if (this.IsRtlDirection())
+			this.BufferIndex -= codePointCount;
+		else
+			this.BufferIndex += codePointCount;
+	};
+	StringShaper.prototype.GetFontSlot = function(codePoint)
+	{
+		if (!this.textPr)
+			return AscWord.fontslot_ASCII;
+		
+		return AscWord.GetFontSlotByTextPr(codePoint, this.textPr);
+	};
+	StringShaper.prototype.GetDirection = function(script)
+	{
+		return AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
+	};
+	StringShaper.prototype.GetFontInfo = function(fontSlot)
+	{
+		if (!this.textPr)
+			return AscFonts.DEFAULT_TEXTFONTINFO;
+		
+		return this.textPr.GetFontInfo(fontSlot);
+	};
+	StringShaper.prototype.GetGraphemes = function()
+	{
+		return this.graphemes;
+	};
+	StringShaper.prototype.GetWidths = function()
+	{
+		return this.widths;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'] = window['AscWord'] || {};
-	window['AscWord'].CRunPagesCount = CRunPagesCount;
-
+	window['AscFonts'] = window['AscFonts'] || {};
+	window['AscFonts'].StringShaper = StringShaper;
 })(window);

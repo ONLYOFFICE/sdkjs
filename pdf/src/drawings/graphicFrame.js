@@ -52,26 +52,6 @@
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
-    CPdfGraphicFrame.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun)
-                oParagraph.AddToParagraph(oRun, true);
-        }
-
-        this.SetNeedRecalc(true);
-        return true;
-    };
     CPdfGraphicFrame.prototype.updateCursorType = function (x, y, e) {
 		var tx = this.invertTransform.TransformPointX(x, y);
 		var ty = this.invertTransform.TransformPointY(x, y);
@@ -87,17 +67,27 @@
         oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
+        if (oContent) {
+            oContent.Remove(nDirection, true, false, false, isCtrlKey);
+        }
+        else {
+            this.graphicObject.Remove(nDirection, true, false, false, isCtrlKey);
+        }
+        
         this.SetNeedRecalc(true);
 
         if (AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
         }
-        else {
-            this.SetNeedRecalc(true);
+    };
+    CPdfGraphicFrame.prototype.CheckTextOnOpen = function() {
+        let oTable = this.graphicObject;
+        if (oTable) {
+            oTable.SetApplyToAll(true);
+            AscFonts.FontPickerByCharacter.getFontsByString(oTable.GetSelectedText(false));
+            oTable.SetApplyToAll(false);
         }
     };
-    
     CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

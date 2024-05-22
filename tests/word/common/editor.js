@@ -66,7 +66,8 @@
 		SetCurrentPage : function(pageNum) {},
 		SelectClear : function() {},
 		Start_CollaborationEditing : function() {},
-		End_CollaborationEditing : function() {}
+		End_CollaborationEditing : function() {},
+		ConvertCoordsToCursorWR : function() {return {X : 0, Y : 0};}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');

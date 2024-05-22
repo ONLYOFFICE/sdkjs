@@ -330,6 +330,46 @@ StartAddNewShape.prototype =
 					{
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
+                    if(oThis.preset && oThis.preset.startsWith("actionButton"))
+                    {
+                        let sHyperText = "", sHyperValue, sHyperTooltip;
+                        switch (oThis.preset) {
+                            case "actionButtonBackPrevious": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=previousslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Previous Slide");
+                                break;
+                            }
+                            case "actionButtonBeginning": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=firstslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("First Slide");
+                                break;
+                            }
+                            case "actionButtonEnd": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=lastslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Last Slide");
+                                break;
+                            }
+                            case "actionButtonForwardNext": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=nextslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Next Slide");
+                                break;
+                            }
+                            case "actionButtonHome": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=firstslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("First Slide");
+                                break;
+                            }
+                            case "actionButtonReturn": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=previousslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Previous Slide");
+                                break;
+                            }
+                        }
+                        if(sHyperValue) {
+                            oAPI.sendEvent("asc_onDialogAddHyperlink", new Asc.CHyperlinkProperty({Text: sHyperText, Value: sHyperValue, ToolTip: sHyperTooltip}));
+                        }
+                    }
+
                 }
 	            oThis.drawingObjects.updateOverlay();
             };
@@ -624,6 +664,7 @@ NullState.prototype =
                 _x = -1000;
             }
         }
+        this.drawingObjects.checkShowMediaControlOnHover(this.lastMoveHandler);
     },
 
     onMouseUp: function(e, x, y, pageIndex)

@@ -297,6 +297,14 @@
         var nType = this.getObjectType();
         return (nType === AscDFH.historyitem_type_Excl);
     };
+    CTimeNodeBase.prototype.isVideo = function () {
+        var nType = this.getObjectType();
+        return (nType === AscDFH.historyitem_type_Video);
+    };
+    CTimeNodeBase.prototype.isAudio = function () {
+        var nType = this.getObjectType();
+        return (nType === AscDFH.historyitem_type_Audio);
+    };
     CTimeNodeBase.prototype.isTimeNode = function () {
         return true;
     };
@@ -998,11 +1006,16 @@
         return oParentNode.getDelay();
 	}
     CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
-        fCallback(this);
-        var aChildren = this.getChildrenTimeNodes();
-        for (var nChild = 0; nChild < aChildren.length; ++nChild) {
-            aChildren[nChild].traverseTimeNodes(fCallback);
+        if(fCallback(this)) {
+            return true;
         }
+        let aChildren = this.getChildrenTimeNodes();
+        for (let nChild = 0; nChild < aChildren.length; ++nChild) {
+            if(aChildren[nChild].traverseTimeNodes(fCallback)) {
+                return true;
+            }
+        }
+        return false;
     };
     CTimeNodeBase.prototype.traverseDrawable = function (oPlayer) {
         if (!this.isDrawable()) {
@@ -1039,6 +1052,9 @@
     CTimeNodeBase.prototype.getTargetObjectId = function () {
         if (this.cBhvr) {
             return this.cBhvr.getTargetObjectId();
+        }
+        if (this.tgtEl) {
+            return this.tgtEl.getSpId();
         }
         return null;
     };
@@ -2649,7 +2665,7 @@
     CTiming.prototype.canStartDemo = function () {
         return this.getEffectsForDemo() !== null;
     };
-    CTiming.prototype.createDemoTiming = function () {
+    CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
         return AscFormat.ExecuteNoHistory(function () {
             if (!this.canStartDemo()) {
                 return null;
@@ -2666,22 +2682,22 @@
                 oEffect = aEffectsForDemo[nIdx];
                 var oCopyEffect = oEffect.createDuplicate();
                 oCopyEffect.originalNode = oEffect;
-                if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
-                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                if (!bDisableSmooth) {
+                    if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                        oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                    }
+                    var nRepeatCount = oCopyEffect.asc_getRepeatCount();
+                    if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
+                        oCopyEffect.cTn.changeRepeatCount(1000);
+                    }
+                    var nDur = oCopyEffect.asc_getDuration();
+                    if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
+                        oCopyEffect.cTn.changeEffectDuration(1000);
+                    }
+                    if (AscFormat.isRealNumber(nDur) && nDur < 50) {
+                        oCopyEffect.cTn.changeEffectDuration(750);
+                    }
                 }
-                var nRepeatCount = oCopyEffect.asc_getRepeatCount();
-                if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeRepeatCount(1000);
-                }
-                var nDur = oCopyEffect.asc_getDuration();
-                if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
-                    oCopyEffect.cTn.changeEffectDuration(1000);
-                }
-                if (AscFormat.isRealNumber(nDur) && nDur < 50) {
-                    oCopyEffect.cTn.changeEffectDuration(750);
-                }
-
-                // oCopyEffect.originalNode = null;
                 aSeq.push(oCopyEffect);
             }
             var oTiming = new CTiming();
@@ -8272,26 +8288,92 @@
         return [this.cBhvr];
     };
 
+    CCmd.prototype.getMediaData = function () {
+        //cmd
+        /*{
+        id: sId, //drawing id
+        name: sMediaName,//name of media file
+        fullScreen: bFullScreen, //show on fullscreen or not
+        mute: false,
+        vol: 100,
+        video: true
+        }*/
+
+        let oSp = this.getTargetObject();
+        if(!oSp) {
+            return null;
+        }
+
+
+        let oData = oSp.getMediaData();
+        if(!oData) {
+            return null;
+        }
+        let sId = oSp.GetId();
+        let oRoot = this.getRoot();//find video node with video
+        if(oRoot) {
+            let oMediaNode = null;
+            oRoot.traverseTimeNodes(function (oNode) {
+                if(oNode.isVideo() || oNode.isAudio()) {
+                    let oMedia = oNode.cMediaNode;
+                    if(sId === oMedia.getTargetObjectId()) {
+                        oMediaNode = oNode;
+                        return true;
+                    }
+                }
+            });
+            if(oMediaNode) {
+                let oPr = oMediaNode.cMediaNode;
+                let oAdditionalData = new CAdditionalMediaData();
+                oAdditionalData.fullScreen = !!oPr.fullScrn;
+                oAdditionalData.mute = !!oPr.mute;
+                oAdditionalData.vol = oPr.vol !== null ? oPr.vol : null;
+                oAdditionalData.video = oMediaNode.isVideo();
+                oData.setAdditionalData(oAdditionalData);
+
+            }
+        }
+        return oData;
+    };
     CCmd.prototype.setState = function (nState) {
         CTimeNodeBase.prototype.setState.call(this, nState);
         if (nState === TIME_NODE_STATE_ACTIVE) {
-            var sCmd = this.cmd;
-            if (sCmd) {
-                if (sCmd.indexOf("play") || sCmd === "resume" || sCmd === "togglePause") {
-                    var oSp = this.getTargetObject();
-                    if (oSp) {
-                        var sMediaName = oSp.getMediaFileName();
-                        if (sMediaName) {
-                            var oApi = Asc.editor || editor;
-                            if (oApi && oApi.showVideoControl) {
-                                oApi.showVideoControl(sMediaName, oSp.extX, oSp.extY, oSp.transform);
-                            }
+            if(this.type === TLCommandTypeCall) {
+                var sCmd = this.cmd;
+                if (sCmd) {
+                    if (sCmd.indexOf("play") ||
+                        sCmd === "pause" ||
+                        sCmd === "resume" ||
+                        sCmd === "stop" ||
+                        sCmd === "togglePause") {
+                        let oMediaData = this.getMediaData();
+                        if(oMediaData) {
+                            Asc.editor.callMediaPlayerCommand(sCmd, oMediaData);
                         }
                     }
                 }
             }
         }
-        //this.logState("SET STATE:");
+    };
+
+
+    function CAdditionalMediaData() {
+        this.fullScreen = null;
+        this.mute = null;
+        this.vol = null;
+        this.video = null;
+    }
+    CAdditionalMediaData.prototype.isFullScreen = function () {
+        return this.fullScreen === true;
+    };
+    CAdditionalMediaData.prototype.isMute = function () {
+        return this.mute === true;
+    };
+    CAdditionalMediaData.prototype.getVol = function () {
+        return this.vol;
+    };
+    CAdditionalMediaData.prototype.isVideo = function () {
+        return this.video !== false;
     };
 
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
@@ -8727,7 +8809,7 @@
     CTimeNodeContainer.prototype.getObjectText = function () {
         const sObjectId = this.getObjectId();
         const oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
-        return oObject ? oObject.getText() : "";
+        return oObject && oObject.getText ? oObject.getText() : "";
     };
     CTimeNodeContainer.prototype.asc_getStartType = function () {
         if (this.cTn) {
@@ -9255,7 +9337,7 @@
                                 var bFreeze = true;
                                 oChild.traverseTimeNodes(function (oNode) {
                                     if (!bFreeze) {
-                                        return
+                                        return;
                                     }
                                     if (oNode.isAnimEffect()) {
                                         if (oNode.asc_getRepeatCount() === AscFormat.untilNextSlide) {
@@ -11810,6 +11892,10 @@
             var oDemoTiming = oTiming.createDemoTiming();
             if (oDemoTiming) {
                 this.timings.push(oDemoTiming);
+            }
+            const oRawDemoTiming = oTiming.createDemoTiming(true);
+            if (oRawDemoTiming) {
+                this.timings.push(oRawDemoTiming);
             }
         }
         var oTr = editor.WordControl.m_oDrawingDocument.TransitionSlide;

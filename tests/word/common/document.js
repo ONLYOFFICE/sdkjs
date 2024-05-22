@@ -140,6 +140,13 @@
 	{
 		return CreateStyle(styletype_Character, name);
 	}
+	function CreateMath()
+	{
+		let math = new AscWord.ParaMath();
+		let run = new AscWord.CRun(null, true);
+		math.Root.AddToContent(0, run);
+		return math;
+	}
 	function GetParagraphText(paragraph)
 	{
 		return paragraph.GetText({ParaEndToSpace : false});
@@ -452,6 +459,7 @@
 	AscTest.CreateStyle              = CreateStyle;
 	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
 	AscTest.CreateRunStyle           = CreateRunStyle;
+	AscTest.CreateMath               = CreateMath;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;

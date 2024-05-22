@@ -973,10 +973,14 @@
 			this.shapeSmartArtInfo.setParent(this);
 		}
 		CShape.prototype.isActiveBlipFillPlaceholder = function () {
-			var shapePoint = this.getSmartArtShapePoint();
+			const shapePoint = this.getSmartArtShapePoint();
 			if (shapePoint) {
-				var isNotBlipFill = shapePoint.isBlipFillPlaceholder() && (shapePoint.spPr && !shapePoint.spPr.Fill || !shapePoint.spPr);
-				return isNotBlipFill;
+				let isContentFill = false;
+				const contentPoints = this.getSmartArtPointContent();
+				if (contentPoints && contentPoints[0]) {
+					isContentFill = contentPoints[0].spPr && contentPoints[0].spPr.Fill;
+				}
+				return shapePoint.isBlipFillPlaceholder() && !(shapePoint.spPr && shapePoint.spPr.Fill) && !isContentFill;
 			}
 		}
 		CShape.prototype.getSmartArtInfo = function () {
@@ -5190,78 +5194,6 @@
 				shape_drawer.draw(geometry);
 			}
 
-			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)
-			|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)) {
-				var drawingObjects = this.getDrawingObjectsController();
-				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
-					var angle = _transform.GetRotation();
-					if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
-						AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
-						AscFormat.fApproxEqual(angle, 180.0, 0.0) ||
-						AscFormat.fApproxEqual(angle, 270.0, 0.0)) {
-						graphics.transform3(_transform, false);
-						var tr = graphics.m_oFullTransform;
-						graphics.SetIntegerGrid(true);
-
-						var _x = tr.TransformPointX(0, 0);
-						var _y = tr.TransformPointY(0, 0);
-						var _r = tr.TransformPointX(this.extX, this.extY);
-						var _b = tr.TransformPointY(this.extX, this.extY);
-
-						var __x = Math.min(_x, _r);
-						var __y = Math.min(_y, _b);
-						var __r = Math.max(_x, _r);
-						var __b = Math.max(_y, _b);
-						graphics.m_oContext.lineWidth = 1;
-						graphics.p_color(127, 127, 127, 255);
-
-						graphics._s();
-						editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDashClever(graphics.m_oContext, __x >> 0, __y >> 0, __r >> 0, __b >> 0, 2, 2, true);
-						graphics._s();
-					} else {
-						graphics.transform3(_transform, false);
-						var tr = graphics.m_oFullTransform;
-						graphics.SetIntegerGrid(true);
-
-						var _r = this.extX;
-						var _b = this.extY;
-
-						var x1 = tr.TransformPointX(0, 0) >> 0;
-						var y1 = tr.TransformPointY(0, 0) >> 0;
-
-						var x2 = tr.TransformPointX(_r, 0) >> 0;
-						var y2 = tr.TransformPointY(_r, 0) >> 0;
-
-						var x3 = tr.TransformPointX(0, _b) >> 0;
-						var y3 = tr.TransformPointY(0, _b) >> 0;
-
-						var x4 = tr.TransformPointX(_r, _b) >> 0;
-						var y4 = tr.TransformPointY(_r, _b) >> 0;
-
-						graphics.m_oContext.lineWidth = 1;
-						graphics.p_color(127, 127, 127, 255);
-
-						graphics._s();
-						editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDash(graphics.m_oContext, x1, y1, x2, y2, x3, y3, x4, y4, 3, 1, true);
-						graphics._s();
-					}
-				} else {
-					graphics.SetIntegerGrid(false);
-					graphics.p_width(70);
-					graphics.transform3(_transform, false);
-					graphics.p_color(0, 0, 0, 255);
-					graphics._s();
-					graphics._m(0, 0);
-					graphics._l(this.extX, 0);
-					graphics._l(this.extX, this.extY);
-					graphics._l(0, this.extY);
-					graphics._z();
-					graphics.ds();
-
-					graphics.SetIntegerGrid(true);
-				}
-			}
-			
 			this.brush = _oldBrush;
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 
@@ -5403,6 +5335,79 @@
 			//    graphics.rect(-this.txXfrm.extX / 2, -this.txXfrm.extY / 2, this.txXfrm.extX, this.txXfrm.extY);
 			//    graphics.ds();
 			//}
+
+			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)
+				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter)) {
+					var drawingObjects = this.getDrawingObjectsController();
+					if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
+						var angle = _transform.GetRotation();
+						if (AscFormat.fApproxEqual(angle, 0.0, 0.0) ||
+							AscFormat.fApproxEqual(angle, 90.0, 0.0) ||
+							AscFormat.fApproxEqual(angle, 180.0, 0.0) ||
+							AscFormat.fApproxEqual(angle, 270.0, 0.0)) {
+							graphics.transform3(_transform, false);
+							var tr = graphics.m_oFullTransform;
+							graphics.SetIntegerGrid(true);
+	
+							var _x = tr.TransformPointX(0, 0);
+							var _y = tr.TransformPointY(0, 0);
+							var _r = tr.TransformPointX(this.extX, this.extY);
+							var _b = tr.TransformPointY(this.extX, this.extY);
+	
+							var __x = Math.min(_x, _r);
+							var __y = Math.min(_y, _b);
+							var __r = Math.max(_x, _r);
+							var __b = Math.max(_y, _b);
+							graphics.m_oContext.lineWidth = 1;
+							graphics.p_color(127, 127, 127, 255);
+	
+							graphics._s();
+							editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDashClever(graphics.m_oContext, __x >> 0, __y >> 0, __r >> 0, __b >> 0, 2, 2, true);
+							graphics._s();
+						} else {
+							graphics.transform3(_transform, false);
+							var tr = graphics.m_oFullTransform;
+							graphics.SetIntegerGrid(true);
+	
+							var _r = this.extX;
+							var _b = this.extY;
+	
+							var x1 = tr.TransformPointX(0, 0) >> 0;
+							var y1 = tr.TransformPointY(0, 0) >> 0;
+	
+							var x2 = tr.TransformPointX(_r, 0) >> 0;
+							var y2 = tr.TransformPointY(_r, 0) >> 0;
+	
+							var x3 = tr.TransformPointX(0, _b) >> 0;
+							var y3 = tr.TransformPointY(0, _b) >> 0;
+	
+							var x4 = tr.TransformPointX(_r, _b) >> 0;
+							var y4 = tr.TransformPointY(_r, _b) >> 0;
+	
+							graphics.m_oContext.lineWidth = 1;
+							graphics.p_color(127, 127, 127, 255);
+	
+							graphics._s();
+							editor.WordControl.m_oDrawingDocument.AutoShapesTrack.AddRectDash(graphics.m_oContext, x1, y1, x2, y2, x3, y3, x4, y4, 3, 1, true);
+							graphics._s();
+						}
+					} else {
+						graphics.SetIntegerGrid(false);
+						graphics.p_width(70);
+						graphics.transform3(_transform, false);
+						graphics.p_color(0, 0, 0, 255);
+						graphics._s();
+						graphics._m(0, 0);
+						graphics._l(this.extX, 0);
+						graphics._l(this.extX, this.extY);
+						graphics._l(0, this.extY);
+						graphics._z();
+						graphics.ds();
+	
+						graphics.SetIntegerGrid(true);
+					}
+				}
+
 			graphics.SetIntegerGrid(true);
 			graphics.reset();
 			if (graphics.EndDrawShape) {

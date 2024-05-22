@@ -1020,7 +1020,8 @@
 			PLAY_BUTTON_MAX_LABEL_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
-		let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		// let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		let dLabelWidth = PLAY_BUTTON_MAX_LABEL_WIDTH;
 		oButtonLabel.setLayout(
 			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
 			0,
@@ -1068,35 +1069,44 @@
 		);
 		this.closeButton.recalculate();
 	};
+	CAnimPaneHeader.prototype.onMouseMove = function (e, x, y) {
+		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
+		animPane.SetCursorType('default', new CMouseMoveData());
+
+		for (var nChild = this.children.length - 1; nChild >= 0; --nChild) {
+			if (this.children[nChild].onMouseMove(e, x, y)) {
+				return true;
+			}
+		}
+		return CControl.prototype.onMouseMove.call(this, e, x, y);
+	};
 
 
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.drawer = oDrawer;
 
-		this.scaleButton = this.addControl(new CButton(this, null, null, manageTimelineScale));
-		this.scaleButton.label = this.scaleButton.addControl(new CLabel(this.scaleButton, 'Seconds', SCALE_BUTTON_LABEL_FONTSIZE));
-		this.scaleButton.icon = this.scaleButton.addControl(new CImageControl(this.scaleButton, dropDownIcon, SCALE_BUTTON_ICON_SIZE, SCALE_BUTTON_ICON_SIZE));
+		this.zoomOutButton = this.addControl(
+			new CButton(this, null, null, function (e, x, y) {
+				if (this.hit(x, y)) editor.asc_ZoomOutTimeline();
+			})
+		);
+		this.zoomOutButton.icon = this.zoomOutButton.addControl(
+			new CImageControl(this.zoomOutButton, zoomOutIcon, 10 * AscCommon.g_dKoef_pix_to_mm, 1 * AscCommon.g_dKoef_pix_to_mm) /* 10x1 svg image */
+		);
+
+		this.zoomLabel = this.addControl(new CLabel(this, 'Zoom', ZOOM_LABEL_FONTSIZE, false, AscCommon.align_Center));
+
+		this.zoomInButton = this.addControl(
+			new CButton(this, null, null, function (e, x, y) {
+				if (this.hit(x, y)) editor.asc_ZoomInTimeline();
+			})
+		);
+		this.zoomInButton.icon = this.zoomInButton.addControl(
+			new CImageControl(this.zoomInButton, zoomInIcon, 11 * AscCommon.g_dKoef_pix_to_mm, 11 * AscCommon.g_dKoef_pix_to_mm) /* 11x11 svg image */
+		);
 
 		this.timeline = this.addControl(new CTimeline(this));
-
-		function manageTimelineScale(event, x, y) {
-			if (!this.hit(x, y)) { return }
-
-			const animPaneAbsPosition = editor.WordControl.m_oAnimationPaneContainer.AbsolutePosition;
-			const animPaneHeight = animPaneAbsPosition.B - animPaneAbsPosition.T;
-			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
-				this.getLeft(),
-				animPaneHeight - TIMELINE_HEIGHT + this.getTop()
-			);
-
-			const data = new AscCommonSlide.CContextMenuData();
-			data.Type = Asc.c_oAscContextMenuTypes.TimelineZoom;
-			data.X_abs = coords.X;
-			data.Y_abs = coords.Y;
-
-			editor.sync_ContextMenuCallback(data);
-		}
 
 		this.onMouseDownCallback = function (event, x, y) {
 			if(Asc.editor.asc_IsStartedAnimationPreview()) {
@@ -1108,25 +1118,34 @@
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
 
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
-		this.scaleButton.setLayout(
-			COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN,
-			(TIMELINE_HEIGHT - SCALE_BUTTON_HEIGHT) / 2,
-			SCALE_BUTTON_WIDTH,
-			SCALE_BUTTON_HEIGHT
+		this.zoomInButton.setLayout(
+			TIMELINE_SCROLL_ABSOLUTE_LEFT - TIMELINE_HEIGHT + (TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			ZOOM_BUTTON_SIZE,
+			ZOOM_BUTTON_SIZE
 		);
-		this.scaleButton.label.setLayout(
-			SCALE_BUTTON_LEFT_PADDING,
+		this.zoomInButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
+
+		this.zoomLabel.setLayout(
+			this.zoomInButton.getLeft() - ZOOM_LABEL_WIDTH,
 			0,
-			SCALE_BUTTON_LABEL_WIDTH,
-			SCALE_BUTTON_HEIGHT
+			ZOOM_LABEL_WIDTH,
+			this.getHeight()
 		);
-		this.scaleButton.icon.setLayout(this.scaleButton.label.getRight(), 0, SCALE_BUTTON_HEIGHT, SCALE_BUTTON_HEIGHT);
+
+		this.zoomOutButton.setLayout(
+			this.zoomLabel.getLeft() - ZOOM_BUTTON_SIZE,
+			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
+			ZOOM_BUTTON_SIZE,
+			ZOOM_BUTTON_SIZE
+		);
+		this.zoomOutButton.icon.setLayout(0, 0, ZOOM_BUTTON_SIZE, ZOOM_BUTTON_SIZE);
 
 		const timelineWidth = this.getWidth() -
 			(COMMON_LEFT_MARGIN + COMMON_RIGHT_MARGIN) -
 			(SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN) - (ANIM_ITEM_HEIGHT - MENU_BUTTON_SIZE) / 2;
 		this.timeline.setLayout(
-			this.scaleButton.getRight() + TIMELINE_SCROLL_LEFT_MARGIN,
+			TIMELINE_SCROLL_ABSOLUTE_LEFT,
 			(TIMELINE_HEIGHT - TIMELINE_SCROLL_HEIGHT) / 2,
 			timelineWidth,
 			TIMELINE_SCROLL_HEIGHT
@@ -1569,11 +1588,16 @@
 	}
 
 	CTimeline.prototype.onPreviewStart = function() {
-		this.demoTiming = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings[0];
 		this.tmpScrollOffset = 0;
 		this.setStartTime(0);
 
-		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		const previewTimings = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings;
+		this.demoTiming = previewTimings[0]; // effects are smoothed to follow each other
+		this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
+
+		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
+
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
 		oPaneApi.timeline.OnPaint();
@@ -1582,10 +1606,13 @@
 	}
 	CTimeline.prototype.onPreviewStop = function() {
 		this.demoTiming = null;
+		this.rawDemoTiming = null;
 		this.tmpScrollOffset = null;
 		this.setStartTime(0);
 
-		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.list.Control.recalculateByTiming(this.getTiming());
+
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();
 		oPaneApi.timeline.OnPaint();
@@ -1593,41 +1620,79 @@
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
-		if (this.tmpScrollOffset === null) { return }
-		if (!this.demoTiming) { return }
+		if (this.tmpScrollOffset === null) { return; }
+		if (!this.demoTiming) { return; }
 
-		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
-		let correction = 0;
-		demoEffects.forEach(function (effect) {
-			let originalEffectStart = effect.originalNode.getFullDelay();
+		const currentlyPlayingDemoEffects = this.getCurrentlyPlayingDemoEffects(elapsedTicks);
 
-			let demoEffectStart = effect.getFullDelay();
-			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
+		const currentlyPlayingDemoEffect = currentlyPlayingDemoEffects[0]; // first in group
+		const correction = (currentlyPlayingDemoEffect)
+			? currentlyPlayingDemoEffect.originalNode.getBaseTime() - currentlyPlayingDemoEffect.getBaseTime()
+			: 0;
+		this.tmpScrollOffset = this.getNewTmpScrollOffset(elapsedTicks, correction);
 
-			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
-				correction = originalEffectStart - demoEffectStart;
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		seqList.setCurrentlyPlaying(currentlyPlayingDemoEffects);
+
+		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+	}
+	CTimeline.prototype.getCurrentlyPlayingDemoEffects = function (elapsedTicks) {
+		const demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
+		const rawDemoEffects = this.rawDemoTiming.getRootSequences()[0].getAllEffects();
+		rawDemoEffects.forEach(function (effect, index) {
+			effect.originalDemoNode = demoEffects[index];
+		});
+
+		// Getting level 3 Time Node Containers
+		// Each contains either 'after'-effect or 'click'-effect with mulpiple 'with'-effects
+		const lvl3DemoTimingNodes = this.demoTiming.getRootSequences(0)[0].getChildrenTimeNodes()[0].getChildrenTimeNodes();
+
+		// Getting first active level 3 Time Node Container
+		// to get currently active demo effect
+		let activeDemoEffect = null;
+		for (let nodeIndex = 0; nodeIndex < lvl3DemoTimingNodes.length; nodeIndex++) {
+			const node = lvl3DemoTimingNodes[nodeIndex];
+			if (node.isActive()) {
+				activeDemoEffect = node.getAllAnimEffects()[0];
+				break;
 			}
-		})
+		}
+
+		// Get index of active demo effect (in array of all raw demo effects)
+		let activeDemoEffectIndex;
+		for (let nEffect = 0; nEffect < rawDemoEffects.length; nEffect++) {
+			if (rawDemoEffects[nEffect].originalNode === activeDemoEffect.originalNode) {
+				activeDemoEffectIndex = nEffect;
+				break;
+			}
+		}
+
+		// Get group of active raw demo effects and their corresponding demo effects
+		const activeRawDemoEffects = rawDemoEffects[activeDemoEffectIndex].getTimeNodeWithLvl(2).getAllAnimEffects();
+		const activeDemoEffects = activeRawDemoEffects.map(function (rawEffect) {
+			return rawEffect.originalDemoNode;
+		});
+
+		return activeDemoEffects;
+	};
+	CTimeline.prototype.getNewTmpScrollOffset = function (elapsedTicks, correction) {
+		const leftLimit = 0;
+		const rightLimit = this.getRulerEnd() - this.getZeroShift();
 
 		let newTmpScrollOffset = ms_to_mm(elapsedTicks + correction) - ms_to_mm(this.getStartTime() * 1000);
-
-		const rightLimit = this.getRulerEnd() - this.getZeroShift();
+		if (newTmpScrollOffset < leftLimit) {
+			this.setStartTime(0);
+			newTmpScrollOffset = 0;
+		}
 		if (newTmpScrollOffset > rightLimit) {
 			const rulerDur = mm_to_ms(this.getRulerEnd() - this.getRulerStart()) / 1000; // seconds
 			this.setStartTime(this.getStartTime() + rulerDur / 2);
 			newTmpScrollOffset -= ms_to_mm(rulerDur / 2);
 		}
-		const leftLimit = 0;
-		if (newTmpScrollOffset < leftLimit) {
-			this.setStartTime(0);
-			newTmpScrollOffset = 0;
-		}
 
-		this.tmpScrollOffset = newTmpScrollOffset;
-
-		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
-		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
-		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		return newTmpScrollOffset;
 
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
@@ -1637,7 +1702,7 @@
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 			return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 		}
-	}
+	};
 
 	CTimeline.prototype.getRulerStart = function () {
 		return this.startButton.getRight();
@@ -1742,7 +1807,14 @@
 		this.seqList.recalculate();
 		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 	};
-
+	CSeqListContainer.prototype.recalculateByTiming = function (customTiming) {
+		if (!customTiming) { return; }
+		this.seqList.recalculateChildren(customTiming);
+		this.seqList.recalculateChildrenLayout();
+		this.seqList.parentControl.recalculateChildrenLayout();
+		this.seqList.parentControl.onUpdate();
+		this.seqList.parentControl.drawer.CheckScroll();
+	};
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
@@ -1835,10 +1907,10 @@
 
 	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
 
-	CSeqList.prototype.recalculateChildren = function () {
+	CSeqList.prototype.recalculateChildren = function (oCustomTiming) {
 		this.clear();
 
-		const oTiming = this.getTiming();
+		const oTiming = oCustomTiming || this.getTiming();
 		if (!oTiming) { return }
 
 		const aAllSeqs = oTiming.getRootSequences();
@@ -1914,7 +1986,7 @@
 			let oColor = AscCommon.RgbaHexToRGBA(sColor);
 			graphics.p_color(oColor.R, oColor.G, oColor.B, 255);
 			const xCord = timeline.getLeft() + timeline.getZeroShift() + timeline.tmpScrollOffset;
-			const height = this.parentControl.drawer.GetHeight();
+			const height = this.parentControl.drawer.GetHeight() + editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm;
 			graphics.drawVerLine(1, xCord, this.getTop(), this.getTop() + height, this.getPenWidth(graphics));
 
 			graphics.RestoreGrState();
@@ -1965,7 +2037,20 @@
 			this.cachedCanvas = null;
 		}
 	};
+	CSeqList.prototype.setCurrentlyPlaying = function (demoEffects) {
+		if (!demoEffects) { return; }
 
+		const originalEffects = demoEffects.map(
+			function (demoEffect) {
+				return demoEffect.originalNode;
+			}
+		);
+		this.forEachAnimItem(
+			function (animItem) {
+				animItem.isCurrentlyPlaying = (originalEffects.indexOf(animItem.effect.originalNode) > -1);
+			}
+		)
+	};
 	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// У счетчиков сквозная нумерация
 		let seqCounter = 0;
@@ -1981,8 +2066,7 @@
 			})
 			seqCounter++;
 		})
-	}
-
+	};
 
 
 	// mainSeq or interactiveSeq
@@ -2578,10 +2662,6 @@
 
 		const oSkin = AscCommon.GlobalSkin;
 		let sFillColor, sOutlineColor;
-		let oFillColor, oOutlineColor;
-
-		sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
-		sOutlineColor = oSkin.AnimPaneEffectBarOutlineEntrance;
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
 				sFillColor = oSkin.AnimPaneEffectBarFillEntrance;
@@ -2604,11 +2684,20 @@
 				break;
 		}
 
-		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
-		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+		// hex to rgba
+		const oFillColorRGBA = AscCommon.RgbaHexToRGBA(sFillColor);
+		const oOutlineColorRGBA = AscCommon.RgbaHexToRGBA(sOutlineColor);
 
-		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
-		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255);
+		// rgba to CShapeColor
+		let oFillColor = new AscFormat.CShapeColor(oFillColorRGBA.R, oFillColorRGBA.G, oFillColorRGBA.B);
+		let oOutlineColor = new AscFormat.CShapeColor(oOutlineColorRGBA.R, oOutlineColorRGBA.G, oOutlineColorRGBA.B);
+
+		// change brightness of CShapeColor
+		oFillColor = this.isCurrentlyPlaying ? oFillColor.getColorData(-0.1) : oFillColor;
+		oOutlineColor = this.isCurrentlyPlaying ? oOutlineColor.getColorData(-0.1) : oOutlineColor;
+
+		graphics.b_color1(oFillColor.r, oFillColor.g, oFillColor.b, 255);
+		graphics.p_color(oOutlineColor.r, oOutlineColor.g, oOutlineColor.b, 255);
 
 		const bounds = this.getEffectBarBounds();
 		if (this.effect.isInstantEffect()) {
@@ -2731,6 +2820,11 @@
 		return null;
 	};
 	CAnimItem.prototype.hit = function (x, y) {
+		const headerY = y + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+		if (editor.WordControl.m_oAnimPaneApi.header.Control.hit(x, headerY)) {
+			return false;
+		}
+
 		if (this.parentControl && !this.parentControl.hit(x, y)) { return false; }
 
 		const oInv = this.invertTransform;
@@ -2827,19 +2921,18 @@
 	// TIMELINE
 	const TIMELINE_HEIGHT = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_HEIGHT = 17 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_ABSOLUTE_LEFT = 143 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_LEFT_MARGIN = 10 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_RIGHT_MARGIN = 40 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLL_BUTTON_SIZE = 17 * AscCommon.g_dKoef_pix_to_mm;
 	const TIMELINE_SCROLLER_WIDTH = 16 * AscCommon.g_dKoef_pix_to_mm;
-	
-	const SCALE_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+
+	const ZOOM_BUTTON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;
+	const ZOOM_LABEL_FONTSIZE = 9;
+	const ZOOM_LABEL_WIDTH = 40 * AscCommon.g_dKoef_pix_to_mm;
+
 	const SCALE_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
 	const SCALE_BUTTON_LEFT_MARGIN = 43 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LEFT_PADDING = 4 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LABEL_WIDTH = 50 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_LABEL_FONTSIZE = 9;
-	const SCALE_BUTTON_ICON_LEFT_MARGIN = 17 * AscCommon.g_dKoef_pix_to_mm;
-	const SCALE_BUTTON_ICON_SIZE = 5 * AscCommon.g_dKoef_pix_to_mm;
 
 	const TIMELINE_LABEL_WIDTH = 100;
 	const TIMELINE_LABEL_FONTSIZE = 7.5;
@@ -2915,6 +3008,9 @@
 	const arrowLeft = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNNSA5LjUzNjc0ZS0wN0w1IDlMMC41IDQuNUw1IDkuNTM2NzRlLTA3WiIgZmlsbD0iYmxhY2siIGZpbGwtb3BhY2l0eT0iMC44Ii8+Cjwvc3ZnPgo=';
 	const arrowRight = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMCA5TDAgMEw0LjUgNC41TDAgOVoiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
 
+	const zoomInIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTEiIHZpZXdCb3g9IjAgMCAxMSAxMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA2TDExIDVMNiA1TDYgLTIuMTg1NTdlLTA3TDUgLTIuNjIyNjhlLTA3TDUgNUwtMi4xODU1N2UtMDcgNUwtMi42MjI2OGUtMDcgNkw1IDZMNSAxMUw2IDExTDYgNkwxMSA2WiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+Cg==';
+	const zoomOutIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDEwIDEiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjEwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxMCIgdHJhbnNmb3JtPSJyb3RhdGUoOTAgMTAgMCkiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=';
+
 	const getIconsForLoad = function () {
 		return [
 			clickEffectIcon, afterEffectIcon,
@@ -2922,7 +3018,8 @@
 			playIcon, stopIcon, arrowUpIcon, arrowDownIcon, closeIcon,
 			menuButton,
 			dropDownIcon,
-			arrowLeft, arrowRight
+			arrowLeft, arrowRight,
+			zoomInIcon, zoomOutIcon,
 		];
 	}
 

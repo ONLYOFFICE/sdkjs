@@ -114,6 +114,10 @@
         return false;
     };
 
+    CGraphicObjects.prototype.getTargetTextObject = function() {
+        return AscFormat.getTargetTextObject(this);
+    };
+
     CGraphicObjects.prototype.setTableProps = function(props) {
         let by_type = this.getSelectedObjectsByTypes();
         if(by_type.tables.length === 1) {
@@ -1220,7 +1224,21 @@
             drawingDocument.EndDrawTracking();
 
 
-    }
+    };
+    CGraphicObjects.prototype.hyperlinkCanAdd = function (bCheckInHyperlink) {
+        var content = this.getTargetDocContent();
+        if (content) {
+            return content.CanAddHyperlink(bCheckInHyperlink);
+        }
+        return false;
+    };
+
+    CGraphicObjects.prototype.setParagraphIndent = function(Indent) {
+        if(AscCommon.isRealObject(Indent) && AscFormat.isRealNumber(Indent.Left) && Indent.Left < 0) {
+            Indent.Left = 0;
+        }
+        this.applyDocContentFunction(AscWord.CDocumentContent.prototype.SetParagraphIndent, [Indent], AscWord.CTable.prototype.SetParagraphIndent);
+    };
 
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
@@ -1232,7 +1250,6 @@
     CGraphicObjects.prototype.convertMathView            = AscFormat.DrawingObjectsController.prototype.convertMathView;
     CGraphicObjects.prototype.setMathProps               = AscFormat.DrawingObjectsController.prototype.setMathProps;
     CGraphicObjects.prototype.paraApplyCallback          = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
-    CGraphicObjects.prototype.setParagraphIndent         = AscFormat.DrawingObjectsController.prototype.setParagraphIndent;
     CGraphicObjects.prototype.setParagraphAlign          = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
     CGraphicObjects.prototype.setParagraphSpacing        = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
     CGraphicObjects.prototype.setParagraphTabs           = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;

@@ -72,8 +72,10 @@
         let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[nPage])
-                oViewer.pagesInfo.pages[nPage].needRedrawHighlights = true;
+            if (oViewer.pagesInfo.pages[nPage]) {
+                oViewer.pagesInfo.pages[nPage].needRedrawMarkups = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);
@@ -256,7 +258,7 @@
             let rotationAngle   = angle1;
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-            AscPDF.startMultiplyMode(oGraphicsPDF.context);
+            AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
@@ -277,7 +279,7 @@
             }
 
             oGraphicsPDF.Fill();
-            AscPDF.endMultiplyMode(oGraphicsPDF.context);
+            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
     };
         

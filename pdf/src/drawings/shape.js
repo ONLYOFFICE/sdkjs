@@ -55,6 +55,14 @@
 
         return bDraw;
     };
+    CPdfShape.prototype.CheckTextOnOpen = function() {
+        let oContent = this.GetDocContent();
+        if (oContent) {
+            oContent.SetApplyToAll(true);
+            AscFonts.FontPickerByCharacter.getFontsByString(oContent.GetSelectedText());
+            oContent.SetApplyToAll(false);
+        }
+    };
     CPdfShape.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
@@ -86,6 +94,9 @@
         }
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+		let docContent = this.GetDocContent();
+		if (docContent)
+			docContent.RecalculateCurPos();
     };
     CPdfShape.prototype.GetDocContent = function() {
         return this.getDocContent();
@@ -98,43 +109,34 @@
         }
         this.SetNeedRecalc(true);
     };
-    CPdfShape.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
 
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun) {
-                oContent.AddToParagraph(oRun, false);
-            }
+    CPdfShape.prototype.getTrackGeometry = function () {
+        // заглушка для трека геометрии с клауд бордером для FreeText
+        if (this.group && this.group.IsAnnot && this.group.IsAnnot() && this.group.GetTextBoxShape() == this) {
+            return AscFormat.ExecuteNoHistory(
+                function () {
+                    var _ret = AscFormat.CreateGeometry("rect");
+                    _ret.Recalculate(this.extX, this.extY);
+                    return _ret;
+                }, this, []
+            );
         }
 
-        this.SetNeedRecalc(true);
-        return true;
-    };
-    /**
-     * Removes char in current position by direction.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfShape.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        this.SetNeedRecalc(true);
-
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-        else {
-            this.SetNeedRecalc(true);
-        }
-    };
-
+		const oOwnGeometry = this.getGeometry();
+		if(oOwnGeometry) {
+			return oOwnGeometry;
+		}
+		if(this.rectGeometry) {
+			return this.rectGeometry;
+		}
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				var _ret = AscFormat.CreateGeometry("rect");
+				_ret.Recalculate(this.extX, this.extY);
+				return _ret;
+			}, this, []
+		);
+	};
     CPdfShape.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();
         
@@ -149,8 +151,10 @@
                 oContent.RemoveSelection();
         }
                 
-        if (oContent.IsSelectionEmpty())
-            oContent.RemoveSelection();
+        if (oContent.IsSelectionEmpty()) {
+			oContent.RemoveSelection();
+			oContent.RecalculateCurPos();
+		}
     };
     CPdfShape.prototype.GetAllFonts = function(fontMap) {
         let oContent = this.GetDocContent();

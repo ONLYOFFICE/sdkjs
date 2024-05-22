@@ -3130,7 +3130,7 @@ function CDrawingDocument()
 		this.FirePaint();
 	};
 
-	this.IsCursorInTableCur = function(x, y, page)
+	this.IsCursorInTableCur = function(x, y, page, checkArea)
 	{
 		var _table = this.TableOutlineDr.TableOutline;
 		if (_table == null)
@@ -3149,7 +3149,7 @@ function CDrawingDocument()
 
 		if ((x > (_x - _dist)) && (x < _r) && (y > (_y - _dist)) && (y < _b))
 		{
-			if ((x < _x) || (y < _y))
+			if ((x < _x && y < _y) || (checkArea && (x < _x || y < _y)))
 				return true;
 		}
 		return false;
@@ -7066,7 +7066,28 @@ function CAnimationPaneDrawer(page, htmlElement)
 				oThis.list.Control.onUpdate();
 				oThis.list.CheckScroll();
 			}
-		})
+		});
+
+		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
+			/*
+				Update effectLabel if needed
+				(when shape name has been changed)
+			*/
+
+			if (!oThis.list.Control) return;
+
+			let changedLabelsCount = 0;
+			oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
+				if (animItem.effectLabel.string !== animItem.getEffectLabelText()) {
+					animItem.effectLabel.string = animItem.getEffectLabelText();
+					changedLabelsCount++;
+				}
+			});
+
+			if (changedLabelsCount > 0) {
+				oThis.list.Control.recalculateChildrenLayout();
+			}
+		});
 	};
 	oThis.onMouseDown = function (e)
 	{

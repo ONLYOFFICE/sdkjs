@@ -9970,8 +9970,8 @@
 	}
 
 	var g_oUserColorById = {}, g_oUserNextColorIndex = 0;
-
-	function getUserColorById(userId, userName, isDark, isNumericValue)
+	
+	function _getUserColorById(userId, userName, isDark, isNumericValue)
 	{
 		if ((!userId || "" === userId) && (!userName || "" === userName))
 			return new CColor(0, 0, 0, 255);
@@ -9996,8 +9996,12 @@
 		if (!res)
 			return new CColor(0, 0, 0, 255);
 
-		var oColor = true === isDark ? res.Dark : res.Light;
-		return true === isNumericValue ? ((oColor.r << 16) & 0xFF0000) | ((oColor.g << 8) & 0xFF00) | (oColor.b & 0xFF) : oColor;
+		return true === isDark ? res.Dark : res.Light;
+	}
+	function getUserColorById(userId, userName, isDark, isNumericValue)
+	{
+		let color = _getUserColorById(userId, userName, isDark);
+		return true === isNumericValue ? ((color.r << 16) & 0xFF0000) | ((color.g << 8) & 0xFF00) | (color.b & 0xFF) : color;
 	}
 
 	function isNullOrEmptyString(str)

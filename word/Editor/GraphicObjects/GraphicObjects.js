@@ -126,6 +126,10 @@ CGraphicObjects.prototype =
     canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
     haveTrackedObjects: DrawingObjectsController.prototype.haveTrackedObjects,
+    checkShowMediaControlOnSelect: function () {
+    },
+    checkShowMediaControlOnHover: function (oDrawing) {
+    },
 
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
     {
