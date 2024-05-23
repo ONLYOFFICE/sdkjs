@@ -339,12 +339,14 @@
 			StyleId        : "DefaultParagraphFont",
 			Type           : AscWord.styletype_Character,
 			Name           : "Default Paragraph Font",
+			Default        : true,
 			UiPriority     : 1,
 			SemiHidden     : true,
 			UnhideWhenUsed : true
 		},
 		{
 			StyleId        : "NoList",
+			Default        : true,
 			Type           : AscWord.styletype_Numbering,
 			Name           : "No List",
 			UiPriority     : 99,
@@ -755,6 +757,7 @@
 			StyleId    : "NoSpacing",
 			Type       : AscWord.styletype_Paragraph,
 			Name       : "No Spacing",
+			BasedOn    : "Normal",
 			UiPriority : 1,
 			QFormat    : true,
 			ParaPr     : {
@@ -1021,8 +1024,37 @@
 			}
 		}
 	];
+	
+	function getDefaultStyleObject(styleName)
+	{
+		for (let i = 0; i < DEFAULT_STYLES.length; ++i)
+		{
+			if (DEFAULT_STYLES[i].Name === styleName)
+				return DEFAULT_STYLES[i];
+		}
+		
+		return null;
+	}
+	/**
+	 *  StyleId здесь - это местный идентификтор, а не тот что используется в менеджере стилей
+	 * @param defaultStyleId
+	 * @returns {string}
+	 */
+	function getDefaultStyleName(defaultStyleId)
+	{
+		for (let i = 0; i < DEFAULT_STYLES.length; ++i)
+		{
+			if (DEFAULT_STYLES[i].StyleId === defaultStyleId)
+				return DEFAULT_STYLES[i].Name;
+		}
+		
+		return "";
+	}
+	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscWord.DEFAULT_STYLES       = DEFAULT_STYLES;
-	AscWord.DEFAULT_HEADING_FONT = DEFAULT_HEADING_FONT;
-	AscWord.DEFAULT_FONT         = DEFAULT_FONT;
+	AscWord.DEFAULT_STYLES        = DEFAULT_STYLES;
+	AscWord.DEFAULT_HEADING_FONT  = DEFAULT_HEADING_FONT;
+	AscWord.DEFAULT_FONT          = DEFAULT_FONT;
+	AscWord.getDefaultStyleObject = getDefaultStyleObject;
+	AscWord.getDefaultStyleName   = getDefaultStyleName;
 })(window);

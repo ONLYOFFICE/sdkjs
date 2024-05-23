@@ -6340,39 +6340,42 @@ CStyle.fromObject = function(obj)
 	if (!obj)
 		return style;
 	
+	style.SetFromObject(obj);
+	return style;
+};
+CStyle.prototype.SetFromObject = function(obj)
+{
 	if (undefined !== obj.QFormat)
-		style.SetQFormat(obj.QFormat);
+		this.SetQFormat(obj.QFormat);
 	
 	if (undefined !== obj.UiPriority)
-		style.SetUiPriority(obj.UiPriority);
+		this.SetUiPriority(obj.UiPriority);
 	
 	if (undefined !== obj.Hidden)
-		style.SetHidden(obj.Hidden);
+		this.SetHidden(obj.Hidden);
 	
 	if (undefined !== obj.SemiHidden)
-		style.SetSemiHidden(obj.SemiHidden);
+		this.SetSemiHidden(obj.SemiHidden);
 	
 	if (undefined !== obj.UnhideWhenUsed)
-		style.SetUnhideWhenUsed(obj.UnhideWhenUsed);
+		this.SetUnhideWhenUsed(obj.UnhideWhenUsed);
 	
 	if (undefined !== obj.TextPr)
-		style.SetTextPr(obj.TextPr);
+		this.SetTextPr(obj.TextPr);
 	
 	if (undefined !== obj.ParaPr)
-		style.SetParaPr(obj.ParaPr);
+		this.SetParaPr(obj.ParaPr);
 	
 	if (undefined !== obj.TablePr)
-		style.Set_TablePr(obj.TablePr);
+		this.Set_TablePr(obj.TablePr);
 	
 	if (undefined !== obj.TableRowPr)
-		style.Set_TableRowPr(obj.TableRowPr);
+		this.Set_TableRowPr(obj.TableRowPr);
 	
 	if (undefined !== obj.TableCellPr)
-		style.Set_TableCellPr(obj.TableCellPr);
+		this.Set_TableCellPr(obj.TableCellPr);
 	
 	// TODO: Table conditional
-	
-	return style;
 };
 /**
  * Получаем ссылку на основной класс документа
@@ -6646,149 +6649,6 @@ CStyle.prototype.CreateHyperlink = function()
 		Color     : {r : 0x00, g : 0x00, b : 0xFF},
 		Underline : true,
 		Unifill   : AscFormat.CreateUniFillSchemeColorWidthTint(11, 0)
-	});
-};
-/**
- * Дефолтовые настройки для стиля No Spacing
- */
-CStyle.prototype.CreateNoSpacing = function()
-{
-	this.SetUiPriority(1);
-	this.SetQFormat(true);
-	
-	this.SetParaPr({
-		Spacing : {
-			Line     : 1,
-			LineRule : linerule_Auto,
-			After    : 0
-		}
-	});
-};
-/**
- * Дефолтовые настройки для стиля Header
- */
-CStyle.prototype.CreateHeader = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-
-	var RPos = 297 - 30 - 15; // Ширина страницы - левое поле - правое поле
-	var CPos = RPos / 2;
-
-	this.SetParaPr({
-		Spacing : {
-			After    : 0,
-			Line     : 1,
-			LineRule : linerule_Auto
-		},
-
-		Tabs : {
-			Tabs : [
-				{
-					Value : tab_Center,
-					Pos   : CPos
-				},
-				{
-					Value : tab_Right,
-					Pos   : RPos
-				}
-			]
-		}
-	});
-};
-/**
- * Дефолтовые настройки для стиля Footer
- */
-CStyle.prototype.CreateFooter = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-	
-	this.SetParaPr({
-		Spacing : {
-			After    : 0,
-			Line     : 1,
-			LineRule : linerule_Auto
-		},
-		
-		Tabs : {
-			Tabs : [
-				{
-					Value : tab_Center,
-					Pos   : 4844 * g_dKoef_twips_to_mm
-				},
-				{
-					Value : tab_Right,
-					Pos   : 9689 * g_dKoef_twips_to_mm
-				}
-			]
-		}
-	});
-};
-/**
- * Дефолтовый стиль для footnote text
- */
-CStyle.prototype.CreateFootnoteText = function()
-{
-	this.SetUiPriority(99);
-	this.SetSemiHidden(true);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetParaPr({
-		Spacing : {
-			After    : 40 * g_dKoef_twips_to_mm,
-			Line     : 1,
-			LineRule : linerule_Auto
-		}
-	});
-
-	this.SetTextPr({
-		FontSize : 9
-	});
-};
-/**
- * Дефолтовые настройки для стиля footnote reference
- */
-CStyle.prototype.CreateFootnoteReference = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-	this.SetTextPr({
-		VertAlign : AscCommon.vertalign_SuperScript
-	});
-};
-/**
- * Стиль по умолчнию для текста концевой сноски
- */
-CStyle.prototype.CreateEndnoteText = function()
-{
-	this.SetUiPriority(99);
-	this.SetSemiHidden(true);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetParaPr({
-		Spacing : {
-			After    : 0,
-			Line     : 1,
-			LineRule : linerule_Auto
-		}
-	});
-
-	this.SetTextPr({
-		FontSize : 10
-	});
-};
-/**
- * Стиль по умолчанию для номера сноски
- */
-CStyle.prototype.CreateEndnoteReference = function()
-{
-	this.SetUiPriority(99);
-	this.SetSemiHidden(true);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetTextPr({
-		VertAlign : AscCommon.vertalign_SuperScript
 	});
 };
 CStyle.prototype.CreateTOC = function(nLvl, nType)
@@ -7122,358 +6982,6 @@ CStyle.prototype.CreateTOF = function(nType)
 	this.Set_TextPr(oTextPr);
 };
 /**
- * Дефолтовые настройки для стиля ListParagraph
- */
-CStyle.prototype.CreateListParagraph = function()
-{
-	this.SetQFormat(true);
-	this.SetUiPriority(34);
-
-	this.SetParaPr({
-
-		Ind : {
-			Left : 720 * g_dKoef_twips_to_mm
-		},
-
-		ContextualSpacing : true
-	});
-};
-/**
- * Дефолтовые настройки для стиля Heading (1..9)
- * @param nLvl {number} 0..8
- */
-CStyle.prototype.CreateHeading = function(nLvl)
-{
-	let spacingBefore = undefined;
-	let spacingAfter  = undefined;
-	let fontSize      = undefined;
-	let italic        = undefined;
-	let color         = undefined;
-	let themeColor    = undefined;
-	
-	if (0 === nLvl)
-	{
-		spacingBefore = 360 * g_dKoef_twips_to_mm;
-		spacingAfter  = 200 * g_dKoef_twips_to_mm;
-		fontSize      = 20;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (1 === nLvl)
-	{
-		spacingBefore = 160 * g_dKoef_twips_to_mm;
-		spacingAfter  = 80 * g_dKoef_twips_to_mm;
-		fontSize      = 16;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (2 === nLvl)
-	{
-		spacingBefore = 160 * g_dKoef_twips_to_mm;
-		spacingAfter  = 80 * g_dKoef_twips_to_mm;
-		fontSize      = 14;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (3 === nLvl)
-	{
-		spacingBefore = 80 * g_dKoef_twips_to_mm;
-		spacingAfter  = 40 * g_dKoef_twips_to_mm;
-		italic        = true;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (4 === nLvl)
-	{
-		spacingBefore = 80 * g_dKoef_twips_to_mm;
-		spacingAfter  = 40 * g_dKoef_twips_to_mm;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (5 === nLvl)
-	{
-		spacingBefore = 80 * g_dKoef_twips_to_mm;
-		spacingAfter  = 40 * g_dKoef_twips_to_mm;
-		italic        = true;
-		color         = {r : 0x59, g : 0x59, b : 0x59}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
-	}
-	else if (6 === nLvl)
-	{
-		spacingBefore = 80 * g_dKoef_twips_to_mm;
-		spacingAfter  = 40 * g_dKoef_twips_to_mm;
-		color         = {r : 0x59, g : 0x59, b : 0x59}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
-	}
-	else if (7 === nLvl)
-	{
-		spacingAfter  = 0;
-		color         = {r : 0x27, g : 0x27, b : 0x27}
-		italic        = true;
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
-	}
-	else if (8 === nLvl)
-	{
-		spacingAfter  = 0;
-		color         = {r : 0x27, g : 0x27, b : 0x27}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
-	}
-	
-	this.SetParaPr({
-		
-		KeepNext  : true,
-		KeepLines : true,
-		
-		Spacing : {
-			Before   : spacingBefore,
-			After    : spacingAfter
-		},
-		
-		OutlineLvl : nLvl
-	});
-	
-	this.SetTextPr({
-		
-		FontSize   : fontSize,
-		FontSizeCS : fontSize,
-		Italic     : italic,
-		RFonts     : {
-			Ascii    : {Name : Default_Heading_Font, Index : -1},
-			EastAsia : {Name : Default_Heading_Font, Index : -1},
-			HAnsi    : {Name : Default_Heading_Font, Index : -1},
-			CS       : {Name : Default_Heading_Font, Index : -1}
-		},
-		
-		Color   : color,
-		Unifill : themeColor
-	});
-
-	this.SetQFormat(true);
-	this.SetUiPriority(9);
-
-	if (0 !== nLvl)
-		this.SetUnhideWhenUsed(true);
-};
-/**
- * Дефолтовые настройки для линкованного стиля текста для Heading (1..9)
- * @param nLvl {number} 0..8
- */
-CStyle.prototype.CreateHeadingLinkStyle = function(nLvl)
-{
-	let fontSize   = undefined;
-	let color      = undefined;
-	let themeColor = undefined;
-	let italic     = undefined;
-	
-	if (0 === nLvl)
-	{
-		fontSize      = 20;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (1 === nLvl)
-	{
-		fontSize      = 16;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (2 === nLvl)
-	{
-		fontSize      = 14;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (3 === nLvl)
-	{
-		italic        = true;
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (4 === nLvl)
-	{
-		color         = {r : 0x0F, g : 0x47, b : 0x61}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF);
-	}
-	else if (5 === nLvl)
-	{
-		italic        = true;
-		color         = {r : 0x59, g : 0x59, b : 0x59}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
-	}
-	else if (6 === nLvl)
-	{
-		color         = {r : 0x59, g : 0x59, b : 0x59}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA6, null);
-	}
-	else if (7 === nLvl)
-	{
-		color         = {r : 0x27, g : 0x27, b : 0x27}
-		italic        = true;
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
-	}
-	else if (8 === nLvl)
-	{
-		color         = {r : 0x27, g : 0x27, b : 0x27}
-		themeColor    = AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xD8, null);
-	}
-	
-	this.Set_TextPr({
-		FontSize   : fontSize,
-		FontSizeCS : fontSize,
-		Italic     : italic,
-		RFonts     : {
-			Ascii    : {Name : Default_Heading_Font, Index : -1},
-			EastAsia : {Name : Default_Heading_Font, Index : -1},
-			HAnsi    : {Name : Default_Heading_Font, Index : -1},
-			CS       : {Name : Default_Heading_Font, Index : -1}
-		},
-		Color      : color,
-		Unifill    : themeColor
-	});
-	
-	this.Set_UiPriority(9);
-};
-/**
- * Дефолтовые настройки для стиля Title
- */
-CStyle.prototype.CreateTitle = function()
-{
-	this.SetQFormat(true);
-	this.SetUiPriority(10);
-	
-	this.SetTextPr({
-		FontSize   : 28,
-		FontSizeCS : 28,
-		Spacing    : -10 * g_dKoef_twips_to_mm
-	});
-	
-	this.SetParaPr({
-		Spacing : {
-			After    : 80 * g_dKoef_twips_to_mm,
-			Line     : 1,
-			LineRule : linerule_Auto
-		},
-		
-		ContextualSpacing : true
-	});
-};
-/**
- * Дефолтовые настройки для стиля Subtitle
- */
-CStyle.prototype.CreateSubtitle = function()
-{
-	this.SetQFormat(true);
-	this.SetUiPriority(11);
-
-	this.SetTextPr({
-		FontSize   : 14,
-		FontSizeCS : 14,
-		Spacing    : 15 * g_dKoef_twips_to_mm
-	});
-
-	this.SetParaPr({
-		NumPr : {
-			Lvl : 1
-		}
-	});
-};
-/**
- * Дефолтовые настройки для стиля Quote
- */
-CStyle.prototype.CreateQuote = function()
-{
-	this.SetQFormat(true);
-	this.SetUiPriority(29);
-	
-	this.SetTextPr({
-		Italic : true
-	});
-	
-	this.SetParaPr({
-		Jc      : AscCommon.align_Center,
-		Spacing : {
-			Before : 160 * g_dKoef_twips_to_mm
-		}
-	});
-	this.SetTextPr({
-		Italic  : true,
-		Color   : {r : 0x40, g : 0x40, b : 0x40},
-		Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xBF, null),
-	});
-};
-/**
- * Дефолтовые настройки для стиля IntenseQuote
- */
-CStyle.prototype.CreateIntenseQuote = function()
-{
-	this.SetQFormat(true);
-	this.SetUiPriority(30);
-	
-	this.SetTextPr({
-		Italic  : true,
-		Color   : {r : 0x07, g : 0x47, b : 0x61},
-		Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
-	});
-	
-	this.SetParaPr({
-		
-		Jc : AscCommon.align_Center,
-		
-		ContextualSpacing : false,
-		
-		Ind : {
-			Left  : 864 * g_dKoef_twips_to_mm,
-			Right : 864 * g_dKoef_twips_to_mm
-		},
-		
-		Spacing : {
-			Before : 360 * g_dKoef_twips_to_mm,
-			After  : 360 * g_dKoef_twips_to_mm
-		},
-		
-		Brd : {
-			Top    : {
-				Color   : {r : 0x07, g : 0x47, b : 0x61},
-				Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
-				Space   : 5 * g_dKoef_pt_to_mm,
-				Size    : 0.5 * g_dKoef_pt_to_mm,
-				Value   : border_Single
-			},
-			Bottom : {
-				Color   : {r : 0x07, g : 0x47, b : 0x61},
-				Unifill : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF),
-				Space   : 5 * g_dKoef_pt_to_mm,
-				Size    : 0.5 * g_dKoef_pt_to_mm,
-				Value   : border_Single
-			}
-		}
-	});
-};
-/**
- * Default settings for Caption style
- */
-CStyle.prototype.CreateCaption = function()
-{
-	this.SetUiPriority(35);
-	this.SetUnhideWhenUsed(true);
-	this.SetQFormat(true);
-	this.SetParaPr({
-		Spacing : {
-			After    : 200 * g_dKoef_twips_to_mm,
-			Line     : 1,
-			LineRule : linerule_Auto
-		}
-	});
-	this.SetTextPr({
-		Italic     : true,
-		ItalicCS   : true,
-		Color      : {r : 0x0E, g : 0x28, b : 0x41},
-		Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText2, null, null),
-		FontSize   : 9,
-		FontSizeCS : 9
-	});
-};
-/**
  * Конвертируем стиль в Asc.CAscStyle
  * @returns {Asc.CAscStyle}
  */
@@ -7749,90 +7257,15 @@ function CStyles(bCreateDefault)
         this.Default.TableCellPr.InitDefault();
 
         this.Style = [];
-
-        // Создадим стандартные стили
-
-		// Дефолтовый стиль для параграфа
-		var oNormal = new CStyle("Normal", null, null, styletype_Paragraph);
-		oNormal.CreateNormal();
-		this.Default.Paragraph = this.Add(oNormal);
-
-		// Дефолтовый стиль для текста
-		var oDefaultParagraphFont = new CStyle("Default Paragraph Font", null, null, styletype_Character);
-		oDefaultParagraphFont.CreateDefaultParagraphFont();
-		this.Default.Character = this.Add(oDefaultParagraphFont);
-
-		// Дефолтовый стиль для нумерации в списках
-		var oNoList = new CStyle("No List", null, null, styletype_Numbering);
-		oNoList.CreateNoList();
-		this.Default.Numbering = this.Add(oNoList);
-
-		// Создаем стандартные стили для заголовков
-		for (var nLvl = 0; nLvl <= 8; ++nLvl)
-		{
-			var oHeadingStyle = new CStyle("Heading " + (nLvl + 1), this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-			oHeadingStyle.CreateHeading(nLvl);
-			this.Default.Headings[nLvl] = this.Add(oHeadingStyle);
-			this.Add(oHeadingStyle.CreateLinkedCharacterStyle("Heading " + (nLvl + 1) + " Char", this.Default.Character));
-		}
-
-		// Создаем стандартный стиль для нумерованных параграфов
-		var oListParagraph = new CStyle("List Paragraph", this.Default.Paragraph, null, styletype_Paragraph);
-		oListParagraph.CreateListParagraph();
-		this.Default.ParaList = this.Add(oListParagraph);
-
+		
+		// TODO: Сейчас почти все стили параграфа и текста заданы в AscWord.DEFAULT_STYLES
+		//       Стили таблиц нужно переделать также
+		
 		// Создаем стандартный стиль для таблиц
 		var Style_Table = new CStyle("Normal Table", null, null, styletype_Table);
 		Style_Table.Create_NormalTable();
 		this.Default.Table = this.Add(Style_Table);
-
-		// // Создаем стиль "Без интервала"
-		// var oNoSpacing = new CStyle("No Spacing", null, null, styletype_Paragraph);
-		// oNoSpacing.CreateNoSpacing();
-		// this.Default.NoSpacing = this.Add(oNoSpacing);
-
-		// // Создаем стиль "Заголовок"
-		// var oTitle = new CStyle("Title", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		// oTitle.CreateTitle();
-		// this.Default.Title = this.Add(oTitle);
-		// this.Add(oTitle.CreateLinkedCharacterStyle("Title Char", this.Default.Character));
-
-		// Создаем стиль "Подзаголовок"
-		var oSubtitle = new CStyle("Subtitle", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		oSubtitle.CreateSubtitle();
-		this.Default.Subtitle = this.Add(oSubtitle);
-		this.Add(oSubtitle.CreateLinkedCharacterStyle("Subtitle Char", this.Default.Character));
-
-		// Создаем стиль "Цитата"
-		var oQuote = new CStyle("Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		oQuote.CreateQuote();
-		this.Default.Quote = this.Add(oQuote);
-		this.Add(oQuote.CreateLinkedCharacterStyle("Quote Char"), this.Default.Character);
-
-		// Создаем стиль "Выделенная цитата"
-		var oIntenseQuote = new CStyle("Intense Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		oIntenseQuote.CreateIntenseQuote();
-		this.Default.IntenseQuote = this.Add(oIntenseQuote);
-		this.Add(oIntenseQuote.CreateLinkedCharacterStyle("Intense Quote Char"), this.Default.Character);
-
-		// Создаем стандартный стиль верхнего колонтитула
-		var oHeader = new CStyle("Header", this.Default.Paragraph, null, styletype_Paragraph);
-		oHeader.CreateHeader();
-		this.Default.Header = this.Add(oHeader);
-		this.Add(oHeader.CreateLinkedCharacterStyle("Header Char", this.Default.Character));
-
-		// Создаем стандартный стиль нижнего колонтитула
-		var oFooter = new CStyle("Footer", this.Default.Paragraph, null, styletype_Paragraph);
-		oFooter.CreateFooter();
-		this.Default.Footer = this.Add(oFooter);
-		this.Add(oFooter.CreateLinkedCharacterStyle("Footer Char", this.Default.Character));
-
-		// Create default style for objects caption
-		var oCaption = new CStyle("Caption", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		oCaption.CreateCaption();
-		this.Default.Caption = this.Add(oCaption);
-		this.Add(oFooter.CreateLinkedCharacterStyle("Caption Char", this.Default.Caption));
-
+		
         var fUF = AscCommonWord.CreateThemeUnifill;
 
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
@@ -8353,37 +7786,20 @@ function CStyles(bCreateDefault)
 		var Style_Table_Bordered_Accent_6 = new CStyle("Bordered - Accent 6", this.Default.Table, null, styletype_Table );
 		Style_Table_Bordered_Accent_6.Create_Grid_Table_Light(fUF(EThemeColor.themecolorAccent6, 0x98, null), fUF(EThemeColor.themecolorAccent6, 0x67, null));
 		this.Add( Style_Table_Bordered_Accent_6 );
-
+		
+		
+		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
+		this.UpdateDefaultStyleLinks();
+		
+		
         // Создаем стиль гиперссылки
         var oHyperlink = new CStyle("Hyperlink", null, null, styletype_Character );
 		oHyperlink.CreateHyperlink();
-        this.Default.Hyperlink = this.Add(oHyperlink);
-
-		// Создаем стили для сносок
-		var oFootnoteText = new CStyle("footnote text", this.Default.Paragraph, null, styletype_Paragraph);
-		oFootnoteText.CreateFootnoteText();
-		this.Default.FootnoteText = this.Add(oFootnoteText);
-		this.Default.FootnoteTextChar = this.Add(oFootnoteText.CreateLinkedCharacterStyle("Footnote Text Char"), this.Default.Character);
-
-		var oFootnoteReference = new CStyle("footnote reference", this.Default.Character, null, styletype_Character);
-		oFootnoteReference.CreateFootnoteReference();
-		this.Default.FootnoteReference = this.Add(oFootnoteReference);
-
-		// Создаем стили для концевых сносок
-		var oEndnoteText = new CStyle("endnote text", this.Default.Paragraph, null, styletype_Paragraph);
-		oEndnoteText.CreateEndnoteText();
-		this.Default.EndnoteText = this.Add(oEndnoteText);
-		this.Default.EndnoteTextChar = this.Add(oEndnoteText.CreateLinkedCharacterStyle("Endnote Text Char"), this.Default.Character);
-
-		var oEndnoteReference = new CStyle("endnote reference", this.Default.Character, null, styletype_Character);
-		oEndnoteReference.CreateEndnoteReference();
-		this.Default.EndnoteReference = this.Add(oEndnoteReference);
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
 		{
 			var oStyleTOC = new CStyle("toc " + (nLvl + 1), this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
 			oStyleTOC.CreateTOC(nLvl);
-			this.Default.TOC[nLvl] = this.Add(oStyleTOC);
 		}
 
 		var oStyleTOCHeading = new CStyle("TOC Heading", this.Default.TOCHeading);
@@ -8394,7 +7810,6 @@ function CStyles(bCreateDefault)
 		oStyleTOF.CreateTOF();
 		this.Default.TOF = this.Add(oStyleTOF);
 		
-		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
 
         // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
         AscCommon.g_oTableId.Add( this, this.Id );
@@ -9603,134 +9018,36 @@ CStyles.prototype.Create_StyleFromInterface = function(oAscStyle, bCheckLink)
 		return oStyle;
 	}
 };
-CStyles.prototype.Remove_StyleFromInterface = function(StyleId)
+CStyles.prototype.Remove_StyleFromInterface = function(styleId)
 {
 	// Если этот стиль не один из стилей по умолчанию, тогда мы просто удаляем этот стиль
 	// и очищаем все параграфы с сылкой на этот стиль.
 
-	var Style = this.Style[StyleId];
-	if (StyleId == this.Default.Paragraph)
+	let style = this.Style[styleId];
+	if (!style)
+		return;
+	
+	let styleName = this.GetName(styleId);
+	let defaultObject = AscWord.getDefaultStyleObject(styleName);
+	if (defaultObject)
 	{
-		Style.Clear("Normal", null, null, styletype_Paragraph);
-		Style.CreateNormal();
-	}
-	else if (StyleId == this.Default.Character)
-	{
-		Style.Clear("Default Paragraph Font", null, null, styletype_Character);
-		Style.CreateDefaultParagraphFont();
-	}
-	else if (StyleId == this.Default.Numbering)
-	{
-		Style.Clear("No List", null, null, styletype_Numbering);
-		Style.CreateNoList();
-	}
-	else if (StyleId == this.Default.Table)
-	{
-		Style.Clear("Normal Table", null, null, styletype_Table);
-		Style.Create_NormalTable();
-	}
-	else if (StyleId == this.Default.TableGrid)
-	{
-		Style.Clear("Table Grid", this.Default.Table, null, styletype_Table);
-		Style.Create_TableGrid();
-	}
-	else if (StyleId == this.Default.Headings[0])
-	{
-		Style.Clear("Heading 1", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(0);
-	}
-	else if (StyleId == this.Default.Headings[1])
-	{
-		Style.Clear("Heading 2", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(1);
-	}
-	else if (StyleId == this.Default.Headings[2])
-	{
-		Style.Clear("Heading 3", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(2);
-	}
-	else if (StyleId == this.Default.Headings[3])
-	{
-		Style.Clear("Heading 4", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(3);
-	}
-	else if (StyleId == this.Default.Headings[4])
-	{
-		Style.Clear("Heading 5", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(4);
-	}
-	else if (StyleId == this.Default.Headings[5])
-	{
-		Style.Clear("Heading 6", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(5);
-	}
-	else if (StyleId == this.Default.Headings[6])
-	{
-		Style.Clear("Heading 7", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(6);
-	}
-	else if (StyleId == this.Default.Headings[7])
-	{
-		Style.Clear("Heading 8", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(7);
-	}
-	else if (StyleId == this.Default.Headings[8])
-	{
-		Style.Clear("Heading 9", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(8);
-	}
-	else if (StyleId == this.Default.ParaList)
-	{
-		Style.Clear("List Paragraph", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateListParagraph();
-	}
-	else if (StyleId == this.Default.Header)
-	{
-		Style.Clear("Header", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateHeader();
-	}
-	else if (StyleId == this.Default.Footer)
-	{
-		Style.Clear("Footer", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateFooter();
-	}
-	else if (StyleId == this.Default.Hyperlink)
-	{
-		Style.Clear("Hyperlink", null, null, styletype_Character);
-		Style.CreateHyperlink();
-	}
-	else if (StyleId == this.Default.NoSpacing)
-	{
-		Style.Clear("No Spacing", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateNoSpacing();
-	}
-	else if (StyleId === this.Default.Title)
-	{
-		Style.Clear("Title", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateTitle();
-	}
-	else if (StyleId === this.Default.Subtitle)
-	{
-		Style.Clear("Subtitle", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateSubtitle();
-	}
-	else if (StyleId === this.Default.Quote)
-	{
-		Style.Clear("Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateQuote();
-	}
-	else if (StyleId === this.Default.IntenseQuote)
-	{
-		Style.Clear("Intense Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateIntenseQuote();
+		style.Clear(defaultObject.Name, null, null, defaultObject.Type);
+		style.SetFromObject(defaultObject);
+		
+		if (defaultObject.Link)
+			style.SetLink(this.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.Link)));
+		if (defaultObject.BasedOn)
+			style.SetBasedOn(this.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.BasedOn)));
+		if (defaultObject.Next)
+			style.SetNext(this.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.Next)));
 	}
 	else
 	{
-		this.Remove(StyleId);
+		this.Remove(styleId);
 
 		if (this.LogicDocument)
 		{
-			var AllParagraphs = this.LogicDocument.GetAllParagraphsByStyle([StyleId]);
+			var AllParagraphs = this.LogicDocument.GetAllParagraphsByStyle([styleId]);
 			var Count = AllParagraphs.length;
 			for (var Index = 0; Index < Count; Index++)
 			{
@@ -9739,7 +9056,7 @@ CStyles.prototype.Remove_StyleFromInterface = function(StyleId)
 			}
 		}
 	}
-	this.Update_Interface(StyleId);
+	this.Update_Interface(styleId);
 };
 CStyles.prototype.Remove_AllCustomStylesFromInterface = function()
 {
@@ -9762,36 +9079,8 @@ CStyles.prototype.IsStyleDefaultByName = function(styleName)
 };
 CStyles.prototype.IsStyleDefaultById = function(styleId)
 {
-	return (styleId === this.Default.Paragraph
-		|| styleId === this.Default.Character
-		|| styleId === this.Default.Numbering
-		|| styleId === this.Default.Table
-		|| styleId === this.Default.TableGrid
-		|| styleId === this.Default.Headings[0]
-		|| styleId === this.Default.Headings[1]
-		|| styleId === this.Default.Headings[2]
-		|| styleId === this.Default.Headings[3]
-		|| styleId === this.Default.Headings[4]
-		|| styleId === this.Default.Headings[5]
-		|| styleId === this.Default.Headings[6]
-		|| styleId === this.Default.Headings[7]
-		|| styleId === this.Default.Headings[8]
-		|| styleId === this.Default.ParaList
-		|| styleId === this.Default.Header
-		|| styleId === this.Default.Footer
-		|| styleId === this.Default.Hyperlink
-		|| styleId === this.Default.FootnoteText
-		|| styleId === this.Default.FootnoteTextChar
-		|| styleId === this.Default.FootnoteReference
-		|| styleId === this.Default.NoSpacing
-		|| styleId === this.Default.Title
-		|| styleId === this.Default.Subtitle
-		|| styleId === this.Default.Quote
-		|| styleId === this.Default.IntenseQuote
-		|| styleId === this.Default.Caption
-		|| styleId === this.Default.EndnoteText
-		|| styleId === this.Default.EndnoteTextChar
-		|| styleId === this.Default.EndnoteReference);
+	let styleName = this.GetName(styleId);
+	return !!AscWord.getDefaultStyleObject(styleName);
 };
 CStyles.prototype.Is_StyleDefaultOOXML = function(sStyleName)
 {
@@ -9808,138 +9097,31 @@ CStyles.prototype.Is_StyleDefaultOOXML = function(sStyleName)
 	}
 	return false;
 };
-CStyles.prototype.Is_DefaultStyleChanged = function(sStyleName)
+CStyles.prototype.Is_DefaultStyleChanged = function(styleName)
 {
-	if (true != this.IsStyleDefaultByName(sStyleName))
+	let styleId = this.GetStyleIdByName(styleName);
+	if (!styleId)
 		return false;
-
-	var StyleId = this.GetStyleIdByName(sStyleName);
-	if (null === StyleId)
+	
+	let currentStyle  = this.Style[styleId];
+	let defaultObject = AscWord.getDefaultStyleObject(styleName);
+	if (!defaultObject)
 		return false;
-
-	var CurrentStyle = this.Style[StyleId];
-	this.LogicDocument.TurnOffHistory();
-
-	var Style = new CStyle();
-	if (StyleId == this.Default.Paragraph)
+	
+	let _t = this;
+	return AscCommon.ExecuteNoHistory(function()
 	{
-		Style.Clear("Normal", null, null, styletype_Paragraph);
-		Style.CreateNormal();
-	}
-	else if (StyleId == this.Default.Character)
-	{
-		Style.Clear("Default Paragraph Font", null, null, styletype_Character);
-		Style.CreateDefaultParagraphFont();
-	}
-	else if (StyleId == this.Default.Numbering)
-	{
-		Style.Clear("No List", null, null, styletype_Numbering);
-		Style.CreateNoList();
-	}
-	else if (StyleId == this.Default.Table)
-	{
-		Style.Clear("Normal Table", null, null, styletype_Table);
-		Style.Create_NormalTable();
-	}
-	else if (StyleId == this.Default.TableGrid)
-	{
-		Style.Clear("Table Grid", this.Default.Table, null, styletype_Table);
-		Style.Create_TableGrid();
-	}
-	else if (StyleId == this.Default.Headings[0])
-	{
-		Style.Clear("Heading 1", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(0);
-	}
-	else if (StyleId == this.Default.Headings[1])
-	{
-		Style.Clear("Heading 2", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(1);
-	}
-	else if (StyleId == this.Default.Headings[2])
-	{
-		Style.Clear("Heading 3", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(2);
-	}
-	else if (StyleId == this.Default.Headings[3])
-	{
-		Style.Clear("Heading 4", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(3);
-	}
-	else if (StyleId == this.Default.Headings[4])
-	{
-		Style.Clear("Heading 5", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(4);
-	}
-	else if (StyleId == this.Default.Headings[5])
-	{
-		Style.Clear("Heading 6", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(5);
-	}
-	else if (StyleId == this.Default.Headings[6])
-	{
-		Style.Clear("Heading 7", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(6);
-	}
-	else if (StyleId == this.Default.Headings[7])
-	{
-		Style.Clear("Heading 8", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(7);
-	}
-	else if (StyleId == this.Default.Headings[8])
-	{
-		Style.Clear("Heading 9", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateHeading(8);
-	}
-	else if (StyleId == this.Default.ParaList)
-	{
-		Style.Clear("List Paragraph", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateListParagraph();
-	}
-	else if (StyleId == this.Default.Header)
-	{
-		Style.Clear("Header", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateHeader();
-	}
-	else if (StyleId == this.Default.Footer)
-	{
-		Style.Clear("Footer", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateFooter();
-	}
-	else if (StyleId == this.Default.Hyperlink)
-	{
-		Style.Clear("Hyperlink", null, null, styletype_Character);
-		Style.CreateHyperlink();
-	}
-	else if (StyleId == this.Default.NoSpacing)
-	{
-		Style.Clear("No Spacing", this.Default.Paragraph, null, styletype_Paragraph);
-		Style.CreateNoSpacing();
-	}
-	else if (StyleId === this.Default.Title)
-	{
-		Style.Clear("Title", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateTitle();
-	}
-	else if (StyleId === this.Default.Subtitle)
-	{
-		Style.Clear("Subtitle", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateSubtitle();
-	}
-	else if (StyleId === this.Default.Quote)
-	{
-		Style.Clear("Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateQuote();
-	}
-	else if (StyleId === this.Default.IntenseQuote)
-	{
-		Style.Clear("Intense Quote", this.Default.Paragraph, this.Default.Paragraph, styletype_Paragraph);
-		Style.CreateIntenseQuote();
-	}
-
-	this.LogicDocument.TurnOnHistory();
-
-	return (true === Style.Is_Equal(CurrentStyle) ? false : true);
+		let style = CStyle.fromObject(defaultObject);
+		
+		if (defaultObject.Link)
+			style.SetLink(_t.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.Link)));
+		if (defaultObject.BasedOn)
+			style.SetBasedOn(_t.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.BasedOn)));
+		if (defaultObject.Next)
+			style.SetNext(_t.GetStyleIdByName(AscWord.getDefaultStyleName(defaultObject.Next)));
+		
+		return (true !== style.Is_Equal(currentStyle));
+	});
 };
 CStyles.prototype.AddStylesFromObject = function(obj)
 {
@@ -9998,38 +9180,132 @@ CStyles.prototype.AddStylesFromObject = function(obj)
 /**
  * Обновляем ссылки на все дефолтные стили
  */
-CStyle.prototype.UpdateDefaultLinks = function()
+CStyles.prototype.UpdateDefaultStyleLinks = function()
 {
-	return (styleId === this.Default.Paragraph
-		|| styleId === this.Default.Character
-		|| styleId === this.Default.Numbering
-		|| styleId === this.Default.Table
-		|| styleId === this.Default.TableGrid
-		|| styleId === this.Default.Headings[0]
-		|| styleId === this.Default.Headings[1]
-		|| styleId === this.Default.Headings[2]
-		|| styleId === this.Default.Headings[3]
-		|| styleId === this.Default.Headings[4]
-		|| styleId === this.Default.Headings[5]
-		|| styleId === this.Default.Headings[6]
-		|| styleId === this.Default.Headings[7]
-		|| styleId === this.Default.Headings[8]
-		|| styleId === this.Default.ParaList
-		|| styleId === this.Default.Header
-		|| styleId === this.Default.Footer
-		|| styleId === this.Default.Hyperlink
-		|| styleId === this.Default.FootnoteText
-		|| styleId === this.Default.FootnoteTextChar
-		|| styleId === this.Default.FootnoteReference
-		|| styleId === this.Default.NoSpacing
-		|| styleId === this.Default.Title
-		|| styleId === this.Default.Subtitle
-		|| styleId === this.Default.Quote
-		|| styleId === this.Default.IntenseQuote
-		|| styleId === this.Default.Caption
-		|| styleId === this.Default.EndnoteText
-		|| styleId === this.Default.EndnoteTextChar
-		|| styleId === this.Default.EndnoteReference);
+	for (let styleId in this.Style)
+	{
+		let name = this.Style[styleId].GetName();
+		switch (name)
+		{
+			case "Normal":
+				this.Default.Paragraph = styleId;
+				break;
+			case "Default Paragraph Font":
+				this.Default.Character = styleId;
+				break;
+			case "No List":
+				this.Default.Numbering = styleId;
+				break;
+			case "Normal Table":
+				this.Default.Table = styleId;
+				break;
+			case "Table Grid":
+				this.Default.TableGrid = styleId;
+				break;
+			case "Heading 1":
+			case "heading 1":
+				this.Default.Headings[0] = styleId;
+				break;
+			case "Heading 2":
+			case "heading 2":
+				this.Default.Headings[1] = styleId;
+				break;
+			case "Heading 3":
+			case "heading 3":
+				this.Default.Headings[2] = styleId;
+				break;
+			case "Heading 4":
+			case "heading 4":
+				this.Default.Headings[3] = styleId;
+				break;
+			case "Heading 5":
+			case "heading 5":
+				this.Default.Headings[4] = styleId;
+				break;
+			case "Heading 6":
+			case "heading 6":
+				this.Default.Headings[5] = styleId;
+				break;
+			case "Heading 7":
+			case "heading 7":
+				this.Default.Headings[6] = styleId;
+				break;
+			case "Heading 8":
+			case "heading 8":
+				this.Default.Headings[7] = styleId;
+				break;
+			case "Heading 9":
+			case "heading 9":
+				this.Default.Headings[8] = styleId;
+				break;
+			case "List Paragraph":
+				this.Default.ParaList = styleId;
+				break;
+			case "header":
+			case "Header":
+				this.Default.Header = styleId;
+				break;
+			case "footer":
+			case "Footer":
+				this.Default.Footer = styleId;
+				break;
+			case "Hyperlink":
+			case "hyperlink":
+				this.Default.Hyperlink = styleId;
+				break;
+			case "footnote text":
+				this.Default.FootnoteText = styleId;
+				break
+			case "Footnote Text Char":
+				this.Default.FootnoteTextChar = styleId;
+				break;
+			case "footnote reference":
+				this.Default.FootnoteReference = styleId;
+				break;
+			case "endnote text":
+				this.Default.EndnoteText = styleId;
+				break;
+			case "Endnote Text Char":
+				this.Default.EndnoteTextChar = styleId;
+				break;
+			case "endnote reference":
+				this.Default.EndnoteReference = styleId;
+				break;
+			case "toc 1":
+				this.Default.TOC[0] = styleId;
+				break;
+			case "toc 2":
+				this.Default.TOC[1] = styleId;
+				break;
+			case "toc 3":
+				this.Default.TOC[2] = styleId;
+				break;
+			case "toc 4":
+				this.Default.TOC[3] = styleId;
+				break;
+			case "toc 5":
+				this.Default.TOC[4] = styleId;
+				break;
+			case "toc 6":
+				this.Default.TOC[5] = styleId;
+				break;
+			case "toc 7":
+				this.Default.TOC[6] = styleId;
+				break;
+			case "toc 8":
+				this.Default.TOC[7] = styleId;
+				break;
+			case "toc 9":
+				this.Default.TOC[8] = styleId;
+				break;
+			case "TOC Heading":
+				this.Default.TOCHeading = styleId;
+				break;
+			case "table of figures":
+				this.Default.TOF = styleId;
+				break;
+		}
+	}
 };
 /**
  * Получаем идентификатор стиля по умолчанию для параграфов
