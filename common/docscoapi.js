@@ -357,6 +357,12 @@
     }
   };
 
+  CDocsCoApi.prototype.disconnectQuietly = function(opt_code, opt_reason) {
+    if (this._CoAuthoringApi && this._onlineWork) {
+      this._CoAuthoringApi.disconnectQuietly(opt_code, opt_reason);
+    }
+  };
+
   CDocsCoApi.prototype.connect = function() {
     if (this._CoAuthoringApi && this._onlineWork) {
       this._CoAuthoringApi.connect();
@@ -923,6 +929,12 @@
       this._send({"type": "close"});
       this._state = ConnectionState.ClosedCoAuth;
     }
+  };
+
+  DocsCoApi.prototype.disconnectQuietly = function() {
+    // Отключаемся сами
+    this.isCloseCoAuthoring = true;
+    this.socketio.disconnect();
   };
 
   DocsCoApi.prototype.extendSession = function(idleTime) {
@@ -1715,7 +1727,7 @@
       'lastOtherSaveTime': this.lastOtherSaveTime,
       'block': this.ownedLockBlocks,
       'sessionId': this._id,
-      'sessionTimeConnect': this._sessionTimeConnect,
+	  'sessionTimeConnect': this._sessionTimeConnect,
       'sessionTimeIdle': opt_isIdle >= 0 ? opt_isIdle : 0,
       'documentFormatSave': this._documentFormatSave,
       'isCloseCoAuthoring': this.isCloseCoAuthoring,
@@ -1731,7 +1743,7 @@
       'jwtSession': this.jwtSession,
       'time': Math.round(performance.now()),
       'supportAuthChangesAck': true
-    };
+  };
   };
   // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
   DocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
@@ -1802,7 +1814,7 @@
       };
       options["query"] = {};
       if (this.shardKey) {
-        options["query"][Asc.c_sShardKeyName] = this.shardKey;
+      options["query"][Asc.c_sShardKeyName] = this.shardKey;
       }
       if (this.wopiSrc) {
         options["query"][Asc.c_sWopiSrcName] = this.wopiSrc;

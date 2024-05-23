@@ -152,6 +152,7 @@
 		this.licenseResult       = null;
 		// Получили ли лицензию
 		this.isOnLoadLicense     = false;
+		this.isRefreshFile     = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
 		this.isDocumentLoadComplete = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
@@ -504,7 +505,7 @@
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
-			}
+				}
 			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
 				this.documentShardKey = this.DocInfo.get_Shardkey() || this.documentId;
@@ -1073,7 +1074,7 @@
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
-				rData["closeonerror"] = versionHistory.isRequested;
+                rData["closeonerror"] = versionHistory.isRequested;
 				rData["tokenHistory"] = versionHistory.token;
 				//чтобы результат пришел только этому соединению, а не всем кто в документе
 				rData["userconnectionid"] = this.CoAuthoringApi.getUserConnectionId();
@@ -1511,7 +1512,7 @@
 	};
 	baseEditorsApi.prototype._onEndPermissions                   = function()
 	{
-		if (this.isOnLoadLicense) {
+		if (this.isOnLoadLicense && !this.isRefreshFile) {
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
 			if (null !== this.licenseResult) {
 				var type = this.licenseResult['type'];
@@ -1588,7 +1589,10 @@
 				t.disconnectRestrictions = null;
 			}
 
-			t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
+			if (!this.isRefreshFile) {
+				t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
+			}
+
 		};
 		this.CoAuthoringApi.onAuthParticipantsChanged = function(users, userId)
 		{
@@ -1688,9 +1692,9 @@
 				extendSession = false;
 			}
 			if (!extendSession) {
-				t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
-				t.CoAuthoringApi.disconnect(code, reason);
-			}
+					t.CoAuthoringApi.sendClientLog('debug', 'disconnect code:' + code + ';reason:' + reason);
+					t.CoAuthoringApi.disconnect(code, reason);
+				}
 		};
         this.CoAuthoringApi.onForceSave = function(data) {
             if (AscCommon.c_oAscForceSaveTypes.Button === data.type) {
@@ -1816,7 +1820,7 @@
 					t.waitNotIdle(undefined, function () {
 						t.CoAuthoringApi.connect();
 					});
-				}
+			}
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
@@ -1859,12 +1863,17 @@
 									if ('ok' === input["status"] || t.getViewMode()) {
 										t._onOpenCommand(documentUrl);
 									} else {
-										t.sendEvent("asc_onDocumentUpdateVersion", function () {
-											if (t.isCoAuthoringEnable) {
-												t.asc_coAuthoringDisconnect();
-											}
-											t._onOpenCommand(documentUrl);
-										})
+										if (t.asc_checkNeedCallback('asc_onRequestRefreshFile')) {
+											t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.RefreshFile);
+											t.sendEvent("asc_onRequestRefreshFile");
+										} else {
+											t.sendEvent("asc_onDocumentUpdateVersion", function () {
+												if (t.isCoAuthoringEnable) {
+													t.asc_coAuthoringDisconnect();
+												}
+												t._onOpenCommand(documentUrl);
+											})
+										}
 									}
 								} else {
 									t.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError,
@@ -2206,7 +2215,7 @@
 			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
 			if (this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
 				jsonparams["watermark"] = JSON.parse(this.watermarkDraw.inputContentSrc);
-			}
+		}
 			oAdditionalData["jsonparams"] = jsonparams;
 		} else if ((Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType) &&
 			this.watermarkDraw && this.watermarkDraw.inputContentSrc) {
@@ -2631,6 +2640,20 @@
 	baseEditorsApi.prototype.getVersionHistory = function()
 	{
 		return this.VersionHistory;
+	};
+	baseEditorsApi.prototype.asc_refreshFile   = function(docInfo) {
+		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.RefreshFile);
+		if (this.isDocumentLoadComplete) {
+			this.asc_CloseFile();
+		}
+
+		this.asc_setDocInfo(docInfo);
+		this.CoAuthoringApi.disconnectQuietly();
+		//todo get rid of isRefreshFile
+		this.isRefreshFile = true;
+		// this.isOnLoadLicense = false;
+		this.CoAuthoringApi = new AscCommon.CDocsCoApi();
+		this._coAuthoringInit();
 	};
 	baseEditorsApi.prototype.asc_undoAllChanges = function()
 	{
@@ -5160,6 +5183,7 @@
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
 	prot['asc_isSelectSearchingResults'] = prot.asc_isSelectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;
+	prot['asc_refreshFile'] = prot.asc_refreshFile;
 	prot['asc_getAdvancedOptions'] = prot.asc_getAdvancedOptions;
 	prot['asc_Print'] = prot.asc_Print;
 	prot['asc_GetCurrentColorSchemeName'] = prot.asc_GetCurrentColorSchemeName;
