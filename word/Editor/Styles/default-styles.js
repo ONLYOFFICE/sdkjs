@@ -55,20 +55,6 @@
 			QFormat : true
 		},
 		{
-			StyleId    : "NoSpacing",
-			Type       : AscWord.styletype_Paragraph,
-			Name       : "No Spacing",
-			UiPriority : 1,
-			QFormat    : true,
-			ParaPr     : {
-				Spacing : {
-					After    : 0,
-					Line     : 1,
-					LineRule : Asc.linerule_Auto
-				}
-			}
-		},
-		{
 			StyleId    : "Heading1",
 			Type       : AscWord.styletype_Paragraph,
 			Name       : "Heading 1",
@@ -678,6 +664,20 @@
 			}
 		},
 		{
+			StyleId        : "IntenseEmphasis",
+			Type           : AscWord.styletype_Character,
+			Name           : "Intense Emphasis",
+			BasedOn        : "DefaultParagraphFont",
+			UiPriority     : 21,
+			QFormat        : true,
+			TextPr         : {
+				Italic : true,
+				ItalicCS : true,
+				Color    : {r : 0x0F, g : 0x47, b : 0x61},
+				Unifill  : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF)
+			}
+		},
+		{
 			StyleId    : "IntenseQuote",
 			Type       : AscWord.styletype_Paragraph,
 			Name       : "Intense Quote",
@@ -733,6 +733,102 @@
 				ItalicCS : true,
 				Color    : {r : 0x0F, g : 0x47, b : 0x61},
 				Unifill  : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF)
+			}
+		},
+		{
+			StyleId    : "IntenseReference",
+			Type       : AscWord.styletype_Character,
+			Name       : "Intense Reference",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 32,
+			QFormat    : true,
+			TextPr     : {
+				Bold      : true,
+				BoldCS    : true,
+				SmallCaps : true,
+				Spacing   : tw2mm(5),
+				Color     : {r : 0x0F, g : 0x47, b : 0x61},
+				Unifill   : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorAccent1, null, 0xBF)
+			}
+		},
+		{
+			StyleId    : "NoSpacing",
+			Type       : AscWord.styletype_Paragraph,
+			Name       : "No Spacing",
+			UiPriority : 1,
+			QFormat    : true,
+			ParaPr     : {
+				Spacing : {
+					After    : 0,
+					Line     : 1,
+					LineRule : Asc.linerule_Auto
+				}
+			}
+		},
+		{
+			StyleId    : "SubtleEmphasis",
+			Type       : AscWord.styletype_Character,
+			Name       : "Subtle Emphasis",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 19,
+			QFormat    : true,
+			TextPr     : {
+				Italic   : true,
+				ItalicCS : true,
+				Color    : {r : 0x40, g : 0x40, b : 0x40},
+				Unifill  : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xBF, null)
+			}
+		},
+		{
+			StyleId    : "Emphasis",
+			Type       : AscWord.styletype_Character,
+			Name       : "Emphasis",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 20,
+			QFormat    : true,
+			TextPr     : {
+				Italic   : true,
+				ItalicCS : true
+			}
+		},
+		{
+			StyleId    : "Strong",
+			Type       : AscWord.styletype_Character,
+			Name       : "Strong",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 22,
+			QFormat    : true,
+			TextPr     : {
+				Bold   : true,
+				BoldCS : true
+			}
+		},
+		{
+			StyleId    : "SubtleReference",
+			Type       : AscWord.styletype_Character,
+			Name       : "Subtle Reference",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 31,
+			QFormat    : true,
+			TextPr     : {
+				SmallCaps : true,
+				Color     : {r : 0x5A, g : 0x5A, b : 0x5A},
+				Unifill   : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText1, 0xA5, null)
+			}
+		},
+		{
+			StyleId    : "BookTitle",
+			Type       : AscWord.styletype_Character,
+			Name       : "Book Title",
+			BasedOn    : "DefaultParagraphFont",
+			UiPriority : 33,
+			QFormat    : true,
+			TextPr     : {
+				Bold     : true,
+				BoldCS   : true,
+				Italic   : true,
+				ItalicCS : true,
+				Spacing  : tw2mm(5)
 			}
 		},
 		{
@@ -833,80 +929,97 @@
 			}
 		},
 		{
-			StyleId        : "Caption",
-			Type           : AscWord.styletype_Paragraph,
-			Name           : "Caption",
-			BasedOn        : "Normal",
-			Next           : "Normal",
-			UiPriority     : 35,
-			UnhideWhenUsed : true,
-			QFormat        : true,
-			ParaPr         : {
-				Spacing : {
-					After    : tw2mm(200),
-					Line     : 1,
-					LineRule : Asc.linerule_Auto
-				}
-			},
-			TextPr         : {
-				Italic     : true,
-				ItalicCS   : true,
-				FontSize   : 9,
-				FontSizeCS : 9,
-				Color      : {r : 0x0E, g : 0x28, b : 0x41},
-				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText2, null, null)
-			}
-		},
-		{
 			StyleId        : "FootnoteText",
 			Type           : AscWord.styletype_Paragraph,
 			Name           : "footnote text",
 			BasedOn        : "Normal",
-			Next           : "Normal",
-			UiPriority     : 35,
+			Link           : "FootnoteTextChar",
+			UiPriority     : 99,
+			SemiHidden     : true,
 			UnhideWhenUsed : true,
-			QFormat        : true,
 			ParaPr         : {
 				Spacing : {
-					After    : tw2mm(200),
+					After    : 0,
 					Line     : 1,
 					LineRule : Asc.linerule_Auto
 				}
 			},
 			TextPr         : {
-				Italic     : true,
-				ItalicCS   : true,
-				FontSize   : 9,
-				FontSizeCS : 9,
-				Color      : {r : 0x0E, g : 0x28, b : 0x41},
-				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText2, null, null)
+				FontSize   : 10,
+				FontSizeCS : 10
 			}
 		},
 		{
-			StyleId        : "Caption",
-			Type           : AscWord.styletype_Paragraph,
-			Name           : "Caption",
-			BasedOn        : "Normal",
-			Next           : "Normal",
-			UiPriority     : 35,
+			StyleId    : "FootnoteTextChar",
+			Type       : AscWord.styletype_Character,
+			Name       : "Footnote Text Char",
+			BasedOn    : "DefaultParagraphFont",
+			Link       : "FootnoteText",
+			UiPriority : 99,
+			SemiHidden : true,
+			TextPr     : {
+				FontSize   : 10,
+				FontSizeCS : 10
+			}
+		},
+		{
+			StyleId        : "FootnoteReference",
+			Type           : AscWord.styletype_Character,
+			Name           : "footnote reference",
+			BasedOn        : "DefaultParagraphFont",
+			UiPriority     : 99,
+			SemiHidden     : true,
 			UnhideWhenUsed : true,
-			QFormat        : true,
+			TextPr         : {
+				VertAlign : AscCommon.vertalign_SuperScript
+			}
+		},
+		{
+			StyleId        : "EndnoteText",
+			Type           : AscWord.styletype_Paragraph,
+			Name           : "endnote text",
+			BasedOn        : "Normal",
+			Link           : "EndnoteTextChar",
+			UiPriority     : 99,
+			SemiHidden     : true,
+			UnhideWhenUsed : true,
 			ParaPr         : {
 				Spacing : {
-					After    : tw2mm(200),
+					After    : 0,
 					Line     : 1,
 					LineRule : Asc.linerule_Auto
 				}
 			},
 			TextPr         : {
-				Italic     : true,
-				ItalicCS   : true,
-				FontSize   : 9,
-				FontSizeCS : 9,
-				Color      : {r : 0x0E, g : 0x28, b : 0x41},
-				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorText2, null, null)
+				FontSize   : 10,
+				FontSizeCS : 10
 			}
 		},
+		{
+			StyleId    : "EndnoteTextChar",
+			Type       : AscWord.styletype_Character,
+			Name       : "Endnote Text Char",
+			BasedOn    : "DefaultParagraphFont",
+			Link       : "EndnoteText",
+			UiPriority : 99,
+			SemiHidden : true,
+			TextPr     : {
+				FontSize   : 10,
+				FontSizeCS : 10
+			}
+		},
+		{
+			StyleId        : "EndnoteReference",
+			Type           : AscWord.styletype_Character,
+			Name           : "endnote reference",
+			BasedOn        : "DefaultParagraphFont",
+			UiPriority     : 99,
+			SemiHidden     : true,
+			UnhideWhenUsed : true,
+			TextPr         : {
+				VertAlign : AscCommon.vertalign_SuperScript
+			}
+		}
 	];
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.DEFAULT_STYLES       = DEFAULT_STYLES;
