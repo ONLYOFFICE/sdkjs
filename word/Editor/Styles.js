@@ -7271,7 +7271,6 @@ function CStyles(bCreateDefault)
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
 		var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
 		Style_TableGrid.Create_TableGrid();
-		this.Default.TableGrid = this.Add(Style_TableGrid);
 
         var Style_TableGridLight = new CStyle("Table Grid Light", this.Default.Table, null, styletype_Table);
 		Style_TableGridLight.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
@@ -7903,275 +7902,8 @@ CStyles.prototype =
 		this.Update_Interface(Id);
 	},
 
-	SetDefaultParagraph : function(Id)
-	{
-		if (Id !== this.Default.Paragraph)
-		{
-			History.Add(new CChangesStylesChangeDefaultParagraphId(this, this.Default.Paragraph, Id));
-			this.Default.Paragraph = Id;
-		}
-	},
-
-	SetDefaultCharacter : function(Id)
-	{
-		if (Id !== this.Default.Character)
-		{
-			History.Add(new CChangesStylesChangeDefaultCharacterId(this, this.Default.Character, Id));
-			this.Default.Character = Id;
-		}
-	},
-
-	SetDefaultNumbering : function(Id)
-	{
-		if (Id !== this.Default.Numbering)
-		{
-			History.Add(new CChangesStylesChangeDefaultNumberingId(this, this.Default.Numbering, Id));
-			this.Default.Numbering = Id;
-		}
-	},
-
-	SetDefaultTable : function(Id)
-	{
-		if (Id !== this.Default.Table)
-		{
-			History.Add(new CChangesStylesChangeDefaultTableId(this, this.Default.Table, Id));
-			this.Default.Table = Id;
-		}
-	},
-
-	SetDefaultTableGrid : function(Id)
-	{
-		if (Id !== this.Default.TableGrid)
-		{
-			History.Add(new CChangesStylesChangeDefaultTableGridId(this, this.Default.TableGrid, Id));
-			this.Default.TableGrid = Id;
-		}
-	},
-
-	SetDefaultParaList : function(Id)
-	{
-		if (Id !== this.Default.ParaList)
-		{
-			History.Add(new CChangesStylesChangeDefaultParaListId(this, this.Default.ParaList, Id));
-			this.Default.ParaList = Id;
-		}
-	},
-
-	SetDefaultHeader : function(Id)
-	{
-		if (Id !== this.Default.Header)
-		{
-			History.Add(new CChangesStylesChangeDefaultHeaderId(this, this.Default.Header, Id));
-			this.Default.Header = Id;
-		}
-	},
-
-	SetDefaultFooter : function(Id)
-	{
-		if (Id !== this.Default.Footer)
-		{
-			History.Add(new CChangesStylesChangeDefaultFooterId(this, this.Default.Footer, Id));
-			this.Default.Footer = Id;
-		}
-	},
-
-	SetDefaultHyperlink : function(Id)
-	{
-		if (Id !== this.Default.Hyperlink)
-		{
-			History.Add(new CChangesStylesChangeDefaultHyperlinkId(this, this.Default.Hyperlink, Id));
-			this.Default.Hyperlink = Id;
-		}
-	},
-
-	SetDefaultFootnoteText : function(Id)
-	{
-		if (Id !== this.Default.FootnoteText)
-		{
-			History.Add(new CChangesStylesChangeDefaultFootnoteTextId(this, this.Default.FootnoteText, Id));
-			this.Default.FootnoteText = Id;
-		}
-	},
-
-	SetDefaultFootnoteTextChar : function(Id)
-	{
-		if (Id !== this.Default.FootnoteTextChar)
-		{
-			History.Add(new CChangesStylesChangeDefaultFootnoteTextCharId(this, this.Default.FootnoteTextChar, Id));
-			this.Default.FootnoteTextChar = Id;
-		}
-	},
-
-	SetDefaultFootnoteReference : function(Id)
-	{
-		if (Id !== this.Default.FootnoteReference)
-		{
-			History.Add(new CChangesStylesChangeDefaultFootnoteReferenceId(this, this.Default.FootnoteReference, Id));
-			this.Default.FootnoteReference = Id;
-		}
-	},
-
-	SetDefaultHeading : function(Id, Lvl)
-	{
-		if (Id !== this.Default.Headings[Lvl])
-		{
-			History.Add(new CChangesStylesChangeDefaultHeadingsId(this, this.Default.Headings[Lvl], Id, Lvl));
-			this.Default.Headings[Lvl] = Id;
-		}
-	},
-
-	SetDefaultNoSpacing : function(Id)
-	{
-		if (Id !== this.Default.NoSpacing)
-		{
-			History.Add(new CChangesStylesChangeDefaultNoSpacingId(this, this.Default.NoSpacing, Id));
-			this.Default.NoSpacing = Id;
-		}
-	},
-
-	SetDefaultTitle : function(Id)
-	{
-		if (Id !== this.Default.Title)
-		{
-			History.Add(new CChangesStylesChangeDefaultTitleId(this, this.Default.Title, Id));
-			this.Default.Title = Id;
-		}
-	},
-
-	SetDefaultSubtitle : function(Id)
-	{
-		if (Id !== this.Default.Subtitle)
-		{
-			History.Add(new CChangesStylesChangeDefaultSubtitleId(this, this.Default.Subtitle, Id));
-			this.Default.Subtitle = Id;
-		}
-	},
-
-	SetDefaultQuote : function(Id)
-	{
-		if (Id !== this.Default.Quote)
-		{
-			History.Add(new CChangesStylesChangeDefaultQuoteId(this, this.Default.Quote, Id));
-			this.Default.Quote = Id;
-		}
-	},
-
-	SetDefaultIntenseQuote : function(Id)
-	{
-		if (Id !== this.Default.IntenseQuote)
-		{
-			History.Add(new CChangesStylesChangeDefaultIntenseQuoteId(this, this.Default.IntenseQuote, Id));
-			this.Default.IntenseQuote = Id;
-		}
-	},
-
-	SetDefaultCaption : function(Id)
-	{
-		if(Id !== this.Default.Caption)
-		{
-			History.Add(new CChangesStylesChangeDefaultCaption(this, this.Default.Caption, Id));
-			this.Default.Caption = Id;
-		}
-	},
-
-	SetDefaultEndnoteText : function(Id)
-	{
-		if (Id !== this.Default.EndnoteText)
-		{
-			History.Add(new CChangesStylesChangeDefaultEndnoteTextId(this, this.Default.EndnoteText, Id));
-			this.Default.EndnoteText = Id;
-		}
-	},
-
-	SetDefaultEndnoteTextChar : function(Id)
-	{
-		if (Id !== this.Default.EndnoteTextChar)
-		{
-			History.Add(new CChangesStylesChangeDefaultEndnoteTextCharId(this, this.Default.EndnoteTextChar, Id));
-			this.Default.EndnoteTextChar = Id;
-		}
-	},
-
-	SetDefaultEndnoteReference : function(Id)
-	{
-		if (Id !== this.Default.EndnoteReference)
-		{
-			History.Add(new CChangesStylesChangeDefaultEndnoteReferenceId(this, this.Default.EndnoteReference, Id));
-			this.Default.EndnoteReference = Id;
-		}
-	},
-
 	RemapIdReferences : function(OldId, NewId)
 	{
-		if (OldId === this.Default.Paragraph)
-			this.SetDefaultParagraph(NewId);
-
-		if (OldId === this.Default.Character)
-			this.SetDefaultCharacter(NewId);
-
-		if (OldId === this.Default.Numbering)
-			this.SetDefaultNumbering(NewId);
-
-		if (OldId === this.Default.Table)
-			this.SetDefaultTable(NewId);
-
-		if (OldId === this.Default.TableGrid)
-			this.SetDefaultTableGrid(NewId);
-
-		if (OldId === this.Default.ParaList)
-			this.SetDefaultParaList(NewId);
-
-		if (OldId === this.Default.Header)
-			this.SetDefaultHeader(NewId);
-
-		if (OldId === this.Default.Footer)
-			this.SetDefaultFooter(NewId);
-
-		if (OldId === this.Default.Hyperlink)
-			this.SetDefaultHyperlink(NewId);
-
-		if (OldId === this.Default.FootnoteText)
-			this.SetDefaultFootnoteText(NewId);
-
-		if (OldId === this.Default.FootnoteTextChar)
-			this.SetDefaultFootnoteTextChar(NewId);
-
-		if (OldId === this.Default.FootnoteReference)
-			this.SetDefaultFootnoteReference(NewId);
-
-		if (OldId === this.Default.EndnoteText)
-			this.SetDefaultEndnoteText(NewId);
-
-		if (OldId === this.Default.EndnoteTextChar)
-			this.SetDefaultEndnoteTextChar(NewId);
-
-		if (OldId === this.Default.EndnoteReference)
-			this.SetDefaultEndnoteReference(NewId);
-
-		for (var nIndex = 0, nCount = this.Default.Headings.length; nIndex < nCount; ++nIndex)
-		{
-			if (OldId === this.Default.Headings[nIndex])
-				this.SetDefaultHeading(NewId, nIndex);
-		}
-
-		if (OldId === this.Default.NoSpacing)
-			this.SetDefaultNoSpacing(NewId);
-
-		if (OldId === this.Default.Title)
-			this.SetDefaultTitle(NewId);
-
-		if (OldId === this.Default.Subtitle)
-			this.SetDefaultSubtitle(NewId);
-
-		if (OldId === this.Default.Quote)
-			this.SetDefaultQuote(NewId);
-
-		if (OldId === this.Default.IntenseQuote)
-			this.SetDefaultIntenseQuote(NewId);
-
-		if (OldId === this.Default.Caption)
-			this.SetDefaultCaption(NewId);
-
 		for (var Id in this.Style)
 		{
 			this.Style[Id].RemapIdReferences(OldId, NewId);
@@ -8188,34 +7920,13 @@ CStyles.prototype =
         Styles.Default.TableRowPr  = this.Default.TableRowPr.Copy();
         Styles.Default.TableCellPr = this.Default.TableCellPr.Copy();
 
-        // Тут можно копировать напрямую, т.к. это либо null, либо StyleId, который мы повторяем
-		Styles.Default.Paragraph    = this.Default.Paragraph;
-		Styles.Default.Character    = this.Default.Character;
-		Styles.Default.Numbering    = this.Default.Numbering;
-		Styles.Default.Table        = this.Default.Table;
-		Styles.Default.TableGrid    = this.Default.TableGrid;
-		Styles.Default.ParaList     = this.Default.ParaList;
-		Styles.Default.Header       = this.Default.Header;
-		Styles.Default.Footer       = this.Default.Footer;
-		Styles.Default.Hyperlink    = this.Default.Hyperlink;
-		Styles.Default.NoSpacing    = this.Default.NoSpacing;
-		Styles.Default.Title        = this.Default.Title;
-		Styles.Default.Subtitle     = this.Default.Subtitle;
-		Styles.Default.Quote        = this.Default.Quote;
-		Styles.Default.IntenseQuote = this.Default.IntenseQuote;
-		Styles.Default.Caption      = this.Default.Caption;
-
-        for (var Index = 0, Count = this.Default.Headings.length; Index < Count; Index++)
-        {
-            Styles.Default.Headings[Index] = this.Default.Headings[Index];
-        }
-
         for (var StyleId in this.Style)
         {
             Styles.Style[StyleId] = this.Style[StyleId].Copy();
         }
 
         Styles.OnChangeDefaultTextPr();
+		Styles.UpdateDefaultStyleLinks();
         return Styles;
     },
 
@@ -9182,126 +8893,119 @@ CStyles.prototype.AddStylesFromObject = function(obj)
  */
 CStyles.prototype.UpdateDefaultStyleLinks = function()
 {
+	// TODO: Если данный метод будет слишком часто вызываться, то нужно переделать, чтобы реальное обновление срабатывало
+	//       при запросе к одному из дефолтовых стилей GetDefaultParagraph, например
+	
+	let localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
 	for (let styleId in this.Style)
 	{
-		let name = this.Style[styleId].GetName();
+		let name = this.Style[styleId].GetName().toLowerCase().replace(/\s/g,"");
 		switch (name)
 		{
-			case "Normal":
+			case "normal":
 				this.Default.Paragraph = styleId;
 				break;
-			case "Default Paragraph Font":
+			case "defaultparagraphfont":
 				this.Default.Character = styleId;
 				break;
-			case "No List":
+			case "nolist":
 				this.Default.Numbering = styleId;
 				break;
-			case "Normal Table":
+			case "normaltable":
 				this.Default.Table = styleId;
 				break;
-			case "Table Grid":
+			case "tablegrid":
 				this.Default.TableGrid = styleId;
 				break;
-			case "Heading 1":
-			case "heading 1":
+			case "heading1":
 				this.Default.Headings[0] = styleId;
 				break;
-			case "Heading 2":
-			case "heading 2":
+			case "heading2":
 				this.Default.Headings[1] = styleId;
 				break;
-			case "Heading 3":
-			case "heading 3":
+			case "heading3":
 				this.Default.Headings[2] = styleId;
 				break;
-			case "Heading 4":
-			case "heading 4":
+			case "heading4":
 				this.Default.Headings[3] = styleId;
 				break;
-			case "Heading 5":
-			case "heading 5":
+			case "heading5":
 				this.Default.Headings[4] = styleId;
 				break;
-			case "Heading 6":
-			case "heading 6":
+			case "heading6":
 				this.Default.Headings[5] = styleId;
 				break;
-			case "Heading 7":
-			case "heading 7":
+			case "heading7":
 				this.Default.Headings[6] = styleId;
 				break;
-			case "Heading 8":
-			case "heading 8":
+			case "heading8":
 				this.Default.Headings[7] = styleId;
 				break;
-			case "Heading 9":
-			case "heading 9":
+			case "heading9":
 				this.Default.Headings[8] = styleId;
 				break;
-			case "List Paragraph":
+			case "listparagraph":
 				this.Default.ParaList = styleId;
 				break;
 			case "header":
-			case "Header":
 				this.Default.Header = styleId;
 				break;
 			case "footer":
-			case "Footer":
 				this.Default.Footer = styleId;
 				break;
-			case "Hyperlink":
 			case "hyperlink":
+			case localHyperlink:
 				this.Default.Hyperlink = styleId;
 				break;
-			case "footnote text":
+			case "footnotetext":
 				this.Default.FootnoteText = styleId;
 				break
-			case "Footnote Text Char":
+			case "footnotetextchar":
 				this.Default.FootnoteTextChar = styleId;
 				break;
-			case "footnote reference":
+			case "footnotereference":
 				this.Default.FootnoteReference = styleId;
 				break;
-			case "endnote text":
+			case "endnotetext":
 				this.Default.EndnoteText = styleId;
 				break;
-			case "Endnote Text Char":
+			case "endnotetextchar":
 				this.Default.EndnoteTextChar = styleId;
 				break;
-			case "endnote reference":
+			case "endnotereference":
 				this.Default.EndnoteReference = styleId;
 				break;
-			case "toc 1":
+			case "toc1":
 				this.Default.TOC[0] = styleId;
 				break;
-			case "toc 2":
+			case "toc2":
 				this.Default.TOC[1] = styleId;
 				break;
-			case "toc 3":
+			case "toc3":
 				this.Default.TOC[2] = styleId;
 				break;
-			case "toc 4":
+			case "toc4":
 				this.Default.TOC[3] = styleId;
 				break;
-			case "toc 5":
+			case "toc5":
 				this.Default.TOC[4] = styleId;
 				break;
-			case "toc 6":
+			case "toc6":
 				this.Default.TOC[5] = styleId;
 				break;
-			case "toc 7":
+			case "toc7":
 				this.Default.TOC[6] = styleId;
 				break;
-			case "toc 8":
+			case "toc8":
 				this.Default.TOC[7] = styleId;
 				break;
-			case "toc 9":
+			case "toc9":
 				this.Default.TOC[8] = styleId;
 				break;
-			case "TOC Heading":
+			case "tocheading":
 				this.Default.TOCHeading = styleId;
 				break;
-			case "table of figures":
+			case "tableoffigures":
 				this.Default.TOF = styleId;
 				break;
 		}

@@ -7957,7 +7957,6 @@ function BinaryFileReader(doc, openParams)
 		
 		var oDocStyle = this.Document.Styles;
 		var styles = this.Document.Styles.Style;
-        var stDefault = this.Document.Styles.Default;
 		if(AscCommon.CurFileVersion < 2){
 			for(var i in this.oReadResult.styles)
 				this.oReadResult.styles[i].style.qFormat = true;
@@ -8015,96 +8014,7 @@ function BinaryFileReader(doc, openParams)
 					stObj.Set_Link(oNewId.id);
 			}
         }
-		//меняем Headings
-		for(var i = 0, length = stDefault.Headings.length; i < length; ++i)
-        {
-            var sHeading = stDefault.Headings[i];
-			var oNewId = oIdRenameMap[sHeading];
-			if(null != oNewId)
-				stDefault.Headings[i] = oNewId.id;
-        }
-		//TOC
-		for(var i = 0, length = stDefault.TOC.length; i < length; ++i)
-		{
-			var sTOC = stDefault.TOC[i];
-			var oNewId = oIdRenameMap[sTOC];
-			if(null != oNewId)
-				stDefault.TOC[i] = oNewId.id;
-		}
-		//TOCHeading
-		var sTOCHeading = stDefault.TOCHeading;
-		var oNewId = oIdRenameMap[sTOCHeading];
-		if(null != oNewId)
-			stDefault.TOCHeading = oNewId.id;
-
-		var sTOF = stDefault.TOF;
-		var oNewId = oIdRenameMap[sTOF];
-		if(null != oNewId)
-			stDefault.TOF = oNewId.id;
-
-		var localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
-		//меняем старые id
-		for(var sOldId in oIdRenameMap)
-		{
-			var oNewId = oIdRenameMap[sOldId];
-			var sNewStyleName = oNewId.newName;
-			var stId = sOldId;
-			if(stDefault.Character == stId)
-                stDefault.Character = null;
-            if(stDefault.Paragraph == stId)
-                stDefault.Paragraph = null;
-            if(stDefault.Numbering == stId)
-                stDefault.Numbering = null;
-            if(stDefault.Table == stId)
-                stDefault.Table = null;
-            if(stDefault.ParaList == stId)
-                stDefault.ParaList = oNewId.id;
-            if(stDefault.Header == stId || "header" == sNewStyleName)
-                stDefault.Header = oNewId.id;
-            if(stDefault.Footer == stId || "footer" == sNewStyleName)
-                stDefault.Footer = oNewId.id;
-			if(stDefault.Hyperlink == stId || "hyperlink" === sNewStyleName || localHyperlink === sNewStyleName)
-                stDefault.Hyperlink = oNewId.id;
-            if(stDefault.TableGrid == stId || "tablegrid" == sNewStyleName)
-                stDefault.TableGrid = oNewId.id;
-			if(stDefault.FootnoteText == stId || "footnotetext" == sNewStyleName)
-				stDefault.FootnoteText = oNewId.id;
-			if(stDefault.FootnoteTextChar == stId || "footnotetextchar" == sNewStyleName)
-				stDefault.FootnoteTextChar = oNewId.id;
-			if(stDefault.FootnoteReference == stId || "footnotereference" == sNewStyleName)
-				stDefault.FootnoteReference = oNewId.id;
-			if(stDefault.EndnoteText == stId || "endnotetext" == sNewStyleName)
-				stDefault.EndnoteText = oNewId.id;
-			if(stDefault.EndnoteTextChar == stId || "endnotetextchar" == sNewStyleName)
-				stDefault.EndnoteTextChar = oNewId.id;
-			if(stDefault.EndnoteReference == stId || "endnotereference" == sNewStyleName)
-				stDefault.EndnoteReference = oNewId.id;
-			if (stDefault.NoSpacing == stId)
-				stDefault.NoSpacing = oNewId.id;
-			if (stDefault.Title == stId)
-				stDefault.Title = oNewId.id;
-			if (stDefault.Subtitle == stId)
-				stDefault.Subtitle = oNewId.id;
-			if (stDefault.Quote == stId)
-				stDefault.Quote = oNewId.id;
-			if (stDefault.IntenseQuote == stId)
-				stDefault.IntenseQuote = oNewId.id;
-			if (stDefault.Caption == stId)
-				stDefault.Caption = oNewId.id;
-
-            if(true == oNewId.def)
-            {
-                switch(oNewId.type)
-                {
-                    case styletype_Character:stDefault.Character = oNewId.id;break;
-                    case styletype_Numbering:stDefault.Numbering = oNewId.id;break;
-                    case styletype_Paragraph:stDefault.Paragraph = oNewId.id;break;
-                    case styletype_Table:stDefault.Table = oNewId.id;break;
-                }
-            }
-		}
-		//will be default if there is no def attribute
-		var characterNameId, numberingNameId, paragraphNameId, tableNameId;
+		
 		//добавляем новые стили
 		for(var i in this.oReadResult.styles)
 		{
@@ -8132,48 +8042,7 @@ function BinaryFileReader(doc, openParams)
 				else
 					oNewStyle.Set_Link(null);
 			}
-			var oNewId = elem.param;
-			var sNewStyleName = oNewStyle.Name.toLowerCase().replace(/\s/g,"");
-			if(true == oNewId.def)
-            {
-                switch(oNewStyle.Type)
-                {
-                    case styletype_Character:stDefault.Character = sNewStyleId;break;
-                    case styletype_Numbering:stDefault.Numbering = sNewStyleId;break;
-                    case styletype_Paragraph:stDefault.Paragraph = sNewStyleId;break;
-                    case styletype_Table:stDefault.Table = sNewStyleId;break;
-                }
-            }
-            if("header" == sNewStyleName)
-                stDefault.Header = sNewStyleId;
-            if("footer" == sNewStyleName)
-                stDefault.Footer = sNewStyleId;
-            if("hyperlink" === sNewStyleName || localHyperlink === sNewStyleName)
-                stDefault.Hyperlink = sNewStyleId;
-            if("tablegrid" == sNewStyleName)
-                stDefault.TableGrid = sNewStyleId;
-			if("footnotetext" == sNewStyleName)
-				stDefault.FootnoteText = sNewStyleId;
-			if("footnotetextchar" == sNewStyleName)
-				stDefault.FootnoteTextChar = sNewStyleId;
-			if("footnotereference" == sNewStyleName)
-				stDefault.FootnoteReference = sNewStyleId;
-			if("endnotetext" == sNewStyleName)
-				stDefault.EndnoteText = sNewStyleId;
-			if("endnotetextchar" == sNewStyleName)
-				stDefault.EndnoteTextChar = sNewStyleId;
-			if("endnotereference" == sNewStyleName)
-				stDefault.EndnoteReference = sNewStyleId;
-			if("defaultparagraphfont" == sNewStyleName)
-				characterNameId = sNewStyleId;
-			if("normal" == sNewStyleName)
-				paragraphNameId = sNewStyleId;
-			if("nolist" == sNewStyleName)
-				numberingNameId = sNewStyleId;
-			if("normaltable" == sNewStyleName)
-				tableNameId = sNewStyleId;
-			if ("caption" == sNewStyleName)
-				stDefault.Caption = sNewStyleId;
+			
 			oDocStyle.Add(oNewStyle);
 		}
 		var fParseStyle = function(aStyles, oDocumentStyles)
@@ -8188,62 +8057,39 @@ function BinaryFileReader(doc, openParams)
 		}
 		fParseStyle(this.oReadResult.styleLinks, styles);
 
-		if (null == stDefault.Character) {
-			if (!characterNameId) {
-				let styleName = "Default Paragraph Font";
-				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")]
-				if (!startDocStyle) {
-					let newStyle = new CStyle(styleName, null, null, styletype_Character);
-					newStyle.CreateDefaultParagraphFont();
-					characterNameId = oDocStyle.Add(newStyle);
-				} else {
-					characterNameId = startDocStyle.GetId();
-				}
-			}
-			stDefault.Character = characterNameId;
+		// Проверяем наличие 4 основных дефолтовых стилей
+		let styleName = "Default Paragraph Font";
+		let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")]
+		if (!startDocStyle) {
+			let newStyle = new CStyle(styleName, null, null, styletype_Character);
+			newStyle.CreateDefaultParagraphFont();
+			oDocStyle.Add(newStyle);
 		}
-		if (null == stDefault.Numbering) {
-			if (!numberingNameId) {
-				let styleName = "No List";
-				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
-				if (!startDocStyle) {
-					let newStyle = new CStyle(styleName, null, null, styletype_Numbering);
-					newStyle.CreateNoList();
-					numberingNameId = oDocStyle.Add(newStyle);
-				} else {
-					numberingNameId = startDocStyle.GetId();
-				}
-			}
-			stDefault.Numbering = numberingNameId;
+		
+		styleName = "No List";
+		startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+		if (!startDocStyle) {
+			let newStyle = new CStyle(styleName, null, null, styletype_Numbering);
+			newStyle.CreateNoList();
+			oDocStyle.Add(newStyle);
 		}
-		if (null == stDefault.Paragraph) {
-			if (!paragraphNameId) {
-				let styleName = "Normal";
-				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
-				if (!startDocStyle) {
-					let newStyle = new CStyle(styleName, null, null, styletype_Paragraph);
-					newStyle.CreateNormal();
-					paragraphNameId = oDocStyle.Add(newStyle);
-				} else {
-					paragraphNameId = startDocStyle.GetId();
-				}
-			}
-			stDefault.Paragraph = paragraphNameId;
+		
+		styleName = "Normal";
+		startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+		if (!startDocStyle) {
+			let newStyle = new CStyle(styleName, null, null, styletype_Paragraph);
+			newStyle.CreateNormal();
+			oDocStyle.Add(newStyle);
 		}
-		if (null == stDefault.Table) {
-			if (!tableNameId) {
-				let styleName = "Normal Table";
-				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
-				if (!startDocStyle) {
-					let newStyle = new CStyle(styleName, null, null, styletype_Table);
-					newStyle.Create_NormalTable();
-					tableNameId = oDocStyle.Add(newStyle);
-				} else {
-					tableNameId = startDocStyle.GetId();
-				}
-			}
-			stDefault.Table = tableNameId;
+		styleName = "Normal Table";
+		startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+		if (!startDocStyle) {
+			let newStyle = new CStyle(styleName, null, null, styletype_Table);
+			newStyle.Create_NormalTable();
+			oDocStyle.Add(newStyle);
 		}
+		
+		oDocStyle.UpdateDefaultStyleLinks();
 		//проверяем циклы в styles по BasedOn
 		var aStylesGrey = {};
 		for(var stId in styles)

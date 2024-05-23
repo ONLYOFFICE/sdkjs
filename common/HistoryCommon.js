@@ -2030,32 +2030,10 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CStyles
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Styles_Add                              = window['AscDFH'].historyitem_type_Styles | 1;
-	window['AscDFH'].historyitem_Styles_Remove                           = window['AscDFH'].historyitem_type_Styles | 2;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTextPr              = window['AscDFH'].historyitem_type_Styles | 3;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParaPr              = window['AscDFH'].historyitem_type_Styles | 4;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParagraphId         = window['AscDFH'].historyitem_type_Styles | 5;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultCharacterId         = window['AscDFH'].historyitem_type_Styles | 6;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultNumberingId         = window['AscDFH'].historyitem_type_Styles | 7;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTableId             = window['AscDFH'].historyitem_type_Styles | 8;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTableGridId         = window['AscDFH'].historyitem_type_Styles | 9;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHeadingsId          = window['AscDFH'].historyitem_type_Styles | 10;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParaListId          = window['AscDFH'].historyitem_type_Styles | 11;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHeaderId            = window['AscDFH'].historyitem_type_Styles | 12;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFooterId            = window['AscDFH'].historyitem_type_Styles | 13;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHyperlinkId         = window['AscDFH'].historyitem_type_Styles | 14;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteTextId      = window['AscDFH'].historyitem_type_Styles | 15;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteTextCharId  = window['AscDFH'].historyitem_type_Styles | 16;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteReferenceId = window['AscDFH'].historyitem_type_Styles | 17;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultNoSpacingId         = window['AscDFH'].historyitem_type_Styles | 18;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTitleId             = window['AscDFH'].historyitem_type_Styles | 19;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultSubtitleId          = window['AscDFH'].historyitem_type_Styles | 20;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultQuoteId             = window['AscDFH'].historyitem_type_Styles | 21;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultIntenseQuoteId      = window['AscDFH'].historyitem_type_Styles | 22;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultCaption             = window['AscDFH'].historyitem_type_Styles | 23;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteTextId       = window['AscDFH'].historyitem_type_Styles | 24;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteTextCharId   = window['AscDFH'].historyitem_type_Styles | 25;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteReferenceId  = window['AscDFH'].historyitem_type_Styles | 26;
+	window['AscDFH'].historyitem_Styles_Add                 = window['AscDFH'].historyitem_type_Styles | 1;
+	window['AscDFH'].historyitem_Styles_Remove              = window['AscDFH'].historyitem_type_Styles | 2;
+	window['AscDFH'].historyitem_Styles_ChangeDefaultTextPr = window['AscDFH'].historyitem_type_Styles | 3;
+	window['AscDFH'].historyitem_Styles_ChangeDefaultParaPr = window['AscDFH'].historyitem_type_Styles | 4;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaMath
 	//------------------------------------------------------------------------------------------------------------------
