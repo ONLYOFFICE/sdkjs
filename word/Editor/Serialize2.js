@@ -8190,53 +8190,56 @@ function BinaryFileReader(doc, openParams)
 
 		if (null == stDefault.Character) {
 			if (!characterNameId) {
-				var oNewStyle = new CStyle("Default Paragraph Font", null, null, styletype_Character );
-				oNewStyle.CreateDefaultParagraphFont();
-				characterNameId = oDocStyle.Add(oNewStyle);
-				//remove style with same name
-				var oStartDocStyle = aStartDocStylesNames[oNewStyle.Name.toLowerCase().replace(/\s/g,"")];
-				if(oStartDocStyle) {
-					oDocStyle.Remove(oStartDocStyle.Get_Id());
+				let styleName = "Default Paragraph Font";
+				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")]
+				if (!startDocStyle) {
+					let newStyle = new CStyle(styleName, null, null, styletype_Character);
+					newStyle.CreateDefaultParagraphFont();
+					characterNameId = oDocStyle.Add(newStyle);
+				} else {
+					characterNameId = startDocStyle.GetId();
 				}
 			}
 			stDefault.Character = characterNameId;
 		}
 		if (null == stDefault.Numbering) {
 			if (!numberingNameId) {
-				var oNewStyle = new CStyle("No List", null, null, styletype_Numbering);
-				oNewStyle.CreateNoList();
-				numberingNameId = oDocStyle.Add(oNewStyle);
-				//remove style with same name
-				var oStartDocStyle = aStartDocStylesNames[oNewStyle.Name.toLowerCase().replace(/\s/g,"")];
-				if(oStartDocStyle) {
-					oDocStyle.Remove(oStartDocStyle.Get_Id());
+				let styleName = "No List";
+				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+				if (!startDocStyle) {
+					let newStyle = new CStyle(styleName, null, null, styletype_Numbering);
+					newStyle.CreateNoList();
+					numberingNameId = oDocStyle.Add(newStyle);
+				} else {
+					numberingNameId = startDocStyle.GetId();
 				}
 			}
 			stDefault.Numbering = numberingNameId;
 		}
 		if (null == stDefault.Paragraph) {
 			if (!paragraphNameId) {
-				var oNewStyle = new CStyle("Normal", null, null, styletype_Paragraph);
-				oNewStyle.CreateNormal();
-				paragraphNameId = oDocStyle.Add(oNewStyle);
-				//remove style with same name
-				var oStartDocStyle = aStartDocStylesNames[oNewStyle.Name.toLowerCase().replace(/\s/g,"")];
-				if(oStartDocStyle) {
-					oDocStyle.Remove(oStartDocStyle.Get_Id());
+				let styleName = "Normal";
+				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+				if (!startDocStyle) {
+					let newStyle = new CStyle(styleName, null, null, styletype_Paragraph);
+					newStyle.CreateNormal();
+					paragraphNameId = oDocStyle.Add(newStyle);
+				} else {
+					paragraphNameId = startDocStyle.GetId();
 				}
 			}
 			stDefault.Paragraph = paragraphNameId;
 		}
 		if (null == stDefault.Table) {
 			if (!tableNameId) {
-				var oNewStyle = new CStyle("Normal Table", null, null, styletype_Table);
-				oNewStyle.Create_NormalTable();
-				oNewStyle.Set_TablePr(new CTablePr());
-				tableNameId = oDocStyle.Add(oNewStyle);
-				//remove style with same name
-				var oStartDocStyle = aStartDocStylesNames[oNewStyle.Name.toLowerCase().replace(/\s/g,"")];
-				if(oStartDocStyle) {
-					oDocStyle.Remove(oStartDocStyle.Get_Id());
+				let styleName = "Normal Table";
+				let startDocStyle = aStartDocStylesNames[styleName.toLowerCase().replace(/\s/g,"")];
+				if (!startDocStyle) {
+					let newStyle = new CStyle(styleName, null, null, styletype_Table);
+					newStyle.Create_NormalTable();
+					tableNameId = oDocStyle.Add(newStyle);
+				} else {
+					tableNameId = startDocStyle.GetId();
 				}
 			}
 			stDefault.Table = tableNameId;
