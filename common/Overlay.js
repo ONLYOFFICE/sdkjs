@@ -126,31 +126,7 @@
                 else
                 {
                     var _eps = 5;
-                    if(this.CanvasTransform)
-                    {
-                        let m = this.CanvasTransform;
-                        let x_min = this.min_x - _eps;
-                        let y_min = this.min_y - _eps;
-                        let x_max = this.max_x + _eps;
-                        let y_max = this.max_y + _eps;
-                        let x1 = m.TransformPointX(x_min, y_min);
-                        let y1 = m.TransformPointY(x_min, y_min);
-                        let x2 = m.TransformPointX(x_max, y_min);
-                        let y2 = m.TransformPointY(x_max, y_min);
-                        let x3 = m.TransformPointX(x_max, y_max);
-                        let y3 = m.TransformPointY(x_max, y_max);
-                        let x4 = m.TransformPointX(x_min, y_max);
-                        let y4 = m.TransformPointY(x_min, y_max);
-                        let l = Math.min(x1, x2, x3, x4);
-                        let t = Math.min(y1, y2, y3, y4);
-                        let r = Math.max(x1, x2, x3, x4);
-                        let b = Math.max(y1, y2, y3, y4);
-                        this.m_oContext.clearRect(l, t, r - l, b - t);
-                    }
-                    else
-                    {
-                        this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
-                    }
+                    this.m_oContext.clearRect(this.min_x - _eps, this.min_y - _eps, this.max_x - this.min_x + 2*_eps, this.max_y - this.min_y + 2 * _eps);
                 }
             }
             this.min_x = 0xFFFF;
@@ -427,20 +403,38 @@
 
         CheckPoint1 : function(x,y)
         {
-            if (x < this.min_x)
-                this.min_x = x;
-            if (y < this.min_y)
-                this.min_y = y;
+            if (this.CanvasTransform) {
+                this.CheckPoint(x, y);
+            }
+            else {
+                if (x < this.min_x)
+                    this.min_x = x;
+                if (y < this.min_y)
+                    this.min_y = y;
+            }
         },
         CheckPoint2 : function(x,y)
         {
-            if (x > this.max_x)
-                this.max_x = x;
-            if (y > this.max_y)
-                this.max_y = y;
+            if (this.CanvasTransform) {
+                this.CheckPoint(x, y);
+            }
+            else {
+                if (x > this.max_x)
+                    this.max_x = x;
+                if (y > this.max_y)
+                    this.max_y = y;
+            }
+            
         },
         CheckPoint : function(x,y)
         {
+            if (this.CanvasTransform) {
+                let oTr = this.CanvasTransform;
+                let oTrPt = oTr.TransformPoint(x, y);
+                x = oTrPt.x;
+                y = oTrPt.y;
+            }
+
             if (x < this.min_x)
                 this.min_x = x ;
             if (y < this.min_y)
