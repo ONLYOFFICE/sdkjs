@@ -183,6 +183,38 @@
 			return Asc.editor.getPDFDoc().globalTableStyles;
 		}
 	};
+    CPdfGraphicFrame.prototype.canRotate = function() {
+        return true;
+    };
+    CPdfGraphicFrame.prototype.getRotateAngle = function (x, y) {
+        var transform = this.getTransformMatrix();
+        var rotate_distance = this.convertPixToMM(AscCommon.TRACK_DISTANCE_ROTATE);
+        var hc = this.extX * 0.5;
+        var vc = this.extY * 0.5;
+        var xc_t = transform.TransformPointX(hc, vc);
+        var yc_t = transform.TransformPointY(hc, vc);
+        var rot_x_t = transform.TransformPointX(hc, -rotate_distance);
+        var rot_y_t = transform.TransformPointY(hc, -rotate_distance);
+
+        var invert_transform = this.getInvertTransform();
+        if (!invert_transform) {
+            return 0.0;
+        }
+        var rel_x = invert_transform.TransformPointX(x, y);
+
+        var v1_x, v1_y, v2_x, v2_y;
+        v1_x = x - xc_t;
+        v1_y = y - yc_t;
+
+        v2_x = rot_x_t - xc_t;
+        v2_y = rot_y_t - yc_t;
+
+        var flip_h = this.getFullFlipH();
+        var flip_v = this.getFullFlipV();
+        var same_flip = flip_h && flip_v || !flip_h && !flip_v;
+        var angle = rel_x > this.extX * 0.5 ? Math.atan2(Math.abs(v1_x * v2_y - v1_y * v2_x), v1_x * v2_x + v1_y * v2_y) : -Math.atan2(Math.abs(v1_x * v2_y - v1_y * v2_x), v1_x * v2_x + v1_y * v2_y);
+        return same_flip ? angle : -angle;
+    };
     CPdfGraphicFrame.prototype.selectionSetStart = function (e, x, y) {
 		if (AscCommon.g_mouse_button_right === e.Button) {
 			this.rightButtonFlag = true;
