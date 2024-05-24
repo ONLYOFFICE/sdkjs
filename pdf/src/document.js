@@ -206,7 +206,7 @@ var CPresentation = CPresentation || function(){};
                 }
                 case 90: {
                     // Новый отступ слева после поворота
-                    let newXInd = xInd + (nPageW - nPageH) / 2;
+                    let newXInd = xInd + (nPageW - nPageH >> 1);
                     tx = -yInd * nScale;
                     ty = (nPageH + newXInd) * nScale;
                     sx = 0;
@@ -226,7 +226,7 @@ var CPresentation = CPresentation || function(){};
                 }
                 case 270: {
                     // Новый отступ слева после поворота
-                    let newXInd = xInd + (nPageW - nPageH) / 2;
+                    let newXInd = xInd + (nPageW - nPageH >> 1);
                     tx = (nPageW + yInd) * nScale;
                     ty = -newXInd * nScale;
                     sx = 0;

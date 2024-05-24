@@ -2893,20 +2893,20 @@
 				case 90:
 					ctx.translate(cx, yInd);
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, 0, -0.5 * pageHeight >> 0, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, 0, -pageHeight >> 1, pageWidth, pageHeight);
 					break;
 				case 180:
-					ctx.translate(cx, yInd + pageHeight / 2 >> 0);
+					ctx.translate(cx, yInd + (pageHeight >> 1));
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, -pageWidth / 2 >> 0, -pageHeight / 2 >> 0, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, -(pageWidth >> 1), -(pageHeight >> 1), pageWidth, pageHeight);
 					break;
 				case 270:
 					ctx.translate(cx, yInd + pageWidth >> 0);
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, 0, -0.5 * pageHeight >> 0, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, 0, -pageHeight >> 1, pageWidth, pageHeight);
 					break;
 				default: // 0 градусов, по умолчанию
-					ctx.drawImage(imagePage, cx - pageWidth / 2 >> 0, yInd, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, cx - (pageWidth >> 1), yInd, pageWidth, pageHeight);
 					break;
 			}
 
