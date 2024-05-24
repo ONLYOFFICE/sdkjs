@@ -902,12 +902,20 @@ CChangesStylesAdd.prototype.constructor = CChangesStylesAdd;
 CChangesStylesAdd.prototype.Type = AscDFH.historyitem_Styles_Add;
 CChangesStylesAdd.prototype.Undo = function()
 {
+	let style = this.Class.Style[this.Id]
+	if (!style)
+		return;
+	
 	delete this.Class.Style[this.Id];
+	style.SetParent(null);
 	this.Class.Update_Interface(this.Id);
 };
 CChangesStylesAdd.prototype.Redo = function()
 {
 	this.Class.Style[this.Id] = this.Style;
+	if (this.Style)
+		this.Style.SetParent(this.Class);
+		
 	this.Class.Update_Interface(this.Id);
 };
 CChangesStylesAdd.prototype.WriteToBinary = function(Writer)
@@ -957,11 +965,18 @@ CChangesStylesRemove.prototype.Type = AscDFH.historyitem_Styles_Remove;
 CChangesStylesRemove.prototype.Undo = function()
 {
 	this.Class.Style[this.Id] = this.Style;
+	if (this.Style)
+		this.Style.SetParent(this.Class);
+	
 	this.Class.Update_Interface(this.Id);
 };
 CChangesStylesRemove.prototype.Redo = function()
 {
+	let style = this.Class.Style[this.Id];
 	delete this.Class.Style[this.Id];
+	if (style)
+		style.SetParent(null);
+	
 	this.Class.Update_Interface(this.Id);
 };
 CChangesStylesRemove.prototype.WriteToBinary = function(Writer)

@@ -244,6 +244,8 @@ CTableStylePr.prototype =
 function CStyle(Name, BasedOnId, NextId, type, bNoCreateTablePr)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	
+	this.Parent = null;
 
 	this.StyleId = null;
 
@@ -6378,12 +6380,26 @@ CStyle.prototype.SetFromObject = function(obj)
 	// TODO: Table conditional
 };
 /**
+ * @param {?CStyles} parent
+ */
+CStyle.prototype.SetParent = function(parent)
+{
+	this.Parent = parent;
+};
+CStyle.prototype.GetParent = function()
+{
+	return this.Parent;
+};
+/**
  * Получаем ссылку на основной класс документа
  * @returns {?AscWord.CDocument}
  */
 CStyle.prototype.GetLogicDocument = function()
 {
-	return private_GetWordLogicDocument();
+	if (!this.Parent)
+		return null;
+	
+	return this.Parent.GetLogicDocument();
 };
 /**
  * Устанавливаем стиль, от которого данный наследуется
@@ -7155,6 +7171,8 @@ CStyle.prototype.GetRelatedParagraphs = function()
 		return [];
 	
 	let styleManager = logicDocument.GetStyles();
+	if (!styleManager)
+		return [];
 	
 	let styleId = this.GetId();
 	let paragraphs;
@@ -7881,6 +7899,7 @@ CStyles.prototype =
 		var Id = Style.Get_Id();
 		History.Add(new CChangesStylesAdd(this, Id, Style));
 		this.Style[Id] = Style;
+		Style.SetParent(this);
 		this.Update_Interface(Id);
 		return Id;
 	},
@@ -7897,6 +7916,10 @@ CStyles.prototype =
 
 	Remove : function(Id)
 	{
+		if (!this.Style[Id])
+			return;
+		
+		this.Style[Id].SetParent(null);
 		History.Add(new CChangesStylesRemove(this, Id, this.Style[Id]));
 		delete this.Style[Id];
 		this.Update_Interface(Id);
@@ -9255,6 +9278,10 @@ CStyles.prototype.GetAscStylesArray = function()
 CStyles.prototype.private_GetLogicDocument = function()
 {
 	return (editor && editor.WordControl && editor.WordControl.m_oLogicDocument ? editor.WordControl.m_oLogicDocument : null);
+};
+CStyles.prototype.GetLogicDocument = function()
+{
+	return this.LogicDocument;
 };
 CStyles.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
