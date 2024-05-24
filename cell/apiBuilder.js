@@ -7998,7 +7998,7 @@
 			if (destination instanceof ApiRange) {
 				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
 				let ws =  destination.range.worksheet;
-				private_executeOtherActiveSheet(ws, destination.range, function () {
+				private_executeOtherActiveSheet(ws, destination.areas || [destination.range], function () {
 					oApi && oApi.asc_Paste();
 				});
 			} else {
@@ -9475,7 +9475,7 @@
 			}
 		} else {
 			let ws =  this.range.worksheet;
-			private_executeOtherActiveSheet(ws, this.range, function () {
+			private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
 				oApi && oApi.asc_Copy();
 			});
 			oApi && oApi.wb.cleanCopyData();
@@ -9504,7 +9504,7 @@
 			}
 		} else {
 			let ws =  this.range.worksheet;
-			private_executeOtherActiveSheet(ws, this.range, function () {
+			private_executeOtherActiveSheet(ws, [this.range], function () {
 				AscCommon.g_clipboardBase.forceCutSelection = true;
 				oApi && oApi.asc_Cut();
 				AscCommon.g_clipboardBase.forceCutSelection = false;
@@ -9629,7 +9629,7 @@
 		let oApi = Asc["editor"];
 		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
 		let ws =  this.range.worksheet;
-		private_executeOtherActiveSheet(ws, this.range, function () {
+		private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
 			oApi && oApi.asc_Paste();
 		});
 	};
@@ -13862,21 +13862,21 @@
 		}
 
 		return result;
-	};
+	}
 
 	function logError(err) {
 		if (console.error)
 			console.error(err);
 		else
 			console.log(err);
-	};
+	}
 
 	function throwException(err) {
 		if (!console.error)
 			logError(err);
 		throw err;
-	};
-	function private_executeOtherActiveSheet(ws, range, func) {
+	}
+	function private_executeOtherActiveSheet(ws, ranges, func) {
 		let oldActiveSheet = ws && ws.workbook && ws.workbook.getActive();
 		let isChangedActiveSheet;
 		if (oldActiveSheet != null && ws && oldActiveSheet !== ws.index) {
@@ -13885,11 +13885,20 @@
 		}
 
 		let oldSelection;
-		if (range) {
+		if (ranges) {
 			oldSelection = ws.selectionRange.clone();
 			let newSelection = new AscCommonExcel.SelectionRange(ws);
-			let bbox = range.bbox;
-			newSelection.assign2(bbox);
+			if (ranges.length === 1) {
+				let bbox = ranges[0].bbox;
+				newSelection.assign2(bbox);
+			} else {
+				for (let i = 0; i < ranges.length; i++) {
+					if (i !== 0) {
+						newSelection.addRange();
+					}
+					newSelection.getLast().assign2(ranges[i].bbox);
+				}
+			}
 			newSelection.Select(true);
 		}
 
@@ -13897,6 +13906,6 @@
 
 		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
 		oldSelection && oldSelection.Select(true);
-	};
+	}
 
 }(window, null));
