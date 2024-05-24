@@ -1230,6 +1230,9 @@
     CAnnotationBase.prototype.canRotate = function() {
         return false;
     };
+    CAnnotationBase.prototype.canEditText = function () {
+        return false;
+    };
 
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));
