@@ -253,12 +253,12 @@
 		}
 	};
 	PDFEditorApi.prototype.onUpdateRestrictions = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc) {
+			return;
+		}
+
 		if (this.isRestrictionView()) {
-			let oDoc = this.getPDFDoc();
-			if (!oDoc) {
-				return;
-			}
-			
 			let oActiveObj = oDoc.GetActiveObject();
 
 			if (oActiveObj && oActiveObj.IsDrawing()) {
@@ -267,6 +267,11 @@
 
 			oDoc.drawings.forEach(function(drawing) {
 				drawing.AddToRedraw();
+			});
+		}
+		else {
+			setTimeout(function() {
+				oDoc.checkDefaultFonts();
 			});
 		}
 	};
