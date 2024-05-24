@@ -253,8 +253,9 @@ function (window, undefined) {
 		oCopy.setHidden(this.hidden);
 	};
 
-	CAxis.prototype.setAxPos = function (pos) {
-		const axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+	// isVertAxis => shows if axis is vertical
+	CAxis.prototype.setAxPos = function (isVertAxis) {
+		const axPos = isVertAxis ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
 		CAxisBase.prototype.setAxPos.call(this, axPos);
 	}
 
@@ -3375,7 +3376,7 @@ function (window, undefined) {
 		if (aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if (oDim) {
-				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL) ? oDim.levelData.length - 1 : 0;
+				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
 				return oDim.levelData[index] || null;
 			}
 		}

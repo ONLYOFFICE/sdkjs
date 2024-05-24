@@ -4063,7 +4063,7 @@
         return new CDataRefs([]);
     };
     CSeriesBase.prototype.getTxDataRefs = function() {
-        if(this.tx) {
+        if(this.tx && this.tx.getDataRefs) {
             return this.tx.getDataRefs();
         }
         return new CDataRefs([]);
