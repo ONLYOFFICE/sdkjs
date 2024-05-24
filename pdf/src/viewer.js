@@ -3072,7 +3072,8 @@
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
 				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-				if ((pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio > yInp)
+				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
+					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 					break;
 			}
 			if (pageIndex > this.endVisiblePage)
