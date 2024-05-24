@@ -3870,8 +3870,10 @@
 		}
 	};
 	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
-        let image = this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-        if (!image) {
+		let oFile = this.file;
+		let image = !oFile.pages[nPage].isConvertedToShapes ? this.file.getPage(nPage, nWidthPx, nHeightPx, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF) : null;
+
+		if (!image) {
 			let pageColor = this.Api.getPageBackgroundColor();
 
 			image = document.createElement('canvas');
@@ -3883,20 +3885,20 @@
 
 			ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
 			ctx.fillRect(0, 0, nWidthPx, nHeightPx);
-        }
+		}
 
 		image.requestWidth = nWidthPx;
 		image.requestHeight = nHeightPx;
-		
-        let ctx = image.getContext('2d');
+
+		let ctx = image.getContext('2d');
 
 		this._drawMarkupAnnotsOnCtx(nPage, ctx);
-		this._drawDrawingsOnCtx(nPage, ctx);
-        this._drawAnnotsOnCtx(nPage, ctx, true);
-        this._drawFieldsOnCtx(nPage, ctx, true);
+		this._drawDrawingsOnCtx(nPage, ctx, true);
+		this._drawAnnotsOnCtx(nPage, ctx, true);
+		this._drawFieldsOnCtx(nPage, ctx, true);
 
-        return ctx.canvas;
-    };
+		return ctx.canvas;
+	};
     CHtmlPage.prototype._drawAnnotsOnCtx = function(nPage, ctx, isThumbnails) {
 		let oDoc		= this.getPDFDoc();
         let widthPx		= ctx.canvas.width;
@@ -3949,17 +3951,18 @@
             });
         }
     };
-	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx) {
+	CHtmlPage.prototype._drawDrawingsOnCtx = function(nPage, ctx, isThumbnails) {
 		let oDoc		= this.getPDFDoc();
-        let widthPx		= ctx.canvas.width;
-        let heightPx    = ctx.canvas.height;
-        
-        let oGraphicsWord = new AscCommon.CGraphics();
-        oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage) , oDoc.GetPageHeightMM(nPage));
-        oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-        oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
-        oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
-        
+		let widthPx		= ctx.canvas.width;
+		let heightPx    = ctx.canvas.height;
+
+		let oGraphicsWord = new AscCommon.CGraphics();
+		oGraphicsWord.isThumbnails = isThumbnails;
+		oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage) , oDoc.GetPageHeightMM(nPage));
+		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+		oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
+		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+
 		let aDrawings = this.pagesInfo.pages[nPage].drawings;
 		aDrawings.forEach(function(drawing) {
 			drawing.Draw(oGraphicsWord);
