@@ -1236,9 +1236,9 @@ $(function () {
 		ws.getRange2("B1036").setValue("10"); // mu
 		ws.getRange2("C1036").setValue("0"); // u start
 		ws.getRange2('D1036').setValue("=C1035"); // u
-		assert.strictEqual(ws.getRange2("D1033").getValue(), "7.499728735325547", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1033 - 7.499728735325547");
-		assert.strictEqual(ws.getRange2("D1034").getValue(), "4.999728735325547", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1034 - 4.999728735325547");
-		assert.strictEqual(ws.getRange2("D1035").getValue(), "2.4998643676627736", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1035 - 2.4998643676627736");
+		assert.strictEqual(ws.getRange2("D1033").getValue(), "7.499457849531321", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1033 - 7.499728735325547");
+		assert.strictEqual(ws.getRange2("D1034").getValue(), "4.999457849531321", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1034 - 4.999728735325547");
+		assert.strictEqual(ws.getRange2("D1035").getValue(), "2.4997289247656607", "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. D1035 - 2.4998643676627736");
 		// Check work  isFormulaRecursion function
 		bCaFromSelectedCell = getCaFromSelectedCell("D1033");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1033 - flag ca: true");
@@ -1248,6 +1248,24 @@ $(function () {
 		bCaFromSelectedCell = null;
 		bCaFromSelectedCell = getCaFromSelectedCell("D1035");
 		assert.strictEqual(bCaFromSelectedCell, true, "Test: Sequence-loop chain. D1033 <-> D1034, D1034 <-> D1035 etc. isFormulaRecursion test. D1035 - flag ca: true");
+		bCaFromSelectedCell = null;
+		// Case: Convergent formula calucaltes only once time.
+		g_cCalcRecursion.setMaxIterations(15);
+		ws.getRange2("A1040").setValue("=A1041+A1043");
+		ws.getRange2("A1041").setValue("25150");
+		ws.getRange2("A1042").setValue("0.2");
+		ws.getRange2("A1043").setValue("=A1040*A1042");
+		assert.strictEqual(ws.getRange2("A1040").getValue(), "31437.49935616", "Test: Convergent formula calculates only once time. First calculate. A1040 - 31437.49987");
+		assert.strictEqual(ws.getRange2("A1043").getValue(), "6287.499871232", "Test: Convergent formula calculates only once time. First calculate. A1041 - 6287.499974246401");
+		ws.getRange2("A1041").setValue("25150");
+		assert.strictEqual(ws.getRange2("A1040").getValue(), "31437.49935616", "Test: Convergent formula calculates only once time. Recalculate. A1040 - 31437.49987");
+		assert.strictEqual(ws.getRange2("A1043").getValue(), "6287.499871232", "Test: Convergent formula calculates only once time. Recalculate. A1041 - 6287.499974246401");
+		// Check work isFormulaRecursion function
+		bCaFromSelectedCell = getCaFromSelectedCell("A1040");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Convergent formula calculates only once time. isFormulaRecursion test. A1040 - flag ca: true");
+		bCaFromSelectedCell = null;
+		bCaFromSelectedCell = getCaFromSelectedCell("A1043");
+		assert.strictEqual(bCaFromSelectedCell, true, "Test: Convergent formula calculates only once time. isFormulaRecursion test. A1043 - flag ca: true");
 		bCaFromSelectedCell = null;
 		// - Case: With disabled iterative calculation.
 		g_cCalcRecursion.setIsEnabledRecursion(false);

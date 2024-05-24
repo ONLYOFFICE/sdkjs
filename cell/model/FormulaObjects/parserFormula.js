@@ -9248,7 +9248,7 @@ function parserFormula( formula, parent, _ws ) {
 		const oGroupChangedCell = this.getGroupChangedCells();
 		const sCellWsName = oCell.ws.getName().toLowerCase();
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
-		if (!oGroupChangedCell[sCellWsName].hasOwnProperty(nCellIndex)) {
+		if (!oGroupChangedCell[sCellWsName] || !oGroupChangedCell[sCellWsName][nCellIndex]) {
 			return;
 		}
 		delete oGroupChangedCell[sCellWsName][nCellIndex];
@@ -9298,15 +9298,14 @@ function parserFormula( formula, parent, _ws ) {
 		this.oPrevIterResult = null;
 	};
 	/**
-	 * Method sets a result of a difference between iterations.
+	 * Method sets result of a difference between iterations.
 	 * @memberof CalcRecursion
 	 * @param {Cell} oCell
+	 * @param {number} nResult
 	 */
-	CalcRecursion.prototype.setDiffBetweenIter = function (oCell) {
+	CalcRecursion.prototype.setDiffBetweenIter = function (oCell, nResult) {
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
 		const sWsName = oCell.ws.getName().toLowerCase();
-		const nPrevIterResult = this.getPrevIterResult(oCell);
-		const nCurrentIterResult = oCell.getNumberValue();
 
 		if (this.oDiffBetweenIter == null) {
 			this.oDiffBetweenIter = {};
@@ -9314,7 +9313,22 @@ function parserFormula( formula, parent, _ws ) {
 		if (!this.oDiffBetweenIter.hasOwnProperty(sWsName)) {
 			this.oDiffBetweenIter[sWsName] = {};
 		}
-		this.oDiffBetweenIter[sWsName][nCellIndex] = Math.abs(nCurrentIterResult - nPrevIterResult);
+		this.oDiffBetweenIter[sWsName][nCellIndex] = nResult;
+	}
+	/**
+	 * Method calculates a result of a difference between iterations.
+	 * @memberof CalcRecursion
+	 * @param {Cell} oCell
+	 */
+	CalcRecursion.prototype.calcDiffBetweenIter = function (oCell) {
+		const nPrevIterResult = this.getPrevIterResult(oCell);
+		const nCurrentIterResult = oCell.getNumberValue();
+		const nChainLength = this.getRecursiveCells(oCell).length;
+
+		if (this.getIterStep() <= nChainLength && nCurrentIterResult === nPrevIterResult) {
+			return;
+		}
+		this.setDiffBetweenIter(oCell, Math.abs(nCurrentIterResult - nPrevIterResult));
 	};
 	/**
 	 * Method returns a result of a difference between iterations.
@@ -9330,7 +9344,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (oDiffBetweenIter == null) {
 			return NaN;
 		}
-		if (!oDiffBetweenIter.hasOwnProperty(sWsName) && !oDiffBetweenIter[sWsName].hasOwnProperty(nCellIndex)) {
+		if (!oDiffBetweenIter.hasOwnProperty(sWsName) || !oDiffBetweenIter[sWsName].hasOwnProperty(nCellIndex)) {
 			return NaN;
 		}
 
