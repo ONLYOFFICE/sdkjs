@@ -213,6 +213,48 @@
 			this.graphicObject.RecalculateCurPos();
 		}
 	};
+    CPdfGraphicFrame.prototype.draw = function (graphics) {
+        if (graphics.isBoundsChecker() === true) {
+            graphics.transform3(this.transform);
+            graphics._s();
+            graphics._m(0, 0);
+            graphics._l(this.extX, 0);
+            graphics._l(this.extX, this.extY);
+            graphics._l(0, this.extY);
+            graphics._e();
+            return;
+        }
+        if (graphics.animationDrawer) {
+            graphics.animationDrawer.drawObject(this, graphics);
+            return;
+        }
+        if (this.graphicObject) {
+            graphics.SaveGrState();
+            graphics.transform3(this.transform);
+            graphics.SetIntegerGrid(true);
+            if (this.graphicObject.IsTable()) {
+                let oTable  = this.graphicObject;
+                let nRows   = oTable.GetRowsCount();
+
+                for (let nRow = 0; nRow < nRows; nRow++) {
+                    let oRow = oTable.GetRow(nRow);
+                    let nCells = oRow.GetCellsCount();
+
+                    for (let nCell = 0; nCell < nCells; nCell++) {
+                        let oContent = oRow.GetCell(nCell).GetContent();
+                        oContent.Set_StartPage(0);
+                    }
+                }
+            }
+
+            this.graphicObject.Draw(0, graphics);
+            
+            this.drawLocks(this.transform, graphics);
+            graphics.RestoreGrState();
+        }
+        graphics.SetIntegerGrid(true);
+        graphics.reset();
+    };
     CPdfGraphicFrame.prototype.updateSelectionState = function () {
         let oDoc    = this.GetDocument();
         let oDrDoc  = oDoc.GetDrawingDocument();
