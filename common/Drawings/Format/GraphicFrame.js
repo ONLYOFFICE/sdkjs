@@ -770,13 +770,11 @@
 		if (this.graphicObject) {
 			graphics.SaveGrState();
 			graphics.transform3(this.transform);
-			graphics.SetIntegerGrid(true);
+			graphics.SetIntegerGrid(false);
 			this.graphicObject.Draw(0, graphics);
 			this.drawLocks(this.transform, graphics);
 			graphics.RestoreGrState();
 		}
-		graphics.SetIntegerGrid(true);
-		graphics.reset();
 	};
 
 	CGraphicFrame.prototype.Select = function () {
