@@ -216,8 +216,8 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
                 case 180: {
-                    tx = (xInd + nPageW) * nScale;
-                    ty = (yInd + nPageH) * nScale;
+                    tx = (xInd + nPageW) * nScale - (1 / this.Viewer.zoom); // магическое число
+                    ty = (yInd + nPageH) * nScale + (1 / this.Viewer.zoom); // магическое число
                     sx = -nScale;
                     sy = -nScale;
                     shx = 0;
@@ -228,7 +228,7 @@ var CPresentation = CPresentation || function(){};
                     // Новый отступ слева после поворота
                     let newXInd = xInd + (nPageW - nPageH >> 1);
                     tx = (nPageW + yInd) * nScale;
-                    ty = -newXInd * nScale;
+                    ty = -newXInd * nScale + (1 / this.Viewer.zoom); // магическое число;
                     sx = 0;
                     sy = 0;
                     shx = -1 * nScale;
