@@ -1337,7 +1337,7 @@
 		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
 			result = result.getValue();
 			if (AscCommonExcel.cElementType.empty === result.type) {
-				result = new cNumber(0);
+				result = new AscCommonExcel.cNumber(0);
 			}
 		} else if (AscCommonExcel.cElementType.array === result.type) {
 			result = result.getElement(0);
