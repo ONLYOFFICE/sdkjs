@@ -3638,9 +3638,7 @@
 			if (this.pagesInfo.pages[i].needRedrawTextShapes)
 			{
 				aDrawings.forEach(function(drawing) {
-					if (true == drawing.IsTextShape()) {
-						drawing.GetAllFonts(fontMap);
-					}
+					drawing.GetAllFonts(fontMap);
 				});
 			}
 			

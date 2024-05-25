@@ -183,6 +183,10 @@
             }
         }
     };
+    CPdfDrawingPrototype.prototype.GetAllFonts = function(fontMap) {
+        fontMap = fontMap || {};
+        return fontMap;
+    };
     CPdfDrawingPrototype.prototype.CheckTextOnOpen = function() {};
     CPdfDrawingPrototype.prototype.Draw = function(oGraphicsWord) {
         this.Recalculate();

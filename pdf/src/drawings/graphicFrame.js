@@ -88,6 +88,27 @@
             oTable.SetApplyToAll(false);
         }
     };
+    CPdfGraphicFrame.prototype.GetAllFonts = function (fontMap) {
+        fontMap = fontMap || {};
+
+		if (this.graphicObject) {
+			for (var i = 0; i < this.graphicObject.Content.length; ++i) {
+				var row = this.graphicObject.Content[i];
+				var cells = row.Content;
+				for (var j = 0; j < cells.length; ++j) {
+					cells[j].Content.Document_Get_AllFontNames(fontMap);
+				}
+			}
+			delete fontMap["+mj-lt"];
+			delete fontMap["+mn-lt"];
+			delete fontMap["+mj-ea"];
+			delete fontMap["+mn-ea"];
+			delete fontMap["+mj-cs"];
+			delete fontMap["+mn-cs"];
+		}
+
+        return fontMap;
+	};
     CPdfGraphicFrame.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
