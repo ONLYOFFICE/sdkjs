@@ -3913,8 +3913,9 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPage])
             return;
 
-        let oDrDoc      = this.GetDrawingDocument();
-        let nRotAngle    = this.Viewer.getPageRotate(nPage);
+        let nPageW      = this.GetPageWidthMM(nPage);
+        let nPageH      = this.GetPageHeightMM(nPage);
+        let nRotAngle   = this.Viewer.getPageRotate(nPage);
 
         let nExtX   = nPageW * 2 /3;
         let nExtY   = nPageH / 5;
@@ -3991,8 +3992,8 @@ var CPresentation = CPresentation || function(){};
             let oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
 
             if (oPh) {
-                nPosX = oPh.x;
-                nPosY = oPh.y;
+                oPos.x = oPh.x;
+                oPos.y = oPh.y;
                 oXfrm.setExtX(oPh.extX);
                 oXfrm.setExtY(oPh.extY);
             }

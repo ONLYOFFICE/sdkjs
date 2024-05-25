@@ -2326,6 +2326,8 @@ function CDrawingDocument()
 		var targetSizePx = (this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) >> 0;
 
 		var pos = null;
+		
+		this.AutoShapesTrack.SetCurrentPage(pageIndex);
 		let TextMatrix = this.AutoShapesTrack.transformPageMatrix(this.TextMatrix);
 		if (this.m_oWordControl.m_oLogicDocument)
 		{

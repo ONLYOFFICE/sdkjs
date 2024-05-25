@@ -62,7 +62,8 @@
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CTextSelectTrackHandler.prototype.GetBounds = function() {
-		let oFile		= Asc.editor.getDocumentRenderer().file;
+		let oViewer		= Asc.editor.getDocumentRenderer();
+		let oFile		= oViewer.file;
 		let aSelQuads	= oFile.getSelectionQuads();
 
 		if (aSelQuads.length == 0) {
@@ -72,7 +73,6 @@
 		let nPage		= aSelQuads[0].page;
 		let aFirstQuads	= aSelQuads[0].quads[0];
 
-		let oViewer = Asc.editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
         let oTr     = oDoc.pagesTransform[nPage].invert;
 

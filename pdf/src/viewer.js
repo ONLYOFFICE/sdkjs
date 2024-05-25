@@ -1509,7 +1509,7 @@
 				x -= this.x;
 				y -= this.y;
 			}
-			this.zoomCoordinate = this.getPageByCoords2(x, y);
+			this.zoomCoordinate = this.getPageByCoords2(x + this.x, y + this.y);
 			if (this.zoomCoordinate)
 			{
 				this.zoomCoordinate.xShift = x;
@@ -1896,12 +1896,6 @@
 		};
 		this.getPageDrawingByMouse = function()
 		{
-			let oDoc	= this.getPDFDoc();
-			let oDrDoc	= oDoc.GetDrawingDocument();
-			let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-			let X       = oPos.X;
-			let Y       = oPos.Y;
-
 			var pageObject = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 			if (!pageObject)
 				return null;
@@ -2396,15 +2390,8 @@
 					var _w = (rPR * (dKoefX * place.W)) >> 0;
 					var _h = (rPR * (dKoefY * place.H)) >> 0;
 
-					if (_x < this.overlay.min_x)
-						this.overlay.min_x = _x;
-					if ((_x + _w) > this.overlay.max_x)
-						this.overlay.max_x = _x + _w;
-
-					if (_y < this.overlay.min_y)
-						this.overlay.min_y = _y;
-					if ((_y + _h) > this.overlay.max_y)
-						this.overlay.max_y = _y + _h;
+					this.overlay.CheckPoint(_x,_y);
+					this.overlay.CheckPoint(_x + _w, _y + _h);
 
 					ctx.rect(_x, _y, _w, _h);
 				}
@@ -2554,14 +2541,17 @@
 				ctx.fillStyle = "rgba(51,102,204,255)";
 				ctx.beginPath();
 
-				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+				if (this.file.isSelectionUse())
 				{
-					var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-					ctx.beginPath();
-					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-					ctx.globalAlpha = 0.2;
-					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
-					ctx.fill();
+					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+					{
+						var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+						ctx.beginPath();
+						oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+						ctx.globalAlpha = 0.2;
+						this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y);
+						ctx.fill();
+					}
 				}
 
 				this.DrawingObjects.updateSelectionState();
@@ -3139,28 +3129,17 @@
 
 		this.ConvertCoordsToCursor = function(x, y, pageIndex)
 		{
-			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
-			var rPR = 1;//AscCommon.AscBrowser.retinaPixelRatio;
-			let yPos = this.scrollY >> 0;
-			let xCenter = this.width >> 1;
-			if (this.documentWidth > this.width)
-			{
-				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-			}
+			let oDoc	= Asc.editor.getPDFDoc();
+			let oFile	= Asc.editor.getDocumentRenderer().file;
 
-			let page = this.drawingPages[pageIndex];
+			let oTr		= oDoc.pagesTransform[pageIndex].normal.CreateDublicate();
+			let inchC	= (25.4 / oFile.pages[pageIndex].Dpi);
+			AscCommon.global_MatrixTransformer.ScaleAppend(oTr, inchC, inchC);
+			oTr.Invert();
 
-			let _w = (page.W * rPR) >> 0;
-			let _h = (page.H * rPR) >> 0;
-			let _x = ( (xCenter * rPR) >> 0) - (_w >> 1);
-			let _y = ( (page.Y - yPos) * rPR) >> 0;
+			let oPt = oTr.TransformPoint(x, y);
 
-			var x_pix = (_x + x * dKoef) >> 0;
-			var y_pix = (_y + y * dKoef) >> 0;
-			var w_pix = (_w * dKoef) >> 0;
-			var h_pix = (_h * dKoef) >> 0
-
-			return ( {x : x_pix, y : y_pix, w : w_pix, h: h_pix} );
+			return ( {x : oPt.x, y : oPt.y, w : oDoc.GetPageWidthMM(pageIndex), h: oDoc.GetPageHeightMM(pageIndex)} );
 		};
 
 		this.getPageLikeDetector = function(pageIndex)
@@ -3835,23 +3814,21 @@
 		let oCtx = this.canvasForms.getContext("2d");
 		oCtx.save();
 
-		let oCurOverlayTr = this.overlay.CanvasTransform;
-
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let page = this.drawingPages[i];
 			if (!page)
 				break;
 
+			let aForms = this.pagesInfo.pages[i].fields;
+			
+			if (aForms.length == 0)
+				continue;
+			
 			oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 			let oTr = this.overlay.m_oContext.getTransform();
 			oCtx.setTransform(oTr.a, oTr.b, oTr.c, oTr.d, oTr.e, oTr.f);
 
-			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-			
-			if (!aForms)
-				continue;
-			
 			if (this.pagesInfo.pages[i].fields != null) {
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
 					if (field.IsNeedDrawHighlight())
@@ -3867,7 +3844,6 @@
 			}
 		}
 
-		this.overlay.CanvasTransform = oCurOverlayTr;
 		oCtx.restore();
 	};
 	CHtmlPage.prototype._paintFormsMarkers = function()

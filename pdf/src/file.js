@@ -583,6 +583,9 @@ void main() {\n\
 
         this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
     };
+    CFile.prototype.isSelectionUse = function() {
+        return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2);
+    };
     CFile.prototype.getSelection = function() {
         return this.Selection;
     };
@@ -1660,15 +1663,8 @@ void main() {\n\
                         var _y = (y + dKoefY * (_lineY - _lineAscent)) >> 0;
                         var _b = (y + dKoefY * (_lineY + _lineDescent)) >> 0;
 
-                        if (_x < overlay.min_x)
-                            overlay.min_x = _x;
-                        if (_r > overlay.max_x)
-                            overlay.max_x = _r;
-
-                        if (_y < overlay.min_y)
-                            overlay.min_y = _y;
-                        if (_b > overlay.max_y)
-                            overlay.max_y = _b;
+                        overlay.CheckPoint(_x, _y);
+                        overlay.CheckPoint(_r, _b);
 
                         overlay.m_oContext.rect(_x,_y,_r-_x,_b-_y);
                     }
