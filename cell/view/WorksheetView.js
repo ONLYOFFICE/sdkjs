@@ -10479,8 +10479,8 @@
 				cursor: _cursor,
 				target: f ? c_oTargetType.RowResize : _target,
 				col: -1,
-				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
-				mouseY: f ? (((y < r.top + 3) ? r.top : r.bottom) - y - 1) : null
+				row: r.row + (isNotFirst && f && y < r.top + epsChangeSize ? -1 : 0),
+				mouseY: f ? (((y < r.top + epsChangeSize) ? r.top : r.bottom) - y - 1) : null
 			};
 		}
 
@@ -10515,9 +10515,9 @@
 			return {
 				cursor: _cursor,
 				target: f ? c_oTargetType.ColumnResize : _target,
-				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
+				col: c.col + (isNotFirst && f && x < c.left + epsChangeSize ? -1 : 0),
 				row: -1,
-				mouseX: f ? (((x < c.left + 3) ? c.left : c.right) - x - 1) : null
+				mouseX: f ? (((x < c.left + epsChangeSize) ? c.left : c.right) - x - 1) : null
 			};
 		}
 
