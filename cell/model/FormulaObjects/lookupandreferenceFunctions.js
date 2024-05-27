@@ -60,6 +60,7 @@ function (window, undefined) {
 	var cEmpty = AscCommonExcel.cEmpty;
 	var cArray = AscCommonExcel.cArray;
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
+	let cUndefined = AscCommonExcel.cUndefined;
 
 	var checkTypeCell = AscCommonExcel.checkTypeCell;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
@@ -1817,11 +1818,17 @@ function (window, undefined) {
 	cOFFSET.prototype.ca = true;
 	cOFFSET.prototype.arrayIndexes = {0: 1};
 	cOFFSET.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.number, argType.number];
+	cOFFSET.prototype.exactTypes = {0: 1};
 	cOFFSET.prototype.Calculate = function (arg) {
 
 		function validBBOX(bbox) {
 			return 0 <= bbox.r1 && bbox.r1 <= gc_nMaxRow0 && 0 <= bbox.c1 && bbox.c1 <= gc_nMaxCol0 && 0 <= bbox.r2 &&
 				bbox.r2 <= gc_nMaxRow0 && 0 <= bbox.c2 && bbox.c2 <= gc_nMaxCol0;
+		}
+
+		const t = this;
+		if (t.exactTypes && !AscCommonExcel.checkArgumentsTypes.call(t, arg)) {
+			return new cUndefined();
 		}
 
 		var arg0 = arg[0], arg1 = arg[1].tocNumber(), arg2 = arg[2].tocNumber();
@@ -1928,10 +1935,18 @@ function (window, undefined) {
 	cROW.prototype.argumentsMax = 1;
 	cROW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.setArrayRefAsArg;
 	cROW.prototype.argumentsType = [argType.reference];
+	cROW.prototype.exactTypes = {0: 1};
 	cROW.prototype.Calculate = function (arg) {
+		const t = this;
 		var bbox;
 		var res;
 		var opt_row = arguments[5];
+
+		// checkArgumentsTypes
+		if (t.exactTypes && !AscCommonExcel.checkArgumentsTypes.call(t, arg)) {
+			return new cUndefined();
+		}
+
 		if (opt_row !== undefined) {
 			return new cNumber(opt_row + 1);
 		} else if (0 === arg.length) {

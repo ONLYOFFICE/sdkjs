@@ -471,6 +471,24 @@ function (window, undefined) {
 		return typedArr;
 	}
 
+	function checkArgumentsTypes(args) {
+		if (args) {
+			let length = args.length;
+			for (let i = 0; i < length; i++) {
+				let arg = args[i];
+				if (arg && this.exactTypes[i] && this.argumentsType && this.argumentsType[i] !== undefined) {
+					// check types
+					if (this.argumentsType[i] === Asc.c_oAscFormulaArgumentType.reference && (arg.type !== cElementType.cellsRange && arg.type !== cElementType.cellsRange3D 
+						&& arg.type !== cElementType.cell && arg.type !== cElementType.cell3D)) {
+							return false;
+					}
+					// todo add other data types for arguments to the check, if needed in a function
+				}
+			}
+		}
+		return true;
+	}
+
 /** @enum */
 var cElementType = {
 		number      : 0,
@@ -6796,10 +6814,10 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseCommaAndArgumentsUnion = function () {
+		const parseCommaAndArgumentsUnion = function () {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
-			var stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
+			let stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
 
 			if (elemArr.length !== 0 && elemArr[stackLength - 1].name === "(" &&
 				((!elemArr[stackLength - 2]) || (elemArr[stackLength - 2] && elemArr[stackLength - 2].type !== cElementType.func))) {
@@ -7716,6 +7734,14 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
+
+			if (_tmp instanceof cUndefined) {
+				elemArr = [];
+				this.value = new cUndefined();
+				this._endCalculate();
+				return this.value;
+			}
+
 		}
 
 		// ref(CSE) - legacy array-formula
@@ -10172,6 +10198,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
 	window['AscCommonExcel'].getMaxDate = getMaxDate;
+	window['AscCommonExcel'].checkArgumentsTypes = checkArgumentsTypes;
 
 	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 

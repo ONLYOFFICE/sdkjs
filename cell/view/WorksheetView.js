@@ -16719,6 +16719,13 @@
 						dynamicSelectionRange = refInfo.dynamicRange;
 					}
 				}
+
+				// preliminary calculation of the formula 
+				// if undefined is returned (temporary solution) - this means that one of the formulas contains an argument of an invalid type
+				if (newFP && newFP.value && newFP.value instanceof AscCommonExcel.cUndefined) {
+					t.handlers.trigger("onErrorEvent", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
+					return false;
+				}
 			}
 		}
 
