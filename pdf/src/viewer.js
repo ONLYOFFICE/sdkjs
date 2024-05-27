@@ -2572,6 +2572,7 @@
 					}
 					if (oDoc.mouseDownAnnot.IsTextMarkup())
 					{
+						oDrDoc.AutoShapesTrack.SetCurrentPage(oDoc.mouseDownAnnot.GetPage(), true);
 						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
 					else if (oDoc.mouseDownAnnot.IsComment() == false)
