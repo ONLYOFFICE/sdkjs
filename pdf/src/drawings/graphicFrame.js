@@ -311,6 +311,31 @@
         graphics.SetIntegerGrid(true);
         graphics.reset();
     };
+    CPdfGraphicFrame.prototype.select = function (drawingObjectsController, pageIndex) {
+        if (!AscFormat.canSelectDrawing(this)) {
+            return;
+        }
+        this.selected = true;
+        this.selectStartPage = pageIndex;
+        let content = this.getDocContent && this.getDocContent();
+        if (content)
+            content.Set_StartPage(0);
+        let selected_objects;
+        if (!AscCommon.isRealObject(this.group))
+            selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
+        else
+            selected_objects = this.group.getMainGroup().selectedObjects;
+        for (let i = 0; i < selected_objects.length; ++i) {
+            if (selected_objects[i] === this)
+                break;
+        }
+        if (i === selected_objects.length)
+            selected_objects.push(this);
+
+        if (drawingObjectsController) {
+            drawingObjectsController.onChangeDrawingsSelection();
+        }
+    };
     CPdfGraphicFrame.prototype.updateSelectionState = function () {
         let oDoc    = this.GetDocument();
         let oDrDoc  = oDoc.GetDrawingDocument();
