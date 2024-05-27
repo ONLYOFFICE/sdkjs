@@ -5366,12 +5366,6 @@ var CPresentation = CPresentation || function(){};
         return {x: nPosX, y: nPosY}
     }
     
-    function rotatePagePoint(cursorX, cursorY, width, height) {
-        const newCursorX = cursorY;
-        const newCursorY = height - cursorX;
-        return { x: newCursorX, y: newCursorY };
-    }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
 	
@@ -5458,10 +5452,95 @@ var CPresentation = CPresentation || function(){};
 		}
 	};
 
+    /**
+	 * Converts global coords to page coords.
+     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} nPage
+     * @param {boolean} [isNotMM = false] - coordinates in millimeters or not 
+	 * @typeofeditors ["PDF"]
+	 */
+    function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
+        // конвертация из глобальных x, y к mm кординатам самой страницы
+        let oViewer = editor.getDocumentRenderer();
+        var pageObject = oViewer.getPageByCoords(x, y);
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        if (!pageObject) {
+            return {X: 0, Y: 0}
+        }
+
+        let result = {
+            X : isNotMM ? (pageObject.x) * nScaleY : (pageObject.x) * g_dKoef_pix_to_mm * nScaleY,
+            Y : isNotMM ? (pageObject.y) * nScaleX : (pageObject.y) * g_dKoef_pix_to_mm * nScaleX
+        };
+
+        result["X"] = result.X;
+        result["Y"] = result.Y;
+
+        return result;
+    }
+
+    /**
+	 * Converts page (native) coords to global coords.
+     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} nPage
+	 * @typeofeditors ["PDF"]
+	 */
+    function GetGlobalCoordsByPageCoords(x, y, nPage) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc = oViewer.getPDFDoc();
+        let oTr = oDoc.pagesTransform[nPage].invert;
+        
+        let result = {};
+
+        let oPoint = oTr.TransformPoint(x, y);
+        result.X = result["X"] = oPoint.x;
+        result.Y = result["Y"] = oPoint.y;
+
+        return result;
+    }
+
+    /**
+     * Corverts page coords (in mm) from one page to another page.
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} curPage
+     * @param {Number} needPage
+	 * @typeofeditors ["PDF"]
+     * @returns {Object}
+	 */
+    function ConvertCoordsToAnotherPage(x, y, curPage, needPage) {
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let oFile       = oViewer.file;
+        let oDoc        = oViewer.getPDFDoc();
+        let oCurPageTr  = oDoc.pagesTransform[curPage].normal.CreateDublicate(); // с помощью этой получаем глобальные координаты
+        let oNeedPageTr = oDoc.pagesTransform[needPage].normal.CreateDublicate(); // с помощью этой получаем координаты на странице
+        
+        let inchCur     = (25.4 / oFile.pages[curPage].Dpi);
+        let inchNeed    = (25.4 / oFile.pages[needPage].Dpi);
+        AscCommon.global_MatrixTransformer.ScaleAppend(oCurPageTr, inchCur, inchCur);
+        AscCommon.global_MatrixTransformer.ScaleAppend(oNeedPageTr, inchNeed, inchNeed);
+        oCurPageTr.Invert();
+
+        let oGlobalCoords = oCurPageTr.TransformPoint(x, y);
+        
+        let oNeedPageCoords = oNeedPageTr.TransformPoint(oGlobalCoords.x, oGlobalCoords.y);
+
+        return oNeedPageCoords;
+    }
+
     window["AscPDF"].CPDFDoc                    = CPDFDoc;
     window["AscPDF"].CreateAnnotByProps         = CreateAnnotByProps;
     window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
-    window["AscPDF"].rotatePagePoint            = rotatePagePoint;
-	window["AscPDF"].CPDFCompositeInput = CPDFCompositeInput;
+    window["AscPDF"].CPDFCompositeInput         = CPDFCompositeInput;
+    window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
+    window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
+    window["AscPDF"]["ConvertCoordsToAnotherPage"]  = window["AscPDF"].ConvertCoordsToAnotherPage = ConvertCoordsToAnotherPage;
 
 })();
