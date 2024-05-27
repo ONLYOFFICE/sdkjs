@@ -9943,6 +9943,7 @@ var editor;
   prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
 
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
+  prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
 
 
 
