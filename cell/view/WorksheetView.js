@@ -8616,12 +8616,13 @@
 		return th;
 	};
 	WorksheetView.prototype._updateRowHeight = function (cache, row, maxW, colWidth) {
-	    if (this.skipUpdateRowHeight) {
-	        return;
-        }
-	    var res = null;
+		if (this.skipUpdateRowHeight) {
+			return;
+		}
+		var res = null;
 		var mergeType = cache.flags && cache.flags.getMergeType();
-		var isMergedRows = (mergeType & c_oAscMergeType.rows) || (mergeType && cache.flags.wrapText);
+		//not find a case where the ms does not update the height with the columns merged ans wrap
+		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
@@ -8642,12 +8643,12 @@
 			var newHeight = tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
 			if (cache.angle && textBound) {
-                newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
+				newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
 			}
 			newHeight = Math.min(this.maxRowHeightPx, Math.max(oldHeight, newHeight));
 			if (newHeight !== oldHeight) {
 				if (this.updateRowHeightValuePx) {
-                    this.updateRowHeightValuePx = newHeight;
+					this.updateRowHeightValuePx = newHeight;
 				}
 				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
 				var _rowHeight = this.workbook.printPreviewState.isStart() ? newHeight * this.getZoom() : Asc.round(newHeight * this.getZoom());
@@ -8659,7 +8660,7 @@
 				res = newHeight;
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
 				this.model.bExcludeCollapsed = true;
-                // ToDo delete setRowHeight here
+				// ToDo delete setRowHeight here
 				// TODO temporary add limit, because minimal zoom change not correct row height
 				if (this.getZoom() >= 0.5) {
 					this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
@@ -8672,8 +8673,7 @@
 						maxW = tm.width;
 					}
 
-					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width,
-						cache.cellHA, va, maxW);
+					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width, cache.cellHA, va, maxW);
 				}
 
 				this.isChanged = true;
