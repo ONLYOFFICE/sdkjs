@@ -4977,7 +4977,7 @@ var CPresentation = CPresentation || function(){};
 		return 1 === this.defaultFontsLoaded;
 	};
     CPDFDoc.prototype.checkDefaultFonts = function(callback) {
-        this.checkFonts(["Arial", "Symbol", "Wingdings", "Courier New", "Times New Roman"], callback);
+        return this.checkFonts(["Arial", "Symbol", "Wingdings", "Courier New", "Times New Roman"], callback);
     };
     CPDFDoc.prototype.checkFieldFont = function(oField, callback) {
         if (!oField)

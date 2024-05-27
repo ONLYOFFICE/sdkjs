@@ -857,9 +857,16 @@
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
 		let oDoc = this.getPDFDoc();
-		oDoc.CreateNewHistoryPoint();
-		oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
-		oDoc.TurnOffHistory();
+
+		function addFreeText() {
+			oDoc.CreateNewHistoryPoint();
+			oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
+			oDoc.TurnOffHistory();
+		}
+
+		if (oDoc.checkDefaultFonts(addFreeText)) {
+			addFreeText();
+		}
 	};
 	
 	/////////////////////////////////////////////////////////////

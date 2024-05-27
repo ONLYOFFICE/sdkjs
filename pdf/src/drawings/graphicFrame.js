@@ -325,7 +325,7 @@
             selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
         else
             selected_objects = this.group.getMainGroup().selectedObjects;
-        for (let i = 0; i < selected_objects.length; ++i) {
+        for (var i = 0; i < selected_objects.length; ++i) {
             if (selected_objects[i] === this)
                 break;
         }
