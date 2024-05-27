@@ -14417,8 +14417,7 @@ $(function () {
 		oParser = new parserFormula("COUNTIF(C102:C1002,4)/1000", "A1", ws);
 		assert.ok(oParser.parse());
 		res = Math.round(oParser.calculate().getValue() * 100);
-		console.log(res);
-		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 4 in COUNTIF(C102:C1002,4)/1000 " + res);
+		assert.ok(res >= 20 && res <= 29, "Spreading percentages for number 4 in COUNTIF(C102:C1002,4)/1000");
 
 		// spreading percentages for range [1,5]
 		oParser = new parserFormula("COUNTIF(D102:D1002,1)/1000", "A1", ws);
