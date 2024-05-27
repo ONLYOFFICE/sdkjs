@@ -4440,7 +4440,7 @@ function(window, undefined) {
 			if (this.chart && this.chart.title) {
 				var pos = this.chartObj.recalculatePositionText(this.chart.title);
 				if (this.chart.title.layout) {
-					layout = this.chart.title.layout;
+					const layout = this.chart.title.layout;
 					if (AscFormat.isRealNumber(layout.x)) {
 						pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.title.extX, this.extX);
 					}
@@ -4459,7 +4459,7 @@ function(window, undefined) {
 						var pos = this.chartObj.recalculatePositionText(oAxis.title);
 
 						if (oAxis.title.layout) {
-							layout = oAxis.title.layout;
+							const layout = oAxis.title.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
 								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oAxis.title.extX, this.extX);
 							}
@@ -4484,7 +4484,7 @@ function(window, undefined) {
 			}
 			var pos = this.chartObj.recalculatePositionText(this.chart.legend);
 			if (this.chart.legend.layout) {
-				layout = this.chart.legend.layout;
+				const layout = this.chart.legend.layout;
 				if (AscFormat.isRealNumber(layout.x)) {
 					pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.legend.extX, this.extX);
 				}
@@ -4508,7 +4508,7 @@ function(window, undefined) {
 				if(oLbl && oDrawerData && oDrawerData.coordinate) {
 					pos = {x: oDrawerData.coordinate.catVal, y: oDrawerData.coordinate.valVal};
 					if (oLbl.layout) {
-						layout = oLbl.layout;
+						const layout = oLbl.layout;
 						if (AscFormat.isRealNumber(layout.x)) {
 							pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oLbl.extX, this.extX);
 						}
