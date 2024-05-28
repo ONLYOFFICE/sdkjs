@@ -9245,6 +9245,14 @@ var editor;
 		return wb.addCustomFunction(func, options);
 	};
 
+	spreadsheet_api.prototype.removeCustomFunction = function(sName) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
+	};
+
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
 		let wb = this.wb;
 		if (!wb) {

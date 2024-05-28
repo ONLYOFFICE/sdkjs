@@ -1739,8 +1739,6 @@
 			}
 
 			this.documentHeight = curTop;
-
-			this.UpdateDrDocDrawingPages();
 		};
 
 		this.setCursorType = function(cursor)
@@ -2572,6 +2570,7 @@
 					}
 					if (oDoc.mouseDownAnnot.IsTextMarkup())
 					{
+						oDrDoc.AutoShapesTrack.SetCurrentPage(oDoc.mouseDownAnnot.GetPage(), true);
 						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
 					else if (oDoc.mouseDownAnnot.IsComment() == false)
@@ -4159,6 +4158,7 @@
 		if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
 			this.clearZoomCoord();
 
+		this.UpdateDrDocDrawingPages();
 		this._paint();
 		this.onUpdateOverlay();
 	};

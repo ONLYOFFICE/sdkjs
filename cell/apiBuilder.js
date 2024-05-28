@@ -507,6 +507,17 @@
 	};
 
 	/**
+	 * Remove a custom function.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The name of a custom function.
+	 * @returns {boolean} - returns false if such a function does not exist.
+	 */
+	Api.prototype.RemoveCustomFunction = function (sName) {
+		return this.removeCustomFunction(sName);
+	};
+
+	/**
 	 * Creates a new worksheet. The new worksheet becomes the active sheet.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -12991,6 +13002,7 @@
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
+	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;

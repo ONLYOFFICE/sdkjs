@@ -933,7 +933,7 @@ RotateState.prototype =
                             oAnnot.SetRect(aRect);
                         }
                     }
-                    if (oTrack.originalObject.IsDrawing()) {
+                    if (oTrack.originalObject.IsDrawing() && oTrack instanceof AscFormat.MoveShapeImageTrack) {
                         if (pageIndex != oTrack.originalObject.pageIndex) {
                             oTrack.originalObject.SetPage(pageIndex);
                         }

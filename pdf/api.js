@@ -2286,6 +2286,9 @@
 	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
 
+	PDFEditorApi.prototype['asc_ShowDocumentOutline']      = PDFEditorApi.prototype.asc_ShowDocumentOutline;
+	PDFEditorApi.prototype['asc_HideDocumentOutline']      = PDFEditorApi.prototype.asc_HideDocumentOutline;
+
 	// text/para pr
 	PDFEditorApi.prototype['put_TextPrBold']				= PDFEditorApi.prototype.put_TextPrBold;
 	PDFEditorApi.prototype['put_TextPrItalic']				= PDFEditorApi.prototype.put_TextPrItalic;

@@ -327,10 +327,15 @@ Asc['asc_docs_api'].prototype.asc_isOffline = function()
 };
 
 
-
 Asc['asc_docs_api'].prototype["asc_addImage"] = Asc['asc_docs_api'].prototype.asc_addImage;
 Asc['asc_docs_api'].prototype["AddImageUrl"] = Asc['asc_docs_api'].prototype.AddImageUrl;
 Asc['asc_docs_api'].prototype["AddImage"] = Asc['asc_docs_api'].prototype.AddImage;
+
+Asc['PDFEditorApi'].prototype["asc_addImage"] = Asc['PDFEditorApi'].prototype.asc_addImage;
+Asc['PDFEditorApi'].prototype["AddImageUrl"] = Asc['PDFEditorApi'].prototype.AddImageUrl;
+Asc['PDFEditorApi'].prototype["AddImage"] = Asc['PDFEditorApi'].prototype.AddImage;
+
+
 Asc['asc_docs_api'].prototype["asc_Save"] = Asc['asc_docs_api'].prototype.asc_Save;
 Asc['asc_docs_api'].prototype["asc_DownloadAs"] = Asc['asc_docs_api'].prototype.asc_DownloadAs;
 Asc['asc_docs_api'].prototype["asc_isOffline"] = Asc['asc_docs_api'].prototype.asc_isOffline;
