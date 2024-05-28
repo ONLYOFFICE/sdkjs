@@ -1827,10 +1827,6 @@ function (window, undefined) {
 		}
 
 		const t = this;
-		if (t.exactTypes && !AscCommonExcel.checkArgumentsTypes.call(t, arg)) {
-			return new cUndefined();
-		}
-
 		var arg0 = arg[0], arg1 = arg[1].tocNumber(), arg2 = arg[2].tocNumber();
 		var arg3 = 3 < arg.length ? (cElementType.empty === arg[3].type ? new cNumber(1) : arg[3].tocNumber()) : new cNumber(-1);
 		var arg4 = 4 < arg.length ? (cElementType.empty === arg[4].type ? new cNumber(1) : arg[4].tocNumber()) : new cNumber(-1);
@@ -1941,11 +1937,6 @@ function (window, undefined) {
 		var bbox;
 		var res;
 		var opt_row = arguments[5];
-
-		// checkArgumentsTypes
-		if (t.exactTypes && !AscCommonExcel.checkArgumentsTypes.call(t, arg)) {
-			return new cUndefined();
-		}
 
 		if (opt_row !== undefined) {
 			return new cNumber(opt_row + 1);

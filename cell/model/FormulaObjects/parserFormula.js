@@ -7691,7 +7691,13 @@ function parserFormula( formula, parent, _ws ) {
 					//если данная функция не может возвращать массив, проходимся по всем элементам аргументов и формируем массив
 					var formulaArray = null;
 					if (currentElement.type === cElementType.func) {
-						formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+						// checkArgumentsTypes before calculate
+						if (currentElement.exactTypes && !checkArgumentsTypes.call(currentElement, arg)) {
+							formulaArray = new cError(cErrorType.null_value);
+						} else {
+							formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
+						}
+
 					} else if (currentElement.type === cElementType.operator && currentElement.bArrayFormula) {
 						bIsSpecialFunction = true;
 					}
@@ -7735,9 +7741,9 @@ function parserFormula( formula, parent, _ws ) {
 				elemArr.push(currentElement);
 			}
 
-			if (_tmp instanceof cUndefined) {
+			if (_tmp instanceof cUndefined || (_tmp && _tmp.errorType && _tmp.errorType === cErrorType.null_value)) {
 				elemArr = [];
-				this.value = new cUndefined();
+				this.value = _tmp;
 				this._endCalculate();
 				return this.value;
 			}

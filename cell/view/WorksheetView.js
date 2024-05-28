@@ -16721,8 +16721,10 @@
 				}
 
 				// preliminary calculation of the formula 
-				// if undefined is returned (temporary solution) - this means that one of the formulas contains an argument of an invalid type
-				if (newFP && newFP.value && newFP.value instanceof AscCommonExcel.cUndefined) {
+				// if undefined or null or cError(null) is returned (temporary solution) - this means that one of the formulas contains an argument of an invalid type
+				if (newFP && newFP.value && ( newFP.value instanceof AscCommonExcel.cUndefined 
+					|| (newFP.value.errorType && newFP.value.errorType === AscCommonExcel.cErrorType.null_value)
+					|| newFP.value === null )) {
 					t.handlers.trigger("onErrorEvent", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
 					return false;
 				}
