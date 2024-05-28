@@ -1885,7 +1885,8 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer     = editor.getDocumentRenderer();
         let pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let nGrScale    = 1.25 * (96 / oViewer.file.pages[pageObject.index].Dpi);
+        let nPage       = pageObject ? pageObject.index : this.GetCurPage();
+        let nGrScale    = 1.25 * (96 / oViewer.file.pages[nPage].Dpi);
         let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
         
         let X2 = posToAdd.x + 40 / nGrScale;
@@ -1893,7 +1894,7 @@ var CPresentation = CPresentation || function(){};
 
         let oProps = {
             rect:           [posToAdd.x, posToAdd.y, X2, Y2],
-            page:           pageObject.index,
+            page:           nPage,
             name:           AscCommon.CreateGUID(),
             type:           AscPDF.ANNOTATIONS_TYPES.Text,
             author:         AscCommentData.m_sUserName,
