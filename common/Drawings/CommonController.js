@@ -3267,6 +3267,17 @@
 							return false;
 						return content.CanAddHyperlink(bCheckInHyperlink);
 					}
+					else {
+						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+							let aSelectedObjects = this.getSelectedArray();
+							if(aSelectedObjects.length === 1) {
+								let oDrawing = aSelectedObjects[0];
+								if(oDrawing.isShape() || oDrawing.isImage()) {
+									return true;
+								}
+							}
+						}
+					}
 					return false;
 				},
 
@@ -3280,6 +3291,23 @@
 						}
 						return Ret;
 					}
+					else {
+						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+							let aSelectedObjects = this.getSelectedArray();
+							if(aSelectedObjects.length === 1) {
+								let oDrawing = aSelectedObjects[0];
+								if(oDrawing.isShape() || oDrawing.isImage()) {
+									let oNvPr = oDrawing.getCNvProps();
+									if (oNvPr) {
+										if(oNvPr.hlinkClick)
+											oNvPr.setHlinkClick(null);
+										if(oNvPr.hlinkHover)
+											oNvPr.setHlinkHover(null);
+									}
+								}
+							}
+						}
+					}
 					return undefined;
 				},
 
@@ -3292,6 +3320,29 @@
 							target_text_object.checkExtentsByDocContent && target_text_object.checkExtentsByDocContent();
 						}
 						return Ret;
+					}
+					else {
+						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+							if(HyperProps.Value) {
+								let aSelectedObjects = this.getSelectedArray();
+								if(aSelectedObjects.length === 1) {
+									let oDrawing = aSelectedObjects[0];
+									if(oDrawing.isShape() || oDrawing.isImage()) {
+
+										let oNvPr = oDrawing.getCNvProps();
+										if (oNvPr) {
+											let oHyper = new AscFormat.CT_Hyperlink();
+											if(HyperProps.Value.startsWith("ppaction")) {
+												oHyper.action = HyperProps.Value;
+											}
+											oHyper.id = HyperProps.Value;
+											oHyper.tooltip = HyperProps.Tooltip;
+											oNvPr.setHlinkClick(oHyper);
+										}
+									}
+								}
+							}
+						}
 					}
 					return undefined;
 				},
@@ -3315,6 +3366,29 @@
 							}
 						}
 						return Ret;
+					}
+					else {
+						if(Asc.editor.getEditorId() === AscCommon.c_oEditorId.Presentation) {
+							if(HyperProps.Value) {
+								let aSelectedObjects = this.getSelectedArray();
+								if(aSelectedObjects.length === 1) {
+									let oDrawing = aSelectedObjects[0];
+									if(oDrawing.isShape() || oDrawing.isImage()) {
+
+										let oNvPr = oDrawing.getCNvProps();
+										if (oNvPr) {
+											let oHyper = new AscFormat.CT_Hyperlink();
+											if(HyperProps.Value.startsWith("ppaction")) {
+												oHyper.action = HyperProps.Value;
+											}
+											oHyper.id = HyperProps.Value;
+											oHyper.tooltip = HyperProps.Tooltip;
+											oNvPr.setHlinkClick(oHyper);
+										}
+									}
+								}
+							}
+						}
 					}
 					return null;
 				},
@@ -7698,11 +7772,33 @@
 
 						shape_props.isMotionPath = !!bMotionPath;
 					}
+
+					let hyperlink_properties = null;
+					if(drawings.length === 1) {
+						let oDrawing = drawings[0];
+						let isStickyNote = oDrawing.IsAnnot && oDrawing.IsAnnot() && oDrawing.IsComment(); // skip pdf text annot
+
+						if(!isStickyNote && (oDrawing.isShape() || oDrawing.isImage())) {
+
+							let oNvPr = oDrawing.getCNvProps();
+							if (oNvPr) {
+								let oHyper = oNvPr.hlinkClick;
+								if(oHyper && oHyper.id) {
+									hyperlink_properties = new Asc.CHyperlinkProperty();
+									hyperlink_properties.Text = "";
+									hyperlink_properties.Value = oHyper.id;
+									hyperlink_properties.ToolTip = oHyper.tooltip;
+
+								}
+							}
+						}
+					}
 					return {
 						imageProps: image_props,
 						shapeProps: shape_props,
 						chartProps: chart_props,
 						tableProps: table_props,
+						hyperlinkProps: hyperlink_properties,
 						shapeChartProps: shape_chart_props,
 						slicerProps: slicer_props,
 						animProps: anim_props

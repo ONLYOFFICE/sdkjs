@@ -423,6 +423,17 @@
 			return;
 		AscFormat.ExecuteNoHistory(function () {
 
+
+			if (this.recalcInfo.recalculateTable) {
+				this.extX = this.getXfrmExtX();
+				this.recalculateTable();
+				this.recalcInfo.recalculateTable = false;
+			}
+			let bSizes = this.recalcInfo.recalculateSizes;
+			if(this.recalcInfo.recalculateSizes) {
+				this.recalculateSizes();
+				this.recalcInfo.recalculateSizes = false;
+			}
 			if (this.recalcInfo.recalculateTransform) {
 				this.recalculateTransform();
 				this.recalculateSnapArrays();
@@ -432,13 +443,7 @@
 				this.cachedImage = null;
 				this.recalcInfo.recalculateSizes = true;
 			}
-			if (this.recalcInfo.recalculateTable) {
-				this.recalculateTable();
-				this.recalcInfo.recalculateTable = false;
-			}
-			if (this.recalcInfo.recalculateSizes) {
-				this.recalculateSizes();
-				this.recalcInfo.recalculateSizes = false;
+			if (bSizes) {
 				this.bounds.l = this.x;
 				this.bounds.t = this.y;
 				this.bounds.r = this.x + this.extX;
@@ -770,13 +775,11 @@
 		if (this.graphicObject) {
 			graphics.SaveGrState();
 			graphics.transform3(this.transform);
-			graphics.SetIntegerGrid(true);
+			graphics.SetIntegerGrid(false);
 			this.graphicObject.Draw(0, graphics);
 			this.drawLocks(this.transform, graphics);
 			graphics.RestoreGrState();
 		}
-		graphics.SetIntegerGrid(true);
-		graphics.reset();
 	};
 
 	CGraphicFrame.prototype.Select = function () {

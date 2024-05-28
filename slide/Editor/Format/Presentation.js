@@ -6525,6 +6525,7 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 		let oSpPr = oDrawingPr.shapeProps;
 		let oChartPr = oDrawingPr.chartProps;
 		let oTblPr = oDrawingPr.tableProps;
+		let oHyperlinkPr = oDrawingPr.hyperlinkProps;
 		let bIsFocusOnSlide = !this.FocusOnNotes;
 		if (bIsFocusOnSlide) {
 			if (oImgPr) {
@@ -6572,6 +6573,10 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 						this.Api.sync_VerticalTextAlign(AscFormat.VERTICAL_ANCHOR_TYPE_TOP);
 					}
 				}
+			}
+
+			if(oHyperlinkPr) {
+				this.Api.sync_HyperlinkPropCallback(oHyperlinkPr);
 			}
 		}
 		if (window['IS_NATIVE_EDITOR']) {

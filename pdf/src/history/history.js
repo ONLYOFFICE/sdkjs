@@ -83,7 +83,124 @@
 				this.Points[this.Index].Additional.Pdf.push(_Class.Class);
 			}
 		}
-	}	
+	};
+	History.prototype.CheckUnionLastPoints = function()
+    {
+        // Не объединяем точки в истории, когда отключается пересчет.
+        // TODO: Неправильно изменяется RecalcIndex
+        if (this.Document && null == this.Document.Viewer.scheduledRepaintTimer)
+            return false;
+
+        // Не объединяем точки во время Undo/Redo
+        if (this.Index < this.Points.length - 1)
+        	return false;
+
+        // Не объединяем точки истории, если на предыдущей точке произошло сохранение
+        if (this.Points.length < 2
+            || (true !== this.Is_UserSaveMode() && null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
+            || (true === this.Is_UserSaveMode() && null !== this.UserSavedIndex && this.UserSavedIndex >= this.Points.length - 2))
+            return false;
+
+        var Point1 = this.Points[this.Points.length - 2];
+        var Point2 = this.Points[this.Points.length - 1];
+
+        // Не объединяем слова больше 63 элементов
+        if (Point1.Items.length > 63 && AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
+            return false;
+
+        var StartIndex1 = 0;
+        var StartIndex2 = 0;
+        if (Point1.Items.length > 0 && Point1.Items[0].Data && AscDFH.historyitem_TableId_Description === Point1.Items[0].Data.Type)
+            StartIndex1 = 1;
+
+        if (Point2.Items.length > 0 && Point2.Items[0].Data && AscDFH.historyitem_TableId_Description === Point2.Items[0].Data.Type)
+            StartIndex2 = 1;
+
+        var NewDescription;
+        if ((AscDFH.historydescription_Document_CompositeInput === Point1.Description || AscDFH.historydescription_Document_CompositeInputReplace === Point1.Description)
+            && AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
+        {
+            // Ничего не делаем. Эта ветка означает, что эти две точки можно объединить
+            NewDescription = Point1.Description;
+        }
+		else if (AscDFH.historydescription_Document_CompositeInput === Point1.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === Point1.Description
+			|| AscDFH.historydescription_Document_CompositeInput === Point2.Description
+			|| AscDFH.historydescription_Document_CompositeInputReplace === Point2.Description)
+		{
+			// Композитный ввод не разрешаем объединять ни с чем, кроме композитного ввода
+			return false;
+		}
+		else if ((AscDFH.historydescription_Document_AddLetter === Point1.Description || AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)
+			&& (AscDFH.historydescription_Document_AddLetter === Point2.Description || AscDFH.historydescription_Document_AddLetterUnion === Point2.Description))
+		{
+            var PrevItem = null;
+            var Class    = null;
+            for (var Index = StartIndex1; Index < Point1.Items.length; Index++)
+            {
+                var Item = Point1.Items[Index];
+
+                if (null === Class)
+                    Class = Item.Class;
+                else if (Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data))
+                    return;
+
+                PrevItem = Item;
+            }
+
+            for (var Index = StartIndex2; Index < Point2.Items.length; Index++)
+            {
+                var Item = Point2.Items[Index];
+
+                if (Class != Item.Class || "undefined" === typeof(Class.Check_HistoryUninon) || false === Class.Check_HistoryUninon(PrevItem.Data, Item.Data))
+                    return;
+
+                PrevItem = Item;
+            }
+
+            NewDescription = AscDFH.historydescription_Document_AddLetterUnion;
+        }
+		else
+		{
+			return false;
+		}
+
+        if (0 !== StartIndex1)
+            Point1.Items.splice(0, 1);
+
+        if (0 !== StartIndex2)
+            Point2.Items.splice(0, 1);
+
+		let aObjects = [];
+		if (Point1.Additional.Pdf) {
+			aObjects = aObjects.concat(Point1.Additional.Pdf);
+		}
+		if (Point2.Additional.Pdf) {
+			aObjects = aObjects.concat(Point2.Additional.Pdf);
+		}
+
+        var NewPoint =
+        {
+            State      : Point1.State,
+            Items      : Point1.Items.concat(Point2.Items),
+            Time       : Point1.Time,
+            Additional : {Pdf: aObjects},
+            Description: NewDescription
+        };
+
+		if (null !== this.SavedIndex && this.SavedIndex >= this.Points.length - 2)
+            this.Set_SavedIndex(this.Points.length - 3);
+
+        this.Points.splice( this.Points.length - 2, 2, NewPoint );
+        if ( this.Index >= this.Points.length )
+        {
+            var DiffIndex = -this.Index + (this.Points.length - 1);
+            this.Index    += DiffIndex;
+            this.RecIndex  = Math.max( -1, this.RecIndex + DiffIndex);
+        }
+
+        return true;
+	};
 	
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};

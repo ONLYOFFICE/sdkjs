@@ -4353,7 +4353,7 @@ function (window, undefined) {
 		return this.colors;
 	};
 	CAscColorScheme.prototype.get_name = function () {
-		return this.name;
+		return AscCommon.translateManager.getValue(this.name);
 	};
 	CAscColorScheme.prototype.get_dk1 = function () {
 		return this.colors[0];

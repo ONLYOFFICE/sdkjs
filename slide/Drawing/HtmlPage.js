@@ -4918,14 +4918,24 @@ function CEditorPage(api)
 
 			//view rect relative to slide coords
 			let oMainViewRect = this.m_oMainView.AbsolutePosition;
-			let nViewRectL = nControlX + oMainViewRect.L * dKoef + 0.5 >> 0;
-			let nViewRectT = nControlY + oMainViewRect.T * dKoef + 0.5 >> 0;
-			let nViewRectR = nControlX + oMainViewRect.R * dKoef + 0.5 >> 0;
-			let nViewRectB = nControlY + oMainViewRect.B * dKoef + 0.5 >> 0;
+
+			let dViewL = 0, dViewT = 0, dViewR = 0, dViewB = 0;
+			let oCurControl = this.m_oMainView;
+			while(oCurControl)
+			{
+				let oAbsPos = oCurControl.AbsolutePosition;
+				dViewL += oAbsPos.L;
+				dViewT += oAbsPos.T;
+				oCurControl = oCurControl.Parent;
+			}
+ 			let nViewRectL = nControlX + dViewL * dKoef + 0.5 >> 0;
+			let nViewRectT = nControlY + dViewT * dKoef + 0.5 >> 0;
+			let nViewRectR = nViewRectL + (oMainViewRect.R - oMainViewRect.L) * dKoef + 0.5 >> 0;
+			let nViewRectB = nViewRectT + (oMainViewRect.B - oMainViewRect.T) * dKoef + 0.5 >> 0;
 
 
 			if(nX < nViewRectL)
-				nX = nViewRectT;
+				nX = nViewRectL;
 			if(nY < nViewRectT)
 				nY = nViewRectT;
 			if(nX + nWidth > nViewRectR)

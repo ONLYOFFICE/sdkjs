@@ -697,15 +697,16 @@ function MoveAnnotationTrack(originalObject)
     this.draw = function(oDrawer)
     {
         // рисуем на отдельном канвасе
-        this.objectToDraw.SetPage(this.pageIndex);
+        let nPage = this.pageIndex;
+        this.objectToDraw.SetPage(nPage);
 
-        let page = this.viewer.drawingPages[this.objectToDraw.GetPage()];
+        let page = this.viewer.drawingPages[nPage];
         if (!page)
             return;
 
-        if(AscFormat.isRealNumber(this.objectToDraw.GetPage()) && oDrawer.SetCurrentPage)
+        if(AscFormat.isRealNumber(nPage) && oDrawer.SetCurrentPage)
         {
-            oDrawer.SetCurrentPage(this.objectToDraw.GetPage());
+            oDrawer.SetCurrentPage(nPage);
         }
 
         let oOverlay = oDrawer.m_oOverlay || oDrawer;
@@ -733,11 +734,12 @@ function MoveAnnotationTrack(originalObject)
         
         let oGraphicsPDF, oGraphicsWord;
         oGraphicsPDF = new AscPDF.CPDFGraphics();
-        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
+        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height, this.viewer.file.getPageWidth(nPage) , this.viewer.file.getPageHeight(nPage));
         oGraphicsPDF.SetGlobalAlpha(1);
 
         oGraphicsPDF.SetCurPage(this.objectToDraw.GetPage());
-        switch (this.objectToDraw.GetType()) {
+        switch (this.objectToDraw.GetType())
+        {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
             case AscPDF.ANNOTATIONS_TYPES.Line:
             case AscPDF.ANNOTATIONS_TYPES.Square:
@@ -764,6 +766,9 @@ function MoveAnnotationTrack(originalObject)
             this.objectToDraw.DrawFromStream(oGraphicsPDF, oGraphicsWord);
         else
             this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
+
+        if (true == this.viewer.isLandscapePage(nPage))
+            x = x + (w - h) / 2;
 
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };

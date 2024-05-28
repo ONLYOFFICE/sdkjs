@@ -5772,6 +5772,9 @@ function parserFormula( formula, parent, _ws ) {
 
 	this.ref = null;
 
+	//mark function, when need reparse and recalculate on custom function change change
+	this.bUnknownOrCustomFunction = null;
+
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
 	}
@@ -6976,6 +6979,14 @@ function parserFormula( formula, parent, _ws ) {
 					//_xlws only together with _xlfn
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
+
+					t.bUnknownOrCustomFunction = true;
+				}
+
+				//mark function, when need reparse and recalculate on custom function change change
+				let wb = Asc["editor"] && Asc["editor"].wb;
+				if (wb && wb.customFunctionEngine && wb.customFunctionEngine.getFunc(operandStr)) {
+					t.bUnknownOrCustomFunction = true;
 				}
 
 				if (found_operator !== null) {

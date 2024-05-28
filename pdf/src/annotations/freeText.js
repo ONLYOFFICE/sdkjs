@@ -1,3 +1,4 @@
+
 /*
  * (c) Copyright Ascensio System SIA 2010-2019
  *
@@ -62,7 +63,7 @@
         this._popupOpen     = false;
         this._popupRect     = undefined;
         this._richContents  = undefined;
-        this._rotate        = undefined;
+        this._rotate        = 0;
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
@@ -111,6 +112,36 @@
                 return CALLOUT_EXIT_POS.bottom;
             }
         }
+    };
+    CAnnotationFreeText.prototype.SetRotate = function(nAngle) {
+        let oTxShape = this.GetTextBoxShape();
+        if (!oTxShape) {
+            return;
+        }
+
+        let oBodyPr = oTxShape.txBody.bodyPr;
+        
+        switch (nAngle) {
+            case 0:
+                oBodyPr.setVert();
+                break;
+            case 90:
+                oBodyPr.setVert(AscFormat.nVertTTvert270);
+                break;
+            case 180:
+                oBodyPr.setRot(-nAngle * 60000);
+                oBodyPr.setVert(AscFormat.nVertTTwordArtVert);
+                oBodyPr.anchor = AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM;
+                break;
+            case 270:
+                oBodyPr.setVert(AscFormat.nVertTTeaVert);
+                break;
+        }
+        this._rotate = nAngle;
+        this.SetNeedRecalc(true);
+    };
+    CAnnotationFreeText.prototype.GetRotate = function() {
+        return this._rotate;
     };
     CAnnotationFreeText.prototype.canMove = function () {
 		var oApi = Asc.editor || editor;
@@ -261,7 +292,7 @@
                 oLine.setFill(oFill);
             }
 
-            for (let i = 1; i < this.spTree.length; i++) {
+            for (let i = 0; i < this.spTree.length; i++) {
                 let oLine = this.spTree[i].spPr.ln;
                 oLine.setFill(oFill);
             }
@@ -278,7 +309,7 @@
 
         let nWidthPt = this.GetWidth();
         nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        for (let i = 1; i < this.spTree.length; i++) {
+        for (let i = 0; i < this.spTree.length; i++) {
             let oLine = this.spTree[i].spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
         }
@@ -774,7 +805,7 @@
         return false;
     };
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        let oAscCommData = new Asc.asc_CCommentDataWord(null);
         if (this._replies.length == 0)
             return oAscCommData;
 
@@ -806,6 +837,33 @@
 
         this.draw(oGraphicsWord);
     };
+    CAnnotationFreeText.prototype.draw = function(graphics) {
+        if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {
+            return;
+        }
+        if (graphics.animationDrawer) {
+            graphics.animationDrawer.drawObject(this, graphics);
+            return;
+        }
+        var oClipRect;
+        if (!graphics.isBoundsChecker()) {
+            oClipRect = this.getClipRect();
+        }
+        if (oClipRect) {
+            graphics.SaveGrState();
+            graphics.AddClipRect(oClipRect.x, oClipRect.y, oClipRect.w, oClipRect.h);
+        }
+        for (var i = this.spTree.length - 1; i >= 0; i--)
+            this.spTree[i].draw(graphics);
+
+        this.drawLocks(this.transform, graphics);
+        if (oClipRect) {
+            graphics.RestoreGrState();
+        }
+        graphics.reset();
+        graphics.SetIntegerGrid(true);
+    };
+
     CAnnotationFreeText.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oController         = oDoc.GetController();
@@ -905,30 +963,47 @@
 
         return null;
     };
-    CAnnotationFreeText.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
-		for (let index = 0; index < aChars.length; ++index) {
-			let oRun = AscPDF.codePointToRunElement(aChars[index]);
-			if (oRun)
-				oParagraph.AddToParagraph(oRun, true);
+	CAnnotationFreeText.prototype.OnChangeTextContent = function() {
+		this.FitTextBox();
+		this.SetNeedRecalc(true);
+		this.SetNeedUpdateRC(true);
+		
+		let docContent = this.GetDocContent();
+		docContent.RecalculateCurPos();
+	};
+	CAnnotationFreeText.prototype.EnterText = function(value) {
+		let doc        = this.GetDocument();
+		let docContent = this.GetDocContent();
+		
+		doc.CreateNewHistoryPoint({objects : [this]});
+		
+		let result = docContent.EnterText(value);
+		this.OnChangeTextContent();
+		return result;
+	};
+	CAnnotationFreeText.prototype.CorrectEnterText = function(oldValue, newValue) {
+		let doc = this.GetDocument();
+		let docContent = this.GetDocContent();
+		
+		doc.CreateNewHistoryPoint({objects: [this]});
+		
+		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
+		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
+			return true;
+		});
+		this.OnChangeTextContent();
+		return result;
+	};
+	CAnnotationFreeText.prototype.canBeginCompositeInput = function() {
+		return true;
+	};
+	CAnnotationFreeText.prototype.beforeCompositeInput = function() {
+		let docContent = this.GetDocContent();
+		if (docContent.IsSelectionUse()) {
+			docContent.Remove(1, true, false, false);
+			docContent.RemoveSelection();
 		}
-
-        this.FitTextBox();
-        this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
-        oContent.RecalculateCurPos();
-
-        return true;
-    };
+	};
     /**
 	 * Removes char in current position by direction.
 	 * @memberof CTextField
@@ -974,7 +1049,11 @@
             this.GetContents() != sText && this.SetContents(sText);
             
             if (this.IsNeedUpdateRC()) {
-                oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), this.GetRichContents(true)));
+                let aCurRc = this.GetRichContents();
+                let aNewRc = this.GetRichContents(true);
+                
+                this._richContents = aNewRc;
+                oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
                 this.SetNeedUpdateRC(false);
             }
 
@@ -986,15 +1065,19 @@
     };
 
     CAnnotationFreeText.prototype.FitTextBox = function() {
+        let oDoc            = this.GetDocument();
         let oDocContent     = this.GetDocContent();
         let oTextBoxShape   = this.GetTextBoxShape();
         let nPage           = this.GetPage();
+        let nRotAngle       = this.GetRotate();
         oTextBoxShape.recalculateContent();                
 
         let oContentBounds  = oDocContent.GetContentBounds(nPage);
         let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
 
-        if (nContentH > oTextBoxShape.extY) {
+        let nLengthToCheck = oDoc.Viewer.isLandscapePage(nPage) ? oTextBoxShape.extX : oTextBoxShape.extY;
+
+        if (nContentH > nLengthToCheck) {
             let oViewer = Asc.editor.getDocumentRenderer();
             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -1005,9 +1088,23 @@
             let xMin = aCurTextBoxRect[0];
             let yMin = aCurTextBoxRect[1];
             let xMax = aCurTextBoxRect[2];
-            let yMax = aCurTextBoxRect[3] + (nContentH - oTextBoxShape.extY + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+            let yMax = aCurTextBoxRect[3] + (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
 
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
+            // расширяем рект на ширину линии (или на радиус cloud бордера)
+            let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+            if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+                aNewTextBoxRect[0] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
+                aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
+                aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
+                aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
+            }
+            else {
+                aNewTextBoxRect[0] -= nLineWidth * nScaleX;
+                aNewTextBoxRect[1] -= nLineWidth * nScaleY;
+                aNewTextBoxRect[2] += nLineWidth * nScaleX;
+                aNewTextBoxRect[3] += nLineWidth * nScaleY;
+            }
 
             // находит точку выхода callout для нового ректа textbox
             let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
@@ -1097,8 +1194,10 @@
         return this.spTree[0];
     };
 
-    CAnnotationFreeText.prototype.onMouseUp = function(e) {
-        this.GetDocument().ShowComment([this.GetId()]);
+    CAnnotationFreeText.prototype.onMouseUp = function(x, y, e) {
+        if (e.button != 2) {
+            this.GetDocument().ShowComment([this.GetId()]);
+        }
 
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
@@ -1106,9 +1205,14 @@
         this.isInMove       = false;
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
         
         let oTextBoxShape = this.GetTextBoxShape();
         if (oTextBoxShape.hitInTextRect(X, Y)) {
@@ -1150,7 +1254,7 @@
         this.onMouseDown();
         this.isInMove = false;
     };
-    CAnnotationFreeText.prototype.onPreMove = function(e) {
+    CAnnotationFreeText.prototype.onPreMove = function(x, y, e) {
         if (this.isInMove)
             return;
 
@@ -1158,17 +1262,18 @@
 
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
 
-        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
+        let X = pageObject.x;
+        let Y = pageObject.y;
+
+        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(pageObject.index, X, Y);
         if (oCursorInfo.cursorType == null) {
             this.isInMove = false;
             return;
@@ -1223,6 +1328,10 @@
         if (nAlign != null)
             memory.WriteByte(nAlign);
 
+        // rotate
+        let nAngle = this.GetRotate();
+        memory.WriteLong(nAngle);
+
         // rectangle diff
         let aRD = this.GetRectangleDiff();
         if (aRD) {
@@ -1261,6 +1370,19 @@
             memory.annotFlags |= (1 << 20);
             memory.WriteByte(nIntent);
         }
+
+        // its stroke color
+        let aFillColor = this.GetFillColor();
+        if (aFillColor != null) {
+            memory.annotFlags |= (1 << 21);
+            memory.WriteLong(aFillColor.length);
+            for (let i = 0; i < aFillColor.length; i++)
+                memory.WriteDouble(aFillColor[i]);
+        }
+
+        // render
+        memory.annotFlags |= (1 << 22);
+        this.WriteRenderToBinary(memory);
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
@@ -1508,7 +1630,7 @@
 
         
         let aShapeBounds = findMinRect(aPoints);
-
+        
         let xMax = aShapeBounds[2];
         let xMin = aShapeBounds[0];
         let yMin = aShapeBounds[1];
@@ -1537,7 +1659,9 @@
         oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
-        let geometry = generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
+        let bCloudy = oParentAnnot.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud && aPoints.length == 4;
+
+        let geometry = bCloudy ? AscPDF.generateCloudyGeometry(aPoints, aShapeBounds, null, oParentAnnot.GetBorderEffectIntensity()) : generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
         oShape.spPr.setGeometry(geometry);
 
         return oShape;

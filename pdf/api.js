@@ -49,6 +49,8 @@
 		
 		this.DocumentRenderer = null;
 		this.DocumentType     = 1;
+		
+		this.compositeInput = null;
 	}
 	
 	PDFEditorApi.prototype = Object.create(AscCommon.DocumentEditorApi.prototype);
@@ -82,8 +84,7 @@
 		}
 		
 		this.WordControl.OnResize(true);
-
-		this.FontLoader.LoadDocumentFonts([{name : AscPDF.DEFAULT_FIELD_FONT}]);
+		this.FontLoader.LoadDocumentFonts();
 
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
@@ -200,7 +201,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let sText = oActiveDrawing.GetDocContent().GetSelectedText(true);
+			let sText = oActiveDrawing.GetDocContent().GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -252,17 +253,26 @@
 		}
 	};
 	PDFEditorApi.prototype.onUpdateRestrictions = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc) {
+			return;
+		}
+
 		if (this.isRestrictionView()) {
-			let oDoc = this.getPDFDoc();
-			if (!oDoc) {
-				return;
-			}
-			
 			let oActiveObj = oDoc.GetActiveObject();
 
 			if (oActiveObj && oActiveObj.IsDrawing()) {
 				oDoc.BlurActiveObject();
 			}
+
+			oDoc.drawings.forEach(function(drawing) {
+				drawing.AddToRedraw();
+			});
+		}
+		else {
+			setTimeout(function() {
+				oDoc.checkDefaultFonts();
+			});
 		}
 	};
 	PDFEditorApi.prototype.sync_CanUndoCallback = function(canUndo) {
@@ -438,52 +448,24 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		let viewer		= this.DocumentRenderer;
-		let oDoc		= viewer.getPDFDoc();
-		let oDrDoc		= oDoc.GetDrawingDocument();
-
-		let oActiveForm		= oDoc.activeForm;
-		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveDrawing	= oDoc.activeDrawing;
-		oDrDoc.UpdateTargetFromPaint = true;
+		let viewer = this.DocumentRenderer;
+		let doc    = viewer.getPDFDoc();
+		let drDoc  = doc.GetDrawingDocument();
 		
-		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveDrawing))
+		let textController = doc.getTextController();
+		if (!textController)
 			return false;
-
-		let oContent;
-		if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
-			oActiveForm.EnterText(codePoints);
-			oContent = oActiveForm.GetDocContent();
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			oActiveAnnot.EnterText(codePoints);
-			oContent = oActiveAnnot.GetDocContent();
-		}
-		else if (oActiveDrawing && !this.isRestrictionView()) {
-			oContent = oActiveDrawing.GetDocContent();
-
-			let nCode, oItem;
-			if (Array.isArray(codePoints)) {
-				for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
-					nCode = codePoints[nIdx];
-					oItem = AscCommon.IsSpace(nCode) ? new AscWord.CRunSpace(nCode) : new AscWord.CRunText(nCode);
-					oDoc.AddToParagraph(oItem, false, true);
-				}
-			} else {
-				oItem = AscCommon.IsSpace(codePoints) ? new AscWord.CRunSpace(codePoints) : new AscWord.CRunText(codePoints);
-				oDoc.AddToParagraph(oItem, false, true);
-			}
-		}
 		
-		if (oContent) {
-			oDrDoc.showTarget(true);
-			oDrDoc.TargetStart();
-
-			if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-				oDrDoc.TargetEnd();
-		}
-
-		return true;
+		let result = textController.EnterText(codePoints);
+		
+		drDoc.showTarget(true);
+		drDoc.TargetStart();
+		let docContent = textController.GetDocContent();
+		
+		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
+			drDoc.TargetEnd();
+		
+		return result;
 	};
 	PDFEditorApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		let oViewer	= this.getDocumentRenderer();
@@ -513,8 +495,19 @@
 
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.asc_correctEnterText = function(oldText, newText) {
-		return this.asc_enterText(newText);
+	PDFEditorApi.prototype.asc_correctEnterText = function(oldValue, newValue) {
+		
+		if (!this.DocumentRenderer)
+			return false;
+		
+		let viewer = this.DocumentRenderer;
+		let doc    = viewer.getPDFDoc();
+		
+		let textController = doc.getTextController();
+		if (!textController)
+			return false;
+		
+		return textController.CorrectEnterText(oldValue, newValue);
 	};
 	PDFEditorApi.prototype.asc_EditPage = function() {
 		let oViewer	= this.getDocumentRenderer();
@@ -864,9 +857,16 @@
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
 		let oDoc = this.getPDFDoc();
-		oDoc.CreateNewHistoryPoint();
-		oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
-		oDoc.TurnOffHistory();
+
+		function addFreeText() {
+			oDoc.CreateNewHistoryPoint();
+			oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
+			oDoc.TurnOffHistory();
+		}
+
+		if (oDoc.checkDefaultFonts(addFreeText)) {
+			addFreeText();
+		}
 	};
 	
 	/////////////////////////////////////////////////////////////
@@ -1265,13 +1265,11 @@
 		}
 	};
 	PDFEditorApi.prototype.put_TextColor = function(color) {
-		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({
-			Color : {
-				r : color.r,
-				g : color.g,
-				b : color.b
-			}
-		}), false);
+		var _unifill        = new AscFormat.CUniFill();
+		_unifill.fill       = new AscFormat.CSolidFill();
+		_unifill.fill.color = AscFormat.CorrectUniColor(color, _unifill.fill.color, 0);
+
+		this.getPDFDoc().AddToParagraph(new AscCommonWord.ParaTextPr({Unifill : _unifill}), false);
 	};
 	PDFEditorApi.prototype.asc_ChangeTextCase = function(nType) {
 		this.getPDFDoc().ChangeTextCase(nType);
@@ -1610,94 +1608,72 @@
 		if (!bIsFreeze)
 			this.WordControl.OnScroll();
 	};
-	// composite input
-	PDFEditorApi.prototype.Begin_CompositeInput = function()
-	{
-		let viewer = this.DocumentRenderer;
-		if (!viewer)
-			return false;
-		
-		let pdfDoc = viewer.getPDFDoc();
-		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsCanEditText())
-			return false;
-		
-		function begin() {
-			pdfDoc.activeForm.beginCompositeInput();
-		}
-		
-		if (!pdfDoc.checkFieldFont(pdfDoc.activeForm, begin))
-			return true;
-		
-		begin();
-		return true;
-	};
-	PDFEditorApi.prototype.SetDocumentModified = function(bValue)
-	{
+	PDFEditorApi.prototype.SetDocumentModified = function(bValue) {
 		this.isDocumentModify = bValue;
 		this.sendEvent("asc_onDocumentModifiedChanged");
 
-		if (undefined !== window["AscDesktopEditor"])
-		{
+		if (undefined !== window["AscDesktopEditor"]) {
 			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
 		}
-	};
-	PDFEditorApi.prototype.getAddedTextOnKeyDown = function() {
-		return [];
 	};
 	PDFEditorApi.prototype._autoSaveInner = function() {};
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};
 	PDFEditorApi.prototype.asc_getSelectedDrawingObjectsCount = function() {
 		return this.WordControl.m_oLogicDocument.GetSelectedDrawingObjectsCount();
 	};
-	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+	
+	// composite input
+	PDFEditorApi.prototype.Begin_CompositeInput = function() {
+		if (this.compositeInput)
 			return;
 		
-		form.addCompositeText(codePoint);
+		this.compositeInput = AscPDF.CPDFCompositeInput.begin(this.getPDFDoc());
+	};
+	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.add(codePoint);
 	};
 	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+		if (!this.compositeInput)
 			return;
 		
-		form.removeCompositeText(count);
+		this.compositeInput.remove(count);
 	};
 	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+		if (!this.compositeInput)
 			return;
 		
-		form.replaceCompositeText(codePoints);
-	};
-	PDFEditorApi.prototype.End_CompositeInput = function()
-	{
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
-			return;
-		
-		form.endCompositeInput();
+		this.compositeInput.replace(codePoints);
 	};
 	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+		if (!this.compositeInput)
 			return;
 		
-		form.setPosInCompositeInput(pos);
+		this.compositeInput.setPos(pos);
 	};
 	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+		if (!this.compositeInput)
 			return 0;
 		
-		return form.getPosInCompositeInput();
+		return this.compositeInput.getPos();
 	};
 	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
-		let form = this._getActiveForm();
-		if (!form || !form.IsCanEditText())
+		if (!this.compositeInput)
 			return 0;
 		
-		return form.getMaxPosInCompositeInput();
+		return this.compositeInput.getMaxPos();
+	};
+	PDFEditorApi.prototype.End_CompositeInput = function() {
+		if (!this.compositeInput)
+			return;
+		
+		this.compositeInput.end();
+		this.compositeInput = null;
+	};
+	PDFEditorApi.prototype.getAddedTextOnKeyDown = function() {
+		return [];
 	};
 	PDFEditorApi.prototype._getActiveForm = function() {
 		let viewer = this.DocumentRenderer;
@@ -1847,10 +1823,33 @@
 			this.sendEvent("asc_onTextColor", color);
 		}
 	};
+	PDFEditorApi.prototype.asc_RotatePage = function(angle) {
+		if (angle % 90 != 0) {
+			return false;
+		}
+		if (angle < 0) {
+			angle = 360 + angle;
+		}
+
+		let oDoc = this.getPDFDoc();
+		let oThumbnails = oDoc.Viewer.Thumbnails;
+
+		oDoc.CreateNewHistoryPoint();
+		oDoc.SetPageRotate(oThumbnails.selectPage, angle % 360);
+		oDoc.TurnOffHistory();
+	};
+	PDFEditorApi.prototype.asc_GetPageRotate = function(nPage) {
+		let oViewer = this.getDocumentRenderer();
+		if (!oViewer) {
+			return;
+		}
+
+		return oViewer.getPageRotate(nPage);
+	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
-		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
 		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
@@ -1860,7 +1859,7 @@
 		let oDoc			= oViewer.getPDFDoc();
 
 		if (!pageObject) {
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage);
 			oDoc.anchorPositionToAdd = {
 				x: 10,
 				y: 10
@@ -1874,8 +1873,8 @@
 		};
 
 		if (oDoc.mouseDownAnnot) {
-			let aRect = oDoc.mouseDownAnnot.GetRect();
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage);
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
@@ -1965,7 +1964,10 @@
 		if (oDoc)
 			oDoc.UpdateInterface();
 	};
-	
+	PDFEditorApi.prototype.asc_ShowDocumentOutline = function() {
+	};
+	PDFEditorApi.prototype.asc_HideDocumentOutline = function() {
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2267,6 +2269,8 @@
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
+	PDFEditorApi.prototype['asc_GetPageRotate']			   = PDFEditorApi.prototype.asc_GetPageRotate;
+	PDFEditorApi.prototype['asc_RotatePage']        	   = PDFEditorApi.prototype.asc_RotatePage;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
 	PDFEditorApi.prototype['get_PageWidth']                = PDFEditorApi.prototype.get_PageWidth;
 	PDFEditorApi.prototype['get_PageHeight']               = PDFEditorApi.prototype.get_PageHeight;

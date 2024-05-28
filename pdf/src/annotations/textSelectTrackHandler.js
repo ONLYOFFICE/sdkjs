@@ -62,7 +62,8 @@
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CTextSelectTrackHandler.prototype.GetBounds = function() {
-		let oFile		= Asc.editor.getDocumentRenderer().file;
+		let oViewer		= Asc.editor.getDocumentRenderer();
+		let oFile		= oViewer.file;
 		let aSelQuads	= oFile.getSelectionQuads();
 
 		if (aSelQuads.length == 0) {
@@ -72,17 +73,13 @@
 		let nPage		= aSelQuads[0].page;
 		let aFirstQuads	= aSelQuads[0].quads[0];
 
-		let nScale = oFile.viewer.drawingPages[nPage].W / oFile.pages[nPage].W * g_dKoef_pix_to_mm / oFile.viewer.zoom;
+        let oDoc    = oViewer.getPDFDoc();
+        let oTr     = oDoc.pagesTransform[nPage].invert;
 
-		let x1 = aFirstQuads[0] * nScale;
-		let y1 = aFirstQuads[1] * nScale;
-		let x2 = aFirstQuads[6] * nScale;
-		let y2 = aFirstQuads[7] * nScale;
+		let oPoint1 = oTr.TransformPoint(aFirstQuads[0], aFirstQuads[1]);
+		let oPoint2 = oTr.TransformPoint(aFirstQuads[6], aFirstQuads[7]);
 
-		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(x1, y1, nPage);
-		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(x2, y2, nPage);
-
-		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
+		return [Math.min(oPoint1.x, oPoint2.x), Math.min(oPoint1.y, oPoint2.y), Math.max(oPoint1.x, oPoint2.x), Math.max(oPoint1.y, oPoint2.y)];
 	};
 	CTextSelectTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideTextSelectTrack");

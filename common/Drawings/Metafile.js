@@ -3523,6 +3523,12 @@
 		{
 			return x * this.shy + y * this.sy + this.ty;
 		},
+		TransformPoint : function(x, y)
+		{
+			const transformedX = x * this.sx + y * this.shx + this.tx;
+			const transformedY = x * this.shy + y * this.sy + this.ty;
+			return { x: transformedX, y: transformedY };
+		},
 		// calculate rotate angle
 		GetRotation     : function()
 		{

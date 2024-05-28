@@ -36,130 +36,20 @@
 {
 	/**
 	 * Класс представляющий элемент "количество страниц"
-	 * @param PageCount
 	 * @constructor
 	 * @extends {AscWord.CRunElementBase}
 	 */
-	function CRunPagesCount(PageCount)
+	function CRunPagesCount()
 	{
-		AscWord.CRunElementBase.call(this);
-
-		this.FontKoef  = 1;
-		this.NumWidths = [];
-		this.Widths    = [];
-		this.String    = "";
-		this.PageCount = undefined !== PageCount ? PageCount : 1;
-		this.Parent    = null;
+		AscWord.CRunPageNum.call(this);
 	}
-	CRunPagesCount.prototype = Object.create(AscWord.CRunElementBase.prototype);
+	CRunPagesCount.prototype = Object.create(AscWord.CRunPageNum.prototype);
 	CRunPagesCount.prototype.constructor = CRunPagesCount;
 
 	CRunPagesCount.prototype.Type = para_PageCount;
-	CRunPagesCount.prototype.Copy = function()
+	CRunPagesCount.prototype.UpdatePageCount = function(pageCount)
 	{
-		return new CRunPagesCount();
-	};
-	CRunPagesCount.prototype.CanAddNumbering = function()
-	{
-		return true;
-	};
-	CRunPagesCount.prototype.Measure = function(Context, TextPr)
-	{
-		this.FontKoef = TextPr.getFontCoef();
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-
-		for (var Index = 0; Index < 10; Index++)
-		{
-			this.NumWidths[Index] = Context.Measure("" + Index).Width;
-		}
-
-		this.private_UpdateWidth();
-	};
-	CRunPagesCount.prototype.Draw = function(X, Y, Context)
-	{
-		var Len = this.String.length;
-
-		var _X = X;
-		var _Y = Y;
-
-		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
-		for (var Index = 0; Index < Len; Index++)
-		{
-			var Char = this.String.charAt(Index);
-			Context.FillText(_X, _Y, Char);
-			_X += this.Widths[Index];
-		}
-	};
-	CRunPagesCount.prototype.Document_CreateFontCharMap = function(FontCharMap)
-	{
-		var sValue = "1234567890";
-		for (var Index = 0; Index < sValue.length; Index++)
-		{
-			var Char = sValue.charAt(Index);
-			FontCharMap.AddChar(Char);
-		}
-	};
-	CRunPagesCount.prototype.Update_PageCount = function(nPageCount)
-	{
-		this.PageCount = nPageCount;
-		this.private_UpdateWidth();
-	};
-	CRunPagesCount.prototype.SetNumValue = function(nValue)
-	{
-		this.Update_PageCount(nValue);
-	};
-	CRunPagesCount.prototype.private_UpdateWidth = function()
-	{
-		this.String = "" + this.PageCount;
-
-		var RealWidth = 0;
-		for (var Index = 0, Len = this.String.length; Index < Len; Index++)
-		{
-			var Char = parseInt(this.String.charAt(Index));
-
-			this.Widths[Index] = this.NumWidths[Char];
-			RealWidth += this.NumWidths[Char];
-		}
-
-		RealWidth = (RealWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
-
-		this.Width        = RealWidth;
-		this.WidthVisible = RealWidth;
-	};
-	CRunPagesCount.prototype.Write_ToBinary = function(Writer)
-	{
-		// Long : Type
-		// Long : PageCount
-		Writer.WriteLong(this.Type);
-		Writer.WriteLong(this.PageCount);
-	};
-	CRunPagesCount.prototype.Read_FromBinary = function(Reader)
-	{
-		this.PageCount = Reader.GetLong();
-	};
-	CRunPagesCount.prototype.GetPageCountValue = function()
-	{
-		return this.PageCount;
-	};
-	/**
-	 * Выставляем родительский класс
-	 * @param {ParaRun} oParent
-	 */
-	CRunPagesCount.prototype.SetParent = function(oParent)
-	{
-		this.Parent = oParent;
-	};
-	/**
-	 * Получаем родительский класс
-	 * @returns {?ParaRun}
-	 */
-	CRunPagesCount.prototype.GetParent = function()
-	{
-		return this.Parent;
-	};
-	CRunPagesCount.prototype.GetFontSlot = function(oTextPr)
-	{
-		return AscWord.fontslot_Unknown;
+		this.SetValue(pageCount, Asc.c_oAscNumberingFormat.Decimal);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

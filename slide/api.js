@@ -4614,7 +4614,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.isDrawAnimLabels = function() 
 	{
-		return this.bIsShowAnimTab;
+		return this.bIsShowAnimTab || this.getIsAnimPaneShow();
 	};
 	asc_docs_api.prototype.asc_moveAnimationEarlier = function(nPositions)
 	{
@@ -6791,9 +6791,9 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onCanAddHyperlink", bCanAdd);
 	};
 
-	asc_docs_api.prototype.sync_DialogAddHyperlink = function()
+	asc_docs_api.prototype.sync_DialogAddHyperlink = function(bInternal)
 	{
-		this.sendEvent("asc_onDialogAddHyperlink");
+		this.sendEvent("asc_onDialogAddHyperlink", bInternal);
 	};
 
     //-----------------------------------------------------------------
@@ -9171,7 +9171,7 @@ background-repeat: no-repeat;\
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
-	window['Asc']['asc_docs_api']                                 = asc_docs_api;
+	window['Asc']['asc_docs_api'] = window['Asc'].asc_docs_api    = asc_docs_api;
 	asc_docs_api.prototype['asc_GetFontThumbnailsPath']           = asc_docs_api.prototype.asc_GetFontThumbnailsPath;
 	asc_docs_api.prototype['pre_Save']                            = asc_docs_api.prototype.pre_Save;
 	asc_docs_api.prototype['sync_CollaborativeChanges']           = asc_docs_api.prototype.sync_CollaborativeChanges;
@@ -9753,7 +9753,7 @@ background-repeat: no-repeat;\
 	CContextMenuData.prototype['get_ButtonWidth']     = CContextMenuData.prototype.get_ButtonWidth;
 	CContextMenuData.prototype['get_ButtonHeight']    = CContextMenuData.prototype.get_ButtonHeight;
 
-	window['Asc']['CAscSlideProps']                   = CAscSlideProps;
+	window['Asc']['CAscSlideProps'] = window['Asc'].CAscSlideProps = CAscSlideProps;
 	CAscSlideProps.prototype['get_background']        = CAscSlideProps.prototype.get_background;
 	CAscSlideProps.prototype['put_background']        = CAscSlideProps.prototype.put_background;
 	CAscSlideProps.prototype['get_LayoutIndex']        = CAscSlideProps.prototype.get_LayoutIndex;

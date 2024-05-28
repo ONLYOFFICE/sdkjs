@@ -1603,6 +1603,13 @@
 				}
 			});
 		},
+		forEachFormula: function(callback) {
+			this._foreachDefName(function(defName) {
+				if (defName.parsedRef) {
+					callback(defName.parsedRef);
+				}
+			});
+		},
 		updateSharedFormulas: function() {
 			var newRef;
 			for (var indexNumber in this.changedShared) {
@@ -2560,13 +2567,15 @@
 		this.sharedStrings = wb.sharedStrings;
 		this.workbookFormulas = wb.workbookFormulas;
 	};
-	Workbook.prototype.forEach = function (callback, isCopyPaste) {
+	Workbook.prototype.forEach = function (callback, isCopyPaste, writeTabSelected) {
 		//if copy/paste - use only actve ws
-		if (isCopyPaste || isCopyPaste === false) {
+		if ((isCopyPaste || isCopyPaste === false) && !writeTabSelected) {
 			callback(this.getActiveWs(), this.getActive());
 		} else {
 			for (var i = 0, l = this.aWorksheets.length; i < l; ++i) {
-				callback(this.aWorksheets[i], i);
+				if (!writeTabSelected || (writeTabSelected && this.aWorksheets[i].isSelectedTab())) {
+					callback(this.aWorksheets[i], i);
+				}
 			}
 		}
 	};
@@ -3172,6 +3181,33 @@
 		this.dependencyFormulas.getAllFormulas(res);
 		this.forEach(function (ws) {
 			ws.getAllFormulas(res, needReturnCellProps);
+		});
+		return res;
+	};
+	Workbook.prototype.addCustomFunctionToChanged = function() {
+		var res = null;
+		let t = this;
+		this.dependencyFormulas.forEachFormula(function (fP) {
+			if (fP && fP.bUnknownOrCustomFunction) {
+				fP.isParsed = false;
+				fP.parse();
+				if (/*DefName*/fP.parent.getNodeId) {
+					t.dependencyFormulas.addToChangedDefName(fP.parent);
+				}
+				res = true;
+			}
+		});
+		this.forEach(function (ws) {
+			ws.forEachFormula(function (fP) {
+				if (fP && fP.bUnknownOrCustomFunction) {
+					fP.isParsed = false;
+					fP.parse();
+					if (/*CCellWithFormula*/fP.parent.nCol != null) {
+						t.dependencyFormulas.addToChangedCell(fP.parent);
+					}
+					res = true;
+				}
+			});
 		});
 		return res;
 	};
@@ -8751,6 +8787,18 @@
 			table.getAllFormulas(formulas);
 		}
 	};
+	Worksheet.prototype.forEachFormula = function(callback) {
+		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
+		range._setPropertyNoEmpty(null, null, function(cell) {
+			if (cell.isFormula()) {
+				callback(cell.getFormulaParsed());
+			}
+		});
+		for (var i = 0; i < this.TableParts.length; ++i) {
+			var table = this.TableParts[i];
+			table.forEachFormula(callback);
+		}
+	};
 	Worksheet.prototype.setTableStyleAfterOpen = function () {
 		if (this.TableParts && this.TableParts.length) {
 			for (var i = 0; i < this.TableParts.length; i++) {
@@ -13060,6 +13108,14 @@
 			}
 		}
 	};
+	Worksheet.prototype.isSelectedTab = function () {
+		for (let i = 0; i < this.sheetViews.length; i++) {
+			if (this.sheetViews[i].tabSelected) {
+				return true;
+			}
+		}
+		return false;
+	};
 	
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -14254,6 +14310,9 @@
 		if (this.ws.workbook.handlers) {
 			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
+	};
+	Cell.prototype.getQuotePrefix = function () {
+		return this.xfs && this.xfs.getQuotePrefix();
 	};
 	Cell.prototype._checkDirty = function(){
 		var t = this;
@@ -16898,6 +16957,14 @@
 				valueWithoutFormat = "";
 		});
 		return valueWithoutFormat;
+	};
+	Range.prototype.getQuotePrefix=function(){
+		let res = false;
+		this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, function(cell) {
+			if(null != cell && cell.getQuotePrefix())
+				res = true;
+		});
+		return res;
 	};
 	Range.prototype.getValue=function(){
 		return this.getValueWithoutFormat();

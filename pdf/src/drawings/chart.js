@@ -72,14 +72,17 @@
         this.SetNeedRecalc(false);
     };
     CPdfChart.prototype.onMouseDown = function(x, y, e) {
+        let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
             this.SetInTextBox(false);
@@ -96,52 +99,6 @@
     };
     CPdfChart.prototype.IsInTextBox = function() {
         return this.isInTextBox;
-    };
-    CPdfChart.prototype.EnterText = function(aChars) {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetCurrentParagraph();
-
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        // удаляем текст в селекте
-        if (oContent.IsSelectionUse())
-            oContent.Remove(-1);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let oRun = AscPDF.codePointToRunElement(aChars[index]);
-            if (oRun)
-                oParagraph.AddToParagraph(oRun, true);
-        }
-
-        this.FitTextBox();
-        this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
-        oContent.RecalculateCurPos();
-
-        return true;
-    };
-    /**
-     * Removes char in current position by direction.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfChart.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, isCtrlKey);
-        oContent.RecalculateCurPos();
-        this.SetNeedRecalc(true);
-
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-        else {
-            this.SetNeedRecalc(true);
-            this.SetNeedUpdateRC(true);
-        }
     };
     CPdfChart.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();

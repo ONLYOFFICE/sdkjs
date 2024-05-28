@@ -52,6 +52,8 @@
 	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
+	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -262,6 +264,26 @@
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
+
+	/**
+	 * The cell references type.
+	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
+	 * */
+
+	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
+	/**
+	 * Specifies the part of the range to be pasted.
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
+	 *  | "xlPasteColumnWidths" | "xlPasteComments"
+	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
+	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
+	 * */
+
+	/**
+	 * Specifies how numeric data will be calculated with the destinations cells on the worksheet.
+	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
+	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
+	 * */
 
 	/**
 	 * Class representing a base class for the color types.
@@ -735,6 +757,5707 @@
 	};
 
 	/**
+	 * Returns the ApiWorksheetFunction object.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheetFunction}
+	 */
+	Api.prototype.GetWorksheetFunction = function () {
+		if (!this.oWorksheetFunction) {
+			this.oWorksheetFunction = new ApiWorksheetFunction(this);
+			//this.oWorksheetFunction.init();
+		}
+		return this.oWorksheetFunction;
+	};
+	Object.defineProperty(Api.prototype, "WorksheetFunction", {
+		get: function () {
+			return this.GetWorksheetFunction();
+		}
+	});
+
+	//vba + js
+	let supportedFunctionsMap = {
+		"ABS": "ABS",
+		"ACCRINT": "AccrInt",
+		"ACCRINTM": "AccrIntM",
+		"ACOS": "Acos",
+		"ACOSH": "Acosh",
+		"ACOT": "Acot",
+		"ACOTH": "Acoth",
+		"AGGREGATE": "Aggregate",//not js
+		"AMORDEGRC": "AmorDegrc",
+		"AMORLINC": "AmorLinc",
+		"AND": "And",
+		"ARABIC": "Arabic",
+		"ASC": "Asc",
+		"ASIN": "Asin",
+		"ASINH": "Asinh",
+		"ATAN2": "Atan2",
+		"ATANH": "Atanh",
+		"AVEDEV": "AveDev",
+		"AVERAGE": "Average",
+		"AVERAGEIF": "AverageIf",
+		"AVERAGEIFS": "AverageIfs",
+		//"BAHTTEXT": "BahtText",//not support by OO
+		"BASE": "Base",
+		"BESSELI": "BesselI",
+		"BESSELJ": "BesselJ",
+		"BESSELK": "BesselK",
+		"BESSELY": "BesselY",
+		"BETA.DIST": "Beta.Dist",
+		"BETA.INV": "Beta.Inv",
+		"BETADIST": "BetaDist",//not js
+		"BETAINV": "BetaInv",//not js
+		"BIN2DEC": "Bin2Dec",
+		"BIN2HEX": "Bin2Hex",
+		"BIN2OCT": "Bin2Oct",
+		"BINOM.DIST": "Binom.Dist",
+		"BINOM.DIST.RANGE": "Binom.Dist.Range",
+		"BINOM.INV": "Binom.Inv",
+		"BINOMDIST": "BinomDist",//not js
+		"BITAND": "Bitand",
+		"BITLSHIFT": "Bitlshift",
+		"BITOR": "Bitor",
+		"BITRSHIFT": "Bitrshift",
+		"BITXOR": "Bitxor",
+		"CEILING": "Ceiling",//not js
+		"CEILING.MATH": "Ceiling.Math",
+		"CEILING.PRECISE": "Ceiling.Precise",
+		"CHIDIST": "ChiDist",//not js
+		"CHIINV": "ChiInv",//not js
+		"CHISQ.DIST": "ChiSq.Dist",
+		"CHISQ.DIST.RT": "ChiSq.Dist.RT",
+		"CHISQ.INV": "ChiSq.Inv",
+		"CHISQ.INV.RT": "ChiSq.Inv.RT",
+		"CHISQ.TEST": "ChiSq.Test",//not js
+		"CHITEST": "ChiTest",//not js
+		"CHOOSE": "Choose",
+		"CLEAN": "Clean",
+		"COMBIN": "Combin",
+		"COMBINA": "Combina",
+		"COMPLEX": "Complex",
+		"CONFIDENCE": "Confidence",//not js
+		"CONFIDENCE.NORM": "Confidence.Norm",
+		"CONFIDENCE.T": "Confidence.T",
+		"CONVERT": "Convert",
+		"CORREL": "Correl",//not js
+		"COSH": "Cosh",
+		"COT": "Cot",
+		"COTH": "Coth",
+		"COUNT": "Count",
+		"COUNTA": "CountA",
+		"COUNTBLANK": "CountBlank",
+		"COUNTIF": "CountIf",
+		"COUNTIFS": "CountIfs",
+		"COUPDAYBS": "CoupDayBs",
+		"COUPDAYS": "CoupDays",
+		"COUPDAYSNC": "CoupDaysNc",
+		"COUPNCD": "CoupNcd",
+		"COUPNUM": "CoupNum",
+		"COUPPCD": "CoupPcd",
+		"COVAR": "Covar",//not js
+		"COVARIANCE.P": "Covariance.P",//not js
+		"COVARIANCE.S": "Covariance.S",//not js
+		"CRITBINOM": "CritBinom",//not js
+		"CSC": "Csc",
+		"CSCH": "Csch",
+		"CUMIPMT": "CumIPmt",
+		"CUMPRINC": "CumPrinc",
+		"DAVERAGE": "DAverage",
+		"DAYS": "Days",
+		"DAYS360": "Days360",
+		"DB": "Db",
+		//"DBCS": "Dbcs", //not support by OO
+		"DCOUNT": "DCount",
+		"DCOUNTA": "DCountA",
+		"DDB": "Ddb",
+		"DEC2BIN": "Dec2Bin",
+		"DEC2HEX": "Dec2Hex",
+		"DEC2OCT": "Dec2Oct",
+		"DECIMAL": "Decimal",
+		"DEGREES": "Degrees",
+		"DELTA": "Delta",
+		"DEVSQ": "DevSq",
+		"DGET": "DGet",
+		"DISC": "Disc",
+		"DMAX": "DMax",
+		"DMIN": "DMin",
+		"DOLLAR": "Dollar",
+		"DOLLARDE": "DollarDe",
+		"DOLLARFR": "DollarFr",
+		"DPRODUCT": "DProduct",
+		"DSTDEV": "DStDev",
+		"DSTDEVP": "DStDevP",
+		"DSUM": "DSum",
+		"DURATION": "Duration",
+		"DVAR": "DVar",
+		"DVARP": "DVarP",
+		"EDATE": "EDate",
+		"EFFECT": "Effect",
+		"ENCODEURL": "EncodeUrl",//not js
+		"EOMONTH": "EoMonth",
+		"ERF": "Erf",
+		"ERF.PRECISE": "Erf.Precise",
+		"ERFC": "ErfC",
+		"ERFC.PRECISE": "ErfC.Precise",
+		"EVEN": "Even",
+		"EXPON.DIST": "Expon.Dist",
+		"EXPONDIST": "ExponDist",//not js
+		"F.DIST": "F.Dist",
+		"F.DIST.RT": "F.Dist.RT",
+		"F.INV": "F.Inv",
+		"F.INV.RT": "F.Inv.RT",
+		"F.TEST": "F.Test",//not js
+		"FACT": "Fact",
+		"FACTDOUBLE": "FactDouble",
+		"FDIST": "FDist",//not js
+		"FILTERXML": "FilterXML",//not js
+		"FIND": "Find",
+		"FINDB": "FindB",
+		"FINV": "FInv",//not js
+		"FISHER": "Fisher",
+		"FISHERINV": "FisherInv",
+		"FIXED": "Fixed",
+		"FLOOR": "Floor",//not js
+		"FLOOR.MATH": "Floor.Math",
+		"FLOOR.PRECISE": "Floor.Precise",
+		"FORECAST": "Forecast",//not js
+		"FORECAST.ETS": "Forecast.ETS",//not js
+		"FORECAST.ETS.CONFINT": "Forecast.ETS.ConfInt",//not js
+		"FORECAST.ETS.SEASONALITY": "Forecast.ETS.Seasonality",//not js
+		"FORECAST.ETS.STAT": "Forecast.ETS.STAT",//not js
+		"FORECAST.LINEAR": "Forecast.Linear",//not js
+		"FREQUENCY": "Frequency",//not js
+		"FTEST": "FTest",//not js
+		"FV": "Fv",
+		"FVSCHEDULE": "FVSchedule",
+		"GAMMA": "Gamma",
+		"GAMMA.DIST": "Gamma.Dist",
+		"GAMMA.INV": "Gamma.Inv",
+		"GAMMADIST": "GammaDist",//not js
+		"GAMMAINV": "GammaInv",//not js
+		"GAMMALN": "GammaLn",
+		"GAMMALN.PRECISE": "GammaLn.Precise",
+		"GAUSS": "Gauss",
+		"GCD": "Gcd",
+		"GEOMEAN": "GeoMean",
+		"GESTEP": "GeStep",
+		"GROWTH": "Growth",//not js
+		"HARMEAN": "HarMean",
+		"HEX2BIN": "Hex2Bin",
+		"HEX2DEC": "Hex2Dec",
+		"HEX2OCT": "Hex2Oct",
+		"HLOOKUP": "HLookup",
+		"HYPGEOM.DIST": "HypGeom.Dist",
+		"HYPGEOMDIST": "HypGeomDist",//not js
+		"IFERROR": "IfError",//not js
+		"IFNA": "IfNa",//not js
+		"IMABS": "ImAbs",
+		"IMAGINARY": "Imaginary",
+		"IMARGUMENT": "ImArgument",
+		"IMCONJUGATE": "ImConjugate",
+		"IMCOS": "ImCos",
+		"IMCOSH": "ImCosh",
+		"IMCOT": "ImCot",
+		"IMCSC": "ImCsc",
+		"IMCSCH": "ImCsch",
+		"IMDIV": "ImDiv",
+		"IMEXP": "ImExp",
+		"IMLN": "ImLn",
+		"IMLOG10": "ImLog10",
+		"IMLOG2": "ImLog2",
+		"IMPOWER": "ImPower",
+		"IMPRODUCT": "ImProduct",
+		"IMREAL": "ImReal",
+		"IMSEC": "ImSec",
+		"IMSECH": "ImSech",
+		"IMSIN": "ImSin",
+		"IMSINH": "ImSinh",
+		"IMSQRT": "ImSqrt",
+		"IMSUB": "ImSub",
+		"IMSUM": "ImSum",
+		"IMTAN": "ImTan",
+		"INDEX": "Index",//not js
+		"INTERCEPT": "Intercept",//not js
+		"INTRATE": "IntRate",
+		"IPMT": "Ipmt",
+		"IRR": "Irr",
+		"ISERR": "IsErr",
+		"ISERROR": "IsError",
+		"ISEVEN": "IsEven",
+		"ISFORMULA": "IsFormula",
+		"ISLOGICAL": "IsLogical",
+		"ISNA": "IsNA",
+		"ISNONTEXT": "IsNonText",
+		"ISNUMBER": "IsNumber",
+		"ISO.CEILING": "ISO.Ceiling",
+		"ISODD": "IsOdd",
+		"ISOWEEKNUM": "IsoWeekNum",
+		"ISPMT": "Ispmt",
+		"ISTEXT": "IsText",
+		"KURT": "Kurt",
+		"LARGE": "Large",
+		"LCM": "Lcm",
+		"LINEST": "LinEst",//not js
+		"LN": "Ln",
+		"LOG": "Log",
+		"LOG10": "Log10",
+		"LOGEST": "LogEst",//not js
+		"LOGINV": "LogInv",//not js
+		"LOGNORM.DIST": "LogNorm.Dist",
+		"LOGNORM.INV": "LogNorm.Inv",
+		"LOGNORMDIST": "LogNormDist",//not js
+		"LOOKUP": "Lookup",
+		"MATCH": "Match",
+		"MAX": "Max",
+		"MDETERM": "MDeterm",//not js
+		"MDURATION": "MDuration",
+		"MEDIAN": "Median",
+		"MIN": "Min",
+		"MINVERSE": "MInverse",//not js
+		"MIRR": "MIrr",
+		"MMULT": "MMult",//not js
+		"MODE": "Mode",//not js
+		"MODE.MULT": "Mode.Mult",//not js
+		"MODE.SNGL": "Mode.Sngl",//not js
+		"MROUND": "MRound",
+		"MULTINOMIAL": "MultiNomial",
+		"MUNIT": "Munit",//not js
+		"NEGBINOM.DIST": "NegBinom.Dist",
+		"NEGBINOMDIST": "NegBinomDist",//not js
+		"NETWORKDAYS": "NetworkDays",
+		"NETWORKDAYS.INTL": "NetworkDays.Intl",
+		"NOMINAL": "Nominal",
+		"NORM.DIST": "Norm.Dist",
+		"NORM.INV": "Norm.Inv",
+		"NORM.S.DIST": "Norm.S.Dist",
+		"NORM.S.INV": "Norm.S.Inv",
+		"NORMDIST": "NormDist",//not js
+		"NORMINV": "NormInv",//not js
+		"NORMSDIST": "NormSDist",//not js
+		"NORMSINV": "NormSInv",//not js
+		"NPER": "NPer",
+		"NPV": "Npv",
+		"NUMBERVALUE": "NumberValue",
+		"OCT2BIN": "Oct2Bin",
+		"OCT2DEC": "Oct2Dec",
+		"OCT2HEX": "Oct2Hex",
+		"ODD": "Odd",
+		"ODDFPRICE": "OddFPrice",
+		"ODDFYIELD": "OddFYield",
+		"ODDLPRICE": "OddLPrice",
+		"ODDLYIELD": "OddLYield",
+		"OR": "Or",
+		"PDURATION": "PDuration",
+		"PEARSON": "Pearson",//not js
+		"PERCENTILE": "Percentile",//not js
+		"PERCENTILE.EXC": "Percentile.Exc",
+		"PERCENTILE.INC": "Percentile.Inc",
+		"PERCENTRANK": "PercentRank",//not js
+		"PERCENTRANK.EXC": "PercentRank.Exc",
+		"PERCENTRANK.INC": "PercentRank.Inc",
+		"PERMUT": "Permut",
+		"PERMUTATIONA": "Permutationa",
+		"PHI": "Phi",
+		"PHONETIC": "Phonetic",//not js
+		"PI": "Pi",
+		"PMT": "Pmt",
+		"POISSON": "Poisson",//not js
+		"POISSON.DIST": "Poisson.Dist",
+		"POWER": "Power",
+		"PPMT": "Ppmt",
+		"PRICE": "Price",
+		"PRICEDISC": "PriceDisc",
+		"PRICEMAT": "PriceMat",
+		"PROB": "Prob",//not js
+		"PRODUCT": "Product",
+		"PROPER": "Proper",
+		"PV": "Pv",
+		"QUARTILE": "Quartile",//not js
+		"QUARTILE.EXC": "Quartile.Exc",
+		"QUARTILE.INC": "Quartile.Inc",
+		"QUOTIENT": "Quotient",
+		"RADIANS": "Radians",
+		"RANDBETWEEN": "RandBetween",
+		"RANK": "Rank",//not js
+		"RANK.AVG": "Rank.Avg",
+		"RANK.EQ": "Rank.Eq",
+		"RATE": "Rate",
+		"RECEIVED": "Received",
+		"REPLACE": "Replace",
+		"REPLACEB": "ReplaceB",
+		"REPT": "Rept",
+		"ROMAN": "Roman",
+		"ROUND": "Round",
+		"ROUNDDOWN": "RoundDown",
+		"ROUNDUP": "RoundUp",
+		"RRI": "Rri",
+		"RSQ": "RSq",//not js
+		"RTD": "RTD",//not js
+		"SEARCH": "Search",//not js
+		"SEARCHB": "SearchB",//not js
+		"SEC": "Sec",
+		"SECH": "Sech",
+		"SERIESSUM": "SeriesSum",
+		"SINH": "Sinh",
+		"SKEW": "Skew",
+		"SKEW.P": "Skew.p",
+		"SLN": "Sln",
+		"SLOPE": "Slope",//not js
+		"SMALL": "Small",
+		"SQRTPI": "SqrtPi",
+		"STANDARDIZE": "Standardize",
+		"STDEV": "StDev",//not js
+		"STDEV.P": "StDev.P",//not js
+		"STDEV.S": "StDev.S",
+		"STDEVP": "StDevP",
+		"STEYX": "StEyx",//not js
+		"SUBSTITUTE": "Substitute",
+		"SUBTOTAL": "Subtotal",
+		"SUM": "Sum",
+		"SUMIF": "SumIf",
+		"SUMIFS": "SumIfs",
+		"SUMPRODUCT": "SumProduct",//not js
+		"SUMSQ": "SumSq",
+		"SUMX2MY2": "SumX2MY2",//not js
+		"SUMX2PY2": "SumX2PY2",//not js
+		"SUMXMY2": "SumXMY2",//not js
+		"SYD": "Syd",
+		"T.DIST": "T.Dist",
+		"T.DIST.2T": "T.Dist.2T",
+		"T.DIST.RT": "T.Dist.RT",
+		"T.INV": "T.Inv",
+		"T.INV.2T": "T.Inv.2T",
+		"T.TEST": "T.Test",//not js
+		"TANH": "Tanh",
+		"TBILLEQ": "TBillEq",
+		"TBILLPRICE": "TBillPrice",
+		"TBILLYIELD": "TBillYield",
+		"TDIST": "TDist",//not js
+		"TEXT": "Text",
+		"TINV": "TInv",//not js
+		"TRANSPOSE": "Transpose",//not js
+		"TREND": "Trend",//not js
+		"TRIM": "Trim",
+		"TRIMMEAN": "TrimMean",
+		"TTEST": "TTest",//not js
+		"UNICHAR": "Unichar",
+		"UNICODE": "Unicode",
+		//"USDOLLAR": "USDollar", //not support by OO
+		"VAR": "Var",//not js
+		"VAR.P": "Var.P",//not js
+		"VAR.S": "Var.S",
+		"VARP": "VarP",
+		"VDB": "Vdb",
+		"VLOOKUP": "VLookup",
+		"WEBSERVICE": "WebService",//not js
+		"WEEKDAY": "Weekday",
+		"WEEKNUM": "WeekNum",
+		"WEIBULL": "Weibull",//not js
+		"WEIBULL.DIST": "Weibull.Dist",
+		"WORKDAY": "WorkDay",
+		"WORKDAY.INTL": "WorkDay.Intl",
+		"XIRR": "Xirr",
+		"XNPV": "Xnpv",
+		"XOR": "Xor",
+		"YEARFRAC": "YearFrac",
+		"YIELDDISC": "YieldDisc",
+		"YIELDMAT": "YieldMat",
+		"Z.TEST": "Z.Test",
+		"ZTEST": "ZTest",//not js
+
+
+		//not in vba, only js:
+		//"INIT": "init", //not support by OO
+		//"AREAS": "areas", //not support by OO
+		"ATAN": "atan",
+		"AVERAGEA": "averageA",
+		"CHAR": "char",
+		"CODE": "code",
+		"COLUMNS": "columns",
+		"CONCATENATE": "concatenate",
+		"COS": "cos",
+		"DATE": "date",
+		"DATEVALUE": "datevalue",
+		"DAY": "day",
+		"ECMA.CEILING": "ecma.Ceiling",
+		"ERROR.TYPE": "error.Type",
+		"EXACT": "exact",
+		"EXP": "exp",
+		"FALSE": "false",
+		"HOUR": "hour",
+		"HYPERLINK": "hyperlink",
+		"IF": "if",
+		"INT": "int",
+		"ISREF": "isref",
+		"LEFT": "left",
+		"LEFTB": "leftb",
+		"LEN": "len",
+		"LENB": "lenb",
+		"LOWER": "lower",
+		"MAXA": "maxA",
+		"MID": "mid",
+		"MIDB": "midb",
+		"MINA": "minA",
+		"MINUTE": "minute",
+		"MOD": "mod",
+		"MONTH": "month",
+		"N": "n",
+		"NA": "na",
+		"NOT": "not",
+		"NOW": "now",
+		"RAND": "rand",
+		"RIGHT": "right",
+		"RIGHTB": "rightb",
+		"ROWS": "rows",
+		"SECOND": "second",
+		"SHEET": "sheet",
+		"SHEETS": "sheets",
+		"SIGN": "sign",
+		"SIN": "sin",
+		"SQRT": "sqrt",
+		"STDEVA": "stDevA",
+		"STDEVPA": "stDevPA",
+		"T": "t",
+		"TAN": "tan",
+		"TIME": "time",
+		"TIMEVALUE": "timevalue",
+		"TODAY": "today",
+		"TRUE": "true",
+		"TRUNC": "trunc",
+		"TYPE": "type",
+		"UPPER": "upper",
+		"VALUE": "value",
+		"VARA": "varA",
+		"VARPA": "varPA",
+		"YEAR": "year",
+		"YIELD": "yield"
+	};
+
+	function ApiWorksheetFunction(api) {
+		this.api = api;
+	}
+
+	// ApiWorksheetFunction.prototype.init = function () {
+	// 	let getArgType = function (_arg) {
+	//
+	// 		let res = "any";
+	// 		if (_arg === Asc.c_oAscFormulaArgumentType.number) {
+	// 			res = "number"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
+	// 			res = "string"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
+	// 			res = "ApiRange"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
+	// 			res = "boolean"
+	// 		}
+	// 		return res;
+	// 	};
+	//
+	// 	let test = ""
+	// 	for (let i in AscCommonExcel.cFormulaFunction) {
+	// 		if (supportedFunctionsMap[i]) {
+	//
+	// 			//if (i === "SERIESSUM") {
+	// 				let test1 = "";
+	// 				let test2 = ""
+	// 				let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax
+	// 				let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin
+	// 				if (maxArg < 10) {
+	// 					for (let j = 1; j <= maxArg; j++) {
+	// 						let test12 = "arg" + (j)
+	//
+	// 						test1 += "\t * @param {" + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
+	// 						if (j <= minArg) {
+	// 							test1 += test12;
+	// 						} else {
+	// 							test1 += "[" + test12 + "]";
+	// 						}
+	// 						test1 +=  ".\n";
+	//
+	// 						test2 += j === maxArg ? test12 : (test12 + ",")
+	// 					}
+	// 				}
+	//
+	//
+	// 				test += "/**\n" + "\t * Returns the result of calculating the function.\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
+	// 					+ "\t * @returns {number | string | boolean}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\tthis.private_calculateFunction(\"" + i + "\", arguments);\n" + "\t};"
+	// 			//}
+	//
+	// 			test += "\n"
+	//
+	//
+	//
+	// 			ApiWorksheetFunction.prototype[i] = function () {
+	// 				return this.private_calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
+	// 			}
+	// 		}
+	// 	}
+	// 	console.log(test)
+	// };
+
+
+	ApiWorksheetFunction.prototype.private_calculateFunction = function (sFunc, arg) {
+		//check
+		let func = AscCommonExcel.cFormulaFunction[sFunc].prototype;
+		if (!func) {
+			return;
+		}
+		let argsCount = arg.length;
+		if (!func.checkArguments(argsCount)) {
+			throwException(new Error('Arguments count error.'));
+			return null;
+		}
+
+		//prepare arguments
+		let newArguments = [];
+		for (let i = 0; i < argsCount; i++) {
+			if ('number' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cNumber(arg[i]));
+			} else if ('string' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cString(arg[i]));
+			} else if ('boolean' === typeof arg[i]) {
+				newArguments.push(new AscCommonExcel.cBool(arg[i]));
+			} else if (arg[i] instanceof ApiRange ) {
+				//cArea/cRef/cArea3D/cRef3d
+				if (arg[i].range && arg[i].range.bbox && arg[i].range.worksheet) {
+					newArguments.push(new AscCommonExcel.cArea3D(arg[i].range.bbox.getName(), arg[i].range.worksheet, arg[i].range.worksheet));
+				} else {
+					throwException(new Error('Arguments type error.'));
+					return null;
+				}
+			} else {
+				throwException(new Error('Arguments type error.'));
+				return null;
+			}
+		}
+
+		//prepare result
+		let ws = this.api && this.api.wb && this.api.wb.getWorksheet();
+		if (ws) {
+			ws = ws.model;
+		}
+		let result = func.Calculate(newArguments, new Asc.Range(0, 0, 0, 0), null, ws);
+
+		if (!result) {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
+
+
+		if (AscCommonExcel.cElementType.cell === result.type || AscCommonExcel.cElementType.cell3D === result.type) {
+			result = result.getValue();
+			if (AscCommonExcel.cElementType.empty === result.type) {
+				result = new AscCommonExcel.cNumber(0);
+			}
+		} else if (AscCommonExcel.cElementType.array === result.type) {
+			result = result.getElement(0);
+		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
+			if (AscCommonExcel.cElementType.cellsRange === result.type) {
+				result = result.getValue2(0, 0);
+			} else {
+				result = result.getValue2(new AscCommon.CellAddress(result.getBBox0().r1, result.getBBox0().c1, 0));
+			}
+		}
+
+		if (result && result.getValue) {
+			result = result.getValue();
+		} else {
+			throwException(new Error('Result type error.'));
+			return null;
+		}
+
+		return result;
+	}
+
+	ApiWorksheetFunction.prototype.private_simpleTestAllFunctions = function () {
+		let obj = Object.getPrototypeOf(this)
+
+		let t = this
+		let checkType = function (type) {
+			let arg
+			if (type === Asc.c_oAscFormulaArgumentType.reference) {
+				arg = t.api.GetRange("A1:B2");
+			} else if (type === Asc.c_oAscFormulaArgumentType.number) {
+				arg = 111;
+			} else if (type === Asc.c_oAscFormulaArgumentType.text) {
+				arg = "test1"
+			} else if (type === Asc.c_oAscFormulaArgumentType.any) {
+				arg = t.api.GetRange("A1:B2");
+			} else if (type === Asc.c_oAscFormulaArgumentType.logical) {
+				arg = true;
+			}
+			return arg
+		}
+
+		for (let i in obj) {
+			let arrayTypeFunc = false;
+
+			let iReplace = i.replace("_", ".")
+			if (!AscCommonExcel.cFormulaFunction[iReplace]) {
+				continue
+			}
+			if (!AscCommonExcel.cFormulaFunction[iReplace]) {
+				console.log(i)
+				continue;
+			}
+			let props = AscCommonExcel.cFormulaFunction[iReplace].prototype
+			let args = [];
+			for (let j in props.argumentsType) {
+
+				let arg;
+				let type;
+				if (Array.isArray(props.argumentsType[j])) {
+					for (let n  =0 ; n < props.argumentsType[j].length; n++) {
+						type = props.argumentsType[j][n]
+						arg = checkType(type);
+						if (arg == null) {
+							console.log("undefined type: " + i)
+							arrayTypeFunc = true
+							continue;
+						}
+						args.push(arg);
+					}
+				} else {
+					type = props.argumentsType[j]
+					arg = checkType(type);
+					if (arg == null) {
+						console.log("undefined type: " + i)
+						arrayTypeFunc = true
+						continue;
+					}
+					args.push(arg);
+				}
+			}
+			if (!arrayTypeFunc) {
+				obj[i].apply(this, args);
+			}
+		}
+	};
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ASC = function (arg1) {
+		return this.private_calculateFunction("ASC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
+		return this.private_calculateFunction("CHAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
+		return this.private_calculateFunction("CLEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CODE = function (arg1) {
+		return this.private_calculateFunction("CODE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CONCATENATE = function () {
+		return this.private_calculateFunction("CONCATENATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
+		return this.private_calculateFunction("DOLLAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
+		return this.private_calculateFunction("EXACT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FIND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FINDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {boolean} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FIXED", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
+		return this.private_calculateFunction("LEFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
+		return this.private_calculateFunction("LEFTB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LEN = function (arg1) {
+		return this.private_calculateFunction("LEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LENB = function (arg1) {
+		return this.private_calculateFunction("LENB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
+		return this.private_calculateFunction("LOWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("MID", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("MIDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} [arg2].
+	 * @param {string} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("NUMBERVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
+		return this.private_calculateFunction("PROPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {string} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("REPLACE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {string} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("REPLACEB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
+		return this.private_calculateFunction("REPT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
+		return this.private_calculateFunction("RIGHT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
+		return this.private_calculateFunction("RIGHTB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("SEARCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("SEARCHB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {string} arg3.
+	 * @param {string} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("SUBSTITUTE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T = function (arg1) {
+		return this.private_calculateFunction("T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {string} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
+		return this.private_calculateFunction("TEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
+		return this.private_calculateFunction("TRIM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
+		return this.private_calculateFunction("UNICHAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
+		return this.private_calculateFunction("UNICODE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
+		return this.private_calculateFunction("UPPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
+		return this.private_calculateFunction("VALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AVEDEV = function () {
+		return this.private_calculateFunction("AVEDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGE = function () {
+		return this.private_calculateFunction("AVERAGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEA = function () {
+		return this.private_calculateFunction("AVERAGEA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEIF = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("AVERAGEIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AVERAGEIFS = function () {
+		return this.private_calculateFunction("AVERAGEIFS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BETADIST = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("BETADIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BETA_DIST = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("BETA.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BETA_INV = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("BETA.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BETAINV = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("BETAINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BINOMDIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("BINOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("BINOM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_DIST.RANGE = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("BINOM.DIST.RANGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BINOM_INV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("BINOM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHIDIST = function (arg1, arg2) {
+		return this.private_calculateFunction("CHIDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHIINV = function (arg1, arg2) {
+		return this.private_calculateFunction("CHIINV", arguments);
+	};
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_DIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CHISQ.DIST", arguments);
+	};
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_DIST_RT = function (arg1, arg2) {
+		return this.private_calculateFunction("CHISQ.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_INV = function (arg1, arg2) {
+		return this.private_calculateFunction("CHISQ.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHISQ_INV.RT = function (arg1, arg2) {
+		return this.private_calculateFunction("CHISQ.INV.RT", arguments);
+	};
+
+	//todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CHITEST", arguments);
+	// };
+
+	//todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CHISQ_TEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CHISQ.TEST", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CONFIDENCE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE_NORM = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CONFIDENCE.NORM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CONFIDENCE.T", arguments);
+	};
+
+	// //todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CORREL = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CORREL", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUNT = function () {
+		return this.private_calculateFunction("COUNT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUNTA = function () {
+		return this.private_calculateFunction("COUNTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUNTBLANK = function (arg1) {
+		return this.private_calculateFunction("COUNTBLANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUNTIF = function (arg1, arg2) {
+		return this.private_calculateFunction("COUNTIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUNTIFS = function () {
+		return this.private_calculateFunction("COUNTIFS", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVAR = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVAR", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVARIANCE_P = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVARIANCE.P", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVARIANCE_S = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVARIANCE.S", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CRITBINOM = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CRITBINOM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DEVSQ = function () {
+		return this.private_calculateFunction("DEVSQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EXPON_DIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("EXPON.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EXPONDIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("EXPONDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.F_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("F.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FDIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.F_DIST.RT = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("F.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.F_INV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("F.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FINV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.F_INV.RT = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("F.INV.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FISHER = function (arg1) {
+		return this.private_calculateFunction("FISHER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
+		return this.private_calculateFunction("FISHERINV", arguments);
+	};
+
+	//todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} arg1.
+	//  * @param {any} arg2.
+	//  * @param {any} arg3.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FORECAST = function (arg1, arg2, arg3) {
+	// 	return this.private_calculateFunction("FORECAST", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("FORECAST.ETS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @param {number} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.CONFINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("FORECAST.ETS.CONFINT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {number} [arg3].
+	 * @param {number} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.SEASONALITY = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FORECAST_ETS.STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} arg1.
+	//  * @param {any} arg2.
+	//  * @param {any} arg3.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FORECAST_LINEAR = function (arg1, arg2, arg3) {
+	// 	return this.private_calculateFunction("FORECAST.LINEAR", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
+		return this.private_calculateFunction("FREQUENCY", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FTEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("FTEST", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.F_TEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("F.TEST", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA = function (arg1) {
+		return this.private_calculateFunction("GAMMA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("GAMMA.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMADIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("GAMMADIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMA_INV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("GAMMA.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMAINV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("GAMMAINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMALN = function (arg1) {
+		return this.private_calculateFunction("GAMMALN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAMMALN_PRECISE = function (arg1) {
+		return this.private_calculateFunction("GAMMALN.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GAUSS = function (arg1) {
+		return this.private_calculateFunction("GAUSS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GEOMEAN = function () {
+		return this.private_calculateFunction("GEOMEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {ApiRange} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("GROWTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HARMEAN = function () {
+		return this.private_calculateFunction("HARMEAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HYPGEOMDIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("HYPGEOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {boolean} arg5.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("HYPGEOM.DIST", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.INTERCEPT = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("INTERCEPT", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.KURT = function () {
+		return this.private_calculateFunction("KURT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
+		return this.private_calculateFunction("LARGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {boolean} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("LINEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {boolean} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOGEST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("LOGEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOGINV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("LOGINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORM_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("LOGNORM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORM_INV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("LOGNORM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOGNORMDIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("LOGNORMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MAX = function () {
+		return this.private_calculateFunction("MAX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MAXA = function () {
+		return this.private_calculateFunction("MAXA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MEDIAN = function () {
+		return this.private_calculateFunction("MEDIAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MIN = function () {
+		return this.private_calculateFunction("MIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MINA = function () {
+		return this.private_calculateFunction("MINA", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE = function () {
+	// 	return this.private_calculateFunction("MODE", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE_MULT = function () {
+	// 	return this.private_calculateFunction("MODE.MULT", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE_SNGL = function () {
+	// 	return this.private_calculateFunction("MODE.SNGL", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NEGBINOMDIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("NEGBINOMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NEGBINOM_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("NEGBINOM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORMDIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("NORMDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORM_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("NORM.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORMINV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("NORMINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORM_INV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("NORM.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORMSDIST = function (arg1) {
+		return this.private_calculateFunction("NORMSDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {boolean} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORM_S_DIST = function (arg1, arg2) {
+		return this.private_calculateFunction("NORM.S.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORMSINV = function (arg1) {
+		return this.private_calculateFunction("NORMSINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
+		return this.private_calculateFunction("NORM.S.INV", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.PEARSON = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("PEARSON", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE = function (arg1, arg2) {
+		return this.private_calculateFunction("PERCENTILE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE_EXC = function (arg1, arg2) {
+		return this.private_calculateFunction("PERCENTILE.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTILE_INC = function (arg1, arg2) {
+		return this.private_calculateFunction("PERCENTILE.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("PERCENTRANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK_EXC = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("PERCENTRANK.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERCENTRANK_INC = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("PERCENTRANK.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERMUT = function (arg1, arg2) {
+		return this.private_calculateFunction("PERMUT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PERMUTATIONA = function (arg1, arg2) {
+		return this.private_calculateFunction("PERMUTATIONA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PHI = function (arg1) {
+		return this.private_calculateFunction("PHI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.POISSON = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("POISSON", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("POISSON.DIST", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @param {number} arg3.
+	//  * @param {number} [arg4].
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("PROB", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE = function (arg1, arg2) {
+		return this.private_calculateFunction("QUARTILE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE_EXC = function (arg1, arg2) {
+		return this.private_calculateFunction("QUARTILE.EXC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.QUARTILE_INC = function (arg1, arg2) {
+		return this.private_calculateFunction("QUARTILE.INC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RANK = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("RANK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RANK_AVG = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("RANK.AVG", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("RANK.EQ", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.RSQ = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("RSQ", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SKEW = function () {
+		return this.private_calculateFunction("SKEW", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SKEW_P = function () {
+		return this.private_calculateFunction("SKEW.P", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SLOPE = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SLOPE", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
+		return this.private_calculateFunction("SMALL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STANDARDIZE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("STANDARDIZE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEV = function () {
+		return this.private_calculateFunction("STDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEV_S = function () {
+		return this.private_calculateFunction("STDEV.S", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEVA = function () {
+		return this.private_calculateFunction("STDEVA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEVP = function () {
+		return this.private_calculateFunction("STDEVP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEV_P = function () {
+		return this.private_calculateFunction("STDEV.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.STDEVPA = function () {
+		return this.private_calculateFunction("STDEVPA", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.STEYX = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("STEYX", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TDIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("TDIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("T.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST_2T = function (arg1, arg2) {
+		return this.private_calculateFunction("T.DIST.2T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T_DIST_RT = function (arg1, arg2) {
+		return this.private_calculateFunction("T.DIST.RT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T_INV = function (arg1, arg2) {
+		return this.private_calculateFunction("T.INV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.T_INV_2T = function (arg1, arg2) {
+		return this.private_calculateFunction("T.INV.2T", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TINV = function (arg1, arg2) {
+		return this.private_calculateFunction("TINV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {ApiRange} [arg2].
+	 * @param {ApiRange} [arg3].
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("TREND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
+		return this.private_calculateFunction("TRIMMEAN", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @param {number} arg3.
+	//  * @param {number} arg4.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.TTEST = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("TTEST", arguments);
+	// };
+
+	//todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @param {number} arg3.
+	//  * @param {number} arg4.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.T_TEST = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("T.TEST", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VAR = function () {
+		return this.private_calculateFunction("VAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VARA = function () {
+		return this.private_calculateFunction("VARA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VARP = function () {
+		return this.private_calculateFunction("VARP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VAR_P = function () {
+		return this.private_calculateFunction("VAR.P", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VAR_S = function () {
+		return this.private_calculateFunction("VAR.S", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VARPA = function () {
+		return this.private_calculateFunction("VARPA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WEIBULL = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("WEIBULL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WEIBULL_DIST = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("WEIBULL.DIST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ZTEST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("ZTEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.Z_TEST = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("Z.TEST", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
+		return this.private_calculateFunction("DATEVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DAY = function (arg1) {
+		return this.private_calculateFunction("DAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
+		return this.private_calculateFunction("DAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {boolean} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DAYS360", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
+		return this.private_calculateFunction("EDATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
+		return this.private_calculateFunction("EOMONTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HOUR = function (arg1) {
+		return this.private_calculateFunction("HOUR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISOWEEKNUM = function (arg1) {
+		return this.private_calculateFunction("ISOWEEKNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MINUTE = function (arg1) {
+		return this.private_calculateFunction("MINUTE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MONTH = function (arg1) {
+		return this.private_calculateFunction("MONTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NETWORKDAYS = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("NETWORKDAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NETWORKDAYS_INTL = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NOW = function () {
+		return this.private_calculateFunction("NOW", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SECOND = function (arg1) {
+		return this.private_calculateFunction("SECOND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TIME = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("TIME", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TIMEVALUE = function (arg1) {
+		return this.private_calculateFunction("TIMEVALUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TODAY = function () {
+		return this.private_calculateFunction("TODAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WEEKDAY = function (arg1, arg2) {
+		return this.private_calculateFunction("WEEKDAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WEEKNUM = function (arg1, arg2) {
+		return this.private_calculateFunction("WEEKNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WORKDAY = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("WORKDAY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.WORKDAY_INTL = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("WORKDAY.INTL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.YEAR = function (arg1) {
+		return this.private_calculateFunction("YEAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.YEARFRAC = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("YEARFRAC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BESSELI = function (arg1, arg2) {
+		return this.private_calculateFunction("BESSELI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BESSELJ = function (arg1, arg2) {
+		return this.private_calculateFunction("BESSELJ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BESSELK = function (arg1, arg2) {
+		return this.private_calculateFunction("BESSELK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BESSELY = function (arg1, arg2) {
+		return this.private_calculateFunction("BESSELY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BIN2DEC = function (arg1) {
+		return this.private_calculateFunction("BIN2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
+		return this.private_calculateFunction("BIN2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
+		return this.private_calculateFunction("BIN2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BITAND = function (arg1, arg2) {
+		return this.private_calculateFunction("BITAND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BITLSHIFT = function (arg1, arg2) {
+		return this.private_calculateFunction("BITLSHIFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BITOR = function (arg1, arg2) {
+		return this.private_calculateFunction("BITOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BITRSHIFT = function (arg1, arg2) {
+		return this.private_calculateFunction("BITRSHIFT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BITXOR = function (arg1, arg2) {
+		return this.private_calculateFunction("BITXOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("COMPLEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CONVERT = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CONVERT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
+		return this.private_calculateFunction("DEC2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
+		return this.private_calculateFunction("DEC2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
+		return this.private_calculateFunction("DEC2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DELTA = function (arg1, arg2) {
+		return this.private_calculateFunction("DELTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ERF = function (arg1, arg2) {
+		return this.private_calculateFunction("ERF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ERF_PRECISE = function (arg1) {
+		return this.private_calculateFunction("ERF.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ERFC = function (arg1) {
+		return this.private_calculateFunction("ERFC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ERFC_PRECISE = function (arg1) {
+		return this.private_calculateFunction("ERFC.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GESTEP = function (arg1, arg2) {
+		return this.private_calculateFunction("GESTEP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
+		return this.private_calculateFunction("HEX2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HEX2DEC = function (arg1) {
+		return this.private_calculateFunction("HEX2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
+		return this.private_calculateFunction("HEX2OCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMABS = function (arg1) {
+		return this.private_calculateFunction("IMABS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMAGINARY = function (arg1) {
+		return this.private_calculateFunction("IMAGINARY", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMARGUMENT = function (arg1) {
+		return this.private_calculateFunction("IMARGUMENT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
+		return this.private_calculateFunction("IMCONJUGATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
+		return this.private_calculateFunction("IMCOS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
+		return this.private_calculateFunction("IMCOSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
+		return this.private_calculateFunction("IMCOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
+		return this.private_calculateFunction("IMCSC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
+		return this.private_calculateFunction("IMCSCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
+		return this.private_calculateFunction("IMDIV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
+		return this.private_calculateFunction("IMEXP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
+		return this.private_calculateFunction("IMLN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
+		return this.private_calculateFunction("IMLOG10", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
+		return this.private_calculateFunction("IMLOG2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
+		return this.private_calculateFunction("IMPOWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
+		return this.private_calculateFunction("IMPRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMREAL = function (arg1) {
+		return this.private_calculateFunction("IMREAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
+		return this.private_calculateFunction("IMSEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
+		return this.private_calculateFunction("IMSECH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
+		return this.private_calculateFunction("IMSIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
+		return this.private_calculateFunction("IMSINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
+		return this.private_calculateFunction("IMSQRT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
+		return this.private_calculateFunction("IMSUB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMSUM = function () {
+		return this.private_calculateFunction("IMSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
+		return this.private_calculateFunction("IMTAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
+		return this.private_calculateFunction("OCT2BIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.OCT2DEC = function (arg1) {
+		return this.private_calculateFunction("OCT2DEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
+		return this.private_calculateFunction("OCT2HEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DAVERAGE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DAVERAGE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DCOUNT = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DCOUNT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DCOUNTA = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DCOUNTA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DGET = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DGET", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DMAX = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DMAX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DMIN = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DMIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DPRODUCT = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DPRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DSTDEV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DSTDEV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DSTDEVP = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DSTDEVP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DSUM = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DVAR = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DVAR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {string} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DVARP = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("DVARP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @param {any} [arg8].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACCRINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return this.private_calculateFunction("ACCRINT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACCRINTM = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("ACCRINTM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AMORDEGRC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("AMORDEGRC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AMORLINC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("AMORLINC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYBS = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPDAYBS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYS = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPDAYS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPDAYSNC = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPDAYSNC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPNCD = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPNCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPNUM = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPNUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COUPPCD = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("COUPPCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CUMIPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("CUMIPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CUMPRINC = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("CUMPRINC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DB = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("DB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DDB = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("DDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("DISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DOLLARDE = function (arg1, arg2) {
+		return this.private_calculateFunction("DOLLARDE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DOLLARFR = function (arg1, arg2) {
+		return this.private_calculateFunction("DOLLARFR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("DURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EFFECT = function (arg1, arg2) {
+		return this.private_calculateFunction("EFFECT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FV = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("FV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FVSCHEDULE = function (arg1, arg2) {
+		return this.private_calculateFunction("FVSCHEDULE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.INTRATE = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("INTRATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("IPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IRR = function (arg1, arg2) {
+		return this.private_calculateFunction("IRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISPMT = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("ISPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MDURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("MDURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MIRR = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("MIRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NOMINAL = function (arg1, arg2) {
+		return this.private_calculateFunction("NOMINAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NPER = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("NPER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NPV = function () {
+		return this.private_calculateFunction("NPV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} arg8.
+	 * @param {any} [arg9].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ODDFPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+		return this.private_calculateFunction("ODDFPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} arg8.
+	 * @param {any} [arg9].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ODDFYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+		return this.private_calculateFunction("ODDFYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} [arg8].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ODDLPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return this.private_calculateFunction("ODDLPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} arg7.
+	 * @param {any} [arg8].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ODDLYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+		return this.private_calculateFunction("ODDLYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PDURATION = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("PDURATION", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PMT = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("PMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("PPMT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("PRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PRICEDISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("PRICEDISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PRICEMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("PRICEMAT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PV = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("PV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} [arg4].
+	 * @param {number} [arg5].
+	 * @param {number} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RATE = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("RATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RECEIVED = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("RECEIVED", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RRI = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("RRI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SLN = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("SLN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SYD = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("SYD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TBILLEQ = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("TBILLEQ", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TBILLPRICE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("TBILLPRICE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TBILLYIELD = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("TBILLYIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {number} arg4.
+	 * @param {number} arg5.
+	 * @param {number} [arg6].
+	 * @param {boolean} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VDB = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("VDB", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.XIRR = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("XIRR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.XNPV = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("XNPV", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {any} [arg7].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.YIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+		return this.private_calculateFunction("YIELD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} [arg5].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.YIELDDISC = function (arg1, arg2, arg3, arg4, arg5) {
+		return this.private_calculateFunction("YIELDDISC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} [arg6].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.YIELDMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
+		return this.private_calculateFunction("YIELDMAT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ABS = function (arg1) {
+		return this.private_calculateFunction("ABS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACOS = function (arg1) {
+		return this.private_calculateFunction("ACOS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACOSH = function (arg1) {
+		return this.private_calculateFunction("ACOSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACOT = function (arg1) {
+		return this.private_calculateFunction("ACOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ACOTH = function (arg1) {
+		return this.private_calculateFunction("ACOTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AGGREGATE = function () {
+		return this.private_calculateFunction("AGGREGATE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ARABIC = function (arg1) {
+		return this.private_calculateFunction("ARABIC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ASIN = function (arg1) {
+		return this.private_calculateFunction("ASIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ASINH = function (arg1) {
+		return this.private_calculateFunction("ASINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ATAN = function (arg1) {
+		return this.private_calculateFunction("ATAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
+		return this.private_calculateFunction("ATAN2", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ATANH = function (arg1) {
+		return this.private_calculateFunction("ATANH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("BASE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CEILING = function (arg1, arg2) {
+		return this.private_calculateFunction("CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CEILING_MATH = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("CEILING.MATH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CEILING_PRECISE = function (arg1, arg2) {
+		return this.private_calculateFunction("CEILING.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COMBIN = function (arg1, arg2) {
+		return this.private_calculateFunction("COMBIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COMBINA = function (arg1, arg2) {
+		return this.private_calculateFunction("COMBINA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COS = function (arg1) {
+		return this.private_calculateFunction("COS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COSH = function (arg1) {
+		return this.private_calculateFunction("COSH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COT = function (arg1) {
+		return this.private_calculateFunction("COT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COTH = function (arg1) {
+		return this.private_calculateFunction("COTH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CSC = function (arg1) {
+		return this.private_calculateFunction("CSC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CSCH = function (arg1) {
+		return this.private_calculateFunction("CSCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DECIMAL = function (arg1, arg2) {
+		return this.private_calculateFunction("DECIMAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.DEGREES = function (arg1) {
+		return this.private_calculateFunction("DEGREES", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ECMA_CEILING = function (arg1, arg2) {
+		return this.private_calculateFunction("ECMA.CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EVEN = function (arg1) {
+		return this.private_calculateFunction("EVEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.EXP = function (arg1) {
+		return this.private_calculateFunction("EXP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FACT = function (arg1) {
+		return this.private_calculateFunction("FACT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FACTDOUBLE = function (arg1) {
+		return this.private_calculateFunction("FACTDOUBLE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR = function (arg1, arg2) {
+		return this.private_calculateFunction("FLOOR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR_PRECISE = function (arg1, arg2) {
+		return this.private_calculateFunction("FLOOR.PRECISE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FLOOR_MATH = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("FLOOR.MATH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.GCD = function () {
+		return this.private_calculateFunction("GCD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.INT = function (arg1) {
+		return this.private_calculateFunction("INT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISO_CEILING = function (arg1, arg2) {
+		return this.private_calculateFunction("ISO.CEILING", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LCM = function () {
+		return this.private_calculateFunction("LCM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LN = function (arg1) {
+		return this.private_calculateFunction("LN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOG = function (arg1, arg2) {
+		return this.private_calculateFunction("LOG", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
+		return this.private_calculateFunction("LOG10", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MDETERM = function (arg1) {
+	// 	return this.private_calculateFunction("MDETERM", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MINVERSE = function (arg1) {
+	// 	return this.private_calculateFunction("MINVERSE", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MMULT = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("MMULT", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MOD = function (arg1, arg2) {
+		return this.private_calculateFunction("MOD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MROUND = function (arg1, arg2) {
+		return this.private_calculateFunction("MROUND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MULTINOMIAL = function () {
+		return this.private_calculateFunction("MULTINOMIAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
+		return this.private_calculateFunction("MUNIT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ODD = function (arg1) {
+		return this.private_calculateFunction("ODD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PI = function () {
+		return this.private_calculateFunction("PI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.POWER = function (arg1, arg2) {
+		return this.private_calculateFunction("POWER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.PRODUCT = function () {
+		return this.private_calculateFunction("PRODUCT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.QUOTIENT = function (arg1, arg2) {
+		return this.private_calculateFunction("QUOTIENT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RADIANS = function (arg1) {
+		return this.private_calculateFunction("RADIANS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RAND = function () {
+		return this.private_calculateFunction("RAND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.RANDBETWEEN = function (arg1, arg2) {
+		return this.private_calculateFunction("RANDBETWEEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ROMAN = function (arg1, arg2) {
+		return this.private_calculateFunction("ROMAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ROUND = function (arg1, arg2) {
+		return this.private_calculateFunction("ROUND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ROUNDDOWN = function (arg1, arg2) {
+		return this.private_calculateFunction("ROUNDDOWN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ROUNDUP = function (arg1, arg2) {
+		return this.private_calculateFunction("ROUNDUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SEC = function (arg1) {
+		return this.private_calculateFunction("SEC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SECH = function (arg1) {
+		return this.private_calculateFunction("SECH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SERIESSUM = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("SERIESSUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SIGN = function (arg1) {
+		return this.private_calculateFunction("SIGN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SIN = function (arg1) {
+		return this.private_calculateFunction("SIN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SINH = function (arg1) {
+		return this.private_calculateFunction("SINH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SQRT = function (arg1) {
+		return this.private_calculateFunction("SQRT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SQRTPI = function (arg1) {
+		return this.private_calculateFunction("SQRTPI", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUBTOTAL = function () {
+		return this.private_calculateFunction("SUBTOTAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUM = function () {
+		return this.private_calculateFunction("SUM", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {any} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUMIF = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("SUMIF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUMIFS = function () {
+		return this.private_calculateFunction("SUMIFS", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMPRODUCT = function () {
+	// 	return this.private_calculateFunction("SUMPRODUCT", arguments);
+	// };
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SUMSQ = function () {
+		return this.private_calculateFunction("SUMSQ", arguments);
+	};
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMX2MY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMX2MY2", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMX2PY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMX2PY2", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMXMY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMXMY2", arguments);
+	// };
+
+
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TAN = function (arg1) {
+		return this.private_calculateFunction("TAN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TANH = function (arg1) {
+		return this.private_calculateFunction("TANH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {number} arg1.
+	 * @param {number} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TRUNC = function (arg1, arg2) {
+		return this.private_calculateFunction("TRUNC", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.CHOOSE = function () {
+		return this.private_calculateFunction("CHOOSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.COLUMNS = function (arg1) {
+		return this.private_calculateFunction("COLUMNS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HLOOKUP = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("HLOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} arg1.
+	 * @param {any} [arg2].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.HYPERLINK = function (arg1, arg2) {
+		return this.private_calculateFunction("HYPERLINK", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @param {any} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.INDEX = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("INDEX", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.LOOKUP = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("LOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.MATCH = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("MATCH", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ROWS = function (arg1) {
+		return this.private_calculateFunction("ROWS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
+		return this.private_calculateFunction("TRANSPOSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {boolean} [arg4].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.VLOOKUP = function (arg1, arg2, arg3, arg4) {
+		return this.private_calculateFunction("VLOOKUP", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ERROR_TYPE = function (arg1) {
+		return this.private_calculateFunction("ERROR.TYPE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISERR = function (arg1) {
+		return this.private_calculateFunction("ISERR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISERROR = function (arg1) {
+		return this.private_calculateFunction("ISERROR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISEVEN = function (arg1) {
+		return this.private_calculateFunction("ISEVEN", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISFORMULA = function (arg1) {
+		return this.private_calculateFunction("ISFORMULA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISLOGICAL = function (arg1) {
+		return this.private_calculateFunction("ISLOGICAL", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISNA = function (arg1) {
+		return this.private_calculateFunction("ISNA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISNONTEXT = function (arg1) {
+		return this.private_calculateFunction("ISNONTEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISNUMBER = function (arg1) {
+		return this.private_calculateFunction("ISNUMBER", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISODD = function (arg1) {
+		return this.private_calculateFunction("ISODD", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISREF = function (arg1) {
+		return this.private_calculateFunction("ISREF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.ISTEXT = function (arg1) {
+		return this.private_calculateFunction("ISTEXT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.N = function (arg1) {
+		return this.private_calculateFunction("N", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NA = function () {
+		return this.private_calculateFunction("NA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {string} [arg1].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SHEET = function (arg1) {
+		return this.private_calculateFunction("SHEET", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} [arg1].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.SHEETS = function (arg1) {
+		return this.private_calculateFunction("SHEETS", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TYPE = function (arg1) {
+		return this.private_calculateFunction("TYPE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.AND = function () {
+		return this.private_calculateFunction("AND", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.FALSE = function () {
+		return this.private_calculateFunction("FALSE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} arg1.
+	 * @param {any} arg2.
+	 * @param {any} [arg3].
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IF = function (arg1, arg2, arg3) {
+		return this.private_calculateFunction("IF", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IFERROR = function (arg1, arg2) {
+		return this.private_calculateFunction("IFERROR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.IFNA = function (arg1, arg2) {
+		return this.private_calculateFunction("IFNA", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} arg1.
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.NOT = function (arg1) {
+		return this.private_calculateFunction("NOT", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.OR = function () {
+		return this.private_calculateFunction("OR", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.TRUE = function () {
+		return this.private_calculateFunction("TRUE", arguments);
+	};
+	/**
+	 * Returns the result of calculating the function.
+	 * @memberof ApiWorksheetFunction
+	 * @typeofeditors ["CSE"]
+	 * @returns {number | string | boolean}
+	 */
+	ApiWorksheetFunction.prototype.XOR = function () {
+		return this.private_calculateFunction("XOR", arguments);
+	};
+
+
+
+	/**
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -1084,7 +6807,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			logError(new Error('Invalid parametr "FreezePaneType".'));
+			logError(new Error('Invalid parameter "FreezePaneType".'));
 		}
 	};
 
@@ -1124,6 +6847,51 @@
 			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
+
+	/**
+	 * Returns the cell references style.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ReferenceStyle}
+	 * */
+	Api.prototype.GetReferenceStyle = function () {
+		let bReferenceStyle = this.asc_getR1C1Mode();
+		return bReferenceStyle ? "xlR1C1" : "xlA1";
+	};
+
+	/**
+	 * Sets the cell references style.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
+	 */
+	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
+		let bReferenceMode = null;
+		switch (sReferenceStyle) {
+			case "xlA1":
+				bReferenceMode = false;
+				break;
+			case "xlR1C1":
+				bReferenceMode = true;
+				break;
+		}
+
+		if (bReferenceMode !== null) {
+			this.asc_setR1C1Mode(bReferenceMode);
+		} else {
+			logError(new Error('Invalid parameter "ReferenceStyle"'));
+		}
+	};
+
+	Object.defineProperty(Api.prototype, "ReferenceStyle", {
+		get: function () {
+			return this.GetReferenceStyle();
+		},
+		set: function (ReferenceStyle) {
+			this.SetReferenceStyle(ReferenceStyle);
+		}
+	});
+
 
 	/**
 	 * Returns the state of sheet visibility.
@@ -2228,6 +7996,34 @@
 		}
 	});
 
+	/**
+	 * Pastes the contents of the Clipboard onto the sheet.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Object that specifies where the Clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @since 8.1.0
+	 */
+	ApiWorksheet.prototype.Paste = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+				let ws =  destination.range.worksheet;
+				private_executeOtherActiveSheet(ws, destination.areas || [destination.range], function () {
+					oApi && oApi.asc_Paste();
+				});
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+			let ws = this.worksheet;
+			private_executeOtherActiveSheet(ws, null, function () {
+				oApi && oApi.asc_Paste();
+			});
+		}
+	};
+
 
 
 	/**
@@ -2463,7 +8259,7 @@
 		let r1, c1, result;
 		if (typeof col == "number" && typeof row == "number") {
 			row--;
-			col--
+			col--;
 			r1 = bbox.r1 + row;
 			c1 = bbox.c1 + col;
 		} else if (typeof row == "number") {
@@ -3669,21 +9465,62 @@
 	});
 
 	/**
-	 * Copies a range to the specified range.
+	 * Copies the range to the specified range or to the Clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} destination - Specifies a new range to which the specified range will be copied.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
-		if (destination && destination instanceof ApiRange) {
-			let bboxFrom = this.range.bbox;
-			let cols = bboxFrom.c2 - bboxFrom.c1;
-			let rows = bboxFrom.r2 - bboxFrom.r1;
-			let bbox = destination.range.bbox;
-			let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
-			this.range.move(range.bbox, true, destination.range.worksheet);
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, true, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
 		} else {
-			logError(new Error('Invalid destination'));
+			let ws =  this.range.worksheet;
+			private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
+				oApi && oApi.asc_Copy();
+			});
+			oApi && oApi.wb.cleanCopyData();
+		}
+	};
+
+	/**
+	 * Cuts the range to the specified range or to the Clipboard.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be cuted. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 */
+	ApiRange.prototype.Cut = function (destination) {
+		var oApi = Asc["editor"];
+		if (destination) {
+			if (destination instanceof ApiRange) {
+				let bboxFrom = this.range.bbox;
+				let cols = bboxFrom.c2 - bboxFrom.c1;
+				let rows = bboxFrom.r2 - bboxFrom.r1;
+				let bbox = destination.range.bbox;
+				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
+				this.range.move(range.bbox, false, destination.range.worksheet);
+				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+			} else {
+				logError(new Error('Invalid destination'));
+			}
+		} else {
+			let ws =  this.range.worksheet;
+			private_executeOtherActiveSheet(ws, [this.range], function () {
+				AscCommon.g_clipboardBase.forceCutSelection = true;
+				oApi && oApi.asc_Cut();
+				AscCommon.g_clipboardBase.forceCutSelection = false;
+			});
+			oApi && oApi.wb.cleanCutData();
 		}
 	};
 
@@ -3704,6 +9541,108 @@
 		} else {
 			logError(new Error('Invalid range'));
 		}
+	};
+
+	/**
+	 * Pastes the Range object to the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Type of special paste
+	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - Operation of special paste
+	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Case sensitive or not. The default value is "false".
+	 * @param {boolean} bTranspose [bTranspose=false] - Case sensitive or not. The default value is "false".
+	 */
+	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
+		if (sPasteType && typeof sPasteType !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteType".'));
+			return;
+		}
+		if (sPasteSpecialOperation && typeof sPasteSpecialOperation !== 'string') {
+			logError(new Error('Invalid type of parameter "sPasteSpecialOperation".'));
+			return;
+		}
+
+
+		let nPasteType = null;
+		if (sPasteType) {
+			switch (sPasteType) {
+				// case "xlPasteAllMergingConditionalFormats":
+				// 	break;
+				case "xlPasteAll":
+					break;
+				case "xlPasteAllExceptBorders":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaWithoutBorders;
+					break;
+				//case "xlPasteAllUsingSourceTheme":
+				//	break;
+				case "xlPasteColumnWidths":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+					break;
+				case "xlPasteComments":
+					nPasteType = Asc.c_oSpecialPasteProps.comments;
+					break;
+				case "xlPasteFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormating;
+					break;
+				case "xlPasteFormulas":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyFormula;
+					break;
+				case "xlPasteFormulasAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.formulaNumberFormat;
+					break;
+				// case "xlPasteValidation":
+				// 	nPasteType = Asc.c_oSpecialPasteProps.formulaColumnWidth;
+				// 	break;
+				case "xlPasteValues":
+					nPasteType = Asc.c_oSpecialPasteProps.pasteOnlyValues;
+					break;
+				case "xlPasteValuesAndNumberFormats":
+					nPasteType = Asc.c_oSpecialPasteProps.valueNumberFormat;
+					break;
+			}
+		}
+
+		let nPasteSpecialOperation = null;
+		if (sPasteSpecialOperation) {
+			switch (sPasteSpecialOperation) {
+				case "xlPasteSpecialOperationAdd":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.add;
+					break;
+				case "xlPasteSpecialOperationDivide":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.divide;
+					break;
+				case "xlPasteSpecialOperationMultiply":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.multiply;
+					break;
+				case "xlPasteSpecialOperationNone":
+					break;
+				case "xlPasteSpecialOperationSubtract":
+					nPasteSpecialOperation = Asc.c_oSpecialPasteOperation.subtract;
+					break;
+			}
+		}
+
+		let specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		if (!specialPasteHelper.specialPasteProps) {
+			specialPasteHelper.specialPasteProps = new Asc.SpecialPasteProps();
+		}
+		let specialPasteProps = specialPasteHelper.specialPasteProps;
+
+		if (nPasteType != null) {
+			specialPasteProps.asc_setProps(nPasteType);
+		}
+		if (nPasteSpecialOperation != null) {
+			specialPasteProps.asc_setOperation(nPasteSpecialOperation);
+		}
+		specialPasteProps.asc_setSkipBlanks(!!bSkipBlanks);
+		specialPasteProps.asc_setTranspose(!!bTranspose);
+
+		let oApi = Asc["editor"];
+		AscCommon.g_specialPasteHelper && AscCommon.g_specialPasteHelper.Special_Paste_Hide_Button();
+		let ws =  this.range.worksheet;
+		private_executeOtherActiveSheet(ws, this.areas || [this.range], function () {
+			oApi && oApi.asc_Paste();
+		});
 	};
 
 	/**
@@ -7064,6 +13003,11 @@
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
+
+	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
+	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
+
+	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
 	
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -7120,8 +13064,9 @@
 	ApiWorksheet.prototype["AddProtectedRange"] = ApiWorksheet.prototype.AddProtectedRange;
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
+	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
 
-	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
+	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
 	ApiRange.prototype["Clear"] = ApiRange.prototype.Clear;
@@ -7176,12 +13121,14 @@
 	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
+	ApiRange.prototype["Cut"] = ApiRange.prototype.Cut;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
 	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
 	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;
 	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
+	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -7351,6 +13298,407 @@
 	ApiProtectedRangeUserInfo.prototype["GetType"]  = ApiProtectedRangeUserInfo.prototype.GetType;
 	ApiProtectedRangeUserInfo.prototype["GetId"]    = ApiProtectedRangeUserInfo.prototype.GetId;
 
+	ApiWorksheetFunction.prototype["ASC"]             =  ApiWorksheetFunction.prototype.ASC;
+	ApiWorksheetFunction.prototype["CHAR"]            =  ApiWorksheetFunction.prototype.CHAR;
+	ApiWorksheetFunction.prototype["CLEAN"]           =  ApiWorksheetFunction.prototype.CLEAN;
+	ApiWorksheetFunction.prototype["CODE"]            =  ApiWorksheetFunction.prototype.CODE;
+	ApiWorksheetFunction.prototype["CONCATENATE"]     =  ApiWorksheetFunction.prototype.CONCATENATE;
+	ApiWorksheetFunction.prototype["DOLLAR"]          =  ApiWorksheetFunction.prototype.DOLLAR;
+	ApiWorksheetFunction.prototype["EXACT"]           =  ApiWorksheetFunction.prototype.EXACT;
+	ApiWorksheetFunction.prototype["FIND"]            =  ApiWorksheetFunction.prototype.FIND;
+	ApiWorksheetFunction.prototype["FINDB"]           =  ApiWorksheetFunction.prototype.FINDB;
+	ApiWorksheetFunction.prototype["FIXED"]           =  ApiWorksheetFunction.prototype.FIXED;
+	ApiWorksheetFunction.prototype["LEFT"]            =  ApiWorksheetFunction.prototype.LEFT;
+	ApiWorksheetFunction.prototype["LEFTB"]           =  ApiWorksheetFunction.prototype.LEFTB;
+	ApiWorksheetFunction.prototype["LEN"]             =  ApiWorksheetFunction.prototype.LEN;
+	ApiWorksheetFunction.prototype["LENB"]            =  ApiWorksheetFunction.prototype.LENB;
+	ApiWorksheetFunction.prototype["LOWER"]           =  ApiWorksheetFunction.prototype.LOWER;
+	ApiWorksheetFunction.prototype["MID"]             =  ApiWorksheetFunction.prototype.MID;
+	ApiWorksheetFunction.prototype["MIDB"]            =  ApiWorksheetFunction.prototype.MIDB;
+	ApiWorksheetFunction.prototype["NUMBERVALUE"]     =  ApiWorksheetFunction.prototype.NUMBERVALUE;
+	ApiWorksheetFunction.prototype["PROPER"]          =  ApiWorksheetFunction.prototype.PROPER;
+	ApiWorksheetFunction.prototype["REPLACE"]         =  ApiWorksheetFunction.prototype.REPLACE;
+	ApiWorksheetFunction.prototype["REPLACEB"]        =  ApiWorksheetFunction.prototype.REPLACEB;
+	ApiWorksheetFunction.prototype["REPT"]            =  ApiWorksheetFunction.prototype.REPT;
+	ApiWorksheetFunction.prototype["RIGHT"]           =  ApiWorksheetFunction.prototype.RIGHT;
+	ApiWorksheetFunction.prototype["RIGHTB"]          =  ApiWorksheetFunction.prototype.RIGHTB;
+	ApiWorksheetFunction.prototype["SEARCH"]          =  ApiWorksheetFunction.prototype.SEARCH;
+	ApiWorksheetFunction.prototype["SEARCHB"]         =  ApiWorksheetFunction.prototype.SEARCHB;
+	ApiWorksheetFunction.prototype["SUBSTITUTE"]      =  ApiWorksheetFunction.prototype.SUBSTITUTE;
+	ApiWorksheetFunction.prototype["T"]               =  ApiWorksheetFunction.prototype.T;
+	ApiWorksheetFunction.prototype["TEXT"]            =  ApiWorksheetFunction.prototype.TEXT;
+	ApiWorksheetFunction.prototype["TRIM"]            =  ApiWorksheetFunction.prototype.TRIM;
+	ApiWorksheetFunction.prototype["UNICHAR"]         =  ApiWorksheetFunction.prototype.UNICHAR;
+	ApiWorksheetFunction.prototype["UNICODE"]         =  ApiWorksheetFunction.prototype.UNICODE;
+	ApiWorksheetFunction.prototype["UPPER"]           =  ApiWorksheetFunction.prototype.UPPER;
+	ApiWorksheetFunction.prototype["VALUE"]           =  ApiWorksheetFunction.prototype.VALUE;
+	ApiWorksheetFunction.prototype["AVEDEV"]          =  ApiWorksheetFunction.prototype.AVEDEV;
+	ApiWorksheetFunction.prototype["AVERAGE"]         =  ApiWorksheetFunction.prototype.AVERAGE;
+	ApiWorksheetFunction.prototype["AVERAGEA"]        =  ApiWorksheetFunction.prototype.AVERAGEA;
+	ApiWorksheetFunction.prototype["AVERAGEIF"]       =  ApiWorksheetFunction.prototype.AVERAGEIF;
+	ApiWorksheetFunction.prototype["AVERAGEIFS"]      =  ApiWorksheetFunction.prototype.AVERAGEIFS;
+	ApiWorksheetFunction.prototype["BETADIST"]        =  ApiWorksheetFunction.prototype.BETADIST;
+	ApiWorksheetFunction.prototype["BETAINV"]         =  ApiWorksheetFunction.prototype.BETAINV;
+	ApiWorksheetFunction.prototype["BINOMDIST"]       =  ApiWorksheetFunction.prototype.BINOMDIST;
+	ApiWorksheetFunction.prototype["CHIDIST"]         =  ApiWorksheetFunction.prototype.CHIDIST;
+	ApiWorksheetFunction.prototype["CHIINV"]          =  ApiWorksheetFunction.prototype.CHIINV;
+	ApiWorksheetFunction.prototype["CONFIDENCE"]      =  ApiWorksheetFunction.prototype.CONFIDENCE;
+	ApiWorksheetFunction.prototype["COUNT"]           =  ApiWorksheetFunction.prototype.COUNT;
+	ApiWorksheetFunction.prototype["COUNTA"]          =  ApiWorksheetFunction.prototype.COUNTA;
+	ApiWorksheetFunction.prototype["COUNTBLANK"]      =  ApiWorksheetFunction.prototype.COUNTBLANK;
+	ApiWorksheetFunction.prototype["COUNTIF"]         =  ApiWorksheetFunction.prototype.COUNTIF;
+	ApiWorksheetFunction.prototype["COUNTIFS"]        =  ApiWorksheetFunction.prototype.COUNTIFS;
+	ApiWorksheetFunction.prototype["CRITBINOM"]       =  ApiWorksheetFunction.prototype.CRITBINOM;
+	ApiWorksheetFunction.prototype["DEVSQ"]           =  ApiWorksheetFunction.prototype.DEVSQ;
+	ApiWorksheetFunction.prototype["EXPONDIST"]       =  ApiWorksheetFunction.prototype.EXPONDIST;
+	ApiWorksheetFunction.prototype["FDIST"]           =  ApiWorksheetFunction.prototype.FDIST;
+	ApiWorksheetFunction.prototype["FINV"]            =  ApiWorksheetFunction.prototype.FINV;
+	ApiWorksheetFunction.prototype["FISHER"]          =  ApiWorksheetFunction.prototype.FISHER;
+	ApiWorksheetFunction.prototype["FISHERINV"]       =  ApiWorksheetFunction.prototype.FISHERINV;
+	ApiWorksheetFunction.prototype["FREQUENCY"]       =  ApiWorksheetFunction.prototype.FREQUENCY;
+	ApiWorksheetFunction.prototype["GAMMA"]           =  ApiWorksheetFunction.prototype.GAMMA;
+	ApiWorksheetFunction.prototype["GAMMADIST"]       =  ApiWorksheetFunction.prototype.GAMMADIST;
+	ApiWorksheetFunction.prototype["GAMMAINV"]        =  ApiWorksheetFunction.prototype.GAMMAINV;
+	ApiWorksheetFunction.prototype["GAMMALN"]         =  ApiWorksheetFunction.prototype.GAMMALN;
+	ApiWorksheetFunction.prototype["GAUSS"]           =  ApiWorksheetFunction.prototype.GAUSS;
+	ApiWorksheetFunction.prototype["GEOMEAN"]         =  ApiWorksheetFunction.prototype.GEOMEAN;
+	ApiWorksheetFunction.prototype["GROWTH"]          =  ApiWorksheetFunction.prototype.GROWTH;
+	ApiWorksheetFunction.prototype["HARMEAN"]         =  ApiWorksheetFunction.prototype.HARMEAN;
+	ApiWorksheetFunction.prototype["HYPGEOMDIST"]     =  ApiWorksheetFunction.prototype.HYPGEOMDIST;
+	ApiWorksheetFunction.prototype["KURT"]            =  ApiWorksheetFunction.prototype.KURT;
+	ApiWorksheetFunction.prototype["LARGE"]           =  ApiWorksheetFunction.prototype.LARGE;
+	ApiWorksheetFunction.prototype["LINEST"]          =  ApiWorksheetFunction.prototype.LINEST;
+	ApiWorksheetFunction.prototype["LOGEST"]          =  ApiWorksheetFunction.prototype.LOGEST;
+	ApiWorksheetFunction.prototype["LOGINV"]          =  ApiWorksheetFunction.prototype.LOGINV;
+	ApiWorksheetFunction.prototype["LOGNORMDIST"]     =  ApiWorksheetFunction.prototype.LOGNORMDIST;
+	ApiWorksheetFunction.prototype["MAX"]             =  ApiWorksheetFunction.prototype.MAX;
+	ApiWorksheetFunction.prototype["MAXA"]            =  ApiWorksheetFunction.prototype.MAXA;
+	ApiWorksheetFunction.prototype["MEDIAN"]          =  ApiWorksheetFunction.prototype.MEDIAN;
+	ApiWorksheetFunction.prototype["MIN"]             =  ApiWorksheetFunction.prototype.MIN;
+	ApiWorksheetFunction.prototype["MINA"]            =  ApiWorksheetFunction.prototype.MINA;
+	ApiWorksheetFunction.prototype["NEGBINOMDIST"]    =  ApiWorksheetFunction.prototype.NEGBINOMDIST;
+	ApiWorksheetFunction.prototype["NORMDIST"]        =  ApiWorksheetFunction.prototype.NORMDIST;
+	ApiWorksheetFunction.prototype["NORMINV"]         =  ApiWorksheetFunction.prototype.NORMINV;
+	ApiWorksheetFunction.prototype["NORMSDIST"]       =  ApiWorksheetFunction.prototype.NORMSDIST;
+	ApiWorksheetFunction.prototype["NORMSINV"]        =  ApiWorksheetFunction.prototype.NORMSINV;
+	ApiWorksheetFunction.prototype["PERCENTILE"]      =  ApiWorksheetFunction.prototype.PERCENTILE;
+	ApiWorksheetFunction.prototype["PERCENTRANK"]     =  ApiWorksheetFunction.prototype.PERCENTRANK;
+	ApiWorksheetFunction.prototype["PERMUT"]          =  ApiWorksheetFunction.prototype.PERMUT;
+	ApiWorksheetFunction.prototype["PERMUTATIONA"]    =  ApiWorksheetFunction.prototype.PERMUTATIONA;
+	ApiWorksheetFunction.prototype["PHI"]             =  ApiWorksheetFunction.prototype.PHI;
+	ApiWorksheetFunction.prototype["POISSON"]         =  ApiWorksheetFunction.prototype.POISSON;
+	ApiWorksheetFunction.prototype["QUARTILE"]        =  ApiWorksheetFunction.prototype.QUARTILE;
+	ApiWorksheetFunction.prototype["RANK"]            =  ApiWorksheetFunction.prototype.RANK;
+	ApiWorksheetFunction.prototype["SKEW"]            =  ApiWorksheetFunction.prototype.SKEW;
+	ApiWorksheetFunction.prototype["SMALL"]           =  ApiWorksheetFunction.prototype.SMALL;
+	ApiWorksheetFunction.prototype["STANDARDIZE"]     =  ApiWorksheetFunction.prototype.STANDARDIZE;
+	ApiWorksheetFunction.prototype["STDEV"]           =  ApiWorksheetFunction.prototype.STDEV;
+	ApiWorksheetFunction.prototype["STDEVA"]          =  ApiWorksheetFunction.prototype.STDEVA;
+	ApiWorksheetFunction.prototype["STDEVP"]          =  ApiWorksheetFunction.prototype.STDEVP;
+	ApiWorksheetFunction.prototype["STDEVPA"]         =  ApiWorksheetFunction.prototype.STDEVPA;
+	ApiWorksheetFunction.prototype["TDIST"]           =  ApiWorksheetFunction.prototype.TDIST;
+	ApiWorksheetFunction.prototype["TINV"]            =  ApiWorksheetFunction.prototype.TINV;
+	ApiWorksheetFunction.prototype["TREND"]           =  ApiWorksheetFunction.prototype.TREND;
+	ApiWorksheetFunction.prototype["TRIMMEAN"]        =  ApiWorksheetFunction.prototype.TRIMMEAN;
+	ApiWorksheetFunction.prototype["VAR"]             =  ApiWorksheetFunction.prototype.VAR;
+	ApiWorksheetFunction.prototype["VARA"]            =  ApiWorksheetFunction.prototype.VARA;
+	ApiWorksheetFunction.prototype["VARP"]            =  ApiWorksheetFunction.prototype.VARP;
+	ApiWorksheetFunction.prototype["VARPA"]           =  ApiWorksheetFunction.prototype.VARPA;
+	ApiWorksheetFunction.prototype["WEIBULL"]         =  ApiWorksheetFunction.prototype.WEIBULL;
+	ApiWorksheetFunction.prototype["ZTEST"]           =  ApiWorksheetFunction.prototype.ZTEST;
+	ApiWorksheetFunction.prototype["DATE"]            =  ApiWorksheetFunction.prototype.DATE;
+	ApiWorksheetFunction.prototype["DATEVALUE"]       =  ApiWorksheetFunction.prototype.DATEVALUE;
+	ApiWorksheetFunction.prototype["DAY"]             =  ApiWorksheetFunction.prototype.DAY;
+	ApiWorksheetFunction.prototype["DAYS"]            =  ApiWorksheetFunction.prototype.DAYS;
+	ApiWorksheetFunction.prototype["DAYS360"]         =  ApiWorksheetFunction.prototype.DAYS360;
+	ApiWorksheetFunction.prototype["EDATE"]           =  ApiWorksheetFunction.prototype.EDATE;
+	ApiWorksheetFunction.prototype["EOMONTH"]         =  ApiWorksheetFunction.prototype.EOMONTH;
+	ApiWorksheetFunction.prototype["HOUR"]            =  ApiWorksheetFunction.prototype.HOUR;
+	ApiWorksheetFunction.prototype["ISOWEEKNUM"]      =  ApiWorksheetFunction.prototype.ISOWEEKNUM;
+	ApiWorksheetFunction.prototype["MINUTE"]          =  ApiWorksheetFunction.prototype.MINUTE;
+	ApiWorksheetFunction.prototype["MONTH"]           =  ApiWorksheetFunction.prototype.MONTH;
+	ApiWorksheetFunction.prototype["NETWORKDAYS"]     =  ApiWorksheetFunction.prototype.NETWORKDAYS;
+	ApiWorksheetFunction.prototype["NOW"]             =  ApiWorksheetFunction.prototype.NOW;
+	ApiWorksheetFunction.prototype["SECOND"]          =  ApiWorksheetFunction.prototype.SECOND;
+	ApiWorksheetFunction.prototype["TIME"]            =  ApiWorksheetFunction.prototype.TIME;
+	ApiWorksheetFunction.prototype["TIMEVALUE"]       =  ApiWorksheetFunction.prototype.TIMEVALUE;
+	ApiWorksheetFunction.prototype["TODAY"]           =  ApiWorksheetFunction.prototype.TODAY;
+	ApiWorksheetFunction.prototype["WEEKDAY"]         =  ApiWorksheetFunction.prototype.WEEKDAY;
+	ApiWorksheetFunction.prototype["WEEKNUM"]         =  ApiWorksheetFunction.prototype.WEEKNUM;
+	ApiWorksheetFunction.prototype["WORKDAY"]         =  ApiWorksheetFunction.prototype.WORKDAY;
+	ApiWorksheetFunction.prototype["YEAR"]            =  ApiWorksheetFunction.prototype.YEAR;
+	ApiWorksheetFunction.prototype["YEARFRAC"]        =  ApiWorksheetFunction.prototype.YEARFRAC;
+	ApiWorksheetFunction.prototype["BESSELI"]         =  ApiWorksheetFunction.prototype.BESSELI;
+	ApiWorksheetFunction.prototype["BESSELJ"]         =  ApiWorksheetFunction.prototype.BESSELJ;
+	ApiWorksheetFunction.prototype["BESSELK"]         =  ApiWorksheetFunction.prototype.BESSELK;
+	ApiWorksheetFunction.prototype["BESSELY"]         =  ApiWorksheetFunction.prototype.BESSELY;
+	ApiWorksheetFunction.prototype["BIN2DEC"]         =  ApiWorksheetFunction.prototype.BIN2DEC;
+	ApiWorksheetFunction.prototype["BIN2HEX"]         =  ApiWorksheetFunction.prototype.BIN2HEX;
+	ApiWorksheetFunction.prototype["BIN2OCT"]         =  ApiWorksheetFunction.prototype.BIN2OCT;
+	ApiWorksheetFunction.prototype["BITAND"]          =  ApiWorksheetFunction.prototype.BITAND;
+	ApiWorksheetFunction.prototype["BITLSHIFT"]       =  ApiWorksheetFunction.prototype.BITLSHIFT;
+	ApiWorksheetFunction.prototype["BITOR"]           =  ApiWorksheetFunction.prototype.BITOR;
+	ApiWorksheetFunction.prototype["BITRSHIFT"]       =  ApiWorksheetFunction.prototype.BITRSHIFT;
+	ApiWorksheetFunction.prototype["BITXOR"]          =  ApiWorksheetFunction.prototype.BITXOR;
+	ApiWorksheetFunction.prototype["COMPLEX"]         =  ApiWorksheetFunction.prototype.COMPLEX;
+	ApiWorksheetFunction.prototype["CONVERT"]         =  ApiWorksheetFunction.prototype.CONVERT;
+	ApiWorksheetFunction.prototype["DEC2BIN"]         =  ApiWorksheetFunction.prototype.DEC2BIN;
+	ApiWorksheetFunction.prototype["DEC2HEX"]         =  ApiWorksheetFunction.prototype.DEC2HEX;
+	ApiWorksheetFunction.prototype["DEC2OCT"]         =  ApiWorksheetFunction.prototype.DEC2OCT;
+	ApiWorksheetFunction.prototype["DELTA"]           =  ApiWorksheetFunction.prototype.DELTA;
+	ApiWorksheetFunction.prototype["ERF"]             =  ApiWorksheetFunction.prototype.ERF;
+	ApiWorksheetFunction.prototype["ERFC"]            =  ApiWorksheetFunction.prototype.ERFC;
+	ApiWorksheetFunction.prototype["GESTEP"]          =  ApiWorksheetFunction.prototype.GESTEP;
+	ApiWorksheetFunction.prototype["HEX2BIN"]         =  ApiWorksheetFunction.prototype.HEX2BIN;
+	ApiWorksheetFunction.prototype["HEX2DEC"]         =  ApiWorksheetFunction.prototype.HEX2DEC;
+	ApiWorksheetFunction.prototype["HEX2OCT"]         =  ApiWorksheetFunction.prototype.HEX2OCT;
+	ApiWorksheetFunction.prototype["IMABS"]           =  ApiWorksheetFunction.prototype.IMABS;
+	ApiWorksheetFunction.prototype["IMAGINARY"]       =  ApiWorksheetFunction.prototype.IMAGINARY;
+	ApiWorksheetFunction.prototype["IMARGUMENT"]      =  ApiWorksheetFunction.prototype.IMARGUMENT;
+	ApiWorksheetFunction.prototype["IMCONJUGATE"]     =  ApiWorksheetFunction.prototype.IMCONJUGATE;
+	ApiWorksheetFunction.prototype["IMCOS"]           =  ApiWorksheetFunction.prototype.IMCOS;
+	ApiWorksheetFunction.prototype["IMCOSH"]          =  ApiWorksheetFunction.prototype.IMCOSH;
+	ApiWorksheetFunction.prototype["IMCOT"]           =  ApiWorksheetFunction.prototype.IMCOT;
+	ApiWorksheetFunction.prototype["IMCSC"]           =  ApiWorksheetFunction.prototype.IMCSC;
+	ApiWorksheetFunction.prototype["IMCSCH"]          =  ApiWorksheetFunction.prototype.IMCSCH;
+	ApiWorksheetFunction.prototype["IMDIV"]           =  ApiWorksheetFunction.prototype.IMDIV;
+	ApiWorksheetFunction.prototype["IMEXP"]           =  ApiWorksheetFunction.prototype.IMEXP;
+	ApiWorksheetFunction.prototype["IMLN"]            =  ApiWorksheetFunction.prototype.IMLN;
+	ApiWorksheetFunction.prototype["IMLOG10"]         =  ApiWorksheetFunction.prototype.IMLOG10;
+	ApiWorksheetFunction.prototype["IMLOG2"]          =  ApiWorksheetFunction.prototype.IMLOG2;
+	ApiWorksheetFunction.prototype["IMPOWER"]         =  ApiWorksheetFunction.prototype.IMPOWER;
+	ApiWorksheetFunction.prototype["IMPRODUCT"]       =  ApiWorksheetFunction.prototype.IMPRODUCT;
+	ApiWorksheetFunction.prototype["IMREAL"]          =  ApiWorksheetFunction.prototype.IMREAL;
+	ApiWorksheetFunction.prototype["IMSEC"]           =  ApiWorksheetFunction.prototype.IMSEC;
+	ApiWorksheetFunction.prototype["IMSECH"]          =  ApiWorksheetFunction.prototype.IMSECH;
+	ApiWorksheetFunction.prototype["IMSIN"]           =  ApiWorksheetFunction.prototype.IMSIN;
+	ApiWorksheetFunction.prototype["IMSINH"]          =  ApiWorksheetFunction.prototype.IMSINH;
+	ApiWorksheetFunction.prototype["IMSQRT"]          =  ApiWorksheetFunction.prototype.IMSQRT;
+	ApiWorksheetFunction.prototype["IMSUB"]           =  ApiWorksheetFunction.prototype.IMSUB;
+	ApiWorksheetFunction.prototype["IMSUM"]           =  ApiWorksheetFunction.prototype.IMSUM;
+	ApiWorksheetFunction.prototype["IMTAN"]           =  ApiWorksheetFunction.prototype.IMTAN;
+	ApiWorksheetFunction.prototype["OCT2BIN"]         =  ApiWorksheetFunction.prototype.OCT2BIN;
+	ApiWorksheetFunction.prototype["OCT2DEC"]         =  ApiWorksheetFunction.prototype.OCT2DEC;
+	ApiWorksheetFunction.prototype["OCT2HEX"]         =  ApiWorksheetFunction.prototype.OCT2HEX;
+	ApiWorksheetFunction.prototype["DAVERAGE"]        =  ApiWorksheetFunction.prototype.DAVERAGE;
+	ApiWorksheetFunction.prototype["DCOUNT"]          =  ApiWorksheetFunction.prototype.DCOUNT;
+	ApiWorksheetFunction.prototype["DCOUNTA"]         =  ApiWorksheetFunction.prototype.DCOUNTA;
+	ApiWorksheetFunction.prototype["DGET"]            =  ApiWorksheetFunction.prototype.DGET;
+	ApiWorksheetFunction.prototype["DMAX"]            =  ApiWorksheetFunction.prototype.DMAX;
+	ApiWorksheetFunction.prototype["DMIN"]            =  ApiWorksheetFunction.prototype.DMIN;
+	ApiWorksheetFunction.prototype["DPRODUCT"]        =  ApiWorksheetFunction.prototype.DPRODUCT;
+	ApiWorksheetFunction.prototype["DSTDEV"]          =  ApiWorksheetFunction.prototype.DSTDEV;
+	ApiWorksheetFunction.prototype["DSTDEVP"]         =  ApiWorksheetFunction.prototype.DSTDEVP;
+	ApiWorksheetFunction.prototype["DSUM"]            =  ApiWorksheetFunction.prototype.DSUM;
+	ApiWorksheetFunction.prototype["DVAR"]            =  ApiWorksheetFunction.prototype.DVAR;
+	ApiWorksheetFunction.prototype["DVARP"]           =  ApiWorksheetFunction.prototype.DVARP;
+	ApiWorksheetFunction.prototype["ACCRINT"]         =  ApiWorksheetFunction.prototype.ACCRINT;
+	ApiWorksheetFunction.prototype["ACCRINTM"]        =  ApiWorksheetFunction.prototype.ACCRINTM;
+	ApiWorksheetFunction.prototype["AMORDEGRC"]       =  ApiWorksheetFunction.prototype.AMORDEGRC;
+	ApiWorksheetFunction.prototype["AMORLINC"]        =  ApiWorksheetFunction.prototype.AMORLINC;
+	ApiWorksheetFunction.prototype["COUPDAYBS"]       =  ApiWorksheetFunction.prototype.COUPDAYBS;
+	ApiWorksheetFunction.prototype["COUPDAYS"]        =  ApiWorksheetFunction.prototype.COUPDAYS;
+	ApiWorksheetFunction.prototype["COUPDAYSNC"]      =  ApiWorksheetFunction.prototype.COUPDAYSNC;
+	ApiWorksheetFunction.prototype["COUPNCD"]         =  ApiWorksheetFunction.prototype.COUPNCD;
+	ApiWorksheetFunction.prototype["COUPNUM"]         =  ApiWorksheetFunction.prototype.COUPNUM;
+	ApiWorksheetFunction.prototype["COUPPCD"]         =  ApiWorksheetFunction.prototype.COUPPCD;
+	ApiWorksheetFunction.prototype["CUMIPMT"]         =  ApiWorksheetFunction.prototype.CUMIPMT;
+	ApiWorksheetFunction.prototype["CUMPRINC"]        =  ApiWorksheetFunction.prototype.CUMPRINC;
+	ApiWorksheetFunction.prototype["DB"]              =  ApiWorksheetFunction.prototype.DB;
+	ApiWorksheetFunction.prototype["DDB"]             =  ApiWorksheetFunction.prototype.DDB;
+	ApiWorksheetFunction.prototype["DISC"]            =  ApiWorksheetFunction.prototype.DISC;
+	ApiWorksheetFunction.prototype["DOLLARDE"]        =  ApiWorksheetFunction.prototype.DOLLARDE;
+	ApiWorksheetFunction.prototype["DOLLARFR"]        =  ApiWorksheetFunction.prototype.DOLLARFR;
+	ApiWorksheetFunction.prototype["DURATION"]        =  ApiWorksheetFunction.prototype.DURATION;
+	ApiWorksheetFunction.prototype["EFFECT"]          =  ApiWorksheetFunction.prototype.EFFECT;
+	ApiWorksheetFunction.prototype["FV"]              =  ApiWorksheetFunction.prototype.FV;
+	ApiWorksheetFunction.prototype["FVSCHEDULE"]      =  ApiWorksheetFunction.prototype.FVSCHEDULE;
+	ApiWorksheetFunction.prototype["INTRATE"]         =  ApiWorksheetFunction.prototype.INTRATE;
+	ApiWorksheetFunction.prototype["IPMT"]            =  ApiWorksheetFunction.prototype.IPMT;
+	ApiWorksheetFunction.prototype["IRR"]             =  ApiWorksheetFunction.prototype.IRR;
+	ApiWorksheetFunction.prototype["ISPMT"]           =  ApiWorksheetFunction.prototype.ISPMT;
+	ApiWorksheetFunction.prototype["MDURATION"]       =  ApiWorksheetFunction.prototype.MDURATION;
+	ApiWorksheetFunction.prototype["MIRR"]            =  ApiWorksheetFunction.prototype.MIRR;
+	ApiWorksheetFunction.prototype["NOMINAL"]         =  ApiWorksheetFunction.prototype.NOMINAL;
+	ApiWorksheetFunction.prototype["NPER"]            =  ApiWorksheetFunction.prototype.NPER;
+	ApiWorksheetFunction.prototype["NPV"]             =  ApiWorksheetFunction.prototype.NPV;
+	ApiWorksheetFunction.prototype["ODDFPRICE"]       =  ApiWorksheetFunction.prototype.ODDFPRICE;
+	ApiWorksheetFunction.prototype["ODDFYIELD"]       =  ApiWorksheetFunction.prototype.ODDFYIELD;
+	ApiWorksheetFunction.prototype["ODDLPRICE"]       =  ApiWorksheetFunction.prototype.ODDLPRICE;
+	ApiWorksheetFunction.prototype["ODDLYIELD"]       =  ApiWorksheetFunction.prototype.ODDLYIELD;
+	ApiWorksheetFunction.prototype["PDURATION"]       =  ApiWorksheetFunction.prototype.PDURATION;
+	ApiWorksheetFunction.prototype["PMT"]             =  ApiWorksheetFunction.prototype.PMT;
+	ApiWorksheetFunction.prototype["PPMT"]            =  ApiWorksheetFunction.prototype.PPMT;
+	ApiWorksheetFunction.prototype["PRICE"]           =  ApiWorksheetFunction.prototype.PRICE;
+	ApiWorksheetFunction.prototype["PRICEDISC"]       =  ApiWorksheetFunction.prototype.PRICEDISC;
+	ApiWorksheetFunction.prototype["PRICEMAT"]        =  ApiWorksheetFunction.prototype.PRICEMAT;
+	ApiWorksheetFunction.prototype["PV"]              =  ApiWorksheetFunction.prototype.PV;
+	ApiWorksheetFunction.prototype["RATE"]            =  ApiWorksheetFunction.prototype.RATE;
+	ApiWorksheetFunction.prototype["RECEIVED"]        =  ApiWorksheetFunction.prototype.RECEIVED;
+	ApiWorksheetFunction.prototype["RRI"]             =  ApiWorksheetFunction.prototype.RRI;
+	ApiWorksheetFunction.prototype["SLN"]             =  ApiWorksheetFunction.prototype.SLN;
+	ApiWorksheetFunction.prototype["SYD"]             =  ApiWorksheetFunction.prototype.SYD;
+	ApiWorksheetFunction.prototype["TBILLEQ"]         =  ApiWorksheetFunction.prototype.TBILLEQ;
+	ApiWorksheetFunction.prototype["TBILLPRICE"]      =  ApiWorksheetFunction.prototype.TBILLPRICE;
+	ApiWorksheetFunction.prototype["TBILLYIELD"]      =  ApiWorksheetFunction.prototype.TBILLYIELD;
+	ApiWorksheetFunction.prototype["VDB"]             =  ApiWorksheetFunction.prototype.VDB;
+	ApiWorksheetFunction.prototype["XIRR"]            =  ApiWorksheetFunction.prototype.XIRR;
+	ApiWorksheetFunction.prototype["XNPV"]            =  ApiWorksheetFunction.prototype.XNPV;
+	ApiWorksheetFunction.prototype["YIELD"]           =  ApiWorksheetFunction.prototype.YIELD;
+	ApiWorksheetFunction.prototype["YIELDDISC"]       =  ApiWorksheetFunction.prototype.YIELDDISC;
+	ApiWorksheetFunction.prototype["YIELDMAT"]        =  ApiWorksheetFunction.prototype.YIELDMAT;
+	ApiWorksheetFunction.prototype["ABS"]             =  ApiWorksheetFunction.prototype.ABS;
+	ApiWorksheetFunction.prototype["ACOS"]            =  ApiWorksheetFunction.prototype.ACOS;
+	ApiWorksheetFunction.prototype["ACOSH"]           =  ApiWorksheetFunction.prototype.ACOSH;
+	ApiWorksheetFunction.prototype["ACOT"]            =  ApiWorksheetFunction.prototype.ACOT;
+	ApiWorksheetFunction.prototype["ACOTH"]           =  ApiWorksheetFunction.prototype.ACOTH;
+	ApiWorksheetFunction.prototype["AGGREGATE"]       =  ApiWorksheetFunction.prototype.AGGREGATE;
+	ApiWorksheetFunction.prototype["ARABIC"]          =  ApiWorksheetFunction.prototype.ARABIC;
+	ApiWorksheetFunction.prototype["ASIN"]            =  ApiWorksheetFunction.prototype.ASIN;
+	ApiWorksheetFunction.prototype["ASINH"]           =  ApiWorksheetFunction.prototype.ASINH;
+	ApiWorksheetFunction.prototype["ATAN"]            =  ApiWorksheetFunction.prototype.ATAN;
+	ApiWorksheetFunction.prototype["ATAN2"]           =  ApiWorksheetFunction.prototype.ATAN2;
+	ApiWorksheetFunction.prototype["ATANH"]           =  ApiWorksheetFunction.prototype.ATANH;
+	ApiWorksheetFunction.prototype["BASE"]            =  ApiWorksheetFunction.prototype.BASE;
+	ApiWorksheetFunction.prototype["CEILING"]         =  ApiWorksheetFunction.prototype.CEILING;
+	ApiWorksheetFunction.prototype["COMBIN"]          =  ApiWorksheetFunction.prototype.COMBIN;
+	ApiWorksheetFunction.prototype["COMBINA"]         =  ApiWorksheetFunction.prototype.COMBINA;
+	ApiWorksheetFunction.prototype["COS"]             =  ApiWorksheetFunction.prototype.COS;
+	ApiWorksheetFunction.prototype["COSH"]            =  ApiWorksheetFunction.prototype.COSH;
+	ApiWorksheetFunction.prototype["COT"]             =  ApiWorksheetFunction.prototype.COT;
+	ApiWorksheetFunction.prototype["COTH"]            =  ApiWorksheetFunction.prototype.COTH;
+	ApiWorksheetFunction.prototype["CSC"]             =  ApiWorksheetFunction.prototype.CSC;
+	ApiWorksheetFunction.prototype["CSCH"]            =  ApiWorksheetFunction.prototype.CSCH;
+	ApiWorksheetFunction.prototype["DECIMAL"]         =  ApiWorksheetFunction.prototype.DECIMAL;
+	ApiWorksheetFunction.prototype["DEGREES"]         =  ApiWorksheetFunction.prototype.DEGREES;
+	ApiWorksheetFunction.prototype["EVEN"]            =  ApiWorksheetFunction.prototype.EVEN;
+	ApiWorksheetFunction.prototype["EXP"]             =  ApiWorksheetFunction.prototype.EXP;
+	ApiWorksheetFunction.prototype["FACT"]            =  ApiWorksheetFunction.prototype.FACT;
+	ApiWorksheetFunction.prototype["FACTDOUBLE"]      =  ApiWorksheetFunction.prototype.FACTDOUBLE;
+	ApiWorksheetFunction.prototype["FLOOR"]           =  ApiWorksheetFunction.prototype.FLOOR;
+	ApiWorksheetFunction.prototype["GCD"]             =  ApiWorksheetFunction.prototype.GCD;
+	ApiWorksheetFunction.prototype["INT"]             =  ApiWorksheetFunction.prototype.INT;
+	ApiWorksheetFunction.prototype["LCM"]             =  ApiWorksheetFunction.prototype.LCM;
+	ApiWorksheetFunction.prototype["LN"]              =  ApiWorksheetFunction.prototype.LN;
+	ApiWorksheetFunction.prototype["LOG"]             =  ApiWorksheetFunction.prototype.LOG;
+	ApiWorksheetFunction.prototype["LOG10"]           =  ApiWorksheetFunction.prototype.LOG10;
+	ApiWorksheetFunction.prototype["MOD"]             =  ApiWorksheetFunction.prototype.MOD;
+	ApiWorksheetFunction.prototype["MROUND"]          =  ApiWorksheetFunction.prototype.MROUND;
+	ApiWorksheetFunction.prototype["MULTINOMIAL"]     =  ApiWorksheetFunction.prototype.MULTINOMIAL;
+	ApiWorksheetFunction.prototype["MUNIT"]           =  ApiWorksheetFunction.prototype.MUNIT;
+	ApiWorksheetFunction.prototype["ODD"]             =  ApiWorksheetFunction.prototype.ODD;
+	ApiWorksheetFunction.prototype["PI"]              =  ApiWorksheetFunction.prototype.PI;
+	ApiWorksheetFunction.prototype["POWER"]           =  ApiWorksheetFunction.prototype.POWER;
+	ApiWorksheetFunction.prototype["PRODUCT"]         =  ApiWorksheetFunction.prototype.PRODUCT;
+	ApiWorksheetFunction.prototype["QUOTIENT"]        =  ApiWorksheetFunction.prototype.QUOTIENT;
+	ApiWorksheetFunction.prototype["RADIANS"]         =  ApiWorksheetFunction.prototype.RADIANS;
+	ApiWorksheetFunction.prototype["RAND"]            =  ApiWorksheetFunction.prototype.RAND;
+	ApiWorksheetFunction.prototype["RANDBETWEEN"]     =  ApiWorksheetFunction.prototype.RANDBETWEEN;
+	ApiWorksheetFunction.prototype["ROMAN"]           =  ApiWorksheetFunction.prototype.ROMAN;
+	ApiWorksheetFunction.prototype["ROUND"]           =  ApiWorksheetFunction.prototype.ROUND;
+	ApiWorksheetFunction.prototype["ROUNDDOWN"]       =  ApiWorksheetFunction.prototype.ROUNDDOWN;
+	ApiWorksheetFunction.prototype["ROUNDUP"]         =  ApiWorksheetFunction.prototype.ROUNDUP;
+	ApiWorksheetFunction.prototype["SEC"]             =  ApiWorksheetFunction.prototype.SEC;
+	ApiWorksheetFunction.prototype["SECH"]            =  ApiWorksheetFunction.prototype.SECH;
+	ApiWorksheetFunction.prototype["SERIESSUM"]       =  ApiWorksheetFunction.prototype.SERIESSUM;
+	ApiWorksheetFunction.prototype["SIGN"]            =  ApiWorksheetFunction.prototype.SIGN;
+	ApiWorksheetFunction.prototype["SIN"]             =  ApiWorksheetFunction.prototype.SIN;
+	ApiWorksheetFunction.prototype["SINH"]            =  ApiWorksheetFunction.prototype.SINH;
+	ApiWorksheetFunction.prototype["SQRT"]            =  ApiWorksheetFunction.prototype.SQRT;
+	ApiWorksheetFunction.prototype["SQRTPI"]          =  ApiWorksheetFunction.prototype.SQRTPI;
+	ApiWorksheetFunction.prototype["SUBTOTAL"]        =  ApiWorksheetFunction.prototype.SUBTOTAL;
+	ApiWorksheetFunction.prototype["SUM"]             =  ApiWorksheetFunction.prototype.SUM;
+	ApiWorksheetFunction.prototype["SUMIF"]           =  ApiWorksheetFunction.prototype.SUMIF;
+	ApiWorksheetFunction.prototype["SUMIFS"]          =  ApiWorksheetFunction.prototype.SUMIFS;
+	ApiWorksheetFunction.prototype["SUMSQ"]           =  ApiWorksheetFunction.prototype.SUMSQ;
+	ApiWorksheetFunction.prototype["TAN"]             =  ApiWorksheetFunction.prototype.TAN;
+	ApiWorksheetFunction.prototype["TANH"]            =  ApiWorksheetFunction.prototype.TANH;
+	ApiWorksheetFunction.prototype["TRUNC"]           =  ApiWorksheetFunction.prototype.TRUNC;
+	ApiWorksheetFunction.prototype["CHOOSE"]          =  ApiWorksheetFunction.prototype.CHOOSE;
+	ApiWorksheetFunction.prototype["COLUMNS"]         =  ApiWorksheetFunction.prototype.COLUMNS;
+	ApiWorksheetFunction.prototype["HLOOKUP"]         =  ApiWorksheetFunction.prototype.HLOOKUP;
+	ApiWorksheetFunction.prototype["HYPERLINK"]       =  ApiWorksheetFunction.prototype.HYPERLINK;
+	ApiWorksheetFunction.prototype["INDEX"]           =  ApiWorksheetFunction.prototype.INDEX;
+	ApiWorksheetFunction.prototype["LOOKUP"]          =  ApiWorksheetFunction.prototype.LOOKUP;
+	ApiWorksheetFunction.prototype["MATCH"]           =  ApiWorksheetFunction.prototype.MATCH;
+	ApiWorksheetFunction.prototype["ROWS"]            =  ApiWorksheetFunction.prototype.ROWS;
+	ApiWorksheetFunction.prototype["TRANSPOSE"]       =  ApiWorksheetFunction.prototype.TRANSPOSE;
+	ApiWorksheetFunction.prototype["VLOOKUP"]         =  ApiWorksheetFunction.prototype.VLOOKUP;
+	ApiWorksheetFunction.prototype["ISERR"]           =  ApiWorksheetFunction.prototype.ISERR;
+	ApiWorksheetFunction.prototype["ISERROR"]         =  ApiWorksheetFunction.prototype.ISERROR;
+	ApiWorksheetFunction.prototype["ISEVEN"]          =  ApiWorksheetFunction.prototype.ISEVEN;
+	ApiWorksheetFunction.prototype["ISFORMULA"]       =  ApiWorksheetFunction.prototype.ISFORMULA;
+	ApiWorksheetFunction.prototype["ISLOGICAL"]       =  ApiWorksheetFunction.prototype.ISLOGICAL;
+	ApiWorksheetFunction.prototype["ISNA"]            =  ApiWorksheetFunction.prototype.ISNA;
+	ApiWorksheetFunction.prototype["ISNONTEXT"]       =  ApiWorksheetFunction.prototype.ISNONTEXT;
+	ApiWorksheetFunction.prototype["ISNUMBER"]        =  ApiWorksheetFunction.prototype.ISNUMBER;
+	ApiWorksheetFunction.prototype["ISODD"]           =  ApiWorksheetFunction.prototype.ISODD;
+	ApiWorksheetFunction.prototype["ISREF"]           =  ApiWorksheetFunction.prototype.ISREF;
+	ApiWorksheetFunction.prototype["ISTEXT"]          =  ApiWorksheetFunction.prototype.ISTEXT;
+	ApiWorksheetFunction.prototype["N"]               =  ApiWorksheetFunction.prototype.N;
+	ApiWorksheetFunction.prototype["NA"]              =  ApiWorksheetFunction.prototype.NA;
+	ApiWorksheetFunction.prototype["SHEET"]           =  ApiWorksheetFunction.prototype.SHEET;
+	ApiWorksheetFunction.prototype["SHEETS"]          =  ApiWorksheetFunction.prototype.SHEETS;
+	ApiWorksheetFunction.prototype["TYPE"]            =  ApiWorksheetFunction.prototype.TYPE;
+	ApiWorksheetFunction.prototype["AND"]             =  ApiWorksheetFunction.prototype.AND;
+	ApiWorksheetFunction.prototype["FALSE"]           =  ApiWorksheetFunction.prototype.FALSE;
+	ApiWorksheetFunction.prototype["IF"]              =  ApiWorksheetFunction.prototype.IF;
+	ApiWorksheetFunction.prototype["IFERROR"]         =  ApiWorksheetFunction.prototype.IFERROR;
+	ApiWorksheetFunction.prototype["IFNA"]            =  ApiWorksheetFunction.prototype.IFNA;
+	ApiWorksheetFunction.prototype["NOT"]             =  ApiWorksheetFunction.prototype.NOT;
+	ApiWorksheetFunction.prototype["OR"]              =  ApiWorksheetFunction.prototype.OR;
+	ApiWorksheetFunction.prototype["TRUE"]            =  ApiWorksheetFunction.prototype.TRUE;
+	ApiWorksheetFunction.prototype["XOR"]             =  ApiWorksheetFunction.prototype.XOR;
+
+	ApiWorksheetFunction.prototype["BETA_DIST"]       =  ApiWorksheetFunction.prototype.BETA_DIST;
+	ApiWorksheetFunction.prototype["BETA_INV"]        =  ApiWorksheetFunction.prototype.BETA_INV;
+	ApiWorksheetFunction.prototype["BINOM_DIST"]      =  ApiWorksheetFunction.prototype.BINOM_DIST;
+	ApiWorksheetFunction.prototype["BINOM_INV"]       =  ApiWorksheetFunction.prototype.BINOM_INV;
+	ApiWorksheetFunction.prototype["CHISQ_INV"]       =  ApiWorksheetFunction.prototype.CHISQ_INV;
+	ApiWorksheetFunction.prototype["CONFIDENCE_NORM"] =  ApiWorksheetFunction.prototype.CONFIDENCE_NORM;
+	ApiWorksheetFunction.prototype["CONFIDENCE_T"]    =  ApiWorksheetFunction.prototype.CONFIDENCE_T;
+	ApiWorksheetFunction.prototype["EXPON_DIST"]      =  ApiWorksheetFunction.prototype.EXPON_DIST;
+	ApiWorksheetFunction.prototype["F_DIST"]          =  ApiWorksheetFunction.prototype.F_DIST;
+	ApiWorksheetFunction.prototype["F_INV"]           =  ApiWorksheetFunction.prototype.F_INV;
+	ApiWorksheetFunction.prototype["FORECAST_ETS"]    =  ApiWorksheetFunction.prototype.FORECAST_ETS;
+	ApiWorksheetFunction.prototype["GAMMA_DIST"]      =  ApiWorksheetFunction.prototype.GAMMA_DIST;
+	ApiWorksheetFunction.prototype["GAMMA_INV"]       =  ApiWorksheetFunction.prototype.GAMMA_INV;
+	ApiWorksheetFunction.prototype["GAMMALN_PRECISE"] =  ApiWorksheetFunction.prototype.GAMMALN_PRECISE;
+	ApiWorksheetFunction.prototype["HYPGEOM_DIST"]    =  ApiWorksheetFunction.prototype.HYPGEOM_DIST;
+	ApiWorksheetFunction.prototype["LOGNORM_DIST"]    =  ApiWorksheetFunction.prototype.LOGNORM_DIST;
+	ApiWorksheetFunction.prototype["LOGNORM_INV"]     =  ApiWorksheetFunction.prototype.LOGNORM_INV;
+	ApiWorksheetFunction.prototype["NEGBINOM_DIST"]   =  ApiWorksheetFunction.prototype.NEGBINOM_DIST;
+	ApiWorksheetFunction.prototype["NORM_DIST"]       =  ApiWorksheetFunction.prototype.NORM_DIST;
+	ApiWorksheetFunction.prototype["NORM_INV"]        =  ApiWorksheetFunction.prototype.NORM_INV;
+	ApiWorksheetFunction.prototype["PERCENTILE_EXC"]  =  ApiWorksheetFunction.prototype.PERCENTILE_EXC;
+	ApiWorksheetFunction.prototype["PERCENTILE_INC"]  =  ApiWorksheetFunction.prototype.PERCENTILE_INC;
+	ApiWorksheetFunction.prototype["PERCENTRANK_EXC"] =  ApiWorksheetFunction.prototype.PERCENTRANK_EXC;
+	ApiWorksheetFunction.prototype["PERCENTRANK_INC"] =  ApiWorksheetFunction.prototype.PERCENTRANK_INC;
+	ApiWorksheetFunction.prototype["POISSON_DIST"]    =  ApiWorksheetFunction.prototype.POISSON_DIST;
+	ApiWorksheetFunction.prototype["QUARTILE_EXC"]    =  ApiWorksheetFunction.prototype.QUARTILE_EXC;
+	ApiWorksheetFunction.prototype["QUARTILE_INC"]    =  ApiWorksheetFunction.prototype.QUARTILE_INC;
+	ApiWorksheetFunction.prototype["RANK_AVG"]        =  ApiWorksheetFunction.prototype.RANK_AVG;
+	ApiWorksheetFunction.prototype["RANK_EQ"]         =  ApiWorksheetFunction.prototype.RANK_EQ;
+	ApiWorksheetFunction.prototype["SKEW_P"]          =  ApiWorksheetFunction.prototype.SKEW_P;
+	ApiWorksheetFunction.prototype["STDEV_S"]         =  ApiWorksheetFunction.prototype.STDEV_S;
+	ApiWorksheetFunction.prototype["STDEV_P"]         =  ApiWorksheetFunction.prototype.STDEV_P;
+	ApiWorksheetFunction.prototype["T_DIST"]          =  ApiWorksheetFunction.prototype.T_DIST;
+	ApiWorksheetFunction.prototype["T_INV"]           =  ApiWorksheetFunction.prototype.T_INV;
+	ApiWorksheetFunction.prototype["VAR_P"]           =  ApiWorksheetFunction.prototype.VAR_P;
+	ApiWorksheetFunction.prototype["VAR_S"]           =  ApiWorksheetFunction.prototype.VAR_S;
+	ApiWorksheetFunction.prototype["WEIBULL_DIST"]    =  ApiWorksheetFunction.prototype.WEIBULL_DIST;
+	ApiWorksheetFunction.prototype["Z_TEST"]          =  ApiWorksheetFunction.prototype.Z_TEST;
+	ApiWorksheetFunction.prototype["NETWORKDAYS_INTL"]=  ApiWorksheetFunction.prototype.NETWORKDAYS_INTL;
+	ApiWorksheetFunction.prototype["WORKDAY_INTL"]    =  ApiWorksheetFunction.prototype.WORKDAY_INTL;
+	ApiWorksheetFunction.prototype["ERF_PRECISE"]     =  ApiWorksheetFunction.prototype.ERF_PRECISE;
+	ApiWorksheetFunction.prototype["ERFC_PRECISE"]    =  ApiWorksheetFunction.prototype.ERFC_PRECISE;
+	ApiWorksheetFunction.prototype["CEILING_MATH"]    =  ApiWorksheetFunction.prototype.CEILING_MATH;
+	ApiWorksheetFunction.prototype["CEILING_PRECISE"] =  ApiWorksheetFunction.prototype.CEILING_PRECISE;
+	ApiWorksheetFunction.prototype["ECMA_CEILING"]    =  ApiWorksheetFunction.prototype.ECMA_CEILING;
+	ApiWorksheetFunction.prototype["FLOOR_PRECISE"]   =  ApiWorksheetFunction.prototype.FLOOR_PRECISE;
+	ApiWorksheetFunction.prototype["FLOOR_MATH"]      =  ApiWorksheetFunction.prototype.FLOOR_MATH;
+	ApiWorksheetFunction.prototype["ISO_CEILING"]     =  ApiWorksheetFunction.prototype.ISO_CEILING;
+	ApiWorksheetFunction.prototype["ERROR_TYPE"]      =  ApiWorksheetFunction.prototype.ERROR_TYPE;
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
@@ -7526,19 +13874,50 @@
 		}
 
 		return result;
-	};
+	}
 
 	function logError(err) {
 		if (console.error)
 			console.error(err);
 		else
 			console.log(err);
-	};
+	}
 
 	function throwException(err) {
 		if (!console.error)
 			logError(err);
 		throw err;
-	};
+	}
+	function private_executeOtherActiveSheet(ws, ranges, func) {
+		let oldActiveSheet = ws && ws.workbook && ws.workbook.getActive();
+		let isChangedActiveSheet;
+		if (oldActiveSheet != null && ws && oldActiveSheet !== ws.index) {
+			ws.workbook.setActive(ws.index);
+			isChangedActiveSheet = true;
+		}
+
+		let oldSelection;
+		if (ranges) {
+			oldSelection = ws.selectionRange.clone();
+			let newSelection = new AscCommonExcel.SelectionRange(ws);
+			if (ranges.length === 1) {
+				let bbox = ranges[0].bbox;
+				newSelection.assign2(bbox);
+			} else {
+				for (let i = 0; i < ranges.length; i++) {
+					if (i !== 0) {
+						newSelection.addRange();
+					}
+					newSelection.getLast().assign2(ranges[i].bbox);
+				}
+			}
+			newSelection.Select(true);
+		}
+
+		func();
+
+		isChangedActiveSheet && ws.workbook.setActive(oldActiveSheet);
+		oldSelection && oldSelection.Select(true);
+	}
 
 }(window, null));

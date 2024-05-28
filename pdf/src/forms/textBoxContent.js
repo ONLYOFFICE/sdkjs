@@ -124,18 +124,6 @@
 		this.AddToParagraph(new AscWord.ParaTextPr({Italic : bItalic}));
 		this.SetApplyToAll(false);
 	};
-	CTextBoxContent.prototype.getCurrentRun = function() {
-		let paragraph = this.GetElement(0);
-		if (!paragraph || !paragraph.IsParagraph())
-			return null;
-		
-		let paraPos = paragraph.Get_ParaContentPos(false);
-		let run = paragraph.GetElementByPos(paraPos);
-		if (!run || !(run instanceof AscWord.CRun))
-			return null;
-		
-		return run;
-	};
 	CTextBoxContent.prototype.replaceAllText = function(value) {
 		let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
 		

@@ -1773,25 +1773,21 @@
 	};
 
 
-    // Проверяет, есть ли числовые значения в диапазоне
-    WorksheetView.prototype._hasNumberValueInActiveRange = function () {
+    // Checks if there are non-empty values ​​in a range
+    WorksheetView.prototype._getValuesPositionsInRange = function (onlyNumbers) {
+        /* The onlyNumbers flag checks all values ​​except string values */
         let cell, cellType, exist = false, setCols = {}, setRows = {};
-        // ToDo multiselect
         let selection = this.model.getSelection();
         let selectionRange = selection.getLast();
-        if (selectionRange.isOneCell()) {
-            // Для одной ячейки не стоит ничего делать
-            return null;
-        }
         let mergedRange = this.model.getMergedByCell(selectionRange.r1, selectionRange.c1);
         if (mergedRange && mergedRange.isEqual(selectionRange)) {
-            // Для одной ячейки не стоит ничего делать
+            // There is no need to do anything for one cell
             return null;
         }
 
-		if (c_oAscSelectionType.RangeMax === selectionRange.getType()) {
-			return null;
-		}
+        if (c_oAscSelectionType.RangeMax === selectionRange.getType()) {
+            return null;
+        }
 
         let c2 = Math.min(selectionRange.c2, this.nColsCount - 1);
         let r2 = Math.min(selectionRange.r2, this.nRowsCount - 1);
@@ -1799,30 +1795,34 @@
             for (let r = selectionRange.r1; r <= r2; ++r) {
                 cell = this._getCellTextCache(c, r, true);
                 if (cell) {
-                    // Нашли не пустую ячейку, проверим формат
+                    // We found a non-empty cell, let's check the format
                     cellType = cell.cellType;
-                    if (null == cellType || CellValueType.Number === cellType || CellValueType.Bool === cellType || CellValueType.Error === cellType) {
-						exist = setRows[r] = setCols[c] = true;
+
+                    // When performing autocomplete formula, all data types except string are treated as numeric
+                    if ((null == cellType || CellValueType.Number === cellType || CellValueType.Bool === cellType || CellValueType.Error === cellType || CellValueType.String === cellType)) {
+                        if (!(onlyNumbers && CellValueType.String === cellType)) {
+							exist = setRows[r] = setCols[c] = true;
+                        }
                     }
                 }
             }
         }
         if (exist) {
-            // Делаем массивы уникальными и сортируем
+            // Making arrays unique and sorting
             let i, arrCols = [], arrRows = [];
             for(i in setCols) {
-				arrCols.push(+i);
+                arrCols.push(+i);
             }
-			for(i in setRows) {
-				arrRows.push(+i);
-			}
+            for(i in setRows) {
+                arrRows.push(+i);
+            }
             return {arrCols: arrCols.sort(fSortAscending), arrRows: arrRows.sort(fSortAscending)};
         } else {
             return null;
         }
     };
 
-    // Автодополняет формулу диапазоном, если это возможно
+    // Autocomplete formula with range if possible
     WorksheetView.prototype.autoCompleteFormula = function (functionName) {
         const t = this;
         // ToDo autoComplete with multiselect
@@ -1832,40 +1832,63 @@
         let arCopy = null;
         let arHistorySelect = ar.clone(true);
         let vr = this.visibleRange;
-        // Первая верхняя не числовая ячейка
+        // First top cell
         let topCell = null;
-        // Первая левая не числовая ячейка
+        // First left cell
         let leftCell = null;
 
         let r = activeCell.row - 1;
         let c = activeCell.col - 1;
         let cell, cellType, isNumberFormat;
         let result = {};
-        // Проверим, есть ли числовые значения в диапазоне
-        let hasNumber = this._hasNumberValueInActiveRange();
+        // Get all numeric values ​​in the range
+        let hasNumber = this._getValuesPositionsInRange(true);
+        // Get all non-empty values ​​in the range
+        let realValues = this._getValuesPositionsInRange();
         let val, text;
+
+        /*
+            If the first value in the select is a string, then:
+            if there are numeric values ​​and there are more than 1, then cut the select to the first value in the column/row
+            if there is one numeric value, then we do not change the select and perform the same actions as when selecting one numeric cell (empty SUM)
+
+            If the last value in the select exists (non empty), then move the select +1 from the current one (column or row),
+
+            We write the autosum only in empty cells of the select (right or left)
+            If there are none, then expand the select down or to the right
+            By default, the select expands downwards, except in cases where one line is selected (r2 - r1 === 0)
+            or the number of numeric values ​​in the column is 1
+        */
 
         let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
         let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
 
         if (hasNumber) {
             let i;
-            // Есть ли значения в последней строке и столбце
+            // Are there numeric values ​​in the last row and column
             let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
             let hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
-            let realElementsInCol = hasNumber.arrRows.length;
-            let realElementsInRow = hasNumber.arrCols.length;
-            let bIsVertical = (ar.c2 - ar.c1) === 0;
-            // Нужно ли прервать выполнение
+            let numberElementsInCol = hasNumber.arrRows.length;
+            let numberElementsInRow = hasNumber.arrCols.length;
+
+            // Are there any non-empty values ​​in the last row and column
+            let hasRealElementInLastCol = (ar.c2 === realValues.arrCols[realValues.arrCols.length - 1]);
+            let hasRealElementInLastRow = (ar.r2 === realValues.arrRows[realValues.arrRows.length - 1]);
+            let realElementsInCol = realValues.arrRows.length;
+            let realElementsInRow = realValues.arrCols.length;
+
+            // Should execution be stopped
             let breakExec;
 
-            // Нужно уменьшить зону выделения (если она реально уменьшилась)
+            // Is necessary to reduce the selection area (if it has actually decreased)
             let startRow = (ar.c2 - ar.c1) > 0 ? hasNumber.arrRows[0] : ar.r1;
             let startCol = hasNumber.arrRows.length === 1 ? ar.c1 : hasNumber.arrCols[0];
-            // Старые границы диапазона
+
+            // Old range borders
             let startColOld = ar.c1;
             let startRowOld = ar.r1;
-            // Нужно ли перерисовывать
+
+            // Need to update and redraw Selection
             let bIsUpdate = false;
 
             if (startColOld !== startCol || startRowOld !== startRow) {
@@ -1876,9 +1899,9 @@
             }
 
             if (firstCell && firstCell.cellType === CellValueType.String) {
-                // если первая ячейка строка, обрезаем select до первого не пустого значения
-                if (hasNumberInLastColumn && hasNumberInLastRow && (realElementsInRow === 1 && realElementsInCol === 1)) {
-                    // Последнее значение - число
+                // If the first cell is a string, cut the select to the first non-empty value
+                if (hasNumberInLastColumn && hasNumberInLastRow && (numberElementsInCol === 1 && numberElementsInRow === 1)) {
+                    // Last value is number
                     bIsUpdate = false;
                     // set active cell to the end of the select
                     activeCell.row = ar.r2;
@@ -1891,30 +1914,42 @@
                     bIsUpdate = true;
                 }
             } else if ((realElementsInRow === 1 && realElementsInCol === 1) && (hasNumberInLastColumn && hasNumberInLastRow)) {
-                // Последняя ячейка - число, нужно расширить селект
+                // The last cell is a number - need to expand the select
                 startRow = ar.r1;
                 startCol = ar.c1;
                 bIsUpdate = true;
+            } else if (hasRealElementInLastRow && hasRealElementInLastCol) {
+                bIsUpdate = true;
             }
-
 
             if (bIsUpdate) {
                 this.cleanSelection();
                 ar.c1 = startCol;
                 ar.r1 = startRow;
                 if (false === ar.contains(activeCell.col, activeCell.row)) {
-                    // Передвинуть первую ячейку в выделении
+                    // Move the active cell in the selection
                     activeCell.col = startCol;
                     activeCell.row = startRow;
                 }
-                if (true === hasNumberInLastRow && true === hasNumberInLastColumn) {
-                    // Мы расширяем диапазон
-                    if (1 === hasNumber.arrRows.length && (ar.c2 - startColOld) > 0) {
-                        // Увеличиваем вправо только если выделенный диапазон по столбцам больше 1 ячейки и только в одной строке есть значения
-                        ar.c2 += 1;
-                    } else {
-                        // Иначе вводим в строку вниз
-                        ar.r2 += 1;
+                let newRealValues = this._getValuesPositionsInRange();
+                
+                hasRealElementInLastCol = (ar.c2 === newRealValues.arrCols[newRealValues.arrCols.length - 1]);
+                hasRealElementInLastRow = (ar.r2 === newRealValues.arrRows[newRealValues.arrRows.length - 1]);
+
+                if ((true === hasRealElementInLastCol || true === hasRealElementInLastRow)) {
+                    // Expanding the range
+                    if (1 === hasNumber.arrRows.length && (ar.c2 - ar.c1 /*startColOld*/) > 0) {
+                        // We increase to the right, only if the selected range in columns is more than 1 cell and only one row contains values
+                        if ((newRealValues.arrCols[newRealValues.arrCols.length - 1] === ar.c2)) {
+                            ar.c2 += 1;
+                        }
+                    } 
+                    // else
+                    if (hasRealElementInLastRow && (ar.r2 - ar.r1 /*startRowOld*/) > 0) {
+                        // If selecting by rows is more than 1 cell and there is no free space for the formula in the last row, increase down
+                        if ((newRealValues.arrRows[newRealValues.arrRows.length - 1] === ar.r2)) {
+                            ar.r2 += 1;
+                        }
                     }
                 }
                 this._drawSelection();
@@ -8581,12 +8616,13 @@
 		return th;
 	};
 	WorksheetView.prototype._updateRowHeight = function (cache, row, maxW, colWidth) {
-	    if (this.skipUpdateRowHeight) {
-	        return;
-        }
-	    var res = null;
+		if (this.skipUpdateRowHeight) {
+			return;
+		}
+		var res = null;
 		var mergeType = cache.flags && cache.flags.getMergeType();
-		var isMergedRows = (mergeType & c_oAscMergeType.rows) || (mergeType && cache.flags.wrapText);
+		//not find a case where the ms does not update the height with the columns merged ans wrap
+		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
@@ -8607,12 +8643,12 @@
 			var newHeight = tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
 			if (cache.angle && textBound) {
-                newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
+				newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
 			}
 			newHeight = Math.min(this.maxRowHeightPx, Math.max(oldHeight, newHeight));
 			if (newHeight !== oldHeight) {
 				if (this.updateRowHeightValuePx) {
-                    this.updateRowHeightValuePx = newHeight;
+					this.updateRowHeightValuePx = newHeight;
 				}
 				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
 				var _rowHeight = this.workbook.printPreviewState.isStart() ? newHeight * this.getZoom() : Asc.round(newHeight * this.getZoom());
@@ -8624,7 +8660,7 @@
 				res = newHeight;
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
 				this.model.bExcludeCollapsed = true;
-                // ToDo delete setRowHeight here
+				// ToDo delete setRowHeight here
 				// TODO temporary add limit, because minimal zoom change not correct row height
 				if (this.getZoom() >= 0.5) {
 					this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
@@ -8637,8 +8673,7 @@
 						maxW = tm.width;
 					}
 
-					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width,
-						cache.cellHA, va, maxW);
+					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width, cache.cellHA, va, maxW);
 				}
 
 				this.isChanged = true;
@@ -10444,8 +10479,8 @@
 				cursor: _cursor,
 				target: f ? c_oTargetType.RowResize : _target,
 				col: -1,
-				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
-				mouseY: f ? (((y < r.top + 3) ? r.top : r.bottom) - y - 1) : null
+				row: r.row + (isNotFirst && f && y < r.top + epsChangeSize ? -1 : 0),
+				mouseY: f ? (((y < r.top + epsChangeSize) ? r.top : r.bottom) - y - 1) : null
 			};
 		}
 
@@ -10480,9 +10515,9 @@
 			return {
 				cursor: _cursor,
 				target: f ? c_oTargetType.ColumnResize : _target,
-				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
+				col: c.col + (isNotFirst && f && x < c.left + epsChangeSize ? -1 : 0),
 				row: -1,
-				mouseX: f ? (((x < c.left + 3) ? c.left : c.right) - x - 1) : null
+				mouseX: f ? (((x < c.left + epsChangeSize) ? c.left : c.right) - x - 1) : null
 			};
 		}
 
@@ -14139,7 +14174,7 @@
 
 	WorksheetView.prototype.isNeedSelectionCut = function () {
 		var res = true;
-		if (AscCommon.g_clipboardBase.bCut && !this.objectRender.selectedGraphicObjectsExists()) {
+		if (AscCommon.g_clipboardBase.bCut && !this.objectRender.selectedGraphicObjectsExists() && !AscCommon.g_clipboardBase.forceCutSelection) {
 			res = false;
 		}
 		return res;

@@ -333,4 +333,37 @@ $(function () {
 		
 		
 	});
+	
+	QUnit.test("Get text/selected text", function(assert)
+	{
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+		
+		let run = AscTest.CreateRun();
+		logicDocument.AddToContent(0, p);
+		p.AddToContentToEnd(run);
+		run.AddText("The quick brown fox jumps over the lazy dog");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 4);
+		assert.strictEqual(logicDocument.GetSelectedText(), "", "Check no selection");
+		AscTest.MoveCursorRight(true, false, 5);
+		assert.strictEqual(logicDocument.GetSelectedText(), "quick", "Select word 'quick'");
+		
+		// TODO: Переделать заполнение формулы по-нормальному
+		let math = AscTest.CreateMath();
+		p.AddToContentToEnd(math);
+		math.SetThisElementCurrent();
+		let text = "abcd";
+		for (let i = 0; i < text.length; ++i)
+		{
+			math.Add(new AscWord.CRunText(text.charCodeAt(i)));
+		}
+		
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.MoveCursorLeft(false, false, 4); // 1 сдвиг для захода в формулу
+		AscTest.MoveCursorRight(true, false, 2);
+		assert.strictEqual(logicDocument.GetSelectedText(), "bc", "Add math with text 'abcd' and partially select the text");
+		
+	});
 });

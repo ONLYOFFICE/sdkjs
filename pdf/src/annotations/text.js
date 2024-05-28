@@ -126,7 +126,7 @@
         this._replies.push(oReply);
     };
     CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        let oAscCommData = new Asc.asc_CCommentDataWord(null);
         oAscCommData.asc_putText(this.GetContents());
         let sModDate = this.GetModDate();
         if (sModDate)
@@ -253,6 +253,12 @@
         let canvas = document.createElement('canvas');
         let context = canvas.getContext('2d');
 
+        if (oGraphics.isThumbnails) {
+            let oTr = oGraphics.GetTransform();
+            wScaled *= oTr.sy;
+            hScaled *= oTr.sy;
+        }
+        
         // Set the canvas dimensions to match the image
         canvas.width = wScaled;
         canvas.height = hScaled;
@@ -296,15 +302,17 @@
         return false;
     };
     CAnnotationText.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };

@@ -1859,10 +1859,10 @@
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
-		for (let i = 0, len = items.tabs.length; i < len; i++)
+		for (let i = 0, len = items["tabs"].length; i < len; i++)
 		{
-			if (items.tabs[i]["items"])
-				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+			if (items["tabs"][i]["items"])
+				correctItemsWithData(items["tabs"][i]["items"], baseUrl);
 		}
 
 		this.sendEvent("onPluginToolbarMenu", [items]);

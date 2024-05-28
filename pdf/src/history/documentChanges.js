@@ -37,6 +37,7 @@ AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]			= CChangesPDFDo
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]		= CChangesPDFDocumentRemoveItem;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddPage]			= CChangesPDFDocumentAddPage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemovePage]		= CChangesPDFDocumentRemovePage;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RotatePage]		= CChangesPDFDocumentRotatePage;
 AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_ChangePosInTree]	= CChangesPDFDocumentChangePosInTree;
 
 /**
@@ -312,6 +313,23 @@ CChangesPDFDocumentRemovePage.prototype.Redo = function()
 
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFDocumentRotatePage(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDocumentRotatePage.prototype.constructor = CChangesPDFDocumentRotatePage;
+CChangesPDFDocumentRotatePage.prototype.Type = AscDFH.historyitem_PDF_Document_RotatePage;
+CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
+{
+	let oDoc = this.Class;
+	oDoc.SetPageRotate(Value[0], Value[1]);
 };
 
 /**

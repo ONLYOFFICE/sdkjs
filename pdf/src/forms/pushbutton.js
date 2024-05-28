@@ -606,16 +606,19 @@
         oGraphicsWord.RemoveLastClip();
 
         if (this.IsPressed()) {
-            let oViewer = editor.getDocumentRenderer();
+            let oViewer     = editor.getDocumentRenderer();
             let aOrigRect   = this.GetOrigRect();
-            let nGrScale    = oGraphicsPDF.GetScale();
+            let oTr         = oGraphicsPDF.GetTransform();
 
-            let X = aOrigRect[0] * nGrScale;
-            let Y = aOrigRect[1] * nGrScale;
-            let nWidth = (aOrigRect[2] - aOrigRect[0]) * nGrScale;
-            let nHeight = (aOrigRect[3] - aOrigRect[1]) * nGrScale;
+            let origX   = aOrigRect[0];
+            let origY   = aOrigRect[1];
+            let X       = aOrigRect[0] * oTr.sx;
+            let Y       = aOrigRect[1] * oTr.sy;
+            let nWidth  = (aOrigRect[2] - aOrigRect[0]) * oTr.sx;
+            let nHeight = (aOrigRect[3] - aOrigRect[1]) * oTr.sy;
 
             // Create a new canvas element for the cropped area
+            let oGrContext          = oGraphicsPDF.GetContext();
             let croppedCanvas       = document.createElement('canvas');
             let oCroppedCtx         = croppedCanvas.getContext("2d");
             croppedCanvas.width     = nWidth + 0.5 >> 0;
@@ -660,25 +663,25 @@
                     oCroppedCtx.drawImage(page.ImageAnnots, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                 }
     
-                oCroppedCtx.drawImage(oGraphicsPDF.context.canvas, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
+                oCroppedCtx.drawImage(oGrContext.canvas, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                 oCroppedCtx.globalCompositeOperation='difference';
                 oCroppedCtx.fillStyle='white';
                 oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
-                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
+                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
             }
             else if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.outline) {
-                let nLineWidth = this._lineWidth;
+                let nLineWidth = this.GetBorderWidth();
 
-                oCroppedCtx.drawImage(oGraphicsPDF.context.canvas, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
-                oCroppedCtx.clearRect(nLineWidth * nGrScale, nLineWidth * nGrScale, croppedCanvas.width - 2 * nLineWidth * nGrScale, croppedCanvas.height - 2 * nLineWidth * nGrScale);
+                oCroppedCtx.drawImage(oGrContext.canvas, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
+                oCroppedCtx.clearRect(nLineWidth * oTr.sy, nLineWidth * oTr.sy, croppedCanvas.width - 2 * nLineWidth * oTr.sy, croppedCanvas.height - 2 * nLineWidth * oTr.sy);
     
                 oCroppedCtx.globalCompositeOperation='difference';
                 oCroppedCtx.fillStyle='white';
                 oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
                 oCroppedCtx.globalCompositeOperation='source-over';
-                oCroppedCtx.drawImage(oGraphicsPDF.context.canvas, X + nLineWidth * nGrScale, Y + nLineWidth * nGrScale, nWidth - 2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth -  2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale);
+                oCroppedCtx.drawImage(oGrContext.canvas, X + nLineWidth * oTr.sy, Y + nLineWidth * oTr.sy, nWidth - 2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy, nLineWidth * oTr.sy, nLineWidth * oTr.sy, nWidth -  2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy);
     
-                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
+                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
             }
         }
         
@@ -718,7 +721,6 @@
         this.AddToRedraw();
 
         if (this.IsNeedDrawFromStream()) {
-            editor.getDocumentRenderer()._paint();
             return;
         }
              
@@ -757,15 +759,12 @@
         if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
             this.SetNeedRecalc(true);
         }
-
-        editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.DrawUnpressed = function() {
         this.SetPressed(false);
         this.AddToRedraw();
 
         if (this.IsNeedDrawFromStream()) {
-            editor.getDocumentRenderer()._paint();
             return;
         }
         
@@ -794,8 +793,6 @@
         if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
             this.SetNeedRecalc(true);
         }
-
-        editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.CreateFill = function(sRasterId) {
         let oFill;
@@ -824,7 +821,6 @@
         this.AddToRedraw();
 
         if (this.IsNeedDrawFromStream()) {
-            editor.getDocumentRenderer()._paint();
             return;
         }
 
@@ -847,8 +843,6 @@
 
             this.SetNeedRecalc(true);
         }
-
-        editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.OnEndRollover = function() {
         // rollover состояние может быть только в push
@@ -860,7 +854,6 @@
         this.AddToRedraw();
 
         if (this.IsNeedDrawFromStream()) {
-            editor.getDocumentRenderer()._paint();
             return;
         }
         
@@ -882,8 +875,6 @@
 
             this.SetNeedRecalc(true);
         }
-
-        editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.DrawBackground = function(oGraphicsPDF) {
         
@@ -1100,15 +1091,21 @@
         else
             nImgType = undefined;
 
-        let originView      = this.GetOriginView(nImgType);
-        let nGrScale        = oGraphicsPDF.GetScale();
+        let originView      = this.GetOriginView(nImgType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
+        let oTr             = oGraphicsPDF.GetTransform();
         let highlightType   = this.GetHighlight();
 
-        let X = originView.x;
-        let Y = originView.y;
-        let nWidth = originView.width;
+        let aOrigRect = this.GetOrigRect();
+
+        let origX   = aOrigRect[0] >> 0;
+        let origY   = aOrigRect[1] >> 0;
+        let X       = originView.x;
+        let Y       = originView.y;
+
+        let nWidth  = originView.width;
         let nHeight = originView.height;
-        let nLineWidth = this._lineWidth + 1;
+
+        let nLineWidth = this.GetBorderWidth() + 1;
 
         // Create a new canvas element for the cropped area
         var croppedCanvas       = document.createElement('canvas');
@@ -1117,7 +1114,7 @@
         croppedCanvas.height    = nHeight;
 
         if (this.IsPressed() == false) {
-            oGraphicsPDF.DrawImageXY(originView, originView.x / nGrScale, originView.y / nGrScale);
+            oGraphicsPDF.DrawImageXY(originView, origX, origY);
             return;
         }
 
@@ -1125,7 +1122,7 @@
             switch (highlightType) {
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.none:
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.push:
-                    oGraphicsPDF.DrawImageXY(originView, originView.x / nGrScale, originView.y / nGrScale);
+                    oGraphicsPDF.DrawImageXY(originView, origX, origY);
                     break;
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.invert: {
                     let xCenter = oViewer.width >> 1;
@@ -1170,7 +1167,7 @@
                     oCroppedCtx.globalCompositeOperation='difference';
                     oCroppedCtx.fillStyle='white';
                     oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
-                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
                     break;
                 }
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.outline: {
@@ -1181,15 +1178,15 @@
                         oCroppedCtx.drawImage(oViewer.canvasForms, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                     }
     
-                    oCroppedCtx.clearRect(nLineWidth * nGrScale, nLineWidth * nGrScale, croppedCanvas.width - 2 * nLineWidth * nGrScale, croppedCanvas.height - 2 * nLineWidth * nGrScale);
+                    oCroppedCtx.clearRect(nLineWidth * oTr.sy, nLineWidth * oTr.sy, croppedCanvas.width - 2 * nLineWidth * oTr.sy, croppedCanvas.height - 2 * nLineWidth * oTr.sy);
     
                     oCroppedCtx.globalCompositeOperation='difference';
                     oCroppedCtx.fillStyle='white';
                     oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
                     oCroppedCtx.globalCompositeOperation='source-over';
-                    oCroppedCtx.drawImage(originView, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth - 2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth -  2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale);
+                    oCroppedCtx.drawImage(originView, nLineWidth * oTr.sy, nLineWidth * oTr.sy, nWidth - 2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy, nLineWidth * oTr.sy, nLineWidth * oTr.sy, nWidth -  2 * nLineWidth * oTr.sy, nHeight - 2 * nLineWidth * oTr.sy);
     
-                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, origX, origY);
                     break;
                 }
             }
