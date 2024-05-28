@@ -1739,8 +1739,6 @@
 			}
 
 			this.documentHeight = curTop;
-
-			this.UpdateDrDocDrawingPages();
 		};
 
 		this.setCursorType = function(cursor)
@@ -4160,6 +4158,7 @@
 		if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
 			this.clearZoomCoord();
 
+		this.UpdateDrDocDrawingPages();
 		this._paint();
 		this.onUpdateOverlay();
 	};
