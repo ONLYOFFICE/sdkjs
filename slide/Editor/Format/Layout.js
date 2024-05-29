@@ -751,6 +751,29 @@ SlideLayout.prototype.getTheme = function(){
 
         this.writecomments = [];
     };
+    SlideLayout.prototype.copySelectedObjects = function () {
+        AscCommonSlide.Slide.prototype.copySelectedObjects.call(this);
+    };
+    SlideLayout.prototype.getPlaceholdersControls = function () {
+        return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+    };
+    SlideLayout.prototype.getParentObjects = function () {
+        return {
+            presentation: Asc.editor.private_GetLogicDocument(),
+            master: this.Master,
+            layout: this,
+            slide: null
+        };
+    };
+    SlideLayout.prototype.recalculateNotesShape = function () {
+    };
+
+    SlideLayout.prototype.getNotesHeight = function () {
+        return 0;
+    };
+    SlideLayout.prototype.recalcText = function() {
+        return AscCommonSlide.Slide.prototype.recalcText.call(this);
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

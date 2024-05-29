@@ -2988,6 +2988,11 @@
 		}
 		return { slide: null, layout: null, master: null, theme: null};
 	};
+	CGraphicObjectBase.prototype.Get_StartPage_Absolute = function () {
+		if (AscFormat.CShape.prototype.Get_StartPage_Absolute) {
+			return AscFormat.CShape.prototype.Get_StartPage_Absolute.call(this);
+		}
+	};
 	CGraphicObjectBase.prototype.Get_Theme = function () {
 		if (AscFormat.CShape.prototype.Get_Theme) {
 			return AscFormat.CShape.prototype.Get_Theme.call(this);

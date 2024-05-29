@@ -3429,6 +3429,10 @@ function CDrawingDocument()
         return bIsReturn;
 	};
 
+	this.GetCurSld = function()
+	{
+		return this.m_oWordControl.Thumbnails.GetCurSld();
+	};
 
 }
 
@@ -3449,7 +3453,6 @@ function CThPage()
 	this.IsLocked   = false;
 }
 
-
 CThPage.prototype.Draw = function(context, xDst, yDst, wDst, hDst)
 {
 	if (wDst <= 0 || hDst <= 0)
@@ -3469,6 +3472,34 @@ CThPage.prototype.Draw = function(context, xDst, yDst, wDst, hDst)
 CThPage.prototype.Hit = function(x, y)
 {
 	return y >= this.top && y <= this.bottom;
+};
+CThPage.prototype.SetRecalc = function(bValue)
+{
+	this.IsRecalc = bValue;
+};
+CThPage.prototype.GetRecalc = function(bValue)
+{
+	return this.IsRecalc;
+};
+CThPage.prototype.SetLocked = function(bValue)
+{
+	this.IsLocked = bValue;
+};
+CThPage.prototype.SetSelected = function(bValue)
+{
+	this.IsSelected = bValue;
+};
+CThPage.prototype.SetFocused = function(bValue)
+{
+	this.IsFocused = bValue;
+};
+CThPage.prototype.IsPageSelected = function()
+{
+	return this.IsSelected;
+};
+CThPage.prototype.GetPosition = function()
+{
+	return this.Position;
 };
 
 function DrawBackground(graphics, unifill, w, h)
@@ -3620,45 +3651,479 @@ CMouseDownTrack.prototype.IsSamePos = function()
 
 
 
-function CThumbnailsBase() {
 
+function CThPosBase(oThumbnails)
+{
+	this.thumbnails = oThumbnails;
 }
+CThPosBase.prototype.Increment = function() {};
+CThPosBase.prototype.Decrement = function() {};
+CThPosBase.prototype.IsLess = function(oPos)
+{
+	return false;
+};
+CThPosBase.prototype.IsGreater = function(oPos)
+{
+	return false;
+};
+CThPosBase.prototype.IsLessOrEqual = function(oPos)
+{
+	return this.IsLess(oPos) || this.IsEqual(oPos);
+};
+CThPosBase.prototype.IsGreaterOrEqual = function(oPos)
+{
+	return this.IsGreater(oPos) || this.IsEqual(oPos);
+};
+CThPosBase.prototype.IsEqual = function(oPos)
+{
+	return false;
+};
+CThPosBase.prototype.Copy = function()
+{
+	return new CThPosBase(this.thumbnails);
+};
+CThPosBase.prototype.GetPage = function()
+{
+	return this.thumbnails.GetPage(this);
+};
+CThPosBase.prototype.GetSld = function()
+{
+	return null;
+};
+CThPosBase.prototype.GetPresentation = function()
+{
+	return Asc.editor.WordControl.m_oLogicDocument;
+};
+
+function CSlideThPos(oThumbnails)
+{
+	CThPosBase.call(this, oThumbnails);
+	this.Idx = -1;
+}
+AscFormat.InitClassWithoutType(CSlideThPos, CThPosBase);
+CSlideThPos.prototype.Check = function()
+{
+	let aThs = this.thumbnails.slides;
+	let nMaxIdx = aThs.length - 1;
+	let nMinIdx = Math.min(nMaxIdx, 0);
+	this.Idx = Math.max(nMinIdx, Math.min(this.Idx, nMaxIdx));
+};
+CSlideThPos.prototype.Increment = function()
+{
+	++this.Idx;
+	this.Check();
+};
+CSlideThPos.prototype.Decrement = function()
+{
+	--this.Idx;
+	this.Check();
+};
+CSlideThPos.prototype.IsLess = function(oPos)
+{
+	return this.Idx < oPos.Idx;
+};
+CSlideThPos.prototype.IsGreater = function(oPos)
+{
+	return this.Idx > oPos.Idx;
+};
+CSlideThPos.prototype.IsEqual = function(oPos)
+{
+	return this.Idx === oPos.Idx;
+};
+CSlideThPos.prototype.Copy = function()
+{
+	let oPos = new CSlideThPos(this.thumbnails);
+	oPos.Idx = this.Idx;
+	return oPos;
+};
+CSlideThPos.prototype.GetSld = function()
+{
+	return this.GetPresentation().Slides[this.Idx];
+};
+
+
+function CMasterThPos(oThumbnails)
+{
+	CThPosBase.call(this, oThumbnails);
+	this.MasterIdx = -1;
+	this.LayoutIdx = -1;
+}
+AscFormat.InitClassWithoutType(CMasterThPos, CThPosBase);
+CMasterThPos.prototype.Check = function()
+{
+	let nOldMasterIdx = this.MasterIdx;
+	let aThs = this.thumbnails.masters;
+	let nMaxMasterIdx = aThs.length - 1;
+	let nMinMasterIdx = Math.min(nMaxMasterIdx, 0);
+	this.MasterIdx = Math.max(nMinMasterIdx, Math.min(this.MasterIdx, nMaxMasterIdx));
+	if(this.MasterIdx !== nOldMasterIdx)
+	{
+		this.LayoutIdx = -1;
+		return;
+	}
+	if(this.LayoutIdx === -1)
+	{
+		return;
+	}
+	let oMasterTh = aThs[this.MasterIdx];
+	let aLayoutsTh = oMasterTh.layoutPages;
+	let nMaxLayoutIdx = aLayoutsTh.length - 1;
+	let nMinLayoutIdx = Math.min(nMaxLayoutIdx, 0);
+	this.LayoutIdx = Math.max(nMinLayoutIdx, Math.min(this.LayoutIdx, nMaxLayoutIdx));
+};
+CMasterThPos.prototype.Increment = function()
+{
+	let oMasterThs = this.thumbnails.GetMasterThumbnails(this.MasterIdx);
+	let nLayoutsCount = oMasterThs.GetLayoutsCount();
+	if(this.LayoutIdx + 1 < nLayoutsCount)
+	{
+		++this.LayoutIdx;
+	}
+	else
+	{
+		if(this.MasterIdx + 1 < this.thumbnails.GetMastersCount())
+		{
+			++this.MasterIdx;
+			this.LayoutIdx = - 1;
+		}
+	}
+};
+CMasterThPos.prototype.Decrement = function()
+{
+	if(this.LayoutIdx > -1)
+	{
+		--this.LayoutIdx;
+		return;
+	}
+	this.MasterIdx = Math.max(-1, this.MasterIdx - 1);
+	let oMasterThs = this.thumbnails.GetMasterThumbnails(this.MasterIdx);
+	if(oMasterThs)
+	{
+		this.LayoutIdx = oMasterThs.GetLayoutsCount() - 1;
+	}
+};
+CMasterThPos.prototype.IsLess = function(oPos)
+{
+	if(this.MasterIdx > oPos.MasterIdx) return false;
+	if(this.MasterIdx < oPos.MasterIdx) return true;
+	return this.LayoutIdx < oPos.LayoutIdx;
+};
+CMasterThPos.prototype.IsGreater = function(oPos)
+{
+	return !this.IsLess(oPos) && !this.IsEqual(oPos);
+};
+CMasterThPos.prototype.IsEqual = function(oPos)
+{
+	return (oPos.MasterIdx === this.MasterIdx && oPos.LayoutIdx === this.LayoutIdx);
+};
+CMasterThPos.prototype.Copy = function()
+{
+	let oPos = new CMasterThPos(this.thumbnails);
+	oPos.MasterIdx = this.MasterIdx;
+	oPos.LayoutIdx = this.LayoutIdx;
+	return oPos;
+};
+CMasterThPos.prototype.GetSld = function()
+{
+	let oPresentation = this.GetPresentation();
+	let oMaster = oPresentation.slideMasters[this.MasterIdx];
+	if(!oMaster) return null;
+	if(this.LayoutIdx === -1) {
+		return oMaster;
+	}
+	return oMaster.sldLayoutLst[this.LayoutIdx];
+};
+
+function CThumbnailsBase() {
+	this.curPos = this.GetIterator();
+	this.firstVisible = this.GetIterator();
+	this.lastVisible = this.GetIterator();
+}
+CThumbnailsBase.prototype.GetIterator = function()
+{
+	throw new Error();
+};
+CThumbnailsBase.prototype.SetSlideRecalc = function (idx) {
+	let oTh = this.GetPage(idx);
+	if(oTh)
+	{
+		oTh.SetRecalc(true);
+	}
+};
+CThumbnailsBase.prototype.LockSlide = function(idx) {
+	let oTh = this.GetPage(idx);
+	if(oTh)
+	{
+		oTh.SetLocked(true);
+	}
+};
+CThumbnailsBase.prototype.UnLockSlide = function(idx) {
+	let oTh = this.GetPage(idx);
+	if(oTh)
+	{
+		oTh.SetLocked(false);
+	}
+};
+CThumbnailsBase.prototype.GetPage = function (oIdx) {
+	return null;
+};
+CThumbnailsBase.prototype.SelectAll = function()
+{
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		oPage.SetSelected(true);
+		return false;
+	});
+};
+CThumbnailsBase.prototype.FindThUnderCursor = function(X, Y)
+{
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		if(oPage.Hit(X, Y))
+		{
+			return oPage;
+		}
+	});
+};
+CThumbnailsBase.prototype.ResetSelection = function()
+{
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		oPage.SetSelected(false);
+		return false;
+	});
+};
+CThumbnailsBase.prototype.SetAllFocused = function(bValue)
+{
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		oPage.SetFocused(bValue);
+		return false;
+	});
+};
+
+CThumbnailsBase.prototype.SetAllRecalc = function (bValue) {
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		oPage.SetRecalc(bValue);
+		return false;
+	});
+};
+CThumbnailsBase.prototype.SelectRange = function(oStartPos, oEndPos)
+{
+	this.SetSelectionRange(oStartPos, oEndPos, true);
+};
+
+CThumbnailsBase.prototype.SetSelectionRange = function(oStartPos, oEndPos, bValue)
+{
+	this.IteratePages(oStartPos, oEndPos, function(oPage) {
+		oPage.SetSelected(bValue);
+		return false;
+	});
+};
+CThumbnailsBase.prototype.GetStartPos = function()
+{
+	throw new Error();
+};
+CThumbnailsBase.prototype.GetEndPos = function()
+{
+	throw new Error();
+};
+CThumbnailsBase.prototype.IteratePages = function(oStartPos, oEndPos, fAction)
+{
+	if(oStartPos.IsLessOrEqual(oEndPos))
+	{
+		for(let oPos = oStartPos.Copy(); oPos.IsLessOrEqual(oEndPos); oPos.Increment())
+		{
+			let oPage = oPos.GetPage();
+			if(!oPage)
+				return null;
+			if(oPage)
+			{
+				let oResult = fAction(oPos.GetPage());
+				if(oResult)
+				{
+					return oResult;
+				}
+			}
+		}
+	}
+	return null;
+};
+CThumbnailsBase.prototype.GetPagesCount = function()
+{
+	let nCount = 0;
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage) {
+		nCount++;
+		return false;
+	});
+	return nCount;
+};
+CThumbnailsBase.prototype.ConvertCoords2 = function(X, Y)
+{
+
+	let pages_count = this.GetPagesCount();
+	if (0 == pages_count)
+		return -1;
+
+	let oStartPos = this.GetStartPos();
+	let oEndPos = this.GetEndPos();
+	let _min = Math.abs(Y - this.GetStartPos().GetPage().top);
+	let _MinPositionPage = 0;
+
+	this.IteratePages(oStartPos, oEndPos, function(oPage) {
+
+		let _min1 = Math.abs(Y - oPage.top);
+		let _min2 = Math.abs(Y - oPage.bottom);
+
+		if (_min1 < _min)
+		{
+			_min = _min1;
+			_MinPositionPage = oPage.GetPosition();
+		}
+		if (_min2 < _min)
+		{
+			_min = _min2;
+			_MinPositionPage = oPage.GetPosition().Increment();
+		}
+	});
+
+	return _MinPositionPage;
+};
+CThumbnailsBase.prototype.GetPagePosition = function(oPageIdx)
+{
+	let oPage = this.GetPage(oPageIdx);
+	if(!oPage) return null;
+	let _ret = {
+		X: AscCommon.AscBrowser.convertToRetinaValue(oPage.left),
+		Y: AscCommon.AscBrowser.convertToRetinaValue(oPage.top),
+		W: AscCommon.AscBrowser.convertToRetinaValue(oPage.right - oPage.left),
+		H: AscCommon.AscBrowser.convertToRetinaValue(oPage.bottom - oPage.top)
+	};
+	return _ret;
+};
+CThumbnailsBase.prototype.GetCurSld = function()
+{
+	return this.curPos.GetSld();
+};
+CThumbnailsBase.prototype.IndexToPos = function(nIndex)
+{
+	return null;
+};
+CThumbnailsBase.prototype.PosToIndex = function(oPos)
+{
+	return null;
+};
 
 function CSlidesThumbnails() {
 	CThumbnailsBase.call(this);
 	this.slides = [];
-	this.cusSlide = -1;
-	this.firstVisible = -1;
-	this.lastVisible = -1;
 }
 AscFormat.InitClassWithoutType(CSlidesThumbnails, CThumbnailsBase);
-CSlidesThumbnails.prototype.clear = function () {
+CSlidesThumbnails.prototype.GetIterator = function()
+{
+	return new CSlideThPos(this);
+};
+CSlidesThumbnails.prototype.clear = function ()
+{
 	this.slides.length = 0;
 	this.cusSlide = -1;
 	this.firstVisible = -1;
 	this.lastVisible = -1;
 };
+CSlidesThumbnails.prototype.GetStartPos = function()
+{
+	let oPos = this.GetIterator();
+	oPos.Idx = Math.min(0, this.slides.length - 1);
+	return oPos;
+};
+CSlidesThumbnails.prototype.GetEndPos = function()
+{
+	let oPos = this.GetIterator();
+	oPos.Idx = this.slides.length - 1;
+	return oPos;
+};
+CSlidesThumbnails.prototype.IndexToPos = function(nIndex)
+{
+	let oPos = this.GetIterator();
+	oPos.Idx = nIndex;
+	return oPos;
+};
+CSlidesThumbnails.prototype.PosToIndex = function(oPos)
+{
+	if(!oPos) return -1;
+	return oPos.Idx;
+};
 
 
-function CMasterIndex() {
-	this.masterIdx = -1;
-	this.layoutIdx = -1;
-}
-function CMastersThumbnails() {
+function CMastersThumbnails()
+{
 	CThumbnailsBase.call(this);
 	this.masters = [];
-	this.curPos = new CMasterIndex();
-	this.firstVisible = new CMasterIndex();
-	this.lastVisible = new CMasterIndex();
 }
-AscFormat.InitClassWithoutType(CMastersThumbnails, CThumbnailsBase)
-
-
-CMastersThumbnails.prototype.clear = function () {
-	for(let nIdx = 0; nIdx < this.masters.length; ++nIdx) {
+AscFormat.InitClassWithoutType(CMastersThumbnails, CThumbnailsBase);
+CMastersThumbnails.prototype.clear = function ()
+{
+	for(let nIdx = 0; nIdx < this.masters.length; ++nIdx)
+	{
 		this.masters[nIdx].preDelete();
 	}
 	this.masters.length = 0;
+};
+CMastersThumbnails.prototype.GetPage = function(oPos)
+{
+	if(!Asc.Format.isRealObject(oPos)) return null;
+	let oMasterTh = this.masters[oPos.MasterIdx];
+	if(!oMasterTh) return null;
+	return oMasterTh.GetPage(oPos);
+};
+CMastersThumbnails.prototype.GetMastersCount = function ()
+{
+	return this.masters.length;
+};
+CMastersThumbnails.prototype.GetMasterThumbnails = function (nIdx)
+{
+	return this.masters[nIdx] || null;
+};
+CMastersThumbnails.prototype.GetIterator = function()
+{
+	return new CMasterThPos(this);
+};
+CMastersThumbnails.prototype.GetStartPos = function()
+{
+	let oPos = this.GetIterator();
+	oPos.MasterIdx = Math.min(0, this.masters.length - 1);
+};
+CMastersThumbnails.prototype.GetEndPos = function()
+{
+	let oPos = this.GetIterator();
+	oPos.MasterIdx = this.masters.length - 1;
+	let oMasterThs = this.GetMasterThumbnails(oPos.MasterIdx);
+	if(oMasterThs)
+	{
+		oPos.LayoutIdx = oMasterThs.GetLayoutsCount() - 1;
+	}
+	return oPos;
+};
+CMastersThumbnails.prototype.IndexToPos = function(nIndex)
+{
+	let nIdx = 0;
+	let oPosition = null;
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage, oPos) {
+		if(nIdx === nIndex) {
+			oPosition = oPos;
+			return true;
+		}
+		++nIdx;
+	});
+	return oPosition;
+};
+CSlidesThumbnails.prototype.PosToIndex = function(oPos)
+{
+	let nIdx = -1;
+	this.IteratePages(this.GetStartPos(), this.GetEndPos(), function(oPage, oPosition) {
+		++nIdx;
+		if(oPos.IsEqual(oPosition)) {
+			return true;
+		}
+		return false;
+	});
+	return nIdx;
 };
 
 function CMasterThumbnails(oMaster)
@@ -3678,9 +4143,15 @@ function CMasterThumbnails(oMaster)
 	}, this.id);
 	this.update();
 }
-
-
-
+CMasterThumbnails.prototype.GetPage = function(oPos)
+{
+	if(!oPos) return null;
+	return this.layoutPages[oPos.LayoutIdx] || this.masterPage;
+};
+CMasterThumbnails.prototype.GetLayoutsCount = function()
+{
+	return this.layoutPages.length;
+};
 CMasterThumbnails.prototype.preDelete = function() {
 	Asc.editor.detachEvent("slideMasterUpdate", this.id);
 };
@@ -3694,7 +4165,6 @@ CMasterThumbnails.prototype.update = function() {
 		this.layoutPages.push(new CThPage());
 	}
 };
-
 
 function CThumbnailsManager()
 {
@@ -3739,11 +4209,6 @@ function CThumbnailsManager()
 	this.m_lDrawingFirst = -1;
 	this.m_lDrawingEnd = -1;
 
-	//master mode
-	this.m_arrMasters = [];
-	this.m_oCurPos = new CMasterIndex();
-	this.m_oDrawingFirstPos = new CMasterIndex();
-	this.m_oDrawingEndPos = new CMasterIndex();
 
 
 	this.bIsEmptyDrawed = false;
@@ -3890,6 +4355,12 @@ function CThumbnailsManager()
 	};
 
 
+
+	this.GetPageByPos = function(oPos)
+	{
+		return this.thumbnails.GetPage(oPos);
+	};
+
 	this.GetSlidesCount = function()
 	{
 		return Asc.editor.getCountSlides();
@@ -3917,6 +4388,29 @@ function CThumbnailsManager()
 			oFontStyle = FontStyle.FontStyleBoldItalic;
 
 		g_fontApplication.LoadFont(font.FontFamily.Name, AscCommon.g_font_loader, this.m_oFontManager, font.FontSize, oFontStyle, 96, 96);
+	};
+
+	this.SetSlideRecalc = function (nIdx)
+	{
+		this.thumbnails.SetSlideRecalc(nIdx);
+	};
+
+	this.LockSlide = function(nIdx)
+	{
+
+		this.thumbnails.LockSlide(nIdx);
+		this.OnUpdateOverlay();
+	};
+
+	this.UnLockSlide = function(nIdx)
+	{
+		this.thumbnails.UnLockSlide(nIdx);
+		this.OnUpdateOverlay();
+	};
+	this.SelectAll = function()
+	{
+		this.thumbnails.SelectAll();
+		this.OnUpdateOverlay();
 	};
 
 	// events
@@ -4460,7 +4954,7 @@ function CThumbnailsManager()
 						{
 							oPresentation.deleteSlides(sSelectedIdx);
 						}
-						if (0 === oPresentation.Slides.length)
+						if (0 === oPresentation.GetSlidesCount())
 						{
 							this.m_bIsUpdate = true;
 						}
@@ -5171,6 +5665,7 @@ function CThumbnailsManager()
 		return false;
 	};
 
+
 	this.SelectPage = function(pageNum)
 	{
 		if (!this.SelectPageEnabled)
@@ -5233,6 +5728,14 @@ function CThumbnailsManager()
 			}
 		}
 		return Pos;
+	};
+
+	this.GetContextMenuPos = function()
+	{
+		let oPos = {};
+		oPos.X_abs = global_mouseEvent.X - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.X;
+		oPos.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
+		return oPos;
 	};
 	this.ConvertCoords2 = function(x, y)
 	{
@@ -5669,6 +6172,11 @@ function CThumbnailsManager()
 				};
 			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));
 		}
+	};
+
+	this.GetCurSld = function()
+	{
+		return this.thumbnails.GetCurSld();
 	};
 }
 

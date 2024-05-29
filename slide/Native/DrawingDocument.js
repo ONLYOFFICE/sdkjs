@@ -304,7 +304,7 @@ CDrawingDocument.prototype.OnRecalculatePage = function(index, pageObject)
 
 CDrawingDocument.prototype.OnEndRecalculate = function()
 {
-    this.SlidesCount = this.m_oLogicDocument.Slides.length;
+    this.SlidesCount = this.m_oLogicDocument.GetSlidesCount();
     this.SlideCurrent = this.m_oLogicDocument.CurPage;
 
     if(this.LockEvents)

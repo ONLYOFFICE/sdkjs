@@ -207,11 +207,7 @@ CShape.prototype.addToRecalculate = function()
 };
 CShape.prototype.getSlideIndex = function()
 {
-    if(this.parent && AscFormat.isRealNumber(this.parent.num))
-    {
-        return this.parent.num;
-    }
-    return null;
+    return this.Get_StartPage_Absolute();
 };
 CShape.prototype.handleUpdatePosition = function()
 {
@@ -677,6 +673,24 @@ CShape.prototype.OnContentReDraw = function(){
         return false;
     };
 
+
+    CShape.prototype.Get_StartPage_Absolute = function () {
+        if(this.getParentObjects) {
+            let oParents = this.getParentObjects();
+            if(oParents && oParents.presentation) {
+                if(oParents.slide) {
+                    return oParents.slide.num;
+                }
+                if(oParents.layout) {
+                    return oParents.presentation.GetSlideIndex(oParents.layout);
+                }
+                if(oParents.master) {
+                    return oParents.presentation.GetSlideIndex(oParents.master);
+                }
+            }
+        }
+        return 0;
+    };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;

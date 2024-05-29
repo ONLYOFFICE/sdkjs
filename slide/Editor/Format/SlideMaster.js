@@ -528,6 +528,13 @@ MasterSlide.prototype.addToRecalculate = function()
 {
     History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 };
+MasterSlide.prototype.addNewLayout = function()
+{
+    let oLayout = AscFormat.GenerateDefaultSlideLayout(this);
+    this.addToSldLayoutLstToPos(this.sldLayoutLst.length, oLayout);
+};
+
+
 MasterSlide.prototype.Refresh_RecalcData = function (data) {
     if(data)
     {
@@ -637,6 +644,37 @@ MasterSlide.prototype.scale = function (kw, kh) {
     {
         this.cSld.spTree[i].changeSize(kw, kh);
     }
+};
+MasterSlide.prototype.copySelectedObjects = function () {
+    AscCommonSlide.Slide.prototype.copySelectedObjects.call(this);
+};
+
+MasterSlide.prototype.getPlaceholdersControls = function () {
+    return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+};
+MasterSlide.prototype.getParentObjects = function () {
+    return {
+        presentation: Asc.editor.private_GetLogicDocument(),
+        master: this,
+        layout: null,
+        slide: null
+    };
+};
+MasterSlide.prototype.recalculateNotesShape = function () {
+};
+MasterSlide.prototype.getNotesHeight = function () {
+    return 0;
+};
+
+MasterSlide.prototype.recalcText = function() {
+    return AscCommonSlide.Slide.prototype.recalcText.call(this);
+};
+MasterSlide.prototype.checkSlideTheme = function() {
+    return AscCommonSlide.Slide.prototype.checkSlideTheme.call(this);
+};
+
+MasterSlide.prototype.checkSlideColorScheme = function() {
+    return AscCommonSlide.Slide.prototype.checkSlideColorScheme.call(this);
 };
 
 

@@ -4046,8 +4046,8 @@ function CEditorPage(api)
 		var drDoc = this.m_oDrawingDocument;
 		drDoc.SelectionMatrix = null;
 
-		if (drDoc.SlideCurrent >= drDoc.m_oLogicDocument.Slides.length)
-			drDoc.SlideCurrent = drDoc.m_oLogicDocument.Slides.length - 1;
+		if (drDoc.SlideCurrent >= drDoc.m_oLogicDocument.GetSlidesCount())
+			drDoc.SlideCurrent = drDoc.m_oLogicDocument.GetSlidesCount() - 1;
 
 		if (drDoc.m_bIsSearching)
 		{
@@ -4998,12 +4998,13 @@ function CEditorPage(api)
 			case Asc.c_oAscPresentationViewMode.normal:
 			{
 				this.m_oDrawingDocument.SlideCurrent = 0;
+				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
 			{
-				this.m_oDrawingDocument.MasterCurrent = 0;
-				this.m_oDrawingDocument.LayoutCurrent = -1;
+				this.m_oDrawingDocument.SlideCurrent = 0;
+				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.sorter:

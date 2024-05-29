@@ -2329,6 +2329,13 @@
         }
         return null;
     };
+    CBaseChartObject.prototype.Get_StartPage_Absolute = function() {
+        let oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.Get_StartPage_Absolute();
+        }
+        return 0;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {

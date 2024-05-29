@@ -1075,6 +1075,26 @@
 		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide;
 	};
 
+	asc_docs_api.prototype.asc_AddMasterSlide = function() {
+		if(!this.isMasterMode()) return;
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument) return;
+		oLogicDocument.AddNewMasterSlide();
+	};
+	asc_docs_api.prototype.asc_AddSlideLayout = function() {
+		if(!this.isMasterMode()) return;
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument) return;
+		oLogicDocument.AddNewLayout();
+	};
+	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType) {
+		if(!this.isMasterMode()) return;
+
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument) return;
+		oLogicDocument.StartAddShape("");
+	};
+
     //----------------------------------------------------------------------------------------------------------------------
     // SpellCheck_CallBack
     //          Функция ответа от сервера.
@@ -2650,9 +2670,9 @@ background-repeat: no-repeat;\
 		var logicDoc = this.WordControl.m_oLogicDocument;
 		if (!logicDoc)
 			return;
-		if (logicDoc.CurPage >= logicDoc.Slides.length)
+		if (logicDoc.CurPage >= logicDoc.GetSlidesCount())
 			return;
-		if (logicDoc.Slides.length == 0)
+		if (logicDoc.GetSlidesCount() === 0)
 		{
 			logicDoc.addNextSlide();
 		}
@@ -5387,7 +5407,7 @@ background-repeat: no-repeat;\
 		var scheme = AscCommon.getColorSchemeByName(sSchemeName);
 		if (!scheme)
 		{
-			var theme = this.WordControl.MasterLayouts.Theme;
+			var theme = this.getCurrentTheme();
 			if (null == theme)
 				return;
 			scheme = theme.getExtraClrScheme(sSchemeName);
@@ -9184,6 +9204,7 @@ background-repeat: no-repeat;\
 
 
 	asc_docs_api.prototype.asc_changePresentationViewMode = function(mode) {
+		if(this.presentationViewMode === mode) return;
 		this.presentationViewMode = mode;
 		this.updateViewMode();
 	};

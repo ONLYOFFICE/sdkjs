@@ -109,7 +109,7 @@
     SHAPE_ASPECTS["accentBorderCallout2"] = 914400/612648;
     SHAPE_ASPECTS["accentBorderCallout3"] = 914400/612648;
 
-function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController)
+function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController, nPlaceholderType)
 {
     this.presetGeom = presetGeom;
     this.startX = startX;
@@ -135,6 +135,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.startShape = null;
     this.endShape = null;
     this.endConnectionInfo = null;
+    this.placeholderType = nPlaceholderType;
 
     AscFormat.ExecuteNoHistory(function(){
 

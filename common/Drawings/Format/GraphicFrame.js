@@ -960,13 +960,6 @@
 		}
 	};
 
-	CGraphicFrame.prototype.Get_StartPage_Absolute = function () {
-		if (this.parent) {
-			return this.parent.num;
-		}
-		return 0;
-	};
-
 	CGraphicFrame.prototype.Get_PageContentStartPos = function (PageNum) {
 		var presentation = editor.WordControl.m_oLogicDocument;
 		return {

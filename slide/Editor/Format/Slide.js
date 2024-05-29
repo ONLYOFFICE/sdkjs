@@ -2162,19 +2162,9 @@ PropLocker.prototype = {
 
 AscFormat.CTextBody.prototype.Get_StartPage_Absolute = function()
 {
-    if(this.parent)
+    if(this.parent && this.parent.Get_StartPage_Absolute)
     {
-        if(this.parent.getParentObjects)
-        {
-            var parent_objects = this.parent.getParentObjects();
-            if(parent_objects.slide)
-            {
-                return parent_objects.slide.num;
-            }
-            if(parent_objects.notes && parent_objects.notes.slide){
-                return parent_objects.notes.slide.num;
-            }
-        }
+        return this.parent.Get_StartPage_Absolute();
     }
     return 0;
 };
