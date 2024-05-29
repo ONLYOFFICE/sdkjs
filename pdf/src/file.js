@@ -2823,6 +2823,7 @@ void main() {\n\
                 page.Dpi            = page["Dpi"];
                 page.originIndex    = page["originIndex"]; // исходный индекс в файле
                 page.originRotate   = page["Rotate"];
+                page.Rotate         = page["Rotate"];
             }
             file.originalPagesCount = file.pages.length;
 
