@@ -6298,7 +6298,8 @@ StyleManager.prototype =
 			null == this.CustomWidth && 0 === this.outlineLevel && false == this.collapsed;
 	};
 	Col.prototype.isUpdateScroll = function () {
-		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed;
+		//TODO temporary added check on CustomWidth -> nColsCount common for scroll/draw. need separate nColsCount for draw and for scroll
+		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed || true === this.CustomWidth;
 	};
 	Col.prototype.clone = function (oNewWs) {
 		if (!oNewWs) {
