@@ -79,7 +79,6 @@
 
         this.fillObject(oSquare);
 
-        oSquare.pen = new AscFormat.CLn();
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
         oSquare.SetOriginPage(this.GetOriginPage());
@@ -89,7 +88,7 @@
         oSquare.SetWidth(this.GetWidth());
         oSquare.SetStrokeColor(this.GetStrokeColor().slice());
         oSquare.SetFillColor(this.GetFillColor());
-        oSquare.recalcInfo.recalculatePen = false;
+        oSquare.SetOpacity(this.GetOpacity());
         oSquare.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());
         oSquare.recalculate();
@@ -212,28 +211,6 @@
     };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
-    };
-    CAnnotationSquare.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
-        oLine.setFill(oFill);
-    };
-    CAnnotationSquare.prototype.SetFillColor = function(aColor) {
-        this._fillColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        this.setFill(oFill);
-    };
-    CAnnotationSquare.prototype.SetWidth = function(nWidthPt) {
-        this._width = nWidthPt; 
-
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
-        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
     CAnnotationSquare.prototype.Recalculate = function() {
         let oViewer     = editor.getDocumentRenderer();

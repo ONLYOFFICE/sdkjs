@@ -1405,7 +1405,9 @@
 						if (oAnnotInfo["BE"]["S"] != null)
 							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
 					}
-						
+					
+					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+					
 					if (oAnnotInfo["CA"] != null) {
 						oAnnot.SetOpacity(oAnnotInfo["CA"]);
 					}
@@ -1416,8 +1418,6 @@
 						oAnnot.SetWidth(1);
 					}
 
-					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
-					
 					if (oAnnotInfo["QuadPoints"] != null) {
 						let aSepQuads = [];
 						for (let i = 0; i < oAnnotInfo["QuadPoints"].length; i+=8)

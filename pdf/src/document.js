@@ -1767,6 +1767,14 @@ var CPresentation = CPresentation || function(){};
 
         this.History.Add(new CChangesPDFDocumentRotatePage(this, [nPage, oFile.pages[nPage].Rotate], [nPage, nAngle]));
 		oFile.pages[nPage].Rotate = nAngle;
+
+        // sticky note всегда неповернуты
+        oViewer.pagesInfo.pages[nPage].annots.forEach(function(annot) {
+            if (annot.IsComment()) {
+                annot.AddToRedraw();
+            }
+        });
+        
 		oViewer.resize();
     };
     /**

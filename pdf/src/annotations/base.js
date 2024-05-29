@@ -130,12 +130,25 @@
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
         this._fillColor = aColor;
+
+        if (this.IsShapeBased()) {
+            let oRGB    = this.GetRGBColor(aColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            this.setFill(oFill);
+        }
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
     };
-    CAnnotationBase.prototype.SetWidth = function(nWidth) {
-        this._width = nWidth;
+    CAnnotationBase.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt;
+
+        if (this.IsShapeBased()) {
+            nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+            let oLine = this.spPr.ln;
+            oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+            this.handleUpdateLn();
+        }
     };
     CAnnotationBase.prototype.GetWidth = function() {
         return this._width;
@@ -184,6 +197,17 @@
     CAnnotationBase.prototype.SetOpacity = function(value) {
         this._opacity = value;
         this.SetWasChanged(true);
+
+        if (this.IsShapeBased()) {
+            let oLine = this.spPr.ln;
+            oLine.Fill.transparent = value * 100 * 2.55;
+
+            let oFill = this.spPr.Fill;
+            oFill.transparent = value * 100 * 2.55;
+
+            this.handleUpdateLn();
+            this.handleUpdateFill();
+        }
     };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
@@ -899,6 +923,14 @@
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
         this.SetWasChanged(true);
+
+        if (this.IsShapeBased()) {
+            let oRGB    = this.GetRGBColor(aColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oLine   = this.spPr.ln;
+            oLine.setFill(oFill);
+            this.handleUpdateLn();
+        }
     };
     CAnnotationBase.prototype.GetStrokeColor = function() {
         return this._strokeColor;
