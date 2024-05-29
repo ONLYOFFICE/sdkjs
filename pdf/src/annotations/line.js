@@ -220,7 +220,6 @@
 
         this.fillObject(oLine);
 
-        oLine.pen = new AscFormat.CLn();
         oLine._apIdx = this._apIdx;
         oLine._originView = this._originView;
         oLine.SetOriginPage(this.GetOriginPage());
@@ -233,7 +232,7 @@
         oLine.SetLineEnd(this.GetLineEnd());
         oLine.SetContents(this.GetContents());
         oLine.SetFillColor(this.GetFillColor());
-        oLine.recalcInfo.recalculatePen = false;
+        oLine.SetOpacity(this.GetOpacity());
         oLine.recalcInfo.recalculateGeometry = true;
         oLine._points = this._points.slice();
         oLine.recalculate();

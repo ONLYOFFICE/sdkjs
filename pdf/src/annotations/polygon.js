@@ -131,28 +131,6 @@
         if (this.spPr.geometry == null)
             this.spPr.setGeometry(geometry);
     };
-    CAnnotationPolygon.prototype.SetWidth = function(nWidthPt) {
-        this._width = nWidthPt; 
-
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
-        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
-    };
-    CAnnotationPolygon.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
-        oLine.setFill(oFill);
-    };
-    CAnnotationPolygon.prototype.SetFillColor = function(aColor) {
-        this._fillColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        this.setFill(oFill);
-    };
     CAnnotationPolygon.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
@@ -203,7 +181,6 @@
 
         this.fillObject(oPolygon);
 
-        oPolygon.pen = new AscFormat.CLn();
         oPolygon._apIdx = this._apIdx;
         oPolygon._originView = this._originView;
         oPolygon.SetOriginPage(this.GetOriginPage());
@@ -214,7 +191,7 @@
         oPolygon.SetStrokeColor(this.GetStrokeColor().slice());
         oPolygon.SetContents(this.GetContents());
         oPolygon.SetFillColor(this.GetFillColor());
-        oPolygon.recalcInfo.recalculatePen = false;
+        oPolygon.SetOpacity(this.GetOpacity());
         oPolygon.recalcInfo.recalculateGeometry = true;
         oPolygon._vertices = this._vertices.slice();
         oPolygon.SetWasChanged(oPolygon.IsChanged());

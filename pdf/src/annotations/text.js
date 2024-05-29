@@ -237,7 +237,9 @@
         let ICON_TO_DRAW    = this.GetIconImg();
 
         let aRect       = this.GetRect();
+        let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
+        let nRotAngle   = this.GetDocument().Viewer.getPageRotate(nPage);
 
         let nWidth  = (aRect[2] - aRect[0]) * AscCommon.AscBrowser.retinaPixelRatio;
         let nHeight = (aRect[3] - aRect[1]) * AscCommon.AscBrowser.retinaPixelRatio;
@@ -264,7 +266,13 @@
         canvas.height = hScaled;
 
         // Draw the image onto the canvas
-        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
+        let nOpacity = this.GetOpacity();
+        context.save();
+        context.globalAlpha = nOpacity;
+        context.translate(wScaled >> 1, hScaled >> 1);
+        context.rotate(-nRotAngle * Math.PI / 180);
+        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, -wScaled / 2, -hScaled / 2, wScaled, hScaled);
+        context.restore();
 
         if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
             if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
