@@ -455,6 +455,9 @@
 		let textController = doc.getTextController();
 		if (!textController)
 			return false;
+		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
+            return false;
+        }
 		
 		let result = textController.EnterText(codePoints);
 		

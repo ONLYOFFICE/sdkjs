@@ -3385,7 +3385,7 @@ var CPresentation = CPresentation || function(){};
         let oDrawing = this.activeDrawing;
 
         if (oDrawing) {
-            this.SetParagraphHighlight(this.Api.isMarkerFormat, r, g, b);
+            this.SetParagraphHighlight(AscCommon.isNumber(r) && AscCommon.isNumber(g) && AscCommon.isNumber(b), r, g, b);
             return;
         }
         else {
@@ -5403,6 +5403,9 @@ var CPresentation = CPresentation || function(){};
 		let textController = pdfDocument.getTextController();
 		if (!textController || !textController.canBeginCompositeInput())
 			return null;
+        if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
+            return null;
+        }
 		
 		let compositeInput = new CPDFCompositeInput(textController);
 		compositeInput.createNewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);
