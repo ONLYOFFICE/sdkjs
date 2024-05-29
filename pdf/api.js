@@ -456,8 +456,8 @@
 		if (!textController)
 			return false;
 		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
-            return false;
-        }
+			return false;
+		}
 		
 		let result = textController.EnterText(codePoints);
 		

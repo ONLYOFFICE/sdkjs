@@ -3298,7 +3298,7 @@
 			{
 				window.event.preventDefault();
 				let oActiveObj = oDoc.GetActiveObject();
-				if (oActiveObj.IsDrawing()) {
+				if (oActiveObj && oActiveObj.IsDrawing()) {
 					oDoc.AddToParagraph(new AscWord.CRunTab());
 				}
 				else {

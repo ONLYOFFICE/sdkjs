@@ -5403,9 +5403,8 @@ var CPresentation = CPresentation || function(){};
 		let textController = pdfDocument.getTextController();
 		if (!textController || !textController.canBeginCompositeInput())
 			return null;
-        if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
-            return null;
-        }
+		if (textController.IsDrawing() && Asc.editor.isRestrictionView())
+			return null;
 		
 		let compositeInput = new CPDFCompositeInput(textController);
 		compositeInput.createNewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);
