@@ -17683,6 +17683,9 @@ function RangeDataManagerElem(bbox, data)
 		return this.description;
 	};
 	CCustomFunctionInfo.prototype.asc_getArg = function (num) {
+		if (num == null) {
+			return this.args;
+		}
 		if (this.args && this.args[num]) {
 			return this.args[num];
 		}
