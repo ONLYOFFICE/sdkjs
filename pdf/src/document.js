@@ -3372,9 +3372,9 @@ var CPresentation = CPresentation || function(){};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
         this.HighlightColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
+            r: r,
+            g: g,
+            b: b,
             a: opacity
         };
 
@@ -3448,9 +3448,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
         this.UnderlineColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
+            r: r,
+            g: g,
+            b: b,
             a: opacity
         };
 
@@ -3501,9 +3501,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
         this.StrikeoutColor = {
-            r: r != undefined ? r : 0,
-            g: g != undefined ? g : 0,
-            b: b != undefined ? b : 0,
+            r: r,
+            g: g,
+            b: b,
             a: opacity
         };
 
@@ -5403,9 +5403,8 @@ var CPresentation = CPresentation || function(){};
 		let textController = pdfDocument.getTextController();
 		if (!textController || !textController.canBeginCompositeInput())
 			return null;
-        if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
-            return null;
-        }
+		if (textController.IsDrawing() && Asc.editor.isRestrictionView())
+			return null;
 		
 		let compositeInput = new CPDFCompositeInput(textController);
 		compositeInput.createNewHistoryPoint(AscDFH.historydescription_Document_CompositeInput);

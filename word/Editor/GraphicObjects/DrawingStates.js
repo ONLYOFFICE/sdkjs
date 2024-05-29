@@ -219,8 +219,10 @@ StartAddNewShape.prototype =
                             modDate:        (new Date().getTime()).toString()
                         });
     
-                        var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint, oTrack.pen);
+                        var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint);
     
+                        let oRGBPen = oTrack.pen.Fill.getRGBAColor();
+                        oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                         oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                         oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
                         

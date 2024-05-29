@@ -164,17 +164,11 @@
         this._relativePaths = aRelPointsPos;
         this._gestures = aShapePaths;
     };
-    CAnnotationInk.prototype.FillShapeByPoints = function(aPoints, oPen) {
+    CAnnotationInk.prototype.FillShapeByPoints = function(aPoints) {
         let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
         let shape = fillShapeByPoints([aPoints], aShapeRectInMM, this);
-
-        let oRGBPen = oPen.Fill.getRGBAColor();
-        shape.spPr.setLn(oPen);
-        shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
-        shape.recalculate();
-        this.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
 
         let aRelPointsPos = [];
         let aMinRect = getMinRect(aPoints);
