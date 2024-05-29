@@ -3753,7 +3753,7 @@ var CPresentation = CPresentation || function(){};
         let oParserContext  = new AscCommon.XmlParserContext();
         let oTableStyles    = this.GetTableStyles();
         Object.keys(this.TableStylesIdMap).forEach(function(styleId) {
-            oParserContext.addTableStyle(styleId, oTableStyles.Get(styleId));
+            oParserContext.addTableStyle(oTableStyles.Get(styleId).GetStyleId(), oTableStyles.Get(styleId));
         });
         let aPageDrawings   = [];
         let oXmlReader;

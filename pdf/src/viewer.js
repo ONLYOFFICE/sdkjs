@@ -4333,9 +4333,11 @@
 					let oDrawing = oPageInfo.drawings[nDr];
 
 					if (oDrawing.IsGraphicFrame()) {
-						let sTableStyle = oDrawing.graphicObject.GetTableStyle();
-						if (sTableStyle != undefined) {
-							oMemory.context.tableStylesIdToGuid[sTableStyle] = sTableStyle;
+						let sTableStyleId	= oDrawing.graphicObject.GetTableStyle();
+						let sStyleGUID		= oDoc.globalTableStyles.Get(sTableStyleId).GetStyleId();
+						
+						if (sTableStyleId != undefined) {
+							oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
 						}
 					}
 				}
