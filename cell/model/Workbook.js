@@ -1956,7 +1956,9 @@
 						oCell.initStartCellForIterCalc();
 						if (g_cCalcRecursion.getStartCellIndex()) {
 							aCycleCells.push(oCell);
-							oCell.setValueNumberInternal(0);
+							if (oCell.getNumberValue() == null && oCell.getValueText() == null) {
+								oCell.setValueNumberInternal(0);
+							}
 							oCell.setIsDirty(false);
 							return;
 						}
@@ -1970,6 +1972,9 @@
 				const oApi = Asc.editor;
 				oApi.sendEvent("asc_onError", c_oAscError.ID.CircularReference, c_oAscError.Level.NoCritical);
 				g_cCalcRecursion.setShowCycleWarn(false);
+			}
+			if (!aCycleCells.length && !g_cCalcRecursion.getShowCycleWarn()) {
+				g_cCalcRecursion.setShowCycleWarn(true);
 			}
 			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
 
