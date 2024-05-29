@@ -4159,8 +4159,10 @@
 			this.clearZoomCoord();
 
 		this.UpdateDrDocDrawingPages();
-		this._paint();
-		this.onUpdateOverlay();
+		if (true !== isDisablePaint) {
+			this._paint();
+			this.onUpdateOverlay();	
+		}
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
 	{

@@ -1676,7 +1676,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         oViewer.thumbnails._addPage(nPos);
-        oViewer.resize();
+        oViewer.resize(true);
 
         for (let i = 0; i < oViewer.file.pages.length; i++) {
             oController.mergeDrawings(i);
@@ -1686,6 +1686,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentAddPage(this, nPos, [oPage]));
+
+        oViewer.paint();
     };
 
     /**
@@ -1752,7 +1754,7 @@ var CPresentation = CPresentation || function(){};
         oViewer.thumbnails._deletePage(nPos);
 
         oViewer.checkVisiblePages();
-        oViewer.resize();
+        oViewer.resize(true);
         for (let i = 0; i < oViewer.file.pages.length; i++) {
             oController.mergeDrawings(i);
         }
@@ -1760,6 +1762,8 @@ var CPresentation = CPresentation || function(){};
         oViewer.sendEvent("onPagesCount", oFile.pages.length);
 
         this.History.Add(new CChangesPDFDocumentRemovePage(this, nPos, aPages));
+
+        oViewer.paint();
     };
     CPDFDoc.prototype.SetPageRotate = function(nPage, nAngle) {
 		let oViewer     = this.Viewer;
