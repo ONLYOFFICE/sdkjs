@@ -5460,17 +5460,30 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                         var LDRecalcInfo  = Para.Parent.RecalcInfo;
                         if ( true === LDRecalcInfo.Can_RecalcObject() )
                         {
-                            // Обновляем позицию объекта
-                            Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
-                            LDRecalcInfo.Set_FlowObject( Item, 0, recalcresult_NextElement, -1 );
-
-                            // TODO: Добавить проверку на не попадание в предыдущие колонки
-                            if (0 === PRSA.CurPage && Item.wrappingPolygon.top > PRSA.PageY + 0.001 && Item.wrappingPolygon.left > PRSA.PageX + 0.001)
-                                PRSA.RecalcResult = recalcresult_CurPagePara;
-                            else
-                                PRSA.RecalcResult = recalcresult_CurPage | recalcresultflags_Page;
-
-                            return;
+							// Обновляем позицию объекта
+							Item.Update_Position(PRSA.Paragraph, new CParagraphLayout( PRSA.X, PRSA.Y , PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent, Para.Pages[_CurPage].Y), PageLimits, PageLimitsOrigin, _CurLine);
+							
+							if (PRSA.getCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15
+								&& 0 === CurPage
+								&& Item.Get_Bounds().Bottom >= Y_Bottom_Field
+								&& Item.IsMoveWithTextVertically())
+							{
+								// TODO: По хорошему надо пересчитать заново всю текущую страницу с условием, что заданный параграф начинается с новой страницы
+								Para.StartFromNewPage();
+								PRSA.RecalcResult = recalcresult_NextPage;
+							}
+							else
+							{
+								LDRecalcInfo.Set_FlowObject(Item, 0, recalcresult_NextElement, -1);
+								
+								// TODO: Добавить проверку на не попадание в предыдущие колонки
+								if (0 === PRSA.CurPage && Item.wrappingPolygon.top > PRSA.PageY + 0.001 && Item.wrappingPolygon.left > PRSA.PageX + 0.001)
+									PRSA.RecalcResult = recalcresult_CurPagePara;
+								else
+									PRSA.RecalcResult = recalcresult_CurPage | recalcresultflags_Page;
+							}
+							
+							return;
                         }
                         else if ( true === LDRecalcInfo.Check_FlowObject(Item) )
                         {

@@ -4284,6 +4284,18 @@ CParagraphRecalculateStateAlign.prototype.getLogicDocument = function()
 {
 	return this.wrapState.Paragraph.GetLogicDocument();
 };
+CParagraphRecalculateStateAlign.prototype.getDocumentSettings = function()
+{
+	let logicDocument = this.Paragraph.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		return logicDocument.getDocumentSettings();
+	
+	return AscWord.DEFAULT_DOCUMENT_SETTINGS;
+};
+CParagraphRecalculateStateAlign.prototype.getCompatibilityMode = function()
+{
+	return this.getDocumentSettings().getCompatibilityMode();
+};
 
 function CParagraphRecalculateStateInfo()
 {
