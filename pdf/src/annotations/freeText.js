@@ -280,7 +280,7 @@
     CAnnotationFreeText.prototype.CheckInnerShapesProps = function() {
         let nOpacity = this.GetOpacity();
 
-        let oStrokeColor = this.GetStrokeColor();
+        let oStrokeColor = this.GetStrokeColor() || [0, 0, 0];
         if (oStrokeColor) {
             let oRGB    = this.GetRGBColor(oStrokeColor);
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
@@ -301,7 +301,7 @@
             }
         }
         
-        let oFillColor = this.GetFillColor();
+        let oFillColor = this.GetFillColor() || [1, 1, 1];
         if (oFillColor) {
             let oRGB    = this.GetRGBColor(oFillColor);
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
@@ -476,6 +476,9 @@
         // this.copy2(oFreeText);
         // oFreeText.recalculate();
 
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oFreeText._apIdx = this._apIdx;
         oFreeText._originView = this._originView;
         oFreeText.SetOriginPage(this.GetOriginPage());
@@ -483,9 +486,9 @@
         oFreeText.SetModDate(this.GetModDate());
         oFreeText.SetCreationDate(this.GetCreationDate());
         oFreeText.SetWidth(this.GetWidth());
-        oFreeText.SetStrokeColor(this.GetStrokeColor().slice());
         oFreeText.SetContents(this.GetContents());
-        oFreeText.SetFillColor(this.GetFillColor());
+        oFreeText.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oFreeText.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oFreeText.SetLineEnd(this.GetLineEnd());
         oFreeText.SetOpacity(this.GetOpacity());
         oFreeText.recalcInfo.recalculateGeometry = false;

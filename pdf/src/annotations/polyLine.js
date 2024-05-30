@@ -173,6 +173,9 @@
 
         this.fillObject(oPolyline);
 
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oPolyline._apIdx = this._apIdx;
         oPolyline._originView = this._originView;
         oPolyline.SetOriginPage(this.GetOriginPage());
@@ -180,9 +183,9 @@
         oPolyline.SetModDate(this.GetModDate());
         oPolyline.SetCreationDate(this.GetCreationDate());
         oPolyline.SetWidth(this.GetWidth());
-        oPolyline.SetStrokeColor(this.GetStrokeColor().slice());
         oPolyline.SetContents(this.GetContents());
-        oPolyline.SetFillColor(this.GetFillColor());
+        oPolyline.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oPolyline.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oPolyline.SetLineStart(this.GetLineStart());
         oPolyline.SetLineEnd(this.GetLineEnd());
         oPolyline.SetOpacity(this.GetOpacity());

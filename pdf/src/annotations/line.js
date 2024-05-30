@@ -220,6 +220,8 @@
 
         this.fillObject(oLine);
 
+        let aFillColor = this.GetFillColor();
+
         oLine._apIdx = this._apIdx;
         oLine._originView = this._originView;
         oLine.SetOriginPage(this.GetOriginPage());
@@ -231,7 +233,7 @@
         oLine.SetLineStart(this.GetLineStart());
         oLine.SetLineEnd(this.GetLineEnd());
         oLine.SetContents(this.GetContents());
-        oLine.SetFillColor(this.GetFillColor());
+        oLine.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oLine.SetOpacity(this.GetOpacity());
         oLine.recalcInfo.recalculateGeometry = true;
         oLine._points = this._points.slice();

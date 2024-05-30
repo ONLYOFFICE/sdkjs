@@ -82,6 +82,9 @@
 
         this.fillObject(oCircle);
 
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oCircle._apIdx = this._apIdx;
         oCircle._originView = this._originView;
         oCircle.SetOriginPage(this.GetOriginPage());
@@ -89,8 +92,8 @@
         oCircle.SetModDate(this.GetModDate());
         oCircle.SetCreationDate(this.GetCreationDate());
         oCircle.SetWidth(this.GetWidth());
-        oCircle.SetStrokeColor(this.GetStrokeColor().slice());
-        oCircle.SetFillColor(this.GetFillColor());
+        oCircle.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oCircle.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oCircle.SetOpacity(this.GetOpacity());
         oCircle.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice());

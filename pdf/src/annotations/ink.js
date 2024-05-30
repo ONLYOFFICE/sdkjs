@@ -455,6 +455,8 @@
 
         this.fillObject(oNewInk);
 
+        let aStrokeColor = this.GetStrokeColor();
+
         oNewInk._apIdx = this._apIdx;
         oNewInk._originView = this._originView;
         oNewInk.SetOriginPage(this.GetOriginPage());
@@ -462,7 +464,7 @@
         oNewInk.SetModDate(this.GetModDate());
         oNewInk.SetCreationDate(this.GetCreationDate());
         oNewInk.SetWidth(this.GetWidth());
-        oNewInk.SetStrokeColor(this.GetStrokeColor().slice());
+        oNewInk.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
         oNewInk.SetOpacity(this.GetOpacity());
         oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();

@@ -924,6 +924,10 @@
         this._strokeColor = aColor;
         this.SetWasChanged(true);
 
+        if (!aColor) {
+            aColor = [0, 0, 0];
+        }
+        
         if (this.IsShapeBased()) {
             let oRGB    = this.GetRGBColor(aColor);
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);

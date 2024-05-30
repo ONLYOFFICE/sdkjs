@@ -79,6 +79,9 @@
 
         this.fillObject(oSquare);
 
+        let aStrokeColor = this.GetStrokeColor();
+        let aFillColor = this.GetFillColor();
+
         oSquare._apIdx = this._apIdx;
         oSquare._originView = this._originView;
         oSquare.SetOriginPage(this.GetOriginPage());
@@ -86,8 +89,8 @@
         oSquare.SetModDate(this.GetModDate());
         oSquare.SetCreationDate(this.GetCreationDate());
         oSquare.SetWidth(this.GetWidth());
-        oSquare.SetStrokeColor(this.GetStrokeColor().slice());
-        oSquare.SetFillColor(this.GetFillColor());
+        oSquare.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oSquare.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oSquare.SetOpacity(this.GetOpacity());
         oSquare.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());

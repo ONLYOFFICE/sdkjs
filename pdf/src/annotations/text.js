@@ -214,9 +214,11 @@
         if (this._origRect)
             oNewAnnot._origRect = this._origRect.slice();
 
+        let aFillColor = this.GetFillColor();
+
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetFillColor(this.GetFillColor());
+        oNewAnnot.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
