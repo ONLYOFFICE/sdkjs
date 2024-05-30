@@ -6709,7 +6709,25 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 		let oCurSlide = this.GetCurrentSlide();
 		if(oCurSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
 			let bTitle = false;
-			//let oSp = oCurSlide.getMa
+			let oSp = oCurSlide.getMatchingShape(AscFormat.phType_title, null, false, {});
+			if(!oSp) {
+				oSp = oCurSlide.getMatchingShape(AscFormat.phType_ctrTitle, null, false, {});
+			}
+			if(oSp) {
+				bTitle = true;
+			}
+			let bFooter = true;
+			let aTypes = [AscFormat.phType_ftr, AscFormat.phType_dt, AscFormat.phType_sldNum];
+			for(let nIdx = 0; nIdx < aTypes.length; ++nIdx) {
+				let nType = aTypes[nIdx];
+				let oSp = oCurSlide.getMatchingShape(nType, null, false, {});
+				if(!oSp) {
+					bFooter = false;
+					break;
+				}
+			}
+			this.Api.sendEvent("asc_onLayoutTitle", bTitle);
+			this.Api.sendEvent("asc_onLayoutFooter", bFooter);
 		}
 	}
 
