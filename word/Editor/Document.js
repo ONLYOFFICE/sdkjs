@@ -7029,6 +7029,7 @@ CDocument.prototype.SetParagraphFramePr = function(FramePr, bDelete)
 CDocument.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 {
 	this.Controller.IncreaseDecreaseFontSize(bIncrease);
+	this.setMergeFormatComplexFieldOnApplyTextPr();
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
@@ -23195,6 +23196,11 @@ CDocument.prototype.GetAllFields = function(isUseSelection)
 
 	if (isUseSelection)
 	{
+		let state = this.SaveDocumentState();
+		this.RemoveSelection();
+		arrFields = this.GetCurrentComplexFields();
+		this.LoadDocumentState(state);
+		
 		this.Controller.GetAllFields(isUseSelection, arrFields);
 	}
 	else
