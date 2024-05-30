@@ -1089,9 +1089,12 @@
 	};
 	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType) {
 		if(!this.isMasterMode()) return;
+
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
-		oLogicDocument.StartAddShape("", undefined, nType);
+		let oCurSlide = oLogicDocument.GetCurrentSlide();
+		if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
+		oLogicDocument.StartAddShape("textRect", undefined, nType);
 	};
 
     //----------------------------------------------------------------------------------------------------------------------

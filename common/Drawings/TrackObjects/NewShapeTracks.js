@@ -135,11 +135,8 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.startShape = null;
     this.endShape = null;
     this.endConnectionInfo = null;
-    this.placeholderType = nPlaceholderType;
+    this.placeholderType = nPlaceholderType || null;
     this.parentObject = slide || layout || master;
-    if(this.placeholderType !== null && this.placeholderType !== undefined) {
-        this.presetGeom = "кect";
-    }
 
     AscFormat.ExecuteNoHistory(function(){
 
@@ -718,7 +715,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                 shape.txBody.setContent(content);
                 var bNeedCheckExtents = false;
                 if(drawingObjects){
-                    if(!drawingObjects.cSld){
+                    if(!drawingObjects.cSld || this.placeholderType !== null){
                         body_pr.vertOverflow = AscFormat.nVOTClip;
                     }
                     else{
