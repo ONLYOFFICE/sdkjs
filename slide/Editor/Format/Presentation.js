@@ -2149,6 +2149,20 @@ CPresentation.prototype.GetSlideIndex = function (oSlide) {
 	}
 	return -1;
 };
+CPresentation.prototype.GetSlideNumber = function (nIdx) {
+	if(!this.IsMasterMode()) {
+		return nIdx + this.getFirstSlideNumber();
+	}
+	let oSlide = this.GetSlide(nIdx);
+	if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
+		for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
+			if(this.slideMasters[nIdx] === oSlide) {
+				return nMaster + 1;
+			}
+		}
+	}
+	return null;
+};
 CPresentation.prototype.GetCurrentSlide = function () {
 	return this.GetAllSlides()[this.CurPage];
 };

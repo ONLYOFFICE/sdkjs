@@ -5266,57 +5266,63 @@ function CThumbnailsManager()
 			};
 			g.SetFont(font);
 
-			// меряем надпись номера слайда
-			let nSlideNumber = i + _logicDocument.getFirstSlideNumber();
-			var DrawNumSlide = nSlideNumber;
-			var num_slide_text_width = 0;
-			while (DrawNumSlide !== 0)
-			{
-				var _last_dig = DrawNumSlide % 10;
-				num_slide_text_width += this.DigitWidths[_last_dig];
-				DrawNumSlide = (DrawNumSlide / 10) >> 0;
-			}
+
 
 			page.Draw(context, page.left, page.top, page.right - page.left, page.bottom - page.top);
 
-			var text_color = null;
-			let sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
-			if (!page.IsLocked)
-				sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
-			else
-				sTextColor = AscCommon.GlobalSkin.ThumbnailsLockColor;
-
-			text_color = AscCommon.RgbaHexToRGBA(sTextColor);
-			g.b_color1(text_color.R, text_color.G, text_color.B, 255);
-
-			let dX = (_digit_distance - num_slide_text_width) / 2;
-			let dY = page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio;
-			let _bounds = g.t("" + nSlideNumber, dX, dY, true);
-			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
+			// меряем надпись номера слайда
+			let nSlideNumber = _logicDocument.GetSlideNumber(i);
+			if(nSlideNumber !== null)
 			{
-				context.lineWidth =  AscCommon.AscBrowser.convertToRetinaValue(1, true);
-				context.strokeStyle = sTextColor;
-				context.beginPath();
-				context.moveTo(_bounds.x - 3, _bounds.y);
-				context.lineTo(_bounds.r + 3, _bounds.b);
-				context.stroke();
-				context.beginPath();
-				context.fillStyle = AscCommon.GlobalSkin.BackgroundColorThumbnails;
-				context.globalAlpha = 0.5;
-				context.fillRect(page.left, page.top, page.right - page.left, page.bottom - page.top);
-				context.globalAlpha = 1;
-			}
-			page.animateLabelRect = null;
-			if (_logicDocument.isSlideAnimated(i))
-			{
-				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
-				let nY = _bounds.b + 3;
-				let nIconH = AscCommon.AscBrowser.convertToRetinaValue(15, true);
-				if(nY + nIconH < page.bottom)
+
+				var DrawNumSlide = nSlideNumber;
+				var num_slide_text_width = 0;
+				while (DrawNumSlide !== 0)
 				{
-					let oColor = text_color;
-					let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
-					page.animateLabelRect = resCords
+					var _last_dig = DrawNumSlide % 10;
+					num_slide_text_width += this.DigitWidths[_last_dig];
+					DrawNumSlide = (DrawNumSlide / 10) >> 0;
+				}
+				var text_color = null;
+				let sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
+				if (!page.IsLocked)
+					sTextColor = AscCommon.GlobalSkin.ThumbnailsPageNumberText;
+				else
+					sTextColor = AscCommon.GlobalSkin.ThumbnailsLockColor;
+
+				text_color = AscCommon.RgbaHexToRGBA(sTextColor);
+				g.b_color1(text_color.R, text_color.G, text_color.B, 255);
+
+				let dX = (_digit_distance - num_slide_text_width) / 2;
+				let dY = page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio;
+				let _bounds = g.t("" + nSlideNumber, dX, dY, true);
+				let oSlide = _logicDocument.GetSlide(i);
+				if (oSlide && !oSlide.isVisible())
+				{
+					context.lineWidth =  AscCommon.AscBrowser.convertToRetinaValue(1, true);
+					context.strokeStyle = sTextColor;
+					context.beginPath();
+					context.moveTo(_bounds.x - 3, _bounds.y);
+					context.lineTo(_bounds.r + 3, _bounds.b);
+					context.stroke();
+					context.beginPath();
+					context.fillStyle = AscCommon.GlobalSkin.BackgroundColorThumbnails;
+					context.globalAlpha = 0.5;
+					context.fillRect(page.left, page.top, page.right - page.left, page.bottom - page.top);
+					context.globalAlpha = 1;
+				}
+				page.animateLabelRect = null;
+				if (_logicDocument.isSlideAnimated(i))
+				{
+					let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
+					let nY = _bounds.b + 3;
+					let nIconH = AscCommon.AscBrowser.convertToRetinaValue(15, true);
+					if(nY + nIconH < page.bottom)
+					{
+						let oColor = text_color;
+						let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
+						page.animateLabelRect = resCords
+					}
 				}
 			}
 		}
@@ -5832,12 +5838,21 @@ function CThumbnailsManager()
 			}
 
 			var drawRect = this.m_arrPages[i];
-
+			let nHeight = nHeightSlide;
 			drawRect.left = this.const_offset_x;
 			drawRect.top = lStart - lCurrentTopInDoc;
 			drawRect.right = drawRect.left + nWidthSlide;
-			drawRect.bottom = drawRect.top + nHeightSlide;
+			drawRect.bottom = drawRect.top + nHeight;
 			drawRect.pageIndex = i;
+			let oSlide = this.m_oWordControl.m_oLogicDocument.GetSlide(i);
+			if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout)
+			{
+				let dScale = 0.87;
+				let nWidth = (drawRect.right - drawRect.left) * dScale;
+				drawRect.left = (drawRect.right - nWidth) + 0.5 >> 0;
+				nHeight = nHeightSlide * dScale + 0.5 >> 0;
+				drawRect.bottom = drawRect.top + nHeight;
+			}
 
 			if (false === bIsFoundEnd)
 			{
@@ -5848,7 +5863,7 @@ function CThumbnailsManager()
 				}
 			}
 
-			lStart += (nHeightSlide + 3 * this.const_border_w);
+			lStart += (nHeight + 3 * this.const_border_w);
 		}
 
 		if (this.m_arrPages.length > SlidesCount)
@@ -7602,9 +7617,9 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.HtmlPage.Thumbnails.SetFocusElement(FOCUS_OBJECT_ANIM_PANE);
 
 		// Order matters
-		if (oThis.header.onMouseDown(e)) { return true };
-		if (oThis.timeline.onMouseDown(e)) { return true };
-		if (oThis.list.onMouseDown(e)) { return true };
+		if (oThis.header.onMouseDown(e)) { return true }
+		if (oThis.timeline.onMouseDown(e)) { return true }
+		if (oThis.list.onMouseDown(e)) { return true }
 		return false;
 	};
 	oThis.onMouseMove = function (e)

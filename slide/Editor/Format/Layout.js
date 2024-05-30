@@ -774,6 +774,9 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.recalcText = function() {
         return AscCommonSlide.Slide.prototype.recalcText.call(this);
     };
+    SlideLayout.prototype.isVisible = function(){
+        return true;
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

@@ -676,6 +676,9 @@ MasterSlide.prototype.checkSlideTheme = function() {
 MasterSlide.prototype.checkSlideColorScheme = function() {
     return AscCommonSlide.Slide.prototype.checkSlideColorScheme.call(this);
 };
+MasterSlide.prototype.isVisible = function(){
+    return true;
+};
 
 
 function CMasterThumbnailDrawer()
