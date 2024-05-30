@@ -518,16 +518,28 @@
 		
 		oDoc.EditPage(oViewer.currentPage);
 	};
-	PDFEditorApi.prototype.asc_AddPage = function() {
+	PDFEditorApi.prototype.asc_AddPage = function(bBefore) {
 		let oViewer = this.getDocumentRenderer();
+		let oFile	= oViewer.file;
 		let oDoc 	= this.getPDFDoc();
 
-		let nPos = oViewer.currentPage + 1;
+		let nPos = bBefore ? oViewer.currentPage : oViewer.currentPage + 1;
 
 		oDoc.CreateNewHistoryPoint();
-		oDoc.AddPage(nPos);
-		oViewer.navigateToPage(nPos);
+
+		let oPageToClone = bBefore ? oFile.pages[oViewer.currentPage] : (oFile.pages[oViewer.currentPage + 1] || oFile.pages[oViewer.currentPage]);
+		let oPage = {
+			fonts: [],
+			Rotate: 0,
+			Dpi: oPageToClone.Dpi,
+			W: oPageToClone.W,
+			H: oPageToClone.H
+		}
+
+		oDoc.AddPage(nPos, oPage);
 		oDoc.TurnOffHistory();
+		
+		oViewer.navigateToPage(nPos);
 	};
 	PDFEditorApi.prototype.asc_RemovePage = function(nPage) {
 		let oViewer = this.getDocumentRenderer();

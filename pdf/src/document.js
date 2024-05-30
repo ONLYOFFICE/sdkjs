@@ -1631,16 +1631,17 @@ var CPresentation = CPresentation || function(){};
         if (!oPage) {
             oPage = {
                 Dpi: 72,
-                fonts: []
+                fonts: [],
+                Rotate: 0
             }
         }
 
         if (nPos === undefined || -1 === nPos)
             nPos = oFile.pages.length;
         if (oPage.W === undefined)
-            oPage.W = oFile.pages[nPos - 1].W;
+            oPage.W = oFile.pages[Math.max(nPos - 1, 0)].W;
         if (oPage.H === undefined)
-            oPage.H = oFile.pages[nPos - 1].H;
+            oPage.H = oFile.pages[Math.max(nPos - 1, 0)].H;
 
         oFile.pages.splice(nPos, 0, oPage);
 	
