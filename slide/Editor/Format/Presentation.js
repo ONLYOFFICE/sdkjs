@@ -2503,14 +2503,23 @@ CPresentation.prototype.Get_Id = function () {
 
 
 CPresentation.prototype.AddNewMasterSlide = function () {
-	this.addSlideMaster(this.slideMasters.length, AscFormat.GenerateDefaultMasterSlide(AscFormat.GenerateDefaultTheme(this)));
+	if(!this.IsMasterMode) return;
+	let oMaster = AscFormat.GenerateDefaultMasterSlide(AscFormat.GenerateDefaultTheme(this));
+	oMaster.changeSize(this.GetWidthMM(), this.GetHeightMM());
+	for(let nLt = 0 ; nLt < oMaster.sldLayoutLst.length; ++nLt) {
+		oMaster.sldLayoutLst[nLt].changeSize(this.GetWidthMM(), this.GetHeightMM());
+	}
+	this.addSlideMaster(this.slideMasters.length, oMaster);
 	this.Recalculate();
+	this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlideIndex(oMaster));
 };
 CPresentation.prototype.AddNewLayout = function () {
+	if(!this.IsMasterMode) return;
 	let oMaster = this.GetCurrentMaster();
 	if(oMaster) {
-		oMaster.addNewLayout();
+		let oLayout = oMaster.addNewLayout();
 		this.Recalculate();
+		this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlideIndex(oLayout));
 	}
 };
 

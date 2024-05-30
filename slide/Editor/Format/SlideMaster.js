@@ -531,7 +531,10 @@ MasterSlide.prototype.addToRecalculate = function()
 MasterSlide.prototype.addNewLayout = function()
 {
     let oLayout = AscFormat.GenerateDefaultSlideLayout(this);
+    let oPresentation = Asc.editor.private_GetLogicDocument();
+    oLayout.changeSize(oPresentation.GetWidthMM(), oPresentation.GetHeightMM());
     this.addToSldLayoutLstToPos(this.sldLayoutLst.length, oLayout);
+    return oLayout;
 };
 
 

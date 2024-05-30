@@ -9763,6 +9763,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_closePrintPreview"] = asc_docs_api.prototype.asc_closePrintPreview;
 
 
+	asc_docs_api.prototype["asc_changePresentationViewMode"] = asc_docs_api.prototype.asc_changePresentationViewMode;
+	asc_docs_api.prototype["asc_AddMasterSlide"] = asc_docs_api.prototype.asc_AddMasterSlide;
+	asc_docs_api.prototype["asc_AddSlideLayout"] = asc_docs_api.prototype.asc_AddSlideLayout;
+	asc_docs_api.prototype["asc_StartAddPlaceholder"] = asc_docs_api.prototype.asc_StartAddPlaceholder;
+
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
 	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
 	asc_CCommentData.prototype['asc_putText']         = asc_CCommentData.prototype.asc_putText;
