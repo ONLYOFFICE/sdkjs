@@ -17175,8 +17175,16 @@ CTable.prototype.CorrectBadTable = function()
 	
 	this.CorrectVMerge();
 	this.CorrectTableRows(false);
+	this.CorrectEmptyTable();
 	this.CorrectBadGrid();
 	this.CorrectHMerge();
+};
+CTable.prototype.CorrectEmptyTable = function()
+{
+	if (this.GetRowsCount() > 0)
+		return;
+	
+	this.private_AddRow(0, 1);
 };
 /**
  * Специальная функция, которая обрабатывает устаревший параметр HMerge и заменяет его на GridSpan во время открытия файла
