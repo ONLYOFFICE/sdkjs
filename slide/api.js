@@ -1089,10 +1089,9 @@
 	};
 	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType) {
 		if(!this.isMasterMode()) return;
-
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
-		oLogicDocument.StartAddShape("");
+		oLogicDocument.StartAddShape("", undefined, nType);
 	};
 
     //----------------------------------------------------------------------------------------------------------------------

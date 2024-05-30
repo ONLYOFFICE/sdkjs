@@ -456,9 +456,13 @@ MasterSlide.prototype.setTheme = function (theme) {
     this.Theme = theme;
 };
 MasterSlide.prototype.shapeAdd = function (pos, item) {
+    let pos_ = pos;
+    if(!AscFormat.isRealNumber(pos)) {
+        pos_ = this.cSld.spTree.length;
+    }
     this.checkDrawingUniNvPr(item);
-    History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos, [item], true));
-    this.cSld.spTree.splice(pos, 0, item);
+    History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos_, [item], true));
+    this.cSld.spTree.splice(pos_, 0, item);
     item.setParent2(this);
     this.recalcInfo.recalculateSpTree = true;
 };
@@ -681,6 +685,9 @@ MasterSlide.prototype.checkSlideColorScheme = function() {
 };
 MasterSlide.prototype.isVisible = function(){
     return true;
+};
+MasterSlide.prototype.getWorksheet = function(){
+    return null;
 };
 
 

@@ -18043,22 +18043,22 @@
 		window['AscFormat'].LineJoinType = LineJoinType;
 
 //типы плейсхолдеров
-		window['AscFormat'].phType_body = 0;
-		window['AscFormat'].phType_chart = 1;
-		window['AscFormat'].phType_clipArt = 2; //(Clip Art)
-		window['AscFormat'].phType_ctrTitle = 3; //(Centered Title)
-		window['AscFormat'].phType_dgm = 4; //(Diagram)
-		window['AscFormat'].phType_dt = 5; //(Date and Time)
-		window['AscFormat'].phType_ftr = 6; //(Footer)
-		window['AscFormat'].phType_hdr = 7; //(Header)
-		window['AscFormat'].phType_media = 8; //(Media)
-		window['AscFormat'].phType_obj = 9; //(Object)
-		window['AscFormat'].phType_pic = 10; //(Picture)
-		window['AscFormat'].phType_sldImg = 11; //(Slide Image)
-		window['AscFormat'].phType_sldNum = 12; //(Slide Number)
-		window['AscFormat'].phType_subTitle = 13; //(Subtitle)
-		window['AscFormat'].phType_tbl = 14; //(Table)
-		window['AscFormat'].phType_title = 15; //(Title)
+		window['AscFormat']["phType_body"] = window['AscFormat'].phType_body = 0;
+		window['AscFormat']["phType_chart"] = window['AscFormat'].phType_chart = 1;
+		window['AscFormat']["phType_clipArt"] = window['AscFormat'].phType_clipArt = 2;
+		window['AscFormat']["phType_ctrTitle"] = window['AscFormat'].phType_ctrTitle = 3;
+		window['AscFormat']["phType_dgm"] = window['AscFormat'].phType_dgm = 4;
+		window['AscFormat']["phType_dt"] = window['AscFormat'].phType_dt = 5;
+		window['AscFormat']["phType_ftr"] = window['AscFormat'].phType_ftr = 6;
+		window['AscFormat']["phType_hdr"] = window['AscFormat'].phType_hdr = 7;
+		window['AscFormat']["phType_media"] = window['AscFormat'].phType_media = 8;
+		window['AscFormat']["phType_obj"] = window['AscFormat'].phType_obj = 9;
+		window['AscFormat']["phType_pic"] = window['AscFormat'].phType_pic = 10;
+		window['AscFormat']["phType_sldImg"] = window['AscFormat'].phType_sldImg = 11;
+		window['AscFormat']["phType_sldNum"] = window['AscFormat'].phType_sldNum = 12;
+		window['AscFormat']["phType_subTitle"] = window['AscFormat'].phType_subTitle = 13;
+		window['AscFormat']["phType_tbl"] = window['AscFormat'].phType_tbl = 14;
+		window['AscFormat']["phType_title"] = window['AscFormat'].phType_title = 15;
 
 		window['AscFormat'].fntStyleInd_none = 2;
 		window['AscFormat'].fntStyleInd_major = 0;

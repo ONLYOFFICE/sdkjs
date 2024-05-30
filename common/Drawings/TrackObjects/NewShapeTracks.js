@@ -136,6 +136,10 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.endShape = null;
     this.endConnectionInfo = null;
     this.placeholderType = nPlaceholderType;
+    this.parentObject = slide || layout || master;
+    if(this.placeholderType !== null && this.placeholderType !== undefined) {
+        this.presetGeom = "кect";
+    }
 
     AscFormat.ExecuteNoHistory(function(){
 
@@ -785,6 +789,37 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                             shape.spPr.setLn(spDef.spPr.ln.createDuplicate());
                         }
                     }
+                }
+            }
+        }
+
+        if(this.placeholderType !== null && this.placeholderType !== undefined)
+        {
+            shape.checkDrawingUniNvPr();
+            let oNvPr = shape.getNvProps();
+            if(oNvPr) {
+                let oPh = new AscFormat.Ph();
+                oPh.setType(this.placeholderType);
+                oNvPr.setPh(oPh);
+                let nMaxIdx = undefined;
+                let aDrawings = this.parentObject.cSld.spTree;
+                for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
+                    let oSp = aDrawings[nIdx];
+                    let nPhIdx = oSp.getPlaceholderIndex();
+                    if(nMaxIdx === undefined || nMaxIdx === null) {
+                        nMaxIdx = nPhIdx;
+                    }
+                    else {
+                        if(nPhIdx !== null) {
+                            nMaxIdx = Math.max(nMaxIdx, nPhIdx);
+                        }
+                    }
+                }
+                if(nMaxIdx !== undefined && nMaxIdx !== null) {
+                    oPh.setIdx(nMaxIdx + 1);
+                }
+                else {
+                    oPh.setIdx(1);
                 }
             }
         }
