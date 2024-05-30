@@ -290,7 +290,7 @@
 			return;
 		
 		let oDoc			= this.DocumentRenderer.getPDFDoc();
-		let data			= text_data || data1;
+		let data			= typeof(text_data) == "string" ? text_data : data1;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
