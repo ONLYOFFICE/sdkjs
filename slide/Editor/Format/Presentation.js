@@ -2658,7 +2658,7 @@ CPresentation.prototype.IsMasterMode = function () {
 };
 
 CPresentation.prototype.Recalculate = function (RecalcData) {
-	this.DrawingDocument.OnStartRecalculate(this.Slides.length);
+	this.DrawingDocument.OnStartRecalculate(this.GetSlidesCount());
 	this.StopAnimationPreview();
 	++this.RecalcId;
 	this.private_ClearSearchOnRecalculate();
@@ -2784,6 +2784,13 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 								}
 							}
 						}
+						let nIdx = this.GetSlideIndex(oDrawingObject);
+						if(nIdx !== -1) {
+							if (redrawSlideIndexMap[nIdx] !== true) {
+								redrawSlideIndexMap[nIdx] = true;
+								aToRedrawSlides.push(nIdx);
+							}
+						}
 					}
 					if (oDrawingObject.parent instanceof AscCommonSlide.SlideLayout) {
 						if (oDrawingObject.type === AscFormat.nSldLtTTitle) {
@@ -2801,6 +2808,22 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 									redrawSlideIndexMap[nIdx] = true;
 									aToRedrawSlides.push(nIdx);
 								}
+							}
+						}
+						let nIdx = this.GetSlideIndex(oDrawingObject);
+						if(nIdx !== -1) {
+							if (redrawSlideIndexMap[nIdx] !== true) {
+								redrawSlideIndexMap[nIdx] = true;
+								aToRedrawSlides.push(nIdx);
+							}
+						}
+					}
+					if (oDrawingObject instanceof AscCommonSlide.SlideLayout) {
+						let nIdx = this.GetSlideIndex(oDrawingObject);
+						if(nIdx !== -1) {
+							if (redrawSlideIndexMap[nIdx] !== true) {
+								redrawSlideIndexMap[nIdx] = true;
+								aToRedrawSlides.push(nIdx);
 							}
 						}
 					}

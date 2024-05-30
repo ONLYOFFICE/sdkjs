@@ -553,7 +553,6 @@ MasterSlide.prototype.Refresh_RecalcData = function (data) {
                 for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
                     this.sldLayoutLst[_slideLayout_index].addToRecalculate();
                 }
-                this.addToRecalculate();
                 break;
             }
             case AscDFH.historyitem_SlideMasterAddToSpTree:
@@ -561,9 +560,9 @@ MasterSlide.prototype.Refresh_RecalcData = function (data) {
                 for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
                     this.sldLayoutLst[_slideLayout_index].addToRecalculate();
                 }
-                this.addToRecalculate();
                 break;
         }
+        this.addToRecalculate();
     }
 };
 MasterSlide.prototype.getAllFonts = function (fonts) {

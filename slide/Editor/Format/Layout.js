@@ -650,15 +650,14 @@ SlideLayout.prototype.getTheme = function(){
                 case AscDFH.historyitem_SlideLayoutAddToSpTree:
                 {
                     this.recalcInfo.recalculateBounds = true;
-                    this.addToRecalculate();
                     break;
                 }
                 case AscDFH.historyitem_SlideLayoutSetBg:
                 {
-                    this.addToRecalculate();
                     break;
                 }
             }
+            this.addToRecalculate();
         }
     };
     SlideLayout.prototype.Clear_ContentChanges = function () {
