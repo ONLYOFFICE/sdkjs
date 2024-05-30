@@ -9929,9 +9929,30 @@ CPresentation.prototype.StartAddShape = function (preset, _is_apply, nPlaceholde
 	}
 };
 
-CPresentation.prototype.StartAddPlaceholder = function (nType, _is_apply) {
-	this.placeholderType = nType;
-	this.StartAddShape("textRect", _is_apply);
+CPresentation.prototype.SetLayoutTitle = function (bVal) {
+	const oCurSlide = this.GetCurrentSlide();
+	if(!oCurSlide) {
+		return;
+	}
+	if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
+	this.StartAction(0);
+	if(!bVal) {
+		let oSp = oCurSlide.getMatchingShape(AscFormat.phType_title);
+		if(!oSp) {
+			oSp = oCurSlide.getMatchingShape(AscFormat.phType_ctrTitle);
+		}
+		oCurSlide.removeFromSpTreeById(oSp.Get_Id());
+	}
+	else {
+		let extX = this.GetWidthMM() * 0.9;
+		let extY = this.GetHeightMM() * 0.2;
+		let x = (this.GetWidthMM() - extX) / 2.0;
+		let y = x / 2.0;
+		let oSp = CreatePlaceholderSp(AscFormat.phType_title, x, y, extX, extY, oCurSlide);
+		oCurSlide.addToSpTreeToPos(undefined, oSp);
+	}
+	this.Recalculate()
+	this.FinalizeAction(true);
 };
 
 CPresentation.prototype.canStartImageCrop = function () {
@@ -10472,6 +10493,14 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 	}
 	return false;
 };
+
+function CreatePlaceholderSp(nType, x, y, extX, extY, oParent) {
+	let oPO = oParent.getParentObjects();
+	var oTrack = new AscFormat.NewShapeTrack("textRect", x, y, oPO.master.Theme, oPO.master, oPO.layout, oPO.slide, 0, oParent.graphicObjects, nType);
+	oTrack.track({}, extX, extY);
+	let oShape = oTrack.getShape(false, Asc.editor.getDrawingDocument(), oParent.graphicObjects);
+	return oShape;
+}
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;
