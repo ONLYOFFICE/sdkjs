@@ -6463,9 +6463,10 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 		return;
 	
 	// We don't check selection lock, because this method should be called when other action was started
-	
+	let state = this.SaveDocumentState();
 	this.StartAction(AscDFH.historydescription_Document_ComplexField_MergeFormat);
 	complexField.ChangeInstruction(complexField.GetInstructionLine() + " \\* MERGEFORMAT ");
+	this.LoadDocumentState(state);
 	this.Recalculate();
 	this.FinalizeAction();
 };
