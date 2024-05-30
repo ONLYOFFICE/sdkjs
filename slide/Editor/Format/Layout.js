@@ -778,12 +778,19 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.recalcText = function() {
         return AscCommonSlide.Slide.prototype.recalcText.call(this);
     };
+    SlideLayout.prototype.removeFromSpTreeById = function(sId) {
+        return AscCommonSlide.Slide.prototype.removeFromSpTreeById.call(this, sId);
+    };
+    SlideLayout.prototype.removeFromSpTreeByPos = function(pos) {
+        return AscCommonSlide.Slide.prototype.removeFromSpTreeByPos.call(this, pos);
+    };
     SlideLayout.prototype.isVisible = function(){
         return true;
     };
     SlideLayout.prototype.getWorksheet = function(){
         return null;
     };
+
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

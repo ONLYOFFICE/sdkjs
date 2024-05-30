@@ -689,7 +689,12 @@ MasterSlide.prototype.isVisible = function(){
 MasterSlide.prototype.getWorksheet = function(){
     return null;
 };
-
+MasterSlide.prototype.removeFromSpTreeById = function(sId) {
+    return AscCommonSlide.Slide.prototype.removeFromSpTreeById.call(this, sId);
+};
+MasterSlide.prototype.removeFromSpTreeByPos = function(pos) {
+    return AscCommonSlide.Slide.prototype.removeFromSpTreeByPos.call(this, pos);
+};
 
 function CMasterThumbnailDrawer()
 {
