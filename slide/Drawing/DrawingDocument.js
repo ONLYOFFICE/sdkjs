@@ -6177,9 +6177,22 @@ function CThumbnailsManager()
 		let oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
 		if (oMenuPos)
 		{
+			let oFirstSlide = this.m_oWordControl.m_oLogicDocument.GetSlide(sSelectedIdx[0]);
+			let nType = Asc.c_oAscContextMenuTypes.Thumbnails;
+			if(oFirstSlide)
+			{
+				if(oFirstSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout)
+				{
+					nType = Asc.c_oAscContextMenuTypes.Layout;
+				}
+				else if(oFirstSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster)
+				{
+					nType = Asc.c_oAscContextMenuTypes.Master;
+				}
+			}
 			let oData =
 				{
-					Type: Asc.c_oAscContextMenuTypes.Thumbnails,
+					Type: nType,
 					X_abs: oMenuPos.X,
 					Y_abs: oMenuPos.Y,
 					IsSlideSelect: true,

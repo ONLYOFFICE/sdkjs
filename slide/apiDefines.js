@@ -68,6 +68,8 @@ var c_oAscContextMenuTypes = {
 	Main       : 0,
 	Thumbnails : 1,
 	AnimEffect: 3,
+	Master: 4,
+	Layout: 5
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
