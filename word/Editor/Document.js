@@ -1849,7 +1849,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.Content[0].Set_DocumentPrev(null);
 	
 	this.Background = null;
-
+	
     this.CurPos  =
     {
         X          : 0,
@@ -5885,50 +5885,39 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 	//          тогда надо специально отрисовывать места соединения данных линий.
 
 };
-CDocument.prototype.getBackgroundColor = function()
+CDocument.prototype.getBackgroundBrush = function()
 {
 	if (!this.Background)
 		return null;
 	
-	let color = null;
-	if (this.Background.Unifill)
-	{
-		this.Background.Unifill.check(this.GetTheme(), this.GetColorMap());
-		let RGBA = this.Background.Unifill.getRGBAColor();
-		color = new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
-	}
+	let brush = null;
+	if (false)//this.Background.shape)
+		brush = this.Background.shape.brush;
+	else if (this.Background.Unifill)
+		brush = this.Background.Unifill;
 	else if (this.Background.Color)
-	{
-		color = this.Background.Color;
-	}
+		brush = AscFormat.CreateSolidFillRGB(this.Background.Color.r, this.Background.Color.g, this.Background.Color.b);
 	
-	return color;
+	return brush;
 };
 CDocument.prototype.drawBackground = function(graphics, sectPr)
 {
-
-	if(!this.Background)
+	let brush = this.getBackgroundBrush();
+	if (!brush || !brush.isVisible())
 		return;
-
-	let brush = this.Background.Unifill;
-	if(!brush)
-	{
-		let shape = this.Background.shape;
-		if(shape)
-			brush = shape.brush;
-	}
-	if(!brush || !brush.isVisible())
-		return;
+	
 	let h = sectPr.GetPageHeight();
 	let w = sectPr.GetPageWidth();
-	if(brush.isSolidFill())
+	
+	let shapeDrawer = new AscCommon.CShapeDrawer();
+	brush.check(this.GetTheme(), this.GetColorMap());
+	shapeDrawer.fromShape2(new AscFormat.ObjectToDraw(brush, null, w, h, null, null), graphics, null);
+	
+	if (brush.isSolidFill())
 	{
 		let RGBA = brush.getRGBAColor();
 		graphics.setEndGlobalAlphaColor(RGBA.R, RGBA.G, RGBA.B);
 	}
-	let shapeDrawer = new AscCommon.CShapeDrawer();
-	brush.check(this.GetTheme(), this.GetColorMap());
-	shapeDrawer.fromShape2(new AscFormat.ObjectToDraw(brush, null, w, h, null, null), graphics, null);
 	shapeDrawer.draw(null);
 };
 /**
