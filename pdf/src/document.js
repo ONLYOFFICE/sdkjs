@@ -2135,7 +2135,7 @@ var CPresentation = CPresentation || function(){};
                 this.RemoveDrawing(oDrawing.GetId());
             }
         }
-        else if (nDirection == 1 && oAnnot && this.Viewer.isMouseDown == false) {
+        else if (oAnnot && this.Viewer.isMouseDown == false) {
             this.RemoveAnnot(oAnnot.GetId());
         }
 
