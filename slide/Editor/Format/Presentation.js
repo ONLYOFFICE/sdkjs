@@ -6736,6 +6736,26 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 			}
 			this.Api.sendEvent("asc_onLayoutTitle", bTitle);
 			this.Api.sendEvent("asc_onLayoutFooter", bFooter);
+			this.Api.sendEvent("asc_onCanDeleteMaster", this.CanRemoveMaster(this.lastMaster));
+
+
+			let bCanDeleteLayout = true;
+			let aSelectedSlides = this.GetSelectedSlides();
+			for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
+				let oSlide = this.GetSlide(aSelectedSlides[nIdx]);
+				if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
+					if(!this.CanRemoveLayout(oSlide)) {
+						bCanDeleteLayout = false;
+						break;
+					}
+				}
+				else {
+					bCanDeleteLayout = false;
+					break;
+				}
+			}
+			this.Api.sendEvent("asc_onCanDeleteMaster", this.CanRemoveMaster(this.lastMaster));
+			this.Api.sendEvent("asc_onCanDeleteLayout", bCanDeleteLayout);
 		}
 	}
 
