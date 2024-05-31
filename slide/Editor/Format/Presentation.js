@@ -8932,7 +8932,7 @@ CPresentation.prototype.ChangeSlideSlideMaster = function(oSlide, oNewMaster) {
 	}
 	let oNewLayout = oNewMaster.getMatchingLayout(oSlide.Layout.type, oSlide.Layout.matchingName, oSlide.Layout.cSld.name, true);
 	if (!isRealObject(oNewLayout)) {
-		new_layout = oNewMaster.sldLayoutLst[0];
+		oNewLayout = oNewMaster.sldLayoutLst[0];
 	}
 	oSlide.setLayout(oNewLayout);
 	oSlide.checkNoTransformPlaceholder();
