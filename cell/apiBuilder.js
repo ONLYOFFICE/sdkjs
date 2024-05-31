@@ -765,7 +765,7 @@
 	Api.prototype.GetWorksheetFunction = function () {
 		if (!this.oWorksheetFunction) {
 			this.oWorksheetFunction = new ApiWorksheetFunction(this);
-			this.oWorksheetFunction.init();
+			//this.oWorksheetFunction.init();
 		}
 		return this.oWorksheetFunction;
 	};
@@ -2040,6 +2040,21 @@
 	ApiWorksheetFunction.prototype.CHISQ_INV_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.INV.RT", arguments);
 	};
+
+	//todo need array
+	// /**
+	//  * Returns the result of calculating the function.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CHITEST", arguments);
+	// };
+
+
 	/**
 	 * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
 	 * @memberof ApiWorksheetFunction
@@ -2051,17 +2066,18 @@
 	ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
 		return this.private_calculateFunction("CHITEST", arguments);
 	};
-	/**
-	 * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the range of data that contains observations to test against expected values.
-	 * @param {any} arg2 Is the range of data that contains the ratio of the product of row totals and column totals to the grand total.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.CHISQ_TEST = function (arg1, arg2) {
-		return this.private_calculateFunction("CHISQ.TEST", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the range of data that contains observations to test against expected values.
+	//  * @param {any} arg2 Is the range of data that contains the ratio of the product of row totals and column totals to the grand total.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CHISQ_TEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CHISQ.TEST", arguments);
+	// };
 	/**
 	 * Returns the confidence interval for a population mean, using a normal distribution.
 	 * @memberof ApiWorksheetFunction
@@ -2098,17 +2114,18 @@
 	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE.T", arguments);
 	};
-	/**
-	 * Returns the correlation coefficient between two data sets.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a cell range of values. The values should be numbers, names, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is a second cell range of values. The values should be numbers, names, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.CORREL = function (arg1, arg2) {
-		return this.private_calculateFunction("CORREL", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the correlation coefficient between two data sets.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is a cell range of values. The values should be numbers, names, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is a second cell range of values. The values should be numbers, names, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.CORREL = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("CORREL", arguments);
+	// };
 	/**
 	 * Counts the number of cells in a range that contain numbers.
 	 * @memberof ApiWorksheetFunction
@@ -2157,39 +2174,45 @@
 	ApiWorksheetFunction.prototype.COUNTIFS = function () {
 		return this.private_calculateFunction("COUNTIFS", arguments);
 	};
-	/**
-	 * Returns covariance, the average of the products of deviations for each data point pair in two data sets.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.COVAR = function (arg1, arg2) {
-		return this.private_calculateFunction("COVAR", arguments);
-	};
-	/**
-	 * Returns population covariance, the average of the products of deviations for each data point pair in two data sets.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.COVARIANCE_P = function (arg1, arg2) {
-		return this.private_calculateFunction("COVARIANCE.P", arguments);
-	};
-	/**
-	 * Returns sample covariance, the average of the products of deviations for each data point pair in two data sets.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.COVARIANCE_S = function (arg1, arg2) {
-		return this.private_calculateFunction("COVARIANCE.S", arguments);
-	};
+
+	// todo need array
+	// /**
+	//  * Returns covariance, the average of the products of deviations for each data point pair in two data sets.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVAR = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVAR", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns population covariance, the average of the products of deviations for each data point pair in two data sets.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVARIANCE_P = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVARIANCE.P", arguments);
+	// };
+
+	// todo need array
+	// /**
+	//  * Returns sample covariance, the average of the products of deviations for each data point pair in two data sets.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is the second cell range of integers and must be numbers, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.COVARIANCE_S = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("COVARIANCE.S", arguments);
+	// };
 	/**
 	 * Returns the smallest value for which the cumulative binomial distribution is greater than or equal to a criterion value.
 	 * @memberof ApiWorksheetFunction
@@ -2328,18 +2351,19 @@
 	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
 		return this.private_calculateFunction("FISHERINV", arguments);
 	};
-	/**
-	 * Calculates, or predicts, a future value along a linear trend by using existing values.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the data point for which you want to predict a value and must be a numeric value.
-	 * @param {any} arg2 Is the dependent array or range of numeric data.
-	 * @param {any} arg3 Is the independent array or range of numeric data. The variance of Known_x's must not be zero.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.FORECAST = function (arg1, arg2, arg3) {
-		return this.private_calculateFunction("FORECAST", arguments);
-	};
+	//todo need array
+	// /**
+	//  * Calculates, or predicts, a future value along a linear trend by using existing values.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} arg1 Is the data point for which you want to predict a value and must be a numeric value.
+	//  * @param {any} arg2 Is the dependent array or range of numeric data.
+	//  * @param {any} arg3 Is the independent array or range of numeric data. The variance of Known_x's must not be zero.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FORECAST = function (arg1, arg2, arg3) {
+	// 	return this.private_calculateFunction("FORECAST", arguments);
+	// };
 	/**
 	 * Returns the forecasted value for a specific future target date using exponential smoothing method..
 	 * @memberof ApiWorksheetFunction
@@ -2399,18 +2423,19 @@
 	ApiWorksheetFunction.prototype.FORECAST_ETS_STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
 	};
-	/**
-	 * Calculates, or predicts, a future value along a linear trend by using existing values.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the data point for which you want to predict a value and must be a numeric value.
-	 * @param {any} arg2 Is the dependent array or range of numeric data.
-	 * @param {any} arg3 Is the independent array or range of numeric data. The variance of Known_x's must not be zero.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.FORECAST_LINEAR = function (arg1, arg2, arg3) {
-		return this.private_calculateFunction("FORECAST.LINEAR", arguments);
-	};
+	//todo need array
+	// /**
+	//  * Calculates, or predicts, a future value along a linear trend by using existing values.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {number} arg1 Is the data point for which you want to predict a value and must be a numeric value.
+	//  * @param {any} arg2 Is the dependent array or range of numeric data.
+	//  * @param {any} arg3 Is the independent array or range of numeric data. The variance of Known_x's must not be zero.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FORECAST_LINEAR = function (arg1, arg2, arg3) {
+	// 	return this.private_calculateFunction("FORECAST.LINEAR", arguments);
+	// };
 	/**
 	 * Calculates how often values occur within a range of values and then returns a vertical array of numbers that have one more element than Bins_array.
 	 * @memberof ApiWorksheetFunction
@@ -2422,28 +2447,30 @@
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
 		return this.private_calculateFunction("FREQUENCY", arguments);
 	};
-	/**
-	 * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
-	 * @param {any} arg2 Is the second array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.FTEST = function (arg1, arg2) {
-		return this.private_calculateFunction("FTEST", arguments);
-	};
-	/**
-	 * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
-	 * @param {any} arg2 Is the second array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.F_TEST = function (arg1, arg2) {
-		return this.private_calculateFunction("F.TEST", arguments);
-	};
+	// //todo need array
+	// /**
+	//  * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
+	//  * @param {any} arg2 Is the second array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.FTEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("FTEST", arguments);
+	// };
+	// //todo need array
+	// /**
+	//  * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
+	//  * @param {any} arg2 Is the second array or range of data and can be numbers or names, arrays, or references that contain numbers (blanks are ignored).
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.F_TEST = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("F.TEST", arguments);
+	// };
 	/**
 	 * Returns the Gamma function value.
 	 * @memberof ApiWorksheetFunction
@@ -2592,17 +2619,18 @@
 	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("HYPGEOM.DIST", arguments);
 	};
-	/**
-	 * Calculates the point at which a line will intersect the y-axis by using a best-fit regression line plotted through the known x-values and y-values.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the dependent set of observations or data and can be numbers or names, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is the independent set of observations or data and can be numbers or names, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.INTERCEPT = function (arg1, arg2) {
-		return this.private_calculateFunction("INTERCEPT", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Calculates the point at which a line will intersect the y-axis by using a best-fit regression line plotted through the known x-values and y-values.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the dependent set of observations or data and can be numbers or names, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is the independent set of observations or data and can be numbers or names, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.INTERCEPT = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("INTERCEPT", arguments);
+	// };
 	/**
 	 * Returns the kurtosis of a data set.
 	 * @memberof ApiWorksheetFunction
@@ -2743,33 +2771,36 @@
 	ApiWorksheetFunction.prototype.MINA = function () {
 		return this.private_calculateFunction("MINA", arguments);
 	};
-	/**
-	 * Returns the most frequently occurring, or repetitive, value in an array or range of data.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MODE = function () {
-		return this.private_calculateFunction("MODE", arguments);
-	};
-	/**
-	 * Returns a vertical array of the most frequently occurring, or repetitive, values in an array or range of data. For a horizontal array, use =TRANSPOSE(MODE.MULT(number1,number2,...)).
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MODE_MULT = function () {
-		return this.private_calculateFunction("MODE.MULT", arguments);
-	};
-	/**
-	 * Returns the most frequently occurring, or repetitive, value in an array or range of data.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MODE_SNGL = function () {
-		return this.private_calculateFunction("MODE.SNGL", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the most frequently occurring, or repetitive, value in an array or range of data.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE = function () {
+	// 	return this.private_calculateFunction("MODE", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns a vertical array of the most frequently occurring, or repetitive, values in an array or range of data. For a horizontal array, use =TRANSPOSE(MODE.MULT(number1,number2,...)).
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE_MULT = function () {
+	// 	return this.private_calculateFunction("MODE.MULT", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns the most frequently occurring, or repetitive, value in an array or range of data.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MODE_SNGL = function () {
+	// 	return this.private_calculateFunction("MODE.SNGL", arguments);
+	// };
 	/**
 	 * Returns the negative binomial distribution, the probability that there will be Number_f failures before the Number_s-th success, with Probability_s probability of a success.
 	 * @memberof ApiWorksheetFunction
@@ -2886,17 +2917,19 @@
 	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
 		return this.private_calculateFunction("NORM.S.INV", arguments);
 	};
-	/**
-	 * Returns the Pearson product moment correlation coefficient, r.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a set of independent values.
-	 * @param {any} arg2 Is a set of dependent values.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.PEARSON = function (arg1, arg2) {
-		return this.private_calculateFunction("PEARSON", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the Pearson product moment correlation coefficient, r.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is a set of independent values.
+	//  * @param {any} arg2 Is a set of dependent values.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.PEARSON = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("PEARSON", arguments);
+	// };
+
 	/**
 	 * Returns the k-th percentile of values in a range.
 	 * @memberof ApiWorksheetFunction
@@ -3022,19 +3055,20 @@
 	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("POISSON.DIST", arguments);
 	};
-	/**
-	 * Returns the probability that values in a range are between two limits or equal to a lower limit.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the range of numeric values of x with which there are associated probabilities.
-	 * @param {any} arg2 Is the set of probabilities associated with values in X_range, values between 0 and 1 and excluding 0.
-	 * @param {number} arg3 Is the lower bound on the value for which you want a probability.
-	 * @param {?number} arg4 Is the optional upper bound on the value. If omitted, PROB returns the probability that X_range values are equal to Lower_limit.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
-		return this.private_calculateFunction("PROB", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the probability that values in a range are between two limits or equal to a lower limit.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the range of numeric values of x with which there are associated probabilities.
+	//  * @param {any} arg2 Is the set of probabilities associated with values in X_range, values between 0 and 1 and excluding 0.
+	//  * @param {number} arg3 Is the lower bound on the value for which you want a probability.
+	//  * @param {?number} arg4 Is the optional upper bound on the value. If omitted, PROB returns the probability that X_range values are equal to Lower_limit.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("PROB", arguments);
+	// };
 	/**
 	 * Returns the quartile of a data set.
 	 * @memberof ApiWorksheetFunction
@@ -3104,17 +3138,19 @@
 	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK.EQ", arguments);
 	};
-	/**
-	 * Returns the square of the Pearson product moment correlation coefficient through the given data points.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is an array or range of data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is an array or range of data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.RSQ = function (arg1, arg2) {
-		return this.private_calculateFunction("RSQ", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the square of the Pearson product moment correlation coefficient through the given data points.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is an array or range of data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is an array or range of data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.RSQ = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("RSQ", arguments);
+	// };
+
 	/**
 	 * Returns the skewness of a distribution: a characterisation of the degree of asymmetry of a distribution around its mean.
 	 * @memberof ApiWorksheetFunction
@@ -3133,17 +3169,18 @@
 	ApiWorksheetFunction.prototype.SKEW_P = function () {
 		return this.private_calculateFunction("SKEW.P", arguments);
 	};
-	/**
-	 * Returns the slope of the linear regression line through the given data points.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is an array or cell range of numeric dependent data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is the set of independent data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.SLOPE = function (arg1, arg2) {
-		return this.private_calculateFunction("SLOPE", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the slope of the linear regression line through the given data points.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is an array or cell range of numeric dependent data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is the set of independent data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SLOPE = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SLOPE", arguments);
+	// };
 	/**
 	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
 	 * @memberof ApiWorksheetFunction
@@ -3221,17 +3258,18 @@
 	ApiWorksheetFunction.prototype.STDEVPA = function () {
 		return this.private_calculateFunction("STDEVPA", arguments);
 	};
-	/**
-	 * Returns the standard error of the predicted y-value for each x in a regression.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is an array or range of dependent data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @param {any} arg2 Is an array or range of independent data points and can be numbers or names, arrays, or references that contain numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.STEYX = function (arg1, arg2) {
-		return this.private_calculateFunction("STEYX", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the standard error of the predicted y-value for each x in a regression.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is an array or range of dependent data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @param {any} arg2 Is an array or range of independent data points and can be numbers or names, arrays, or references that contain numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.STEYX = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("STEYX", arguments);
+	// };
 	/**
 	 * Returns the Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
@@ -3335,32 +3373,34 @@
 	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
 		return this.private_calculateFunction("TRIMMEAN", arguments);
 	};
-	/**
-	 * Returns the probability associated with a Student's t-Test.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first data set.
-	 * @param {any} arg2 Is the second data set.
-	 * @param {number} arg3 Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
-	 * @param {number} arg4 Is the kind of t-test: paired = 1, two-sample equal variance (homoscedastic) = 2, two-sample unequal variance = 3.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.TTEST = function (arg1, arg2, arg3, arg4) {
-		return this.private_calculateFunction("TTEST", arguments);
-	};
-	/**
-	 * Returns the probability associated with a Student's t-Test.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first data set.
-	 * @param {any} arg2 Is the second data set.
-	 * @param {number} arg3 Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
-	 * @param {number} arg4 Is the kind of t-test: paired = 1, two-sample equal variance (homoscedastic) = 2, two-sample unequal variance = 3.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.T_TEST = function (arg1, arg2, arg3, arg4) {
-		return this.private_calculateFunction("T.TEST", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the probability associated with a Student's t-Test.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first data set.
+	//  * @param {any} arg2 Is the second data set.
+	//  * @param {number} arg3 Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
+	//  * @param {number} arg4 Is the kind of t-test: paired = 1, two-sample equal variance (homoscedastic) = 2, two-sample unequal variance = 3.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.TTEST = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("TTEST", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns the probability associated with a Student's t-Test.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first data set.
+	//  * @param {any} arg2 Is the second data set.
+	//  * @param {number} arg3 Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
+	//  * @param {number} arg4 Is the kind of t-test: paired = 1, two-sample equal variance (homoscedastic) = 2, two-sample unequal variance = 3.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.T_TEST = function (arg1, arg2, arg3, arg4) {
+	// 	return this.private_calculateFunction("T.TEST", arguments);
+	// };
 	/**
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
@@ -5617,37 +5657,40 @@
 	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
 		return this.private_calculateFunction("LOG10", arguments);
 	};
-	/**
-	 * Returns the matrix determinant of an array.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a numeric array with an equal number of rows and columns, either a cell range or an array constant.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MDETERM = function (arg1) {
-		return this.private_calculateFunction("MDETERM", arguments);
-	};
-	/**
-	 * Returns the inverse matrix for the matrix stored in an array.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a numeric array with an equal number of rows and columns, either a cell range or an array constant.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MINVERSE = function (arg1) {
-		return this.private_calculateFunction("MINVERSE", arguments);
-	};
-	/**
-	 * Returns the matrix product of two arrays, an array with the same number of rows as array1 and columns as array2.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first array of numbers to multiply and must have the same number of columns as Array2 has rows.
-	 * @param {any} arg2.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.MMULT = function (arg1, arg2) {
-		return this.private_calculateFunction("MMULT", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the matrix determinant of an array.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is a numeric array with an equal number of rows and columns, either a cell range or an array constant.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MDETERM = function (arg1) {
+	// 	return this.private_calculateFunction("MDETERM", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns the inverse matrix for the matrix stored in an array.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is a numeric array with an equal number of rows and columns, either a cell range or an array constant.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MINVERSE = function (arg1) {
+	// 	return this.private_calculateFunction("MINVERSE", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns the matrix product of two arrays, an array with the same number of rows as array1 and columns as array2.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first array of numbers to multiply and must have the same number of columns as Array2 has rows.
+	//  * @param {any} arg2.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.MMULT = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("MMULT", arguments);
+	// };
 	/**
 	 * Returns the remainder after a number is divided by a divisor.
 	 * @memberof ApiWorksheetFunction
@@ -5935,15 +5978,16 @@
 	ApiWorksheetFunction.prototype.SUMIFS = function () {
 		return this.private_calculateFunction("SUMIFS", arguments);
 	};
-	/**
-	 * Returns the sum of the products of corresponding ranges or arrays.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.SUMPRODUCT = function () {
-		return this.private_calculateFunction("SUMPRODUCT", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Returns the sum of the products of corresponding ranges or arrays.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMPRODUCT = function () {
+	// 	return this.private_calculateFunction("SUMPRODUCT", arguments);
+	// };
 	/**
 	 * Returns the sum of the squares of the arguments. The arguments can be numbers, arrays, names or references to cells that contain numbers.
 	 * @memberof ApiWorksheetFunction
@@ -5953,39 +5997,42 @@
 	ApiWorksheetFunction.prototype.SUMSQ = function () {
 		return this.private_calculateFunction("SUMSQ", arguments);
 	};
-	/**
-	 * Sums the differences between the squares of two corresponding ranges or arrays.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first range or array of numbers and can be a number or name, array, or reference that contains numbers.
-	 * @param {any} arg2 Is the second range or array of numbers and can be a number or name, array, or reference that contains numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.SUMX2MY2 = function (arg1, arg2) {
-		return this.private_calculateFunction("SUMX2MY2", arguments);
-	};
-	/**
-	 * Returns the sum total of the sums of squares of numbers in two corresponding ranges or arrays.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first range or array of numbers and can be a number or name, array, or reference that contains numbers.
-	 * @param {any} arg2 Is the second range or array of numbers and can be a number or name, array, or reference that contains numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.SUMX2PY2 = function (arg1, arg2) {
-		return this.private_calculateFunction("SUMX2PY2", arguments);
-	};
-	/**
-	 * Sums the squares of the differences in two corresponding ranges or arrays.
-	 * @memberof ApiWorksheetFunction
-	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first range or array of values and can be a number or name, array, or reference that contains numbers.
-	 * @param {any} arg2 Is the second range or array of values and can be a number or name, array, or reference that contains numbers.
-	 * @returns {number | string | boolean}
-	 */
-	ApiWorksheetFunction.prototype.SUMXMY2 = function (arg1, arg2) {
-		return this.private_calculateFunction("SUMXMY2", arguments);
-	};
+	// todo need array
+	// /**
+	//  * Sums the differences between the squares of two corresponding ranges or arrays.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first range or array of numbers and can be a number or name, array, or reference that contains numbers.
+	//  * @param {any} arg2 Is the second range or array of numbers and can be a number or name, array, or reference that contains numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMX2MY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMX2MY2", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Returns the sum total of the sums of squares of numbers in two corresponding ranges or arrays.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first range or array of numbers and can be a number or name, array, or reference that contains numbers.
+	//  * @param {any} arg2 Is the second range or array of numbers and can be a number or name, array, or reference that contains numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMX2PY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMX2PY2", arguments);
+	// };
+	// todo need array
+	// /**
+	//  * Sums the squares of the differences in two corresponding ranges or arrays.
+	//  * @memberof ApiWorksheetFunction
+	//  * @typeofeditors ["CSE"]
+	//  * @param {any} arg1 Is the first range or array of values and can be a number or name, array, or reference that contains numbers.
+	//  * @param {any} arg2 Is the second range or array of values and can be a number or name, array, or reference that contains numbers.
+	//  * @returns {number | string | boolean}
+	//  */
+	// ApiWorksheetFunction.prototype.SUMXMY2 = function (arg1, arg2) {
+	// 	return this.private_calculateFunction("SUMXMY2", arguments);
+	// };
 	/**
 	 * Returns the tangent of an angle.
 	 * @memberof ApiWorksheetFunction
@@ -6388,8 +6435,6 @@
 	ApiWorksheetFunction.prototype.XOR = function () {
 		return this.private_calculateFunction("XOR", arguments);
 	};
-
-
 
 
 
