@@ -779,25 +779,7 @@ function MoveAnnotationTrack(originalObject)
             return;
         }
 
-        let nPage       = this.originalObject.GetPage();
-        let nPageHeight = this.viewer.drawingPages[nPage].H / this.viewer.zoom;
-        let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
-
-        // не даем выйти за границы листа
-        let X = Math.max(this.x, 5);
-        let Y = Math.max(this.y, 5);
-
-        if (X + this.originalObject._pagePos.w > nPageWidth) {
-            X = nPageWidth - this.originalObject._pagePos.w;
-        }
-        if (Y + this.originalObject._pagePos.h > nPageHeight) {
-            Y = nPageHeight - this.originalObject._pagePos.h;
-        }
-
-        if (this.originalObject.IsFreeText())
-            this.originalObject.onAfterMove();
-        
-        this.originalObject.SetPosition(X, Y);
+        this.originalObject.SetPosition(this.x, this.y);
         this.originalObject.SetPage(this.pageIndex);
     };
 

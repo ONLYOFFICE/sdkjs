@@ -3021,8 +3021,7 @@
 				if (!pageCoords)
 					continue;
 
-				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
-					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 				{
 					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y);
 					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y);
@@ -3061,8 +3060,7 @@
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
 				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
-				if (x >= pageCoords.x / AscCommon.AscBrowser.retinaPixelRatio && x <= (pageCoords.x + pageCoords.w) / AscCommon.AscBrowser.retinaPixelRatio &&
-					y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
 					break;
 			}
 			if (pageIndex > this.endVisiblePage)
