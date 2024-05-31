@@ -6544,6 +6544,14 @@ background-repeat: no-repeat;\
 	{
 		this.DeleteSlide();
 	};
+	asc_docs_api.prototype.asc_CanDeleteMaster    = function()
+	{
+		return this.WordControl.m_oLogicDocument.CanDeleteSelectedMasters();
+	};
+	asc_docs_api.prototype.asc_CanDeleteLayout    = function()
+	{
+		return this.WordControl.m_oLogicDocument.CanDeleteSelectedLayouts();
+	};
 	asc_docs_api.prototype.asc_DuplicateMaster    = function()
 	{
 		this.DublicateSlide();
@@ -9810,6 +9818,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_DeleteLayout"] = asc_docs_api.prototype.asc_DeleteLayout;
 	asc_docs_api.prototype["asc_DuplicateMaster"] = asc_docs_api.prototype.asc_DuplicateMaster;
 	asc_docs_api.prototype["asc_DuplicateLayout"] = asc_docs_api.prototype.asc_DuplicateLayout;
+	asc_docs_api.prototype["asc_CanDeleteMaster"] = asc_docs_api.prototype.asc_CanDeleteMaster;
+	asc_docs_api.prototype["asc_CanDeleteLayout"] = asc_docs_api.prototype.asc_CanDeleteLayout;
 
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;

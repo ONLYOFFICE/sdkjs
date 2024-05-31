@@ -6763,7 +6763,27 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	
 	Asc.editor.WordControl.m_oAnimPaneApi && Asc.editor.WordControl.m_oAnimPaneApi.UpdateState()
 };
-
+CPresentation.prototype.CanDeleteSelectedMasters = function() {
+	return this.CanRemoveMaster(this.lastMaster);
+};
+CPresentation.prototype.CanDeleteSelectedLayouts = function() {
+	let bCanDeleteLayout = true;
+	let aSelectedSlides = this.GetSelectedSlides();
+	for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
+		let oSlide = this.GetSlide(aSelectedSlides[nIdx]);
+		if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
+			if(!this.CanRemoveLayout(oSlide)) {
+				bCanDeleteLayout = false;
+				break;
+			}
+		}
+		else {
+			bCanDeleteLayout = false;
+			break;
+		}
+	}
+	return bCanDeleteLayout;
+};
 CPresentation.prototype.changeBackground = function (bg, arr_ind, bNoCreatePoint) {
 	if (bNoCreatePoint === true || this.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, arr_ind) === false) {
 		if (!(bNoCreatePoint === true)) {
