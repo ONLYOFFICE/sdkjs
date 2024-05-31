@@ -13942,6 +13942,48 @@ background-repeat: no-repeat;\
 		return this.isHandMode && this.isRestrictionForms();
 	};
 	
+	asc_docs_api.prototype.asc_putPageColor = function(color)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetPageColor);
+		
+		if (!color)
+		{
+			logicDocument.setBackgroundColor(null, null);
+		}
+		else
+		{
+			if (color && color.asc_getType && color.asc_getType() === Asc.c_oAscColor.COLOR_TYPE_SRGB)
+				logicDocument.setBackgroundColor(new AscCommonWord.CDocumentColor(color.r, color.g, color.b, false), null);
+			else
+				logicDocument.setBackgroundColor(null, AscFormat.CreateUnifillFromAscColor(color));
+		}
+		
+		logicDocument.UpdateInterface();
+		logicDocument.Redraw();
+		logicDocument.FinalizeAction();
+	};
+	asc_docs_api.prototype.asc_getPageColor = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.Background)
+			return;
+		
+		let Unifill = logicDocument.Background.Unifill;
+		if (Unifill && Unifill.fill && Unifill.fill.color)
+			return AscCommon.CreateAscColor(Unifill.fill.color);
+		else if (logicDocument.Background.Color)
+			return AscCommon.CreateAscColorCustom(logicDocument.Background.Color.r, logicDocument.Background.Color.g, logicDocument.Background.Color.b, false);
+		
+		return null;
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;
@@ -14745,6 +14787,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_getConsecutiveHyphenLimit"]  = asc_docs_api.prototype.asc_getConsecutiveHyphenLimit;
 	asc_docs_api.prototype["asc_setAutoHyphenationSettings"] = asc_docs_api.prototype.asc_setAutoHyphenationSettings;
 	asc_docs_api.prototype["asc_getAutoHyphenationSettings"] = asc_docs_api.prototype.asc_getAutoHyphenationSettings;
+	
+	asc_docs_api.prototype["asc_putPageColor"] = asc_docs_api.prototype.asc_putPageColor;
+	asc_docs_api.prototype["asc_getPageColor"] = asc_docs_api.prototype.asc_getPageColor;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

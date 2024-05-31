@@ -1848,7 +1848,11 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
 	
-	this.Background = null;
+	this.Background = {
+		Color   : null,
+		Unifill : null,
+		shape   : null
+	};
 	
     this.CurPos  =
     {
@@ -5884,6 +5888,18 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 	//       2. Различные типы обычных границ. Причем, если пересакающиеся границы имеют одинаковый тип и размер,
 	//          тогда надо специально отрисовывать места соединения данных линий.
 
+};
+CDocument.prototype.setBackgroundColor = function(color, unifill)
+{
+	let oldValue = this.Background;
+	let newValue = {
+		Color   : color ? color : null,
+		Unifill : unifill ? unifill : null,
+		shape   : null
+	};
+	
+	AscCommon.History.Add(new CChangesDocumentPageColor(this, oldValue, newValue));
+	this.Background = newValue;
 };
 CDocument.prototype.getBackgroundBrush = function()
 {
