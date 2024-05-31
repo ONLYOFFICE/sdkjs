@@ -5906,10 +5906,17 @@ CDocument.prototype.getBackgroundColor = function()
 };
 CDocument.prototype.drawBackground = function(graphics, sectPr)
 {
-	if(!this.Background || !this.Background.shape)
+
+	if(!this.Background)
 		return;
-	let oShape = this.Background.shape;
-	let brush = oShape.brush;
+
+	let brush = this.Background.Unifill;
+	if(!brush)
+	{
+		let shape = this.Background.shape;
+		if(shape)
+			brush = shape.brush;
+	}
 	if(!brush || !brush.isVisible())
 		return;
 	let h = sectPr.GetPageHeight();
