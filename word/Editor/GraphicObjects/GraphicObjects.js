@@ -4402,6 +4402,11 @@ CGraphicObjects.prototype =
                     graphic_array[i].getAllRasterImages(ret);
             }
         }
+        let oPageBg = this.document.Background;
+        if(oPageBg && oPageBg.shape)
+        {
+            oPageBg.shape.getAllRasterImages(ret);
+        }
         return ret;
     },
 

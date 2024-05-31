@@ -5906,17 +5906,23 @@ CDocument.prototype.getBackgroundColor = function()
 };
 CDocument.prototype.drawBackground = function(graphics, sectPr)
 {
-	let color = this.getBackgroundColor();
-	if (!color)
+	if(!this.Background || !this.Background.shape)
 		return;
-	
-	graphics.setEndGlobalAlphaColor(color.r, color.g, color.b);
-	graphics.b_color1(color.r, color.g, color.b, 255);
-	
+	let oShape = this.Background.shape;
+	let brush = oShape.brush;
+	if(!brush)
+		return;
 	let h = sectPr.GetPageHeight();
 	let w = sectPr.GetPageWidth();
-	graphics.rect(0, 0, w, h);
-	graphics.df();
+	if(brush.isSolidFill())
+	{
+		let RGBA = brush.getRGBAColor();
+		graphics.setEndGlobalAlphaColor(RGBA.R, RGBA.G, RGBA.B);
+	}
+	let shapeDrawer = new AscCommon.CShapeDrawer();
+	brush.check(this.GetTheme(), this.GetColorMap());
+	shapeDrawer.fromShape2(new AscFormat.ObjectToDraw(brush, null, w, h, null, null), graphics, null);
+	shapeDrawer.draw(null);
 };
 /**
  *
