@@ -1238,73 +1238,73 @@
 		this.api = api;
 	}
 
-	ApiWorksheetFunction.prototype.init = function () {
-		let getArgType = function (_arg) {
-
-			let res = "any";
-			if (_arg === Asc.c_oAscFormulaArgumentType.number) {
-				res = "number"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
-				res = "string"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
-				res = "ApiRange"
-			} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
-				res = "boolean"
-			}
-			return res;
-		};
-
-		let test = ""
-		for (let i in AscCommonExcel.cFormulaFunction) {
-			if (supportedFunctionsMap[i]) {
-
-				//if (i === "SERIESSUM") {
-					let test1 = "";
-					let test2 = ""
-					let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax;
-					let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin;
-					if (maxArg < 10) {
-						for (let j = 1; j <= maxArg; j++) {
-							let test12 = "arg" + (j)
-
-							test1 += "\t * @param {" + (j <= minArg ? "" : "?") + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
-							if (j <= minArg) {
-								test1 += test12;
-							} else {
-								test1 += test12;
-							}
-
-							let argInfo = window.map2[i] && window.map2[i][j - 1];
-							if (argInfo) {
-								argInfo = argInfo.charAt(0).toUpperCase() + argInfo.slice(1)
-							} else {
-								argInfo = "";
-							}
-
-							test1 += " " + argInfo + ".\n";
-
-							test2 += j === maxArg ? test12 : (test12 + ",")
-						}
-					}
-
-
-					let funcInfo = window.test0[i] ? " " + window.test0[i].d : "Returns the result of calculating the function"
-
-					test += "/**\n" + "\t *" + funcInfo + ".\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
-						+ "\t * @returns {number | string | boolean}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\tthis.private_calculateFunction(\"" + i + "\", arguments);\n" + "\t};"
-				//}
-
-				test += "\n";
-
-
-
-				ApiWorksheetFunction.prototype[i] = function () {
-					return this.private_calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
-				}
-			}
-		}
-		console.log(test)
-	};
+	// ApiWorksheetFunction.prototype.init = function () {
+	// 	let getArgType = function (_arg) {
+	//
+	// 		let res = "any";
+	// 		if (_arg === Asc.c_oAscFormulaArgumentType.number) {
+	// 			res = "number"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.text) {
+	// 			res = "string"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.reference) {
+	// 			res = "ApiRange"
+	// 		} else if (_arg === Asc.c_oAscFormulaArgumentType.logical) {
+	// 			res = "boolean"
+	// 		}
+	// 		return res;
+	// 	};
+	//
+	// 	let test = ""
+	// 	for (let i in AscCommonExcel.cFormulaFunction) {
+	// 		if (supportedFunctionsMap[i]) {
+	//
+	// 			//if (i === "SERIESSUM") {
+	// 				let test1 = "";
+	// 				let test2 = ""
+	// 				let maxArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMax;
+	// 				let minArg = AscCommonExcel.cFormulaFunction[i].prototype.argumentsMin;
+	// 				if (maxArg < 10) {
+	// 					for (let j = 1; j <= maxArg; j++) {
+	// 						let test12 = "arg" + (j)
+	//
+	// 						test1 += "\t * @param {" + (j <= minArg ? "" : "?") + getArgType(AscCommonExcel.cFormulaFunction[i].prototype.argumentsType && AscCommonExcel.cFormulaFunction[i].prototype.argumentsType[j-1]) + "} ";
+	// 						if (j <= minArg) {
+	// 							test1 += test12;
+	// 						} else {
+	// 							test1 += test12;
+	// 						}
+	//
+	// 						let argInfo = window.map2[i] && window.map2[i][j - 1];
+	// 						if (argInfo) {
+	// 							argInfo = argInfo.charAt(0).toUpperCase() + argInfo.slice(1)
+	// 						} else {
+	// 							argInfo = "";
+	// 						}
+	//
+	// 						test1 += (argInfo !== "" ? " " : "") + argInfo + ".\n";
+	//
+	// 						test2 += j === maxArg ? test12 : (test12 + ",")
+	// 					}
+	// 				}
+	//
+	//
+	// 				let funcInfo = window.test0[i] ? " " + window.test0[i].d : "Returns the result of calculating the function"
+	//
+	// 				test += "/**\n" + "\t *" + funcInfo + ".\n" + "\t * @memberof ApiWorksheetFunction\n" + "\t * @typeofeditors [\"CSE\"]\n" + test1
+	// 					+ "\t * @returns {number | string | boolean}\n" + "\t */\n" + "\tApiWorksheetFunction.prototype." + i.replaceAll(".","_")  + "= function (" + test2 + ") {\n" + "\t\treturn this.private_calculateFunction(\"" + i + "\", arguments);\n" + "\t};"
+	// 			//}
+	//
+	// 			test += "\n";
+	//
+	//
+	//
+	// 			ApiWorksheetFunction.prototype[i] = function () {
+	// 				return this.private_calculateFunction(AscCommonExcel.cFormulaFunction[i].prototype, arguments);
+	// 			}
+	// 		}
+	// 	}
+	// 	console.log(test)
+	// };
 
 
 	ApiWorksheetFunction.prototype.private_calculateFunction = function (sFunc, arg) {
@@ -1378,7 +1378,7 @@
 		}
 
 		return result;
-	}
+	};
 
 	ApiWorksheetFunction.prototype.private_simpleTestAllFunctions = function () {
 		let obj = Object.getPrototypeOf(this)
@@ -1449,11 +1449,11 @@
 	 * For Double-byte character set (DBCS) languages, the function changes full-width (double-byte) characters to half-width (single-byte) characters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
+	 * @param {string} arg1.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ASC = function (arg1) {
-		this.private_calculateFunction("ASC", arguments);
+		return this.private_calculateFunction("ASC", arguments);
 	};
 	/**
 	 * Returns the character specified by the code number from the character set for your computer.
@@ -1463,7 +1463,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
-		this.private_calculateFunction("CHAR", arguments);
+		return this.private_calculateFunction("CHAR", arguments);
 	};
 	/**
 	 * Removes all nonprintable characters from text.
@@ -1473,7 +1473,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
-		this.private_calculateFunction("CLEAN", arguments);
+		return this.private_calculateFunction("CLEAN", arguments);
 	};
 	/**
 	 * Returns a numeric code for the first character in a text string, in the character set used by your computer.
@@ -1483,7 +1483,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CODE = function (arg1) {
-		this.private_calculateFunction("CODE", arguments);
+		return this.private_calculateFunction("CODE", arguments);
 	};
 	/**
 	 * Joins several text strings into one text string.
@@ -1492,7 +1492,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CONCATENATE = function () {
-		this.private_calculateFunction("CONCATENATE", arguments);
+		return this.private_calculateFunction("CONCATENATE", arguments);
 	};
 	/**
 	 * Converts a number to text, using currency format.
@@ -1503,7 +1503,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
-		this.private_calculateFunction("DOLLAR", arguments);
+		return this.private_calculateFunction("DOLLAR", arguments);
 	};
 	/**
 	 * Checks whether two text strings are exactly the same, and returns TRUE or FALSE. EXACT is case-sensitive.
@@ -1514,7 +1514,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
-		this.private_calculateFunction("EXACT", arguments);
+		return this.private_calculateFunction("EXACT", arguments);
 	};
 	/**
 	 * Returns the starting position of one text string within another text string. FIND is case-sensitive.
@@ -1526,19 +1526,19 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FIND", arguments);
+		return this.private_calculateFunction("FIND", arguments);
 	};
 	/**
 	 * Finds the specified substring (string-1) within a string (string-2) and is intended for languages the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {string} arg2 .
-	 * @param {?number} arg3 .
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {?number} arg3.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FINDB", arguments);
+		return this.private_calculateFunction("FINDB", arguments);
 	};
 	/**
 	 * Rounds a number to the specified number of decimals and returns the result as text with or without commas.
@@ -1550,7 +1550,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FIXED", arguments);
+		return this.private_calculateFunction("FIXED", arguments);
 	};
 	/**
 	 * Returns the specified number of characters from the start of a text string.
@@ -1561,18 +1561,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
-		this.private_calculateFunction("LEFT", arguments);
+		return this.private_calculateFunction("LEFT", arguments);
 	};
 	/**
 	 * Extracts the substring from the specified string starting from the left character and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {?number} arg2 .
+	 * @param {string} arg1.
+	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
-		this.private_calculateFunction("LEFTB", arguments);
+		return this.private_calculateFunction("LEFTB", arguments);
 	};
 	/**
 	 * Returns the number of characters in a text string.
@@ -1582,17 +1582,17 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LEN = function (arg1) {
-		this.private_calculateFunction("LEN", arguments);
+		return this.private_calculateFunction("LEN", arguments);
 	};
 	/**
 	 * Analyses the specified string and returns the number of characters it contains and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
+	 * @param {string} arg1.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LENB = function (arg1) {
-		this.private_calculateFunction("LENB", arguments);
+		return this.private_calculateFunction("LENB", arguments);
 	};
 	/**
 	 * Converts all letters in a text string to lowercase.
@@ -1602,7 +1602,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
-		this.private_calculateFunction("LOWER", arguments);
+		return this.private_calculateFunction("LOWER", arguments);
 	};
 	/**
 	 * Returns the characters from the middle of a text string, given a starting position and length.
@@ -1614,19 +1614,19 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("MID", arguments);
+		return this.private_calculateFunction("MID", arguments);
 	};
 	/**
 	 * Extracts the characters from the specified string starting from any position and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {number} arg2 .
-	 * @param {number} arg3 .
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("MIDB", arguments);
+		return this.private_calculateFunction("MIDB", arguments);
 	};
 	/**
 	 * Converts text to number in a locale-independent manner.
@@ -1638,7 +1638,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("NUMBERVALUE", arguments);
+		return this.private_calculateFunction("NUMBERVALUE", arguments);
 	};
 	/**
 	 * Converts a text string to proper case; the first letter in each word to uppercase, and all other letters to lowercase.
@@ -1648,7 +1648,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
-		this.private_calculateFunction("PROPER", arguments);
+		return this.private_calculateFunction("PROPER", arguments);
 	};
 	/**
 	 * Replaces part of a text string with a different text string.
@@ -1661,20 +1661,20 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("REPLACE", arguments);
+		return this.private_calculateFunction("REPLACE", arguments);
 	};
 	/**
 	 * Replaces a set of characters, based on the number of characters and the start position you specify, with a new set of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {number} arg2 .
-	 * @param {number} arg3 .
-	 * @param {string} arg4 .
+	 * @param {string} arg1.
+	 * @param {number} arg2.
+	 * @param {number} arg3.
+	 * @param {string} arg4.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("REPLACEB", arguments);
+		return this.private_calculateFunction("REPLACEB", arguments);
 	};
 	/**
 	 * Repeats text a given number of times. Use REPT to fill a cell with a number of instances of a text string.
@@ -1685,7 +1685,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
-		this.private_calculateFunction("REPT", arguments);
+		return this.private_calculateFunction("REPT", arguments);
 	};
 	/**
 	 * Returns the specified number of characters from the end of a text string.
@@ -1696,18 +1696,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
-		this.private_calculateFunction("RIGHT", arguments);
+		return this.private_calculateFunction("RIGHT", arguments);
 	};
 	/**
 	 * Extracts a substring from a string starting from the right-most character, based on the specified number of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {?number} arg2 .
+	 * @param {string} arg1.
+	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
-		this.private_calculateFunction("RIGHTB", arguments);
+		return this.private_calculateFunction("RIGHTB", arguments);
 	};
 	/**
 	 * Returns the number of the character at which a specific character or text string is first found, reading left to right (not case-sensitive).
@@ -1719,19 +1719,19 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("SEARCH", arguments);
+		return this.private_calculateFunction("SEARCH", arguments);
 	};
 	/**
 	 * Returns the location of the specified substring in a string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 .
-	 * @param {string} arg2 .
-	 * @param {?number} arg3 .
+	 * @param {string} arg1.
+	 * @param {string} arg2.
+	 * @param {?number} arg3.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("SEARCHB", arguments);
+		return this.private_calculateFunction("SEARCHB", arguments);
 	};
 	/**
 	 * Replaces existing text with new text in a text string.
@@ -1744,7 +1744,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("SUBSTITUTE", arguments);
+		return this.private_calculateFunction("SUBSTITUTE", arguments);
 	};
 	/**
 	 * Checks whether a value is text, and returns the text if it is, or returns double quotes (empty text) if it is not.
@@ -1754,7 +1754,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T = function (arg1) {
-		this.private_calculateFunction("T", arguments);
+		return this.private_calculateFunction("T", arguments);
 	};
 	/**
 	 * Converts a value to text in a specific number format.
@@ -1765,7 +1765,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
-		this.private_calculateFunction("TEXT", arguments);
+		return this.private_calculateFunction("TEXT", arguments);
 	};
 	/**
 	 * Removes all spaces from a text string except for single spaces between words.
@@ -1775,7 +1775,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
-		this.private_calculateFunction("TRIM", arguments);
+		return this.private_calculateFunction("TRIM", arguments);
 	};
 	/**
 	 * Returns the Unicode character referenced by the given numeric value.
@@ -1785,7 +1785,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
-		this.private_calculateFunction("UNICHAR", arguments);
+		return this.private_calculateFunction("UNICHAR", arguments);
 	};
 	/**
 	 * Returns the number (code point) corresponding to the first character of the text.
@@ -1795,7 +1795,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
-		this.private_calculateFunction("UNICODE", arguments);
+		return this.private_calculateFunction("UNICODE", arguments);
 	};
 	/**
 	 * Converts a text string to all uppercase letters.
@@ -1805,7 +1805,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
-		this.private_calculateFunction("UPPER", arguments);
+		return this.private_calculateFunction("UPPER", arguments);
 	};
 	/**
 	 * Converts a text string that represents a number to a number.
@@ -1815,7 +1815,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
-		this.private_calculateFunction("VALUE", arguments);
+		return this.private_calculateFunction("VALUE", arguments);
 	};
 	/**
 	 * Returns the average of the absolute deviations of data points from their mean. Arguments can be numbers or names, arrays or references that contain numbers.
@@ -1824,7 +1824,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AVEDEV = function () {
-		this.private_calculateFunction("AVEDEV", arguments);
+		return this.private_calculateFunction("AVEDEV", arguments);
 	};
 	/**
 	 * Returns the average (arithmetic mean) of its arguments, which can be numbers or names, arrays or references that contain numbers.
@@ -1833,7 +1833,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGE = function () {
-		this.private_calculateFunction("AVERAGE", arguments);
+		return this.private_calculateFunction("AVERAGE", arguments);
 	};
 	/**
 	 * Returns the average (arithmetic mean) of its arguments, evaluating text and FALSE in arguments as 0; TRUE evaluates as 1. Arguments can be numbers, names, arrays or references.
@@ -1842,7 +1842,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEA = function () {
-		this.private_calculateFunction("AVERAGEA", arguments);
+		return this.private_calculateFunction("AVERAGEA", arguments);
 	};
 	/**
 	 * Finds average (arithmetic mean) for the cells specified by a given condition or criteria.
@@ -1854,7 +1854,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIF = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("AVERAGEIF", arguments);
+		return this.private_calculateFunction("AVERAGEIF", arguments);
 	};
 	/**
 	 * Finds average (arithmetic mean) for the cells specified by a given set of conditions or criteria.
@@ -1863,7 +1863,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIFS = function () {
-		this.private_calculateFunction("AVERAGEIFS", arguments);
+		return this.private_calculateFunction("AVERAGEIFS", arguments);
 	};
 	/**
 	 * Returns the cumulative beta probability density function.
@@ -1877,7 +1877,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BETADIST = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("BETADIST", arguments);
+		return this.private_calculateFunction("BETADIST", arguments);
 	};
 	/**
 	 * Returns the beta probability distribution function.
@@ -1892,7 +1892,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BETA_DIST = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("BETA.DIST", arguments);
+		return this.private_calculateFunction("BETA.DIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the cumulative beta probability density function (BETA.DIST).
@@ -1906,7 +1906,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BETA_INV = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("BETA.INV", arguments);
+		return this.private_calculateFunction("BETA.INV", arguments);
 	};
 	/**
 	 * Returns the inverse of the cumulative beta probability density function (BETADIST).
@@ -1920,7 +1920,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BETAINV = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("BETAINV", arguments);
+		return this.private_calculateFunction("BETAINV", arguments);
 	};
 	/**
 	 * Returns the individual term binomial distribution probability.
@@ -1933,7 +1933,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BINOMDIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("BINOMDIST", arguments);
+		return this.private_calculateFunction("BINOMDIST", arguments);
 	};
 	/**
 	 * Returns the individual term binomial distribution probability.
@@ -1946,7 +1946,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("BINOM.DIST", arguments);
+		return this.private_calculateFunction("BINOM.DIST", arguments);
 	};
 	/**
 	 * Returns the probability of a trial result using a binomial distribution.
@@ -1959,7 +1959,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST_RANGE = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("BINOM.DIST.RANGE", arguments);
+		return this.private_calculateFunction("BINOM.DIST.RANGE", arguments);
 	};
 	/**
 	 * Returns the smallest value for which the cumulative binomial distribution is greater than or equal to a criterion value.
@@ -1971,7 +1971,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_INV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("BINOM.INV", arguments);
+		return this.private_calculateFunction("BINOM.INV", arguments);
 	};
 	/**
 	 * Returns the right-tailed probability of the chi-squared distribution.
@@ -1982,7 +1982,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHIDIST = function (arg1, arg2) {
-		this.private_calculateFunction("CHIDIST", arguments);
+		return this.private_calculateFunction("CHIDIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the right-tailed probability of the chi-squared distribution.
@@ -1993,7 +1993,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHIINV = function (arg1, arg2) {
-		this.private_calculateFunction("CHIINV", arguments);
+		return this.private_calculateFunction("CHIINV", arguments);
 	};
 	/**
 	 * Returns the left-tailed probability of the chi-squared distribution.
@@ -2005,7 +2005,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CHISQ.DIST", arguments);
+		return this.private_calculateFunction("CHISQ.DIST", arguments);
 	};
 	/**
 	 * Returns the right-tailed probability of the chi-squared distribution.
@@ -2016,7 +2016,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST_RT = function (arg1, arg2) {
-		this.private_calculateFunction("CHISQ.DIST.RT", arguments);
+		return this.private_calculateFunction("CHISQ.DIST.RT", arguments);
 	};
 	/**
 	 * Returns the inverse of the left-tailed probability of the chi-squared distribution.
@@ -2027,7 +2027,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV = function (arg1, arg2) {
-		this.private_calculateFunction("CHISQ.INV", arguments);
+		return this.private_calculateFunction("CHISQ.INV", arguments);
 	};
 	/**
 	 * Returns the inverse of the right-tailed probability of the chi-squared distribution.
@@ -2038,7 +2038,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV_RT = function (arg1, arg2) {
-		this.private_calculateFunction("CHISQ.INV.RT", arguments);
+		return this.private_calculateFunction("CHISQ.INV.RT", arguments);
 	};
 	/**
 	 * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
@@ -2049,7 +2049,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
-		this.private_calculateFunction("CHITEST", arguments);
+		return this.private_calculateFunction("CHITEST", arguments);
 	};
 	/**
 	 * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
@@ -2060,7 +2060,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_TEST = function (arg1, arg2) {
-		this.private_calculateFunction("CHISQ.TEST", arguments);
+		return this.private_calculateFunction("CHISQ.TEST", arguments);
 	};
 	/**
 	 * Returns the confidence interval for a population mean, using a normal distribution.
@@ -2072,7 +2072,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CONFIDENCE", arguments);
+		return this.private_calculateFunction("CONFIDENCE", arguments);
 	};
 	/**
 	 * Returns the confidence interval for a population mean, using a normal distribution.
@@ -2084,7 +2084,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_NORM = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CONFIDENCE.NORM", arguments);
+		return this.private_calculateFunction("CONFIDENCE.NORM", arguments);
 	};
 	/**
 	 * Returns the confidence interval for a population mean, using a Student's T distribution.
@@ -2096,7 +2096,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CONFIDENCE.T", arguments);
+		return this.private_calculateFunction("CONFIDENCE.T", arguments);
 	};
 	/**
 	 * Returns the correlation coefficient between two data sets.
@@ -2107,7 +2107,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CORREL = function (arg1, arg2) {
-		this.private_calculateFunction("CORREL", arguments);
+		return this.private_calculateFunction("CORREL", arguments);
 	};
 	/**
 	 * Counts the number of cells in a range that contain numbers.
@@ -2116,7 +2116,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUNT = function () {
-		this.private_calculateFunction("COUNT", arguments);
+		return this.private_calculateFunction("COUNT", arguments);
 	};
 	/**
 	 * Counts the number of cells in a range that are not empty.
@@ -2125,7 +2125,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUNTA = function () {
-		this.private_calculateFunction("COUNTA", arguments);
+		return this.private_calculateFunction("COUNTA", arguments);
 	};
 	/**
 	 * Counts the number of empty cells in a specified range of cells.
@@ -2135,7 +2135,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUNTBLANK = function (arg1) {
-		this.private_calculateFunction("COUNTBLANK", arguments);
+		return this.private_calculateFunction("COUNTBLANK", arguments);
 	};
 	/**
 	 * Counts the number of cells within a range that meet the given condition.
@@ -2146,7 +2146,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUNTIF = function (arg1, arg2) {
-		this.private_calculateFunction("COUNTIF", arguments);
+		return this.private_calculateFunction("COUNTIF", arguments);
 	};
 	/**
 	 * Counts the number of cells specified by a given set of conditions or criteria.
@@ -2155,7 +2155,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUNTIFS = function () {
-		this.private_calculateFunction("COUNTIFS", arguments);
+		return this.private_calculateFunction("COUNTIFS", arguments);
 	};
 	/**
 	 * Returns covariance, the average of the products of deviations for each data point pair in two data sets.
@@ -2166,7 +2166,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COVAR = function (arg1, arg2) {
-		this.private_calculateFunction("COVAR", arguments);
+		return this.private_calculateFunction("COVAR", arguments);
 	};
 	/**
 	 * Returns population covariance, the average of the products of deviations for each data point pair in two data sets.
@@ -2177,7 +2177,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COVARIANCE_P = function (arg1, arg2) {
-		this.private_calculateFunction("COVARIANCE.P", arguments);
+		return this.private_calculateFunction("COVARIANCE.P", arguments);
 	};
 	/**
 	 * Returns sample covariance, the average of the products of deviations for each data point pair in two data sets.
@@ -2188,7 +2188,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COVARIANCE_S = function (arg1, arg2) {
-		this.private_calculateFunction("COVARIANCE.S", arguments);
+		return this.private_calculateFunction("COVARIANCE.S", arguments);
 	};
 	/**
 	 * Returns the smallest value for which the cumulative binomial distribution is greater than or equal to a criterion value.
@@ -2200,7 +2200,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CRITBINOM = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CRITBINOM", arguments);
+		return this.private_calculateFunction("CRITBINOM", arguments);
 	};
 	/**
 	 * Returns the sum of squares of deviations of data points from their sample mean.
@@ -2209,7 +2209,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DEVSQ = function () {
-		this.private_calculateFunction("DEVSQ", arguments);
+		return this.private_calculateFunction("DEVSQ", arguments);
 	};
 	/**
 	 * Returns the exponential distribution.
@@ -2221,7 +2221,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXPON_DIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("EXPON.DIST", arguments);
+		return this.private_calculateFunction("EXPON.DIST", arguments);
 	};
 	/**
 	 * Returns the exponential distribution.
@@ -2233,7 +2233,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXPONDIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("EXPONDIST", arguments);
+		return this.private_calculateFunction("EXPONDIST", arguments);
 	};
 	/**
 	 * Returns the (left-tailed) F probability distribution (degree of diversity) for two data sets.
@@ -2246,7 +2246,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.F_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("F.DIST", arguments);
+		return this.private_calculateFunction("F.DIST", arguments);
 	};
 	/**
 	 * Returns the (right-tailed) F probability distribution (degree of diversity) for two data sets.
@@ -2258,7 +2258,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FDIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FDIST", arguments);
+		return this.private_calculateFunction("FDIST", arguments);
 	};
 	/**
 	 * Returns the (right-tailed) F probability distribution (degree of diversity) for two data sets.
@@ -2270,7 +2270,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.F_DIST_RT = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("F.DIST.RT", arguments);
+		return this.private_calculateFunction("F.DIST.RT", arguments);
 	};
 	/**
 	 * Returns the inverse of the (left-tailed) F probability distribution: if p = F.DIST(x,...), then F.INV(p,...) = x.
@@ -2282,7 +2282,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.F_INV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("F.INV", arguments);
+		return this.private_calculateFunction("F.INV", arguments);
 	};
 	/**
 	 * Returns the inverse of the (right-tailed) F probability distribution: if p = FDIST(x,...), then FINV(p,...) = x.
@@ -2294,7 +2294,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FINV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FINV", arguments);
+		return this.private_calculateFunction("FINV", arguments);
 	};
 	/**
 	 * Returns the inverse of the (right-tailed) F probability distribution: if p = F.DIST.RT(x,...), then F.INV.RT(p,...) = x.
@@ -2306,7 +2306,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.F_INV_RT = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("F.INV.RT", arguments);
+		return this.private_calculateFunction("F.INV.RT", arguments);
 	};
 	/**
 	 * Returns the Fisher transformation.
@@ -2316,7 +2316,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FISHER = function (arg1) {
-		this.private_calculateFunction("FISHER", arguments);
+		return this.private_calculateFunction("FISHER", arguments);
 	};
 	/**
 	 * Returns the inverse of the Fisher transformation: if y = FISHER(x), then FISHERINV(y) = x.
@@ -2326,7 +2326,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
-		this.private_calculateFunction("FISHERINV", arguments);
+		return this.private_calculateFunction("FISHERINV", arguments);
 	};
 	/**
 	 * Calculates, or predicts, a future value along a linear trend by using existing values.
@@ -2338,22 +2338,22 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FORECAST", arguments);
+		return this.private_calculateFunction("FORECAST", arguments);
 	};
 	/**
 	 * Returns the forecasted value for a specific future target date using exponential smoothing method..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 .
-	 * @param {ApiRange} arg2 .
-	 * @param {ApiRange} arg3 .
-	 * @param {?number} arg4 .
-	 * @param {?number} arg5 .
-	 * @param {?number} arg6 .
+	 * @param {number} arg1.
+	 * @param {ApiRange} arg2.
+	 * @param {ApiRange} arg3.
+	 * @param {?number} arg4.
+	 * @param {?number} arg5.
+	 * @param {?number} arg6.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("FORECAST.ETS", arguments);
+		return this.private_calculateFunction("FORECAST.ETS", arguments);
 	};
 	/**
 	 * Returns a confidence interval for the forecast value at the specified target date..
@@ -2369,7 +2369,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_CONFINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("FORECAST.ETS.CONFINT", arguments);
+		return this.private_calculateFunction("FORECAST.ETS.CONFINT", arguments);
 	};
 	/**
 	 * Returns the length of the repetitive pattern an application detects for the specified time series..
@@ -2382,7 +2382,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_SEASONALITY = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
+		return this.private_calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
 	};
 	/**
 	 * Returns the requested statistic for the forecast..
@@ -2397,7 +2397,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
+		return this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
 	};
 	/**
 	 * Calculates, or predicts, a future value along a linear trend by using existing values.
@@ -2409,7 +2409,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_LINEAR = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FORECAST.LINEAR", arguments);
+		return this.private_calculateFunction("FORECAST.LINEAR", arguments);
 	};
 	/**
 	 * Calculates how often values occur within a range of values and then returns a vertical array of numbers that have one more element than Bins_array.
@@ -2420,7 +2420,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
-		this.private_calculateFunction("FREQUENCY", arguments);
+		return this.private_calculateFunction("FREQUENCY", arguments);
 	};
 	/**
 	 * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
@@ -2431,7 +2431,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FTEST = function (arg1, arg2) {
-		this.private_calculateFunction("FTEST", arguments);
+		return this.private_calculateFunction("FTEST", arguments);
 	};
 	/**
 	 * Returns the result of an F-test, the two-tailed probability that the variances in Array1 and Array2 are not significantly different.
@@ -2442,7 +2442,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.F_TEST = function (arg1, arg2) {
-		this.private_calculateFunction("F.TEST", arguments);
+		return this.private_calculateFunction("F.TEST", arguments);
 	};
 	/**
 	 * Returns the Gamma function value.
@@ -2452,7 +2452,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA = function (arg1) {
-		this.private_calculateFunction("GAMMA", arguments);
+		return this.private_calculateFunction("GAMMA", arguments);
 	};
 	/**
 	 * Returns the gamma distribution.
@@ -2465,7 +2465,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("GAMMA.DIST", arguments);
+		return this.private_calculateFunction("GAMMA.DIST", arguments);
 	};
 	/**
 	 * Returns the gamma distribution.
@@ -2478,7 +2478,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMADIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("GAMMADIST", arguments);
+		return this.private_calculateFunction("GAMMADIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the gamma cumulative distribution: if p = GAMMA.DIST(x,...), then GAMMA.INV(p,...) = x.
@@ -2490,7 +2490,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_INV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("GAMMA.INV", arguments);
+		return this.private_calculateFunction("GAMMA.INV", arguments);
 	};
 	/**
 	 * Returns the inverse of the gamma cumulative distribution: if p = GAMMADIST(x,...), then GAMMAINV(p,...) = x.
@@ -2502,7 +2502,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMAINV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("GAMMAINV", arguments);
+		return this.private_calculateFunction("GAMMAINV", arguments);
 	};
 	/**
 	 * Returns the natural logarithm of the gamma function.
@@ -2512,7 +2512,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN = function (arg1) {
-		this.private_calculateFunction("GAMMALN", arguments);
+		return this.private_calculateFunction("GAMMALN", arguments);
 	};
 	/**
 	 * Returns the natural logarithm of the gamma function.
@@ -2522,7 +2522,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN_PRECISE = function (arg1) {
-		this.private_calculateFunction("GAMMALN.PRECISE", arguments);
+		return this.private_calculateFunction("GAMMALN.PRECISE", arguments);
 	};
 	/**
 	 * Returns 0.5 less than the standard normal cumulative distribution.
@@ -2532,7 +2532,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GAUSS = function (arg1) {
-		this.private_calculateFunction("GAUSS", arguments);
+		return this.private_calculateFunction("GAUSS", arguments);
 	};
 	/**
 	 * Returns the geometric mean of an array or range of positive numeric data.
@@ -2541,7 +2541,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GEOMEAN = function () {
-		this.private_calculateFunction("GEOMEAN", arguments);
+		return this.private_calculateFunction("GEOMEAN", arguments);
 	};
 	/**
 	 * Returns numbers in an exponential growth trend matching known data points.
@@ -2554,7 +2554,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("GROWTH", arguments);
+		return this.private_calculateFunction("GROWTH", arguments);
 	};
 	/**
 	 * Returns the harmonic mean of a data set of positive numbers: the reciprocal of the arithmetic mean of reciprocals.
@@ -2563,7 +2563,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HARMEAN = function () {
-		this.private_calculateFunction("HARMEAN", arguments);
+		return this.private_calculateFunction("HARMEAN", arguments);
 	};
 	/**
 	 * Returns the hypergeometric distribution.
@@ -2576,7 +2576,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOMDIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("HYPGEOMDIST", arguments);
+		return this.private_calculateFunction("HYPGEOMDIST", arguments);
 	};
 	/**
 	 * Returns the hypergeometric distribution.
@@ -2590,7 +2590,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("HYPGEOM.DIST", arguments);
+		return this.private_calculateFunction("HYPGEOM.DIST", arguments);
 	};
 	/**
 	 * Calculates the point at which a line will intersect the y-axis by using a best-fit regression line plotted through the known x-values and y-values.
@@ -2601,7 +2601,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.INTERCEPT = function (arg1, arg2) {
-		this.private_calculateFunction("INTERCEPT", arguments);
+		return this.private_calculateFunction("INTERCEPT", arguments);
 	};
 	/**
 	 * Returns the kurtosis of a data set.
@@ -2610,7 +2610,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.KURT = function () {
-		this.private_calculateFunction("KURT", arguments);
+		return this.private_calculateFunction("KURT", arguments);
 	};
 	/**
 	 * Returns the k-th largest value in a data set. For example, the fifth largest number.
@@ -2621,7 +2621,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
-		this.private_calculateFunction("LARGE", arguments);
+		return this.private_calculateFunction("LARGE", arguments);
 	};
 	/**
 	 * Returns statistics that describe a linear trend matching known data points, by fitting a straight line using the least squares method.
@@ -2634,7 +2634,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("LINEST", arguments);
+		return this.private_calculateFunction("LINEST", arguments);
 	};
 	/**
 	 * Returns statistics that describe an exponential curve matching known data points.
@@ -2647,7 +2647,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOGEST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("LOGEST", arguments);
+		return this.private_calculateFunction("LOGEST", arguments);
 	};
 	/**
 	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
@@ -2659,7 +2659,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOGINV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("LOGINV", arguments);
+		return this.private_calculateFunction("LOGINV", arguments);
 	};
 	/**
 	 * Returns the lognormal distribution of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
@@ -2672,7 +2672,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("LOGNORM.DIST", arguments);
+		return this.private_calculateFunction("LOGNORM.DIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
@@ -2684,7 +2684,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_INV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("LOGNORM.INV", arguments);
+		return this.private_calculateFunction("LOGNORM.INV", arguments);
 	};
 	/**
 	 * Returns the cumulative lognormal distribution of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
@@ -2696,7 +2696,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORMDIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("LOGNORMDIST", arguments);
+		return this.private_calculateFunction("LOGNORMDIST", arguments);
 	};
 	/**
 	 * Returns the largest value in a set of values. Ignores logical values and text.
@@ -2705,7 +2705,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MAX = function () {
-		this.private_calculateFunction("MAX", arguments);
+		return this.private_calculateFunction("MAX", arguments);
 	};
 	/**
 	 * Returns the largest value in a set of values. Does not ignore logical values and text.
@@ -2714,7 +2714,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MAXA = function () {
-		this.private_calculateFunction("MAXA", arguments);
+		return this.private_calculateFunction("MAXA", arguments);
 	};
 	/**
 	 * Returns the median, or the number in the middle of the set of given numbers.
@@ -2723,7 +2723,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MEDIAN = function () {
-		this.private_calculateFunction("MEDIAN", arguments);
+		return this.private_calculateFunction("MEDIAN", arguments);
 	};
 	/**
 	 * Returns the smallest number in a set of values. Ignores logical values and text.
@@ -2732,7 +2732,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MIN = function () {
-		this.private_calculateFunction("MIN", arguments);
+		return this.private_calculateFunction("MIN", arguments);
 	};
 	/**
 	 * Returns the smallest value in a set of values. Does not ignore logical values and text.
@@ -2741,7 +2741,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MINA = function () {
-		this.private_calculateFunction("MINA", arguments);
+		return this.private_calculateFunction("MINA", arguments);
 	};
 	/**
 	 * Returns the most frequently occurring, or repetitive, value in an array or range of data.
@@ -2750,7 +2750,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MODE = function () {
-		this.private_calculateFunction("MODE", arguments);
+		return this.private_calculateFunction("MODE", arguments);
 	};
 	/**
 	 * Returns a vertical array of the most frequently occurring, or repetitive, values in an array or range of data. For a horizontal array, use =TRANSPOSE(MODE.MULT(number1,number2,...)).
@@ -2759,7 +2759,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MODE_MULT = function () {
-		this.private_calculateFunction("MODE.MULT", arguments);
+		return this.private_calculateFunction("MODE.MULT", arguments);
 	};
 	/**
 	 * Returns the most frequently occurring, or repetitive, value in an array or range of data.
@@ -2768,7 +2768,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MODE_SNGL = function () {
-		this.private_calculateFunction("MODE.SNGL", arguments);
+		return this.private_calculateFunction("MODE.SNGL", arguments);
 	};
 	/**
 	 * Returns the negative binomial distribution, the probability that there will be Number_f failures before the Number_s-th success, with Probability_s probability of a success.
@@ -2780,7 +2780,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOMDIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("NEGBINOMDIST", arguments);
+		return this.private_calculateFunction("NEGBINOMDIST", arguments);
 	};
 	/**
 	 * Returns the negative binomial distribution, the probability that there will be Number_f failures before the Number_s-th success, with Probability_s probability of a success.
@@ -2793,7 +2793,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOM_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("NEGBINOM.DIST", arguments);
+		return this.private_calculateFunction("NEGBINOM.DIST", arguments);
 	};
 	/**
 	 * Returns the normal cumulative distribution for the specified mean and standard deviation.
@@ -2806,7 +2806,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORMDIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("NORMDIST", arguments);
+		return this.private_calculateFunction("NORMDIST", arguments);
 	};
 	/**
 	 * Returns the normal distribution for the specified mean and standard deviation.
@@ -2819,7 +2819,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORM_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("NORM.DIST", arguments);
+		return this.private_calculateFunction("NORM.DIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the normal cumulative distribution for the specified mean and standard deviation.
@@ -2831,7 +2831,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORMINV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("NORMINV", arguments);
+		return this.private_calculateFunction("NORMINV", arguments);
 	};
 	/**
 	 * Returns the inverse of the normal cumulative distribution for the specified mean and standard deviation.
@@ -2843,7 +2843,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORM_INV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("NORM.INV", arguments);
+		return this.private_calculateFunction("NORM.INV", arguments);
 	};
 	/**
 	 * Returns the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
@@ -2853,7 +2853,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORMSDIST = function (arg1) {
-		this.private_calculateFunction("NORMSDIST", arguments);
+		return this.private_calculateFunction("NORMSDIST", arguments);
 	};
 	/**
 	 * Returns the standard normal distribution (has a mean of zero and a standard deviation of one).
@@ -2864,7 +2864,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_DIST = function (arg1, arg2) {
-		this.private_calculateFunction("NORM.S.DIST", arguments);
+		return this.private_calculateFunction("NORM.S.DIST", arguments);
 	};
 	/**
 	 * Returns the inverse of the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
@@ -2874,7 +2874,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORMSINV = function (arg1) {
-		this.private_calculateFunction("NORMSINV", arguments);
+		return this.private_calculateFunction("NORMSINV", arguments);
 	};
 	/**
 	 * Returns the inverse of the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
@@ -2884,7 +2884,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
-		this.private_calculateFunction("NORM.S.INV", arguments);
+		return this.private_calculateFunction("NORM.S.INV", arguments);
 	};
 	/**
 	 * Returns the Pearson product moment correlation coefficient, r.
@@ -2895,7 +2895,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PEARSON = function (arg1, arg2) {
-		this.private_calculateFunction("PEARSON", arguments);
+		return this.private_calculateFunction("PEARSON", arguments);
 	};
 	/**
 	 * Returns the k-th percentile of values in a range.
@@ -2906,7 +2906,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE = function (arg1, arg2) {
-		this.private_calculateFunction("PERCENTILE", arguments);
+		return this.private_calculateFunction("PERCENTILE", arguments);
 	};
 	/**
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, exclusive.
@@ -2917,7 +2917,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_EXC = function (arg1, arg2) {
-		this.private_calculateFunction("PERCENTILE.EXC", arguments);
+		return this.private_calculateFunction("PERCENTILE.EXC", arguments);
 	};
 	/**
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, inclusive.
@@ -2928,7 +2928,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_INC = function (arg1, arg2) {
-		this.private_calculateFunction("PERCENTILE.INC", arguments);
+		return this.private_calculateFunction("PERCENTILE.INC", arguments);
 	};
 	/**
 	 * Returns the rank of a value in a data set as a percentage of the data set.
@@ -2940,7 +2940,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("PERCENTRANK", arguments);
+		return this.private_calculateFunction("PERCENTRANK", arguments);
 	};
 	/**
 	 * Returns the rank of a value in a data set as a percentage of the data set as a percentage (0..1, exclusive) of the data set.
@@ -2952,7 +2952,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_EXC = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("PERCENTRANK.EXC", arguments);
+		return this.private_calculateFunction("PERCENTRANK.EXC", arguments);
 	};
 	/**
 	 * Returns the rank of a value in a data set as a percentage of the data set as a percentage (0..1, inclusive) of the data set.
@@ -2964,7 +2964,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_INC = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("PERCENTRANK.INC", arguments);
+		return this.private_calculateFunction("PERCENTRANK.INC", arguments);
 	};
 	/**
 	 * Returns the number of permutations for a given number of objects that can be selected from the total objects.
@@ -2975,7 +2975,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERMUT = function (arg1, arg2) {
-		this.private_calculateFunction("PERMUT", arguments);
+		return this.private_calculateFunction("PERMUT", arguments);
 	};
 	/**
 	 * Returns the number of permutations for a given number of objects (with repetitions) that can be selected from the total objects.
@@ -2986,7 +2986,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PERMUTATIONA = function (arg1, arg2) {
-		this.private_calculateFunction("PERMUTATIONA", arguments);
+		return this.private_calculateFunction("PERMUTATIONA", arguments);
 	};
 	/**
 	 * Returns the value of the density function for a standard normal distribution.
@@ -2996,7 +2996,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PHI = function (arg1) {
-		this.private_calculateFunction("PHI", arguments);
+		return this.private_calculateFunction("PHI", arguments);
 	};
 	/**
 	 * Returns the Poisson distribution.
@@ -3008,7 +3008,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.POISSON = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("POISSON", arguments);
+		return this.private_calculateFunction("POISSON", arguments);
 	};
 	/**
 	 * Returns the Poisson distribution.
@@ -3020,7 +3020,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("POISSON.DIST", arguments);
+		return this.private_calculateFunction("POISSON.DIST", arguments);
 	};
 	/**
 	 * Returns the probability that values in a range are between two limits or equal to a lower limit.
@@ -3033,7 +3033,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PROB = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("PROB", arguments);
+		return this.private_calculateFunction("PROB", arguments);
 	};
 	/**
 	 * Returns the quartile of a data set.
@@ -3044,7 +3044,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE = function (arg1, arg2) {
-		this.private_calculateFunction("QUARTILE", arguments);
+		return this.private_calculateFunction("QUARTILE", arguments);
 	};
 	/**
 	 * Returns the quartile of a data set, based on percentile values from 0..1, exclusive.
@@ -3055,7 +3055,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_EXC = function (arg1, arg2) {
-		this.private_calculateFunction("QUARTILE.EXC", arguments);
+		return this.private_calculateFunction("QUARTILE.EXC", arguments);
 	};
 	/**
 	 * Returns the quartile of a data set, based on percentile values from 0..1, inclusive.
@@ -3066,7 +3066,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_INC = function (arg1, arg2) {
-		this.private_calculateFunction("QUARTILE.INC", arguments);
+		return this.private_calculateFunction("QUARTILE.INC", arguments);
 	};
 	/**
 	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list.
@@ -3078,7 +3078,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RANK = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("RANK", arguments);
+		return this.private_calculateFunction("RANK", arguments);
 	};
 	/**
 	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list; if more than one value has the same rank, the average rank is returned.
@@ -3090,7 +3090,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RANK_AVG = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("RANK.AVG", arguments);
+		return this.private_calculateFunction("RANK.AVG", arguments);
 	};
 	/**
 	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list; if more than one value has the same rank, the top rank of that set of values is returned.
@@ -3102,7 +3102,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("RANK.EQ", arguments);
+		return this.private_calculateFunction("RANK.EQ", arguments);
 	};
 	/**
 	 * Returns the square of the Pearson product moment correlation coefficient through the given data points.
@@ -3113,7 +3113,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RSQ = function (arg1, arg2) {
-		this.private_calculateFunction("RSQ", arguments);
+		return this.private_calculateFunction("RSQ", arguments);
 	};
 	/**
 	 * Returns the skewness of a distribution: a characterisation of the degree of asymmetry of a distribution around its mean.
@@ -3122,7 +3122,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SKEW = function () {
-		this.private_calculateFunction("SKEW", arguments);
+		return this.private_calculateFunction("SKEW", arguments);
 	};
 	/**
 	 * Returns the skewness of a distribution based on a population: a characterisation of the degree of asymmetry of a distribution around its mean.
@@ -3131,7 +3131,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SKEW_P = function () {
-		this.private_calculateFunction("SKEW.P", arguments);
+		return this.private_calculateFunction("SKEW.P", arguments);
 	};
 	/**
 	 * Returns the slope of the linear regression line through the given data points.
@@ -3142,7 +3142,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SLOPE = function (arg1, arg2) {
-		this.private_calculateFunction("SLOPE", arguments);
+		return this.private_calculateFunction("SLOPE", arguments);
 	};
 	/**
 	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
@@ -3153,7 +3153,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
-		this.private_calculateFunction("SMALL", arguments);
+		return this.private_calculateFunction("SMALL", arguments);
 	};
 	/**
 	 * Returns a normalised value from a distribution characterised by a mean and standard deviation.
@@ -3165,7 +3165,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STANDARDIZE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("STANDARDIZE", arguments);
+		return this.private_calculateFunction("STANDARDIZE", arguments);
 	};
 	/**
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
@@ -3174,7 +3174,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEV = function () {
-		this.private_calculateFunction("STDEV", arguments);
+		return this.private_calculateFunction("STDEV", arguments);
 	};
 	/**
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
@@ -3183,7 +3183,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_S = function () {
-		this.private_calculateFunction("STDEV.S", arguments);
+		return this.private_calculateFunction("STDEV.S", arguments);
 	};
 	/**
 	 * Estimates standard deviation based on a sample, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
@@ -3192,7 +3192,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEVA = function () {
-		this.private_calculateFunction("STDEVA", arguments);
+		return this.private_calculateFunction("STDEVA", arguments);
 	};
 	/**
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
@@ -3201,7 +3201,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEVP = function () {
-		this.private_calculateFunction("STDEVP", arguments);
+		return this.private_calculateFunction("STDEVP", arguments);
 	};
 	/**
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
@@ -3210,7 +3210,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_P = function () {
-		this.private_calculateFunction("STDEV.P", arguments);
+		return this.private_calculateFunction("STDEV.P", arguments);
 	};
 	/**
 	 * Calculates standard deviation based on an entire population, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
@@ -3219,7 +3219,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEVPA = function () {
-		this.private_calculateFunction("STDEVPA", arguments);
+		return this.private_calculateFunction("STDEVPA", arguments);
 	};
 	/**
 	 * Returns the standard error of the predicted y-value for each x in a regression.
@@ -3230,7 +3230,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STEYX = function (arg1, arg2) {
-		this.private_calculateFunction("STEYX", arguments);
+		return this.private_calculateFunction("STEYX", arguments);
 	};
 	/**
 	 * Returns the Student's t-distribution.
@@ -3242,7 +3242,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TDIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("TDIST", arguments);
+		return this.private_calculateFunction("TDIST", arguments);
 	};
 	/**
 	 * Returns the left-tailed Student's t-distribution.
@@ -3254,7 +3254,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("T.DIST", arguments);
+		return this.private_calculateFunction("T.DIST", arguments);
 	};
 	/**
 	 * Returns the two-tailed Student's t-distribution.
@@ -3265,7 +3265,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_2T = function (arg1, arg2) {
-		this.private_calculateFunction("T.DIST.2T", arguments);
+		return this.private_calculateFunction("T.DIST.2T", arguments);
 	};
 	/**
 	 * Returns the right-tailed Student's t-distribution.
@@ -3276,7 +3276,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_RT = function (arg1, arg2) {
-		this.private_calculateFunction("T.DIST.RT", arguments);
+		return this.private_calculateFunction("T.DIST.RT", arguments);
 	};
 	/**
 	 * Returns the left-tailed inverse of the Student's t-distribution.
@@ -3287,7 +3287,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_INV = function (arg1, arg2) {
-		this.private_calculateFunction("T.INV", arguments);
+		return this.private_calculateFunction("T.INV", arguments);
 	};
 	/**
 	 * Returns the two-tailed inverse of the Student's t-distribution.
@@ -3298,7 +3298,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_INV_2T = function (arg1, arg2) {
-		this.private_calculateFunction("T.INV.2T", arguments);
+		return this.private_calculateFunction("T.INV.2T", arguments);
 	};
 	/**
 	 * Returns the two-tailed inverse of the Student's t-distribution.
@@ -3309,7 +3309,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TINV = function (arg1, arg2) {
-		this.private_calculateFunction("TINV", arguments);
+		return this.private_calculateFunction("TINV", arguments);
 	};
 	/**
 	 * Returns numbers in a linear trend matching known data points, using the least squares method.
@@ -3322,7 +3322,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("TREND", arguments);
+		return this.private_calculateFunction("TREND", arguments);
 	};
 	/**
 	 * Returns the mean of the interior portion of a set of data values.
@@ -3333,7 +3333,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
-		this.private_calculateFunction("TRIMMEAN", arguments);
+		return this.private_calculateFunction("TRIMMEAN", arguments);
 	};
 	/**
 	 * Returns the probability associated with a Student's t-Test.
@@ -3346,7 +3346,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TTEST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("TTEST", arguments);
+		return this.private_calculateFunction("TTEST", arguments);
 	};
 	/**
 	 * Returns the probability associated with a Student's t-Test.
@@ -3359,7 +3359,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.T_TEST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("T.TEST", arguments);
+		return this.private_calculateFunction("T.TEST", arguments);
 	};
 	/**
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
@@ -3368,7 +3368,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VAR = function () {
-		this.private_calculateFunction("VAR", arguments);
+		return this.private_calculateFunction("VAR", arguments);
 	};
 	/**
 	 * Estimates variance based on a sample, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
@@ -3377,7 +3377,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VARA = function () {
-		this.private_calculateFunction("VARA", arguments);
+		return this.private_calculateFunction("VARA", arguments);
 	};
 	/**
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
@@ -3386,7 +3386,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VARP = function () {
-		this.private_calculateFunction("VARP", arguments);
+		return this.private_calculateFunction("VARP", arguments);
 	};
 	/**
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
@@ -3395,7 +3395,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VAR_P = function () {
-		this.private_calculateFunction("VAR.P", arguments);
+		return this.private_calculateFunction("VAR.P", arguments);
 	};
 	/**
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
@@ -3404,7 +3404,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VAR_S = function () {
-		this.private_calculateFunction("VAR.S", arguments);
+		return this.private_calculateFunction("VAR.S", arguments);
 	};
 	/**
 	 * Calculates variance based on the entire population, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
@@ -3413,7 +3413,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VARPA = function () {
-		this.private_calculateFunction("VARPA", arguments);
+		return this.private_calculateFunction("VARPA", arguments);
 	};
 	/**
 	 * Returns the Weibull distribution.
@@ -3426,7 +3426,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("WEIBULL", arguments);
+		return this.private_calculateFunction("WEIBULL", arguments);
 	};
 	/**
 	 * Returns the Weibull distribution.
@@ -3439,7 +3439,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL_DIST = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("WEIBULL.DIST", arguments);
+		return this.private_calculateFunction("WEIBULL.DIST", arguments);
 	};
 	/**
 	 * Returns the one-tailed P-value of a z-test.
@@ -3451,7 +3451,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ZTEST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("ZTEST", arguments);
+		return this.private_calculateFunction("ZTEST", arguments);
 	};
 	/**
 	 * Returns the one-tailed P-value of a z-test.
@@ -3463,7 +3463,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.Z_TEST = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("Z.TEST", arguments);
+		return this.private_calculateFunction("Z.TEST", arguments);
 	};
 	/**
 	 * Returns the number that represents the date in the date-time code.
@@ -3475,7 +3475,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DATE", arguments);
+		return this.private_calculateFunction("DATE", arguments);
 	};
 	/**
 	 * Converts a date in the form of text to a number that represents the date in the date-time code.
@@ -3485,7 +3485,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
-		this.private_calculateFunction("DATEVALUE", arguments);
+		return this.private_calculateFunction("DATEVALUE", arguments);
 	};
 	/**
 	 * Returns the day of the month, a number from 1 to 31..
@@ -3495,7 +3495,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DAY = function (arg1) {
-		this.private_calculateFunction("DAY", arguments);
+		return this.private_calculateFunction("DAY", arguments);
 	};
 	/**
 	 * Returns the number of days between the two dates..
@@ -3506,7 +3506,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
-		this.private_calculateFunction("DAYS", arguments);
+		return this.private_calculateFunction("DAYS", arguments);
 	};
 	/**
 	 * Returns the number of days between two dates based on a 360-day year (twelve 30-day months).
@@ -3518,7 +3518,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DAYS360", arguments);
+		return this.private_calculateFunction("DAYS360", arguments);
 	};
 	/**
 	 * Returns the serial number of the date that is the indicated number of months before or after the start date.
@@ -3529,7 +3529,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
-		this.private_calculateFunction("EDATE", arguments);
+		return this.private_calculateFunction("EDATE", arguments);
 	};
 	/**
 	 * Returns the serial number of the last day of the month before or after a specified number of months.
@@ -3540,7 +3540,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
-		this.private_calculateFunction("EOMONTH", arguments);
+		return this.private_calculateFunction("EOMONTH", arguments);
 	};
 	/**
 	 * Returns the hour as a number from 0 (12:00 A.M.) to 23 (11:00 P.M.)..
@@ -3550,7 +3550,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HOUR = function (arg1) {
-		this.private_calculateFunction("HOUR", arguments);
+		return this.private_calculateFunction("HOUR", arguments);
 	};
 	/**
 	 * Returns the ISO week number in the year for a given date.
@@ -3560,7 +3560,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISOWEEKNUM = function (arg1) {
-		this.private_calculateFunction("ISOWEEKNUM", arguments);
+		return this.private_calculateFunction("ISOWEEKNUM", arguments);
 	};
 	/**
 	 * Returns the minute, a number from 0 to 59..
@@ -3570,7 +3570,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MINUTE = function (arg1) {
-		this.private_calculateFunction("MINUTE", arguments);
+		return this.private_calculateFunction("MINUTE", arguments);
 	};
 	/**
 	 * Returns the month, a number from 1 (January) to 12 (December)..
@@ -3580,7 +3580,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MONTH = function (arg1) {
-		this.private_calculateFunction("MONTH", arguments);
+		return this.private_calculateFunction("MONTH", arguments);
 	};
 	/**
 	 * Returns the number of whole workdays between two dates.
@@ -3592,7 +3592,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("NETWORKDAYS", arguments);
+		return this.private_calculateFunction("NETWORKDAYS", arguments);
 	};
 	/**
 	 * Returns the number of whole workdays between two dates with custom weekend parameters.
@@ -3605,7 +3605,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS_INTL = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
+		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
 	};
 	/**
 	 * Returns the current date and time formatted as a date and time..
@@ -3614,7 +3614,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NOW = function () {
-		this.private_calculateFunction("NOW", arguments);
+		return this.private_calculateFunction("NOW", arguments);
 	};
 	/**
 	 * Returns the second, a number from 0 to 59..
@@ -3624,7 +3624,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SECOND = function (arg1) {
-		this.private_calculateFunction("SECOND", arguments);
+		return this.private_calculateFunction("SECOND", arguments);
 	};
 	/**
 	 * Converts hours, minutes and seconds given as numbers to a serial number, formatted with a time format.
@@ -3636,7 +3636,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TIME = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("TIME", arguments);
+		return this.private_calculateFunction("TIME", arguments);
 	};
 	/**
 	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM). Format the number with a time format after entering the formula.
@@ -3646,7 +3646,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TIMEVALUE = function (arg1) {
-		this.private_calculateFunction("TIMEVALUE", arguments);
+		return this.private_calculateFunction("TIMEVALUE", arguments);
 	};
 	/**
 	 * Returns the current date formatted as a date..
@@ -3655,7 +3655,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TODAY = function () {
-		this.private_calculateFunction("TODAY", arguments);
+		return this.private_calculateFunction("TODAY", arguments);
 	};
 	/**
 	 * Returns a number from 1 to 7 identifying the day of the week of a date..
@@ -3666,7 +3666,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WEEKDAY = function (arg1, arg2) {
-		this.private_calculateFunction("WEEKDAY", arguments);
+		return this.private_calculateFunction("WEEKDAY", arguments);
 	};
 	/**
 	 * Returns the week number in the year.
@@ -3677,7 +3677,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WEEKNUM = function (arg1, arg2) {
-		this.private_calculateFunction("WEEKNUM", arguments);
+		return this.private_calculateFunction("WEEKNUM", arguments);
 	};
 	/**
 	 * Returns the serial number of the date before or after a specified number of workdays.
@@ -3689,7 +3689,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("WORKDAY", arguments);
+		return this.private_calculateFunction("WORKDAY", arguments);
 	};
 	/**
 	 * Returns the serial number of the date before or after a specified number of workdays with custom weekend parameters.
@@ -3702,7 +3702,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY_INTL = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("WORKDAY.INTL", arguments);
+		return this.private_calculateFunction("WORKDAY.INTL", arguments);
 	};
 	/**
 	 * Returns the year of a date, an integer in the range 1900-9999..
@@ -3712,7 +3712,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.YEAR = function (arg1) {
-		this.private_calculateFunction("YEAR", arguments);
+		return this.private_calculateFunction("YEAR", arguments);
 	};
 	/**
 	 * Returns the year fraction representing the number of whole days between start_date and end_date.
@@ -3724,7 +3724,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.YEARFRAC = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("YEARFRAC", arguments);
+		return this.private_calculateFunction("YEARFRAC", arguments);
 	};
 	/**
 	 * Returns the modified Bessel function In(x).
@@ -3735,7 +3735,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BESSELI = function (arg1, arg2) {
-		this.private_calculateFunction("BESSELI", arguments);
+		return this.private_calculateFunction("BESSELI", arguments);
 	};
 	/**
 	 * Returns the Bessel function Jn(x).
@@ -3746,7 +3746,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BESSELJ = function (arg1, arg2) {
-		this.private_calculateFunction("BESSELJ", arguments);
+		return this.private_calculateFunction("BESSELJ", arguments);
 	};
 	/**
 	 * Returns the modified Bessel function Kn(x).
@@ -3757,7 +3757,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BESSELK = function (arg1, arg2) {
-		this.private_calculateFunction("BESSELK", arguments);
+		return this.private_calculateFunction("BESSELK", arguments);
 	};
 	/**
 	 * Returns the Bessel function Yn(x).
@@ -3768,7 +3768,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BESSELY = function (arg1, arg2) {
-		this.private_calculateFunction("BESSELY", arguments);
+		return this.private_calculateFunction("BESSELY", arguments);
 	};
 	/**
 	 * Converts a binary number to decimal.
@@ -3778,7 +3778,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BIN2DEC = function (arg1) {
-		this.private_calculateFunction("BIN2DEC", arguments);
+		return this.private_calculateFunction("BIN2DEC", arguments);
 	};
 	/**
 	 * Converts a binary number to hexadecimal.
@@ -3789,7 +3789,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
-		this.private_calculateFunction("BIN2HEX", arguments);
+		return this.private_calculateFunction("BIN2HEX", arguments);
 	};
 	/**
 	 * Converts a binary number to octal.
@@ -3800,7 +3800,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
-		this.private_calculateFunction("BIN2OCT", arguments);
+		return this.private_calculateFunction("BIN2OCT", arguments);
 	};
 	/**
 	 * Returns a bitwise 'And' of two numbers.
@@ -3811,7 +3811,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BITAND = function (arg1, arg2) {
-		this.private_calculateFunction("BITAND", arguments);
+		return this.private_calculateFunction("BITAND", arguments);
 	};
 	/**
 	 * Returns a number shifted left by shift_amount bits.
@@ -3822,7 +3822,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BITLSHIFT = function (arg1, arg2) {
-		this.private_calculateFunction("BITLSHIFT", arguments);
+		return this.private_calculateFunction("BITLSHIFT", arguments);
 	};
 	/**
 	 * Returns a bitwise 'Or' of two numbers.
@@ -3833,7 +3833,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BITOR = function (arg1, arg2) {
-		this.private_calculateFunction("BITOR", arguments);
+		return this.private_calculateFunction("BITOR", arguments);
 	};
 	/**
 	 * Returns a number shifted right by shift_amount bits.
@@ -3844,7 +3844,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BITRSHIFT = function (arg1, arg2) {
-		this.private_calculateFunction("BITRSHIFT", arguments);
+		return this.private_calculateFunction("BITRSHIFT", arguments);
 	};
 	/**
 	 * Returns a bitwise 'Exclusive Or' of two numbers.
@@ -3855,7 +3855,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BITXOR = function (arg1, arg2) {
-		this.private_calculateFunction("BITXOR", arguments);
+		return this.private_calculateFunction("BITXOR", arguments);
 	};
 	/**
 	 * Converts real and imaginary coefficients into a complex number.
@@ -3867,7 +3867,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("COMPLEX", arguments);
+		return this.private_calculateFunction("COMPLEX", arguments);
 	};
 	/**
 	 * Converts a number from one measurement system to another.
@@ -3879,7 +3879,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CONVERT = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CONVERT", arguments);
+		return this.private_calculateFunction("CONVERT", arguments);
 	};
 	/**
 	 * Converts a decimal number to binary.
@@ -3890,7 +3890,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
-		this.private_calculateFunction("DEC2BIN", arguments);
+		return this.private_calculateFunction("DEC2BIN", arguments);
 	};
 	/**
 	 * Converts a decimal number to hexadecimal.
@@ -3901,7 +3901,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
-		this.private_calculateFunction("DEC2HEX", arguments);
+		return this.private_calculateFunction("DEC2HEX", arguments);
 	};
 	/**
 	 * Converts a decimal number to octal.
@@ -3912,7 +3912,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
-		this.private_calculateFunction("DEC2OCT", arguments);
+		return this.private_calculateFunction("DEC2OCT", arguments);
 	};
 	/**
 	 * Tests whether two numbers are equal.
@@ -3923,7 +3923,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DELTA = function (arg1, arg2) {
-		this.private_calculateFunction("DELTA", arguments);
+		return this.private_calculateFunction("DELTA", arguments);
 	};
 	/**
 	 * Returns the error function.
@@ -3934,7 +3934,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ERF = function (arg1, arg2) {
-		this.private_calculateFunction("ERF", arguments);
+		return this.private_calculateFunction("ERF", arguments);
 	};
 	/**
 	 * Returns the error function.
@@ -3944,7 +3944,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ERF_PRECISE = function (arg1) {
-		this.private_calculateFunction("ERF.PRECISE", arguments);
+		return this.private_calculateFunction("ERF.PRECISE", arguments);
 	};
 	/**
 	 * Returns the complementary error function.
@@ -3954,7 +3954,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ERFC = function (arg1) {
-		this.private_calculateFunction("ERFC", arguments);
+		return this.private_calculateFunction("ERFC", arguments);
 	};
 	/**
 	 * Returns the complementary error function.
@@ -3964,7 +3964,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ERFC_PRECISE = function (arg1) {
-		this.private_calculateFunction("ERFC.PRECISE", arguments);
+		return this.private_calculateFunction("ERFC.PRECISE", arguments);
 	};
 	/**
 	 * Tests whether a number is greater than a threshold value.
@@ -3975,7 +3975,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GESTEP = function (arg1, arg2) {
-		this.private_calculateFunction("GESTEP", arguments);
+		return this.private_calculateFunction("GESTEP", arguments);
 	};
 	/**
 	 * Converts a Hexadecimal number to binary.
@@ -3986,7 +3986,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
-		this.private_calculateFunction("HEX2BIN", arguments);
+		return this.private_calculateFunction("HEX2BIN", arguments);
 	};
 	/**
 	 * Converts a hexadecimal number to decimal.
@@ -3996,7 +3996,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HEX2DEC = function (arg1) {
-		this.private_calculateFunction("HEX2DEC", arguments);
+		return this.private_calculateFunction("HEX2DEC", arguments);
 	};
 	/**
 	 * Converts a hexadecimal number to octal.
@@ -4007,7 +4007,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
-		this.private_calculateFunction("HEX2OCT", arguments);
+		return this.private_calculateFunction("HEX2OCT", arguments);
 	};
 	/**
 	 * Returns the absolute value (modulus) of a complex number.
@@ -4017,7 +4017,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMABS = function (arg1) {
-		this.private_calculateFunction("IMABS", arguments);
+		return this.private_calculateFunction("IMABS", arguments);
 	};
 	/**
 	 * Returns the imaginary coefficient of a complex number.
@@ -4027,7 +4027,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMAGINARY = function (arg1) {
-		this.private_calculateFunction("IMAGINARY", arguments);
+		return this.private_calculateFunction("IMAGINARY", arguments);
 	};
 	/**
 	 * Returns the argument q, an angle expressed in radians.
@@ -4037,7 +4037,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMARGUMENT = function (arg1) {
-		this.private_calculateFunction("IMARGUMENT", arguments);
+		return this.private_calculateFunction("IMARGUMENT", arguments);
 	};
 	/**
 	 * Returns the complex conjugate of a complex number.
@@ -4047,7 +4047,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
-		this.private_calculateFunction("IMCONJUGATE", arguments);
+		return this.private_calculateFunction("IMCONJUGATE", arguments);
 	};
 	/**
 	 * Returns the cosine of a complex number.
@@ -4057,7 +4057,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
-		this.private_calculateFunction("IMCOS", arguments);
+		return this.private_calculateFunction("IMCOS", arguments);
 	};
 	/**
 	 * Returns the hyperbolic cosine of a complex number.
@@ -4067,7 +4067,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
-		this.private_calculateFunction("IMCOSH", arguments);
+		return this.private_calculateFunction("IMCOSH", arguments);
 	};
 	/**
 	 * Returns the cotangent of a complex number.
@@ -4077,7 +4077,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
-		this.private_calculateFunction("IMCOT", arguments);
+		return this.private_calculateFunction("IMCOT", arguments);
 	};
 	/**
 	 * Returns the cosecant of a complex number.
@@ -4087,7 +4087,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
-		this.private_calculateFunction("IMCSC", arguments);
+		return this.private_calculateFunction("IMCSC", arguments);
 	};
 	/**
 	 * Returns the hyperbolic cosecant of a complex number.
@@ -4097,7 +4097,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
-		this.private_calculateFunction("IMCSCH", arguments);
+		return this.private_calculateFunction("IMCSCH", arguments);
 	};
 	/**
 	 * Returns the quotient of two complex numbers.
@@ -4108,7 +4108,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
-		this.private_calculateFunction("IMDIV", arguments);
+		return this.private_calculateFunction("IMDIV", arguments);
 	};
 	/**
 	 * Returns the exponential of a complex number.
@@ -4118,7 +4118,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
-		this.private_calculateFunction("IMEXP", arguments);
+		return this.private_calculateFunction("IMEXP", arguments);
 	};
 	/**
 	 * Returns the natural logarithm of a complex number.
@@ -4128,7 +4128,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
-		this.private_calculateFunction("IMLN", arguments);
+		return this.private_calculateFunction("IMLN", arguments);
 	};
 	/**
 	 * Returns the base-10 logarithm of a complex number.
@@ -4138,7 +4138,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
-		this.private_calculateFunction("IMLOG10", arguments);
+		return this.private_calculateFunction("IMLOG10", arguments);
 	};
 	/**
 	 * Returns the base-2 logarithm of a complex number.
@@ -4148,7 +4148,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
-		this.private_calculateFunction("IMLOG2", arguments);
+		return this.private_calculateFunction("IMLOG2", arguments);
 	};
 	/**
 	 * Returns a complex number raised to an integer power.
@@ -4159,7 +4159,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
-		this.private_calculateFunction("IMPOWER", arguments);
+		return this.private_calculateFunction("IMPOWER", arguments);
 	};
 	/**
 	 * Returns the product of 1 to 255 complex numbers.
@@ -4168,7 +4168,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
-		this.private_calculateFunction("IMPRODUCT", arguments);
+		return this.private_calculateFunction("IMPRODUCT", arguments);
 	};
 	/**
 	 * Returns the real coefficient of a complex number.
@@ -4178,7 +4178,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMREAL = function (arg1) {
-		this.private_calculateFunction("IMREAL", arguments);
+		return this.private_calculateFunction("IMREAL", arguments);
 	};
 	/**
 	 * Returns the secant of a complex number.
@@ -4188,7 +4188,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
-		this.private_calculateFunction("IMSEC", arguments);
+		return this.private_calculateFunction("IMSEC", arguments);
 	};
 	/**
 	 * Returns the hyperbolic secant of a complex number.
@@ -4198,7 +4198,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
-		this.private_calculateFunction("IMSECH", arguments);
+		return this.private_calculateFunction("IMSECH", arguments);
 	};
 	/**
 	 * Returns the sine of a complex number.
@@ -4208,7 +4208,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
-		this.private_calculateFunction("IMSIN", arguments);
+		return this.private_calculateFunction("IMSIN", arguments);
 	};
 	/**
 	 * Returns the hyperbolic sine of a complex number.
@@ -4218,7 +4218,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
-		this.private_calculateFunction("IMSINH", arguments);
+		return this.private_calculateFunction("IMSINH", arguments);
 	};
 	/**
 	 * Returns the square root of a complex number.
@@ -4228,7 +4228,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
-		this.private_calculateFunction("IMSQRT", arguments);
+		return this.private_calculateFunction("IMSQRT", arguments);
 	};
 	/**
 	 * Returns the difference of two complex numbers.
@@ -4239,7 +4239,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
-		this.private_calculateFunction("IMSUB", arguments);
+		return this.private_calculateFunction("IMSUB", arguments);
 	};
 	/**
 	 * Returns the sum of complex numbers.
@@ -4248,7 +4248,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMSUM = function () {
-		this.private_calculateFunction("IMSUM", arguments);
+		return this.private_calculateFunction("IMSUM", arguments);
 	};
 	/**
 	 * Returns the tangent of a complex number.
@@ -4258,7 +4258,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
-		this.private_calculateFunction("IMTAN", arguments);
+		return this.private_calculateFunction("IMTAN", arguments);
 	};
 	/**
 	 * Converts an octal number to binary.
@@ -4269,7 +4269,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
-		this.private_calculateFunction("OCT2BIN", arguments);
+		return this.private_calculateFunction("OCT2BIN", arguments);
 	};
 	/**
 	 * Converts an octal number to decimal.
@@ -4279,7 +4279,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.OCT2DEC = function (arg1) {
-		this.private_calculateFunction("OCT2DEC", arguments);
+		return this.private_calculateFunction("OCT2DEC", arguments);
 	};
 	/**
 	 * Converts an octal number to hexadecimal.
@@ -4290,7 +4290,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
-		this.private_calculateFunction("OCT2HEX", arguments);
+		return this.private_calculateFunction("OCT2HEX", arguments);
 	};
 	/**
 	 * Averages the values in a column in a list or database that match conditions you specify.
@@ -4302,7 +4302,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DAVERAGE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DAVERAGE", arguments);
+		return this.private_calculateFunction("DAVERAGE", arguments);
 	};
 	/**
 	 * Counts the cells containing numbers in the field (column) of records in the database that match the conditions you specify.
@@ -4314,7 +4314,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DCOUNT = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DCOUNT", arguments);
+		return this.private_calculateFunction("DCOUNT", arguments);
 	};
 	/**
 	 * Counts nonblank cells in the field (column) of records in the database that match the conditions you specify.
@@ -4326,7 +4326,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DCOUNTA = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DCOUNTA", arguments);
+		return this.private_calculateFunction("DCOUNTA", arguments);
 	};
 	/**
 	 * Extracts from a database a single record that matches the conditions you specify.
@@ -4338,7 +4338,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DGET = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DGET", arguments);
+		return this.private_calculateFunction("DGET", arguments);
 	};
 	/**
 	 * Returns the largest number in the field (column) of records in the database that match the conditions you specify.
@@ -4350,7 +4350,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DMAX = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DMAX", arguments);
+		return this.private_calculateFunction("DMAX", arguments);
 	};
 	/**
 	 * Returns the smallest number in the field (column) of records in the database that match the conditions you specify.
@@ -4362,7 +4362,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DMIN = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DMIN", arguments);
+		return this.private_calculateFunction("DMIN", arguments);
 	};
 	/**
 	 * Multiplies the values in the field (column) of records in the database that match the conditions you specify.
@@ -4374,7 +4374,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DPRODUCT = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DPRODUCT", arguments);
+		return this.private_calculateFunction("DPRODUCT", arguments);
 	};
 	/**
 	 * Estimates the standard deviation based on a sample from selected database entries.
@@ -4386,7 +4386,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DSTDEV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DSTDEV", arguments);
+		return this.private_calculateFunction("DSTDEV", arguments);
 	};
 	/**
 	 * Calculates the standard deviation based on the entire population of selected database entries.
@@ -4398,7 +4398,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DSTDEVP = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DSTDEVP", arguments);
+		return this.private_calculateFunction("DSTDEVP", arguments);
 	};
 	/**
 	 * Adds the numbers in the field (column) of records in the database that match the conditions you specify.
@@ -4410,7 +4410,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DSUM = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DSUM", arguments);
+		return this.private_calculateFunction("DSUM", arguments);
 	};
 	/**
 	 * Estimates variance based on a sample from selected database entries.
@@ -4422,7 +4422,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DVAR = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DVAR", arguments);
+		return this.private_calculateFunction("DVAR", arguments);
 	};
 	/**
 	 * Calculates variance based on the entire population of selected database entries.
@@ -4434,7 +4434,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DVARP = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("DVARP", arguments);
+		return this.private_calculateFunction("DVARP", arguments);
 	};
 	/**
 	 * Returns the accrued interest for a security that pays periodic interest..
@@ -4451,7 +4451,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACCRINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-		this.private_calculateFunction("ACCRINT", arguments);
+		return this.private_calculateFunction("ACCRINT", arguments);
 	};
 	/**
 	 * Returns the accrued interest for a security that pays interest at maturity.
@@ -4465,23 +4465,23 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACCRINTM = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("ACCRINTM", arguments);
+		return this.private_calculateFunction("ACCRINTM", arguments);
 	};
 	/**
 	 * Returns the prorated linear depreciation of an asset for each accounting period..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 .
-	 * @param {any} arg2 .
-	 * @param {any} arg3 .
-	 * @param {any} arg4 .
-	 * @param {any} arg5 .
-	 * @param {any} arg6 .
-	 * @param {?any} arg7 .
+	 * @param {any} arg1.
+	 * @param {any} arg2.
+	 * @param {any} arg3.
+	 * @param {any} arg4.
+	 * @param {any} arg5.
+	 * @param {any} arg6.
+	 * @param {?any} arg7.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AMORDEGRC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("AMORDEGRC", arguments);
+		return this.private_calculateFunction("AMORDEGRC", arguments);
 	};
 	/**
 	 * Returns the prorated linear depreciation of an asset for each accounting period..
@@ -4497,7 +4497,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AMORLINC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("AMORLINC", arguments);
+		return this.private_calculateFunction("AMORLINC", arguments);
 	};
 	/**
 	 * Returns the number of days from the beginning of the coupon period to the settlement date.
@@ -4510,7 +4510,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYBS = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPDAYBS", arguments);
+		return this.private_calculateFunction("COUPDAYBS", arguments);
 	};
 	/**
 	 * Returns the number of days in the coupon period that contains the settlement date.
@@ -4523,7 +4523,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYS = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPDAYS", arguments);
+		return this.private_calculateFunction("COUPDAYS", arguments);
 	};
 	/**
 	 * Returns the number of days from the settlement date to the next coupon date.
@@ -4536,7 +4536,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYSNC = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPDAYSNC", arguments);
+		return this.private_calculateFunction("COUPDAYSNC", arguments);
 	};
 	/**
 	 * Returns the next coupon date after the settlement date.
@@ -4549,7 +4549,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPNCD = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPNCD", arguments);
+		return this.private_calculateFunction("COUPNCD", arguments);
 	};
 	/**
 	 * Returns the number of coupons payable between the settlement date and maturity date.
@@ -4562,7 +4562,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPNUM = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPNUM", arguments);
+		return this.private_calculateFunction("COUPNUM", arguments);
 	};
 	/**
 	 * Returns the previous coupon date before the settlement date.
@@ -4575,7 +4575,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COUPPCD = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("COUPPCD", arguments);
+		return this.private_calculateFunction("COUPPCD", arguments);
 	};
 	/**
 	 * Returns the cumulative interest paid between two periods.
@@ -4590,7 +4590,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CUMIPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("CUMIPMT", arguments);
+		return this.private_calculateFunction("CUMIPMT", arguments);
 	};
 	/**
 	 * Returns the cumulative principal paid on a loan between two periods.
@@ -4605,7 +4605,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CUMPRINC = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("CUMPRINC", arguments);
+		return this.private_calculateFunction("CUMPRINC", arguments);
 	};
 	/**
 	 * Returns the depreciation of an asset for a specified period using the fixed-declining balance method.
@@ -4619,7 +4619,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DB = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("DB", arguments);
+		return this.private_calculateFunction("DB", arguments);
 	};
 	/**
 	 * Returns the depreciation of an asset for a specified period using the double-declining balance method or some other method you specify.
@@ -4633,7 +4633,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DDB = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("DDB", arguments);
+		return this.private_calculateFunction("DDB", arguments);
 	};
 	/**
 	 * Returns the discount rate for a security.
@@ -4647,7 +4647,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DISC = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("DISC", arguments);
+		return this.private_calculateFunction("DISC", arguments);
 	};
 	/**
 	 * Converts a dollar price, expressed as a fraction, into a dollar price, expressed as a decimal number.
@@ -4658,7 +4658,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DOLLARDE = function (arg1, arg2) {
-		this.private_calculateFunction("DOLLARDE", arguments);
+		return this.private_calculateFunction("DOLLARDE", arguments);
 	};
 	/**
 	 * Converts a dollar price, expressed as a decimal number, into a dollar price, expressed as a fraction.
@@ -4669,7 +4669,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DOLLARFR = function (arg1, arg2) {
-		this.private_calculateFunction("DOLLARFR", arguments);
+		return this.private_calculateFunction("DOLLARFR", arguments);
 	};
 	/**
 	 * Returns the annual duration of a security with periodic interest payments.
@@ -4684,7 +4684,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("DURATION", arguments);
+		return this.private_calculateFunction("DURATION", arguments);
 	};
 	/**
 	 * Returns the effective annual interest rate.
@@ -4695,7 +4695,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EFFECT = function (arg1, arg2) {
-		this.private_calculateFunction("EFFECT", arguments);
+		return this.private_calculateFunction("EFFECT", arguments);
 	};
 	/**
 	 * Returns the future value of an investment based on periodic, constant payments and a constant interest rate.
@@ -4709,7 +4709,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FV = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("FV", arguments);
+		return this.private_calculateFunction("FV", arguments);
 	};
 	/**
 	 * Returns the future value of an initial principal after applying a series of compound interest rates.
@@ -4720,7 +4720,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FVSCHEDULE = function (arg1, arg2) {
-		this.private_calculateFunction("FVSCHEDULE", arguments);
+		return this.private_calculateFunction("FVSCHEDULE", arguments);
 	};
 	/**
 	 * Returns the interest rate for a fully invested security.
@@ -4734,7 +4734,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.INTRATE = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("INTRATE", arguments);
+		return this.private_calculateFunction("INTRATE", arguments);
 	};
 	/**
 	 * Returns the interest payment for a given period for an investment, based on periodic, constant payments and a constant interest rate.
@@ -4749,7 +4749,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("IPMT", arguments);
+		return this.private_calculateFunction("IPMT", arguments);
 	};
 	/**
 	 * Returns the internal rate of return for a series of cash flows.
@@ -4760,7 +4760,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IRR = function (arg1, arg2) {
-		this.private_calculateFunction("IRR", arguments);
+		return this.private_calculateFunction("IRR", arguments);
 	};
 	/**
 	 * Returns the interest paid during a specific period of an investment.
@@ -4773,7 +4773,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISPMT = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("ISPMT", arguments);
+		return this.private_calculateFunction("ISPMT", arguments);
 	};
 	/**
 	 * Returns the Macauley modified duration for a security with an assumed par value of $100.
@@ -4788,7 +4788,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MDURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("MDURATION", arguments);
+		return this.private_calculateFunction("MDURATION", arguments);
 	};
 	/**
 	 * Returns the internal rate of return for a series of periodic cash flows, considering both cost of investment and interest on reinvestment of cash.
@@ -4800,7 +4800,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MIRR = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("MIRR", arguments);
+		return this.private_calculateFunction("MIRR", arguments);
 	};
 	/**
 	 * Returns the annual nominal interest rate.
@@ -4811,7 +4811,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NOMINAL = function (arg1, arg2) {
-		this.private_calculateFunction("NOMINAL", arguments);
+		return this.private_calculateFunction("NOMINAL", arguments);
 	};
 	/**
 	 * Returns the number of periods for an investment based on periodic, constant payments and a constant interest rate.
@@ -4825,7 +4825,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NPER = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("NPER", arguments);
+		return this.private_calculateFunction("NPER", arguments);
 	};
 	/**
 	 * Returns the net present value of an investment based on a discount rate and a series of future payments (negative values) and income (positive values).
@@ -4834,7 +4834,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NPV = function () {
-		this.private_calculateFunction("NPV", arguments);
+		return this.private_calculateFunction("NPV", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value of a security with an odd first period.
@@ -4852,7 +4852,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ODDFPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
-		this.private_calculateFunction("ODDFPRICE", arguments);
+		return this.private_calculateFunction("ODDFPRICE", arguments);
 	};
 	/**
 	 * Returns the yield of a security with an odd first period.
@@ -4870,7 +4870,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ODDFYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
-		this.private_calculateFunction("ODDFYIELD", arguments);
+		return this.private_calculateFunction("ODDFYIELD", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value of a security with an odd last period.
@@ -4887,7 +4887,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ODDLPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-		this.private_calculateFunction("ODDLPRICE", arguments);
+		return this.private_calculateFunction("ODDLPRICE", arguments);
 	};
 	/**
 	 * Returns the yield of a security with an odd last period.
@@ -4904,7 +4904,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ODDLYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-		this.private_calculateFunction("ODDLYIELD", arguments);
+		return this.private_calculateFunction("ODDLYIELD", arguments);
 	};
 	/**
 	 * Returns the number of periods required by an investment to reach a specified value.
@@ -4916,7 +4916,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PDURATION = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("PDURATION", arguments);
+		return this.private_calculateFunction("PDURATION", arguments);
 	};
 	/**
 	 * Calculates the payment for a loan based on constant payments and a constant interest rate.
@@ -4930,7 +4930,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PMT = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("PMT", arguments);
+		return this.private_calculateFunction("PMT", arguments);
 	};
 	/**
 	 * Returns the payment on the principal for a given investment based on periodic, constant payments and a constant interest rate.
@@ -4945,7 +4945,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("PPMT", arguments);
+		return this.private_calculateFunction("PPMT", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value of a security that pays periodic interest.
@@ -4961,7 +4961,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("PRICE", arguments);
+		return this.private_calculateFunction("PRICE", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value of a discounted security.
@@ -4975,7 +4975,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PRICEDISC = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("PRICEDISC", arguments);
+		return this.private_calculateFunction("PRICEDISC", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value of a security that pays interest at maturity.
@@ -4990,7 +4990,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PRICEMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("PRICEMAT", arguments);
+		return this.private_calculateFunction("PRICEMAT", arguments);
 	};
 	/**
 	 * Returns the present value of an investment: the total amount that a series of future payments is worth now.
@@ -5004,7 +5004,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PV = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("PV", arguments);
+		return this.private_calculateFunction("PV", arguments);
 	};
 	/**
 	 * Returns the interest rate per period of a loan or an investment. For example, use 6%/4 for quarterly payments at 6% APR.
@@ -5019,7 +5019,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RATE = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("RATE", arguments);
+		return this.private_calculateFunction("RATE", arguments);
 	};
 	/**
 	 * Returns the amount received at maturity for a fully invested security.
@@ -5033,7 +5033,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RECEIVED = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("RECEIVED", arguments);
+		return this.private_calculateFunction("RECEIVED", arguments);
 	};
 	/**
 	 * Returns an equivalent interest rate for the growth of an investment.
@@ -5045,7 +5045,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RRI = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("RRI", arguments);
+		return this.private_calculateFunction("RRI", arguments);
 	};
 	/**
 	 * Returns the straight-line depreciation of an asset for one period.
@@ -5057,7 +5057,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SLN = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("SLN", arguments);
+		return this.private_calculateFunction("SLN", arguments);
 	};
 	/**
 	 * Returns the sum-of-years' digits depreciation of an asset for a specified period.
@@ -5070,7 +5070,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SYD = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("SYD", arguments);
+		return this.private_calculateFunction("SYD", arguments);
 	};
 	/**
 	 * Returns the bond-equivalent yield for a treasury bill.
@@ -5082,7 +5082,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TBILLEQ = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("TBILLEQ", arguments);
+		return this.private_calculateFunction("TBILLEQ", arguments);
 	};
 	/**
 	 * Returns the price per $100 face value for a treasury bill.
@@ -5094,7 +5094,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TBILLPRICE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("TBILLPRICE", arguments);
+		return this.private_calculateFunction("TBILLPRICE", arguments);
 	};
 	/**
 	 * Returns the yield for a treasury bill.
@@ -5106,7 +5106,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TBILLYIELD = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("TBILLYIELD", arguments);
+		return this.private_calculateFunction("TBILLYIELD", arguments);
 	};
 	/**
 	 * Returns the depreciation of an asset for any period you specify, including partial periods, using the double-declining balance method or some other method you specify.
@@ -5122,7 +5122,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VDB = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("VDB", arguments);
+		return this.private_calculateFunction("VDB", arguments);
 	};
 	/**
 	 * Returns the internal rate of return for a schedule of cash flows.
@@ -5134,7 +5134,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.XIRR = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("XIRR", arguments);
+		return this.private_calculateFunction("XIRR", arguments);
 	};
 	/**
 	 * Returns the net present value for a schedule of cash flows.
@@ -5146,7 +5146,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.XNPV = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("XNPV", arguments);
+		return this.private_calculateFunction("XNPV", arguments);
 	};
 	/**
 	 * Returns the yield on a security that pays periodic interest.
@@ -5162,7 +5162,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.YIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
-		this.private_calculateFunction("YIELD", arguments);
+		return this.private_calculateFunction("YIELD", arguments);
 	};
 	/**
 	 * Returns the annual yield for a discounted security. For example, a treasury bill.
@@ -5176,7 +5176,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.YIELDDISC = function (arg1, arg2, arg3, arg4, arg5) {
-		this.private_calculateFunction("YIELDDISC", arguments);
+		return this.private_calculateFunction("YIELDDISC", arguments);
 	};
 	/**
 	 * Returns the annual yield of a security that pays interest at maturity.
@@ -5191,7 +5191,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.YIELDMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
-		this.private_calculateFunction("YIELDMAT", arguments);
+		return this.private_calculateFunction("YIELDMAT", arguments);
 	};
 	/**
 	 * Returns the absolute value of a number, a number without its sign.
@@ -5201,7 +5201,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ABS = function (arg1) {
-		this.private_calculateFunction("ABS", arguments);
+		return this.private_calculateFunction("ABS", arguments);
 	};
 	/**
 	 * Returns the arccosine of a number, in radians in the range 0 to Pi. The arccosine is the angle whose cosine is Number.
@@ -5211,7 +5211,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACOS = function (arg1) {
-		this.private_calculateFunction("ACOS", arguments);
+		return this.private_calculateFunction("ACOS", arguments);
 	};
 	/**
 	 * Returns the inverse hyperbolic cosine of a number.
@@ -5221,7 +5221,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACOSH = function (arg1) {
-		this.private_calculateFunction("ACOSH", arguments);
+		return this.private_calculateFunction("ACOSH", arguments);
 	};
 	/**
 	 * Returns the arccotangent of a number, in radians in the range 0 to Pi..
@@ -5231,7 +5231,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACOT = function (arg1) {
-		this.private_calculateFunction("ACOT", arguments);
+		return this.private_calculateFunction("ACOT", arguments);
 	};
 	/**
 	 * Returns the inverse hyperbolic cotangent of a number.
@@ -5241,7 +5241,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ACOTH = function (arg1) {
-		this.private_calculateFunction("ACOTH", arguments);
+		return this.private_calculateFunction("ACOTH", arguments);
 	};
 	/**
 	 * Returns an aggregate in a list or database.
@@ -5250,7 +5250,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AGGREGATE = function () {
-		this.private_calculateFunction("AGGREGATE", arguments);
+		return this.private_calculateFunction("AGGREGATE", arguments);
 	};
 	/**
 	 * Converts a Roman numeral to Arabic.
@@ -5260,7 +5260,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ARABIC = function (arg1) {
-		this.private_calculateFunction("ARABIC", arguments);
+		return this.private_calculateFunction("ARABIC", arguments);
 	};
 	/**
 	 * Returns the arcsine of a number in radians, in the range -Pi/2 to Pi/2.
@@ -5270,7 +5270,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ASIN = function (arg1) {
-		this.private_calculateFunction("ASIN", arguments);
+		return this.private_calculateFunction("ASIN", arguments);
 	};
 	/**
 	 * Returns the inverse hyperbolic sine of a number.
@@ -5280,7 +5280,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ASINH = function (arg1) {
-		this.private_calculateFunction("ASINH", arguments);
+		return this.private_calculateFunction("ASINH", arguments);
 	};
 	/**
 	 * Returns the arctangent of a number in radians, in the range -Pi/2 to Pi/2.
@@ -5290,7 +5290,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ATAN = function (arg1) {
-		this.private_calculateFunction("ATAN", arguments);
+		return this.private_calculateFunction("ATAN", arguments);
 	};
 	/**
 	 * Returns the arctangent of the specified x and y coordinates, in radians between -Pi and Pi, excluding -Pi.
@@ -5301,7 +5301,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
-		this.private_calculateFunction("ATAN2", arguments);
+		return this.private_calculateFunction("ATAN2", arguments);
 	};
 	/**
 	 * Returns the inverse hyperbolic tangent of a number.
@@ -5311,7 +5311,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ATANH = function (arg1) {
-		this.private_calculateFunction("ATANH", arguments);
+		return this.private_calculateFunction("ATANH", arguments);
 	};
 	/**
 	 * Converts a number into a text representation with the given radix (base).
@@ -5323,7 +5323,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("BASE", arguments);
+		return this.private_calculateFunction("BASE", arguments);
 	};
 	/**
 	 * Rounds a number up, to the nearest multiple of significance.
@@ -5334,7 +5334,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CEILING = function (arg1, arg2) {
-		this.private_calculateFunction("CEILING", arguments);
+		return this.private_calculateFunction("CEILING", arguments);
 	};
 	/**
 	 * Rounds a number up, to the nearest integer or to the nearest multiple of significance.
@@ -5346,18 +5346,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CEILING_MATH = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("CEILING.MATH", arguments);
+		return this.private_calculateFunction("CEILING.MATH", arguments);
 	};
 	/**
 	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 .
-	 * @param {?number} arg2 .
+	 * @param {number} arg1.
+	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CEILING_PRECISE = function (arg1, arg2) {
-		this.private_calculateFunction("CEILING.PRECISE", arguments);
+		return this.private_calculateFunction("CEILING.PRECISE", arguments);
 	};
 	/**
 	 * Returns the number of combinations for a given number of items.
@@ -5368,7 +5368,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COMBIN = function (arg1, arg2) {
-		this.private_calculateFunction("COMBIN", arguments);
+		return this.private_calculateFunction("COMBIN", arguments);
 	};
 	/**
 	 * Returns the number of combinations with repetitions for a given number of items.
@@ -5379,7 +5379,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COMBINA = function (arg1, arg2) {
-		this.private_calculateFunction("COMBINA", arguments);
+		return this.private_calculateFunction("COMBINA", arguments);
 	};
 	/**
 	 * Returns the cosine of an angle.
@@ -5389,7 +5389,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COS = function (arg1) {
-		this.private_calculateFunction("COS", arguments);
+		return this.private_calculateFunction("COS", arguments);
 	};
 	/**
 	 * Returns the hyperbolic cosine of a number.
@@ -5399,7 +5399,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COSH = function (arg1) {
-		this.private_calculateFunction("COSH", arguments);
+		return this.private_calculateFunction("COSH", arguments);
 	};
 	/**
 	 * Returns the cotangent of an angle.
@@ -5409,7 +5409,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COT = function (arg1) {
-		this.private_calculateFunction("COT", arguments);
+		return this.private_calculateFunction("COT", arguments);
 	};
 	/**
 	 * Returns the hyperbolic cotangent of a number.
@@ -5419,7 +5419,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COTH = function (arg1) {
-		this.private_calculateFunction("COTH", arguments);
+		return this.private_calculateFunction("COTH", arguments);
 	};
 	/**
 	 * Returns the cosecant of an angle.
@@ -5429,7 +5429,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CSC = function (arg1) {
-		this.private_calculateFunction("CSC", arguments);
+		return this.private_calculateFunction("CSC", arguments);
 	};
 	/**
 	 * Returns the hyperbolic cosecant of an angle.
@@ -5439,7 +5439,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CSCH = function (arg1) {
-		this.private_calculateFunction("CSCH", arguments);
+		return this.private_calculateFunction("CSCH", arguments);
 	};
 	/**
 	 * Converts a text representation of a number in a given base into a decimal number.
@@ -5450,7 +5450,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DECIMAL = function (arg1, arg2) {
-		this.private_calculateFunction("DECIMAL", arguments);
+		return this.private_calculateFunction("DECIMAL", arguments);
 	};
 	/**
 	 * Converts radians to degrees.
@@ -5460,18 +5460,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.DEGREES = function (arg1) {
-		this.private_calculateFunction("DEGREES", arguments);
+		return this.private_calculateFunction("DEGREES", arguments);
 	};
 	/**
 	 * Rounds the number up to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 .
-	 * @param {number} arg2 .
+	 * @param {number} arg1.
+	 * @param {number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ECMA_CEILING = function (arg1, arg2) {
-		this.private_calculateFunction("ECMA.CEILING", arguments);
+		return this.private_calculateFunction("ECMA.CEILING", arguments);
 	};
 	/**
 	 * Rounds a positive number up and negative number down to the nearest even integer.
@@ -5481,7 +5481,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EVEN = function (arg1) {
-		this.private_calculateFunction("EVEN", arguments);
+		return this.private_calculateFunction("EVEN", arguments);
 	};
 	/**
 	 * Returns e raised to the power of a given number.
@@ -5491,7 +5491,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXP = function (arg1) {
-		this.private_calculateFunction("EXP", arguments);
+		return this.private_calculateFunction("EXP", arguments);
 	};
 	/**
 	 * Returns the factorial of a number, equal to 1*2*3*...* Number.
@@ -5501,7 +5501,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FACT = function (arg1) {
-		this.private_calculateFunction("FACT", arguments);
+		return this.private_calculateFunction("FACT", arguments);
 	};
 	/**
 	 * Returns the double factorial of a number.
@@ -5511,7 +5511,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FACTDOUBLE = function (arg1) {
-		this.private_calculateFunction("FACTDOUBLE", arguments);
+		return this.private_calculateFunction("FACTDOUBLE", arguments);
 	};
 	/**
 	 * Rounds a number down to the nearest multiple of significance.
@@ -5522,18 +5522,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR = function (arg1, arg2) {
-		this.private_calculateFunction("FLOOR", arguments);
+		return this.private_calculateFunction("FLOOR", arguments);
 	};
 	/**
 	 * Returns a number that is rounded down to the nearest integer or to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 .
-	 * @param {?number} arg2 .
+	 * @param {number} arg1.
+	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_PRECISE = function (arg1, arg2) {
-		this.private_calculateFunction("FLOOR.PRECISE", arguments);
+		return this.private_calculateFunction("FLOOR.PRECISE", arguments);
 	};
 	/**
 	 * Rounds a number down, to the nearest integer or to the nearest multiple of significance.
@@ -5545,7 +5545,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_MATH = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("FLOOR.MATH", arguments);
+		return this.private_calculateFunction("FLOOR.MATH", arguments);
 	};
 	/**
 	 * Returns the greatest common divisor.
@@ -5554,7 +5554,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.GCD = function () {
-		this.private_calculateFunction("GCD", arguments);
+		return this.private_calculateFunction("GCD", arguments);
 	};
 	/**
 	 * Rounds a number down to the nearest integer.
@@ -5564,18 +5564,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.INT = function (arg1) {
-		this.private_calculateFunction("INT", arguments);
+		return this.private_calculateFunction("INT", arguments);
 	};
 	/**
 	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number. However, if the number or the significance is zero, zero is returned..
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 .
-	 * @param {?number} arg2 .
+	 * @param {number} arg1.
+	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISO_CEILING = function (arg1, arg2) {
-		this.private_calculateFunction("ISO.CEILING", arguments);
+		return this.private_calculateFunction("ISO.CEILING", arguments);
 	};
 	/**
 	 * Returns the least common multiple.
@@ -5584,7 +5584,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LCM = function () {
-		this.private_calculateFunction("LCM", arguments);
+		return this.private_calculateFunction("LCM", arguments);
 	};
 	/**
 	 * Returns the natural logarithm of a number.
@@ -5594,7 +5594,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LN = function (arg1) {
-		this.private_calculateFunction("LN", arguments);
+		return this.private_calculateFunction("LN", arguments);
 	};
 	/**
 	 * Returns the logarithm of a number to the base you specify.
@@ -5605,7 +5605,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOG = function (arg1, arg2) {
-		this.private_calculateFunction("LOG", arguments);
+		return this.private_calculateFunction("LOG", arguments);
 	};
 	/**
 	 * Returns the base-10 logarithm of a number.
@@ -5615,7 +5615,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
-		this.private_calculateFunction("LOG10", arguments);
+		return this.private_calculateFunction("LOG10", arguments);
 	};
 	/**
 	 * Returns the matrix determinant of an array.
@@ -5625,7 +5625,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MDETERM = function (arg1) {
-		this.private_calculateFunction("MDETERM", arguments);
+		return this.private_calculateFunction("MDETERM", arguments);
 	};
 	/**
 	 * Returns the inverse matrix for the matrix stored in an array.
@@ -5635,18 +5635,18 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MINVERSE = function (arg1) {
-		this.private_calculateFunction("MINVERSE", arguments);
+		return this.private_calculateFunction("MINVERSE", arguments);
 	};
 	/**
 	 * Returns the matrix product of two arrays, an array with the same number of rows as array1 and columns as array2.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the first array of numbers to multiply and must have the same number of columns as Array2 has rows.
-	 * @param {any} arg2 .
+	 * @param {any} arg2.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MMULT = function (arg1, arg2) {
-		this.private_calculateFunction("MMULT", arguments);
+		return this.private_calculateFunction("MMULT", arguments);
 	};
 	/**
 	 * Returns the remainder after a number is divided by a divisor.
@@ -5657,7 +5657,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MOD = function (arg1, arg2) {
-		this.private_calculateFunction("MOD", arguments);
+		return this.private_calculateFunction("MOD", arguments);
 	};
 	/**
 	 * Returns a number rounded to the desired multiple.
@@ -5668,7 +5668,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MROUND = function (arg1, arg2) {
-		this.private_calculateFunction("MROUND", arguments);
+		return this.private_calculateFunction("MROUND", arguments);
 	};
 	/**
 	 * Returns the multinomial of a set of numbers.
@@ -5677,7 +5677,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MULTINOMIAL = function () {
-		this.private_calculateFunction("MULTINOMIAL", arguments);
+		return this.private_calculateFunction("MULTINOMIAL", arguments);
 	};
 	/**
 	 * Returns the unit matrix for the specified dimension.
@@ -5687,7 +5687,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
-		this.private_calculateFunction("MUNIT", arguments);
+		return this.private_calculateFunction("MUNIT", arguments);
 	};
 	/**
 	 * Rounds a positive number up and negative number down to the nearest odd integer.
@@ -5697,7 +5697,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ODD = function (arg1) {
-		this.private_calculateFunction("ODD", arguments);
+		return this.private_calculateFunction("ODD", arguments);
 	};
 	/**
 	 * Returns the value of Pi, 3.14159265358979, accurate to 15 digits.
@@ -5706,7 +5706,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PI = function () {
-		this.private_calculateFunction("PI", arguments);
+		return this.private_calculateFunction("PI", arguments);
 	};
 	/**
 	 * Returns the result of a number raised to a power.
@@ -5717,7 +5717,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.POWER = function (arg1, arg2) {
-		this.private_calculateFunction("POWER", arguments);
+		return this.private_calculateFunction("POWER", arguments);
 	};
 	/**
 	 * Multiplies all the numbers given as arguments.
@@ -5726,7 +5726,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.PRODUCT = function () {
-		this.private_calculateFunction("PRODUCT", arguments);
+		return this.private_calculateFunction("PRODUCT", arguments);
 	};
 	/**
 	 * Returns the integer portion of a division.
@@ -5737,7 +5737,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.QUOTIENT = function (arg1, arg2) {
-		this.private_calculateFunction("QUOTIENT", arguments);
+		return this.private_calculateFunction("QUOTIENT", arguments);
 	};
 	/**
 	 * Converts degrees to radians.
@@ -5747,7 +5747,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RADIANS = function (arg1) {
-		this.private_calculateFunction("RADIANS", arguments);
+		return this.private_calculateFunction("RADIANS", arguments);
 	};
 	/**
 	 * Returns a random number greater than or equal to 0 and less than 1, evenly distributed (changes on recalculation).
@@ -5756,7 +5756,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RAND = function () {
-		this.private_calculateFunction("RAND", arguments);
+		return this.private_calculateFunction("RAND", arguments);
 	};
 	/**
 	 * Returns a random number between the numbers you specify.
@@ -5767,7 +5767,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.RANDBETWEEN = function (arg1, arg2) {
-		this.private_calculateFunction("RANDBETWEEN", arguments);
+		return this.private_calculateFunction("RANDBETWEEN", arguments);
 	};
 	/**
 	 * Converts an Arabic numeral to Roman, as text.
@@ -5778,7 +5778,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ROMAN = function (arg1, arg2) {
-		this.private_calculateFunction("ROMAN", arguments);
+		return this.private_calculateFunction("ROMAN", arguments);
 	};
 	/**
 	 * Rounds a number to a specified number of digits.
@@ -5789,7 +5789,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ROUND = function (arg1, arg2) {
-		this.private_calculateFunction("ROUND", arguments);
+		return this.private_calculateFunction("ROUND", arguments);
 	};
 	/**
 	 * Rounds a number down, towards zero.
@@ -5800,7 +5800,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ROUNDDOWN = function (arg1, arg2) {
-		this.private_calculateFunction("ROUNDDOWN", arguments);
+		return this.private_calculateFunction("ROUNDDOWN", arguments);
 	};
 	/**
 	 * Rounds a number up, away from zero.
@@ -5811,7 +5811,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ROUNDUP = function (arg1, arg2) {
-		this.private_calculateFunction("ROUNDUP", arguments);
+		return this.private_calculateFunction("ROUNDUP", arguments);
 	};
 	/**
 	 * Returns the secant of an angle.
@@ -5821,7 +5821,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SEC = function (arg1) {
-		this.private_calculateFunction("SEC", arguments);
+		return this.private_calculateFunction("SEC", arguments);
 	};
 	/**
 	 * Returns the hyperbolic secant of an angle.
@@ -5831,7 +5831,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SECH = function (arg1) {
-		this.private_calculateFunction("SECH", arguments);
+		return this.private_calculateFunction("SECH", arguments);
 	};
 	/**
 	 * Returns the sum of a power series based on the formula.
@@ -5844,7 +5844,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SERIESSUM = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("SERIESSUM", arguments);
+		return this.private_calculateFunction("SERIESSUM", arguments);
 	};
 	/**
 	 * Returns the sign of a number: 1 if the number is positive, zero if the number is zero, or -1 if the number is negative.
@@ -5854,7 +5854,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SIGN = function (arg1) {
-		this.private_calculateFunction("SIGN", arguments);
+		return this.private_calculateFunction("SIGN", arguments);
 	};
 	/**
 	 * Returns the sine of an angle.
@@ -5864,7 +5864,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SIN = function (arg1) {
-		this.private_calculateFunction("SIN", arguments);
+		return this.private_calculateFunction("SIN", arguments);
 	};
 	/**
 	 * Returns the hyperbolic sine of a number.
@@ -5874,7 +5874,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SINH = function (arg1) {
-		this.private_calculateFunction("SINH", arguments);
+		return this.private_calculateFunction("SINH", arguments);
 	};
 	/**
 	 * Returns the square root of a number.
@@ -5884,7 +5884,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SQRT = function (arg1) {
-		this.private_calculateFunction("SQRT", arguments);
+		return this.private_calculateFunction("SQRT", arguments);
 	};
 	/**
 	 * Returns the square root of (number * Pi).
@@ -5894,7 +5894,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SQRTPI = function (arg1) {
-		this.private_calculateFunction("SQRTPI", arguments);
+		return this.private_calculateFunction("SQRTPI", arguments);
 	};
 	/**
 	 * Returns a subtotal in a list or database.
@@ -5903,7 +5903,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUBTOTAL = function () {
-		this.private_calculateFunction("SUBTOTAL", arguments);
+		return this.private_calculateFunction("SUBTOTAL", arguments);
 	};
 	/**
 	 * Adds all the numbers in a range of cells.
@@ -5912,7 +5912,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUM = function () {
-		this.private_calculateFunction("SUM", arguments);
+		return this.private_calculateFunction("SUM", arguments);
 	};
 	/**
 	 * Adds the cells specified by a given condition or criteria.
@@ -5924,7 +5924,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMIF = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("SUMIF", arguments);
+		return this.private_calculateFunction("SUMIF", arguments);
 	};
 	/**
 	 * Adds the cells specified by a given set of conditions or criteria.
@@ -5933,7 +5933,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMIFS = function () {
-		this.private_calculateFunction("SUMIFS", arguments);
+		return this.private_calculateFunction("SUMIFS", arguments);
 	};
 	/**
 	 * Returns the sum of the products of corresponding ranges or arrays.
@@ -5942,7 +5942,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMPRODUCT = function () {
-		this.private_calculateFunction("SUMPRODUCT", arguments);
+		return this.private_calculateFunction("SUMPRODUCT", arguments);
 	};
 	/**
 	 * Returns the sum of the squares of the arguments. The arguments can be numbers, arrays, names or references to cells that contain numbers.
@@ -5951,7 +5951,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMSQ = function () {
-		this.private_calculateFunction("SUMSQ", arguments);
+		return this.private_calculateFunction("SUMSQ", arguments);
 	};
 	/**
 	 * Sums the differences between the squares of two corresponding ranges or arrays.
@@ -5962,7 +5962,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMX2MY2 = function (arg1, arg2) {
-		this.private_calculateFunction("SUMX2MY2", arguments);
+		return this.private_calculateFunction("SUMX2MY2", arguments);
 	};
 	/**
 	 * Returns the sum total of the sums of squares of numbers in two corresponding ranges or arrays.
@@ -5973,7 +5973,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMX2PY2 = function (arg1, arg2) {
-		this.private_calculateFunction("SUMX2PY2", arguments);
+		return this.private_calculateFunction("SUMX2PY2", arguments);
 	};
 	/**
 	 * Sums the squares of the differences in two corresponding ranges or arrays.
@@ -5984,7 +5984,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SUMXMY2 = function (arg1, arg2) {
-		this.private_calculateFunction("SUMXMY2", arguments);
+		return this.private_calculateFunction("SUMXMY2", arguments);
 	};
 	/**
 	 * Returns the tangent of an angle.
@@ -5994,7 +5994,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TAN = function (arg1) {
-		this.private_calculateFunction("TAN", arguments);
+		return this.private_calculateFunction("TAN", arguments);
 	};
 	/**
 	 * Returns the hyperbolic tangent of a number.
@@ -6004,7 +6004,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TANH = function (arg1) {
-		this.private_calculateFunction("TANH", arguments);
+		return this.private_calculateFunction("TANH", arguments);
 	};
 	/**
 	 * Truncates a number to an integer by removing the decimal, or fractional, part of the number.
@@ -6015,7 +6015,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRUNC = function (arg1, arg2) {
-		this.private_calculateFunction("TRUNC", arguments);
+		return this.private_calculateFunction("TRUNC", arguments);
 	};
 	/**
 	 * Chooses a value or action to perform from a list of values, based on an index number.
@@ -6024,7 +6024,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.CHOOSE = function () {
-		this.private_calculateFunction("CHOOSE", arguments);
+		return this.private_calculateFunction("CHOOSE", arguments);
 	};
 	/**
 	 * Returns the number of columns in an array or reference.
@@ -6034,7 +6034,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.COLUMNS = function (arg1) {
-		this.private_calculateFunction("COLUMNS", arguments);
+		return this.private_calculateFunction("COLUMNS", arguments);
 	};
 	/**
 	 * Looks for a value in the top row of a table or array of values and returns the value in the same column from a row you specify.
@@ -6047,7 +6047,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HLOOKUP = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("HLOOKUP", arguments);
+		return this.private_calculateFunction("HLOOKUP", arguments);
 	};
 	/**
 	 * Creates a shortcut or jump that opens a document stored on your hard drive, a network server, or on the Internet.
@@ -6058,7 +6058,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.HYPERLINK = function (arg1, arg2) {
-		this.private_calculateFunction("HYPERLINK", arguments);
+		return this.private_calculateFunction("HYPERLINK", arguments);
 	};
 	/**
 	 * Returns a value or reference of the cell at the intersection of a particular row and column, in a given range.
@@ -6071,7 +6071,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.INDEX = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("INDEX", arguments);
+		return this.private_calculateFunction("INDEX", arguments);
 	};
 	/**
 	 * Looks up a value either from a one-row or one-column range or from an array. Provided for backwards compatibility.
@@ -6083,7 +6083,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOOKUP = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("LOOKUP", arguments);
+		return this.private_calculateFunction("LOOKUP", arguments);
 	};
 	/**
 	 * Returns the relative position of an item in an array that matches a specified value in a specified order.
@@ -6095,7 +6095,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.MATCH = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("MATCH", arguments);
+		return this.private_calculateFunction("MATCH", arguments);
 	};
 	/**
 	 * Returns the number of rows in a reference or array.
@@ -6105,7 +6105,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ROWS = function (arg1) {
-		this.private_calculateFunction("ROWS", arguments);
+		return this.private_calculateFunction("ROWS", arguments);
 	};
 	/**
 	 * Converts a vertical range of cells to a horizontal range, or vice versa.
@@ -6115,7 +6115,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
-		this.private_calculateFunction("TRANSPOSE", arguments);
+		return this.private_calculateFunction("TRANSPOSE", arguments);
 	};
 	/**
 	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from a column that you specify. By default, the table must be sorted in an ascending order.
@@ -6128,7 +6128,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.VLOOKUP = function (arg1, arg2, arg3, arg4) {
-		this.private_calculateFunction("VLOOKUP", arguments);
+		return this.private_calculateFunction("VLOOKUP", arguments);
 	};
 	/**
 	 * Returns a number matching an error value..
@@ -6138,7 +6138,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ERROR_TYPE = function (arg1) {
-		this.private_calculateFunction("ERROR.TYPE", arguments);
+		return this.private_calculateFunction("ERROR.TYPE", arguments);
 	};
 	/**
 	 * Checks whether a value is an error other than #N/A, and returns TRUE or FALSE.
@@ -6148,7 +6148,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISERR = function (arg1) {
-		this.private_calculateFunction("ISERR", arguments);
+		return this.private_calculateFunction("ISERR", arguments);
 	};
 	/**
 	 * Checks whether a value is an error, and returns TRUE or FALSE.
@@ -6158,7 +6158,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISERROR = function (arg1) {
-		this.private_calculateFunction("ISERROR", arguments);
+		return this.private_calculateFunction("ISERROR", arguments);
 	};
 	/**
 	 * Returns TRUE if the number is even.
@@ -6168,7 +6168,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISEVEN = function (arg1) {
-		this.private_calculateFunction("ISEVEN", arguments);
+		return this.private_calculateFunction("ISEVEN", arguments);
 	};
 	/**
 	 * Checks whether a reference is to a cell containing a formula, and returns TRUE or FALSE.
@@ -6178,7 +6178,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISFORMULA = function (arg1) {
-		this.private_calculateFunction("ISFORMULA", arguments);
+		return this.private_calculateFunction("ISFORMULA", arguments);
 	};
 	/**
 	 * Checks whether a value is a logical value (TRUE or FALSE), and returns TRUE or FALSE.
@@ -6188,7 +6188,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISLOGICAL = function (arg1) {
-		this.private_calculateFunction("ISLOGICAL", arguments);
+		return this.private_calculateFunction("ISLOGICAL", arguments);
 	};
 	/**
 	 * Checks whether a value is #N/A, and returns TRUE or FALSE.
@@ -6198,7 +6198,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNA = function (arg1) {
-		this.private_calculateFunction("ISNA", arguments);
+		return this.private_calculateFunction("ISNA", arguments);
 	};
 	/**
 	 * Checks whether a value is not text (blank cells are not text), and returns TRUE or FALSE.
@@ -6208,7 +6208,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNONTEXT = function (arg1) {
-		this.private_calculateFunction("ISNONTEXT", arguments);
+		return this.private_calculateFunction("ISNONTEXT", arguments);
 	};
 	/**
 	 * Checks whether a value is a number, and returns TRUE or FALSE.
@@ -6218,7 +6218,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNUMBER = function (arg1) {
-		this.private_calculateFunction("ISNUMBER", arguments);
+		return this.private_calculateFunction("ISNUMBER", arguments);
 	};
 	/**
 	 * Returns TRUE if the number is odd.
@@ -6228,7 +6228,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISODD = function (arg1) {
-		this.private_calculateFunction("ISODD", arguments);
+		return this.private_calculateFunction("ISODD", arguments);
 	};
 	/**
 	 * Checks whether a value is a reference, and returns TRUE or FALSE.
@@ -6238,7 +6238,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISREF = function (arg1) {
-		this.private_calculateFunction("ISREF", arguments);
+		return this.private_calculateFunction("ISREF", arguments);
 	};
 	/**
 	 * Checks whether a value is text, and returns TRUE or FALSE.
@@ -6248,7 +6248,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISTEXT = function (arg1) {
-		this.private_calculateFunction("ISTEXT", arguments);
+		return this.private_calculateFunction("ISTEXT", arguments);
 	};
 	/**
 	 * Converts non-number value to a number, dates to serial numbers, TRUE to 1, anything else to 0 (zero).
@@ -6258,7 +6258,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.N = function (arg1) {
-		this.private_calculateFunction("N", arguments);
+		return this.private_calculateFunction("N", arguments);
 	};
 	/**
 	 * Returns the error value #N/A (value not available).
@@ -6267,7 +6267,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NA = function () {
-		this.private_calculateFunction("NA", arguments);
+		return this.private_calculateFunction("NA", arguments);
 	};
 	/**
 	 * Returns the sheet number of the referenced sheet.
@@ -6277,7 +6277,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SHEET = function (arg1) {
-		this.private_calculateFunction("SHEET", arguments);
+		return this.private_calculateFunction("SHEET", arguments);
 	};
 	/**
 	 * Returns the number of sheets in a reference.
@@ -6287,7 +6287,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.SHEETS = function (arg1) {
-		this.private_calculateFunction("SHEETS", arguments);
+		return this.private_calculateFunction("SHEETS", arguments);
 	};
 	/**
 	 * Returns an integer representing the data type of a value: number = 1; text = 2; logical value = 4; error value = 16; array = 64; compound data = 128.
@@ -6297,7 +6297,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TYPE = function (arg1) {
-		this.private_calculateFunction("TYPE", arguments);
+		return this.private_calculateFunction("TYPE", arguments);
 	};
 	/**
 	 * Checks whether all arguments are TRUE, and returns TRUE if all arguments are TRUE.
@@ -6306,7 +6306,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.AND = function () {
-		this.private_calculateFunction("AND", arguments);
+		return this.private_calculateFunction("AND", arguments);
 	};
 	/**
 	 * Returns the logical value FALSE.
@@ -6315,7 +6315,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.FALSE = function () {
-		this.private_calculateFunction("FALSE", arguments);
+		return this.private_calculateFunction("FALSE", arguments);
 	};
 	/**
 	 * Checks whether a condition is met, and returns one value if TRUE, and another value if FALSE.
@@ -6327,7 +6327,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IF = function (arg1, arg2, arg3) {
-		this.private_calculateFunction("IF", arguments);
+		return this.private_calculateFunction("IF", arguments);
 	};
 	/**
 	 * Returns value_if_error if expression is an error and the value of the expression itself otherwise.
@@ -6338,7 +6338,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IFERROR = function (arg1, arg2) {
-		this.private_calculateFunction("IFERROR", arguments);
+		return this.private_calculateFunction("IFERROR", arguments);
 	};
 	/**
 	 * Returns the value you specify if the expression resolves to #N/A, otherwise returns the result of the expression.
@@ -6349,7 +6349,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IFNA = function (arg1, arg2) {
-		this.private_calculateFunction("IFNA", arguments);
+		return this.private_calculateFunction("IFNA", arguments);
 	};
 	/**
 	 * Changes FALSE to TRUE, or TRUE to FALSE.
@@ -6359,7 +6359,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.NOT = function (arg1) {
-		this.private_calculateFunction("NOT", arguments);
+		return this.private_calculateFunction("NOT", arguments);
 	};
 	/**
 	 * Checks whether any of the arguments are TRUE, and returns TRUE or FALSE. Returns FALSE only if all arguments are FALSE.
@@ -6368,7 +6368,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.OR = function () {
-		this.private_calculateFunction("OR", arguments);
+		return this.private_calculateFunction("OR", arguments);
 	};
 	/**
 	 * Returns the logical value TRUE.
@@ -6377,7 +6377,7 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRUE = function () {
-		this.private_calculateFunction("TRUE", arguments);
+		return this.private_calculateFunction("TRUE", arguments);
 	};
 	/**
 	 * Returns a logical 'Exclusive Or' of all arguments.
@@ -6386,8 +6386,9 @@
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.XOR = function () {
-		this.private_calculateFunction("XOR", arguments);
+		return this.private_calculateFunction("XOR", arguments);
 	};
+
 
 
 
