@@ -8772,7 +8772,35 @@ CPresentation.prototype.DublicateMaster = function () {
 	this.FinalizeAction(true);
 };
 CPresentation.prototype.DublicateLayout = function () {
-
+	if (!this.CanEdit()) {
+		return;
+	}
+	this.StartAction(0);
+	let aSelectedSlides = this.GetSelectedSlideObjects();
+	let aCopyLayouts = [];
+	let oLastLayout;
+	for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
+		let oSlide = aSelectedSlides[nIdx];
+		if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout) {
+			let oLayout = oSlide.createDuplicate();
+			aCopyLayouts.push(oLayout);
+			oLastLayout = oSlide;
+		}
+	}
+	if(oLastLayout) {
+		let oMaster = oLastLayout.Master;
+		let nPos = oMaster.sldLayoutLst.length;
+		for(let nIdx = oMaster.sldLayoutLst.length - 1; nIdx > -1; --nIdx) {
+			if(oMaster.sldLayoutLst[nIdx] === oLastLayout) {
+				nPos = nIdx + 1;
+				break;
+			}
+		}
+		for(let nIdx = 0; nIdx < aCopyLayouts.length; ++nIdx) {
+			oMaster.addToSldLayoutLstToPos(nPos + nIdx, aCopyLayouts[nIdx]);
+		}
+	}
+	this.FinalizeAction(true);
 };
 
 CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {

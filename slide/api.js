@@ -6558,7 +6558,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DuplicateLayout    = function()
 	{
-		this.DublicateSlide();
+		this.WordControl.m_oLogicDocument.DublicateLayout();
 	};
 
 	asc_docs_api.prototype.SelectAllSlides = function(layoutType)
