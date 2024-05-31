@@ -642,6 +642,10 @@ MasterSlide.prototype.createDuplicate = function (IdMap) {
     if(this.timing) {
         copy.setTiming(this.timing.createDuplicate(oIdMap));
     }
+    copy.setSlideSize(this.Width, this.Height);
+    for(let nIdx = 0; nIdx < this.sldLayoutLst.length; ++nIdx) {
+        copy.addToSldLayoutLstToPos(nIdx, this.sldLayoutLst[nIdx].createDuplicate(IdMap));
+    }
     return copy;
 };
 MasterSlide.prototype.Clear_ContentChanges = function()

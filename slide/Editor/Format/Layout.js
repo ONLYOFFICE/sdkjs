@@ -242,6 +242,7 @@ SlideLayout.prototype.getTheme = function(){
         if(this.timing) {
             copy.setTiming(this.timing.createDuplicate(oIdMap));
         }
+        copy.setSlideSize(this.Width, this.Height);
         return copy;
     };
     SlideLayout.prototype.setMaster = function(master)

@@ -4098,6 +4098,14 @@ CPresentation.prototype.GetSelectedSlides = function () {
 		return [this.CurPage];
 	}
 };
+CPresentation.prototype.GetSelectedSlideObjects = function () {
+	let aSlideObjects = [];
+	let aIdx = this.GetSelectedSlides();
+	for(let nIdx = 0; nIdx < aIdx.length; ++nIdx) {
+		aSlideObjects.push(this.GetSlide(aIdx[nIdx]));
+	}
+	return aSlideObjects;
+};
 CPresentation.prototype.GetAllSlideIndexes = function () {
 	let aIdx = [];
 	let nCount = this.GetSlidesCount();
@@ -8731,6 +8739,40 @@ CPresentation.prototype.DublicateSlide = function () {
 		var selected_slides = this.GetSelectedSlides();
 		this.shiftSlides(Math.max.apply(Math, selected_slides) + 1, selected_slides, true);
 	}
+};
+CPresentation.prototype.DublicateMaster = function () {
+	if (!this.CanEdit()) {
+		return;
+	}
+	this.StartAction(0);
+	let aSelectedSlides = this.GetSelectedSlideObjects();
+	let aCopyMasters = [];
+	let oLastMaster;
+	for(let nIdx = 0; nIdx < aSelectedSlides.length; ++nIdx) {
+		let oSlide = aSelectedSlides[nIdx];
+		if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
+			let oMaster = oSlide.createDuplicate();
+			oMaster.setTheme(oSlide.Theme.createDuplicate());
+			aCopyMasters.push(oMaster);
+			oLastMaster = oSlide;
+		}
+	}
+	if(oLastMaster) {
+		let nPos = this.slideMasters.length;
+		for(let nIdx = this.slideMasters.length - 1; nIdx > -1; --nIdx) {
+			if(this.slideMasters[nIdx] === oLastMaster) {
+				nPos = nIdx + 1;
+				break;
+			}
+		}
+		for(let nIdx = 0; nIdx < aCopyMasters.length; ++nIdx) {
+			this.addSlideMaster(nPos + nIdx, aCopyMasters[nIdx]);
+		}
+	}
+	this.FinalizeAction(true);
+};
+CPresentation.prototype.DublicateLayout = function () {
+
 };
 
 CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {

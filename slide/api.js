@@ -6554,7 +6554,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DuplicateMaster    = function()
 	{
-		this.DublicateSlide();
+		this.WordControl.m_oLogicDocument.DublicateMaster();
 	};
 	asc_docs_api.prototype.asc_DuplicateLayout    = function()
 	{
