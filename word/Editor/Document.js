@@ -5910,7 +5910,7 @@ CDocument.prototype.drawBackground = function(graphics, sectPr)
 		return;
 	let oShape = this.Background.shape;
 	let brush = oShape.brush;
-	if(!brush)
+	if(!brush || !brush.isVisible())
 		return;
 	let h = sectPr.GetPageHeight();
 	let w = sectPr.GetPageWidth();
