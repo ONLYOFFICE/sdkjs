@@ -505,6 +505,14 @@ MasterSlide.prototype.removeFromSldLayoutLstByPos = function (pos, count) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterRemoveLayout, pos, this.sldLayoutLst.slice(pos, pos + count), false));
     this.sldLayoutLst.splice(pos, count);
 };
+MasterSlide.prototype.removeLayout = function (oLayout) {
+    for(let nIdx = 0; nIdx < this.sldLayoutLst.length; ++nIdx) {
+        if(oLayout === this.sldLayoutLst[nIdx]) {
+            this.removeFromSldLayoutLstByPos(nIdx, 1);
+            return;
+        }
+    }
+};
 MasterSlide.prototype.moveLayouts  = function (layoutsIndexes, pos) {
     var insert_pos = pos;
     var removed_layouts = [];

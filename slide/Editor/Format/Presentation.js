@@ -8961,21 +8961,49 @@ CPresentation.prototype.changeColorScheme = function (colorScheme) {
 };
 
 CPresentation.prototype.removeSlide = function (pos) {
-	if (AscFormat.isRealNumber(pos) && pos > -1 && pos < this.Slides.length) {
-		var oSlide = this.Slides[pos];
-		History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_Presentation_RemoveSlide, pos, [oSlide], false));
-		var aSlideComments = oSlide && oSlide.slideComments && oSlide.slideComments.comments;
-		this.Api.sync_HideComment();
-		if (Array.isArray(aSlideComments)) {
-			for (var i = aSlideComments.length - 1; i > -1; --i) {
-				var sId = aSlideComments[i].Id;
-				oSlide.removeComment(sId, true);
+	let oSlide = this.GetSlide(pos);
+	if(!oSlide) return;
+	let nType = oSlide.getObjectType();
+	switch (nType) {
+		case AscDFH.historyitem_type_Slide: {
+			History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_Presentation_RemoveSlide, pos, [oSlide], false));
+			var aSlideComments = oSlide && oSlide.slideComments && oSlide.slideComments.comments;
+			this.Api.sync_HideComment();
+			if (Array.isArray(aSlideComments)) {
+				for (var i = aSlideComments.length - 1; i > -1; --i) {
+					var sId = aSlideComments[i].Id;
+					oSlide.removeComment(sId, true);
+				}
+			}
+			this.Slides.splice(pos, 1);
+		}
+		case AscDFH.historyitem_type_SlideLayout: {
+			if(this.CanRemoveLayout(oSlide)) {
+				oSlide.Master.removeLayout(oSlide);
 			}
 		}
-		this.Slides.splice(pos, 1);
-		return oSlide;
+		case AscDFH.historyitem_type_SlideMaster: {
+			if(this.CanRemoveMaster(oSlide)) {
+				for(let nIdx = 0; nIdx < this.slideMasters.length; ++nIdx) {
+					if(this.slideMasters[nIdx] === oSlide) {
+						this.removeSlideMaster(nIdx, 1);
+						break;
+					}
+				}
+			}
+		}
 	}
-	return null;
+	return oSlide;
+};
+
+CPresentation.prototype.CanRemoveLayout = function(oLayout) {
+	for(let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
+		if(this.Slides[nIdx].Layout === oLayout) return false;
+	}
+	return true;
+};
+CPresentation.prototype.CanRemoveMaster = function(oMaster) {
+	return this.slideMasters.length >1;
 };
 
 CPresentation.prototype.insertSlide = function (pos, slide) {
