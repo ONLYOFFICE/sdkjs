@@ -4098,6 +4098,14 @@ CPresentation.prototype.GetSelectedSlides = function () {
 		return [this.CurPage];
 	}
 };
+CPresentation.prototype.GetAllSlideIndexes = function () {
+	let aIdx = [];
+	let nCount = this.GetSlidesCount();
+	for(let nIdx = 0; nIdx < nCount; ++nIdx) {
+		aIdx.push(nIdx);
+	}
+	return aIdx;
+};
 
 CPresentation.prototype.RemoveCurrentComment = function (isMine) {
 	if (!this.FocusOnNotes) {
@@ -8741,18 +8749,20 @@ CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
 CPresentation.prototype.deleteSlides = function (array) {
 	if (array.length > 0 && (this.Document_Is_SelectionLocked(AscCommon.changestype_RemoveSlide, array) === false)) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_DeleteSlides);
-		var oldLen = this.Slides.length;
+		var oldLen = this.GetSlidesCount();
 		array.sort(AscCommon.fSortAscending);
 		for (var i = array.length - 1; i > -1; --i) {
 			this.removeSlide(array[i]);
 		}
-		for (i = 0; i < this.Slides.length; ++i) {
-			this.Slides[i].changeNum(i);
+		if(!this.IsMasterMode()) {
+			for (i = 0; i < this.Slides.length; ++i) {
+				this.Slides[i].changeNum(i);
+			}
 		}
 		if (array[array.length - 1] != oldLen - 1) {
 			this.DrawingDocument.m_oWordControl.GoToPage(array[array.length - 1] + 1 - array.length, undefined, true);
 		} else {
-			this.DrawingDocument.m_oWordControl.GoToPage(this.Slides.length - 1, undefined, true);
+			this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlidesCount() - 1, undefined, true);
 		}
 		this.Api.sync_HideComment();
 		this.Document_UpdateUndoRedoState();
@@ -9127,7 +9137,9 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
 		return true;
-	if (this.Slides.length === 0)
+
+
+	if (this.IsEmpty())
 		return false;
 	if (AscCommon.changestype_Document_SectPr === CheckType) {
 		return true;
@@ -9256,17 +9268,27 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 		}
 	}
 
-	if (CheckType === AscCommon.changestype_SlideBg) {
-		const selectedSlideIndexes = AdditionalData;
-		for (var i = 0; i < selectedSlideIndexes.length; ++i) {
-			var check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": this.Slides[selectedSlideIndexes[i]].backgroundLock.Get_Id(),
-					"guid": this.Slides[selectedSlideIndexes[i]].backgroundLock.Get_Id()
-				};
-			this.Slides[selectedSlideIndexes[i]].backgroundLock.Lock.Check(check_obj);
+	let oPres = this;
+	function fCheckSlides(fGetLock, selectedSlideIndexes) {
+		let aSlides = oPres.GetAllSlides();
+		for (let nIdx = 0; nIdx < selectedSlideIndexes.length; ++nIdx) {
+			let oSlide = aSlides[nIdx];
+			if(oSlide) {
+				let oLocker = fGetLock(oSlide);
+				if(oLocker) {
+					let sId = oLocker.Get_Id();
+					let oCheckData = {
+						"type": c_oAscLockTypeElemPresentation.Slide,
+						"val": sId,
+						"guid": sId
+					};
+					oLocker.Lock.Check(oCheckData);
+				}
+			}
 		}
+	}
+	if (CheckType === AscCommon.changestype_SlideBg) {
+		fCheckSlides(function (slide) {return slide.backgroundLock;}, AdditionalData);
 	}
 	if (CheckType === AscCommon.changestype_HdrFtr) {
 		const check_obj =
@@ -9278,16 +9300,7 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 		this.hdrFtrLock.Lock.Check(check_obj);
 	}
 	if (CheckType === AscCommon.changestype_SlideHide) {
-		var selected_slides = AdditionalData;
-		for (var i = 0; i < selected_slides.length; ++i) {
-			var check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": this.Slides[selected_slides[i]].showLock.Get_Id(),
-					"guid": this.Slides[selected_slides[i]].showLock.Get_Id()
-				};
-			this.Slides[selected_slides[i]].showLock.Lock.Check(check_obj);
-		}
+		fCheckSlides(function (slide) {return slide.showLock;}, AdditionalData);
 	}
 
 	if (CheckType === AscCommon.changestype_CorePr) {
@@ -9303,29 +9316,14 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 	}
 
 	if (CheckType === AscCommon.changestype_SlideTransition) {
-		if (!AdditionalData || !AdditionalData.All) {
-			var aSelectedSlides = this.GetSelectedSlides();
-			for (var i = 0; i < aSelectedSlides.length; ++i) {
-				var check_obj =
-					{
-						"type": c_oAscLockTypeElemPresentation.Slide,
-						"val": cur_slide.transitionLock.Get_Id(),
-						"guid": cur_slide.transitionLock.Get_Id()
-					};
-				this.Slides[aSelectedSlides[i]].transitionLock.Lock.Check(check_obj);
-			}
-		} else {
-			for (var i = 0; i < this.Slides.length; ++i) {
-				var check_obj =
-					{
-						"type": c_oAscLockTypeElemPresentation.Slide,
-						"val": this.Slides[i].transitionLock.Get_Id(),
-						"guid": this.Slides[i].transitionLock.Get_Id()
-					};
-				this.Slides[i].transitionLock.Lock.Check(check_obj);
-			}
-		}
 
+		let aIdx;
+		if (!AdditionalData || !AdditionalData.All) {
+			aIdx = this.GetSelectedSlides();
+		} else {
+			aIdx = this.GetAllSlideIndexes();
+		}
+		fCheckSlides(function (slide) {return slide.transitionLock;}, aIdx);
 	}
 
 	if (CheckType === AscCommon.changestype_Text_Props) {
@@ -9346,19 +9344,12 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 
 	if (CheckType === AscCommon.changestype_RemoveSlide) {
 		var selected_slides = AdditionalData;
+		let aSlides = this.GetAllSlides();
 		for (var i = 0; i < selected_slides.length; ++i) {
-			if (this.Slides[selected_slides[i]].isLockedObject())
+			if (aSlides[selected_slides[i]].isLockedObject())
 				return true;
 		}
-		for (var i = 0; i < selected_slides.length; ++i) {
-			var check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": this.Slides[selected_slides[i]].deleteLock.Get_Id(),
-					"guid": this.Slides[selected_slides[i]].deleteLock.Get_Id()
-				};
-			this.Slides[selected_slides[i]].deleteLock.Lock.Check(check_obj);
-		}
+		fCheckSlides(function (slide) {return slide.deleteLock;}, selected_slides);
 	}
 
 	if (CheckType === AscCommon.changestype_Theme) {
@@ -9373,28 +9364,10 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 
 	if (CheckType === AscCommon.changestype_Layout) {
 		var selected_slides = this.GetSelectedSlides();
-		for (var i = 0; i < selected_slides.length; ++i) {
-			var check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": this.Slides[selected_slides[i]].layoutLock.Get_Id(),
-					"guid": this.Slides[selected_slides[i]].layoutLock.Get_Id()
-				};
-			this.Slides[selected_slides[i]].layoutLock.Lock.Check(check_obj);
-		}
+		fCheckSlides(function (slide) {return slide.layoutLock;}, selected_slides);
 	}
 	if (CheckType === AscCommon.changestype_Timing) {
-		var oSlide = this.GetCurrentSlide();
-		if (oSlide) {
-			var oTimingLock = oSlide.timingLock;
-			var check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": oTimingLock.Get_Id(),
-					"guid": oTimingLock.Get_Id()
-				};
-			oTimingLock.Lock.Check(check_obj);
-		}
+		fCheckSlides(function (slide) {return slide.timingLock;}, [this.CurPage]);
 	}
 	if (CheckType === AscCommon.changestype_ColorScheme) {
 		var check_obj =

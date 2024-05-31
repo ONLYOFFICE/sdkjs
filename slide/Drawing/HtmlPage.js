@@ -4560,9 +4560,9 @@ function CEditorPage(api)
 		if (bIsAttack && !isRecalculateNote)
 		{
 			var _curPage = this.m_oLogicDocument.CurPage;
-			if (_curPage >= 0)
+			var oSlide = this.m_oLogicDocument.GetCurrentSlide();
+			if (_curPage >= 0 && oSlide)
 			{
-				var oSlide = this.m_oLogicDocument.Slides[_curPage];
 				this.m_oNotesApi.OnRecalculateNote(_curPage, oSlide.NotesWidth, oSlide.getNotesHeight());
 				if(this.m_oAnimPaneApi)
 				{

@@ -6536,6 +6536,23 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.DublicateSlide();
 	};
 
+	asc_docs_api.prototype.asc_DeleteMaster    = function()
+	{
+		this.DeleteSlide();
+	};
+	asc_docs_api.prototype.asc_DeleteLayout    = function()
+	{
+		this.DeleteSlide();
+	};
+	asc_docs_api.prototype.asc_DuplicateMaster    = function()
+	{
+		this.DublicateSlide();
+	};
+	asc_docs_api.prototype.asc_DuplicateLayout    = function()
+	{
+		this.DublicateSlide();
+	};
+
 	asc_docs_api.prototype.SelectAllSlides = function(layoutType)
 	{
 		var drDoc       = this.WordControl.m_oDrawingDocument;
@@ -9789,6 +9806,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_StartAddPlaceholder"] = asc_docs_api.prototype.asc_StartAddPlaceholder;
 	asc_docs_api.prototype["asc_setLayoutTitle"] = asc_docs_api.prototype.asc_setLayoutTitle;
 	asc_docs_api.prototype["asc_setLayoutFooter"] = asc_docs_api.prototype.asc_setLayoutFooter;
+	asc_docs_api.prototype["asc_DeleteMaster"] = asc_docs_api.prototype.asc_DeleteMaster;
+	asc_docs_api.prototype["asc_DeleteLayout"] = asc_docs_api.prototype.asc_DeleteLayout;
+	asc_docs_api.prototype["asc_DuplicateMaster"] = asc_docs_api.prototype.asc_DuplicateMaster;
+	asc_docs_api.prototype["asc_DuplicateLayout"] = asc_docs_api.prototype.asc_DuplicateLayout;
+
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;
 	asc_CCommentData.prototype['asc_getText']         = asc_CCommentData.prototype.asc_getText;
