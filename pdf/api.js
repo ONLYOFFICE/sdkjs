@@ -174,6 +174,7 @@
 			return;
 
 		let oDoc			= this.getPDFDoc();
+		let oFile			= oDoc.Viewer.file;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
@@ -200,16 +201,34 @@
 			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let sText = oActiveDrawing.GetDocContent().GetSelectedText(false);
-			if (!sText)
-				return;
+		else if (oActiveDrawing) {
+			let oContent = oActiveDrawing.GetDocContent();
+			let sText = oContent ? oContent.GetSelectedText(false) : "";
+			let _data, sBase64;
 
-			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+			// text
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats) {
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
-
-			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+			}
+			//HTML
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
+				var oCopyProcessor = new AscCommon.CopyProcessor(this);
+				sBase64            = oCopyProcessor.Start();
+				_data              = oCopyProcessor.getInnerHtml();
+	
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data)
+			}
+			//INTERNAL
+			if (AscCommon.c_oAscClipboardDataFormat.Internal & _formats) {
+				if (sBase64 === null)
+				{
+					var oCopyProcessor = new AscCommon.CopyProcessor(this);
+					sBase64            = oCopyProcessor.Start();
+				}
+	
+				_data = sBase64;
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, _data)
+			}
 		}
 		else {
 			let _text_object = {Text: ""};
@@ -295,9 +314,13 @@
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
-		if (!data)
+		// пока что копирование бинарником только внутри drawings или самих drawings
+		if (_format !== AscCommon.c_oAscClipboardDataFormat.Text && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
+			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 			return;
-
+		}
+		
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
@@ -2120,6 +2143,14 @@
 		}
 		
 		this.EndActionLoadImages = 0;
+		if (this.isPasteFonts_Images) {
+			this.isPasteFonts_Images = false;
+			this.pasteImageMap       = null;
+			this.pasteCallback();
+			this.pasteCallback            = null;
+			this.decrementCounterLongAction();
+		}
+
 		if (false === this.isPasteFonts_Images && false === this.isSaveFonts_Images && false === this.isLoadImagesCustom)
 		{
 			this.ServerImagesWaitComplete = true;
@@ -2177,6 +2208,8 @@
 
 		this.sendMathToMenu();
 		this.sendStandartTextures();
+		//выставляем тип copypaste
+		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));

@@ -48,7 +48,40 @@
     CPdfGraphicFrame.prototype.IsGraphicFrame = function() {
         return true;
     };
+    CPdfGraphicFrame.prototype.copy = function (oPr) {
+        let ret = new CPdfGraphicFrame();
+        let oDoc = Asc.editor.getPDFDoc();
+        if (this.graphicObject) {
+            ret.setGraphicObject(this.graphicObject.Copy(ret));
+            if (oDoc && isRealObject(oDoc.globalTableStyles)) {
+                ret.graphicObject.Reset(0, 0, this.graphicObject.XLimit, this.graphicObject.YLimit, ret.graphicObject.PageNum);
+            }
+        }
+        if (this.nvGraphicFramePr) {
+            ret.setNvSpPr(this.nvGraphicFramePr.createDuplicate());
+        }
+        if (this.spPr) {
+            ret.setSpPr(this.spPr.createDuplicate());
+            ret.spPr.setParent(ret);
+        }
+        ret.setBDeleted(false);
+        if (this.macro !== null) {
+            ret.setMacro(this.macro);
+        }
+        if (this.textLink !== null) {
+            ret.setTextLink(this.textLink);
+        }
+        if (!this.recalcInfo.recalculateTable && !this.recalcInfo.recalculateSizes && !this.recalcInfo.recalculateTransform) {
+            if (!oPr || false !== oPr.cacheImage) {
+                ret.cachedImage = this.getBase64Img();
+                ret.cachedPixH = this.cachedPixH;
+                ret.cachedPixW = this.cachedPixW;
+            }
+        }
 
+        ret._page = this._page; 
+        return ret;
+    };
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();
     };

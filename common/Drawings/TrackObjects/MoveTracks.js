@@ -781,6 +781,9 @@ function MoveAnnotationTrack(originalObject)
 
         this.originalObject.SetPosition(this.x, this.y);
         this.originalObject.SetPage(this.pageIndex);
+        if (this.originalObject.IsFreeText()) {
+            this.originalObject.onAfterMove();
+        }
     };
 
     this.getBounds = function()
