@@ -13636,6 +13636,7 @@
 	ApiWorksheetFunction.prototype["BINOM_DIST"]      =  ApiWorksheetFunction.prototype.BINOM_DIST;
 	ApiWorksheetFunction.prototype["BINOM_INV"]       =  ApiWorksheetFunction.prototype.BINOM_INV;
 	ApiWorksheetFunction.prototype["CHISQ_INV"]       =  ApiWorksheetFunction.prototype.CHISQ_INV;
+	ApiWorksheetFunction.prototype["CHISQ_INV_RT"]    =  ApiWorksheetFunction.prototype.CHISQ_INV_RT;
 	ApiWorksheetFunction.prototype["CONFIDENCE_NORM"] =  ApiWorksheetFunction.prototype.CONFIDENCE_NORM;
 	ApiWorksheetFunction.prototype["CONFIDENCE_T"]    =  ApiWorksheetFunction.prototype.CONFIDENCE_T;
 	ApiWorksheetFunction.prototype["EXPON_DIST"]      =  ApiWorksheetFunction.prototype.EXPON_DIST;
