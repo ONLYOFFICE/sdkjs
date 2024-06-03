@@ -1232,7 +1232,7 @@ function CDrawingDocument()
 		var dKoefY = hDst / this.m_oLogicDocument.GetHeightMM();
 
 		var overlay = this.m_oWordControl.m_oOverlayApi;
-		if (this.m_oWordControl.IsSupportNotes && this.m_oWordControl.m_oNotesApi && this.m_oLogicDocument.IsFocusOnNotes())
+		if (this.m_oWordControl.IsNotesSupported() && this.m_oWordControl.m_oNotesApi && this.m_oLogicDocument.IsFocusOnNotes())
 		{
 			overlay = this.m_oWordControl.m_oNotesApi.m_oOverlayApi;
 			xDst = this.m_oWordControl.m_oNotesApi.OffsetX;
@@ -3321,7 +3321,7 @@ function CDrawingDocument()
 	// notes
 	this.Notes_GetWidth = function()
 	{
-		if (!this.m_oWordControl.IsSupportNotes)
+		if (!this.m_oWordControl.IsNotesSupported())
 			return 0;
 
 		if (!this.m_oWordControl.m_oNotesApi)
@@ -3332,7 +3332,7 @@ function CDrawingDocument()
 
 	this.Notes_OnRecalculate = function(slideNum, width, height)
 	{
-		if (!this.m_oWordControl.IsSupportNotes)
+		if (!this.m_oWordControl.IsNotesSupported())
 			return;
 
 		if (!this.m_oWordControl.m_oNotesApi)

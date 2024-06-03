@@ -358,7 +358,7 @@ function CEditorPage(api)
 
 		this.Splitter1Pos    = 67.5;
 		this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos = (this.IsSupportNotes && !this.m_oApi.isEmbedVersion) ? this.Splitter2PosMin : 0;
+		this.Splitter2Pos = (this.IsNotesSupported() && !this.m_oApi.isEmbedVersion) ? this.Splitter2PosMin : 0;
 		this.Splitter3Pos = 0;
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
@@ -910,7 +910,7 @@ function CEditorPage(api)
 			this.MobileTouchManagerThumbnails.Init(this.m_oApi);
 		}
 
-		if (this.IsSupportNotes)
+		if (this.IsNotesSupported())
 		{
 			this.m_oNotes.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oNotesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
@@ -1285,7 +1285,7 @@ function CEditorPage(api)
 			this.Splitter3Pos = 0;
 		}
 
-		this.Splitter2Pos = (this.IsSupportNotes)
+		this.Splitter2Pos = (this.IsNotesSupported())
 			? Math.min(Math.max(this.Splitter2Pos, this.Splitter3Pos + HIDDEN_PANE_HEIGHT), this.Splitter2PosMax)
 			: 0;
 
@@ -1314,7 +1314,7 @@ function CEditorPage(api)
 			this.m_oMainParent.HtmlElement.style.borderLeft = "none";
 		}
 
-		if (this.IsSupportNotes)
+		if (this.IsNotesSupported())
 		{
 			if (this.m_oNotesContainer.Bounds.AbsH < 1)
 				this.m_oNotesContainer.Bounds.AbsH = 1;
@@ -2148,7 +2148,7 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_After();
 
-		if (this.IsSupportNotes && this.m_oNotesApi)
+		if (this.IsNotesSupported() && this.m_oNotesApi)
 			this.m_oNotesApi.OnResize();
 
 		if (this.m_oAnimPaneApi)
@@ -2288,7 +2288,7 @@ function CEditorPage(api)
 		if (!isRepaint && oWordControl.m_oNotesApi.IsRepaint)
 			isRepaint = true;
 
-		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
+		if (oWordControl.IsNotesSupported() && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
 		if (oWordControl.m_oAnimPaneApi && oWordControl.IsAnimPaneShown())
@@ -4029,7 +4029,7 @@ function CEditorPage(api)
 		var overlayNotes = null;
 
 		var isDrawNotes = false;
-		if (this.IsSupportNotes && this.m_oNotesApi)
+		if (this.IsNotesSupported() && this.m_oNotesApi)
 		{
 			overlayNotes = this.m_oNotesApi.m_oOverlayApi;
 			overlayNotes.SetBaseTransform();
@@ -4322,7 +4322,7 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_After();
 
-		if (this.IsSupportNotes && this.m_oNotesApi && this.m_oApi.isDocumentLoadComplete/* asc_setSkin => OnResize before fonts loaded => crash on Notes.OnResize() */)
+		if (this.IsNotesSupported() && this.m_oNotesApi && this.m_oApi.isDocumentLoadComplete/* asc_setSkin => OnResize before fonts loaded => crash on Notes.OnResize() */)
 			this.m_oNotesApi.OnResize();
 
 		if (this.m_oAnimPaneApi)
@@ -4390,7 +4390,7 @@ function CEditorPage(api)
 
 		this.DemonstrationManager.Resize();
 
-		if (this.IsSupportNotes && this.m_oNotesApi)
+		if (this.IsNotesSupported() && this.m_oNotesApi)
 			this.m_oNotesApi.OnResize();
 
 		if (this.m_oAnimPaneApi)
@@ -4532,7 +4532,7 @@ function CEditorPage(api)
 		{
 			this.m_oDrawingDocument.IsEmptyPresentation = true;
 
-			if (this.IsSupportNotes && this.m_oNotesApi)
+			if (this.IsNotesSupported() && this.m_oNotesApi)
 				this.m_oNotesApi.OnRecalculateNote(-1, 0, 0);
 
 			if (this.m_oAnimPaneApi)
@@ -4800,6 +4800,16 @@ function CEditorPage(api)
 		this.OnResizeSplitter();
 	};
 
+	this.setAnimPaneEnable = function(bEnabled)
+	{
+		if (bEnabled == this.IsSupportAnimPane)
+			return;
+		this.IsSupportAnimPane = bEnabled;
+		this.Splitter3Pos = 0;
+		Asc.editor.sendEvent('asc_onCloseAnimPane');
+		this.OnResizeSplitter();
+	};
+
 
 	this.GetMediaPlayerData = function(mediaData)
 	{
@@ -5000,6 +5010,8 @@ function CEditorPage(api)
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				this.GoToPage(0);
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
+				this.setNotesEnable(true);
+				this.setAnimPaneEnable(true);
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
@@ -5007,6 +5019,8 @@ function CEditorPage(api)
 				let oSlide = this.m_oLogicDocument.Slides[ this.m_oLogicDocument.CurPage];
 				let nIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
+				this.setNotesEnable(false);
+				this.setAnimPaneEnable(false);
 				this.GoToPage(nIdx);
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
@@ -5016,6 +5030,15 @@ function CEditorPage(api)
 				break;
 			}
 		}
+	};
+
+	this.IsNotesSupported = function()
+	{
+		return this.IsSupportNotes && !this.m_oApi.isMasterMode();
+	};
+	this.IsAnimPaneSupported = function()
+	{
+		return this.IsSupportAnimPane && !this.m_oApi.isMasterMode();
 	};
 }
 
