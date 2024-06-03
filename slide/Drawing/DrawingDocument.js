@@ -54,6 +54,8 @@ var FOCUS_OBJECT_ANIM_PANE  = 3;
 var COMMENT_WIDTH  = 18;
 var COMMENT_HEIGHT = 16;
 
+const LAYOUT_SCALE = 0.87;
+
 // text measurer wrapper
 AscCommon.CTextMeasurer.prototype.GetAscender  = function()
 {
@@ -5859,10 +5861,9 @@ function CThumbnailsManager()
 			let oSlide = this.m_oWordControl.m_oLogicDocument.GetSlide(i);
 			if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideLayout)
 			{
-				let dScale = 0.87;
-				let nWidth = (drawRect.right - drawRect.left) * dScale;
+				let nWidth = (drawRect.right - drawRect.left) * LAYOUT_SCALE;
 				drawRect.left = (drawRect.right - nWidth) + 0.5 >> 0;
-				nHeight = nHeightSlide * dScale + 0.5 >> 0;
+				nHeight = nHeightSlide * LAYOUT_SCALE + 0.5 >> 0;
 				drawRect.bottom = drawRect.top + nHeight;
 			}
 
@@ -6054,7 +6055,24 @@ function CThumbnailsManager()
 		nWidthSlide -= this.const_offset_x;
 
 		var nHeightSlide = (nWidthSlide * this.SlideHeight / this.SlideWidth) >> 0;
-		var nHeightPix = this.const_offset_y + this.const_offset_y + nHeightSlide * SlidesCount;
+
+		let nSumThHeight;
+		if(!this.IsMasterMode())
+		{
+			nSumThHeight = nHeightSlide * SlidesCount;
+		}
+		else
+		{
+			nSumThHeight = 0;
+			for(let nIdx = 0; nIdx < oPresentation.slideMasters.length; ++nIdx)
+			{
+				nSumThHeight += nHeightSlide;
+				let oMaster = oPresentation.slideMasters[nIdx];
+				nSumThHeight += LAYOUT_SCALE * oMaster.sldLayoutLst.length * nHeightSlide;
+			}
+			nSumThHeight = nSumThHeight + 0.5 >> 0;
+		}
+		var nHeightPix = this.const_offset_y + this.const_offset_y + nSumThHeight;
 		if (SlidesCount > 0)
 			nHeightPix += (SlidesCount - 1) * 3 * this.const_border_w;
 
@@ -6110,7 +6128,24 @@ function CThumbnailsManager()
 			nWidthSlide -= (this.const_offset_x + this.const_offset_r);
 
 			var nHeightSlide = (nWidthSlide * this.SlideHeight / this.SlideWidth) >> 0;
-			var nHeightPix = this.const_offset_y + this.const_offset_y + nHeightSlide * SlidesCount;
+
+			let nSumThHeight;
+			if(!this.IsMasterMode())
+			{
+				nSumThHeight = nHeightSlide * SlidesCount;
+			}
+			else
+			{
+				nSumThHeight = 0;
+				for(let nIdx = 0; nIdx < oPresentation.slideMasters.length; ++nIdx)
+				{
+					nSumThHeight += nHeightSlide;
+					let oMaster = oPresentation.slideMasters[nIdx];
+					nSumThHeight += LAYOUT_SCALE * oMaster.sldLayoutLst.length * nHeightSlide;
+				}
+				nSumThHeight = nSumThHeight + 0.5 >> 0;
+			}
+			var nHeightPix = this.const_offset_y + this.const_offset_y + nSumThHeight;
 			if (SlidesCount > 0)
 				nHeightPix += (SlidesCount - 1) * 3 * this.const_border_w;
 
