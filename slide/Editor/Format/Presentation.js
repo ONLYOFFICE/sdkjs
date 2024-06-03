@@ -9721,6 +9721,8 @@ CPresentation.prototype.RemoveComment = function (Id, bSendEvent) {
 CPresentation.prototype.CanAddComment = function () {
 	if (!this.CanEdit() && !this.IsEditCommentsMode())
 		return false;
+	if(this.IsMasterMode())
+		return false;
 	return true;
 };
 

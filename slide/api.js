@@ -79,6 +79,7 @@
 		this.resetBackground          = false;
 		this.applyBackgroundToAll     = false;
 		this.showMasterSp             = null;
+		this.IsMaster                 = false;
 	}
 
 	CAscSlideProps.prototype.get_background     = function()
@@ -197,6 +198,11 @@
 	{
 		this.showMasterSp = v;
 	};
+	CAscSlideProps.prototype.get_IsMasterSelected     = function()
+	{
+		return this.IsMaster;
+	};
+
 	function CAscChartProp(obj)
 	{
 		if (obj)
@@ -7070,25 +7076,18 @@ background-repeat: no-repeat;\
 		{
 			return;
 		}
-		var obj = new CAscSlideProps();
-		var aSlides = [];
-		var oPresentation = this.WordControl.m_oLogicDocument, i;
-		if(this.WordControl.Thumbnails){
-
+		let obj = new CAscSlideProps();
+		let oPresentation = this.WordControl.m_oLogicDocument, i;
+		let aSlides = oPresentation.GetSelectedSlideObjects();
+		if(this.WordControl.Thumbnails)
+		{
 			var oTh = editor.WordControl.Thumbnails;
 			var aSelectedArray = oTh.GetSelectedArray();
 			obj.isHidden = oTh.IsSlideHidden(aSelectedArray);
-			for(i = 0; i < aSelectedArray.length; ++i)
-			{
-				if(oPresentation.Slides[aSelectedArray[i]])
-				{
-					aSlides.push(oPresentation.Slides[aSelectedArray[i]]);
-				}
-			}
 		}
-		else{
+		else
+		{
 			obj.isHidden = false;
-			aSlides.push(slide);
 		}
 		if (!slide)
 			return;
@@ -7096,6 +7095,17 @@ background-repeat: no-repeat;\
 		{
 			aSlides.push(slide);
 		}
+
+		for(let nIdx = 0; nIdx < aSlides.length; ++nIdx)
+		{
+			let oSlide = aSlides[nIdx];
+			if(oSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster)
+			{
+				obj.IsMaster = true;
+				break;
+			}
+		}
+
 
 		var bgFill = aSlides[0].backgroundFill ? aSlides[0].backgroundFill.createDuplicate() : aSlides[0].backgroundFill;
 		for(i = 1; i < aSlides.length; ++i)
@@ -9890,6 +9900,7 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['put_ApplyBackgroundToAll']     = CAscSlideProps.prototype.put_ApplyBackgroundToAll;
 	CAscSlideProps.prototype['get_ShowMasterSp']             = CAscSlideProps.prototype.get_ShowMasterSp;
 	CAscSlideProps.prototype['put_ShowMasterSp']             = CAscSlideProps.prototype.put_ShowMasterSp;
+	CAscSlideProps.prototype['get_IsMasterSelected']         = CAscSlideProps.prototype.get_IsMasterSelected;
 	window['Asc']['CAscChartProp']                    = CAscChartProp;
 	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
 	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;
