@@ -4850,13 +4850,13 @@ function CThumbnailsManager()
 			return false;
 		}
 		AscCommon.check_KeyboardEvent(e);
-		var oApi = this.m_oWordControl.m_oApi;
-		var oPresentation = this.m_oWordControl.m_oLogicDocument;
-		var oDrawingDocument = this.m_oWordControl.m_oDrawingDocument;
-		var oEvent = global_keyboardEvent;
-		var nShortCutAction = oApi.getShortcut(oEvent);
-		var bReturnValue = false, bPreventDefault = true;
-		var sSelectedIdx;
+		let oApi = this.m_oWordControl.m_oApi;
+		let oPresentation = this.m_oWordControl.m_oLogicDocument;
+		let oDrawingDocument = this.m_oWordControl.m_oDrawingDocument;
+		let oEvent = global_keyboardEvent;
+		let nShortCutAction = oApi.getShortcut(oEvent);
+		let bReturnValue = false, bPreventDefault = true;
+		let sSelectedIdx;
 		let nStartHistoryIndex = oPresentation.History.Index;
 		switch (nShortCutAction)
 		{

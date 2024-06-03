@@ -4126,7 +4126,10 @@ CPresentation.prototype.GetSelectedSlideObjects = function () {
 	let aSlideObjects = [];
 	let aIdx = this.GetSelectedSlides();
 	for(let nIdx = 0; nIdx < aIdx.length; ++nIdx) {
-		aSlideObjects.push(this.GetSlide(aIdx[nIdx]));
+		let oSlide = this.GetSlide(aIdx[nIdx]);
+		if(oSlide) {
+			aSlideObjects.push(this.GetSlide(aIdx[nIdx]));
+		}
 	}
 	return aSlideObjects;
 };
@@ -9133,15 +9136,17 @@ CPresentation.prototype.removeSlide = function (pos, bNoCheck) {
 			break;
 		}
 		case AscDFH.historyitem_type_SlideMaster: {
-			if(this.CanRemoveMaster(oSlide) || bNoCheck) {
+			if(this.CanRemoveMaster(oSlide)) {
 				for(let nIdx = 0; nIdx < this.slideMasters.length; ++nIdx) {
-					if(this.slideMasters[nIdx] === oSlide) {
+					if(this.slideMasters[nIdx] === oSlide || bNoCheck) {
 						this.removeSlideMaster(nIdx, 1);
-						let oNewMaster = this.slideMasters[0];
-						for(let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
-							let oCurSlide = this.Slides[nIdx];
-							if(oCurSlide.Layout.Master === oSlide) {
-								this.ChangeSlideSlideMaster(oCurSlide, oNewMaster);
+						if(!bNoCheck) {
+							let oNewMaster = this.slideMasters[0];
+							for(let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
+								let oCurSlide = this.Slides[nIdx];
+								if(oCurSlide.Layout.Master === oSlide) {
+									this.ChangeSlideSlideMaster(oCurSlide, oNewMaster);
+								}
 							}
 						}
 						break;
@@ -9161,7 +9166,7 @@ CPresentation.prototype.CanRemoveLayout = function(oLayout) {
 	return true;
 };
 CPresentation.prototype.CanRemoveMaster = function(oMaster) {
-	return this.slideMasters.length >1;
+	return this.slideMasters.length > 1;
 };
 
 CPresentation.prototype.insertSlide = function (pos, slide) {
