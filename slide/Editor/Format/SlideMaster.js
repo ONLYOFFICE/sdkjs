@@ -706,6 +706,9 @@ MasterSlide.prototype.removeFromSpTreeById = function(sId) {
 MasterSlide.prototype.removeFromSpTreeByPos = function(pos) {
     return AscCommonSlide.Slide.prototype.removeFromSpTreeByPos.call(this, pos);
 };
+MasterSlide.prototype.convertPixToMM = function(pix) {
+    return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
+};
 
 function CMasterThumbnailDrawer()
 {

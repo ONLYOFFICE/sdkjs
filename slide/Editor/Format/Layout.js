@@ -790,7 +790,9 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.getWorksheet = function(){
         return null;
     };
-
+    SlideLayout.prototype.convertPixToMM = function(pix) {
+        return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

@@ -4413,6 +4413,19 @@ function CThumbnailsManager()
 		this.OnUpdateOverlay();
 	};
 
+	this.GetFirstSelectedType = function()
+	{
+		return this.m_oWordControl.m_oLogicDocument.GetFirstSelectedType();
+	};
+	this.GetSlideType = function(nIdx)
+	{
+		return this.m_oWordControl.m_oLogicDocument.GetSlideType(nIdx);
+	};
+	this.IsMixedSelection = function()
+	{
+		return this.m_oWordControl.m_oLogicDocument.IsMixedSelection();
+	};
+
 	// events
 	this.onMouseDown = function(e)
 	{
@@ -4494,17 +4507,20 @@ function CThumbnailsManager()
 				}
 			} else
 			{
-				oThis.m_arrPages[pos.Page].IsSelected = true;
-				oThis.OnUpdateOverlay();
+				if(oThis.GetFirstSelectedType() === oThis.GetSlideType(pos.Page))
+				{
+					oThis.m_arrPages[pos.Page].IsSelected = true;
+					oThis.OnUpdateOverlay();
 
-				oThis.SelectPageEnabled = false;
-				oThis.m_oWordControl.GoToPage(pos.Page);
-				oThis.SelectPageEnabled = true;
-
-				oThis.ShowPage(pos.Page);
+					oThis.SelectPageEnabled = false;
+					oThis.m_oWordControl.GoToPage(pos.Page);
+					oThis.SelectPageEnabled = true;
+					oThis.ShowPage(pos.Page);
+				}
 			}
 		} else if (global_keyboardEvent.ShiftKey && !oThis.m_oWordControl.m_oApi.isReporterMode)
 		{
+
 			var pages_count = oThis.m_arrPages.length;
 			for (var i = 0; i < pages_count; i++)
 			{
@@ -4520,9 +4536,13 @@ function CThumbnailsManager()
 				_min = _temp;
 			}
 
+			let nSlideType = oThis.GetSlideType(_min);
 			for (var i = _min; i <= _max; i++)
 			{
-				oThis.m_arrPages[i].IsSelected = true;
+				if(nSlideType === oThis.GetSlideType(i))
+				{
+					oThis.m_arrPages[i].IsSelected = true;
+				}
 			}
 
 			oThis.OnUpdateOverlay();
@@ -5516,12 +5536,16 @@ function CThumbnailsManager()
 				this.m_arrPages[i].IsSelected = false;
 			}
 			let nCount = aSelectedIdx.length;
+			let nSlideType = this.GetSlideType(aSelectedIdx[0]);
 			for (let nIdx = 0; nIdx < nCount; nIdx++)
 			{
-				let oPage = this.m_arrPages[aSelectedIdx[nIdx]];
-				if (oPage)
+				if(this.GetSlideType(aSelectedIdx[nIdx]) === nSlideType)
 				{
-					oPage.IsSelected = true;
+					let oPage = this.m_arrPages[aSelectedIdx[nIdx]];
+					if (oPage)
+					{
+						oPage.IsSelected = true;
+					}
 				}
 			}
 			this.OnUpdateOverlay();
@@ -5611,9 +5635,13 @@ function CThumbnailsManager()
 		{
 			this.m_arrPages[i].IsSelected = false;
 		}
+		let nSlideType = this.GetSlideType(_min);
 		for (var i = _min; i <= _max; i++)
 		{
-			this.m_arrPages[i].IsSelected = true;
+			if(this.GetSlideType(i) === nSlideType)
+			{
+				this.m_arrPages[i].IsSelected = true;
+			}
 		}
 		for (var i = _max + 1; i < slidesCount; i++)
 		{

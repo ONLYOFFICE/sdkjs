@@ -4997,14 +4997,18 @@ function CEditorPage(api)
 		{
 			case Asc.c_oAscPresentationViewMode.normal:
 			{
-				this.m_oDrawingDocument.SlideCurrent = 0;
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
+				this.GoToPage(0);
+				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
 			{
-				this.m_oDrawingDocument.SlideCurrent = 0;
+				let oSlide = this.m_oLogicDocument.Slides[ this.m_oLogicDocument.CurPage];
+				let nIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
+				this.GoToPage(nIdx);
+				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.sorter:
