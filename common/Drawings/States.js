@@ -46,7 +46,7 @@ var SNAP_DISTANCE = 1.27;
 
 
 
-function StartAddNewShape(drawingObjects, preset, nPlaceholderType)
+function StartAddNewShape(drawingObjects, preset, nPlaceholderType, bVertical)
 {
     this.drawingObjects = drawingObjects;
     this.preset = preset;
@@ -59,6 +59,7 @@ function StartAddNewShape(drawingObjects, preset, nPlaceholderType)
 
     this.oldConnector = null;
     this.placeholderType = nPlaceholderType;
+    this.bVertical = bVertical;
 }
 
 StartAddNewShape.prototype =
@@ -93,7 +94,7 @@ StartAddNewShape.prototype =
                 }
             }
         }
-        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects, this.placeholderType));
+        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects, this.placeholderType, this.bVertical));
         this.bStart = true;
         this.drawingObjects.swapTrackObjects();
     },

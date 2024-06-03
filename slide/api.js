@@ -1093,14 +1093,14 @@
 		if(!oLogicDocument) return;
 		oLogicDocument.AddNewLayout();
 	};
-	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType) {
+	asc_docs_api.prototype.asc_StartAddPlaceholder = function(nType, bVertical, bStart) {
 		if(!this.isMasterMode()) return;
 
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
 		let oCurSlide = oLogicDocument.GetCurrentSlide();
 		if(oCurSlide.getObjectType() !== AscDFH.historyitem_type_SlideLayout) return;
-		oLogicDocument.StartAddShape("textRect", undefined, nType);
+		oLogicDocument.StartAddShape("textRect", bStart, nType, bVertical);
 	};
 	asc_docs_api.prototype.asc_setLayoutTitle = function(bVal) {
 		if(!this.isMasterMode()) return;

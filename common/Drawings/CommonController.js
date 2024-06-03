@@ -6640,7 +6640,7 @@
 					return bRetArray === true ? ret_array : false;
 				},
 
-				startTrackNewShape: function (presetGeom, nPlaceholderType) {
+				startTrackNewShape: function (presetGeom, nPlaceholderType, bVertical) {
 					switch (presetGeom) {
 						case "spline": {
 							this.changeCurrentState(new AscFormat.SplineBezierState(this));
@@ -6659,7 +6659,7 @@
 							break;
 						}
 						default : {
-							this.changeCurrentState(new AscFormat.StartAddNewShape(this, presetGeom, nPlaceholderType));
+							this.changeCurrentState(new AscFormat.StartAddNewShape(this, presetGeom, nPlaceholderType, bVertical));
 							break;
 						}
 					}

@@ -8846,7 +8846,7 @@ CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
 
 	if (!(bCopy === true || AscCommon.global_mouseEvent.CtrlKey)) {
 		for (i = array.length - 1; i > -1; --i) {
-			deleted.push(this.removeSlide(array[i]));
+			deleted.push(this.removeSlide(array[i], true));
 		}
 
 		for (i = 0; i < array.length; ++i) {
@@ -9108,7 +9108,7 @@ CPresentation.prototype.changeColorScheme = function (colorScheme) {
 	this.Document_UpdateInterfaceState();
 };
 
-CPresentation.prototype.removeSlide = function (pos) {
+CPresentation.prototype.removeSlide = function (pos, bNoCheck) {
 	let oSlide = this.GetSlide(pos);
 	if(!oSlide) return;
 	let nType = oSlide.getObjectType();
@@ -9124,14 +9124,16 @@ CPresentation.prototype.removeSlide = function (pos) {
 				}
 			}
 			this.Slides.splice(pos, 1);
+			break;
 		}
 		case AscDFH.historyitem_type_SlideLayout: {
-			if(this.CanRemoveLayout(oSlide)) {
+			if(this.CanRemoveLayout(oSlide) || bNoCheck) {
 				oSlide.Master.removeLayout(oSlide);
 			}
+			break;
 		}
 		case AscDFH.historyitem_type_SlideMaster: {
-			if(this.CanRemoveMaster(oSlide)) {
+			if(this.CanRemoveMaster(oSlide) || bNoCheck) {
 				for(let nIdx = 0; nIdx < this.slideMasters.length; ++nIdx) {
 					if(this.slideMasters[nIdx] === oSlide) {
 						this.removeSlideMaster(nIdx, 1);
@@ -9146,6 +9148,7 @@ CPresentation.prototype.removeSlide = function (pos) {
 					}
 				}
 			}
+			break;
 		}
 	}
 	return oSlide;
@@ -9170,11 +9173,61 @@ CPresentation.prototype.insertSlide = function (pos, slide) {
 	}
 };
 CPresentation.prototype.insertSlideObjectToPos = function (pos, slide) {
-	History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_Presentation_AddSlide, pos, [slide], true));
-	this.Slides.splice(pos, 0, slide);
-	var aSlideComments = slide.slideComments.comments;
-	for (var i = 0; i < aSlideComments.length; ++i) {
-		this.Api.sync_AddComment(aSlideComments[i].Get_Id(), aSlideComments[i].Data);
+	if(this.IsMasterMode()) {
+		if(slide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
+			let oCurSlide = this.GetSlide(pos - 1);
+			let oPrevMaster = null;
+			if(oCurSlide) {
+				if(oCurSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
+					oPrevMaster = oCurSlide;
+				}
+				else {
+					oPrevMaster = oCurSlide.Master;
+				}
+			}
+			let nPos = 0;
+			if(oPrevMaster) {
+				for(let nIdx = 0; nIdx < this.slideMasters.length; ++nIdx) {
+					if(this.slideMasters[nIdx] === oPrevMaster) {
+						nPos = nIdx + 1;
+						break;
+					}
+				}
+			}
+			this.addSlideMaster(nPos, slide);
+		}
+		else {
+			let oCurSlide = this.GetSlide(pos - 1);
+			let oPrevMaster = null;
+			let oPrevLayout = null;
+			if(oCurSlide) {
+				if(oCurSlide.getObjectType() === AscDFH.historyitem_type_SlideMaster) {
+					oPrevMaster = oCurSlide;
+				}
+				else {
+					oPrevLayout = oCurSlide;
+					oPrevMaster = oCurSlide.Master;
+				}
+			}
+			if(!oPrevMaster) {
+				oPrevMaster = this.slideMasters[0];
+			}
+			if(oPrevMaster) {
+				let nPos = 0;
+				if(oPrevLayout) {
+					for(let nIdx = 0; nIdx < oPrevMaster.sldLayoutLst.length; ++nIdx) {
+						if(oPrevMaster.sldLayoutLst[nIdx] === oPrevLayout) {
+							nPos = nIdx + 1;
+							break;
+						}
+					}
+				}
+				oPrevMaster.addToSldLayoutLstToPos(nPos, slide);
+			}
+		}
+	}
+	else {
+		this.insertSlide(pos, slide)
 	}
 };
 
@@ -10132,7 +10185,7 @@ CPresentation.prototype.OnInkDrawerChangeState = function() {
 	oController.onInkDrawerChangeState();
 };
 
-CPresentation.prototype.StartAddShape = function (preset, _is_apply, nPlaceholderType) {
+CPresentation.prototype.StartAddShape = function (preset, _is_apply, nPlaceholderType, bVertical) {
 	const oCurSlide = this.GetCurrentSlide();
 	if(!oCurSlide) {
 		return;
@@ -10142,7 +10195,7 @@ CPresentation.prototype.StartAddShape = function (preset, _is_apply, nPlaceholde
 		this.FocusOnNotes = false;
 		this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
 		this.Api.sync_HideComment();
-		oController.startTrackNewShape(preset, nPlaceholderType);
+		oController.startTrackNewShape(preset, nPlaceholderType, bVertical);
 	} else {
 		oController.clearTrackObjects();
 		oController.clearPreTrackObjects();
