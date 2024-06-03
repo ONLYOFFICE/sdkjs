@@ -5995,6 +5995,13 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		return res;
 	};
 
+	function CalculateResult(checkOnError) {
+		this.checkOnError = checkOnError;
+		this.error = null;
+	}
+	CalculateResult.prototype.setError = function(error) {
+		this.error = error;
+	};
 
 	var g_defParseResult = new ParseResult(undefined, undefined);
 
@@ -7622,7 +7629,7 @@ function parserFormula( formula, parent, _ws ) {
 			return false;
 		}
 	};
-	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect) {
+	parserFormula.prototype.calculate = function (opt_defName, opt_bbox, opt_offset, checkMultiSelect, opt_oCalculateResult) {
 		if (this.outStack.length < 1) {
 			this.value = new cError(cErrorType.wrong_name);
 			this._endCalculate();
@@ -7692,8 +7699,11 @@ function parserFormula( formula, parent, _ws ) {
 					var formulaArray = null;
 					if (currentElement.type === cElementType.func) {
 						// checkArgumentsTypes before calculate
-						if (currentElement.exactTypes && !checkArgumentsTypes.call(currentElement, arg)) {
-							formulaArray = new cError(cErrorType.null_value);
+						if (opt_oCalculateResult && opt_oCalculateResult.checkOnError && currentElement.exactTypes && !checkArgumentsTypes.call(currentElement, arg)) {
+							this.value = new cError(cErrorType.null_value);
+							this._endCalculate();
+							opt_oCalculateResult.setError(c_oAscError.ID.FrmlOperandExpected);
+							return this.value;
 						} else {
 							formulaArray = cBaseFunction.prototype.checkFormulaArray.call(currentElement, arg, opt_bbox, opt_defName, this, bIsSpecialFunction, argumentsCount);
 						}
@@ -7740,14 +7750,6 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
-
-			if (_tmp instanceof cUndefined || (_tmp && _tmp.errorType && _tmp.errorType === cErrorType.null_value)) {
-				elemArr = [];
-				this.value = _tmp;
-				this._endCalculate();
-				return this.value;
-			}
-
 		}
 
 		// ref(CSE) - legacy array-formula
@@ -10188,6 +10190,7 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].parserFormula = parserFormula;
 	window['AscCommonExcel'].ParseResult = ParseResult;
+	window['AscCommonExcel'].CalculateResult = CalculateResult;
 
 	window['AscCommonExcel'].parseNum = parseNum;
 	window['AscCommonExcel'].matching = matching;

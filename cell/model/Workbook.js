@@ -13256,9 +13256,9 @@
 			}
 		}
 	};
-	Worksheet.prototype.getRefDynamicInfo = function (formula) {
+	Worksheet.prototype.getRefDynamicInfo = function (formula, calculateResult) {
 		if (formula) {
-			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannoChangeFormulaArray = false;
+			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannotChangeFormulaArray = false;
 
 			if (formula.ref) {
 				dynamicRange = formula.ref;
@@ -13266,7 +13266,7 @@
 				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
 				formula.ref = tempRef;
 
-				let formulaResult = formula.calculate();
+				let formulaResult = formula.calculate(null, null, null, null, calculateResult);
 				let arraySize = formulaResult.getDimensions(true);
 				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
 				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
@@ -13276,7 +13276,7 @@
 					let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
 
 					if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
-						cannoChangeFormulaArray = true;
+						cannotChangeFormulaArray = true;
 						return false;
 					}
 				});
@@ -13289,7 +13289,7 @@
 				dynamicRange = tempDynamicSelectionRange.bbox;
 			}
 
-			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannoChangeFormulaArray: cannoChangeFormulaArray};
+			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannotChangeFormulaArray: cannotChangeFormulaArray};
 		}
 	};
 
