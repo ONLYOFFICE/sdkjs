@@ -2821,6 +2821,11 @@ CTable.prototype.Shift = function(CurPage, Dx, Dy)
 		oDrawingObjects.updateFloatTable(new CFlowTable(this, this.PageNum + CurPage));
 	}
 };
+CTable.prototype.IsMoveWithTextVertically = function()
+{
+	var oVertRelative = this.GetPositionV().RelativeFrom;
+	return (Asc.c_oAscVAnchor.Text === oVertRelative);
+};
 CTable.prototype.UpdateEndInfo = function()
 {
 	for (var RowIndex = 0, RowsCount = this.Content.length; RowIndex < RowsCount; RowIndex++)
@@ -3095,7 +3100,8 @@ CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, Colu
 	this.PageNum      = PageNum;
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
-
+	
+	this.private_CheckYLimitForFlowTableInHdrFtr();
 	this.private_CalculateTableWidthRange();
 	this.private_CheckRangeOnReset();
 };
@@ -3138,6 +3144,26 @@ CTable.prototype.private_CheckRangeOnReset = function()
 
 	this.X      = X;
 	this.XLimit = XLimit;
+};
+CTable.prototype.private_CheckYLimitForFlowTableInHdrFtr = function()
+{
+	// Здесь мы проверяем специальный случай, когда данная таблица находится в колонтитуле, она плавающая, и
+	// привязана к странице или к полю по вертикали, у такой таблицы мы считаем, что нет нижней границы
+	
+	// Можно добавить условие, что это только в режиме совместимости Word14 и ниже, но с 15-ой версии у всего колонтитула
+	// нижняя граница не задана
+
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument
+		|| !logicDocument.IsDocumentEditor()
+		|| this.IsInline()
+		|| this.IsMoveWithTextVertically()
+		|| !this.Parent
+		|| !this.Parent.IsHdrFtr()
+		|| this.IsInnerTable())
+		return;
+	
+	this.YLimit = AscWord.MAX_MM_VALUE;
 };
 CTable.prototype.Recalculate = function()
 {
@@ -8692,6 +8718,10 @@ CTable.prototype.SetPositionH = function(relativeFrom, align, value)
 {
 	return this.Set_PositionH(relativeFrom, align, value);
 };
+CTable.prototype.GetPositionH = function()
+{
+	return this.PositionH;
+};
 CTable.prototype.Get_PositionHValueInTwips = function() {
 	var res;
 	if(this.PositionH && null !== this.PositionH.Value && undefined !== this.PositionH.Value) {
@@ -8724,6 +8754,10 @@ CTable.prototype.Set_PositionV = function(RelativeFrom, Align, Value)
 CTable.prototype.SetPositionV = function(relativeFrom, align, value)
 {
 	return this.Set_PositionV(relativeFrom, align, value);
+};
+CTable.prototype.GetPositionV = function()
+{
+	return this.PositionV;
 };
 CTable.prototype.Get_PositionVValueInTwips = function() {
 	var res;
