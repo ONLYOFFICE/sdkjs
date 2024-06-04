@@ -1682,6 +1682,7 @@ var CPresentation = CPresentation || function(){};
 
         this.UpdateInterface();
         oViewer.onUpdateOverlay();
+        oViewer.file.onUpdateSelection();
     };
 
     CPDFDoc.prototype.OnMouseUpField = function(oField) {

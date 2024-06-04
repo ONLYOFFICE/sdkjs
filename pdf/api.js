@@ -180,7 +180,7 @@
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
-			let sText = oActiveForm.content.GetSelectedText(true);
+			let sText = oActiveForm.content.GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -191,7 +191,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let sText = oActiveAnnot.GetDocContent().GetSelectedText(true);
+			let sText = oActiveAnnot.GetDocContent().GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -575,12 +575,22 @@
 		oViewer.navigateToPage(nPage - 1 >= 0 ? nPage - 1 : 0);
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.asc_GetSelectedText = function() {
+	PDFEditorApi.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
 		if (!this.DocumentRenderer)
 			return "";
 
-		var textObj = {Text : ""};
-		this.DocumentRenderer.Copy(textObj);
+		let oDoc		= this.getPDFDoc();
+		let oTxObject	= oDoc.getTextController();
+		let textObj		= {Text : ""};
+		
+		if (oTxObject) {
+			let oContent = oTxObject.GetDocContent();
+			textObj.Text = oContent ? oContent.GetSelectedText(bClearText, select_Pr) : "";
+		}
+		else {
+			this.DocumentRenderer.Copy(textObj);
+		}
+		
 		if (textObj.Text.trim() === "")
 			return "";
 		
