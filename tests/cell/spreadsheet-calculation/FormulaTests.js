@@ -27487,6 +27487,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"FIND\"", function (assert) {
+		ws.getRange2("A101:F101").cleanAll();
 		ws.getRange2("A101").setValue("Miriam McGovern");
 
 		oParser = new parserFormula('FIND("M",A101)', "A2", ws);
@@ -27504,6 +27505,34 @@ $(function () {
 		oParser = new parserFormula('FIND("U",TRUE)', "A2", ws);
 		assert.ok(oParser.parse(), 'FIND("T",TRUE)');
 		assert.strictEqual(oParser.calculate().getValue(), 3, 'FIND("T",TRUE)');
+
+		// for bug 68343
+		ws.getRange2("B101").setValue("31° 57' 14.6\" S BT 3 18° 54' 20.3\" E");
+		oParser = new parserFormula('FIND(""" S",B101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(""" S",B101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 13, 'FIND(""" S",B101,1)');
+
+		oParser = new parserFormula('FIND(" S",B101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(" S",B101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 14, 'FIND(" S",B101,1)');
+
+		ws.getRange2("C101").setValue("6\" S");
+		oParser = new parserFormula('FIND(""" S",C101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(""" S",C101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'FIND(""" S",C101,1)');
+
+		oParser = new parserFormula('FIND(" S",C101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(" S",C101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'FIND(" S",C101,1)');
+
+		ws.getRange2("D101").setValue("testtest \" String\"abcdString");
+		oParser = new parserFormula('FIND(""" String",D101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(""" String",D101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'FIND(""" String",D101,1)');
+
+		oParser = new parserFormula('FIND(" String",D101,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'FIND(" String",D101,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 11, 'FIND(" String",D101,1)');
 
 		testArrayFormula2(assert, "FIND", 2, 3);
 	});

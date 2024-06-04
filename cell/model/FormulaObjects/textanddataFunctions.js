@@ -890,7 +890,7 @@ function (window, undefined) {
 	cFIND.prototype.argumentsMax = 3;
 	cFIND.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cFIND.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg.length == 3 ? arg[2] : null, res, str, searchStr,
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.length == 3 ? arg[2] : null, res, str, searchStr,
 			pos = -1;
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -938,7 +938,8 @@ function (window, undefined) {
 		}
 
 		str = arg1.toLocaleString();
-		searchStr = RegExp.escape(arg0.toLocaleString());
+		// searchStr = RegExp.escape(arg0.toLocaleString()); // doesn't work with strings like """ String""" , it's return ""\ String"" instead "" String""
+		searchStr = arg0.toLocaleString().replace(/\"\"/g, "\"");
 
 		if (arg2) {
 
