@@ -152,9 +152,10 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 					|| Class.getObjectType() === AscDFH.historyitem_type_OleObject
 					|| Class.getObjectType() === AscDFH.historyitem_type_Cnx) && AscCommon.isRealObject(Class.parent))
 				{
-					if(Class.parent && AscFormat.isRealNumber(Class.parent.num))
+					if(Class.getParentNum)
 					{
-						map[Class.parent.num] = true;
+
+						map[Class.getParentNum()] = true;
 					}
 
 					check_obj =
@@ -330,10 +331,11 @@ CCollaborativeEditing.prototype.Release_Locks = function()
             if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)
                 editor.WordControl.m_oLogicDocument.DrawingDocument.LockSlide(this.m_aNeedUnlock[Index].num);
         }
-        if(this.m_aNeedUnlock[Index].parent && AscFormat.isRealNumber(this.m_aNeedUnlock[Index].parent.num))
-        {
-            map_redraw[this.m_aNeedUnlock[Index].parent.num] = true;
-        }
+		if(this.m_aNeedUnlock[Index].getParentNum)
+		{
+
+			map_redraw[this.m_aNeedUnlock[Index].getParentNum()] = true;
+		}
     }
     return map_redraw;
 };

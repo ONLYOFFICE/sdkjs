@@ -2852,8 +2852,11 @@
 			}
 		}
 		var nPageNum;
-		if (this.parent && this.parent.getObjectType && this.parent.getObjectType() === AscDFH.historyitem_type_Slide) {
-			nPageNum = this.parent.num;
+		if (this.parent && this.parent.getObjectType
+			&& (this.parent.getObjectType() === AscDFH.historyitem_type_Slide
+				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout
+				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster )) {
+			nPageNum = this.getParentNum();
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
 		} else {
@@ -3602,6 +3605,20 @@
 		return sResult;
 	};
 
+	CGraphicObjectBase.prototype.getParentNum = function() {
+		if(!this.parent) return -1;
+		if(this.parent && AscFormat.isRealNumber(this.parent.num)) {
+			return this.parent.num;
+		}
+		let oPresentation;
+		if(Asc.editor.private_GetLogicDocument) {
+			oPresentation = Asc.editor.private_GetLogicDocument();
+			if(oPresentation && oPresentation.GetSlideIndex) {
+				return oPresentation.GetSlideIndex(this.parent);
+			}
+		}
+		return -1;
+	};
 
 	CGraphicObjectBase.prototype.applyDrawingSize = function(props) {
 		let oSpParent = this.parent;

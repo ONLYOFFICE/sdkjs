@@ -573,7 +573,7 @@
 
 	CGraphicFrame.prototype.Document_UpdateRulersState = function (margins) {
 		if (this.graphicObject) {
-			this.graphicObject.Document_UpdateRulersState(this.parent.num);
+			this.graphicObject.Document_UpdateRulersState(this.getParentNum());
 		}
 	};
 
@@ -661,12 +661,12 @@
 					editor.WordControl.m_oLogicDocument.CurPosition.X = tx;
 					editor.WordControl.m_oLogicDocument.CurPosition.Y = ty;
 				}
-				this.graphicObject.Selection_SetStart(tx, ty, this.parent.num, e);
+				this.graphicObject.Selection_SetStart(tx, ty, this.getParentNum(), e);
 			} else {
 				if (!this.graphicObject.IsSelectionUse()) {
 					this.graphicObject.StartSelectionFromCurPos();
 				}
-				this.graphicObject.Selection_SetEnd(tx, ty, this.parent.num, e);
+				this.graphicObject.Selection_SetEnd(tx, ty, this.getParentNum(), e);
 			}
 			this.graphicObject.RecalculateCurPos();
 
@@ -794,9 +794,9 @@
 				this.parent.graphicObjects.selectObject(this, 0);
 				this.parent.graphicObjects.selection.textSelection = this;
 			}
-			if (editor.WordControl.m_oLogicDocument.CurPage !== this.parent.num) {
-				editor.WordControl.m_oLogicDocument.Set_CurPage(this.parent.num);
-				editor.WordControl.GoToPage(this.parent.num);
+			if (editor.WordControl.m_oLogicDocument.CurPage !== this.getParentNum()) {
+				editor.WordControl.m_oLogicDocument.Set_CurPage(this.getParentNum());
+				editor.WordControl.GoToPage(this.getParentNum());
 			}
 		}
 	};

@@ -1774,7 +1774,7 @@
 		};
 		CShape.prototype.Document_UpdateRulersState = function (margins) {
 			if (this.txBody && this.txBody.content) {
-				this.txBody.content.Document_UpdateRulersState(this.parent.num, this.getMargins());
+				this.txBody.content.Document_UpdateRulersState(this.getParentNum(), this.getMargins());
 			}
 		};
 

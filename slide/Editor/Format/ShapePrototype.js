@@ -618,7 +618,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex){
             }
         }
         else{
-            nSlideNum = this.parent.num;
+            nSlideNum = this.getParentNum();
             editor.WordControl.m_oLogicDocument.FocusOnNotes = false;
         }
         if(editor.WordControl.m_oLogicDocument.CurPage !== nSlideNum){
@@ -635,7 +635,7 @@ CShape.prototype.OnContentReDraw = function(){
     if(AscCommonSlide){
         var oPresentation = editor.WordControl.m_oLogicDocument;
         if(this.parent instanceof AscCommonSlide.Slide) {
-            oPresentation.DrawingDocument.OnRecalculateSlide(this.parent.num);
+            oPresentation.DrawingDocument.OnRecalculateSlide(this.getParentNum());
         }
         else if(this.parent instanceof AscCommonSlide.CNotes) {
             var oCurSlide = oPresentation.Slides[oPresentation.CurPage];
