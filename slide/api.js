@@ -5418,8 +5418,7 @@ background-repeat: no-repeat;\
 	{
 		if (null == this.WordControl.m_oLogicDocument)
 			return null;
-
-		return this.WordControl.MasterLayouts.Theme;
+		return this.WordControl.m_oLogicDocument.GetCurrentTheme();
 	};
 
 	asc_docs_api.prototype.getGraphicController = function() {
@@ -7442,16 +7441,12 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.ChangeLayout = function(layout_index)
 	{
 		var _array = this.WordControl.m_oLogicDocument.GetSelectedSlides();
-
-		var _master = this.WordControl.MasterLayouts;
-		this.WordControl.m_oLogicDocument.changeLayout(_array, this.WordControl.MasterLayouts, layout_index);
+		this.WordControl.m_oLogicDocument.changeLayout(_array, layout_index);
 	};
 	asc_docs_api.prototype.ResetSlide = function()
 	{
-		var _array = this.WordControl.m_oLogicDocument.GetSelectedSlides();
-
-		var _master = this.WordControl.MasterLayouts;
-		this.WordControl.m_oLogicDocument.changeLayout(_array, this.WordControl.MasterLayouts, undefined);
+		let _array = this.WordControl.m_oLogicDocument.GetSelectedSlides();
+		this.WordControl.m_oLogicDocument.changeLayout(_array, undefined);
 	};
 
 	asc_docs_api.prototype.put_ShapesAlign = function(type, alignType)

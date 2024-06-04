@@ -8917,8 +8917,44 @@ CPresentation.prototype.deleteSlides = function (array) {
 		this.Recalculate();
 	}
 };
+CPresentation.prototype.GetAllMasters = function() {
+	return [].concat(this.slideMasters);
+};
+CPresentation.prototype.GetAllLayouts = function() {
+	let aMasters = this.GetAllMasters();
+	let aLayouts = [];
+	for(let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
+		aLayouts = aLayouts.concat(aMasters[nIdx].sldLayoutLst);
+	}
+	return aLayouts;
+};
+CPresentation.prototype.GetCurrentTheme = function() {
+	let oCurSlide = this.GetCurrentSlide();
+	if(oCurSlide) {
+		let nType = oCurSlide.getObjectType();
+		switch (nType) {
+			case AscDFH.historyitem_type_Slide: {
+				return oCurSlide.Layout.Master;
+			}
+			case AscDFH.historyitem_type_SlideLayout: {
+				return oSlide.Master;
+			}
+			case AscDFH.historyitem_type_SlideMaster: {
+				return oSlide;
+			}
+		}
+	}
+	if(this.lastMaster) {
+		return this.lastMaster;
+	}
+	return this.slideMasters[0] || null;
+};
 
-CPresentation.prototype.changeLayout = function (_array, MasterLayouts, layout_index) {
+CPresentation.prototype.changeLayout = function (_array, layout_index) {
+	if(this.IsMasterMode()) return;
+	let aLayouts = this.GetAllLayouts();
+	let oApplyLayout = aLayouts[layout_index];
+	let layout;
 	if (this.Document_Is_SelectionLocked(AscCommon.changestype_Layout) === false) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_ChangeLayout);
 		var oSelectionStateState = null;
@@ -8927,13 +8963,15 @@ CPresentation.prototype.changeLayout = function (_array, MasterLayouts, layout_i
 			oSelectionStateState = {};
 			oController.Save_DocumentStateBeforeLoadChanges(oSelectionStateState);
 		}
-		var layout = MasterLayouts.sldLayoutLst[layout_index];
 		for (var i = 0; i < _array.length; ++i) {
-			var slide = this.Slides[_array[i]];
-			if (!AscFormat.isRealNumber(layout_index)) {
+			let slide = this.Slides[_array[i]];
+			if (!oApplyLayout) {
 				layout = slide.Layout;
+				slide.changeLayout(slide.Layout);
 			}
-			slide.changeLayout(layout);
+			else {
+				slide.changeLayout(oApplyLayout);
+			}
 		}
 		if (oSelectionStateState) {
 			oController.resetSelection();

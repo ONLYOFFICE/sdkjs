@@ -211,7 +211,7 @@ function CEditorPage(api)
 	this.m_oMasterDrawer                 = new CMasterThumbnailDrawer();
 	this.m_oMasterDrawer.DrawingDocument = this.m_oDrawingDocument;
 
-	this.MasterLayouts = null; // мастер, от которого посылались в меню последние шаблоны
+	this.AllLayouts = [];
 
 	this.m_oDrawingDocument.m_oWordControl           = this;
 	this.m_oDrawingDocument.TransitionSlide.HtmlPage = this;
@@ -4426,45 +4426,75 @@ function CEditorPage(api)
 
 		master = this.m_oLogicDocument.getLayoutsMasterSlide();
 
-		if (this.MasterLayouts !== master || Math.abs(this.m_oLayoutDrawer.WidthMM - this.m_oLogicDocument.GetWidthMM()) > MOVE_DELTA || Math.abs(this.m_oLayoutDrawer.HeightMM - this.m_oLogicDocument.GetHeightMM()) > MOVE_DELTA || bIsAttack === true)
+
+		let aAllLayouts = this.m_oLogicDocument.GetAllLayouts();
+		let oLtDrawer = this.m_oLayoutDrawer;
+		let dWMM = this.m_oLogicDocument.GetWidthMM();
+		let dHMM = this.m_oLogicDocument.GetHeightMM();
+		let bUpdate = false;
+		if(bIsAttack)
 		{
-			this.MasterLayouts = master;
+			bUpdate = true;
+		}
+		else
+		{
+			if(this.AllLayouts.length !== aAllLayouts.length)
+			{
+				bUpdate = true;
+			}
+			else if(Math.abs(oLtDrawer.WidthMM - dWMM) > MOVE_DELTA || Math.abs(oLtDrawer.HeightMM - dHMM) > MOVE_DELTA)
+			{
+				bUpdate = true;
+			}
+			else
+			{
+				for(let nIdx = 0; nIdx < aAllLayouts.length; ++nIdx)
+				{
+					if(this.AllLayouts[nIdx] !== aAllLayouts[nIdx])
+					{
+						bUpdate = true;
+						break;
+					}
+				}
+			}
+		}
 
-			var _len = master.sldLayoutLst.length;
-			var arr  = new Array(_len);
+		if (bUpdate)
+		{
+			this.AllLayouts = aAllLayouts;
 
-			var bRedraw = Math.abs(this.m_oLayoutDrawer.WidthMM - this.m_oLogicDocument.GetWidthMM()) > MOVE_DELTA || Math.abs(this.m_oLayoutDrawer.HeightMM - this.m_oLogicDocument.GetHeightMM()) > MOVE_DELTA;
-			for (var i = 0; i < _len; i++)
+			let _len = this.AllLayouts.length;
+			let arr  = new Array(_len);
+			for (let i = 0; i < _len; i++)
 			{
 				arr[i]       = new CLayoutThumbnail();
 				arr[i].Index = i;
 
-				var __type = master.sldLayoutLst[i].type;
+				let oLt = this.AllLayouts[i];
+				let __type = oLt.type;
 				if (__type !== undefined && __type != null)
 					arr[i].Type = __type;
 
-				arr[i].Name = master.sldLayoutLst[i].cSld.name;
+				arr[i].Name = oLt.cSld.name;
+				oLtDrawer.WidthMM       = this.m_oLogicDocument.GetWidthMM();
+				oLtDrawer.HeightMM      = this.m_oLogicDocument.GetHeightMM();
+				oLt.ImageBase64 = oLtDrawer.GetThumbnail(oLt);
+				oLt.Width64     = oLtDrawer.WidthPx;
+				oLt.Height64    = oLtDrawer.HeightPx;
 
-				if ("" == master.sldLayoutLst[i].ImageBase64 || bRedraw)
-				{
-					this.m_oLayoutDrawer.WidthMM       = this.m_oLogicDocument.GetWidthMM();
-					this.m_oLayoutDrawer.HeightMM      = this.m_oLogicDocument.GetHeightMM();
-					master.sldLayoutLst[i].ImageBase64 = this.m_oLayoutDrawer.GetThumbnail(master.sldLayoutLst[i]);
-					master.sldLayoutLst[i].Width64     = this.m_oLayoutDrawer.WidthPx;
-					master.sldLayoutLst[i].Height64    = this.m_oLayoutDrawer.HeightPx;
-				}
-
-				arr[i].Image  = master.sldLayoutLst[i].ImageBase64;
-				arr[i].Width  = AscCommon.AscBrowser.convertToRetinaValue(master.sldLayoutLst[i].Width64);
-				arr[i].Height =  AscCommon.AscBrowser.convertToRetinaValue(master.sldLayoutLst[i].Height64);
+				arr[i].Image  = oLt.ImageBase64;
+				arr[i].Width  = AscCommon.AscBrowser.convertToRetinaValue(oLt.Width64);
+				arr[i].Height =  AscCommon.AscBrowser.convertToRetinaValue(oLt.Height64);
 			}
 
 			this.m_oApi.sendEvent("asc_onUpdateLayout", arr);
-			this.m_oApi.sendEvent("asc_onUpdateThemeIndex", this.MasterLayouts.ThemeIndex);
-
-			this.m_oApi.sendColorThemes(this.MasterLayouts.Theme);
+			let oMaster = this.m_oLogicDocument.GetCurrentMaster();
+			if(oMaster)
+			{
+				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", oMaster.ThemeIndex);
+				this.m_oApi.sendColorThemes(oMaster.Theme);
+			}
 		}
-
 		this.m_oDrawingDocument.CheckGuiControlColors(bIsAttack);
 	};
 
