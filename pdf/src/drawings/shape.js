@@ -50,10 +50,10 @@
     };
     CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
         let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
-        bDraw &&= this.IsFromScan();
-        bDraw &&= !Asc.editor.isRestrictionView();
-        bDraw &&= !graphicsWord.isThumbnails;
-
+        bDraw = bDraw && this.IsFromScan();
+        bDraw = bDraw && !Asc.editor.isRestrictionView();
+        bDraw = bDraw && !graphicsWord.isThumbnails;
+    
         return bDraw;
     };
     CPdfShape.prototype.CheckTextOnOpen = function() {

@@ -684,7 +684,6 @@
 
         if (selected_objects.length > 0) {
             let nPageW = this.document.GetPageWidthMM(selected_objects[0].GetPage());
-            console.log(`PageW: ${nPageW}`);
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
@@ -746,7 +745,6 @@
         
         if (selected_objects.length > 0) {
             let nPageH = this.document.GetPageHeightMM(selected_objects[0].GetPage());
-            console.log(`PageH: ${nPageH}`);
 
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             this.checkSelectedObjectsForMove();

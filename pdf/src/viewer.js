@@ -3821,8 +3821,9 @@
 				continue;
 			
 			oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-			let oTr = this.overlay.m_oContext.getTransform();
-			oCtx.setTransform(oTr.a, oTr.b, oTr.c, oTr.d, oTr.e, oTr.f);
+			
+			let oTr = this.overlay.CanvasTransform;
+			oCtx.setTransform(oTr.sx,oTr.shy,oTr.shx,oTr.sy,oTr.tx,oTr.ty);
 
 			if (this.pagesInfo.pages[i].fields != null) {
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
@@ -4408,7 +4409,9 @@
 			let currentPageCount = originalPageCount;
 		  
 			// Сначала обрабатываем удаления
-			const finalPageIndexes = finalPages.flatMap(page => page.originIndex !== undefined ? [page.originIndex] : []);
+			const finalPageIndexes = finalPages.flatMap(function(page) {
+				return page.originIndex !== undefined ? [page.originIndex] : [];
+			});
 			let deletedCount = 0; // Считаем количество удаленных страниц для корректировки индексов
 			for (let i = 0; i < originalPageCount; i++) {
 				if (!finalPageIndexes.includes(i)) {
@@ -4422,7 +4425,7 @@
 			// Обрабатываем добавления
 			// Учитываем, что после удалений индексы могут измениться, поэтому используем смещение
 			let addedPagesCount = 0; // Количество добавленных страниц для корректировки индекса вставки
-			finalPages.forEach((page, index) => {
+			finalPages.forEach(function(page, index) {
 				if (page.originIndex === undefined) { // Если страница новая (нет originIndex)
 					// Корректируем индекс для вставки, учитывая удаления и уже добавленные страницы
 					operations.push([index, 1]);
