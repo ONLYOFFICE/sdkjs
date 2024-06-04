@@ -4331,11 +4331,13 @@
 					let oDrawing = oPageInfo.drawings[nDr];
 
 					if (oDrawing.IsGraphicFrame()) {
-						let sTableStyleId	= oDrawing.graphicObject.GetTableStyle();
-						let sStyleGUID		= oDoc.globalTableStyles.Get(sTableStyleId).GetStyleId();
+						let sTableStyleId = oDrawing.graphicObject.GetTableStyle();
+						if (sTableStyleId) {
+							let sStyleGUID = oDoc.globalTableStyles.Get(sTableStyleId).GetStyleId();
 						
-						if (sTableStyleId != undefined) {
-							oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
+							if (sTableStyleId != undefined) {
+								oMemory.context.tableStylesIdToGuid[sTableStyleId] = sStyleGUID;
+							}
 						}
 					}
 				}
