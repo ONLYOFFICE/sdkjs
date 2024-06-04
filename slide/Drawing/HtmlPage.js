@@ -4491,7 +4491,7 @@ function CEditorPage(api)
 			let oMaster = this.m_oLogicDocument.GetCurrentMaster();
 			if(oMaster)
 			{
-				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", oMaster.ThemeIndex);
+				this.m_oApi.sendEvent("asc_onUpdateThemeIndex", oMaster.getThemeIndex());
 				this.m_oApi.sendColorThemes(oMaster.Theme);
 			}
 		}

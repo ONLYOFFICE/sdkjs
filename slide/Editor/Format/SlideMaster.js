@@ -111,7 +111,6 @@ function MasterSlide(presentation, theme)
     this.Width64 = 0;
     this.Height64 = 0;
 
-    this.ThemeIndex = 0;
 
     // pointers
     this.Theme = null;
@@ -156,10 +155,6 @@ AscFormat.InitClass(MasterSlide, AscFormat.CBaseFormatObject, AscDFH.historyitem
 
 MasterSlide.prototype.addLayout = function (layout) {
     this.addToSldLayoutLstToPos(this.sldLayoutLst.length, layout);
-};
-MasterSlide.prototype.setThemeIndex = function (index) {
-    History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_SlideMasterSetThemeIndex, this.ThemeIndex, index));
-    this.ThemeIndex = index;
 };
 MasterSlide.prototype.isAnimated = function () {
     return false;
@@ -708,6 +703,15 @@ MasterSlide.prototype.removeFromSpTreeByPos = function(pos) {
 };
 MasterSlide.prototype.convertPixToMM = function(pix) {
     return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
+};
+MasterSlide.prototype.getThemeIndex = function() {
+   let aMasters = Asc.editor.WordControl.m_oLogicDocument.slideMasters;
+   for(let nIdx = 0; nIdx < aMasters.length; ++nIdx) {
+       if(aMasters[nIdx] === this) {
+           return -nIdx - 1;
+       }
+   }
+   return 0;
 };
 
 function CMasterThumbnailDrawer()

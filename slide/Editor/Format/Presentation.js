@@ -2941,8 +2941,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.placeholders.update(oCurSlide.getPlaceholdersControls());
 	}
 	this.MathTrackHandler.Update();
-	if (isUpdateThemes) {
+	if (isUpdateThemes || this.bNeedUpdateThemes) {
 		this.SendThemesThumbnails();
+		this.bNeedUpdateThemes = false;
 	}
 };
 
@@ -8023,9 +8024,6 @@ CPresentation.prototype.InsertContent2 = function (aContents, nIndex) {
 	}
 	var bRet = this.InsertContent(oContent);
 	if (bNeedGenerateThumbnails) {
-		for (i = 0; i < this.slideMasters.length; ++i) {
-			this.slideMasters[i].setThemeIndex(-i - 1);
-		}
 		this.SendThemesThumbnails();
 	}
 	return bRet;
@@ -8325,25 +8323,22 @@ CPresentation.prototype.SendThemesThumbnails = function () {
 	aDocumentThemes.length = 0;
 	aThemeInfo.length = 0;
 	for (var i = 0; i < _masters.length; i++) {
-		if (_masters[i].ThemeIndex < 0)//только темы презентации
-		{
-			var theme_load_info = new AscCommonSlide.CThemeLoadInfo();
-			theme_load_info.Master = _masters[i];
-			theme_load_info.Theme = _masters[i].Theme;
-			var oTheme = _masters[i].Theme;
-			var _lay_cnt = _masters[i].sldLayoutLst.length;
-			for (var j = 0; j < _lay_cnt; j++) {
-				theme_load_info.Layouts[j] = _masters[i].sldLayoutLst[j];
-			}
-			var th_info = {};
-			th_info.Name = typeof oTheme.name === "string" && oTheme.name.length > 0 ? oTheme.name : "Doc Theme " + (i + 1);
-			th_info.Url = "";
-			th_info.Thumbnail = _masters[i].ImageBase64;
-			var th = new AscCommonSlide.CAscThemeInfo(th_info);
-			aDocumentThemes[aDocumentThemes.length] = th;
-			th.Index = -this.Api.ThemeLoader.Themes.DocumentThemes.length;
-			aThemeInfo[aDocumentThemes.length - 1] = theme_load_info;
+		var theme_load_info = new AscCommonSlide.CThemeLoadInfo();
+		theme_load_info.Master = _masters[i];
+		theme_load_info.Theme = _masters[i].Theme;
+		var oTheme = _masters[i].Theme;
+		var _lay_cnt = _masters[i].sldLayoutLst.length;
+		for (var j = 0; j < _lay_cnt; j++) {
+			theme_load_info.Layouts[j] = _masters[i].sldLayoutLst[j];
 		}
+		var th_info = {};
+		th_info.Name = typeof oTheme.name === "string" && oTheme.name.length > 0 ? oTheme.name : "Doc Theme " + (i + 1);
+		th_info.Url = "";
+		th_info.Thumbnail = _masters[i].ImageBase64;
+		var th = new AscCommonSlide.CAscThemeInfo(th_info);
+		aDocumentThemes[aDocumentThemes.length] = th;
+		th.Index = -this.Api.ThemeLoader.Themes.DocumentThemes.length;
+		aThemeInfo[aDocumentThemes.length - 1] = theme_load_info;
 	}
 	this.Api.sync_InitEditorThemes(this.Api.ThemeLoader.Themes.EditorThemes, aDocumentThemes);
 };
@@ -8409,6 +8404,11 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
 			break;
 		}
 		case AscDFH.historyitem_Presentation_AddSlideMaster: {
+			this.bNeedUpdateThemes = true;
+			break;
+		}
+		case AscDFH.historyitem_Presentation_RemoveSlideMaster: {
+			this.bNeedUpdateThemes = true;
 			break;
 		}
 		case AscDFH.historyitem_Presentation_ChangeTheme: {
