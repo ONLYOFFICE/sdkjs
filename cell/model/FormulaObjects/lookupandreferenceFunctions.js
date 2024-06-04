@@ -2953,17 +2953,19 @@ function (window, undefined) {
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
 
-		const _compareValues = function (val1, val2, op) {
-			if (val2.type === cElementType.string) {
-				val2 = new cString(val2.getValue().toLowerCase());
-			}
 
+		let _cString = new cString();
+		const _compareValues = function (val1, val2, op) {
+			/*if (val2.type === cElementType.string) {
+				_cString.value = val2.getValue().toLowerCase();
+				val2 = _cString;
+			}*/
 			if (opt_arg4 === 2 && val2.type === cElementType.string) {
 				let matchingInfo = AscCommonExcel.matchingValue(val1);
 				return AscCommonExcel.matching(val2, matchingInfo)
 			} else {
-				let res = _func[val1.type][val2.type](val1, val2, op);
-				return res ? res.value : false;
+				let res = _func[val1.type][val2.type](val1, val2, op, null, null, true);
+				return res;
 			}
 		};
 

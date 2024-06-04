@@ -779,7 +779,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this;
 	};
 	cString.prototype.getValue = function () {
-		return this.value.replace(/\"\"/g, "\"");
+		return this.value;
 	};
 
 	/**
@@ -788,11 +788,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 */
 	function cBool(val) {
 		var v = false;
-		switch (val.toString().toUpperCase()) {
-			case "TRUE":
-			case cBoolLocal.t:
-				v = true;
+		if (val === true) {
+			v = true;
+		} else if (val === false) {
+			v = false;
+		} else {
+			switch (val.toString().toUpperCase()) {
+				case "TRUE":
+				case cBoolLocal.t:
+					v = true;
+			}
 		}
+
 		cBaseType.call(this, v);
 	}
 
@@ -4647,89 +4654,104 @@ _func[cElementType.number][cElementType.number] = function ( arg0, arg1, what ) 
 	var compareNumbers = function(){
 		return AscCommon.compareNumbers(arg0.getValue(), arg1.getValue());
 	};
-	if ( what === ">" ) {
-		return new cBool( compareNumbers() > 0 );
-  } else if (what === ">=") {
-		return new cBool( !(compareNumbers() < 0) );
-  } else if (what === "<") {
-		return new cBool( compareNumbers() < 0 );
-  } else if (what === "<=") {
-		return new cBool( !(compareNumbers() > 0) );
-  } else if (what === "=") {
-		return new cBool( compareNumbers() === 0 );
-  } else if (what === "<>") {
-		return new cBool( compareNumbers() !== 0 );
-  } else if (what === "-") {
-        return new cNumber( arg0.getValue() - arg1.getValue() );
-  } else if (what === "+") {
-        return new cNumber( arg0.getValue() + arg1.getValue() );
-  } else if (what === "/") {
-        if ( arg1.getValue() !== 0 ) {
-            return new cNumber( arg0.getValue() / arg1.getValue() );
-    } else {
-            return new cError( cErrorType.division_by_zero );
-        }
-  } else if (what === "*") {
-        return new cNumber( arg0.getValue() * arg1.getValue() );
-    }
+	let opt_return_bool = arguments[5];
+	let res = null;
+	if (what === ">") {
+		res = compareNumbers() > 0;
+	} else if (what === ">=") {
+		res = !(compareNumbers() < 0);
+	} else if (what === "<") {
+		res = compareNumbers() < 0;
+	} else if (what === "<=") {
+		res = !(compareNumbers() > 0);
+	} else if (what === "=") {
+		res = (compareNumbers() === 0);
+	} else if (what === "<>") {
+		res = (compareNumbers() !== 0);
+	} else if (what === "-") {
+		return new cNumber(arg0.getValue() - arg1.getValue());
+	} else if (what === "+") {
+		return new cNumber(arg0.getValue() + arg1.getValue());
+	} else if (what === "/") {
+		if (arg1.getValue() !== 0) {
+			return new cNumber(arg0.getValue() / arg1.getValue());
+		} else {
+			return new cError(cErrorType.division_by_zero);
+		}
+	} else if (what === "*") {
+		return new cNumber(arg0.getValue() * arg1.getValue());
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
     return new cError( cErrorType.wrong_value_type );
 };
 
 _func[cElementType.number][cElementType.string] = function ( arg0, arg1, what ) {
-    if ( what === ">" || what === ">=" ) {
-        return new cBool( false );
-  } else if (what === "<" || what === "<=") {
-        return new cBool( true );
-  } else if (what === "=") {
-        return new cBool( false );
-  } else if (what === "<>") {
-        return new cBool( true );
-  } else if (what === "-" || what === "+" || what === "/" || what === "*") {
-        return new cError( cErrorType.wrong_value_type );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let opt_return_bool = arguments[5];
+	let res = null;
+	if (what === ">" || what === ">=") {
+		res = false;
+	} else if (what === "<" || what === "<=") {
+		res = true;
+	} else if (what === "=") {
+		res = false;
+	} else if (what === "<>") {
+		res = true;
+	} else if (what === "-" || what === "+" || what === "/" || what === "*") {
+		return new cError(cErrorType.wrong_value_type);
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 _func[cElementType.number][cElementType.bool] = function ( arg0, arg1, what ) {
-    var _arg;
-    if ( what === ">" || what === ">=" ) {
-        return new cBool( false );
-  } else if (what === "<" || what === "<=") {
-        return new cBool( true );
-  } else if (what === "=") {
-        return new cBool( false );
-  } else if (what === "<>") {
-        return new cBool( true );
-  } else if (what === "-") {
-        _arg = arg1.tocNumber();
-        if ( _arg instanceof cError ) {
-            return _arg;
-        }
-        return new cNumber( arg0.getValue() - _arg.getValue() );
-  } else if (what === "+") {
-        _arg = arg1.tocNumber();
-        if ( _arg instanceof cError ) {
-            return _arg;
-        }
-        return new cNumber( arg0.getValue() + _arg.getValue() );
-  } else if (what === "/") {
-        _arg = arg1.tocNumber();
-        if ( _arg instanceof cError ) {
-            return _arg;
-        }
-        if ( _arg.getValue() !== 0 ) {
-            return new cNumber( arg0.getValue() / _arg.getValue() );
-    } else {
-            return new cError( cErrorType.division_by_zero );
-        }
-  } else if (what === "*") {
-        _arg = arg1.tocNumber();
-        if ( _arg instanceof cError ) {
-            return _arg;
-        }
-        return new cNumber( arg0.getValue() * _arg.getValue() );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let _arg;
+	let res = null;
+	let opt_return_bool = arguments[5];
+	if (what === ">" || what === ">=") {
+		res = false;
+	} else if (what === "<" || what === "<=") {
+		res = true;
+	} else if (what === "=") {
+		res = false;
+	} else if (what === "<>") {
+		res = true;
+	} else if (what === "-") {
+		_arg = arg1.tocNumber();
+		if (_arg instanceof cError) {
+			return _arg;
+		}
+		return new cNumber(arg0.getValue() - _arg.getValue());
+	} else if (what === "+") {
+		_arg = arg1.tocNumber();
+		if (_arg instanceof cError) {
+			return _arg;
+		}
+		return new cNumber(arg0.getValue() + _arg.getValue());
+	} else if (what === "/") {
+		_arg = arg1.tocNumber();
+		if (_arg instanceof cError) {
+			return _arg;
+		}
+		if (_arg.getValue() !== 0) {
+			return new cNumber(arg0.getValue() / _arg.getValue());
+		} else {
+			return new cError(cErrorType.division_by_zero);
+		}
+	} else if (what === "*") {
+		_arg = arg1.tocNumber();
+		if (_arg instanceof cError) {
+			return _arg;
+		}
+		return new cNumber(arg0.getValue() * _arg.getValue());
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 _func[cElementType.number][cElementType.error] = function ( arg0, arg1 ) {
@@ -4737,160 +4759,185 @@ _func[cElementType.number][cElementType.error] = function ( arg0, arg1 ) {
 };
 
 _func[cElementType.number][cElementType.empty] = function ( arg0, arg1, what ) {
-    if ( what === ">" ) {
-        return new cBool( arg0.getValue() > 0 );
-  } else if (what === ">=") {
-        return new cBool( arg0.getValue() >= 0 );
-  } else if (what === "<") {
-        return new cBool( arg0.getValue() < 0 );
-  } else if (what === "<=") {
-        return new cBool( arg0.getValue() <= 0 );
-  } else if (what === "=") {
-        return new cBool( arg0.getValue() === 0 );
-  } else if (what === "<>") {
-        return new cBool( arg0.getValue() !== 0 );
-  } else if (what === "-") {
-        return new cNumber( arg0.getValue() - 0 );
-  } else if (what === "+") {
-        return new cNumber( arg0.getValue() + 0 );
-  } else if (what === "/") {
-        return new cError( cErrorType.division_by_zero );
-  } else if (what === "*") {
-        return new cNumber( 0 );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let opt_return_bool = arguments[5];
+	let res = null;
+	if (what === ">") {
+		res = arg0.getValue() > 0;
+	} else if (what === ">=") {
+		res = arg0.getValue() >= 0;
+	} else if (what === "<") {
+		res = arg0.getValue() < 0;
+	} else if (what === "<=") {
+		res = arg0.getValue() <= 0;
+	} else if (what === "=") {
+		res = arg0.getValue() === 0;
+	} else if (what === "<>") {
+		res = arg0.getValue() !== 0;
+	} else if (what === "-") {
+		return new cNumber(arg0.getValue() - 0);
+	} else if (what === "+") {
+		return new cNumber(arg0.getValue() + 0);
+	} else if (what === "/") {
+		return new cError(cErrorType.division_by_zero);
+	} else if (what === "*") {
+		return new cNumber(0);
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 
 _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) {
-    if ( what === ">" || what === ">=" ) {
-        return new cBool( true );
-  } else if (what === "<" || what === "<=" || what === "=") {
-        return new cBool( false );
-  } else if (what === "<>") {
-        return new cBool( true );
-  } else if (what === "-" || what === "+" || what === "/" || what === "*") {
-        return new cError( cErrorType.wrong_value_type );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let opt_return_bool = arguments[5];
+	let res = null;
+	if (what === ">" || what === ">=") {
+		res = true;
+	} else if (what === "<" || what === "<=" || what === "=") {
+		res = false;
+	} else if (what === "<>") {
+		res = true;
+	} else if (what === "-" || what === "+" || what === "/" || what === "*") {
+		return new cError(cErrorType.wrong_value_type);
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) {
-    var _arg0, _arg1;
-    if ( what === ">" ) {
-        return new cBool( arg0.getValue() > arg1.getValue() );
-  } else if (what === ">=") {
-        return new cBool( arg0.getValue() >= arg1.getValue() );
-  } else if (what === "<") {
-        return new cBool( arg0.getValue() < arg1.getValue() );
-  } else if (what === "<=") {
-        return new cBool( arg0.getValue() <= arg1.getValue() );
-  } else if (what === "=") {
-        return new cBool( arg0.getValue().toLowerCase() === arg1.getValue().toLowerCase() );
-  } else if (what === "<>") {
-        return new cBool( arg0.getValue().toLowerCase() !== arg1.getValue().toLowerCase() );
-  } else if (what === "-") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() - _arg1.getValue() );
-  } else if (what === "+") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() + _arg1.getValue() );
-  } else if (what === "/") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        if ( _arg1.getValue() !== 0 ) {
-            return new cNumber( _arg0.getValue() / _arg1.getValue() );
-        }
-        return new cError( cErrorType.division_by_zero );
-  } else if (what === "*") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() * _arg1.getValue() );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let opt_return_bool = arguments[5];
+	let res = null;
+
+	let isEqualStrings = function (str1, str2) {
+		return 0 === AscCommon.CompareStrings(str1, str2);
+	};
+
+	let _arg0, _arg1;
+	if (what === ">") {
+		res = arg0.getValue() > arg1.getValue();
+	} else if (what === ">=") {
+		res = arg0.getValue() >= arg1.getValue();
+	} else if (what === "<") {
+		res = arg0.getValue() < arg1.getValue();
+	} else if (what === "<=") {
+		res = arg0.getValue() <= arg1.getValue();
+	} else if (what === "=") {
+		res = isEqualStrings(arg0.getValue(), arg1.getValue());
+	} else if (what === "<>") {
+		res = !isEqualStrings(arg0.getValue(), arg1.getValue());
+	} else if (what === "-") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() - _arg1.getValue());
+	} else if (what === "+") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() + _arg1.getValue());
+	} else if (what === "/") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		if (_arg1.getValue() !== 0) {
+			return new cNumber(_arg0.getValue() / _arg1.getValue());
+		}
+		return new cError(cErrorType.division_by_zero);
+	} else if (what === "*") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() * _arg1.getValue());
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 _func[cElementType.string][cElementType.bool] = function ( arg0, arg1, what ) {
-    var _arg0, _arg1;
-    if ( what === ">" || what === ">=" ) {
-        return new cBool( false );
-  } else if (what === "<" || what === "<=") {
-        return new cBool( true );
-  } else if (what === "=") {
-        return new cBool( false );
-  } else if (what === "<>") {
-        return new cBool( true );
-  } else if (what === "-") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() - _arg1.getValue() );
-  } else if (what === "+") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() + _arg1.getValue() );
-  } else if (what === "/") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        if ( _arg1.getValue() !== 0 ) {
-            return new cNumber( _arg0.getValue() / _arg1.getValue() );
-        }
-        return new cError( cErrorType.division_by_zero );
-  } else if (what === "*") {
-        _arg0 = arg0.tocNumber();
-        _arg1 = arg1.tocNumber();
-        if ( _arg0 instanceof cError ) {
-            return _arg0;
-        }
-        if ( _arg1 instanceof cError ) {
-            return _arg1;
-        }
-        return new cNumber( _arg0.getValue() * _arg1.getValue() );
-    }
-    return new cError( cErrorType.wrong_value_type );
+	let opt_return_bool = arguments[5];
+	let res = null;
+	let _arg0, _arg1;
+	if (what === ">" || what === ">=") {
+		res = false;
+	} else if (what === "<" || what === "<=") {
+		res = true;
+	} else if (what === "=") {
+		res = false;
+	} else if (what === "<>") {
+		res = true;
+	} else if (what === "-") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() - _arg1.getValue());
+	} else if (what === "+") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() + _arg1.getValue());
+	} else if (what === "/") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		if (_arg1.getValue() !== 0) {
+			return new cNumber(_arg0.getValue() / _arg1.getValue());
+		}
+		return new cError(cErrorType.division_by_zero);
+	} else if (what === "*") {
+		_arg0 = arg0.tocNumber();
+		_arg1 = arg1.tocNumber();
+		if (_arg0 instanceof cError) {
+			return _arg0;
+		}
+		if (_arg1 instanceof cError) {
+			return _arg1;
+		}
+		return new cNumber(_arg0.getValue() * _arg1.getValue());
+	}
+	if (res !== null) {
+		return opt_return_bool ? res : new cBool(res);
+	}
+	return new cError(cErrorType.wrong_value_type);
 };
 
 _func[cElementType.string][cElementType.error] = function ( arg0, arg1 ) {
