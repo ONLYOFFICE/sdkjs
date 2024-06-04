@@ -4296,6 +4296,17 @@ CParagraphRecalculateStateAlign.prototype.getCompatibilityMode = function()
 {
 	return this.getDocumentSettings().getCompatibilityMode();
 };
+CParagraphRecalculateStateAlign.prototype.getLineTop = function()
+{
+	let p = this.Paragraph;
+	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Top;
+};
+CParagraphRecalculateStateAlign.prototype.getLineBottom = function()
+{
+	let p = this.Paragraph;
+	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Bottom;
+};
+
 
 function CParagraphRecalculateStateInfo()
 {
