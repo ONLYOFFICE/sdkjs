@@ -2417,18 +2417,36 @@ var CPresentation = CPresentation || function(){};
             AscCommon.History.TurnOn();
     }
     CPDFDoc.prototype.ShowComment = function(arrId) {
-        let arrCommentsId = [];
-
+        let oAnnot;
         for (let nIndex = 0, nCount = arrId.length; nIndex < nCount; ++nIndex) {
-            let oAnnot = this.GetAnnotById(arrId[nIndex]);
+            oAnnot = this.GetAnnotById(arrId[nIndex]);
 
             if (oAnnot) {
-                arrCommentsId.push(oAnnot.GetId());
+                break;
             }
         }
 
-        if (arrCommentsId.length > 0) {
-            this.showedCommentId = arrCommentsId[0];
+        if (oAnnot) {
+            this.showedCommentId = oAnnot.GetId();
+
+            let oPos;
+            let nPage       = oAnnot.GetPage();
+            let aOrigRect   = oAnnot.GetOrigRect();
+            let oTr         = this.pagesTransform[nPage].invert;
+            
+            let x = aOrigRect[0];
+            let w = aOrigRect[2] - aOrigRect[0];
+            let y = aOrigRect[1];
+            let h = aOrigRect[3] - aOrigRect[1];
+
+            if (oAnnot.IsComment()) {
+                oPos = oTr.TransformPoint(x + w / this.Viewer.zoom, y + h / 2 / this.Viewer.zoom);
+            }
+            else {
+                oPos = oTr.TransformPoint(x + w, y + h / 2);
+            }
+
+            Asc.editor.sync_ShowComment([this.showedCommentId], oPos.x, oPos.y);
         }
         else {
             Asc.editor.sync_HideComment();
