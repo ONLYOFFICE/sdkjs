@@ -168,7 +168,7 @@ function CTransitionAnimation(htmlpage)
         var _h = this.Rect.h;
         CacheImage.Image = this.CreateImage(_w, _h);
         CacheImage.SlideNum = slide_num;
-        var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(slide_num);
+        var oSlide = this.GetSlide(slide_num);
         var oPlayer = oSlide.getAnimationPlayer();
 
         // не кэшируем вотермарк никогда
@@ -185,14 +185,14 @@ function CTransitionAnimation(htmlpage)
             if (null == this.DemonstrationObject)
             {
                 slide_num = this.HtmlPage.m_oDrawingDocument.SlideCurrent;
-                if (slide_num >= this.HtmlPage.m_oDrawingDocument.GetSlidesCount())
-                    slide_num = this.HtmlPage.m_oDrawingDocument.GetSlidesCount() - 1;
+                if (slide_num >= this.GetSlidesCount())
+                    slide_num = this.GetSlidesCount() - 1;
             }
             else
             {
                 slide_num = this.DemonstrationObject.SlideNum;
-                if (slide_num >= this.HtmlPage.m_oDrawingDocument.GetSlidesCount())
-                    slide_num = this.HtmlPage.m_oDrawingDocument.GetSlidesCount() - 1;
+                if (slide_num >= this.GetSlidesCount())
+                    slide_num = this.GetSlidesCount() - 1;
             }
         }
 
@@ -209,14 +209,14 @@ function CTransitionAnimation(htmlpage)
             if (null == this.DemonstrationObject)
             {
                 slide_num = this.HtmlPage.m_oDrawingDocument.SlideCurrent;
-                if (slide_num >= this.HtmlPage.m_oDrawingDocument.GetSlidesCount())
-                    slide_num = this.HtmlPage.m_oDrawingDocument.GetSlidesCount() - 1;
+                if (slide_num >= this.GetSlidesCount())
+                    slide_num = this.GetSlidesCount() - 1;
             }
             else
             {
                 slide_num = this.DemonstrationObject.SlideNum;
-                if (slide_num >= this.HtmlPage.m_oDrawingDocument.GetSlidesCount())
-                    slide_num = this.HtmlPage.m_oDrawingDocument.GetSlidesCount() - 1;
+                if (slide_num >= this.GetSlidesCount())
+                    slide_num = this.GetSlidesCount() - 1;
             }
         }
 
@@ -224,6 +224,20 @@ function CTransitionAnimation(htmlpage)
         {
             this.DrawImage(this.CacheImage2, slide_num);
         }
+    };
+
+    this.GetPresentation = function ()
+    {
+        return Asc.editor.private_GetLogicDocument();
+    };
+
+    this.GetSlide = function(nIdx)
+    {
+        return this.GetPresentation().Slides[nIdx];
+    };
+    this.GetSlidesCount = function()
+    {
+        return this.GetPresentation().Slides.length;
     };
 
     this.StopIfPlaying = function()
@@ -248,8 +262,8 @@ function CTransitionAnimation(htmlpage)
             if (null == this.DemonstrationObject)
             {
                 _currentSlide = this.HtmlPage.m_oDrawingDocument.SlideCurrent;
-                if (_currentSlide >= this.HtmlPage.m_oDrawingDocument.GetSlidesCount())
-                    _currentSlide = this.HtmlPage.m_oDrawingDocument.GetSlidesCount() - 1;
+                if (_currentSlide >= this.GetSlidesCount())
+                    _currentSlide = this.GetSlidesCount() - 1;
             }
             else
             {
@@ -2746,7 +2760,7 @@ function CDemonstrationManager(htmlpage)
         const _w = this.Transition.Rect.w;
         const _h = this.Transition.Rect.h;
         const _image = this.CacheImagesManager.Lock(_w, _h);
-        const oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(slide_num);
+        const oSlide = this.GetSlide(slide_num);
         const oPlayer = oSlide.getAnimationPlayer();
 
         // не кэшируем вотермарк никогда
@@ -2818,7 +2832,11 @@ function CDemonstrationManager(htmlpage)
     };
     this.GetSlidesCount = function()
     {
-        return this.HtmlPage.GetSlidesCount();
+        return this.Transition.GetSlidesCount();
+    };
+    this.GetSlide = function(nIdx)
+    {
+        return this.Transition.GetSlide(nIdx);
     };
 
     this.PrepareSlide = function()
@@ -3018,7 +3036,7 @@ function CDemonstrationManager(htmlpage)
 
     this.StartAnimation = function(nSlideNum)
     {
-        var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(nSlideNum);
+        var oSlide = this.GetSlide(nSlideNum);
         if(oSlide)
         {
             return oSlide.getAnimationPlayer().start();
@@ -3030,7 +3048,7 @@ function CDemonstrationManager(htmlpage)
     {
         if(this.HtmlPage.m_oLogicDocument)
         {
-            var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(nSlideNum);
+            var oSlide = this.GetSlide(nSlideNum);
             if(oSlide)
             {
                 oSlide.getAnimationPlayer().stop();
@@ -3047,7 +3065,7 @@ function CDemonstrationManager(htmlpage)
 
     this.PauseAnimation = function(nSlideNum)
     {
-        var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(nSlideNum);
+        var oSlide = this.GetSlide(nSlideNum);
         if(oSlide)
         {
             oSlide.getAnimationPlayer().pause();
@@ -3068,7 +3086,7 @@ function CDemonstrationManager(htmlpage)
 
     this.IsMainSeqFinished = function(nSlideNum)
     {
-        var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(nSlideNum);
+        var oSlide = this.GetSlide(nSlideNum);
         if(oSlide)
         {
             return oSlide.getAnimationPlayer().isMainSequenceFinished();
@@ -3476,7 +3494,7 @@ function CDemonstrationManager(htmlpage)
 
 	this.GetCurrentAnimPlayer = function()
 	{
-        var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(this.SlideNum);
+        var oSlide = this.GetSlide(this.SlideNum);
         if(!oSlide)
         {
             return null;
