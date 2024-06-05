@@ -3244,6 +3244,10 @@ var CPresentation = CPresentation || function(){};
         }
         else if (oActiveDrawing) {
             oContent = oActiveDrawing.GetDocContent();
+            if (!oActiveDrawing.IsInTextBox()) {
+                isCanCopy = true;
+                isCanCut = true;
+            }
         }
 
         if (oContent && oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
