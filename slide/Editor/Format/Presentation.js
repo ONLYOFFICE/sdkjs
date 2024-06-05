@@ -6887,7 +6887,7 @@ CPresentation.prototype.CheckNeedUpdateTableStyles = function (oTableLook) {
 	if (!oSlide) {
 		return false;
 	}
-	let oMaster = oSlide.Layout && oSlide.Layout.Master;
+	let oMaster = this.GetCurrentMaster();
 	if (!oMaster) {
 		return false;
 	}

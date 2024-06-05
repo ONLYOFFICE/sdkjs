@@ -750,6 +750,14 @@ MasterSlide.prototype.GetSearchElementId = function(isNext, StartPos)
 {
     return Slide.prototype.Search.call(this, isNext, StartPos);
 };
+MasterSlide.prototype.Get_ColorMap = function()
+{
+    if(this.clrMap)
+    {
+        return this.clrMap;
+    }
+    return AscFormat.GetDefaultColorMap();
+};
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;

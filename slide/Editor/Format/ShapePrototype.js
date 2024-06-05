@@ -325,18 +325,31 @@ CShape.prototype.getCompiledStyle = function()
 };
 CShape.prototype.getParentObjects = function ()
 {
+    let oParent;
     if(this.parent)
     {
-        switch(this.parent.getObjectType())
+        oParent = this.parent;
+    }
+    else
+    {
+        var oPresentation = editor.WordControl.m_oLogicDocument;
+        if(oPresentation)
+        {
+            oParent = oPresentation.GetCurrentSlide();
+        }
+    }
+    if(oParent)
+    {
+        switch(oParent.getObjectType())
         {
             case AscDFH.historyitem_type_Slide:
             {
                 return {
                     presentation: editor.WordControl.m_oLogicDocument,
-                    slide: this.parent,
-                    layout: this.parent.Layout,
-                    master: this.parent.Layout ? this.parent.Layout.Master : null,
-                    theme: this.themeOverride ? this.themeOverride : (this.parent.Layout && this.parent.Layout.Master ? this.parent.Layout.Master.Theme : null)
+                    slide: oParent,
+                    layout: oParent.Layout,
+                    master: oParent.Layout ? oParent.Layout.Master : null,
+                    theme: this.themeOverride ? this.themeOverride : (oParent.Layout && oParent.Layout.Master ? oParent.Layout.Master.Theme : null)
                 };
             }
             case AscDFH.historyitem_type_SlideLayout:
@@ -344,9 +357,9 @@ CShape.prototype.getParentObjects = function ()
                 return {
                     presentation: editor.WordControl.m_oLogicDocument,
                     slide: null,
-                    layout: this.parent,
-                    master: this.parent.Master,
-                    theme: this.themeOverride ? this.themeOverride : (this.parent.Master ? this.parent.Master.Theme : null)
+                    layout: oParent,
+                    master: oParent.Master,
+                    theme: this.themeOverride ? this.themeOverride : (oParent.Master ? oParent.Master.Theme : null)
                 };
             }
             case AscDFH.historyitem_type_SlideMaster:
@@ -355,8 +368,8 @@ CShape.prototype.getParentObjects = function ()
                     presentation: editor.WordControl.m_oLogicDocument,
                     slide: null,
                     layout: null,
-                    master: this.parent,
-                    theme: this.themeOverride ? this.themeOverride : this.parent.Theme
+                    master: oParent,
+                    theme: this.themeOverride ? this.themeOverride : oParent.Theme
                 };
             }
             case AscDFH.historyitem_type_Notes:
@@ -366,9 +379,9 @@ CShape.prototype.getParentObjects = function ()
                     presentation: editor.WordControl.m_oLogicDocument,
                     slide: null,
                     layout: null,
-                    master: this.parent.Master,
-                    theme: this.themeOverride ? this.themeOverride : (this.parent.Master ? this.parent.Master.Theme : null),
-                    notes: this.parent
+                    master: oParent.Master,
+                    theme: this.themeOverride ? this.themeOverride : (oParent.Master ? oParent.Master.Theme : null),
+                    notes: oParent
                 }
             }
             case AscDFH.historyitem_type_NotesMaster:
@@ -377,37 +390,19 @@ CShape.prototype.getParentObjects = function ()
                     presentation: editor.WordControl.m_oLogicDocument,
                     slide: null,
                     layout: null,
-                    master: this.parent,
-                    theme: this.themeOverride ? this.themeOverride : this.parent.Theme,
+                    master: oParent,
+                    theme: this.themeOverride ? this.themeOverride : oParent.Theme,
                     notes: null
                 }
             }
             case AscDFH.historyitem_type_RelSizeAnchor:
             case AscDFH.historyitem_type_AbsSizeAnchor:
             {
-                if(this.parent.parent)
+                if(oParent.parent)
                 {
-                    return this.parent.parent.getParentObjects()
+                    return oParent.parent.getParentObjects()
                 }
                 break;
-            }
-        }
-    }
-    else
-    {
-        var oPresentation = editor.WordControl.m_oLogicDocument;
-        if(oPresentation)
-        {
-            var oSlide = oPresentation.Slides[oPresentation.CurPage];
-            if(oSlide)
-            {
-                return {
-                    presentation: oPresentation,
-                    slide: oSlide,
-                    layout: oSlide.Layout,
-                    master: oSlide.Layout ? oSlide.Layout.Master : null,
-                    theme: this.themeOverride ? this.themeOverride : (oSlide.Layout && oSlide.Layout.Master ? oSlide.Layout.Master.Theme : null)
-                };
             }
         }
     }

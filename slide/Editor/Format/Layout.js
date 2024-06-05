@@ -845,6 +845,19 @@ SlideLayout.prototype.getTheme = function(){
     {
         return Slide.prototype.Search.call(this, isNext, StartPos);
     };
+    SlideLayout.prototype.Get_ColorMap = function()
+    {
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Master && this.Master.clrMap)
+        {
+            return this.Master.clrMap;
+        }
+        return AscFormat.GetDefaultColorMap();
+    };
+
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
     LAYOUT_TYPE_MAP["chart"] = AscFormat.nSldLtTChart;
