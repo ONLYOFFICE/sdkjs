@@ -5845,9 +5845,29 @@ var editor;
       this.spellcheckState.isIgnoreUppercase = isIgnore;
     };
 
-  spreadsheet_api.prototype.asc_cancelSpellCheck = function() {
-    this.cleanSpelling();
-  };
+	spreadsheet_api.prototype.asc_cancelSpellCheck = function () {
+		this.cleanSpelling();
+	};
+
+	spreadsheet_api.prototype.asc_getKeyboardLanguage = function () {
+		if (undefined !== window["asc_current_keyboard_layout"]) {
+			return window["asc_current_keyboard_layout"];
+		}
+		return -1;
+	};
+	spreadsheet_api.prototype.asc_getInputLanguage = function () {
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang) {
+			return keyboardLang;
+		}
+
+		let ws = this.wb && this.wb.getWorksheet();
+		if (ws && ws.objectRender && ws.objectRender.controller && ws.objectRender.selectedGraphicObjectsExists()) {
+			return ws.objectRender.controller.getInputLanguage();
+		}
+
+		return this.defaultLanguage;
+	};
 
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
@@ -6013,7 +6033,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
 
@@ -9679,6 +9699,8 @@ var editor;
   prot["asc_cancelSpellCheck"] = prot.asc_cancelSpellCheck;
   prot["asc_ignoreNumbers"] = prot.asc_ignoreNumbers;
   prot["asc_ignoreUppercase"] = prot.asc_ignoreUppercase;
+  prot["asc_getKeyboardLanguage"] = prot.asc_getKeyboardLanguage;
+  prot["asc_getInputLanguage"] = prot.asc_getInputLanguage;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
