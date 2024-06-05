@@ -1456,7 +1456,7 @@ CopyProcessor.prototype =
 			oThis.oPDFWriter.WriteString2("Drawings");
 			oThis.oPDFWriter.WriteULong(elements.length);
 
-			pptx_content_writer.Start_UseFullUrl();
+			oThis.oPDFWriter.Start_UseFullUrl();
 			for (let i = 0; i < elements.length; ++i) {
 				if (!elements[i].Drawing.isTable()) {
 					oThis.oPDFWriter.WriteBool(true);
@@ -1487,7 +1487,7 @@ CopyProcessor.prototype =
 					oThis.oPDFWriter.WriteString2(elements[i].ImageUrl);
 				}
 			}
-			pptx_content_writer.End_UseFullUrl();
+			oThis.oPDFWriter.End_UseFullUrl();
 
 		};
 
