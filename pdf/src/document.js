@@ -3494,7 +3494,7 @@ var CPresentation = CPresentation || function(){};
                 {
                     this.Viewer.fullTextMessageCallbackArgs = [];
                     this.Viewer.fullTextMessageCallback = function() {
-                        this.Viewer.file.selectAll();
+                        this.selectAll();
                     };
                     this.Viewer.showTextMessage();
                 }
@@ -4233,13 +4233,27 @@ var CPresentation = CPresentation || function(){};
             if (oSelContent.Drawings.length != 0) {
                 this.BlurActiveObject();
 
-                oSelContent.Drawings.forEach(function(drawing) {
-                    oThis.AddDrawing(drawing.Drawing, oThis.GetCurPage());
-                    if (drawing.Drawing.IsGraphicFrame()) {
-                        oController.Check_GraphicFrameRowHeight(drawing.Drawing);
+                let aDrToPaste = oSelContent.Drawings.map(function(pasteObj) {
+                    return pasteObj.Drawing;
+                });
+
+                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                let nShift = oController.getDrawingsPasteShift(aDrToPaste);
+
+                aDrToPaste.forEach(function(drawing) {
+                    if (nShift > 0) {
+                        let oXfrm = drawing.getXfrm();
+                        if (oXfrm) {
+                            oXfrm.shift(nShift, nShift);
+                        }
                     }
-                    drawing.Drawing.select(oController, nCurPage);
-                    oThis.SetMouseDownObject(drawing.Drawing);
+
+                    oThis.AddDrawing(drawing, oThis.GetCurPage());
+                    if (drawing.IsGraphicFrame()) {
+                        oController.Check_GraphicFrameRowHeight(drawing);
+                    }
+                    drawing.select(oController, nCurPage);
+                    oThis.SetMouseDownObject(drawing);
                 });
             }
             else if (oSelContent.DocContent) {

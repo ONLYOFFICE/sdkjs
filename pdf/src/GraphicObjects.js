@@ -534,6 +534,10 @@
         return oPageInfo ? oPageInfo.drawings : [];
     };
 
+    CGraphicObjects.prototype.getDrawingArray = function() {
+        return this.document.drawings;
+    };
+
     CGraphicObjects.prototype.canEditText = function () {
         let content = this.getTargetDocContent();
         if (content) {
@@ -1274,22 +1278,25 @@
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
 
-    CGraphicObjects.prototype.setEquationTrack           = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
-    CGraphicObjects.prototype.getParagraphTextPr         = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
-    CGraphicObjects.prototype.alignLeft                  = AscFormat.DrawingObjectsController.prototype.alignLeft;
-    CGraphicObjects.prototype.alignTop                   = AscFormat.DrawingObjectsController.prototype.alignTop;
-    CGraphicObjects.prototype.convertMathView            = AscFormat.DrawingObjectsController.prototype.convertMathView;
-    CGraphicObjects.prototype.setMathProps               = AscFormat.DrawingObjectsController.prototype.setMathProps;
-    CGraphicObjects.prototype.paraApplyCallback          = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
-    CGraphicObjects.prototype.setParagraphAlign          = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
-    CGraphicObjects.prototype.setParagraphSpacing        = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
-    CGraphicObjects.prototype.setParagraphTabs           = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
-    CGraphicObjects.prototype.setDefaultTabSize          = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
-    CGraphicObjects.prototype.changeTextCase             = AscFormat.DrawingObjectsController.prototype.changeTextCase;
-    CGraphicObjects.prototype.handleDblClickEmptyShape   = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
+    // import
+    CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+    CGraphicObjects.prototype.getParagraphTextPr        = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
+    CGraphicObjects.prototype.alignLeft                 = AscFormat.DrawingObjectsController.prototype.alignLeft;
+    CGraphicObjects.prototype.alignTop                  = AscFormat.DrawingObjectsController.prototype.alignTop;
+    CGraphicObjects.prototype.convertMathView           = AscFormat.DrawingObjectsController.prototype.convertMathView;
+    CGraphicObjects.prototype.setMathProps              = AscFormat.DrawingObjectsController.prototype.setMathProps;
+    CGraphicObjects.prototype.paraApplyCallback         = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
+    CGraphicObjects.prototype.setParagraphAlign         = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
+    CGraphicObjects.prototype.setParagraphSpacing       = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
+    CGraphicObjects.prototype.setParagraphTabs          = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
+    CGraphicObjects.prototype.setDefaultTabSize         = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
+    CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
+    CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
+    CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 
+    // export 
     window["AscPDF"].CGraphicObjects = CGraphicObjects;
 
 })(window);
