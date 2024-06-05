@@ -1823,7 +1823,7 @@
     };
 
     // Автодополняет формулу диапазоном, если это возможно
-    WorksheetView.prototype.autoCompleteFormula = function (functionName) {
+    WorksheetView.prototype.autoCompleteFormula = function (functionName, callFromWizard) {
         const t = this;
         // ToDo autoComplete with multiselect
         let selection = this.model.getSelection();
@@ -1848,7 +1848,7 @@
         let firstCell = this._getCellTextCache(ar.c1, ar.r1, true);
         let lastCell = this._getCellTextCache(ar.c2, ar.r2, true);
 
-        if (hasNumber) {
+        if (hasNumber && !callFromWizard) {
             let i;
             // Есть ли значения в последней строке и столбце
             let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);

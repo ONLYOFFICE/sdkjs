@@ -2923,7 +2923,135 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(L13)", "Formula after A12:M14 autosum");
 		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A13:M14", "Selection after A12:M14 autosum");
 		
+		// for bug 37318
+		let callFromWizard = true; // imitating a call from the insert function dialog
+		ws.getRange2("A1:D10").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
 
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		// api.asc_startWizard("SUM");
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A1");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "", true, "Result text in autoCompleteFormula after A1 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after A1 wizard formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after A1 wizard formula call");
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Formula after A1 wizard formula call");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A1", "Selection after A1 wizard formula call");
+
+
+		fillRange = ws.getRange2("A1:A2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A1");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "", true, "Result text in autoCompleteFormula after A1:A2 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after A1:A2 wizard formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after A1:A2 wizard formula call");
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Formula after A1:A2 wizard formula call");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A1:A2", "Selection after A1:A2 wizard formula call");
+
+
+		ws.getRange2("A4").setValue("1");
+		ws.getRange2("A5").setValue("2");
+		fillRange = ws.getRange2("A4");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A4");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "A1:A3", true, "Result text in autoCompleteFormula after A4 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, false, "Is empty SUM() formula after wizard formula call from A4");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after wizard formula call from A4");
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Formula after wizard formula call from A4");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A4", "Selection after wizard formula call from A4");
+
+
+		fillRange = ws.getRange2("A4:A5");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A4");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "A1:A3", true, "Result text in autoCompleteFormula after A4:A5 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, false, "Is empty SUM() formula after wizard formula call from A4:A5");
+		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after wizard formula call from A4:A5");
+		assert.strictEqual(resCell.getValueForEdit(), "1", "Formula after wizard formula call from A4:A5");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A4:A5", "Selection after wizard formula call from A4:A5");
+
+		/* tests with dates */
+		ws.getRange2("A1:A2").setNumFormat("dd/mm/yyyy");
+		fillRange = ws.getRange2("A1");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A1");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "", true, "Result text in autoCompleteFormula after A1 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after A1 wizard formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "01/01/1900", "Value after A1 wizard formula call");
+		assert.strictEqual(resCell.getValueForEdit(), "1/1/1900", "Formula after A1 wizard formula call");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A1", "Selection after A1 wizard formula call");
+
+
+		fillRange = ws.getRange2("A1:A2");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A1");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "", true, "Result text in autoCompleteFormula after A1:A2 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after A1:A2 wizard formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "01/01/1900", "Value after A1:A2 wizard formula call");
+		assert.strictEqual(resCell.getValueForEdit(), "1/1/1900", "Formula after A1:A2 wizard formula call");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A1:A2", "Selection after A1:A2 wizard formula call");
+
+
+		ws.getRange2("A4:A5").setNumFormat("dd/mm/yyyy");
+		fillRange = ws.getRange2("A4");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A4");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "A1:A3", true, "Result text in autoCompleteFormula after A4 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after wizard formula call from A4");
+		assert.strictEqual(resCell.getValueWithFormat(), "01/01/1900", "Value after wizard formula call from A4");
+		assert.strictEqual(resCell.getValueForEdit(), "1/1/1900", "Formula after wizard formula call from A4");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A4", "Selection after wizard formula call from A4");
+
+
+		fillRange = ws.getRange2("A4:A5");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM", callFromWizard);
+		resCell = ws.getRange2("A4");
+		if (autoCompleteRes && autoCompleteRes.text) {
+			assert.strictEqual(autoCompleteRes.text === "A1:A3", true, "Result text in autoCompleteFormula after A4:A5 wizard formula call");
+		}
+		assert.strictEqual(Object.keys(autoCompleteRes).length === 0, true, "Is empty SUM() formula after wizard formula call from A4:A5");
+		assert.strictEqual(resCell.getValueWithFormat(), "01/01/1900", "Value after wizard formula call from A4:A5");
+		assert.strictEqual(resCell.getValueForEdit(), "1/1/1900", "Formula after wizard formula call from A4:A5");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A4:A5", "Selection after wizard formula call from A4:A5");
 		
 	});
 

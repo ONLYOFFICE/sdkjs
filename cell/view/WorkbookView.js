@@ -3073,7 +3073,7 @@
 
 				let trueName = oFormulaList[name] && oFormulaList[name].prototype && oFormulaList[name].prototype.name;
 				if (allowCompleteFunctions[trueName]) {
-					cellRange = wsView.autoCompleteFormula(trueName);
+					cellRange = wsView.autoCompleteFormula(trueName, t.isWizardMode);
 				}
 
 				t.cellEditor.insertFormula(name, null, cellRange && !cellRange.notEditCell && cellRange.text);
