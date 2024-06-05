@@ -462,6 +462,11 @@ SlideLayout.prototype.getTheme = function(){
         }
         this.recalculate();
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
+
+
+        if(this.showMasterSp) {
+            this.Master.drawNoPlaceholders(graphics, this);
+        }
         this.cSld.forEachSp(function(oSp) {
             if (!AscCommon.IsHiddenObj(oSp)) {
                 oSp.draw(graphics);
