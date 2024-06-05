@@ -4654,12 +4654,15 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								}
 								else
 								{
+									if (oComplexField.IsHaveNestedNUMPAGES())
+										oHdrFtr.Add_PageCountElement(Item);
+									
 									var sValue = oComplexField.CalculateValue();
 									var nValue = parseInt(sValue);
 									if (isNaN(nValue))
 										nValue = 0;
 
-									Item.SetNumValue(nValue);
+									Item.SetFormulaValue(nValue);
 								}
 							}
 

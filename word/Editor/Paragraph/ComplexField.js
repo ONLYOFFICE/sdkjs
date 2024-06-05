@@ -202,6 +202,21 @@ ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
 	this.private_UpdateWidth();
 };
+/**
+ * Специальная функция для работы с полями FORUMULA в колонтитулах
+ * @param value {number|string}
+ */
+ParaFieldChar.prototype.SetFormulaValue = function(value)
+{
+	if (null === value)
+	{
+		this.numText = null;
+		return;
+	}
+	
+	this.numText = "" + value;
+	this.private_UpdateWidth();
+};
 ParaFieldChar.prototype.GetNumFormat = function()
 {
 	let numFormat = Asc.c_oAscNumberingFormat.Decimal;
@@ -214,7 +229,27 @@ ParaFieldChar.prototype.GetNumFormat = function()
 };
 ParaFieldChar.prototype.UpdatePageCount = function(pageCount)
 {
-	this.SetNumValue(pageCount, this.GetNumFormat());
+	let cf = this.ComplexField;
+	if (!cf)
+		return;
+	
+	let instruction = cf.GetInstruction();
+	if (!instruction)
+		return;
+	
+	let fieldType = instruction.GetType();
+	if (fieldType === AscWord.fieldtype_FORMULA)
+	{
+		let value =  parseInt(cf.CalculateValue());
+		if (isNaN(value))
+			value = 0;
+		
+		this.SetFormulaValue(value);
+	}
+	else if (fieldType === AscWord.fieldtype_NUMPAGES)
+	{
+		this.SetNumValue(pageCount, this.GetNumFormat());
+	}
 };
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
@@ -593,6 +628,20 @@ CComplexField.prototype.UpdateTIME = function(ms)
 
 	this.SelectFieldValue();
 	this.private_UpdateTIME(ms);
+};
+CComplexField.prototype.IsHaveNestedNUMPAGES = function()
+{
+	for (let index = 0, count = this.InstructionCF.length; index < count; ++index)
+	{
+		let instruction = this.InstructionCF[index].GetInstruction();
+		if (instruction && AscWord.fieldtype_NUMPAGES === instruction.GetType())
+			return true;
+		
+		if (this.InstructionCF[index].IsHaveNestedNUMPAGES())
+			return true;
+	}
+	
+	return false;
 };
 
 CComplexField.prototype.private_UpdateSEQ = function()
