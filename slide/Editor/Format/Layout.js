@@ -837,13 +837,13 @@ SlideLayout.prototype.getTheme = function(){
     {
         Slide.prototype.RestartSpellCheck.call(this);
     };
-    SlideLayout.prototype.Search = function()
+    SlideLayout.prototype.Search = function(Engine, Type)
     {
-        Slide.prototype.Search.call(this);
+        Slide.prototype.Search.call(this, Engine, Type);
     };
     SlideLayout.prototype.GetSearchElementId = function(isNext, StartPos)
     {
-        return Slide.prototype.Search.call(this, isNext, StartPos);
+        return Slide.prototype.GetSearchElementId.call(this, isNext, StartPos);
     };
     SlideLayout.prototype.Get_ColorMap = function()
     {
