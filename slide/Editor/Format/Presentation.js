@@ -1147,6 +1147,9 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 	if (bAll && this.Document_Is_SelectionLocked(AscCommon.changestype_HdrFtr)) {
 		return;
 	}
+	if(this.IsMasterMode()) {
+		bAll = true;
+	}
 
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_SetHF);
 	let oSlideProps = oProps.get_Slide();
@@ -1594,7 +1597,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 		if (bAll) {
 			const oNotesMastersMap = {};
 			for (let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
-				oSlide = this.GetSlide(nSlide);
+				oSlide = this.Slides[nSlide];
 				oNotes = oSlide.notes;
 				if(!oNotes) {
 					continue;
