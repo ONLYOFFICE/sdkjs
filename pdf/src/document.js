@@ -1735,7 +1735,10 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = false;
+                let oThis = this;
+                this.Viewer.paint(function() {
+                    oThis.Viewer.thumbnails._repaintPage(oTextConvert.page);
+                });
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -1807,7 +1810,11 @@ var CPresentation = CPresentation || function(){};
             let oTextConvert    = oCurPoint.Additional.PdfConvertText;
 
             if (oTextConvert) {
-                this.Viewer.file.pages[oTextConvert.page].isConvertedToShapes = true;
+                let oThis = this;
+                this.Viewer.paint(function() {
+                    oThis.Viewer.thumbnails._repaintPage(oTextConvert.page);
+                });
+
                 this.isUndoRedoInProgress = false;
                 return;
             }
@@ -4115,6 +4122,8 @@ var CPresentation = CPresentation || function(){};
         oFile.pages[nPage].isConvertedToShapes = true;
 
         this.CreateNewHistoryPoint({textConvert: {page: nPage}});
+        this.History.Add(new CChangesPDFDocumentRecognizePage(this, [nPage, false], [nPage, true]));
+
         let oDrDoc = this.GetDrawingDocument();
 
         let aSpsXmls        = oFile.nativeFile["scanPage"](nOriginIndex, 1);
@@ -4202,6 +4211,9 @@ var CPresentation = CPresentation || function(){};
             });
             _t.TurnOffHistory();
             _t.Viewer.file.removeSelection();
+            _t.Viewer.paint(function() {
+                _t.Viewer.thumbnails._repaintPage(nPage);
+            });
         };
         if(aUrls.length > 0) {
             AscCommon.sendImgUrls(Asc.editor, aUrls, function (data) {
