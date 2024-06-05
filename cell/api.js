@@ -4000,7 +4000,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
-	this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
+	this.broadcastChannel && this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
 	window.fBroadcastChannelDocumentInfo = null;
   };
 
@@ -9283,6 +9283,10 @@ var editor;
 
 
 	spreadsheet_api.prototype.asc_getOpeningDocumentsList = function(callback) {
+		if (!this.broadcastChannel) {
+			return;
+		}
+
 		let docInfo = this.DocInfo;
 		let addedMapDocs = {};
 		if (!window.fBroadcastChannelDocumentInfo) {
@@ -9313,6 +9317,9 @@ var editor;
 		})
 	};
 	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
+		if (!this.broadcastChannel) {
+			return;
+		}
 		let arrBinary = this.getBinaryContentSheets(arrSheets);
 		if (arrBinary) {
 			this.broadcastChannel.postMessage({
@@ -9328,8 +9335,13 @@ var editor;
 	};
 	spreadsheet_api.prototype.initBroadcastChannel = function() {
 		if (!this.broadcastChannel) {
-			this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			if (this.asc_isSupportCopySheetsBetweenBooks()) {
+				this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			}
 		}
+	};
+	spreadsheet_api.prototype.asc_isSupportCopySheetsBetweenBooks = function() {
+		return typeof BroadcastChannel !== "undefined";
 	};
 	spreadsheet_api.prototype.closeBroadcastChannel = function() {
 		if (this.broadcastChannel) {
@@ -9974,6 +9986,7 @@ var editor;
 
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
+  prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
 
 
 
