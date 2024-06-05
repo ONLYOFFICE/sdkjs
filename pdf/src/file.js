@@ -1109,7 +1109,84 @@ void main() {\n\
     CFile.prototype.getSelectionQuads = function() {
         let aInfo = [];
 
-        for (let i = this.Selection.Page1; i <= this.Selection.Page2; i++) {
+        if (false == this.isSelectionUse()) {
+            return aInfo;
+        }
+        
+        let sel = this.Selection;
+        let Page1 = 0;
+        let Page2 = 0;
+        let Line1 = 0;
+        let Line2 = 0;
+        let Glyph1 = 0;
+        let Glyph2 = 0;
+
+        if (sel.Page2 > sel.Page1)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+            Line1 = sel.Line1;
+            Line2 = sel.Line2;
+            Glyph1 = sel.Glyph1;
+            Glyph2 = sel.Glyph2;
+        }
+        else if (sel.Page2 < sel.Page1)
+        {
+            Page1 = sel.Page2;
+            Page2 = sel.Page1;
+            Line1 = sel.Line2;
+            Line2 = sel.Line1;
+            Glyph1 = sel.Glyph2;
+            Glyph2 = sel.Glyph1;
+        }
+        else if (sel.Page1 === sel.Page2)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+
+            if (sel.Line1 < sel.Line2)
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+                Glyph1 = sel.Glyph1;
+                Glyph2 = sel.Glyph2;
+            }
+            else if (sel.Line2 < sel.Line1)
+            {
+                Line1 = sel.Line2;
+                Line2 = sel.Line1;
+                Glyph1 = sel.Glyph2;
+                Glyph2 = sel.Glyph1;
+            }
+            else
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+
+                if (-1 === sel.Glyph1)
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+                else if (-1 === sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else if (sel.Glyph1 < sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+            }
+        }
+
+        for (let i = Page1; i <= Page2; i++) {
             var stream = this.getPageTextStream(i);
             if (!stream)
                 continue;
@@ -1119,79 +1196,6 @@ void main() {\n\
                 quads: []
             }
             
-            var sel = this.Selection;
-            var Page1 = 0;
-            var Page2 = 0;
-            var Line1 = 0;
-            var Line2 = 0;
-            var Glyph1 = 0;
-            var Glyph2 = 0;
-
-            if (sel.Page2 > sel.Page1)
-            {
-                Page1 = sel.Page1;
-                Page2 = sel.Page2;
-                Line1 = sel.Line1;
-                Line2 = sel.Line2;
-                Glyph1 = sel.Glyph1;
-                Glyph2 = sel.Glyph2;
-            }
-            else if (sel.Page2 < sel.Page1)
-            {
-                Page1 = sel.Page2;
-                Page2 = sel.Page1;
-                Line1 = sel.Line2;
-                Line2 = sel.Line1;
-                Glyph1 = sel.Glyph2;
-                Glyph2 = sel.Glyph1;
-            }
-            else if (sel.Page1 === sel.Page2)
-            {
-                Page1 = sel.Page1;
-                Page2 = sel.Page2;
-
-                if (sel.Line1 < sel.Line2)
-                {
-                    Line1 = sel.Line1;
-                    Line2 = sel.Line2;
-                    Glyph1 = sel.Glyph1;
-                    Glyph2 = sel.Glyph2;
-                }
-                else if (sel.Line2 < sel.Line1)
-                {
-                    Line1 = sel.Line2;
-                    Line2 = sel.Line1;
-                    Glyph1 = sel.Glyph2;
-                    Glyph2 = sel.Glyph1;
-                }
-                else
-                {
-                    Line1 = sel.Line1;
-                    Line2 = sel.Line2;
-
-                    if (-1 === sel.Glyph1)
-                    {
-                        Glyph1 = sel.Glyph2;
-                        Glyph2 = sel.Glyph1;
-                    }
-                    else if (-1 === sel.Glyph2)
-                    {
-                        Glyph1 = sel.Glyph1;
-                        Glyph2 = sel.Glyph2;
-                    }
-                    else if (sel.Glyph1 < sel.Glyph2)
-                    {
-                        Glyph1 = sel.Glyph1;
-                        Glyph2 = sel.Glyph2;
-                    }
-                    else
-                    {
-                        Glyph1 = sel.Glyph2;
-                        Glyph2 = sel.Glyph1;
-                    }
-                }
-            }
-
             if (Page1 > i || Page2 < i)
                 continue;
 
