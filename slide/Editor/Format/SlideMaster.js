@@ -254,6 +254,20 @@ MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
         }
     });
 };
+MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
+    if(slide) {
+        if(slide.num !== this.lastRecalcSlideIndex) {
+            this.lastRecalcSlideIndex = slide.num;
+            this.cSld.refreshAllContentsFields();
+        }
+    }
+    this.recalculate();
+    this.cSld.forEachSp(function(oSp) {
+        if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
+            oSp.draw(graphics);
+        }
+    });
+};
 
 MasterSlide.prototype.draw = function (graphics, slide) {
 	if(slide) {
@@ -346,7 +360,6 @@ MasterSlide.prototype.recalculate = function () {
     var bRecalculateSlideLayouts = this.recalcInfo.recalculateSlideLayouts;
     var bRecalculateBackground = this.recalcInfo.recalculateBackground;
     var bRecalculateSpTree = this.recalcInfo.recalculateSpTree;
-    this.recalculate
     if (bRecalculateBounds) {
         this.bounds.reset(this.Width + 100.0, this.Height + 100.0, -100.0, -100.0);
     }
@@ -374,9 +387,12 @@ MasterSlide.prototype.recalculate = function () {
     }
     if (bRecalculateSlideLayouts || bRecalculateBackground || bRecalculateSpTree) {
         for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
-            if (!this.sldLayoutLst[_slideLayout_index].cSld.Bg) {
-                this.sldLayoutLst[_slideLayout_index].ImageBase64 = "";
-                this.sldLayoutLst[_slideLayout_index].recalculate();
+            let oLt = this.sldLayoutLst[_slideLayout_index];
+            if (!oLt.cSld.Bg) {
+                oLt.recalcInfo.recalculateBackground = true;
+                oLt.recalcInfo.recalculateSpTree = true;
+                oLt.ImageBase64 = "";
+                oLt.recalculate();
             }
         }
         this.recalcInfo.recalculateSlideLayouts = false;
@@ -722,7 +738,18 @@ MasterSlide.prototype.isLayout = function () {
 MasterSlide.prototype.isMaster = function () {
     return true;
 };
-
+MasterSlide.prototype.RestartSpellCheck = function()
+{
+    Slide.prototype.RestartSpellCheck.call(this);
+};
+MasterSlide.prototype.Search = function()
+{
+    Slide.prototype.Search.call(this);
+};
+MasterSlide.prototype.GetSearchElementId = function(isNext, StartPos)
+{
+    return Slide.prototype.Search.call(this, isNext, StartPos);
+};
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;

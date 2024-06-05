@@ -446,8 +446,22 @@ SlideLayout.prototype.getTheme = function(){
 
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
         if(this.showMasterSp) {
-            this.Master.drawNoPlaceholders(graphics, this);
+            this.Master.drawNoPlaceholdersShapesOnly(graphics, this);
         }
+        this.cSld.forEachSp(function(oSp) {
+            if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
+                oSp.draw(graphics);
+            }
+        });
+    };
+    SlideLayout.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
+        if(slide) {
+            if(slide.num !== this.lastRecalcSlideIndex) {
+                this.lastRecalcSlideIndex = slide.num;
+                this.cSld.refreshAllContentsFields();
+            }
+        }
+        this.recalculate();
         this.cSld.forEachSp(function(oSp) {
             if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
                 oSp.draw(graphics);
@@ -468,7 +482,7 @@ SlideLayout.prototype.getTheme = function(){
 
 
         if(this.showMasterSp) {
-            this.Master.drawNoPlaceholders(graphics, this);
+            this.Master.drawNoPlaceholdersShapesOnly(graphics, this);
         }
         this.cSld.forEachSp(function(oSp) {
             if (!AscCommon.IsHiddenObj(oSp)) {
@@ -570,8 +584,16 @@ SlideLayout.prototype.getTheme = function(){
             }
             this.recalcInfo.recalculateBounds = false;
         }
-        this.recalcInfo.recalculateBackground = false;
-        this.recalcInfo.recalculateSpTree = false;
+
+        if(this.recalcInfo.recalculateBackground) {
+            this.recalculateBackground();
+            this.recalcInfo.recalculateBackground = false;
+        }
+        if(this.recalcInfo.recalculateSpTree) {
+            for(let i = 0; i < this.cSld.spTree.length; ++i)
+                this.cSld.spTree[i].recalculate();
+            this.recalcInfo.recalculateSpTree = false;
+        }
     };
     SlideLayout.prototype.recalculate2 = function()
     {
@@ -811,6 +833,18 @@ SlideLayout.prototype.getTheme = function(){
         return false;
     };
 
+    SlideLayout.prototype.RestartSpellCheck = function()
+    {
+        Slide.prototype.RestartSpellCheck.call(this);
+    };
+    SlideLayout.prototype.Search = function()
+    {
+        Slide.prototype.Search.call(this);
+    };
+    SlideLayout.prototype.GetSearchElementId = function(isNext, StartPos)
+    {
+        return Slide.prototype.Search.call(this, isNext, StartPos);
+    };
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
     LAYOUT_TYPE_MAP["chart"] = AscFormat.nSldLtTChart;

@@ -3502,7 +3502,7 @@ background-repeat: no-repeat;\
 					if (-1 !== this.nCurPointItemsLength)
 					{
 						History.UndoLastPoint();
-						var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
+						var slide = this.WordControl.m_oLogicDocument.GetCurrentSlide();
 						slide.graphicObjects.applyDrawingProps(prop);
 						this.WordControl.m_oLogicDocument.Recalculate();
 						this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
@@ -3539,12 +3539,12 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				if (this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
+				if (this.WordControl.m_oLogicDocument.GetCurrentSlide())
 				{
 					if (-1 !== this.nCurPointItemsLength)
 					{
 						History.UndoLastPoint();
-						var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
+						var slide = this.WordControl.m_oLogicDocument.GetCurrentSlide();
 						slide.graphicObjects.applyDrawingProps(prop);
 						this.WordControl.m_oLogicDocument.Recalculate();
 						this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
@@ -3576,14 +3576,14 @@ background-repeat: no-repeat;\
 		this.incrementCounterLongAction();
 		this.WordControl.m_oLogicDocument.TurnOff_InterfaceEvents();
 	};
-	asc_docs_api.prototype.setEndPointHistory   = function()
+	asc_docs_api.prototype.setEndPointHistory = function()
 	{
 		this.noCreatePoint     = false;
 		this.exucuteHistoryEnd = true;
 		this.decrementCounterLongAction();
 		this.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents();
 	};
-	asc_docs_api.prototype.SetSlideProps        = function(prop)
+	asc_docs_api.prototype.SetSlideProps = function(prop)
 	{
 		if (null == prop)
 			return;
@@ -3608,13 +3608,7 @@ background-repeat: no-repeat;\
 
 		const bNewShowMasterShapes = prop.get_ShowMasterSp();
 		if (bNewShowMasterShapes !== null) {
-			for (let i = 0; i < arr_ind.length; i += 1) {
-				const oSlide = oLogicDocument.Slides[arr_ind[i]];
-				if (bNewShowMasterShapes !== oSlide.showMasterSp) {
-					oLogicDocument.setShowMasterSp(bNewShowMasterShapes, arr_ind);
-					return;
-				}
-			}
+			oLogicDocument.setShowMasterSp(bNewShowMasterShapes, arr_ind);
 		}
 
 		const _back_fill = prop.get_background();
@@ -3629,7 +3623,7 @@ background-repeat: no-repeat;\
 				return;
 			}
 
-			var _old_fill = oLogicDocument.Slides[oLogicDocument.CurPage].backgroundFill;
+			var _old_fill = oLogicDocument.GetCurrentSlide().backgroundFill;
 			if (AscCommon.isRealObject(_old_fill))
 				_old_fill = _old_fill.createDuplicate();
 			var bg        = new AscFormat.CBg();
@@ -3741,7 +3735,7 @@ background-repeat: no-repeat;\
 				}
 				else
 				{
-					if (oLogicDocument.Slides[oLogicDocument.CurPage])
+					if (oLogicDocument.GetCurrentSlide())
 					{
 						AscFormat.ExecuteNoHistory(function()
 						{
@@ -3749,7 +3743,7 @@ background-repeat: no-repeat;\
 							oLogicDocument.changeBackground(bg, arr_ind, true);
 							for (var i = 0; i < arr_ind.length; ++i)
 							{
-								oLogicDocument.Slides[arr_ind[i]].recalculateBackground()
+								oLogicDocument.GetSlide(arr_ind[i]).recalculateBackground()
 							}
 							for (i = 0; i < arr_ind.length; ++i)
 							{
@@ -4651,7 +4645,7 @@ background-repeat: no-repeat;\
 		this.bIsShowAnimTab = bShow;
 		if(this.WordControl && this.WordControl.m_oLogicDocument) 
 		{
-			var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
+			var slide = this.WordControl.m_oLogicDocument.GetSlide(this.WordControl.m_oLogicDocument.CurPage);
 			if(slide) 
 			{
 				this.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.WordControl.m_oLogicDocument.CurPage);
@@ -4880,8 +4874,8 @@ background-repeat: no-repeat;\
 
 
     asc_docs_api.prototype.asc_startEditCurrentOleObject = function(){
-    	if(this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
-            this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage].graphicObjects.startEditCurrentOleObject();
+    	if(this.WordControl.m_oLogicDocument.GetCurrentSlide())
+            this.WordControl.m_oLogicDocument.GetCurrentSlide().graphicObjects.startEditCurrentOleObject();
     };
 
 
@@ -5193,9 +5187,9 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.ChartApply              = function(obj)
 	{
-		if (obj.ChartProperties && obj.ChartProperties.type === Asc.c_oAscChartTypeSettings.stock && this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
+		if (obj.ChartProperties && obj.ChartProperties.type === Asc.c_oAscChartTypeSettings.stock && this.WordControl.m_oLogicDocument.GetCurrentSlide())
 		{
-			if (!AscFormat.CheckStockChart(this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage].graphicObjects, this))
+			if (!AscFormat.CheckStockChart(this.WordControl.m_oLogicDocument.GetCurrentSlide().graphicObjects, this))
 			{
 				return;
 			}
@@ -6917,9 +6911,9 @@ background-repeat: no-repeat;\
             LogicDocument.Spelling.AddToIgnore(SpellCheckProperty.Word);
             LogicDocument.DrawingDocument.ClearCachePages();
             LogicDocument.DrawingDocument.FirePaint();
-			if(LogicDocument.Slides[LogicDocument.CurPage])
+			if(LogicDocument.GetCurrentSlide())
 			{
-				LogicDocument.DrawingDocument.Notes_OnRecalculate(LogicDocument.CurPage,LogicDocument.NotesWidth, LogicDocument.Slides[LogicDocument.CurPage].getNotesHeight());
+				LogicDocument.DrawingDocument.Notes_OnRecalculate(LogicDocument.CurPage,LogicDocument.NotesWidth, LogicDocument.GetCurrentSlide().getNotesHeight());
 			}
         }
     };
@@ -6936,9 +6930,9 @@ background-repeat: no-repeat;\
 				LogicDocument.Spelling.AddToIgnore(word);
 				LogicDocument.DrawingDocument.ClearCachePages();
 				LogicDocument.DrawingDocument.FirePaint();
-				if(LogicDocument.Slides[LogicDocument.CurPage])
+				if(LogicDocument.GetCurrentSlide())
 				{
-					LogicDocument.DrawingDocument.Notes_OnRecalculate(LogicDocument.CurPage,LogicDocument.NotesWidth, LogicDocument.Slides[LogicDocument.CurPage].getNotesHeight());
+					LogicDocument.DrawingDocument.Notes_OnRecalculate(LogicDocument.CurPage,LogicDocument.NotesWidth, LogicDocument.GetCurrentSlide().getNotesHeight());
 				}
 				delete LogicDocument.Spelling.Words[word];
 			}
@@ -6981,8 +6975,8 @@ background-repeat: no-repeat;\
             var _drawing_document = editor.WordControl.m_oDrawingDocument;
             _drawing_document.ClearCachePages();
             _drawing_document.FirePaint();
-            if(_presentation.Slides[_presentation.CurPage] && _presentation.Slides[_presentation.CurPage].notes){
-                _drawing_document.Notes_OnRecalculate(_presentation.CurPage, _presentation.Slides[_presentation.CurPage].NotesWidth, _presentation.Slides[_presentation.CurPage].getNotesHeight());
+            if(_presentation.GetCurrentSlide() && _presentation.GetCurrentSlide().notes){
+                _drawing_document.Notes_OnRecalculate(_presentation.CurPage, _presentation.GetCurrentSlide().NotesWidth, _presentation.GetCurrentSlide().getNotesHeight());
             }
         }
     };
@@ -8018,6 +8012,7 @@ background-repeat: no-repeat;\
 	{
 		if(!oTransition)
 			return;
+		if(this.isMasterMode()) return;
 
 		const oPresentation = this.private_GetLogicDocument();
 		if(!oPresentation)
@@ -8055,6 +8050,8 @@ background-repeat: no-repeat;\
 		if(oPresentation.IsEmpty())
 			return;
 
+		if(this.isMasterMode())
+			return;
 		const oCurSlide = oPresentation.GetCurrentSlide();
 		if(!oCurSlide)
 			return;
