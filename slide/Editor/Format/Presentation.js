@@ -2541,7 +2541,7 @@ CPresentation.prototype.Get_Id = function () {
 
 CPresentation.prototype.AddNewMasterSlide = function () {
 	if(!this.IsMasterMode) return;
-	let oMaster = AscFormat.GenerateDefaultMasterSlide(AscFormat.GenerateDefaultTheme(this));
+	let oMaster = AscCommonSlide.CreateDefaultMaster();
 	oMaster.changeSize(this.GetWidthMM(), this.GetHeightMM());
 	for(let nLt = 0 ; nLt < oMaster.sldLayoutLst.length; ++nLt) {
 		oMaster.sldLayoutLst[nLt].changeSize(this.GetWidthMM(), this.GetHeightMM());
@@ -2861,6 +2861,13 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							if (redrawSlideIndexMap[nIdx] !== true) {
 								redrawSlideIndexMap[nIdx] = true;
 								aToRedrawSlides.push(nIdx);
+							}
+						}
+						for (let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
+							let oCalcSlide = this.Slides[nIdx];
+							if (oCalcSlide.Layout === oDrawingObject) {
+								oCalcSlide.checkSlideTheme();
+								oCalcSlide.recalculate();
 							}
 						}
 					}

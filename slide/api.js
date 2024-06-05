@@ -1083,6 +1083,8 @@
 
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
 		if(!this.isMasterMode()) return;
+
+
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument) return;
 		oLogicDocument.AddNewMasterSlide();
