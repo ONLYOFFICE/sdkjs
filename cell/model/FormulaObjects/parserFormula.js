@@ -807,7 +807,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBool.prototype.constructor = cBool;
 	cBool.prototype.type = cElementType.bool;
 	cBool.prototype.toString = function () {
-		return this.value.toString().toUpperCase();
+		return (this.value ? "TRUE" : "FALSE");
 	};
 	cBool.prototype.getValue = function () {
 		return this.toString();
