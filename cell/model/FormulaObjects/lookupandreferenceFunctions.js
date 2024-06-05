@@ -2867,6 +2867,9 @@ function (window, undefined) {
 		} else if (cElementType.array === arg1.type && opt_xlookup) {
 			var _cacheElem = {elements: []};
 			arg1.foreach(function (elem, r, c) {
+				if (elem && elem.type === cElementType.string) {
+					elem.value = elem.value.toLowerCase();
+				}
 				_cacheElem.elements.push({v: elem, i: (t.bHor ? c : r)});
 			});
 			return this._calculate(_cacheElem.elements, arg0Val, null, opt_arg4, opt_arg5);
@@ -3120,7 +3123,7 @@ function (window, undefined) {
 
 		//сильного прироста не получил, пока оставляю прежнюю обработку, подумать на счёт разбития диапазонов
 		range._foreachNoEmpty(function (cell, r, c) {
-			cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+			cacheElem.elements.push({v: checkTypeCell(cell, true), i: (_this.bHor ? c : r)});
 		});
 		return;
 
@@ -3202,7 +3205,7 @@ function (window, undefined) {
 
 			var addElemsFromWs = function (_range) {
 				_range._foreachNoEmpty(function (cell, r, c) {
-					cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+					cacheElem.elements.push({v: checkTypeCell(cell, true), i: (_this.bHor ? c : r)});
 				});
 			};
 
