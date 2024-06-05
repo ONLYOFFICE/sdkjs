@@ -2102,7 +2102,7 @@
 
 			let oDoc = oThis.getPDFDoc();
 			AscCommon.check_MouseMoveEvent(e);
-			e.IsLocked = true;
+			e.IsLocked = oThis.isMouseDown;
 
 			if (e && e.preventDefault)
 				e.preventDefault();
@@ -3322,12 +3322,23 @@
 					this.Api.sendEvent("asc_onMarkerFormatChanged", this.Api.curMarkerType, false);
 					this.Api.SetMarkerFormat(this.Api.curMarkerType, false);
 				}
-				
-				const oController = oDoc.GetController();
-				oController.resetSelection();
+				else if (this.Api.isStartAddShape)
+				{
+					this.Api.sync_StartAddShapeCallback(false);
+					this.Api.sync_EndAddShape();
+					this.DrawingObjects.endTrackNewShape();
+				}
+				else {
+					const oController = oDoc.GetController();
+					oController.resetSelection();
+					this.onUpdateOverlay();
+				oDoc.EscapeForm();
 				oDoc.EscapeForm();
 				
-				editor.sync_HideComment();
+					oDoc.EscapeForm();
+				
+					editor.sync_HideComment();
+				}
 			}
 			else if (e.KeyCode === 32) // Space
 			{

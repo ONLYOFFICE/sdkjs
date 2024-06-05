@@ -1293,6 +1293,7 @@
     CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
     CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
+    CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 

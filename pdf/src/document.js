@@ -852,7 +852,10 @@ var CPresentation = CPresentation || function(){};
         }
         // если добавление шейпа
         else if (IsOnAddAddShape) {
-            oController.startAddShape(this.Api.addShapePreset);
+            if (!oController.isPolylineAddition()) {
+                oController.startAddShape(this.Api.addShapePreset);
+            }
+            
             oController.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
@@ -1488,6 +1491,11 @@ var CPresentation = CPresentation || function(){};
         }
         else
         {
+            if (IsOnAddAddShape && oController.isPolylineAddition()) {
+                oController.OnMouseMove(e, X, Y, pageObject.index);
+                return;
+            }
+
             // рисование и ластик работает только при зажатой мышке
             if (IsOnDrawer || IsOnEraser || IsOnAddAddShape || IsPageHighlight)
                 return;
@@ -1647,6 +1655,7 @@ var CPresentation = CPresentation || function(){};
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
+            e.IsLocked = false;
             return;
         }
 

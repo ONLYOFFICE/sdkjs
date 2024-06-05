@@ -245,6 +245,7 @@ StartAddNewShape.prototype =
                     oShape.select(oLogicDocument.GetController(), this.pageIndex);
 
                     oLogicDocument.TurnOffHistory();
+                    bRet = true;
                 }
             }
         }
