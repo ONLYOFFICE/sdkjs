@@ -160,6 +160,7 @@
             Line2 : 0,
             Glyph2 : 0,
 
+            quads: [],
             IsSelection : false
         };
 
@@ -564,6 +565,7 @@ void main() {\n\
         sel.Glyph2 = ret.Glyph;
 
         sel.IsSelection = true;
+        this.cacheSelectionQuads([]);
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
@@ -581,6 +583,7 @@ void main() {\n\
 			IsSelection : false
 		}
 
+        this.cacheSelectionQuads([]);
         this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
     };
     CFile.prototype.isSelectionUse = function() {
@@ -1106,11 +1109,18 @@ void main() {\n\
         this.Selection = oSelectionInfo;
         this.onUpdateOverlay();
     };
+    CFile.prototype.cacheSelectionQuads = function(aQuads) {
+        this.Selection.quads = aQuads;
+    };
     CFile.prototype.getSelectionQuads = function() {
         let aInfo = [];
-
+        
         if (false == this.isSelectionUse()) {
+            this.cacheSelectionQuads(aInfo);
             return aInfo;
+        }
+        else if (this.Selection.quads.length != 0) {
+            return this.Selection.quads;
         }
         
         let sel = this.Selection;
@@ -1417,6 +1427,7 @@ void main() {\n\
                 aInfo.push(oInfo);
         }
         
+        this.cacheSelectionQuads(aInfo);
         return aInfo;
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
