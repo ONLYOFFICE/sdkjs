@@ -294,7 +294,7 @@
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		// пока что копирование бинарником только внутри drawings или самих drawings
-		if (_format !== AscCommon.c_oAscClipboardDataFormat.Text && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+		if (_format == AscCommon.c_oAscClipboardDataFormat.Internal && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 			return;
