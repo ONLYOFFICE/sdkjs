@@ -713,6 +713,15 @@ MasterSlide.prototype.getThemeIndex = function() {
    }
    return 0;
 };
+MasterSlide.prototype.isSlide = function () {
+    return false;
+};
+MasterSlide.prototype.isLayout = function () {
+    return false;
+};
+MasterSlide.prototype.isMaster = function () {
+    return true;
+};
 
 function CMasterThumbnailDrawer()
 {

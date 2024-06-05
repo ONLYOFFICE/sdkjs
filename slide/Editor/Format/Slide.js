@@ -2013,6 +2013,16 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
         return oTransition.SlideAdvanceDuration;
     };
+    Slide.prototype.isSlide = function () {
+        return true;
+    };
+    Slide.prototype.isLayout = function () {
+        return false;
+    };
+    Slide.prototype.isMaster = function () {
+        return false;
+    };
+
 function fLoadComments(oObject, authors)
 {
     var _comments_count = oObject.writecomments.length;

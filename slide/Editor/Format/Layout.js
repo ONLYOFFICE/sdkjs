@@ -793,6 +793,15 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.convertPixToMM = function(pix) {
         return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
     };
+    SlideLayout.prototype.isSlide = function () {
+        return false;
+    };
+    SlideLayout.prototype.isLayout = function () {
+        return true;
+    };
+    SlideLayout.prototype.isMaster = function () {
+        return false;
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
