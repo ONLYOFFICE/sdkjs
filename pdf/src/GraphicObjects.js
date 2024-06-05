@@ -1079,6 +1079,9 @@
                         if (oTrackDrawer.Graphics) {
                             oTrackDrawer.Graphics.put_GlobalAlpha(true, oldGlobalAlpha);
                         }
+
+                        oTrackDrawer.CheckCanvasTransform();
+
                         drawingDocument.DrawTrack(
                             AscFormat.TYPE_TRACK.SHAPE,
                             cropObject.getTransformMatrix(),
