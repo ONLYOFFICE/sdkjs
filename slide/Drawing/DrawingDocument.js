@@ -3033,8 +3033,9 @@ function CDrawingDocument()
 	this.ToRendererPart = function(noBase64, isSelection)
 	{
 		var watermark = this.m_oWordControl.m_oApi.watermarkDraw;
+		let oPresentation = this.m_oWordControl.m_oLogicDocument;
 
-		var pagescount = this.GetSlidesCount();
+		var pagescount = oPresentation.Slides.length;
 
 		if (-1 == this.m_lCurrentRendererPage)
 		{
@@ -3060,14 +3061,16 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if ((true === isSelection) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+			if ((true === isSelection && !this.m_oLogicDocument.IsMasterMode()) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
 				continue;
 
-			if (!this.m_oLogicDocument.IsVisibleSlide(i))
+			let oSlide = this.m_oLogicDocument.Slides[i];
+
+			if (!oSlide.isVisible())
 				continue;
 
 			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
-			this.m_oLogicDocument.DrawPage(i, renderer);
+			oSlide.draw(renderer);
 			renderer.EndPage();
 
 			if (watermark)
