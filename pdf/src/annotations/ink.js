@@ -88,7 +88,7 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 
         if (this.IsSelected()) {
             oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
@@ -97,7 +97,7 @@
             oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oViewer = editor.getDocumentRenderer();

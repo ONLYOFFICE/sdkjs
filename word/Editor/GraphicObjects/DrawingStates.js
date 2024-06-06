@@ -380,7 +380,7 @@ NullState.prototype =
 
         if(!b_no_handle_selected)
         {
-            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
+            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, true);
             if(ret)
             {
                 if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -399,7 +399,7 @@ NullState.prototype =
             var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
             if(drawing_page)
             {
-                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
+                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);
                 if(ret)
                 {
                     if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -456,13 +456,10 @@ NullState.prototype =
 
             let aDrawings = [];
 
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
-            }
-            
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
-            }
+            oViewer.pagesInfo.pages.forEach(function(page) {
+                aDrawings = aDrawings.concat(page.drawings);
+                aDrawings = aDrawings.concat(page.annots);
+            });
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
 
@@ -1567,18 +1564,8 @@ MoveState.prototype =
             }
         }
 
-        if (Asc.editor.isPdfEditor() == false) {
-            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
-        }
-        // для pdf freeText аннотации нужно отлеживать взаимное положение коннектора и прямоугольника,
-        // чтобы динамически перекидывать коннектор на другую сторону прямоугольлника
-        else {
-            // для pdf freeText всегда будет 2 объкта в группе шейпов
-            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
-        }
-        
+        for(_object_index = 0; _object_index < _objects_count; ++_object_index)
+            _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
 
         this.bSamePos = (AscFormat.fApproxEqual(result_x - this.startX + min_dx, 0) && AscFormat.fApproxEqual(result_y - this.startY + min_dy, 0) && this.majorObject.selectStartPage === pageIndex);
         this.drawingObjects.updateOverlay();

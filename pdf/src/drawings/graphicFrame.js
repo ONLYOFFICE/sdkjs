@@ -189,7 +189,7 @@
             this.SetInTextBox(true);
         }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     
     CPdfGraphicFrame.prototype.onMouseUp = function(x, y, e) {

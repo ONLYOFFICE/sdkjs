@@ -92,7 +92,7 @@
             oDoc.SelectionSetStart(x, y, e);
         }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CPdfChart.prototype.SetInTextBox = function(bIn) {
         this.isInTextBox = bIn;

@@ -215,7 +215,7 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
         oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolygon.prototype.GetGeometryEdit = function() {

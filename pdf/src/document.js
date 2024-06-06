@@ -897,7 +897,7 @@ var CPresentation = CPresentation || function(){};
 
             // всегда даём кликнуть по лкм, пкм даем кликнуть один раз, при первом попадании в объект
             if (AscCommon.getMouseButton(e || {}) != 2 || (AscCommon.getMouseButton(e || {}) == 2 && oCurObject != oMouseDownObject)) {
-                oMouseDownObject.onMouseDown(x, y, e);
+                oMouseDownObject.onMouseDown(x, y, e, pageObject.index);
             }
             
             if (((oMouseDownObject.IsDrawing() && oMouseDownObject.IsTextShape()) || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
@@ -2775,6 +2775,31 @@ var CPresentation = CPresentation || function(){};
         return this.annots.find(function(annot) {
             return annot.GetId() == sId;
         });
+    };
+    CPDFDoc.prototype.GetShapeBasedAnnotById = function(sId) {
+        if (!sId) {
+            return null;
+        }
+
+        function findInAnnot(annot) {
+            let isFound = false;
+            if (annot.GetId() == sId) {
+                isFound = true;
+                return isFound;
+            }
+
+            if (annot.isGroup()) {
+                isFound = annot.spTree.find(findInAnnot)
+            }
+
+            return isFound;
+        };
+
+        let oDrawing = this.annots.find(function(annot) {
+            return findInAnnot(annot);
+        });
+
+        return oDrawing;
     };
     CPDFDoc.prototype.GetDrawingById = function(sId) {
         if (!sId) {
@@ -5137,6 +5162,7 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    CPDFDoc.prototype.Is_Inline = function() {};
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
     };
@@ -5998,6 +6024,8 @@ var CPresentation = CPresentation || function(){};
         let oGlobalCoords = oCurPageTr.TransformPoint(x, y);
         
         let oNeedPageCoords = oNeedPageTr.TransformPoint(oGlobalCoords.x, oGlobalCoords.y);
+        oNeedPageCoords.X = oNeedPageCoords.x;
+        oNeedPageCoords.Y = oNeedPageCoords.y;
 
         return oNeedPageCoords;
     }

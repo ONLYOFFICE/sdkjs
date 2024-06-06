@@ -1823,16 +1823,26 @@
 			const nPage	= pageObject.index;
 
 			// координаты клика на странице в MM
-			let pageObject2 = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-			let X = pageObject2.x;
-			let Y = pageObject2.y;
+			let pageObjectMM = this.getPageByCoords2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 
 			let page = this.pagesInfo.pages[nPage];
 			
-			// если есть заселекченная shape base аннотация под мышкой, то возвращаем её, а не первую попавшуюся
+			// если есть заселекченная shape base аннотация под мышкой, залезающая на другую страницу
 			if (oDoc.mouseDownAnnot) {
-				if (oDoc.mouseDownAnnot.IsShapeBased() && (oDoc.mouseDownAnnot.hitInBoundingRect(X, Y) || oDoc.mouseDownAnnot.hitToHandles(X, Y) != -1 || oDoc.mouseDownAnnot.hitInPath(X, Y)))
-					return oDoc.mouseDownAnnot;
+				let oActiveAnnot = oDoc.mouseDownAnnot;
+				if (oActiveAnnot.IsShapeBased()) {
+					let nAnnotPage = oActiveAnnot.GetPage();
+
+					if (pageObjectMM.index != nAnnotPage) {
+						let oPt = AscPDF.ConvertCoordsToAnotherPage(pageObjectMM.x, pageObjectMM.y, pageObjectMM.index, nAnnotPage);
+
+						if (oActiveAnnot == oDoc.GetShapeBasedAnnotById(this.DrawingObjects.getGraphicInfoUnderCursor(nAnnotPage, oPt.x, oPt.y).objectId)) {
+							if (oActiveAnnot.hitToHandles(oPt.x, oPt.y) != -1) {
+								return oActiveAnnot;
+							}
+						}
+					}
+				}
 			}
 
 			if (page.annots)
@@ -1870,7 +1880,7 @@
 					// у draw аннотаций ищем по path
 					if (oAnnot.IsShapeBased())
 					{
-						if (oAnnot.hitInBoundingRect(X, Y) || oAnnot.hitToHandles(X, Y) != -1 || oAnnot.hitInPath(X, Y) || oAnnot.hitInInnerArea(X, Y))
+						if (oAnnot.hitInBoundingRect(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitToHandles(pageObjectMM.x, pageObjectMM.y) != -1 || oAnnot.hitInPath(pageObjectMM.x, pageObjectMM.y) || oAnnot.hitInInnerArea(pageObjectMM.x, pageObjectMM.y))
 							return oAnnot;
 					}
 
@@ -1901,10 +1911,32 @@
 			let oCurState = this.DrawingObjects.curState;
 			this.DrawingObjects.curState = this.DrawingObjects.nullState;
 
-			let oDrawing = this.getPDFDoc().GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(pageObject.index, pageObject.x, pageObject.y).objectId);
+			let oDoc = this.getPDFDoc();
+			let oDrawingUnderMouse;
+
+			// handle selected drawing in another page
+			let oActiveDrawing = oDoc.activeDrawing;
+			if (oActiveDrawing) {
+				let nDrawingPage = oActiveDrawing.GetPage();
+
+				if (pageObject.index != nDrawingPage) {
+					let oPt = AscPDF.ConvertCoordsToAnotherPage(pageObject.x, pageObject.y, pageObject.index, nDrawingPage);
+
+					if (oActiveDrawing == oDoc.GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(nDrawingPage, oPt.x, oPt.y).objectId)) {
+						if (oActiveDrawing.hitToHandles(oPt.x, oPt.y) != -1) {
+							oDrawingUnderMouse = oActiveDrawing;
+						}
+					}
+				}
+			}
+			
+			if (null == oDrawingUnderMouse) {
+				oDrawingUnderMouse = oDoc.GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(pageObject.index, pageObject.x, pageObject.y).objectId);
+			}
+			
 			this.DrawingObjects.curState = oCurState;
 
-			return oDrawing
+			return oDrawingUnderMouse;
 		};
 
 		this.onMouseDown = function(e)

@@ -93,7 +93,7 @@
         //     this.SetInTextBox(true);
         // }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CPdfSmartArt.prototype.AddNewParagraph = function() {
         this.GetDocContent().AddNewParagraph();

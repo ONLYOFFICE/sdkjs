@@ -43,13 +43,8 @@ function CheckCoordsNeedPage(x, y, pageIndex, needPageIndex, drawingDocument)
         return {x:x, y:y};
     else
     {
-        if (Asc.editor.isPdfEditor()) {
-            return AscPDF.ConvertCoordsToAnotherPage(x,y, pageIndex, needPageIndex);
-        }
-        else {
-            let t = drawingDocument.ConvertCoordsToAnotherPage(x,y, pageIndex, needPageIndex);
+        let t = drawingDocument.ConvertCoordsToAnotherPage(x,y, pageIndex, needPageIndex);
             return {x: t.X, y: t.Y};
-        }
     }
 }
 

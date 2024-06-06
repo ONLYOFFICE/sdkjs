@@ -98,7 +98,7 @@
             this.SetInTextBox(true);
         }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 		let docContent = this.GetDocContent();
 		if (docContent)
 			docContent.RecalculateCurPos();
