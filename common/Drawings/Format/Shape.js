@@ -1057,54 +1057,16 @@
 
 		CShape.prototype.convertToPPTX = function (drawingDocument, worksheet, bIsAddMath) {
 			let c = new CShape();
-			c.setWordShape(false);
-			c.setBDeleted(false);
-			c.setWorksheet(worksheet);
-			if (this.nvSpPr) {
-				c.setNvSpPr(this.nvSpPr.createDuplicate());
-			}
-			if (this.spPr) {
-				c.setSpPr(this.spPr.createDuplicate());
-				c.spPr.setParent(c);
-			}
-			if (this.style) {
-				c.setStyle(this.style.createDuplicate());
-			}
-			if (this.textBoxContent) {
-				let tx_body = new AscFormat.CTextBody();
-				tx_body.setParent(c);
-				if (this.bodyPr) {
-					tx_body.setBodyPr(this.bodyPr.createDuplicate());
-				}
-				let new_content = new AscFormat.CDrawingDocContent(tx_body, drawingDocument, 0, 0, 0, 0, false, false, true);
-				let aContent = this.textBoxContent.Content;
-				let aNewParagraphs = [];
-				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
-					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscWord.Paragraph) {
-						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
-						aNewParagraphs.push(oParagraph);
-					}
-				}
-				if (aNewParagraphs.length > 0) {
-					new_content.Internal_Content_RemoveAll();
-					for (let nIdx = 0; nIdx < aNewParagraphs.length; ++nIdx) {
-						let oParagraph = aNewParagraphs[nIdx];
-						new_content.Internal_Content_Add(nIdx, oParagraph, false);
-					}
-				}
-				tx_body.setContent(new_content);
-				c.setTxBody(tx_body);
-			}
-			if (worksheet) {
-				if (this.signatureLine) {
-					c.setSignature(this.signatureLine.copy());
-				}
-			}
+			this._convertToPPTX(c, drawingDocument, worksheet, bIsAddMath);
 			return c;
 		};
 		CShape.prototype.convertToPdf = function (drawingDocument, worksheet, bIsAddMath) {
 			let c = new AscPDF.CPdfShape();
+			this._convertToPPTX(c, drawingDocument, worksheet, bIsAddMath);
+			return c;
+		};
+		CShape.prototype._convertToPPTX = function(c, drawingDocument, worksheet, bIsAddMath)
+		{
 			c.setWordShape(false);
 			c.setBDeleted(false);
 			c.setWorksheet(worksheet);
@@ -1149,7 +1111,6 @@
 					c.setSignature(this.signatureLine.copy());
 				}
 			}
-			return c;
 		};
 		CShape.prototype.convertFromSmartArt = function (bForce) {
 			if (AscFormat.SmartArt && !bForce) {

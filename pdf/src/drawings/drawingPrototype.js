@@ -67,6 +67,9 @@
     CPdfDrawingPrototype.prototype.IsDrawing = function() {
         return true;
     };
+    CPdfDrawingPrototype.prototype.IsPdfDrawing = function() {
+        return true;
+    };
     CPdfDrawingPrototype.prototype.IsSmartArt = function() {
         return false;
     };

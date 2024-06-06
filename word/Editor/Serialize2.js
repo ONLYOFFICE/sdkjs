@@ -17252,7 +17252,7 @@ DocReadResult.prototype = {
 	isDocumentPasting: function(){
 		var api = window["Asc"]["editor"] || editor;
 		if(api) {
-			return this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
+			return !Asc.editor.isPdfEditor() && this.bCopyPaste && AscCommon.c_oEditorId.Word === api.getEditorId();
 		}
 		return false;
 	},

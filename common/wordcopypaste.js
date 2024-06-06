@@ -163,7 +163,8 @@ var koef_mm_to_indent = 3.88;
 
 var PasteElementsId = {
   copyPasteUseBinary : true,
-  g_bIsDocumentCopyPaste : true
+  g_bIsDocumentCopyPaste : true,
+  g_bIsPDFCopyPaste : false
 };
 function CopyElement(sName, bText){
 	this.sName = sName;
@@ -4081,7 +4082,7 @@ PasteProcessor.prototype =
 				}
 			} else if (base64FromWord)//вставка из редактора документов
 			{
-				if (Asc.editor.isPdfEditor()) {
+				if (PasteElementsId.g_bIsPDFCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromWordToPDF(base64FromWord, !!(fromBinary));
 				} else if (PasteElementsId.g_bIsDocumentCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromWordToWord(base64FromWord, !!(fromBinary));
@@ -4090,7 +4091,9 @@ PasteProcessor.prototype =
 				}
 			} else if (base64FromPresentation)//вставка из редактора презентаций
 			{
-				if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				if (PasteElementsId.g_bIsPDFCopyPaste) {
+					bInsertFromBinary = null !== this._pasteBinaryFromPresentationToPDF(base64FromPresentation, bDuplicate);
+				} else if (PasteElementsId.g_bIsDocumentCopyPaste) {
 					bInsertFromBinary = null !== this._pasteBinaryFromPresentationToWord(base64FromPresentation, bDuplicate);
 				} else {
 					bInsertFromBinary = null !== this._pasteBinaryFromPresentationToPresentation(base64FromPresentation);
@@ -4803,6 +4806,8 @@ PasteProcessor.prototype =
 	_pasteBinaryFromWordToPDF: function (base64FromWord) {
 		let oThis = this;
 		let oDoc = Asc.editor.getPDFDoc();
+		let nPageW = oDoc.GetPageWidthMM(oDoc.GetCurPage());
+		let nPageH = oDoc.GetPageHeight(oDoc.GetCurPage());
 		let trueDocument = this.oDocument;
 
 		let tempCDocument = function () {
@@ -4841,7 +4846,7 @@ PasteProcessor.prototype =
 					element = oThis._convertTableToPPTX(element, true);
 
 					//TODO переделать количество строк и ширину
-					let W = oThis.oDocument.GetWidthMM() / 1.45;
+					let W = nPageW *  2 / 3;
 					let Rows = element.GetRowsCount();
 					let H = Rows * 7.478268771701388;
 					let graphic_frame = new AscPDF.CPdfGraphicFrame();
@@ -4849,8 +4854,8 @@ PasteProcessor.prototype =
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
 					graphic_frame.spPr.xfrm.setParent(graphic_frame.spPr);
-					graphic_frame.spPr.xfrm.setOffX(oThis.oDocument.GetWidthMM() / 2 - W / 2);
-					graphic_frame.spPr.xfrm.setOffY(oThis.oDocument.GetHeightMM() / 2 - H / 2);
+					graphic_frame.spPr.xfrm.setOffX(nPageW / 2 - W / 2);
+					graphic_frame.spPr.xfrm.setOffY(nPageH / 2 - H / 2);
 					graphic_frame.spPr.xfrm.setExtX(W);
 					graphic_frame.spPr.xfrm.setExtY(H);
 					graphic_frame.setNvSpPr(new AscFormat.UniNvPr());
@@ -4900,15 +4905,9 @@ PasteProcessor.prototype =
 					if (oPDFSelContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame) {
 						let drawing = oPDFSelContent.Drawings[i].Drawing;
 						let oldParent = drawing.parent;
-						let bDeleted = drawing.bDeleted;
 						drawing.bDeleted = false;
 						drawing.recalculate();
 						drawing.parent = oldParent;
-						drawing.bDeleted = bDeleted;
-
-						drawing.spPr.xfrm.setOffX(oThis.oDocument.GetWidthMM() / 2 - drawing.extX / 2);
-						drawing.spPr.xfrm.setOffY(oThis.oDocument.GetHeightMM() / 2 - drawing.extY / 2);
-
 					}
 				}
 
@@ -4965,16 +4964,21 @@ PasteProcessor.prototype =
 		} else {
 			//ковертим изображения в презентационный формат
 			for (var i = 0; i < oPDFSelContent.Drawings.length; i++) {
-				if (!(oPDFSelContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
-					oPDFSelContent.Drawings[i].Drawing = oPDFSelContent.Drawings[i].Drawing.convertToPPTX(oThis.oDocument.DrawingDocument, undefined, true);
+				if (oPDFSelContent.Drawings[i].Drawing.convertToPdf) {
+					oPDFSelContent.Drawings[i].Drawing = oPDFSelContent.Drawings[i].Drawing.convertToPdf(oThis.oDocument.DrawingDocument, undefined, true);
 					AscFormat.checkBlipFillRasterImages(oPDFSelContent.Drawings[i].Drawing);
+				}
+				if (!oPDFSelContent.Drawings[i].Drawing.IsPdfDrawing) {
+					oPDFSelContent.Drawings.splice(i, 1);
+					i--;
 				}
 			}
 
 			oThis.api.pre_Paste(aContent.fonts, aContent.images, paste_callback);
 		}
 	},
-	// from pdf to pdf
+
+	// from PDF to PDF
 	_pasteBinaryFromPDFToPDF: function (base64, bDuplicate) {
 		let oThis	= this;
 		let oDoc	= Asc.editor.getPDFDoc();
@@ -5069,6 +5073,106 @@ PasteProcessor.prototype =
 				for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
 					oImageMap[nImg] = arr_Images[nImg].Url
 				}
+				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
+			}
+		} else {
+			return null;
+		}
+	},
+
+	//from PRESENTATION to PDF
+	_pasteBinaryFromPresentationToPDF: function (base64, bDuplicate) {
+		let oThis = this;
+		let oDoc = Asc.editor.getPDFDoc();
+		let nPageW = oDoc.GetPageWidthMM(oDoc.GetCurPage());
+		let nPageH = oDoc.GetPageHeight(oDoc.GetCurPage());
+
+		let oSelectedContent2	= this._readPresentationSelectedContent2(base64, bDuplicate);
+		let p_url				= oSelectedContent2.p_url;
+		let selectedContent2	= oSelectedContent2.content;
+		let multipleParamsCount	= selectedContent2 ? selectedContent2.length : 0;
+
+		let aContents = [];
+		if (multipleParamsCount) {
+			
+			for (let i = 0; i < multipleParamsCount; i++) {
+				let curContent = selectedContent2[i];
+				aContents.push(curContent.content);
+			}
+
+			let specialOptionsArr = [];
+			let specialProps = Asc.c_oSpecialPasteProps;
+			if (1 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting];
+			} else if (2 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting, specialProps.sourceformatting];
+			} else if (3 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting, specialProps.sourceformatting, specialProps.picture];
+			}
+
+			let bSlideObjects = selectedContent2[0] && selectedContent2[0].content && selectedContent2[0].content.SlideObjects && selectedContent2[0].content.SlideObjects.length > 0;
+			let pasteObj = bSlideObjects ? selectedContent2[2] : selectedContent2[0];
+			let nIndex = bSlideObjects ? 2 : 0;
+
+			let arr_Images = pasteObj.images;
+			let fonts = pasteObj.fonts;
+			let presentationSelectedContent = pasteObj.content;
+			if (!presentationSelectedContent.Drawings) {
+				presentationSelectedContent.Drawings = [];
+			}
+
+			if (null === presentationSelectedContent) {
+				return null;
+			}
+
+			let paste_callback = function () {
+				if (false === oThis.bNested) {
+					let bPaste = oDoc.InsertContent2(aContents, nIndex);
+
+					if (specialOptionsArr.length >= 1 && bPaste) {
+						if (presentationSelectedContent && presentationSelectedContent.DocContent) {
+							specialOptionsArr.push(Asc.c_oSpecialPasteProps.keepTextOnly);
+						}
+
+						oThis._setSpecialPasteShowOptionsPresentation(specialOptionsArr);
+					} else {
+						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+					}
+
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				}
+			};
+
+			let oObjectsForDownload = GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId);
+			if (oObjectsForDownload.aUrls.length > 0) {
+				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
+					let oImageMap = {};
+					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
+					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
+				}, true);
+			} else {
+				let oImageMap = {};
+				for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
+					oImageMap[nImg] = arr_Images[nImg].Url
+				}
+
+				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
+					if (presentationSelectedContent.Drawings[i].Drawing.convertToPdf) {
+						presentationSelectedContent.Drawings[i].Drawing = presentationSelectedContent.Drawings[i].Drawing.convertToPdf(oThis.oDocument.DrawingDocument, undefined, true);
+						AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
+					}
+					else if (presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing && presentationSelectedContent.Drawings[i].Drawing.IsGraphicFrame()) {
+						let oGrFrame = presentationSelectedContent.Drawings[i].Drawing;
+						oGrFrame.applyDrawingSize({Width: nPageW *  2 / 3});
+						oGrFrame.graphicObject.Set_TableW(tblwidth_Mm, nPageW * 2 / 3);
+					}
+					if (!presentationSelectedContent.Drawings[i].Drawing.IsPdfDrawing) {
+						presentationSelectedContent.Drawings.splice(i, 1);
+						i--;
+					}
+				}
+
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}
 		} else {
@@ -5383,7 +5487,7 @@ PasteProcessor.prototype =
 				//var arr_arrTransforms = [];
 
 				for (var i = 0; i < slide_count; ++i) {
-					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					if (PasteElementsId.g_bIsDocumentCopyPaste || PasteElementsId.g_bIsPDFCopyPaste) {
 						loader.stream.GetUChar();
 						loader.stream.SkipRecord();
 						arr_slides[i] = null;
@@ -5423,7 +5527,7 @@ PasteProcessor.prototype =
 
 				var layouts = [];
 				for (var i = 0; i < selected_layouts; ++i) {
-					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					if (PasteElementsId.g_bIsDocumentCopyPaste || PasteElementsId.g_bIsPDFCopyPaste) {
 						loader.stream.GetUChar();
 						loader.stream.SkipRecord();
 					} else {
@@ -5450,7 +5554,7 @@ PasteProcessor.prototype =
 
 				var array = [];
 				for (var i = 0; i < count; ++i) {
-					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					if (PasteElementsId.g_bIsDocumentCopyPaste || PasteElementsId.g_bIsPDFCopyPaste) {
 						loader.stream.GetUChar();
 						loader.stream.SkipRecord();
 					} else {
@@ -5474,7 +5578,7 @@ PasteProcessor.prototype =
 
 				var notes = [];
 				for (var i = 0; i < selected_notes; ++i) {
-					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					if (PasteElementsId.g_bIsDocumentCopyPaste || PasteElementsId.g_bIsPDFCopyPaste) {
 						loader.stream.GetUChar();
 						loader.stream.SkipRecord();
 					} else {
@@ -5497,7 +5601,7 @@ PasteProcessor.prototype =
 
 				var array = [];
 				for (var i = 0; i < count; ++i) {
-					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					if (PasteElementsId.g_bIsDocumentCopyPaste || PasteElementsId.g_bIsPDFCopyPaste) {
 						loader.stream.GetUChar();
 						loader.stream.SkipRecord();
 					} else {
