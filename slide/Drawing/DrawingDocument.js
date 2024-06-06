@@ -5661,8 +5661,7 @@ function CThumbnailsManager()
 
 	this.SelectAll = function()
 	{
-		var nSlidesCount = this.GetSlidesCount();
-		for (var i = 0; i < nSlidesCount; i++)
+		for (var i = 0; i < this.m_arrPages.length; i++)
 		{
 			this.m_arrPages[i].IsSelected = true;
 		}

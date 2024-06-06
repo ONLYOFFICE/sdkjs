@@ -73,7 +73,10 @@
 		GetDotsPerMM : function(value) {return 72;},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		m_oNotesApi: {},
-		clear: function () {}
+		clear: function () {},
+		GetSlidesCount: function () {
+			return editor.getCountSlides();
+		}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
