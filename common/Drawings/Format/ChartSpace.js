@@ -1272,9 +1272,13 @@ function(window, undefined) {
 
 		//statement1 checks if string
 		const statement1 = mainAxis ? (!!mainAxis.strRef || !!mainAxis.strLit) : false;
-		const sFormatCode = this.axis.getFormatCode();
+
+		if (statement1) {
+			return 'string';
+		}
 
 		//statement2 checks if date
+		const sFormatCode = this.axis.getFormatCode();
 		const statement2 = this.axis && sFormatCode !== 'General';
 		const oNumFormat = oNumFormatCache.get(sFormatCode);
 
@@ -1320,76 +1324,49 @@ function(window, undefined) {
 		return isRot && rot >= -halfRange && rot <= halfRange ? - (Math.PI * rot) / fullRange : Math.PI / 4.0;
 	}
 
-	function isSkip (oLabelParams, index) {
-		if (!oLabelParams.nLblTickSkip) {
-			return false;
-		}
-		const nLblTickType = oLabelParams.nLblTickType;
-		const nLblTickSkip = oLabelParams.nLblTickSkip;
-		if (!nLblTickType) {
-			return index % nLblTickSkip !== 0;
-		} else {
-			if (nLblTickType === 'month') {
-				[31, 29, ]
-			}
-		}
-	}
-
 	function skipCond (oLabelParams, loopsCount) {
 		if (!oLabelParams) {
 			return;
 		}
 
-		const isLeap = function (year) {
-			if (!AscFormat.isRealNumber(year)) {
+		const isLeap = function (y) {
+			if (!AscFormat.isRealNumber(y)) {
 				return false;
 			}
 
-			// leap year must be devided by 4!
-			if (year % 4 !== 0 ) {
-				return false;
-			}
-			// if year is divisible by 4 and not by 100 then its leap year
-			if (year % 100 !== 0) {
-				return true;
-			}
-			// if year is divisible by 100 and 400 then its leap year
-			if (year % 400 !== 0) {
-				return false;
-			}
-			return true;
-		};
-
-		const convToMonth = function (months) {
-			let year = 1700 + Math.floor(months / 12);
-			let month = months % 12;
-			// check for february which if 1 month, calculation starts from 0
-			// if leap year return 12;
-			if (month === 1 && isLeap(year)) {
-				return 12;
-			}
-			return month;
+			// excel formula for leap year;
+			return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 		};
 
 		const nLblTickSkip = oLabelParams.nLblTickSkip;
 		const nAxisType = oLabelParams.nAxisType;
 		const sDataType = oLabelParams.sDataType;
+		const oStartingDate = oLabelParams.oStartingDate;
+		const startingDay = oLabelParams.oStartingDate ? oStartingDate.getUTCDate() : 0
+		const startingMonth = oLabelParams.oStartingDate ? oStartingDate.getUTCMonth() : 0
+		const startingYear = oLabelParams.oStartingDate ? oStartingDate.getUTCFullYear() : 0
 
-		// const date = new cDate('January 7, 1965');
-		// console.log(date.getExcelNullDate());
-		// console.log(23749 * 86400000)
-		// console.log(date.getDateFromExcel(45292));
-		// // mainAxis.numRef.numCache.pts[0].val
 		if (nAxisType === AscDFH.historyitem_type_DateAx) {
 			const msg = sDataType.split('_');
 			const val = msg.length > 1 ? +msg[1] : null;
 			if (nLblTickSkip % 366 === 0) {
-				const year = 1700 + loopsCount;
+				const year = 1900 + loopsCount + startingYear;
 				return isLeap(year) ? 366 : 365;
 			} else if (nLblTickSkip % 31 === 0) {
-				const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 29]
-				const month = convToMonth(loopsCount);
-				return month >= 0 && month < 13 ? months[month] : 31;
+				const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+				let year = 1700 + Math.floor(loopsCount / 12);
+				let month = (loopsCount + startingMonth) % 12;
+				if (AscFormat.isRealNumber(month)) {
+					// february can have 28/29 days
+					let skipDays = isLeap(year) && month === 1 ? months[month] + 1 : months[month];
+					let negOffset = loopsCount === 0 ? startingDay - months[(startingMonth + 1) % 12] : 0;
+					let posOffset = loopsCount !== 0 ? months[(month + 1) % 12] - months[month] : 0;
+
+					skipDays = skipDays - negOffset + posOffset;
+
+					return skipDays;
+				}
+				return 31;
 			} 
 		}
 
@@ -11533,6 +11510,7 @@ function(window, undefined) {
 		this.range = 60000 * 90;
 		this.nAxisType = nAxisType;
 		this.sDataType = sDataType;
+		this.oStartingDate = null;
 	}
 
 	CLabelsParameters.prototype.getUserDefinedSettings = function (oLabelsBox) {
@@ -11559,6 +11537,14 @@ function(window, undefined) {
 		const fDiagramHeight = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.extY : 0;
 		const fChartHeight = oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.plotArea && oLabelsBox.chartSpace.chart.plotArea.layout ? oLabelsBox.chartSpace.chart.plotArea.layout.h : 0;
 		this.setMaxHeight(fDiagramHeight, fChartHeight, fTitleHeight);
+
+		// retrieve startingDate if exist
+		let msg = this.sDataType.split('_');
+		if (msg.length > 1) {
+			// date.setDate(date.getDateFromExcel(+msg[1]));
+			let date = new AscCommonExcel.cDate();
+			this.oStartingDate = date.getDateFromExcel(+msg[1]);
+		}
 
 		// find label skip
 		this.calculateNLblTickSkip(oLabelsBox, fAxisLength);
