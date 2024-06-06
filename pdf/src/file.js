@@ -579,6 +579,7 @@ void main() {\n\
 			Page2 : 0,
 			Line2 : 0,
 			Glyph2 : 0,
+            quads: [],
 
 			IsSelection : false
 		}
@@ -1033,7 +1034,8 @@ void main() {\n\
             Line1: oNearesPos.Line,
             Line2: oNearesPos.Line,
             Page1: pageIndex,
-            Page2: pageIndex
+            Page2: pageIndex,
+            quads: []
         }
 
         let isOnSpace       = false;
@@ -1103,7 +1105,8 @@ void main() {\n\
             Line1: oNearesPos.Line,
             Line2: oNearesPos.Line,
             Page1: pageIndex,
-            Page2: pageIndex
+            Page2: pageIndex,
+            quads: []
         }
 
         this.Selection = oSelectionInfo;
