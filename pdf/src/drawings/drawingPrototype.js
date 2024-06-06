@@ -141,7 +141,7 @@
         
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
-                oViewer.pagesInfo.pages[nPage].needRedrawTextShapes = true;
+                oViewer.pagesInfo.pages[nPage].needRedrawDrawings = true;
                 oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
             }
         }

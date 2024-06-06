@@ -109,7 +109,7 @@
 		this.annots					= [];
 		this.drawings				= [];
 		this.needRedrawForms		= true;
-		this.needRedrawTextShapes	= true;
+		this.needRedrawDrawings		= true;
 		this.needRedrawAnnots		= true;
 	}
 	
@@ -2723,7 +2723,7 @@
 
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
-			var isStretchPaint = this.Api.WordControl.NoneRepaintPages;
+			let isStretchPaint = this.isStretchPaint();
 			if (this.isClearPages)
 				isStretchPaint = false;
 
@@ -2734,12 +2734,10 @@
 				if (!page)
 					break;
 
-				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+				let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-				let rotateAngle = this.getPageRotate(i);
 
 				if (!isStretchPaint)
 				{
@@ -2766,7 +2764,8 @@
 				if (!this.file.pages[i].isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
-						page.Image = this.file.getPage(i, w, h, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);						if (this.bCachedMarkupAnnnots) {
+						page.Image = this.file.getPage(i, w, h, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);						
+						if (this.bCachedMarkupAnnnots) {
 							this._drawMarkupAnnotsOnCtx(i, page.Image.getContext("2d"));
 							oImageToDraw = page.Image;
 						}
@@ -2785,8 +2784,14 @@
 					let markupContext = markupCanvas.getContext('2d');
 					
 					page.TmpImage = markupCanvas;
-					markupCanvas.width = w;
-					markupCanvas.height = h;
+					if (page.Image) {
+						markupCanvas.width = page.Image.width;
+						markupCanvas.height = page.Image.height;
+					}
+					else {
+						markupCanvas.width = w;
+						markupCanvas.height = h;
+					}
 
 					if (page.Image) {
 						markupContext.drawImage(page.Image, 0, 0);
@@ -2845,6 +2850,9 @@
 			// Обязательно делаем в конце, т.к. во время отрисовки происходит пересчет
 			this._checkTargetUpdate();
 		};
+		this.isStretchPaint = function() {
+			return this.Api.WordControl.NoneRepaintPages;
+		};
 		this._checkTargetUpdate = function() {
 			let pdfDocument = this.getPDFDoc();
 			let docApi = pdfDocument.GetApi();
@@ -2860,11 +2868,15 @@
 			drawingDocument.CheckTrackTable();
 		};
 		this.blitPageToCtx = function(ctx, imagePage, pageIndex) {
+			if (!imagePage) {
+				return;
+			}
+
 			let angle = this.getPageRotate(pageIndex);
 			let angleRad = angle * Math.PI / 180;
 
-			let pageHeight = imagePage.height;
-			let pageWidth = imagePage.width;
+			let imgHeight = imagePage.height;
+			let imgWidth = imagePage.width;
 
 			let page = this.drawingPages[pageIndex];
 
@@ -2877,25 +2889,28 @@
 			let cx = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
 			let yInd = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 			
+			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
+
 			ctx.save();
 			switch (angle) {
 				case 90:
 					ctx.translate(cx, yInd);
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, 0, -pageHeight >> 1, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, 0, 0, imgWidth, imgHeight, 0, -h >> 1, w, h);
 					break;
 				case 180:
-					ctx.translate(cx, yInd + (pageHeight >> 1));
+					ctx.translate(cx, yInd + (h >> 1));
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, -(pageWidth >> 1), -(pageHeight >> 1), pageWidth, pageHeight);
+					ctx.drawImage(imagePage, 0, 0, imgWidth, imgHeight, -(w >> 1), -(h >> 1), w, h);
 					break;
 				case 270:
-					ctx.translate(cx, yInd + pageWidth >> 0);
+					ctx.translate(cx, yInd + w >> 0);
 					ctx.rotate(angleRad);
-					ctx.drawImage(imagePage, 0, -pageHeight >> 1, pageWidth, pageHeight);
+					ctx.drawImage(imagePage, 0, 0, imgWidth, imgHeight, 0, -h >> 1, w, h);
 					break;
 				default: // 0 градусов, по умолчанию
-					ctx.drawImage(imagePage, cx - (pageWidth >> 1), yInd, pageWidth, pageHeight);
+					ctx.drawImage(imagePage,  0, 0, imgWidth, imgHeight, cx - (w >> 1), yInd, w, h);
 					break;
 			}
 
@@ -3144,8 +3159,8 @@
 			let curPosition = this.getViewportPosition();
 
 			let page = this.drawingPages[pageIndex];
-			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
 
 			return {
 				x : ((curPosition.centerX * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1),
@@ -3598,32 +3613,42 @@
 			if (this.pagesInfo.pages[i].graphics == null)
 				this.pagesInfo.pages[i].graphics = {};
 			
-			if (!aForms)
+			if (aForms.length == 0)
 				continue;
 
-			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) >> 0;
-			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
+			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
 
-			let cachedImg = page.ImageForms;
+			let isStretchPaint	= this.isStretchPaint();
+			let isZoom			= page.ImageForms && (page.ImageForms.width != w || page.ImageForms.height != h);
+			let isNeedRedraw	= this.pagesInfo.pages[i].needRedrawForms;
 
-			if (!cachedImg || this.pagesInfo.pages[i].needRedrawForms || cachedImg.width != w || cachedImg.height != h)
-			{
-				// рисуем на отдельном канвасе, кешируем
-				let tmpCanvas		= page.ImageForms ? page.ImageForms : document.createElement('canvas');
-				let tmpCanvasCtx	= tmpCanvas.getContext('2d');
-				
-				tmpCanvas.width		= w;
-				tmpCanvas.height	= h;
+			let bDrawEmpty = false;
+			if ((null == page.ImageForms || isNeedRedraw || isZoom)) {
+				if (isStretchPaint) {
+					if (isNeedRedraw) {
+						bDrawEmpty = true;
+					}
+				}
+				else {
+					// рисуем на отдельном канвасе, кешируем
+					let tmpCanvas		= page.ImageForms ? page.ImageForms : document.createElement('canvas');
+					let tmpCanvasCtx	= tmpCanvas.getContext('2d');
+					
+					tmpCanvas.width		= w;
+					tmpCanvas.height	= h;
 
-				if (page.ImageForms)
-					tmpCanvasCtx.clearRect(0, 0, w, h);
+					if (page.ImageForms)
+						tmpCanvasCtx.clearRect(0, 0, w, h);
 
-				this._drawFieldsOnCtx(i, tmpCanvasCtx);
-				page.ImageForms = tmpCanvas;
-				this.pagesInfo.pages[i].needRedrawForms = false;
+					this._drawFieldsOnCtx(i, tmpCanvasCtx);
+					
+					page.ImageForms = tmpCanvas;
+					this.pagesInfo.pages[i].needRedrawForms = false;
+				}
 			}
 			
-			this.blitPageToCtx(ctx, page.ImageForms, i);
+			this.blitPageToCtx(ctx, bDrawEmpty ? null : page.ImageForms, i);
 		}
 		
 		let oDoc = this.getPDFDoc();
@@ -3664,7 +3689,7 @@
 				});
 			}
 			
-			if (this.pagesInfo.pages[i].needRedrawTextShapes)
+			if (this.pagesInfo.pages[i].needRedrawDrawings)
 			{
 				aDrawings.forEach(function(drawing) {
 					drawing.GetAllFonts(fontMap);
@@ -3702,28 +3727,42 @@
 			if (this.pagesInfo.pages[i].graphics == null)
 				this.pagesInfo.pages[i].graphics = {};
 			
-			if (!aAnnots)
+			if (aAnnots.length == 0)
 				continue;
 
-			// рисуем на отдельном канвасе, кешируем
-			let tmpCanvas = page.ImageAnnots ? page.ImageAnnots : document.createElement('canvas');
-			
-			let cachedImg = page.ImageAnnots;
-			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) >> 0;
-            let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
-			
-			if (!cachedImg || this.pagesInfo.pages[i].needRedrawAnnots || cachedImg.width != w || cachedImg.height != h)
-			{
-				tmpCanvas.width = w;
-				tmpCanvas.height = h;
-				let tmpCanvasCtx = tmpCanvas.getContext('2d');
-				
-				this._drawAnnotsOnCtx(i, tmpCanvasCtx)
-				page.ImageAnnots = tmpCanvas;
-				this.pagesInfo.pages[i].needRedrawAnnots = false;
+			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
+
+			let isStretchPaint	= this.isStretchPaint();
+			let isZoom			= page.ImageAnnots && (page.ImageAnnots.width != w || page.ImageAnnots.height != h);
+			let isNeedRedraw	= this.pagesInfo.pages[i].needRedrawAnnots;
+
+			let bDrawEmpty = false;
+			if ((null == page.ImageAnnots || isNeedRedraw || isZoom)) {
+				if (isStretchPaint) {
+					if (isNeedRedraw) {
+						bDrawEmpty = true;
+					}
+				}
+				else {
+					// рисуем на отдельном канвасе, кешируем
+					let tmpCanvas		= page.ImageAnnots ? page.ImageAnnots : document.createElement('canvas');
+					let tmpCanvasCtx	= tmpCanvas.getContext('2d');
+					
+					tmpCanvas.width		= w;
+					tmpCanvas.height	= h;
+
+					if (page.ImageAnnots)
+						tmpCanvasCtx.clearRect(0, 0, w, h);
+
+					this._drawAnnotsOnCtx(i, tmpCanvasCtx);
+					
+					page.ImageAnnots = tmpCanvas;
+					this.pagesInfo.pages[i].needRedrawAnnots = false;
+				}
 			}
 			
-			this.blitPageToCtx(ctx, page.ImageAnnots, i);
+			this.blitPageToCtx(ctx, bDrawEmpty ? null : page.ImageAnnots, i);
 		}
 		
 		if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText()) {
@@ -3780,31 +3819,42 @@
 			if (this.pagesInfo.pages[i].graphics == null)
 				this.pagesInfo.pages[i].graphics = {};
 			
-			if (!aDrawings)
+			if (aDrawings.length == 0)
 				continue;
 
-			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) >> 0;
-			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) >> 0;
+			let w = AscCommon.AscBrowser.convertToRetinaValue(page.W, true);
+			let h = AscCommon.AscBrowser.convertToRetinaValue(page.H, true);
 
-			let cachedImg = page.ImageTextShapes;
-			if (!cachedImg || this.pagesInfo.pages[i].needRedrawTextShapes || cachedImg.width != w || cachedImg.height != h)
-			{
-				// рисуем на отдельном канвасе, кешируем
-				let tmpCanvas		= page.ImageTextShapes ? page.ImageTextShapes : document.createElement('canvas');
-				let tmpCanvasCtx	= tmpCanvas.getContext('2d');
-				
-				tmpCanvas.width		= w;
-				tmpCanvas.height	= h;
+			let isStretchPaint	= this.isStretchPaint();
+			let isZoom			= page.ImageDrawings && (page.ImageDrawings.width != w || page.ImageDrawings.height != h);
+			let isNeedRedraw	= this.pagesInfo.pages[i].needRedrawDrawings;
 
-				if (page.ImageTextShapes)
-					tmpCanvasCtx.clearRect(0, 0, w, h);
+			let bDrawEmpty = false;
+			if ((null == page.ImageDrawings || isNeedRedraw || isZoom)) {
+				if (isStretchPaint) {
+					if (isNeedRedraw) {
+						bDrawEmpty = true;
+					}
+				}
+				else {
+					// рисуем на отдельном канвасе, кешируем
+					let tmpCanvas		= page.ImageDrawings ? page.ImageDrawings : document.createElement('canvas');
+					let tmpCanvasCtx	= tmpCanvas.getContext('2d');
+					
+					tmpCanvas.width		= w;
+					tmpCanvas.height	= h;
 
-				this._drawDrawingsOnCtx(i, tmpCanvasCtx);
-				page.ImageTextShapes = tmpCanvas;
-				this.pagesInfo.pages[i].needRedrawTextShapes = false;
+					if (page.ImageDrawings)
+						tmpCanvasCtx.clearRect(0, 0, w, h);
+
+					this._drawDrawingsOnCtx(i, tmpCanvasCtx);
+					
+					page.ImageDrawings = tmpCanvas;
+					this.pagesInfo.pages[i].needRedrawDrawings = false;
+				}
 			}
 			
-			this.blitPageToCtx(ctx, page.ImageTextShapes, i);
+			this.blitPageToCtx(ctx, bDrawEmpty ? null : page.ImageDrawings, i);
 		}
 		
 		if (this.doc.activeDrawing) {
