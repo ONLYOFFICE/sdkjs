@@ -629,7 +629,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         }
         else{
             if(this.placeholderType === null) {
-                shape = Asc.editor.isPdfEditor() === false ? new AscFormat.CShape() : new AscPDF.CPdfShape();
+                shape = new AscFormat.CShape();
                 if(drawingObjects)
                 {
                     shape.setDrawingObjects(drawingObjects);
