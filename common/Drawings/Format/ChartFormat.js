@@ -7662,6 +7662,24 @@
     CAxisBase.prototype.onUpdate = function() {
         this.onChartInternalUpdate();
     };
+    CAxisBase.prototype.getFormatCode = function() {
+        let oNumFmt = this.numFmt;
+        let sFormatCode = null;
+
+        if(oNumFmt) {
+            if(oNumFmt.sourceLinked) {
+                return this.getSourceFormatCode ? this.getSourceFormatCode() : "General";
+            }
+            sFormatCode = oNumFmt.formatCode;
+            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
+                return sFormatCode;
+            }
+            return "General";
+        }
+        else {
+            return this.getSourceFormatCode ? this.getSourceFormatCode() : "General";
+        }
+    };
     CAxisBase.prototype.Refresh_RecalcData = function() {
         this.onUpdate();
     };
@@ -8963,24 +8981,6 @@
             if(!this.numFmt) {
                 this.setNumFmt(oNumFmt);
             }
-        }
-    };
-    CValAx.prototype.getFormatCode = function() {
-        let oNumFmt = this.numFmt;
-        let sFormatCode = null;
-
-        if(oNumFmt) {
-            if(oNumFmt.sourceLinked) {
-                return this.getSourceFormatCode();
-            }
-            sFormatCode = oNumFmt.formatCode;
-            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
-                return sFormatCode;
-            }
-            return "General";
-        }
-        else {
-            return this.getSourceFormatCode();
         }
     };
     CValAx.prototype.getSourceFormatCode = function() {
