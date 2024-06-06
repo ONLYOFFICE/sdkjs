@@ -2323,6 +2323,39 @@ $(function() {
 		// 	// asc_Paste -> false
 		// 	// asc_PasteData -> true*
 		// });
+		QUnit.test("Test: \"Recursive formulas\"", function (assert) {
+			// Case #1: Precedent trace for formula - =A100+1. A dot or line shouldn't be traced
+			ws.getRange2("A100").setValue("=A100+1");
+			let A100Index = AscCommonExcel.getCellIndex(ws.getRange2("A100").bbox.r1, ws.getRange2("A100").bbox.c1);
+			ws.selectionRange.ranges = [ws.getRange2("A100").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A100").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A100Index, A100Index), undefined, "Precedent trace. Formula A100+1. A100. Dot shouldn't be show");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			// Case #2: Dependent trace for formula - =A100+1. A dot or line shouldn't be traced
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A100Index, A100Index), undefined, "Dependent trace. Formula A100+1. A100. Dot shouldn't be show");
+			// Case #3: Precedent trace for formula - A100: A100+B100, B100: B100+C100. A100<-B100.  Arrow without dot in A100 cell.
+			ws.getRange2("A100").setValue("=A100+B100");
+			ws.getRange2("B100").setValue("=B100+C100");
+			A100Index = AscCommonExcel.getCellIndex(ws.getRange2("A100").bbox.r1, ws.getRange2("A100").bbox.c1);
+			let B100Index = AscCommonExcel.getCellIndex(ws.getRange2("B100").bbox.r1, ws.getRange2("B100").bbox.c1);
+			ws.selectionRange.ranges = [ws.getRange2("A100").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A100").getBBox0().r1, ws.getRange2("C1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A100Index, B100Index), 1, "Precedent trace. Formula: A100: A100+B100, B100: B100+C100. A100<-B100. Arrow to A100 without dot in A100 cell.");
+			assert.strictEqual(traceManager._getPrecedents(A100Index, A100Index), undefined, "Precedent trace. Formula: A100: A100+B100, B100: B100+C100. A100. Dot shouldn't be show");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			// Case #4: Dependent trace for formula - A100: A100+B100, B100: B100+C100. A100->B100.  Arrow without dot in B100 cell.
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A100Index, A100Index), undefined, "Dependent trace. Formula: A100: A100+B100, B100: B100+C100. A100. Dot shouldn't be show");
+		});
 	}
 
 	QUnit.module("FormulaTrace");

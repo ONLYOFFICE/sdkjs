@@ -513,6 +513,7 @@ function (window, undefined) {
 			if (!this.dependents[cellIndex]) {
 				// if dependents by cellIndex didn't exist, create it
 				this.dependents[cellIndex] = {};
+				let parentCellIndex = null;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
@@ -564,7 +565,7 @@ function (window, undefined) {
 							}
 						}
 
-						let parentCellIndex = getParentIndex(parent);
+						parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
 							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
@@ -573,7 +574,7 @@ function (window, undefined) {
 						this._setPrecedents(parentCellIndex, cellIndex, true);
 					}
 				}
-				if (Object.keys(this.dependents[cellIndex]).length === 0) {
+				if (Object.keys(this.dependents[cellIndex]).length === 0 && cellIndex !== parentCellIndex) {
 					delete this.dependents[cellIndex];
 					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
@@ -584,6 +585,10 @@ function (window, undefined) {
 				// if dependents by cellIndex aldready exist, check current tree
 				let currentIndex = Object.keys(this.dependents[cellIndex])[0];
 				let isUpdated = false;
+				let bCellHasNotTrace = false;
+				if (Object.keys(this.dependents[cellIndex]).length === 0) {
+					bCellHasNotTrace = true;
+				}
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
@@ -626,6 +631,9 @@ function (window, undefined) {
 						}
 					}
 				}
+				if (Object.keys(this.dependents[cellIndex]).length === 0 && bCellHasNotTrace) {
+					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
+				}
 			}
 		} else if (!isSecondCall) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
@@ -640,6 +648,9 @@ function (window, undefined) {
 		}
 		if (!this.dependents[from]) {
 			this.dependents[from] = {};
+		}
+		if (from === to) {
+			return;
 		}
 		this.dependents[from][to] = 1;
 	};
@@ -907,7 +918,11 @@ function (window, undefined) {
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 		let formulaInfoObject = this.checkUnrecordedAndFormNewStack(currentCellIndex, formulaParsed), isHaveUnrecorded,
 			newOutStack;
+		let bCellHasNotTrace = false;
 
+		if (this.precedents[currentCellIndex] && Object.keys(this.precedents[currentCellIndex]).length === 0) {
+			bCellHasNotTrace = true;
+		}
 		if (formulaInfoObject) {
 			isHaveUnrecorded = formulaInfoObject.isHaveUnrecorded;
 			newOutStack = formulaInfoObject.newOutStack;
@@ -1074,6 +1089,9 @@ function (window, undefined) {
 			}
 
 			this.setPrecedentsLoop(false);
+		}
+		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype.checkUnrecordedAndFormNewStack = function (cellIndex, formulaParsed) {
@@ -1251,6 +1269,9 @@ function (window, undefined) {
 		}
 		if (!this.precedents[from]) {
 			this.precedents[from] = {};
+		}
+		if (from === to) {
+			return;
 		}
 		// TODO calculated: 1, not_calculated: 2
 		// TODO isAreaHeader: "A3:B4"
