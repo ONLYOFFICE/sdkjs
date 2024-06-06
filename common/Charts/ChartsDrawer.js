@@ -1758,8 +1758,15 @@ CChartsDrawer.prototype =
 					pointVal = oErrVal.val;
 				}
 
-				var plusErrVal = oErrVal.plusErrVal;
-				var minusErrVal = oErrVal.minusErrVal
+				const remainder = oErrVal.plusErrVal % 1;
+				var plusErrVal = remainder <= 0.5 ? Math.floor(oErrVal.plusErrVal) : Math.ceil(oErrVal.plusErrVal);
+				var minusErrVal = Math.floor(oErrVal.minusErrVal);
+				if (!AscFormat.isRealNumber(plusErrVal)) {
+					plusErrVal = 0;
+				}
+				if (!AscFormat.isRealNumber(minusErrVal)) {
+					plusErrVal = 0;
+				}
 				switch (errBar.errBarType) {
 					case AscFormat.st_errbartypeBOTH: {
 						if (maxErr === null || maxErr < pointVal + plusErrVal) {
