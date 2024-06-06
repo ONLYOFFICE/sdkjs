@@ -1895,8 +1895,8 @@
 		}
 
 		oDoc.anchorPositionToAdd = {
-			x: pageObject.x,
-			y: pageObject.y
+			x: Math.max(pageObject.x, 10),
+			y: Math.max(pageObject.y, 10)
 		};
 
 		if (oDoc.mouseDownAnnot) {
@@ -1905,7 +1905,9 @@
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
-		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
+		let oPos = AscPDF.GetGlobalCoordsByPageCoords(oDoc.anchorPositionToAdd.x, oDoc.anchorPositionToAdd.y, nPage);
+
+		return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id)
 	{
