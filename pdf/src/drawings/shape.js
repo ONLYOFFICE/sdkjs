@@ -48,11 +48,12 @@
     CPdfShape.prototype.IsTextShape = function() {
         return true;
     };
-    CPdfShape.prototype.ShouldDrawImaginaryBorder = function() {
+    CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
         let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
-        bDraw &&= this.IsFromScan();
-        bDraw &&= !Asc.editor.isRestrictionView();
-
+        bDraw = bDraw && this.IsFromScan();
+        bDraw = bDraw && !Asc.editor.isRestrictionView();
+        bDraw = bDraw && !graphicsWord.isThumbnails;
+    
         return bDraw;
     };
     CPdfShape.prototype.CheckTextOnOpen = function() {
@@ -78,13 +79,17 @@
     };
     CPdfShape.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
+        let oViewer             = oDoc.Viewer;
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        // координаты клика на странице в MM
+        var pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
             this.SetInTextBox(false);

@@ -3326,8 +3326,11 @@
 							this.x = xfrm.offX;
 							this.y = xfrm.offY;
 						}
-						this.extX = xfrm.extX;
-						this.extY = xfrm.extY;
+						let isTable = (this.isTable && this.isTable());
+						if(!isTable) {
+							this.extX = xfrm.extX;
+							this.extY = xfrm.extY;
+						}
 						this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
 						this.flipH = xfrm.flipH === true;
 						this.flipV = xfrm.flipV === true;

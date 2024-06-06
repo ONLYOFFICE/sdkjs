@@ -1847,7 +1847,13 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.Content[0] = new AscWord.Paragraph(this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
-
+	
+	this.Background = {
+		Color   : null,
+		Unifill : null,
+		shape   : null
+	};
+	
     this.CurPos  =
     {
         X          : 0,
@@ -5598,10 +5604,9 @@ CDocument.prototype.Draw                                     = function(nPageInd
     // Определим секцию
     var Page_StartPos = this.Pages[nPageIndex].Pos;
     var SectPr        = this.SectionsInfo.Get_SectPr(Page_StartPos).SectPr;
-
-	if (docpostype_HdrFtr !== this.CurPos.Type && !this.IsViewMode())
-		pGraphics.Start_GlobalAlpha();
-
+	
+	this.drawBackground(pGraphics, SectPr);
+	
 	// Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
 	if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
 		this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
@@ -5613,7 +5618,7 @@ CDocument.prototype.Draw                                     = function(nPageInd
 		pGraphics.put_GlobalAlpha(true, 0.4);
 	else if (!this.IsViewMode())
 		pGraphics.End_GlobalAlpha();
-
+	
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
     this.Footnotes.Draw(nPageIndex, pGraphics);
@@ -5883,6 +5888,53 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 	//       2. Различные типы обычных границ. Причем, если пересакающиеся границы имеют одинаковый тип и размер,
 	//          тогда надо специально отрисовывать места соединения данных линий.
 
+};
+CDocument.prototype.setBackgroundColor = function(color, unifill)
+{
+	let oldValue = this.Background;
+	let newValue = {
+		Color   : color ? color : null,
+		Unifill : unifill ? unifill : null,
+		shape   : null
+	};
+	
+	AscCommon.History.Add(new CChangesDocumentPageColor(this, oldValue, newValue));
+	this.Background = newValue;
+};
+CDocument.prototype.getBackgroundBrush = function()
+{
+	if (!this.Background)
+		return null;
+	
+	let brush = null;
+	if (false)//this.Background.shape)
+		brush = this.Background.shape.brush;
+	else if (this.Background.Unifill)
+		brush = this.Background.Unifill;
+	else if (this.Background.Color)
+		brush = AscFormat.CreateSolidFillRGB(this.Background.Color.r, this.Background.Color.g, this.Background.Color.b);
+	
+	return brush;
+};
+CDocument.prototype.drawBackground = function(graphics, sectPr)
+{
+	let brush = this.getBackgroundBrush();
+	if (!brush || !brush.isVisible())
+		return;
+	
+	let h = sectPr.GetPageHeight();
+	let w = sectPr.GetPageWidth();
+	
+	let shapeDrawer = new AscCommon.CShapeDrawer();
+	brush.check(this.GetTheme(), this.GetColorMap());
+	shapeDrawer.fromShape2(new AscFormat.ObjectToDraw(brush, null, w, h, null, null), graphics, null);
+	
+	if (brush.isSolidFill())
+	{
+		let RGBA = brush.getRGBAColor();
+		graphics.setEndGlobalAlphaColor(RGBA.R, RGBA.G, RGBA.B);
+	}
+	shapeDrawer.draw(null);
 };
 /**
  *
@@ -6429,9 +6481,10 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 		return;
 	
 	// We don't check selection lock, because this method should be called when other action was started
-	
+	let state = this.SaveDocumentState();
 	this.StartAction(AscDFH.historydescription_Document_ComplexField_MergeFormat);
 	complexField.ChangeInstruction(complexField.GetInstructionLine() + " \\* MERGEFORMAT ");
+	this.LoadDocumentState(state);
 	this.Recalculate();
 	this.FinalizeAction();
 };
@@ -6995,6 +7048,7 @@ CDocument.prototype.SetParagraphFramePr = function(FramePr, bDelete)
 CDocument.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 {
 	this.Controller.IncreaseDecreaseFontSize(bIncrease);
+	this.setMergeFormatComplexFieldOnApplyTextPr();
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
@@ -23161,6 +23215,11 @@ CDocument.prototype.GetAllFields = function(isUseSelection)
 
 	if (isUseSelection)
 	{
+		let state = this.SaveDocumentState();
+		this.RemoveSelection();
+		arrFields = this.GetCurrentComplexFields();
+		this.LoadDocumentState(state);
+		
 		this.Controller.GetAllFields(isUseSelection, arrFields);
 	}
 	else

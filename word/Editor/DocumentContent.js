@@ -2092,19 +2092,6 @@ CDocumentContent.prototype.GetCurrentTablesStack = function(arrTables)
 		return this.Content[this.CurPos.ContentPos].GetCurrentTablesStack(arrTables);
 	}
 };
-CDocumentContent.prototype.GetCurrentRun = function()
-{
-	let paragraph = this.GetCurrentParagraph(false, false);
-	if (!paragraph || !paragraph.IsParagraph())
-		return null;
-	
-	let paraPos = paragraph.Get_ParaContentPos(false);
-	let run = paragraph.GetElementByPos(paraPos);
-	if (!run || !(run instanceof AscWord.CRun))
-		return null;
-	
-	return run;
-};
 CDocumentContent.prototype.IsContentOnFirstPage = function()
 {
 	if (this.Content.length <= 0)

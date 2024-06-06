@@ -109,7 +109,12 @@
 
 	CGraphicsBase.prototype.isPdf = function()
 	{
-		return (this.type === AscCommon.RendererType.PDF || this.type === AscCommon.RendererType.NativeDrawer);
+		return (this.type === AscCommon.RendererType.PDF);
+	};
+
+	CGraphicsBase.prototype.isNativeDrawer = function()
+	{
+		return (this.type === AscCommon.RendererType.NativeDrawer);
 	};
 
 	CGraphicsBase.prototype.isTrack = function()

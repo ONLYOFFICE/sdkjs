@@ -3995,7 +3995,7 @@ var editor;
 	  });
 
 	  if (aBinaryWorkbook) {
-		  window["AscDesktopEditor"]["OpenWorkbook"](aBinaryWorkbook);
+		  window["AscDesktopEditor"]["OpenWorkbook"](AscCommon.Base64.encode(aBinaryWorkbook));
 	  }
   };
 
@@ -5845,9 +5845,29 @@ var editor;
       this.spellcheckState.isIgnoreUppercase = isIgnore;
     };
 
-  spreadsheet_api.prototype.asc_cancelSpellCheck = function() {
-    this.cleanSpelling();
-  };
+	spreadsheet_api.prototype.asc_cancelSpellCheck = function () {
+		this.cleanSpelling();
+	};
+
+	spreadsheet_api.prototype.asc_getKeyboardLanguage = function () {
+		if (undefined !== window["asc_current_keyboard_layout"]) {
+			return window["asc_current_keyboard_layout"];
+		}
+		return -1;
+	};
+	spreadsheet_api.prototype.asc_getInputLanguage = function () {
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang) {
+			return keyboardLang;
+		}
+
+		let ws = this.wb && this.wb.getWorksheet();
+		if (ws && ws.objectRender && ws.objectRender.controller && ws.objectRender.selectedGraphicObjectsExists()) {
+			return ws.objectRender.controller.getInputLanguage();
+		}
+
+		return this.defaultLanguage;
+	};
 
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
@@ -6013,7 +6033,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
 
@@ -9245,6 +9265,14 @@ var editor;
 		return wb.addCustomFunction(func, options);
 	};
 
+	spreadsheet_api.prototype.removeCustomFunction = function(sName) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
+	};
+
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
 		let wb = this.wb;
 		if (!wb) {
@@ -9671,6 +9699,8 @@ var editor;
   prot["asc_cancelSpellCheck"] = prot.asc_cancelSpellCheck;
   prot["asc_ignoreNumbers"] = prot.asc_ignoreNumbers;
   prot["asc_ignoreUppercase"] = prot.asc_ignoreUppercase;
+  prot["asc_getKeyboardLanguage"] = prot.asc_getKeyboardLanguage;
+  prot["asc_getInputLanguage"] = prot.asc_getInputLanguage;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
@@ -9943,6 +9973,7 @@ var editor;
   prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
 
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
+  prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
 
 
 

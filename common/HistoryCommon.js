@@ -1779,6 +1779,7 @@
 	window['AscDFH'].historyitem_Document_Settings_ConsecutiveHyphenLimit = window['AscDFH'].historyitem_type_Document | 13;
 	window['AscDFH'].historyitem_Document_Settings_DoNotHyphenateCaps     = window['AscDFH'].historyitem_type_Document | 14;
 	window['AscDFH'].historyitem_Document_Settings_HyphenationZone        = window['AscDFH'].historyitem_type_Document | 15;
+	window['AscDFH'].historyitem_Document_PageColor                       = window['AscDFH'].historyitem_type_Document | 16;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
@@ -2030,32 +2031,10 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CStyles
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Styles_Add                              = window['AscDFH'].historyitem_type_Styles | 1;
-	window['AscDFH'].historyitem_Styles_Remove                           = window['AscDFH'].historyitem_type_Styles | 2;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTextPr              = window['AscDFH'].historyitem_type_Styles | 3;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParaPr              = window['AscDFH'].historyitem_type_Styles | 4;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParagraphId         = window['AscDFH'].historyitem_type_Styles | 5;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultCharacterId         = window['AscDFH'].historyitem_type_Styles | 6;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultNumberingId         = window['AscDFH'].historyitem_type_Styles | 7;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTableId             = window['AscDFH'].historyitem_type_Styles | 8;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTableGridId         = window['AscDFH'].historyitem_type_Styles | 9;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHeadingsId          = window['AscDFH'].historyitem_type_Styles | 10;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultParaListId          = window['AscDFH'].historyitem_type_Styles | 11;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHeaderId            = window['AscDFH'].historyitem_type_Styles | 12;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFooterId            = window['AscDFH'].historyitem_type_Styles | 13;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultHyperlinkId         = window['AscDFH'].historyitem_type_Styles | 14;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteTextId      = window['AscDFH'].historyitem_type_Styles | 15;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteTextCharId  = window['AscDFH'].historyitem_type_Styles | 16;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultFootnoteReferenceId = window['AscDFH'].historyitem_type_Styles | 17;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultNoSpacingId         = window['AscDFH'].historyitem_type_Styles | 18;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultTitleId             = window['AscDFH'].historyitem_type_Styles | 19;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultSubtitleId          = window['AscDFH'].historyitem_type_Styles | 20;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultQuoteId             = window['AscDFH'].historyitem_type_Styles | 21;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultIntenseQuoteId      = window['AscDFH'].historyitem_type_Styles | 22;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultCaption             = window['AscDFH'].historyitem_type_Styles | 23;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteTextId       = window['AscDFH'].historyitem_type_Styles | 24;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteTextCharId   = window['AscDFH'].historyitem_type_Styles | 25;
-	window['AscDFH'].historyitem_Styles_ChangeDefaultEndnoteReferenceId  = window['AscDFH'].historyitem_type_Styles | 26;
+	window['AscDFH'].historyitem_Styles_Add                 = window['AscDFH'].historyitem_type_Styles | 1;
+	window['AscDFH'].historyitem_Styles_Remove              = window['AscDFH'].historyitem_type_Styles | 2;
+	window['AscDFH'].historyitem_Styles_ChangeDefaultTextPr = window['AscDFH'].historyitem_type_Styles | 3;
+	window['AscDFH'].historyitem_Styles_ChangeDefaultParaPr = window['AscDFH'].historyitem_type_Styles | 4;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaMath
 	//------------------------------------------------------------------------------------------------------------------
@@ -4081,7 +4060,9 @@
 	window['AscDFH'].historyitem_PDF_Document_RemoveItem				= window['AscDFH'].historyitem_type_PDF_Document | 2;
 	window['AscDFH'].historyitem_PDF_Document_AddPage					= window['AscDFH'].historyitem_type_PDF_Document | 3;
 	window['AscDFH'].historyitem_PDF_Document_RemovePage				= window['AscDFH'].historyitem_type_PDF_Document | 4;
-	window['AscDFH'].historyitem_PDF_Document_ChangePosInTree			= window['AscDFH'].historyitem_type_PDF_Document | 5;
+	window['AscDFH'].historyitem_PDF_Document_RotatePage				= window['AscDFH'].historyitem_type_PDF_Document | 5;
+	window['AscDFH'].historyitem_PDF_Document_RecognizePage				= window['AscDFH'].historyitem_type_PDF_Document | 6;
+	window['AscDFH'].historyitem_PDF_Document_ChangePosInTree			= window['AscDFH'].historyitem_type_PDF_Document | 7;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4528,6 +4509,7 @@
 	window['AscDFH'].historydescription_BuilderScript                               = 0x01af;
 	window['AscDFH'].historydescription_Document_AddRemoveBeforeAfterParagraph      = 0x01b0;
 	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
+	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

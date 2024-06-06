@@ -2801,6 +2801,18 @@ function (window, undefined) {
 				}
 				t._setSkipKeyPress(false);
 				return false;
+			case 219:
+			case 221:
+				if (ctrlKey) {
+					event.stopPropagation();
+					event.preventDefault();
+					if (hieroglyph) {
+						t._syncEditors();
+					}
+					t.setTextStyle("changeFontSize", event.which === 221);
+					return true;
+				}
+			break;
 		}
 
 		t._setSkipKeyPress(false);

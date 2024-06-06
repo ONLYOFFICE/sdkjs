@@ -751,7 +751,14 @@
 				plugins["pluginsData"].push(this.plugins[i].serialize());
 			}
 
-			this.api.sendEvent("asc_onPluginsInit", plugins);
+			this.sendPluginsInit(plugins);
+		},
+
+		sendPluginsInit : function(plugins)
+		{
+			this.api.sendEvent("asc_onPluginsInit", plugins, this.isUICheckOnInitMessage);
+			if (true === this.isUICheckOnInitMessage)
+				delete this.isUICheckOnInitMessage;
 		},
 
 		startLongAction : function()

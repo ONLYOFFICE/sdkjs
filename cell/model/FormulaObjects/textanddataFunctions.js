@@ -295,6 +295,7 @@ function (window, undefined) {
 	cASC.prototype.name = 'ASC';
 	cASC.prototype.argumentsMin = 1;
 	cASC.prototype.argumentsMax = 1;
+	cASC.prototype.argumentsType = [argType.text];
 	cASC.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 

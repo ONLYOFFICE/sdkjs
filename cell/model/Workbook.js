@@ -14311,6 +14311,9 @@
 			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
 	};
+	Cell.prototype.getQuotePrefix = function () {
+		return this.xfs && this.xfs.getQuotePrefix();
+	};
 	Cell.prototype._checkDirty = function(){
 		var t = this;
 		if (this.getIsDirty()) {
@@ -16954,6 +16957,14 @@
 				valueWithoutFormat = "";
 		});
 		return valueWithoutFormat;
+	};
+	Range.prototype.getQuotePrefix=function(){
+		let res = false;
+		this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, function(cell) {
+			if(null != cell && cell.getQuotePrefix())
+				res = true;
+		});
+		return res;
 	};
 	Range.prototype.getValue=function(){
 		return this.getValueWithoutFormat();

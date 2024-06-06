@@ -70,7 +70,7 @@
 	CRunPageNum.prototype.Measure = function (Context, TextPr)
 	{
 		this.textPr = TextPr;
-		this.SetValue(1, Asc.c_oAscNumberingFormat.Decimal);
+		this._measure();
 	};
 	CRunPageNum.prototype.SetNumFormat = function(format)
 	{
@@ -81,23 +81,10 @@
 		if (-1 !== this.numFormat)
 			numFormat = this.numFormat;
 		
-		this.value   = pageNum;
+		this.pageNum = pageNum;
 		this.numText = AscCommon.IntToNumberFormat(pageNum, numFormat);
-		AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
 		
-		this.graphemes = AscWord.stringShaper.GetGraphemes();
-		this.widths    = AscWord.stringShaper.GetWidths();
-		
-		let totalWidth = 0;
-		for (let index = 0; index < this.widths.length; ++index)
-		{
-			totalWidth += this.widths[index];
-		}
-		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-		totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
-		
-		this.Width        = totalWidth;
-		this.WidthVisible = totalWidth;
+		this._measure();
 	};
 	CRunPageNum.prototype.IsNeedSaveRecalculateObject = function()
 	{
@@ -134,7 +121,7 @@
 	};
 	CRunPageNum.prototype.GetValue = function()
 	{
-		return this.value;
+		return this.pageNum;
 	};
 	/**
 	 * Выставляем родительский класс
@@ -159,6 +146,27 @@
 	CRunPageNum.prototype.ToString = function()
 	{
 		return this.numText;
+	};
+	CRunPageNum.prototype._measure = function()
+	{
+		if (!this.textPr)
+			return;
+		
+		AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
+		
+		this.graphemes = AscWord.stringShaper.GetGraphemes();
+		this.widths    = AscWord.stringShaper.GetWidths();
+		
+		let totalWidth = 0;
+		for (let index = 0; index < this.widths.length; ++index)
+		{
+			totalWidth += this.widths[index];
+		}
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		
+		this.Width        = totalWidth;
+		this.WidthVisible = totalWidth;
 	};
 
 	/**

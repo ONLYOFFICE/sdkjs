@@ -738,7 +738,8 @@ function MoveAnnotationTrack(originalObject)
         oGraphicsPDF.SetGlobalAlpha(1);
 
         oGraphicsPDF.SetCurPage(this.objectToDraw.GetPage());
-        switch (this.objectToDraw.GetType()) {
+        switch (this.objectToDraw.GetType())
+        {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
             case AscPDF.ANNOTATIONS_TYPES.Line:
             case AscPDF.ANNOTATIONS_TYPES.Square:
@@ -766,6 +767,9 @@ function MoveAnnotationTrack(originalObject)
         else
             this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
 
+        if (true == this.viewer.isLandscapePage(nPage))
+            x = x + (w - h) / 2;
+
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };
 
@@ -775,26 +779,11 @@ function MoveAnnotationTrack(originalObject)
             return;
         }
 
-        let nPage       = this.originalObject.GetPage();
-        let nPageHeight = this.viewer.drawingPages[nPage].H / this.viewer.zoom;
-        let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
-
-        // не даем выйти за границы листа
-        let X = Math.max(this.x, 5);
-        let Y = Math.max(this.y, 5);
-
-        if (X + this.originalObject._pagePos.w > nPageWidth) {
-            X = nPageWidth - this.originalObject._pagePos.w;
-        }
-        if (Y + this.originalObject._pagePos.h > nPageHeight) {
-            Y = nPageHeight - this.originalObject._pagePos.h;
-        }
-
-        if (this.originalObject.IsFreeText())
-            this.originalObject.onAfterMove();
-        
-        this.originalObject.SetPosition(X, Y);
+        this.originalObject.SetPosition(this.x, this.y);
         this.originalObject.SetPage(this.pageIndex);
+        if (this.originalObject.IsFreeText()) {
+            this.originalObject.onAfterMove();
+        }
     };
 
     this.getBounds = function()

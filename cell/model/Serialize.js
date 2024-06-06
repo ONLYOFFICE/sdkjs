@@ -1395,7 +1395,11 @@
         pagesizeISOB5ExtraPaper:  65,
         pagesizeA2Paper:  66,
         pagesizeA3TransversePaper:  67,
-        pagesizeA3ExtraTransversePaper:  68
+        pagesizeA3ExtraTransversePaper:  68,
+
+        pagesizeEnvelopeChoukei3: 73,
+        pagesizeROC16K: 121
+
     };
     /** @enum */
     var ETotalsRowFunction =
@@ -1686,7 +1690,9 @@
             {id:EPageSize.pagesizeISOB5ExtraPaper, w_mm: 201, h_mm: 276},
             {id:EPageSize.pagesizeA2Paper, w_mm: 420, h_mm: 594},
             {id:EPageSize.pagesizeA3TransversePaper, w_mm: 297, h_mm: 420},
-            {id:EPageSize.pagesizeA3ExtraTransversePaper, w_mm: 322, h_mm: 445}
+            {id:EPageSize.pagesizeA3ExtraTransversePaper, w_mm: 322, h_mm: 445},
+            {id:EPageSize.pagesizeEnvelopeChoukei3, w_mm: 120, h_mm: 235},
+            {id:EPageSize.pagesizeROC16K, w_mm: 196.8, h_mm: 273}
         ];
         this.getSizeByWH = function(widthMm, heightMm)
         {

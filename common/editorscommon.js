@@ -726,8 +726,14 @@
 	}
 
 	function isPdfFormatFile(stream) {
-		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
-		return -1 !== part.indexOf("%PDF-");
+		//x2t MIN_SIZE_BUFFER = 4096
+		for (let i = 0; i < 4096 && i < stream.length; ++i) {
+			//match "%PDF-"
+			if (0x25 === stream[i] && 0x50 === stream[i + 1] && 0x44 === stream[i + 2] && 0x46 === stream[i + 3] && 0x2D === stream[i + 4]) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	function isDjvuFormatFile(stream) {
@@ -10475,7 +10481,7 @@
 		for(var i = 0; i <  AscCommon.g_oUserColorScheme.length; ++i)
 		{
 			var tmp = AscCommon.g_oUserColorScheme[i];
-			if(tmp && tmp.name === sName)
+			if(tmp && tmp.get_name() === sName)
 			{
 				return getColorSchemeByIdx(i);
 			}

@@ -160,6 +160,7 @@
             Line2 : 0,
             Glyph2 : 0,
 
+            quads: [],
             IsSelection : false
         };
 
@@ -564,6 +565,7 @@ void main() {\n\
         sel.Glyph2 = ret.Glyph;
 
         sel.IsSelection = true;
+        this.cacheSelectionQuads([]);
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
@@ -581,7 +583,11 @@ void main() {\n\
 			IsSelection : false
 		}
 
+        this.cacheSelectionQuads([]);
         this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
+    };
+    CFile.prototype.isSelectionUse = function() {
+        return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2);
     };
     CFile.prototype.getSelection = function() {
         return this.Selection;
@@ -1103,10 +1109,94 @@ void main() {\n\
         this.Selection = oSelectionInfo;
         this.onUpdateOverlay();
     };
+    CFile.prototype.cacheSelectionQuads = function(aQuads) {
+        this.Selection.quads = aQuads;
+    };
     CFile.prototype.getSelectionQuads = function() {
         let aInfo = [];
+        
+        if (false == this.isSelectionUse()) {
+            this.cacheSelectionQuads(aInfo);
+            return aInfo;
+        }
+        else if (this.Selection.quads.length != 0) {
+            return this.Selection.quads;
+        }
+        
+        let sel = this.Selection;
+        let Page1 = 0;
+        let Page2 = 0;
+        let Line1 = 0;
+        let Line2 = 0;
+        let Glyph1 = 0;
+        let Glyph2 = 0;
 
-        for (let i = this.Selection.Page1; i <= this.Selection.Page2; i++) {
+        if (sel.Page2 > sel.Page1)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+            Line1 = sel.Line1;
+            Line2 = sel.Line2;
+            Glyph1 = sel.Glyph1;
+            Glyph2 = sel.Glyph2;
+        }
+        else if (sel.Page2 < sel.Page1)
+        {
+            Page1 = sel.Page2;
+            Page2 = sel.Page1;
+            Line1 = sel.Line2;
+            Line2 = sel.Line1;
+            Glyph1 = sel.Glyph2;
+            Glyph2 = sel.Glyph1;
+        }
+        else if (sel.Page1 === sel.Page2)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+
+            if (sel.Line1 < sel.Line2)
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+                Glyph1 = sel.Glyph1;
+                Glyph2 = sel.Glyph2;
+            }
+            else if (sel.Line2 < sel.Line1)
+            {
+                Line1 = sel.Line2;
+                Line2 = sel.Line1;
+                Glyph1 = sel.Glyph2;
+                Glyph2 = sel.Glyph1;
+            }
+            else
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+
+                if (-1 === sel.Glyph1)
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+                else if (-1 === sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else if (sel.Glyph1 < sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+            }
+        }
+
+        for (let i = Page1; i <= Page2; i++) {
             var stream = this.getPageTextStream(i);
             if (!stream)
                 continue;
@@ -1116,79 +1206,6 @@ void main() {\n\
                 quads: []
             }
             
-            var sel = this.Selection;
-            var Page1 = 0;
-            var Page2 = 0;
-            var Line1 = 0;
-            var Line2 = 0;
-            var Glyph1 = 0;
-            var Glyph2 = 0;
-
-            if (sel.Page2 > sel.Page1)
-            {
-                Page1 = sel.Page1;
-                Page2 = sel.Page2;
-                Line1 = sel.Line1;
-                Line2 = sel.Line2;
-                Glyph1 = sel.Glyph1;
-                Glyph2 = sel.Glyph2;
-            }
-            else if (sel.Page2 < sel.Page1)
-            {
-                Page1 = sel.Page2;
-                Page2 = sel.Page1;
-                Line1 = sel.Line2;
-                Line2 = sel.Line1;
-                Glyph1 = sel.Glyph2;
-                Glyph2 = sel.Glyph1;
-            }
-            else if (sel.Page1 === sel.Page2)
-            {
-                Page1 = sel.Page1;
-                Page2 = sel.Page2;
-
-                if (sel.Line1 < sel.Line2)
-                {
-                    Line1 = sel.Line1;
-                    Line2 = sel.Line2;
-                    Glyph1 = sel.Glyph1;
-                    Glyph2 = sel.Glyph2;
-                }
-                else if (sel.Line2 < sel.Line1)
-                {
-                    Line1 = sel.Line2;
-                    Line2 = sel.Line1;
-                    Glyph1 = sel.Glyph2;
-                    Glyph2 = sel.Glyph1;
-                }
-                else
-                {
-                    Line1 = sel.Line1;
-                    Line2 = sel.Line2;
-
-                    if (-1 === sel.Glyph1)
-                    {
-                        Glyph1 = sel.Glyph2;
-                        Glyph2 = sel.Glyph1;
-                    }
-                    else if (-1 === sel.Glyph2)
-                    {
-                        Glyph1 = sel.Glyph1;
-                        Glyph2 = sel.Glyph2;
-                    }
-                    else if (sel.Glyph1 < sel.Glyph2)
-                    {
-                        Glyph1 = sel.Glyph1;
-                        Glyph2 = sel.Glyph2;
-                    }
-                    else
-                    {
-                        Glyph1 = sel.Glyph2;
-                        Glyph2 = sel.Glyph1;
-                    }
-                }
-            }
-
             if (Page1 > i || Page2 < i)
                 continue;
 
@@ -1410,9 +1427,10 @@ void main() {\n\
                 aInfo.push(oInfo);
         }
         
+        this.cacheSelectionQuads(aInfo);
         return aInfo;
     };
-    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
+    CFile.prototype.drawSelection = function(pageIndex, overlay, x, y)
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
@@ -1519,6 +1537,9 @@ void main() {\n\
         var _arrayGlyphOffsets = [];
 
         var _numLine = -1;
+
+        let width = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].W, true) >> 0;
+        let height = AscCommon.AscBrowser.convertToRetinaValue(this.viewer.drawingPages[pageIndex].H, true) >> 0;
 
         var dKoefX = width / this.pages[pageIndex].W;
         var dKoefY = height / this.pages[pageIndex].H;
@@ -1657,15 +1678,8 @@ void main() {\n\
                         var _y = (y + dKoefY * (_lineY - _lineAscent)) >> 0;
                         var _b = (y + dKoefY * (_lineY + _lineDescent)) >> 0;
 
-                        if (_x < overlay.min_x)
-                            overlay.min_x = _x;
-                        if (_r > overlay.max_x)
-                            overlay.max_x = _r;
-
-                        if (_y < overlay.min_y)
-                            overlay.min_y = _y;
-                        if (_b > overlay.max_y)
-                            overlay.max_y = _b;
+                        overlay.CheckPoint(_x, _y);
+                        overlay.CheckPoint(_r, _b);
 
                         overlay.m_oContext.rect(_x,_y,_r-_x,_b-_y);
                     }
@@ -2818,10 +2832,13 @@ void main() {\n\
             for (var i = 0, len = file.pages.length; i < len; i++)
             {
                 var page = file.pages[i];
-                page.W = page["W"];
-                page.H = page["H"];
-                page.Dpi = page["Dpi"];
-                page.originIndex = page["originIndex"]; // исходный индекс в файле
+                
+                page.W              = page["W"];
+                page.H              = page["H"];
+                page.Dpi            = page["Dpi"];
+                page.originIndex    = page["originIndex"]; // исходный индекс в файле
+                page.originRotate   = page["Rotate"];
+                page.Rotate         = page["Rotate"];
             }
             file.originalPagesCount = file.pages.length;
 

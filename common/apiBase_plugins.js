@@ -1273,7 +1273,13 @@
 				"guid" : ""
 			};
 		}
-		
+
+		window.g_asc_plugins.isUICheckOnInitMessage = true;
+		setTimeout(function(){
+			if (window.g_asc_plugins.isUICheckOnInitMessage)
+				delete window.g_asc_plugins.isUICheckOnInitMessage;
+		});
+
 		// desktop detecting (it's necessary when we work with clouds into desktop)
 		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 		if (isLocal)
@@ -1859,10 +1865,10 @@
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
-		for (let i = 0, len = items.tabs.length; i < len; i++)
+		for (let i = 0, len = items["tabs"].length; i < len; i++)
 		{
-			if (items.tabs[i]["items"])
-				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+			if (items["tabs"][i]["items"])
+				correctItemsWithData(items["tabs"][i]["items"], baseUrl);
 		}
 
 		this.sendEvent("onPluginToolbarMenu", [items]);

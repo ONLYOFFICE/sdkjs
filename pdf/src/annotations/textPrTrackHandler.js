@@ -89,19 +89,48 @@
 
 		if (!oAnnot)
 			return null;
+        
+        let aOrigRect   = oAnnot.GetOrigRect();
+        let aRD         = oAnnot.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
+        let nPage       = oAnnot.GetPage();
+		let oDoc		= oAnnot.GetDocument();
+		let oTr			= oDoc.pagesTransform[nPage].invert;
+		
+        let aFreeTextRect = []; // прямоугольник
 
-		let nPage		= oAnnot.GetPage();
-		let aBoundsMM	= [];
+        // левый верхний
+        aFreeTextRect.push({
+            x: (aOrigRect[0] + aRD[0]),
+            y: (aOrigRect[1] + aRD[1])
+        });
+        // правый верхний
+        aFreeTextRect.push({
+            x: (aOrigRect[2] - aRD[2]),
+            y: (aOrigRect[1] + aRD[1])
+        });
+        // правый нижний
+        aFreeTextRect.push({
+            x: (aOrigRect[2] - aRD[2]),
+            y: (aOrigRect[3] - aRD[3])
+        });
+        // левый нижний
+        aFreeTextRect.push({
+            x: (aOrigRect[0] + aRD[0]),
+            y: (aOrigRect[3] - aRD[3])
+        });
 
-		if (oAnnot.IsFreeText()) {
-			let oTxBoxBounds = oAnnot.GetTextBoxShape().getRectBounds();
-			aBoundsMM = [oTxBoxBounds.l, oTxBoxBounds.t, oTxBoxBounds.r, oTxBoxBounds.b];
-		}
+		
+		let oPoint1 = oTr.TransformPoint(aFreeTextRect[0].x, aFreeTextRect[0].y); // левый верхний
+		let oPoint2 = oTr.TransformPoint(aFreeTextRect[1].x, aFreeTextRect[1].y); // правый верхний
+		let oPoint3 = oTr.TransformPoint(aFreeTextRect[2].x, aFreeTextRect[2].y); // правый нижний
+		let oPoint4 = oTr.TransformPoint(aFreeTextRect[3].x, aFreeTextRect[3].y); // левый нижний
 
-		let pos0 = this.DrawingDocument.ConvertCoordsToCursorWR(aBoundsMM[0], aBoundsMM[1], nPage);
-		let pos1 = this.DrawingDocument.ConvertCoordsToCursorWR(aBoundsMM[2], aBoundsMM[3], nPage);
+		let xMin = Math.min(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMin = Math.min(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
+		let xMax = Math.max(oPoint1.x, oPoint2.x, oPoint3.x, oPoint4.x);
+		let yMax = Math.max(oPoint1.y, oPoint2.y, oPoint3.y, oPoint4.y);
 
-		return [pos0.X, pos0.Y, pos1.X, pos1.Y];
+		return [xMin, yMin, xMax, yMax];
 	};
 	CAnnotTextPrTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideAnnotTextPrTrack");

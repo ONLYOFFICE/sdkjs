@@ -130,12 +130,25 @@
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
         this._fillColor = aColor;
+
+        if (this.IsShapeBased()) {
+            let oRGB    = this.GetRGBColor(aColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            this.setFill(oFill);
+        }
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
     };
-    CAnnotationBase.prototype.SetWidth = function(nWidth) {
-        this._width = nWidth;
+    CAnnotationBase.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt;
+
+        if (this.IsShapeBased()) {
+            nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+            let oLine = this.spPr.ln;
+            oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+            this.handleUpdateLn();
+        }
     };
     CAnnotationBase.prototype.GetWidth = function() {
         return this._width;
@@ -177,53 +190,24 @@
         return this._borderEffectStyle;
     };
 
-    CAnnotationBase.prototype.DrawSelected = function(overlay) {
-        let rPR         = AscCommon.AscBrowser.retinaPixelRatio;
-        let style_blue  = "#939393";
-        let indent      = 0.5 * Math.round(rPR);
-
-        let nPage       = this.GetPage();
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[nPage].Dpi);
-        let aOrigRect   = this.GetOrigRect();
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[nPage];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        
-        let x1 = Math.round(indLeft + aOrigRect[0] * nScale);
-        let y1 = Math.round(indTop + aOrigRect[1] * nScale);
-        let x2 = Math.round(indLeft + aOrigRect[2] * nScale + 0.5);
-        let y2 = Math.round(indTop + aOrigRect[3] * nScale + 0.5);
-
-        overlay.m_oContext.lineWidth    = Math.round(rPR);
-        overlay.m_oContext.globalAlpha  = 1;
-        overlay.m_oContext.strokeStyle  = style_blue;
-        overlay.m_oContext.beginPath();
-
-        overlay.CheckPoint1(x1, y1);
-        overlay.CheckPoint1(x2, y2);
-        overlay.CheckPoint2(x1, y1);
-        overlay.CheckPoint2(x2, y2);
-        
-        overlay.m_oContext.rect(x1 + indent, y1 + indent, x2 - x1, y2 - y1);
-        overlay.m_oContext.stroke();
-    };
+    CAnnotationBase.prototype.DrawSelected = function() {};
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
     };
     CAnnotationBase.prototype.SetOpacity = function(value) {
         this._opacity = value;
         this.SetWasChanged(true);
+
+        if (this.IsShapeBased()) {
+            let oLine = this.spPr.ln;
+            oLine.Fill.transparent = value * 100 * 2.55;
+
+            let oFill = this.spPr.Fill;
+            oFill.transparent = value * 100 * 2.55;
+
+            this.handleUpdateLn();
+            this.handleUpdateFill();
+        }
     };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
@@ -604,8 +588,10 @@
     CAnnotationBase.prototype.GetDisplay = function() {
         return this._display;
     };
-    CAnnotationBase.prototype.onMouseUp = function() {
-        this.GetDocument().ShowComment([this.GetId()]);
+    CAnnotationBase.prototype.onMouseUp = function(e) {
+        if (e.button != 2) {
+            this.GetDocument().ShowComment([this.GetId()]);
+        }
     };
     CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
@@ -916,15 +902,17 @@
     };
 
     CAnnotationBase.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
     };
@@ -935,6 +923,18 @@
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
         this.SetWasChanged(true);
+
+        if (!aColor) {
+            aColor = [0, 0, 0];
+        }
+        
+        if (this.IsShapeBased()) {
+            let oRGB    = this.GetRGBColor(aColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oLine   = this.spPr.ln;
+            oLine.setFill(oFill);
+            this.handleUpdateLn();
+        }
     };
     CAnnotationBase.prototype.GetStrokeColor = function() {
         return this._strokeColor;
@@ -1228,6 +1228,9 @@
 
     // переопределение методов cshape
     CAnnotationBase.prototype.canRotate = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.canEditText = function () {
         return false;
     };
 

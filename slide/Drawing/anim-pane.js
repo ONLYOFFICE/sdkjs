@@ -2682,6 +2682,10 @@
 				sFillColor = oSkin.AnimPaneEffectBarFillPath;
 				sOutlineColor = oSkin.AnimPaneEffectBarOutlinePath;
 				break;
+
+			default:
+				sFillColor = '#A0A0A0';
+				sOutlineColor = '#404040';
 		}
 
 		// hex to rgba

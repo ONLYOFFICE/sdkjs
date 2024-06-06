@@ -6298,7 +6298,8 @@ StyleManager.prototype =
 			null == this.CustomWidth && 0 === this.outlineLevel && false == this.collapsed;
 	};
 	Col.prototype.isUpdateScroll = function () {
-		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed;
+		//TODO temporary added check on CustomWidth -> nColsCount common for scroll/draw. need separate nColsCount for draw and for scroll
+		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed || true === this.CustomWidth;
 	};
 	Col.prototype.clone = function (oNewWs) {
 		if (!oNewWs) {
@@ -11132,6 +11133,12 @@ function RangeDataManagerElem(bbox, data)
 		var isDigitValue = !isNaN(val);
 		if (!isDigitValue) {
 			val = val.toLowerCase();
+		} else {
+			let isQuotePrefix = cell && cell.getQuotePrefix();
+			if (isQuotePrefix) {
+				isDigitValue = false;
+				val = val.toLowerCase();
+			}
 		}
 
 		var checkComplexSymbols = null, filterVal;
@@ -17200,6 +17207,33 @@ function RangeDataManagerElem(bbox, data)
 		this.addToFunctionsList(newFunc, options);
 	};
 
+	CCustomFunctionEngine.prototype.remove = function (sName) {
+		sName = sName.toUpperCase();
+
+		let isFound = false;
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"]) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i in aCustomFunc) {
+				if (aCustomFunc[i] && aCustomFunc[i].prototype && aCustomFunc[i].prototype.name === sName) {
+					aCustomFunc.splice(i - 0, 1);
+					isFound = true;
+					break;
+				}
+			}
+		}
+
+		if (isFound) {
+			AscCommonExcel.removeCustomFunction(sName);
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+			return true;
+		}
+		return false;
+	};
+
 	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
 		this.activeLocale = sLocale;
 	};
@@ -17246,6 +17280,7 @@ function RangeDataManagerElem(bbox, data)
 
 		let translations = params.nameLocale;
 		let description = params.description;
+		let args = params.params;
 
 		let funcName = newFunc.prototype.name;
 
@@ -17266,6 +17301,15 @@ function RangeDataManagerElem(bbox, data)
 			this.funcsMapInfo[funcName] = new CCustomFunctionInfo(funcName);
 			this.pushTranslations(funcName, translations);
 			this.funcsMapInfo[funcName].description = description;
+
+			if (args) {
+				for (let i = 0; i < args.length; i++) {
+					if (!this.funcsMapInfo[funcName].args) {
+						this.funcsMapInfo[funcName].args = [];
+					}
+					this.funcsMapInfo[funcName].args.push(new CCustomFunctionArgInfo(args[i].name, args[i].isOptional));
+				}
+			}
 			isNewFunc = true;
 		}
 
@@ -17632,10 +17676,32 @@ function RangeDataManagerElem(bbox, data)
 		this.name = name;
 		this.description = null;
 
+		this.args = null;
+
 		this.addLocalization = null;
 	}
 	CCustomFunctionInfo.prototype.asc_getDescription = function () {
 		return this.description;
+	};
+	CCustomFunctionInfo.prototype.asc_getArg = function (num) {
+		if (num == null) {
+			return this.args;
+		}
+		if (this.args && this.args[num]) {
+			return this.args[num];
+		}
+		return null;
+	};
+
+	function CCustomFunctionArgInfo(sName, bOptional) {
+		this.sName = sName;
+		this.bOptional = bOptional;
+	}
+	CCustomFunctionArgInfo.prototype.asc_getName = function () {
+		return this.sName;
+	};
+	CCustomFunctionArgInfo.prototype.asc_getIsOptional = function () {
+		return this.bOptional;
 	};
 
 	function CWorkbookInfo(name, id) {
@@ -18191,6 +18257,13 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;
 	prot = CCustomFunctionInfo.prototype;
 	prot["asc_getDescription"] = prot.asc_getDescription;
+	prot["asc_getArg"] = prot.asc_getArg;
+
+	window["AscCommonExcel"].CCustomFunctionArgInfo = CCustomFunctionArgInfo;
+	prot = CCustomFunctionArgInfo.prototype;
+	prot["asc_getName"] = prot.asc_getName;
+	prot["asc_getIsOptional"] = prot.asc_getIsOptional;
+
 
 	window["AscCommonExcel"].CWorkbookInfo = CWorkbookInfo;
 	prot = CWorkbookInfo.prototype;

@@ -764,6 +764,11 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
+        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        if (isLandscape) {
+            indLeft = indLeft + (w - h) / 2;
+        }
+
         let aOrigRect = this.GetOrigRect();
         let X = aOrigRect[0] * nScale + indLeft;
         let Y = aOrigRect[1] * nScale + indTop;
@@ -772,8 +777,9 @@
 
         if (null == aBgColor)
             oCtx.globalAlpha = 0.8;
-
+        
         oCtx.globalCompositeOperation = "destination-over";
+        
         if (this.IsNeedDrawFromStream())
             AscPDF.startMultiplyMode(oCtx);
         
@@ -800,6 +806,7 @@
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
+        
         AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
@@ -2065,11 +2072,13 @@
     CBaseField.prototype["getPagePos"] = function() {
         if (!this._pagePos)
             return null;
+
+        let aOrigRect = this.GetOrigRect();
         return {
-            "x" : this._pagePos.x,
-            "y" : this._pagePos.y,
-            "w" : this._pagePos.w,
-            "h" : this._pagePos.h
+            "x" : aOrigRect[0],
+            "y" : aOrigRect[1],
+            "w" : (aOrigRect[2] - aOrigRect[0]),
+            "h" : (aOrigRect[3] - aOrigRect[1])
         };
     };
     CBaseField.prototype.WriteToBinaryBase = function(memory) {
@@ -2371,84 +2380,6 @@
 		return undefined;
 	}
 
-    /**
-	 * Converts global coords to page coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} nPage
-     * @param {boolean} [isNotMM = false] - coordinates in millimeters or not 
-	 * @typeofeditors ["PDF"]
-	 */
-    function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
-        // конвертация из глобальных x, y к mm кординатам самой страницы
-        let oViewer = editor.getDocumentRenderer();
-        var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        if (!pageObject) {
-            return {X: 0, Y: 0}
-        }
-
-        let result = {
-            X : isNotMM ? (pageObject.x) * nScaleY : (pageObject.x) * g_dKoef_pix_to_mm * nScaleY,
-            Y : isNotMM ? (pageObject.y) * nScaleX : (pageObject.y) * g_dKoef_pix_to_mm * nScaleX
-        };
-
-        result["X"] = result.X;
-        result["Y"] = result.Y;
-
-        return result;
-    }
-    /**
-	 * Converts page coords to global coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} nPage
-     * @param {boolean} isNotMM - coordinates in millimeters or not 
-	 * @typeofeditors ["PDF"]
-	 */
-    function GetGlobalCoordsByPageCoords(x, y, nPage, isNotMM) {
-        let oViewer = editor.getDocumentRenderer();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        let X = isNotMM ? x / nScaleX : x * g_dKoef_mm_to_pix / nScaleX;
-        let Y = isNotMM ? y / nScaleY : y * g_dKoef_mm_to_pix / nScaleY;
-
-        let pageCoords;
-        for (let i = 0; i < oViewer.pageDetector.pages.length; i++) {
-            if (oViewer.pageDetector.pages[i].num == nPage)
-                pageCoords = oViewer.pageDetector.pages[i];
-        }
-
-        if (!pageCoords)
-            pageCoords = oViewer.getPageLikeDetector(nPage);
-
-        let result = {
-            X : (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio,
-            Y : (Y * pageCoords.h / oViewer.file.pages[nPage].H + pageCoords.y) / AscCommon.AscBrowser.retinaPixelRatio
-        };
-
-        result["X"] = result.X;
-        result["Y"] = result.Y;
-
-        return result;
-    }
-
-    function invertRGB(oColor) {
-        // Calculate the inverted components
-        const invertedR = 255 - oColor.r;
-        const invertedG = 255 - oColor.g;
-        const invertedB = 255 - oColor.b;
-      
-        return {r: invertedR, g: invertedG, b: invertedB}
-      }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
@@ -2463,8 +2394,6 @@
 	window["AscPDF"].DEFAULT_FIELD_FONT = DEFAULT_FIELD_FONT;
 
     window["AscPDF"].CBaseField = CBaseField;
-    window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
-    window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     
 })();
 

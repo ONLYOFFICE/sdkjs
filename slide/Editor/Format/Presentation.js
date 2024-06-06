@@ -2220,6 +2220,14 @@ CPresentation.prototype.GetCurrentController = function () {
 	}
 	return null;
 };
+CPresentation.prototype.GetInputLanguage = function () {
+	var oController = this.GetCurrentController();
+	if (oController) {
+		return oController.getInputLanguage();
+	}
+	return lcid_enUS;
+
+};
 CPresentation.prototype.GetCurrentSlideController = function () {
 	var oCurSlide = this.GetCurrentSlide();
 	if (oCurSlide) {

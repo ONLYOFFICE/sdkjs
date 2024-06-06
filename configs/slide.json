@@ -74,6 +74,7 @@
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
@@ -330,6 +331,7 @@
 			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"slide/Editor/Format/ImagePrototype.js",

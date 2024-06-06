@@ -8616,12 +8616,13 @@
 		return th;
 	};
 	WorksheetView.prototype._updateRowHeight = function (cache, row, maxW, colWidth) {
-	    if (this.skipUpdateRowHeight) {
-	        return;
-        }
-	    var res = null;
+		if (this.skipUpdateRowHeight) {
+			return;
+		}
+		var res = null;
 		var mergeType = cache.flags && cache.flags.getMergeType();
-		var isMergedRows = (mergeType & c_oAscMergeType.rows) || (mergeType && cache.flags.wrapText);
+		//not find a case where the ms does not update the height with the columns merged ans wrap
+		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
@@ -8642,12 +8643,12 @@
 			var newHeight = tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
 			if (cache.angle && textBound) {
-                newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
+				newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
 			}
 			newHeight = Math.min(this.maxRowHeightPx, Math.max(oldHeight, newHeight));
 			if (newHeight !== oldHeight) {
 				if (this.updateRowHeightValuePx) {
-                    this.updateRowHeightValuePx = newHeight;
+					this.updateRowHeightValuePx = newHeight;
 				}
 				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
 				var _rowHeight = this.workbook.printPreviewState.isStart() ? newHeight * this.getZoom() : Asc.round(newHeight * this.getZoom());
@@ -8659,7 +8660,7 @@
 				res = newHeight;
 				var oldExcludeCollapsed = this.model.bExcludeCollapsed;
 				this.model.bExcludeCollapsed = true;
-                // ToDo delete setRowHeight here
+				// ToDo delete setRowHeight here
 				// TODO temporary add limit, because minimal zoom change not correct row height
 				if (this.getZoom() >= 0.5) {
 					this.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, false);
@@ -8672,8 +8673,7 @@
 						maxW = tm.width;
 					}
 
-					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width,
-						cache.cellHA, va, maxW);
+					cache.textBound = this.stringRender.getTransformBound(cache.angle, colWidth, _rowHeight, tm.width, cache.cellHA, va, maxW);
 				}
 
 				this.isChanged = true;
@@ -10479,8 +10479,8 @@
 				cursor: _cursor,
 				target: f ? c_oTargetType.RowResize : _target,
 				col: -1,
-				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
-				mouseY: f ? (((y < r.top + 3) ? r.top : r.bottom) - y - 1) : null
+				row: r.row + (isNotFirst && f && y < r.top + epsChangeSize ? -1 : 0),
+				mouseY: f ? (((y < r.top + epsChangeSize) ? r.top : r.bottom) - y - 1) : null
 			};
 		}
 
@@ -10515,9 +10515,9 @@
 			return {
 				cursor: _cursor,
 				target: f ? c_oTargetType.ColumnResize : _target,
-				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
+				col: c.col + (isNotFirst && f && x < c.left + epsChangeSize ? -1 : 0),
 				row: -1,
-				mouseX: f ? (((x < c.left + 3) ? c.left : c.right) - x - 1) : null
+				mouseX: f ? (((x < c.left + epsChangeSize) ? c.left : c.right) - x - 1) : null
 			};
 		}
 
@@ -18327,6 +18327,10 @@
 		return true;
 	};
     WorksheetView.prototype.drawOverlayButtons = function (visibleRange, offsetX, offsetY) {
+		let viewMode = !this.workbook.canEdit();
+		if (viewMode) {
+			return;
+		}
 		var activeCell = this.model.getSelection().activeCell;
 		if (visibleRange.contains2(activeCell)) {
 			var dataValidation = this.model.getDataValidation(activeCell.col, activeCell.row);

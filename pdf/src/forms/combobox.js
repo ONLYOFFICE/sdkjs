@@ -171,6 +171,11 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        if (isLandscape) {
+            indLeft = indLeft + (w - h) / 2;
+        }
+        
         let X       = aOrigRect[0] * nScale + indLeft;
         let Y       = aOrigRect[1] * nScale + indTop;
         let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
@@ -251,7 +256,7 @@
             
             this.SetInForm(true);
 
-            var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
+            var pageObject = oViewer.getPageByCoords(x, y);
 
             if (pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2 && this._options.length != 0) {
                 editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);

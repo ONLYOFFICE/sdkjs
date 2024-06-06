@@ -204,11 +204,15 @@
 
     CBlock.prototype.getHeight = function(columnW, startOffset, betweenPages, zoom)
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var maxPageHeight = 0;
         for (var i = 0, len = this.pages.length; i < len; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
+
             if (this.pages[i].page.height > maxPageHeight)
-                maxPageHeight = this.pages[i].page.height;
+                maxPageHeight = false == isLandscape ? this.pages[i].page.height : this.pages[i].page.width;
         }
 
         var blockHeight = (maxPageHeight * zoom) >> 0;
@@ -218,9 +222,17 @@
         var currentPosX = startOffset;
         for (var i = 0, len = this.pages.length; i < len; i++)
         {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
+
             var drPage = this.pages[i];
             var pW = (drPage.page.width * zoom) >> 0;
             var pH = (drPage.page.height * zoom) >> 0;
+            if (isLandscape)
+            {
+                [pW, pH] = [pH, pW];
+            }
+
             var curPageHeight = pH + PageStyle.numberFontOffset + PageStyle.numberFontHeight;
 
             drPage.pageRect.y = this.top + ((blockHeight - curPageHeight) >> 1);
@@ -490,7 +502,35 @@
             if (needPage)
             {
                 isNeedTasks = true;
-                needPage.page.image = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
+                let isLandscape = this.viewer.isLandscapePage(needPage.num);
+                let angle       = this.viewer.getPageRotate(needPage.num);
+                
+                let oImage;
+                if (isLandscape) {
+                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.h, needPage.pageRect.w);
+                }
+                else {
+                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
+                }
+
+                // Создание нового canvas с изменёнными размерами
+                const rotatedCanvas = document.createElement('canvas');
+                rotatedCanvas.width = needPage.pageRect.w;
+                rotatedCanvas.height = needPage.pageRect.h;
+                const rotatedContext = rotatedCanvas.getContext('2d');
+                
+                // Поворот canvas
+                rotatedContext.save();
+                rotatedContext.translate(rotatedCanvas.width / 2 >> 0, rotatedCanvas.height / 2 >> 0);
+                rotatedContext.rotate(angle * Math.PI / 180);
+                rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
+                rotatedContext.restore();
+
+                rotatedCanvas.requestWidth = rotatedCanvas.width;
+                rotatedCanvas.requestHeight = rotatedCanvas.height;
+
+                needPage.page.image = rotatedCanvas;
+
                 needPage.page.needRedraw = false;
                 this.isRepaint = true;
                 
@@ -765,23 +805,48 @@
 
     CDocument.prototype.getMaxPageWidth = function()
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var size = 0, page = null;
         for (var i = 0, count = this.pages.length; i < count; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(i);
+
             page = this.pages[i];
-            if (size < page.width)
-                size = page.width;
+            if (isLandscape)
+            {
+                if (size < page.height)
+                    size = page.height;
+            }
+            else
+            {
+                if (size < page.width)
+                    size = page.width;
+            }
+            
         }
         return size;
     };
     CDocument.prototype.getMaxPageHeight = function()
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var size = 0, page = null;
         for (var i = 0, count = this.pages.length; i < count; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(i);
+
             page = this.pages[i];
-            if (size < page.height)
-                size = page.height;
+            if (isLandscape)
+            {
+                if (size < page.width)
+                    size = page.width;
+            }
+            else
+            {
+                if (size < page.height)
+                    size = page.height;
+            }
         }
         return size;
     };

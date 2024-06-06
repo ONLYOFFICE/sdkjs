@@ -174,12 +174,13 @@
 			return;
 
 		let oDoc			= this.getPDFDoc();
+		let oFile			= oDoc.Viewer.file;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
-			let sText = oActiveForm.content.GetSelectedText(true);
+			let sText = oActiveForm.content.GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -190,7 +191,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let sText = oActiveAnnot.GetDocContent().GetSelectedText(true);
+			let sText = oActiveAnnot.GetDocContent().GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -200,16 +201,34 @@
 			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let sText = oActiveDrawing.GetDocContent().GetSelectedText(false);
-			if (!sText)
-				return;
+		else if (oActiveDrawing) {
+			let oContent = oActiveDrawing.GetDocContent();
+			let sText = oContent ? oContent.GetSelectedText(false) : "";
+			let _data, sBase64;
 
-			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+			// text
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats) {
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
-
-			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+			}
+			//HTML
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats) {
+				var oCopyProcessor = new AscCommon.CopyProcessor(this);
+				sBase64            = oCopyProcessor.Start();
+				_data              = oCopyProcessor.getInnerHtml();
+	
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _data)
+			}
+			//INTERNAL
+			if (AscCommon.c_oAscClipboardDataFormat.Internal & _formats) {
+				if (sBase64 === null)
+				{
+					var oCopyProcessor = new AscCommon.CopyProcessor(this);
+					sBase64            = oCopyProcessor.Start();
+				}
+	
+				_data = sBase64;
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Internal, _data)
+			}
 		}
 		else {
 			let _text_object = {Text: ""};
@@ -226,39 +245,18 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		let oDoc			= this.DocumentRenderer.getPDFDoc();
-		let oField			= oDoc.activeForm;
-		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveDrawing	= oDoc.activeDrawing;
-
-		if (oField && oField.IsCanEditText()) {
-			if (oField.content.IsSelectionUse()) {
-				oField.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let oContent = oActiveAnnot.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveAnnot.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let oContent = oActiveDrawing.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveDrawing.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		if (oDoc.CanCopyCut().cut) {
+			oDoc.Remove(1);
 		}
 	};
 	PDFEditorApi.prototype.onUpdateRestrictions = function() {
+		let oDoc = this.getPDFDoc();
+		if (!oDoc) {
+			return;
+		}
+
 		if (this.isRestrictionView()) {
-			let oDoc = this.getPDFDoc();
-			if (!oDoc) {
-				return;
-			}
-			
 			let oActiveObj = oDoc.GetActiveObject();
 
 			if (oActiveObj && oActiveObj.IsDrawing()) {
@@ -267,6 +265,11 @@
 
 			oDoc.drawings.forEach(function(drawing) {
 				drawing.AddToRedraw();
+			});
+		}
+		else {
+			setTimeout(function() {
+				oDoc.checkDefaultFonts();
 			});
 		}
 	};
@@ -285,14 +288,18 @@
 			return;
 		
 		let oDoc			= this.DocumentRenderer.getPDFDoc();
-		let data			= text_data || data1;
+		let data			= typeof(text_data) == "string" ? text_data : data1;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
-		if (!data)
+		// пока что копирование бинарником только внутри drawings или самих drawings
+		if (_format == AscCommon.c_oAscClipboardDataFormat.Internal && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
+			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 			return;
-
+		}
+		
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
@@ -450,6 +457,9 @@
 		let textController = doc.getTextController();
 		if (!textController)
 			return false;
+		if (textController.IsDrawing() && Asc.editor.isRestrictionView()) {
+			return false;
+		}
 		
 		let result = textController.EnterText(codePoints);
 		
@@ -510,16 +520,28 @@
 		
 		oDoc.EditPage(oViewer.currentPage);
 	};
-	PDFEditorApi.prototype.asc_AddPage = function() {
+	PDFEditorApi.prototype.asc_AddPage = function(bBefore) {
 		let oViewer = this.getDocumentRenderer();
+		let oFile	= oViewer.file;
 		let oDoc 	= this.getPDFDoc();
 
-		let nPos = oViewer.currentPage + 1;
+		let nPos = bBefore ? oViewer.currentPage : oViewer.currentPage + 1;
 
 		oDoc.CreateNewHistoryPoint();
-		oDoc.AddPage(nPos);
-		oViewer.navigateToPage(nPos);
+
+		let oPageToClone = bBefore ? oFile.pages[oViewer.currentPage] : (oFile.pages[oViewer.currentPage + 1] || oFile.pages[oViewer.currentPage]);
+		let oPage = {
+			fonts: [],
+			Rotate: 0,
+			Dpi: oPageToClone.Dpi,
+			W: oPageToClone.W,
+			H: oPageToClone.H
+		}
+
+		oDoc.AddPage(nPos, oPage);
 		oDoc.TurnOffHistory();
+		
+		oViewer.navigateToPage(nPos);
 	};
 	PDFEditorApi.prototype.asc_RemovePage = function(nPage) {
 		let oViewer = this.getDocumentRenderer();
@@ -532,12 +554,22 @@
 		oViewer.navigateToPage(nPage - 1 >= 0 ? nPage - 1 : 0);
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.asc_GetSelectedText = function() {
+	PDFEditorApi.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
 		if (!this.DocumentRenderer)
 			return "";
 
-		var textObj = {Text : ""};
-		this.DocumentRenderer.Copy(textObj);
+		let oDoc		= this.getPDFDoc();
+		let oTxObject	= oDoc.getTextController();
+		let textObj		= {Text : ""};
+		
+		if (oTxObject) {
+			let oContent = oTxObject.GetDocContent();
+			textObj.Text = oContent ? oContent.GetSelectedText(bClearText, select_Pr) : "";
+		}
+		else {
+			this.DocumentRenderer.Copy(textObj);
+		}
+		
 		if (textObj.Text.trim() === "")
 			return "";
 		
@@ -852,9 +884,16 @@
 	////////////////////////////////////////////////////////////
 	PDFEditorApi.prototype.AddFreeTextAnnot = function(nType) {
 		let oDoc = this.getPDFDoc();
-		oDoc.CreateNewHistoryPoint();
-		oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
-		oDoc.TurnOffHistory();
+
+		function addFreeText() {
+			oDoc.CreateNewHistoryPoint();
+			oDoc.AddFreeTextAnnot(nType, oDoc.Viewer.currentPage);
+			oDoc.TurnOffHistory();
+		}
+
+		if (oDoc.checkDefaultFonts(addFreeText)) {
+			addFreeText();
+		}
 	};
 	
 	/////////////////////////////////////////////////////////////
@@ -1811,10 +1850,33 @@
 			this.sendEvent("asc_onTextColor", color);
 		}
 	};
+	PDFEditorApi.prototype.asc_RotatePage = function(angle) {
+		if (angle % 90 != 0) {
+			return false;
+		}
+		if (angle < 0) {
+			angle = 360 + angle;
+		}
+
+		let oDoc = this.getPDFDoc();
+		let oThumbnails = oDoc.Viewer.Thumbnails;
+
+		oDoc.CreateNewHistoryPoint();
+		oDoc.SetPageRotate(oThumbnails.selectPage, angle % 360);
+		oDoc.TurnOffHistory();
+	};
+	PDFEditorApi.prototype.asc_GetPageRotate = function(nPage) {
+		let oViewer = this.getDocumentRenderer();
+		if (!oViewer) {
+			return;
+		}
+
+		return oViewer.getPageRotate(nPage);
+	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
-		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
 		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
@@ -1824,7 +1886,7 @@
 		let oDoc			= oViewer.getPDFDoc();
 
 		if (!pageObject) {
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage);
 			oDoc.anchorPositionToAdd = {
 				x: 10,
 				y: 10
@@ -1838,8 +1900,8 @@
 		};
 
 		if (oDoc.mouseDownAnnot) {
-			let aRect = oDoc.mouseDownAnnot.GetRect();
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage);
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
@@ -2070,6 +2132,14 @@
 		}
 		
 		this.EndActionLoadImages = 0;
+		if (this.isPasteFonts_Images) {
+			this.isPasteFonts_Images = false;
+			this.pasteImageMap       = null;
+			this.pasteCallback();
+			this.pasteCallback            = null;
+			this.decrementCounterLongAction();
+		}
+
 		if (false === this.isPasteFonts_Images && false === this.isSaveFonts_Images && false === this.isLoadImagesCustom)
 		{
 			this.ServerImagesWaitComplete = true;
@@ -2127,6 +2197,8 @@
 
 		this.sendMathToMenu();
 		this.sendStandartTextures();
+		//выставляем тип copypaste
+		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
@@ -2234,6 +2306,8 @@
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
+	PDFEditorApi.prototype['asc_GetPageRotate']			   = PDFEditorApi.prototype.asc_GetPageRotate;
+	PDFEditorApi.prototype['asc_RotatePage']        	   = PDFEditorApi.prototype.asc_RotatePage;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
 	PDFEditorApi.prototype['get_PageWidth']                = PDFEditorApi.prototype.get_PageWidth;
 	PDFEditorApi.prototype['get_PageHeight']               = PDFEditorApi.prototype.get_PageHeight;
@@ -2248,6 +2322,9 @@
 
 	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+
+	PDFEditorApi.prototype['asc_ShowDocumentOutline']      = PDFEditorApi.prototype.asc_ShowDocumentOutline;
+	PDFEditorApi.prototype['asc_HideDocumentOutline']      = PDFEditorApi.prototype.asc_HideDocumentOutline;
 
 	// text/para pr
 	PDFEditorApi.prototype['put_TextPrBold']				= PDFEditorApi.prototype.put_TextPrBold;

@@ -596,6 +596,11 @@ CShapeDrawer.prototype =
         this.IsRectShape = false;
     },
 
+    isPdf : function()
+    {
+        return this.Graphics.isPdf() || this.Graphics.isNativeDrawer();
+    },
+
     CheckPoint : function(_x,_y)
     {
         // TODO: !!!
@@ -647,7 +652,7 @@ CShapeDrawer.prototype =
                 _arr[indexD] *= this.StrokeWidth;
             this.Graphics.p_dash(_arr);
         }
-        else if (this.Graphics.isPdf())
+        else if (this.isPdf())
         {
             this.Graphics.p_dash(null);
         }
@@ -864,7 +869,7 @@ CShapeDrawer.prototype =
             bIsPatt = true;
         }
 
-        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
+        if (this.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(true);
             this.Graphics.put_TextureBounds(this.min_x, this.min_y, this.max_x - this.min_x, this.max_y - this.min_y);
@@ -887,7 +892,7 @@ CShapeDrawer.prototype =
         }
         this.Graphics.ArrayPoints = null;
 
-        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
+        if (this.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(false);
         }
@@ -1013,7 +1018,7 @@ CShapeDrawer.prototype =
                 bIsIntegerGridTRUE = true;
             }
 
-            if (this.Graphics.isPdf())
+            if (this.isPdf())
             {
                 if (null == this.UniFill.fill.tile || this.Graphics.m_oContext === undefined)
                 {
@@ -1556,7 +1561,7 @@ CShapeDrawer.prototype =
 
         if(this.Graphics.isBoundsChecker())
             return;
-        if (!this.Graphics.isPdf())
+        if (!this.isPdf())
         {
             if (bIsFill)
                 this.df(fill_mode);
@@ -1784,10 +1789,10 @@ CShapeDrawer.prototype =
                 // трансформируем точки в окончательные.
                 // и отправляем на отрисовку (с матрицей)
 
-                var trans = (!this.Graphics.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
+                var trans = (!this.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
                 var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
 
-                var lineSize = (!this.Graphics.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
+                var lineSize = (!this.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
 
                 var x1 = trans.TransformPointX(0, 0);
                 var y1 = trans.TransformPointY(0, 0);
@@ -1856,7 +1861,7 @@ CShapeDrawer.prototype =
 
     drawStrokeFillStyle : function()
     {
-        if (!this.Graphics.isPdf())
+        if (!this.isPdf())
         {
             var gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 

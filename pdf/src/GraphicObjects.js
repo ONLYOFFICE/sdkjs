@@ -42,6 +42,9 @@
     CGraphicObjects.prototype.constructor = CGraphicObjects;
     CGraphicObjects.prototype = Object.create(AscCommonWord.CGraphicObjects.prototype);
 
+	CGraphicObjects.prototype.createShape = function() {
+		return new AscPDF.CPdfShape();
+	};
     CGraphicObjects.prototype.updateSelectionState = function(bNoCheck) {
         let text_object, drawingDocument = this.drawingDocument;
         if (this.selection.textSelection) {
@@ -531,6 +534,10 @@
         return oPageInfo ? oPageInfo.drawings : [];
     };
 
+    CGraphicObjects.prototype.getDrawingArray = function() {
+        return this.document.drawings;
+    };
+
     CGraphicObjects.prototype.canEditText = function () {
         let content = this.getTargetDocContent();
         if (content) {
@@ -684,7 +691,6 @@
 
         if (selected_objects.length > 0) {
             let nPageW = this.document.GetPageWidthMM(selected_objects[0].GetPage());
-            console.log(`PageW: ${nPageW}`);
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
@@ -746,7 +752,6 @@
         
         if (selected_objects.length > 0) {
             let nPageH = this.document.GetPageHeightMM(selected_objects[0].GetPage());
-            console.log(`PageH: ${nPageH}`);
 
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             this.checkSelectedObjectsForMove();
@@ -999,11 +1004,42 @@
         }
         return false;
     };
+    CGraphicObjects.prototype.selectObject = function (object, pageIndex) {
+        if (object.IsAnnot() && !object.IsShapeBased())
+            return;
+        
+        object.select(this, pageIndex);
+        if (AscFormat.MoveAnimationDrawObject) {
+            if (object instanceof AscFormat.MoveAnimationDrawObject) {
+                for (let i = this.selectedObjects.length - 1; i > -1; --i) {
+                    if (!this.selectedObjects[i].isMoveAnimObject()) {
+                        object.selected = false;
+                        this.selectedObjects.splice(i, 1);
+                        return;
+                    }
+                }
+            } else {
+                for (let i = this.selectedObjects.length - 1; i > -1; --i) {
+                    if (this.selectedObjects[i].isMoveAnimObject()) {
+                        object.selected = false;
+                        this.selectedObjects.splice(i, 1);
+                        return;
+                    }
+                }
+            }
+        }
+        this.lastSelectedObject = null;
+        this.checkShowMediaControlOnSelect();
+    }
     CGraphicObjects.prototype.drawSelect = function (pageIndex) {
         let drawingDocument = this.drawingDocument;
 
         if (undefined !== drawingDocument.BeginDrawTracking)
             drawingDocument.BeginDrawTracking();
+
+
+        const oTrackDrawer  = drawingDocument.AutoShapesTrack;
+        oTrackDrawer.SetCurrentPage(pageIndex, true);
 
         const oApi = this.getEditorApi();
         let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
@@ -1023,7 +1059,6 @@
         const oGrp          = this.selection.groupSelection;
         const oChart        = this.selection.chartSelection;
         const oWrp          = this.selection.wrapPolygonSelection;
-        const oTrackDrawer  = drawingDocument.AutoShapesTrack;
 
         if (oCrop) {
             if (this.arrTrackObjects.length === 0) {
@@ -1035,17 +1070,18 @@
                             oldGlobalAlpha = oTrackDrawer.Graphics.globalAlpha;
                             oTrackDrawer.Graphics.put_GlobalAlpha(false, 1.0);
                         }
-                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
                         cropObject.draw(oTrackDrawer);
                         oTrackDrawer.CorrectOverlayBounds();
 
-                        oTrackDrawer.SetCurrentPage(cropObject.selectStartPage, true);
                         oCrop.draw(oTrackDrawer);
                         oTrackDrawer.CorrectOverlayBounds();
 
                         if (oTrackDrawer.Graphics) {
                             oTrackDrawer.Graphics.put_GlobalAlpha(true, oldGlobalAlpha);
                         }
+
+                        oTrackDrawer.CheckCanvasTransform();
+
                         drawingDocument.DrawTrack(
                             AscFormat.TYPE_TRACK.SHAPE,
                             cropObject.getTransformMatrix(),
@@ -1095,7 +1131,9 @@
             }
         } else if (oGrp) {
             if (oGrp.selectStartPage === pageIndex) {
-                !oGrp.IsAnnot && drawingDocument.DrawTrack(
+                isDrawHandles = !oGrp.IsAnnot;
+
+                drawingDocument.DrawTrack(
                     AscFormat.TYPE_TRACK.GROUP_PASSIVE,
                     oGrp.getTransformMatrix(),
                     0,
@@ -1243,22 +1281,26 @@
     CGraphicObjects.prototype.loadDocumentStateAfterLoadChanges = function() {};
     CGraphicObjects.prototype.saveDocumentState = function(){};
 
-    CGraphicObjects.prototype.setEquationTrack           = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
-    CGraphicObjects.prototype.getParagraphTextPr         = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
-    CGraphicObjects.prototype.alignLeft                  = AscFormat.DrawingObjectsController.prototype.alignLeft;
-    CGraphicObjects.prototype.alignTop                   = AscFormat.DrawingObjectsController.prototype.alignTop;
-    CGraphicObjects.prototype.convertMathView            = AscFormat.DrawingObjectsController.prototype.convertMathView;
-    CGraphicObjects.prototype.setMathProps               = AscFormat.DrawingObjectsController.prototype.setMathProps;
-    CGraphicObjects.prototype.paraApplyCallback          = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
-    CGraphicObjects.prototype.setParagraphAlign          = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
-    CGraphicObjects.prototype.setParagraphSpacing        = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
-    CGraphicObjects.prototype.setParagraphTabs           = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
-    CGraphicObjects.prototype.setDefaultTabSize          = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
-    CGraphicObjects.prototype.changeTextCase             = AscFormat.DrawingObjectsController.prototype.changeTextCase;
-    CGraphicObjects.prototype.handleDblClickEmptyShape   = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
+    // import
+    CGraphicObjects.prototype.setEquationTrack          = AscFormat.DrawingObjectsController.prototype.setEquationTrack;
+    CGraphicObjects.prototype.getParagraphTextPr        = AscFormat.DrawingObjectsController.prototype.getParagraphTextPr;
+    CGraphicObjects.prototype.alignLeft                 = AscFormat.DrawingObjectsController.prototype.alignLeft;
+    CGraphicObjects.prototype.alignTop                  = AscFormat.DrawingObjectsController.prototype.alignTop;
+    CGraphicObjects.prototype.convertMathView           = AscFormat.DrawingObjectsController.prototype.convertMathView;
+    CGraphicObjects.prototype.setMathProps              = AscFormat.DrawingObjectsController.prototype.setMathProps;
+    CGraphicObjects.prototype.paraApplyCallback         = AscFormat.DrawingObjectsController.prototype.paraApplyCallback;
+    CGraphicObjects.prototype.setParagraphAlign         = AscFormat.DrawingObjectsController.prototype.setParagraphAlign;
+    CGraphicObjects.prototype.setParagraphSpacing       = AscFormat.DrawingObjectsController.prototype.setParagraphSpacing;
+    CGraphicObjects.prototype.setParagraphTabs          = AscFormat.DrawingObjectsController.prototype.setParagraphTabs;
+    CGraphicObjects.prototype.setDefaultTabSize         = AscFormat.DrawingObjectsController.prototype.setDefaultTabSize;
+    CGraphicObjects.prototype.changeTextCase            = AscFormat.DrawingObjectsController.prototype.changeTextCase;
+    CGraphicObjects.prototype.handleDblClickEmptyShape  = AscFormat.DrawingObjectsController.prototype.handleDblClickEmptyShape;
+    CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
+    CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 
+    // export 
     window["AscPDF"].CGraphicObjects = CGraphicObjects;
 
 })(window);

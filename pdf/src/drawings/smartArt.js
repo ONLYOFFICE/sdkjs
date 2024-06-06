@@ -74,14 +74,17 @@
         this.SetNeedRecalc(false);
     };
     CPdfSmartArt.prototype.onMouseDown = function(x, y, e) {
+        let oViewer             = Asc.editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oDrawingObjects     = oDoc.Viewer.DrawingObjects;
-        let oDrDoc              = oDoc.GetDrawingDocument();
         this.selectStartPage    = this.GetPage();
 
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         // if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
         //     this.SetInTextBox(false);

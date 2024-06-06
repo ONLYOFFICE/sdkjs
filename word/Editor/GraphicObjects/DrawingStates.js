@@ -219,8 +219,10 @@ StartAddNewShape.prototype =
                             modDate:        (new Date().getTime()).toString()
                         });
     
-                        var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint, oTrack.pen);
+                        var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint);
     
+                        let oRGBPen = oTrack.pen.Fill.getRGBAColor();
+                        oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                         oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                         oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
                         
@@ -243,6 +245,7 @@ StartAddNewShape.prototype =
                     oShape.select(oLogicDocument.GetController(), this.pageIndex);
 
                     oLogicDocument.TurnOffHistory();
+                    bRet = true;
                 }
             }
         }
@@ -861,7 +864,7 @@ RotateState.prototype =
                         }
                         else if (oAnnot.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
-                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
                             let aVertices   = oAnnot.GetVertices().slice();
                             
                             // если редактируется последняя точка, то надо отредактировать ещё начальную (только у Polygon, в случае если первая совпадает с последней)
@@ -902,7 +905,7 @@ RotateState.prototype =
                         }
                         else if (oAnnot.IsPolyLine()) {
                             // меняем только редактируемую точку в массиве vertices
-                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
                             let aVertices   = oAnnot.GetVertices().slice();
                             let nStartPos   = oTrack.gmEditPtIdx * 2;
                             
@@ -933,7 +936,7 @@ RotateState.prototype =
                             oAnnot.SetRect(aRect);
                         }
                     }
-                    if (oTrack.originalObject.IsDrawing()) {
+                    if (oTrack.originalObject.IsDrawing() && oTrack instanceof AscFormat.MoveShapeImageTrack) {
                         if (pageIndex != oTrack.originalObject.pageIndex) {
                             oTrack.originalObject.SetPage(pageIndex);
                         }
