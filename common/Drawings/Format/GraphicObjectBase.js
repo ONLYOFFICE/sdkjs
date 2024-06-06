@@ -2760,7 +2760,20 @@
 		return nCurPage || 0;
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
-		if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
+
+		let bCanAdd = false;
+		if(this.isPlaceholder() && this.parent && this.parent.getObjectType &&
+			(this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster ||
+				this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout)) {
+			bCanAdd = true;
+		}
+		else {
+			if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
+				bCanAdd = false;
+			}
+		}
+
+		if (!bCanAdd) {
 			return;
 		}
 		var phType = this.getPlaceholderType();

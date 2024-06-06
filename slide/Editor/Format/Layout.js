@@ -845,6 +845,10 @@ SlideLayout.prototype.getTheme = function(){
     {
         return Slide.prototype.GetSearchElementId.call(this, isNext, StartPos);
     };
+    SlideLayout.prototype.replaceSp = function(oPh, oObject)
+    {
+        return Slide.prototype.replaceSp.call(this, oPh, oObject);
+    };
     SlideLayout.prototype.Get_ColorMap = function()
     {
         if(this.clrMap)

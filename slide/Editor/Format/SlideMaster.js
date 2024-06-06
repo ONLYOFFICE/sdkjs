@@ -553,7 +553,7 @@ MasterSlide.prototype.addToRecalculate = function()
 };
 MasterSlide.prototype.addNewLayout = function()
 {
-    let oLayout = AscFormat.GenerateDefaultSlideLayout(this);
+    let oLayout = AscCommonSlide.CreateDefaultLayout(this);
     let oPresentation = Asc.editor.private_GetLogicDocument();
     oLayout.changeSize(oPresentation.GetWidthMM(), oPresentation.GetHeightMM());
     this.addToSldLayoutLstToPos(this.sldLayoutLst.length, oLayout);
@@ -757,6 +757,10 @@ MasterSlide.prototype.Get_ColorMap = function()
         return this.clrMap;
     }
     return AscFormat.GetDefaultColorMap();
+};
+MasterSlide.prototype.replaceSp = function(oPh, oObject)
+{
+    return Slide.prototype.replaceSp.call(this, oPh, oObject);
 };
 function CMasterThumbnailDrawer()
 {
@@ -1348,8 +1352,31 @@ function CreateDefaultMaster() {
     oMaster.setTheme(oTheme);
     return oMaster;
 }
+
+function CreateDefaultLayout(oMaster) {
+    let stream = AscFormat.CreateBinaryReader(AscCommonSlide.DEFAULT_LAYOUTS_BINARY, "PPTY;v10;".length, AscCommonSlide.DEFAULT_LAYOUTS_BINARY.length);
+    let oBinaryReader = new AscCommon.BinaryPPTYLoader();
+    oBinaryReader.stream = new AscCommon.FileStream();
+    oBinaryReader.stream.obj = stream.obj;
+    oBinaryReader.stream.data = stream.data;
+    oBinaryReader.stream.size = stream.size;
+    oBinaryReader.stream.pos = stream.pos;
+    oBinaryReader.stream.cur = stream.cur;
+
+    let _sl_count = oBinaryReader.stream.GetULong();
+    let oPresentation = Asc.editor.private_GetLogicDocument();
+
+    oBinaryReader.stream.Skip2(1);
+    let end = oBinaryReader.stream.cur + oBinaryReader.stream.GetULong() + 4;
+    oBinaryReader.stream.Seek2(end);
+    let oLt = oBinaryReader.ReadSlideLayout();
+    oLt.setMaster(oMaster);
+    return oLt;
+
+}
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonSlide'].MasterSlide = MasterSlide;
 window['AscCommonSlide'].fFillFromCSld = fFillFromCSld;
 window['AscCommonSlide'].CreateDefaultMaster = CreateDefaultMaster;
+window['AscCommonSlide'].CreateDefaultLayout = CreateDefaultLayout;
