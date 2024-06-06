@@ -1359,11 +1359,12 @@ function(window, undefined) {
 				if (AscFormat.isRealNumber(month)) {
 					// february can have 28/29 days
 					let skipDays = isLeap(year) && month === 1 ? months[month] + 1 : months[month];
-					let negOffset = loopsCount === 0 ? startingDay - months[(startingMonth + 1) % 12] : 0;
-					let posOffset = loopsCount !== 0 ? months[(month + 1) % 12] - months[month] : 0;
+					const diffDays = startingDay - months[(startingMonth + 1) % 12];
+					let negOffset = loopsCount === 0  && diffDays > 0? diffDays : 0;
+					let posOffset = loopsCount !== 0 && negOffset >= 0 ? months[(month + 1) % 12] - months[month] : 0;
 
 					skipDays = skipDays - negOffset + posOffset;
-
+					console.log(skipDays);
 					return skipDays;
 				}
 				return 31;
