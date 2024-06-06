@@ -3184,41 +3184,53 @@
     };
 
 	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc) {
+		let maxCol = -1;
+		let maxRow = -1;
 		if(!doNotRecalc) {
+			console.time("_prepareCellTextMetricsCache")
 			this._prepareCellTextMetricsCache(range);
-		}
+			console.timeEnd("_prepareCellTextMetricsCache")
 
-		var maxCol = -1;
-		var maxRow = -1;
-
-		var t = this;
-		var rowCache, rightSide, curRow = -1, hiddenRow = false;
-		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
-			var c = cell.nCol;
-			var r = cell.nRow;
-			if (curRow !== r) {
-				curRow = r;
-				hiddenRow = 0 === t._getRowHeight(r);
-				rowCache = t._getRowCache(r);
-			}
-			if(!hiddenRow && 0 < t._getColumnWidth(c)){
-				var style = cell.getStyle();
-				if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
-					maxCol = Math.max(maxCol, c);
-					maxRow = Math.max(maxRow, r);
+			console.time("cache.rows")
+			let i, j;
+			for (i in this.cache.rows) {
+				for (j in this.cache.rows[i].columns) {
 				}
-				var ct = t._getCellTextCache(c, r);
-				if (ct !== undefined) {
-					rightSide = 0;
-					if (!ct.flags.isMerged() && !ct.flags.wrapText) {
-						rightSide = ct.sideR;
+				maxCol = Math.max(j - 0, maxCol);
+			}
+			maxRow = i - 0;
+			console.timeEnd("cache.rows")
+
+		} else {
+			var t = this;
+			var rowCache, rightSide, curRow = -1, hiddenRow = false;
+			this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
+				var c = cell.nCol;
+				var r = cell.nRow;
+				if (curRow !== r) {
+					curRow = r;
+					hiddenRow = 0 === t._getRowHeight(r);
+					rowCache = t._getRowCache(r);
+				}
+				if(!hiddenRow && 0 < t._getColumnWidth(c)){
+					var style = cell.getStyle();
+					if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
+						maxCol = Math.max(maxCol, c);
+						maxRow = Math.max(maxRow, r);
 					}
+					var ct = t._getCellTextCache(c, r);
+					if (ct !== undefined) {
+						rightSide = 0;
+						if (!ct.flags.isMerged() && !ct.flags.wrapText) {
+							rightSide = ct.sideR;
+						}
 
-					maxCol = Math.max(maxCol, c + rightSide);
-					maxRow = Math.max(maxRow, r);
+						maxCol = Math.max(maxCol, c + rightSide);
+						maxRow = Math.max(maxRow, r);
+					}
 				}
-			}
-		});
+			});
+		}
 
 		return new AscCommon.CellBase(maxRow, maxCol);
 	};
@@ -8157,6 +8169,7 @@
         }
 
         firstUpdateRow = asc.getMinValueOrNull(firstUpdateRow, this._prepareCellTextMetricsCache2(range.r1, range.r2));
+
         if (null !== firstUpdateRow || this.isChanged) {
             // Убрал это из _calcCellsTextMetrics, т.к. вызов был для каждого сектора(добавляло тормоза: баг 20388)
             // Код нужен для бага http://bugzilla.onlyoffice.com/show_bug.cgi?id=13875
