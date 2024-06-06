@@ -2542,9 +2542,10 @@ CPresentation.prototype.Get_Id = function () {
 CPresentation.prototype.AddNewMasterSlide = function () {
 	if(!this.IsMasterMode) return;
 	let oMaster = AscCommonSlide.CreateDefaultMaster();
-	oMaster.changeSize(this.GetWidthMM(), this.GetHeightMM());
+	//oMaster.changeSize(this.GetWidthMM(), this.GetHeightMM());
+	oMaster.setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 	for(let nLt = 0 ; nLt < oMaster.sldLayoutLst.length; ++nLt) {
-		oMaster.sldLayoutLst[nLt].changeSize(this.GetWidthMM(), this.GetHeightMM());
+		oMaster.sldLayoutLst[nLt].setSlideSize(this.GetWidthMM(), this.GetHeightMM());
 	}
 	this.addSlideMaster(this.slideMasters.length, oMaster);
 	this.Recalculate();
