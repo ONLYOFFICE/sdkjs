@@ -1255,7 +1255,8 @@
 	CCollaborativeEditingBase.prototype.PreUndo = function()
 	{
 		let logicDocument = this.m_oLogicDocument;
-
+		
+		logicDocument.sendEvent("asc_onBeforeUndoRedoInCollaboration");
 		logicDocument.DrawingDocument.EndTrackTable(null, true);
 		logicDocument.TurnOffCheckChartSelection();
 
@@ -1271,6 +1272,7 @@
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
 		logicDocument.UpdateRulers();
+		logicDocument.sendEvent("asc_onUndoRedoInCollaboration");
 	};
 	CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
 	{
