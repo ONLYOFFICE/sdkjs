@@ -259,8 +259,8 @@
 
         if (oGraphics.isThumbnails) {
             let oTr = oGraphics.GetTransform();
-            wScaled *= oTr.sy;
-            hScaled *= oTr.sy;
+            wScaled = wScaled * oTr.sy + 0.5 >> 0;
+            hScaled = hScaled * oTr.sy + 0.5 >> 0;
         }
         
         // Set the canvas dimensions to match the image
