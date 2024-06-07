@@ -3038,7 +3038,7 @@ $(function () {
 	});
 
 	QUnit.test('sortRangeTest', function (assert) {
-		let range;
+		let range, expectedRes;
 
 		ws.getRange2("A1:Z100").cleanAll();
 
@@ -3117,6 +3117,156 @@ $(function () {
 
 		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
 		compareData(assert, range.bbox, [['-2'],['-1'],['1'],['2'],['12345'],['a'],['á'],['é'],['é'],['g'],['TEST0'],['test1'],['Test2'],['TEST2'],['аА'],['АА'],['аа'],['녕하'],['안세요'],['하']], "check_sort_5");
+
+		/* MS ставит арабский алфавит выше японского, javascript сортирует иначе*/
+
+		// TODO протестировать в gs, lo
+
+		testData = [
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['А'],['أ'],['あ']], "Asc check_sort_6");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['あ'],['أ'],['А']], "Desc check_sort_6");
+
+		testData = [
+			['A'],	// english
+			['A'],	// spanish
+			['A'],	// german
+			['Ä'],	// german
+			['A'],	// french
+			['À'],	// french
+			['A'],	// hungarian
+			['Á'],	// hungarian
+			['A'],	// turkish
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['A'],['A'],['A'],['A'],['A'],['A'],['Á'],['À'],['Ä'],['А'],['أ'],['あ']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_7");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_7");
+		
+		// Tests with more of languages
+		// testData = [
+		// 	['Test'],
+		// 	['测试'],
+		// 	['परीक्षण'],
+		// 	['Prueba'],
+		// 	['Test'],
+		// 	['اختبار'],
+		// 	['পরীক্ষা'],
+		// 	['Тест'],
+		// 	['Teste'],
+		// 	['Tes'],
+		// 	['ٹیسٹ'],
+		// 	['Test'],
+		// 	['テスト'],
+		// 	['ਟੈਸਟ'],
+		// 	['시험'],
+		// 	['Test'],
+		// 	['சோதனை'],
+		// 	['Kiểm tra']
+		// ];
+
+		testData = [
+			['City'],	// eng
+			['城市'],	// cn
+			['शहर'],	// hindi
+			['Ciudad'],	// esp
+			['Ville'],	// fr
+			['مدينة'],	// arabic
+			['শহর'],	// bengal
+			['Город'],	// ru
+			['Cidade'],	// pt-pt
+			['Kota'],	// indonesian
+			['Város'],	// Magyar
+			['Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['Cidade'],['City'],['Ciudad'],['Kota'],['Stadt'],['Város'],['Ville'],['Город'],['مدينة'],['शहर'],['শহর'],['城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_8");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_8");
+		
+		testData = [
+			['123City'],	// eng
+			['123城市'],	// cn
+			['123शहर'],		// hindi
+			['123Ciudad'],	// esp
+			['123Ville'],	// fr
+			['123' + 'مدينة'],	// arabic
+			['123শহর'],		// bengal
+			['123Город'],	// ru
+			['123Cidade'],	// pt-pt
+			['123Kota'],	// indonesian
+			['123Város'],	// Magyar
+			['123Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['123Cidade'],['123City'],['123Ciudad'],['123Kota'],['123Stadt'],['123Város'],['123Ville'],['123Город'],['123مدينة'],['123शहर'],['123শহর'],['123城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_9");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_9");
+
+		testData = [
+			['2e2de2'],
+			['zxc'],
+			['f'],
+			['_d'],
+			['edasd'],
+			['SiM`Gl23'],
+			['dd23dd'],	
+			['3e2de2'],
+			['SDY'],
+			['3e2de3'],
+			['2e3de2'],
+			['__z']
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['__z'],['_d'],['2e2de2'],['2e3de2'],['3e2de2'],['3e2de3'],['dd23dd'],['edasd'],['f'],['SDY'],['SiM`Gl23'],['zxc']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_10");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_10");
+
+		// testData = [
+		// 	['1'],
+		// 	['-9999'],
+		// 	['123ABCDE123'],
+		// 	['123AÁBCCs123'],
+		// ];
+
+
 	});
 	
 
