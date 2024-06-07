@@ -2734,7 +2734,7 @@
     };
 
     // ----- Drawing for print -----
-    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea) {
+    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea, opt_prepareTextMetrics) {
         if (0 > range.r2 || 0 > range.c2) {
 			// Ничего нет
             return;
@@ -2970,6 +2970,13 @@
 			}
 		}
 
+		let prepareTextMetricsRowMax = 0;
+		let _range, step = 1000;
+		if (opt_prepareTextMetrics) {
+			_range =  new Asc.Range(range.c1, range.r1, range.c2, range.r1 + step);
+			prepareTextMetricsRowMax = step;
+			this._prepareCellTextMetricsCache(_range);
+		}
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
 				break;
@@ -3011,6 +3018,13 @@
 
 			let rightBorderWidth = null;
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
+
+				if (opt_prepareTextMetrics && rowIndex === prepareTextMetricsRowMax) {
+					_range =  new Asc.Range(range.c1, prepareTextMetricsRowMax, range.c2, prepareTextMetricsRowMax + step);
+					prepareTextMetricsRowMax += step;
+					this._prepareCellTextMetricsCache(_range);
+				}
+
 				let currentRowHeight = _getRowHeight(rowIndex) * scale;
 				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
 				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2);
@@ -3348,8 +3362,8 @@
 				}
 			}
 		} else {
-			var _maxRowCol = this.getMaxRowColWithData(doNotRecalc);
-			range = new asc_Range(0, 0, _maxRowCol.col, _maxRowCol.row);
+			/*var _maxRowCol = this.getMaxRowColWithData(doNotRecalc);
+			range = new asc_Range(0, 0, _maxRowCol.col, _maxRowCol.row);*/
 
 			//подменяем scale на временный для печати выделенной области
 			if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
@@ -3358,7 +3372,7 @@
 				tempPrintScale = checkCustomScaleProps();
 			}
 
-			this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
+			this._calcPagesPrint(new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1), pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint, null, true);
 		}
 
 		if(oldPagePrintOptions) {
@@ -4060,7 +4074,7 @@
 				calcScaleByRanges(printAreaRanges);
 			} else {
 				//calculate width/height all columns/rows
-				var range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
+				/*var range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
 				var maxCell = this._checkPrintRange(range);
 				var maxCol = maxCell.col;
 				var maxRow = maxCell.row;
@@ -4077,10 +4091,10 @@
 				if (maxCell) {
 					maxCol = Math.max(maxCol, maxCell.col);
 					maxRow = Math.max(maxRow, maxCell.row);
-				}
+				}*/
 				//TODO print area
-				wScale = doCalcScaleWidth(0, maxCol);
-				hScale = doCalcScaleHeight(0, maxRow);
+				wScale = doCalcScaleWidth(0, this.model.getColsCount() - 1);
+				hScale = doCalcScaleHeight(0, this.model.getRowsCount() - 1);
 			}
 		}
 
