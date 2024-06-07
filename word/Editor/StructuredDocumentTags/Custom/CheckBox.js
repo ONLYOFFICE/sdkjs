@@ -163,8 +163,11 @@
 	{
 		this.ChoiceName = name;
 	};
-	CSdtCheckBoxPr.prototype.GetChoiceName = function()
+	CSdtCheckBoxPr.prototype.GetChoiceName = function(returnRaw)
 	{
+		if (returnRaw)
+			return this.ChoiceName;
+		
 		return this.ChoiceName ? this.ChoiceName : "";
 	};
 	//--------------------------------------------------------export----------------------------------------------------

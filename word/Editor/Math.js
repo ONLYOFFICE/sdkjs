@@ -3459,3 +3459,4 @@ CMathRecalculateObject.prototype.Compare = function(PageInfo)
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].MathMenu = MathMenu;
 window['AscCommonWord'].ParaMath = ParaMath;
+window['AscWord'].ParaMath = ParaMath;

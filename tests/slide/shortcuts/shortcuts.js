@@ -79,8 +79,6 @@
 	function CreateSlide()
 	{
 		logicDocument.addNextSlide(0);
-		editor.WordControl.Thumbnails.SlidesCount = logicDocument.Slides.length;
-		editor.WordControl.m_oDrawingDocument.SlidesCount = logicDocument.Slides.length;
 		editor.WordControl.Thumbnails.CalculatePlaces();
 	}
 

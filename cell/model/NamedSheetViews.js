@@ -333,8 +333,7 @@
 
 		var baseName, counter;
 		if (!name) {
-			//TODO перевод
-			name = "View";
+			name = AscCommon.translateManager.getValue("View");
 
 			baseName = name;
 			counter = 1;

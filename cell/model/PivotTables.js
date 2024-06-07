@@ -6499,7 +6499,8 @@ CT_pivotTableDefinition.prototype.filterPivotSlicers = function(api, fld, confir
 		var pivotField = this.asc_getPivotFields()[fld];
 		var cacheField = this.asc_getCacheFields()[fld];
 		var values = pivotField.getFilterObject(cacheField, null, this.getPivotFieldNum(fld));
-		changeRes = slicerCache.applyPivotFilter(api, values, this, confirmation);
+		let changeResCur = slicerCache.applyPivotFilter(api, values, this, confirmation);
+		changeRes.merge(changeResCur);
 	}
 	return changeRes;
 };
@@ -9490,7 +9491,10 @@ CT_DateTime.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["v"];
 		if (undefined !== val) {
-			this.v = Asc.cDate.prototype.fromISO8601(val).getExcelDateWithTime2();
+			let date = Asc.cDate.prototype.fromISO8601(val);
+			if (date) {
+				this.v = date.getExcelDateWithTime2();
+			}
 		}
 		val = vals["u"];
 		if (undefined !== val) {
@@ -19928,6 +19932,22 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 	return oCellValue;
 };
 
+function PivotChangeResult(error, warning, changed, ranges, updateRes){
+	this.error = error || c_oAscError.ID.No;
+	this.warning = warning || c_oAscError.ID.No;
+	this.changedPivots = changed ? [changed] : [];
+	this.ranges = ranges || [];
+	this.updateRes = updateRes;
+}
+PivotChangeResult.prototype.merge = function(changeRes) {
+	this.error = changeRes.error;
+	this.warning = changeRes.warning;
+	this.changedPivots = this.changedPivots.concat(changeRes.changedPivots);
+	this.ranges = this.ranges.concat(changeRes.ranges);
+	this.updateRes = changeRes.updateRes;
+};
+
+
 var prot;
 
 window['Asc']['c_oAscSourceType'] = window['Asc'].c_oAscSourceType = c_oAscSourceType;
@@ -20164,6 +20184,7 @@ window['AscCommonExcel'].ToName_ST_ItemType = ToName_ST_ItemType;
 window['AscCommonExcel'].ToName_ST_DataConsolidateFunction = ToName_ST_DataConsolidateFunction;
 window['AscCommonExcel'].cmpPivotItems = cmpPivotItems;
 window['AscCommonExcel'].DataRowTraversal = DataRowTraversal;
+window['AscCommonExcel'].PivotChangeResult = PivotChangeResult;
 
 window['Asc']['CT_PivotCacheDefinition'] = window['Asc'].CT_PivotCacheDefinition = CT_PivotCacheDefinition;
 window['Asc']['CT_pivotTableDefinitionX14'] = window['Asc'].CT_pivotTableDefinitionX14 = CT_pivotTableDefinitionX14;

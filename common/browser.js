@@ -62,7 +62,8 @@ var AscBrowser = {
     isNeedEmulateUpload : false,
     chromeVersion : 70,
     iosVersion : 13,
-    isAndroidNativeApp : false
+    isAndroidNativeApp : false,
+	safariVersion : 17004001
 };
 
 // user agent lower case
@@ -97,6 +98,28 @@ AscBrowser.isSafari = !AscBrowser.isIE && !AscBrowser.isChrome && (AscBrowser.us
 
 // macOs safari detect
 AscBrowser.isSafariMacOs = (AscBrowser.isSafari && AscBrowser.isMacOs);
+
+if (AscBrowser.isSafari)
+{
+	let testVersion =  AscBrowser.userAgent.indexOf("version/");
+	if (-1 !== testVersion)
+	{
+		let last = AscBrowser.userAgent.indexOf(" ", testVersion);
+		let ver = AscBrowser.userAgent.substring(testVersion + 8, last);
+		let arrVer = ver.split(".");
+		try
+		{
+			while (3 > arrVer.length)
+				arrVer.push("0");
+
+			AscBrowser.safariVersion = 1000000 * parseInt(arrVer[0]) +  1000 * parseInt(arrVer[1]) + parseInt(arrVer[2]);
+		}
+		catch (err)
+		{
+			AscBrowser.safariVersion = 17004001;
+		}
+	}
+}
 
 // apple devices detect
 AscBrowser.isAppleDevices = (AscBrowser.userAgent.indexOf("ipad") > -1 ||

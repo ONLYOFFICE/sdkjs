@@ -1302,6 +1302,14 @@
 						return result;
 					}
 
+				case 219:
+				case 221:
+					if (!ctrlKey || t.getCellEditMode() || !canEdit || selectionDialogMode) {
+						return true;
+					}
+					stop();
+					t.view.setFontAttributes("changeFontSize", event.which === 221);
+					return result;
 				default:
 					t._setSkipKeyPress(false);
 					return true;

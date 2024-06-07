@@ -34,14 +34,21 @@
 
 $(function ()
 {
+	const pageH  = 1000;
+	const pageW  = 500;
+	const marginT = 50;
+	const marginB = 50;
+	const marginR = 50;
+	const marginL = 50;
+	
 	const logicDocument = AscTest.CreateLogicDocument();
 	
 	function SetupDocumentSection()
 	{
 		AscTest.ClearDocument();
 		let sectPr = AscTest.GetFinalSection();
-		sectPr.SetPageSize(500, 1000);
-		sectPr.SetPageMargins(50, 50, 50, 50);
+		sectPr.SetPageSize(pageW, pageH);
+		sectPr.SetPageMargins(marginL, marginT, marginR, marginB);
 	}
 	SetupDocumentSection();
 	
@@ -119,6 +126,48 @@ $(function ()
 		assert.ok(true, "Fill in paragraphs with text");
 		CheckPositions();
 
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Current);
+	});
+	
+	QUnit.test("Check for a case when a text-wrapped object  extends beyond the boundaries of the fields (#68037)", function (assert)
+	{
+		let p1 = AscTest.CreateParagraph();
+		let p2 = AscTest.CreateParagraph();
+		
+		p1.SetParagraphSpacing({Before : 0, After : pageH - AscTest.FontHeight - 70 - marginT - marginB, LineRule : linerule_Auto, Line : 1});
+		
+		let p1Bottom = pageH - 70 - marginB;
+		
+		let d1 = CreateImageInParagraph(p2, 50, 50);
+		
+		AscTest.ClearDocument();
+		logicDocument.PushToContent(p1);
+		logicDocument.PushToContent(p2);
+		
+		assert.strictEqual(logicDocument.GetElementsCount(), 2, "Should be 2 paragraphs in the document");
+		
+		let offsetY = 40;
+		
+		d1.Set_DrawingType(drawing_Anchor);
+		d1.Set_PositionH(Asc.c_oAscRelativeFromH.Column, false, 0);
+		d1.Set_PositionV(Asc.c_oAscRelativeFromV.Paragraph, false, offsetY);
+		d1.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+		d1.Set_BehindDoc(false);
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word14);
+		AscTest.Recalculate();
+		assert.ok(true, "Set compatibility mode equal to 14 (Word2010)");
+		assert.strictEqual(logicDocument.GetPagesCount(), 1, "Check pages count");
+		assert.strictEqual(d1.X, marginL, "Check drawing1.x");
+		assert.strictEqual(d1.Y, p1Bottom + offsetY, "Check drawing1.y");
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		AscTest.Recalculate();
+		assert.ok(true, "Set compatibility mode equal to 15 (Word2013-2019)");
+		assert.strictEqual(logicDocument.GetPagesCount(), 2, "Check pages count");
+		assert.strictEqual(d1.X, marginL, "Check drawing1.x");
+		assert.strictEqual(d1.Y, marginT + offsetY, "Check drawing1.y");
+		
 		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Current);
 	});
 	

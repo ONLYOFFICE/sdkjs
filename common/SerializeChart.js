@@ -7373,7 +7373,6 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         res = c_oSerConstants.ReadUnknown;
     }
     else if(c_oserct_chartspaceSTYLES === type) {
-        this.curChart.oChartStyleData = AscCommon.fSaveStream(this.bcr.stream, length);
         oNewVal = new AscFormat.CChartStyle();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartStyle(t, l, oNewVal);
@@ -7383,7 +7382,6 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         }
     }
     else if(c_oserct_chartspaceCOLORS === type) {
-        this.curChart.oChartColorsData = AscCommon.fSaveStream(this.bcr.stream, length);
         oNewVal = new AscFormat.CChartColors();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartColors(t, l, oNewVal);
@@ -10696,7 +10694,6 @@ BinaryChartReader.prototype.ReadCT_BubbleChart = function (type, length, val, aC
     }
     else if (c_oserct_bubblechartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11012,7 +11009,6 @@ BinaryChartReader.prototype.ReadCT_OfPieChart = function (type, length, val, aCh
     }
     else if (c_oserct_ofpiechartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11206,7 +11202,6 @@ BinaryChartReader.prototype.ReadCT_Bar3DChart = function (type, length, val, aCh
     }
     else if (c_oserct_bar3dchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11492,7 +11487,6 @@ BinaryChartReader.prototype.ReadCT_BarChart = function (type, length, val, aChar
     }
     else if (c_oserct_barchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11576,7 +11570,6 @@ BinaryChartReader.prototype.ReadCT_DoughnutChart = function (type, length, val, 
     }
     else if (c_oserct_doughnutchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11642,7 +11635,6 @@ BinaryChartReader.prototype.ReadCT_Pie3DChart = function (type, length, val, aCh
     }
     else if (c_oserct_pie3dchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11680,7 +11672,6 @@ BinaryChartReader.prototype.ReadCT_PieChart = function (type, length, val, aChar
     }
     else if (c_oserct_piechartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -11862,7 +11853,6 @@ BinaryChartReader.prototype.ReadCT_ScatterChart = function (type, length, val, a
     }
     else if (c_oserct_scatterchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12012,7 +12002,6 @@ BinaryChartReader.prototype.ReadCT_RadarChart = function (type, length, val, aCh
     }
     else if (c_oserct_radarchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12050,7 +12039,6 @@ BinaryChartReader.prototype.ReadCT_StockChart = function (type, length, val, aCh
     }
     else if (c_oserct_stockchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12294,7 +12282,6 @@ BinaryChartReader.prototype.ReadCT_Line3DChart = function (type, length, val, aC
     }
     else if (c_oserct_line3dchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12383,7 +12370,6 @@ BinaryChartReader.prototype.ReadCT_LineChart = function (type, length, val, aCha
     }
     else if (c_oserct_linechartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12484,7 +12470,6 @@ BinaryChartReader.prototype.ReadCT_Area3DChart = function (type, length, val, aC
     }
     else if (c_oserct_area3dchartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12652,7 +12637,6 @@ BinaryChartReader.prototype.ReadCT_AreaChart = function (type, length, val, aCha
     }
     else if (c_oserct_areachartDLBLS === type) {
         var oNewVal = new AscFormat.CDLbls();
-        this.curChart.oDataLablesData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DLbls(t, l, oNewVal);
         });
@@ -12830,7 +12814,6 @@ BinaryChartReader.prototype.ReadCT_PlotArea = function (type, length, val, aChar
     else if (c_oserct_plotareaCATAX === type) {
         var oNewVal = new AscFormat.CCatAx();
 
-        this.curChart.oCatAxData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_CatAx(t, l, oNewVal);
         });
@@ -12851,7 +12834,6 @@ BinaryChartReader.prototype.ReadCT_PlotArea = function (type, length, val, aChar
         val.addAxis(oNewVal);
     }
     else if (c_oserct_plotareaVALAX === type) {
-        this.curChart.oValAxData = AscCommon.fSaveStream(this.bcr.stream, length);
         var oNewVal = new AscFormat.CValAx();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ValAx(t, l, oNewVal);
@@ -13142,7 +13124,6 @@ BinaryChartReader.prototype.ReadCT_Chart = function (type, length, val) {
     else if (c_oserct_chartVIEW3D === type) {
         var oNewVal = new AscFormat.CView3d();
 
-        this.curChart.oView3DData = AscCommon.fSaveStream(this.bcr.stream, length);
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_View3D(t, l, oNewVal);
         });
@@ -13179,7 +13160,6 @@ BinaryChartReader.prototype.ReadCT_Chart = function (type, length, val) {
 		val.setPlotArea(oNewVal);
     }
     else if (c_oserct_chartLEGEND === type) {
-        this.curChart.oLegendData = AscCommon.fSaveStream(this.bcr.stream, length);
         var oNewVal = new AscFormat.CLegend();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Legend(t, l, oNewVal);

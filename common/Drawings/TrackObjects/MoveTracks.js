@@ -697,17 +697,25 @@ function MoveAnnotationTrack(originalObject)
     this.draw = function(oDrawer)
     {
         // рисуем на отдельном канвасе
-        this.objectToDraw.SetPage(this.pageIndex);
+        let nPage = this.pageIndex;
+        this.objectToDraw.SetPage(nPage);
 
-        let page = this.viewer.drawingPages[this.objectToDraw.GetPage()];
+        let page = this.viewer.drawingPages[nPage];
         if (!page)
             return;
 
-        if(AscFormat.isRealNumber(this.objectToDraw.GetPage()) && oDrawer.SetCurrentPage)
+        if(AscFormat.isRealNumber(nPage) && oDrawer.SetCurrentPage)
         {
-            oDrawer.SetCurrentPage(this.objectToDraw.GetPage());
+            oDrawer.SetCurrentPage(nPage);
         }
-        
+
+        let oOverlay = oDrawer.m_oOverlay || oDrawer;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+
         let xCenter = this.viewer.width >> 1;
 		let yPos = this.viewer.scrollY >> 0;
 		if (this.viewer.documentWidth > this.viewer.width)
@@ -726,11 +734,12 @@ function MoveAnnotationTrack(originalObject)
         
         let oGraphicsPDF, oGraphicsWord;
         oGraphicsPDF = new AscPDF.CPDFGraphics();
-        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
+        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height, this.viewer.file.getPageWidth(nPage) , this.viewer.file.getPageHeight(nPage));
         oGraphicsPDF.SetGlobalAlpha(1);
 
         oGraphicsPDF.SetCurPage(this.objectToDraw.GetPage());
-        switch (this.objectToDraw.GetType()) {
+        switch (this.objectToDraw.GetType())
+        {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
             case AscPDF.ANNOTATIONS_TYPES.Line:
             case AscPDF.ANNOTATIONS_TYPES.Square:
@@ -758,6 +767,9 @@ function MoveAnnotationTrack(originalObject)
         else
             this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
 
+        if (true == this.viewer.isLandscapePage(nPage))
+            x = x + (w - h) / 2;
+
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };
 
@@ -767,26 +779,11 @@ function MoveAnnotationTrack(originalObject)
             return;
         }
 
-        let nPage       = this.originalObject.GetPage();
-        let nPageHeight = this.viewer.drawingPages[nPage].H / this.viewer.zoom;
-        let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
-
-        // не даем выйти за границы листа
-        let X = Math.max(this.x, 5);
-        let Y = Math.max(this.y, 5);
-
-        if (X + this.originalObject._pagePos.w > nPageWidth) {
-            X = nPageWidth - this.originalObject._pagePos.w;
-        }
-        if (Y + this.originalObject._pagePos.h > nPageHeight) {
-            Y = nPageHeight - this.originalObject._pagePos.h;
-        }
-
-        let oDoc = this.viewer.getPDFDoc();
-        oDoc.CreateNewHistoryPoint();
-        this.originalObject.SetPosition(X, Y);
+        this.originalObject.SetPosition(this.x, this.y);
         this.originalObject.SetPage(this.pageIndex);
-        oDoc.TurnOffHistory();
+        if (this.originalObject.IsFreeText()) {
+            this.originalObject.onAfterMove();
+        }
     };
 
     this.getBounds = function()

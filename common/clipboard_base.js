@@ -105,6 +105,7 @@
 
 		this.bSaveFormat = false; //для вставки, допустим, из плагина необходимо чтобы при добавлении текста в шейп сохранялось форматирование
 		this.bCut = false;
+		this.forceCutSelection = null;
 
 		this.pastedFrom = null;
 

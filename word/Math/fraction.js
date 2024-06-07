@@ -621,33 +621,33 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX, !this.getDenominator().haveMixedContent());
 
 	if (true === isLaTeX)
-    {
-        if (strNumerator[0] !== "{")
-            strNumerator = "{" + strNumerator + "}";
-        if (strDenominator[0] !== "{")
-            strDenominator = "{" + strDenominator + "}";
+	{
+		if (strNumerator[0] !== "{")
+			strNumerator = "{" + strNumerator + "}";
+		if (strDenominator[0] !== "{")
+			strDenominator = "{" + strDenominator + "}";
 
 		switch (this.Pr.type)
-        {
-			case 0:	strTemp += '\\frac'; break;
-			case 1:	strTemp += '\\sfrac'; break;
-			case 2:	strTemp += '\\cfrac'; break;
-            case 3: strTemp += '\\binom'; break;
-			default: strTemp += '\\frac';  break;
+		{
+			case BAR_FRACTION:		strTemp += '\\frac'; break;
+			case SKEWED_FRACTION:	strTemp += '\\sfrac'; break;
+			case LINEAR_FRACTION:	strTemp += '\\cfrac'; break;
+			case NO_BAR_FRACTION:	strTemp += '\\binom'; break;
+			default:				strTemp += '\\frac';  break;
 		}
 
 		strTemp += strNumerator + strDenominator;
 	}
-    else
-    {
+	else
+	{
 		strTemp += strNumerator;
 		switch (this.Pr.type)
-        {
-			case 0:	strTemp += '/';	break;
-			case 1:	strTemp += '⁄';	break;
-			case 2:	strTemp += '⊘';	break;
-			case 3:	strTemp += String.fromCharCode(166); break;
-			default:strTemp += String.fromCharCode(47); break;
+		{
+			case BAR_FRACTION:		strTemp += '/';	break;
+			case SKEWED_FRACTION:	strTemp += '⁄';	break;
+			case LINEAR_FRACTION:	strTemp += '∕';	break;
+			case NO_BAR_FRACTION:	strTemp += '¦'; break;
+			default:				strTemp += '/'; break;
 		}
 
 		strTemp += strDenominator + " ";

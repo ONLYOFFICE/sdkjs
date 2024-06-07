@@ -223,6 +223,9 @@
     CBaseField.prototype.IsForm = function() {
         return true;
     };
+    CBaseField.prototype.IsDrawing = function() {
+        return false;
+     };
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
@@ -291,12 +294,8 @@
 
 
         let oViewer = editor.getDocumentRenderer();
-        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
-            if (oViewer.pagesInfo.pages[nPage].fields == null) {
-                oViewer.pagesInfo.pages[nPage].fields = [];
-            }
-
             if (nCurIdxOnPage != -1)
                 oViewer.pagesInfo.pages[nCurPage].fields.splice(nCurIdxOnPage, 1);
 
@@ -319,6 +318,7 @@
 	 */
     CBaseField.prototype.AddKid = function(oField) {
         this._kids.push(oField);
+        AscCommon.History.Add(new CChangesPDFFormAddKid(this, this._kids.length - 1, [oField]))
         oField._parent = this;
     };
     CBaseField.prototype.GetKids = function() {
@@ -329,6 +329,24 @@
             return this;
 
         return this._kids[nPos];
+    };
+    /**
+	 * Removes field from kids.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+     * @param {CBaseField} oField - the field to remove.
+	 * @returns {boolean} - returns false if field isn't in the field kids.
+	 */
+    CBaseField.prototype.RemoveKid = function(oField) {
+        let nIndex = this._kids.indexOf(oField);
+        if (nIndex != -1) {
+            this._kids.splice(nIndex, 1);
+            AscCommon.History.Add(new CChangesPDFFormRemoveKid(this, nIndex, [oField]))
+            oField._parent = null;
+            return true;
+        }
+
+        return false;
     };
     
     /**
@@ -355,68 +373,18 @@
     };
 
     CBaseField.prototype.Recalculate = function() {};
-    /**
-	 * Removes field from kids.
-	 * @memberof CBaseField
-	 * @typeofeditors ["PDF"]
-     * @param {CBaseField} oField - the field to remove.
-	 * @returns {boolean} - returns false if field isn't in the field kids.
-	 */
-    CBaseField.prototype.RemoveKid = function(oField) {
-        let nIndex = this._kids.indexOf(oField);
-        if (nIndex != -1) {
-            this._kids.splice(nIndex, 1);
-            oField._parent = null;
-            return true;
-        }
-
-        return false;
+    
+    CBaseField.prototype.GetDocContent = function(bFormatContent) {
+        return bFormatContent ? this.contentFormat : this.content;
     };
 
-    CBaseField.prototype.GetDocContent = function() {
-        return this.content;
-    };
-
-    CBaseField.prototype.getFormRelRect = function()
-    {
+    CBaseField.prototype.getFormRelRect = function() {
         return this.contentRect;
     };
-    CBaseField.prototype.getFormRect = function()
-    {
+    CBaseField.prototype.getFormRect = function() {
         return this._formRect;
     };
     
-    CBaseField.prototype.IntersectWithRect = function(X, Y, W, H)
-    {
-        let oViewer     = editor.getDocumentRenderer();
-        var arrRects    = [];
-        var oBounds     = this.getFormRelRect();
-
-        let nPage = this.GetPage();
-        let oPage = oViewer.pageDetector.pages.find(function(page) {
-            return page.num == nPage;
-        });
-        
-        let nPageIndX = oPage.x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-        let nPageIndY = oPage.y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-
-        var nLeft   = Math.max(X, oBounds.X) + nPageIndX / oViewer.zoom;
-        var nRight  = Math.min(X + W, oBounds.X + oBounds.W) + nPageIndX / oViewer.zoom;
-        var nTop    = Math.max(Y, oBounds.Y) + nPageIndY / oViewer.zoom;
-        var nBottom = Math.min(Y + H, oBounds.Y + oBounds.H) + nPageIndY / oViewer.zoom;
-
-        if (nLeft < nRight && nTop < nBottom)
-        {
-            arrRects.push({
-                X : nLeft,
-                Y : nTop,
-                W : nRight - nLeft,
-                H : nBottom - nTop
-            });
-        }
-
-        return arrRects;
-    };
     CBaseField.prototype.GetFullName = function() {
         if (this._parent)
         {
@@ -580,6 +548,19 @@
         }
     };
 
+    /**
+	 * Sets a flag that we have entered the field.
+     * This is not the same as an doc.activeField.
+	 * @memberof CBaseField
+     * @param {boolean} bInField
+	 */
+    CBaseField.prototype.SetInForm = function(bInField) {
+        this.isInForm = bInField;
+    };
+    CBaseField.prototype.IsInForm = function() {
+        return !!this.isInForm;
+    };
+    
     /**
 	 * Gets the JavaScript action of the field for a given trigger.
 	 * @memberof CBaseField
@@ -783,6 +764,11 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
+        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        if (isLandscape) {
+            indLeft = indLeft + (w - h) / 2;
+        }
+
         let aOrigRect = this.GetOrigRect();
         let X = aOrigRect[0] * nScale + indLeft;
         let Y = aOrigRect[1] * nScale + indTop;
@@ -791,8 +777,9 @@
 
         if (null == aBgColor)
             oCtx.globalAlpha = 0.8;
-
+        
         oCtx.globalCompositeOperation = "destination-over";
+        
         if (this.IsNeedDrawFromStream())
             AscPDF.startMultiplyMode(oCtx);
         
@@ -819,10 +806,10 @@
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
+        
         AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
-        let oViewer     = editor.getDocumentRenderer();
         let aOringRect  = this.GetOrigRect();
         let aBgColor;
         if (this.GetType() == AscPDF.FIELD_TYPES.button)
@@ -915,7 +902,7 @@
                     if (color == null)
                         break;
 
-                    oGraphicsPDF.SetLineDash([5 * oViewer.zoom]);
+                    oGraphicsPDF.SetLineDash([3]);
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                     oGraphicsPDF.Stroke();
@@ -1049,7 +1036,7 @@
                     if (color == null)
                         break;
 
-                    oGraphicsPDF.SetLineDash([5 * oViewer.zoom]);
+                    oGraphicsPDF.SetLineDash([3]);
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
@@ -1233,23 +1220,7 @@
 
         return oColor;
     };
-    /**
-	 * Creates new history point for cur field.
-	 * @memberof CComboBoxField
-	 * @typeofeditors ["PDF"]
-     * @param {boolean} isCanUnion - is it possible to union a point with others
-     * @returns {object}
-	 */
-    CBaseField.prototype.CreateNewHistoryPoint = function(isCanUnion) {
-        if (isCanUnion == null)
-            isCanUnion = false;
-
-        if (AscCommon.History.IsOn() == false)
-            AscCommon.History.TurnOn();
-        AscCommon.History.Create_NewPoint();
-        AscCommon.History.SetAdditionalFormFilling(this);
-        AscCommon.History.Points[AscCommon.History.Points.length - 1].Additional.CanUnion = isCanUnion;
-    };
+    
     CBaseField.prototype.DrawSelected = function() {
         return;
         /*
@@ -1281,6 +1252,9 @@
             this._needRecalc = false;
         }
         else {
+            if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.GetType())) {
+                this.GetDocument().SetNeedUpdateTarget(true);
+            }
             this._needRecalc = true;
             if (bSkipAddToRedraw != true)
                 this.AddToRedraw();
@@ -1297,6 +1271,17 @@
             this.IsWidget() && this.SetDrawFromStream(!isChanged);
         }
     };
+
+    CBaseField.prototype.UndoNotAppliedChanges = function() {
+        let isChanged = this.IsChanged();
+        this.SetValue(this.GetApiValue());
+        this.SetNeedRecalc(true);
+        this.SetNeedCommit(false);
+
+        if (!isChanged)
+            this.SetWasChanged(false);
+    };
+
     CBaseField.prototype.ClearCache = function() {
         this._originView.normal     = null;
         this._originView.mouseDown  = null;
@@ -1330,11 +1315,13 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        let _t      = this;
+        let nPage   = this.GetPage();
         
         function setRedrawPageOnRepaint() {
-            if (oViewer.pagesInfo.pages[_t.GetPage()])
-                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawForms = true;
+            if (oViewer.pagesInfo.pages[nPage]) {
+                oViewer.pagesInfo.pages[nPage].needRedrawForms = true;
+                // oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
         }
 
         oViewer.paint(setRedrawPageOnRepaint);
@@ -1441,91 +1428,7 @@
 	};
 	CBaseField.prototype.beforeCompositeInput = function() {
 	};
-	CBaseField.prototype.getRunForCompositeInput = function() {
-		return null;
-	};
 	CBaseField.prototype.EnterText = function(codePoints) {
-	};
-	CBaseField.prototype.beginCompositeInput = function() {
-		if (!this.canBeginCompositeInput() || this.compositeInput)
-			return;
-		
-		this.CreateNewHistoryPoint(true);
-		this.beforeCompositeInput();
-		let run = this.getRunForCompositeInput();
-		if (!run) {
-			// TODO: Cancel composite input
-			AscCommon.History.Undo();
-			return;
-		}
-		
-		this.compositeReplaceCount = 0;
-		this.compositeInput = new AscWord.RunCompositeInput(false);
-		this.compositeInput.begin(run);
-	};
-	CBaseField.prototype.endCompositeInput = function() {
-		if (!this.compositeInput)
-			return;
-		
-		// TODO: As a result, we have two history points here if the text was selected before input
-		//       To avoid this, we need to fix the issue with restoring a selection on undo or we should save the
-		//       selection positions when composite input begins
-		let codePoints = this.compositeInput.getCodePoints();
-		this.compositeInput.end();
-		this.compositeInput = null;
-		while (this.compositeReplaceCount > 0)
-		{
-			AscCommon.History.Undo();
-			--this.compositeReplaceCount;
-		}
-		
-		this.EnterText(codePoints);
-	};
-	CBaseField.prototype.addCompositeText = function(codePoint) {
-		if (!this.compositeInput)
-			return;
-		
-		this.CreateNewHistoryPoint(true);
-		this.compositeReplaceCount++;
-		this.compositeInput.add(codePoint);
-		this.SetNeedRecalc(true);
-		this.AddToRedraw();
-	};
-	CBaseField.prototype.removeCompositeText = function(count) {
-		if (!this.compositeInput)
-			return;
-		
-		this.CreateNewHistoryPoint(true);
-		this.compositeReplaceCount++;
-		this.compositeInput.remove(count);
-		this.SetNeedRecalc(true);
-		this.AddToRedraw();
-	};
-	CBaseField.prototype.replaceCompositeText = function(codePoints) {
-		if (!this.compositeInput)
-			return;
-		
-		this.CreateNewHistoryPoint(true);
-		this.compositeReplaceCount++;
-		this.compositeInput.replace(codePoints);
-		this.SetNeedRecalc(true);
-		this.AddToRedraw();
-	};
-	CBaseField.prototype.setPosInCompositeInput = function(pos) {
-		if (this.compositeInput)
-			this.compositeInput.setPos(pos);
-	};
-	CBaseField.prototype.getPosInCompositeInput = function(pos) {
-		if (this.compositeInput)
-			return this.compositeInput.getPos(pos);
-		
-		return 0;
-	};
-	CBaseField.prototype.getMaxPosInCompositeInput = function() {
-		if (this.compositeInput)
-			return this.compositeInput.getLength();
-		
-		return 0;
 	};
     /**
 	 * Sets default value for form.
@@ -1768,14 +1671,14 @@
 	 * @typeofeditors ["PDF"]
      * @returns {canvas}
 	 */
-    CBaseField.prototype.GetOriginView = function(nAPType) {
+    CBaseField.prototype.GetOriginView = function(nAPType, nPageW, nPageH) {
         if (this._apIdx == -1)
             return null;
 
         let oViewer = editor.getDocumentRenderer();
         let oFile   = oViewer.file;
         
-        let oApearanceInfo  = this.GetOriginViewInfo();
+        let oApearanceInfo  = this.GetOriginViewInfo(nPageW, nPageH);
         let oSavedView, oApInfoTmp;
         if (!oApearanceInfo)
             return null;
@@ -1880,7 +1783,7 @@
 	 * @typeofeditors ["PDF"]
      * @returns {Object}
 	 */
-    CBaseField.prototype.GetOriginViewInfo = function() {
+    CBaseField.prototype.GetOriginViewInfo = function(nPageW, nPageH) {
         let oViewer     = editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
@@ -1888,15 +1791,12 @@
             return page.originIndex == nPage;
         });
 
-        let w = ((oOriginPage.W * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
-        let h = ((oOriginPage.H * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
-
-        if (oOriginPage.fieldsAPInfo == null || oOriginPage.fieldsAPInfo.size.w != w || oOriginPage.fieldsAPInfo.size.h != h) {
+        if (oOriginPage.fieldsAPInfo == null || oOriginPage.fieldsAPInfo.size.w != nPageW || oOriginPage.fieldsAPInfo.size.h != nPageH) {
             oOriginPage.fieldsAPInfo = {
-                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, w, h),
+                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, nPageW, nPageH),
                 size: {
-                    w: w,
-                    h: h
+                    w: nPageW,
+                    h: nPageH
                 }
             }
         }
@@ -1913,18 +1813,29 @@
 		if (this.IsHidden())
 			return;
 		
-		if (this.IsNeedDrawFromStream())
-			this.DrawFromStream(pdfGraphics);
-		else
-			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+        if (pdfGraphics.isThumbnails) {
+            this.DrawBorders(pdfGraphics);
+        }
+        else {
+            if (this.IsNeedDrawFromStream())
+                this.DrawFromStream(pdfGraphics);
+            else
+                this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+        }
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
-        let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
-        let nGrScale        = oGraphicsPDF.GetScale();
+        let nAPType = this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined;
+
+        let originView = this.GetOriginView(nAPType, oGraphicsPDF.GetDrawingPageW(), oGraphicsPDF.GetDrawingPageH());
+
+        let aOringRect = this.GetOrigRect();
+
+        let X = (aOringRect[0] >> 0);
+        let Y = (aOringRect[1] >> 0);
 
         if (originView) {
-            oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+            oGraphicsPDF.DrawImageXY(originView, X, Y);
         }
     };
 	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
@@ -2006,14 +1917,6 @@
         this._textFont = sFontName;
         this.SetWasChanged(true);
         this.AddToRedraw();
-    };
-    CBaseField.prototype.IsInField = function() {
-        let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this) {
-            if (!this.IsNeedDrawHighlight() || this.GetType() == AscPDF.FIELD_TYPES.button)
-                return true;
-        }
-        return false;
     };
     CBaseField.prototype.SetFontKey = function(sKey) {
         this._fontKey = sKey;
@@ -2146,12 +2049,19 @@
 	 */
     CBaseField.prototype.Blur = function() {
         let oDoc = this.GetDocument();
+        oDoc.SetGlobalHistory();
+
+        this.SetInForm(false);
+
+        if (this.content && this.content.IsSelectionUse()) {
+            this.content.RemoveSelection();
+        }
+        
         if (oDoc.activeForm == this) {
             oDoc.activeForm = null;
             this.onBlur();
         }
     };
-
     // export
     CBaseField.prototype["getType"] = function() {
         return this.type;
@@ -2162,11 +2072,13 @@
     CBaseField.prototype["getPagePos"] = function() {
         if (!this._pagePos)
             return null;
+
+        let aOrigRect = this.GetOrigRect();
         return {
-            "x" : this._pagePos.x,
-            "y" : this._pagePos.y,
-            "w" : this._pagePos.w,
-            "h" : this._pagePos.h
+            "x" : aOrigRect[0],
+            "y" : aOrigRect[1],
+            "w" : (aOrigRect[2] - aOrigRect[0]),
+            "h" : (aOrigRect[3] - aOrigRect[1])
         };
     };
     CBaseField.prototype.WriteToBinaryBase = function(memory) {
@@ -2468,84 +2380,6 @@
 		return undefined;
 	}
 
-    /**
-	 * Converts global coords to page coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} nPage
-     * @param {boolean} isNotMM - coordinates in millimeters or not 
-	 * @typeofeditors ["PDF"]
-	 */
-    function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
-        // конвертация из глобальных x, y к mm кординатам самой страницы
-        let oViewer = editor.getDocumentRenderer();
-        var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        if (!pageObject) {
-            return {X: 0, Y: 0}
-        }
-
-        let result = {
-            X : isNotMM ? (pageObject.x) * nScaleY : (pageObject.x) * g_dKoef_pix_to_mm * nScaleY,
-            Y : isNotMM ? (pageObject.y) * nScaleX : (pageObject.y) * g_dKoef_pix_to_mm * nScaleX
-        };
-
-        result["X"] = result.X;
-        result["Y"] = result.Y;
-
-        return result;
-    }
-    /**
-	 * Converts page coords to global coords.
-     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
-     * @param {Number} x
-     * @param {Number} y
-     * @param {Number} nPage
-     * @param {boolean} isNotMM - coordinates in millimeters or not 
-	 * @typeofeditors ["PDF"]
-	 */
-    function GetGlobalCoordsByPageCoords(x, y, nPage, isNotMM) {
-        let oViewer = editor.getDocumentRenderer();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        let X = isNotMM ? x / nScaleX : x * g_dKoef_mm_to_pix / nScaleX;
-        let Y = isNotMM ? y / nScaleY : y * g_dKoef_mm_to_pix / nScaleY;
-
-        let pageCoords;
-        for (let i = 0; i < oViewer.pageDetector.pages.length; i++) {
-            if (oViewer.pageDetector.pages[i].num == nPage)
-                pageCoords = oViewer.pageDetector.pages[i];
-        }
-
-        if (!pageCoords)
-            pageCoords = oViewer.getPageLikeDetector(nPage);
-
-        let result = {
-            X : (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio,
-            Y : (Y * pageCoords.h / oViewer.file.pages[nPage].H + pageCoords.y) / AscCommon.AscBrowser.retinaPixelRatio
-        };
-
-        result["X"] = result.X;
-        result["Y"] = result.Y;
-
-        return result;
-    }
-
-    function invertRGB(oColor) {
-        // Calculate the inverted components
-        const invertedR = 255 - oColor.r;
-        const invertedG = 255 - oColor.g;
-        const invertedB = 255 - oColor.b;
-      
-        return {r: invertedR, g: invertedG, b: invertedB}
-      }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
@@ -2560,8 +2394,6 @@
 	window["AscPDF"].DEFAULT_FIELD_FONT = DEFAULT_FIELD_FONT;
 
     window["AscPDF"].CBaseField = CBaseField;
-    window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
-    window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     
 })();
 

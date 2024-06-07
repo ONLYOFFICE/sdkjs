@@ -32,9 +32,6 @@
 
 "use strict";
 
-// Import
-var History = AscCommon.History;
-
 /**
  *
  * @constructor
@@ -106,7 +103,7 @@ ParaHyperlink.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
         return;
     }
 
-	History.Add(new CChangesHyperlinkAddItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesHyperlinkAddItem(this, Pos, [Item]));
 
     CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
 };
@@ -115,7 +112,7 @@ ParaHyperlink.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition
 {
     // Получим массив удаляемых элементов
     var DeletedItems = this.Content.slice( Pos, Pos + Count );
-    History.Add(new CChangesHyperlinkRemoveItem(this, Pos, DeletedItems));
+    AscCommon.History.Add(new CChangesHyperlinkRemoveItem(this, Pos, DeletedItems));
 
     CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
 };
@@ -246,13 +243,37 @@ ParaHyperlink.prototype.SetVisited = function(isVisited)
 };
 ParaHyperlink.prototype.SetToolTip = function(ToolTip)
 {
-    History.Add(new CChangesHyperlinkToolTip(this, this.ToolTip, ToolTip));
+    AscCommon.History.Add(new CChangesHyperlinkToolTip(this, this.ToolTip, ToolTip));
     this.ToolTip = ToolTip;
 };
 ParaHyperlink.prototype.GetToolTip = function()
 {
 	if (!this.ToolTip)
 	{
+        if (Asc.editor.isPdfEditor() && AscCommon.IsLinkPPAction(this.Value)) {
+            if (this.Value == "ppaction://hlinkshowjump?jump=firstslide") {
+				return AscCommon.translateManager.getValue("First Page");
+			}
+			else if (this.Value == "ppaction://hlinkshowjump?jump=lastslide") {
+				return AscCommon.translateManager.getValue("Last Page");
+			}
+			else if (this.Value == "ppaction://hlinkshowjump?jump=nextslide") {
+				return AscCommon.translateManager.getValue("Next Page");
+			}
+			else if (this.Value == "ppaction://hlinkshowjump?jump=previousslide") {
+				return AscCommon.translateManager.getValue("Previous Page");
+			}
+			else {
+				let mask	= "ppaction://hlinksldjumpslide";
+				let posStr	= this.Value.indexOf(mask);
+
+				if (0 == posStr) {
+					let pageNum = parseInt(this.Value.substring(mask.length));
+					return AscCommon.translateManager.getValue("Page " + (pageNum + 1));
+				}
+			}
+        }
+
 		if ("string" === typeof(this.Value))
 			return (this.Anchor ? this.Value + "#" + this.Anchor : this.Value);
 		else if (this.Anchor)
@@ -267,7 +288,7 @@ ParaHyperlink.prototype.GetToolTip = function()
 };
 ParaHyperlink.prototype.Set_Value = function(Value)
 {
-    History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
+    AscCommon.History.Add(new CChangesHyperlinkValue(this, this.Value, Value));
     this.Value = Value;
 };
 ParaHyperlink.prototype.GetAnchor = function()
@@ -276,7 +297,7 @@ ParaHyperlink.prototype.GetAnchor = function()
 };
 ParaHyperlink.prototype.SetAnchor = function(sBookmarkName)
 {
-	History.Add(new CChangesHyperlinkAnchor(this, this.Anchor, sBookmarkName));
+	AscCommon.History.Add(new CChangesHyperlinkAnchor(this, this.Anchor, sBookmarkName));
 	this.Anchor = sBookmarkName;
 };
 ParaHyperlink.prototype.GetValue = function()

@@ -50,7 +50,7 @@
     this._onlineWork = false;
   }
 
-  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey) {
+  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc) {
     if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL()) {
       var t = this;
       this._CoAuthoringApi.onAuthParticipantsChanged = function(e, id) {
@@ -145,7 +145,7 @@
         t.callback_OnLicenseChanged(res);
 	  };
 
-      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey);
+      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc);
       this._onlineWork = true;
     } else {
       // Фиктивные вызовы
@@ -1641,7 +1641,7 @@
     this._authOtherChanges = [];
   };
 
-  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey) {
+  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc) {
     this._user = user;
     this._docid = null;
     this._documentCallbackUrl = documentCallbackUrl;
@@ -1661,6 +1661,7 @@
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
     this.coEditingMode = docInfo.asc_getCoEditingMode();
     this.shardKey = shardKey;
+    this.wopiSrc = wopiSrc;
 
     this.setDocId(docid);
     this._initSocksJs();
@@ -1787,7 +1788,12 @@
         }
       };
       options["query"] = {};
-      options["query"][Asc.c_sShardKeyName] = this.shardKey;
+      if (this.shardKey) {
+        options["query"][Asc.c_sShardKeyName] = this.shardKey;
+      }
+      if (this.wopiSrc) {
+        options["query"][Asc.c_sWopiSrcName] = this.wopiSrc;
+      }
 
       if (window['IS_NATIVE_EDITOR']) {
         socket = this.sockjs = new CNativeSocket(options);
