@@ -585,7 +585,7 @@ void main() {\n\
 		}
 
         this.cacheSelectionQuads([]);
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
     };
     CFile.prototype.isSelectionUse = function() {
         return !(this.Selection.Page1 == this.Selection.Page2 && this.Selection.Glyph1 == this.Selection.Glyph2 && this.Selection.Line1 == this.Selection.Line2);
@@ -611,8 +611,8 @@ void main() {\n\
 
     CFile.prototype.onMouseUp = function()
     {
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update()
         this.Selection.IsSelection = false;
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
         this.onUpdateSelection();
         this.onUpdateOverlay();
 
@@ -2116,18 +2116,9 @@ void main() {\n\
 
     CFile.prototype.selectAll = function()
     {
+        this.removeSelection();
         var sel = this.Selection;
-
-        sel.Page1 = 0;
-        sel.Line1 = 0;
-        sel.Glyph1 = 0;
-
-        sel.Page2 = 0;
-        sel.Line2 = 0;
-        sel.Glyph2 = 0;
-
-        sel.IsSelection = false;
-
+        
         var pagesCount = this.pages.length;
         if (0 != pagesCount)
         {
@@ -2143,6 +2134,7 @@ void main() {\n\
 
         this.onUpdateSelection();
         this.onUpdateOverlay();
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
     };
 
     CFile.prototype.onUpdateOverlay = function()

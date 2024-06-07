@@ -5346,7 +5346,7 @@
 				bMasterPh = true;
 			}
 			if ((!graphics.isSmartArtPreviewDrawer && !graphics.isPdf() && !this.bWordShape && (this.isEmptyPlaceholder() || bMasterPh) && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)
-				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder() && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
+				|| (Asc.editor.isPdfEditor() && !graphics.isPdf() && !graphics.isSmartArtPreviewDrawer && this.IsDrawing && this.IsDrawing() && this.ShouldDrawImaginaryBorder(graphics) && (graphics.IsNoDrawingEmptyPlaceholder !== true || bMasterPh) && !AscCommon.IsShapeToImageConverter)) {
 					var drawingObjects = this.getDrawingObjectsController();
 					if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && !graphics.isTrack() && (Asc.editor.isPdfEditor() || !drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 						var angle = _transform.GetRotation();

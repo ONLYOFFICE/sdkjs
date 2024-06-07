@@ -49,6 +49,12 @@
 		this.OnChangePosition();
 	};
 	CTextSelectTrackHandler.prototype.OnChangePosition = function() {
+		let oFile = Asc.editor.getDocumentRenderer().file;
+		if (oFile.Selection.IsSelection) {
+			this.OnHide();
+			return;
+		}
+		
 		let bounds = this.GetBounds();
 		if (!bounds) {
 			this.OnHide();
