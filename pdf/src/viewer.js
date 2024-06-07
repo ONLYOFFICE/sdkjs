@@ -2538,7 +2538,6 @@
 						var pageMatches = oDoc.SearchEngine.GetPdfPageMatches(i);
 						if (0 != pageMatches.length) {
 							oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
-							ctx.globalAlpha = 0.2;
 							this.drawSearch(i, pageMatches);
 						}
 							
