@@ -4325,14 +4325,39 @@ var CPresentation = CPresentation || function(){};
                         AscCommon.History.SetSourceObjectsToPointPdf([oTargetTextObject]);
 					}
                     else {
-						this.FocusOnNotes = false;
-						let shape = this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
-						oController.resetSelection();
-						oController.selectObject(shape, 0);
+						this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
 					}
 				}
             }
         }
+    };
+    CPDFDoc.prototype.CreateAndAddShapeFromSelectedContent = function (oDocContent) {
+        let nPage   = this.GetCurPage();
+        let oTrack = new AscFormat.NewShapeTrack("textRect", 0, 0, this.GetTheme(), undefined, undefined, this, nPage);
+        oTrack.track({}, 0, 0);
+
+        let oShape = oTrack.getShape(false, this.GetDrawingDocument(), this.GetController());
+        oShape.spPr.setLn(null);
+        this.AddDrawing(oShape, nPage);
+
+        oDocContent.ReplaceContent(oShape.txBody.content);
+
+        let nPageW = this.GetPageWidthMM(nPage);
+        let nPageH = this.GetPageHeightMM(nPage);
+        let oBodyPr = oShape.getBodyPr();
+
+        let nExtX = oShape.txBody.getMaxContentWidth(nPageW / 2, true) + oBodyPr.lIns + oBodyPr.rIns;
+        let nExtY = oShape.txBody.content.GetSummaryHeight() + oBodyPr.tIns + oBodyPr.bIns;
+
+        let oPos = private_computeDrawingAddingPos(nPage, nExtX, nExtY);
+
+        oShape.spPr.xfrm.setOffX(oPos.x);
+        oShape.spPr.xfrm.setOffY(oPos.y);
+
+        oShape.spPr.xfrm.setExtX(nExtX);
+        oShape.spPr.xfrm.setExtY(nExtY);
+
+        return oShape;
     };
     CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
         let oPagesInfo = this.Viewer.pagesInfo;
