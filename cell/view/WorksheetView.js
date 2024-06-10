@@ -2977,8 +2977,8 @@
 		let _range, step = 1000;
 		if (opt_prepareTextMetrics) {
 			_range =  new Asc.Range(range.c1, range.r1, range.c2, range.r1 + step);
-			prepareTextMetricsRowMax = step;
 			this._prepareCellTextMetricsCache(_range);
+			prepareTextMetricsRowMax = range.r1 + step;
 		}
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
@@ -3022,9 +3022,9 @@
 			let rightBorderWidth = null;
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
 
-				if (opt_prepareTextMetrics && rowIndex === prepareTextMetricsRowMax) {
-					_range =  new Asc.Range(range.c1, prepareTextMetricsRowMax, range.c2, prepareTextMetricsRowMax + step);
-					prepareTextMetricsRowMax += step;
+				if (opt_prepareTextMetrics && rowIndex === prepareTextMetricsRowMax + 1) {
+					_range =  new Asc.Range(range.c1, prepareTextMetricsRowMax + 1, range.c2, prepareTextMetricsRowMax + 1 + step);
+					prepareTextMetricsRowMax += step + 1;
 					this._prepareCellTextMetricsCache(_range);
 				}
 
