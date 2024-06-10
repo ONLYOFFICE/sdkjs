@@ -5839,6 +5839,12 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 			this.elems.push(elem);
 		}
 	};
+	ParseResult.prototype.addElemWithPos = function(elem, start, end) {
+		if (this.elemsWithPos) {
+			// this.elemsWithPos.push({elem: elem, startPos: start, endPos: end});
+			this.elemsWithPos[start] = {elem: elem, startPos: start, endPos: end};
+		}
+	};
 	ParseResult.prototype.setError = function(error) {
 		this.error = error;
 	};
@@ -6213,7 +6219,11 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startArrayFunc = false, counterArrayFunc = 0, isFoundImportFunctions;
+		parseResult ? parseResult.elems = [] : null;
+		// parseResult ? parseResult.elemsWithPos = [] : null;
+		parseResult ? parseResult.elemsWithPos = {} : null;
+
+		var startArrayFunc = false, counterArrayFunc = 0, isFoundImportFunctions, isFoundIfsFunction;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -6585,6 +6595,9 @@ function parserFormula( formula, parent, _ws ) {
 		var argPosArrMap = [];
 		var startArrayArg = null;
 
+		let associativeArgsObj = {};
+		let associativeFunctionsObj = {};
+
 		var t = this;
 		var _checkReferenceCount = function (weight) {
 			//ввожу ограничение на максимальное количество операндов в формуле
@@ -6611,7 +6624,8 @@ function parserFormula( formula, parent, _ws ) {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
 			var found_operator = null;
-
+			
+			let _curArg = argPosArrMap[currentFuncLevel] ? argPosArrMap[currentFuncLevel].length : 0;
 			if (parseResult.operand_expected) {
 				if ('-' === ph.operand_str) {
 					parseResult.operand_expected = true;
@@ -6660,9 +6674,15 @@ function parserFormula( formula, parent, _ws ) {
 			while (0 !== elemArr.length && (found_operator.rightAssociative ? (found_operator.priority < elemArr[elemArr.length - 1].priority) :
 					(found_operator.priority <= elemArr[elemArr.length - 1].priority))) {
 				t.outStack.push(elemArr.pop());
+				// **/
+				if (!associativeArgsObj[_curArg]) {
+					associativeArgsObj[_curArg] = [];
+				}
+				associativeArgsObj[_curArg].push(t.outStack.length - 1);
 			}
 			elemArr.push(found_operator);
 			parseResult.addElem(found_operator);
+			parseResult.addElemWithPos(found_operator, ph.pCurrPos);
 			found_operand = null;
 			return true;
 		};
@@ -6677,6 +6697,7 @@ function parserFormula( formula, parent, _ws ) {
 			found_operand = null;
 			elemArr.push(cFormulaOperators[ph.operand_str].prototype);
 			parseResult.addElem(cFormulaOperators[ph.operand_str].prototype);
+			// parseResult.addElemWithPos(cFormulaOperators[ph.operand_str].prototype);
 			leftParentArgumentsCurrentArr[elemArr.length - 1] = 1;
 			parseResult.argPos = 1;
 
@@ -6687,13 +6708,19 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
+			if (argFuncMap[currentFuncLevel] && argPosArrMap[currentFuncLevel]) {
+				// reset array with elem indexes in argument for subsequent assignment to another function
+				associativeArgsObj = [];
+			}
 			argFuncMap[currentFuncLevel] = {count: 0, startPos: ph.pCurrPos + 1};
 			argPosArrMap[currentFuncLevel] = [{start: ph.pCurrPos + 1}];
 		};
 
 		var parseRightParentheses = function () {
+			let _curArg = argPosArrMap[currentFuncLevel] ? argPosArrMap[currentFuncLevel].length : 0;
 
 			parseResult.addElem(cFormulaOperators[ph.operand_str].prototype);
+			// parseResult.addElemWithPos(cFormulaOperators[ph.operand_str].prototype);
 			wasRigthParentheses = true;
 			var top_elem = null;
 			var top_elem_arg_count = 0;
@@ -6713,6 +6740,12 @@ function parserFormula( formula, parent, _ws ) {
 						return false;
 					}
 					t.outStack.push(elemArr.pop());
+					// **/
+					if (!associativeArgsObj[_curArg]) {
+						associativeArgsObj[_curArg] = [];
+					}
+					associativeArgsObj[_curArg].push(t.outStack.length - 1);
+					
 				}
 				top_elem_arg_count = leftParentArgumentsCurrentArr[elemArr.length - 1];
 			}
@@ -6802,10 +6835,20 @@ function parserFormula( formula, parent, _ws ) {
 					lastArgPos.end = lastArgPos.start > ph.pCurrPos ? lastArgPos.start : ph.pCurrPos;
 				}
 
+				// associate function with elements
+				let _curFunc = levelFuncMap[currentFuncLevel] ? levelFuncMap[currentFuncLevel].func : null;
+				let _curArg = argPosArrMap[currentFuncLevel] ? argPosArrMap[currentFuncLevel].length : 0;
+				if (!associativeArgsObj[_curArg]) {
+					associativeArgsObj[_curArg] = [];
+				}
+
+				// associativeFunctionsObj[t.outStack.length - 1] = associativeArgsObj;
+				associativeFunctionsObj[t.outStack.length - 1] = Object.assign({}, associativeArgsObj);
+
 				if (!parseResult.allFunctionsPos) {
 					parseResult.allFunctionsPos = [];
 				}
-				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
+				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos, funcLevel: currentFuncLevel});
 
 				currentFuncLevel--;
 			}
@@ -6816,7 +6859,9 @@ function parserFormula( formula, parent, _ws ) {
 		var parseCommaAndArgumentsUnion = function () {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
-			var stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
+			let stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
+			let _curFunc = levelFuncMap[currentFuncLevel] ? levelFuncMap[currentFuncLevel].func : null;
+			let _curArg = argPosArrMap[currentFuncLevel] ? argPosArrMap[currentFuncLevel].length : 0;
 
 			if (elemArr.length !== 0 && elemArr[stackLength - 1].name === "(" &&
 				((!elemArr[stackLength - 2]) || (elemArr[stackLength - 2] && elemArr[stackLength - 2].type !== cElementType.func))) {
@@ -6839,7 +6884,13 @@ function parserFormula( formula, parent, _ws ) {
 						wasLeftParentheses = true;
 						break;
 					} else {
-						t.outStack.push(elemArr.pop());
+						let elemToPush = elemArr.pop();
+						// t.outStack.push(elemArr.pop());
+						t.outStack.push(elemToPush);
+						if (!associativeArgsObj[_curArg]) {
+							associativeArgsObj[_curArg] = [];
+						}
+						associativeArgsObj[_curArg].push(t.outStack.length - 1);
 						stackLength = elemArr.length;
 					}
 				}
@@ -6875,8 +6926,6 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (argPosArrMap[currentFuncLevel] && levelFuncMap[currentFuncLevel]) {
 				//проверяем, вдруг данная функция может принимать в качестве данного аргумента массив
-				var _curFunc = levelFuncMap[currentFuncLevel].func;
-				var _curArg = argPosArrMap[currentFuncLevel].length;
 				if (_curFunc.argumentsType && Asc.c_oAscFormulaArgumentType.reference === _curFunc.argumentsType[_curArg]) {
 					if (null === startArrayArg || startArrayArg > currentFuncLevel) {
 						startArrayArg = currentFuncLevel;
@@ -6886,6 +6935,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 
+				// **/
 				argPosArrMap[currentFuncLevel][argPosArrMap[currentFuncLevel].length - 1].end = ph.pCurrPos;
 				argPosArrMap[currentFuncLevel][argPosArrMap[currentFuncLevel].length] = {start: ph.pCurrPos + 1};
 
@@ -7291,12 +7341,17 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					elemArr.push(found_operator);
 					parseResult.addElem(found_operator);
+					parseResult.addElemWithPos(found_operator, ph.pCurrPos);
 					if (arrayFunctionsMap[found_operator.name]) {
 						startArrayFunc = true;
 					}
 
 					if (found_operator.name === "IMPORTRANGE") {
 						isFoundImportFunctions = true;
+					}
+
+					if (found_operator.name === "IFS") {
+						isFoundIfsFunction = true;
 					}
 
 					if (needCalcArgPos) {
@@ -7333,8 +7388,21 @@ function parserFormula( formula, parent, _ws ) {
 			if (null !== found_operand) {
 				t.outStack.push(found_operand);
 				parseResult.addElem(found_operand);
+				parseResult.addElemWithPos(found_operand, ph.pCurrPos);
 				parseResult.operand_expected = false;
 				found_operand = null;
+
+				// associativeArgsArray
+				let _curFunc = levelFuncMap[currentFuncLevel] ? levelFuncMap[currentFuncLevel].func : null;
+				let _curArg = argPosArrMap[currentFuncLevel] ? argPosArrMap[currentFuncLevel].length : 0;
+				// TODO для каждой функции свой объект с аргументами
+				// levelFuncMap[currentFuncLevel].startPos !== levelFuncMap[currentFuncLevel].startPos
+				if (!associativeArgsObj[_curArg]) {
+					associativeArgsObj[_curArg] = [];
+				}
+				associativeArgsObj[_curArg].push(t.outStack.length - 1);
+
+
 			} else {
 				t.outStack.push(new cError(cErrorType.wrong_name));
 				parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
@@ -7372,7 +7440,7 @@ function parserFormula( formula, parent, _ws ) {
 					if (!parseResult.allFunctionsPos) {
 						parseResult.allFunctionsPos = [];
 					}
-					parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
+					parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos, funcLevel: currentFuncLevel});
 				}
 			}
 		};
@@ -7504,6 +7572,11 @@ function parserFormula( formula, parent, _ws ) {
 					AscCommonExcel.importRangeLinksState.importRangeLinks = null;
 				}
 			}
+
+			if (isFoundIfsFunction) {
+				this.associativeFunctionsObj = associativeFunctionsObj;
+			}
+
 			return this.isParsed = true;
 		} else {
 			return this.isParsed = false;
@@ -7651,6 +7724,63 @@ function parserFormula( formula, parent, _ws ) {
 			opt_bbox = new Asc.Range(0, 0, 0, 0);
 		}
 
+		// if the formula contains the IFS function, we need to discard some values ​​from the outStack calculation based on the results of the formula
+		// All values/formulas that come after the first true value in the IFS result will not be taken into calcultion
+
+		let elemIndexesToSkip = [];
+		let funcSkipInfo = {};
+
+		if (this.associativeFunctionsObj) {
+			for (let obj in this.associativeFunctionsObj) {
+				let argsInfo = this.associativeFunctionsObj[obj];
+				let functionIndex = parseInt(obj, 10);
+				// take elements from stack, and calculate only odd arguments
+				// if one of the arg is true, remove the rest of arguments from stack by it's id(position in outStack)
+				let isFoundTrueVal, trueValIndex = -1;
+				for (let i = 1; i < 255; i += 2) {
+					let oddArgument = argsInfo[i];
+					let evenArgument = argsInfo[i+1];
+					if (oddArgument === undefined || evenArgument === undefined) {
+						break
+					}
+
+					if (isFoundTrueVal) {
+						// collect into an array the indices of those elements that we will skip during the main calculation
+						elemIndexesToSkip.push.apply(elemIndexesToSkip, oddArgument);
+						elemIndexesToSkip.push.apply(elemIndexesToSkip, evenArgument);
+						continue
+					}
+
+					let tempStack = [];
+					for (let elemIndex = 0; elemIndex < oddArgument.length; elemIndex++) {
+						let elemInArgument = this.outStack[oddArgument[elemIndex]];
+						tempStack.push(elemInArgument);
+					}
+
+					let tempFP = new AscCommonExcel.parserFormula("", null, this.ws);
+					tempFP.outStack = tempStack;
+					
+					let res = tempFP.calculate();
+					if (res) {
+						let elemToCheck = res.tocBool();
+						if (elemToCheck.toBool && elemToCheck.toBool()) {
+							// go to the next odd argument
+							isFoundTrueVal = true;
+							trueValIndex = i;
+						}
+					}
+				}
+
+				if (elemIndexesToSkip.length > 0) {
+					let curNumOfArgs = this.outStack[functionIndex - 1];
+					let newNumOfArgs = (curNumOfArgs - (trueValIndex + 1)) > 0 ? (trueValIndex + 1) : curNumOfArgs;
+
+					funcSkipInfo[functionIndex] = {newNumOfArgs: newNumOfArgs}
+				}
+			}
+
+		}
+
 		var elemArr = [], _tmp, numFormat = cNumFormatFirstCell, currentElement = null, bIsSpecialFunction, argumentsCount, defNameCalcArr, defNameArgCount = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			currentElement = this.outStack[i];
@@ -7668,6 +7798,9 @@ function parserFormula( formula, parent, _ws ) {
 			if("number" === typeof(currentElement)){
 				continue;
 			}
+			if (elemIndexesToSkip.length > 0 && (elemIndexesToSkip.indexOf(i) !== -1)) {
+				continue;
+			}
 
 			//TODO пока проставляю у каждого элемента флаг для рассчетов. пересмотреть
 			//***array-formula***
@@ -7677,7 +7810,11 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
-				argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
+				argumentsCount = "number" === typeof(this.outStack[i - 1]) 
+					? (funcSkipInfo[i] && this.associativeFunctionsObj[i]) ? funcSkipInfo[i].newNumOfArgs : this.outStack[i - 1]
+					: currentElement.argumentsCurrent;
+
+
 				if (argumentsCount < 0) {
 					argumentsCount = -argumentsCount;
 					currentElement.bArrayFormula = true;

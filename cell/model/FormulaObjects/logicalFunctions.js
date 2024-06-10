@@ -265,28 +265,108 @@ function (window, undefined) {
 	cIFS.prototype.name = 'IFS';
 	cIFS.prototype.argumentsMin = 2;
 	cIFS.prototype.isXLFN = true;
+	cIFS.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
 	cIFS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		// let oArguments = this._prepareArguments(arg, arguments[1], true);
+		// let argClone = oArguments.args;
 
-		var res = null;
-		for (var i = 0; i < arg.length; i++) {
-			var argN = argClone[i];
-			if (cElementType.error === argN.type) {
+		let res = null;
+		for (let i = 0; i < arg.length; i++) {
+			let argN = arg[i];
+
+			if (argN.type === cElementType.array || argN.type === cElementType.cellsRange || argN.type === cElementType.cellsRange3D) {
+				// go throught the array
+				// if array have 'truthy' element, return it and end the cycle
+				// if array have only 'false' elements, go to the next argument
+				let arg0dimensions = argN.getDimensions();
+				let isHaveTrueVal;
+				
+				// first loop to find "true" value
+				for (let i = 0; i < arg0dimensions.row; i++) {
+					for (let j = 0; j < arg0dimensions.col; j++) {
+						let elem = argN.getValue2(i, j);
+						if (!elem || elem.type === cElementType.error || elem.type === cElementType.string) {
+							continue
+						}
+						if (elem.type === cElementType.number || elem.type === cElementType.bool) {
+							elem = elem.tocBool();
+							if (elem.value === true) {
+								isHaveTrueVal = true;
+								break
+							}
+						}
+					}
+				}
+
+				if (isHaveTrueVal) {
+					let resElem = arg[i + 1];
+					let resArr = new cArray();
+					let elemDimensions = resElem.getDimensions()
+					let maxArrayRow = arg0dimensions.row,
+						maxArrayCol = arg0dimensions.col;
+
+					if (resElem.type === cElementType.array || resElem.type === cElementType.cellsRange || resElem.type === cElementType.cellsRange3D) {
+						maxArrayRow = elemDimensions.row > maxArrayRow ? elemDimensions.row : maxArrayRow;
+						maxArrayCol = elemDimensions.col > maxArrayCol ? elemDimensions.col : maxArrayCol;
+					}
+
+					let errNA = new cError(cErrorType.not_available);
+					for (let r = 0; r < maxArrayRow; r++) {
+						resArr.addRow();
+						for (let c = 0; c < maxArrayCol; c++) {
+							let addedElem;
+							let isTrueVal = argN.getValue2((arg0dimensions.row === 1) ? 0 : r,(arg0dimensions.col === 1) ? 0 : c);
+
+							// check val from argN(row,col)
+							// if "true" - return rowColVal from argN+1
+							// if "false" - return #N/A
+							if (isTrueVal === undefined) {
+								addedElem = errNA;
+							} else if (!isTrueVal || isTrueVal.type === cElementType.error || isTrueVal.type === cElementType.string) {
+								addedElem = new cError(cErrorType.wrong_value_type);
+							} else if (isTrueVal.type === cElementType.number || isTrueVal.type === cElementType.bool) {
+								isTrueVal = isTrueVal.tocBool();
+							}
+
+							if (isTrueVal && isTrueVal.value === false) {
+								addedElem = addedElem ? addedElem : errNA;
+							} else if (isTrueVal && isTrueVal.value === true) {
+								if ((r > arg0dimensions.row && arg0dimensions.row !== 1) || (c > arg0dimensions.col && arg0dimensions.col !== 1)) {
+									addedElem = errNA;
+								} else if (elemDimensions.col === 1 && elemDimensions.row === 1) {
+									addedElem = resElem;
+								} else {
+									addedElem = resElem.getElementRowCol 
+										? resElem.getElementRowCol((elemDimensions.row === 1) ? 0 : r, (elemDimensions.col === 1) ? 0 : c) 
+										: resElem.getValueByRowCol((elemDimensions.row === 1) ? 0 : r, (elemDimensions.col === 1) ? 0 : c);
+								}
+							}
+
+							resArr.addElement(addedElem);
+						}
+					}
+
+					return resArr;
+				}
+				i++;
+			}
+
+
+			else if (cElementType.error === argN.type) {
 				res = argN;
 				break;
 			} else if (cElementType.string === argN.type) {
 				res = new cError(cErrorType.wrong_value_type);
 				break;
 			} else if (cElementType.number === argN.type || cElementType.bool === argN.type) {
-				if (!argClone[i + 1]) {
+				if (!arg[i + 1]) {
 					res = new cError(cErrorType.not_available);
 					break;
 				}
 
 				argN = argN.tocBool();
 				if (true === argN.value) {
-					res = argClone[i + 1];
+					res = arg[i + 1];
 					break;
 				}
 			}

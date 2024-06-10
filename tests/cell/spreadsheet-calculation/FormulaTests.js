@@ -28673,6 +28673,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"IFS\"", function (assert) {
+		ws.getRange2("A100:C110").cleanAll();
 
 		oParser = new parserFormula('IFS(1,"TEST")', "AA2", ws);
 		assert.ok(oParser.parse());
@@ -28718,7 +28719,87 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "correct");
 
-		testArrayFormulaEqualsValues(assert, "1,3.123,-4,#N/A;2,4,5,#N/A;#N/A,#N/A,#N/A,#N/A", "IFS(A1:C2,A1:C2,A1:C2,A1:C2, A1:C2,A1:C2)");
+		let array;
+		ws.getRange2("A101").setValue("1");
+		ws.getRange2("A102").setValue("2");
+		ws.getRange2("A103").setValue("3");
+		ws.getRange2("B101").setValue("3.123");
+		ws.getRange2("B102").setValue("4");
+		ws.getRange2("B103").setValue("6");
+		ws.getRange2("C101").setValue("-4");
+		ws.getRange2("C102").setValue("5");
+		ws.getRange2("C103").setValue("9");
+
+		oParser = new parserFormula('IFS(A101:C102,A101:C102)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of IFS(A101:C102,A101:C102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3.123, "Result of IFS(A101:C102,A101:C102)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), -4, "Result of IFS(A101:C102,A101:C102)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of IFS(A101:C102,A101:C102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, "Result of IFS(A101:C102,A101:C102)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), 5, "Result of IFS(A101:C102,A101:C102)[1,2]");
+
+		oParser = new parserFormula('IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3.123, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), -4, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 2, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), 5, "Result of IFS(A101:C102,A101:C102,A101:C102,A101:C102,A101:C102,A101:C102)[1,2]");
+
+		oParser = new parserFormula('IFS({FALSE,TRUE},"dsds",{FALSE,FALSE},A101:A103)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#N/A", 'Result of IFS({FALSE,TRUE},"dsds",{FALSE,FALSE},A101:A103)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "dsds", 'Result of IFS({FALSE,TRUE},"dsds",{FALSE,FALSE},A101:A103)[0,1]');
+
+		oParser = new parserFormula('IFS({FALSE,TRUE},"dsds",{TRUE,FALSE},A101:A103)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#N/A", 'Result of IFS({FALSE,TRUE},"dsds",{TRUE,FALSE},A101:A103)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), "dsds", 'Result of IFS({FALSE,TRUE},"dsds",{TRUE,FALSE},A101:A103)[0,1]');
+
+		oParser = new parserFormula('IFS(TRUE,"dsds",{FALSE,TRUE},A101:A103)', "AA2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "dsds", 'Result of IFS(TRUE,"dsds",{FALSE,TRUE},A101:A103)');
+
+		oParser = new parserFormula('IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#VALUE!", 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 3.123, 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0,2).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[0,2]');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 4, 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[1,1]');
+		assert.strictEqual(array.getElementRowCol(1,2).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{"ds",TRUE;FALSE,TRUE},A101:C102)[1,2]');
+
+		oParser = new parserFormula('IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 1, 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), 2, 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2,0).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2,1).getValue(), 3, 'Result of IFS(FALSE,"dsds",{FALSE,TRUE},A101:A103)[2,1]');
+
+		oParser = new parserFormula('IFS(FALSE,"dsds",{FALSE,TRUE;TRUE,FALSE},1)', "AA2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{FALSE,TRUE;TRUE,FALSE},1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0,1).getValue(), 1, 'Result of IFS(FALSE,"dsds",{FALSE,TRUE;TRUE,FALSE},1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1,0).getValue(), 1, 'Result of IFS(FALSE,"dsds",{FALSE,TRUE;TRUE,FALSE},1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1,1).getValue(), "#N/A", 'Result of IFS(FALSE,"dsds",{FALSE,TRUE;TRUE,FALSE},1)[1,1]');
+		ws.getRange2("A100:C110").cleanAll();
+
+		oParser = new parserFormula('IFS(1,2,7,8,9,10,11,12)', "AA2", ws);
+		assert.ok(oParser.parse(), 'IFS(1,2,7,8,9,10,11,12)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of IFS(1,2,7,8,9,10,11,12)');
+
+		// testArrayFormulaEqualsValues(assert, "1,3.123,-4,#N/A;2,4,5,#N/A;#N/A,#N/A,#N/A,#N/A", "IFS(A1:C2,A1:C2,A1:C2,A1:C2, A1:C2,A1:C2)");
 	});
 
 	QUnit.test("Test: \"IF\"", function (assert) {
