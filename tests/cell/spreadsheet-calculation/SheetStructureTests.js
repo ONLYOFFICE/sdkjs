@@ -3118,9 +3118,7 @@ $(function () {
 		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
 		compareData(assert, range.bbox, [['-2'],['-1'],['1'],['2'],['12345'],['a'],['á'],['é'],['é'],['g'],['TEST0'],['test1'],['Test2'],['TEST2'],['аА'],['АА'],['аа'],['녕하'],['안세요'],['하']], "check_sort_5");
 
-		/* MS ставит арабский алфавит выше японского, javascript сортирует иначе*/
-
-		// TODO протестировать в gs, lo
+		/* MS puts Arabic alphabet above Japanese, javascript sorts differently*/
 
 		testData = [
 			['أ'],	// arabic
@@ -3163,27 +3161,6 @@ $(function () {
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_7");
 		
 		// Tests with more of languages
-		// testData = [
-		// 	['Test'],
-		// 	['测试'],
-		// 	['परीक्षण'],
-		// 	['Prueba'],
-		// 	['Test'],
-		// 	['اختبار'],
-		// 	['পরীক্ষা'],
-		// 	['Тест'],
-		// 	['Teste'],
-		// 	['Tes'],
-		// 	['ٹیسٹ'],
-		// 	['Test'],
-		// 	['テスト'],
-		// 	['ਟੈਸਟ'],
-		// 	['시험'],
-		// 	['Test'],
-		// 	['சோதனை'],
-		// 	['Kiểm tra']
-		// ];
-
 		testData = [
 			['City'],	// eng
 			['城市'],	// cn
@@ -3259,13 +3236,187 @@ $(function () {
 		range.sort(Asc.c_oAscSortOptions.Descending, 0);
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_10");
 
-		// testData = [
-		// 	['1'],
-		// 	['-9999'],
-		// 	['123ABCDE123'],
-		// 	['123AÁBCCs123'],
-		// ];
+		// sorting specials characters does not coincide with the sorting in ms (but the same as in gs and libre)
+		/*
+		testData = [
+			['!a'],
+			['#a'],
+			['$a'],
+			['^a'],
+			['&a'],
+			['*a'],
+			['(a'],	
+			[')a'],
+			['_a'],
+			['[a'],
+			[']a'],
+			['{a'],
+			['}a'],
+			['\a'],
+			['/a'],
+			['|a'],
+			[';a'],
+			[':a'],
+			['a'],	
+			[',a'],
+			['.a'],
+			['`a'],
+			['>a'],
+			['<a'],
+			['?a'],
+			['~a'],
+		];
 
+		range = ws.getRange2("A1:A26");
+		range.fillData(testData);
+
+		expectedRes = [['!a'],['#a'],['$a'],['&a'],['(a'],[')a'],['*a'],[',a'],['.a'],['/a'],[':a'],[';a'],['?a'],['[a'],['\a'],[']a'],['^a'],['_a'],['`a'],['{a'],['|a'],['}a'],['~a'],['<a'],['>a'],['a']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_11");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_11");
+
+		// letters with diacritics sorting also does not coincide with the sorting in ms (but the same as in gs and libre)
+		testData = [
+			['á'],
+			['Á'],
+			['à'],
+			['ă'],
+			['â'],
+			['Â'],
+			['å'],
+			['ä'],
+			['ã'],
+			['Ą'],
+			['ā'],
+			['Ā'],
+		];
+		
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['á'],['Á'],['à'],['â'], ['Â'],['ä'],['ă'],['ā'],['Ā'],['ã'],['å'],['Ą'],];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_12");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_12");
+		*/
+
+		// english
+		testData = [
+			['Test1'],
+			['TEST1'],
+			['tESt1'],
+			['TesT1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Test1'],['TEST1'],['tESt1'],['TesT1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_13");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_13");
+
+		// hungarian
+		testData = [
+			['Köszönöm1'],
+			['KÖSZÖNÖM1'],
+			['köSzÖnÖm1'],
+			['KöszönöM1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Köszönöm1'],['KÖSZÖNÖM1'],['köSzÖnÖm1'],['KöszönöM1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_14");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_14");
+
+		testData = [
+			['ZZ'],['á'], ['é'],['í'], ['ó'], 
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['a']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['a'],['á'],['é'], ['í'], ['ó'],
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['ZZ']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_15");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_15");
+
+
+		// turkish
+		testData = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_16");
+
+		expectedRes = [
+			['Ü'],['ü'],['Ş'],['ş'],['Ö'],
+			['ö'],['Ğ'],['ğ'],['Ç'],['ç'],['C'],
+		];
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_16");
+
+
+		testData = [
+			['ALİ'],
+			['MURAT'],
+			['İSMAİL']
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		expectedRes = [['ALİ'],['İSMAİL'],['MURAT']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_17");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_17");
+
+
+		// hungarian, portugese, deutsch, turkish
+		testData = [
+			['Évad'],
+			['Óculos'],
+			['Äpfel'],
+			['Şehir']
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Äpfel'],['Évad'],['Óculos'],['Şehir']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_18");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
 	});
 	
