@@ -2334,7 +2334,9 @@ var CPresentation = CPresentation || function(){};
         
         return oStickyComm;
     };
-    
+    CPDFDoc.prototype.convertPixToMM = function(pix) {
+        return this.GetDrawingDocument().GetMMPerDot(pix);
+    };
     /**
 	 * Обновляет позицию всплывающего окна комментария
 	 * @memberof CPDFDoc

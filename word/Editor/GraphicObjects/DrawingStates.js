@@ -239,7 +239,7 @@ StartAddNewShape.prototype =
                     oLogicDocument.CreateNewHistoryPoint();
 
                     // добавление шейпов
-                    var oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
+                    let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
                     oLogicDocument.AddDrawing(oShape, this.pageIndex);
                     oLogicDocument.SetMouseDownObject(oShape);
                     oShape.select(oLogicDocument.GetController(), this.pageIndex);
