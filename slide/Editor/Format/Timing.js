@@ -2692,22 +2692,20 @@
 						const onEndCond = new CCond();
 						onEndCond.setEvt(COND_EVNT_ON_END);
 						onEndCond.setTn(aEffectsForDemo[3].Id);
-						console.log(onEndCond.tn)
 
 						oCopyEffect.cTn.setEndCondLst(new CCondLst())
 						oCopyEffect.cTn.endCondLst.push(onEndCond);
 					}
 					if (nRepeatCount === AscFormat.untilNextClick) {
-						// const group = oCopyEffect.originalNode.getTimeNodeWithLvl(1).getAllAnimEffects();
-						// const lastEffect = group.reduce(function (lastEffect, currentEffect) {
-						// 	lastEffectEndTime = lastEffect.getFullDelay() + lastEffect.asc_getDuration();
-						// 	currentEffectEndTime = currentEffect.getFullDelay() + currentEffect.asc_getDuration();
-						// 	return (currentEffectEndTime > lastEffectEndTime)
-						// 		? currentEffect
-						// 		: lastEffect;
-						// })
-						// console.log(lastEffect.Id)
-						oCopyEffect.cTn.changeRepeatCount(1000);
+						const group = oCopyEffect.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects();
+						const groupEndTime = group.reduce(function (maxEndTime, effect) {
+							const effectEndTime = effect.getFullDelay() + effect.asc_getDuration();
+							return Math.max(maxEndTime, effectEndTime);
+						}, 0)
+						
+						// const newRepeatCount = (groupEndTime - oCopyEffect.originalNode.getFullDelay()) / oCopyEffect.asc_getDuration() * 1000;
+						const newRepeatCount = 1000;
+						oCopyEffect.cTn.changeRepeatCount(newRepeatCount);
 					}
 
                     var nDur = oCopyEffect.asc_getDuration();
