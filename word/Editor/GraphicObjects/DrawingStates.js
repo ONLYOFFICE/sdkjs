@@ -456,10 +456,8 @@ NullState.prototype =
 
             let aDrawings = [];
 
-            oViewer.pagesInfo.pages.forEach(function(page) {
-                aDrawings = aDrawings.concat(page.drawings);
-                aDrawings = aDrawings.concat(page.annots);
-            });
+            aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
+            aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
 
@@ -819,13 +817,15 @@ RotateState.prototype =
                 let oDoc    = oViewer.getPDFDoc();
 
                 oDoc.SetGlobalHistory();
+                oDoc.CreateNewHistoryPoint({objects: aTracks.map(function(track) {
+                    return track.originalObject;
+                })});
 
                 for (i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
-
-                    oDoc.CreateNewHistoryPoint({objects: [oTrack.originalObject]});
+                    
                     oTrack.trackEnd(oTrack.originalObject.IsAnnot());
 
                     // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
@@ -856,8 +856,6 @@ RotateState.prototype =
 
                             oAnnot.SetLinePoints(aLinePoints);
                             oAnnot.SetRect(oAnnot.GetMinShapeRect());
-
-                            oDoc.TurnOnHistory();
                         }
                         else if (oAnnot.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
@@ -939,9 +937,10 @@ RotateState.prototype =
                         }
                     }
                     
-                    oDoc.TurnOffHistory();
                     oTrack.originalObject.SetNeedRecalc(true);
                 }
+
+                oDoc.TurnOffHistory();
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
                 this.drawingObjects.clearTrackObjects();

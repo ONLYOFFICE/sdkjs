@@ -1933,6 +1933,9 @@
 			
 			if (null == oDrawingUnderMouse) {
 				oDrawingUnderMouse = oDoc.GetDrawingById(this.DrawingObjects.getGraphicInfoUnderCursor(pageObject.index, pageObject.x, pageObject.y).objectId);
+				if (oDrawingUnderMouse && oDrawingUnderMouse.GetPage() != pageObject.index) {
+					oDrawingUnderMouse = null;
+				}
 			}
 			
 			this.DrawingObjects.curState = oCurState;

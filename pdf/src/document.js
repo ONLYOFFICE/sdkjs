@@ -896,9 +896,17 @@ var CPresentation = CPresentation || function(){};
             return;
         }
         
+        // докидываем в селект
         let oCurObject = this.GetMouseDownObject();
+        if (e.CtrlKey && (oCurObject && oCurObject.IsDrawing() && oMouseDownDrawing && oCurObject != oMouseDownDrawing) && oMouseDownDrawing.GetPage() == oMouseDownDrawing.GetPage()) {
+            oController.selectObject(oMouseDownDrawing, oMouseDownDrawing.GetPage());
+            return;
+        }
+
         // оставляем текущий объет к селекте, если кликнули по нему же
-        if (null == oCurObject || (oCurObject && false == [oMouseDownField, oMouseDownAnnot, oMouseDownDrawing, oMouseDownLink].includes(oCurObject)))
+        let isDrawingSelected = oMouseDownDrawing && oController.selectedObjects.includes(oMouseDownDrawing);
+        let isObjectSelected = (oCurObject && ([oMouseDownField, oMouseDownAnnot, oMouseDownDrawing, oMouseDownLink].includes(oCurObject)) || isDrawingSelected);
+        if (null == oCurObject || !isObjectSelected)
             this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing || oMouseDownLink);
 
         let oMouseDownObject = this.GetMouseDownObject();
@@ -929,7 +937,6 @@ var CPresentation = CPresentation || function(){};
                 oDrDoc.TargetEnd();
             }
         }
-        
 
         if (oViewer.canSelectPageText()) {
             oViewer.isMouseMoveBetweenDownUp = true;
@@ -2564,7 +2571,12 @@ var CPresentation = CPresentation || function(){};
                 oContent = oDrawing.GetDocContent();
             }
             else {
-                this.RemoveDrawing(oDrawing.GetId());
+                let oThis = this;
+                let oController = this.GetController();
+                let aDrawings = oController.getSelectedObjects().slice();
+                aDrawings.forEach(function(drawing) {
+                    oThis.RemoveDrawing(drawing.GetId());
+                });
             }
         }
         else if (oAnnot && this.Viewer.isMouseDown == false) {
@@ -3591,6 +3603,11 @@ var CPresentation = CPresentation || function(){};
         else if (oDrawing) {
             oContent = oDrawing.GetDocContent();
             oController.selectAll();
+
+            if (!oContent && oController.getSelectedArray().length != 0) {
+                this.Viewer.onUpdateOverlay();
+                return;
+            }
         }
 
         if (oContent) {
