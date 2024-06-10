@@ -2686,10 +2686,30 @@
                     if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
                         oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                     }
-                    var nRepeatCount = oCopyEffect.asc_getRepeatCount();
-                    if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
-                        oCopyEffect.cTn.changeRepeatCount(1000);
-                    }
+
+                    const nRepeatCount = oCopyEffect.asc_getRepeatCount();
+					if (nRepeatCount === AscFormat.untilNextSlide) {
+						const onEndCond = new CCond();
+						onEndCond.setEvt(COND_EVNT_ON_END);
+						onEndCond.setTn(aEffectsForDemo[3].Id);
+						console.log(onEndCond.tn)
+
+						oCopyEffect.cTn.setEndCondLst(new CCondLst())
+						oCopyEffect.cTn.endCondLst.push(onEndCond);
+					}
+					if (nRepeatCount === AscFormat.untilNextClick) {
+						// const group = oCopyEffect.originalNode.getTimeNodeWithLvl(1).getAllAnimEffects();
+						// const lastEffect = group.reduce(function (lastEffect, currentEffect) {
+						// 	lastEffectEndTime = lastEffect.getFullDelay() + lastEffect.asc_getDuration();
+						// 	currentEffectEndTime = currentEffect.getFullDelay() + currentEffect.asc_getDuration();
+						// 	return (currentEffectEndTime > lastEffectEndTime)
+						// 		? currentEffect
+						// 		: lastEffect;
+						// })
+						// console.log(lastEffect.Id)
+						oCopyEffect.cTn.changeRepeatCount(1000);
+					}
+
                     var nDur = oCopyEffect.asc_getDuration();
                     if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
                         oCopyEffect.cTn.changeEffectDuration(1000);
