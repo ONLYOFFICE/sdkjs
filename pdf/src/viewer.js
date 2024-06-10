@@ -3060,50 +3060,39 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
 
-			var x = xInp - this.x;
-			var y = yInp - this.y;
-
-			let oDoc = this.getPDFDoc();
-
-			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
-				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-				if (!pageCoords)
-					continue;
-
-				if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+				let x = xInp - this.x;
+				let y = yInp - this.y;
+				
+				var pageCoords = null;
+				var pageIndex = 0;
+				for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 				{
-					let _x = oDoc.pagesTransform[pageCoords.num].normal.TransformPointX(x, y);
-					let _y = oDoc.pagesTransform[pageCoords.num].normal.TransformPointY(x, y);
-
-					//console.log(`x: ${_x}`);
-					//console.log(`y: ${_y}`);
-
-					// console.log(`page x: ${_x}`);
-					// console.log(`page y: ${_y}`);
-					// console.log(`canvas x: ${x}`);
-					// console.log(`canvas y: ${y}`);
-
-					// let orig_x = oDoc.pagesTransform[pageCoords.num].invert.TransformPointX(_x / nScale, _y / nScale);
-					// let orig_y = oDoc.pagesTransform[pageCoords.num].invert.TransformPointY(_x / nScale, _y / nScale);
-
-					return {
-						index : i,
-						x : _x,
-						y : _y
-					};
+					pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+					if (y >= pageCoords.y / AscCommon.AscBrowser.retinaPixelRatio && y <= (pageCoords.y + pageCoords.h) / AscCommon.AscBrowser.retinaPixelRatio)
+						break;
 				}
-			}
-			return null;
+				if (pageIndex > this.endVisiblePage)
+					pageIndex = this.endVisiblePage;
+
+				let oDoc = this.getPDFDoc();
+
+				let _x = oDoc.pagesTransform[pageIndex].normal.TransformPointX(x, y);
+				let _y = oDoc.pagesTransform[pageIndex].normal.TransformPointY(x, y);
+
+				return {
+					index : pageIndex,
+					x : _x,
+					y : _y
+				};
 		};
 
 		this.getPageByCoords2 = function(xInp, yInp)
 		{
-			let x = xInp - this.x;
-			let y = yInp - this.y;
-
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
+
+			let x = xInp - this.x;
+			let y = yInp - this.y;
 
 			var pageCoords = null;
 			var pageIndex = 0;
@@ -3115,9 +3104,6 @@
 			}
 			if (pageIndex > this.endVisiblePage)
 				pageIndex = this.endVisiblePage;
-
-			if (!pageCoords)
-				pageCoords = {x:0, y:0, w:1, h:1};
 
 			let oDoc = this.getPDFDoc();
 
