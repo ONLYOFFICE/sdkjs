@@ -801,8 +801,7 @@
 			this.setMouseLockMode(true);
 
 			if (this.drawingPages[0]) {
-				let nKoeff = this.drawingPages[0].W / this.file.pages[0].W;
-				this.navigateToPage(0, 0, (this.scrollMaxX / 2) / nKoeff);
+				this.navigateToPage(0, 0, this.scrollMaxX / 2);
 			}
 		};
 
@@ -1600,7 +1599,6 @@
 
 			if (yOffset)
 			{
-				yOffset *= (drawingPage.H / this.file.pages[pageNum].H);
 				yOffset = yOffset >> 0;
 				posY += yOffset;
 			}
@@ -1612,7 +1610,6 @@
 
 			if (xOffset)
 			{
-				xOffset *= (drawingPage.W / this.file.pages[pageNum].W);
 				xOffset = xOffset >> 0;
 				posX += xOffset;
 			}
@@ -1641,7 +1638,11 @@
 
 			if ("#" === link["link"].charAt(0))
 			{
-				this.navigateToPage(parseInt(link["link"].substring(1)), link["dest"]);
+				let nPage	= parseInt(link["link"].substring(1));
+				let oTr		= this.getPDFDoc().pagesTransform[nPage].invert;
+				let oPos	= oTr.TransformPoint(0, link["dest"]);
+
+				this.navigateToPage(nPage, this.scrollY + oPos.y, this.scrollX + oPos.x);
 			}
 			else
 			{
@@ -3960,9 +3961,84 @@
 			}
 		}
 	};
-	// возвращает видимый рект страницы (процентах от полной)
+	// возвращает видимый рект страницы (процентах от полной), не учитывая поворот
 	CHtmlPage.prototype.getViewingRect = function(nPage) {
-		return this.pageDetector.getCurrentPage(nPage);
+		let oPageDetector = this.pageDetector;
+
+		let page = oPageDetector.pages.find(function(page) {
+			return page.num == nPage;
+		});
+
+		if (!page)
+		{
+			return {
+				num : nPage,
+				x : 0,
+				y : 0,
+				r : 0,
+				b : 0
+			};
+		}
+
+		let x = 0;
+		if (page.x < 0) 
+			x = -page.x / page.w;
+
+		let y = 0;
+		if (page.y < 0)
+			y = -page.y / page.h;
+
+		let r = 1;
+		if ((page.x + page.w) > oPageDetector.width)
+			r -= (page.x + page.w - oPageDetector.width) / page.w;
+
+		let b = 1;
+		if ((page.y + page.h) > oPageDetector.height)
+			b -= (page.y + page.h - oPageDetector.height) / page.h;
+		
+		return {
+			num : nPage,
+			x : x,
+			y : y,
+			r : r,
+			b : b
+		};
+	};
+	// возвращает видимый рект страницы (процентах от полной) учитывая поворот
+	CHtmlPage.prototype.getViewingRect2 = function(nPage) {
+		let oViewRect = this.getViewingRect(nPage);
+		let nRotAngle = this.getPageRotate(nPage);
+
+		let oRotViewRect = {};
+		switch (nRotAngle) {
+			case 90: {
+				oRotViewRect.x = oViewRect.y;
+				oRotViewRect.y = 1 - oViewRect.r;
+				oRotViewRect.r = oViewRect.b;
+				oRotViewRect.b = 1 - oViewRect.x;
+				break;
+			}
+			case 180: {
+				oRotViewRect.x = 1 - oViewRect.r;
+				oRotViewRect.y = 1 - oViewRect.b;
+				oRotViewRect.r = 1 - oViewRect.x;
+				oRotViewRect.b = 1 - oViewRect.y;
+				break;
+			}
+			case 270: {
+				oRotViewRect.x = 1 - oViewRect.b;
+				oRotViewRect.y = oViewRect.x;
+				oRotViewRect.r = 1 - oViewRect.y;
+				oRotViewRect.b = oViewRect.r;
+				break;
+			}
+			default: {
+				oRotViewRect = oViewRect;
+				break;
+			}
+		}
+
+		return oRotViewRect;
 	};
 	CHtmlPage.prototype.GetPageForThumbnails = function(nPage, nWidthPx, nHeightPx) {
 		let oFile = this.file;
@@ -4254,6 +4330,9 @@
 		if (true !== isDisablePaint) {
 			this._paint();
 			this.onUpdateOverlay();	
+		}
+		else {
+			this.getPDFDoc().UpdatePagesTransform();
 		}
 	};
 	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)

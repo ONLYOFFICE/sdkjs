@@ -622,8 +622,7 @@ var CPresentation = CPresentation || function(){};
             }
         };
         
-        if (false == oNextForm.IsInSight())
-            this.NavigateToField(oNextForm);
+        this.NavigateToField(oNextForm);
                 
         let oOnFocus = oNextForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
@@ -707,9 +706,7 @@ var CPresentation = CPresentation || function(){};
             }
         };
 
-        // если форма не в видимой зоне, двигаемся к ней
-        if (false == oNextForm.IsInSight())
-            this.NavigateToField(oNextForm);
+        this.NavigateToField(oNextForm);
         
         let oOnFocus = oNextForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
@@ -719,24 +716,52 @@ var CPresentation = CPresentation || function(){};
             callbackAfterFocus.bind(this)();
     };
     CPDFDoc.prototype.NavigateToField = function(oField) {
-        let oViewer = editor.getDocumentRenderer();
-        let aOrigRect = oField.GetOrigRect();
-        let nPage = oField.GetPage();
+        let oViewer     = Asc.editor.getDocumentRenderer();
+        let aOrigRect   = oField.GetOrigRect();
+        let nPage       = oField.GetPage();
         
-        let nBetweenPages = oViewer.betweenPages / (oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H);
+        let oViewRect = oViewer.getViewingRect2(nPage);
 
-        let nPageHpx = (oViewer.drawingPages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let nPageWpx = (oViewer.drawingPages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let nOrigPageW = oViewer.file.pages[nPage].W;
+        let nOrigPageH = oViewer.file.pages[nPage].H;
+        let nPageRot = oViewer.getPageRotate(nPage);
 
-        // находим видимый размер от страницы в исходных размерах 
-        let nViewedH = (oViewer.canvas.height / nPageHpx) * oViewer.file.pages[nPage].H;
-        let nViewedW = (oViewer.canvas.width / nPageWpx) * oViewer.file.pages[nPage].W;
-        
-        // выставляем смещение до формы страницу
-        let yOffset = aOrigRect[1] + (aOrigRect[3] - aOrigRect[1]) / 2 - nViewedH / 2 + nBetweenPages;
-        let xOffset = aOrigRect[0] + (aOrigRect[2] - aOrigRect[0]) / 2 - nViewedW / 2;
+        let nStartViewX = nOrigPageW * oViewRect.x;
+        let nStartViewY = nOrigPageH * oViewRect.y;
+        let nEndViewX   = nOrigPageW * oViewRect.r;
+        let nEndViewY   = nOrigPageH * oViewRect.b;
 
-        oViewer.navigateToPage(nPage, yOffset > 0 ? yOffset : undefined, xOffset > 0 ? xOffset : undefined);
+        if ((aOrigRect[3] > nStartViewY && aOrigRect[1] < nEndViewY) && (aOrigRect[2] > nStartViewX && aOrigRect[0] < nEndViewX)) {
+            return;
+        }
+
+        // выставляем смещения
+        let yOffset;
+        let xOffset;
+
+        switch (nPageRot) {
+            case 0:
+                yOffset = aOrigRect[1];
+                xOffset = aOrigRect[0];
+                break;
+            case 90:
+                yOffset = aOrigRect[3];
+                xOffset = aOrigRect[0];
+                break;
+            case 180:
+                yOffset = aOrigRect[3];
+                xOffset = aOrigRect[2];
+                break;
+            case 270:
+                yOffset = aOrigRect[1];
+                xOffset = aOrigRect[2];
+                break;
+        }
+
+        let oTr = this.pagesTransform[nPage].invert;
+        let oPos = oTr.TransformPoint(xOffset, yOffset);
+
+        this.Viewer.navigateToPage(nPage, this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
     };
     CPDFDoc.prototype.CommitField = function(oField) {
         let isValid = true;
@@ -2326,20 +2351,38 @@ var CPresentation = CPresentation || function(){};
 
             let oPos;
             let nPage       = oAnnot.GetPage();
+            let nPageRotate = this.Viewer.getPageRotate(nPage);
             let aOrigRect   = oAnnot.GetOrigRect();
             let oTr         = this.pagesTransform[nPage].invert;
             
-            let x = aOrigRect[0];
             let w = aOrigRect[2] - aOrigRect[0];
-            let y = aOrigRect[1];
             let h = aOrigRect[3] - aOrigRect[1];
 
-            if (oAnnot.IsComment()) {
-                oPos = oTr.TransformPoint(x + w / this.Viewer.zoom, y + h / 2 / this.Viewer.zoom);
+            let X, Y;
+            switch (nPageRotate) {
+                case 0: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom : w);
+                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    break;
+                }
+                case 90: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom / 2 : w / 2);
+                    Y = aOrigRect[1];
+                    break;
+                }
+                case 180: {
+                    X = aOrigRect[0];
+                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    break;
+                }
+                case 270: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / 2 / this.Viewer.zoom : w / 2);
+                    Y = aOrigRect[3];
+                    break;
+                }
             }
-            else {
-                oPos = oTr.TransformPoint(x + w, y + h / 2);
-            }
+
+            oPos = oTr.TransformPoint(X, Y);
 
             editor.sync_UpdateCommentPosition(oAnnot.GetId(), oPos.x, oPos.y);
         }
@@ -2448,21 +2491,38 @@ var CPresentation = CPresentation || function(){};
 
             let oPos;
             let nPage       = oAnnot.GetPage();
+            let nPageRotate = this.Viewer.getPageRotate(nPage);
             let aOrigRect   = oAnnot.GetOrigRect();
             let oTr         = this.pagesTransform[nPage].invert;
             
-            let x = aOrigRect[0];
             let w = aOrigRect[2] - aOrigRect[0];
-            let y = aOrigRect[1];
             let h = aOrigRect[3] - aOrigRect[1];
 
-            if (oAnnot.IsComment()) {
-                oPos = oTr.TransformPoint(x + w / this.Viewer.zoom, y + h / 2 / this.Viewer.zoom);
-            }
-            else {
-                oPos = oTr.TransformPoint(x + w, y + h / 2);
+            let X, Y;
+            switch (nPageRotate) {
+                case 0: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom : w);
+                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    break;
+                }
+                case 90: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / this.Viewer.zoom / 2 : w / 2);
+                    Y = aOrigRect[1];
+                    break;
+                }
+                case 180: {
+                    X = aOrigRect[0];
+                    Y = aOrigRect[1] + (oAnnot.IsComment() ? h / 2 / this.Viewer.zoom : h / 2);
+                    break;
+                }
+                case 270: {
+                    X = aOrigRect[0] + (oAnnot.IsComment() ? w / 2 / this.Viewer.zoom : w / 2);
+                    Y = aOrigRect[3];
+                    break;
+                }
             }
 
+            oPos = oTr.TransformPoint(X, Y);
             Asc.editor.sync_ShowComment([this.showedCommentId], oPos.x, oPos.y);
         }
         else {
@@ -2714,42 +2774,53 @@ var CPresentation = CPresentation || function(){};
         let aRect = oAnnot.GetOrigRect();
 
         let isVisible = false;
-        let oPage;
-        for (let i = 0; i < this.Viewer.pageDetector.pages.length; i++) {
-            oPage = this.Viewer.pageDetector.pages[i];
-            if (oPage.num == nPage) {
-                let nScale = AscCommon.AscBrowser.retinaPixelRatio * this.Viewer.zoom * (96 / this.Viewer.file.pages[nPage].Dpi);
-                let nPageY = -oPage.y / nScale;
-                let nPageX = -oPage.x / nScale;
+        let oViewRect = this.Viewer.getViewingRect2(nPage);
 
-                let nVisibleH = (oPage.h - nPageY) / nScale;
-                let nVisibleW = (oPage.w - nPageX) / nScale;
+        let nOrigPageW = this.Viewer.file.pages[nPage].W;
+        let nOrigPageH = this.Viewer.file.pages[nPage].H;
+        let nPageRot = this.Viewer.getPageRotate(nPage);
 
-                // если рект аннотации попадает в рект видимого окна (положения страницы), то значит аннотация видима
-                if ((aRect[3] > nPageY && aRect[1] < nPageY + nVisibleH) && (aRect[2] > nPageX && aRect[0] < nPageX + nVisibleW))
-                    isVisible = true;
-            }
+        let nStartViewX = nOrigPageW * oViewRect.x;
+        let nStartViewY = nOrigPageH * oViewRect.y;
+        let nEndViewX   = nOrigPageW * oViewRect.r;
+        let nEndViewY   = nOrigPageH * oViewRect.b;
+
+        if ((aRect[3] > nStartViewY && aRect[1] < nEndViewY) && (aRect[2] > nStartViewX && aRect[0] < nEndViewX)) {
+            isVisible = true;
         }
-
+        
         if (isVisible == true && bForceMove != true)
             return;
         
         // выставляем смещения
         let yOffset;
         let xOffset;
-        if (aRect[1] != null) {
-            yOffset = aRect[1] + this.Viewer.betweenPages / (this.Viewer.drawingPages[nPage].H / this.Viewer.file.pages[nPage].H);
-        }
-        else
-            yOffset = this.Viewer.betweenPages / (this.Viewer.drawingPages[nPage].H / this.Viewer.file.pages[nPage].H);
 
-        if (aRect[0] != null) {
-            xOffset = aRect[0];
+        switch (nPageRot) {
+            case 0:
+                yOffset = aRect[1];
+                xOffset = aRect[0];
+                break;
+            case 90:
+                yOffset = aRect[3];
+                xOffset = aRect[0];
+                break;
+            case 180:
+                yOffset = aRect[3];
+                xOffset = aRect[2];
+                break;
+            case 270:
+                yOffset = aRect[1];
+                xOffset = aRect[2];
+                break;
         }
+
+        let oTr = this.pagesTransform[nPage].invert;
+        let oPos = oTr.TransformPoint(xOffset, yOffset);
 
         if (yOffset != undefined && xOffset != undefined || this.Viewer.currentPage != nPage) {
             this.Viewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            this.Viewer.navigateToPage(nPage, yOffset, xOffset);
+            this.Viewer.navigateToPage(nPage, this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
             this.Viewer.disabledPaintOnScroll = false;
             this.Viewer.paint();
         }
