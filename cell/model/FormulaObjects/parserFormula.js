@@ -781,6 +781,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cString.prototype.getValue = function () {
 		return this.value.replace(/\"\"/g, "\"");
 	};
+	cString.prototype.toString = function () {
+		return this.value;
+	};
 
 	/**
 	 * @constructor
@@ -2441,7 +2444,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else {
 			this.area = new cError(cErrorType.bad_reference);
 		}
-
+		//return this._createAreaError(isThisRow);
 		return this.area;
 	};
 	cStrucTable.prototype._createAreaError = function (isThisRow) {

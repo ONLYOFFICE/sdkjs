@@ -907,7 +907,9 @@
 				--this.lockCounter;
 			}
 			if (!notCalc && 0 >= this.lockCounter) {
+				console.time("asd")
 				this.calcTree();
+				console.timeEnd("asd")
 			}
 		},
 		lockRecalExecute: function(callback) {
@@ -16028,7 +16030,7 @@
 	};
 	Range.prototype.isOneCell=function(){
 		var oBBox = this.bbox;
-		return oBBox.r1 == oBBox.r2 && oBBox.c1 == oBBox.c2;
+		return oBBox.r1 === oBBox.r2 && oBBox.c1 === oBBox.c2;
 	};
 	Range.prototype.getBBox0=function(){
 		//0 - based
