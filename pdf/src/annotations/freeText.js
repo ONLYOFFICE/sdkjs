@@ -1093,26 +1093,42 @@
         let nPage           = this.GetPage();
         let nRotAngle       = this.GetRotate();
         oTextBoxShape.recalculateContent();                
-
+    
         let oContentBounds  = oDocContent.GetContentBounds(nPage);
         let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
-
+    
         let nLengthToCheck = oDoc.Viewer.isLandscapePage(nPage) ? oTextBoxShape.extX : oTextBoxShape.extY;
-
+    
         if (nContentH > nLengthToCheck) {
             let oViewer = Asc.editor.getDocumentRenderer();
             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
+    
             let aCurTextBoxRect = this.GetTextBoxRect();
             
-            // Находим новый textbox rect 
             let xMin = aCurTextBoxRect[0];
             let yMin = aCurTextBoxRect[1];
             let xMax = aCurTextBoxRect[2];
-            let yMax = aCurTextBoxRect[3] + (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
-
+            let yMax = aCurTextBoxRect[3];
+            
+            // Adjusting the text box rect based on rotation angle
+            switch (nRotAngle) {
+                case 0:
+                    yMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+                    break;
+                case 90:
+                    xMax += (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleX;
+                    break;
+                case 180:
+                    yMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+                    break;
+                case 270:
+                    xMin -= (nContentH - nLengthToCheck + 0.5) * g_dKoef_mm_to_pix / nScaleX;
+                    break;
+            }
+    
             let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
+    
             // расширяем рект на ширину линии (или на радиус cloud бордера)
             let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
             if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
@@ -1120,26 +1136,23 @@
                 aNewTextBoxRect[1] -= this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
                 aNewTextBoxRect[2] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleX;
                 aNewTextBoxRect[3] += this.GetBorderEffectIntensity() * 1.5 * g_dKoef_mm_to_pix * nScaleY;
-            }
-            else {
+            } else {
                 aNewTextBoxRect[0] -= nLineWidth * nScaleX;
                 aNewTextBoxRect[1] -= nLineWidth * nScaleY;
                 aNewTextBoxRect[2] += nLineWidth * nScaleX;
                 aNewTextBoxRect[3] += nLineWidth * nScaleY;
             }
-
+    
             // находит точку выхода callout для нового ректа textbox
             let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
-
+    
             // пересчитываем callout
             let aNewCallout = this.GetCallout() ? this.GetCallout().slice() : null;
             switch (nCalloutExitPos) {
                 case AscPDF.CALLOUT_EXIT_POS.left: {
-                    // точка выхода (x3, y3)
                     aNewCallout[2 * 2]      = xMin;
                     aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
-
-                    // точка начала стрелки
+    
                     aNewCallout[2 * 1]      = xMin - this.defaultPerpLength;
                     aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
                     break;
@@ -1147,7 +1160,7 @@
                 case AscPDF.CALLOUT_EXIT_POS.top: {
                     aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
                     aNewCallout[2 * 2 + 1]  = yMin;
-
+    
                     aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
                     aNewCallout[2 * 1 + 1]  = yMin - this.defaultPerpLength;
                     break;
@@ -1155,7 +1168,7 @@
                 case AscPDF.CALLOUT_EXIT_POS.right: {
                     aNewCallout[2 * 2]      = xMax;
                     aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
-
+    
                     aNewCallout[2 * 1]      = xMax + this.defaultPerpLength;
                     aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
                     break;
@@ -1163,18 +1176,18 @@
                 case AscPDF.CALLOUT_EXIT_POS.bottom: {
                     aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
                     aNewCallout[2 * 2 + 1]  = yMax;
-
+    
                     aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
                     aNewCallout[2 * 1 + 1]  = yMax + this.defaultPerpLength;
                     break;
                 }
             }
-
+    
             function findBoundingRectangle(points) {
                 if (!points) {
                     return null;
                 }
-
+    
                 let minX = points[0];
                 let minY = points[1];
                 let maxX = points[0];
@@ -1189,10 +1202,10 @@
             
                 return [minX, minY, maxX, maxY];
             }
-
+    
             // находим рект стрелки, учитывая окончание линии
             let aArrowRect = aNewCallout ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
-
+    
             // находим результирующий rect аннотации
             let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
                 return idx % 2 ? measure * nScaleY : measure * nScaleX;
@@ -1205,7 +1218,7 @@
                 aNewRect[2] / nScaleX - xMax,
                 aNewRect[3] / nScaleY - yMax
             ];
-
+    
             aNewCallout && this.SetCallout(aNewCallout);
             this.SetRectangleDiff(aNewRD);
             this.SetRect(aNewRect);
