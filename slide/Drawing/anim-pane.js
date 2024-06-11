@@ -2422,9 +2422,9 @@
 		})
 
 		const templateStrings = {
-			startTime: AscCommon.translateManager.getValue('Start: ${time}s'),
-			endTime: AscCommon.translateManager.getValue('End: ${time}s'),
-			loopTime: AscCommon.translateManager.getValue('Loop: ${time}s'),
+			startTime: AscCommon.translateManager.getValue('Start: ${0}s'),
+			endTime: AscCommon.translateManager.getValue('End: ${0}s'),
+			loopTime: AscCommon.translateManager.getValue('Loop: ${0}s'),
 		};
 
 		// When dragging (when animItem's bar is pressed)
@@ -2433,16 +2433,16 @@
 			switch (currentAnimItem.hitResult.type) {
 				case 'center':
 					time = currentAnimItem.getDelay() / 1000;
-					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+					return templateStrings.startTime.replace('${0}', time.toFixed(1));
 				case 'left':
 					time = currentAnimItem.getDelay() / 1000;
-					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+					return templateStrings.startTime.replace('${0}', time.toFixed(1));
 				case 'right':
 					time = currentAnimItem.getDelay() / 1000 + currentAnimItem.getDuration() / 1000;
-					return templateStrings.endTime.replace('${time}', time.toFixed(1));
+					return templateStrings.endTime.replace('${0}', time.toFixed(1));
 				case 'partition':
 					time = (currentAnimItem.getDuration() / 1000);
-					return templateStrings.loopTime.replace('${time}', time.toFixed(1));
+					return templateStrings.loopTime.replace('${0}', time.toFixed(1));
 			}
 		}
 
@@ -2450,8 +2450,8 @@
 			const startTime = (currentAnimItem.getDelay() / 1000).toFixed(1);
 			const endTime = ((currentAnimItem.getDelay() + currentAnimItem.getDuration()) / 1000).toFixed(1);
 			const result = [
-				templateStrings.startTime.replace('${time}', startTime),
-				templateStrings.endTime.replace('${time}', endTime),
+				templateStrings.startTime.replace('${0}', startTime),
+				templateStrings.endTime.replace('${0}', endTime),
 			];
 			return result.join(', ');
 		} else {
