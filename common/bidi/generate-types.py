@@ -41,7 +41,7 @@ header = "/*\n\
 \n\
 \"use strict\";\n\
 \n\
-(function(window)\n\
+(function()\n\
 {\n\
 	const L   = AscBidi.Type.L;\n\
 	const R   = AscBidi.Type.R;\n\

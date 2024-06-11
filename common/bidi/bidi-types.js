@@ -89,7 +89,7 @@
 		LRI : FLAG.NEUTRAL | FLAG.ISOLATE,
 		RLI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.RTL,
 		FSI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.FS,
-		PDI : FLGA.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE
+		PDI : FLAG.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscBidi.FLAG = FLAG;

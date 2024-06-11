@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function(window)
+(function()
 {
 	const L   = AscBidi.Type.L;
 	const R   = AscBidi.Type.R;
