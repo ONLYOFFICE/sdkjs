@@ -845,7 +845,7 @@
 										return new ParaHyperlink();
 									}, this, []);
 									oHyperlink.Value = sLink2;
-									oHyperlink.Tooltip = oNvPr.hlinkClick.tooltip;
+									oHyperlink.ToolTip = oNvPr.hlinkClick.tooltip;
 									if (hit_in_text_rect) {
 										return {
 											objectId: drawing.Get_Id(),
@@ -3339,7 +3339,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}
@@ -3385,7 +3385,7 @@
 												oHyper.action = HyperProps.Value;
 											}
 											oHyper.id = HyperProps.Value;
-											oHyper.tooltip = HyperProps.Tooltip;
+											oHyper.tooltip = HyperProps.ToolTip;
 											oNvPr.setHlinkClick(oHyper);
 										}
 									}

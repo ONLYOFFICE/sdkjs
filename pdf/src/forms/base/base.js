@@ -1982,43 +1982,6 @@
     CBaseField.prototype.GetTextSize = function() {
         return this._textSize;
     };
-    /**
-     * Is the field completely within the window of view.
-	 * @memberof CBaseField
-	 * @typeofeditors ["PDF"]
-     * @returns {boolean}
-	 */
-    CBaseField.prototype.IsInSight = function() {
-        let oViewer     = editor.getDocumentRenderer();
-        let aOrigRect   = this.GetOrigRect();
-        let nPage       = this.GetPage();
-
-        let oPage;
-        for (let i = 0; i < oViewer.pageDetector.pages.length; i++) {
-            if (oViewer.pageDetector.pages[i].num == nPage) {
-                oPage = oViewer.pageDetector.pages[i];
-                break;
-            }
-        }
-
-        if (!oPage)
-            return false;
-
-        // координаты видимой части страницы
-        let x1, x2, y1, y2;
-
-        x1 = (-oPage.x / oPage.w) * oViewer.file.pages[nPage].W;
-        y1 = (-oPage.y / oPage.h) * oViewer.file.pages[nPage].H;
-
-        x2 = x1 + oViewer.canvas.width / (oPage.w) * oViewer.file.pages[nPage].W;
-        y2 = y1 + oViewer.canvas.height / (oPage.h) * oViewer.file.pages[nPage].H;
-        
-        if (aOrigRect[0] >= x1 && aOrigRect[1] >= y1 && aOrigRect[2] <= x2 && aOrigRect[3] <= y2)
-            return true;
-        else
-            return false;
-
-    };
     CBaseField.prototype.GetOrigRect = function() {
         return this._origRect;
     };

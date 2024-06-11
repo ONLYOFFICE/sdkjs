@@ -3587,7 +3587,10 @@ CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStar
 			return false;
 	}
 
-	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
+	if (!oRun
+		|| !(oRun instanceof ParaRun)
+		|| !oRun.GetParagraph()
+		|| !oRun.GetParagraph().IsUseInDocument())
 		return false;
 
 	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, _nStartIndex, _nEndIndex);
@@ -3673,7 +3676,7 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 			}
 		}
 
-		if (isAdd)
+		if (isAdd && oPara.IsUseInDocument())
 			arrParagraphs.push(oPara);
 	}
 

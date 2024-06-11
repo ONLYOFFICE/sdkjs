@@ -3811,20 +3811,19 @@
         this.rev = pr;
     };
     CBldSub.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.chart !== null) {
+        if (this.chart !== null && this.chart !== undefined) {
             oCopy.setChart(this.chart);
         }
-        if (this.animBg !== null) {
+        if (this.animBg !== null && this.animBg !== undefined) {
             oCopy.setAnimBg(this.animBg);
         }
-
-        if (this.bldChart !== null) {
+        if (this.bldChart !== null && this.bldChart !== undefined) {
             oCopy.setBldChart(this.bldChart);
         }
-        if (this.bldDgm !== null) {
+        if (this.bldDgm !== null && this.bldDgm !== undefined) {
             oCopy.setBldDgm(this.bldDgm);
         }
-        if (this.rev !== null) {
+        if (this.rev !== null && this.rev !== undefined) {
             oCopy.setRev(this.rev);
         }
     };
@@ -3978,23 +3977,23 @@
         this.categoryIdx = pr;
     };
     CGraphicEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.dgmId !== null) {
+        if (this.dgmId !== null && this.dgmId !== undefined) {
             var sDgmId = this.dgmId;
             if (oIdMap && oIdMap[this.dgmId]) {
                 sDgmId = oIdMap[this.dgmId];
             }
             oCopy.setDgmId(sDgmId);
         }
-        if (this.dgmBuildStep !== null) {
+        if (this.dgmBuildStep !== null && this.dgmBuildStep !== undefined) {
             oCopy.setDgmBuildStep(this.dgmBuildStep);
         }
-        if (this.chartBuildStep !== null) {
+        if (this.chartBuildStep !== null && this.chartBuildStep !== undefined) {
             oCopy.setChartBuildStep(this.chartBuildStep);
         }
-        if (this.seriesIdx !== null) {
+        if (this.seriesIdx !== null && this.seriesIdx !== undefined) {
             oCopy.setSeriesIdx(this.seriesIdx);
         }
-        if (this.categoryIdx !== null) {
+        if (this.categoryIdx !== null && this.categoryIdx !== undefined) {
             oCopy.setCategoryIdx(this.categoryIdx);
         }
     };
@@ -4055,10 +4054,10 @@
         this.end = pr;
     };
     CIndexRg.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.end !== null) {
+        if (this.end !== null && this.end !== undefined) {
             oCopy.setEnd(this.end);
         }
-        if (this.st !== null) {
+        if (this.st !== null && this.st !== undefined) {
             oCopy.setSt(this.st);
         }
     };
@@ -4097,10 +4096,10 @@
         this.setParentToChild(pr);
     };
     CTmpl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.lvl !== null) {
+        if (this.lvl !== null && this.lvl !== undefined) {
             oCopy.setLvl(this.lvl);
         }
-        if (this.tnLst !== null) {
+        if (this.tnLst !== null && this.tnLst !== undefined) {
             oCopy.setTnLst(this.tnLst.createDuplicate(oIdMap));
         }
     };
@@ -4211,25 +4210,25 @@
         this.valueType = pr;
     };
     CAnim.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.tavLst !== null) {
+        if (this.tavLst !== null && this.tavLst !== undefined) {
             oCopy.setTavLst(this.tavLst.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.calcmode !== null) {
+        if (this.calcmode !== null && this.calcmode !== undefined) {
             oCopy.setCalcmode(this.calcmode);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
-        if (this.valueType !== null) {
+        if (this.valueType !== null && this.valueType !== undefined) {
             oCopy.setValueType(this.valueType);
         }
     };
@@ -4678,37 +4677,37 @@
         this.xfrmType = pr;
     };
     CCBhvr.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.attrNameLst !== null) {
+        if (this.attrNameLst !== null && this.attrNameLst !== undefined) {
             oCopy.setAttrNameLst(this.attrNameLst.createDuplicate(oIdMap));
         }
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.accumulate !== null) {
+        if (this.accumulate !== null && this.accumulate !== undefined) {
             oCopy.setAccumulate(this.accumulate);
         }
-        if (this.additive !== null) {
+        if (this.additive !== null && this.additive !== undefined) {
             oCopy.setAdditive(this.additive);
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.override !== null) {
+        if (this.override !== null && this.override !== undefined) {
             oCopy.setOverride(this.override);
         }
-        if (this.rctx !== null) {
+        if (this.rctx !== null && this.rctx !== undefined) {
             oCopy.setRctx(this.rctx);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
-        if (this.xfrmType !== null) {
+        if (this.xfrmType !== null && this.xfrmType	!== undefined) {
             oCopy.setXfrmType(this.xfrmType);
         }
     };
@@ -5084,88 +5083,88 @@
         if (AscCommon.isRealObject(this.childTnLst)) {
             oCopy.setChildTnLst(this.childTnLst.createDuplicate(oIdMap));
         }
-        if (this.endCondLst !== null) {
+        if (this.endCondLst !== null && this.endCondLst !== undefined) {
             oCopy.setEndCondLst(this.endCondLst.createDuplicate(oIdMap));
         }
-        if (this.endSync !== null) {
+        if (this.endSync !== null && this.endSync !== undefined) {
             oCopy.setEndSync(this.endSync.createDuplicate(oIdMap));
         }
-        if (this.iterate !== null) {
+        if (this.iterate !== null && this.iterate !== undefined) {
             oCopy.setIterate(this.iterate.createDuplicate(oIdMap));
         }
-        if (this.stCondLst !== null) {
+        if (this.stCondLst !== null && this.stCondLst !== undefined) {
             oCopy.setStCondLst(this.stCondLst.createDuplicate(oIdMap));
         }
-        if (this.subTnLst !== null) {
+        if (this.subTnLst !== null && this.subTnLst !== undefined) {
             oCopy.setSubTnLst(this.subTnLst.createDuplicate(oIdMap));
         }
-        if (this.accel !== null) {
+        if (this.accel !== null && this.accel !== undefined) {
             oCopy.setAccel(this.accel);
         }
-        if (this.afterEffect !== null) {
+        if (this.afterEffect !== null && this.afterEffect !== undefined) {
             oCopy.setAfterEffect(this.afterEffect);
         }
-        if (this.autoRev !== null) {
+        if (this.autoRev !== null && this.autoRev !== undefined) {
             oCopy.setAutoRev(this.autoRev);
         }
-        if (this.bldLvl !== null) {
+        if (this.bldLvl !== null && this.bldLvl !== undefined) {
             oCopy.setBldLvl(this.bldLvl);
         }
-        if (this.decel !== null) {
+        if (this.decel !== null && this.decel !== undefined) {
             oCopy.setDecel(this.decel);
         }
-        if (this.display !== null) {
+        if (this.display !== null && this.display !== undefined) {
             oCopy.setDisplay(this.display);
         }
-        if (this.dur !== null) {
+        if (this.dur !== null && this.dur !== undefined) {
             oCopy.setDur(this.dur);
         }
-        if (this.evtFilter !== null) {
+        if (this.evtFilter !== null && this.evtFilter !== undefined) {
             oCopy.setEvtFilter(this.evtFilter);
         }
-        if (this.fill !== null) {
+        if (this.fill !== null && this.fill !== undefined) {
             oCopy.setFill(this.fill);
         }
-        if (this.grpId !== null) {
+        if (this.grpId !== null && this.grpId !== undefined) {
             oCopy.setGrpId(this.grpId);
         }
-        if (this.id !== null) {
+        if (this.id !== null && this.id !== undefined) {
             oCopy.setId(this.id);
         }
-        if (this.masterRel !== null) {
+        if (this.masterRel !== null && this.masterRel !== undefined) {
             oCopy.setMasterRel(this.masterRel);
         }
-        if (this.nodePh !== null) {
+        if (this.nodePh !== null && this.nodePh !== undefined) {
             oCopy.setNodePh(this.nodePh);
         }
-        if (this.nodeType !== null) {
+        if (this.nodeType !== null && this.nodeType !== undefined) {
             oCopy.setNodeType(this.nodeType);
         }
-        if (this.presetClass !== null) {
+        if (this.presetClass !== null && this.presetClass !== undefined ) {
             oCopy.setPresetClass(this.presetClass);
         }
-        if (this.presetID !== null) {
+        if (this.presetID !== null && this.presetID !== undefined ) {
             oCopy.setPresetID(this.presetID);
         }
-        if (this.presetSubtype !== null) {
+        if (this.presetSubtype !== null && this.presetSubtype !== undefined ) {
             oCopy.setPresetSubtype(this.presetSubtype);
         }
-        if (this.repeatCount !== null) {
+        if (this.repeatCount !== null && this.repeatCount !== undefined ) {
             oCopy.setRepeatCount(this.repeatCount);
         }
-        if (this.repeatDur !== null) {
+        if (this.repeatDur !== null && this.repeatDur !== undefined ) {
             oCopy.setRepeatDur(this.repeatDur);
         }
-        if (this.restart !== null) {
+        if (this.restart !== null && this.restart !== undefined ) {
             oCopy.setRestart(this.restart);
         }
-        if (this.spd !== null) {
+        if (this.spd !== null && this.spd !== undefined ) {
             oCopy.setSpd(this.spd);
         }
-        if (this.syncBehavior !== null) {
+        if (this.syncBehavior !== null && this.syncBehavior !== undefined ) {
             oCopy.setSyncBehavior(this.syncBehavior);
         }
-        if (this.tmFilter !== null) {
+        if (this.tmFilter !== null && this.tmFilter !== undefined ) {
             oCopy.setTmFilter(this.tmFilter);
         }
     };
@@ -5723,19 +5722,19 @@
         this.evt = pr;
     };
     CCond.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.rtn !== null) {
+        if (this.rtn !== null && this.rtn !== undefined) {
             oCopy.setRtn(this.rtn);
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.tn !== null) {
+        if (this.tn !== null && this.tn !== undefined) {
             oCopy.setTn(this.tn);
         }
-        if (this.delay !== null) {
+        if (this.delay !== null && this.delay !== undefined) {
             oCopy.setDelay(this.delay);
         }
-        if (this.evt !== null) {
+        if (this.evt !== null && this.evt !== undefined) {
             oCopy.setEvt(this.evt);
         }
     };
@@ -5956,16 +5955,16 @@
         this.setParentToChild(pr);
     };
     CTgtEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.inkTgt !== null) {
+        if (this.inkTgt !== null && this.inkTgt !== undefined) {
             oCopy.setInkTgt(this.inkTgt.createDuplicate(oIdMap));
         }
-        if (this.sldTgt !== null) {
+        if (this.sldTgt !== null && this.sldTgt !== undefined) {
             oCopy.setSldTgt(this.sldTgt.createDuplicate(oIdMap));
         }
-        if (this.sndTgt !== null) {
+        if (this.sndTgt !== null && this.sndTgt !== undefined) {
             oCopy.setSndTgt(this.sndTgt.createDuplicate(oIdMap));
         }
-        if (this.spTgt !== null) {
+        if (this.spTgt !== null && this.spTgt !== undefined) {
             oCopy.setSpTgt(this.spTgt.createDuplicate(oIdMap));
         }
     };
@@ -6082,13 +6081,13 @@
         this.builtIn = pr;
     };
     CSndTgt.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.embed !== null) {
+        if (this.embed !== null && this.embed !== undefined) {
             oCopy.setEmbed(this.embed);
         }
-        if (this.name !== null) {
+        if (this.name !== null && this.name !== undefined) {
             oCopy.setName(this.name);
         }
-        if (this.builtIn !== null) {
+        if (this.builtIn !== null && this.builtIn !== undefined) {
             oCopy.setBuiltIn(this.builtIn);
         }
     };
@@ -6206,23 +6205,23 @@
     };
     CSpTgt.prototype.fillObject = function (oCopy, oIdMap) {
         CObjectTarget.prototype.fillObject.call(this, oCopy, oIdMap);
-        if (this.bg !== null) {
+        if (this.bg !== null && this.bg !== undefined) {
             oCopy.setBg(this.bg);
         }
-        if (this.graphicEl !== null) {
+        if (this.graphicEl !== null && this.graphicEl !== undefined) {
             oCopy.setGraphicEl(this.graphicEl.createDuplicate(oIdMap));
         }
-        if (this.oleChartEl !== null) {
+        if (this.oleChartEl !== null && this.oleChartEl !== undefined) {
             oCopy.setOleChartEl(this.oleChartEl.createDuplicate(oIdMap));
         }
-        if (this.subSpId !== null) {
+        if (this.subSpId !== null && this.subSpId !== undefined) {
             var sId = this.subSpId;
             if (oIdMap && oIdMap[this.subSpId]) {
                 sId = oIdMap[this.subSpId];
             }
             oCopy.setSubSpId(sId);
         }
-        if (this.txEl !== null) {
+        if (this.txEl !== null && this.txEl !== undefined) {
             oCopy.setTxEl(this.txEl.createDuplicate(oIdMap));
         }
     };
@@ -6328,16 +6327,16 @@
         this.type = pr;
     };
     CIterateData.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.tmAbs !== null) {
+        if (this.tmAbs !== null && this.tmAbs !== undefined) {
             oCopy.setTmAbs(this.tmAbs);
         }
-        if (this.tmPct !== null) {
+        if (this.tmPct !== null && this.tmPct !== undefined) {
             oCopy.setTmPct(this.tmPct);
         }
-        if (this.backwards !== null) {
+        if (this.backwards !== null && this.backwards !== undefined) {
             oCopy.setBackwards(this.backwards);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -6395,13 +6394,13 @@
         this.tm = pr;
     };
     CTav.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.val !== null) {
+        if (this.val !== null && this.val !== undefined) {
             oCopy.setVal(this.val.createDuplicate(oIdMap));
         }
-        if (this.fmla !== null) {
+        if (this.fmla !== null && this.fmla !== undefined) {
             oCopy.setFmla(this.fmla);
         }
-        if (this.tm !== null) {
+        if (this.tm !== null && this.tm !== undefined) {
             oCopy.setTm(this.tm);
         }
     };
@@ -6501,19 +6500,19 @@
         this.strVal = pr;
     };
     CAnimVariant.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.boolVal !== null) {
+        if (this.boolVal !== null && this.boolVal !== undefined) {
             oCopy.setBoolVal(this.boolVal);
         }
-        if (this.clrVal !== null) {
+        if (this.clrVal !== null && this.clrVal !== undefined) {
             oCopy.setClrVal(this.clrVal.createDuplicate());
         }
-        if (this.fltVal !== null) {
+        if (this.fltVal !== null && this.fltVal !== undefined) {
             oCopy.setFltVal(this.fltVal);
         }
-        if (this.intVal !== null) {
+        if (this.intVal !== null && this.intVal !== undefined) {
             oCopy.setIntVal(this.intVal);
         }
-        if (this.strVal !== null) {
+        if (this.strVal !== null && this.strVal !== undefined) {
             oCopy.setStrVal(this.strVal);
         }
     };
@@ -6725,25 +6724,25 @@
         this.dir = pr;
     };
     CAnimClr.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.byRGB !== null) {
+        if (this.byRGB !== null && this.byRGB !== undefined) {
             oCopy.setByRGB(this.byRGB.createDuplicate(oIdMap));
         }
-        if (this.byHSL !== null) {
+        if (this.byHSL !== null && this.byHSL !== undefined) {
             oCopy.setByHSL(this.byHSL.createDuplicate(oIdMap));
         }
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.clrSpc !== null) {
+        if (this.clrSpc !== null && this.clrSpc !== undefined) {
             oCopy.setClrSpc(this.clrSpc);
         }
-        if (this.dir !== null) {
+        if (this.dir !== null && this.dir !== undefined) {
             oCopy.setDir(this.dir);
         }
     };
@@ -7005,19 +7004,19 @@
         this.transition = pr;
     };
     CAnimEffect.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.progress !== null) {
+        if (this.progress !== null && this.progress !== undefined) {
             oCopy.setProgress(this.progress.createDuplicate(oIdMap));
         }
-        if (this.filter !== null) {
+        if (this.filter !== null && this.filter !== undefined) {
             oCopy.setFilter(this.filter);
         }
-        if (this.prLst !== null) {
+        if (this.prLst !== null && this.prLst !== undefined) {
             oCopy.setPrLst(this.prLst);
         }
-        if (this.transition !== null) {
+        if (this.transition !== null && this.transition !== undefined) {
             oCopy.setTransition(this.transition);
         }
     };
@@ -7238,34 +7237,34 @@
         this.rAng = pr;
     };
     CAnimMotion.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by.createDuplicate(oIdMap));
         }
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.rCtr !== null) {
+        if (this.rCtr !== null && this.rCtr !== undefined) {
             oCopy.setRCtr(this.rCtr.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.origin !== null) {
+        if (this.origin !== null && this.origin !== undefined) {
             oCopy.setOrigin(this.origin);
         }
-        if (this.path !== null) {
+        if (this.path !== null && this.path !== undefined) {
             oCopy.setPath(this.path);
         }
-        if (this.pathEditMode !== null) {
+        if (this.pathEditMode !== null && this.pathEditMode !== undefined) {
             oCopy.setPathEditMode(this.pathEditMode);
         }
-        if (this.ptsTypes !== null) {
+        if (this.ptsTypes !== null && this.ptsTypes !== undefined) {
             oCopy.setPtsTypes(this.ptsTypes);
         }
-        if (this.rAng !== null) {
+        if (this.rAng !== null && this.rAng !== undefined) {
             oCopy.setRAng(this.rAng);
         }
     };
@@ -7809,16 +7808,16 @@
         this.to = pr;
     };
     CAnimRot.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by);
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from);
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to);
         }
     };
@@ -7943,19 +7942,19 @@
         this.zoomContents = pr;
     };
     CAnimScale.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.by !== null) {
+        if (this.by !== null && this.by !== undefined) {
             oCopy.setBy(this.by.createDuplicate(oIdMap));
         }
-        if (this.from !== null) {
+        if (this.from !== null && this.from !== undefined) {
             oCopy.setFrom(this.from.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
-        if (this.zoomContents !== null) {
+        if (this.zoomContents !== null && this.zoomContents !== undefined) {
             oCopy.setZoomContents(this.zoomContents);
         }
     };
@@ -8081,10 +8080,10 @@
         this.isNarration = pr;
     };
     CAudio.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cMediaNode !== null) {
+        if (this.cMediaNode !== null && this.cMediaNode !== undefined) {
             oCopy.setCMediaNode(this.cMediaNode.createDuplicate(oIdMap));
         }
-        if (this.isNarration !== null) {
+        if (this.isNarration !== null && this.isNarration !== undefined) {
             oCopy.setIsNarration(this.isNarration);
         }
     };
@@ -8177,22 +8176,22 @@
         this.vol = pr;
     };
     CCMediaNode.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
-        if (this.tgtEl !== null) {
+        if (this.tgtEl !== null && this.tgtEl !== undefined) {
             oCopy.setTgtEl(this.tgtEl.createDuplicate(oIdMap));
         }
-        if (this.mute !== null) {
+        if (this.mute !== null && this.mute !== undefined) {
             oCopy.setMute(this.mute);
         }
-        if (this.numSld !== null) {
+        if (this.numSld !== null && this.numSld !== undefined) {
             oCopy.setNumSld(this.numSld);
         }
-        if (this.showWhenStopped !== null) {
+        if (this.showWhenStopped !== null && this.showWhenStopped !== undefined) {
             oCopy.setShowWhenStopped(this.showWhenStopped);
         }
-        if (this.vol !== null) {
+        if (this.vol !== null && this.vol !== undefined) {
             oCopy.setVol(this.vol);
         }
     };
@@ -8270,13 +8269,13 @@
         this.type = pr;
     };
     CCmd.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.cmd !== null) {
+        if (this.cmd !== null && this.cmd !== undefined) {
             oCopy.setCmd(this.cmd);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -8424,7 +8423,7 @@
         this.setParentToChild(pr);
     };
     CTimeNodeContainer.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cTn !== null) {
+        if (this.cTn !== null && this.cTn !== undefined) {
             oCopy.setCTn(this.cTn.createDuplicate(oIdMap));
         }
         if (this.selected) {
@@ -9259,19 +9258,19 @@
     };
     CSeq.prototype.fillObject = function (oCopy, oIdMap) {
         CTimeNodeContainer.prototype.fillObject.call(this, oCopy, oIdMap);
-        if (this.nextCondLst !== null) {
+        if (this.nextCondLst !== null && this.nextCondLst !== undefined) {
             oCopy.setNextCondLst(this.nextCondLst.createDuplicate(oIdMap));
         }
-        if (this.prevCondLst !== null) {
+        if (this.prevCondLst !== null && this.prevCondLst !== undefined) {
             oCopy.setPrevCondLst(this.prevCondLst.createDuplicate(oIdMap));
         }
-        if (this.concurrent !== null) {
+        if (this.concurrent !== null && this.concurrent !== undefined) {
             oCopy.setConcurrent(this.concurrent);
         }
-        if (this.nextAc !== null) {
+        if (this.nextAc !== null && this.nextAc !== undefined) {
             oCopy.setNextAc(this.nextAc);
         }
-        if (this.prevAc !== null) {
+        if (this.prevAc !== null && this.prevAc !== undefined) {
             oCopy.setPrevAc(this.prevAc);
         }
     };
@@ -9452,10 +9451,10 @@
         this.setParentToChild(pr);
     };
     CSet.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cBhvr !== null) {
+        if (this.cBhvr !== null && this.cBhvr !== undefined) {
             oCopy.setCBhvr(this.cBhvr.createDuplicate(oIdMap));
         }
-        if (this.to !== null) {
+        if (this.to !== null && this.to !== undefined) {
             oCopy.setTo(this.to.createDuplicate(oIdMap));
         }
     };
@@ -9566,10 +9565,10 @@
         this.setParentToChild(pr);
     };
     CVideo.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.cMediaNode !== null) {
+        if (this.cMediaNode !== null && this.cMediaNode !== undefined) {
             oCopy.setCMediaNode(this.cMediaNode.createDuplicate(oIdMap));
         }
-        if (this.fullScrn !== null) {
+        if (this.fullScrn !== null && this.fullScrn !== undefined) {
             oCopy.setFullScrn(this.fullScrn);
         }
     };
@@ -9629,10 +9628,10 @@
         this.type = pr;
     };
     COleChartEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.lvl !== null) {
+        if (this.lvl !== null && this.lvl !== undefined) {
             oCopy.setLvl(this.lvl);
         }
-        if (this.type !== null) {
+        if (this.type !== null && this.type !== undefined) {
             oCopy.setType(this.type);
         }
     };
@@ -9670,10 +9669,10 @@
         this.y = pr;
     };
     CTLPoint.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.x !== null) {
+        if (this.x !== null && this.x !== undefined) {
             oCopy.setX(this.x);
         }
-        if (this.y !== null) {
+        if (this.y !== null && this.y !== undefined) {
             oCopy.setY(this.y);
         }
     };
@@ -9711,10 +9710,10 @@
         this.stSnd = pr;
     };
     CSndAc.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.endSnd !== null) {
+        if (this.endSnd !== null && this.endSnd !== undefined) {
             oCopy.setEndSnd(this.endSnd.createDuplicate(oIdMap));
         }
-        if (this.stSnd !== null) {
+        if (this.stSnd !== null && this.stSnd !== undefined) {
             oCopy.setStSnd(this.stSnd.createDuplicate(oIdMap));
         }
     };
@@ -9753,10 +9752,10 @@
         this.loop = pr;
     };
     CStSnd.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.snd !== null) {
+        if (this.snd !== null && this.snd !== undefined) {
             oCopy.setSnd(this.snd.createDuplicate(oIdMap));
         }
-        if (this.loop !== null) {
+        if (this.loop !== null && this.loop !== undefined) {
             oCopy.setLoop(this.loop);
         }
     };
@@ -9797,10 +9796,10 @@
         this.setParentToChild(pr);
     };
     CTxEl.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.charRg !== null) {
+        if (this.charRg !== null && this.charRg !== undefined) {
             oCopy.setCharRg(this.charRg.createDuplicate(oIdMap));
         }
-        if (this.pRg !== null) {
+        if (this.pRg !== null && this.pRg !== undefined) {
             oCopy.setPRg(this.pRg.createDuplicate(oIdMap));
         }
     };
@@ -9862,7 +9861,7 @@
         this.spokes = pr;
     };
     CWheel.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.spokes !== null) {
+        if (this.spokes !== null && this.spokes !== undefined) {
             oCopy.setSpokes(this.spokes);
         }
     };
@@ -9892,7 +9891,7 @@
         this.text = pr;
     };
     CAttrName.prototype.fillObject = function (oCopy, oIdMap) {
-        if (this.text !== null) {
+        if (this.text !== null && this.text !== undefined) {
             oCopy.setText(this.text);
         }
     };

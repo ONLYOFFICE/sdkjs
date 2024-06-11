@@ -1879,25 +1879,81 @@
 		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
+		let nNativeW		= oViewer.file.pages[nPage].W;
+		let nNativeH		= oViewer.file.pages[nPage].H;
+		let nPageRotate		= oViewer.getPageRotate(nPage);
 		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
         let nScaleX			= oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W;
-		let nCommentWidth	= 33 * nScaleX;
-		let nCommentHeight	= 33 * nScaleY;
+		let nCommentWidth	= 40 * nScaleX;
+		let nCommentHeight	= 40 * nScaleY;
 		let oDoc			= oViewer.getPDFDoc();
 
+		let oBasePos = {
+			x: 10,
+			y: 10
+		}
+
+		switch (nPageRotate) {
+			case 90: {
+				oBasePos.y = nNativeH - nCommentHeight;
+				break;
+			}
+			case 180: {
+				oBasePos.x = nNativeW - nCommentWidth;
+				oBasePos.y = nNativeH - nCommentHeight;
+				break;
+			}
+			case 270: {
+				oBasePos.x = nNativeW - nCommentWidth;
+				break;
+			}
+		}
+
+		if (pageObject && (pageObject.x > nNativeW || pageObject.x < 0 || pageObject.y > nNativeH || pageObject.y < 0)) {
+			pageObject = null;
+		}
+
 		if (!pageObject) {
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(oBasePos.x, oBasePos.y, nPage);
 			oDoc.anchorPositionToAdd = {
-				x: 10,
-				y: 10
+				x: oBasePos.x,
+				y: oBasePos.y
 			};
 			return new AscCommon.asc_CRect(oPos["X"] + nCommentWidth, oPos["Y"] + nCommentHeight / 2, 0, 0);
 		}
 
-		oDoc.anchorPositionToAdd = {
-			x: Math.max(pageObject.x, 10),
-			y: Math.max(pageObject.y, 10)
-		};
+		switch (nPageRotate) {
+			case 0: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x,
+					y: pageObject.y
+				};
+				break;
+			}
+			case 90: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x,
+					y: pageObject.y - nCommentHeight / 4
+				};
+				break;
+			}
+			case 180: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x - nCommentWidth / 4,
+					y: pageObject.y - nCommentHeight / 4
+				};
+				break;
+			}
+			case 270: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x - nCommentWidth / 4,
+					y: pageObject.y
+				};
+				break;
+			}
+		}
+
+		
 
 		if (oDoc.mouseDownAnnot) {
 			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
@@ -1905,7 +1961,7 @@
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
-		let oPos = AscPDF.GetGlobalCoordsByPageCoords(oDoc.anchorPositionToAdd.x, oDoc.anchorPositionToAdd.y, nPage);
+		let oPos = AscPDF.GetGlobalCoordsByPageCoords(pageObject.x, pageObject.y, nPage);
 
 		return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 	};

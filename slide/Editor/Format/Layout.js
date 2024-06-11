@@ -194,6 +194,9 @@ SlideLayout.prototype.getDrawingsForController = function(){
 SlideLayout.prototype.getTheme = function(){
     return this.Master && this.Master.Theme || null;
 };
+SlideLayout.prototype.getMaster = function(){
+    return this.getParentObjects().master;
+};
     SlideLayout.prototype.isAnimated = function () {
         return false;
     };
@@ -442,6 +445,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
 
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
@@ -461,6 +471,13 @@ SlideLayout.prototype.getTheme = function(){
                 this.cSld.refreshAllContentsFields();
             }
         }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
         this.recalculate();
         this.cSld.forEachSp(function(oSp) {
             if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
@@ -473,6 +490,13 @@ SlideLayout.prototype.getTheme = function(){
         if(slide){
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
+                this.cSld.refreshAllContentsFields();
+
+            }
+        }
+        else {
+            if(-1 !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = -1;
                 this.cSld.refreshAllContentsFields();
 
             }
@@ -791,6 +815,9 @@ SlideLayout.prototype.getTheme = function(){
     SlideLayout.prototype.getPlaceholdersControls = function () {
         return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
     };
+    SlideLayout.prototype.showChartSettings = function () {
+        return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
+    };
     SlideLayout.prototype.getParentObjects = function () {
         return {
             presentation: Asc.editor.private_GetLogicDocument(),
@@ -860,6 +887,9 @@ SlideLayout.prototype.getTheme = function(){
             return this.Master.clrMap;
         }
         return AscFormat.GetDefaultColorMap();
+    };
+    SlideLayout.prototype.checkSlideTheme = function() {
+        return AscCommonSlide.Slide.prototype.checkSlideTheme.call(this);
     };
 
     let LAYOUT_TYPE_MAP = {};

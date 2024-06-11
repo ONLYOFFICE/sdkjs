@@ -939,10 +939,11 @@
                     }
                 }
             } else if (!this.selection.chartSelection) {
+                let nCurPage = this.document.GetCurPage();
                 this.resetSelection();
-                var drawings = this.getDrawingObjects();
+                var drawings = this.getDrawingObjects(nCurPage);
                 for (i = drawings.length - 1; i > -1; --i) {
-                    this.selectObject(drawings[i], 0);
+                    this.selectObject(drawings[i], nCurPage);
                 }
             }
         }

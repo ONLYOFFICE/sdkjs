@@ -139,7 +139,7 @@
 			this.LinkToPrevious   = null;
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
-			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
+			this.NumFormat        = -1;
 		}
 	}
 
