@@ -780,9 +780,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cString.prototype.tocString = function () {
 		return this;
 	};
-	cString.prototype.getValue = function () {
+	cString.prototype.getValue = function (doNotReplace) {
 		//TODO many function calls -> many calls indexOf/replaceAll - review and if only necessary to do the conversion
-		if (-1 !== this.value.indexOf("\"\"")) {
+		if (!doNotReplace && -1 !== this.value.indexOf("\"\"")) {
 			return this.value.replaceAll("\"\"", "\"");
 		}
 		return this.value;
@@ -4823,17 +4823,17 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 
 	let _arg0, _arg1;
 	if (what === ">") {
-		res = arg0.getValue() > arg1.getValue();
+		res = arg0.getValue(true) > arg1.getValue(true);
 	} else if (what === ">=") {
-		res = arg0.getValue() >= arg1.getValue();
+		res = arg0.getValue(true) >= arg1.getValue(true);
 	} else if (what === "<") {
-		res = arg0.getValue() < arg1.getValue();
+		res = arg0.getValue(true) < arg1.getValue(true);
 	} else if (what === "<=") {
-		res = arg0.getValue() <= arg1.getValue();
+		res = arg0.getValue(true) <= arg1.getValue(true);
 	} else if (what === "=") {
-		res = isEqualStrings(arg0.getValue(), arg1.getValue());
+		res = isEqualStrings(arg0.getValue(true), arg1.getValue(true));
 	} else if (what === "<>") {
-		res = !isEqualStrings(arg0.getValue(), arg1.getValue());
+		res = !isEqualStrings(arg0.getValue(true), arg1.getValue(true));
 	} else if (what === "-") {
 		_arg0 = arg0.tocNumber();
 		_arg1 = arg1.tocNumber();
@@ -4843,7 +4843,7 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		if (_arg1 instanceof cError) {
 			return _arg1;
 		}
-		return new cNumber(_arg0.getValue() - _arg1.getValue());
+		return new cNumber(_arg0.getValue(true) - _arg1.getValue(true));
 	} else if (what === "+") {
 		_arg0 = arg0.tocNumber();
 		_arg1 = arg1.tocNumber();
@@ -4853,7 +4853,7 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		if (_arg1 instanceof cError) {
 			return _arg1;
 		}
-		return new cNumber(_arg0.getValue() + _arg1.getValue());
+		return new cNumber(_arg0.getValue(true) + _arg1.getValue(true));
 	} else if (what === "/") {
 		_arg0 = arg0.tocNumber();
 		_arg1 = arg1.tocNumber();
@@ -4863,8 +4863,8 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		if (_arg1 instanceof cError) {
 			return _arg1;
 		}
-		if (_arg1.getValue() !== 0) {
-			return new cNumber(_arg0.getValue() / _arg1.getValue());
+		if (_arg1.getValue(true) !== 0) {
+			return new cNumber(_arg0.getValue(true) / _arg1.getValue(true));
 		}
 		return new cError(cErrorType.division_by_zero);
 	} else if (what === "*") {
@@ -4876,7 +4876,7 @@ _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) 
 		if (_arg1 instanceof cError) {
 			return _arg1;
 		}
-		return new cNumber(_arg0.getValue() * _arg1.getValue());
+		return new cNumber(_arg0.getValue(true) * _arg1.getValue(true));
 	}
 	if (res !== null) {
 		return opt_return_bool ? res : new cBool(res);
@@ -4955,17 +4955,17 @@ _func[cElementType.string][cElementType.empty] = function ( arg0, arg1, what ) {
 	let res = null;
 
 	if (what === ">") {
-		res = arg0.getValue().length !== 0;
+		res = arg0.getValue(true).length !== 0;
 	} else if (what === ">=") {
-		res = arg0.getValue().length >= 0;
+		res = arg0.getValue(true).length >= 0;
 	} else if (what === "<") {
 		res = false;
 	} else if (what === "<=") {
-		res = arg0.getValue().length <= 0;
+		res = arg0.getValue(true).length <= 0;
 	} else if (what === "=") {
-		res = arg0.getValue().length === 0;
+		res = arg0.getValue(true).length === 0;
 	} else if (what === "<>") {
-		res = arg0.getValue().length !== 0;
+		res = arg0.getValue(true).length !== 0;
 	} else if (what === "-" || what === "+" || what === "/" || what === "*") {
 		return new cError(cErrorType.wrong_value_type);
 	}
@@ -5191,17 +5191,17 @@ _func[cElementType.empty][cElementType.number] = function ( arg0, arg1, what ) {
 
 _func[cElementType.empty][cElementType.string] = function ( arg0, arg1, what ) {
     if ( what === ">" ) {
-        return new cBool( 0 > arg1.getValue().length );
+        return new cBool( 0 > arg1.getValue(true).length );
   } else if (what === ">=") {
-        return new cBool( 0 >= arg1.getValue().length );
+        return new cBool( 0 >= arg1.getValue(true).length );
   } else if (what === "<") {
-        return new cBool( 0 < arg1.getValue().length );
+        return new cBool( 0 < arg1.getValue(true).length );
   } else if (what === "<=") {
-        return new cBool( 0 <= arg1.getValue().length );
+        return new cBool( 0 <= arg1.getValue(true).length );
   } else if (what === "=") {
-        return new cBool( 0 === arg1.getValue().length );
+        return new cBool( 0 === arg1.getValue(true).length );
   } else if (what === "<>") {
-        return new cBool( 0 !== arg1.getValue().length );
+        return new cBool( 0 !== arg1.getValue(true).length );
   } else if (what === "-" || what === "+" || what === "/" || what === "*") {
         return new cError( cErrorType.wrong_value_type );
     }
