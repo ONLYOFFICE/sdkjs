@@ -3051,10 +3051,8 @@
 		} else {
 			formulas = this.getAllFormulas();
 		}
-		console.time("asd")
 		this.dependencyFormulas.notifyChanged(formulas);
 		this.dependencyFormulas.calcTree();
-		console.timeEnd("asd")
 		History.Create_NewPoint();
 		History.StartTransaction();
 		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Calculate, sheetId,

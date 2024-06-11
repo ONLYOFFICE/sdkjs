@@ -2957,7 +2957,6 @@ function (window, undefined) {
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
 
 
-		let _cString = new cString();
 		const _compareValues = function (val1, val2, op) {
 			/*if (val2.type === cElementType.string) {
 				_cString.value = val2.getValue().toLowerCase();
