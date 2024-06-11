@@ -66,7 +66,7 @@ header = "/*\n\
 	const RLI = AscBidi.Type.RLI;\n\
 	const FSI = AscBidi.Type.FSI;\n\
 	const PDI = AscBidi.Type.PDI;\n\
-	const unicodeTable = new Int8Array([\n		"
+	const unicodeTable = new Uint32Array([\n		"
 
 mid = "	]);\n\
 	const unicodeTable2 = {\n		"
