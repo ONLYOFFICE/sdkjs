@@ -1147,19 +1147,29 @@
 
 			if (!_ret && null != this.LastCopyBinary)
 			{
-				var _data = null;
 				var _isInternal = false;
+				var _internal_data = null;
+				var _text_data = null;
 				for (var i = 0; i < this.LastCopyBinary.length; i++)
 				{
-					if (c_oAscClipboardDataFormat.Internal == this.LastCopyBinary[i].type)
+					if (c_oAscClipboardDataFormat.Internal === this.LastCopyBinary[i].type)
 					{
-						this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, this.LastCopyBinary[i].data);
+						_internal_data = this.LastCopyBinary[i].data;
 						_isInternal = true;
 					}
+					else if (c_oAscClipboardDataFormat.Text === this.LastCopyBinary[i].type)
+					{
+						_text_data = this.LastCopyBinary[i].data;
+					}
 				}
-
-				if (!_isInternal && this.LastCopyBinary.length > 0)
-					this.Api.asc_PasteData(this.LastCopyBinary[0].type, this.LastCopyBinary[0].data);
+				if (_isInternal)
+				{
+					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal_data, null, _text_data);
+				}
+				else if (this.LastCopyBinary.length > 0)
+				{
+					this.Api.asc_PasteData(this.LastCopyBinary[0].type, this.LastCopyBinary[0].data, null, _text_data);
+				}
 			}
 			return _ret;
 		},
