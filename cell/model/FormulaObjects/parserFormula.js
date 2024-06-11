@@ -2444,7 +2444,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else {
 			this.area = new cError(cErrorType.bad_reference);
 		}
-		//return this._createAreaError(isThisRow);
 		return this.area;
 	};
 	cStrucTable.prototype._createAreaError = function (isThisRow) {

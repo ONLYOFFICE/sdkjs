@@ -907,9 +907,7 @@
 				--this.lockCounter;
 			}
 			if (!notCalc && 0 >= this.lockCounter) {
-				console.time("asd")
 				this.calcTree();
-				console.timeEnd("asd")
 			}
 		},
 		lockRecalExecute: function(callback) {
