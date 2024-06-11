@@ -1153,12 +1153,15 @@
         return Math.max(0, i - tmp); // Диапазон скрола должен быть меньше количества столбцов, чтобы не было прибавления столбцов при перетаскивании бегунка
     };
 
-    WorksheetView.prototype.getVerticalScrollRange = function () {
-		var offsetFrozen = this.getFrozenPaneOffset(true, false);
+    WorksheetView.prototype.getVerticalScrollRange = function (bCheckEqual) {
+        var offsetFrozen = this.getFrozenPaneOffset(true, false);
         var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
         for (var h = 0, i = this.nRowsCount - 1; i >= 0; --i) {
             h += this._getRowHeight(i);
             if (h >= ctxH) {
+                if (bCheckEqual && h > ctxH) {
+                    i++;
+                }
                 break;
             }
         }
@@ -11263,8 +11266,10 @@
 			scroll = arn.r1 - vr.r1;
 		} else if (arn.r1 >= vr.r2) {
 			this.nRowsCount = arn.r2 + 1;
-			scroll = this.getVerticalScrollRange();
-			scroll += Math.ceil(this._getRowHeight(scroll)/this._getRowHeight(arn.r2)) - 1;
+
+			this._prepareCellTextMetricsCache(new asc_Range(vr.c1, vr.r2, vr.c2, arn.r2 + 1));
+			scroll = this.getVerticalScrollRange(true);
+
 			if (scroll > arn.r1) {
 				scroll = arn.r1;
 			}
