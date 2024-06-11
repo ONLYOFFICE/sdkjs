@@ -289,21 +289,15 @@
             oViewer.setZoom(nZoom, true);
 
         // выставляем смещения
-        let yOffset;
-        let xOffset;
-        if (this.rect.top != null) {
-            yOffset = this.rect.top + oViewer.betweenPages / (oViewer.drawingPages[this.page].H / oViewer.file.pages[this.page].H);
-        }
-        else
-            yOffset = oViewer.betweenPages / (oViewer.drawingPages[this.page].H / oViewer.file.pages[this.page].H);
-
-        if (this.rect.left != null) {
-            xOffset = this.rect.left;
-        }
+        let yOffset = this.rect.top != null ? this.rect.top : 0;
+        let xOffset = this.rect.left != null ? this.rect.left : 0;
 
         if ((nZoom && oViewer.zoom != nZoom) || yOffset != undefined && xOffset != undefined || oViewer.currentPage != this.page) {
+            let oTr = oDoc.pagesTransform[this.page].invert;
+            let oPos = oTr.TransformPoint(xOffset, yOffset);
+
             oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            oViewer.navigateToPage(this.page, yOffset, xOffset);
+            oViewer.navigateToPage(this.page, oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
             oViewer.disabledPaintOnScroll = false;
             oViewer.needRedraw = true; // в конце Actions выполним отрисовку
         }

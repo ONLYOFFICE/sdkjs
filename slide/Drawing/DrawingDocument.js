@@ -1542,6 +1542,10 @@ function CDrawingDocument()
 
 	this.OnRecalculateSlide = function(index)
 	{
+
+		let thpages = this.m_oWordControl.Thumbnails.m_arrPages;
+		if(index < 0 || index >= thpages.length) return;
+
 		if (this.m_oWordControl && this.m_oWordControl.MobileTouchManager)
 		{
 			this.m_oWordControl.MobileTouchManager.ClearContextMenu();
@@ -1559,7 +1563,6 @@ function CDrawingDocument()
 			this.SendChangeDocumentToApi(true);
 		}
 
-		var thpages = this.m_oWordControl.Thumbnails.m_arrPages;
 		if (thpages.length > index)
 		{
 			thpages[index].IsRecalc = true;
@@ -1586,8 +1589,9 @@ function CDrawingDocument()
 			this.m_oWordControl.m_oApi.checkLastWork();
 
 		this.m_oWordControl.Thumbnails.LockMainObjType = true;
+		this.SlidesCount                               = this.m_oLogicDocument.GetSlidesCount();
 		this.m_oWordControl.CalculateDocumentSize();
-		this.m_oWordControl.m_oApi.sync_countPagesCallback(this.GetSlidesCount());
+		this.m_oWordControl.m_oApi.sync_countPagesCallback(this.SlidesCount);
 		this.m_oWordControl.Thumbnails.LockMainObjType = false;
 	};
 
@@ -3406,7 +3410,7 @@ function CDrawingDocument()
 
 	this.isButtonsDisabled = function()
 	{
-		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode() || Asc.editor.isMasterMode();
 	};
 
 	this.checkMouseUp_Drawing = function (pos)
@@ -6257,7 +6261,7 @@ function CThumbnailsManager()
 					Type: nType,
 					X_abs: oMenuPos.X,
 					Y_abs: oMenuPos.Y,
-					IsSlideSelect: bPosBySelect,
+					IsSlideSelect: true,
 					IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
 				};
 			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));

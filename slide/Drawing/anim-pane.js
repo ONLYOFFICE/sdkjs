@@ -2355,17 +2355,24 @@
 	};
 
 	CAnimItem.prototype.updateSelectState = function (event) {
-		const oThis = this
-		if (event.CtrlKey) {
-			oThis.effect.toggleSelect()
-		} else {
-			const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+		const oThis = this;
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		if (event.Button === AscCommon.g_mouse_button_right && !oThis.effect.isSelected()) {
 			seqList.forEachAnimItem(function (animItem) {
-				animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect()
+				animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect();
 			})
 		}
-		Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
-		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
+		if (event.Button === AscCommon.g_mouse_button_left) {
+			if (event.CtrlKey) {
+				oThis.effect.toggleSelect();
+			} else {
+				seqList.forEachAnimItem(function (animItem) {
+					animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect();
+				})
+			}
+		}
+		Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide();
+		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	}
 	CAnimItem.prototype.updateCursorType = function (x, y) {
 		const cursorType = this.getNewCursorType(x, y);

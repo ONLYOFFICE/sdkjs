@@ -189,7 +189,7 @@ CTableRow.prototype =
 
 	GetPrevElementEndInfo : function(CellIndex)
 	{
-		if (-1 === CellIndex || !this.Table)
+		if (-1 === CellIndex || !this.Table || !this.Content[CellIndex])
 			return null;
 
 		if (0 === CellIndex)

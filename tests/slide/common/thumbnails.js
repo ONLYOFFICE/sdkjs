@@ -48,4 +48,7 @@
 	{
 		AscTest.DrawingDocument.Thumbnails.CalculatePlaces();
 	}
+	AscTest.DrawingDocument.UpdateThumbnailsAttack = function ()
+	{
+	}
 })(window);

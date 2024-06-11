@@ -51,19 +51,15 @@ CCollaborativeEditing.prototype.constructor = CCollaborativeEditing;
 
 CCollaborativeEditing.prototype.GetEditorApi = function()
 {
-    if(this.m_oLogicDocument)
-    {
-        return this.m_oLogicDocument.GetApi();
-    }
-    return null;
+    return Asc.editor;
 };
 CCollaborativeEditing.prototype.GetDrawingDocument = function()
 {
-    if(this.m_oLogicDocument)
-    {
-        return this.m_oLogicDocument.GetDrawingDocument();
-    }
-    return null;
+    return Asc.editor.getDrawingDocument();
+};
+CCollaborativeEditing.prototype.GetPresentation = function()
+{
+    return Asc.editor.private_GetLogicDocument();
 };
 CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
@@ -71,8 +67,8 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     this.Refresh_DCChanges();
     this.RefreshPosExtChanges();
     // Генерируем свои изменения
-    var StartPoint = ( null === AscCommon.History.SavedIndex ? 0 : AscCommon.History.SavedIndex + 1 );
-    var LastPoint  = -1;
+    let StartPoint = ( null === AscCommon.History.SavedIndex ? 0 : AscCommon.History.SavedIndex + 1 );
+    let LastPoint  = -1;
     if ( this.m_nUseType <= 0 )
     {
         // (ненужные точки предварительно удаляем)
@@ -84,25 +80,25 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
         LastPoint = AscCommon.History.Index;
     }
     // Просчитаем сколько изменений на сервер пересылать не надо
-    var SumIndex = 0;
-    var StartPoint2 = Math.min( StartPoint, LastPoint + 1 );
-    for ( var PointIndex = 0; PointIndex < StartPoint2; PointIndex++ )
+	let SumIndex = 0;
+	let StartPoint2 = Math.min( StartPoint, LastPoint + 1 );
+    for ( let PointIndex = 0; PointIndex < StartPoint2; PointIndex++ )
     {
-        var Point = AscCommon.History.Points[PointIndex];
+		let Point = AscCommon.History.Points[PointIndex];
         SumIndex += Point.Items.length;
     }
-    var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
+	let deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
 
-    var aChanges = [], aChanges2 = [];
-    for ( var PointIndex = StartPoint; PointIndex <= LastPoint; PointIndex++ )
+	let aChanges = [], aChanges2 = [];
+    for ( let PointIndex = StartPoint; PointIndex <= LastPoint; PointIndex++ )
     {
-        var Point = AscCommon.History.Points[PointIndex];
+		let Point = AscCommon.History.Points[PointIndex];
 
         AscCommon.History.Update_PointInfoItem(PointIndex, StartPoint, LastPoint, SumIndex, deleteIndex);
-        for ( var Index = 0; Index < Point.Items.length; Index++ )
+        for ( let Index = 0; Index < Point.Items.length; Index++ )
         {
-            var Item = Point.Items[Index];
-            var oChanges = new AscCommon.CCollaborativeChanges();
+			let Item = Point.Items[Index];
+			let oChanges = new AscCommon.CCollaborativeChanges();
             oChanges.Set_FromUndoRedo( Item.Class, Item.Data, Item.Binary );
             aChanges2.push(Item.Data);
             aChanges.push( oChanges.m_pData );
@@ -111,51 +107,47 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 
 
     // Пока пользователь сидит один, мы не чистим его локи до тех пор пока не зайдет второй
-	var bCollaborative = this.getCollaborativeEditing();
-		
-	var num_arr = [];
+	let bCollaborative = this.getCollaborativeEditing();
+
+	let num_arr = [];
+	let drawingDocument = this.GetDrawingDocument();
+	let presentation = this.GetPresentation();
     if (bCollaborative)
 	{
-		var map = this.Release_Locks();
+		let map = this.Release_Locks();
 
-		var UnlockCount2 = this.m_aNeedUnlock2.length;
-		for ( var Index = 0; Index < UnlockCount2; Index++ )
+		let UnlockCount2 = this.m_aNeedUnlock2.length;
+		for (let Index = 0; Index < UnlockCount2; Index++ )
 		{
-			var Class = this.m_aNeedUnlock2[Index];
+			let Class = this.m_aNeedUnlock2[Index];
 			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
-			if(Class.getObjectType && Class.getObjectType() === AscDFH.historyitem_type_Slide)
+			if(AscFormat.isSlideLikeObject(Class))
 			{
-				editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
+				this.UnlockSlide(Class);
 			}
 			if(Class instanceof AscCommonSlide.PropLocker)
 			{
-				var Class2 = AscCommon.g_oTableId.Get_ById(Class.objectId);
-				if(Class2 && Class2.getObjectType && Class2.getObjectType() === AscDFH.historyitem_type_Slide && Class2.deleteLock === Class)
+				let Class2 = AscCommon.g_oTableId.Get_ById(Class.objectId);
+				if(AscFormat.isSlideLikeObject(Class2))
 				{
-					editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class2.num);
+					this.UnlockSlide(Class2);
 				}
 			}
             if(Class instanceof AscCommon.CCore)
             {
-                editor.sendEvent("asc_onLockCore", false);
+				Asc.editor.sendEvent("asc_onLockCore", false);
             }
 
-			var check_obj = null;
+			let check_obj = null;
 			if(Class.getObjectType)
 			{
-				if( (Class.getObjectType() === AscDFH.historyitem_type_Shape
-					|| Class.getObjectType() === AscDFH.historyitem_type_ImageShape
-					|| Class.getObjectType() === AscDFH.historyitem_type_GroupShape
-					|| Class.getObjectType() === AscDFH.historyitem_type_GraphicFrame
-					|| Class.getObjectType() === AscDFH.historyitem_type_SmartArt
-					|| Class.getObjectType() === AscDFH.historyitem_type_ChartSpace
-					|| Class.getObjectType() === AscDFH.historyitem_type_OleObject
-					|| Class.getObjectType() === AscDFH.historyitem_type_Cnx) && AscCommon.isRealObject(Class.parent))
+				if(Class.isDrawing && AscCommon.isRealObject(Class.parent))
 				{
-					if(Class.getParentNum)
+					let nParentNum = Class.getParentNum();
+					if(nParentNum !== -1)
 					{
 
-						map[Class.getParentNum()] = true;
+						map[nParentNum] = true;
 					}
 
 					check_obj =
@@ -166,7 +158,7 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 						"guid": Class.Get_Id()
 					};
 				}
-				else if(Class.getObjectType() === AscDFH.historyitem_type_Slide)
+				else if(AscFormat.isSlideLikeObject(Class))
 				{
 					check_obj =
 					{
@@ -177,12 +169,12 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 				}
 				else if(Class instanceof AscCommon.CComment){
 					if(Class.Parent && Class.Parent.slide){
-						if(Class.Parent.slide === editor.WordControl.m_oLogicDocument){
+						if(Class.Parent.slide === presentation){
 							check_obj =
 							{
 								"type": c_oAscLockTypeElemPresentation.Slide,
-								"val": editor.WordControl.m_oLogicDocument.commentsLock.Get_Id(),
-								"guid": editor.WordControl.m_oLogicDocument.commentsLock.Get_Id()
+								"val": presentation.commentsLock.Get_Id(),
+								"guid": presentation.commentsLock.Get_Id()
 							};
 						}
 						else {
@@ -200,14 +192,14 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 					}
 				}
 				if(check_obj)
-					editor.CoAuthoringApi.releaseLocks( check_obj );
+					Asc.editor.CoAuthoringApi.releaseLocks( check_obj );
 			}
 		}
 
 
-		if(editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable)
+		if(Asc.editor.WordControl.m_oDrawingDocument.IsLockObjectsEnable)
 		{
-			for(var key in map)
+			for(let key in map)
 			{
 				if(map.hasOwnProperty(key))
 				{
@@ -223,11 +215,11 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
     if (0 < aChanges.length || null !== deleteIndex)
 	{
 		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
-        editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
+		Asc.editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
         AscCommon.History.CanNotAddChanges = true;
     } else
-        editor.CoAuthoringApi.unLockDocument(!!isAfterAskSave, editor.canUnlockDocument2, null, bCollaborative);
-	editor.canUnlockDocument2 = false;
+		Asc.editor.CoAuthoringApi.unLockDocument(!!isAfterAskSave, editor.canUnlockDocument2, null, bCollaborative);
+	Asc.editor.canUnlockDocument2 = false;
 
     if ( -1 === this.m_nUseType )
     {
@@ -249,92 +241,96 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
         AscCommon.History.Reset_SavedIndex(IsUserSave);
     }
 
-    for(var i = 0; i < num_arr.length; ++i)
+    for(let i = 0; i < num_arr.length; ++i)
     {
-        editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(num_arr[i]);
+		Asc.editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(num_arr[i]);
     }
     if(num_arr.length > 0)
     {
-        editor.WordControl.m_oDrawingDocument.OnEndRecalculate();
+		Asc.editor.WordControl.m_oDrawingDocument.OnEndRecalculate();
     }
-    var oSlide = editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage];
+    let oSlide = presentation.GetCurrentSlide();
     if(oSlide && oSlide.notesShape){
-        editor.WordControl.m_oDrawingDocument.Notes_OnRecalculate(editor.WordControl.m_oLogicDocument.CurPage, oSlide.NotesWidth, oSlide.getNotesHeight());
+		Asc.editor.WordControl.m_oDrawingDocument.Notes_OnRecalculate(presentation.CurPage, oSlide.NotesWidth, oSlide.getNotesHeight());
     }
-    editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-    editor.WordControl.m_oLogicDocument.Document_UpdateUndoRedoState();
+    presentation.Document_UpdateInterfaceState();
+    presentation.Document_UpdateUndoRedoState();
 
-    // editor.WordControl.m_oLogicDocument.DrawingDocument.ClearCachePages();
-    //    editor.WordControl.m_oLogicDocument.DrawingDocument.FirePaint();
+    // drawingDocument.ClearCachePages();
+    //    drawingDocument.FirePaint();
 };
 
 CCollaborativeEditing.prototype.Release_Locks = function()
 {
-    var map_redraw = {};
-    var UnlockCount = this.m_aNeedUnlock.length;
-    for ( var Index = 0; Index < UnlockCount; Index++ )
+    let map_redraw = {};
+    let UnlockCount = this.m_aNeedUnlock.length;
+	let presentation = this.GetPresentation();
+    for ( let Index = 0; Index < UnlockCount; Index++ )
     {
-        var CurLockType = this.m_aNeedUnlock[Index].Lock.Get_Type();
+        let CurLockType = this.m_aNeedUnlock[Index].Lock.Get_Type();
+		let Class =  this.m_aNeedUnlock[Index];
         if  ( AscCommon.c_oAscLockTypes.kLockTypeOther3 != CurLockType && AscCommon.c_oAscLockTypes.kLockTypeOther != CurLockType )
         {
-            //if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)                                                      //TODO: проверять LockObject
-            //    editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(this.m_aNeedUnlock[Index].num);
-            var Class =  this.m_aNeedUnlock[Index];
-            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
+			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeNone, false);
             if ( Class instanceof AscCommonSlide.PropLocker )
             {
-                var object = AscCommon.g_oTableId.Get_ById(Class.objectId);
+				let object = AscCommon.g_oTableId.Get_ById(Class.objectId);
                 if(object instanceof AscCommonSlide.CPresentation)
                 {
-                    if(Class === editor.WordControl.m_oLogicDocument.themeLock)
+                    if(Class === presentation.themeLock)
                     {
-                        editor.sendEvent("asc_onUnLockDocumentTheme");
+						Asc.editor.sendEvent("asc_onUnLockDocumentTheme");
                     }
-                    else if(Class === editor.WordControl.m_oLogicDocument.schemeLock)
+                    else if(Class === presentation.schemeLock)
                     {
-                        editor.sendEvent("asc_onUnLockDocumentSchema");
+						Asc.editor.sendEvent("asc_onUnLockDocumentSchema");
                     }
-                    else if(Class === editor.WordControl.m_oLogicDocument.slideSizeLock)
+                    else if(Class === presentation.slideSizeLock)
                     {
-                        editor.sendEvent("asc_onUnLockDocumentProps");
+						Asc.editor.sendEvent("asc_onUnLockDocumentProps");
                     }
-                    else if(Class === editor.WordControl.m_oLogicDocument.viewPrLock)
+                    else if(Class === presentation.viewPrLock)
                     {
-                        editor.sendEvent("asc_onUnLockViewProps");
+						Asc.editor.sendEvent("asc_onUnLockViewProps");
                     }
-                    else if (Class === editor.WordControl.m_oLogicDocument.hdrFtrLock)
+                    else if (Class === presentation.hdrFtrLock)
                     {
-	                    editor.sendEvent("asc_onUnLockSlideHdrFtrApplyToAll");
+						Asc.editor.sendEvent("asc_onUnLockSlideHdrFtrApplyToAll");
                     }
                 }
-                if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)
-                {
-                    editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(object.num);
-                }
+				if(AscFormat.isSlideLikeObject(object))
+				{
+					this.UnlockSlide(object);
+				}
             }
             if(Class instanceof AscCommon.CComment)
             {
-                editor.sync_UnLockComment(Class.Get_Id());
-                if(Class.Parent && Class.Parent.slide && editor.WordControl.m_oLogicDocument !== Class.Parent.slide)
+				Asc.editor.sync_UnLockComment(Class.Get_Id());
+                if(Class.Parent && Class.Parent.slide && presentation !== Class.Parent.slide)
                 {
                     map_redraw[Class.Parent.slide.num] = true;
                 }
             }
             if(Class instanceof AscCommon.CCore)
             {
-                editor.sendEvent("asc_onLockCore", false);
+				Asc.editor.sendEvent("asc_onLockCore", false);
             }
         }
         else if ( AscCommon.c_oAscLockTypes.kLockTypeOther3 === CurLockType )
         {
-            this.m_aNeedUnlock[Index].Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeOther, false);
-            if(this.m_aNeedUnlock[Index] instanceof AscCommonSlide.Slide)
-                editor.WordControl.m_oLogicDocument.DrawingDocument.LockSlide(this.m_aNeedUnlock[Index].num);
+			Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeOther, false);
+            if(AscFormat.isSlideLikeObject(Class))
+			{
+				this.LockSlide(Class);
+			}
         }
-		if(this.m_aNeedUnlock[Index].getParentNum)
+		if(Class.isDrawing)
 		{
-
-			map_redraw[this.m_aNeedUnlock[Index].getParentNum()] = true;
+			let nIdx = Class.getParentNum();
+			if(nIdx !== -1)
+			{
+				map_redraw[nIdx] = true;
+			}
 		}
     }
     return map_redraw;
@@ -349,9 +345,9 @@ CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
     // Запускаем полный пересчет документа
-    var LogicDocument = editor.WordControl.m_oLogicDocument;
+    let LogicDocument = this.GetPresentation();
 
-    var RecalculateData =
+    let RecalculateData =
     {
         Drawings: {
             All: true
@@ -365,17 +361,17 @@ CCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     LogicDocument.Document_UpdateSelectionState();
     LogicDocument.Document_UpdateInterfaceState();
 
-    editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
+	Asc.editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
 
 CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
 {
-    var aIds = [];
-
-    var Count = this.m_aCheckLocks.length;
-    for ( var Index = 0; Index < Count; Index++ )
+	let drawingDocument = this.GetDrawingDocument();
+    let aIds = [];
+	let Count = this.m_aCheckLocks.length;
+    for ( let Index = 0; Index < Count; Index++ )
     {
-        var oItem = this.m_aCheckLocks[Index];
+		let oItem = this.m_aCheckLocks[Index];
 
         if ( true === oItem ) // сравниваем по значению и типу обязательно
             return true;
@@ -390,7 +386,7 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
     if ( aIds.length > 0 )
     {
         // Отправляем запрос на сервер со списком Id
-        editor.CoAuthoringApi.askLock( aIds, this.OnCallback_AskLock );
+		Asc.editor.CoAuthoringApi.askLock( aIds, this.OnCallback_AskLock );
 
         // Ставим глобальный лок, только во время совместного редактирования
         if ( -1 === this.m_nUseType )
@@ -400,11 +396,11 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
         else
         {
             // Пробегаемся по массиву и проставляем, что залочено нами
-            var Count = this.m_aCheckLocks.length;
-            for ( var Index = 0; Index < Count; Index++ )
+            Count = this.m_aCheckLocks.length;
+            for ( let Index = 0; Index < Count; Index++ )
             {
-                var oItem = this.m_aCheckLocks[Index];
-                var items = [];
+				let oItem = this.m_aCheckLocks[Index];
+				let items = [];
                 switch(oItem["type"])
                 {
                     case c_oAscLockTypeElemPresentation.Object:
@@ -424,17 +420,19 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
                     }
                 }
 
-                for(var i = 0; i < items.length; ++i)
+                for(let i = 0; i < items.length; ++i)
                 {
-                    var item = items[i];
+					let item = items[i];
                     if ( true !== item && false !== item ) // сравниваем по значению и типу обязательно
                     {
-                        var Class = AscCommon.g_oTableId.Get_ById( item );
+						let Class = AscCommon.g_oTableId.Get_ById( item );
                         if ( null != Class )
                         {
                             Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeMine, false );
-                            if(Class instanceof AscCommonSlide.Slide)
-                                editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
+							if(AscFormat.isSlideLikeObject(Class))
+							{
+								this.UnlockSlide(Class);
+							}
                             this.Add_Unlock2( Class );
                         }
                     }
@@ -447,12 +445,40 @@ CCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
 
     return false;
 };
-
+CCollaborativeEditing.prototype.UnlockSlide = function(oSlide)
+{
+	this.ChangeSlideLock(oSlide, false);
+};
+CCollaborativeEditing.prototype.LockSlide = function(oSlide)
+{
+	this.ChangeSlideLock(oSlide, true);
+};
+CCollaborativeEditing.prototype.ChangeSlideLock = function(oSlide, bLock)
+{
+	if(!AscFormat.isSlideLikeObject(oSlide)) {
+		return;
+	}
+	let presentation = this.GetPresentation();
+	let nIdx = presentation.GetSlideIndex(oSlide);
+	if(nIdx === -1) {
+		return;
+	}
+	let drawingDocument = this.GetDrawingDocument();
+	if(bLock)
+	{
+		drawingDocument.LockSlide(nIdx);
+	}
+	else
+	{
+		drawingDocument.UnLockSlide(nIdx);
+	}
+};
 CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
+	let presentation = AscCommon.CollaborativeEditing.GetPresentation();
     if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
     {
-        if (false == editor.checkLongActionCallback(AscCommon.CollaborativeEditing.OnCallback_AskLock, result))
+        if (!Asc.editor.checkLongActionCallback(AscCommon.CollaborativeEditing.OnCallback_AskLock, result))
             return;
 
         // Снимаем глобальный лок
@@ -462,11 +488,11 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Пробегаемся по массиву и проставляем, что залочено нами
 
-            var Count = AscCommon.CollaborativeEditing.m_aCheckLocks.length;
-            for ( var Index = 0; Index < Count; Index++ )
+			let Count = AscCommon.CollaborativeEditing.m_aCheckLocks.length;
+            for ( let Index = 0; Index < Count; Index++ )
             {
-                var oItem = AscCommon.CollaborativeEditing.m_aCheckLocks[Index];
-                var item;
+				let oItem = AscCommon.CollaborativeEditing.m_aCheckLocks[Index];
+				let item;
                 switch(oItem["type"])
                 {
                     case c_oAscLockTypeElemPresentation.Object:
@@ -486,12 +512,14 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
                 }
                 if ( true !== oItem && false !== oItem ) // сравниваем по значению и типу обязательно
                 {
-                    var Class = AscCommon.g_oTableId.Get_ById( item );
+					let Class = AscCommon.g_oTableId.Get_ById( item );
                     if ( null != Class )
                     {
                         Class.Lock.Set_Type( AscCommon.c_oAscLockTypes.kLockTypeMine );
-                        if(Class instanceof AscCommonSlide.Slide)
-                            editor.WordControl.m_oLogicDocument.DrawingDocument.UnLockSlide(Class.num);
+						if(AscFormat.isSlideLikeObject(Class))
+						{
+							this.UnlockSlide(Class);
+						}
                         AscCommon.CollaborativeEditing.Add_Unlock2( Class );
                     }
                 }
@@ -501,20 +529,20 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if ( true === editor.isOpenedChartFrame )
-                editor.sync_closeChartEditor();
+            if ( true === Asc.editor.isOpenedChartFrame )
+				Asc.editor.sync_closeChartEditor();
 
-            if ( true === editor.isOleEditor )
-              editor.sync_closeOleEditor();
+            if ( true === Asc.editor.isOleEditor )
+				Asc.editor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
-            editor.WordControl.m_oLogicDocument.Document_Undo();
+			presentation.Document_Undo();
             AscCommon.History.Clear_Redo();
         }
 
     }
-    editor.isChartEditor = false;
-    editor.isOleEditor = false;
+    Asc.editor.isChartEditor = false;
+    Asc.editor.isOleEditor = false;
 };
 
 CCollaborativeEditing.prototype.AddPosExtChanges = function(Item, ChangeObject)
@@ -532,15 +560,15 @@ CCollaborativeEditing.prototype.AddPosExtChanges = function(Item, ChangeObject)
 
 CCollaborativeEditing.prototype.RewritePosExtChanges = function(changesArr, scale)
 {
-    for(var i = 0; i < changesArr.length; ++i)
+    for(let i = 0; i < changesArr.length; ++i)
     {
-        var changes = changesArr[i];
-        var data = changes.Data;
+		let changes = changesArr[i];
+		let data = changes.Data;
         data.New *= scale;
         data.Old *= scale;
-        var Binary_Writer = AscCommon.History.BinaryWriter;
-        var Binary_Pos    = Binary_Writer.GetCurPosition();
-		if ((Asc.editor || editor).binaryChanges) {
+		let Binary_Writer = AscCommon.History.BinaryWriter;
+		let Binary_Pos    = Binary_Writer.GetCurPosition();
+		if (Asc.editor.binaryChanges) {
 			Binary_Writer.WriteWithLen(this, function () {
 				Binary_Writer.WriteString2(changes.Class.Get_Id());
 				Binary_Writer.WriteLong(changes.Data.Type);
@@ -552,7 +580,7 @@ CCollaborativeEditing.prototype.RewritePosExtChanges = function(changesArr, scal
 			changes.Data.WriteToBinary(Binary_Writer);
 		}
 
-        var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
+		let Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
         changes.Binary.Pos = Binary_Pos;
         changes.Binary.Len = Binary_Len;
@@ -574,29 +602,29 @@ CCollaborativeEditing.prototype.RefreshPosExtChanges = function()
 
 CCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
 {
-    var DrawingDocument = editor.WordControl.m_oDrawingDocument;
-    var oPresentation = editor.WordControl.m_oLogicDocument;
-    var oTargetDocContentOrTable;
-    var oCurController = oPresentation.GetCurrentController();
+	let DrawingDocument = this.GetDrawingDocument();
+	let oPresentation = this.GetPresentation();
+	let oTargetDocContentOrTable;
+	let oCurController = oPresentation.GetCurrentController();
     if(oCurController){
         oTargetDocContentOrTable = oCurController.getTargetDocContent(undefined, true);
     }
     if(!oTargetDocContentOrTable){
-        for (var UserId in this.m_aForeignCursors){
+        for (let UserId in this.m_aForeignCursors){
             DrawingDocument.Collaborative_RemoveTarget(UserId);
         }
         return;
     }
-    var bTable = (oTargetDocContentOrTable instanceof AscCommonWord.CTable);
-    for (var UserId in this.m_aForeignCursors){
-        var DocPos = this.m_aForeignCursors[UserId];
+	let bTable = (oTargetDocContentOrTable instanceof AscCommonWord.CTable);
+    for (let UserId in this.m_aForeignCursors){
+		let DocPos = this.m_aForeignCursors[UserId];
         if (!DocPos || DocPos.length <= 0)
             continue;
 
         this.m_aForeignCursorsPos.Update_DocumentPosition(DocPos);
 
-        var Run      = DocPos[DocPos.length - 1].Class;
-        var InRunPos = DocPos[DocPos.length - 1].Position;
+        let Run      = DocPos[DocPos.length - 1].Class;
+		let InRunPos = DocPos[DocPos.length - 1].Position;
         this.Update_ForeignCursorPosition(UserId, Run, InRunPos, false, oTargetDocContentOrTable, bTable);
     }
 };
@@ -605,9 +633,9 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
     if (!(Run instanceof AscCommonWord.ParaRun))
         return;
 
-    var DrawingDocument = editor.WordControl.m_oDrawingDocument;
-    var oPresentation = editor.WordControl.m_oLogicDocument;
-    var Paragraph = Run.GetParagraph();
+    let DrawingDocument = this.GetDrawingDocument();
+    let oPresentation = this.GetPresentation();
+    let Paragraph = Run.GetParagraph();
     if (!Paragraph || !Paragraph.Parent){
         DrawingDocument.Collaborative_RemoveTarget(UserId);
         return;
@@ -627,15 +655,15 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
         }
     }
 
-    var ParaContentPos = Paragraph.Get_PosByElement(Run);
+	let ParaContentPos = Paragraph.Get_PosByElement(Run);
     if (!ParaContentPos){
         DrawingDocument.Collaborative_RemoveTarget(UserId);
         return;
     }
     ParaContentPos.Update(InRunPos, ParaContentPos.GetDepth() + 1);
-    var XY = Paragraph.Get_XYByContentPos(ParaContentPos);
+	let XY = Paragraph.Get_XYByContentPos(ParaContentPos);
     if (XY && XY.Height > 0.001){
-        var ShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
+		let ShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
         DrawingDocument.Collaborative_UpdateTarget(UserId, ShortId, XY.X, XY.Y, XY.Height, oPresentation.CurPage, Paragraph.Get_ParentTextTransform());
         this.Add_ForeignCursorXY(UserId, XY.X, XY.Y, XY.PageNum, XY.Height, Paragraph, isRemoveLabel);
         if (true === this.m_aForeignCursorsToShow[UserId]){
@@ -651,12 +679,12 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
 };
 
 CCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges){
-    this.m_oLogicDocument.Recalculate(AscCommon.History.Get_RecalcData(null, arrChanges));
+    this.GetPresentation().Recalculate(AscCommon.History.Get_RecalcData(null, arrChanges));
 };
 
 CCollaborativeEditing.prototype.private_UpdateForeignCursor = function(CursorInfo, UserId, Show, UserShortId)
 {
-    this.m_oLogicDocument.Update_ForeignCursor(CursorInfo, UserId, Show, UserShortId);
+    this.GetPresentation().Update_ForeignCursor(CursorInfo, UserId, Show, UserShortId);
 };
 
 //--------------------------------------------------------export----------------------------------------------------

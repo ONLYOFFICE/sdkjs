@@ -1634,6 +1634,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.getTheme = function(){
         return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
     };
+    Slide.prototype.getMaster = function(){
+        return this.getParentObjects().master;
+    };
 
     Slide.prototype.drawSelect = function(_type)
     {

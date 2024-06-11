@@ -141,7 +141,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
     AscFormat.ExecuteNoHistory(function(){
 
-        if(this.drawingsController){
+        if(this.drawingsController && !this.drawingsController.document){
             this.bConnector = AscFormat.isConnectorPreset(presetGeom);
             if(this.bConnector){
 

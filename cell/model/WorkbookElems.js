@@ -15352,6 +15352,14 @@ function RangeDataManagerElem(bbox, data)
 	asc_CExternalReference.prototype.asc_getData = function () {
 		return this.data;
 	};
+	asc_CExternalReference.prototype.asc_getLink = function () {
+		let res = null;
+		//if link on portal(example - importRange function)
+		if (this.externalReference && this.externalReference.isExternalLink()) {
+			res = this.externalReference && this.externalReference.Id;
+		}
+		return res;
+	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
 		let id = this.externalReference && this.externalReference.Id;
 		if (id) {
@@ -18115,6 +18123,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_isExternalLink"] = prot.isExternalLink;
 	prot["asc_getPath"] = prot.asc_getPath;
+	prot["asc_getLink"] = prot.asc_getLink;
 
 
 

@@ -578,15 +578,7 @@ CHistory.prototype =
                             oDrawings.ThemeInfo =
                             {
                                 Theme: true,
-                                ArrInd: Data.ArrInd
-                            }
-                        }
-                        else if(Data.ColorScheme)
-                        {
-                            oDrawings.ThemeInfo =
-                            {
-                                ColorScheme: true,
-                                ArrInd: Data.ArrInd
+								ThemeObj: Data.ThemeObj
                             }
                         }
                         else if(AscFormat.isRealNumber(Data.SlideMinIdx))

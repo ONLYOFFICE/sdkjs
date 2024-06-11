@@ -6690,28 +6690,28 @@ background-repeat: no-repeat;\
 			{
 				if (Url == "ppaction://hlinkshowjump?jump=firstslide")
 				{
-					Data.Hyperlink.Value = "First Slide";
+					Data.Hyperlink.Value = AscCommon.translateManager.getValue("First Slide");
 				}
 				else if (Url == "ppaction://hlinkshowjump?jump=lastslide")
 				{
-					Data.Hyperlink.Value = "Last Slide";
+					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Last Slide");
 				}
 				else if (Url == "ppaction://hlinkshowjump?jump=nextslide")
 				{
-					Data.Hyperlink.Value = "Next Slide";
+					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Next Slide");
 				}
 				else if (Url == "ppaction://hlinkshowjump?jump=previousslide")
 				{
-					Data.Hyperlink.Value = "Previous Slide";
+					Data.Hyperlink.Value = AscCommon.translateManager.getValue("Previous Slide");
 				}
 				else
 				{
-					var mask     = "ppaction://hlinksldjumpslide";
-					var indSlide = Url.indexOf(mask);
-					if (0 == indSlide)
+					let mask     = "ppaction://hlinksldjumpslide";
+					let indSlide = Url.indexOf(mask);
+					if (0 === indSlide)
 					{
-						var slideNum         = parseInt(Url.substring(mask.length));
-						Data.Hyperlink.Value = "Slide " + (slideNum + 1);
+						let slideNum = parseInt(Url.substring(mask.length));
+						Data.Hyperlink.Value = AscCommon.translateManager.getValue("Slide") + " " + (slideNum + 1);
 					}
 				}
 			}
@@ -7441,7 +7441,7 @@ background-repeat: no-repeat;\
 		this.WordControl.ThemeGenerateThumbnails(theme_load_info.Master);
 		// меняем шаблоны в меню
 		this.WordControl.CheckLayouts();
-		this.WordControl.m_oLogicDocument.FinalizeAction();
+		this.WordControl.m_oLogicDocument.FinalizeAction(true);
 
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadTheme);
 	};

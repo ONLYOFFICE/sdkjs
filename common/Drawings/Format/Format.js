@@ -8884,6 +8884,13 @@
 			}
 			return null;
 		};
+		CTheme.prototype.GetPresentation = function () {
+			let oLogicDoc = this.GetLogicDocument();
+			if(oLogicDoc instanceof AscCommonSlide.CPresentation) {
+				return oLogicDoc;
+			}
+			return null;
+		};
 		CTheme.prototype.GetAllSlideIndexes = function () {
 			let oPresentation = this.GetLogicDocument();
 			let aSlides = this.GetPresentationSlides();
@@ -8917,6 +8924,22 @@
 						let oApi = oWordGraphicObject.document.Api;
 						oApi.chartPreviewManager.clearPreviews();
 						oApi.textArtPreviewManager.clear();
+					}
+					else {
+						let oPresentation = this.GetPresentation();
+						if(oPresentation) {
+							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
+							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
+								oThemedObjects.masters[nIdx].checkSlideTheme();
+							}
+							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
+								oThemedObjects.layouts[nIdx].checkSlideTheme();
+							}
+							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
+								oThemedObjects.slides[nIdx].checkSlideTheme();
+							}
+							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+						}
 					}
 				}
 				else if(oData.Type === AscDFH.historyitem_ThemeSetFontScheme) {
@@ -9458,7 +9481,7 @@
 		function redrawSlide(slide, presentation, arrInd, pos, direction, arr_slides) {
 			if (slide) {
 				slide.recalculate();
-				presentation.DrawingDocument.OnRecalculateSlide(slide.num);
+				presentation.DrawingDocument.OnRecalculateSlide(presentation.GetSlideIndex(slide));
 			}
 			if (direction === 0) {
 				if (pos > 0) {

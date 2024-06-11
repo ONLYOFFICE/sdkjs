@@ -5051,12 +5051,18 @@ function CEditorPage(api)
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
 			{
-				let oSlide = this.m_oLogicDocument.Slides[ this.m_oLogicDocument.CurPage];
-				let nIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
+				let oSlide = this.m_oLogicDocument.GetCurrentSlide();
+				let nIdx = 0;
+				if(oSlide) {
+					let nCurIdx = this.m_oLogicDocument.GetSlideIndex(oSlide.Layout);
+					if(nCurIdx !== -1) {
+						nIdx = nCurIdx;
+					}
+				}
+				this.GoToPage(nIdx);
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				this.setNotesEnable(false);
 				this.setAnimPaneEnable(false);
-				this.GoToPage(nIdx);
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}

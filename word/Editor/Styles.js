@@ -6653,20 +6653,6 @@ CStyle.prototype.CreateNoList = function()
 	this.SetSemiHidden(true);
 	this.SetUnhideWhenUsed(true);
 };
-/**
- * Дефолтовые настройки для стиля Hyperlink
- */
-CStyle.prototype.CreateHyperlink = function()
-{
-	this.SetUiPriority(99);
-	this.SetUnhideWhenUsed(true);
-
-	this.SetTextPr({
-		Color     : {r : 0x00, g : 0x00, b : 0xFF},
-		Underline : true,
-		Unifill   : AscFormat.CreateUniFillSchemeColorWidthTint(11, 0)
-	});
-};
 CStyle.prototype.CreateTOC = function(nLvl, nType)
 {
 	var ParaPr = {},
@@ -7250,6 +7236,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -7289,6 +7276,7 @@ function CStyles(bCreateDefault)
 		// Создаем стиль для таблиц, который будет применяться к новым таблицам
 		var Style_TableGrid = new CStyle("Table Grid", this.Default.Table, null, styletype_Table);
 		Style_TableGrid.Create_TableGrid();
+		this.Add(Style_TableGrid);
 
         var Style_TableGridLight = new CStyle("Table Grid Light", this.Default.Table, null, styletype_Table);
 		Style_TableGridLight.Create_TableGrid_Light(fUF(EThemeColor.themecolorText1, 0x50, null));
@@ -7807,11 +7795,6 @@ function CStyles(bCreateDefault)
 		
 		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
 		this.UpdateDefaultStyleLinks();
-		
-		
-        // Создаем стиль гиперссылки
-        var oHyperlink = new CStyle("Hyperlink", null, null, styletype_Character );
-		oHyperlink.CreateHyperlink();
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
 		{
@@ -7850,6 +7833,7 @@ function CStyles(bCreateDefault)
 			Header            : null,
 			Footer            : null,
 			Hyperlink         : null,
+			FollowedHyperlink : null,
 			FootnoteText      : null,
 			FootnoteTextChar  : null,
 			FootnoteReference : null,
@@ -8919,7 +8903,8 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 	// TODO: Если данный метод будет слишком часто вызываться, то нужно переделать, чтобы реальное обновление срабатывало
 	//       при запросе к одному из дефолтовых стилей GetDefaultParagraph, например
 	
-	let localHyperlink = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localHyperlink  = AscCommon.translateManager.getValue("Hyperlink").toLowerCase().replace(/\s/g,"");
+	let localFHyperlink = AscCommon.translateManager.getValue("FollowedHyperlink").toLowerCase().replace(/\s/g,"");
 	for (let styleId in this.Style)
 	{
 		let name = this.Style[styleId].GetName().toLowerCase().replace(/\s/g,"");
@@ -8979,6 +8964,10 @@ CStyles.prototype.UpdateDefaultStyleLinks = function()
 			case "hyperlink":
 			case localHyperlink:
 				this.Default.Hyperlink = styleId;
+				break;
+			case "followedhyperlink":
+			case localFHyperlink:
+				this.Default.FollowedHyperlink = styleId;
 				break;
 			case "footnotetext":
 				this.Default.FootnoteText = styleId;
@@ -9090,6 +9079,10 @@ CStyles.prototype.GetDefaultTOF = function()
 CStyles.prototype.GetDefaultHyperlink = function()
 {
 	return this.Default.Hyperlink;
+};
+CStyles.prototype.GetDefaultFollowedHyperlink = function()
+{
+	return this.Default.FollowedHyperlink;
 };
 CStyles.prototype.GetDefaultHeading = function(nLvl)
 {
