@@ -516,6 +516,15 @@
 	Api.prototype.RemoveCustomFunction = function (sName) {
 		return this.removeCustomFunction(sName);
 	};
+	/**
+	 * Clear all custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if such a functions does not exist.
+	 */
+	Api.prototype.ClearCustomFunctions = function () {
+		return this.clearCustomFunctions();
+	};
 
 	/**
 	 * Creates a new worksheet. The new worksheet becomes the active sheet.

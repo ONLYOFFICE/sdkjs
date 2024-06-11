@@ -9273,6 +9273,14 @@ var editor;
 		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
 	};
 
+	spreadsheet_api.prototype.clearCustomFunctions = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.clear();
+	};
+
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
 		let wb = this.wb;
 		if (!wb) {

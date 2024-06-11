@@ -17242,6 +17242,27 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+	CCustomFunctionEngine.prototype.clear = function () {
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i = 0; i < aCustomFunc.length; i++) {
+				let sName = aCustomFunc[i].prototype.name;
+				AscCommonExcel.removeCustomFunction(sName);
+			}
+			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
+
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+
+			return true;
+		}
+
+		return false;
+	};
+
 	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
 		this.activeLocale = sLocale;
 	};
