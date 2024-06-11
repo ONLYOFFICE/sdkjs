@@ -45,7 +45,6 @@ var align_Center = AscCommon.align_Center;
 var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var c_oAscRevisionsChangeType = Asc.c_oAscRevisionsChangeType;
-var History = AscCommon.History;
 
 var linerule_Exact = Asc.linerule_Exact;
 var c_oAscRelativeFromV = Asc.c_oAscRelativeFromV;
@@ -124,7 +123,7 @@ function Paragraph(Parent, bFromPresentation)
 	// ситуации, а лочим при любом первом действии с параграфом
 	if (this.bFromDocument
 		&& false === AscCommon.g_oIdCounter.m_bLoad
-		&& true === History.Is_On()
+		&& true === AscCommon.History.Is_On()
 		&& AscCommon.CollaborativeEditing
 		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
 	{
@@ -172,7 +171,7 @@ function Paragraph(Parent, bFromPresentation)
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     AscCommon.g_oTableId.Add( this, this.Id );
-    if(bFromPresentation === true && History.Is_On())
+    if(bFromPresentation === true && AscCommon.History.Is_On())
     {
         this.Save_StartState();
     }
@@ -224,7 +223,7 @@ Paragraph.prototype.SetDirectParaPr = function(oParaPr)
 
 	var oNewPr = oParaPr.Copy(true);
 
-	History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
+	AscCommon.History.Add(new CChangesParagraphPr(this, this.Pr, oNewPr));
 
 	this.Pr = oNewPr;
 
@@ -828,7 +827,7 @@ Paragraph.prototype.CopyPr_Open = function(OtherParagraph)
 	// их изменить.
 	var oOldPr        = OtherParagraph.Pr;
 	OtherParagraph.Pr = this.Pr.Copy(true);
-	History.Add(new CChangesParagraphPr(OtherParagraph, oOldPr, OtherParagraph.Pr));
+	AscCommon.History.Add(new CChangesParagraphPr(OtherParagraph, oOldPr, OtherParagraph.Pr));
 	OtherParagraph.private_UpdateTrackRevisionOnChangeParaPr(true);
 
 	if (this.bFromDocument)
@@ -939,7 +938,7 @@ Paragraph.prototype.private_UpdateSelectionPosOnRemove = function(nPosition, nCo
  */
 Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 {
-	History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesParagraphAddItem(this, Pos, [Item]));
 	this.Content.splice(Pos, 0, Item);
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks([Item]);
@@ -1026,7 +1025,7 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 			oItem.Recalc_RunsCompiledPr();
 	}
 
-	History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
+	AscCommon.History.Add(new CChangesParagraphAddItem(this, nInsertPos, arrNewItems));
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(arrNewItems);
 	this.UpdateDocumentOutline();
@@ -1044,7 +1043,7 @@ Paragraph.prototype.ConcatContent = function(arrItems)
 Paragraph.prototype.Internal_Content_Remove = function(Pos)
 {
 	var Item = this.Content[Pos];
-	History.Add(new CChangesParagraphRemoveItem(this, Pos, [Item]));
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, [Item]));
 
 	if (Item.PreDelete)
 		Item.PreDelete();
@@ -1129,7 +1128,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 	}
 
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
-	History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, Pos, DeletedItems));
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(DeletedItems);
 	this.UpdateDocumentOutline();
@@ -1235,7 +1234,7 @@ Paragraph.prototype.ClearContent = function()
 			oItem.PreDelete();
 	}
 
-	History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
+	AscCommon.History.Add(new CChangesParagraphRemoveItem(this, 0, this.Content));
 
 	this.updateTrackRevisions();
 	this.private_CheckUpdateBookmarks(this.Content);
@@ -2747,8 +2746,43 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 					}
 					else if (sValue)
 					{
-						var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
-						pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
+						if (AscCommon.IsLinkPPAction(sValue))
+						{
+							let oLogicDocument	= Asc.editor.private_GetLogicDocument();
+							let nCurPage		= Asc.editor.isPdfEditor() ? oLogicDocument.GetCurPage() : oLogicDocument.Get_CurPage();
+							let nPagesCount		= Asc.editor.isPdfEditor() ? oLogicDocument.GetPagesCount() : oLogicDocument.GetSlidesCount();
+							
+							if (sValue == "ppaction://hlinkshowjump?jump=firstslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, 0);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=lastslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nPagesCount - 1);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=nextslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nCurPage + 1);
+							}
+							else if (sValue == "ppaction://hlinkshowjump?jump=previousslide")
+							{
+								pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, nCurPage - 1);
+							}
+							else
+							{
+								let mask	= "ppaction://hlinksldjumpslide";
+								let posNum	= sValue.indexOf(mask);
+								if (0 == posNum)
+								{
+									let pageNum = parseInt(sValue.substring(mask.length));
+									pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, pageNum);
+								}
+							}
+						}
+						else {
+							var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
+							pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
+						}
 					}
 					else if (sAnchor)
 					{
@@ -5144,8 +5178,8 @@ Paragraph.prototype.Shift_NumberingLvl = function(bShift)
 				oNum.ShiftLeftInd(NewX);
 
 				this.private_AddPrChange();
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = undefined;
@@ -5799,6 +5833,21 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 {
 	let oSearchPos;
 	let oCurrentPos  = oContentPos;
+	
+	function canCombinePositions(nextPos)
+	{
+		let depth = oContentPos.GetDepth();
+		if (depth !== nextPos.GetDepth())
+			return false;
+		
+		for (let i = 0; i < depth - 2; ++i)
+		{
+			if (oContentPos.Get(i) !== nextPos.Get(i))
+				return false;
+			
+		}
+		return true;
+	}
 
 	while (true)
 	{
@@ -5807,8 +5856,8 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oPrev
 			|| !oNext
-			|| !oPrev.IsText()
-			|| !oNext.IsText()
+			|| (!oPrev.IsText() && !oPrev.IsMathText())
+			|| (!oNext.IsText() && !oNext.IsMathText())
 			|| !oNext.IsCombiningMark())
 			break;
 
@@ -5824,8 +5873,12 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 		if (!oSearchPos.IsFound())
 			break;
-
-		oCurrentPos = oSearchPos.GetPos().Copy();
+		
+		let newPos = oSearchPos.GetPos();
+		if (!canCombinePositions(newPos))
+			break;
+		
+		oCurrentPos = newPos.Copy();
 	}
 
 	return oCurrentPos;
@@ -6267,7 +6320,9 @@ Paragraph.prototype.Get_LeftPos = function(SearchPos, ContentPos)
 Paragraph.prototype.GetCursorLeftPos = function(oSearchPos, oContentPos)
 {
 	this.Get_LeftPos(oSearchPos, oContentPos);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), false);
 };
 Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 {
@@ -6319,7 +6374,9 @@ Paragraph.prototype.Get_RightPos = function(SearchPos, ContentPos, StepEnd)
 Paragraph.prototype.GetCursorRightPos = function(oSearchPos, oContentPos, isStepEnd)
 {
 	this.Get_RightPos(oSearchPos, oContentPos, isStepEnd);
-	oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
+	
+	if (oSearchPos.Found)
+		oSearchPos.Pos = this.private_CorrectPosInCombiningMark(oSearchPos.GetPos(), true);
 };
 Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 {
@@ -6660,6 +6717,8 @@ Paragraph.prototype.GetNextRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false);
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null);
+	oRunElements.SkipMath = false;
+
 	this.GetNextRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -6677,6 +6736,8 @@ Paragraph.prototype.GetPrevRunElement = function(oParaPos)
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false)
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null, true);
+	oRunElements.SkipMath = false;
+
 	this.GetPrevRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -8521,9 +8582,6 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 		this.GetSelectedElementsInfo(oInfo);
 		oFillingCC = oInfo.GetInlineLevelSdt();
 	}
-	// если пдф форма
-	if (this.Parent && this.Parent.ParentPDF)
-		oFillingCC = this.Parent.ParentPDF;
 
 	switch (this.Selection.Flag)
 	{
@@ -9817,8 +9875,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			{
 				var NewFirstLine = Prev.Pr.Ind.FirstLine;
 				var NewLeft      = Prev.Pr.Ind.Left;
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = NewFirstLine;
@@ -9834,8 +9892,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 					oNum.ShiftLeftInd(X + 12.5);
 					//oNum.ShiftLeftInd(X + oNumParaPr.Ind.Left);
 
-					History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-					History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+					AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+					AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 					// При добавлении списка в параграф, удаляем все собственные сдвиги
 					this.Pr.Ind.FirstLine = undefined;
@@ -9845,7 +9903,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 
 			this.Pr.NumPr = new CNumPr();
 			this.Pr.NumPr.Set(sNumId, nLvl);
-			History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
 		}
@@ -9874,8 +9932,8 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 
 			if (this.Pr.Ind && (undefined !== this.Pr.Ind || undefined !== this.Pr.Ind.Left))
 			{
-				History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
-				History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, undefined));
+				AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, undefined));
 
 				// При добавлении списка в параграф, удаляем все собственные сдвиги
 				this.Pr.Ind.FirstLine = undefined;
@@ -9884,7 +9942,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 
 			this.Pr.NumPr = new CNumPr();
 			this.Pr.NumPr.Set(sNumId, LvlFound);
-			History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
 		}
@@ -9899,15 +9957,15 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 		this.Pr.NumPr = new CNumPr();
 		this.Pr.NumPr.Set(sNumId, nLvl);
 
-		History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
+		AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr_old);
 		this.private_RefreshNumbering(this.Pr.NumPr);
 
 		var Left      = ( NumPr_old.Lvl === nLvl ? undefined : ParaPr.Ind.Left );
 		var FirstLine = ( NumPr_old.Lvl === nLvl ? undefined : ParaPr.Ind.FirstLine );
 
-		History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, FirstLine));
-		History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Left));
+		AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, FirstLine));
+		AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Left));
 
 		this.Pr.Ind.FirstLine = FirstLine;
 		this.Pr.Ind.Left      = Left;
@@ -9939,7 +9997,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 		{
 			this.private_AddPrChange();
 
-			History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, undefined));
+			AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, undefined));
 			this.private_RefreshNumbering(this.Pr.NumPr);
 
 			this.Pr.NumPr = undefined;
@@ -9962,7 +10020,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 		var oNewNumPr = new CNumPr(sNumId, nLvl);
 
-		History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
+		AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
 		this.private_RefreshNumbering(oNewNumPr);
 		this.private_RefreshNumbering(this.Pr.NumPr);
 
@@ -10041,7 +10099,7 @@ Paragraph.prototype.RemoveNumPr = function()
 
 	var OldNumPr = undefined != this.Pr.NumPr ? this.Pr.NumPr : undefined;
 
-	History.Add(new CChangesParagraphNumbering(this, OldNumPr, NewNumPr));
+	AscCommon.History.Add(new CChangesParagraphNumbering(this, OldNumPr, NewNumPr));
 	this.private_RefreshNumbering(OldNumPr);
 	this.private_RefreshNumbering(NewNumPr);
 
@@ -10071,8 +10129,8 @@ Paragraph.prototype.RemoveNumPr = function()
 						var NewFirstLine = 0;
 						var NewLeft      = Left < 0 ? Left : Math.max(0, Left - NumLeftCorrection);
 
-						History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
-						History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
+						AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, NewLeft));
+						AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, NewFirstLine));
 						this.Pr.Ind.Left      = NewLeft;
 						this.Pr.Ind.FirstLine = NewFirstLine;
 					}
@@ -10081,13 +10139,13 @@ Paragraph.prototype.RemoveNumPr = function()
 		}
 		else if (this.Pr.Ind.FirstLine < 0)
 		{
-			History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
+			AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
 			this.Pr.Ind.FirstLine = 0;
 		}
 		else if (undefined != this.Pr.Ind.Left && this.Pr.Ind.FirstLine > 0)
 		{
-			History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, this.Pr.Ind.Left + this.Pr.Ind.FirstLine));
-			History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
+			AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, this.Pr.Ind.Left + this.Pr.Ind.FirstLine));
+			AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, 0));
 			this.Pr.Ind.Left += this.Pr.Ind.FirstLine;
 			this.Pr.Ind.FirstLine = 0;
 		}
@@ -10293,7 +10351,7 @@ Paragraph.prototype.Set_PresentationLevel = function(Level)
 	if (this.Pr.Lvl != Level)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPresentationPrLevel(this, this.Pr.Lvl, Level));
+		AscCommon.History.Add(new CChangesParagraphPresentationPrLevel(this, this.Pr.Lvl, Level));
 		this.Pr.Lvl                = Level;
 		this.CompiledPr.NeedRecalc = true;
 		this.Recalc_RunsCompiledPr();
@@ -10825,11 +10883,10 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		let logicDocument = this.GetLogicDocument();
 		if (logicDocument && logicDocument.IsDocumentEditor())
 		{
-			let sectPr = this.Get_SectPr();
 			let left = Pr.ParaPr.Ind.Left;
-			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, sectPr);
-			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, sectPr);
-			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, sectPr) - Pr.ParaPr.Ind.Left;
+			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, this);
+			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, this);
+			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, this) - Pr.ParaPr.Ind.Left;
 		}
 		
 		return Pr;
@@ -10874,6 +10931,17 @@ Paragraph.prototype.Internal_CompiledParaPrPresentation = function(Lvl, bNoMerge
 	Pr.TextPr.Color.Auto = false;
 
 	return Pr;
+};
+Paragraph.prototype.getCompiledPrFromStyle = function()
+{
+	let parent = this.Parent;
+	
+	let styleManager = parent.Get_Styles();
+	let tableStyle   = parent.Get_TableStyleForPara();
+	let shapeStyle   = parent.Get_ShapeStyleForPara();
+	let styleId      = this.Style_Get();
+	
+	return styleManager.Get_Pr(styleId, styletype_Paragraph, tableStyle, shapeStyle);
 };
 /**
  * Сообщаем параграфу, что ему надо будет пересчитать скомпилированный стиль
@@ -11102,7 +11170,7 @@ Paragraph.prototype.SetPStyle = function(styleId)
 	
 	this.private_AddPrChange();
 	
-	History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
+	AscCommon.History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, styleId));
 	this.Pr.PStyle = styleId;
 	
 	this.RecalcCompiledPr();
@@ -11115,7 +11183,7 @@ Paragraph.prototype.Style_Remove = function()
 	if (undefined != this.Pr.PStyle)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
+		AscCommon.History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
 		this.Pr.PStyle = undefined;
 		this.UpdateDocumentOutline();
 		this.private_RefreshNumbering();
@@ -11267,21 +11335,21 @@ Paragraph.prototype.Set_Ind = function(Ind, bDeleteUndefined)
 	if (( undefined != Ind.FirstLine || true === bDeleteUndefined ) && this.Pr.Ind.FirstLine !== Ind.FirstLine)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, Ind.FirstLine));
+		AscCommon.History.Add(new CChangesParagraphIndFirst(this, this.Pr.Ind.FirstLine, Ind.FirstLine));
 		this.Pr.Ind.FirstLine = Ind.FirstLine;
 	}
 
 	if (( undefined != Ind.Left || true === bDeleteUndefined ) && this.Pr.Ind.Left !== Ind.Left)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Ind.Left));
+		AscCommon.History.Add(new CChangesParagraphIndLeft(this, this.Pr.Ind.Left, Ind.Left));
 		this.Pr.Ind.Left = Ind.Left;
 	}
 
 	if (( undefined != Ind.Right || true === bDeleteUndefined ) && this.Pr.Ind.Right !== Ind.Right)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphIndRight(this, this.Pr.Ind.Right, Ind.Right));
+		AscCommon.History.Add(new CChangesParagraphIndRight(this, this.Pr.Ind.Right, Ind.Right));
 		this.Pr.Ind.Right = Ind.Right;
 	}
 
@@ -11309,42 +11377,42 @@ Paragraph.prototype.Set_Spacing = function(Spacing, bDeleteUndefined)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingLine(this, this.Pr.Spacing.Line, LineValue));
+		AscCommon.History.Add(new CChangesParagraphSpacingLine(this, this.Pr.Spacing.Line, LineValue));
 		this.Pr.Spacing.Line = LineValue;
 	}
 
 	if (( undefined != Spacing.LineRule || true === bDeleteUndefined ) && this.Pr.Spacing.LineRule !== Spacing.LineRule)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingLineRule(this, this.Pr.Spacing.LineRule, Spacing.LineRule));
+		AscCommon.History.Add(new CChangesParagraphSpacingLineRule(this, this.Pr.Spacing.LineRule, Spacing.LineRule));
 		this.Pr.Spacing.LineRule = Spacing.LineRule;
 	}
 
 	if (( undefined != Spacing.Before || true === bDeleteUndefined ) && this.Pr.Spacing.Before !== Spacing.Before)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingBefore(this, this.Pr.Spacing.Before, Spacing.Before));
+		AscCommon.History.Add(new CChangesParagraphSpacingBefore(this, this.Pr.Spacing.Before, Spacing.Before));
 		this.Pr.Spacing.Before = Spacing.Before;
 	}
 
 	if (( undefined != Spacing.After || true === bDeleteUndefined ) && this.Pr.Spacing.After !== Spacing.After)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingAfter(this, this.Pr.Spacing.After, Spacing.After));
+		AscCommon.History.Add(new CChangesParagraphSpacingAfter(this, this.Pr.Spacing.After, Spacing.After));
 		this.Pr.Spacing.After = Spacing.After;
 	}
 
 	if (( undefined != Spacing.AfterAutoSpacing || true === bDeleteUndefined ) && this.Pr.Spacing.AfterAutoSpacing !== Spacing.AfterAutoSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingAfterAutoSpacing(this, this.Pr.Spacing.AfterAutoSpacing, Spacing.AfterAutoSpacing));
+		AscCommon.History.Add(new CChangesParagraphSpacingAfterAutoSpacing(this, this.Pr.Spacing.AfterAutoSpacing, Spacing.AfterAutoSpacing));
 		this.Pr.Spacing.AfterAutoSpacing = Spacing.AfterAutoSpacing;
 	}
 
 	if (( undefined != Spacing.BeforeAutoSpacing || true === bDeleteUndefined ) && this.Pr.Spacing.BeforeAutoSpacing !== Spacing.BeforeAutoSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
+		AscCommon.History.Add(new CChangesParagraphSpacingBeforeAutoSpacing(this, this.Pr.Spacing.BeforeAutoSpacing, Spacing.BeforeAutoSpacing));
 		this.Pr.Spacing.BeforeAutoSpacing = Spacing.BeforeAutoSpacing;
 	}
 
@@ -11358,7 +11426,7 @@ Paragraph.prototype.Set_Align = function(Align)
 	{
 		this.private_AddPrChange();
 
-		History.Add(new CChangesParagraphAlign(this, this.Pr.Jc, Align));
+		AscCommon.History.Add(new CChangesParagraphAlign(this, this.Pr.Jc, Align));
 		this.Pr.Jc = Align;
 
 		// Надо пересчитать конечный стиль
@@ -11379,7 +11447,7 @@ Paragraph.prototype.Set_DefaultTabSize = function(TabSize)
 	{
 		this.private_AddPrChange();
 
-		History.Add(new CChangesParagraphDefaultTabSize(this, this.Pr.DefaultTab, TabSize));
+		AscCommon.History.Add(new CChangesParagraphDefaultTabSize(this, this.Pr.DefaultTab, TabSize));
 		this.Pr.DefaultTab = TabSize;
 
 		// Надо пересчитать конечный стиль
@@ -11395,7 +11463,7 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		if (undefined != this.Pr.Shd)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShd(this, this.Pr.Shd, undefined));
+			AscCommon.History.Add(new CChangesParagraphShd(this, this.Pr.Shd, undefined));
 			this.Pr.Shd = undefined;
 		}
 	}
@@ -11407,27 +11475,27 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		if (undefined === this.Pr.Shd)
 		{
 			this.Pr.Shd = new CDocumentShd();
-			History.Add(new CChangesParagraphShd(this, undefined, this.Pr.Shd));
+			AscCommon.History.Add(new CChangesParagraphShd(this, undefined, this.Pr.Shd));
 		}
 
 		if (( undefined != Shd.Value || true === bDeleteUndefined ) && this.Pr.Shd.Value !== Shd.Value)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdValue(this, this.Pr.Shd.Value, Shd.Value));
+			AscCommon.History.Add(new CChangesParagraphShdValue(this, this.Pr.Shd.Value, Shd.Value));
 			this.Pr.Shd.Value = Shd.Value;
 		}
 
 		if (undefined != Shd.Color || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdColor(this, this.Pr.Shd.Color, Shd.Color));
+			AscCommon.History.Add(new CChangesParagraphShdColor(this, this.Pr.Shd.Color, Shd.Color));
 			this.Pr.Shd.Color = Shd.Color;
 		}
 
 		if (undefined != Shd.Unifill || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdUnifill(this, this.Pr.Shd.Unifill, Shd.Unifill));
+			AscCommon.History.Add(new CChangesParagraphShdUnifill(this, this.Pr.Shd.Unifill, Shd.Unifill));
 			this.Pr.Shd.Unifill = Shd.Unifill;
 		}
 
@@ -11435,14 +11503,14 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 		{
 			var oThemeFill = Shd.ThemeFill ? Shd.ThemeFill.createDuplicate() : undefined;
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdThemeFill(this, this.Pr.Shd.ThemeFill, oThemeFill));
+			AscCommon.History.Add(new CChangesParagraphShdThemeFill(this, this.Pr.Shd.ThemeFill, oThemeFill));
 			this.Pr.Shd.ThemeFill = oThemeFill;
 		}
 
 		if (Shd.Fill || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
-			History.Add(new CChangesParagraphShdFill(this, this.Pr.Shd.Fill, Shd.Fill));
+			AscCommon.History.Add(new CChangesParagraphShdFill(this, this.Pr.Shd.Fill, Shd.Fill));
 			this.Pr.Shd.Fill = Shd.Fill;
 		}
 	}
@@ -11477,7 +11545,7 @@ Paragraph.prototype.Set_Tabs = function(Tabs)
 	}
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
+	AscCommon.History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
 	this.Pr.Tabs = _Tabs;
 
 	// Надо пересчитать конечный стиль
@@ -11489,7 +11557,7 @@ Paragraph.prototype.Set_ContextualSpacing = function(Value)
 	if (Value != this.Pr.ContextualSpacing)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphContextualSpacing(this, this.Pr.ContextualSpacing, Value));
+		AscCommon.History.Add(new CChangesParagraphContextualSpacing(this, this.Pr.ContextualSpacing, Value));
 		this.Pr.ContextualSpacing = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11502,7 +11570,7 @@ Paragraph.prototype.Set_PageBreakBefore = function(Value)
 	if (Value != this.Pr.PageBreakBefore)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphPageBreakBefore(this, this.Pr.PageBreakBefore, Value));
+		AscCommon.History.Add(new CChangesParagraphPageBreakBefore(this, this.Pr.PageBreakBefore, Value));
 		this.Pr.PageBreakBefore = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11515,7 +11583,7 @@ Paragraph.prototype.Set_KeepLines = function(Value)
 	if (Value != this.Pr.KeepLines)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphKeepLines(this, this.Pr.KeepLines, Value));
+		AscCommon.History.Add(new CChangesParagraphKeepLines(this, this.Pr.KeepLines, Value));
 		this.Pr.KeepLines = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11528,7 +11596,7 @@ Paragraph.prototype.Set_KeepNext = function(Value)
 	if (Value != this.Pr.KeepNext)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphKeepNext(this, this.Pr.KeepNext, Value));
+		AscCommon.History.Add(new CChangesParagraphKeepNext(this, this.Pr.KeepNext, Value));
 		this.Pr.KeepNext = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11545,7 +11613,7 @@ Paragraph.prototype.Set_WidowControl = function(Value)
 	if (Value != this.Pr.WidowControl)
 	{
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphWidowControl(this, this.Pr.WidowControl, Value));
+		AscCommon.History.Add(new CChangesParagraphWidowControl(this, this.Pr.WidowControl, Value));
 		this.Pr.WidowControl = Value;
 
 		// Надо пересчитать конечный стиль
@@ -11574,7 +11642,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, NewBorder));
 		this.Pr.Brd.Between = NewBorder;
 	}
 
@@ -11593,7 +11661,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, NewBorder));
 		this.Pr.Brd.Top = NewBorder;
 	}
 
@@ -11612,7 +11680,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, NewBorder));
 		this.Pr.Brd.Right = NewBorder;
 	}
 
@@ -11630,7 +11698,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, NewBorder));
 		this.Pr.Brd.Bottom = NewBorder;
 	}
 
@@ -11649,7 +11717,7 @@ Paragraph.prototype.Set_Borders = function(Borders)
 		}
 
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, NewBorder));
+		AscCommon.History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, NewBorder));
 		this.Pr.Brd.Left = NewBorder;
 	}
 
@@ -11662,23 +11730,23 @@ Paragraph.prototype.Set_Border = function(Border, HistoryType)
 	switch (HistoryType)
 	{
 		case AscDFH.historyitem_Paragraph_Borders_Between:
-			History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersBetween(this, this.Pr.Brd.Between, Border));
 			this.Pr.Brd.Between = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Bottom:
-			History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersBottom(this, this.Pr.Brd.Bottom, Border));
 			this.Pr.Brd.Bottom = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Left:
-			History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersLeft(this, this.Pr.Brd.Left, Border));
 			this.Pr.Brd.Left = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Right:
-			History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersRight(this, this.Pr.Brd.Right, Border));
 			this.Pr.Brd.Right = Border;
 			break;
 		case AscDFH.historyitem_Paragraph_Borders_Top:
-			History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, Border));
+			AscCommon.History.Add(new CChangesParagraphBordersTop(this, this.Pr.Brd.Top, Border));
 			this.Pr.Brd.Top = Border;
 			break;
 	}
@@ -11692,7 +11760,7 @@ Paragraph.prototype.Set_Border = function(Border, HistoryType)
 Paragraph.prototype.Set_Bullet = function(Bullet)
 {
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphPresentationPrBullet(this, this.Pr.Bullet, Bullet));
+	AscCommon.History.Add(new CChangesParagraphPresentationPrBullet(this, this.Pr.Bullet, Bullet));
 	this.Pr.Bullet             = Bullet;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -11703,7 +11771,7 @@ Paragraph.prototype.SetOutlineLvl = function(nLvl)
 		nLvl = undefined;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphOutlineLvl(this, this.Pr.OutlineLvl, nLvl));
+	AscCommon.History.Add(new CChangesParagraphOutlineLvl(this, this.Pr.OutlineLvl, nLvl));
 	this.Pr.OutlineLvl = nLvl;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -11730,7 +11798,7 @@ Paragraph.prototype.SetSuppressLineNumbers = function(isSuppress)
 		isSuppress = undefined;
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphSuppressLineNumbers(this, this.Pr.SuppressLineNumbers, isSuppress));
+	AscCommon.History.Add(new CChangesParagraphSuppressLineNumbers(this, this.Pr.SuppressLineNumbers, isSuppress));
 	this.Pr.SuppressLineNumbers = isSuppress;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -12532,6 +12600,9 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
  */
 Paragraph.prototype.PreDelete = function()
 {
+	if (this.isPreventedPreDelete())
+		return;
+	
 	// Поскольку данный элемент удаляется, поэтому надо удалить все записи о
 	// inline объектах в родительском классе, используемых в данном параграфе.
 	// Кроме этого, если тут начинались или заканчивались комметарии, то их тоже
@@ -12637,7 +12708,7 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	{
 		this.Pr.FramePr = undefined;
 		this.private_AddPrChange();
-		History.Add(new CChangesParagraphFramePr(this, FramePr_old, undefined));
+		AscCommon.History.Add(new CChangesParagraphFramePr(this, FramePr_old, undefined));
 		this.CompiledPr.NeedRecalc = true;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 		return;
@@ -12773,14 +12844,14 @@ Paragraph.prototype.Set_FramePr = function(FramePr, bDelete)
 	}
 
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphFramePr(this, FramePr_old, this.Pr.FramePr));
+	AscCommon.History.Add(new CChangesParagraphFramePr(this, FramePr_old, this.Pr.FramePr));
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
 };
 Paragraph.prototype.Set_FramePr2 = function(FramePr)
 {
 	this.private_AddPrChange();
-	History.Add(new CChangesParagraphFramePr(this, this.Pr.FramePr, FramePr));
+	AscCommon.History.Add(new CChangesParagraphFramePr(this, this.Pr.FramePr, FramePr));
 	this.Pr.FramePr            = FramePr;
 	this.CompiledPr.NeedRecalc = true;
 	this.private_UpdateTrackRevisionOnChangeParaPr(true);
@@ -13685,6 +13756,7 @@ Paragraph.prototype.GetSelectionState = function()
 		X          : this.CurPos.X,
 		Y          : this.CurPos.Y,
 		Line       : this.CurPos.Line,
+		Range      : this.CurPos.Range,
 		ContentPos : this.Get_ParaContentPos(false, false),
 		RealX      : this.CurPos.RealX,
 		RealY      : this.CurPos.RealY,
@@ -13713,22 +13785,22 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 		return;
 
 	var ParaState = State[StateIndex];
-
+	
+	this.RemoveSelection();
+	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
+	
 	this.CurPos.X        = ParaState.CurPos.X;
 	this.CurPos.Y        = ParaState.CurPos.Y;
 	this.CurPos.Line     = ParaState.CurPos.Line;
+	this.CurPos.Range    = ParaState.CurPos.Range;
 	this.CurPos.RealX    = ParaState.CurPos.RealX;
 	this.CurPos.RealY    = ParaState.CurPos.RealY;
 	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
-
-	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
-
-	this.RemoveSelection();
-
+	
 	this.Selection.Start = ParaState.Selection.Start;
 	this.Selection.Use   = ParaState.Selection.Use;
 	this.Selection.Flag  = ParaState.Selection.Flag;
-
+	
 	if (true === this.Selection.Use)
 		this.Set_SelectionContentPos(ParaState.Selection.StartPos, ParaState.Selection.EndPos);
 };
@@ -13854,7 +13926,7 @@ Paragraph.prototype.Refresh_RecalcData = function(Data)
 		}
 		case AscDFH.historyitem_Paragraph_SuppressLineNumbers:
 		{
-			History.AddLineNumbersToRecalculateData();
+			AscCommon.History.AddLineNumbersToRecalculateData();
 			break;
 		}
 	}
@@ -15225,7 +15297,7 @@ Paragraph.prototype.AddPrChange = function()
     if (false === this.HavePrChange())
     {
         this.Pr.AddPrChange();
-		History.Add(new CChangesParagraphPrChange(this,
+		AscCommon.History.Add(new CChangesParagraphPrChange(this,
 			{
 				PrChange   : undefined,
 				ReviewInfo : undefined
@@ -15239,7 +15311,7 @@ Paragraph.prototype.AddPrChange = function()
 };
 Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
 {
-	History.Add(new CChangesParagraphPrChange(this,
+	AscCommon.History.Add(new CChangesParagraphPrChange(this,
 		{
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined
@@ -15279,7 +15351,7 @@ Paragraph.prototype.RemovePrChange = function()
 {
     if (true === this.HavePrChange())
     {
-		History.Add(new CChangesParagraphPrChange(this,
+		AscCommon.History.Add(new CChangesParagraphPrChange(this,
 			{
 				PrChange   : this.Pr.PrChange,
 				ReviewInfo : this.Pr.ReviewInfo
@@ -15437,7 +15509,7 @@ Paragraph.prototype.private_UpdateTrackRevisionOnChangeParaPr = function(bUpdate
         {
             var OldReviewInfo = this.Pr.ReviewInfo.Copy();
             this.Pr.ReviewInfo.Update();
-            History.Add(new CChangesParagraphPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
+            AscCommon.History.Add(new CChangesParagraphPrReviewInfo(this, OldReviewInfo, this.Pr.ReviewInfo.Copy()));
         }
     }
 };
@@ -15969,7 +16041,7 @@ Paragraph.prototype.private_RefreshNumbering = function(NumPr)
     if (undefined === NumPr || null === NumPr)
         return;
 
-    History.Add_RecalcNumPr(NumPr);
+    AscCommon.History.Add_RecalcNumPr(NumPr);
 };
 Paragraph.prototype.Get_NumberingPage = function()
 {

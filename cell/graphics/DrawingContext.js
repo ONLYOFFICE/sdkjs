@@ -393,6 +393,15 @@
 	let setupPpiX      = -1;
 	let setupPpiY      = -1;
 	
+	function resetDrawingContextFonts() {
+		setupFontSize  = -1;
+		setupFontName  = "";
+		setupFontStyle = -1;
+		setupRotated   = false;
+		setupPpiX      = -1;
+		setupPpiY      = -1;
+	}
+	
 	/**
 	 * Emulates scalable canvas context
 	 * -----------------------------------------------------------------------------
@@ -914,7 +923,10 @@
 			&& setupPpiX === this.ppiX
 			&& setupPpiY === this.ppiY
 			&& setupRotated === isRotated) {
-			return;
+			if (!window["IS_NATIVE_EDITOR"]) {
+				// disable this optimization (see m_isPassCommands (core-ext))
+				return;
+			}
 		}
 		
 		setupFontSize  = fontSize;
@@ -1383,4 +1395,8 @@
 	window["Asc"].FontMetrics = FontMetrics;
 	window["Asc"].DrawingContext = DrawingContext;
 	window["Asc"].Matrix = Matrix;
+	
+	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window["AscCommonExcel"].resetDrawingContextFonts = resetDrawingContextFonts;
+	
 })(window);

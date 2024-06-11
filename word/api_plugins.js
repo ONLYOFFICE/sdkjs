@@ -410,7 +410,7 @@
 			oCD.ReadFromSimpleObject(oCommentData);
 		}
 
-		return this.asc_addComment(new window['Asc']['asc_CCommentDataWord'](oCD));
+		return this.asc_addComment(new window['Asc'].asc_CCommentDataWord(oCD));
 	};
     /**
      * Moves a cursor to the beginning of the current editing area (document body, footer/header, footnote, or autoshape).
@@ -580,7 +580,7 @@
 			}
 		}
 
-		this.asc_changeComment(sId, new window['Asc']['asc_CCommentDataWord'](oCD));
+		this.asc_changeComment(sId, new window['Asc'].asc_CCommentDataWord(oCD));
 	};
 	/**
 	 * Moves a cursor to the specified comment.

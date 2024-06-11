@@ -235,17 +235,20 @@ prot.getImageUrl = function(strPath){
 prot.getImageLocal = function(_url){
 	let url = _url.replaceAll("%20", " ");
 	var _first = this.documentUrl + "/media/";
-	if (0 == url.indexOf(_first))
+	if (0 === url.indexOf(_first))
 		return url.substring(_first.length);
 
-	if (window.editor && window.editor.ThemeLoader && 0 == url.indexOf(editor.ThemeLoader.ThemesUrlAbs)) {
+	if (window.editor && window.editor.ThemeLoader && 0 === url.indexOf(editor.ThemeLoader.ThemesUrlAbs)) {
 		return url.substring(editor.ThemeLoader.ThemesUrlAbs.length);
 	}
 
 	return null;
 };
-prot.imagePath2Local = function(imageLocal){
-	return this.getImageLocal(imageLocal);
+prot.imagePath2Local = function(imageLocal)
+{
+	if (imageLocal && this.mediaPrefix === imageLocal.substring(0, this.mediaPrefix.length))
+		imageLocal = imageLocal.substring(this.mediaPrefix.length);
+	return imageLocal;
 };
 prot.getUrl = function(strPath){
 	if (0 === strPath.indexOf('theme'))
@@ -277,7 +280,7 @@ AscCommon.sendImgUrls = function(api, images, callback)
 	for (var i = 0; i < images.length; i++)
 	{
 		var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](images[i]);
-		_data[i] = { url: images[i], path : AscCommon.g_oDocumentUrls.getImageUrl(_url) };
+		_data[i] = { url: AscCommon.g_oDocumentUrls.getUrl(_url), path : _url };
 	}
 	callback(_data);
 };
@@ -441,7 +444,7 @@ window["UpdateInstallPlugins"] = function()
 	}
 
 	_editor.sendEvent("asc_onPluginsReset");
-	_editor.sendEvent("asc_onPluginsInit", _plugins);
+	window.g_asc_plugins.sendPluginsInit(_plugins);
 };
 
 AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {

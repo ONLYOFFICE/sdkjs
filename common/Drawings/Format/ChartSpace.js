@@ -3563,6 +3563,10 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.Refresh_RecalcData = function (data) {
 		switch (data.Type) {
+			case AscDFH.historyitem_AutoShapes_SetDrawingBaseCoors: {
+				this.addToRecalculate();
+				break;
+			}
 			case AscDFH.historyitem_ChartSpace_SetStyle: {
 				this.handleUpdateStyle();
 				break;

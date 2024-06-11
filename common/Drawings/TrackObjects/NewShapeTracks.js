@@ -109,7 +109,7 @@
     SHAPE_ASPECTS["accentBorderCallout2"] = 914400/612648;
     SHAPE_ASPECTS["accentBorderCallout3"] = 914400/612648;
 
-function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController)
+function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController, nPlaceholderType, bVertical)
 {
     this.presetGeom = presetGeom;
     this.startX = startX;
@@ -124,7 +124,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.transform = new AscCommon.CMatrix();
     this.pageIndex = pageIndex;
     this.theme = theme;
-    this.drawingsController = drawingsController;
+    this.drawingsController = drawingsController ? drawingsController : Asc.editor.getGraphicController();
 
     //for connectors
     this.bConnector = false;
@@ -135,10 +135,13 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.startShape = null;
     this.endShape = null;
     this.endConnectionInfo = null;
+    this.placeholderType = nPlaceholderType || null;
+    this.bVertical = bVertical;
+    this.parentObject = slide || layout || master;
 
     AscFormat.ExecuteNoHistory(function(){
 
-        if(this.drawingsController){
+        if(this.drawingsController && !this.drawingsController.document){
             this.bConnector = AscFormat.isConnectorPreset(presetGeom);
             if(this.bConnector){
 
@@ -567,12 +570,27 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         this.overlayObject.draw(overlay);
     };
 
+    this.createDrawing = function() {
+        let oDrawing;
+        if(this.bConnector) {
+            oDrawing = new AscFormat.CConnectionShape();
+        }
+        else if(this.placeholderType !== null && this.placeholderType !== undefined) {
+            oDrawing = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
+        }
+        else if(this.drawingsController) {
+            oDrawing = this.drawingsController.createShape();
+        }
+        else {
+            oDrawing = new AscFormat.CShape();
+        }
+        return oDrawing;
+    };
+
     this.getShape = function(bFromWord, DrawingDocument, drawingObjects, isClickMouseEvent)
     {
-        var _sp_pr, shape;
+        var _sp_pr, shape = this.createDrawing();
         if(this.bConnector){
-
-            shape = new AscFormat.CConnectionShape();
             if(drawingObjects)
             {
                 shape.setDrawingObjects(drawingObjects);
@@ -625,16 +643,17 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             shape.nvSpPr.setUniSpPr(nvUniSpPr);
         }
         else{
-            shape = new AscFormat.CShape();
-            if(drawingObjects)
-            {
-                shape.setDrawingObjects(drawingObjects);
-            }
-            shape.setSpPr(new AscFormat.CSpPr());
-            shape.spPr.setParent(shape);
-            if(bFromWord)
-            {
-                shape.setWordShape(true);
+            if(this.placeholderType === null) {
+                if(drawingObjects)
+                {
+                    shape.setDrawingObjects(drawingObjects);
+                }
+                shape.setSpPr(new AscFormat.CSpPr());
+                shape.spPr.setParent(shape);
+                if(bFromWord)
+                {
+                    shape.setWordShape(true);
+                }
             }
             var x, y;
             if(bFromWord)
@@ -661,129 +680,161 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
         shape.setBDeleted(false);
 
-        if(this.presetGeom && this.presetGeom.indexOf("textRect") === 0)
+        if(this.placeholderType === null)
         {
-            shape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-            shape.setTxBox(true);
-            var fill, ln;
-            if(!drawingObjects || !drawingObjects.cSld)
+            if(this.presetGeom && this.presetGeom.indexOf("textRect") === 0)
             {
-                if(!bFromWord)
+                shape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+                shape.setTxBox(true);
+                var fill, ln;
+                if(!drawingObjects || !drawingObjects.cSld)
                 {
-                    shape.setStyle(AscFormat.CreateDefaultTextRectStyle());
-                }
-
-                fill = new AscFormat.CUniFill();
-                fill.setFill(new AscFormat.CSolidFill());
-                fill.fill.setColor(new AscFormat.CUniColor());
-                fill.fill.color.setColor(new AscFormat.CSchemeColor());
-                fill.fill.color.color.setId(12);
-                shape.spPr.setFill(fill);
-
-                ln = new AscFormat.CLn();
-                ln.setW(6350);
-                ln.setFill(new AscFormat.CUniFill());
-                ln.Fill.setFill(new AscFormat.CSolidFill());
-                ln.Fill.fill.setColor(new AscFormat.CUniColor());
-                ln.Fill.fill.color.setColor(new AscFormat.CPrstColor());
-                ln.Fill.fill.color.color.setId("black");
-                shape.spPr.setLn(ln);
-            }
-            else
-            {
-                fill = new AscFormat.CUniFill();
-                fill.setFill(new AscFormat.CNoFill());
-                shape.spPr.setFill(fill);
-            }
-            var body_pr = new AscFormat.CBodyPr();
-            body_pr.setDefault();
-            if(this.presetGeom === "textRectVertical") {
-                body_pr.setVert(AscFormat.nVertTTvert);
-            }
-            if(bFromWord)
-            {
-                shape.setTextBoxContent(new CDocumentContent(shape, DrawingDocument, 0, 0, 0, 0, false, false, false));
-                shape.setBodyPr(body_pr);
-            }
-            else
-            {
-                shape.setTxBody(new AscFormat.CTextBody());
-                var content = new AscFormat.CDrawingDocContent(shape.txBody, DrawingDocument, 0, 0, 0, 0, false, false, true);
-                shape.txBody.setParent(shape);
-                shape.txBody.setContent(content);
-                var bNeedCheckExtents = false;
-                if(drawingObjects){
-                    if(!drawingObjects.cSld){
-                        body_pr.vertOverflow = AscFormat.nVOTClip;
+                    if(!bFromWord)
+                    {
+                        shape.setStyle(AscFormat.CreateDefaultTextRectStyle());
                     }
-                    else{
-                        body_pr.textFit = new AscFormat.CTextFit();
-                        body_pr.textFit.type = AscFormat.text_fit_Auto;
-                        if (isClickMouseEvent) {
-                            body_pr.wrap = AscFormat.nTWTNone;
-                        } else {
-                            body_pr.wrap = AscFormat.nTWTSquare;
+
+                    fill = new AscFormat.CUniFill();
+                    fill.setFill(new AscFormat.CSolidFill());
+                    fill.fill.setColor(new AscFormat.CUniColor());
+                    fill.fill.color.setColor(new AscFormat.CSchemeColor());
+                    fill.fill.color.color.setId(12);
+                    shape.spPr.setFill(fill);
+
+                    ln = new AscFormat.CLn();
+                    ln.setW(6350);
+                    ln.setFill(new AscFormat.CUniFill());
+                    ln.Fill.setFill(new AscFormat.CSolidFill());
+                    ln.Fill.fill.setColor(new AscFormat.CUniColor());
+                    ln.Fill.fill.color.setColor(new AscFormat.CPrstColor());
+                    ln.Fill.fill.color.color.setId("black");
+                    shape.spPr.setLn(ln);
+                }
+                else
+                {
+                    fill = new AscFormat.CUniFill();
+                    fill.setFill(new AscFormat.CNoFill());
+                    shape.spPr.setFill(fill);
+                }
+                var body_pr = new AscFormat.CBodyPr();
+                body_pr.setDefault();
+                if(this.presetGeom === "textRectVertical") {
+                    body_pr.setVert(AscFormat.nVertTTvert);
+                }
+                if(bFromWord)
+                {
+                    shape.setTextBoxContent(new CDocumentContent(shape, DrawingDocument, 0, 0, 0, 0, false, false, false));
+                    shape.setBodyPr(body_pr);
+                }
+                else
+                {
+                    shape.setTxBody(new AscFormat.CTextBody());
+                    var content = new AscFormat.CDrawingDocContent(shape.txBody, DrawingDocument, 0, 0, 0, 0, false, false, true);
+                    shape.txBody.setParent(shape);
+                    shape.txBody.setContent(content);
+                    var bNeedCheckExtents = false;
+                    if(drawingObjects){
+                        if(!drawingObjects.cSld || this.placeholderType !== null){
+                            body_pr.vertOverflow = AscFormat.nVOTClip;
                         }
-                       bNeedCheckExtents = true;
+                        else{
+                            body_pr.textFit = new AscFormat.CTextFit();
+                            body_pr.textFit.type = AscFormat.text_fit_Auto;
+                            if (isClickMouseEvent) {
+                                body_pr.wrap = AscFormat.nTWTNone;
+                            } else {
+                                body_pr.wrap = AscFormat.nTWTSquare;
+                            }
+                            bNeedCheckExtents = true;
+                        }
+                    }
+                    shape.txBody.setBodyPr(body_pr);
+                    if(bNeedCheckExtents){
+                        var dOldX = shape.spPr.xfrm.offX;
+                        var dOldY = shape.spPr.xfrm.offY;
+                        shape.setParent(drawingObjects);
+                        shape.recalculateContent();
+                        shape.checkExtentsByDocContent(true, true);
+                        shape.spPr.xfrm.setExtX(this.extX);
+                        shape.spPr.xfrm.setOffX(dOldX);
+                        shape.spPr.xfrm.setOffY(dOldY);
                     }
                 }
-                shape.txBody.setBodyPr(body_pr);
-                if(bNeedCheckExtents){
-                    var dOldX = shape.spPr.xfrm.offX;
-                    var dOldY = shape.spPr.xfrm.offY;
-                    shape.setParent(drawingObjects);
-                    shape.recalculateContent();
-                    shape.checkExtentsByDocContent(true, true);
-                    shape.spPr.xfrm.setExtX(this.extX);
-                    shape.spPr.xfrm.setOffX(dOldX);
-                    shape.spPr.xfrm.setOffY(dOldY);
+            }
+            else
+            {
+                if(!shape.spPr.geometry){
+                    shape.spPr.setGeometry(AscFormat.CreateGeometry(this.presetGeom));
+                }
+                shape.setStyle(AscFormat.CreateDefaultShapeStyle(this.presetGeom));
+                if(this.arrowsCount > 0)
+                {
+                    var ln = new AscFormat.CLn();
+                    ln.setTailEnd(new AscFormat.EndArrow());
+                    ln.tailEnd.setType(AscFormat.LineEndType.Arrow);
+                    ln.tailEnd.setLen(AscFormat.LineEndSize.Mid);
+                    if(this.arrowsCount === 2)
+                    {
+                        ln.setHeadEnd(new AscFormat.EndArrow());
+                        ln.headEnd.setType(AscFormat.LineEndType.Arrow);
+                        ln.headEnd.setLen(AscFormat.LineEndSize.Mid);
+                    }
+                    shape.spPr.setLn(ln);
+                }
+                var spDef = this.theme && this.theme.spDef;
+                if(spDef)
+                {
+                    if(spDef.style)
+                    {
+                        shape.setStyle(spDef.style.createDuplicate());
+                    }
+                    if(spDef.spPr)
+                    {
+                        if(spDef.spPr.Fill)
+                        {
+                            shape.spPr.setFill(spDef.spPr.Fill.createDuplicate());
+                        }
+                        if(spDef.spPr.ln)
+                        {
+                            if(shape.spPr.ln)
+                            {
+                                shape.spPr.ln.merge(spDef.spPr.ln);
+                            }
+                            else
+                            {
+                                shape.spPr.setLn(spDef.spPr.ln.createDuplicate());
+                            }
+                        }
+                    }
                 }
             }
         }
-        else
+
+        if(this.placeholderType !== null && this.placeholderType !== undefined)
         {
-            if(!shape.spPr.geometry){
-                shape.spPr.setGeometry(AscFormat.CreateGeometry(this.presetGeom));
-            }
-            shape.setStyle(AscFormat.CreateDefaultShapeStyle(this.presetGeom));
-            if(this.arrowsCount > 0)
-            {
-                var ln = new AscFormat.CLn();
-                ln.setTailEnd(new AscFormat.EndArrow());
-                ln.tailEnd.setType(AscFormat.LineEndType.Arrow);
-                ln.tailEnd.setLen(AscFormat.LineEndSize.Mid);
-                if(this.arrowsCount === 2)
-                {
-                    ln.setHeadEnd(new AscFormat.EndArrow());
-                    ln.headEnd.setType(AscFormat.LineEndType.Arrow);
-                    ln.headEnd.setLen(AscFormat.LineEndSize.Mid);
-                }
-                shape.spPr.setLn(ln);
-            }
-            var spDef = this.theme && this.theme.spDef;
-            if(spDef)
-            {
-                if(spDef.style)
-                {
-                    shape.setStyle(spDef.style.createDuplicate());
-                }
-                if(spDef.spPr)
-                {
-                    if(spDef.spPr.Fill)
-                    {
-                        shape.spPr.setFill(spDef.spPr.Fill.createDuplicate());
+            shape.checkDrawingUniNvPr();
+            let oNvPr = shape.getNvProps();
+            if(oNvPr) {
+                let oPh = oNvPr.ph;
+                let nMaxIdx = undefined;
+                let aDrawings = this.parentObject.cSld.spTree;
+                for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
+                    let oSp = aDrawings[nIdx];
+                    let nPhIdx = oSp.getPlaceholderIndex();
+                    if(nMaxIdx === undefined || nMaxIdx === null) {
+                        nMaxIdx = nPhIdx;
                     }
-                    if(spDef.spPr.ln)
-                    {
-                        if(shape.spPr.ln)
-                        {
-                            shape.spPr.ln.merge(spDef.spPr.ln);
-                        }
-                        else
-                        {
-                            shape.spPr.setLn(spDef.spPr.ln.createDuplicate());
+                    else {
+                        if(nPhIdx !== null) {
+                            nMaxIdx = Math.max(nMaxIdx, nPhIdx);
                         }
                     }
+                }
+                if(nMaxIdx !== undefined && nMaxIdx !== null) {
+                    oPh.setIdx(nMaxIdx + 1);
+                }
+                else {
+                    oPh.setIdx(1);
                 }
             }
         }

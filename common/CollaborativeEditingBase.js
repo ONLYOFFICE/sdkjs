@@ -283,6 +283,11 @@
     {
         return (1 === this.m_nUseType);
     };
+	CCollaborativeEditingBase.prototype.canSendChanges = function()
+	{
+		let api = this.GetEditorApi();
+		return api && api.canSendChanges();
+	};
 	CCollaborativeEditingBase.prototype.getCoHistory = function()
 	{
 		return this.CoHistory;
@@ -1250,7 +1255,8 @@
 	CCollaborativeEditingBase.prototype.PreUndo = function()
 	{
 		let logicDocument = this.m_oLogicDocument;
-
+		
+		logicDocument.sendEvent("asc_onBeforeUndoRedoInCollaboration");
 		logicDocument.DrawingDocument.EndTrackTable(null, true);
 		logicDocument.TurnOffCheckChartSelection();
 
@@ -1266,6 +1272,7 @@
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
 		logicDocument.UpdateRulers();
+		logicDocument.sendEvent("asc_onUndoRedoInCollaboration");
 	};
 	CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
 	{

@@ -34,7 +34,6 @@
 
 // Import
 var g_oTableId = AscCommon.g_oTableId;
-var History = AscCommon.History;
 
 var c_oAscHAnchor = Asc.c_oAscHAnchor;
 var c_oAscXAlign = Asc.c_oAscXAlign;
@@ -6517,8 +6516,15 @@ CDocumentContent.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent
 						{
 							if (editor.isDocumentEditor)
 							{
-								for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
-									this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								if (false == editor.isPdfEditor()) {
+									for (var PageIdx = Item.Get_AbsolutePage(0); PageIdx < Item.Get_AbsolutePage(0) + Item.Get_PagesCount(); PageIdx++)
+										this.DrawingDocument.OnRecalculatePage(PageIdx, this.DrawingDocument.m_oLogicDocument.Pages[PageIdx]);
+								}
+								else {
+									if (this.Parent && this.Parent.parent && this.Parent.parent.IsDrawing()) {
+										this.Parent.parent.SetNeedRecalc(true);	
+									}
+								}
 							}
 							else
 							{
@@ -7186,7 +7192,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 	var NextObj = this.Content[Position] ? this.Content[Position] : null;
 
 	this.private_RecalculateNumbering([NewObject]);
-	History.Add(new CChangesDocumentContentAddItem(this, Position, [NewObject]));
+	AscCommon.History.Add(new CChangesDocumentContentAddItem(this, Position, [NewObject]));
 	this.Content.splice(Position, 0, NewObject);
 	this.private_UpdateSelectionPosOnAdd(Position);
 	NewObject.Set_Parent(this);
@@ -7224,7 +7230,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 	for (var Index = 0; Index < Count; Index++)
 		this.Content[Position + Index].PreDelete();
 
-	History.Add(new CChangesDocumentContentRemoveItem(this, Position, this.Content.slice(Position, Position + Count)));
+	AscCommon.History.Add(new CChangesDocumentContentRemoveItem(this, Position, this.Content.slice(Position, Position + Count)));
 	var Elements = this.Content.splice(Position, Count);
 	this.private_RecalculateNumbering(Elements);
 	this.private_UpdateSelectionPosOnRemove(Position, Count);
@@ -7267,7 +7273,7 @@ CDocumentContent.prototype.Internal_Content_RemoveAll = function()
 		this.Content[index].PreDelete();
 	}
 
-	History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
+	AscCommon.History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
 	this.Content = [];
 };
 //-----------------------------------------------------------------------------------
@@ -8456,6 +8462,10 @@ CDocumentContent.prototype.IsStartFromNewPage = function()
 };
 CDocumentContent.prototype.PreDelete = function()
 {
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isPreventedPreDelete())
+		return;
+	
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		this.Content[nIndex].PreDelete();
@@ -9000,6 +9010,127 @@ CDocumentContent.prototype.GetSearchElementId = function(bNext, bCurrent)
 	return null;
 };
 //----------------------------------------------------------------------------------------------------------------------
+CDocumentContent.prototype.EnterText = function(value)
+{
+	if (undefined === value
+		|| null === value
+		|| (Array.isArray(value) && !value.length))
+		return false;
+	
+	let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+	
+	if (Array.isArray(codePoints))
+	{
+		for (let index = 0, count = codePoints.length; index < count; ++index)
+		{
+			let codePoint = codePoints[index];
+			this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+		}
+	}
+	else
+	{
+		let codePoint = codePoints;
+		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+	}
+	
+	return true;
+};
+CDocumentContent.prototype.CorrectEnterText = function(oldValue, newValue, checkAsYouTypeFunc)
+{
+	if (undefined === oldValue
+		|| null === oldValue
+		|| (Array.isArray(oldValue) && !oldValue.length))
+		return this.EnterText(newValue);
+	
+	let newCodePoints = typeof(newValue) === "string" ? newValue.codePointsArray() : newValue;
+	let oldCodePoints = typeof(oldValue) === "string" ? oldValue.codePointsArray() : oldValue;
+	
+	if (this.IsSelectionUse())
+		return false;
+	
+	if (!Array.isArray(oldCodePoints))
+		oldCodePoints = [oldCodePoints];
+	
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return false;
+	
+	let contentPos = paragraph.GetContentPosition(false, false);
+	let run, inRunPos;
+	for (let index = contentPos.length - 1; index >= 0; --index)
+	{
+		if (contentPos[index].Class instanceof AscWord.CRun)
+		{
+			run      = contentPos[index].Class;
+			inRunPos = contentPos[index].Position;
+			break;
+		}
+	}
+	
+	if (!run)
+		return false;
+	
+	if (!checkAsYouTypeFunc)
+		checkAsYouTypeFunc = AscWord.checkAsYouTypeEnterText;
+	
+	if (!checkAsYouTypeFunc(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
+		return false;
+	
+	if (undefined === newCodePoints || null === newCodePoints)
+		newCodePoints = [];
+	else if (!Array.isArray(newCodePoints))
+		newCodePoints = [newCodePoints];
+	
+	let oldText = "";
+	for (let index = 0, count = oldCodePoints.length; index < count; ++index)
+	{
+		oldText += String.fromCodePoint(oldCodePoints[index]);
+	}
+	
+	let state     = this.GetSelectionState();
+	let startPos  = paragraph.getCurrentPos();
+	let endPos    = startPos;
+	
+	let paraSearchPos = new CParagraphSearchPos();
+	
+	let maxShifts = oldCodePoints.length;
+	let selectedText;
+	this.StartSelectionFromCurPos();
+	while (maxShifts >= 0)
+	{
+		paraSearchPos.Reset();
+		paragraph.Get_LeftPos(paraSearchPos, endPos);
+		
+		if (!paraSearchPos.IsFound())
+			break;
+		
+		endPos = paraSearchPos.GetPos().Copy();
+		
+		paragraph.SetSelectionContentPos(startPos, endPos, false);
+		selectedText = paragraph.GetSelectedText(true);
+		
+		if (!selectedText || selectedText === oldText)
+			break;
+		
+		maxShifts--;
+	}
+	
+	if (selectedText !== oldText)
+	{
+		this.SetSelectionState(state);
+		return false;
+	}
+	
+	this.Remove(1, true, false, true);
+	
+	for (let index = 0, count = newCodePoints.length; index < count; ++index)
+	{
+		let codePoint = newCodePoints[index];
+		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+	}
+	
+	return true;
+};
 
 function CDocumentContentStartState(DocContent)
 {

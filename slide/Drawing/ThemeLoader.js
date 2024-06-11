@@ -224,10 +224,6 @@ function CThemeLoader()
 
             AscCommon.History.MinorChanges = true;
             _loader.Load(_binary, pres);
-            for(var i = 0; i < pres.slideMasters.length; ++i)
-            {
-                pres.slideMasters[i].setThemeIndex(oThis.CurrentLoadThemeIndex);
-            }
             AscCommon.History.MinorChanges = false;
 
             if (oThis.IsReloadBinaryThemeEditorNow || window["NATIVE_EDITOR_ENJINE"])

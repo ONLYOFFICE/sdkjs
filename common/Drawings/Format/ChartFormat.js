@@ -1779,7 +1779,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_DPt_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DTable_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DTable_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_DispUnitsSetCustUnit] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_DispUnitsSetCustUnit] = window['AscDFH'].CChangesDrawingsDouble;
     AscDFH.changesFactory[AscDFH.historyitem_DispUnitsSetDispUnitsLbl] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DoughnutChart_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ErrBars_SetMinus] = window['AscDFH'].CChangesDrawingsObject;
@@ -2328,6 +2328,13 @@
             return oChartSpace.getParentObjects();
         }
         return null;
+    };
+    CBaseChartObject.prototype.Get_StartPage_Absolute = function() {
+        let oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.Get_StartPage_Absolute();
+        }
+        return 0;
     };
 
     function getMinMaxFromArrPoints(aPoints) {
@@ -9835,7 +9842,7 @@
         this.onUpdate();
     };
     CDispUnits.prototype.setCustUnit = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_DispUnitsSetCustUnit, this.custUnit, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_DispUnitsSetCustUnit, this.custUnit, pr));
         this.custUnit = pr;
         this.setParentToChild(pr);
         this.onUpdate();
@@ -11134,9 +11141,15 @@
     };
     CMinusPlus.prototype.getDataRefs = function() {
         if(this.numRef) {
-            this.numRef.getDataRefs();
+            return this.numRef.getDataRefs();
         }
         return new CDataRefs([]);
+    };
+    CMinusPlus.prototype.isValid = function() {
+        if(this.numRef || this.numLit) {
+            return true;
+        }
+        return false;
     };
 
     function CMultiLvlStrCache() {

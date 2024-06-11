@@ -59,6 +59,7 @@
 			"common/libfont/character.js",
 			"common/libfont/grapheme.js",
 			"common/libfont/textshaper.js",
+			"common/libfont/stringshaper.js",
 			"common/libfont/file.js",
 			"common/libfont/manager.js",
 
@@ -76,6 +77,7 @@
 			"cell/model/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
@@ -287,6 +289,7 @@
 			"word/Editor/document-composite-input.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
+			"word/Editor/document/document-background.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
 			"word/Editor/DocumentContent.js",
@@ -352,6 +355,7 @@
 			"word/Math/mathTrackHandler.js",
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"word/apiBuilder.js",

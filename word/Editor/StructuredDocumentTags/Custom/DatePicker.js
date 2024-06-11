@@ -165,6 +165,9 @@
 	};
 	CSdtDatePickerPr.prototype.GetFormatsExamples = function()
 	{
+		if (Asc.c_oAscDateTimeFormat[this.LangId])
+			return Asc.c_oAscDateTimeFormat[this.LangId];
+		
 		return [
 			"MM/DD/YYYY",
 			"dddd\,\ mmmm\ dd\,\ yyyy",

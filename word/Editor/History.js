@@ -578,15 +578,7 @@ CHistory.prototype =
                             oDrawings.ThemeInfo =
                             {
                                 Theme: true,
-                                ArrInd: Data.ArrInd
-                            }
-                        }
-                        else if(Data.ColorScheme)
-                        {
-                            oDrawings.ThemeInfo =
-                            {
-                                ColorScheme: true,
-                                ArrInd: Data.ArrInd
+								ThemeObj: Data.ThemeObj
                             }
                         }
                         else if(AscFormat.isRealNumber(Data.SlideMinIdx))
@@ -1103,6 +1095,7 @@ CHistory.prototype =
 		let additional = this.Index >= 0 ? this.Points[this.Index].Additional : null;
 		return (additional && additional.FormFilling ? additional.FormFilling : null);
 	};
+	
 	CHistory.prototype.ClearFormFillingInfo = function()
 	{
 		if (this.Points[this.Index] && this.Points[this.Index].Additional.FormFilling)
@@ -1136,12 +1129,8 @@ CHistory.prototype.ClearAdditional = function()
 		// TODO: На создании новой точки не удаляем информацию о заполнении формы
 		//       надо переназвать функции по-нормальному
 
-		let form = this.GetLastPointFormFilling();
-		let isCanUnion = this.Points[this.Index].Additional && this.Points[this.Index].Additional.CanUnion === false ? false : true;
-
+		let form				= this.GetLastPointFormFilling();
 		this.Points[this.Index].Additional = {};
-		if (isCanUnion == false)
-			this.Points[this.Index].Additional.CanUnion = false;
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
@@ -1725,6 +1714,8 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		if (!pointCount || pointCount - 1 > this.Index)
 			return;
 		
+		let checkFormLockCounter = 1;
+		
 		let lockData = {
 			document : this.Document,
 			locked   : false,
@@ -1744,18 +1735,56 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 			isLocked : function()
 			{
 				return this.locked;
+			},
+			
+			isSkipFormCheck : function()
+			{
+				return checkFormLockCounter <= 0;
 			}
 		};
+		
 		for (let pointIndex = 0; pointIndex < pointCount; ++pointIndex)
 		{
 			let point = this.Points[this.Index - pointIndex];
+			let checkFormLockArray = point.Additional && point.Additional.FormFillingLockCheck ? point.Additional.FormFillingLockCheck : [];
+			let checkFormLockPos   = 0;
+			
+			checkFormLockCounter = 1;
+			
 			for (let changeIndex = 0; changeIndex < point.Items.length; ++changeIndex)
 			{
+				while (checkFormLockPos < checkFormLockArray.length && checkFormLockArray[checkFormLockPos][0] <= changeIndex)
+				{
+					checkFormLockCounter += checkFormLockArray[checkFormLockPos][1];
+					++checkFormLockPos;
+				}
+				
 				point.Items[changeIndex].Data.CheckLock(lockData);
 				if (lockData.isLocked())
 					return;
 			}
 		}
+	};
+	/**
+	 * Помечаем изменения, в которых не нужно проверять возможность заполнения форм в проверке на лок
+	 * @param isSkip
+	 */
+	CHistory.prototype.skipFormFillingLockCheck = function(isSkip)
+	{
+		if (this.Index < 0)
+			return;
+		
+		let point = this.Points[this.Index];
+		if (!point.Additional)
+			point.Additional = {};
+		
+		if (!point.Additional.FormFillingLockCheck)
+			point.Additional.FormFillingLockCheck = [];
+		
+		if (isSkip)
+			point.Additional.FormFillingLockCheck.push([point.Items.length, -1]);
+		else
+			point.Additional.FormFillingLockCheck.push([point.Items.length, 1]);
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

@@ -31,8 +31,16 @@
  */
 
 $(function () {
-
+	
 	let logicDocument = AscTest.CreateLogicDocument();
+	// Выставим стандартные настройки для параграфа
+	logicDocument.GetStyles().Set_DefaultParaPr(AscWord.CParaPr.fromObject({
+		Spacing : {
+			After : 10 * g_dKoef_pt_to_mm,
+			LineRule : linerule_Auto,
+			Line : 259 / 240
+		}
+	}));
 
 	QUnit.module("Test api for the document editor");
 
@@ -190,5 +198,172 @@ $(function () {
 		
 		assert.strictEqual(!!p2.GetNumPr(), true, "Check paragraph 2 numbering");
 		assert.deepEqual(p2.GetNumPr().Lvl, 0, "Check level of second paragraph");
+	});
+	
+	QUnit.test("Test add/remove space before/after paragraph", function(assert)
+	{
+		const epsilon = 0.001;
+		
+		AscTest.ClearDocument();
+		let p = [];
+		
+		for (let i = 0; i < 3; ++i)
+		{
+			p[i] = AscTest.CreateParagraph();
+			logicDocument.AddToContent(i, p[i]);
+		}
+		
+		function checkSpacing(spacings)
+		{
+			for (let i = 0; i < 3; ++i)
+			{
+				let paraPr = p[i].GetCompiledParaPr(false);
+				
+				assert.close(paraPr.Spacing.Before, spacings[i][0], epsilon, "Check paragraph " + (i + 1) + " spacing before");
+				assert.close(paraPr.Spacing.After, spacings[i][1], epsilon, "Check paragraph " + (i + 1) + " spacing after");
+			}
+		}
+		function checkHaveSpace(haveSpaceBefore, haveSpaceAfter)
+		{
+			assert.strictEqual(AscTest.Editor.asc_haveSpaceBeforeParagraph(), haveSpaceBefore, "Check have space before");
+			assert.strictEqual(AscTest.Editor.asc_haveSpaceAfterParagraph(), haveSpaceAfter, "Check have space after");
+		}
+		
+		checkSpacing([
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		
+		AscTest.MoveCursorToParagraph(p[0]);
+		checkHaveSpace(false, true);
+		
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, true);
+		
+		AscTest.MoveCursorToParagraph(p[1]);
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 0],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.SelectDocumentRange(0, 2);
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 0],
+			[0, 0],
+			[0, 0]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_removeSpaceBeforeParagraph();
+		checkSpacing([
+			[0, 0],
+			[0, 0],
+			[0, 0]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 0],
+			[12 * g_dKoef_pt_to_mm, 0],
+			[12 * g_dKoef_pt_to_mm, 0]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_addSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, true);
+		
+		let paraStyle = AscTest.CreateParagraphStyle("SpacingStyle");
+		paraStyle.SetParaPr(AscWord.CParaPr.fromObject({
+			Spacing : {
+				Before : 25 * g_dKoef_pt_to_mm,
+				After  : 0
+			}
+		}));
+		p[1].SetPStyle(paraStyle.GetId());
+		
+		AscTest.SelectDocumentRange(1, 2);
+		AscTest.Editor.asc_removeSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[0, 0],
+			[0, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(false, false);
+		
+		AscTest.Editor.asc_addSpaceBeforeParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 0],
+			[25 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, false);
+		
+		AscTest.Editor.asc_addSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 12 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 12 * g_dKoef_pt_to_mm]
+		]);
+		checkHaveSpace(true, true);
+		
+		AscTest.Editor.asc_removeSpaceAfterParagraph();
+		checkSpacing([
+			[12 * g_dKoef_pt_to_mm, 10 * g_dKoef_pt_to_mm],
+			[25 * g_dKoef_pt_to_mm, 0],
+			[25 * g_dKoef_pt_to_mm, 0]
+		]);
+		checkHaveSpace(true, false);
+		
+		
+	});
+	
+	QUnit.test("Get text/selected text", function(assert)
+	{
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		logicDocument.AddToContent(0, p);
+		
+		let run = AscTest.CreateRun();
+		logicDocument.AddToContent(0, p);
+		p.AddToContentToEnd(run);
+		run.AddText("The quick brown fox jumps over the lazy dog");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 4);
+		assert.strictEqual(logicDocument.GetSelectedText(), "", "Check no selection");
+		AscTest.MoveCursorRight(true, false, 5);
+		assert.strictEqual(logicDocument.GetSelectedText(), "quick", "Select word 'quick'");
+		
+		// TODO: Переделать заполнение формулы по-нормальному
+		let math = AscTest.CreateMath();
+		p.AddToContentToEnd(math);
+		math.SetThisElementCurrent();
+		let text = "abcd";
+		for (let i = 0; i < text.length; ++i)
+		{
+			math.Add(new AscWord.CRunText(text.charCodeAt(i)));
+		}
+		
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.MoveCursorLeft(false, false, 4); // 1 сдвиг для захода в формулу
+		AscTest.MoveCursorRight(true, false, 2);
+		assert.strictEqual(logicDocument.GetSelectedText(), "bc", "Add math with text 'abcd' and partially select the text");
+		
 	});
 });

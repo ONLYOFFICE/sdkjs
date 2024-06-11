@@ -45,6 +45,26 @@
 	const AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = 0x00000010;
 	const AUTOCORRECT_FLAGS_NUMBERING                = 0x00000020;
 	const AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = 0x00000040;
+	
+	const ALLOWED_SYMBOLS_DOUBLE_SPACE_TO_PERIOD = {
+		0x0022 : 1, // "
+		0x0023 : 1, // #
+		0x0024 : 1, // $
+		0x0025 : 1, // %
+		0x0027 : 1, // '
+		0x0028 : 1, // (
+		0x0029 : 1, // )
+		0x0040 : 1, // @
+		0x005B : 1, // [
+		0x005D : 1, // ]
+		0x007D : 1, // {
+		0x007B : 1, // }
+		
+		0x2018 : 1, // ‘
+		0x2019 : 1, // ’
+		0x201C : 1, // “
+		0x201D : 1  // ”
+	};
 
 	/**
 	 * Класс для выполнения автозамены
@@ -297,11 +317,7 @@
 	CRunAutoCorrect.prototype.private_CheckPrevSymbolForDoubleSpaceWithDot = function(oItem)
 	{
 		return (oItem.IsText()
-			&& (!oItem.IsPunctuation()
-				|| 0x23 === oItem.Value
-				|| 0x24 === oItem.Value
-				|| 0x25 === oItem.Value
-				|| 0x40 === oItem.Value));
+			&& (!oItem.IsPunctuation() || ALLOWED_SYMBOLS_DOUBLE_SPACE_TO_PERIOD[oItem.Value]));
 	};
 	/**
 	 * Производим автозамену для французской пунктуации

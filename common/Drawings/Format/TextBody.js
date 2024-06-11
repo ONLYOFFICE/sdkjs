@@ -40,8 +40,7 @@
 
     // Import
     var isRealObject = AscCommon.isRealObject;
-    var History = AscCommon.History;
-
+    
 //-----------------------------
 
     AscDFH.changesFactory[AscDFH.historyitem_TextBodySetParent] = AscDFH.CChangesDrawingsObject;
@@ -169,7 +168,7 @@
         return null;
     };
     CTextBody.prototype.setBodyPr = function(pr) {
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetBodyPr, this.bodyPr, pr));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetBodyPr, this.bodyPr, pr));
         this.bodyPr = pr;
         var oParent = this.parent;
         if(oParent) {
@@ -190,11 +189,11 @@
         }
     };
     CTextBody.prototype.setContent = function(pr) {
-        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_TextBodySetContent, this.content, pr));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_TextBodySetContent, this.content, pr));
         this.content = pr;
     };
     CTextBody.prototype.setLstStyle = function(lstStyle) {
-        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetLstStyle, this.lstStyle, lstStyle));
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextBodySetLstStyle, this.lstStyle, lstStyle));
         this.lstStyle = lstStyle;
     };
     CTextBody.prototype.recalculate = function() {

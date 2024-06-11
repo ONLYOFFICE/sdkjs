@@ -151,7 +151,7 @@
 	 */
 
 	/**
-	 * OLE-object properties
+	 * The OLE object properties
 	 * @typed {Object} OLEProperties
 	 * @property {string} data - OLE object data (internal format).
 	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
@@ -201,11 +201,11 @@
 
 
 	/**
-	 * Returns an array of selected ole-objects.
+	 * Returns an array of the selected OLE objects.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetSelectedOleObjects
-	 * @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 * @returns {OLEProperties[]} - An array of the *OLEProperties* objects containing the data about the OLE object parameters.
 	 */
 	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
 	{
@@ -688,7 +688,7 @@
                 }
                 case "hideContentControlTrack":
                 {
-                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument)
+                    if (this.editorId === AscCommon.c_oEditorId.Word && this.WordControl && this.WordControl.m_oLogicDocument && !this.isPdfEditor())
                         this.WordControl.m_oLogicDocument.SetForceHideContentControlTrack(obj[prop]);
 
                     break;
@@ -702,7 +702,8 @@
 				{
 					if (this.editorId !== AscCommon.c_oEditorId.Word
 						|| !this.WordControl
-						|| !this.WordControl.m_oLogicDocument)
+						|| !this.WordControl.m_oLogicDocument
+						|| this.isPdfEditor())
 						break;
 
 					let oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -973,23 +974,17 @@
 			{
 				if (!this.WordControl || !this.WordControl.m_oLogicDocument)
 					return "none";
-				var logicDoc = this.WordControl.m_oLogicDocument;
-
+				
+				let logicDoc = this.WordControl.m_oLogicDocument;
 				if (!logicDoc.IsSelectionUse())
 					return "none";
 
-				var selectionBounds = logicDoc.GetSelectionBounds();
-				var eps = 0.0001;
-				if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
-					(Math.abs(selectionBounds.Start.W) > eps) &&
-					(Math.abs(selectionBounds.End.W) > eps))
-				{
+				if (logicDoc.IsTextSelectionUse())
 					return "text";
-				}
-
+				
 				if (logicDoc.DrawingObjects.getSelectedObjectsBounds())
 					return "drawing";
-
+				
 				return "none";
 			}
 			case AscCommon.c_oEditorId.Presentation:
@@ -1001,7 +996,7 @@
 				if (-1 === logicDoc.CurPage)
 					return "none";
 
-				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _controller = logicDoc.GetCurrentSlide().graphicObjects;
 				var _elementsCount = _controller.selectedObjects.length;
 
 				var retType = "slide";
@@ -1278,7 +1273,13 @@
 				"guid" : ""
 			};
 		}
-		
+
+		window.g_asc_plugins.isUICheckOnInitMessage = true;
+		setTimeout(function(){
+			if (window.g_asc_plugins.isUICheckOnInitMessage)
+				delete window.g_asc_plugins.isUICheckOnInitMessage;
+		});
+
 		// desktop detecting (it's necessary when we work with clouds into desktop)
 		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 		if (isLocal)
@@ -1781,9 +1782,9 @@
 	 * The context menu item.
 	 * @property {string} id - The item ID.
 	 * @property {string} text - The item text.
-	 * @property {string} [data] - The item data (this data will be sended to click event callback).
+	 * @property {string} [data] - The item data (this data will be sent to the click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
-	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {string} [icons] - The item icons (see the plugins {@link /plugin/config config} documentation).
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 */
 
@@ -1792,7 +1793,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddContextMenuItem
-	 * @param {ContextMenuItem[]} items - An array containing the context menu items for the current item.
+	 * @param {ContextMenuItem[]} items - An array containing the context menu items.
 	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
@@ -1818,7 +1819,7 @@
 	};
 
 	/**
-	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
+	 * The possible values of the base which the relative vertical position of the toolbar menu item will be calculated from.
 	 * @typedef {("button" | "...")} ToolbarMenuItemType
 	 */
 
@@ -1826,31 +1827,31 @@
 	 * @typedef {Object} ToolbarMenuItem
 	 * The toolbar menu item.
 	 * @property {string} id - The item ID.
-	 * @property {ToolbarMenuItemType} The item type
+	 * @property {ToolbarMenuItemType} type - The item type.
 	 * @property {string} text - The item text.
-	 * @property {string} hint - The item text.
-	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {string} hint - The item hint.
+	 * @property {string} [icons] - The item icons (see the plugins {@link /plugin/config config} documentation).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
-	 * @property {boolean} [enableToggle]
-	 * @property {boolean} [lockInViewMode]
-	 * @property {boolean} [separator]
-	 * @property {boolean} [split]
+	 * @property {boolean} [enableToggle] - Specifies if an item toggle is enabled or not.
+	 * @property {boolean} [lockInViewMode] - Specifies if the current item is locked in the view mode or not.
+	 * @property {boolean} [separator] - Specifies if a separator is used between the toolbar menu items or not.
+	 * @property {boolean} [split] - Specifies if the toolbar menu items are split or not.
 	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
 	 */
 
 	/**
 	 * @typedef {Object} ToolbarMenuTab
-	 * The toolbar menu item.
+	 * The toolbar menu tab.
 	 * @property {string} id - The tab ID.
 	 * @property {string} text - The tab text.
-	 * @property {ToolbarMenuItem[]} [items] - The tab items.
+	 * @property {ToolbarMenuItem[]} [items] - An array containing the toolbar menu items for the current tab.
 	 */
 
 	/**
 	 * @typedef {Object} ToolbarMenuMainItem
-	 * The toolbar menu item.
-	 * @property {string} giud - The plugin guid.
-	 * @property {ToolbarMenuTab[]} tabs
+	 * The main toolbar menu item.
+	 * @property {string} guid - The plugin guid.
+	 * @property {ToolbarMenuTab[]} tabs - An array containing the toolbar menu tabs for the current item.
 	 */
 
 	/**
@@ -1858,16 +1859,16 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddToolbarMenuItem
-	 * @param {ToolbarMenuMainItem[]} items - An array containing the context menu items for the current item.
+	 * @param {ToolbarMenuMainItem[]} items - An array containing the main toolbar menu items.
 	 * @since 8.1.0
 	 */
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
-		for (let i = 0, len = items.tabs.length; i < len; i++)
+		for (let i = 0, len = items["tabs"].length; i < len; i++)
 		{
-			if (items.tabs[i]["items"])
-				correctItemsWithData(items.tabs[i]["items"], baseUrl);
+			if (items["tabs"][i]["items"])
+				correctItemsWithData(items["tabs"][i]["items"], baseUrl);
 		}
 
 		this.sendEvent("onPluginToolbarMenu", [items]);
@@ -1894,7 +1895,7 @@
 	};
 
 	/**
-	 * Activate (move to front) the plugin window/panel.
+	 * Activates (moves forward) the plugin window/panel.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} frameId - The frame ID.

@@ -1847,7 +1847,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.Content[0] = new AscWord.Paragraph(this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
-
+	
+	this.Background = new AscWord.DocumentBackground();
+	
     this.CurPos  =
     {
         X          : 0,
@@ -2040,7 +2042,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.StartCheckCCPlaceholder   = false; //
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
 	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
-
+	this.PreventPreDelete          = false; // Заглушка на случай, когда удаляемые объекты, не удаляются, а переносятся
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -2444,7 +2446,7 @@ CDocument.prototype.Get_PageContentStartPos2 = function(StartPageIndex, StartCol
 CDocument.prototype.Get_PageLimits = function(nPageIndex)
 {
 	var nIndex  = this.Pages[nPageIndex] ? this.Pages[nPageIndex].Pos : 0;
-	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
+	var oSectPr = this.Layout.GetSectionByPos(nIndex);
 
 	return {
 		X      : 0,
@@ -2460,7 +2462,7 @@ CDocument.prototype.Get_PageFields = function(nPageIndex, isHdrFtr, oSectPr)
 	if (!oSectPr)
 	{
 		let nIndex = oPage ? oPage.Pos : 0;
-		oSectPr    = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
+		oSectPr    = this.Layout.GetSectionByPos(nIndex);
 	}
 
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
@@ -2510,7 +2512,7 @@ CDocument.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex, nPa
 		nPageIndex = this.Pages[nPageIndex].Pos;
 	}
 
-	var oSectPr = this.SectionsInfo.Get_SectPr(nElementIndex).SectPr;
+	var oSectPr = this.Layout.GetSectionByPos(nElementIndex);
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
 
 	var X      = oFrame.Left;
@@ -3585,7 +3587,10 @@ CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStar
 			return false;
 	}
 
-	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
+	if (!oRun
+		|| !(oRun instanceof ParaRun)
+		|| !oRun.GetParagraph()
+		|| !oRun.GetParagraph().IsUseInDocument())
 		return false;
 
 	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, _nStartIndex, _nEndIndex);
@@ -3671,7 +3676,7 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 			}
 		}
 
-		if (isAdd)
+		if (isAdd && oPara.IsUseInDocument())
 			arrParagraphs.push(oPara);
 	}
 
@@ -5598,10 +5603,9 @@ CDocument.prototype.Draw                                     = function(nPageInd
     // Определим секцию
     var Page_StartPos = this.Pages[nPageIndex].Pos;
     var SectPr        = this.SectionsInfo.Get_SectPr(Page_StartPos).SectPr;
-
-	if (docpostype_HdrFtr !== this.CurPos.Type && !this.IsViewMode())
-		pGraphics.Start_GlobalAlpha();
-
+	
+	this.Background.draw(pGraphics, SectPr, this.GetTheme(), this.GetColorMap());
+	
 	// Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
 	if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
 		this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
@@ -5613,7 +5617,7 @@ CDocument.prototype.Draw                                     = function(nPageInd
 		pGraphics.put_GlobalAlpha(true, 0.4);
 	else if (!this.IsViewMode())
 		pGraphics.End_GlobalAlpha();
-
+	
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
     this.Footnotes.Draw(nPageIndex, pGraphics);
@@ -5883,6 +5887,14 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 	//       2. Различные типы обычных границ. Причем, если пересакающиеся границы имеют одинаковый тип и размер,
 	//          тогда надо специально отрисовывать места соединения данных линий.
 
+};
+CDocument.prototype.setBackgroundColor = function(color, unifill)
+{
+	let oldValue = this.Background.copy();
+	let newValue = new AscWord.DocumentBackground(color, unifill, null);
+	
+	AscCommon.History.Add(new CChangesDocumentPageColor(this, oldValue, newValue));
+	this.Background = newValue;
 };
 /**
  *
@@ -6429,9 +6441,10 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 		return;
 	
 	// We don't check selection lock, because this method should be called when other action was started
-	
+	let state = this.SaveDocumentState();
 	this.StartAction(AscDFH.historydescription_Document_ComplexField_MergeFormat);
 	complexField.ChangeInstruction(complexField.GetInstructionLine() + " \\* MERGEFORMAT ");
+	this.LoadDocumentState(state);
 	this.Recalculate();
 	this.FinalizeAction();
 };
@@ -6995,6 +7008,7 @@ CDocument.prototype.SetParagraphFramePr = function(FramePr, bDelete)
 CDocument.prototype.IncreaseDecreaseFontSize = function(bIncrease)
 {
 	this.Controller.IncreaseDecreaseFontSize(bIncrease);
+	this.setMergeFormatComplexFieldOnApplyTextPr();
 	this.Recalculate();
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
@@ -10102,7 +10116,7 @@ CDocument.prototype.CorrectEnterText = function(oldValue, newValue)
 		oldText += String.fromCodePoint(oldCodePoints[index]);
 	}
 
-	let state    = this.SaveDocumentState();
+	let state    = this.SaveDocumentState(false);
 	let startPos = paragraph.getCurrentPos();
 	let endPos   = startPos;
 	
@@ -11449,7 +11463,7 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	var nIndex  = this.Pages[nCurPage].Pos;
 	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
 
-	oSectPr.Set_PageNum_Start(nStartPage);
+	oSectPr.SetPageNumStart(nStartPage);
 
 	this.Recalculate();
 
@@ -11457,9 +11471,44 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
 };
+CDocument.prototype.SetSectionPageNumFormat = function(format)
+{
+	let curHdrFtr = this.HdrFtr.CurHdrFtr;
+	if (!curHdrFtr)
+		return;
+	
+	let curPage = curHdrFtr.RecalcInfo.CurPage;
+	if (-1 === curPage)
+		return;
+	
+	let startIndex = this.Pages[curPage].Pos;
+	let sectPr     = this.SectionsInfo.Get_SectPr(startIndex).SectPr;
+	
+	sectPr.SetPageNumFormat(format);
+	
+	this.Recalculate();
+	this.UpdateSelection();
+	this.UpdateInterface();
+};
 CDocument.prototype.Document_Format_Copy = function()
 {
 	this.Api.checkFormatPainterData();
+};
+CDocument.prototype.isHeaderEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Header === hdrFtr.Type;
+};
+CDocument.prototype.isFooterEditing = function()
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType())
+		return false;
+	
+	let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+	return hdrFtr && AscCommon.hdrftr_Footer === hdrFtr.Type;
 };
 CDocument.prototype.EndHdrFtrEditing = function(bCanStayOnPage)
 {
@@ -13911,7 +13960,7 @@ CDocument.prototype.Add_SectionBreak = function(SectionBreakType)
 
 	oSectPr.Copy(oCurSectPr);
 	oCurSectPr.Set_Type(SectionBreakType);
-	oCurSectPr.Set_PageNum_Start(-1);
+	oCurSectPr.SetPageNumStart(-1);
 	oCurSectPr.Clear_AllHdrFtr();
 
 	this.History.MinorChanges = false;
@@ -13984,7 +14033,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 
 	if (0 === SectIndex)
 	{
-		var PageNumStart = this.SectionsInfo.Get_SectPr2(0).SectPr.Get_PageNum_Start();
+		var PageNumStart = this.SectionsInfo.Get_SectPr2(0).SectPr.GetPageNumStart();
 		var BT           = this.SectionsInfo.Get_SectPr2(0).SectPr.Get_Type();
 
 		// Нумерация начинается с 1, если начальное значение не задано. Заметим, что в Word нумерация может начинаться и
@@ -14001,7 +14050,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 	var SectionFirstPage = this.Get_SectionFirstPage(SectIndex, Page_abs);
 
 	var FirstPage    = SectionFirstPage;
-	var PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_PageNum_Start();
+	var PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.GetPageNumStart();
 	var BreakType    = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_Type();
 
 	var StartInfo = [];
@@ -14012,7 +14061,7 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 		SectIndex--;
 
 		FirstPage    = this.Get_SectionFirstPage(SectIndex, Page_abs);
-		PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_PageNum_Start();
+		PageNumStart = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.GetPageNumStart();
 		BreakType    = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr.Get_Type();
 
 		StartInfo.push({FirstPage : FirstPage, BreakType : BreakType});
@@ -17194,6 +17243,8 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 
 	LogicDocument.theme = this.theme.createDuplicate();
 	LogicDocument.clrSchemeMap   = this.clrSchemeMap.createDuplicate();
+	
+	LogicDocument.Background = this.Background.copy();
 
 	var FieldsManager = this.FieldsManager;
 
@@ -18079,40 +18130,42 @@ CDocument.prototype.AddFootnote = function(sText)
 	if (oInfo.GetMath())
 		return null;
 
-	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-	{
-		let oFootnote = null;
-		this.StartAction(AscDFH.historydescription_Document_AddFootnote);
-
-		if (docpostype_Content === nDocPosType)
-		{
-			oFootnote = this.Footnotes.CreateFootnote();
-			oFootnote.AddDefaultFootnoteContent(sText);
-			if (true === this.IsSelectionUse())
-			{
-				this.MoveCursorRight(false, false, false);
-				this.RemoveSelection();
-			}
-
-			if (sText)
-				this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote, sText));
-			else
-				this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote));
-
-			this.SetDocPosType(docpostype_Footnotes);
-			this.Footnotes.Set_CurrentElement(true, 0, oFootnote);
-		}
-		else if (docpostype_Footnotes === nDocPosType)
-		{
-			this.Footnotes.AddFootnoteRef();
-			this.Recalculate();
-		}
-		this.FinalizeAction();
-
-		return oFootnote;
-	}
+	if (this.IsSelectionLocked(changestype_Paragraph_Content))
+		return null
 	
-	return null;
+	this.StartAction(AscDFH.historydescription_Document_AddFootnote);
+	let footnote = this._addFootnote(sText);
+	this.Recalculate();
+	this.FinalizeAction();
+	return footnote;
+};
+CDocument.prototype._addFootnote = function(text)
+{
+	let oFootnote = null;
+	let docPosType = this.GetDocPosType();
+	if (docpostype_Content === docPosType)
+	{
+		oFootnote = this.Footnotes.CreateFootnote();
+		oFootnote.AddDefaultFootnoteContent(text);
+		if (true === this.IsSelectionUse())
+		{
+			this.MoveCursorRight(false, false, false);
+			this.RemoveSelection();
+		}
+		
+		if (text)
+			this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote, text));
+		else
+			this.AddToParagraph(new AscWord.CRunFootnoteReference(oFootnote));
+		
+		this.SetDocPosType(docpostype_Footnotes);
+		this.Footnotes.Set_CurrentElement(true, 0, oFootnote);
+	}
+	else if (docpostype_Footnotes === docPosType)
+	{
+		this.Footnotes.AddFootnoteRef();
+	}
+	return oFootnote;
 };
 CDocument.prototype.RemoveAllFootnotes = function(bRemoveFootnotes, bRemoveEndnotes)
 {
@@ -18316,42 +18369,43 @@ CDocument.prototype.AddEndnote = function(sText)
 	if (oInfo.GetMath())
 		return null;
 
-	if (!this.IsSelectionLocked(changestype_Paragraph_Content))
+	if (this.IsSelectionLocked(changestype_Paragraph_Content))
+		return null;
+	
+	this.StartAction(AscDFH.historydescription_Document_AddEndnote);
+	let endnote = this._addEndnote(sText);
+	this.Recalculate();
+	this.FinalizeAction();
+	return endnote;
+};
+CDocument.prototype._addEndnote = function(text)
+{
+	let oEndnote = null;
+	let docPosType = this.GetDocPosType();
+	if (docpostype_Content === docPosType)
 	{
-		let oEndnote = null;
-		this.StartAction(AscDFH.historydescription_Document_AddEndnote);
-
-		if (docpostype_Content === nDocPosType)
+		oEndnote = this.Endnotes.CreateEndnote();
+		oEndnote.AddDefaultEndnoteContent(text);
+		
+		if (true === this.IsSelectionUse())
 		{
-			oEndnote = this.Endnotes.CreateEndnote();
-			oEndnote.AddDefaultEndnoteContent(sText);
-
-			if (true === this.IsSelectionUse())
-			{
-				this.MoveCursorRight(false, false, false);
-				this.RemoveSelection();
-			}
-
-			if (sText)
-				this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote, sText));
-			else
-				this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote));
-
-			this.SetDocPosType(docpostype_Endnotes);
-			this.Endnotes.Set_CurrentElement(true, 0, oEndnote);
+			this.MoveCursorRight(false, false, false);
+			this.RemoveSelection();
 		}
-		else if (docpostype_Endnotes === nDocPosType)
-		{
-			this.Endnotes.AddEndnoteRef();
-		}
-
-		this.Recalculate();
-		this.FinalizeAction();
-
-		return oEndnote;
+		
+		if (text)
+			this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote, text));
+		else
+			this.AddToParagraph(new AscWord.CRunEndnoteReference(oEndnote));
+		
+		this.SetDocPosType(docpostype_Endnotes);
+		this.Endnotes.Set_CurrentElement(true, 0, oEndnote);
 	}
-
-	return null;
+	else if (docpostype_Endnotes === docPosType)
+	{
+		this.Endnotes.AddEndnoteRef();
+	}
+	return oEndnote;
 };
 CDocument.prototype.GotoEndnote = function(isNext)
 {
@@ -19888,7 +19942,10 @@ CDocument.prototype.controller_MoveCursorToXY = function(X, Y, PageAbs, AddToSel
 	{
 		if (true === AddToSelect)
 		{
-			this.Selection_SetEnd(X, Y, true);
+			let mouseEvent = new AscCommon.CMouseEventHandler();
+			mouseEvent.Type = AscCommon.g_mouse_event_type_up;
+			mouseEvent.ClickCount = 1;
+			this.Selection_SetEnd(X, Y, mouseEvent);
 		}
 		else
 		{
@@ -19907,9 +19964,10 @@ CDocument.prototype.controller_MoveCursorToXY = function(X, Y, PageAbs, AddToSel
 		if (true === AddToSelect)
 		{
 			this.StartSelectionFromCurPos();
-			var oMouseEvent  = new AscCommon.CMouseEventHandler();
-			oMouseEvent.Type = AscCommon.g_mouse_event_type_up;
-			this.Selection_SetEnd(X, Y, oMouseEvent);
+			let mouseEvent = new AscCommon.CMouseEventHandler();
+			mouseEvent.Type = AscCommon.g_mouse_event_type_up;
+			mouseEvent.ClickCount = 1;
+			this.Selection_SetEnd(X, Y, mouseEvent);
 		}
 		else
 		{
@@ -22286,14 +22344,9 @@ CDocument.prototype.RemoveContentControl = function(Id)
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
-	if (!this.CanPerformAction())
-		return;
-	
 	let contentControl = this.TableId.Get_ById(Id);
 	if (!contentControl)
 		return;
-	
-	this.StartAction();
 	
 	if (contentControl.IsForm())
 		contentControl.RemoveFormPr();
@@ -22302,11 +22355,6 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 		this.RemoveContentControl(Id);
 	else
 		contentControl.RemoveContentControlWrapper();
-	
-	this.Recalculate();
-	this.UpdateInterface();
-	this.UpdateSelection();
-	this.FinalizeAction();
 };
 CDocument.prototype.GetContentControl = function(Id)
 {
@@ -23129,6 +23177,11 @@ CDocument.prototype.GetAllFields = function(isUseSelection)
 
 	if (isUseSelection)
 	{
+		let state = this.SaveDocumentState();
+		this.RemoveSelection();
+		arrFields = this.GetCurrentComplexFields();
+		this.LoadDocumentState(state);
+		
 		this.Controller.GetAllFields(isUseSelection, arrFields);
 	}
 	else
@@ -25744,6 +25797,8 @@ CDocument.prototype.SetHighlightRequiredFields = function(isHighlight)
  */
 CDocument.prototype.GetRequiredFieldsBorder = function()
 {
+	this.RequiredFieldsBorder.Size = this.DrawingDocument.GetMMPerDot(2);
+	this.RequiredFieldsBorder.Value = border_Single;
 	return this.RequiredFieldsBorder;
 };
 /**
@@ -27206,6 +27261,10 @@ CDocument.prototype.IsCheckFormPlaceholder = function()
 		return false;
 	
 	return this.CheckFormPlaceHolder;
+};
+CDocument.prototype.isPreventedPreDelete = function()
+{
+	return this.PreventPreDelete;
 };
 
 function CDocumentSelectionState()

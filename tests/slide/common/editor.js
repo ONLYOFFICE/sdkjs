@@ -48,7 +48,7 @@
 		Notes_OnRecalculate: function () {return 100;},
 		scrollToY: function () {},
 		OnStartRecalculate: function () {},
-		OnRecalculatePage: function () {},
+		OnRecalculateSlide: function () {},
 		OnEndRecalculate: function () {},
 		UpdateTargetTransform : function(){},
 		SetTargetColor : function(){},
@@ -73,7 +73,13 @@
 		GetDotsPerMM : function(value) {return 72;},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		m_oNotesApi: {},
-		clear: function () {}
+		clear: function () {},
+		GetSlidesCount: function () {
+			return editor.getCountSlides();
+		},
+		getGraphicController: function() {
+			return AscTest.DrawingDocument.m_oLogicDocument.GetCurrentController();
+		}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -117,6 +123,12 @@
 	editor.DemonstrationReporterEnd = function () {};
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
+	editor.isMasterMode = function(){return false;};
+	editor.getCountSlides = function(){
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation) return 0;
+		return oPresentation.GetSlidesCount();
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;

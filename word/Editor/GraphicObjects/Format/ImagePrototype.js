@@ -47,7 +47,6 @@ CImageShape.prototype.recalculateBounds = CShape.prototype.recalculateBounds;
 CImageShape.prototype.getArrayWrapPolygons = CShape.prototype.getArrayWrapPolygons;
 CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 CImageShape.prototype.recalculateWrapPolygon = CShape.prototype.recalculateWrapPolygon;
-CImageShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 CImageShape.prototype.setRecalculateInfo = function()
 {
