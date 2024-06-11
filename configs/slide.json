@@ -127,7 +127,11 @@
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
-
+			
+			"common/bidi/bidi-common.js",
+			"common/bidi/bidi-types.js",
+			"common/bidi/unicode-data.js",
+			
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",

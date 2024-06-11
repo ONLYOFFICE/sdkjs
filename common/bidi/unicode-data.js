@@ -34,8 +34,8 @@
 
 (function(window)
 {
-	const L   = AscBidi.Type.LTR;
-	const R   = AscBidi.Type.RTL;
+	const L   = AscBidi.Type.L;
+	const R   = AscBidi.Type.R;
 	const AL  = AscBidi.Type.AL;
 	const EN  = AscBidi.Type.EN;
 	const ES  = AscBidi.Type.ES;
@@ -69,9 +69,9 @@
 		if (undefined !== unicodeTable2[codePoint])
 			return unicodeTable2[codePoint];
 		if (0x10800 <= codePoint && codePoint < 0x11000)
-			return RTL;
+			return R;
 		if (0xE0000 <= codePoint && codePoint < 0xE1000)
 			return BN;
-		return LTR;
+		return L;
 	}
 })(window);

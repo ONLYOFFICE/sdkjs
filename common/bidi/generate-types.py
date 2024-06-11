@@ -1,7 +1,6 @@
 import re
 import os
 
-#os.chdir("D:\\Work\\Git\\sdkjs\\common\\bidi")
 #https://www.unicode.org/Public/UNIDATA/UnicodeData.txt
 
 
@@ -44,8 +43,8 @@ header = "/*\n\
 \n\
 (function(window)\n\
 {\n\
-	const L   = AscBidi.Type.LTR;\n\
-	const R   = AscBidi.Type.RTL;\n\
+	const L   = AscBidi.Type.L;\n\
+	const R   = AscBidi.Type.R;\n\
 	const AL  = AscBidi.Type.AL;\n\
 	const EN  = AscBidi.Type.EN;\n\
 	const ES  = AscBidi.Type.ES;\n\
@@ -80,10 +79,10 @@ footer = "\n	};\n\
 		if (undefined !== unicodeTable2[codePoint])\n\
 			return unicodeTable2[codePoint];\n\
 		if (0x10800 <= codePoint && codePoint < 0x11000)\n\
-			return RTL;\n\
+			return R;\n\
 		if (0xE0000 <= codePoint && codePoint < 0xE1000)\n\
 			return BN;\n\
-		return LTR;\n\
+		return L;\n\
 	}\n\
 })(window);\n"
 

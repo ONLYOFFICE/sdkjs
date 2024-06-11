@@ -34,32 +34,6 @@
 
 (function ()
 {
-	const TYPES = {
-		LTR : 'L', // Left-To-Right letter
-		RTL : 'R', // Right-To-Left letter
-		AL  : 'A', // Arabic Letter
-		EN  : '1', // European Numeral
-		AN  : '9', // Arabic Numeral
-		ES  : 'w', // European number Separator
-		ET  : 'w', // European number Terminator
-		CS  : 'w', // Common Separator
-		NSM : '`', // Non Spacing Mark
-		BN  : 'b', // Boundary Neutral
-		BS  : 'B', // Block Separator
-		SS  : 'S', // Segment Separator
-		WS  : '_', // WhiteSpace
-		ON  : 'n', // Other Neutral
-		LRE : '+', // Left-to-Right Embedding
-		RLE : '+', // Right-to-Left Embedding
-		LRO : '+', // Left-to-Right Override
-		RLO : '+', // Right-to-Left Override
-		PDF : '-', // Pop Directional Flag
-		LRI : '+', // Left-to-Right Isolate
-		RLI : '+', // Right-to-Left Isolate
-		FSI : '+', // First-Strong Isolate
-		PDI : '-'  // Pop Directional Isolate
-	};
-	
 	const FLAG = {
 		RTL      : 0x00000001,
 		STRONG   : 0x00000010,
@@ -93,68 +67,31 @@
 	
 	
 	const TYPE = {
-		
-		LTR : FLAG.STRONG | FLAG.LETTER,
-		RTL : FLAG.STRONG | FLAG.LETTER | FLAG.RTL,
-		
-		// Arabic letter
-		AL : FLAG.STRONG | FLAG.LETTER | FLAG.ARABIC | FLAG.RTL,
-		
-		// Embedding
-		LRE : FLAG.STRONG | FLAG.EXPLICIT,
-		RLE : FLAG.STRONG | FLAG.EXPLICIT | FLAG.RTL,
-		
-		// Override
-		LRO : FLAG.STRONG | FLAG.EXPLICIT | FLAG.OVERRIDE,
-		RLO : FLAG.STRONG | FLAG.EXPLICIT | FLAG.OVERRIDE | FLAG.RTL,
-		
-		// Pop Directional Flag
-		PDF : FLAG.WEAK | FLAG.EXPLICIT,
-		
-		EN : FLAG.WEAK | FLAG.NUMBER,
-		AN : FLAG.WEAK | FLAG.NUMBER | FLAG.ARABIC,
-		
-		ES : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.ES,
-		ET : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.ET,
-		
-		// Common Separator
-		CS : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.CS,
-		
-		// Non Spacing Mark
+		L   : FLAG.STRONG | FLAG.LETTER,
+		R   : FLAG.STRONG | FLAG.LETTER | FLAG.RTL,
+		AL  : FLAG.STRONG | FLAG.LETTER | FLAG.ARABIC | FLAG.RTL,
+		EN  : FLAG.WEAK | FLAG.NUMBER,
+		ES  : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.ES,
+		ET  : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.ET,
+		AN  : FLAG.WEAK | FLAG.NUMBER | FLAG.ARABIC,
+		CS  : FLAG.WEAK | FLAG.NUMBER_SEP_TER | FLAG.CS,
 		NSM : FLAG.WEAK | FLAG.NSM,
-		
-		// Boundary Neutral
-		BN : FLAG.WEAK | FLAG.SPACE | FLAG.BN,
-		
-		// Block Separator
-		BS : FLAG.NEUTRAL | FLAG.SPACE | FLAG.SEPARATOR | FLAG.BS,
-		
-		// Segment Separator
-		SS : FLAG.NEUTRAL | FLAG.SPACE | FLAG.SEPARATOR | FLAG.SS,
-		
-		// White Space
-		WS : FLAG.NEUTRAL | FLAG.SPACE | FLAG.WS,
-		
-		// Other Neutral
-		ON : FLAG.NEUTRAL,
-		
-		WLTR     : FLAG.WEAK,
-		WRTL     : FLAG.WEAK | FLAG.RTL,
-		SENTINEL : FLAG.SENTINEL,
-		
-		// Isolates
+		BN  : FLAG.WEAK | FLAG.SPACE | FLAG.BN,
+		B   : FLAG.NEUTRAL | FLAG.SPACE | FLAG.SEPARATOR | FLAG.BS,
+		S   : FLAG.NEUTRAL | FLAG.SPACE | FLAG.SEPARATOR | FLAG.SS,
+		WS  : FLAG.NEUTRAL | FLAG.SPACE | FLAG.WS,
+		ON  : FLAG.NEUTRAL,
+		LRE : FLAG.STRONG | FLAG.EXPLICIT,
+		LRO : FLAG.STRONG | FLAG.EXPLICIT | FLAG.OVERRIDE,
+		RLE : FLAG.STRONG | FLAG.EXPLICIT | FLAG.RTL,
+		RLO : FLAG.STRONG | FLAG.EXPLICIT | FLAG.OVERRIDE | FLAG.RTL,
+		PDF : FLAG.WEAK | FLAG.EXPLICIT,
 		LRI : FLAG.NEUTRAL | FLAG.ISOLATE,
 		RLI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.RTL,
 		FSI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.FS,
-		PDI : FLGA.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE // NEUTRAL ?
+		PDI : FLGA.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE
 	};
-
-	function generateTypes()
-	{
-	
-	}
-	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscBidi.TYPES = TYPES;
+	AscBidi.FLAG = FLAG;
 	AscBidi.TYPE = TYPE;
 })();
