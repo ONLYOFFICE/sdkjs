@@ -72,6 +72,8 @@ function (window, undefined) {
 			// isCalculated: null
 			// }
 		};
+		this.aPassedPrecedents = null;
+		this.aPassedDependents = null;
 
 		this._lockChangeDocument = null;
 	}
@@ -582,6 +584,9 @@ function (window, undefined) {
 				if (this.checkCircularReference(cellIndex, true)) {
 					return;
 				}
+				if (this.checkPassedDependents(+cellIndex)) {
+					return;
+				}
 				// if dependents by cellIndex aldready exist, check current tree
 				let currentIndex = Object.keys(this.dependents[cellIndex])[0];
 				let isUpdated = false;
@@ -625,10 +630,14 @@ function (window, undefined) {
 				}
 
 				if (!isUpdated) {
+					this.setPassedDependents(+cellIndex);
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
 							this._calculateDependents(i, curListener, true);
 						}
+					}
+					if (!isSecondCall) {
+						this.clearPassedDependents();
 					}
 				}
 				if (Object.keys(this.dependents[cellIndex]).length === 0 && bCellHasNotTrace) {
@@ -1075,7 +1084,11 @@ function (window, undefined) {
 			if (this.checkCircularReference(currentCellIndex, false)) {
 				return;
 			}
+			if (this.checkPassedPrecedents(currentCellIndex)) {
+				return;
+			}
 			this.setPrecedentsLoop(true);
+			this.setPassedPrecedents(currentCellIndex);
 			let isHavePrecedents = false;
 			// check first level, then if function return false, check second, third and so on
 			for (let i in this.precedents[currentCellIndex]) {
@@ -1089,6 +1102,9 @@ function (window, undefined) {
 			}
 
 			this.setPrecedentsLoop(false);
+			if (!isSecondCall) {
+				this.clearPassedPrecedents();
+			}
 		}
 		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
@@ -1419,6 +1435,59 @@ function (window, undefined) {
 				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
+	};
+	/**
+	 * Sets passed precedents cells index for recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 */
+	TraceDependentsManager.prototype.setPassedPrecedents = function (currentCellIndex) {
+		if (!this.aPassedPrecedents) {
+			this.aPassedPrecedents = [];
+		}
+		this.aPassedPrecedents.push(currentCellIndex);
+	};
+	/**
+	 * Checks current cell index is already passed in recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 * @returns {boolean}
+	 */
+	TraceDependentsManager.prototype.checkPassedPrecedents = function (currentCellIndex) {
+		return !!(this.aPassedPrecedents && this.aPassedPrecedents.includes(currentCellIndex));
+	};
+	/**
+	 * Clears attribute of passed precedents
+	 * @memberof TraceDependentsManager
+	 */
+	TraceDependentsManager.prototype.clearPassedPrecedents = function () {
+		this.aPassedPrecedents = null;
+	};
+	/**
+	 * Sets passed dependents cells index for recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 */
+	TraceDependentsManager.prototype.setPassedDependents = function (currentCellIndex) {
+		if (!this.aPassedDependents) {
+			this.aPassedDependents = [];
+		}
+		this.aPassedDependents.push(currentCellIndex);
+	};
+	/**
+	 * Checks current cell index is already passed in recursive calls
+	 * @memberof TraceDependentsManager
+	 * @param {number} currentCellIndex
+	 * @returns {boolean}
+	 */
+	TraceDependentsManager.prototype.checkPassedDependents = function (currentCellIndex) {
+		return !!(this.aPassedDependents && this.aPassedDependents.includes(currentCellIndex));
+	};
+	/**
+	 * Clears attribute of passed dependents
+	 */
+	TraceDependentsManager.prototype.clearPassedDependents = function () {
+		this.aPassedDependents = null;
 	};
 
 
