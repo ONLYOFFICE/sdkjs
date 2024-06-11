@@ -11262,8 +11262,9 @@
 		if (arn.r1 < vr.r1) {
 			scroll = arn.r1 - vr.r1;
 		} else if (arn.r1 >= vr.r2) {
-			this.nRowsCount = arn.r2 + 1 + 1;
+			this.nRowsCount = arn.r2 + 1;
 			scroll = this.getVerticalScrollRange();
+			scroll += Math.ceil(this._getRowHeight(scroll)/this._getRowHeight(arn.r2)) - 1;
 			if (scroll > arn.r1) {
 				scroll = arn.r1;
 			}
