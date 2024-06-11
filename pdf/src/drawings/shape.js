@@ -91,13 +91,6 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-            this.SetInTextBox(false);
-        }
-        else {
-            this.SetInTextBox(true);
-        }
-
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 		let docContent = this.GetDocContent();
 		if (docContent)
@@ -107,11 +100,7 @@
         return this.getDocContent();
     };
     CPdfShape.prototype.createTextBody = function () {
-        let oDoc = this.GetDocument();
         AscFormat.CShape.prototype.createTextBody.call(this);
-        if (oDoc && oDoc.GetActiveObject() == this) {
-            this.SetInTextBox(true);
-        }
         this.SetNeedRecalc(true);
     };
 

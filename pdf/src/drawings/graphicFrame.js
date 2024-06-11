@@ -153,9 +153,6 @@
         this.updateTransformMatrix();
         this.SetNeedRecalc(false);
     };
-    CPdfGraphicFrame.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
     CPdfGraphicFrame.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
             this._needRecalc = false;
@@ -181,13 +178,6 @@
 
         let X = pageObject.x;
         let Y = pageObject.y;
-
-        if (this.hitInBoundingRect(X, Y) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-            this.SetInTextBox(false);
-        }
-        else {
-            this.SetInTextBox(true);
-        }
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };

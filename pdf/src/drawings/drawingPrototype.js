@@ -201,7 +201,14 @@
         this.isInTextBox = bIn;
     };
     CPdfDrawingPrototype.prototype.IsInTextBox = function() {
-        return this.isInTextBox;
+        let oDoc = editor.getPDFDoc();
+        let oController = oDoc.GetController();
+
+        if (oDoc.GetActiveObject() == this && this == oController.getTargetTextObject()) {
+            return !!this.GetDocContent();
+        }
+
+        return false;
     };
 	CPdfDrawingPrototype.prototype.Remove = function(direction, isWord) {
 		let doc = this.GetDocument();

@@ -2509,7 +2509,7 @@
 
 		this.onUpdateOverlay = function()
 		{
-			if (!this.overlay)
+			if (!this.overlay || this.scheduledRepaintTimer != null)
 				return;
 
 			let oDoc = this.getPDFDoc();

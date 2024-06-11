@@ -453,6 +453,7 @@
 		let viewer = this.DocumentRenderer;
 		let doc    = viewer.getPDFDoc();
 		let drDoc  = doc.GetDrawingDocument();
+		let drController = doc.GetController();
 		
 		let textController = doc.getTextController();
 		if (!textController)
@@ -461,11 +462,15 @@
 			return false;
 		}
 		
+		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
+		if (null == drController.getTargetTextObject()) {
+			drController.selection.textSelection = textController;
+		}
+
 		drDoc.showTarget(true);
 		drDoc.TargetStart();
-		let docContent = textController.GetDocContent();
 		
 		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
 			drDoc.TargetEnd();

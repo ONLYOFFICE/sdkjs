@@ -969,11 +969,6 @@ var CPresentation = CPresentation || function(){};
         let oContent;
         if (oActiveObj.IsDrawing()) {
             oContent = oActiveObj.GetDocContent();
-
-            if (oActiveObj.IsImage() == false) {
-                oActiveObj.SetInTextBox(false);
-            }
-
             this.activeDrawing = null;
         }
         else if (oActiveObj.IsForm()) {
@@ -3604,7 +3599,7 @@ var CPresentation = CPresentation || function(){};
             oContent = oDrawing.GetDocContent();
             oController.selectAll();
 
-            if (!oContent && oController.getSelectedArray().length != 0) {
+            if (oController.getSelectedArray().length != 0) {
                 this.Viewer.onUpdateOverlay();
                 return;
             }
@@ -3776,7 +3771,6 @@ var CPresentation = CPresentation || function(){};
 				this.AddDrawing(oMathShape, nCurPage);
                 oMathShape.SetNeedRecalc(true);
 				oMathShape.select(oController, nCurPage);
-                oMathShape.SetInTextBox(true);
                 this.SetMouseDownObject(oMathShape);
 				oController.selection.textSelection = oMathShape;
 			}
@@ -4373,10 +4367,10 @@ var CPresentation = CPresentation || function(){};
                     return pasteObj.Drawing;
                 });
 
-                // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
-                let nShift = oController.getDrawingsPasteShift(aDrToPaste);
-
                 aDrToPaste.forEach(function(drawing) {
+                    // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                    let nShift = oController.getDrawingsPasteShift([drawing]);
+
                     if (nShift > 0) {
                         let oXfrm = drawing.getXfrm();
                         if (oXfrm) {
@@ -4508,7 +4502,6 @@ var CPresentation = CPresentation || function(){};
         this.SetMouseDownObject(oTextArt);
 
         oTextArt.select(oController, nPage);
-        oTextArt.SetInTextBox(true);
         this.SetMouseDownObject(oTextArt);
         oController.selection.textSelection = oTextArt;
         oController.selectAll();
@@ -5685,10 +5678,16 @@ var CPresentation = CPresentation || function(){};
     };
 
 	CPDFDoc.prototype.getTextController = function() {
-		let activeForm    = this.activeForm;
-		let activeAnnot   = this.mouseDownAnnot;
-		let activeDrawing = this.activeDrawing;
+        let oController = this.GetController();
+
+		let activeForm      = this.activeForm;
+		let activeAnnot     = this.mouseDownAnnot;
+		let activeDrawing   = this.activeDrawing;
 		
+        if (oController.getSelectedArray().length > 1) {
+            return null;
+        }
+
 		if (activeForm && this.checkFieldFont(activeForm) && activeForm.IsCanEditText()) {
 			return activeForm;
 		}

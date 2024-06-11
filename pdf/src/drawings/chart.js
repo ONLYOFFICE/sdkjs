@@ -84,21 +84,7 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-            this.SetInTextBox(false);
-        }
-        else {
-            this.SetInTextBox(true);
-            oDoc.SelectionSetStart(x, y, e);
-        }
-
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-    };
-    CPdfChart.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
-    CPdfChart.prototype.IsInTextBox = function() {
-        return this.isInTextBox;
     };
     CPdfChart.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
@@ -116,8 +102,6 @@
         oPara.SetApplyToAll(true);
         let sText = oPara.GetSelectedText(true, {NewLine: true});
         oPara.SetApplyToAll(false);
-
-        this.SetInTextBox(false);
 
         if (this.GetContents() != sText) {
             oDoc.CreateNewHistoryPoint();

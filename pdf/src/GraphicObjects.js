@@ -393,7 +393,6 @@
                             oTargetTextObject.group.SetNeedRecalc(true);
                         }
                         else {
-                            oTargetTextObject.SetInTextBox(true);
                             oTargetTextObject.SetNeedRecalc(true);
                             
                             if (oTargetTextObject.checkExtentsByDocContent)

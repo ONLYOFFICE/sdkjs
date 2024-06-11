@@ -86,13 +86,6 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        // if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-        //     this.SetInTextBox(false);
-        // }
-        // else {
-        //     this.SetInTextBox(true);
-        // }
-
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CPdfSmartArt.prototype.AddNewParagraph = function() {
@@ -101,12 +94,6 @@
     };
     CPdfSmartArt.prototype.GetDocContent = function() {
         return this.getTargetDocContent();
-    };
-    CPdfSmartArt.prototype.SetInTextBox = function(bIn) {
-        this.isInTextBox = bIn;
-    };
-    CPdfSmartArt.prototype.IsInTextBox = function() {
-        return this.isInTextBox;
     };
     CPdfSmartArt.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
@@ -124,8 +111,6 @@
         oPara.SetApplyToAll(true);
         let sText = oPara.GetSelectedText(true, {NewLine: true});
         oPara.SetApplyToAll(false);
-
-        this.SetInTextBox(false);
 
         if (this.GetContents() != sText) {
             oDoc.CreateNewHistoryPoint();
