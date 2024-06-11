@@ -41,6 +41,7 @@ function (window, undefined) {
   // Import
   var CellValueType = AscCommon.CellValueType;
   var cBoolLocal = AscCommon.cBoolLocal;
+  var cBoolOrigin = AscCommon.cBoolOrigin;
   var cErrorOrigin = AscCommon.cErrorOrigin;
   var cErrorLocal = AscCommon.cErrorLocal;
   var FormulaSeparators = AscCommon.FormulaSeparators;
@@ -767,6 +768,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cString.prototype.tocBool = function () {
+		//TODO value === cBoolLocal.t || value === cBoolLocal.f || value === cBoolOrigin.t || value === cBoolOrigin.f
 		var res;
 		if (parserHelp.isBoolean(this.value, 0)) {
 			res = new cBool(parserHelp.operand_str.toUpperCase() === cBoolLocal.t);
@@ -779,6 +781,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this;
 	};
 	cString.prototype.getValue = function () {
+		//TODO many function calls -> many calls indexOf/replaceAll - review and if only necessary to do the conversion
+		if (-1 !== this.value.indexOf("\"\"")) {
+			return this.value.replaceAll("\"\"", "\"");
+		}
 		return this.value;
 	};
 
@@ -807,7 +813,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBool.prototype.constructor = cBool;
 	cBool.prototype.type = cElementType.bool;
 	cBool.prototype.toString = function () {
-		return this.value.toString().toUpperCase();
+		return this.value ? cBoolOrigin.t : cBoolOrigin.f;
 	};
 	cBool.prototype.getValue = function () {
 		return this.toString();
