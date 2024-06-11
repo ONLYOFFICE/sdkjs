@@ -2666,66 +2666,57 @@
         return this.getEffectsForDemo() !== null;
     };
     CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
-        const oThis = this;
         return AscFormat.ExecuteNoHistory(function () {
-            if (!this.canStartDemo()) {
-                return null;
-            }
-            var aEffectsForDemo = this.getEffectsForDemo();
-            if (!aEffectsForDemo) {
-                return null;
-            }
-            var aSeqs = [];
-            var aSeq = [null];
-            var oEffect;
+            if (!this.canStartDemo()) return null;
+
+            const aEffectsForDemo = this.getEffectsForDemo();
+            if (!aEffectsForDemo) return null;
+
+            const aSeqs = [];
+            const aSeq = [null];
             aSeqs.push(aSeq);
-            for (var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
-                oEffect = aEffectsForDemo[nIdx];
-                var oCopyEffect = oEffect.createDuplicate();
-                oCopyEffect.originalNode = oEffect;
+
+            const aEffectCopies = [];
+            for (let nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
+                const oEffect = aEffectsForDemo[nIdx];
+                const oEffectCopy = oEffect.createDuplicate();
+                oEffectCopy.originalNode = oEffect;
+                oEffect.copyNode = oEffectCopy;
+                aEffectCopies.push(oEffectCopy);
+            }
+
+            for (let nIdx = 0; nIdx < aEffectCopies.length; ++nIdx) {
+                const oEffectCopy = aEffectCopies[nIdx];
                 if (!bDisableSmooth) {
-                    if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
-                        oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                    if (oEffectCopy.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                        oEffectCopy.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                     }
 
-                    const nRepeatCount = oCopyEffect.asc_getRepeatCount();
+                    const nRepeatCount = oEffectCopy.asc_getRepeatCount();
                     if (nRepeatCount === AscFormat.untilNextSlide) {
-                        debugger
-                        const lastFiniteEffect = oThis.getLastFiniteEffect(aEffectsForDemo);
+                        const lastFiniteEffect = this.getLastFiniteEffect(aEffectsForDemo);
                         const onEndCond = new CCond();
                         onEndCond.setEvt(COND_EVNT_ON_END);
-                        onEndCond.setTn(lastFiniteEffect.Id); // Здесь нужен айди копии эффекта, наверное
+                        onEndCond.setTn(lastFiniteEffect.copyNode.Id);
 
-                        oCopyEffect.cTn.setEndCondLst(new CCondLst())
-                        oCopyEffect.cTn.endCondLst.push(onEndCond);
+                        oEffectCopy.cTn.setEndCondLst(new CCondLst())
+                        oEffectCopy.cTn.endCondLst.push(onEndCond);
                     }
                     if (nRepeatCount === AscFormat.untilNextClick) {
-                        oCopyEffect.cTn.changeRepeatCount(1000);
+                        oEffectCopy.cTn.changeRepeatCount(1000);
                     }
 
-                    // if (nRepeatCount === AscFormat.untilNextClick) {
-                    // 	const group = oCopyEffect.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects();
-                    // 	const groupEndTime = group.reduce(function (maxEndTime, effect) {
-                    // 		const effectEndTime = effect.getFullDelay() + effect.asc_getDuration();
-                    // 		return Math.max(maxEndTime, effectEndTime);
-                    // 	}, 0)
-
-                    // 	// const newRepeatCount = (groupEndTime - oCopyEffect.originalNode.getFullDelay()) / oCopyEffect.asc_getDuration() * 1000;
-                    // 	const newRepeatCount = 1000;
-                    // 	oCopyEffect.cTn.changeRepeatCount(newRepeatCount);
-                    // }
-
-                    var nDur = oCopyEffect.asc_getDuration();
+                    const nDur = oEffectCopy.asc_getDuration();
                     if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
-                        oCopyEffect.cTn.changeEffectDuration(1000);
+                        oEffectCopy.cTn.changeEffectDuration(1000);
                     }
                     if (AscFormat.isRealNumber(nDur) && nDur < 50) {
-                        oCopyEffect.cTn.changeEffectDuration(750);
+                        oEffectCopy.cTn.changeEffectDuration(750);
                     }
                 }
-                aSeq.push(oCopyEffect);
+                aSeq.push(oEffectCopy);
             }
-            var oTiming = new CTiming();
+            const oTiming = new CTiming();
             oTiming.setParent(this.parent);
             oTiming.buildTree(aSeqs);
             return oTiming;
