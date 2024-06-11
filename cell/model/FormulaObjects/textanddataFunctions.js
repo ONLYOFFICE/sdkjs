@@ -890,7 +890,7 @@ function (window, undefined) {
 	cFIND.prototype.argumentsMax = 3;
 	cFIND.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cFIND.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg.length == 3 ? arg[2] : null, res, str, searchStr,
+		var arg0 = arg[0], arg1 = arg[1], arg2 = arg.length === 3 ? arg[2] : null, res, str, searchStr,
 			pos = -1;
 
 		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
