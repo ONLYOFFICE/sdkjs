@@ -1596,7 +1596,7 @@
 		this.rawDemoTiming = previewTimings[1]; // timing with only effects for preview (without smoothing)
 
 		const oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
-		oPaneApi.list.Control.recalculateByTiming(this.demoTiming);
+		oPaneApi.list.Control.recalculateByTiming(this.rawDemoTiming);
 
 		oPaneApi.header.Control.recalculateChildrenLayout();
 		oPaneApi.header.OnPaint();

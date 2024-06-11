@@ -2666,6 +2666,7 @@
         return this.getEffectsForDemo() !== null;
     };
     CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
+        const oThis = this;
         return AscFormat.ExecuteNoHistory(function () {
             if (!this.canStartDemo()) {
                 return null;
@@ -2688,25 +2689,31 @@
                     }
 
                     const nRepeatCount = oCopyEffect.asc_getRepeatCount();
-					if (nRepeatCount === AscFormat.untilNextSlide) {
-						const onEndCond = new CCond();
-						onEndCond.setEvt(COND_EVNT_ON_END);
-						onEndCond.setTn(aEffectsForDemo[3].Id);
+                    if (nRepeatCount === AscFormat.untilNextSlide) {
+                        debugger
+                        const lastFiniteEffect = oThis.getLastFiniteEffect(aEffectsForDemo);
+                        const onEndCond = new CCond();
+                        onEndCond.setEvt(COND_EVNT_ON_END);
+                        onEndCond.setTn(lastFiniteEffect.Id); // Здесь нужен айди копии эффекта, наверное
 
-						oCopyEffect.cTn.setEndCondLst(new CCondLst())
-						oCopyEffect.cTn.endCondLst.push(onEndCond);
-					}
-					if (nRepeatCount === AscFormat.untilNextClick) {
-						const group = oCopyEffect.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects();
-						const groupEndTime = group.reduce(function (maxEndTime, effect) {
-							const effectEndTime = effect.getFullDelay() + effect.asc_getDuration();
-							return Math.max(maxEndTime, effectEndTime);
-						}, 0)
-						
-						// const newRepeatCount = (groupEndTime - oCopyEffect.originalNode.getFullDelay()) / oCopyEffect.asc_getDuration() * 1000;
-						const newRepeatCount = 1000;
-						oCopyEffect.cTn.changeRepeatCount(newRepeatCount);
-					}
+                        oCopyEffect.cTn.setEndCondLst(new CCondLst())
+                        oCopyEffect.cTn.endCondLst.push(onEndCond);
+                    }
+                    if (nRepeatCount === AscFormat.untilNextClick) {
+                        oCopyEffect.cTn.changeRepeatCount(1000);
+                    }
+
+                    // if (nRepeatCount === AscFormat.untilNextClick) {
+                    // 	const group = oCopyEffect.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects();
+                    // 	const groupEndTime = group.reduce(function (maxEndTime, effect) {
+                    // 		const effectEndTime = effect.getFullDelay() + effect.asc_getDuration();
+                    // 		return Math.max(maxEndTime, effectEndTime);
+                    // 	}, 0)
+
+                    // 	// const newRepeatCount = (groupEndTime - oCopyEffect.originalNode.getFullDelay()) / oCopyEffect.asc_getDuration() * 1000;
+                    // 	const newRepeatCount = 1000;
+                    // 	oCopyEffect.cTn.changeRepeatCount(newRepeatCount);
+                    // }
 
                     var nDur = oCopyEffect.asc_getDuration();
                     if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
@@ -2723,6 +2730,19 @@
             oTiming.buildTree(aSeqs);
             return oTiming;
         }, this, []);
+    };
+    CTiming.prototype.getLastFiniteEffect = function (aEffects) {
+        let maxEndTime = 0;
+        let effect = null;
+        for (let nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            const oEffect = aEffects[nEffect];
+            const endTime = oEffect.getFullDelay() + oEffect.asc_getDuration();
+            if (endTime >= maxEndTime) {
+                maxEndTime = endTime;
+                effect = oEffect;
+            }
+        }
+        return effect;
     };
     CTiming.prototype.createDemoPlayer = function () {
         if (!this.canStartDemo()) {
