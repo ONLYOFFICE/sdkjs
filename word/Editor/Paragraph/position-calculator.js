@@ -115,7 +115,7 @@
 			this.posInfo.y = this.y;
 			this.posInfo.run = run;
 			
-			if (lastCombItem.getBidiType() === AscWord.BidiType.rtl)
+			if (lastCombItem.getBidiType() & AscBidi.FLAG.RTL)
 				this.posInfo.x -= lastCombItem.GetWidthVisible();
 			
 			if (lastCombItem.RGapCount)
@@ -181,7 +181,7 @@
 				this.posInfo.x = this.prev.x;
 				this.posInfo.y = this.prev.y;
 				
-				if (lastElement.getBidiType() !== AscWord.BidiType.rtl)
+				if (!(lastElement.getBidiType() & AscBidi.FLAG.RTL))
 					this.posInfo.x += lastElement.GetWidthVisible();
 				
 				this.posInfo.run = this.prev.run;
@@ -195,7 +195,7 @@
 				this.posInfo.x = this.x;
 				this.posInfo.y = this.y;
 				
-				if (element.getBidiType() === AscWord.BidiType.rtl)
+				if (element.getBidiType() & AscBidi.FLAG.RTL)
 					this.posInfo.x += w;
 				
 				this.posInfo.run = run;

@@ -162,7 +162,7 @@
 			if (element === this.beginElement)
 			{
 				this.beginInfo = {
-					x : direction === AscWord.BidiType.rtl ? this.x + w : this.x,
+					x : direction === AscBidi.DIRECTION.R ? this.x + w : this.x,
 					w : 0,
 					y : this.y,
 					h : this.h
@@ -172,7 +172,7 @@
 			if (element === this.endElement)
 			{
 				this.endInfo = {
-					x : direction === AscWord.BidiType.rtl ? this.x : this.x + w,
+					x : direction === AscBidi.DIRECTION.R ? this.x : this.x + w,
 					w : 0,
 					y : this.y,
 					h : this.h

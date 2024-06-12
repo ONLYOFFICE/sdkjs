@@ -66,7 +66,7 @@
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
-		if (AscWord.BidiType.rtl === this.direction)
+		if (AscBidi.DIRECTION.R === this.direction)
 		{
 		
 		}
@@ -75,12 +75,12 @@
 			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
 			{
 				this.flushNeutralRTL();
-				this.buffer.push([element, AscWord.BidiType.rtl]);
+				this.buffer.push([element, AscBidi.DIRECTION.R]);
 			}
 			else if (bidiType & AscBidi.FLAG.STRONG || 0 === this.buffer.length)
 			{
 				this.flush();
-				this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
+				this.handler.handleBidiFlow(element, AscBidi.DIRECTION.L);
 			}
 			else
 			{
@@ -105,7 +105,7 @@
 		
 		for (let i = 0; i < this.neutralBuffer.length; ++i)
 		{
-			this.handler.handleBidiFlow(this.neutralBuffer[i][1], AscWord.BidiType.ltr);
+			this.handler.handleBidiFlow(this.neutralBuffer[i][1], AscBidi.DIRECTION.L);
 		}
 		this.neutralBuffer.length = 0;
 	};
@@ -119,7 +119,7 @@
 		{
 			for (let i = numberBuffer.length - 1; i >= 0; --i)
 			{
-				buffer.push([numberBuffer[i], AscWord.BidiType.ltr]);
+				buffer.push([numberBuffer[i], AscBidi.DIRECTION.L]);
 			}
 			numberBuffer.length = 0;
 		}
@@ -141,7 +141,7 @@
 				else
 				{
 					flushNumber();
-					buffer.push([weakBuffer[i][1], AscWord.BidiType.ltr]);
+					buffer.push([weakBuffer[i][1], AscBidi.DIRECTION.L]);
 				}
 			}
 			flushNumber();
@@ -154,7 +154,7 @@
 			if (AscBidi.FLAG.NEUTRAL & type)
 			{
 				flushWeak(this.buffer);
-				this.buffer.push([this.neutralBuffer[i][1], AscWord.BidiType.rtl]);
+				this.buffer.push([this.neutralBuffer[i][1], AscBidi.DIRECTION.R]);
 			}
 			else
 			{
@@ -166,7 +166,6 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.BidiFlow = BidiFlow;
-	AscWord.BidiType = BidiType;
 	
 })(window);
 

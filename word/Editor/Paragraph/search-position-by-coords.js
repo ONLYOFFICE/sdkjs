@@ -301,7 +301,7 @@
 			this.inTextPosInfo.pos = inRunPos;
 		}
 		
-		if (direction === AscWord.BidiType.rtl)
+		if (direction === AscBidi.DIRECTION.R)
 		{
 			let tmp = diffR;
 			diffR = diffL;

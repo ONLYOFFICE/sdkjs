@@ -91,7 +91,13 @@
 		FSI : FLAG.NEUTRAL | FLAG.ISOLATE | FLAG.FS,
 		PDI : FLAG.NEUTRAL | FLAG.WEAK | FLAG.ISOLATE
 	};
+	
+	const DIRECTION = {
+		L : TYPE.L,
+		R : TYPE.R
+	}
 	//--------------------------------------------------------export----------------------------------------------------
-	AscBidi.FLAG = FLAG;
-	AscBidi.TYPE = TYPE;
+	AscBidi.FLAG      = FLAG;
+	AscBidi.TYPE      = TYPE;
+	AscBidi.DIRECTION = DIRECTION;
 })();
