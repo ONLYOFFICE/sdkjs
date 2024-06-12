@@ -69,13 +69,25 @@
     };
     CAnnotationTextMarkup.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawHighlights = true;
+        let nPage   = this.GetPage();
+        
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[nPage]) {
+                oViewer.pagesInfo.pages[nPage].needRedrawMarkups = true;
+                oViewer.thumbnails && oViewer.thumbnails._repaintPage(nPage);
+            }
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
     };
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
-        let oOverlayCtx = editor.getDocumentRenderer().overlay.m_oContext;
-        let aQuads      = this.GetQuads();
+        let oCtx = Asc.editor.getDocumentRenderer().overlay.m_oContext;
+        oCtx.save();
+        oCtx.resetTransform();
+
+        let aQuads = this.GetQuads();
         
+        let isInQuads = false; 
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
 
@@ -106,18 +118,19 @@
             let X4 = oPoint4.x;
             let Y4 = oPoint4.y;
 
-            oOverlayCtx.beginPath();
-            oOverlayCtx.moveTo(X1, Y1);
-            oOverlayCtx.lineTo(X2, Y2);
-            oOverlayCtx.lineTo(X4, Y4);
-            oOverlayCtx.lineTo(X3, Y3);
-            oOverlayCtx.closePath();
+            oCtx.beginPath();
+            oCtx.moveTo(X1, Y1);
+            oCtx.lineTo(X2, Y2);
+            oCtx.lineTo(X4, Y4);
+            oCtx.lineTo(X3, Y3);
+            oCtx.closePath();
 
-            if (oOverlayCtx.isPointInPath(x, y))
-                return true;
+            if (oCtx.isPointInPath(x, y))
+                isInQuads = true;
         }
 
-        return false;
+        oCtx.restore();
+        return isInQuads;
     };
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
         overlay.m_oContext.lineWidth    = 3;
@@ -250,7 +263,7 @@
             let rotationAngle   = angle1;
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-            AscPDF.startMultiplyMode(oGraphicsPDF.context);
+            AscPDF.startMultiplyMode(oGraphicsPDF.GetContext());
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
@@ -271,7 +284,7 @@
             }
 
             oGraphicsPDF.Fill();
-            AscPDF.endMultiplyMode(oGraphicsPDF.context);
+            AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
     };
         
@@ -673,7 +686,8 @@
 
     function fillRegion(polygon, overlay, pageIndex)
     {
-        let oViewer = editor.getDocumentRenderer();
+        let oCtx    = overlay.m_oContext;
+        let oViewer = Asc.editor.getDocumentRenderer();
         let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageIndex].Dpi);
 
         let xCenter = oViewer.width >> 1;
@@ -688,8 +702,11 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+        if (true == oViewer.isLandscapePage(pageIndex))
+            indLeft = indLeft + (w - h) / 2;
+
         // рисуем всегда в пиксельной сетке. при наклонных линиях - +- 1 пиксел - ничего страшного
-        let pointOffset = (overlay.m_oContext.lineWidth & 1) ? 0.5 : 0;
+        let pointOffset = (oCtx.lineWidth & 1) ? 0.5 : 0;
         
         for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)
         {
@@ -702,7 +719,7 @@
             let X = indLeft + region[0][0] * nScale;
             let Y = indTop + region[0][1] * nScale;
 
-            overlay.m_oContext.moveTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
+            oCtx.moveTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
 
             overlay.CheckPoint1(X, Y);
             overlay.CheckPoint2(X, Y);
@@ -712,12 +729,12 @@
                 X = indLeft + region[j][0] * nScale;
                 Y = indTop + region[j][1] * nScale;;
 
-                overlay.m_oContext.lineTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
+                oCtx.lineTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
                 overlay.CheckPoint1(X, Y);
                 overlay.CheckPoint2(X, Y);
             }
 
-            overlay.m_oContext.closePath();
+            oCtx.closePath();
         }
     }
     function getMinRect(aPoints) {

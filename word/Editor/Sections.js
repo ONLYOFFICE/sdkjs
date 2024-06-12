@@ -168,8 +168,11 @@ CSectionPr.prototype =
             this.Set_Footer_Even(Other.FooterEven);
             this.Set_Footer_Default(Other.FooterDefault);
         }
-
-        this.Set_PageNum_Start( Other.PageNumType.Start );
+	
+		this.SetPageNumStart(Other.PageNumType.Start);
+		this.SetPageNumFormat(Other.PageNumType.Format);
+		this.SetPageNumChapStyle(Other.PageNumType.ChapStyle);
+		this.SetPageNumChapSep(Other.PageNumType.ChapSep);
 
         this.Set_Columns_EqualWidth(Other.Columns.EqualWidth);
         this.Set_Columns_Num(Other.Columns.Num);
@@ -520,8 +523,16 @@ CSectionPr.prototype =
 
         return null;
     },
-
-	Set_PageNum_Start : function(Start)
+	
+	IsDefaultPageNum : function()
+	{
+		return (-1 === this.PageNumType.Start
+			&& Asc.c_oAscNumberingFormat.Decimal === this.PageNumType.Format
+			&& undefined === this.PageNumType.ChapStyle
+			&& undefined === this.PageNumType.ChapSep);
+	},
+	
+	SetPageNumStart : function(Start)
 	{
 		if (Start !== this.PageNumType.Start)
 		{
@@ -529,11 +540,53 @@ CSectionPr.prototype =
 			this.PageNumType.Start = Start;
 		}
 	},
-    
-    Get_PageNum_Start : function()
-    {
-        return this.PageNumType.Start;
-    },
+	
+	GetPageNumStart : function()
+	{
+		return this.PageNumType.Start;
+	},
+	
+	SetPageNumFormat : function(format)
+	{
+		if (format === this.PageNumType.Format)
+			return;
+		
+		AscCommon.History.Add(new CChangesSectionPageNumTypeFormat(this, this.PageNumType.Format, format));
+		this.PageNumType.Format = format;
+	},
+	
+	GetPageNumFormat : function()
+	{
+		return this.PageNumType.Format;
+	},
+	
+	SetPageNumChapStyle : function(chapStyle)
+	{
+		if (chapStyle === this.PageNumType.ChapStyle)
+			return;
+		
+		AscCommon.History.Add(new CChangesSectionPageNumTypeChapStyle(this, this.PageNumType.ChapStyle, chapStyle));
+		this.PageNumType.ChapStyle = chapStyle;
+	},
+	
+	GetPageNumChapStyle : function()
+	{
+		return this.PageNumType.ChapStyle;
+	},
+	
+	SetPageNumChapSep : function(chapSep)
+	{
+		if (chapSep === this.PageNumType.ChapSep)
+			return;
+		
+		AscCommon.History.Add(new CChangesSectionPageNumTypeChapSep(this, this.PageNumType.ChapSep, chapSep));
+		this.PageNumType.ChapSep = chapSep;
+	},
+	
+	GetPageNumChapSep : function()
+	{
+		return this.PageNumType.ChapSep;
+	},
 
     Get_ColumnsCount : function()
     {
@@ -1565,24 +1618,47 @@ CSectionBorders.prototype.IsEmptyBorders = function()
 
 function CSectionPageNumType()
 {
-    this.Start = -1;
+	this.Start     = -1;
+	this.Format    = Asc.c_oAscNumberingFormat.Decimal;
+	this.ChapStyle = undefined;
+	this.ChapSep   = undefined;
 }
-
-CSectionPageNumType.prototype = 
+CSectionPageNumType.prototype.Write_ToBinary = function(writer)
 {
-    Write_ToBinary : function(Writer)
-    {
-        // Long : Start
-        
-        Writer.WriteLong( this.Start );
-    },
-    
-    Read_FromBinary : function(Reader)
-    {
-        // Long : Start
-
-        this.Start = Reader.GetLong();
-    }    
+	writer.WriteLong(this.Start);
+	writer.WriteLong(this.Format);
+	
+	let startPos = writer.GetCurPosition();
+	writer.Skip(4);
+	let flags = 0;
+	
+	if (undefined !== this.ChapStyle)
+	{
+		writer.WriteLong(this.ChapStyle);
+		flags |= 1;
+	}
+	if (undefined !== this.ChapSep)
+	{
+		writer.WriteByte(this.ChapSep);
+		flags |= 2;
+	}
+	
+	let endPos = writer.GetCurPosition();
+	writer.Seek(startPos);
+	writer.WriteLong(flags);
+	writer.Seek(endPos);
+};
+CSectionPageNumType.prototype.Read_FromBinary = function(reader)
+{
+	this.Start  = reader.GetLong();
+	this.Format = reader.GetLong();
+	
+	let flags = reader.GetLong();
+	if (flags & 1)
+		this.ChapStyle = reader.GetLong();
+	
+	if (flags & 2)
+		this.ChapSep = reader.GetByte();
 };
 
 

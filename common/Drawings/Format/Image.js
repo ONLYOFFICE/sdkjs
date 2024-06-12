@@ -40,7 +40,6 @@
 	function (window, undefined) {
 // Import
 		var CShape = AscFormat.CShape;
-		var History = AscCommon.History;
 		var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
 		var isRealObject = AscCommon.isRealObject;
@@ -98,12 +97,12 @@
 
 		AscFormat.InitClass(CImageShape, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ImageShape);
 		CImageShape.prototype.setNvPicPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;
 		};
 
 		CImageShape.prototype.setSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetSpPr, this.spPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetSpPr, this.spPr, pr));
 			this.spPr = pr;
 
 			if (pr) {
@@ -112,22 +111,22 @@
 		};
 
 		CImageShape.prototype.setBlipFill = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, this.blipFill, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetBlipFill, this.blipFill, pr));
 			this.blipFill = pr;
 		};
 
 		CImageShape.prototype.setParent = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetParent, this.parent, pr));
 			this.parent = pr;
 		};
 
 		CImageShape.prototype.setGroup = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetGroup, this.group, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetGroup, this.group, pr));
 			this.group = pr;
 		};
 
 		CImageShape.prototype.setStyle = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetStyle, this.style, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetStyle, this.style, pr));
 			this.style = pr;
 		};
 
@@ -184,11 +183,6 @@
 			snapY.push(transform.ty + this.extY * 0.5);
 			snapY.push(transform.ty + this.extY);
 		};
-
-		CImageShape.prototype.isPlaceholder = function () {
-			return this.nvPicPr != null && this.nvPicPr.nvPr != undefined && this.nvPicPr.nvPr.ph != undefined;
-		};
-
 
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
@@ -640,14 +634,14 @@
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
 
 		CImageShape.prototype.getMediaFileName = function () {
-			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
-				var oUniMedia = this.nvPicPr.nvPr.unimedia;
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia) {
 				if (oUniMedia.type === 7 || oUniMedia.type === 8) {
 					if (typeof oUniMedia.media === "string" && oUniMedia.media.length > 0) {
-						var sExt = AscCommon.GetFileExtension(oUniMedia.media);
+						let sExt = AscCommon.GetFileExtension(oUniMedia.media);
 						if (this.blipFill && typeof this.blipFill.RasterImageId === 'string') {
-							var sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
-							var sMediaFile = sName + '.' + sExt;
+							let sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
+							let sMediaFile = sName + '.' + sExt;
 							return sMediaFile;
 						}
 					}
@@ -656,8 +650,25 @@
 			return null;
 		};
 
+
+		CImageShape.prototype.isVideo = function() {
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia && oUniMedia.type === 7) {
+				return true;
+			}
+			return false;
+		};
+
+		CImageShape.prototype.getMediaData = function () {
+			let oMediaData = new CMediaData(this);
+			if (!oMediaData.isValid()) {
+				return null;
+			}
+			return oMediaData;
+		};
+
 		CImageShape.prototype.setNvSpPr = function (pr) {
-			History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
+			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;
 		};
 
@@ -828,6 +839,8 @@
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
+
+
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;
@@ -846,8 +859,113 @@
 			return oBrush;
 		}
 
+		function CMediaData(drawing) {
+			this.drawing = drawing;
+			this.additionalData = null;
+		}
+		CMediaData.prototype.setDrawing = function(oDrawing) {
+			this.drawing = oDrawing;
+		};
+		CMediaData.prototype.setAdditionalData = function(oAdditionalData) {
+			this.additionalData = oAdditionalData;
+		};
+		CMediaData.prototype.getName = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaFileName();
+		};
+		CMediaData.prototype.isValid = function() {
+			if(!this.getName())
+				return false;
+			let oDrawing = this.getDrawing();
+			if(!oDrawing || !oDrawing.IsUseInDocument())
+				return false;
+			return true;
+		};
+		CMediaData.prototype.getDrawing = function() {
+			return this.drawing;
+		};
+		CMediaData.prototype.getTransform = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getTransformMatrix();
+		};
+		CMediaData.prototype.isFullScreen = function() {
+			if(!this.additionalData)
+				return false;
 
+			return this.additionalData.isFullScreen();
+		};
+		CMediaData.prototype.isMute = function() {
+			if(!this.additionalData)
+				return false;
+
+			return this.additionalData.isMute();
+		};
+		CMediaData.prototype.isVideo = function() {
+			if(!this.additionalData)
+				return this.drawing.isVideo();
+
+			return this.additionalData.isVideo();
+		};
+		CMediaData.prototype.getVol = function() {
+			if(!this.additionalData)
+				return null;
+
+			return this.additionalData.getVol();
+		};
+		CMediaData.prototype.getStartTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaStartTime();
+		};
+		CMediaData.prototype.getEndTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaEndTime();
+		};
+		CMediaData.prototype.getPlayerData = function(oFrameRect, oControlRect) {
+			if(!this.isValid())
+				return null;
+			let oDrawing = this.getDrawing();
+			let oData = CreateMediaData();
+			oData["DrawingId"] = oDrawing.Id;
+			oData["FullScreen"] = this.isFullScreen();
+			oData["Mute"] = this.isMute();
+			oData["IsVideo"] = this.isVideo();
+			oData["Volume"] = this.getVol();
+			oData["StartTime"] = this.getStartTime();
+			oData["EndTime"] = this.getEndTime();
+			oData["FrameRect"] = oFrameRect.toObject();
+			oData["ControlRect"] = oControlRect.toObject();
+			oData["Rotation"] = oDrawing.getFullRotate();
+			oData["FlipH"] = oDrawing.getFullFlipH();
+			oData["FlipV"] = oDrawing.getFullFlipV();
+			oData["IsSelected"] = oDrawing.selected;
+			oData["MediaFile"] = this.getName();
+			oData["From"] = 0;
+			oData["Theme"] = AscCommon.GlobalSkin.Type;
+			return oData;
+		};
+
+		function CreateMediaData() {
+			let oData = {};
+			oData["DrawingId"] = null;
+			oData["FullScreen"] = null;
+			oData["Mute"] = null;
+			oData["IsVideo"] = null;
+			oData["Volume"] = null;
+			oData["StartTime"] = null;
+			oData["EndTime"] = null;
+			oData["FrameRect"] = null;
+			oData["ControlRect"] = null;
+			oData["DrawingTransform"] = null;
+			oData["MediaFile"] = null;
+			oData["From"] = null;
+			return oData;
+		}
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CImageShape = CImageShape;
+		window['AscFormat'].CreateMediaData = CreateMediaData;
 	})(window);

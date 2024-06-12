@@ -136,9 +136,70 @@ function SlideLayout()
 
 
     this.lastRecalcSlideIndex = -1;
+
+
+    this.presentation = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+    this.graphicObjects = new AscFormat.DrawingObjectsController(this);
+    this.deleteLock = new PropLocker(this.Id);
+    this.backgroundLock = new PropLocker(this.Id);
+    this.timingLock = new PropLocker(this.Id);
+    this.transitionLock = new PropLocker(this.Id);
+    this.layoutLock = new PropLocker(this.Id);
+    this.showLock = new PropLocker(this.Id);
 }
 AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_SlideLayout);
 
+
+
+SlideLayout.prototype.getDrawingDocument = function() {
+    return editor.WordControl.m_oLogicDocument.DrawingDocument;
+};
+
+SlideLayout.prototype.OnUpdateOverlay = function()
+{
+    this.presentation.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+};
+SlideLayout.prototype.getNum = function () {
+    let aSlides = this.presentation.GetAllSlides();
+    for(let nIdx = 0; nIdx < aSlides.length; ++nIdx) {
+        if(aSlides[nIdx] === this)
+            return nIdx;
+    }
+    return -1;
+};
+SlideLayout.prototype.drawSelect = function(_type)
+{
+    if (_type === undefined)
+    {
+        this.graphicObjects.drawTextSelection(this.getNum());
+        this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
+    }
+    else if (_type == 1)
+        this.graphicObjects.drawTextSelection(this.getNum());
+    else if (_type == 2)
+        this.graphicObjects.drawSelect(0, this.presentation.DrawingDocument);
+};
+SlideLayout.prototype.showDrawingObjects = function()
+{
+    editor.WordControl.m_oDrawingDocument.OnRecalculateSlide(this.getNum());
+};
+SlideLayout.prototype.sendGraphicObjectProps = function()
+{
+    editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+};
+SlideLayout.prototype.getDrawingsForController = function(){
+    return this.cSld.spTree;
+};
+
+SlideLayout.prototype.getTheme = function(){
+    return this.Master && this.Master.Theme || null;
+};
+    SlideLayout.prototype.isAnimated = function () {
+        return false;
+    };
+    SlideLayout.prototype.isLockedObject = function () {
+        return false;
+    };
     SlideLayout.prototype.createDuplicate = function(IdMap)
     {
         var oIdMap = IdMap || {};
@@ -181,6 +242,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         if(this.timing) {
             copy.setTiming(this.timing.createDuplicate(oIdMap));
         }
+        copy.setSlideSize(this.Width, this.Height);
         return copy;
     };
     SlideLayout.prototype.setMaster = function(master)
@@ -243,9 +305,13 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
     };
     SlideLayout.prototype.shapeAdd = function(pos, item)
     {
+        let pos_ = pos;
+        if(!AscFormat.isRealNumber(pos)) {
+            pos_ = this.cSld.spTree.length;
+        }
         this.checkDrawingUniNvPr(item);
-        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutAddToSpTree, pos, [item], true));
-        this.cSld.spTree.splice(pos, 0, item);
+        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutAddToSpTree, pos_, [item], true));
+        this.cSld.spTree.splice(pos_, 0, item);
         item.setParent2(this);
         this.recalcInfo.recalculateSpTree = true;
     };
@@ -303,23 +369,126 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
     SlideLayout.prototype.Reassign_ImageUrls = Slide.prototype.Reassign_ImageUrls;
     SlideLayout.prototype.checkDrawingUniNvPr = Slide.prototype.checkDrawingUniNvPr;
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
-    SlideLayout.prototype.draw = function (graphics, slide) {
-        if(slide){
-            if(slide.num !== this.lastRecalcSlideIndex){
+
+    SlideLayout.prototype.recalculateBackground = function()
+    {
+        var _back_fill = null;
+        var RGBA = {R:0, G:0, B:0, A:255};
+
+        var _layout = this;
+        var _master = _layout.Master;
+        var _theme = _master.Theme;
+        if (this.cSld.Bg != null)
+        {
+            if (null != this.cSld.Bg.bgPr)
+                _back_fill = this.cSld.Bg.bgPr.Fill;
+            else if(this.cSld.Bg.bgRef != null)
+            {
+                this.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
+                RGBA = this.cSld.Bg.bgRef.Color.RGBA;
+                _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(this.cSld.Bg.bgRef.idx, this.cSld.Bg.bgRef.Color);
+            }
+        }
+        else
+        {
+            if (_layout != null)
+            {
+                if (_layout.cSld.Bg != null)
+                {
+                    if (null != _layout.cSld.Bg.bgPr)
+                        _back_fill = _layout.cSld.Bg.bgPr.Fill;
+                    else if(_layout.cSld.Bg.bgRef != null)
+                    {
+                        _layout.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
+                        RGBA = _layout.cSld.Bg.bgRef.Color.RGBA;
+                        _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(_layout.cSld.Bg.bgRef.idx, _layout.cSld.Bg.bgRef.Color);
+                    }
+                }
+                else if (_master != null)
+                {
+                    if (_master.cSld.Bg != null)
+                    {
+                        if (null != _master.cSld.Bg.bgPr)
+                            _back_fill = _master.cSld.Bg.bgPr.Fill;
+                        else if(_master.cSld.Bg.bgRef != null)
+                        {
+                            _master.cSld.Bg.bgRef.Color.Calculate(_theme, this, _layout, _master, RGBA);
+                            RGBA = _master.cSld.Bg.bgRef.Color.RGBA;
+                            _back_fill = _theme.themeElements.fmtScheme.GetFillStyle(_master.cSld.Bg.bgRef.idx, _master.cSld.Bg.bgRef.Color);
+                        }
+                    }
+                    else
+                    {
+                        _back_fill = new AscFormat.CUniFill();
+                        _back_fill.fill = new AscFormat.CSolidFill();
+                        _back_fill.fill.color =  new AscFormat.CUniColor();
+                        _back_fill.fill.color.color = new AscFormat.CRGBColor();
+                        _back_fill.fill.color.color.RGBA = {R:255, G:255, B:255, A:255};
+                    }
+                }
+            }
+        }
+
+        if (_back_fill != null)
+            _back_fill.calculate(_theme, this, _layout, _master, RGBA);
+
+        this.backgroundFill = _back_fill;
+    };
+
+    SlideLayout.prototype.drawNoPlaceholders = function(graphics, slide) {
+        if(slide) {
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
                 this.cSld.refreshAllContentsFields();
-                this.recalculate();
+            }
+        }
+        this.recalculate();
+
+        DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
+        if(this.showMasterSp) {
+            this.Master.drawNoPlaceholdersShapesOnly(graphics, this);
+        }
+        this.cSld.forEachSp(function(oSp) {
+            if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
+                oSp.draw(graphics);
+            }
+        });
+    };
+    SlideLayout.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
+        if(slide) {
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
+                this.lastRecalcSlideIndex = slide.num;
+                this.cSld.refreshAllContentsFields();
+            }
+        }
+        this.recalculate();
+        this.cSld.forEachSp(function(oSp) {
+            if ( !AscCommon.IsHiddenObj(oSp) && !oSp.isPlaceholder()) {
+                oSp.draw(graphics);
+            }
+        });
+    };
+
+    SlideLayout.prototype.draw = function (graphics, slide) {
+        if(slide){
+            if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
+                this.lastRecalcSlideIndex = slide.num;
+                this.cSld.refreshAllContentsFields();
 
             }
         }
-        for (let nSp = 0; nSp < this.cSld.spTree.length; ++nSp) {
-            let oSp = this.cSld.spTree[nSp];
-            if(AscCommon.IsHiddenObj(oSp)) {
-                continue;
-            }
-            if (oSp.isPlaceholder && !oSp.isPlaceholder())
-                oSp.draw(graphics);
+        this.recalculate();
+        DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
+
+
+        if(this.showMasterSp) {
+            this.Master.drawNoPlaceholdersShapesOnly(graphics, this);
         }
+        this.cSld.forEachSp(function(oSp) {
+            if (!AscCommon.IsHiddenObj(oSp)) {
+                oSp.draw(graphics);
+            }
+        });
     };
     SlideLayout.prototype.calculateType = function()
     {
@@ -395,7 +564,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         var bChecked = false;
         for(_shape_index = 0; _shape_index < _shape_count; ++_shape_index)
         {
-            if(!_shapes[_shape_index].isPlaceholder()){
+            if(!_shapes[_shape_index].isPlaceholder() || true){
                 _shapes[_shape_index].recalculate();
                 if(bRecalculateBounds){
                     this.bounds.checkByOther(_shapes[_shape_index].bounds);
@@ -415,8 +584,16 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             }
             this.recalcInfo.recalculateBounds = false;
         }
-        this.recalcInfo.recalculateBackground = false;
-        this.recalcInfo.recalculateSpTree = false;
+
+        if(this.recalcInfo.recalculateBackground) {
+            this.recalculateBackground();
+            this.recalcInfo.recalculateBackground = false;
+        }
+        if(this.recalcInfo.recalculateSpTree) {
+            for(let i = 0; i < this.cSld.spTree.length; ++i)
+                this.cSld.spTree[i].recalculate();
+            this.recalcInfo.recalculateSpTree = false;
+        }
     };
     SlideLayout.prototype.recalculate2 = function()
     {
@@ -504,15 +681,14 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
                 case AscDFH.historyitem_SlideLayoutAddToSpTree:
                 {
                     this.recalcInfo.recalculateBounds = true;
-                    this.addToRecalculate();
                     break;
                 }
                 case AscDFH.historyitem_SlideLayoutSetBg:
                 {
-                    this.addToRecalculate();
                     break;
                 }
             }
+            this.addToRecalculate();
         }
     };
     SlideLayout.prototype.Clear_ContentChanges = function () {
@@ -608,6 +784,82 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         }
 
         this.writecomments = [];
+    };
+    SlideLayout.prototype.copySelectedObjects = function () {
+        AscCommonSlide.Slide.prototype.copySelectedObjects.call(this);
+    };
+    SlideLayout.prototype.getPlaceholdersControls = function () {
+        return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+    };
+    SlideLayout.prototype.getParentObjects = function () {
+        return {
+            presentation: Asc.editor.private_GetLogicDocument(),
+            master: this.Master,
+            layout: this,
+            slide: null
+        };
+    };
+    SlideLayout.prototype.recalculateNotesShape = function () {
+    };
+
+    SlideLayout.prototype.getNotesHeight = function () {
+        return 0;
+    };
+    SlideLayout.prototype.recalcText = function() {
+        return AscCommonSlide.Slide.prototype.recalcText.call(this);
+    };
+    SlideLayout.prototype.removeFromSpTreeById = function(sId) {
+        return AscCommonSlide.Slide.prototype.removeFromSpTreeById.call(this, sId);
+    };
+    SlideLayout.prototype.removeFromSpTreeByPos = function(pos) {
+        return AscCommonSlide.Slide.prototype.removeFromSpTreeByPos.call(this, pos);
+    };
+    SlideLayout.prototype.isVisible = function(){
+        return true;
+    };
+    SlideLayout.prototype.getWorksheet = function(){
+        return null;
+    };
+    SlideLayout.prototype.convertPixToMM = function(pix) {
+        return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
+    };
+    SlideLayout.prototype.isSlide = function () {
+        return false;
+    };
+    SlideLayout.prototype.isLayout = function () {
+        return true;
+    };
+    SlideLayout.prototype.isMaster = function () {
+        return false;
+    };
+
+    SlideLayout.prototype.RestartSpellCheck = function()
+    {
+        Slide.prototype.RestartSpellCheck.call(this);
+    };
+    SlideLayout.prototype.Search = function(Engine, Type)
+    {
+        Slide.prototype.Search.call(this, Engine, Type);
+    };
+    SlideLayout.prototype.GetSearchElementId = function(isNext, StartPos)
+    {
+        return Slide.prototype.GetSearchElementId.call(this, isNext, StartPos);
+    };
+    SlideLayout.prototype.replaceSp = function(oPh, oObject)
+    {
+        return Slide.prototype.replaceSp.call(this, oPh, oObject);
+    };
+    SlideLayout.prototype.Get_ColorMap = function()
+    {
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Master && this.Master.clrMap)
+        {
+            return this.Master.clrMap;
+        }
+        return AscFormat.GetDefaultColorMap();
     };
 
     let LAYOUT_TYPE_MAP = {};
@@ -1059,7 +1311,7 @@ function CLayoutThumbnailDrawer()
         g.m_oFontManager = AscCommon.g_fontManager;
 
         g.transform(1,0,0,1,0,0);
-
+        g.isSupportTextDraw = function() {return false;};
         this.Draw(g, _layout, use_background, use_master_shapes, use_layout_shapes);
 
         try

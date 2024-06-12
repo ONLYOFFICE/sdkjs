@@ -106,7 +106,7 @@
 	};
 	CRunElementBase.prototype.Copy = function()
 	{
-		return new CRunElementBase();
+		return new this.constructor();
 	};
 	CRunElementBase.prototype.Write_ToBinary = function(Writer)
 	{
@@ -273,6 +273,14 @@
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsText = function()
+	{
+		return false;
+	};
+	/**
+	 * Является ли данный элемент текстовым элементом внутри математического выражения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsMathText = function()
 	{
 		return false;
 	};

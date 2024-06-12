@@ -124,6 +124,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @alias GetAllComments
 	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 * @since 8.1.0
 	 */
 	Api.prototype["pluginMethod_GetAllComments"] = function()
 	{

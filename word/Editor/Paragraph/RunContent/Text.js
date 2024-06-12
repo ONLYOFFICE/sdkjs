@@ -87,7 +87,7 @@
 	 * @param nCodePoint {number}
 	 * @returns {boolean}
 	 */
-	function IsCombinedMark(nCodePoint)
+	function isCombiningMark(nCodePoint)
 	{
 		return !!((0x0300 <= nCodePoint && nCodePoint <= 0x036F)
 			|| (0x0483 <= nCodePoint && nCodePoint <= 0x0487)
@@ -656,7 +656,7 @@
 	};
 	CRunText.prototype.IsCombiningMark = function()
 	{
-		return (!!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK) || IsCombinedMark(this.Value));
+		return (!!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK) || isCombiningMark(this.Value));
 	};
 	CRunText.prototype.IsLigatureContinue = function()
 	{
@@ -758,5 +758,6 @@
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunText = CRunText;
 	window['AscWord'].CreateNonBreakingHyphen = CreateNonBreakingHyphen;
+	window['AscWord'].isCombiningMark = isCombiningMark;
 
 })(window);

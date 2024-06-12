@@ -172,7 +172,7 @@ function CEditorPage(api)
 
 	this.ScrollsWidthPx = 14;
 
-	this.m_oDrawingDocument = new AscCommon.CDrawingDocument();
+	this.m_oDrawingDocument = Asc.editor.isPdfEditor() ? new AscPDF.CDrawingDocument() : new AscCommon.CDrawingDocument();
 	this.m_oLogicDocument   = null;
 
 	this.m_oDrawingDocument.m_oWordControl   = this;
@@ -2618,7 +2618,7 @@ function CEditorPage(api)
 		 return;
 		 }
 		 */
-		if (null == oWordControl.m_oLogicDocument)
+		if (Asc.editor.isPdfEditor())
 		{
 			var bIsPrev = (oWordControl.m_oDrawingDocument.m_oDocumentRenderer.OnKeyDown(global_keyboardEvent) === true) ? false : true;
 			if (false === bIsPrev)

@@ -857,7 +857,7 @@ const arrTestObjectsInfo = [
 			[createParagraphInfo('привет привет '), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет', arrAnswers: ['1']}}]}})]
 		],
 		revisedDocument : [
-			[createParagraphInfo('привет '), createParagraphInfo('привет ', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 1}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 1, data:{text: '123', quoteText: 'привет', arrAnswers: null}}, {start: false, id: 0, data:{text: '123', quoteText: 'привет привет', arrAnswers: ['1']}}]}})]
+			[createParagraphInfo('привет '), createParagraphInfo('привет ', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}}), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 1}]}}), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет привет', arrAnswers: ['1']}}, {start: false, id: 1, data:{text: '123', quoteText: 'привет', arrAnswers: null}}]}})]
 		]
 	},
 	///////////////////////// -> 34<- /////////////////////////////
@@ -902,6 +902,67 @@ const arrTestObjectsInfo = [
 			[createParagraphInfo('Привет привет ', undefined, undefined), createParagraphInfo('привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'приветПривет привет привет', arrAnswers: null}}]}})]		],
 		revisedDocument : [
 			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
+		]
+	},
+	///////////////////////// -> 39 <- /////////////////////////////
+	{
+		originalDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国合同法》的规定，达成如下协议，并由双方共同恪守。")]
+		],
+		revisedDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国"),
+			createParagraphInfo("合同法", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+			createParagraphInfo("民法典", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+			createParagraphInfo("》的规定，达成如下协议，并由双方共同恪守。")]
+		]
+	},
+	///////////////////////// -> 40 <- /////////////////////////////
+	{
+		originalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		],
+		revisedDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+						data: {
+							text: "comment"
+						}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		],
+	},
+	{
+		originalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+				[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+						start: [{
+							id   : 1,
+							start: true
+						}],
+						end: [
+							{id: 1,
+								data: {
+									text: "comment"
+								}
+							}
+						]
+					}}), createParagraphInfo("，这是一个测试段落")],
+				[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+			],
+		revisedDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
 		]
 	}
 ];
@@ -1415,14 +1476,14 @@ const arrAnswers = [
 				}
 			}), createParagraphInfo(' привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '1', quoteText: 'привет привет'}}, {
+					start: [{
 						start: false,
 						id   : 3,
 						data : {
 							text     : '1',
 							quoteText: 'привет'
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '1', quoteText: 'привет привет'}}]
 				}
 			})]
 		]
@@ -1545,14 +1606,14 @@ const arrAnswers = [
 		finalDocument: [
 			[createParagraphInfo('привет '), createParagraphInfo('привет привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{start: true, id: 1}, {
+					start: [{
 						start: true,
 						id   : 0
-					}]
+					}, {start: true, id: 1}]
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '1', quoteText: 'привет привет', arrAnswers: ['123', '12', '1']}}, {
+					start: [{
 						start: false,
 						id   : 0,
 						data : {
@@ -1560,7 +1621,7 @@ const arrAnswers = [
 							quoteText : 'привет привет',
 							arrAnswers: ['123', '12', '1', '2']
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '1', quoteText: 'привет привет', arrAnswers: ['123', '12', '1']}}]
 				}
 			})]
 		]
@@ -1570,14 +1631,14 @@ const arrAnswers = [
 		finalDocument: [
 			[createParagraphInfo('привет '), createParagraphInfo('привет привет', undefined, undefined, undefined, {
 				comments: {
-					start: [{
+					start: [{start: true, id: 1}, {
 						start: true,
 						id   : 0
-					}, {start: true, id: 1}]
+					}]
 				}
 			}), createParagraphInfo(undefined, undefined, undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 1, data: {text: '123', quoteText: 'привет привет', arrAnswers: ['1234', '12', '13', '14']}}, {
+					start: [{
 						start: false,
 						id   : 0,
 						data : {
@@ -1585,7 +1646,7 @@ const arrAnswers = [
 							quoteText : 'привет привет',
 							arrAnswers: ['1234', '12']
 						}
-					}]
+					}, {start: false, id: 1, data: {text: '123', quoteText: 'привет привет', arrAnswers: ['1234', '12', '13', '14']}}]
 				}
 			})]
 		]
@@ -1651,10 +1712,10 @@ const arrAnswers = [
 				}]
 			}, {
 				comments: {
-					start: [{
+					start: [{start: true, id: 0}, {
 						start: true,
 						id   : 1
-					}, {start: true, id: 0} ]
+					} ]
 				}
 			}), createParagraphInfo('ри', undefined, undefined, {
 				start: [{
@@ -1773,7 +1834,7 @@ const arrAnswers = [
 				}
 			}), createParagraphInfo('иве', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined), createParagraphInfo('т', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
 				comments: {
-					start: [{start: false, id: 4, data: {text: '432', quoteText: 'риве', arrAnswers: null}}, {
+					start: [{
 						start: false,
 						id   : 2,
 						data : {
@@ -1781,7 +1842,9 @@ const arrAnswers = [
 							quoteText : 'ет приве',
 							arrAnswers: null
 						}
-					}]
+					},
+					{start: false, id: 4, data: {text: '432', quoteText: 'риве', arrAnswers: null}
+						}]
 				}
 			}), createParagraphInfo(' привет', new CCreatingReviewInfo('Mark Potato', reviewtype_Remove, 1000), undefined, undefined, {
 				comments: {
@@ -1814,6 +1877,54 @@ const arrAnswers = [
 	{
 		finalDocument: [
 			[createParagraphInfo('Привет ', undefined, undefined), createParagraphInfo('привет привет', undefined, undefined, undefined, {comments:{start:[{start: true, id: 0}]}})], [createParagraphInfo('Привет привет привет', undefined, undefined), createParagraphInfo(undefined, undefined, undefined, undefined, {comments:{start:[{start: false, id: 0, data:{text: '123', quoteText: 'привет приветПривет привет привет', arrAnswers: null}}]}})]
+		]
+	},
+	/////////////////////////////////// -> 39 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[createParagraphInfo("在真实、充分地表达各自意愿的基础上，根据《中华人民共和国"),
+			createParagraphInfo("合同法", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000)),
+			createParagraphInfo("民法典", new CCreatingReviewInfo("Mark Potato", reviewtype_Add, 1000)),
+			createParagraphInfo("》的规定，达成如下协议，并由双方共同恪守。")]
+		]
+	},
+	{
+		finalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+							data: {
+								text: "comment"
+							}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
+		]
+	},
+	/////////////////////////////////// -> 40 <- ////////////////////////////////////////////
+	{
+		finalDocument: [
+			[createParagraphInfo("1.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")],
+			[createParagraphInfo("2. 这是一个测试段落，这是一个测试段落"), createParagraphInfo("，这是一个测试段落", new CCreatingReviewInfo("Mark Potato", reviewtype_Remove, 1000), undefined, undefined, {comments: {
+					start: [{
+						id   : 1,
+						start: true
+					}],
+					end: [
+						{id: 1,
+							data: {
+								text: "comment"
+							}
+						}
+					]
+				}}), createParagraphInfo("，这是一个测试段落")],
+			[createParagraphInfo("3.这是一个测试段落，这是一个测试段落，这是一个测试段落，这是一个测试段落")]
 		]
 	}
 ];
@@ -1856,7 +1967,9 @@ const comments = [
 	'Merging bookmarks and comments',
 	'Merging bookmarks, comments and review',
 	'Merging comments and review',
-	'Merging two paragraph with different starts of comment'
+	'Merging two paragraph with different starts of comment',
+	'Merging two documents with changes in the second',
+	'Merging two documents with comment'
 ];
 
 function merge(oMainDocument, oRevisedDocument, fCallback)
@@ -1892,7 +2005,6 @@ $(function ()
 				merge(readMainDocument(oTestInformation.originalDocument), readRevisedDocument(oTestInformation.revisedDocument), function ()
 				{
 					const oResultDocument = mockEditor.WordControl.m_oLogicDocument;
-					oMainComments = oResultDocument.Comments;
 					const oResultObject = getTestObject(oResultDocument);
 					assert.deepEqual(oResultObject, getTestObject(readMainDocument(arrAnswers[i].finalDocument)), comments[i]);
 				});

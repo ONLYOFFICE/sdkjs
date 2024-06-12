@@ -220,6 +220,11 @@
 		this.m_bBrushColorInit = false;
 	};
 
+	CGraphics.prototype.isSupportEditFeatures = function()
+	{
+		return true;
+	};
+
 	CGraphics.prototype.put_GlobalAlpha = function(enable, alpha)
 	{
 		if (false === enable)
@@ -245,6 +250,7 @@
 
 		var oldDarkMode = this.isDarkMode;
 		this.isDarkMode = false;
+		
 		if (!this.endGlobalAlphaColor)
 			this.b_color1(255, 255, 255, 140);
 		else
@@ -326,7 +332,7 @@
 		this.m_oContext.setLineDash(params ? params : []);
 	};
 
-		// brush methods
+	// brush methods
 	CGraphics.prototype.b_color1 = function(r,g,b,a)
 	{
 		var _c = this.m_oBrush.Color1;

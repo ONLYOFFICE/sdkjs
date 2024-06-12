@@ -60,6 +60,7 @@
 			"common/libfont/character.js",
 			"common/libfont/grapheme.js",
 			"common/libfont/textshaper.js",
+			"common/libfont/stringshaper.js",
 			"common/libfont/file.js",
 			"common/libfont/manager.js",
 
@@ -77,6 +78,7 @@
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
+			"common/Shapes/ColorSchemes.js",
 			"common/Shapes/Serialize.js",
 			"common/Shapes/SerializeWriter.js",
 
@@ -322,6 +324,7 @@
 			"pdf/src/thumbnails.js",
 			"pdf/src/viewer.js",
 			"pdf/src/file.js",
+			"pdf/src/pdfSearch.js",
 			"pdf/src/forms/formActions.js",
 			"pdf/src/forms/base/base.js",
 			"pdf/src/forms/apiFunctions.js",
@@ -336,6 +339,12 @@
 			"pdf/src/forms/pushbutton.js",
 			"pdf/src/forms/combobox.js",
 			"pdf/src/forms/textBoxContent.js",
+			"pdf/src/drawings/drawingPrototype.js",
+			"pdf/src/drawings/shape.js",
+			"pdf/src/drawings/image.js",
+			"pdf/src/drawings/chart.js",
+			"pdf/src/drawings/graphicFrame.js",
+			"pdf/src/drawings/smartArt.js",
 			"pdf/src/annotations/base.js",
 			"pdf/src/annotations/text.js",
 			"pdf/src/annotations/ink.js",
@@ -346,11 +355,17 @@
 			"pdf/src/annotations/freeText.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
+			"pdf/src/annotations/textPrTrackHandler.js",
+			"pdf/src/annotations/textSelectTrackHandler.js",
+			"pdf/src/DrawingDocument.js",
+			"pdf/src/GraphicObjects.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
+			"pdf/src/history/history.js",
 			"pdf/src/history/documentChanges.js",
 			"pdf/src/history/annotsChanges.js",
 			"pdf/src/history/formsChanges.js",
+			"pdf/src/history/drawingsChanges.js",
 			"pdf/src/apiPDF.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
@@ -373,6 +388,7 @@
 			
 			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Styles/default-styles.js",
 
 			"word/apiBuilder.js",
 

@@ -6241,7 +6241,7 @@ function (window, undefined) {
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 
 
-		argClone[0] = argClone[0].getMatrix();
+		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
 
 		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
@@ -8759,7 +8759,7 @@ function (window, undefined) {
 	cNORMDIST.prototype.name = 'NORMDIST';
 	cNORMDIST.prototype.argumentsMin = 4;
 	cNORMDIST.prototype.argumentsMax = 4;
-	cNORMDIST.prototype.argumentsType = [argType.number];
+	cNORMDIST.prototype.argumentsType = [argType.number, argType.number, argType.number, argType.logical];
 	cNORMDIST.prototype.Calculate = function (arg) {
 
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arg3 = arg[3];

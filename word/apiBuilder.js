@@ -1446,8 +1446,8 @@
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		var Document = private_GetLogicDocument();
-		Document.RemoveSelection();
+		let oDocument = private_GetLogicDocument();
+		oDocument.RemoveSelection();
 
 		if (this.isEmpty || this.isEmpty === undefined || typeof(sText) !== "string")
 			return false;
@@ -1457,35 +1457,66 @@
 		
 		if (sPosition === "after")
 		{
-			var lastRun				= this.EndPos[this.EndPos.length - 1].Class;
-			var lastRunPos			= this.EndPos[this.EndPos.length - 1].Position;
-			var lastRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
-			var lastRunParent		= lastRun.GetParent();
-			var newRunPos			= lastRunPos;
-			if (lastRunPos === 0)
+			let oTargetRun	= this.EndPos[this.EndPos.length - 1].Class;
+			let oPrevApiRun	= null;
+
+			if (oTargetRun.IsParaEndRun())
 			{
-				if (lastRunPosInParent - 1 >= 0)
+				oPrevApiRun = new ApiRun(oTargetRun).private_GetPreviousInParent();
+				
+				if (oPrevApiRun)
 				{
-					lastRunPosInParent--;
-					lastRun		= lastRunParent.GetElement(lastRunPosInParent);
-					lastRunPos	= lastRun.Content.length;
+					oTargetRun = oPrevApiRun.Run;
+				}
+				else
+				{
+					oTargetRun = null;
 				}
 			}
-			else 
-				for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
-					newRunPos++;
 
-			lastRun.AddText(sText, lastRunPos);
-			this.EndPos[this.EndPos.length - 1].Class = lastRun;
-			this.EndPos[this.EndPos.length - 1].Position = newRunPos;
-			this.EndPos[this.EndPos.length - 2].Position = lastRunPosInParent;
+			if (!oTargetRun)
+			{
+				return false; 	
+			}
+
+			let nPosInRun		= this.EndPos[this.EndPos.length - 1].Position;
+			let nRunPosInParent	= this.EndPos[this.EndPos.length - 2].Position;
+			let oRunParent		= oTargetRun.GetParent();
+			let nNewPosInRun	= nPosInRun;
+
+			if (nPosInRun === 0)
+			{
+				if (nRunPosInParent - 1 >= 0)
+				{
+					nRunPosInParent--;
+					oTargetRun		= oRunParent.GetElement(nRunPosInParent);
+					nPosInRun	= oTargetRun.Content.length;
+				}
+			}
+			else {
+				for (let oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+					nNewPosInRun++;
+			}
+
+			// если ран окончания параграфа, позиция в нём не изменится
+			if (null == oPrevApiRun) {
+				oTargetRun.AddText(sText, nPosInRun);
+				this.EndPos[this.EndPos.length - 1].Class = oTargetRun;
+				this.EndPos[this.EndPos.length - 1].Position = nNewPosInRun;
+				this.EndPos[this.EndPos.length - 2].Position = nRunPosInParent;
+			}
+			else {
+				nPosInRun = oTargetRun.Content.length;
+				oTargetRun.AddText(sText, nPosInRun);
+			}
+			
 			private_TrackRangesPositions(true);
 		}
 		else if (sPosition === "before")
 		{
-			var firstRun		= this.StartPos[this.StartPos.length - 1].Class;
-			var firstRunPos		= this.StartPos[this.StartPos.length - 1].Position;
-			firstRun.AddText(sText, firstRunPos);
+			let oTargetRun	= this.StartPos[this.StartPos.length - 1].Class;
+			let nPosInRun	= this.StartPos[this.StartPos.length - 1].Position;
+			oTargetRun.AddText(sText, nPosInRun);
 		}
 
 		return true;
@@ -3099,10 +3130,6 @@
 	 * Class representing a document form base.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {string} key - Form key.
-	 * @property {string} tip - Form tip text.
-	 * @property {boolean} required - Specifies if the form is required or not.
-	 * @property {string} placeholder - Form placeholder text.
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -3113,11 +3140,6 @@
 	 * Class representing a document text field.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text field.
-	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3132,12 +3154,6 @@
 	 * Class representing a document combo box / dropdown list.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} editable - Specifies if the combo box text can be edited.
-	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
-	 * @property {Array.<string | Array.<string>>} items - The combo box items.
-     * This array consists of strings or arrays of two strings where the first string is the displayed value and the second one is its meaning.
-     * If the array consists of single strings, then the displayed value and its meaning are the same.
-     * Example: ["First", ["Second", "2"], ["Third", "3"], "Fourth"].
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
@@ -3152,7 +3168,6 @@
 	 * Class representing a document checkbox / radio button.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
@@ -3167,17 +3182,6 @@
 	 * Class representing a document picture form.
 	 * @constructor
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
-	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
-	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
-	 * @property {percentage} shiftX - Horizontal picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on the left;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right.
-	 * @property {percentage} shiftY - Vertical picture position inside the picture form measured in percent:
-	 * * <b>0</b> - the picture is placed on top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the bottom.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
@@ -4895,7 +4899,7 @@
 					// other
 					oCurSectPr.Set_TitlePage(oNewSectPr.TitlePage);
 					oCurSectPr.Set_Type(oNewSectPr.Type);
-					oCurSectPr.Set_PageNum_Start(oNewSectPr.PageNumType.Start);
+					oCurSectPr.SetPageNumStart(oNewSectPr.PageNumType.Start);
 
 				}
 
@@ -5514,6 +5518,7 @@
 		}
 
 		oStyles.Add(oStyle);
+		oStyles.UpdateDefaultStyleLinks();
 		return new ApiStyle(oStyle);
 	};
 	/**
@@ -5597,7 +5602,7 @@
 
 		oSectPr.Copy(oCurSectPr);
 		oCurSectPr.Set_Type(oSectPr.Type);
-		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.SetPageNumStart(-1);
 		oCurSectPr.Clear_AllHdrFtr();
 
 		oParagraph.private_GetImpl().Set_SectionPr(oSectPr);
@@ -6946,11 +6951,11 @@
 	 */
 	ApiDocument.prototype.AddFootnote = function()
 	{
-		let oResult = this.Document.AddFootnote();
-		if (!oResult)
+		let footnote = this.Document._addFootnote();
+		if (!footnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(footnote);
 	};
 
 	/**
@@ -6961,11 +6966,11 @@
 	 */
 	ApiDocument.prototype.AddEndnote = function()
 	{
-		let oResult = this.Document.AddEndnote();
-		if (!oResult)
+		let endnote = this.Document._addEndnote();
+		if (!endnote)
 			return null;
 
-		return new ApiDocumentContent(oResult);
+		return new ApiDocumentContent(endnote);
 	};
 
 	/**
@@ -9195,7 +9200,7 @@
 		let oCurSectPr = oDoc.SectionsInfo.Get_SectPr(nContentPos).SectPr;
 
 		oCurSectPr.Set_Type(oSectPr.Type);
-		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.SetPageNumStart(-1);
 		oCurSectPr.Clear_AllHdrFtr();
 
 		this.private_GetImpl().Set_SectionPr(oSectPr);
@@ -12224,6 +12229,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiStyle} - The used style.
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStyle = function()
 	{
@@ -12257,6 +12263,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetBold = function()
 	{
@@ -12282,6 +12289,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetItalic = function()
 	{
@@ -12307,6 +12315,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetStrikeout = function()
 	{
@@ -12333,6 +12342,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetUnderline = function()
 	{
@@ -12358,6 +12368,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontFamily = function()
 	{
@@ -12383,6 +12394,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFontSize = function()
 	{
@@ -12415,6 +12427,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetColor = function()
 	{
@@ -12454,6 +12467,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetVertAlign = function()
 	{
@@ -12507,6 +12521,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CPE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetHighlight = function()
 	{
@@ -12538,6 +12553,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?twips}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSpacing = function()
 	{
@@ -12568,6 +12584,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetDoubleStrikeout = function()
 	{
@@ -12593,6 +12610,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetCaps = function()
 	{
@@ -12619,6 +12637,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @return {?boolean}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetSmallCaps = function()
 	{
@@ -12646,6 +12665,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?hps}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetPosition = function()
 	{
@@ -12683,6 +12703,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?string}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetLanguage = function()
 	{
@@ -12718,6 +12739,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @return {?ApiRGBColor}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetShd = function()
 	{
@@ -12748,6 +12770,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetFill = function()
 	{
@@ -12778,6 +12801,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiFill}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetTextFill = function()
 	{
@@ -12808,6 +12832,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @return {ApiStroke}
+	 * @since 8.1.0
 	 */
 	ApiTextPr.prototype.GetOutLine = function()
 	{
@@ -16853,6 +16878,17 @@
 		oDocument.UpdateSelection();
 		return new ApiComment(comment)
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 
 	/**
 	 * Returns a list of values of the combo box / dropdown list content control.
@@ -17902,6 +17938,17 @@
 		
 		return new ApiContentControlList(this);
 	};
+	
+	/**
+	 * Place cursor before/after the current content control
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -18178,7 +18225,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -18194,7 +18241,9 @@
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
-		this.Sdt.ClearContentControlExt();
+		return executeNoFormLockCheck(function() {
+			this.Sdt.ClearContentControlExt();
+		}, this);
 	};
 	/**
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
@@ -18234,7 +18283,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -18252,7 +18301,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *This method is used only for text and combo box forms.*
+	 * *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -18260,6 +18309,16 @@
 	ApiFormBase.prototype.GetTextPr = function()
 	{
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
+	};
+	/**
+	 * Place cursor before/after the current form.
+	 * @param {boolean?} [isAfter=true]
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
+	{
+		this.Sdt.MoveCursorOutsideForm(false === isAfter);
 	};
 	/**
 	 * Copies the current form (copies with the shape if it exists).
@@ -18692,15 +18751,17 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
+	 * @param {EMU} nWidth - The image width in English measure units.
+	 * @param {EMU} nHeight - The image height in English measure units.
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetImage = function(sImageSrc)
+	ApiPictureForm.prototype.SetImage = function(sImageSrc, nWidth, nHeight)
 	{
 		return executeNoFormLockCheck(function(){
 			if (typeof(sImageSrc) !== "string" || sImageSrc === "")
 				return false;
-	
+			
 			var oImg;
 			var allDrawings = this.Sdt.GetAllDrawingObjects();
 			for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
@@ -18714,6 +18775,34 @@
 	
 			if (oImg)
 			{
+				let spPr = oImg.spPr;
+				if (!spPr)
+				{
+					spPr = new AscFormat.CSpPr();
+					oImg.setSpPr(spPr);
+					spPr.setParent(oImg);
+				}
+				
+				spPr.setGeometry(AscFormat.CreateGeometry("rect"));
+				
+				let xfrm = spPr.xfrm;
+				if (!xfrm)
+				{
+					xfrm = new AscFormat.CXfrm();
+					spPr.setXfrm(xfrm);
+					xfrm.setParent(spPr);
+				}
+				
+				if (undefined !== nWidth && undefined !== nHeight)
+				{
+					let w = private_EMU2MM(nWidth);
+					let h = private_EMU2MM(nHeight);
+					xfrm.setOffX(0);
+					xfrm.setOffY(0);
+					xfrm.setExtX(w);
+					xfrm.setExtY(h);
+				}
+				
 				oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
 				this.OnChangeValue();
 				return true;
@@ -18927,10 +19016,11 @@
 	//------------------------------------------------------------------------------------------------------------------
 	
 	/**
-	 * Gets date format of current form.
+	 * Gets the date format of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetFormat = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18938,11 +19028,12 @@
 	};
 
 	/**
-	 * Sets date format to current form.
+	 * Sets the date format to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sFormat
+	 * @param {string} sFormat - The date format. For example, mm.dd.yyyy
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetFormat = function(sFormat)
 	{
@@ -18959,10 +19050,11 @@
 	};
 
 	/**
-	 * Gets used date language of current form.
+	 * Gets the used date language of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetLanguage = function() {
 		let oDatePr = this.Sdt.GetDatePickerPr();
@@ -18975,12 +19067,13 @@
 	};
 
 	/**
-	 * Sets date language to current form.
+	 * Sets the date language to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
+	 * @param {string} sLangId - The date language. The possible value for this parameter is a language identifier as defined in
 	 * RFC 4646/BCP 47. Example: "en-CA".
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetLanguage = function(sLangId)
 	{
@@ -18998,10 +19091,11 @@
 	};
 
 	/**
-	 * Returns the timestamp setted in form.
+	 * Returns the timestamp of the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @returns {Number}
+	 * @returns {number}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.GetTime = function()
 	{
@@ -19015,8 +19109,9 @@
 	 * Sets the timestamp to the current form.
 	 * @memberof ApiDateForm
 	 * @typeofeditors ["CDE", "CFE"]
-	 * @param {Number} nTimeStamp
+	 * @param {number} nTimeStamp The timestamp that will be set to the current date form.
 	 * @returns {boolean}
+	 * @since 8.1.0
 	 */
 	ApiDateForm.prototype.SetTime = function(nTimeStamp)
 	{
@@ -20216,6 +20311,8 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
+	
+	Api.prototype["Px2Emu"]                          = Px2Emu;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -20803,16 +20900,16 @@
 	ApiChart.prototype["SetMinorVerticalGridlines"]    =  ApiChart.prototype.SetMinorVerticalGridlines;
 	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]     =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]    =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["GetNextChart"]                 =  ApiChart.prototype.GetNextChart;
-    ApiChart.prototype["GetPrevChart"]                 =  ApiChart.prototype.GetPrevChart;
-    ApiChart.prototype["RemoveSeria"]                  =  ApiChart.prototype.RemoveSeria;
-    ApiChart.prototype["SetSeriaValues"]               =  ApiChart.prototype.SetSeriaValues;
-    ApiChart.prototype["SetXValues"]                   =  ApiChart.prototype.SetXValues;
-    ApiChart.prototype["SetSeriaName"]                 =  ApiChart.prototype.SetSeriaName;
-    ApiChart.prototype["SetCategoryName"]              =  ApiChart.prototype.SetCategoryName;
-	ApiChart.prototype["ApplyChartStyle"]              =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]     = ApiChart.prototype.SetHorAxisLablesFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]    = ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
+	ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
+	ApiChart.prototype["RemoveSeria"]                  = ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["SetSeriaValues"]               = ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetXValues"]                   = ApiChart.prototype.SetXValues;
+	ApiChart.prototype["SetSeriaName"]                 = ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCategoryName"]              = ApiChart.prototype.SetCategoryName;
+	ApiChart.prototype["ApplyChartStyle"]              = ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetPlotAreaFill"]              =  ApiChart.prototype.SetPlotAreaFill;
 	ApiChart.prototype["SetPlotAreaOutLine"]           =  ApiChart.prototype.SetPlotAreaOutLine;
 	ApiChart.prototype["SetSeriesFill"]                =  ApiChart.prototype.SetSeriesFill;
@@ -20885,6 +20982,7 @@
 	ApiInlineLvlSdt.prototype["Copy"]                   = ApiInlineLvlSdt.prototype.Copy;
 	ApiInlineLvlSdt.prototype["ToJSON"]                 = ApiInlineLvlSdt.prototype.ToJSON;
 	ApiInlineLvlSdt.prototype["AddComment"]             = ApiInlineLvlSdt.prototype.AddComment;
+	ApiInlineLvlSdt.prototype["MoveCursorOutside"]      = ApiInlineLvlSdt.prototype.MoveCursorOutside;
 
 	ApiInlineLvlSdt.prototype["GetPlaceholderText"]     = ApiInlineLvlSdt.prototype.GetPlaceholderText;
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
@@ -20947,6 +21045,7 @@
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
+	ApiBlockLvlSdt.prototype["MoveCursorOutside"]       = ApiBlockLvlSdt.prototype.MoveCursorOutside;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
@@ -20967,6 +21066,7 @@
 	ApiFormBase.prototype["SetPlaceholderText"]  = ApiFormBase.prototype.SetPlaceholderText;
 	ApiFormBase.prototype["SetTextPr"]           = ApiFormBase.prototype.SetTextPr;
 	ApiFormBase.prototype["GetTextPr"]           = ApiFormBase.prototype.GetTextPr;
+	ApiFormBase.prototype["MoveCursorOutside"]   = ApiFormBase.prototype.MoveCursorOutside;
 
 	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
 	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
@@ -21462,6 +21562,11 @@
 	{
 		return 25.4 / 72.0 / 8 * pt;
 	}
+	
+	function Px2Emu(px)
+	{
+		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
+	}
 
 	function private_StartSilentMode()
 	{
@@ -21739,13 +21844,13 @@
 			console.error(err);
 		else
 			console.log(err);
-	};
+	}
 
 	function throwException(err) {
 		if (!console.error)
 			logError(err);
 		throw err;
-	};
+	}
 
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
 	{
