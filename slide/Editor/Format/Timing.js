@@ -667,19 +667,22 @@
                     var oTrigger = new CAnimComplexTrigger();
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
-                    oTrigger.addTrigger(function () {
-                        for (var nChild = 0; nChild < aChildren.length; ++nChild) {
-                            if (!aChildren[nChild].isAtEnd()) {
-                                return false;
-                            }
-                        }
-                        if (oThis.checkRepeatCondition(oPlayer)) {
-                            return false;
-                        }
-                        return true;
-                    });
+
                     if (oEndSync) {
                         oEndSync.fillTrigger(oPlayer, oTrigger);
+                    }
+                    else {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd()) {
+                                    return false;
+                                }
+                            }
+                            if (oThis.checkRepeatCondition(oPlayer)) {
+                                return false;
+                            }
+                            return true;
+                        });
                     }
                     return oTrigger;
                 }
@@ -2695,12 +2698,10 @@
                     const nRepeatCount = oEffectCopy.asc_getRepeatCount();
                     if (nRepeatCount === AscFormat.untilNextSlide) {
                         const lastFiniteEffect = this.getLastFiniteEffect(aEffectsForDemo);
-                        const onEndCond = new CCond();
-                        onEndCond.setEvt(COND_EVNT_ON_END);
-                        onEndCond.setTn(lastFiniteEffect.copyNode.Id);
-
-                        oEffectCopy.cTn.setEndCondLst(new CCondLst())
-                        oEffectCopy.cTn.endCondLst.push(onEndCond);
+                        const oEndSync = new CCond();
+                        oEndSync.setEvt(COND_EVNT_ON_END);
+                        oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                        oEffectCopy.cTn.setEndSync(oEndSync);
                     }
                     if (nRepeatCount === AscFormat.untilNextClick) {
                         oEffectCopy.cTn.changeRepeatCount(1000);
@@ -5851,7 +5852,7 @@
     };
     CCond.prototype.createOnEndTrigger = function (oPlayer) {
         return this.createTimeNodeTrigger(oPlayer, function (oTimeNode) {
-            return oTimeNode.isFinished();
+            return oTimeNode.isAtEnd();
         });
     };
     CCond.prototype.fillTrigger = function (oPlayer, oTrigger) {
