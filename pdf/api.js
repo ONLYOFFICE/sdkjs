@@ -2261,6 +2261,7 @@
 		this.sendMathToMenu();
 		this.sendStandartTextures();
 		//выставляем тип copypaste
+		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
