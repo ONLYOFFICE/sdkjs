@@ -1045,7 +1045,7 @@
 			this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
 			gap,
 			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE,
+			MOVE_BUTTON_SIZE
 		);
 		this.moveUpButton.recalculate();
 

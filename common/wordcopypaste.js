@@ -5823,8 +5823,9 @@ PasteProcessor.prototype =
 						base64FromWord = cL[i].split('docData;')[1];
 					} else if (cL[i].indexOf("pptData;") > -1) {
 						base64FromPresentation = cL[i].split('pptData;')[1];
+					} else if (cL[i].indexOf("pdfData;") > -1) {
+						base64FromPDF = cL[i].split('pdfData;')[1];
 					}
-					
 				}
 			}
 		}
@@ -11646,7 +11647,7 @@ function searchBinaryClass(node)
 	{
 		var child = node.children[0];
 		var childClass = child ? child.getAttribute("class") : null;
-		if(childClass != null && (childClass.indexOf("xslData;") > -1 || childClass.indexOf("docData;") > -1 || childClass.indexOf("pptData;") > -1))
+		if(childClass != null && (childClass.indexOf("xslData;") > -1 || childClass.indexOf("docData;") > -1 || childClass.indexOf("pptData;") > -1 || childClass.indexOf("pdfData;") > -1))
 		{
 			return childClass;
 		}
