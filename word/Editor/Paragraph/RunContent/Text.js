@@ -289,15 +289,7 @@
 	};
 	CRunText.prototype.getBidiType = function()
 	{
-		let bidiType = AscBidi.getType(this.Value);
-		if (bidiType & AscBidi.FLAG.WEAK)
-			return AscWord.BidiType.weak;
-		else if (bidiType & AscBidi.FLAG.NEUTRAL)
-			return AscWord.BidiType.neutral;
-		else if (bidiType & AscBidi.FLAG.RTL)
-			return AscWord.BidiType.rtl;
-		
-		return AscWord.BidiType.ltr;
+		return AscBidi.getType(this.Value);
 	};
 	CRunText.prototype.SetWidth = function(nWidth)
 	{

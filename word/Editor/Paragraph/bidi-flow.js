@@ -72,12 +72,12 @@
 		}
 		else
 		{
-			if (bidiType === AscWord.BidiType.rtl)
+			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
 			{
 				this.flushNeutralRTL();
 				this.buffer.push(element);
 			}
-			else if (bidiType === AscWord.BidiType.ltr || 0 === this.buffer.length)
+			else if (bidiType & AscBidi.FLAG.STRONG || 0 === this.buffer.length)
 			{
 				this.flush();
 				this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
@@ -125,7 +125,8 @@
 		
 		for (let i = 0; i < this.neutralBuffer.length; ++i)
 		{
-			if (AscWord.BidiType.neutral === this.neutralBuffer[i][0])
+			let type = this.neutralBuffer[i][0];
+			if (AscBidi.FLAG.NEUTRAL & type)
 			{
 				flushWeak(this.buffer);
 				this.buffer.push(this.neutralBuffer[i][1]);
