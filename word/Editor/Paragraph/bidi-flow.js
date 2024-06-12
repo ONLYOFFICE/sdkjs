@@ -52,6 +52,7 @@
 		this.buffer    = [];
 		this.direction = null;
 		
+		
 		this.neutralBuffer = [];
 	}
 	/**
@@ -59,39 +60,42 @@
 	 */
 	BidiFlow.prototype.begin = function(direction)
 	{
-		this.direction     = direction;
-		this.buffer.length = 0;
+		this.direction            = direction;
+		this.buffer.length        = 0;
+		this.neutralBuffer.length = 0;
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
-		if (bidiType === AscWord.BidiType.rtl)
+		if (AscWord.BidiType.rtl === this.direction)
 		{
-			if (this.neutralBuffer.length)
-			{
-				this.buffer = this.buffer.concat(this.neutralBuffer);
-				this.neutralBuffer.length = 0;
-			}
-			
-			this.buffer.push(element);
-		}
-		else if (bidiType === AscWord.BidiType.neutral && this.buffer.length)
-		{
-			this.neutralBuffer.push(element);
+		
 		}
 		else
 		{
-			this.flushBuffer();
-			this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
+			if (bidiType === AscWord.BidiType.rtl)
+			{
+				this.flushNeutralRTL();
+				this.buffer.push(element);
+			}
+			else if (bidiType === AscWord.BidiType.ltr || 0 === this.buffer.length)
+			{
+				this.flush();
+				this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
+			}
+			else
+			{
+				this.neutralBuffer.push([bidiType, element]);
+			}
 		}
 	};
 	BidiFlow.prototype.end = function()
 	{
-		this.flushBuffer();
+		this.flush();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	BidiFlow.prototype.flushBuffer = function()
+	BidiFlow.prototype.flush = function()
 	{
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
@@ -101,8 +105,37 @@
 		
 		for (let i = 0; i < this.neutralBuffer.length; ++i)
 		{
-			this.handler.handleBidiFlow(this.neutralBuffer[i], AscWord.BidiType.ltr);
+			this.handler.handleBidiFlow(this.neutralBuffer[i][1], AscWord.BidiType.ltr);
 		}
+		this.neutralBuffer.length = 0;
+	};
+	BidiFlow.prototype.flushNeutralRTL = function()
+	{
+		let weakBuffer = [];
+		
+		function flushWeak(buffer)
+		{
+			for (let i = weakBuffer.length - 1; i >= 0; --i)
+			{
+				buffer.push(weakBuffer[i]);
+			}
+			
+			weakBuffer.length = 0;
+		}
+		
+		for (let i = 0; i < this.neutralBuffer.length; ++i)
+		{
+			if (AscWord.BidiType.neutral === this.neutralBuffer[i][0])
+			{
+				flushWeak(this.buffer);
+				this.buffer.push(this.neutralBuffer[i][1]);
+			}
+			else
+			{
+				weakBuffer.push(this.neutralBuffer[i][1]);
+			}
+		}
+		flushWeak(this.buffer);
 		this.neutralBuffer.length = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
