@@ -356,11 +356,11 @@
 		return false;
 	};
 	/**
-	 * return {AscWord.BidiType}
+	 * return {AscBidi.TYPE}
 	 */
 	CRunElementBase.prototype.getBidiType = function()
 	{
-		return AscWord.BidiType.neutral;
+		return AscBidi.TYPE.ON;
 	};
 	/**
 	 * @return {number}

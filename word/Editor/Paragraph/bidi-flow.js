@@ -75,7 +75,7 @@
 			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
 			{
 				this.flushNeutralRTL();
-				this.buffer.push(element);
+				this.buffer.push([element, AscWord.BidiType.rtl]);
 			}
 			else if (bidiType & AscBidi.FLAG.STRONG || 0 === this.buffer.length)
 			{
@@ -99,7 +99,7 @@
 	{
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
-			this.handler.handleBidiFlow(this.buffer[i], AscWord.BidiType.rtl);
+			this.handler.handleBidiFlow(this.buffer[i][0], this.buffer[i][1]);
 		}
 		this.buffer.length = 0;
 		
@@ -111,15 +111,40 @@
 	};
 	BidiFlow.prototype.flushNeutralRTL = function()
 	{
-		let weakBuffer = [];
+		let weakBuffer   = [];
+		let numberBuffer = [];
+		let buffer       = this.buffer;
 		
-		function flushWeak(buffer)
+		function flushNumber()
 		{
-			for (let i = weakBuffer.length - 1; i >= 0; --i)
+			for (let i = numberBuffer.length - 1; i >= 0; --i)
 			{
-				buffer.push(weakBuffer[i]);
+				buffer.push([numberBuffer[i], AscWord.BidiType.ltr]);
 			}
-			
+			numberBuffer.length = 0;
+		}
+		
+		function flushWeak()
+		{
+			for (let i = 0; i < weakBuffer.length; ++i)
+			{
+				let type = weakBuffer[i][0];
+				if (type & AscBidi.FLAG.NUMBER
+					|| (type & AscBidi.FLAG.NUMBER_SEP_TER
+						&& 0 !== i
+						&& i !== weakBuffer.length - 1
+						&& weakBuffer[i - 1][0] & AscBidi.FLAG.NUMBER
+						&& weakBuffer[i + 1][0] & AscBidi.FLAG.NUMBER))
+				{
+					numberBuffer.push(weakBuffer[i][1]);
+				}
+				else
+				{
+					flushNumber();
+					buffer.push([weakBuffer[i][1], AscWord.BidiType.ltr]);
+				}
+			}
+			flushNumber();
 			weakBuffer.length = 0;
 		}
 		
@@ -129,11 +154,11 @@
 			if (AscBidi.FLAG.NEUTRAL & type)
 			{
 				flushWeak(this.buffer);
-				this.buffer.push(this.neutralBuffer[i][1]);
+				this.buffer.push([this.neutralBuffer[i][1], AscWord.BidiType.rtl]);
 			}
 			else
 			{
-				weakBuffer.push(this.neutralBuffer[i][1]);
+				weakBuffer.push([type, this.neutralBuffer[i][1]]);
 			}
 		}
 		flushWeak(this.buffer);

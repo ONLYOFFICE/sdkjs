@@ -83,6 +83,10 @@
 	{
 		return this.Value;
 	};
+	CRunSpace.prototype.getBidiType = function()
+	{
+		return AscBidi.TYPE.WS;
+	};
 	CRunSpace.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 	{
 		if (this.Flags & FLAGS_GAPS)
