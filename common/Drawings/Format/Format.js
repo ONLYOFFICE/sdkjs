@@ -8886,7 +8886,7 @@
 		};
 		CTheme.prototype.GetPresentation = function () {
 			let oLogicDoc = this.GetLogicDocument();
-			if(oLogicDoc instanceof AscCommonSlide.CPresentation) {
+			if(AscCommonSlide.CPresentation && oLogicDoc instanceof AscCommonSlide.CPresentation) {
 				return oLogicDoc;
 			}
 			return null;
