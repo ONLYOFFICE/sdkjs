@@ -1818,7 +1818,6 @@ function (window, undefined) {
 	cOFFSET.prototype.ca = true;
 	cOFFSET.prototype.arrayIndexes = {0: 1};
 	cOFFSET.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.number, argType.number];
-	cOFFSET.prototype.exactTypes = {0: 1};
 	cOFFSET.prototype.Calculate = function (arg) {
 
 		function validBBOX(bbox) {
@@ -1826,7 +1825,6 @@ function (window, undefined) {
 				bbox.r2 <= gc_nMaxRow0 && 0 <= bbox.c2 && bbox.c2 <= gc_nMaxCol0;
 		}
 
-		const t = this;
 		var arg0 = arg[0], arg1 = arg[1].tocNumber(), arg2 = arg[2].tocNumber();
 		var arg3 = 3 < arg.length ? (cElementType.empty === arg[3].type ? new cNumber(1) : arg[3].tocNumber()) : new cNumber(-1);
 		var arg4 = 4 < arg.length ? (cElementType.empty === arg[4].type ? new cNumber(1) : arg[4].tocNumber()) : new cNumber(-1);
@@ -1931,9 +1929,7 @@ function (window, undefined) {
 	cROW.prototype.argumentsMax = 1;
 	cROW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.setArrayRefAsArg;
 	cROW.prototype.argumentsType = [argType.reference];
-	cROW.prototype.exactTypes = {0: 1};
 	cROW.prototype.Calculate = function (arg) {
-		const t = this;
 		var bbox;
 		var res;
 		var opt_row = arguments[5];

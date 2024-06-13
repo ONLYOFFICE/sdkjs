@@ -16854,8 +16854,8 @@
 					}
 				}
 
-				// preliminary calculation of the formula 
-				// if undefined or null or cError(null) is returned (temporary solution) - this means that one of the formulas contains an argument of an invalid type
+				// preliminary calculation of the formula
+				// if calculateResult.error is not empty - return this error
 				if (calculateResult && calculateResult.error != null) {
 					this.model.workbook.handlers.trigger("asc_onError", calculateResult.error, c_oAscError.Level.NoCritical);
 					return false;

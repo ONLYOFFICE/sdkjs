@@ -482,7 +482,7 @@ function (window, undefined) {
 						&& arg.type !== cElementType.cell && arg.type !== cElementType.cell3D)) {
 							return false;
 					}
-					// todo add other data types for arguments to the check, if needed in a function
+					// todo add other data types for arguments to the check, if the function requires it
 				}
 			}
 		}
