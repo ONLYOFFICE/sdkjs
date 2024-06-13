@@ -734,10 +734,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     shape.txBody.setContent(content);
                     var bNeedCheckExtents = false;
                     if(drawingObjects){
-                        if(!drawingObjects.cSld || this.placeholderType !== null){
-                            body_pr.vertOverflow = AscFormat.nVOTClip;
-                        }
-                        else{
+                        if((drawingObjects.cSld || Asc.editor.isPdfEditor()) && this.placeholderType === null) {
                             body_pr.textFit = new AscFormat.CTextFit();
                             body_pr.textFit.type = AscFormat.text_fit_Auto;
                             if (isClickMouseEvent) {
@@ -746,6 +743,9 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                                 body_pr.wrap = AscFormat.nTWTSquare;
                             }
                             bNeedCheckExtents = true;
+                        }
+                        else{
+                            body_pr.vertOverflow = AscFormat.nVOTClip;
                         }
                     }
                     shape.txBody.setBodyPr(body_pr);
