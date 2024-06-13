@@ -2134,7 +2134,7 @@ CPresentation.prototype.GetSlides = function () {
 	return this.Slides;
 };
 CPresentation.prototype.GetAllSlides = function () {
-	if(this.Api.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide) {
+	if(this.IsMasterMode()) {
 		let aSlides = [];
 		for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
 			let oMaster = this.slideMasters[nMaster];

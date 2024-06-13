@@ -1078,7 +1078,7 @@
 		};
 
 	asc_docs_api.prototype.isMasterMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide;
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
 	};
 
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
