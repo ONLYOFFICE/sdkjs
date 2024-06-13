@@ -62,7 +62,7 @@
 		SS  : 0x00400000, // Segment Separator
 		WS  : 0x00800000, // WhiteSpace
 		
-		FS  : 0x01000000, // FIRST
+		FS  : 0x01000000  // FIRST
 	};
 	
 	
@@ -95,7 +95,7 @@
 	const DIRECTION = {
 		L : TYPE.L,
 		R : TYPE.R
-	}
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscBidi.FLAG      = FLAG;
 	AscBidi.TYPE      = TYPE;
