@@ -164,7 +164,7 @@ var EditorSkins = {
 
 		Color                    : "#363636",
 		ColorActive              : "#363636",
-		ColorHighlighted         : "#6a6a70",
+		ColorHighlighted         : "#363636",
 		ColorFiltering           : "#008636",
 
 		SheetViewCellBackground        : "#73bf91",
