@@ -7813,8 +7813,11 @@ background-repeat: no-repeat;\
 	{
 		if (data["translate"])
 			this.translateManager = AscCommon.translateManager.init(data["translate"]);
-		if (data["skin"])
+		if (data["skin"]) {
+			let oSkin = data["skin"];
+			oSkin.SupportNotes = true;
 			this.asc_setSkin(data["skin"]);
+		}
 
 		this.reporterTranslates = [data["translations"]["reset"], data["translations"]["slideOf"], data["translations"]["endSlideshow"], data["translations"]["finalMessage"]];
 
