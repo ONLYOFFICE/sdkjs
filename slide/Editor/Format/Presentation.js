@@ -8987,6 +8987,13 @@ CPresentation.prototype.DublicateMaster = function () {
 		}
 	}
 	this.FinalizeAction(true);
+	let oMaster = aCopyMasters[0];
+	if(oMaster) {
+		let nIdx = this.GetSlideIndex(oMaster);
+		if(nIdx > -1) {
+			this.DrawingDocument.m_oWordControl.GoToPage(nIdx);
+		}
+	}
 };
 CPresentation.prototype.DublicateLayout = function () {
 	if (!this.CanEdit()) {
