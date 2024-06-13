@@ -1046,6 +1046,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), -1);
 
+		oParser = new parserFormula('"test" = "test"', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
+
+		oParser = new parserFormula('"tEsT" = "TeSt"', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
+
+		oParser = new parserFormula('"TEST" = "TeSt"', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
+
+		oParser = new parserFormula('"TEST" = "weSt"', "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE");
 
 		ws.getRange2("K100:Z200").cleanAll();
 		ws.getRange2("M106").setValue("1");
