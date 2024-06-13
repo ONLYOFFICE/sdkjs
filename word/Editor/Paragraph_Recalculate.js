@@ -1932,8 +1932,17 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             }
             else
             {
-                // RangeWidth - ширина всего пространства в данном отрезке, а Range.W - ширина занимаемого пространства
-                switch (ParaPr.Jc)
+				let jc = ParaPr.Jc;
+				if (ParaPr.Bidi)
+				{
+					if (AscCommon.align_Left === jc)
+						jc = AscCommon.align_Right;
+					else if (AscCommon.align_Right === jc)
+						jc = AscCommon.align_Left;
+				}
+				
+				// RangeWidth - ширина всего пространства в данном отрезке, а Range.W - ширина занимаемого пространства
+                switch (jc)
                 {
                     case AscCommon.align_Left :
                     {
