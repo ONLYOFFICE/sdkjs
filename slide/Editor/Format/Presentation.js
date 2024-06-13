@@ -8335,7 +8335,7 @@ CPresentation.prototype.InsertContent = function (Content) {
 							let oSlidePh, oLayoutPlaceholder;
 
 							let nType, nIdx;
-							if (oSp.isPlaceholder()) {
+							if (oSp.isPlaceholder() && !this.IsMasterMode()) {
 								let oInfo = {};
 								nType = oSp.getPlaceholderType();
 								nIdx = oSp.getPlaceholderIndex();
