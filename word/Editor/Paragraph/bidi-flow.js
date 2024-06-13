@@ -56,11 +56,11 @@
 		this.neutralBuffer = [];
 	}
 	/**
-	 * @param direction - main flow direction
+	 * @param isRtlDirection - main flow direction
 	 */
-	BidiFlow.prototype.begin = function(direction)
+	BidiFlow.prototype.begin = function(isRtlDirection)
 	{
-		this.direction            = direction;
+		this.direction            = isRtlDirection ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		this.buffer.length        = 0;
 		this.neutralBuffer.length = 0;
 	};

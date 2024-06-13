@@ -53,7 +53,6 @@
 		this.y = 0;
 		
 		this.bidi = new AscWord.BidiFlow(this);
-		this.rtl  = false;
 		
 		this.isNextCurrent = false;
 		this.nextRun       = null;
@@ -98,7 +97,7 @@
 		if (p.Numbering.checkRange(range, line))
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidi.begin();
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
@@ -233,7 +232,7 @@
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
 		this.bidi.end();
-		this.bidi.begin(this.rtl);
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		if (!isCurrentRun)
 			return;

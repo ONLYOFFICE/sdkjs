@@ -49,7 +49,6 @@
 		this.h = 0;
 		this.x = 0;
 		
-		this.rtl  = false;
 		this.bidi = new AscWord.BidiFlow(this);
 		
 		this.page  = 0;
@@ -90,7 +89,7 @@
 		if (this.paragraph.Numbering.checkRange(this.line, this.range))
 			this.x += this.paragraph.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.rtl);
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		this.beginElement = null;
 		this.endElement   = null;
