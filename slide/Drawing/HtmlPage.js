@@ -5047,6 +5047,7 @@ function CEditorPage(api)
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				this.setNotesEnable(true);
 				this.setAnimPaneEnable(true);
+				this.m_oApi.hideMediaControl();
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
@@ -5063,6 +5064,7 @@ function CEditorPage(api)
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				this.setNotesEnable(false);
 				this.setAnimPaneEnable(false);
+				this.m_oApi.hideMediaControl();
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}
