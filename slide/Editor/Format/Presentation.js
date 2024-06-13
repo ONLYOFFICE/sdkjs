@@ -9025,6 +9025,13 @@ CPresentation.prototype.DublicateLayout = function () {
 		}
 	}
 	this.FinalizeAction(true);
+	let oLayout = aCopyLayouts[0];
+	if(oLayout) {
+		let nIdx = this.GetSlideIndex(oLayout);
+		if(nIdx > -1) {
+			this.DrawingDocument.m_oWordControl.GoToPage(nIdx);
+		}
+	}
 };
 
 CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
