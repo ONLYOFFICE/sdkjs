@@ -7725,6 +7725,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.onMouseWhell = function(e)
 	{
+		return oThis.list.onMouseWhell(e);
 	};
 	oThis.onSelectWheel = function()
 	{
@@ -7744,10 +7745,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.list.CheckPaint();
 		oThis.timeline.CheckPaint();
 	};
-	oThis.onMouseWhell = function(e)
-	{
-		return oThis.list.onMouseWhell(e);
-	};
 
 	oThis.UpdateState = function () {
 		if (!oThis.header.Control) { return }
@@ -7756,7 +7753,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 		// TODO: oThis.list.UpdateState();
 		oThis.timeline.UpdateState();
 	};
-
 	oThis.SetCursorType = function(sType, Data) {
 		let elem = this.HtmlElement;
 		// if (Asc.editor.WordControl.DemonstrationManager.Mode)
@@ -7774,6 +7770,9 @@ function CAnimationPaneDrawer(page, htmlElement)
 		Asc.editor.sync_MouseMoveCallback(Data);
 		Asc.editor.sync_MouseMoveEndCallback();
 	};
+	oThis.RedrawAnimPane = function() {
+		console.log('Redraw Animation Pane');
+	}
 }
 
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);

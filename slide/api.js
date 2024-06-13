@@ -1691,6 +1691,10 @@ background-repeat: no-repeat;\
 
 		if (this.WordControl && this.WordControl.m_oBody)
 			this.WordControl.OnResize(true);
+
+		if (this.getIsAnimPaneShow()) {
+			this.WordControl.m_oAnimPaneApi.RedrawAnimPane();
+		}
 	};
 
 	asc_docs_api.prototype.initDefaultShortcuts = function()
