@@ -10519,11 +10519,7 @@ CPresentation.prototype.SetLayoutTitle = function (bVal) {
 	}
 	else {
 		if(!oSp) {
-			let extX = this.GetWidthMM() * 0.9;
-			let extY = this.GetHeightMM() * 0.2;
-			let x = (this.GetWidthMM() - extX) / 2.0;
-			let y = x / 2.0;
-			oSp = CreatePlaceholderSp(AscFormat.phType_title, x, y, extX, extY, oCurSlide);
+			oSp = AscCommonSlide.CreatePlaceholder(AscFormat.phType_title);
 			oCurSlide.addToSpTreeToPos(undefined, oSp);
 		}
 	}
@@ -11102,14 +11098,6 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 	}
 	return false;
 };
-
-function CreatePlaceholderSp(nType, x, y, extX, extY, oParent) {
-	let oPO = oParent.getParentObjects();
-	var oTrack = new AscFormat.NewShapeTrack("textRect", x, y, oPO.master.Theme, oPO.master, oPO.layout, oPO.slide, 0, oParent.graphicObjects, nType);
-	oTrack.track({}, extX, extY);
-	let oShape = oTrack.getShape(false, Asc.editor.getDrawingDocument(), oParent.graphicObjects);
-	return oShape;
-}
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;
