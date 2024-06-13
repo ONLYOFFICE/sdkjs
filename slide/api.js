@@ -6814,12 +6814,20 @@ background-repeat: no-repeat;\
 	//-----------------------------------------------------------------
 	asc_docs_api.prototype.can_AddHyperlink = function()
 	{
-		//if ( true === CollaborativeEditing.Get_GlobalLock() )
-		//    return false;
-
-		var bCanAdd = this.WordControl.m_oLogicDocument.CanAddHyperlink(true);
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation) return false;
+		var bCanAdd = oPresentation.CanAddHyperlink(true);
 		if (true === bCanAdd)
-			return this.WordControl.m_oLogicDocument.GetSelectedText(true);
+		{
+			let oController = oPresentation.GetCurrentController();
+			if(!oController)
+			{
+				return null;
+			}
+			let oTargetContent = oController.getTargetDocContent();
+			if(!oTargetContent) return null;
+			return oPresentation.GetSelectedText(true);
+		}
 
 		return false;
 	};
