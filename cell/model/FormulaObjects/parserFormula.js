@@ -471,23 +471,6 @@ function (window, undefined) {
 		return typedArr;
 	}
 
-	function checkArgumentsTypes(args) {
-		if (args) {
-			let length = args.length;
-			for (let i = 0; i < length; i++) {
-				let arg = args[i];
-				if (arg && this.exactTypes[i] && this.argumentsType && this.argumentsType[i] !== undefined) {
-					// check types
-					if (this.argumentsType[i] === Asc.c_oAscFormulaArgumentType.reference && (arg.type !== cElementType.cellsRange && arg.type !== cElementType.cellsRange3D 
-						&& arg.type !== cElementType.cell && arg.type !== cElementType.cell3D)) {
-							return false;
-					}
-					// todo add other data types for arguments to the check, if the function requires it
-				}
-			}
-		}
-		return true;
-	}
 
 /** @enum */
 var cElementType = {
@@ -3964,6 +3947,23 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return {width: width, height: height};
 		}
 		return null;
+	};
+	cBaseFunction.prototype.checkArgumentsTypes = function (args) {
+		if (args) {
+			let length = args.length;
+			for (let i = 0; i < length; i++) {
+				let arg = args[i];
+				if (arg && this.exactTypes[i] && this.argumentsType && this.argumentsType[i] !== undefined) {
+					// check types
+					if (this.argumentsType[i] === Asc.c_oAscFormulaArgumentType.reference && (arg.type !== cElementType.cellsRange && arg.type !== cElementType.cellsRange3D 
+						&& arg.type !== cElementType.cell && arg.type !== cElementType.cell3D)) {
+							return false;
+					}
+					// todo add other data types for arguments to the check, if the function requires it
+				}
+			}
+		}
+		return true;
 	};
 
 	/** @constructor */
@@ -7733,7 +7733,7 @@ function parserFormula( formula, parent, _ws ) {
 					var formulaArray = null;
 					if (currentElement.type === cElementType.func) {
 						// checkArgumentsTypes before calculate
-						if (opt_oCalculateResult && opt_oCalculateResult.checkOnError && currentElement.exactTypes && !checkArgumentsTypes.call(currentElement, arg)) {
+						if (opt_oCalculateResult && opt_oCalculateResult.checkOnError && currentElement.exactTypes && !currentElement.checkArgumentsTypes(arg)) {
 							this.value = new cError(cErrorType.null_value);
 							this._endCalculate();
 							opt_oCalculateResult.setError(c_oAscError.ID.FrmlOperandExpected);
@@ -10256,7 +10256,6 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
 	window['AscCommonExcel'].getMaxDate = getMaxDate;
-	window['AscCommonExcel'].checkArgumentsTypes = checkArgumentsTypes;
 
 	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 

@@ -60,7 +60,6 @@ function (window, undefined) {
 	var cEmpty = AscCommonExcel.cEmpty;
 	var cArray = AscCommonExcel.cArray;
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
-	let cUndefined = AscCommonExcel.cUndefined;
 
 	var checkTypeCell = AscCommonExcel.checkTypeCell;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
@@ -1933,7 +1932,6 @@ function (window, undefined) {
 		var bbox;
 		var res;
 		var opt_row = arguments[5];
-
 		if (opt_row !== undefined) {
 			return new cNumber(opt_row + 1);
 		} else if (0 === arg.length) {
