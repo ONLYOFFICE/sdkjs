@@ -7797,7 +7797,7 @@
 								let oHyper = oNvPr.hlinkClick;
 								if(oHyper && oHyper.id) {
 									hyperlink_properties = new Asc.CHyperlinkProperty();
-									hyperlink_properties.Text = "";
+									hyperlink_properties.Text = null;
 									hyperlink_properties.Value = oHyper.id;
 									hyperlink_properties.ToolTip = oHyper.tooltip;
 
