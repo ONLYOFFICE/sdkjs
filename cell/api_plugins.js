@@ -160,7 +160,6 @@
 		if (!obj)
 			return;
 
-		// TODO: temporary disable recalculation
 		this.clearCustomFunctions();
 
 		let arr = obj["macrosArray"];
@@ -172,7 +171,7 @@
 			}
 		}
 
-		// TODO: enable recalculation & recalculate if needed
+		this.recalculateCustomFunctions();
 	};
 
 	/**
