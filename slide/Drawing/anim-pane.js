@@ -730,7 +730,14 @@
 			oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
 			oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
 			oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
-			oTxLstStyle.levels[0].DefaultRunPr.Color = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
+
+			let oColor = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
+			let sTextColor = GlobalSkin.AnimPaneText;
+			if (sTextColor) {
+				let oRGB = AscCommon.RgbaHexToRGBA(sTextColor);
+				oColor = new AscCommonWord.CDocumentColor(oRGB.R, oRGB.G, oRGB.B, false);
+			}
+			oTxLstStyle.levels[0].DefaultRunPr.Color = oColor;
 			oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
 			if (AscFormat.isRealNumber(nParaAlign)) {
 				oTxLstStyle.levels[0].Jc = nParaAlign;

@@ -119,9 +119,9 @@ var EditorSkins = {
 		AnimPaneBackground                  : "#F7F7F7",
 		AnimPaneItemFillSelected            : "#ADADAD",
 		AnimPaneItemFillHovered             : "#999999",
-		AnimPaneButtonFill                  : null,
+		AnimPaneButtonFill                  : "#F7F7F7",
 		AnimPaneButtonFillHovered           : "#DDDDDD",
-		AnimPaneButtonFillDisabled          : null,
+		AnimPaneButtonFillDisabled          : "#F7F7F7",
 		AnimPanePlayButtonFill              : "#FFFFFF",
 		AnimPanePlayButtonOutline           : "#CBCBCB",
 		AnimPaneEffectBarFillEntrance       : "#77B583",
@@ -140,6 +140,10 @@ var EditorSkins = {
 		AnimPaneTimelineScrollerOpacity        : 0x0,
 		AnimPaneTimelineScrollerOpacityHovered : 0x40,
 		AnimPaneTimelineScrollerOpacityActive  : 0x80,
+
+		AnimPaneText        : "#000000",
+		AnimPaneTextActive  : "#000000",
+		AnimPaneTextHover   : "#000000",
 
 		// demonstration
 		DemBackgroundColor              : "#F0F0F0",
@@ -265,9 +269,9 @@ var EditorSkins = {
 		AnimPaneBackground                  : "#F7F7F7",
 		AnimPaneItemFillSelected            : "#ADADAD",
 		AnimPaneItemFillHovered             : "#999999",
-		AnimPaneButtonFill                  : null,
+		AnimPaneButtonFill                  : "#F7F7F7",
 		AnimPaneButtonFillHovered           : "#DDDDDD",
-		AnimPaneButtonFillDisabled          : null,
+		AnimPaneButtonFillDisabled          : "#F7F7F7",
 		AnimPanePlayButtonFill              : "#FFFFFF",
 		AnimPanePlayButtonOutline           : "#CBCBCB",
 		AnimPaneEffectBarFillEntrance       : "#77B583",
@@ -280,6 +284,10 @@ var EditorSkins = {
 		AnimPaneEffectBarOutlinePath        : "#254662",
 		AnimPaneTimelineRulerOutline        : "#CBCBCB",
 		AnimPaneTimelineRulerTick           : "#DFDFDF",
+
+		AnimPaneText        : "#FFFFFF",
+		AnimPaneTextActive  : "#FFFFFF",
+		AnimPaneTextHover   : "#FFFFFF",
 
 		AnimPaneTimelineScrollerFill           : "#000000",
 		AnimPaneTimelineScrollerOutline        : "#444444",
@@ -415,6 +423,10 @@ function updateGlobalSkinColors(theme)
 		AnimPaneTimelineRulerOutline        : "canvas-anim-pane-timeline-ruler-outline",
 		AnimPaneTimelineRulerTick           : "canvas-anim-pane-timeline-ruler-tick",
 
+		AnimPaneText                         : "text-normal",
+		AnimPaneTextActive                   : "text-normal",
+		AnimPaneTextHover                    : "text-normal",
+
 		AnimPaneTimelineScrollerFill           : "canvas-anim-pane-timeline-scroller-fill",
 		AnimPaneTimelineScrollerOutline        : "canvas-anim-pane-timeline-scroller-outline",
 		AnimPaneTimelineScrollerOpacity        : "canvas-anim-pane-timeline-scroller-opacity",
@@ -489,7 +501,9 @@ function updateGlobalSkinColors(theme)
 		if (undefined === theme[colorMap[color]])
 			continue;
 
-		if (0 === GlobalSkin[color].indexOf("rgb"))
+		if(typeof GlobalSkin[color] === "number")
+			GlobalSkin[color] = colorMap[color];
+		else if (0 === GlobalSkin[color].indexOf("rgb"))
 			GlobalSkin[color] = theme[colorMap[color]];
 		else
 			GlobalSkin[color] = correctColor(theme[colorMap[color]]);
