@@ -585,7 +585,25 @@ MasterSlide.prototype.addNewLayout = function()
     let oLayout = AscCommonSlide.CreateDefaultLayout(this);
     let oPresentation = Asc.editor.private_GetLogicDocument();
     oLayout.changeSize(oPresentation.GetWidthMM(), oPresentation.GetHeightMM());
-    this.addToSldLayoutLstToPos(this.sldLayoutLst.length, oLayout);
+    let aSelected = oPresentation.GetSelectedSlideObjects();
+    let nPos = this.sldLayoutLst.length;
+    for(let nIdx = aSelected.length - 1; nIdx > -1; --nIdx) {
+        if(aSelected[nIdx] === this) {
+            nPos = 0;
+            break;
+        }
+        if(aSelected[nIdx].Master === this) {
+            let oLayout = aSelected[nIdx];
+            for(let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
+                if(oLayout === this.sldLayoutLst[nLt]) {
+                    nPos = nLt + 1;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    this.addToSldLayoutLstToPos(nPos, oLayout);
     return oLayout;
 };
 
