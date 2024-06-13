@@ -513,6 +513,9 @@ SlideLayout.prototype.getMaster = function(){
                 oSp.draw(graphics);
             }
         });
+        if(!slide) {
+            this.drawViewPrMarks(graphics);
+        }
     };
     SlideLayout.prototype.calculateType = function()
     {
@@ -903,6 +906,10 @@ SlideLayout.prototype.getMaster = function(){
         }
         return false;
     };
+    SlideLayout.prototype.drawViewPrMarks = function(oGraphics) {
+        return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
+    };
+
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
     LAYOUT_TYPE_MAP["chart"] = AscFormat.nSldLtTChart;

@@ -308,6 +308,10 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 			oSp.draw(graphics);
 		}
 	});
+
+    if(!slide) {
+        this.drawViewPrMarks(graphics);
+    }
 };
 MasterSlide.prototype.getMatchingLayout = function (type, matchingName, cSldName, themeFlag) {
     var layoutType = type;
@@ -794,6 +798,9 @@ MasterSlide.prototype.IsUseInDocument = function() {
         }
     }
     return false;
+};
+MasterSlide.prototype.drawViewPrMarks = function(oGraphics) {
+    return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
 };
 function CMasterThumbnailDrawer()
 {
