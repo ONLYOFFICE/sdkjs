@@ -889,10 +889,10 @@
 	}
 	CButton.prototype.getFillColor = function () {
 		const oSkin = AscCommon.GlobalSkin;
-		if (this.isDisabled()) { return oSkin.AnimPaneButtonFillDisabled; }
+		if (this.isDisabled()) { return null; }
 		if (this.isHovered()) { return oSkin.AnimPaneButtonFillHovered; }
-		if (this.sName === 'playButton') { return oSkin.AnimPanePlayButtonFill; }
-		return oSkin.AnimPaneButtonFill;
+		if (this.sName === 'playButton') { return oSkin.type === 'light' ? oSkin.AnimPanePlayButtonFill : null; }
+		return null;
 	};
 	CButton.prototype.getOutlineColor = function () {
 		if (this.sName === 'playButton') { return AscCommon.GlobalSkin.AnimPanePlayButtonOutline; }
