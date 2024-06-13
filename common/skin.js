@@ -502,7 +502,7 @@ function updateGlobalSkinColors(theme)
 			continue;
 
 		if(typeof GlobalSkin[color] === "number")
-			GlobalSkin[color] = colorMap[color];
+			GlobalSkin[color] = parseFloat(theme[colorMap[color]]);
 		else if (0 === GlobalSkin[color].indexOf("rgb"))
 			GlobalSkin[color] = theme[colorMap[color]];
 		else

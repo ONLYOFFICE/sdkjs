@@ -1581,7 +1581,7 @@
 			nOpacity = oSkin.AnimPaneTimelineScrollerOpacity;
 		}
 
-		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, nOpacity);
+		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, nOpacity * 255);
 		graphics.rect(x, y, extX, extY);
 		graphics.df();
 
