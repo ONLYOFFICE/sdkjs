@@ -6268,7 +6268,13 @@ PasteProcessor.prototype =
 				if (null != background_color) {
 					var Shd = new CDocumentShd();
 					Shd.Value = c_oAscShdClear;
-					Shd.Color = Shd.Fill = new CDocumentColor(background_color.getR(), background_color.getG(), background_color.getB());
+					Shd.Color = new CDocumentColor(background_color.getR(), background_color.getG(), background_color.getB());
+					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+						Shd.Fill = new CDocumentColor(background_color.getR(), background_color.getG(), background_color.getB());
+					}
+					else {
+						Shd.Unifill = AscFormat.CreateSolidFillRGBA(background_color.getR(), background_color.getG(), background_color.getB(), 255);
+					}
 					oCurCell.Set_Shd(Shd);
 				}
 
@@ -7573,7 +7579,12 @@ PasteProcessor.prototype =
 					var Shd = new CDocumentShd();
 					Shd.Value = c_oAscShdClear;
 					Shd.Color = background_color;
-					Shd.Fill = background_color;
+					if (PasteElementsId.g_bIsDocumentCopyPaste) {
+						Shd.Fill = background_color;
+					}
+					else {
+						Shd.Unifill = AscFormat.CreateSolidFillRGBA(background_color.r, background_color.g, background_color.b, 255);
+					}
 					Para.Set_Shd(Shd);
 				}
 			}
@@ -9686,7 +9697,12 @@ PasteProcessor.prototype =
 			Shd = new CDocumentShd();
 			Shd.Value = c_oAscShdClear;
 			Shd.Color = background_color;
-			Shd.Fill = background_color;
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				Shd.Fill = background_color;
+			}
+			else {
+				Shd.Unifill = AscFormat.CreateSolidFillRGBA(background_color.r, background_color.g, background_color.b, 255);
+			}
 		}
 
 		for (var i = 0, length = node.childNodes.length; i < length; ++i) {
@@ -9759,19 +9775,26 @@ PasteProcessor.prototype =
 			var Shd = new CDocumentShd();
 			Shd.Value = c_oAscShdClear;
 			Shd.Color = background_color;
-			Shd.Fill = background_color;
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				Shd.Fill = background_color;
+			}
+			else {
+				Shd.Unifill = AscFormat.CreateSolidFillRGBA(background_color.r, background_color.g, background_color.b, 255);
+			}
+			
 			cell.Set_Shd(Shd);
 		}
-		var border = this._ExecuteBorder(computedStyle, node, "left", "Left", bAddIfNull);
+		
+		var border = this._ExecuteBorder(computedStyle, node, "left", "Left", bAddIfNull, !PasteElementsId.g_bIsDocumentCopyPaste);
 		if (null != border)
 			cell.Set_Border(border, 3);
-		border = this._ExecuteBorder(computedStyle, node, "top", "Top", bAddIfNull);
+		border = this._ExecuteBorder(computedStyle, node, "top", "Top", bAddIfNull, !PasteElementsId.g_bIsDocumentCopyPaste);
 		if (null != border)
 			cell.Set_Border(border, 0);
-		border = this._ExecuteBorder(computedStyle, node, "right", "Right", bAddIfNull);
+		border = this._ExecuteBorder(computedStyle, node, "right", "Right", bAddIfNull, !PasteElementsId.g_bIsDocumentCopyPaste);
 		if (null != border)
 			cell.Set_Border(border, 1);
-		border = this._ExecuteBorder(computedStyle, node, "bottom", "Bottom", bAddIfNull);
+		border = this._ExecuteBorder(computedStyle, node, "bottom", "Bottom", bAddIfNull, !PasteElementsId.g_bIsDocumentCopyPaste);
 		if (null != border)
 			cell.Set_Border(border, 2);
 
@@ -9821,6 +9844,9 @@ PasteProcessor.prototype =
 				var first_shape = arrShapes2[0];
 				var content = first_shape.txBody.content;
 
+				//Удаляем параграф, который создается в шейпе по умолчанию
+				content.Internal_Content_Remove(0, 1);
+				
 				//добавляем новый параграфы
 				for (i = 0, length = content.Content.length; i < length; ++i) {
 					if (i === length - 1) {
