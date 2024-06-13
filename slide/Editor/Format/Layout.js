@@ -894,7 +894,15 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.checkSlideTheme = function() {
         return AscCommonSlide.Slide.prototype.checkSlideTheme.call(this);
     };
-
+    SlideLayout.prototype.IsUseInDocument = function() {
+        let oMaster = this.Master;
+        if(!oMaster) return false;
+        if(!oMaster.IsUseInDocument()) return false;
+        for(let nLt = 0; nLt < oMaster.sldLayoutLst.length; ++nLt) {
+            if(oMaster.sldLayoutLst[nLt] === this) return true;
+        }
+        return false;
+    };
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;
     LAYOUT_TYPE_MAP["chart"] = AscFormat.nSldLtTChart;

@@ -2026,6 +2026,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return false;
     };
 
+    Slide.prototype.IsUseInDocument = function() {
+        let oPresentation = Asc.editor.private_GetLogicDocument();
+        if(!oPresentation) return false;
+        for(let nSld = 0; nSld < oPresentation.Slides.length; ++nSld) {
+            if(oPresentation.Slides[nSld] === this) {
+                return true;
+            }
+        }
+        return false;
+    };
+
 function fLoadComments(oObject, authors)
 {
     var _comments_count = oObject.writecomments.length;

@@ -2825,6 +2825,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			if (_RecalcData.Drawings.Map.hasOwnProperty(key)) {
 				var oDrawingObject = _RecalcData.Drawings.Map[key];
 				if (AscCommon.g_oTableId.Get_ById(key) === oDrawingObject) {
+					if(oDrawingObject.IsUseInDocument && !oDrawingObject.IsUseInDocument()) {
+						continue;
+					}
 					if(oDrawingObject instanceof AscFormat.CTheme) {
 						let oThemeObjects = this.GetSlideObjectsWithTheme(oDrawingObject);
 						if(!this.IsMasterMode()) {

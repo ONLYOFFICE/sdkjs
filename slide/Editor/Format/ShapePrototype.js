@@ -54,7 +54,10 @@ CShape.prototype.IsUseInDocument = function()
     if(this.parent && this.parent.cSld){
         var aSpTree = this.parent.cSld.spTree;
         for(var i = 0; i < aSpTree.length; ++i){
-            if(aSpTree[i] === this){
+            if(aSpTree[i] === this) {
+                if(this.parent.IsUseInDocument) {
+                    return this.parent.IsUseInDocument();
+                }
                 return true;
             }
         }

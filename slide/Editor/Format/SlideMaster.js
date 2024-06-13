@@ -785,6 +785,16 @@ MasterSlide.prototype.replaceSp = function(oPh, oObject) {
 MasterSlide.prototype.showChartSettings = function() {
     return AscCommonSlide.Slide.prototype.showChartSettings.call(this);
 };
+MasterSlide.prototype.IsUseInDocument = function() {
+    let oPresentation = Asc.editor.private_GetLogicDocument();
+    if(!oPresentation) return false;
+    for(let nMaster = 0; nMaster < oPresentation.slideMasters.length; ++nMaster) {
+        if(oPresentation.slideMasters[nMaster] === this) {
+            return true;
+        }
+    }
+    return false;
+};
 function CMasterThumbnailDrawer()
 {
     this.CanvasImage    = null;
