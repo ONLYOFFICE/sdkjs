@@ -1906,6 +1906,14 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             var Item = this.Content[Pos];
             Item.Recalculate_Range_Width( PRSC, CurLine, CurRange );
         }
+		
+		// TODO: Right edge is wrong
+		let jc = ParaPr.Jc;
+		if (ParaPr.Bidi && (jc === AscCommon.align_Left || jc === AscCommon.align_Justify))
+		{
+			PRSC.Range.W += PRSC.SpaceLen;
+			PRSC.SpaceLen = 0;
+		}
 
         var JustifyWord  = 0;
         var JustifySpace = 0;
@@ -1932,7 +1940,6 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             }
             else
             {
-				let jc = ParaPr.Jc;
 				if (ParaPr.Bidi)
 				{
 					if (AscCommon.align_Left === jc)
