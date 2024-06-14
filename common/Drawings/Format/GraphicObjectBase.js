@@ -494,6 +494,16 @@
 		}, this, []);
 	};
 
+
+	CGraphicBounds.prototype.toObject = function () {
+		return {
+			"X": this.x,
+			"Y": this.y,
+			"W": this.w,
+			"H": this.h
+		};
+	};
+
 	function CCopyObjectProperties() {
 		this.drawingDocument = null;
 		this.idMap = null;
@@ -2624,6 +2634,28 @@
 	CGraphicObjectBase.prototype.getMediaFileName = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.getMediaData = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.getMediaStartTime = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.getMediaEndTime = function() {
+		return null;
+	};
+	CGraphicObjectBase.prototype.isVideo = function() {
+		return false;
+	};
+	CGraphicObjectBase.prototype.getUniMedia = function() {
+		let oUniPr = this.getUniNvProps();
+		if (oUniPr) {
+			let oNvPr = oUniPr.nvPr;
+			if (oNvPr && oNvPr.unimedia) {
+				return oNvPr.unimedia;
+			}
+		}
+		return null;
+	};
 	CGraphicObjectBase.prototype.getLogicDocument = function () {
 		var oApi = editor || Asc['editor'];
 		if (oApi && oApi.WordControl) {
@@ -2728,7 +2760,20 @@
 		return nCurPage || 0;
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
-		if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
+
+		let bCanAdd = false;
+		if(this.isPlaceholder() && this.parent && this.parent.getObjectType &&
+			(this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster ||
+				this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout)) {
+			bCanAdd = true;
+		}
+		else {
+			if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
+				bCanAdd = false;
+			}
+		}
+
+		if (!bCanAdd) {
 			return;
 		}
 		var phType = this.getPlaceholderType();
@@ -2820,8 +2865,11 @@
 			}
 		}
 		var nPageNum;
-		if (this.parent && this.parent.getObjectType && this.parent.getObjectType() === AscDFH.historyitem_type_Slide) {
-			nPageNum = this.parent.num;
+		if (this.parent && this.parent.getObjectType
+			&& (this.parent.getObjectType() === AscDFH.historyitem_type_Slide
+				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout
+				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster )) {
+			nPageNum = this.getParentNum();
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
 		} else {
@@ -2955,6 +3003,11 @@
 			return AscFormat.CShape.prototype.getParentObjects.call(this);
 		}
 		return { slide: null, layout: null, master: null, theme: null};
+	};
+	CGraphicObjectBase.prototype.Get_StartPage_Absolute = function () {
+		if (AscFormat.CShape.prototype.Get_StartPage_Absolute) {
+			return AscFormat.CShape.prototype.Get_StartPage_Absolute.call(this);
+		}
 	};
 	CGraphicObjectBase.prototype.Get_Theme = function () {
 		if (AscFormat.CShape.prototype.Get_Theme) {
@@ -3542,7 +3595,9 @@
 			this.setStyle(null);
 		}
 	};
-
+	CGraphicObjectBase.prototype.getText = function () {
+		return "";
+	};
 	CGraphicObjectBase.prototype.getContentText = function () {
 		return "";
 	};
@@ -3563,6 +3618,20 @@
 		return sResult;
 	};
 
+	CGraphicObjectBase.prototype.getParentNum = function() {
+		if(!this.parent) return -1;
+		if(this.parent && AscFormat.isRealNumber(this.parent.num)) {
+			return this.parent.num;
+		}
+		let oPresentation;
+		if(Asc.editor.private_GetLogicDocument) {
+			oPresentation = Asc.editor.private_GetLogicDocument();
+			if(oPresentation && oPresentation.GetSlideIndex) {
+				return oPresentation.GetSlideIndex(this.parent);
+			}
+		}
+		return -1;
+	};
 
 	CGraphicObjectBase.prototype.applyDrawingSize = function(props) {
 		let oSpParent = this.parent;

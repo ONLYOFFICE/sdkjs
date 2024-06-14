@@ -2209,6 +2209,10 @@ CTextDrawer.prototype.GetTextPr = function()
 {
     return this.m_oTextPr;
 };
+CTextDrawer.prototype.isSupportTextOutline = function()
+{
+	return true;
+};
 
 function PolygonWrapper(oPolygon)
 {

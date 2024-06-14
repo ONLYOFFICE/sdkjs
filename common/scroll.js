@@ -622,11 +622,11 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 			this.dragMinX = this.arrowPosition;
 		}
 	};
-	ScrollObject.prototype.Repos = function ( settings, bIsHorAttack, bIsVerAttack, pos ) {
+	ScrollObject.prototype.Repos = function ( settings, bIsHorAttack, bIsVerAttack, pos, isAttack ) {
 		let dPR = AscBrowser.retinaPixelRatio;
 		let isChangeTheme = settings && this.settings.scrollBackgroundColor !== settings.scrollBackgroundColor;
 
-		if (isChangeTheme) {
+		if (isChangeTheme || isAttack) {
 			for (let i in settings) {
 				this.settings[i] = settings[i];
 			}

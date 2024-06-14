@@ -46,8 +46,6 @@
 
 	AscTest.DrawingDocument.OnEndRecalculate = function ()
 	{
-		AscTest.DrawingDocument.m_oDrawingDocument.SlidesCount = AscTest.DrawingDocument.m_oLogicDocument.Slides.length;
-		AscTest.DrawingDocument.Thumbnails.SlidesCount = AscTest.DrawingDocument.m_oLogicDocument.Slides.length;
 		AscTest.DrawingDocument.Thumbnails.CalculatePlaces();
 	}
 })(window);

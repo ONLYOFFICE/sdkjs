@@ -295,6 +295,7 @@ function (window, undefined) {
 	cASC.prototype.name = 'ASC';
 	cASC.prototype.argumentsMin = 1;
 	cASC.prototype.argumentsMax = 1;
+	cASC.prototype.argumentsType = [argType.text];
 	cASC.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -1217,9 +1218,17 @@ function (window, undefined) {
 		}
 
 		//check valid arguments strings
-		let is3DRef = AscCommon.parserHelp.parse3DRef(arg1.toString());
+		let sArg1 = arg1.toString();
+		let is3DRef = AscCommon.parserHelp.parse3DRef(sArg1);
 		if (!is3DRef) {
-			return new cError(cErrorType.bad_reference);
+			let _range = AscCommonExcel.g_oRangeCache.getAscRange(sArg1);
+			if (_range) {
+				is3DRef = {sheet: null, sheet2: null, range: sArg1};
+			}
+		}
+
+		if (!is3DRef) {
+			return new cError(cErrorType.not_available);
 		}
 
 		if (AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks) {
@@ -1238,11 +1247,14 @@ function (window, undefined) {
 		let eR = wb && wb.getExternalLinkByName(arg0.toString());
 		let ret = new cArray();
 		if (eR) {
+			if (!is3DRef.sheet) {
+				is3DRef.sheet = eR.SheetNames[0];
+			}
 			let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
 			if (externalWs) {
 				let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
-				if (is3DRef.sheet) {
+				if (is3DRef.sheet !== undefined) {
 					let index = eR.getSheetByName(is3DRef.sheet);
 					if (index != null) {
 						let externalSheetDataSet = eR.SheetDataSet[index];

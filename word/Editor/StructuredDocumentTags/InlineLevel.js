@@ -2038,15 +2038,15 @@ CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 	{
 		var oFirstRun = this.GetFirstRun();
 		var oTextPr   = oFirstRun ? oFirstRun.GetDirectTextPr() : new CTextPr();
-
+		
 		this.SelectAll();
-		this.Remove();
+		this.Remove(AscWord.Direction.FORWARD, true);
 		this.RemoveSelection();
-
+		
 		oRun = new ParaRun(this.GetParagraph(), false);
 		oRun.SetPr(oTextPr);
 		this.AddToContent(0, oRun);
-
+		
 		if (2 === this.Content.length
 			&& para_Run === this.Content[0].Type
 			&& para_Run === this.Content[1].Type
@@ -2055,9 +2055,9 @@ CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 			&& this.Content[0].GetReviewInfo().IsCurrentUser()
 			&& this.Content[1].GetReviewInfo().IsCurrentUser()
 			&& ((isChecked
-			&& String.fromCharCode(this.Pr.CheckBox.CheckedSymbol) === this.Content[1].GetText())
-			|| (!isChecked
-			&& String.fromCharCode(this.Pr.CheckBox.UncheckedSymbol) === this.Content[1].GetText())))
+					&& String.fromCharCode(this.Pr.CheckBox.CheckedSymbol) === this.Content[1].GetText())
+				|| (!isChecked
+					&& String.fromCharCode(this.Pr.CheckBox.UncheckedSymbol) === this.Content[1].GetText())))
 		{
 			this.RemoveFromContent(1, 1);
 			oRun.SetReviewType(reviewtype_Common);
@@ -2143,9 +2143,11 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function(_nW, _nH)
 
 		var nW = _nW ? _nW : 50;
 		var nH = _nH ? _nH : 50;
+		
+		let placholderImage = this.IsForm() ? AscCommon.g_sWordPlaceholderFormImage : AscCommon.g_sWordPlaceholderImage;
 
 		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, oLogicDocument, null);
-		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
+		var oImage = oDrawingObjects.createImage(placholderImage, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
 	}
@@ -3072,7 +3074,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	drawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
 	drawing.Set_Distance(0, 0, 0, 0);
 	drawing.Set_DrawingType(drawing_Anchor);
-	drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+	drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
 	drawing.Set_BehindDoc(false);
 	
 	var oRun = new ParaRun(oParagraph, false);

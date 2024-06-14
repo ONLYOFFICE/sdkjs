@@ -1509,7 +1509,6 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.updatePosition3(this.PageNum, this.X, this.Y, OldPageNum);
 	this.useWrap = this.Use_TextWrap();
 };
-
 ParaDrawing.prototype.GetClipRect = function ()
 {
 	if (this.Is_Inline() || this.Use_TextWrap())

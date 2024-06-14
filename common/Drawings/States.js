@@ -46,7 +46,7 @@ var SNAP_DISTANCE = 1.27;
 
 
 
-function StartAddNewShape(drawingObjects, preset)
+function StartAddNewShape(drawingObjects, preset, nPlaceholderType, bVertical)
 {
     this.drawingObjects = drawingObjects;
     this.preset = preset;
@@ -58,7 +58,8 @@ function StartAddNewShape(drawingObjects, preset)
     this.startY = null;
 
     this.oldConnector = null;
-
+    this.placeholderType = nPlaceholderType;
+    this.bVertical = bVertical;
 }
 
 StartAddNewShape.prototype =
@@ -93,7 +94,7 @@ StartAddNewShape.prototype =
                 }
             }
         }
-        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects));
+        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, dStartX, dStartY, this.drawingObjects.getTheme(), master, layout, slide, 0, this.drawingObjects, this.placeholderType, this.bVertical));
         this.bStart = true;
         this.drawingObjects.swapTrackObjects();
     },
@@ -277,7 +278,7 @@ StartAddNewShape.prototype =
                                 }
                             }
                             else {
-                                oPresentation.DrawingDocument.OnRecalculatePage(oPresentation.CurPage, oCurSlide);
+                                oPresentation.DrawingDocument.OnRecalculateSlide(oPresentation.CurPage);
                             }
                         }
                     }
@@ -330,6 +331,46 @@ StartAddNewShape.prototype =
 					{
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
+                    if(oThis.preset && oThis.preset.startsWith("actionButton"))
+                    {
+                        let sHyperText = "", sHyperValue, sHyperTooltip;
+                        switch (oThis.preset) {
+                            case "actionButtonBackPrevious": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=previousslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Previous Slide");
+                                break;
+                            }
+                            case "actionButtonBeginning": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=firstslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("First Slide");
+                                break;
+                            }
+                            case "actionButtonEnd": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=lastslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Last Slide");
+                                break;
+                            }
+                            case "actionButtonForwardNext": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=nextslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Next Slide");
+                                break;
+                            }
+                            case "actionButtonHome": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=firstslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("First Slide");
+                                break;
+                            }
+                            case "actionButtonReturn": {
+                                sHyperValue = "ppaction://hlinkshowjump?jump=previousslide";
+                                sHyperTooltip = AscCommon.translateManager.getValue("Previous Slide");
+                                break;
+                            }
+                        }
+                        if(sHyperValue) {
+                            oAPI.sendEvent("asc_onDialogAddHyperlink", new Asc.CHyperlinkProperty({Text: sHyperText, Value: sHyperValue, ToolTip: sHyperTooltip}));
+                        }
+                    }
+
                 }
 	            oThis.drawingObjects.updateOverlay();
             };
@@ -624,6 +665,7 @@ NullState.prototype =
                 _x = -1000;
             }
         }
+        this.drawingObjects.checkShowMediaControlOnHover(this.lastMoveHandler);
     },
 
     onMouseUp: function(e, x, y, pageIndex)

@@ -832,7 +832,29 @@
 				case "onWindowEvent":
 				{
 					if (window.Asc.plugin._windows && pluginData.windowID && window.Asc.plugin._windows[pluginData.windowID])
-						window.Asc.plugin._windows[pluginData.windowID]._oncommand(pluginData.eventName, pluginData.eventData);
+					{
+						if ("private_window_method" === pluginData.eventName)
+						{
+							var _windowID = pluginData.windowID;
+							window.Asc.plugin.executeMethod(pluginData.eventData.name, pluginData.eventData.params, function(retValue){
+								if (window.Asc.plugin._windows && window.Asc.plugin._windows[_windowID])
+									window.Asc.plugin._windows[_windowID].command("on_private_window_method", retValue);
+							});
+						}
+						else if ("private_window_command" === pluginData.eventName)
+						{
+							var _windowID = pluginData.windowID;
+							window.Asc.plugin.info.recalculate = (false === pluginData.eventData.isCalc) ? false : true;
+							window.Asc.plugin.executeCommand("command", pluginData.eventData.code, function(retValue){
+								if (window.Asc.plugin._windows && window.Asc.plugin._windows[_windowID])
+									window.Asc.plugin._windows[_windowID].command("on_private_window_command", retValue);
+							});
+						}
+						else
+						{
+							window.Asc.plugin._windows[pluginData.windowID]._oncommand(pluginData.eventName, pluginData.eventData);
+						}
+					}
 					break;
 				}
 				default:

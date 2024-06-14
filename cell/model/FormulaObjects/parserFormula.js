@@ -561,6 +561,12 @@ var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
+var c_nMaxDate1900 = 2958465;
+var c_nMaxDate1904 = c_nMaxDate1900 - (c_Date1900Const - c_Date1904Const) + 1;
+
+function getMaxDate () {
+	return AscCommon.bDate1904 ? c_nMaxDate1904 : c_nMaxDate1900; 	// Maximum date used in calculations in ms (equivalent 31/12/9999)
+}
 
 
 // set type weight of base types
@@ -1167,7 +1173,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
-	cArea.prototype.getValueByRowCol = function (i, j) {
+	cArea.prototype.getValueByRowCol = function (i, j, checkEmpty) {
 		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
@@ -1175,6 +1181,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				res = checkTypeCell(cell);
 			}
 		});
+		if (checkEmpty && res == null) {
+			res = new cEmpty();
+		}
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1389,7 +1398,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getFirstElement = function () {
-		return this.getValueByRowCol(0, 0);
+		return this.getValueByRowCol(0, 0, true);
 	};
 	cArea.prototype._getCol = function (colIndex) {
 		let dimensions = this.getDimensions();
@@ -1558,7 +1567,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
-	cArea3D.prototype.getValueByRowCol = function (i, j) {
+	cArea3D.prototype.getValueByRowCol = function (i, j, checkEmpty) {
 		let r = this.getRanges(), res;
 
 		if (r[0]) {
@@ -1567,6 +1576,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					res = checkTypeCell(cell);
 				}
 			});
+		}
+
+		if (checkEmpty && res == null) {
+			res = new cEmpty();
 		}
 
 		return res;
@@ -1801,7 +1814,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea3D.prototype.getFirstElement = function () {
-		return this.getValueByRowCol(0, 0);
+		return this.getValueByRowCol(0, 0, true);
 	};
 	cArea3D.prototype._getCol = function (colIndex) {
 		let dimensions = this.getDimensions();
@@ -3346,7 +3359,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 			} else if (cElementType.cellsRange === arg.type || cElementType.cellsRange3D === arg.type) {
 				newArgs[i] = bFirstRangeElem ? arg.getValueByRowCol(0,0) : arg.cross(arg1);
-				if (newArgs[i] == undefined) {
+				if (newArgs[i] == null) {
 					newArgs[i] = arg.cross(arg1);
 				}
 			} else if (cElementType.array === arg.type) {
@@ -4741,6 +4754,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		cFormulaFunction[f.asc_getName()] = func;
 		cAllFormulaFunction[a.name] = func;
 	}
+	function removeCustomFunction(sName) {
+		if (!sName) {
+			return;
+		}
+		delete cFormulaFunction[sName];
+		delete cAllFormulaFunction[sName];
+	}
 	function getRangeByRef(ref, ws, onlyRanges, checkMultiSelection, checkFormula) {
 		var activeCell = ws.getSelection().activeCell;
 		var bbox = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
@@ -5996,6 +6016,9 @@ function parserFormula( formula, parent, _ws ) {
 
 	this.ref = null;
 
+	//mark function, when need reparse and recalculate on custom function change change
+	this.bUnknownOrCustomFunction = null;
+
 	if (AscFonts.IsCheckSymbols) {
 		AscFonts.FontPickerByCharacter.getFontsByString(this.Formula);
 	}
@@ -7248,6 +7271,14 @@ function parserFormula( formula, parent, _ws ) {
 					//_xlws only together with _xlfn
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);
+
+					t.bUnknownOrCustomFunction = true;
+				}
+
+				//mark function, when need reparse and recalculate on custom function change change
+				let wb = Asc["editor"] && Asc["editor"].wb;
+				if (wb && wb.customFunctionEngine && wb.customFunctionEngine.getFunc(operandStr)) {
+					t.bUnknownOrCustomFunction = true;
 				}
 
 				if (found_operator !== null) {
@@ -7435,7 +7466,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
 			}
-			if (isFoundImportFunctions) {
+			if (isFoundImportFunctions && !parseResult.error) {
 				//share external links
 				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
 				this.calculate();
@@ -7458,6 +7489,15 @@ function parserFormula( formula, parent, _ws ) {
 							for (var j = 0; j < this.importFunctionsRangeLinks[i].length; j++) {
 								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: this.importFunctionsRangeLinks[i][j].sheet, notUpdateId: true});
 							}
+						}
+					}
+
+					if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						if (!AscCommonExcel.importRangeLinksState.notUpdateIdMap) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap = {};
+						}
+						for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+							AscCommonExcel.importRangeLinksState.notUpdateIdMap[i] = true;
 						}
 					}
 
@@ -9248,7 +9288,7 @@ function parserFormula( formula, parent, _ws ) {
 		const oGroupChangedCell = this.getGroupChangedCells();
 		const sCellWsName = oCell.ws.getName().toLowerCase();
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
-		if (!oGroupChangedCell[sCellWsName].hasOwnProperty(nCellIndex)) {
+		if (!oGroupChangedCell[sCellWsName] || !oGroupChangedCell[sCellWsName][nCellIndex]) {
 			return;
 		}
 		delete oGroupChangedCell[sCellWsName][nCellIndex];
@@ -9298,15 +9338,14 @@ function parserFormula( formula, parent, _ws ) {
 		this.oPrevIterResult = null;
 	};
 	/**
-	 * Method sets a result of a difference between iterations.
+	 * Method sets result of a difference between iterations.
 	 * @memberof CalcRecursion
 	 * @param {Cell} oCell
+	 * @param {number} nResult
 	 */
-	CalcRecursion.prototype.setDiffBetweenIter = function (oCell) {
+	CalcRecursion.prototype.setDiffBetweenIter = function (oCell, nResult) {
 		const nCellIndex = AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol);
 		const sWsName = oCell.ws.getName().toLowerCase();
-		const nPrevIterResult = this.getPrevIterResult(oCell);
-		const nCurrentIterResult = oCell.getNumberValue();
 
 		if (this.oDiffBetweenIter == null) {
 			this.oDiffBetweenIter = {};
@@ -9314,7 +9353,22 @@ function parserFormula( formula, parent, _ws ) {
 		if (!this.oDiffBetweenIter.hasOwnProperty(sWsName)) {
 			this.oDiffBetweenIter[sWsName] = {};
 		}
-		this.oDiffBetweenIter[sWsName][nCellIndex] = Math.abs(nCurrentIterResult - nPrevIterResult);
+		this.oDiffBetweenIter[sWsName][nCellIndex] = nResult;
+	}
+	/**
+	 * Method calculates a result of a difference between iterations.
+	 * @memberof CalcRecursion
+	 * @param {Cell} oCell
+	 */
+	CalcRecursion.prototype.calcDiffBetweenIter = function (oCell) {
+		const nPrevIterResult = this.getPrevIterResult(oCell);
+		const nCurrentIterResult = oCell.getNumberValue();
+		const nChainLength = this.getRecursiveCells(oCell).length;
+
+		if (this.getIterStep() <= nChainLength && nCurrentIterResult === nPrevIterResult) {
+			return;
+		}
+		this.setDiffBetweenIter(oCell, Math.abs(nCurrentIterResult - nPrevIterResult));
 	};
 	/**
 	 * Method returns a result of a difference between iterations.
@@ -9330,7 +9384,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (oDiffBetweenIter == null) {
 			return NaN;
 		}
-		if (!oDiffBetweenIter.hasOwnProperty(sWsName) && !oDiffBetweenIter[sWsName].hasOwnProperty(nCellIndex)) {
+		if (!oDiffBetweenIter.hasOwnProperty(sWsName) || !oDiffBetweenIter[sWsName].hasOwnProperty(nCellIndex)) {
 			return NaN;
 		}
 
@@ -9678,7 +9732,7 @@ function parserFormula( formula, parent, _ws ) {
 		if (_row > sizes.row - 1 || _col > sizes.col - 1) {
 			return new cError(cErrorType.not_available);
 		}
-		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col) : array.getElementRowCol(_row, _col);
+		let res = array.getValueByRowCol ? array.getValueByRowCol(_row, _col, true) : array.getElementRowCol(_row, _col);
 		return res;
 	}
 
@@ -10145,6 +10199,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].getFormulasInfo = getFormulasInfo;
 	window['AscCommonExcel'].getRangeByRef = getRangeByRef;
 	window['AscCommonExcel'].addNewFunction = addNewFunction;
+	window['AscCommonExcel'].removeCustomFunction = removeCustomFunction;
 
 	window['AscCommonExcel']._func = _func;
 
@@ -10165,6 +10220,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].convertAreaToArray = convertAreaToArray;
 	window['AscCommonExcel'].convertAreaToArrayRefs = convertAreaToArrayRefs;
 	window['AscCommonExcel'].getArrayHelper = getArrayHelper;
+	window['AscCommonExcel'].getMaxDate = getMaxDate;
 
 	window['AscCommonExcel'].importRangeLinksState = importRangeLinksState;
 

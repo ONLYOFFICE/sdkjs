@@ -66,7 +66,10 @@ var c_oAscAlignType = {
 /** @enum {number} */
 var c_oAscContextMenuTypes = {
 	Main       : 0,
-	Thumbnails : 1
+	Thumbnails : 1,
+	AnimEffect: 3,
+	Master: 4,
+	Layout: 5
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
@@ -114,34 +117,34 @@ var c_oAscSlideTransitionTypes = {
 
 /** @enum {number} */
 var c_oAscSlideTransitionParams = {
-	Fade_Smoothly      : 0,
-	Fade_Through_Black : 1,
+	Fade_Smoothly          : 0,
+	Fade_Through_Black     : 1,
 
-	Param_Left        : 0,
-	Param_Top         : 1,
-	Param_Right       : 2,
-	Param_Bottom      : 3,
-	Param_TopLeft     : 4,
-	Param_TopRight    : 5,
-	Param_BottomLeft  : 6,
-	Param_BottomRight : 7,
+	Param_Left             : 2,
+	Param_Top              : 3,
+	Param_Right            : 4,
+	Param_Bottom           : 5,
+	Param_TopLeft          : 6,
+	Param_TopRight         : 7,
+	Param_BottomLeft       : 8,
+	Param_BottomRight      : 9,
 
-	Split_VerticalIn    : 8,
-	Split_VerticalOut   : 9,
-	Split_HorizontalIn  : 10,
-	Split_HorizontalOut : 11,
+	Split_VerticalIn       : 10,
+	Split_VerticalOut      : 11,
+	Split_HorizontalIn     : 12,
+	Split_HorizontalOut    : 13,
 
-	Clock_Clockwise        : 0,
-	Clock_Counterclockwise : 1,
-	Clock_Wedge            : 2,
+	Clock_Clockwise        : 14,
+	Clock_Counterclockwise : 15,
+	Clock_Wedge            : 16,
 
-	Zoom_In        : 0,
-	Zoom_Out       : 1,
-	Zoom_AndRotate : 2,
+	Zoom_In                : 17,
+	Zoom_Out               : 18,
+	Zoom_AndRotate         : 19,
 
-	Morph_Objects: 0,
-	Morph_Words: 1,
-	Morph_Letters:2
+	Morph_Objects          : 20,
+	Morph_Words            : 21,
+	Morph_Letters          : 22
 };
 
 /** @enum {number} */
@@ -410,7 +413,7 @@ var c_oAscSlideAnimChartBuildType = {
 };
 
 /** @enum {number} */
-var c_oAscSlideOleChartBuildType = {
+var c_oAscSlideOleChartBuildTypec_oAscSlideOleChartBuildType = {
 	AllAtOnce:  0,
 	Category:   1,
 	CategoryEl: 2,
@@ -502,6 +505,13 @@ var c_oAscPresentationShortcutType = {
 	SpeechWorker    : 32
 };
 
+
+const c_oAscPresentationViewMode = {
+	normal: 0,
+	masterSlide: 1,
+	sorter: 2
+};
+
 var TABLE_STYLE_WIDTH_PIX  = 72;
 var TABLE_STYLE_HEIGHT_PIX = 52;
 
@@ -521,6 +531,7 @@ prot['Bottom'] = c_oAscVertAlignJc.Bottom;
 prot = window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenuTypes = c_oAscContextMenuTypes;
 prot['Main']       = c_oAscContextMenuTypes.Main;
 prot['Thumbnails'] = c_oAscContextMenuTypes.Thumbnails;
+prot['AnimEffect'] = c_oAscContextMenuTypes.AnimEffect;
 
 prot = window['Asc']['c_oAscAlignShapeType'] = c_oAscAlignShapeType;
 prot['ALIGN_LEFT']   = c_oAscAlignShapeType.ALIGN_LEFT;
@@ -610,6 +621,11 @@ prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadow
 prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
 
 prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
+prot = window['Asc']['c_oAscPresentationViewMode'] = window['Asc'].c_oAscPresentationViewMode = c_oAscPresentationViewMode;
+prot['normal']      = c_oAscPresentationViewMode.normal;
+prot['masterSlide'] = c_oAscPresentationViewMode.masterSlide;
+prot['sorter']      = c_oAscPresentationViewMode.sorter;
 
 
 window['AscCommon']                = window['AscCommon'] || {};

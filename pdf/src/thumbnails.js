@@ -204,11 +204,15 @@
 
     CBlock.prototype.getHeight = function(columnW, startOffset, betweenPages, zoom)
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var maxPageHeight = 0;
         for (var i = 0, len = this.pages.length; i < len; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
+
             if (this.pages[i].page.height > maxPageHeight)
-                maxPageHeight = this.pages[i].page.height;
+                maxPageHeight = false == isLandscape ? this.pages[i].page.height : this.pages[i].page.width;
         }
 
         var blockHeight = (maxPageHeight * zoom) >> 0;
@@ -218,9 +222,17 @@
         var currentPosX = startOffset;
         for (var i = 0, len = this.pages.length; i < len; i++)
         {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            let isLandscape = oViewer.isLandscapePage(this.pages[i].num);
+
             var drPage = this.pages[i];
             var pW = (drPage.page.width * zoom) >> 0;
             var pH = (drPage.page.height * zoom) >> 0;
+            if (isLandscape)
+            {
+                [pW, pH] = [pH, pW];
+            }
+
             var curPageHeight = pH + PageStyle.numberFontOffset + PageStyle.numberFontHeight;
 
             drPage.pageRect.y = this.top + ((blockHeight - curPageHeight) >> 1);
@@ -478,7 +490,7 @@
                 for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
                 {
                     drPage = block.pages[pageNum];
-                    if (drPage.page.image === null ||
+                    if (drPage.page.image === null || drPage.page.needRedraw ||
                         (drPage.page.image.requestWidth != drPage.pageRect.w || drPage.page.image.requestHeight != drPage.pageRect.h))
                     {
                         needPage = drPage;
@@ -490,8 +502,38 @@
             if (needPage)
             {
                 isNeedTasks = true;
-                needPage.page.image = this.viewer.file.getPage(needPage.num, needPage.pageRect.w, needPage.pageRect.h, undefined, this.viewer.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+                let isLandscape = this.viewer.isLandscapePage(needPage.num);
+                let angle       = this.viewer.getPageRotate(needPage.num);
+                
+                let oImage;
+                if (isLandscape) {
+                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.h, needPage.pageRect.w);
+                }
+                else {
+                    oImage = this.viewer.GetPageForThumbnails(needPage.num, needPage.pageRect.w, needPage.pageRect.h);
+                }
+
+                // Создание нового canvas с изменёнными размерами
+                const rotatedCanvas = document.createElement('canvas');
+                rotatedCanvas.width = needPage.pageRect.w;
+                rotatedCanvas.height = needPage.pageRect.h;
+                const rotatedContext = rotatedCanvas.getContext('2d');
+                
+                // Поворот canvas
+                rotatedContext.save();
+                rotatedContext.translate(rotatedCanvas.width / 2 >> 0, rotatedCanvas.height / 2 >> 0);
+                rotatedContext.rotate(angle * Math.PI / 180);
+                rotatedContext.drawImage(oImage, -oImage.width / 2 >> 0, -oImage.height / 2 >> 0);
+                rotatedContext.restore();
+
+                rotatedCanvas.requestWidth = rotatedCanvas.width;
+                rotatedCanvas.requestHeight = rotatedCanvas.height;
+
+                needPage.page.image = rotatedCanvas;
+
+                needPage.page.needRedraw = false;
                 this.isRepaint = true;
+                
             }
         }
 
@@ -688,6 +730,24 @@
         this.calculateVisibleBlocks();
         this.repaint();
     };
+    CDocument.prototype._repaintPage = function(nPage) {
+        this.pages[nPage].needRedraw = true;
+    };
+    CDocument.prototype._deletePage = function(nPage) {
+        this.pages.splice(nPage, 1);
+        this._resize();
+    };
+    CDocument.prototype._addPage = function(nPos) {
+        let pages = this.viewer.file.pages;
+        let koef = 1;
+        let filePage = pages[nPos];
+
+        if (filePage.Dpi > 1)
+            koef = 100 / filePage.Dpi;
+
+        this.pages.splice(nPos, 0, new CPage(koef * filePage.W, koef * filePage.H));
+        this._resize();
+    };
 
     CDocument.prototype.calculateVisibleBlocks = function()
     {
@@ -745,23 +805,48 @@
 
     CDocument.prototype.getMaxPageWidth = function()
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var size = 0, page = null;
         for (var i = 0, count = this.pages.length; i < count; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(i);
+
             page = this.pages[i];
-            if (size < page.width)
-                size = page.width;
+            if (isLandscape)
+            {
+                if (size < page.height)
+                    size = page.height;
+            }
+            else
+            {
+                if (size < page.width)
+                    size = page.width;
+            }
+            
         }
         return size;
     };
     CDocument.prototype.getMaxPageHeight = function()
     {
+        let oViewer = Asc.editor.getDocumentRenderer();
+
         var size = 0, page = null;
         for (var i = 0, count = this.pages.length; i < count; i++)
         {
+            let isLandscape = oViewer.isLandscapePage(i);
+
             page = this.pages[i];
-            if (size < page.height)
-                size = page.height;
+            if (isLandscape)
+            {
+                if (size < page.width)
+                    size = page.width;
+            }
+            else
+            {
+                if (size < page.height)
+                    size = page.height;
+            }
         }
         return size;
     };
@@ -842,6 +927,16 @@
         AscCommon.check_MouseUpEvent(e);
         if (e && e.preventDefault)
             e.preventDefault();
+
+        if (global_mouseEvent.Button == 2) {
+            this.viewer.Api.sync_ContextMenuCallback({
+                X_abs   : AscCommon.global_mouseEvent.X - this.viewer.x,
+                Y_abs   : AscCommon.global_mouseEvent.Y - this.viewer.y,
+                Type    : Asc.c_oAscPdfContextMenuTypes.Thumbnails,
+                PageNum : this.getHoverPage()
+            });
+        }
+
         return false;
     };
 
@@ -859,10 +954,18 @@
         {
             var drPage = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
             var hoverNum = drPage ? drPage.num : -1;
+            
             if (hoverNum !== this.hoverPage)
             {
                 this.hoverPage = hoverNum;
                 this._paint();
+            }
+
+            if (hoverNum != -1) {
+                this.canvas.style.cursor = 'pointer';
+            }
+            else {
+                this.canvas.style.cursor = 'default';
             }
         }
 
@@ -870,7 +973,10 @@
             e.preventDefault();
         return false;
     };
-
+    CDocument.prototype.getHoverPage = function()
+    {
+        return this.hoverPage;
+    };
     CDocument.prototype.onMouseWhell = function(e)
     {
         AscCommon.stopEvent(e);
@@ -973,4 +1079,5 @@
     prot["resize"] = prot.resize;
     prot["setEnabled"] = prot.setEnabled;
     prot["registerEvent"] = prot.registerEvent;
+    prot["getHoverPage"] = prot.getHoverPage;
 })();

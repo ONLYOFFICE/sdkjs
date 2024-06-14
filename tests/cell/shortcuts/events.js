@@ -541,7 +541,9 @@
 		selectToUpperCell         : 66,
 		showFilterOptions         : 67,
 		showAutoComplete          : 68,
-		showDataValidation        : 69
+		showDataValidation        : 69,
+		increaseFontSize          : 70,
+		decreaseFontSize          : 71
 	};
 
 	const tableEvents = {};
@@ -753,6 +755,8 @@
 	tableEvents[tableHotkeyTypes.showFilterOptions] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
 	tableEvents[tableHotkeyTypes.showAutoComplete] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
 	tableEvents[tableHotkeyTypes.showDataValidation] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.increaseFontSize] = [new CNativeEvent(keyCodes.BracketRight, true, false, false, false)];
+	tableEvents[tableHotkeyTypes.decreaseFontSize] = [new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)];
 
 	const cellEditorHotkeyTypes = {
 		closeWithoutSave     : 0,
@@ -799,7 +803,9 @@
 		disableF2            : 42,
 		switchReference      : 43,
 		addTime              : 44,
-		addDate              : 45
+		addDate              : 45,
+		increaseFontSize     : 46,
+		decreaseFontSize     : 47
 	};
 
 	const oCellEditorEvents = {};
@@ -950,6 +956,8 @@
 		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
 		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
 	];
+	oCellEditorEvents[cellEditorHotkeyTypes.increaseFontSize] = [new CNativeEvent(keyCodes.BracketRight, true, false, false, false)];
+	oCellEditorEvents[cellEditorHotkeyTypes.decreaseFontSize] = [new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)];
 
 	function ExecuteGraphicHotkey(type, eventIndex)
 	{

@@ -73,7 +73,6 @@ CGroupShape.prototype.handleUpdateLn = function()
 CGroupShape.prototype.getRecalcObject = CShape.prototype.getRecalcObject;
 CGroupShape.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 CGroupShape.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
-CGroupShape.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 
 
 CGroupShape.prototype.getTargetDocContent = AscFormat.DrawingObjectsController.prototype.getTargetDocContent;

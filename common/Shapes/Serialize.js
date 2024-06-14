@@ -728,7 +728,6 @@ function BinaryPPTYLoader()
                 {
                     var indexTh = s.GetULong();
                     master.setTheme(this.aThemes[indexTh]);
-                    master.ThemeIndex = -indexTh - 1;
                     break;
                 }
                 case 1:
@@ -6351,7 +6350,7 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
-        var shape = new AscFormat.CShape(this.TempMainObject);
+        var shape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape(this.TempMainObject) : new AscFormat.CShape(this.TempMainObject);
 
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
@@ -6734,7 +6733,18 @@ function BinaryPPTYLoader()
         var s = this.stream;
 
         var isOle = (type === 6);
-        var pic = isOle ? new AscFormat.COleObject(this.TempMainObject) : new AscFormat.CImageShape(this.TempMainObject);
+        var pic;
+        if (isOle)
+        {
+            pic = new AscFormat.COleObject(this.TempMainObject)
+        }
+        else
+        {
+            if (Asc.editor.isPdfEditor())
+                pic = new AscPDF.CPdfImage();
+            else
+                pic = new AscFormat.CImageShape(this.TempMainObject);
+        }
 
         pic.setBDeleted(false);
 
@@ -7012,7 +7022,7 @@ function BinaryPPTYLoader()
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
 
-        var _graphic_frame = new AscFormat.CGraphicFrame();
+        var _graphic_frame = Asc.editor.isPdfEditor() ? new AscPDF.CPdfGraphicFrame() : new AscFormat.CGraphicFrame();
         _graphic_frame.setParent2(this.TempMainObject);
         this.TempGroupObject = _graphic_frame;
 
@@ -7103,6 +7113,33 @@ function BinaryPPTYLoader()
                     {
                         s.SkipRecord();
                     }
+                    break;
+                }
+                case 7: // chartEx
+                {
+                    var _length = s.GetLong();
+                    var _pos = s.cur;
+
+                    if(typeof AscFormat.CChartSpace !== "undefined" && _length)
+                    {
+                        var _stream = new AscCommon.FT_Stream2();
+                        _stream.data = s.data;
+                        _stream.pos = s.pos;
+                        _stream.cur = s.cur;
+                        _stream.size = s.size;
+                        _chart = new AscFormat.CChartSpace();
+                        _chart.setBDeleted(false);
+                        AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
+                        AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;
+                        var oBinaryChartReader = new AscCommon.BinaryChartReader(_stream);
+                        oBinaryChartReader.ExternalReadCT_ChartExSpace(_length, _chart, this.presentation);
+                        if(!_chart.hasCharts())
+                        {
+                            _chart = null;
+                        }
+                    }
+
+                    s.Seek2(_pos + _length);
                     break;
                 }
                 case 8://smartArt

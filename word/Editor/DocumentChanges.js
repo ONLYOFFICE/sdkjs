@@ -48,6 +48,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]     
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit] = CChangesDocumentSettingsConsecutiveHyphenLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_HyphenationZone]        = CChangesDocumentSettingsHyphenationZone;
+AscDFH.changesFactory[AscDFH.historyitem_Document_PageColor]                       = CChangesDocumentPageColor;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -1157,4 +1158,129 @@ CChangesDocumentSettingsHyphenationZone.prototype.private_SetValue = function(va
 {
 	this.Class.Settings.hyphenationZone = value;
 	this.Class.OnChangeAutoHyphenation();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
+function CChangesDocumentPageColor(Class, Old, New)
+{
+	AscDFH.CChangesBase.call(this, Class);
+	
+	this.Old = Old;
+	this.New = New;
+}
+CChangesDocumentPageColor.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesDocumentPageColor.prototype.constructor = CChangesDocumentPageColor;
+CChangesDocumentPageColor.prototype.Type = AscDFH.historyitem_Document_PageColor;
+CChangesDocumentPageColor.prototype.Undo = function()
+{
+	this.Class.Background = this.Old;
+};
+CChangesDocumentPageColor.prototype.Redo = function()
+{
+	this.Class.Background = this.New;
+};
+CChangesDocumentPageColor.prototype.WriteToBinary = function(writer)
+{
+	let startPos = writer.GetCurPosition();
+	writer.Skip(4);
+	
+	let flags = 0;
+	if (this.New.Color)
+	{
+		flags |= 1;
+		this.New.Color.Write_ToBinary(writer);
+	}
+	
+	if (this.New.Unifill)
+	{
+		flags |= 2;
+		this.New.Unifill.Write_ToBinary(writer);
+	}
+	
+	if (this.New.shape)
+	{
+		flags |= 4;
+		writer.WriteString2(this.New.shape.GetId());
+	}
+	
+	if (this.Old.Color)
+	{
+		flags |= 8;
+		this.Old.Color.Write_ToBinary(writer);
+	}
+	
+	if (this.Old.Unifill)
+	{
+		flags |= 16;
+		this.Old.Unifill.Write_ToBinary(writer);
+	}
+	
+	if (this.Old.shape)
+	{
+		flags |= 32;
+		writer.WriteString2(this.Old.shape.GetId());
+	}
+	
+	let endPos = writer.GetCurPosition();
+	writer.Seek(startPos);
+	writer.WriteLong(flags);
+	writer.Seek(endPos);
+};
+CChangesDocumentPageColor.prototype.ReadFromBinary = function(reader)
+{
+	this.New = {
+		Color   : null,
+		shape   : null,
+		Unifill : null,
+	};
+	
+	this.Old = {
+		Color   : null,
+		shape   : null,
+		Unifill : null,
+	};
+	
+	let flags = reader.GetLong();
+	
+	if (flags & 1)
+	{
+		this.New.Color = new CDocumentColor(0, 0, 0);
+		this.New.Color.Read_FromBinary(reader);
+	}
+	
+	if (flags & 2)
+	{
+		this.New.Unifill = new AscFormat.CUniFill();
+		this.New.Unifill.Read_FromBinary(reader);
+	}
+	
+	if (flags & 4)
+	{
+		let shapeId = reader.GetString2();
+		this.New.shape = AscCommon.g_oTableId.GetById(shapeId);
+	}
+	
+	if (flags & 8)
+	{
+		this.Old.Color = new CDocumentColor(0, 0, 0);
+		this.Old.Color.Read_FromBinary(reader);
+	}
+	
+	if (flags & 16)
+	{
+		this.Old.Unifill = new AscFormat.CUniFill();
+		this.Old.Unifill.Read_FromBinary(reader);
+	}
+	
+	if (flags & 32)
+	{
+		let shapeId = reader.GetString2();
+		this.Old.shape = AscCommon.g_oTableId.GetById(shapeId);
+	}
+};
+CChangesDocumentPageColor.prototype.CreateReverseChange = function()
+{
+	return new CChangesDocumentPageColor(this.Class, this.New, this.Old);
 };

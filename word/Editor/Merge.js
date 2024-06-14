@@ -546,10 +546,11 @@
                                 break;
                             }
                         }
-                        for (let i = 0; i < oCurrentRun.Content.length; i += 1) {
-                            oNewOriginalTextElement.addToElements(oCurrentRun.Content[i], oReviewInfo);
+												const oCopyCurrentRun = oCurrentRun.Copy(false, {CopyReviewPr: true});
+                        for (let i = 0; i < oCopyCurrentRun.Content.length; i += 1) {
+                            oNewOriginalTextElement.addToElements(oCopyCurrentRun.Content[i], oReviewInfo);
                         }
-                        arrContentForInsert.push(oCurrentRun.Copy(false, {CopyReviewPr: true}));
+                        arrContentForInsert.push(oCopyCurrentRun);
                         nCurrentRunPosition -= 1;
                         oCurrentRun = oMockParagraph.Content[nCurrentRunPosition];
                     }

@@ -1792,7 +1792,7 @@ function (window, undefined) {
 				}
 			}
 			if ("" === textPresetsArr[i]) {
-				textPresetsArr[i] = "None";
+				textPresetsArr[i] = AscCommon.translateManager.getValue("None");
 			}
 		}
 

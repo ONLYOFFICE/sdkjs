@@ -2803,11 +2803,16 @@
 			return res;
 		};
 
+		let oThis = this;
+		let getCompleteMenu = function (_name, _type) {
+			return new AscCommonExcel.asc_CCompleteMenu(_name, _type);
+		};
+
 		let defNamesList, defName, defNameStr, _lastFNameLength, _type;
 		fName = fName.toUpperCase();
 		for (let i = 0; i < this.formulasList.length; ++i) {
 			if (0 === this.formulasList[i].indexOf(fName)) {
-				arrResult.push(new AscCommonExcel.asc_CCompleteMenu(this.formulasList[i], c_oAscPopUpSelectorType.Func));
+				arrResult.push(getCompleteMenu(this.formulasList[i], c_oAscPopUpSelectorType.Func));
 			}
 		}
 
@@ -2827,7 +2832,7 @@
 				} else if (defName.type === Asc.c_oAscDefNameType.table) {
 					_type = c_oAscPopUpSelectorType.Table;
 				}
-				arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
+				arrResult.push(getCompleteMenu(defNameStr, _type));
 			} else if (defName.type === Asc.c_oAscDefNameType.table && 0 === fName.indexOf(defNameStr.toLowerCase())) {
 				if (-1 !== fName.indexOf("[")) {
 					var tableNameParse = fName.split("[");
@@ -2842,7 +2847,7 @@
 									_str = table.TableColumns[j].Name;
 									_type = c_oAscPopUpSelectorType.TableColumnName;
 									if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
-										arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
+										arrResult.push(getCompleteMenu(_str, _type));
 									}
 								}
 
@@ -2866,7 +2871,7 @@
 											_type = c_oAscPopUpSelectorType.TableTotals;
 										}
 										if (sTableInner === "" || (0 === _str.toLocaleLowerCase().indexOf(sTableInner) && _type !== c_oAscPopUpSelectorType.TableThisRow)) {
-											arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
+											arrResult.push(getCompleteMenu(_str, _type));
 										}
 									}
 								}
@@ -3086,6 +3091,7 @@
 			if (!res) {
 				res = name ? new AscCommonExcel.CFunctionInfo(name) : null;
 			}
+
 			t.handlers.trigger("asc_onSendFunctionWizardInfo", res);
         };
 
@@ -5750,7 +5756,7 @@
 
 	WorkbookView.prototype.addCustomFunction = function(func, options) {
 		if (!this.customFunctionEngine) {
-			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+			this.initCustomEngine();
 		}
 		this.customFunctionEngine.add(func, options);
 	};
@@ -5784,6 +5790,13 @@
 
 		callback();
 	};
+
+	WorkbookView.prototype.initCustomEngine = function() {
+		if (!this.customFunctionEngine) {
+			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+		}
+	};
+
 
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
@@ -6193,24 +6206,13 @@
 	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
 		if (this.wb.Api.selectSearchingResults && bbox && this.props) {
 			let t = this;
-			let aCells;
-			ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(function(cell) {
-				if (!aCells) {
-					aCells = [];
-				}
-				if (!aCells[cell.nRow]) {
-					aCells[cell.nRow] = [];
-				}
-				aCells[cell.nRow][cell.nCol] = cell;
-			});
-
+			
 			let newCell = new AscCommonExcel.Cell(ws);
-			for (let i = bbox.c1; i <= bbox.c2; i++) {
-				for (let j = bbox.r1; j <= bbox.r2; j++) {
-					newCell.nCol = i;
-					newCell.nRow = j;
-					let _cell = aCells && aCells[j] && aCells[j][i] ? aCells[j][i] : newCell;
-					this.changeCellValue(_cell);
+			for (let i in this.Elements) {
+				if (this.Elements[i].index === ws.index && bbox.contains(this.Elements[i].col, this.Elements[i].row)) {
+					newCell.nCol = this.Elements[i].col;
+					newCell.nRow = this.Elements[i].row;
+					this.changeCellValue(newCell);
 				}
 			}
 		}

@@ -455,7 +455,8 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_dMaxParaRunContentLength = 256;
 	var c_nMaxHyperlinkLength = 2083;
 	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
-	var c_sShardKeyName = 'WOPISrc';
+	var c_sShardKeyName = 'shardkey';
+	var c_sWopiSrcName = 'WOPISrc';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -692,7 +693,8 @@ window.AscCommon.g_cIsBeta = "false";
 		MailMerge      : 10,
 		ContentControl : 11,
 		Animation      : 12,
-		Text           : 13 // viewer
+		Text           : 13, // viewer
+		Annot          : 14
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -1828,7 +1830,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Form         : 4,
 		Review       : 5,
 		Eyedropper   : 6,
-		Placeholder  : 7
+		Placeholder  : 7,
+		EffectInfo   : 8,
 	};
 
 	// selection type
@@ -3007,6 +3010,14 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_oAscNumberingLvlTextType = {
 		Text : 0x00,
 		Num  : 0x01
+	};
+	
+	var c_oAscChapterSep = {
+		Colon : 0,
+		EmDash : 1,
+		EnDash : 2,
+		Hyphen : 3,
+		Period : 4
 	};
 
 	var c_oAscSdtAppearance = {
@@ -4243,6 +4254,44 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_srCyrlRS]     = [
+		"dd.MM.yyyy.",
+		"dddd, d. MMMM yyyy.",
+		"d. MMMM yyyy.",
+		"dd.MM.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd/MM/yyyy",
+		"d. MMM. yy.",
+		"dd/MM/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd.MM.yyyy. H:mm",
+		"dd.MM.yyyy. H:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
+	c_oAscDateTimeFormat[lcid_srLatnRS]     = [
+		"d.M.yyyy.",
+		"dddd, dd. MMMM yyyy.",
+		"dd. MMMM yyyy.",
+		"d.M.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"d/M/yyyy",
+		"dd. MMM. yy.",
+		"d/M/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"d.M.yyyy. HH:mm",
+		"d.M.yyyy. HH:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_skSK]     = [
 		"d. M. yyyy",
 		"dddd d. MMMM yyyy",
@@ -4443,6 +4492,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['c_nMaxHyperlinkLength'] = window['Asc'].c_nMaxHyperlinkLength = c_nMaxHyperlinkLength;
 	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_sShardKeyName'] = window['Asc'].c_sShardKeyName = c_sShardKeyName;
+	window['Asc']['c_sWopiSrcName'] = window['Asc'].c_sWopiSrcName = c_sWopiSrcName;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
@@ -4596,6 +4646,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ContentControl']            = prot.ContentControl;
 	prot['Animation']                 = prot.Animation;
 	prot['Text']                      = prot.Text;
+	prot['Annot']                     = prot.Annot;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;
@@ -5557,6 +5608,14 @@ window.AscCommon.g_cIsBeta = "false";
 	prot = c_oAscNumberingLvlTextType;
 	prot['Text'] = c_oAscNumberingLvlTextType.Text;
 	prot['Num']  = c_oAscNumberingLvlTextType.Num;
+	
+	window['Asc']['c_oAscChapterSep'] = window['Asc'].c_oAscChapterSep = c_oAscChapterSep;
+	prot = c_oAscChapterSep;
+	prot['Colon'] = c_oAscChapterSep.Colon;
+	prot['EmDash']  = c_oAscChapterSep.EmDash;
+	prot['EnDash']  = c_oAscChapterSep.EnDash;
+	prot['Hyphen']  = c_oAscChapterSep.Hyphen;
+	prot['Period']  = c_oAscChapterSep.Period;
 
 	prot = window['Asc']['c_oAscSdtAppearance'] = window['Asc'].c_oAscSdtAppearance = c_oAscSdtAppearance;
 	prot['Frame']  = c_oAscSdtAppearance.Frame;

@@ -2390,9 +2390,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
     pGraphics.SetIntegerGrid(false);
 
     this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
-
-    if(pGraphics.Start_Command)
-    {
+	
+	if (pGraphics.isSupportTextOutline())
+	{
         for(var i = 0; i < CircleLng; i++)
         {
             ExtX[i]     = this.pos.x + x + shX + CircleX[i]*alpha*1.1 - CircleW*alpha*0.04;
@@ -2422,16 +2422,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         pGraphics.df();
 
         // делаем заливку уже обводки
-
-        var WidthLine;
-        if(pGraphics.m_oTextPr.TextOutline && AscFormat.isRealNumber(pGraphics.m_oTextPr.TextOutline.w))
-        {
-            WidthLine = (pGraphics.m_oTextPr.TextOutline.w/36000) *0.6; // сместим заливку на половину толщины линии , чтобы не было зазоров м/ду обводкой и заливкой
-        }
-        else
-        {
-            WidthLine = 0;
-        }
+		var WidthLine = 0;
+		if (oTextOutline && AscFormat.isRealNumber(oTextOutline.w))
+			WidthLine = (oTextOutline.w / 36000) * 0.6; // сместим заливку на половину толщины линии , чтобы не было зазоров м/ду обводкой и заливкой
 
         // последняя точка совпадает в пути с первой, поэтому берем предпоследнюю
 
@@ -2500,10 +2493,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         IntegralX[0] = IntegralX[IntegralLng - 1];
         IntegralY[0] = IntegralY[IntegralLng - 1];
 
-        // т.к. при отрисовке textArt сравниаются ссылки текстовых настроек и если они совпали, то текстовые настройки не меняются и отрисовка происходит с теми же текстовые настройками, к-ые выставлены ранее
-        oCompiledPr.TextOutline  = null;
-
-        pGraphics.SetTextPr(oCompiledPr, PDSE.Theme);
+		let _compiledPr = oCompiledPr.Copy();
+		_compiledPr.TextOutline  = null;
+        pGraphics.SetTextPr(_compiledPr, PDSE.Theme);
 
         pGraphics._s();
         Circle.drawPath(pGraphics, ExtX, ExtY);
@@ -2517,8 +2509,6 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
         Integral.drawPath(pGraphics, IntegralX, IntegralY, IntegralW*alpha);
         pGraphics.ds();
         pGraphics.df();
-
-        oCompiledPr.TextOutline = oTextOutline; // меняем обратно, чтобы не изменились скомпилированные текстовые настройки
     }
     else
     {

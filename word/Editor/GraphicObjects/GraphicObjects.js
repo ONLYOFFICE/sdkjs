@@ -108,6 +108,8 @@ function CGraphicObjects(document, drawingDocument, api)
 
 CGraphicObjects.prototype =
 {
+    createShape: DrawingObjectsController.prototype.createShape,
+
     handleAdjustmentHit: DrawingObjectsController.prototype.handleAdjustmentHit,
     handleHandleHit: DrawingObjectsController.prototype.handleHandleHit,
     handleMoveHit: DrawingObjectsController.prototype.handleMoveHit,
@@ -126,6 +128,10 @@ CGraphicObjects.prototype =
     canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
     haveTrackedObjects: DrawingObjectsController.prototype.haveTrackedObjects,
+    checkShowMediaControlOnSelect: function () {
+    },
+    checkShowMediaControlOnHover: function (oDrawing) {
+    },
 
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
     {
@@ -354,12 +360,6 @@ CGraphicObjects.prototype =
 
     swapTrackObjects: function()
     {
-        if (Asc.editor.isPdfEditor())
-        {
-            this.drawingObjects = this.drawingObjects.concat(this.selectedObjects);
-            AscFormat.DrawingObjectsController.prototype.checkConnectorsPreTrack.call(this);
-        }
-
         this.clearTrackObjects();
         for(var i = 0; i < this.arrPreTrackObjects.length; ++i)
         {
@@ -3067,6 +3067,7 @@ CGraphicObjects.prototype =
                 aPos = arrCenterPos[i];
                 var aDrawings = [];
                 var drawing;
+                this.document.Recalculate(true);
                 for(j = 0; j < sp_tree.length; ++j)
                 {
                     sp = sp_tree[j];
@@ -4403,6 +4404,11 @@ CGraphicObjects.prototype =
                     graphic_array[i].getAllRasterImages(ret);
             }
         }
+        let oPageBg = this.document.Background;
+        if(oPageBg && oPageBg.shape)
+        {
+            oPageBg.shape.getAllRasterImages(ret);
+        }
         return ret;
     },
 
@@ -4762,7 +4768,6 @@ CGraphicObjects.prototype.saveStartDocState = function() {
 
 	}
 };
-
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {

@@ -698,6 +698,10 @@ CMathText.prototype.SetPlaceholder = function()
     this.Type = para_Math_Placeholder;
     this.value = StartTextElement;
 };
+CMathText.prototype.IsAccent = function ()
+{
+	return AscMath.MathLiterals.accent.fromSymbols[String.fromCharCode(this.value)] != undefined;
+}
 CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 {
     /*
@@ -974,6 +978,10 @@ CMathText.prototype.IsMathText = function()
 {
     return true;
 };
+CMathText.prototype.IsCombiningMark = function()
+{
+	return AscWord.isCombiningMark(this.value);
+};
 CMathText.prototype.IsBreakOperator = function ()
 {
 	return this.private_Is_BreakOperator(this.value);
@@ -1064,25 +1072,13 @@ CMathText.prototype.ToSearchElement = function(oProps)
 CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 	var strPre = "";
 
-	if (this.Parent) {
-		var oParentMathPrp = this.Parent.MathPrp.scr;
-
-		if (1 === oParentMathPrp) {
-			strPre = '\\script';
-		} else if (2 === oParentMathPrp) {
-			strPre = '\\fraktur';
-		} else if (3 === oParentMathPrp) {
-			strPre = '\\double';
-		}
-	}
-
 	if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
 	{
 		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
 		if (str)
-			return str + " ";
+			return str;
 	}
-
+  
 	if (this.value && this.value !== 11034)
 		return strPre + AscCommon.encodeSurrogateChar(this.value);
 

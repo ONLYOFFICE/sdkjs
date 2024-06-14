@@ -329,6 +329,27 @@ window.startPluginApi = function() {
 	 */
 
 	/**
+	 * The context menu type:
+	 * * <b>None</b> - not used,
+	 * * <b>Target</b> - nothing is selected,
+	 * * <b>Selection</b> - text is selected,
+	 * * <b>Image</b> - image is selected,
+	 * * <b>Shape</b> - shape is selected,
+	 * * <b>OleObject</b> - OLE object is selected.
+	 * @typedef {("None" | "Target" | "Selection" | "Image" | "Shape" | "OleObject")} ContextMenuType
+	 * */
+
+	/**
+	 * @typedef {Object} ContextMenuOptions
+	 * @description Defines the context menu options.
+	 * @property {ContextMenuType} Type - The context menu type.
+	 * @property {boolean} [header] - Specifies if the context menu is opened inside the header.
+	 * @property {boolean} [footer] - Specifies if the context menu is opened inside the footer.
+	 * @property {boolean} [headerArea] - Specifies if the context menu is opened over the header.
+	 * @property {boolean} [footerArea] - Specifies if the context menu is opened over the footer.
+	 */
+
+	/**
 	 * Event: onContextMenuShow
 	 * WARNING! If plugin is listening this event, it MUST call AddContextMenuItem method (synchronously or not),
 	 * because editor wait answers from ALL plugins and then and only then fill contextmenu.
@@ -336,7 +357,10 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias onContextMenuShow
 	 * @description The function called when the context menu has been shown.
-	 * @param {Object} options - Defines the options for the current selection.
+	 * 
+	 * <note>If a plugin is listening for this event, it must call the {@link /plugin/executeMethod/common/addcontextmenuitem AddContextMenuItem} method (synchronously or not),
+	 * because the editor waits for responses from all plugins before filling the context menu.</note>
+	 * @param {ContextMenuOptions} options - Defines the context menu information.
 	 * @since 7.4.0
 	 */
 
@@ -355,7 +379,7 @@ window.startPluginApi = function() {
 	 * @event Plugin#onToolbarMenuClick
 	 * @memberof Plugin
 	 * @alias onToolbarMenuClick
-	 * @description The function called when the context menu item has been clicked.
+	 * @description The function called when the toolbar menu item has been clicked.
 	 * @param {string} id - Item ID.
 	 * @since 8.1.0
 	 */
@@ -425,6 +449,25 @@ window.startPluginApi = function() {
 			return true;
 		}
 		return false;
+	};
+
+	Plugin._pushWindowMethodCommandCallback = function(callback)
+	{
+		if (this.windowCallbacks === undefined)
+		{
+			this.windowCallbacks = [];
+			this.attachEvent("on_private_window_method", function(retValue) {
+				var _retCallback = window.Asc.plugin.windowCallbacks.shift();
+				if (_retCallback)
+					_retCallback(retValue);
+			});
+			this.attachEvent("on_private_window_command", function(retValue) {
+				var _retCallback = window.Asc.plugin.windowCallbacks.shift();
+				if (_retCallback)
+					_retCallback(retValue);
+			});
+		}
+		this.windowCallbacks.push(callback);
 	};
 
 	/***********************************************************************
@@ -498,7 +541,12 @@ window.startPluginApi = function() {
 	 */
 	Plugin.executeMethod = function(name, params, callback)
     {
-		if (this._checkPluginOnWindow()) return;
+		if (this.windowID)
+		{
+			this._pushWindowMethodCommandCallback(callback);
+			this.sendToPlugin("private_window_method", { name : name, params : params });
+			return;
+		}
 
         if (window.Asc.plugin.isWaitMethod === true)
         {
@@ -594,9 +642,14 @@ window.startPluginApi = function() {
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
-		if (this._checkPluginOnWindow()) return;
+		var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
+		if (this.windowID)
+		{
+			this._pushWindowMethodCommandCallback(callback);
+			this.sendToPlugin("private_window_command", { code : _txtFunc, isCalc : isCalc });
+			return;
+		}
 
-        var _txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(window.Asc.scope) + "; var scope = Asc.scope; (" + func.toString() + ")();";
         var _type = (isClose === true) ? "close" : "command";
         window.Asc.plugin.info.recalculate = (false === isCalc) ? false : true;
         window.Asc.plugin.executeCommand(_type, _txtFunc, callback);

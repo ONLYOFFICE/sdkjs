@@ -2853,3 +2853,16 @@ CDocumentContentBase.prototype.getDocumentContentPosition = function(isSelection
 {
 	return this.GetContentPosition(isSelection, isStart);
 };
+CDocumentContentBase.prototype.GetCurrentRun = function()
+{
+	let paragraph = this.GetCurrentParagraph(false, false);
+	if (!paragraph || !paragraph.IsParagraph())
+		return null;
+	
+	let paraPos = paragraph.Get_ParaContentPos(false);
+	let run = paragraph.GetElementByPos(paraPos);
+	if (!run || !(run instanceof AscWord.CRun))
+		return null;
+	
+	return run;
+};
