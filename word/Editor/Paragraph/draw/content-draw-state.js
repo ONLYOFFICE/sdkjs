@@ -355,10 +355,8 @@
 			y = this.calculateY(endTextPr);
 		}
 		
-		if (this.Paragraph.isRtlDirection())
-			paraMark.Draw(this.X - paraMark.GetWidthVisible(), y - this.yOffset, this.Graphics);
-		else
-			paraMark.Draw(this.X, y - this.yOffset, this.Graphics);
+		paraMark.Draw(this.X, y - this.yOffset, this.Graphics);
+		this.X += paraMark.GetWidthVisible();
 	};
 	/**
 	 * @param element {CMathText | CMathAmp}

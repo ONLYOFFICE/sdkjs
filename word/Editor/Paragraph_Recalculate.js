@@ -2054,6 +2054,13 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             PRSA.Y1 += _LineMetrics.LineGap;
 
         this.Lines[CurLine].Ranges[CurRange].XVisible = X;
+		if (ParaPr.Bidi && Line.Info & paralineinfo_End && CurRange === Line.Ranges.length - 1)
+		{
+			let paraMark = this.GetParaEndRun().GetParaEnd();
+			if (paraMark)
+				this.Lines[CurLine].Ranges[CurRange].XVisible -= paraMark.GetWidthVisible();
+		}
+			
 
         if ( 0 === CurRange )
             this.Lines[CurLine].X = X - PRSW.XStart;
