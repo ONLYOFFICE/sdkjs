@@ -3034,7 +3034,7 @@
 
 		this.getPageByCoords = function(xInp, yInp)
 		{
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0 || !this.pageDetector)
 				return null;
 
 				let x = xInp - this.x;
@@ -3065,7 +3065,7 @@
 
 		this.getPageByCoords2 = function(xInp, yInp)
 		{
-			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0 || !this.pageDetector)
 				return null;
 
 			let x = xInp - this.x;
