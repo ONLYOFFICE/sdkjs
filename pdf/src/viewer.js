@@ -4382,15 +4382,13 @@
 		// add		- 1
 		// delete	- 2
 
-		function writePageInfo(nPage, oPageInfo, nType) {
+		function writePageInfo(nPage, oPageInfo, nRotAngle, nType) {
 			if (!oMemory)
 			{
 				oMemory = new AscCommon.CMemory(true);
 				oMemory.Init(memoryInitSize);
 				oMemory.images = [];
 			}
-
-			let nRotAngle = this.getPageRotate(nPage);
 
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
@@ -4589,7 +4587,7 @@
 		// сначала edit исходных страниц
 		for (let i = 0; i < aPagesInfo.length; i++) {
 			if (checkNeedEditPage(i)) {
-				writePageInfo.call(this, oFile.pages[i].originIndex, aPagesInfo[i], 0);
+				writePageInfo.call(this, oFile.pages[i].originIndex, aPagesInfo[i], this.getPageRotate(i), 0);
 			}
 		}
 
@@ -4601,7 +4599,7 @@
 			let nPage = aOrder[i][0];
 			let nType = aOrder[i][1];
 
-			writePageInfo.call(this, nPage, aPagesInfo[nPage], nType);
+			writePageInfo.call(this, nPage, aPagesInfo[nPage], this.getPageRotate(nPage), nType);
 		}
 
 		if (oMemory) {
