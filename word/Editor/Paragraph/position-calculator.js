@@ -158,7 +158,7 @@
 		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
-	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data)
+	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element   = data[0];
 		let run       = data[1];
@@ -194,7 +194,7 @@
 				this.posInfo.x = this.x;
 				this.posInfo.y = this.y;
 				
-				if (element.getBidiType() & AscBidi.FLAG.RTL)
+				if (direction === AscBidi.DIRECTION.R)
 					this.posInfo.x += w;
 				
 				this.posInfo.run = run;
