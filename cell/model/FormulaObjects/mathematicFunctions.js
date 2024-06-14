@@ -5293,12 +5293,11 @@ function (window, undefined) {
 		}
 
 		for (let i = 1; i < args.length; i += 2) {
-			// check type and return val
+			// check reference type for each odd element
 			let oddArgument = args[i];
-			if (oddArgument && this.exactTypes[1] && this.argumentsType && this.argumentsType[1] !== undefined) {
-				// check types
-				if (this.argumentsType[1][0] === Asc.c_oAscFormulaArgumentType.reference && (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
-					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D)) {
+			if (oddArgument && this.exactTypes[1]) {
+				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
+					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
 						return false
 				}
 			}
