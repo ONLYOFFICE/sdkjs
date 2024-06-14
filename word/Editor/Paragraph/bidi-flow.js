@@ -34,13 +34,6 @@
 
 (function(window)
 {
-	const BidiType = {
-		ltr : 0, // strong rtl
-		rtl : 1, // strong ltr
-		weak : 2,
-		neutral : 3
-	};
-	
 	/**
 	 * Class for handling bidirectional flow of text or other content
 	 * @param handler - handler for elements in the flow
@@ -54,6 +47,7 @@
 		
 		
 		this.neutralBuffer = [];
+		this.bufferLTR     = [];
 	}
 	/**
 	 * @param isRtlDirection - main flow direction
@@ -63,12 +57,27 @@
 		this.direction            = isRtlDirection ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
 		this.buffer.length        = 0;
 		this.neutralBuffer.length = 0;
+		this.bufferLTR.length     = 0;
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
 		if (AscBidi.DIRECTION.R === this.direction)
 		{
-		
+			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
+			{
+				this.flushLTR();
+				this.flushNeutralRTL()
+				this.buffer.push([element, AscBidi.DIRECTION.R]);
+			}
+			else if (bidiType & AscBidi.FLAG.STRONG)
+			{
+				this.flushNeutralLTR();
+				this.bufferLTR.push(element);
+			}
+			else
+			{
+				this.neutralBuffer.push([bidiType, element]);
+			}
 		}
 		else
 		{
@@ -90,6 +99,12 @@
 	};
 	BidiFlow.prototype.end = function()
 	{
+		if (AscBidi.DIRECTION.R === this.direction)
+		{
+			this.flushLTR();
+			this.flushNeutralRTL();
+		}
+		
 		this.flush();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +178,25 @@
 		}
 		flushWeak(this.buffer);
 		this.neutralBuffer.length = 0;
+	};
+	BidiFlow.prototype.flushNeutralLTR = function()
+	{
+		if (!this.bufferLTR.length)
+			return this.flushNeutralRTL();
+		
+		for (let i = 0; i < this.neutralBuffer.length; ++i)
+		{
+			this.bufferLTR.push(this.neutralBuffer[i][1]);
+		}
+		this.neutralBuffer.length = 0;
+	};
+	BidiFlow.prototype.flushLTR = function()
+	{
+		for (let i = this.bufferLTR.length - 1; i >= 0; --i)
+		{
+			this.buffer.push([this.bufferLTR[i], AscBidi.DIRECTION.L]);
+		}
+		this.bufferLTR.length = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.BidiFlow = BidiFlow;
