@@ -11058,18 +11058,15 @@ CPresentation.prototype.applySlideBackgroundToAll = function() {
 };
 
 CPresentation.prototype.resetSlideBackground = function(arrSlideIndexes) {
-	if(this.IsMasterMode()) return;
 	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, arrSlideIndexes) === false) {
 		this.StartAction(AscDFH.historydescription_Presentation_ResetSlideBackground);
-		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
-			this.Slides[arrSlideIndexes[i]].changeBackground(null);
+		for(let nIdx = 0; nIdx < arrSlideIndexes.length; ++nIdx) {
+			let oSlide = this.GetSlide(arrSlideIndexes[nIdx]);
+			if(!oSlide.isMaster()) {
+				oSlide.changeBackground(null);
+			}
 		}
-		this.FinalizeAction();
-		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
-			this.DrawingDocument.OnRecalculateSlide(arrSlideIndexes[i]);
-		}
-		this.DrawingDocument.OnEndRecalculate(true, false);
-		this.Document_UpdateInterfaceState();
+		this.FinalizeAction(true);
 	}
 };
 CPresentation.prototype.setShowMasterSp = function(bShow, arrSlideIndexes) {

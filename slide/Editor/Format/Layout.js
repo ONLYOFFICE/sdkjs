@@ -715,6 +715,7 @@ SlideLayout.prototype.getMaster = function(){
                 }
                 case AscDFH.historyitem_SlideLayoutSetBg:
                 {
+                    this.recalcInfo.recalculateBackground = true;
                     break;
                 }
             }
