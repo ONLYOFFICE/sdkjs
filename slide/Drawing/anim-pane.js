@@ -2441,15 +2441,17 @@
 		);
 
 		const mouseMoveData = new CMouseMoveData();
-		mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
 		mouseMoveData.X_abs = coords.X;
 		mouseMoveData.Y_abs = coords.Y;
 
-		const tooltipInfo = this.getInfoForTooltip(x, y);
-		if (typeof tooltipInfo === 'string') {
-			mouseMoveData.EffectText = tooltipInfo;
-		} else {
-			mouseMoveData.EffectDescription = tooltipInfo;
+		if (!this.contextMenuButton.hit(x, y)) {
+			mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
+			const tooltipInfo = this.getInfoForTooltip(x, y);
+			if (typeof tooltipInfo === 'string') {
+				mouseMoveData.EffectText = tooltipInfo;
+			} else {
+				mouseMoveData.EffectDescription = tooltipInfo;
+			}
 		}
 
 		return mouseMoveData;
