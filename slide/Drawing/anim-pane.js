@@ -1652,7 +1652,7 @@
 		// Getting first active level 3 Time Node Container
 		// to get currently active demo effect
 		let activeDemoEffect = null;
-		for (let nodeIndex = 0; nodeIndex < lvl3DemoTimingNodes.length; nodeIndex++) {
+		for (let nodeIndex = lvl3DemoTimingNodes.length - 1; nodeIndex >= 0; --nodeIndex) {
 			const node = lvl3DemoTimingNodes[nodeIndex];
 			if (node.isActive()) {
 				activeDemoEffect = node.getAllAnimEffects()[0];
