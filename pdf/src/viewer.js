@@ -2641,26 +2641,27 @@
 			ctx.globalAlpha = 1.0;
 		};
 
-		this.checkVisiblePages = function() {
+		this.checkVisiblePages = function()
+		{
 			let oDoc = this.getPDFDoc();
 
 			let yPos = this.scrollY >> 0;
 			let yMax = yPos + this.height;
 			let xCenter = this.width >> 1;
 			if (this.documentWidth > this.width)
-			{
 				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-			}
 
 			let lStartPage = -1;
 			let lEndPage = -1; 
-			
+
 			let lPagesCount = this.drawingPages.length;
 			for (let i = 0; i < lPagesCount; i++)
 			{
+				let isLandscapePage = this.isLandscapePage(i);
+
 				let page = this.drawingPages[i];
 				let pageT = page.Y;
-				let pageB = page.Y + page.H;
+				let pageB = page.Y + (isLandscapePage ? page.W : page.H);
 				
 				if (yPos < pageB && yMax > pageT)
 				{
@@ -2669,6 +2670,22 @@
 					if (-1 == lStartPage)
 						lStartPage = i;
 					lEndPage = i;
+				}
+				else
+				{
+					// страница не видна - выкидываем из кэша
+					if (page.Image)
+					{
+						if (this.file.cacheManager)
+							this.file.cacheManager.unlock(page.Image);
+						
+						delete page.Image;
+						delete page.ImageTmp;
+						delete page.ImageForms;
+						delete page.ImageAnnots;
+						delete page.ImageDrawings;
+						oDoc.ClearCache(i);
+					}
 				}
 			}
 
@@ -2698,54 +2715,14 @@
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
 
 			let yPos = this.scrollY >> 0;
-			let yMax = yPos + this.height;
 			let xCenter = this.width >> 1;
 			if (this.documentWidth > this.width)
 			{
 				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
 			}
 
-			let lStartPage = -1;
-			let lEndPage = -1; 
+			this.checkVisiblePages();
 			
-			let lPagesCount = this.drawingPages.length;
-			for (let i = 0; i < lPagesCount; i++)
-			{
-				let page = this.drawingPages[i];
-				let pageT = page.Y;
-				let pageB = page.Y + page.H;
-				
-				if (yPos < pageB && yMax > pageT)
-				{
-					// страница на экране
-
-					if (-1 == lStartPage)
-						lStartPage = i;
-					lEndPage = i;
-				}
-				else
-				{
-					// страница не видна - выкидываем из кэша
-					if (page.Image)
-					{
-						if (this.file.cacheManager)
-							this.file.cacheManager.unlock(page.Image);
-						
-						delete page.Image;
-						delete page.ImageTmp;
-						delete page.ImageForms;
-						delete page.ImageAnnots;
-						oDoc.ClearCache(i);
-					}
-				}
-			}
-
-			let oDrDoc = oDoc.GetDrawingDocument();
-			oDrDoc.m_lDrawingFirst = lStartPage;
-			oDrDoc.m_lDrawingEnd = lEndPage;
-			this.startVisiblePage = lStartPage;
-			this.endVisiblePage = lEndPage;
-
 			if (this._checkFontsOnPages(this.startVisiblePage, this.endVisiblePage) == false) {
 				this.paint();
 				return;
