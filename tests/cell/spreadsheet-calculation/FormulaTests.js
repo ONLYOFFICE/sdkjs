@@ -8707,6 +8707,35 @@ $(function () {
 		oParser = new parserFormula("SUMIFS(C:D,E:E,$H2)", "A11", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		// for bug 58684
+		let calculateResult = new AscCommonExcel.CalculateResult(true);
+
+		oParser = new parserFormula("SUMIFS({1,2,3},A2:A9,A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS({1,2,3},A2:A9,A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS({1,2,3},A2:A9,A2) - wrong argument type check');
+
+		oParser = new parserFormula("SUMIFS(MONTH(A2:A9),A2:A9,A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(MONTH(A2:A9),A2:A9,A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(MONTH(A2:A9),A2:A9,A2) - wrong argument type check');
+
+		oParser = new parserFormula("SUMIFS(A2:A9,{1,2,3},A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A2:A9,{1,2,3},A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(A2:A9,{1,2,3},A2) - wrong argument type check');
+
+		oParser = new parserFormula("SUMIFS(A2:A9,A2:A9*2,A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A2:A9,A2:A9*2,A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(A2:A9,A2:A9*2,A2) - wrong argument type check');
+
+		oParser = new parserFormula("SUMIFS(A2:A9,A2:A9,A2,{1,2,3},A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A2:A9,A2:A9,A2,{1,2,3},A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(A2:A9,A2:A9,A2,{1,2,3},A2) - wrong argument type check');
+
+		oParser = new parserFormula("SUMIFS(A2:A9,A2:A9,A2,A2:A9*2,A2)", "A11", ws);
+		assert.ok(oParser.parse(), 'SUMIFS(A2:A9,A2:A9,A2,A2:A9*2,A2) - wrong argument type check');
+		assert.strictEqual(oParser.calculate(null, null, null, null, calculateResult).getValue(), "#NULL!", 'Result of SUMIFS(A2:A9,A2:A9,A2,A2:A9*2,A2) - wrong argument type check');
+
+
 	});
 
 	QUnit.test("Test: \"MAXIFS\"", function (assert) {
