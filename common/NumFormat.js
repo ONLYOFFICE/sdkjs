@@ -4258,8 +4258,8 @@ FormatParser.prototype =
     strcmp: function (s1, s2, index1, length, index2) {
         if (null == index2)
             index2 = 0;
-        let bRes = true;
-        for (let i = 0; i < length; ++i) {
+        var bRes = true;
+        for (var i = 0; i < length; ++i) {
             if (s1[index1 + i] != s2[index2 + i]) {
                 bRes = false;
                 break;
@@ -4343,13 +4343,13 @@ FormatParser.prototype =
 		        else if (!bMonth) {
 		            bMonth = true;
 					let aArraysToCheck = [{ arr: cultureInfo.MonthNames, format: "mmmm" }, { arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }];
-		            let bFound = false;
-					for (let aArrayTemp of aArraysToCheck) {
-		                // const aArrayTemp = aArraysToCheck[index];
-		                for (let j = 0, length2 = aArrayTemp.arr.length; j < length2; j++) {
-		                    let sCmpVal = aArrayTemp.arr[j].toLowerCase();
-		                    let sCmpValCrop = sCmpVal.replace(/\./g, "");
-		                    let bCrop = false;
+		            var bFound = false;
+		            for (var index in aArraysToCheck) {
+		                var aArrayTemp = aArraysToCheck[index];
+		                for (var j = 0, length2 = aArrayTemp.arr.length; j < length2; j++) {
+		                    var sCmpVal = aArrayTemp.arr[j].toLowerCase();
+		                    var sCmpValCrop = sCmpVal.replace(/\./g, "");
+		                    var bCrop = false;
 		                    if (this.strcmp(valueLower, sCmpVal, i, sCmpVal.length) || (bCrop = (sCmpVal != sCmpValCrop && this.strcmp(valueLower, sCmpValCrop, i, sCmpValCrop.length)))) {
 		                        bFound = true;
 		                        oNewElem.month = { val: j + 1, format: aArrayTemp.format };
