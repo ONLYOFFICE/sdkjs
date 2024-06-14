@@ -13417,43 +13417,45 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	asc_CPageOptions.prototype.setJson = function (props) {
-		this.gridLines = props["gridLines"];
-		this.headings = props["headings"];
-		this.gridLinesSet = props["gridLinesSet"];
-		this.horizontalCentered = props["horizontalCentered"];
-		this.horizontalCentered = props["horizontalCentered"];
-		this.verticalCentered = props["verticalCentered"];
+		let checkOnNull = function (to, from) {
+			return to != null ? to : from;
+		};
 
-		this.pageMargins.bottom = props["pageMargins"]["bottom"];
-		this.pageMargins.footer = props["pageMargins"]["footer"];
-		this.pageMargins.header = props["pageMargins"]["header"];
-		this.pageMargins.left = props["pageMargins"]["left"];
-		this.pageMargins.right = props["pageMargins"]["right"];
-		this.pageMargins.top = props["pageMargins"]["top"];
-		this.pageMargins.bottom = props["pageMargins"]["bottom"];
+		this.gridLines = checkOnNull(props["gridLines"], this.gridLines);
+		this.headings = checkOnNull(props["headings"], this.headings);
+		this.gridLinesSet = checkOnNull(props["gridLinesSet"], this.gridLinesSet);
+		this.horizontalCentered = checkOnNull(props["horizontalCentered"], this.horizontalCentered);
+		this.verticalCentered = checkOnNull(props["verticalCentered"], this.verticalCentered);
 
-		this.pageSetup.blackAndWhite = props["pageSetup"]["blackAndWhite"];
-		this.pageSetup.cellComments = props["pageSetup"]["cellComments"];
-		this.pageSetup.copies = props["pageSetup"]["copies"];
-		this.pageSetup.draft = props["pageSetup"]["draft"];
-		this.pageSetup.errors = props["pageSetup"]["errors"];
-		this.pageSetup.firstPageNumber = props["pageSetup"]["firstPageNumber"];
-		this.pageSetup.fitToHeight = props["pageSetup"]["fitToHeight"];
-		this.pageSetup.fitToWidth = props["pageSetup"]["fitToWidth"];
-		this.pageSetup.headerFooter = props["pageSetup"]["headerFooter"];
-		this.pageSetup.height = props["pageSetup"]["height"];
-		this.pageSetup.horizontalDpi = props["pageSetup"]["horizontalDpi"];
-		this.pageSetup.orientation = props["pageSetup"]["orientation"];
-		this.pageSetup.pageOrder = props["pageSetup"]["pageOrder"];
-		this.pageSetup.paperUnits = props["pageSetup"]["paperUnits"];
-		this.pageSetup.printArea = props["pageSetup"]["printArea"];
-		this.pageSetup.scale = props["pageSetup"]["scale"];
-		this.pageSetup.useFirstPageNumber = props["pageSetup"]["useFirstPageNumber"];
-		this.pageSetup.usePrinterDefaults = props["pageSetup"]["usePrinterDefaults"];
-		this.pageSetup.verticalDpi = props["pageSetup"]["verticalDpi"];
-		this.pageSetup.width = props["pageSetup"]["width"];
+		this.pageMargins.bottom = checkOnNull(props["pageMargins"]["bottom"], this.pageMargins.bottom);
+		this.pageMargins.footer = checkOnNull(props["pageMargins"]["footer"], this.pageMargins.footer);
+		this.pageMargins.header = checkOnNull(props["pageMargins"]["header"], this.pageMargins.header);
+		this.pageMargins.left = checkOnNull(props["pageMargins"]["left"], this.pageMargins.left);
+		this.pageMargins.right = checkOnNull(props["pageMargins"]["right"], this.pageMargins.right);
+		this.pageMargins.top = checkOnNull(props["pageMargins"]["top"], this.pageMargins.top);
+		this.pageMargins.bottom = checkOnNull(props["pageMargins"]["bottom"], this.pageMargins.bottom);
 
-		this.pageSetup.headerFooter = props["pageSetup"]["headerFooter"];
+		this.pageSetup.blackAndWhite = checkOnNull(props["pageSetup"]["blackAndWhite"], this.pageSetup.blackAndWhite);
+		this.pageSetup.cellComments = checkOnNull(props["pageSetup"]["cellComments"], this.pageSetup.cellComments);
+		this.pageSetup.copies = checkOnNull(props["pageSetup"]["copies"],this.pageSetup.copies);
+		this.pageSetup.draft = checkOnNull(props["pageSetup"]["draft"], this.pageSetup.draft);
+		this.pageSetup.errors = checkOnNull(props["pageSetup"]["errors"],this.pageSetup.errors);
+		this.pageSetup.firstPageNumber = checkOnNull(props["pageSetup"]["firstPageNumber"]< this.pageSetup.firstPageNumber);
+		this.pageSetup.fitToHeight = checkOnNull(props["pageSetup"]["fitToHeight"], this.pageSetup.fitToHeight);
+		this.pageSetup.fitToWidth = checkOnNull(props["pageSetup"]["fitToWidth"], this.pageSetup.fitToWidth);
+		this.pageSetup.height = checkOnNull(props["pageSetup"]["height"], this.pageSetup.height);
+		this.pageSetup.horizontalDpi = checkOnNull(props["pageSetup"]["horizontalDpi"], this.pageSetup.horizontalDpi);
+		this.pageSetup.orientation = checkOnNull(props["pageSetup"]["orientation"], this.pageSetup.orientation);
+		this.pageSetup.pageOrder = checkOnNull(props["pageSetup"]["pageOrder"], this.pageSetup.pageOrder);
+		this.pageSetup.paperUnits = checkOnNull(props["pageSetup"]["paperUnits"], this.pageSetup.paperUnits);
+		this.pageSetup.printArea = checkOnNull(props["pageSetup"]["printArea"], this.pageSetup.printArea);
+		this.pageSetup.scale = checkOnNull(props["pageSetup"]["scale"], this.pageSetup.scale);
+		this.pageSetup.useFirstPageNumber = checkOnNull(props["pageSetup"]["useFirstPageNumber"], this.pageSetup.useFirstPageNumber);
+		this.pageSetup.usePrinterDefaults = checkOnNull(props["pageSetup"]["usePrinterDefaults"], this.pageSetup.usePrinterDefaults);
+		this.pageSetup.verticalDpi = checkOnNull(props["pageSetup"]["verticalDpi"], this.pageSetup.verticalDpi);
+		this.pageSetup.width = checkOnNull(props["pageSetup"]["width"], this.pageSetup.width);
+
+		this.pageSetup.headerFooter = checkOnNull(props["pageSetup"]["headerFooter"], this.pageSetup.headerFooter);
 		/*if (ws.headerFooter) {
 			res["pageSetup"]["headerFooter"] = {
 				"alignWithMargins": ws.headerFooter.alignWithMargins,
@@ -13469,8 +13471,8 @@ function RangeDataManagerElem(bbox, data)
 			};
 		}*/
 
-		this.printTitlesHeight = props["printTitlesHeight"];
-		this.printTitlesWidth = props["printTitlesWidth"];
+		this.printTitlesHeight = checkOnNull(props["printTitlesHeight"], this.printTitlesHeight);
+		this.printTitlesWidth = checkOnNull(props["printTitlesWidth"], this.printTitlesWidth);
 	};
 	asc_CPageOptions.prototype.initPrintTitles = function () {
 		//функция добавлена только для того, чтобы в интерфейс передать текущие заголовки печати, которые хранятся как именованный диапазон
