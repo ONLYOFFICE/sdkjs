@@ -2696,15 +2696,19 @@
                     }
 
                     const nRepeatCount = oEffectCopy.asc_getRepeatCount();
-                    if (nRepeatCount === AscFormat.untilNextSlide) {
-                        const lastFiniteEffect = this.getLastFiniteEffect(aEffectsForDemo);
-                        const oEndSync = new CCond();
-                        oEndSync.setEvt(COND_EVNT_ON_END);
-                        oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
-                        oEffectCopy.cTn.setEndSync(oEndSync);
-                    }
-                    if (nRepeatCount === AscFormat.untilNextClick) {
-                        oEffectCopy.cTn.changeRepeatCount(1000);
+                    if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
+                        const lastFiniteEffect = (nRepeatCount === AscFormat.untilNextSlide)
+                            ? this.getLastFiniteEffect(aEffectsForDemo)
+                            : this.getLastFiniteEffect(oEffectCopy.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects());
+
+                        if (lastFiniteEffect === oEffectCopy) {
+                            oEffectCopy.cTn.changeRepeatCount(1000);
+                        } else {
+                            const oEndSync = new CCond();
+                            oEndSync.setEvt(COND_EVNT_ON_END);
+                            oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                            oEffectCopy.cTn.setEndSync(oEndSync);
+                        }
                     }
 
                     const nDur = oEffectCopy.asc_getDuration();
@@ -2728,7 +2732,8 @@
         let effect = null;
         for (let nEffect = 0; nEffect < aEffects.length; ++nEffect) {
             const oEffect = aEffects[nEffect];
-            const endTime = oEffect.getFullDelay() + oEffect.asc_getDuration();
+            const repeatCount = oEffect.asc_getRepeatCount();
+            const endTime = oEffect.getFullDelay() + oEffect.asc_getDuration() * (repeatCount >= 0 ? repeatCount : 1000);
             if (endTime >= maxEndTime) {
                 maxEndTime = endTime;
                 effect = oEffect;
