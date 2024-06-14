@@ -305,7 +305,7 @@
 		if (form)
 		{
 			if (form.IsFormRequired() && this.logicDocument.IsHighlightRequiredFields() && !this.Graphics.isPrintMode)
-				formBorder= this.logicDocument.GetRequiredFieldsBorder();
+				formBorder = this.logicDocument.GetRequiredFieldsBorder();
 			else if (form.GetFormPr().GetBorder())
 				formBorder = form.GetFormPr().GetBorder();
 			

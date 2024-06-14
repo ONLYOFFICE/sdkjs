@@ -33,6 +33,8 @@
 "use strict";
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]			= CChangesPDFFormValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Add_Kid]			= CChangesPDFFormAddKid;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Remove_Kid]		= CChangesPDFFormRemoveKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]	= CChangesPDFListFormCurIdxs;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 
@@ -51,8 +53,102 @@ CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
 	oField.SetValue(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFFormAddKid(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
 }
-;
+CChangesPDFFormAddKid.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFFormAddKid.prototype.constructor = CChangesPDFFormAddKid;
+CChangesPDFFormAddKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Add_Kid;
+
+CChangesPDFFormAddKid.prototype.Undo = function()
+{
+	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
+	let oDrDoc	= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let oKid = this.Items[nIndex];
+
+		oForm.RemoveKid(oKid);
+		oKid.AddToRedraw();
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFFormAddKid.prototype.Redo = function()
+{
+	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
+	let oDrDoc	= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let oKid = this.Items[nIndex];
+
+		oForm.AddKid(oKid);
+		oKid.AddToRedraw();
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFFormRemoveKid(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFFormRemoveKid.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFFormRemoveKid.prototype.constructor = CChangesPDFFormRemoveKid;
+CChangesPDFFormRemoveKid.prototype.Type = AscDFH.historyitem_Pdf_Form_Remove_Kid;
+
+CChangesPDFFormRemoveKid.prototype.Undo = function()
+{
+	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
+	let oDrDoc	= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let oKid = this.Items[nIndex];
+
+		oForm.AddKid(oKid);
+		oKid.AddToRedraw();
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+CChangesPDFFormRemoveKid.prototype.Redo = function()
+{
+	let oForm	= this.Class;
+	let oDocument = Asc.editor.getPDFDoc();
+	let oDrDoc	= oDocument.GetDrawingDocument();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let oKid = this.Items[nIndex];
+
+		oForm.RemoveKid(oKid);
+		oKid.AddToRedraw();
+	}
+	
+	oDocument.SetMouseDownObject(null);
+	oDrDoc.TargetEnd();
+};
+
 /**
  * @constructor
  * @extends {AscDFH.CChangesBaseStringProperty}

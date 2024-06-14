@@ -218,5 +218,59 @@ $(function ()
 		assert.close(table1.GetPageBounds(0).Top, 20, epsilon, "Check top position of the first table");
 		assert.close(table2.GetPageBounds(0).Top, 20 + 2 * rowHeight, epsilon, "Check top position of the second table");
 	});
+	
+	
+	QUnit.test("Check flow table positioning in a header/footer (bug 67673)", function (assert)
+	{
+		AscTest.ClearDocument();
+		let p1 = AscTest.CreateParagraph();
+		logicDocument.PushToContent(p1);
+		
+		let sectPr = logicDocument.GetLastSection();
+		sectPr.SetPageMargins(50, 50, 50, 50);
+		sectPr.SetPageSize(100, 200);
+		sectPr.SetPageMarginHeader(20);
+		
+		let t = AscTest.CreateTable(1, 1);
+		t.GetRow(0).SetHeight(150, Asc.linerule_AtLeast);
+		t.SetInline(false);
+		t.SetPositionH(Asc.c_oAscHAnchor.Page, false, 0);
+		t.SetPositionV(Asc.c_oAscVAnchor.Page, false, 20);
+		AscTest.RemoveTableBorders(t);
+		
+		let header = AscTest.CreateDefaultHeader(sectPr);
+		header.AddToContent(1, t);
+		
+		p1 = header.GetElement(0);
+		p1.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		AscTest.Recalculate();
+		assert.strictEqual(t.GetPagesCount(), 1, "Check page count");
+		assert.strictEqual(t.IsEmptyPage(0), false, "Check page content");
+		assert.close(t.GetPageBounds(0).Top, 20, epsilon, "Check top position of the table");
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word14);
+		AscTest.Recalculate();
+		assert.strictEqual(t.GetPagesCount(), 1, "Check top position of the first table");
+		assert.strictEqual(t.IsEmptyPage(0), false, "Check page content");
+		assert.close(t.GetPageBounds(0).Top, 20, epsilon, "Check top position of the table");
+		
+		t.SetPositionV(Asc.c_oAscVAnchor.Text, false, 0);
 
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word14);
+		AscTest.Recalculate();
+		assert.strictEqual(t.GetPagesCount(), 2, "Check page count");
+		assert.strictEqual(t.IsEmptyPage(0), true, "Check page content");
+		assert.strictEqual(t.IsEmptyPage(1), false, "Check page content");
+		assert.close(t.GetPageBounds(0).Top, 20 + AscTest.FontHeight, epsilon, "Check top position of the table");
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		AscTest.Recalculate();
+		assert.strictEqual(t.GetPagesCount(), 1, "Check page count");
+		assert.strictEqual(t.IsEmptyPage(0), false, "Check page content");
+		assert.close(t.GetPageBounds(0).Top, 20 + AscTest.FontHeight, epsilon, "Check top position of the table");
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Current);
+	});
 });

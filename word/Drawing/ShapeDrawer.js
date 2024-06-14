@@ -142,8 +142,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
-                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
+                let oRGBColor;
+                if (drawer.Shape.GetRGBColor) {
+                    oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
+                }
+                else if (drawer.Shape.group) {
+                    oRGBColor = drawer.Shape.group.GetRGBColor(drawer.Shape.group.GetFillColor());
+                }
 
                 drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
                 drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
@@ -209,8 +215,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 drawer._l(trans.TransformPointX(aSmall[i].x, aSmall[i].y), trans.TransformPointY(aSmall[i].x, aSmall[i].y));
             }
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
-                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
+                let oRGBColor;
+                if (drawer.Shape.GetRGBColor) {
+                    oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
+                }
+                else if (drawer.Shape.group) {
+                    oRGBColor = drawer.Shape.group.GetRGBColor(drawer.Shape.group.GetFillColor());
+                }
 
                 drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
                 drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
@@ -287,8 +299,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 trans.TransformPointX(cx3, cy3), trans.TransformPointY(cx3, cy3),
                 trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
 
-            if (Asc.editor.isPdfEditor()) {
-                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
+                let oRGBColor;
+                if (drawer.Shape.GetRGBColor) {
+                    oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
+                }
+                else if (drawer.Shape.group) {
+                    oRGBColor = drawer.Shape.group.GetRGBColor(drawer.Shape.group.GetFillColor());
+                }
 
                 drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
                 drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
@@ -379,8 +397,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
-                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
+                let oRGBColor;
+                if (drawer.Shape.GetRGBColor) {
+                    oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
+                }
+                else if (drawer.Shape.group) {
+                    oRGBColor = drawer.Shape.group.GetRGBColor(drawer.Shape.group.GetFillColor());
+                } 
 
                 drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
                 drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
@@ -424,8 +448,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
-            if (Asc.editor.isPdfEditor()) {
-                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+            if (Asc.editor.isPdfEditor() && drawer.Shape.IsDrawing() == false) {
+                let oRGBColor;
+                if (drawer.Shape.GetRGBColor) {
+                    oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor());
+                }
+                else if (drawer.Shape.group) {
+                    oRGBColor = drawer.Shape.group.GetRGBColor(drawer.Shape.group.GetFillColor());
+                }
 
                 drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
                 drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
@@ -566,6 +596,11 @@ CShapeDrawer.prototype =
         this.IsRectShape = false;
     },
 
+    isPdf : function()
+    {
+        return this.Graphics.isPdf() || this.Graphics.isNativeDrawer();
+    },
+
     CheckPoint : function(_x,_y)
     {
         // TODO: !!!
@@ -591,7 +626,19 @@ CShapeDrawer.prototype =
     CheckDash : function()
     {
         if (Asc.editor.isPdfEditor()) {
-            let aDash = this.Shape.GetDash && this.Shape.GetDash();
+            let aDash;
+            if (this.Shape.GetDash)
+                aDash = this.Shape.GetDash();
+            else if (this.Shape.group && this.Shape.group.GetDash)
+                aDash = this.Shape.group.GetDash();
+            else if (this.Shape.IsDrawing && this.Shape.IsDrawing()) {
+                if (AscCommon.DashPatternPresets[this.Ln.prstDash]) {
+                    aDash = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
+                    for (var indexD = 0; indexD < aDash.length; indexD++)
+                        aDash[indexD] *= 2 * this.StrokeWidth;
+                }
+            }
+
             if (aDash) {
                 this.Graphics.p_dash(aDash.map(function(measure) {
                     return measure / 2;
@@ -605,7 +652,7 @@ CShapeDrawer.prototype =
                 _arr[indexD] *= this.StrokeWidth;
             this.Graphics.p_dash(_arr);
         }
-        else if (this.Graphics.isPdf())
+        else if (this.isPdf())
         {
             this.Graphics.p_dash(null);
         }
@@ -822,7 +869,7 @@ CShapeDrawer.prototype =
             bIsPatt = true;
         }
 
-        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
+        if (this.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(true);
             this.Graphics.put_TextureBounds(this.min_x, this.min_y, this.max_x - this.min_x, this.max_y - this.min_y);
@@ -845,7 +892,7 @@ CShapeDrawer.prototype =
         }
         this.Graphics.ArrayPoints = null;
 
-        if (this.Graphics.isPdf() && (this.bIsTexture || bIsPatt))
+        if (this.isPdf() && (this.bIsTexture || bIsPatt))
         {
             this.Graphics.put_TextureBoundsEnabled(false);
         }
@@ -971,7 +1018,7 @@ CShapeDrawer.prototype =
                 bIsIntegerGridTRUE = true;
             }
 
-            if (this.Graphics.isPdf())
+            if (this.isPdf())
             {
                 if (null == this.UniFill.fill.tile || this.Graphics.m_oContext === undefined)
                 {
@@ -1514,7 +1561,7 @@ CShapeDrawer.prototype =
 
         if(this.Graphics.isBoundsChecker())
             return;
-        if (!this.Graphics.isPdf())
+        if (!this.isPdf())
         {
             if (bIsFill)
                 this.df(fill_mode);
@@ -1742,10 +1789,10 @@ CShapeDrawer.prototype =
                 // трансформируем точки в окончательные.
                 // и отправляем на отрисовку (с матрицей)
 
-                var trans = (!this.Graphics.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
+                var trans = (!this.isPdf()) ? this.Graphics.m_oFullTransform : this.Graphics.GetTransform();
                 var trans1 = AscCommon.global_MatrixTransformer.Invert(trans);
 
-                var lineSize = (!this.Graphics.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
+                var lineSize = (!this.isPdf()) ? this.Graphics.m_oContext.lineWidth : this.Graphics.GetLineWidth();
 
                 var x1 = trans.TransformPointX(0, 0);
                 var y1 = trans.TransformPointY(0, 0);
@@ -1814,7 +1861,7 @@ CShapeDrawer.prototype =
 
     drawStrokeFillStyle : function()
     {
-        if (!this.Graphics.isPdf())
+        if (!this.isPdf())
         {
             var gr = this.Graphics.isTrack() ? this.Graphics.Graphics : this.Graphics;
 

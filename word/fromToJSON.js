@@ -10083,7 +10083,7 @@
 		oParsedSectPr["pgBorders"] != null && this.PageBordersFromJSON(oParsedSectPr["pgBorders"], oSectPr);
 		oParsedSectPr["pgMar"] != null && this.PageMarginsFromJSON(oParsedSectPr["pgMar"], oSectPr);
 		oParsedSectPr["pgSz"] != null && this.PageSizeFromJSON(oParsedSectPr["pgSz"], oSectPr);
-		oSectPr.Set_PageNum_Start(oParsedSectPr["pgNumType"]["start"]);
+		oSectPr.SetPageNumStart(oParsedSectPr["pgNumType"]["start"]);
 		oSectPr.SetGutterRTL(oParsedSectPr["rtlGutter"]);
 		oSectPr.Set_TitlePage(oParsedSectPr["titlePg"]);
 		oSectPr.Set_Type(nSectionType);

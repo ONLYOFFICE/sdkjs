@@ -114,7 +114,6 @@ CGroupShape.prototype.recalcBounds = function()
 };
 
 CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
-CGroupShape.prototype.IsUseInDocument =  CShape.prototype.IsUseInDocument;
 
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;

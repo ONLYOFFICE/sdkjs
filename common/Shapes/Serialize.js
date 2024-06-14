@@ -728,7 +728,6 @@ function BinaryPPTYLoader()
                 {
                     var indexTh = s.GetULong();
                     master.setTheme(this.aThemes[indexTh]);
-                    master.ThemeIndex = -indexTh - 1;
                     break;
                 }
                 case 1:
@@ -6351,7 +6350,7 @@ function BinaryPPTYLoader()
     {
         var s = this.stream;
 
-        var shape = new AscFormat.CShape(this.TempMainObject);
+        var shape = Asc.editor.isPdfEditor() ? new AscPDF.CPdfShape(this.TempMainObject) : new AscFormat.CShape(this.TempMainObject);
 
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
@@ -6734,7 +6733,18 @@ function BinaryPPTYLoader()
         var s = this.stream;
 
         var isOle = (type === 6);
-        var pic = isOle ? new AscFormat.COleObject(this.TempMainObject) : new AscFormat.CImageShape(this.TempMainObject);
+        var pic;
+        if (isOle)
+        {
+            pic = new AscFormat.COleObject(this.TempMainObject)
+        }
+        else
+        {
+            if (Asc.editor.isPdfEditor())
+                pic = new AscPDF.CPdfImage();
+            else
+                pic = new AscFormat.CImageShape(this.TempMainObject);
+        }
 
         pic.setBDeleted(false);
 
@@ -7012,7 +7022,7 @@ function BinaryPPTYLoader()
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
 
-        var _graphic_frame = new AscFormat.CGraphicFrame();
+        var _graphic_frame = Asc.editor.isPdfEditor() ? new AscPDF.CPdfGraphicFrame() : new AscFormat.CGraphicFrame();
         _graphic_frame.setParent2(this.TempMainObject);
         this.TempGroupObject = _graphic_frame;
 

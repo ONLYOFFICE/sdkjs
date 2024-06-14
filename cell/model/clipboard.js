@@ -550,8 +550,8 @@
 				return {base64: sBase64, html: innerHtml};
 			},
 
-			getBinaryForCopy: function (wsModel, objectRender, activeRange, selectAll, ignoreCopyPaste) {
-				let isIntoShape = objectRender && objectRender.controller ? objectRender.controller.getTargetDocContent() : null;
+			getBinaryForCopy: function (wsModel, objectRender, activeRange, selectAll, ignoreCopyPaste, allSelectedTabs) {
+				let isIntoShape = !selectAll && objectRender && objectRender.controller ? objectRender.controller.getTargetDocContent() : null;
 				let sBase64 = null;
 
 				if (isIntoShape) {

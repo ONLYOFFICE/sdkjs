@@ -44,6 +44,8 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]		= CChangesPDFInkPoints
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]			= CChangesPDFInkFlipV;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipH]			= CChangesPDFInkFlipH;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Points]		= CChangesPDFLinePoints;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_FreeText_CL]		= CChangesFreeTextCallout;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_FreeText_RC]		= CChangesPDFFreeTextRC;
 
 
 /**
@@ -155,6 +157,40 @@ CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetRectangleDiff(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesFreeTextCallout(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesFreeTextCallout.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesFreeTextCallout.prototype.constructor = CChangesFreeTextCallout;
+CChangesFreeTextCallout.prototype.Type = AscDFH.historyitem_Pdf_FreeText_CL;
+CChangesFreeTextCallout.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetCallout(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFFreeTextRC(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFreeTextRC.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFFreeTextRC.prototype.constructor = CChangesPDFFreeTextRC;
+CChangesPDFFreeTextRC.prototype.Type = AscDFH.historyitem_Pdf_FreeText_RC;
+CChangesPDFFreeTextRC.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetRichContents(Value);
 };
 
 /**

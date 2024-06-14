@@ -196,10 +196,7 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
             }
         }
 
-
-
-
-        var shape = new AscFormat.CShape();
+		let shape = this.drawingObjects.createShape();
 
         //  if(drawingObjects)
         //  {

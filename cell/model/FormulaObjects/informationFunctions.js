@@ -591,7 +591,10 @@ function (window, undefined) {
 		var arg0 = arg[0];
 		var res = false;
 		if ((arg0 instanceof cArea || arg0 instanceof cArea3D) && arg0.range) {
-			res = arg0.range.isFormula();
+			let range = arg0.getRange && arg0.getRange();
+			if (range) {
+				res = range.isFormula()
+			}
 		} else if ((arg0 instanceof cRef || arg0 instanceof cRef3D) && arg0.range) {
 			res = arg0.range.isFormula();
 		}

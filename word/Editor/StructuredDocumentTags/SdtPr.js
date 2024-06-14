@@ -558,11 +558,12 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		if (prevGroupKey !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
 			this.CheckBoxPr.Checked = false;
 		
-		if (undefined !== this.CheckBoxPr.GetChoiceName())
+		let choiceName = this.CheckBoxPr.GetChoiceName(true);
+		if (undefined !== choiceName)
 		{
-			oContentControl.SetFormKey(this.CheckBoxPr.GetChoiceName());
+			oContentControl.SetFormKey(choiceName);
 			if (this.FormPr)
-				this.FormPr.SetKey(this.CheckBoxPr.GetChoiceName());
+				this.FormPr.SetKey(choiceName);
 		}
 		
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);

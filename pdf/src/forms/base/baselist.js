@@ -56,47 +56,6 @@
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;
 
-    /**
-	 * Unions the last history points of this form.
-	 * @memberof CBaseListField
-     * @param {boolean} [bForbidToUnion=true] - wheter to forbid to merge the points united by this iteration
-	 * @typeofeditors ["PDF"]
-	 */
-    CBaseListField.prototype.UnionLastHistoryPoints = function(bForbidToUnion) {
-        if (bForbidToUnion == undefined)
-            bForbidToUnion = true;
-            
-        let oTmpPoint;
-        let oResultPoint = {
-            State      : undefined,
-            Items      : [],
-            Time       : new Date().getTime(),
-            Additional : {FormFilling: this, CanUnion: !bForbidToUnion},
-            Description: undefined
-        };
-
-        let i = 0;
-        for (i = AscCommon.History.Points.length - 1; i >= 0 ; i--) {
-            oTmpPoint = AscCommon.History.Points[i];
-            if (oTmpPoint.Additional.FormFilling === this && oTmpPoint.Additional.CanUnion != false) {
-                oResultPoint.Items = oTmpPoint.Items.concat(oResultPoint.Items);
-            }
-            else {
-                break;
-            }
-        }
-
-        i++; // индекс точки, в которую поместим результирующее значение.
-        
-        // если больше 2х точек, то заменяем
-        if (i < AscCommon.History.Points.length - 1) {
-            AscCommon.History.Index = i;
-            AscCommon.History.Points.splice(i, AscCommon.History.Points.length - i, oResultPoint);
-        }
-        else if (AscCommon.History.Points[i])
-            AscCommon.History.Points[i].Additional.CanUnion = !bForbidToUnion; // запрещаем объединять последнюю добавленную точку
-    };
-
     CBaseListField.prototype.SetApiCurIdxs = function(aIdxs) {
         let oParent = this.GetParent();
         if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())

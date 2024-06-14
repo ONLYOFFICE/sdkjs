@@ -38,8 +38,9 @@
     */
     function CAnnotationInk(sName, nPage, aRect, oDoc)
     {
+        AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
-        AscFormat.CShape.call(this);
+        
         initShape(this);
 
         this._point         = undefined;
@@ -53,7 +54,7 @@
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
-    AscFormat.InitClass(CAnnotationInk, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationInk.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationInk.prototype.IsInk = function() {
@@ -74,18 +75,18 @@
         }
     };
 
-    CAnnotationInk.prototype.onMouseDown = function(e) {
-        let oViewer         = editor.getDocumentRenderer();
+    CAnnotationInk.prototype.onMouseDown = function(x, y, e) {
+        let oViewer         = Asc.editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+        let pageObject = oViewer.getPageByCoords2(x, y);
+        if (!pageObject)
+            return false;
+
+        let X = pageObject.x;
+        let Y = pageObject.y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 
@@ -163,21 +164,11 @@
         this._relativePaths = aRelPointsPos;
         this._gestures = aShapePaths;
     };
-    CAnnotationInk.prototype.FillShapeByPoints = function(aPoints, oPen) {
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = oViewer.getPDFDoc();
-        let oDrDoc          = oDoc.GetDrawingDocument();
-
+    CAnnotationInk.prototype.FillShapeByPoints = function(aPoints) {
         let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
         let shape = fillShapeByPoints([aPoints], aShapeRectInMM, this);
-
-        let oRGBPen = oPen.Fill.getRGBAColor();
-        shape.spPr.setLn(oPen);
-        shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
-        shape.recalculate();
-        this.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
 
         let aRelPointsPos = [];
         let aMinRect = getMinRect(aPoints);
@@ -246,7 +237,6 @@
         this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
 
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationInk.prototype.SetFlipV = function(bFlip) {
         let oDoc = this.GetDocument();
@@ -267,15 +257,11 @@
         }
     };
     CAnnotationInk.prototype.AddPath = function(aNewPath) {
-        let oDoc = this.GetDocument();
-        if (oDoc.History.UndoRedoInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aNewPath));
-            oDoc.TurnOffHistory();
-        }
+        let oDoc    = this.GetDocument();
+        let nLineW  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
 
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-
+        oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aNewPath));
+        
         let aCurAllPoints = [];
         for (let i = 0; i < this._gestures.length; i++)
             aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
@@ -457,6 +443,8 @@
 
         let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
+        oNewInk.lazyCopy = true;
+
         oNewInk._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
@@ -467,7 +455,8 @@
 
         this.fillObject(oNewInk);
 
-        oNewInk.pen = new AscFormat.CLn();
+        let aStrokeColor = this.GetStrokeColor();
+
         oNewInk._apIdx = this._apIdx;
         oNewInk._originView = this._originView;
         oNewInk.SetOriginPage(this.GetOriginPage());
@@ -475,44 +464,17 @@
         oNewInk.SetModDate(this.GetModDate());
         oNewInk.SetCreationDate(this.GetCreationDate());
         oNewInk.SetWidth(this.GetWidth());
-        oNewInk.SetStrokeColor(this.GetStrokeColor().slice());
+        oNewInk.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
+        oNewInk.SetOpacity(this.GetOpacity());
         oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();
         oNewInk.SetContents(this.GetContents());
-        oNewInk.recalcInfo.recalculatePen = false;
         oNewInk.recalcInfo.recalculateGeometry = true;
 
         return oNewInk;
     };
     CAnnotationInk.prototype.GetRelativePaths = function() {
         return this._relativePaths;
-    };
-    CAnnotationInk.prototype.SetStrokeColor = function(aColor) {
-        this._strokeColor = aColor;
-
-        let oRGB    = this.GetRGBColor(aColor);
-        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-        let oLine   = this.pen;
-        oLine.setFill(oFill);
-    };
-    CAnnotationInk.prototype.SetOpacity = function(value) {
-        this._opacity = value;
-        this.SetWasChanged(true);
-
-        this.pen.Fill.transparent = value * 100 * 2.55;
-    };
-    CAnnotationInk.prototype.GetStrokeColor = function() {
-        return this._strokeColor;
-    };
-    CAnnotationInk.prototype.SetWidth = function(nWidthPt) {
-        this._width = nWidthPt; 
-
-        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
-        let oLine = this.pen;
-        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
-    };
-    CAnnotationInk.prototype.GetWidth = function() {
-        return this._width;
     };
     
     CAnnotationInk.prototype.IsSelected = function() {
@@ -628,6 +590,9 @@
         let yMax = aShapeRectInMM[3];
 
         oParentAnnot.setSpPr(new AscFormat.CSpPr());
+        oParentAnnot.spPr.setLn(new AscFormat.CLn());
+        oParentAnnot.spPr.ln.setFill(AscFormat.CreateNoFillUniFill());
+        oParentAnnot.spPr.setFill(AscFormat.CreateNoFillUniFill());
         oParentAnnot.spPr.setParent(oParentAnnot);
         oParentAnnot.spPr.setXfrm(new AscFormat.CXfrm());
         oParentAnnot.spPr.xfrm.setParent(oParentAnnot.spPr);

@@ -118,16 +118,6 @@
     };
     
     /**
-	 * The value application logic for all fields with the same name has been changed for this field type.
-     * The method was left for compatibility.
-	 * @memberof CRadioButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    CRadioButtonField.prototype.Commit = function() {
-        this.SetNeedCommit(false);
-    };
-
-    /**
 	 * Applies value of this field to all field with the same name
      * Note: Uses after mouseUp action.
 	 * @memberof CRadioButtonField

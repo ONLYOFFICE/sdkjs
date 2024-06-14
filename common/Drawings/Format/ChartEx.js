@@ -181,40 +181,32 @@ function (window, undefined) {
 	};
 
 	CAddress.prototype.setAddress1 = function (pr) {
-		CAxisBase.prototype.fillObject.call(this, oCopy);
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetAddress1, this.address1, pr));
 		this.address1 = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setCountryRegion = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetCountryRegion, this.countryRegion, pr));
 		this.countryRegion = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setAdminDistrict1 = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetAdminDistrict1, this.adminDistrict1, pr));
 		this.adminDistrict1 = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setAdminDistrict2 = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetAdminDistrict2, this.adminDistrict2, pr));
 		this.adminDistrict2 = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setPostalCode = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetPostalCode, this.postalCode, pr));
 		this.postalCode = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setLocality = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetLocality, this.locality, pr));
 		this.locality = pr;
-		this.setParentToChild(pr);
 	};
 	CAddress.prototype.setISOCountryCode = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetISOCountryCode, this.isoCountryCode, pr));
 		this.isoCountryCode = pr;
-		this.setParentToChild(pr);
 	};
 
 	drawingsChangesMap[AscDFH.historyitem_Axis_SetUnits] = function (oClass, value) {
@@ -253,15 +245,15 @@ function (window, undefined) {
 		oCopy.setHidden(this.hidden);
 	};
 
-	CAxis.prototype.setAxPos = function (pos) {
-		const axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+	// isVertAxis => shows if axis is vertical
+	CAxis.prototype.setAxPos = function (isVertAxis) {
+		const axPos = isVertAxis ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
 		CAxisBase.prototype.setAxPos.call(this, axPos);
 	}
 
 	CAxis.prototype.setUnits = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
 		this.units = pr;
-		this.setParentToChild(pr);
 	};
 
 	CAxis.prototype.getFormatCode = function () {
@@ -282,12 +274,10 @@ function (window, undefined) {
 	CAxis.prototype.setTickLabels = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
 		this.tickLabels = pr;
-		this.setParentToChild(pr);
 	};
 	CAxis.prototype.setHidden = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetHidden, this.hidden, pr));
 		this.hidden = pr;
-		this.setParentToChild(pr);
 	};
 	CAxis.prototype.isValuesAxis = function () {
 		return (this.scaling instanceof CValueAxisScaling);
@@ -319,14 +309,13 @@ function (window, undefined) {
 		oCopy.setUnit(this.unit);
 	};
 	CAxisUnits.prototype.setUnitsLabel = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnits_SetUnitsLabel, this.unitsLabel, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnits_SetUnitsLabel, this.unitsLabel, pr));
 		this.unitsLabel = pr;
 		this.setParentToChild(pr);
 	};
 	CAxisUnits.prototype.setUnit = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnits_SetUnit, this.unit, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_AxisUnits_SetUnit, this.unit, pr));
 		this.unit = pr;
-		this.setParentToChild(pr);
 	};
 
 	// AxisUnitsLabel
@@ -366,17 +355,17 @@ function (window, undefined) {
 	};
 
 	CAxisUnitsLabel.prototype.setTx = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
 		this.tx = pr;
 		this.setParentToChild(pr);
 	};
 	CAxisUnitsLabel.prototype.setSpPr = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnitsLabel_SetSpPr, this.spPr, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetSpPr, this.spPr, pr));
 		this.spPr = pr;
 		this.setParentToChild(pr);
 	};
 	CAxisUnitsLabel.prototype.setTxPr = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnitsLabel_SetTxPr, this.txPr, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetTxPr, this.txPr, pr));
 		this.txPr = pr;
 		this.setParentToChild(pr);
 	};
@@ -427,27 +416,22 @@ function (window, undefined) {
 	CBinning.prototype.setBinSize = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_Binning_SetBinSize, this.binSize, pr));
 		this.binSize = pr;
-		this.setParentToChild(pr);
 	};
 	CBinning.prototype.setBinCount = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Binning_SetBinCount, this.binCount, pr));
 		this.binCount = pr;
-		this.setParentToChild(pr);
 	};
 	CBinning.prototype.setIntervalClosed = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Binning_SetIntervalClosed, this.intervalClosed, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Binning_SetIntervalClosed, this.intervalClosed, pr));
 		this.intervalClosed = pr;
-		this.setParentToChild(pr);
 	};
 	CBinning.prototype.setUnderflow = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Binning_SetUnderflow, this.underflow, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Binning_SetUnderflow, this.underflow, pr));
 		this.underflow = pr;
-		this.setParentToChild(pr);
 	};
 	CBinning.prototype.setOverflow = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Binning_SetOverflow, this.overflow, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Binning_SetOverflow, this.overflow, pr));
 		this.overflow = pr;
-		this.setParentToChild(pr);
 	};
 
 
@@ -470,9 +454,9 @@ function (window, undefined) {
 	};
 
 	CCategoryAxisScaling.prototype.setGapWidth = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CategoryAxisScaling_SetGapWidth, this.gapWidth, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_CategoryAxisScaling_SetGapWidth, this.gapWidth, pr));
 		this.gapWidth = pr;
-		this.setParentToChild(pr);
+
 	};
 
 
@@ -3375,7 +3359,7 @@ function (window, undefined) {
 		if (aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if (oDim) {
-				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL) ? oDim.levelData.length - 1 : 0;
+				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL || type === AscFormat.SERIES_LAYOUT_FUNNEL) ? oDim.levelData.length - 1 : 0;
 				return oDim.levelData[index] || null;
 			}
 		}
@@ -3888,19 +3872,16 @@ function (window, undefined) {
 		this.setParentToChild(pr);
 	};
 	CValueAxisScaling.prototype.setMin = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueAxisScaling_SetMin, this.min, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_ValueAxisScaling_SetMin, this.min, pr));
 		this.min = pr;
-		this.setParentToChild(pr);
 	};
 	CValueAxisScaling.prototype.setMajorUnit = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueAxisScaling_SetMajorUnit, this.majorUnit, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_ValueAxisScaling_SetMajorUnit, this.majorUnit, pr));
 		this.majorUnit = pr;
-		this.setParentToChild(pr);
 	};
 	CValueAxisScaling.prototype.setMinorUnit = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueAxisScaling_SetMinorUnit, this.minorUnit, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_ValueAxisScaling_SetMinorUnit, this.minorUnit, pr));
 		this.minorUnit = pr;
-		this.setParentToChild(pr);
 	};
 
 
@@ -3939,17 +3920,14 @@ function (window, undefined) {
 	CValueColorEndPosition.prototype.setExtremeValue = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue, this.extremeValue, pr));
 		this.extremeValue = pr;
-		this.setParentToChild(pr);
 	};
 	CValueColorEndPosition.prototype.setNumber = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ValueColorEndPosition_SetNumber, this.number, pr));
 		this.number = pr;
-		this.setParentToChild(pr);
 	};
 	CValueColorEndPosition.prototype.setPercent = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ValueColorEndPosition_SetPercent, this.percent, pr));
 		this.percent = pr;
-		this.setParentToChild(pr);
 	};
 
 
@@ -3980,12 +3958,12 @@ function (window, undefined) {
 	}	
 
 	CValueColorMiddlePosition.prototype.setNumber = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueColorMiddlePosition_SetNumber, this.number, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_ValueColorMiddlePosition_SetNumber, this.number, pr));
 		this.number = pr;
 		this.setParentToChild(pr);
 	};
 	CValueColorMiddlePosition.prototype.setPercent = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueColorMiddlePosition_SetPercent, this.percent, pr));
+		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_ValueColorMiddlePosition_SetPercent, this.percent, pr));
 		this.percent = pr;
 		this.setParentToChild(pr);
 	};
@@ -4051,7 +4029,6 @@ function (window, undefined) {
 	CValueColorPositions.prototype.setCount = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_ValueColorPositions_SetCount, this.count, pr));
 		this.count = pr;
-		this.setParentToChild(pr);
 	};
 
 

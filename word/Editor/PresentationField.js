@@ -217,15 +217,18 @@
                             }
                         }
                     }
-                    else if(oStylesObject.layout)
+                    else if(oStylesObject.layout || oStylesObject.master)
                     {
-                        this.SlideNum = oStylesObject.layout.lastRecalcSlideIndex;
-                        sStr = '' + (oStylesObject.layout.lastRecalcSlideIndex + nFirstSlideNum);
-                    }
-                    else if(oStylesObject.master)
-                    {
-                        this.SlideNum = oStylesObject.master.lastRecalcSlideIndex;
-                        sStr = '' + (oStylesObject.master.lastRecalcSlideIndex + nFirstSlideNum);
+                        let oParent = (oStylesObject.layout || oStylesObject.master);
+                        if(AscFormat.isRealNumber(oParent.lastRecalcSlideIndex) && oParent.lastRecalcSlideIndex > -1)
+                        {
+                            this.SlideNum = oParent.lastRecalcSlideIndex;
+                            sStr = '' + (this.SlideNum + nFirstSlideNum);
+                        }
+                        else
+                        {
+                            sStr = '<#>';
+                        }
                     }
                 }
             }

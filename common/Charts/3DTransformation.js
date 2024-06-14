@@ -1938,7 +1938,7 @@ Processor3D.prototype.calculateCommonOptions = function () {
 		}
 
 		return {
-			diffY: diffY, tempX1: tempX1, tempY1: tempY1, tempZ1: tempZ1, tempX2: tempX2, tempY2: tempY2, tempZ2: tempZ2, diffZ: diffZ
+			tempX1: tempX1, tempY1: tempY1, tempZ1: tempZ1, tempX2: tempX2, tempY2: tempY2, tempZ2: tempZ2
 		};
 	};
 

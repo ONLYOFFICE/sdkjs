@@ -443,6 +443,65 @@ function (window, undefined) {
 		//CT_ThreadedComment.personId, CT_ThreadedComment.id, CT_Person.id also required but they generated
 		return !!this.sUserName;
 	};
+	asc_CCommentData.prototype.fromCValue = function (value) {
+		if (!value) {
+			return value;
+		}
+		let comment = new Asc.asc_CCommentData();
+		comment.asc_putRow(value["Row"]);
+		comment.asc_putCol(value["Col"]);
+		comment.asc_putId(value["Id"]);
+		comment.asc_putLevel(value["Level"]);
+		comment.asc_putText(value["Text"]);
+		comment.asc_putQuoteText(value["QuoteText"]);
+		comment.asc_putTime(value["Time"]);
+		comment.asc_putOnlyOfficeTime(value["OnlyOfficeTime"]);
+		comment.asc_putUserId(value["UserId"]);
+		comment.asc_putUserName(value["Name"]);
+		comment.asc_putProviderId(value["ProviderId"]);
+		comment.asc_putDocumentFlag(value["DocumentFlag"]);
+		comment.asc_putHiddenFlag(value["HiddenFlag"]);
+		comment.asc_putSolved(value["Solved"]);
+		comment.asc_putUserData(value["UserData"]);
+		if(Array.isArray(value["asc_getReplies"])) {
+			for(let nIdx = 0; nIdx < value["asc_getReplies"].length; ++nIdx) {
+				let reply = Asc.asc_CCommentData.prototype.fromCValue(value["asc_getReplies"][nIdx]);
+				if(reply) {
+					this.asc_addReply(reply);
+				}
+			}
+		}
+		comment.asc_putGuid(value["Guid"]);
+		return comment;
+	};
+	asc_CCommentData.prototype.toCValue = function () {
+		let value = {};
+		value["Row"] = this.asc_getRow();
+		value["Col"] = this.asc_getCol();
+		value["Id"] = this.asc_getId();
+		value["Level"] = this.asc_getLevel();
+		value["Text"] = this.asc_getText();
+		value["QuoteText"] = this.asc_getQuoteText();
+		value["Time"] = this.asc_getTime();
+		value["OnlyOfficeTime"] = this.asc_getOnlyOfficeTime();
+		value["UserId"] = this.asc_getUserId();
+		value["UserName"] = this.asc_getUserName();
+		value["ProviderId"] = this.asc_getProviderId();
+		value["DocumentFlag"] = this.asc_getDocumentFlag();
+		value["HiddenFlag"] = this.asc_getHiddenFlag();
+		value["Solved"] = this.asc_getSolved();
+		value["UserData"] = this.asc_getUserData();
+		value["asc_getReplies"] = [];
+		for(let nIdx = 0; nIdx < this.aReplies.length; ++nIdx) {
+			let replyVal = this.aReplies[nIdx].toCValue();
+			if(replyVal) {
+				value["asc_getReplies"].push(replyVal);
+			}
+		}
+		value["MasterCommentId"] = this.asc_getMasterCommentId();
+		value["Guid"] = this.asc_getGuid();
+		return value;
+	};
 
 /** @constructor */
 function CCellCommentator(currentSheet) {

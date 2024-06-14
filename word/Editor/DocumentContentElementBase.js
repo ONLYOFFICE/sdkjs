@@ -1409,6 +1409,11 @@ CDocumentContentElementBase.prototype.updateTrackRevisions = function()
 {
 	AscWord.checkElementInRevision(this);
 };
+CDocumentContentElementBase.prototype.isPreventedPreDelete = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return !logicDocument || !logicDocument.IsDocumentEditor() || logicDocument.isPreventedPreDelete();
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

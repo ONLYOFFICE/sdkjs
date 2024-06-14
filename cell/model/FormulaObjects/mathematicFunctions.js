@@ -1070,6 +1070,7 @@ function (window, undefined) {
 	cCEILING_PRECISE.prototype.argumentsMin = 1;
 	cCEILING_PRECISE.prototype.argumentsMax = 2;
 	cCEILING_PRECISE.prototype.isXLFN = true;
+	cCEILING_PRECISE.prototype.argumentsType = [argType.number, argType.number];
 	cCEILING_PRECISE.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
@@ -1395,6 +1396,7 @@ function (window, undefined) {
 	cCOTH.prototype.argumentsMax = 1;
 	cCOTH.prototype.isXLFN = true;
 	cCOTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cCOTH.prototype.argumentsType = [argType.number];
 	cCOTH.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 
@@ -1889,7 +1891,7 @@ function (window, undefined) {
 	cFLOOR.prototype.name = 'FLOOR';
 	cFLOOR.prototype.argumentsMin = 2;
 	cFLOOR.prototype.argumentsMax = 2;
-	cFLOOR.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cFLOOR.prototype.argumentsType = [argType.number, argType.number];
 	cFLOOR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -1989,6 +1991,7 @@ function (window, undefined) {
 	cFLOOR_PRECISE.prototype.argumentsMin = 1;
 	cFLOOR_PRECISE.prototype.argumentsMax = 2;
 	cFLOOR_PRECISE.prototype.isXLFN = true;
+	cFLOOR_PRECISE.prototype.argumentsType = [argType.number, argType.number];
 	cFLOOR_PRECISE.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
 		var argClone = oArguments.args;
@@ -2220,6 +2223,7 @@ function (window, undefined) {
 	cISO_CEILING.prototype.name = 'ISO.CEILING';
 	cISO_CEILING.prototype.argumentsMin = 1;
 	cISO_CEILING.prototype.argumentsMax = 2;
+	cISO_CEILING.prototype.argumentsType = [argType.number, argType.number];
 	//cISO_CEILING.prototype.isXLFN = true;
 	cISO_CEILING.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1]);
@@ -4988,9 +4992,10 @@ function (window, undefined) {
 	cSUMIF.prototype.argumentsMin = 2;
 	cSUMIF.prototype.argumentsMax = 3;
 	cSUMIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cSUMIF.prototype.exactTypes = {0: 1};
 	cSUMIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cSUMIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, matchingInfo;
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
 			cElementType.cellsRange !== arg0.type) {
 			if (cElementType.cellsRange3D === arg0.type) {
@@ -5021,7 +5026,9 @@ function (window, undefined) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-		arg1 = arg1.tocString();
+		if (cElementType.string !== arg1.type) {
+			arg1 = arg1.tocString();
+		}
 
 		if (cElementType.string !== arg1.type) {
 			return new cError(cErrorType.wrong_value_type);
@@ -5029,9 +5036,9 @@ function (window, undefined) {
 
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
 		if (cElementType.cellsRange === arg0.type || cElementType.cell === arg0.type) {
-			var arg0Matrix = arg0.getMatrix(), arg2Matrix = arg2.getMatrix(), valMatrix2;
-			for (var i = 0; i < arg0Matrix.length; i++) {
-				for (var j = 0; j < arg0Matrix[i].length; j++) {
+			let arg0Matrix = arg0.getMatrix(), arg2Matrix = arg[2] ? arg2.getMatrix() : arg0Matrix, valMatrix2;
+			for (let i = 0; i < arg0Matrix.length; i++) {
+				for (let j = 0; j < arg0Matrix[i].length; j++) {
 					if (arg2Matrix[i] && (valMatrix2 = arg2Matrix[i][j]) && cElementType.number === valMatrix2.type &&
 						AscCommonExcel.matching(arg0Matrix[i][j], matchingInfo)) {
 						_sum += valMatrix2.getValue();
@@ -5456,7 +5463,7 @@ function (window, undefined) {
 	cSUMX2PY2.prototype.argumentsMin = 2;
 	cSUMX2PY2.prototype.argumentsMax = 2;
 	cSUMX2PY2.prototype.arrayIndexes = {0: 1, 1: 1};
-	cSUMX2MY2.prototype.argumentsType = [argType.array, argType.array];
+	cSUMX2PY2.prototype.argumentsType = [argType.array, argType.array];
 	cSUMX2PY2.prototype.Calculate = function (arg) {
 
 		var func = function (a, b) {

@@ -39,7 +39,6 @@ var CShape = AscFormat.CShape;
 var CChartSpace = AscFormat.CChartSpace;
 
 CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
-CChartSpace.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
     CChartSpace.prototype.getEditorType = function()
     {
         return 0;

@@ -923,7 +923,10 @@
 			&& setupPpiX === this.ppiX
 			&& setupPpiY === this.ppiY
 			&& setupRotated === isRotated) {
-			return;
+			if (!window["IS_NATIVE_EDITOR"]) {
+				// disable this optimization (see m_isPassCommands (core-ext))
+				return;
+			}
 		}
 		
 		setupFontSize  = fontSize;

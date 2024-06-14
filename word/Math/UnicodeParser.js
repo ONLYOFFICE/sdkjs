@@ -1260,8 +1260,8 @@
 	{
 		let oOperand,
 			strOpOver,
-			strLiteralType,
-			intTypeFraction;
+			intTypeFraction,
+			isBinomialWithBrackets;
 
 		if (undefined === oNumerator) {
 			oNumerator = this.GetOperandLiteral();
@@ -1270,12 +1270,8 @@
 		if (this.oLookahead.class === oLiteralNames.overLiteral[0])
 		{
 			strOpOver = this.EatToken(oLiteralNames.overLiteral[0]).data;
-
-			strLiteralType = (strOpOver === "¦" || strOpOver === "⒞")
-				? oLiteralNames.binomLiteral[num]
-				: oLiteralNames.fractionLiteral[num];
-
-			intTypeFraction = this.GetFractionType(strOpOver);
+			isBinomialWithBrackets = strOpOver === "⒞";
+			intTypeFraction = AscMath.GetFractionType(strOpOver);
 
 			if (this.IsOperandLiteral())
 				oOperand = this.GetSpaceExitFunction(this.GetFractionLiteral);
@@ -1283,8 +1279,23 @@
 			if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
 				this.EatToken(this.oLookahead.class);
 
+			if (isBinomialWithBrackets)
+			{
+				return {
+					type: oLiteralNames.bracketBlockLiteral[num],
+					value: {
+						type: oLiteralNames.fractionLiteral[num],
+						up: oNumerator || {},
+						down: oOperand || {},
+						fracType: intTypeFraction,
+					},
+					left: "(",
+					right: ")",
+				}
+			}
+
 			return {
-				type: strLiteralType,
+				type: oLiteralNames.fractionLiteral[num],
 				up: oNumerator || {},
 				down: oOperand || {},
 				fracType: intTypeFraction,
@@ -1295,13 +1306,6 @@
 			return oNumerator;
 		}
 	};
-	CUnicodeParser.prototype.GetFractionType = function(str)
-	{
-		switch (str) {
-			case "⁄" : return 1
-			case "⊘" : return 2
-		}
-	}
 	CUnicodeParser.prototype.IsFractionLiteral = function ()
 	{
 		return this.IsOperandLiteral();
@@ -1549,6 +1553,9 @@
 		{
 			let oEntity = this.GetEntityLiteral();
 
+			if (this.oLookahead.data === " ")
+				this.EatToken(this.oLookahead.class);
+
 			if (this.IsDiacriticsLiteral())
 			{
 				const oDiacritic = this.GetDiacriticsLiteral();
@@ -1564,6 +1571,12 @@
 				{
 					return this.GetOneBarLiteral(oEntity, oDiacritic);
 				}
+
+				//nbsp processing for accents
+				if (oEntity[oEntity.length - 1] && oEntity[oEntity.length - 1].value === String.fromCharCode(160)) //nbsp
+					oEntity.length--;
+				else if (oEntity.value === String.fromCharCode(160))
+					oEntity = {};
 
 				return {
 					type: MathLiteral.accent.id,
@@ -1857,8 +1870,7 @@
 	{
 		return this.IsElementLiteral() ||
 			this.oLookahead.class === oLiteralNames.operatorLiteral[0] ||
-			this.oLookahead.data === "/" ||
-			this.oLookahead.data === "¦" ||
+			this.oLookahead.class === oLiteralNames.overLiteral[0] ||
 			this.IsPreScriptLiteral();
 	};
 	CUnicodeParser.prototype.GetExpLiteral = function (arrCorrectSymbols, isMatrix)
@@ -1870,31 +1882,10 @@
 
 		while (this.IsExpLiteral() || (!isMatrix && (this.oLookahead.data === "@" || this.oLookahead.data === "&")) || (arrCorrectSymbols.includes(this.oLookahead.data)))
 		{
-			if (this.oLookahead.data === "/" || this.oLookahead.data === "¦" || this.oLookahead.data === "⒞")
+			if (this.oLookahead.class === oLiteralNames.overLiteral[0])
 			{
-				let type = oLiteralNames.fractionLiteral[num];
-
-				if (this.oLookahead.data === "¦")
-					type = oLiteralNames.binomLiteral[num];
-
-				let down;
-				let intTypeFraction = this.GetFractionType(this.oLookahead.data);
-				this.EatToken(this.oLookahead.class)
-
-				if (this.oLookahead.class)
-					down = this.GetSpaceExitFunction(this.GetElementLiteral);
-
-				if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
-					this.EatToken(this.oLookahead.class);
-
-				oExpLiteral.push({
-					type: type,
-					up: null,
-					down: down,
-					fracType: intTypeFraction,
-				})
+				oExpLiteral.push(this.GetFractionLiteral({}));
 			}
-			
 			else if (this.IsElementLiteral())
 			{
 				let oElement = this.GetElementLiteral();
