@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -48,7 +48,7 @@
 		Notes_OnRecalculate: function () {return 100;},
 		scrollToY: function () {},
 		OnStartRecalculate: function () {},
-		OnRecalculatePage: function () {},
+		OnRecalculateSlide: function () {},
 		OnEndRecalculate: function () {},
 		UpdateTargetTransform : function(){},
 		SetTargetColor : function(){},
@@ -73,7 +73,13 @@
 		GetDotsPerMM : function(value) {return 72;},
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		m_oNotesApi: {},
-		clear: function () {}
+		clear: function () {},
+		GetSlidesCount: function () {
+			return editor.getCountSlides();
+		},
+		getGraphicController: function() {
+			return AscTest.DrawingDocument.m_oLogicDocument.GetCurrentController();
+		}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -117,6 +123,12 @@
 	editor.DemonstrationReporterEnd = function () {};
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
+	editor.isMasterMode = function(){return false;};
+	editor.getCountSlides = function(){
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation) return 0;
+		return oPresentation.GetSlidesCount();
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;

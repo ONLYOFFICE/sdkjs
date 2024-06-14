@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -189,7 +189,7 @@ CTableRow.prototype =
 
 	GetPrevElementEndInfo : function(CellIndex)
 	{
-		if (-1 === CellIndex || !this.Table)
+		if (-1 === CellIndex || !this.Table || !this.Content[CellIndex])
 			return null;
 
 		if (0 === CellIndex)

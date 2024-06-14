@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -996,7 +996,7 @@
 				if (-1 === logicDoc.CurPage)
 					return "none";
 
-				var _controller = logicDoc.Slides[logicDoc.CurPage].graphicObjects;
+				var _controller = logicDoc.GetCurrentSlide().graphicObjects;
 				var _elementsCount = _controller.selectedObjects.length;
 
 				var retType = "slide";
@@ -1263,6 +1263,8 @@
 		}
 		return false;
 	}
+	AscCommon.getLocalStorageItem = getLocalStorageItem;
+	AscCommon.setLocalStorageItem = setLocalStorageItem;
 
 	function installPlugin(config, loadFuncName)
 	{
@@ -1273,7 +1275,13 @@
 				"guid" : ""
 			};
 		}
-		
+
+		window.g_asc_plugins.isUICheckOnInitMessage = true;
+		setTimeout(function(){
+			if (window.g_asc_plugins.isUICheckOnInitMessage)
+				delete window.g_asc_plugins.isUICheckOnInitMessage;
+		});
+
 		// desktop detecting (it's necessary when we work with clouds into desktop)
 		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 		if (isLocal)

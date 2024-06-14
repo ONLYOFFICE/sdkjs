@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -2564,6 +2564,12 @@ function (window, undefined) {
 			} else {
 				wb.onTimelineCacheDelete(Data.from.name);
 			}
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterate === Type) {
+			wb.calcPr.setIterate(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterateCount === Type) {
+			wb.calcPr.setIterateCount(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Workbook_CalcPr_iterateDelta === Type) {
+			wb.calcPr.setIterateDelta(bUndo ? Data.from : Data.to);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

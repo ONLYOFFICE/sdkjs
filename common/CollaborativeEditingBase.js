@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1255,7 +1255,8 @@
 	CCollaborativeEditingBase.prototype.PreUndo = function()
 	{
 		let logicDocument = this.m_oLogicDocument;
-
+		
+		logicDocument.sendEvent("asc_onBeforeUndoRedoInCollaboration");
 		logicDocument.DrawingDocument.EndTrackTable(null, true);
 		logicDocument.TurnOffCheckChartSelection();
 
@@ -1271,6 +1272,7 @@
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
 		logicDocument.UpdateRulers();
+		logicDocument.sendEvent("asc_onUndoRedoInCollaboration");
 	};
 	CCollaborativeEditingBase.prototype.UndoGlobal = function(count)
 	{

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -578,7 +578,7 @@
 
 	CGraphicFrame.prototype.Document_UpdateRulersState = function (margins) {
 		if (this.graphicObject) {
-			this.graphicObject.Document_UpdateRulersState(this.parent.num);
+			this.graphicObject.Document_UpdateRulersState(this.getParentNum());
 		}
 	};
 
@@ -666,12 +666,12 @@
 					editor.WordControl.m_oLogicDocument.CurPosition.X = tx;
 					editor.WordControl.m_oLogicDocument.CurPosition.Y = ty;
 				}
-				this.graphicObject.Selection_SetStart(tx, ty, this.parent.num, e);
+				this.graphicObject.Selection_SetStart(tx, ty, this.getParentNum(), e);
 			} else {
 				if (!this.graphicObject.IsSelectionUse()) {
 					this.graphicObject.StartSelectionFromCurPos();
 				}
-				this.graphicObject.Selection_SetEnd(tx, ty, this.parent.num, e);
+				this.graphicObject.Selection_SetEnd(tx, ty, this.getParentNum(), e);
 			}
 			this.graphicObject.RecalculateCurPos();
 
@@ -797,9 +797,9 @@
 				this.parent.graphicObjects.selectObject(this, 0);
 				this.parent.graphicObjects.selection.textSelection = this;
 			}
-			if (editor.WordControl.m_oLogicDocument.CurPage !== this.parent.num) {
-				editor.WordControl.m_oLogicDocument.Set_CurPage(this.parent.num);
-				editor.WordControl.GoToPage(this.parent.num);
+			if (editor.WordControl.m_oLogicDocument.CurPage !== this.getParentNum()) {
+				editor.WordControl.m_oLogicDocument.Set_CurPage(this.getParentNum());
+				editor.WordControl.GoToPage(this.getParentNum());
 			}
 		}
 	};
@@ -961,13 +961,6 @@
 		} else {
 			return editor.WordControl.m_oLogicDocument.globalTableStyles;
 		}
-	};
-
-	CGraphicFrame.prototype.Get_StartPage_Absolute = function () {
-		if (this.parent) {
-			return this.parent.num;
-		}
-		return 0;
 	};
 
 	CGraphicFrame.prototype.Get_PageContentStartPos = function (PageNum) {
@@ -1196,7 +1189,11 @@
 		Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
 		let nDrawingType = oDrawing.getObjectType();
 		if (nDrawingType === AscDFH.historyitem_type_ChartSpace) {
-			Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+			if (oDrawing.isChartEx()) {
+				Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2014/chartex";
+			} else {
+				Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+			}
 		} else if (nDrawingType === AscDFH.historyitem_type_SlicerView) {
 			Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
 		} else if (nDrawingType === AscDFH.historyitem_type_TimelineSlicerView) {

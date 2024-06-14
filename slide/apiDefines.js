@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -68,6 +68,9 @@ var c_oAscContextMenuTypes = {
 	Main       : 0,
 	Thumbnails : 1,
 	AnimEffect: 3,
+	Master: 4,
+	Layout: 5,
+	TimelineZoom: 6
 };
 
 var THEME_THUMBNAIL_WIDTH   = 180;
@@ -411,7 +414,7 @@ var c_oAscSlideAnimChartBuildType = {
 };
 
 /** @enum {number} */
-var c_oAscSlideOleChartBuildType = {
+var c_oAscSlideOleChartBuildTypec_oAscSlideOleChartBuildType = {
 	AllAtOnce:  0,
 	Category:   1,
 	CategoryEl: 2,
@@ -503,6 +506,13 @@ var c_oAscPresentationShortcutType = {
 	SpeechWorker    : 32
 };
 
+
+const c_oAscPresentationViewMode = {
+	normal: 0,
+	masterSlide: 1,
+	sorter: 2
+};
+
 var TABLE_STYLE_WIDTH_PIX  = 72;
 var TABLE_STYLE_HEIGHT_PIX = 52;
 
@@ -523,6 +533,9 @@ prot = window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenu
 prot['Main']       = c_oAscContextMenuTypes.Main;
 prot['Thumbnails'] = c_oAscContextMenuTypes.Thumbnails;
 prot['AnimEffect'] = c_oAscContextMenuTypes.AnimEffect;
+prot['Master'] = c_oAscContextMenuTypes.Master;
+prot['Layout'] = c_oAscContextMenuTypes.Layout;
+prot['TimelineZoom'] = c_oAscContextMenuTypes.TimelineZoom;
 
 prot = window['Asc']['c_oAscAlignShapeType'] = c_oAscAlignShapeType;
 prot['ALIGN_LEFT']   = c_oAscAlignShapeType.ALIGN_LEFT;
@@ -612,6 +625,11 @@ prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadow
 prot = window['Asc']['c_oAscBlendModeType'] = window['Asc'].c_oAscBlendModeType = c_oAscBlendModeType;
 
 prot = window['Asc']['c_oAscConformanceType'] = window['Asc'].c_oAscConformanceType = c_oAscConformanceType;
+
+prot = window['Asc']['c_oAscPresentationViewMode'] = window['Asc'].c_oAscPresentationViewMode = c_oAscPresentationViewMode;
+prot['normal']      = c_oAscPresentationViewMode.normal;
+prot['masterSlide'] = c_oAscPresentationViewMode.masterSlide;
+prot['sorter']      = c_oAscPresentationViewMode.sorter;
 
 
 window['AscCommon']                = window['AscCommon'] || {};

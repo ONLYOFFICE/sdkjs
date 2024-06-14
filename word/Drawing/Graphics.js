@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -220,6 +220,11 @@
 		this.m_bBrushColorInit = false;
 	};
 
+	CGraphics.prototype.isSupportEditFeatures = function()
+	{
+		return true;
+	};
+
 	CGraphics.prototype.put_GlobalAlpha = function(enable, alpha)
 	{
 		if (false === enable)
@@ -327,7 +332,7 @@
 		this.m_oContext.setLineDash(params ? params : []);
 	};
 
-		// brush methods
+	// brush methods
 	CGraphics.prototype.b_color1 = function(r,g,b,a)
 	{
 		var _c = this.m_oBrush.Color1;

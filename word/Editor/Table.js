@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -962,7 +962,7 @@ CTable.prototype.Set_Props = function(Props)
 	}
 
 	// TableLook
-	if ("undefined" != typeof(Props.TableLook))
+	if (Props.TableLook)
 	{
 		var NewLook = new AscCommon.CTableLook(Props.TableLook.FirstCol, Props.TableLook.FirstRow, Props.TableLook.LastCol, Props.TableLook.LastRow, Props.TableLook.BandHor, Props.TableLook.BandVer);
 		this.Set_TableLook(NewLook);
@@ -2730,7 +2730,7 @@ CTable.prototype.GetEndInfo = function()
 };
 CTable.prototype.GetPrevElementEndInfo = function(RowIndex)
 {
-	if (-1 === RowIndex || !this.Parent)
+	if (-1 === RowIndex || !this.Parent || !this.Content[RowIndex])
 		return null;
 
 	if (0 === RowIndex)
@@ -16568,6 +16568,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 		isAllSelected = true;
 	}
 	
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if ((bAll || (isCellSelection && !this.ApplyToAll))
 		&& (undefined === nType
 			|| c_oAscRevisionsChangeType.TablePr === nType
@@ -16621,12 +16624,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			}
 		}
 	}
-
+	
 	if (this.GetRowsCount() <= 0)
 		return;
-	
-	if (isCellSelection)
-		this.RemoveSelection();
 	
 	if (arrSelectionArray.length <= 0)
 	{

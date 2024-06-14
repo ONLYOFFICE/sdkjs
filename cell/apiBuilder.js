@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -273,8 +273,8 @@
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
 	/**
 	 * Specifies the part of the range to be pasted.
-	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders" |
-	 *  | "xlPasteColumnWidths" | "xlPasteComments"
+	 * @typedef {("xlPasteAll" | "xlPasteAllExceptBorders"
+	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
 	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
 	 * */
@@ -515,6 +515,15 @@
 	 */
 	Api.prototype.RemoveCustomFunction = function (sName) {
 		return this.removeCustomFunction(sName);
+	};
+	/**
+	 * Clear all custom functions.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns false if such a functions does not exist.
+	 */
+	Api.prototype.ClearCustomFunctions = function () {
+		return this.clearCustomFunctions();
 	};
 
 	/**
@@ -6875,6 +6884,85 @@
 
 
 	/**
+	 * Returns the document information:
+	 * * <b>Application</b> - the application the document has been created with.
+	 * * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * * <b>Created</b> - the parsed date and time when the file was created.
+	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * * <b>Autrors</b> - the persons who has created the file.
+	 * * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {object}
+	 */
+	Api.prototype.GetDocumentInfo = function()
+	{
+		const oDocInfo = {
+			Application: '',
+			CreatedRaw: null,
+			Created: '',
+			LastModifiedRaw: null,
+			LastModified: '',
+			LastModifiedBy: '',
+			Autrors: [],
+			Title: '',
+			Tags: '',
+			Subject: '',
+			Comment: ''
+		};
+
+		let props = (this) ? this.asc_getAppProps() : null;
+		oDocInfo.Application = (props.asc_getApplication() || '') + (props.asc_getAppVersion() ? ' ' : '') + (props.asc_getAppVersion() || '');
+
+		let langCode = 1033; // en-US
+		let langName = 'en-us';
+		if (AscCommon.g_oDefaultCultureInfo.Name) {
+			langName = AscCommon.g_oDefaultCultureInfo.Name.replace('_', '-').toLowerCase();
+		} else if (this.defaultLanguage && window['Common']) {
+			langCode = this.defaultLanguage;
+			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
+
+		}
+
+		props = this.asc_getCoreProps();
+		oDocInfo.CreatedRaw = props.asc_getCreated();
+		oDocInfo.LastModifiedRaw = props.asc_getModified();
+
+		try {
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' +oDocInfo. CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+			
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		} catch (e) {
+			langName = 'en';
+			if (oDocInfo.CreatedRaw)
+				oDocInfo.Created = (oDocInfo.CreatedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.CreatedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+
+			if (oDocInfo.LastModifiedRaw)
+				oDocInfo.LastModified = (oDocInfo.LastModifiedRaw.toLocaleString(langName, {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + oDocInfo.LastModifiedRaw.toLocaleString(langName, {timeStyle: 'short'}));
+		}
+
+		const LastModifiedBy = props.asc_getLastModifiedBy();
+		oDocInfo.LastModifiedBy = AscCommon.UserInfoParser.getParsedName(LastModifiedBy);
+
+		oDocInfo.Title = (props.asc_getTitle() || '');
+		oDocInfo.Tags = (props.asc_getKeywords() || '');
+		oDocInfo.Subject = (props.asc_getSubject() || '');
+		oDocInfo.Comment = (props.asc_getDescription() || '');
+
+		const authors = props.asc_getCreator();
+		if (authors)
+			oDocInfo.Autrors = authors.split(/\s*[,;]\s*/);
+
+		return oDocInfo;
+	};
+	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -12981,6 +13069,7 @@
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
+	Api.prototype["GetDocumentInfo"] = Api.prototype.GetDocumentInfo;
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;

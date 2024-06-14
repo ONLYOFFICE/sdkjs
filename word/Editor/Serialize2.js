@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -5176,7 +5176,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
         {
             //sectPr
             this.bs.WriteItem(c_oSerParType.sectPr, function(){oThis.bpPrs.WriteSectPr(oThis.Document.SectPr, oThis.Document);});
-			if (oThis.Document.Background) {
+			if (oThis.Document.Background && !oThis.Document.Background.isDefault()) {
 				this.bs.WriteItem(c_oSerParType.Background, function(){oThis.WriteBackground(oThis.Document.Background);});
 			}
 			var macros = this.Document.DrawingDocument.m_oWordControl.m_oApi.macros.GetData();
@@ -11221,7 +11221,6 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			Content.push(oSdt);
 		} else if ( c_oSerParType.Background === type ) {
-			oThis.Document.Background = {Color: null, Unifill: null, shape: null};
 			res = this.bcr.Read2(length, function(t, l){
 				return oThis.ReadBackground(t,l, oThis.Document.Background);
 			});

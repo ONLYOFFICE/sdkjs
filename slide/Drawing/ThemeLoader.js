@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -224,10 +224,6 @@ function CThemeLoader()
 
             AscCommon.History.MinorChanges = true;
             _loader.Load(_binary, pres);
-            for(var i = 0; i < pres.slideMasters.length; ++i)
-            {
-                pres.slideMasters[i].setThemeIndex(oThis.CurrentLoadThemeIndex);
-            }
             AscCommon.History.MinorChanges = false;
 
             if (oThis.IsReloadBinaryThemeEditorNow || window["NATIVE_EDITOR_ENJINE"])

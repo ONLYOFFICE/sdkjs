@@ -1045,7 +1045,7 @@
 			this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
 			gap,
 			MOVE_BUTTON_SIZE,
-			MOVE_BUTTON_SIZE,
+			MOVE_BUTTON_SIZE
 		);
 		this.moveUpButton.recalculate();
 
@@ -2355,17 +2355,24 @@
 	};
 
 	CAnimItem.prototype.updateSelectState = function (event) {
-		const oThis = this
-		if (event.CtrlKey) {
-			oThis.effect.toggleSelect()
-		} else {
-			const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+		const oThis = this;
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		if (event.Button === AscCommon.g_mouse_button_right && !oThis.effect.isSelected()) {
 			seqList.forEachAnimItem(function (animItem) {
-				animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect()
+				animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect();
 			})
 		}
-		Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
-		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
+		if (event.Button === AscCommon.g_mouse_button_left) {
+			if (event.CtrlKey) {
+				oThis.effect.toggleSelect();
+			} else {
+				seqList.forEachAnimItem(function (animItem) {
+					animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect();
+				})
+			}
+		}
+		Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide();
+		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	}
 	CAnimItem.prototype.updateCursorType = function (x, y) {
 		const cursorType = this.getNewCursorType(x, y);
@@ -2415,9 +2422,9 @@
 		})
 
 		const templateStrings = {
-			startTime: AscCommon.translateManager.getValue('Start: ${time}s'),
-			endTime: AscCommon.translateManager.getValue('End: ${time}s'),
-			loopTime: AscCommon.translateManager.getValue('Loop: ${time}s'),
+			startTime: AscCommon.translateManager.getValue('Start: ${0}s'),
+			endTime: AscCommon.translateManager.getValue('End: ${0}s'),
+			loopTime: AscCommon.translateManager.getValue('Loop: ${0}s'),
 		};
 
 		// When dragging (when animItem's bar is pressed)
@@ -2426,16 +2433,16 @@
 			switch (currentAnimItem.hitResult.type) {
 				case 'center':
 					time = currentAnimItem.getDelay() / 1000;
-					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+					return templateStrings.startTime.replace('${0}', time.toFixed(1));
 				case 'left':
 					time = currentAnimItem.getDelay() / 1000;
-					return templateStrings.startTime.replace('${time}', time.toFixed(1));
+					return templateStrings.startTime.replace('${0}', time.toFixed(1));
 				case 'right':
 					time = currentAnimItem.getDelay() / 1000 + currentAnimItem.getDuration() / 1000;
-					return templateStrings.endTime.replace('${time}', time.toFixed(1));
+					return templateStrings.endTime.replace('${0}', time.toFixed(1));
 				case 'partition':
 					time = (currentAnimItem.getDuration() / 1000);
-					return templateStrings.loopTime.replace('${time}', time.toFixed(1));
+					return templateStrings.loopTime.replace('${0}', time.toFixed(1));
 			}
 		}
 
@@ -2443,8 +2450,8 @@
 			const startTime = (currentAnimItem.getDelay() / 1000).toFixed(1);
 			const endTime = ((currentAnimItem.getDelay() + currentAnimItem.getDuration()) / 1000).toFixed(1);
 			const result = [
-				templateStrings.startTime.replace('${time}', startTime),
-				templateStrings.endTime.replace('${time}', endTime),
+				templateStrings.startTime.replace('${0}', startTime),
+				templateStrings.endTime.replace('${0}', endTime),
 			];
 			return result.join(', ');
 		} else {

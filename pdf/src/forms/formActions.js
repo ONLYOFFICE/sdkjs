@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -289,21 +289,15 @@
             oViewer.setZoom(nZoom, true);
 
         // выставляем смещения
-        let yOffset;
-        let xOffset;
-        if (this.rect.top != null) {
-            yOffset = this.rect.top + oViewer.betweenPages / (oViewer.drawingPages[this.page].H / oViewer.file.pages[this.page].H);
-        }
-        else
-            yOffset = oViewer.betweenPages / (oViewer.drawingPages[this.page].H / oViewer.file.pages[this.page].H);
-
-        if (this.rect.left != null) {
-            xOffset = this.rect.left;
-        }
+        let yOffset = this.rect.top != null ? this.rect.top : 0;
+        let xOffset = this.rect.left != null ? this.rect.left : 0;
 
         if ((nZoom && oViewer.zoom != nZoom) || yOffset != undefined && xOffset != undefined || oViewer.currentPage != this.page) {
+            let oTr = oDoc.pagesTransform[this.page].invert;
+            let oPos = oTr.TransformPoint(xOffset, yOffset);
+
             oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            oViewer.navigateToPage(this.page, yOffset, xOffset);
+            oViewer.navigateToPage(this.page, oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
             oViewer.disabledPaintOnScroll = false;
             oViewer.needRedraw = true; // в конце Actions выполним отрисовку
         }

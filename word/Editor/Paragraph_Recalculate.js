@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -4296,6 +4296,17 @@ CParagraphRecalculateStateAlign.prototype.getCompatibilityMode = function()
 {
 	return this.getDocumentSettings().getCompatibilityMode();
 };
+CParagraphRecalculateStateAlign.prototype.getLineTop = function()
+{
+	let p = this.Paragraph;
+	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Top;
+};
+CParagraphRecalculateStateAlign.prototype.getLineBottom = function()
+{
+	let p = this.Paragraph;
+	return p.Pages[this.wrapState.Page].Y + p.Lines[this.wrapState.Line].Bottom;
+};
+
 
 function CParagraphRecalculateStateInfo()
 {

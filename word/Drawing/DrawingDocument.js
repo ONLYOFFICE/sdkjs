@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1096,11 +1096,12 @@ CPage.prototype.Draw = function (context, xDst, yDst, wDst, hDst, api)
 
 	if (strokeColor)
 	{
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		context.lineWidth = Math.round(rPR);
+		let lineW = Math.round(AscCommon.AscBrowser.retinaPixelRatio);
+		let offset = 0.5 * lineW;
+		context.lineWidth = lineW;
 		context.strokeStyle = strokeColor;
 		context.beginPath();
-		context.strokeRect(xDst - 0.5 * rPR, yDst - 0.5 * rPR, wDst + rPR, hDst + rPR);
+		context.strokeRect(xDst - offset, yDst - offset, wDst + lineW, hDst + lineW);
 		context.beginPath();
 	}
 };
@@ -2313,6 +2314,14 @@ function CDrawingDocument()
 
 		if (this.m_oWordControl.m_oLogicDocument && pageIndex >= this.m_arrPages.length)
 			return;
+
+		if (this.m_oWordControl.m_oApi.isPdfEditor())
+		{
+			this.m_dTargetX = x;
+			this.m_dTargetY = y;
+			this.m_lTargetPage = pageIndex;
+			this.CheckTargetDraw(x, y);
+		}
 
 		var bIsPageChanged = false;
 		if (this.m_lCurrentPage != pageIndex)

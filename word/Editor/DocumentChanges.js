@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1183,102 +1183,16 @@ CChangesDocumentPageColor.prototype.Redo = function()
 };
 CChangesDocumentPageColor.prototype.WriteToBinary = function(writer)
 {
-	let startPos = writer.GetCurPosition();
-	writer.Skip(4);
-	
-	let flags = 0;
-	if (this.New.Color)
-	{
-		flags |= 1;
-		this.New.Color.Write_ToBinary(writer);
-	}
-	
-	if (this.New.Unifill)
-	{
-		flags |= 2;
-		this.New.Unifill.Write_ToBinary(writer);
-	}
-	
-	if (this.New.shape)
-	{
-		flags |= 4;
-		writer.WriteString2(this.New.shape.GetId());
-	}
-	
-	if (this.Old.Color)
-	{
-		flags |= 8;
-		this.Old.Color.Write_ToBinary(writer);
-	}
-	
-	if (this.Old.Unifill)
-	{
-		flags |= 16;
-		this.Old.Unifill.Write_ToBinary(writer);
-	}
-	
-	if (this.Old.shape)
-	{
-		flags |= 32;
-		writer.WriteString2(this.Old.shape.GetId());
-	}
-	
-	let endPos = writer.GetCurPosition();
-	writer.Seek(startPos);
-	writer.WriteLong(flags);
-	writer.Seek(endPos);
+	this.New.writeToBinary(writer);
+	this.Old.writeToBinary(writer);
 };
 CChangesDocumentPageColor.prototype.ReadFromBinary = function(reader)
 {
-	this.New = {
-		Color   : null,
-		shape   : null,
-		Unifill : null,
-	};
+	this.New = new AscWord.DocumentBackground();
+	this.Old = new AscWord.DocumentBackground();
 	
-	this.Old = {
-		Color   : null,
-		shape   : null,
-		Unifill : null,
-	};
-	
-	let flags = reader.GetLong();
-	
-	if (flags & 1)
-	{
-		this.New.Color = new CDocumentColor(0, 0, 0);
-		this.New.Color.Read_FromBinary(reader);
-	}
-	
-	if (flags & 2)
-	{
-		this.New.Unifill = new AscFormat.CUniFill();
-		this.New.Unifill.Read_FromBinary(reader);
-	}
-	
-	if (flags & 4)
-	{
-		let shapeId = reader.GetString2();
-		this.New.shape = AscCommon.g_oTableId.GetById(shapeId);
-	}
-	
-	if (flags & 8)
-	{
-		this.Old.Color = new CDocumentColor(0, 0, 0);
-		this.Old.Color.Read_FromBinary(reader);
-	}
-	
-	if (flags & 16)
-	{
-		this.Old.Unifill = new AscFormat.CUniFill();
-		this.Old.Unifill.Read_FromBinary(reader);
-	}
-	
-	if (flags & 32)
-	{
-		let shapeId = reader.GetString2();
-		this.Old.shape = AscCommon.g_oTableId.GetById(shapeId);
-	}
+	this.New.readFromBinary(reader);
+	this.Old.readFromBinary(reader);
 };
 CChangesDocumentPageColor.prototype.CreateReverseChange = function()
 {

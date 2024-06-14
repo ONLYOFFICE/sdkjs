@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -53,6 +53,12 @@
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
 	const fontslot_ASCII    = 0x01;
+
+	let scriptDirectory = "";
+	if (document.currentScript) {
+		scriptDirectory = document.currentScript.src;
+		scriptDirectory = scriptDirectory.substring(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/") + 1);
+	}
 
 	Number.isInteger = Number.isInteger || function(value) {
 		return typeof value === 'number' && Number.isFinite(value) && !(value % 1);
@@ -1446,7 +1452,8 @@
 		"na": "#N\/A",
 		"getdata": "#GETTING_DATA",
 		"uf": "#UNSUPPORTED_FUNCTION!",
-		"calc": "#CALC!"
+		"calc": "#CALC!",
+		"spill": "#SPILL!",
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1540,7 +1547,8 @@
 			"na":      "#N\/A",
 			"getdata": "#GETTING_DATA",
 			"uf":      "#UNSUPPORTED_FUNCTION!",
-			"calc":    "#CALC!"
+			"calc":    "#CALC!",
+			"spill":   "#SPILL!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1552,6 +1560,7 @@
 		cErrorLocal['getdata'] = local['getdata'];
 		cErrorLocal['uf'] = local['uf'];
 		cErrorLocal['calc'] = local['calc'];
+		cErrorLocal['spill'] = local['spill'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1562,7 +1571,8 @@
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + "|" +
-			cErrorLocal["calc"] + ")", "i");
+			cErrorLocal["calc"] + "|" +
+			cErrorLocal["spill"] + ")", "i")
 	}
 
 	function build_rx_cell_func(local)
@@ -10458,7 +10468,11 @@
 		}
 		else
 		{
-			loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			if (scriptDirectory) {
+				loadScript(scriptDirectory + 'sdk-all.js', onSuccess, onError);
+			} else {
+				loadScript('./../../../../sdkjs/' + sdkName + '/sdk-all.js', onSuccess, onError);
+			}
 		}
 	}
 
@@ -13953,6 +13967,7 @@
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
 	window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;
 	window["AscCommon"].cBoolLocal = cBoolLocal;
+	window["AscCommon"].cBoolOrigin = cBoolOrigin;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
 	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;

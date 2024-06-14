@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -143,6 +143,9 @@
 
     var filterSizeButton = 17;
     var collapsePivotSizeButton = 10;
+
+	//limit rows for prepare metrics. if more then limit -> metrics will prepare dynamic
+	var nMaxPrintRows = 150000;
 
     function getMergeType(merged) {
 		var res = c_oAscMergeType.none;
@@ -1150,12 +1153,15 @@
         return Math.max(0, i - tmp); // Диапазон скрола должен быть меньше количества столбцов, чтобы не было прибавления столбцов при перетаскивании бегунка
     };
 
-    WorksheetView.prototype.getVerticalScrollRange = function () {
-		var offsetFrozen = this.getFrozenPaneOffset(true, false);
+    WorksheetView.prototype.getVerticalScrollRange = function (bCheckEqual) {
+        var offsetFrozen = this.getFrozenPaneOffset(true, false);
         var ctxH = this.drawingCtx.getHeight() - offsetFrozen.offsetY - this.cellsTop;
         for (var h = 0, i = this.nRowsCount - 1; i >= 0; --i) {
             h += this._getRowHeight(i);
             if (h >= ctxH) {
+                if (bCheckEqual && h > ctxH) {
+                    i++;
+                }
                 break;
             }
         }
@@ -2734,7 +2740,7 @@
     };
 
     // ----- Drawing for print -----
-    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea) {
+    WorksheetView.prototype._calcPagesPrint = function(range, pageOptions, indexWorksheet, arrPages, printScale, adjustPrint, bPrintArea, opt_prepareTextMetrics) {
         if (0 > range.r2 || 0 > range.c2) {
 			// Ничего нет
             return;
@@ -2970,6 +2976,13 @@
 			}
 		}
 
+		let prepareTextMetricsRowMax = 0;
+		let _range, step = 1000;
+		if (opt_prepareTextMetrics) {
+			_range =  new Asc.Range(range.c1, range.r1, range.c2, range.r1 + step);
+			this._prepareCellTextMetricsCache(_range);
+			prepareTextMetricsRowMax = range.r1 + step;
+		}
 		while (AscCommonExcel.c_kMaxPrintPages > arrPages.length) {
 			if(isOnlyFirstPage && nCountPages > 0) {
 				break;
@@ -3011,6 +3024,13 @@
 
 			let rightBorderWidth = null;
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
+
+				if (opt_prepareTextMetrics && rowIndex === prepareTextMetricsRowMax + 1) {
+					_range =  new Asc.Range(range.c1, prepareTextMetricsRowMax + 1, range.c2, prepareTextMetricsRowMax + 1 + step);
+					prepareTextMetricsRowMax += step + 1;
+					this._prepareCellTextMetricsCache(_range);
+				}
+
 				let currentRowHeight = _getRowHeight(rowIndex) * scale;
 				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
 				rowBreak = !bFitToHeight && rowIndex !== currentRowIndex && t.model.rowBreaks && t.model.rowBreaks.isBreak(rowIndex, bPrintArea && range.c1, bPrintArea && range.c2);
@@ -3183,42 +3203,64 @@
 		}
     };
 
-	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc) {
+	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc/*, _checkLargeRange*/) {
+		let t = this;
+		let isLargeRange = false;
+		var maxCol = -1;
+		var maxRow = -1;
+		var rowCache, rightSide, curRow = -1, hiddenRow = false;
+
+		//TODO while commented large range. need research all limits.
+
+		let checkMaxRowCol = function (_range, stopOnMax) {
+			/*let maxDefinedCells = 99998;
+			let counterCells = 0;*/
+			t.model.getRange3(_range.r1, _range.c1, _range.r2, _range.c2)._foreachNoEmpty(function(cell) {
+				var c = cell.nCol;
+				var r = cell.nRow;
+				if (curRow !== r) {
+					curRow = r;
+					hiddenRow = 0 === t._getRowHeight(r);
+					rowCache = t._getRowCache(r);
+				}
+				if(!hiddenRow && 0 < t._getColumnWidth(c)){
+					var style = cell.getStyle();
+					if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
+						maxCol = Math.max(maxCol, c);
+						maxRow = Math.max(maxRow, r);
+					}
+					var ct = t._getCellTextCache(c, r);
+					if (ct !== undefined) {
+						rightSide = 0;
+						if (!ct.flags.isMerged() && !ct.flags.wrapText) {
+							rightSide = ct.sideR;
+						}
+
+						maxCol = Math.max(maxCol, c + rightSide);
+						maxRow = Math.max(maxRow, r);
+					}
+				}
+				/*counterCells++;
+				if (stopOnMax && counterCells === maxDefinedCells) {
+					isLargeRange = true;
+					return true;
+				}*/
+			});
+		};
+
+		/*if (_checkLargeRange) {
+			checkMaxRowCol(range, true);
+			if (isLargeRange) {
+				return null;
+			}
+		}*/
+
 		if(!doNotRecalc) {
 			this._prepareCellTextMetricsCache(range);
 		}
 
-		var maxCol = -1;
-		var maxRow = -1;
+		checkMaxRowCol(range);
 
-		var t = this;
-		var rowCache, rightSide, curRow = -1, hiddenRow = false;
-		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
-			var c = cell.nCol;
-			var r = cell.nRow;
-			if (curRow !== r) {
-				curRow = r;
-				hiddenRow = 0 === t._getRowHeight(r);
-				rowCache = t._getRowCache(r);
-			}
-			if(!hiddenRow && 0 < t._getColumnWidth(c)){
-				var style = cell.getStyle();
-				if (style && ((style.fill && style.fill.notEmpty()) || (style.border && style.border.notEmpty()))) {
-					maxCol = Math.max(maxCol, c);
-					maxRow = Math.max(maxRow, r);
-				}
-				var ct = t._getCellTextCache(c, r);
-				if (ct !== undefined) {
-					rightSide = 0;
-					if (!ct.flags.isMerged() && !ct.flags.wrapText) {
-						rightSide = ct.sideR;
-					}
-
-					maxCol = Math.max(maxCol, c + rightSide);
-					maxRow = Math.max(maxRow, r);
-				}
-			}
-		});
 
 		return new AscCommon.CellBase(maxRow, maxCol);
 	};
@@ -3337,16 +3379,29 @@
 			}
 		} else {
 			var _maxRowCol = this.getMaxRowColWithData(doNotRecalc);
-			range = new asc_Range(0, 0, _maxRowCol.col, _maxRowCol.row);
+			if (!_maxRowCol) {
+				range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
 
-			//подменяем scale на временный для печати выделенной области
-			if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
-				tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, null, ignorePrintArea);
+				//подменяем scale на временный для печати выделенной области
+				if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
+					tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, null, ignorePrintArea);
+				} else {
+					tempPrintScale = checkCustomScaleProps();
+				}
+
+				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint, null, true);
 			} else {
-				tempPrintScale = checkCustomScaleProps();
-			}
+				range = new asc_Range(0, 0, _maxRowCol.col, _maxRowCol.row);
 
-			this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
+				//подменяем scale на временный для печати выделенной области
+				if(_printArea && ignorePrintArea && (fitToWidth || fitToHeight)) {
+					tempPrintScale = this.calcPrintScale(fitToWidth, fitToHeight, null, ignorePrintArea);
+				} else {
+					tempPrintScale = checkCustomScaleProps();
+				}
+
+				this._calcPagesPrint(range, pageOptions, indexWorksheet, arrPages, tempPrintScale, adjustPrint);
+			}
 		}
 
 		if(oldPagePrintOptions) {
@@ -4048,24 +4103,33 @@
 				calcScaleByRanges(printAreaRanges);
 			} else {
 				//calculate width/height all columns/rows
-				var range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
-				var maxCell = this._checkPrintRange(range);
-				var maxCol = maxCell.col;
-				var maxRow = maxCell.row;
 
-				maxCell = this.model.getSparkLinesMaxColRow();
-				maxCol = Math.max(maxCol, maxCell.col);
-				maxRow = Math.max(maxRow, maxCell.row);
+				let rowsCount = this.model.getRowsCount();
+				let colsCount = this.model.getColsCount();
+				if (rowsCount > nMaxPrintRows) {
+					maxCol = colsCount - 1;
+					maxRow = rowsCount - 1;
+				} else {
+					var range = new asc_Range(0, 0, colsCount - 1, rowsCount - 1);
+					var maxCell = this._checkPrintRange(range);
+					var maxCol = maxCell.col;
+					var maxRow = maxCell.row;
 
-				maxCell = this.model.autoFilters.getMaxColRow();
-				maxCol = Math.max(maxCol, maxCell.col);
-				maxRow = Math.max(maxRow, maxCell.row);
-
-				maxCell = this.objectRender && this.objectRender.getMaxColRow();
-				if (maxCell) {
+					maxCell = this.model.getSparkLinesMaxColRow();
 					maxCol = Math.max(maxCol, maxCell.col);
 					maxRow = Math.max(maxRow, maxCell.row);
+
+					maxCell = this.model.autoFilters.getMaxColRow();
+					maxCol = Math.max(maxCol, maxCell.col);
+					maxRow = Math.max(maxRow, maxCell.row);
+
+					maxCell = this.objectRender && this.objectRender.getMaxColRow();
+					if (maxCell) {
+						maxCol = Math.max(maxCol, maxCell.col);
+						maxRow = Math.max(maxRow, maxCell.row);
+					}
 				}
+
 				//TODO print area
 				wScale = doCalcScaleWidth(0, maxCol);
 				hScale = doCalcScaleHeight(0, maxRow);
@@ -6587,11 +6651,15 @@
                      */
 					if (bCur.borders.dd) {
 						// draw diagonal line l,t - r,b
-						drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y1 - 1, x2Diagonal, y2Diagonal);
+						if (bCur.borders.d && bCur.borders.d.w > 0) {
+							drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y1 - 1, x2Diagonal, y2Diagonal);
+						}
 					}
 					if (bCur.borders.du) {
 						// draw diagonal line l,b - r,t
-						drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y2Diagonal, x2Diagonal, y1 - 1);
+						if (bCur.borders.d && bCur.borders.d.w > 0) {
+							drawBorder(c_oAscBorderType.Diag, bCur.borders.d, x1 - 1, y2Diagonal, x2Diagonal, y1 - 1);
+						}
 					}
 					// ToDo Clip diagonal borders
 					//ctx.restore();
@@ -8157,6 +8225,7 @@
         }
 
         firstUpdateRow = asc.getMinValueOrNull(firstUpdateRow, this._prepareCellTextMetricsCache2(range.r1, range.r2));
+
         if (null !== firstUpdateRow || this.isChanged) {
             // Убрал это из _calcCellsTextMetrics, т.к. вызов был для каждого сектора(добавляло тормоза: баг 20388)
             // Код нужен для бага http://bugzilla.onlyoffice.com/show_bug.cgi?id=13875
@@ -11200,8 +11269,11 @@
 		if (arn.r1 < vr.r1) {
 			scroll = arn.r1 - vr.r1;
 		} else if (arn.r1 >= vr.r2) {
-			this.nRowsCount = arn.r2 + 1 + 1;
-			scroll = this.getVerticalScrollRange();
+			this.nRowsCount = arn.r2 + 1;
+
+			this._prepareCellTextMetricsCache(new asc_Range(vr.c1, vr.r2, vr.c2, arn.r2 + 1));
+			scroll = this.getVerticalScrollRange(true);
+
 			if (scroll > arn.r1) {
 				scroll = arn.r1;
 			}
@@ -14193,18 +14265,19 @@
             return;
         }
 
-        var t = this;
-        var checkRange = [];
-        var activeCell = this.model.selectionRange.activeCell.clone();
-        var arn = this.model.selectionRange.getLast().clone(true);
+        const t = this;
+		const ws = t.model;
+        let checkRange = [];
+        let activeCell = this.model.selectionRange.activeCell.clone();
+        let arn = this.model.selectionRange.getLast().clone(true);
 
-		var revertSelection = function () {
+		const revertSelection = function () {
 			if (val.originalSelectBeforePaste && val.originalSelectBeforePaste.ranges) {
 				t.model.selectionRange.ranges = val.originalSelectBeforePaste.ranges;
 			}
 		};
 
-        var onSelectionCallback = function (isSuccess) {
+        const onSelectionCallback = function (isSuccess) {
             if (false === isSuccess) {
 				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = null;
                 return;
@@ -14234,7 +14307,7 @@
                 return border;
             }
 
-			var checkIndent = function (_range) {
+			const checkIndent = function (_range) {
 				if (_range) {
 					var _align = _range.getAlign();
 					if (_align && _align.getIndent && 0 != _align.getIndent()) {
@@ -14243,6 +14316,7 @@
 				}
 				return false;
 			};
+
 
             History.Create_NewPoint();
             History.StartTransaction();
@@ -14460,7 +14534,39 @@
                             t.handlers.trigger("slowOperation", true);
                         }
                         /* отключаем отрисовку на случай необходимости пересчета ячеек, заносим ячейку, при необходимости в список перерисовываемых */
+
                         t.model.workbook.dependencyFormulas.lockRecal();
+						
+						if (AscCommonExcel.bIsSupportDynamicArrays) {
+							//***dynamic array-formula***
+							let changedDynamicArraysList;
+							// checking affected arrays only for cases of deleting values ​​in cells
+							if (val === c_oAscCleanOptions.All || val === c_oAscCleanOptions.Text || val === c_oAscCleanOptions.Formula) {
+								changedDynamicArraysList = ws.getChangedArrayList();
+								if (changedDynamicArraysList) {
+									// go through changed dynamic arrays, and delete all|partitional values?
+									for (let array in changedDynamicArraysList) {
+										let arrayData = changedDynamicArraysList[array];
+										let formula = arrayData.formula;
+										let dynamicbbox = arrayData.range;
+										let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+										// todo create clear function for cells (clearRange?)
+										if (arrayData.doDelete) {
+											// delete all cells
+											range.cleanText();
+											let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+											// remove from volatilate listeners
+											ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+										} else if (arrayData.doRecalc) {
+											// delete all cells except the first one
+											range.cleanTextExceptFirst();
+											ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+										}
+									}
+									ws.clearChangedArrayList();
+								}
+							}
+						}
 
                         switch(val) {
 							case c_oAscCleanOptions.All:
@@ -14494,6 +14600,10 @@
 								t.model.removeSparklineGroups(range.bbox);
 								break;
                         }
+
+						// recalculate all volatile arrays on page
+						t.model.recalculateVolatileArrays();
+
 
 						t.model.excludeHiddenRows(false);
 
@@ -14668,11 +14778,8 @@
 					return false;
 				}
 
-				for (var j = 0; j < checkPasteRange.length; j++) {
-					var _checkRange = checkPasteRange[j];
-					/*if () {
-
-					}*/
+				for (let j = 0; j < checkPasteRange.length; j++) {
+					let _checkRange = checkPasteRange[j];
 					if (this.intersectionFormulaArray(_checkRange)) {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 						revertSelection();
@@ -16697,19 +16804,23 @@
     };
 
 	WorksheetView.prototype._saveCellValueAfterEdit = function (c, val, flags, isNotHistory, lockDraw) {
-		var bbox = c.bbox;
-		var t = this;
+		const t = this;
+		const ws = t.model
+		let bbox = c.bbox;
 
-		var ctrlKey = flags && flags.ctrlKey;
-		var shiftKey = flags && flags.shiftKey;
-		var applyByArray = ctrlKey && shiftKey;
+		let ctrlKey = flags && flags.ctrlKey;
+		let shiftKey = flags && flags.shiftKey;
+		let applyByArray = ctrlKey && shiftKey;
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
+		let arrayCannotExpand; 	// flag, needed to avoid selecting the entire expected dynamic range in situations where the array cannot open
+
 		//***array-formula***
-		var changeRangesIfArrayFormula = function() {
+		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
-				c = t.getSelectedRange();
+				// c = dynamicSelectionRange && !arrayCannotExpand ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
+				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
@@ -16745,20 +16856,77 @@
 					return;
 				}
 				bbox = c.bbox;
+
+				// set selection if dynamic arrays are used
+				if (dynamicSelectionRange) {
+					ws.copySelection && ws.copySelection.assign2(bbox);
+				}
 			}
 		};
 
-		var isFormula = this._isFormula(val);
-		var newFP, parseResult;
+		let dynamicSelectionRange = null;
+		let isFormula = this._isFormula(val);
+		let newFP, parseResult;
 		if (isFormula) {
+			let calculateResult = new AscCommonExcel.CalculateResult(true);
 			//перед созданием точки в истории, проверяю, валидная ли формула
-			var cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
+			let cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 			newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
 			parseResult = new AscCommonExcel.ParseResult();
 			if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
 				if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
 					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 					return;
+				}
+			} else {
+
+				if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
+					/* if we write not through cse, then check the formula for the presence of ref */
+					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
+
+					let isRef = newFP.findRefByOutStack();
+					if (isRef) {
+						// if formula has ref, calculate it to get the final size of ref
+						let formulaRes = newFP.calculate(null, null, null, null, calculateResult);
+						applyByArray = true;
+						ctrlKey = true;
+
+						if ((newFP.aca && newFP.ca)) {
+							// array cannot expand
+							// set ref to the first(parent) cell
+							arrayCannotExpand = true;
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol, newFP.parent.nRow);
+							t.model.workbook.dependencyFormulas.addToVolatileArrays(newFP);
+						} else {
+							let dimension = formulaRes.getDimensions();
+							dynamicSelectionRange = new Asc.Range(newFP.parent.nCol, newFP.parent.nRow, newFP.parent.nCol + dimension.col - 1, newFP.parent.nRow + dimension.row - 1);
+						}
+					} else if (newFP.ref) {
+						applyByArray = true;
+						ctrlKey = true;
+						dynamicSelectionRange = newFP.ref;
+					}
+				} else if (!applyByArray) {
+					// refInfo = {cannoChangeFormulaArray: true|false, applyByArray: true|false, ctrlKey: true|false, dynamicRange: range}
+					let refInfo = ws.getRefDynamicInfo(newFP, calculateResult);
+					if (refInfo) {
+						if (refInfo.cannotChangeFormulaArray) {
+							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
+								c_oAscError.Level.NoCritical);
+							return false;
+						}
+	
+						applyByArray = refInfo.applyByArray;
+						ctrlKey = refInfo.ctrlKey;
+						dynamicSelectionRange = refInfo.dynamicRange;
+					}
+				}
+
+				// preliminary calculation of the formula
+				// if calculateResult.error is not empty - return this error
+				if (calculateResult && calculateResult.error != null) {
+					this.model.workbook.handlers.trigger("asc_onError", calculateResult.error, c_oAscError.Level.NoCritical);
+					return false;
 				}
 			}
 		}
@@ -16768,11 +16936,15 @@
 			History.StartTransaction();
 		}
 
+		// if there is a formula use setValue, otherwise setValue2
 		if (isFormula) {
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
 			//***array-formula***
-			var ret = true;
+			let ret = true;
 			changeRangesIfArrayFormula();
+
+			//***dynamic array-formula***
+			let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
@@ -16782,10 +16954,40 @@
 				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 			}
 
+			// before putting a value in the selected cell, need to check whether the given range concerns any of the arrays (daf) on the page
+			// collect a list of all affected arrays and go through each of them
+			// if the main cell was affected, then need to clear the entire array (we will also need to update the DepGraph dependency list)
+			// if the main cell has NOT been affected, we need to execute cell.setValue("") or Range.setValue("") for all child cells of the array, and set the aca=true flag for the main cell
+			if (changedDynamicArraysList) {
+				for (let array in changedDynamicArraysList) {
+					let arrayData = changedDynamicArraysList[array];
+					let formula = arrayData.formula;
+					let dynamicbbox = arrayData.range;
+					let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					if (arrayData.doDelete) {
+						// delete all cells
+						range.cleanText();
 
+						// remove listener
+						let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+						ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+					} else if (arrayData.doRecalc) {
+						// delete all cells except the first one
+						range.cleanTextExceptFirst();
+						// add to volatile
+						ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+					}
+				}
+				ws.clearChangedArrayList();
+			}
+
+			// set the value to the selected range
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
-			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined));
+			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, AscCommonExcel.bIsSupportDynamicArrays ? dynamicSelectionRange : null);
+
+			// recalc all volatile arrays on page
+			t.model.recalculateVolatileArrays();
 
 			//***array-formula***
 			if(ctrlKey) {
@@ -16798,6 +17000,7 @@
 				return false;
 			}
 
+			// todo Add to history UndoRedo DynamicArray and add to AscCH historyitem_DynamicArrayFormula_AddFormula 
 			//***array-formula***
 			if(applyByArray) {
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.model.getId(),
@@ -16809,7 +17012,42 @@
 		} else {
 			//***array-formula***
 			changeRangesIfArrayFormula();
+
+			if (AscCommonExcel.bIsSupportDynamicArrays) {
+				//***dynamic array-formula***
+				let changedDynamicArraysList =  ws.getChangedArrayList();
+				if (changedDynamicArraysList) {
+					// go through changed dynamic arrays, and delete all|partitional values?
+					for (let array in changedDynamicArraysList) {
+						let arrayData = changedDynamicArraysList[array];
+						let formula = arrayData.formula;
+						let dynamicbbox = arrayData.range;
+						let range = (formula && formula.aca && formula.ca) ? t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r1, dynamicbbox.c1) : t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+						// todo create clear function for cells (clearRange?)
+						if (arrayData.doDelete) {
+							// delete all cells
+							range.cleanText();
+
+							// remove listener
+							let listenerId = arrayData.formula && arrayData.formula.getListenerId();
+							ws.workbook.dependencyFormulas.endListeningVolatileArray(listenerId);
+						} else if (arrayData.doRecalc) {
+							// delete all cells except the first one
+							range.cleanTextExceptFirst();
+							// add to volatile 
+							ws.workbook.dependencyFormulas.addToVolatileArrays(formula);
+						}
+					}
+
+					ws.clearChangedArrayList();
+				}
+			}
+
+			// set the value to the selected range 
 			c.setValue2(val, true);
+
+			// recalculate all volatile arrays on page
+			t.model.recalculateVolatileArrays();
 
 			// Вызываем функцию пересчета для заголовков форматированной таблицы
 			this.model.checkChangeTablesContent(bbox);
@@ -17039,7 +17277,8 @@
 				}
 
 				//***array-formula***
-				var ref = null;
+				let ref = null;
+				let isDynamicRef = null;
 				if (flags.ctrlKey && flags.shiftKey) {
 					//необходимо проверить на выделение массива частично
 					var activeRange = t.getSelectedRange();
@@ -17078,14 +17317,38 @@
 						t._isLockedCells(lockedRange, /*subType*/null, saveCellValueCallback);
 					}
 				} else {
-					//проверяем activeCell на наличие форулы массива
+					// check activeCell for the presence of an array formula
 					c._foreachNoEmpty(function (cell) {
-						ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
+						if (cell) {
+							let formula = cell.formulaParsed;
+							let arrayFormulaRef = formula && formula.getArrayFormulaRef();
+							let dynamicRange = formula && formula.getDynamicRef();
+
+							ref = formula && arrayFormulaRef ? arrayFormulaRef : null;
+							isDynamicRef = formula && dynamicRange ? true : null;
+	
+							if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
+								let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
+								let arrayInfo = {range: dynamicRange, doDelete: false, doRecalc: true, formula: formula};
+							
+								// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
+								if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
+									arrayInfo.doRecalc = false
+									arrayInfo.doDelete = true
+								}
+			
+								t.model.addChangedArray(name, arrayInfo);
+							}
+						}
 					});
 					if (ref && !ref.isOneCell()) {
-						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
+						if (isDynamicRef && AscCommonExcel.bIsSupportDynamicArrays) {
+							return saveCellValueCallback(true);
+						} else {
+							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 							c_oAscError.Level.NoCritical);
-						return false;
+							return false;
+						}
 					} else {
 						return saveCellValueCallback(true);
 					}
@@ -20081,6 +20344,51 @@
 				}
 			}
 		});
+		return res;
+	};
+	WorksheetView.prototype.intersectionFormulaArray2 = function(range, notCheckContains, checkOneCellArray) {
+		const t = this;
+		const ws = this.model;
+		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
+		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
+		// this function, in addition to checking cse formulas, checks dynamic arrays and fills in the list of changed arrays
+
+		let res = false;
+		for (let row = range.r1; row <= range.r2; row++) {
+			for (let col = range.c1; col <= range.c2; col++) {
+				if (res) {
+					return res;
+				}
+				
+				ws._getCell(row, col, function(cell) {
+					if(cell.isFormula()) {
+						let formulaParsed = cell.getFormulaParsed();
+						let arrayFormulaRef = formulaParsed.getArrayFormulaRef();
+						let dynamicRange = formulaParsed.getDynamicRef();
+
+						if (arrayFormulaRef && dynamicRange) {
+							let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
+							let arrayInfo = {range: dynamicRange, doDelete: false, doRecalc: true, formula: formulaParsed};
+						
+							// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
+							if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
+								arrayInfo.doRecalc = false
+								arrayInfo.doDelete = true
+							}
+		
+							ws.addChangedArray(name, arrayInfo);
+						} else if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
+							if(notCheckContains) {
+								res = true;
+							} else if(!notCheckContains && !range.containsRange(arrayFormulaRef)){
+								res = true;
+							}
+						}
+					}
+				});	
+				
+			}
+		}
 		return res;
 	};
 
@@ -24376,10 +24684,18 @@
 	};
 
 	WorksheetView.prototype.getMaxRowColWithData = function (doNotRecalc) {
-		var range = new asc_Range(0, 0, this.model.getColsCount() - 1, this.model.getRowsCount() - 1);
-		var maxCell = this._checkPrintRange(range, doNotRecalc);
-		var maxCol = maxCell.col;
-		var maxRow = maxCell.row;
+		let modelRowsCount = this.model.getRowsCount();
+		let modelColsCount = this.model.getColsCount();
+		if (modelRowsCount > nMaxPrintRows) {
+			return null;
+		}
+		let range = new asc_Range(0, 0, modelColsCount - 1, modelRowsCount - 1);
+		let maxCell = this._checkPrintRange(range, doNotRecalc/*, modelRowsCount > nMaxPrintRows*/);
+		/*if (!maxCell) {
+			return maxCell;
+		}*/
+		let maxCol = maxCell.col;
+		let maxRow = maxCell.row;
 
 		maxCell = this.model.getSparkLinesMaxColRow();
 		maxCol = Math.max(maxCol, maxCell.col);

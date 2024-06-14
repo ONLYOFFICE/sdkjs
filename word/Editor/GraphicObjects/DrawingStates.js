@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -92,7 +92,7 @@ StartAddNewShape.prototype =
         this.startX = x;
         this.startY = y;
         this.drawingObjects.arrPreTrackObjects.length = 0;
-        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, x, y, this.drawingObjects.document.theme, null, null, null, pageIndex));
+        this.drawingObjects.arrPreTrackObjects.push(new AscFormat.NewShapeTrack(this.preset, x, y, this.drawingObjects.document.theme, null, null, null, pageIndex, this.drawingObjects));
         this.bStart = true;
         this.drawingObjects.swapTrackObjects();
         return true;
@@ -239,12 +239,13 @@ StartAddNewShape.prototype =
                     oLogicDocument.CreateNewHistoryPoint();
 
                     // добавление шейпов
-                    var oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument);
+                    let oShape = oTrack.getShape(false, this.drawingObjects.drawingDocument, oLogicDocument);
                     oLogicDocument.AddDrawing(oShape, this.pageIndex);
                     oLogicDocument.SetMouseDownObject(oShape);
                     oShape.select(oLogicDocument.GetController(), this.pageIndex);
 
                     oLogicDocument.TurnOffHistory();
+                    bRet = true;
                 }
             }
         }
@@ -379,7 +380,7 @@ NullState.prototype =
 
         if(!b_no_handle_selected)
         {
-            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
+            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, true);
             if(ret)
             {
                 if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -398,7 +399,7 @@ NullState.prototype =
             var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
             if(drawing_page)
             {
-                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, Asc.editor.isPdfEditor() == false);
+                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);
                 if(ret)
                 {
                     if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -455,13 +456,8 @@ NullState.prototype =
 
             let aDrawings = [];
 
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].drawings) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
-            }
-            
-            if (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) {
-                aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
-            }
+            aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].drawings);
+            aDrawings = aDrawings.concat(oViewer.pagesInfo.pages[pageIndex].annots);
 
             ret = AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
 
@@ -821,13 +817,15 @@ RotateState.prototype =
                 let oDoc    = oViewer.getPDFDoc();
 
                 oDoc.SetGlobalHistory();
+                oDoc.CreateNewHistoryPoint({objects: aTracks.map(function(track) {
+                    return track.originalObject;
+                })});
 
                 for (i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
-
-                    oDoc.CreateNewHistoryPoint({objects: [oTrack.originalObject]});
+                    
                     oTrack.trackEnd(oTrack.originalObject.IsAnnot());
 
                     // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
@@ -858,8 +856,6 @@ RotateState.prototype =
 
                             oAnnot.SetLinePoints(aLinePoints);
                             oAnnot.SetRect(oAnnot.GetMinShapeRect());
-
-                            oDoc.TurnOnHistory();
                         }
                         else if (oAnnot.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
@@ -941,9 +937,10 @@ RotateState.prototype =
                         }
                     }
                     
-                    oDoc.TurnOffHistory();
                     oTrack.originalObject.SetNeedRecalc(true);
                 }
+
+                oDoc.TurnOffHistory();
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
                 this.drawingObjects.clearTrackObjects();
@@ -1566,18 +1563,8 @@ MoveState.prototype =
             }
         }
 
-        if (Asc.editor.isPdfEditor() == false) {
-            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
-        }
-        // для pdf freeText аннотации нужно отлеживать взаимное положение коннектора и прямоугольника,
-        // чтобы динамически перекидывать коннектор на другую сторону прямоугольлника
-        else {
-            // для pdf freeText всегда будет 2 объкта в группе шейпов
-            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
-        }
-        
+        for(_object_index = 0; _object_index < _objects_count; ++_object_index)
+            _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
 
         this.bSamePos = (AscFormat.fApproxEqual(result_x - this.startX + min_dx, 0) && AscFormat.fApproxEqual(result_y - this.startY + min_dy, 0) && this.majorObject.selectStartPage === pageIndex);
         this.drawingObjects.updateOverlay();

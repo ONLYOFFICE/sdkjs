@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -444,7 +444,7 @@ window["UpdateInstallPlugins"] = function()
 	}
 
 	_editor.sendEvent("asc_onPluginsReset");
-	_editor.sendEvent("asc_onPluginsInit", _plugins);
+	window.g_asc_plugins.sendPluginsInit(_plugins);
 };
 
 AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {

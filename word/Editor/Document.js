@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1848,11 +1848,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
 	
-	this.Background = {
-		Color   : null,
-		Unifill : null,
-		shape   : null
-	};
+	this.Background = new AscWord.DocumentBackground();
 	
     this.CurPos  =
     {
@@ -3591,7 +3587,10 @@ CDocument.prototype.private_RecalculateFastRunRange = function(arrChanges, nStar
 			return false;
 	}
 
-	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
+	if (!oRun
+		|| !(oRun instanceof ParaRun)
+		|| !oRun.GetParagraph()
+		|| !oRun.GetParagraph().IsUseInDocument())
 		return false;
 
 	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, _nStartIndex, _nEndIndex);
@@ -3677,7 +3676,7 @@ CDocument.prototype.private_RecalculateFastParagraph = function(arrChanges, nSta
 			}
 		}
 
-		if (isAdd)
+		if (isAdd && oPara.IsUseInDocument())
 			arrParagraphs.push(oPara);
 	}
 
@@ -5605,7 +5604,7 @@ CDocument.prototype.Draw                                     = function(nPageInd
     var Page_StartPos = this.Pages[nPageIndex].Pos;
     var SectPr        = this.SectionsInfo.Get_SectPr(Page_StartPos).SectPr;
 	
-	this.drawBackground(pGraphics, SectPr);
+	this.Background.draw(pGraphics, SectPr, this.GetTheme(), this.GetColorMap());
 	
 	// Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
 	if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
@@ -5891,50 +5890,11 @@ CDocument.prototype.DrawPageBorders = function(Graphics, oSectPr, nPageIndex)
 };
 CDocument.prototype.setBackgroundColor = function(color, unifill)
 {
-	let oldValue = this.Background;
-	let newValue = {
-		Color   : color ? color : null,
-		Unifill : unifill ? unifill : null,
-		shape   : null
-	};
+	let oldValue = this.Background.copy();
+	let newValue = new AscWord.DocumentBackground(color, unifill, null);
 	
 	AscCommon.History.Add(new CChangesDocumentPageColor(this, oldValue, newValue));
 	this.Background = newValue;
-};
-CDocument.prototype.getBackgroundBrush = function()
-{
-	if (!this.Background)
-		return null;
-	
-	let brush = null;
-	if (false)//this.Background.shape)
-		brush = this.Background.shape.brush;
-	else if (this.Background.Unifill)
-		brush = this.Background.Unifill;
-	else if (this.Background.Color)
-		brush = AscFormat.CreateSolidFillRGB(this.Background.Color.r, this.Background.Color.g, this.Background.Color.b);
-	
-	return brush;
-};
-CDocument.prototype.drawBackground = function(graphics, sectPr)
-{
-	let brush = this.getBackgroundBrush();
-	if (!brush || !brush.isVisible())
-		return;
-	
-	let h = sectPr.GetPageHeight();
-	let w = sectPr.GetPageWidth();
-	
-	let shapeDrawer = new AscCommon.CShapeDrawer();
-	brush.check(this.GetTheme(), this.GetColorMap());
-	shapeDrawer.fromShape2(new AscFormat.ObjectToDraw(brush, null, w, h, null, null), graphics, null);
-	
-	if (brush.isSolidFill())
-	{
-		let RGBA = brush.getRGBAColor();
-		graphics.setEndGlobalAlphaColor(RGBA.R, RGBA.G, RGBA.B);
-	}
-	shapeDrawer.draw(null);
 };
 /**
  *
@@ -17283,6 +17243,8 @@ CDocument.prototype.Get_MailMergedDocument = function(_nStartIndex, _nEndIndex)
 
 	LogicDocument.theme = this.theme.createDuplicate();
 	LogicDocument.clrSchemeMap   = this.clrSchemeMap.createDuplicate();
+	
+	LogicDocument.Background = this.Background.copy();
 
 	var FieldsManager = this.FieldsManager;
 

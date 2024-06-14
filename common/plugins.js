@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -751,7 +751,14 @@
 				plugins["pluginsData"].push(this.plugins[i].serialize());
 			}
 
-			this.api.sendEvent("asc_onPluginsInit", plugins);
+			this.sendPluginsInit(plugins);
+		},
+
+		sendPluginsInit : function(plugins)
+		{
+			this.api.sendEvent("asc_onPluginsInit", plugins, this.isUICheckOnInitMessage);
+			if (true === this.isUICheckOnInitMessage)
+				delete this.isUICheckOnInitMessage;
 		},
 
 		startLongAction : function()

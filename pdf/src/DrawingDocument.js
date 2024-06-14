@@ -361,6 +361,9 @@
         };
         this.OnRecalculatePage = function() {};
         this.OnEndRecalculate = function() {};
+        this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {
+            return AscPDF.ConvertCoordsToAnotherPage(x, y, pageCoord, pageNeed);
+        }
     }
 
     CDrawingDocument.prototype.constructor = CDrawingDocument;

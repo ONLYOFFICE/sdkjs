@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3036,6 +3036,390 @@ $(function () {
 		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B20:E20", "Selection after B20:E20 autosum");
 		
 	});
+
+	QUnit.test('sortRangeTest', function (assert) {
+		let range, expectedRes;
+
+		ws.getRange2("A1:Z100").cleanAll();
+
+		let testData = [
+			['a'],
+			['h'],
+			['f'],
+			['é'],
+			['e'],
+			['d'],
+			['c'],
+			['b'],
+			['á'],
+			['g']
+		];
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['a'],['á'],['b'],['c'],['d'],['e'],['é'],['f'],['g'],['h']], "check_sort_1");
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['h'],['g'],['f'],['é'],['e'],['d'],['c'],['b'],['á'],['a']], "check_sort_2");
+
+		testData = [
+			['1'],
+			['g'],
+			['2'],
+			['é'],
+			['TEST3'],
+			['á'],
+			['c'],
+			['Test2'],
+			['test1'],
+			['a']
+		];
+
+		range = ws.getRange2("A1:A10");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['1'],['2'],['a'],['á'],['c'],['é'],['g'],['test1'],['Test2'],['TEST3']], "check_sort_3");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['TEST3'],['Test2'],['test1'],['g'],['é'],['c'],['á'],['a'],['2'],['1']], "check_sort_4");
+
+		testData = [
+			['-2'],
+			['Test2'],
+			['test1'],
+			['g'],
+			['é'],
+			['12345'],
+			['á'],
+			['a'],
+			['안세요'],
+			['녕하'],
+			['TEST0'],
+			['하'],
+			['TEST2'],
+			['аА'],
+			['é'],
+			['1'],
+			['2'],
+			['АА'],
+			['аа'],
+			['-1']
+		];
+
+		range = ws.getRange2("A1:A20");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['-2'],['-1'],['1'],['2'],['12345'],['a'],['á'],['é'],['é'],['g'],['TEST0'],['test1'],['Test2'],['TEST2'],['аА'],['АА'],['аа'],['녕하'],['안세요'],['하']], "check_sort_5");
+
+		/* MS puts Arabic alphabet above Japanese, javascript sorts differently*/
+
+		testData = [
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, [['А'],['أ'],['あ']], "Asc check_sort_6");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, [['あ'],['أ'],['А']], "Desc check_sort_6");
+
+		testData = [
+			['A'],	// english
+			['A'],	// spanish
+			['A'],	// german
+			['Ä'],	// german
+			['A'],	// french
+			['À'],	// french
+			['A'],	// hungarian
+			['Á'],	// hungarian
+			['A'],	// turkish
+			['أ'],	// arabic
+			['А'],	// russian
+			['あ'],	// japanese
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['A'],['A'],['A'],['A'],['A'],['A'],['Á'],['À'],['Ä'],['А'],['أ'],['あ']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_7");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_7");
+		
+		// Tests with more of languages
+		testData = [
+			['City'],	// eng
+			['城市'],	// cn
+			['शहर'],	// hindi
+			['Ciudad'],	// esp
+			['Ville'],	// fr
+			['مدينة'],	// arabic
+			['শহর'],	// bengal
+			['Город'],	// ru
+			['Cidade'],	// pt-pt
+			['Kota'],	// indonesian
+			['Város'],	// Magyar
+			['Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['Cidade'],['City'],['Ciudad'],['Kota'],['Stadt'],['Város'],['Ville'],['Город'],['مدينة'],['शहर'],['শহর'],['城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_8");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_8");
+		
+		testData = [
+			['123City'],	// eng
+			['123城市'],	// cn
+			['123शहर'],		// hindi
+			['123Ciudad'],	// esp
+			['123Ville'],	// fr
+			['123' + 'مدينة'],	// arabic
+			['123শহর'],		// bengal
+			['123Город'],	// ru
+			['123Cidade'],	// pt-pt
+			['123Kota'],	// indonesian
+			['123Város'],	// Magyar
+			['123Stadt']	// Dutch
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['123Cidade'],['123City'],['123Ciudad'],['123Kota'],['123Stadt'],['123Város'],['123Ville'],['123Город'],['123مدينة'],['123शहर'],['123শহর'],['123城市']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_9");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_9");
+
+		testData = [
+			['2e2de2'],
+			['zxc'],
+			['f'],
+			['_d'],
+			['edasd'],
+			['SiM`Gl23'],
+			['dd23dd'],	
+			['3e2de2'],
+			['SDY'],
+			['3e2de3'],
+			['2e3de2'],
+			['__z']
+		];
+
+		range = ws.getRange2("A1:A12");
+		range.fillData(testData);
+
+		expectedRes = [['__z'],['_d'],['2e2de2'],['2e3de2'],['3e2de2'],['3e2de3'],['dd23dd'],['edasd'],['f'],['SDY'],['SiM`Gl23'],['zxc']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_10");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_10");
+
+		// sorting specials characters does not coincide with the sorting in ms (but the same as in gs and libre)
+		/*
+		testData = [
+			['!a'],
+			['#a'],
+			['$a'],
+			['^a'],
+			['&a'],
+			['*a'],
+			['(a'],	
+			[')a'],
+			['_a'],
+			['[a'],
+			[']a'],
+			['{a'],
+			['}a'],
+			['\a'],
+			['/a'],
+			['|a'],
+			[';a'],
+			[':a'],
+			['a'],	
+			[',a'],
+			['.a'],
+			['`a'],
+			['>a'],
+			['<a'],
+			['?a'],
+			['~a'],
+		];
+
+		range = ws.getRange2("A1:A26");
+		range.fillData(testData);
+
+		expectedRes = [['!a'],['#a'],['$a'],['&a'],['(a'],[')a'],['*a'],[',a'],['.a'],['/a'],[':a'],[';a'],['?a'],['[a'],['\a'],[']a'],['^a'],['_a'],['`a'],['{a'],['|a'],['}a'],['~a'],['<a'],['>a'],['a']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_11");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_11");
+
+		// letters with diacritics sorting also does not coincide with the sorting in ms (but the same as in gs and libre)
+		testData = [
+			['á'],
+			['Á'],
+			['à'],
+			['ă'],
+			['â'],
+			['Â'],
+			['å'],
+			['ä'],
+			['ã'],
+			['Ą'],
+			['ā'],
+			['Ā'],
+		];
+		
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['á'],['Á'],['à'],['â'], ['Â'],['ä'],['ă'],['ā'],['Ā'],['ã'],['å'],['Ą'],];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_12");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_12");
+		*/
+
+		// english
+		testData = [
+			['Test1'],
+			['TEST1'],
+			['tESt1'],
+			['TesT1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Test1'],['TEST1'],['tESt1'],['TesT1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_13");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_13");
+
+		// hungarian
+		testData = [
+			['Köszönöm1'],
+			['KÖSZÖNÖM1'],
+			['köSzÖnÖm1'],
+			['KöszönöM1'],
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Köszönöm1'],['KÖSZÖNÖM1'],['köSzÖnÖm1'],['KöszönöM1']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_14");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_14");
+
+		testData = [
+			['ZZ'],['á'], ['é'],['í'], ['ó'], 
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['a']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['a'],['á'],['é'], ['í'], ['ó'],
+			['ö'], ['ő'], ['ú'], ['ü'], ['ű'],['ZZ']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_15");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_15");
+
+
+		// turkish
+		testData = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+
+		range = ws.getRange2("A1:A11");
+		range.fillData(testData);
+
+		expectedRes = [
+			['C'],['Ç'],['ç'],['Ğ'],['ğ'],
+			['Ö'],['ö'],['Ş'],['ş'],['Ü'],['ü']
+		];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_16");
+
+		expectedRes = [
+			['Ü'],['ü'],['Ş'],['ş'],['Ö'],
+			['ö'],['Ğ'],['ğ'],['Ç'],['ç'],['C'],
+		];
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes, "Desc check_sort_16");
+
+
+		testData = [
+			['ALİ'],
+			['MURAT'],
+			['İSMAİL']
+		];
+
+		range = ws.getRange2("A1:A3");
+		range.fillData(testData);
+
+		expectedRes = [['ALİ'],['İSMAİL'],['MURAT']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_17");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_17");
+
+
+		// hungarian, portugese, deutsch, turkish
+		testData = [
+			['Évad'],
+			['Óculos'],
+			['Äpfel'],
+			['Şehir']
+		];
+
+		range = ws.getRange2("A1:A4");
+		range.fillData(testData);
+
+		expectedRes = [['Äpfel'],['Évad'],['Óculos'],['Şehir']];
+		range.sort(Asc.c_oAscSortOptions.Ascending, 0);
+		compareData(assert, range.bbox, expectedRes, "Asc check_sort_18");
+
+		range.sort(Asc.c_oAscSortOptions.Descending, 0);
+		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
+
+	});
+	
 
 	QUnit.module("Sheet structure");
 });

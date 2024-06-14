@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1825,8 +1825,17 @@ var editor;
 				wbXml.fromXml(reader);
 			}
 
-
 			if (t.isOpenOOXInBrowser) {
+				//metadata
+				if (AscCommonExcel.bIsSupportDynamicArrays) {
+					let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);
+					if (metaData) {
+						let contentMetaData = metaData.getDocumentContent();
+						wb.metadata = new AscCommonExcel.CMetadata();
+						reader = new StaxParser(contentMetaData, metaData, xmlParserContext);
+						wb.metadata.fromXml(reader);
+					}
+				}
 
 				//theme
 				var workbookThemePart = wbPart.getPartByRelationshipType(openXml.Types.theme.relationType);
@@ -3220,6 +3229,8 @@ var editor;
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
+		this.registerCustomFunctionsLibrary();
+
 		if (this.isCopyOutEnabled && this.topLineEditorElement) {
 			if (this.isCopyOutEnabled() === false) {
 				this.topLineEditorElement.oncopy = function () {
@@ -4000,7 +4011,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.removeDocumentInfoEvent = function () {
-	this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
+	this.broadcastChannel && this.broadcastChannel.removeEventListener("message", window.fBroadcastChannelDocumentInfo);
 	window.fBroadcastChannelDocumentInfo = null;
   };
 
@@ -5845,9 +5856,29 @@ var editor;
       this.spellcheckState.isIgnoreUppercase = isIgnore;
     };
 
-  spreadsheet_api.prototype.asc_cancelSpellCheck = function() {
-    this.cleanSpelling();
-  };
+	spreadsheet_api.prototype.asc_cancelSpellCheck = function () {
+		this.cleanSpelling();
+	};
+
+	spreadsheet_api.prototype.asc_getKeyboardLanguage = function () {
+		if (undefined !== window["asc_current_keyboard_layout"]) {
+			return window["asc_current_keyboard_layout"];
+		}
+		return -1;
+	};
+	spreadsheet_api.prototype.asc_getInputLanguage = function () {
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang) {
+			return keyboardLang;
+		}
+
+		let ws = this.wb && this.wb.getWorksheet();
+		if (ws && ws.objectRender && ws.objectRender.controller && ws.objectRender.selectedGraphicObjectsExists()) {
+			return ws.objectRender.controller.getInputLanguage();
+		}
+
+		return this.defaultLanguage;
+	};
 
   // Frozen pane
   spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
@@ -6013,7 +6044,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
 
@@ -9237,6 +9268,29 @@ var editor;
 		return ws && ws.cleanFillHandleProps();
 	};
 
+	/**
+	 * Returns values of calculation options
+	 * @returns {asc_CCalcSettings}
+	 */
+	spreadsheet_api.prototype.asc_GetCalcSettings = function () {
+		let wbModel = this.wbModel
+		if (!wbModel) {
+			return;
+		}
+		let res = new Asc.asc_CCalcSettings();
+
+		res.asc_initSettings(wbModel);
+
+		return res;
+	};
+	/**
+	 * Updates the calculation options.
+	 * @param {asc_CCalcSettings} oCalcSettings - The calculation options changed from UI.
+	 */
+	spreadsheet_api.prototype.asc_UpdateCalcSettings = function (oCalcSettings) {
+		this.wb.updateCalcSettings(oCalcSettings);
+	};
+
 	spreadsheet_api.prototype.addCustomFunction = function(func, options) {
 		let wb = this.wb;
 		if (!wb) {
@@ -9253,6 +9307,31 @@ var editor;
 		return wb.customFunctionEngine && wb.customFunctionEngine.remove(sName);
 	};
 
+	spreadsheet_api.prototype.clearCustomFunctions = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.customFunctionEngine && wb.customFunctionEngine.clear();
+	};
+
+	spreadsheet_api.prototype.recalculateCustomFunctions = function() {
+		let needDraw = null;
+		if (this.wb && this.wb.customFunctionEngine && this.wb.customFunctionEngine.needRecalculate) {
+			if (this.wbModel.addCustomFunctionToChanged()) {
+				needDraw = true;
+			}
+			this.wb.customFunctionEngine.needRecalculate = false;
+		}
+		if (needDraw) {
+			this.wb.model.dependencyFormulas.calcTree();
+			const ws = this.wb && this.wb.getWorksheet();
+			ws && ws.draw();
+			return true;
+		}
+		return false;
+	};
+
 	spreadsheet_api.prototype.asc_getCustomFunctionInfo = function(sName, bIgnoreLocal) {
 		let wb = this.wb;
 		if (!wb) {
@@ -9263,6 +9342,10 @@ var editor;
 
 
 	spreadsheet_api.prototype.asc_getOpeningDocumentsList = function(callback) {
+		if (!this.broadcastChannel) {
+			return;
+		}
+
 		let docInfo = this.DocInfo;
 		let addedMapDocs = {};
 		if (!window.fBroadcastChannelDocumentInfo) {
@@ -9293,6 +9376,9 @@ var editor;
 		})
 	};
 	spreadsheet_api.prototype.sendSheetsToOtherBooks = function(where, arrNames, arrSheets, arrBooks) {
+		if (!this.broadcastChannel) {
+			return;
+		}
 		let arrBinary = this.getBinaryContentSheets(arrSheets);
 		if (arrBinary) {
 			this.broadcastChannel.postMessage({
@@ -9308,8 +9394,13 @@ var editor;
 	};
 	spreadsheet_api.prototype.initBroadcastChannel = function() {
 		if (!this.broadcastChannel) {
-			this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			if (this.asc_isSupportCopySheetsBetweenBooks()) {
+				this.broadcastChannel = new BroadcastChannel("onlyofficeChannel");
+			}
 		}
+	};
+	spreadsheet_api.prototype.asc_isSupportCopySheetsBetweenBooks = function() {
+		return typeof BroadcastChannel !== "undefined";
 	};
 	spreadsheet_api.prototype.closeBroadcastChannel = function() {
 		if (this.broadcastChannel) {
@@ -9679,6 +9770,8 @@ var editor;
   prot["asc_cancelSpellCheck"] = prot.asc_cancelSpellCheck;
   prot["asc_ignoreNumbers"] = prot.asc_ignoreNumbers;
   prot["asc_ignoreUppercase"] = prot.asc_ignoreUppercase;
+  prot["asc_getKeyboardLanguage"] = prot.asc_getKeyboardLanguage;
+  prot["asc_getInputLanguage"] = prot.asc_getInputLanguage;
 
   // Frozen pane
   prot["asc_freezePane"] = prot.asc_freezePane;
@@ -9938,20 +10031,24 @@ var editor;
 
   prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
-  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
-  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
-  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
-  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
-  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
+  prot["asc_StartGoalSeek"] = prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"] = prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"] = prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"] = prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"] = prot.asc_StepGoalSeek;
 
-  prot["asc_GetSeriesSettings"]= prot.asc_GetSeriesSettings;
-  prot["asc_FillCells"]= prot.asc_FillCells;
-  prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
+  prot["asc_GetSeriesSettings"] = prot.asc_GetSeriesSettings;
+  prot["asc_FillCells"] = prot.asc_FillCells;
+  prot["asc_CancelFillCells"] = prot.asc_CancelFillCells;
+
+  prot["asc_GetCalcSettings"] = prot.asc_GetCalcSettings;
+  prot["asc_UpdateCalcSettings"] = prot.asc_UpdateCalcSettings;
 
   prot["asc_getCustomFunctionInfo"]= prot.asc_getCustomFunctionInfo;
 
   prot["asc_cancelMoveCopyWorksheet"]= prot.asc_cancelMoveCopyWorksheet;
   prot["asc_getOpeningDocumentsList"]= prot.asc_getOpeningDocumentsList;
+  prot["asc_isSupportCopySheetsBetweenBooks"]= prot.asc_isSupportCopySheetsBetweenBooks;
 
 
 

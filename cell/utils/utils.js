@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3899,11 +3899,16 @@
 			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime() - this.getTimezoneOffset() / (60 * 24));
 		};
 		cDate.prototype.fromISO8601 = function (dateStr) {
+			let date;
 			if (dateStr.endsWith("Z")) {
-				return new cDate(dateStr);
+				date = new cDate(dateStr);
 			} else {
-				return new cDate(dateStr + "Z");
+				date = new cDate(dateStr + "Z");
 			}
+			if (isNaN(date)) {
+				date = null;
+			}
+			return date;
 		};
 		cDate.prototype.getCurrentDate = function () {
 			return this;

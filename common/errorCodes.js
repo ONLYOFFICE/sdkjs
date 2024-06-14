@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -166,6 +166,8 @@
 			PivotOverlap				: -314,
 			PivotGroup					: -315,
 			PivotWithoutUnderlyingData	: -316,
+
+			CircularReference			: -320,
 
 			ForceSaveButton: -331,
 			ForceSaveTimeout: -332,

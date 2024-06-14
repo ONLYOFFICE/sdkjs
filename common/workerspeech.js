@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -517,6 +517,8 @@
 		this.editor.asc_registerCallback('asc_onApplyChanges', this.onApplyChanges);
 		this.editor.asc_registerCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
 		this.editor.asc_registerCallback('asc_onUndoRedo', this.onUndoRedo);
+		this.editor.asc_registerCallback('asc_onBeforeUndoRedoInCollaboration', this.onBeforeUndoRedo);
+		this.editor.asc_registerCallback('asc_onUndoRedoInCollaboration', this.onUndoRedo);
 
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);

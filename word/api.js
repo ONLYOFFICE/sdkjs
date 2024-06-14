@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -139,7 +139,7 @@
 			this.LinkToPrevious   = null;
 			this.Locked           = false;
 			this.StartPageNumber  = -1;
-			this.NumFormat        = (undefined !== obj.NumFormat) ? obj.NumFormat : -1;
+			this.NumFormat        = -1;
 		}
 	}
 
@@ -6949,6 +6949,23 @@ background-repeat: no-repeat;\
 			return window["asc_current_keyboard_layout"];
 		return -1;
 	};
+	
+	asc_docs_api.prototype.asc_getInputLanguage = function()
+	{
+		let keyboardLang = this.asc_getKeyboardLanguage();
+		if (-1 !== keyboardLang)
+			return keyboardLang;
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return lcid_enUS;
+		
+		let run = logicDocument.GetCurrentRun();
+		if (!run)
+			return lcid_enUS;
+		
+		return run.Get_CompiledPr(false).Lang.Val;
+	};
 
 	asc_docs_api.prototype.asc_setSpellCheck = function(isOn)
 	{
@@ -13564,7 +13581,7 @@ background-repeat: no-repeat;\
 	{
 		// TODO: get color from theme
 		if (this.isDarkMode)
-			return "#2A2A2A";
+			return "#616161";
 		return GlobalSkin.PageOutline;
 	};
 
@@ -13972,16 +13989,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_getPageColor = function()
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument || !logicDocument.Background)
-			return;
+		if (!logicDocument)
+			return null;
 		
-		let Unifill = logicDocument.Background.Unifill;
-		if (Unifill && Unifill.fill && Unifill.fill.color)
-			return AscCommon.CreateAscColor(Unifill.fill.color);
-		else if (logicDocument.Background.Color)
-			return AscCommon.CreateAscColorCustom(logicDocument.Background.Color.r, logicDocument.Background.Color.g, logicDocument.Background.Color.b, false);
-		
-		return null;
+		return logicDocument.Background.getAscColor();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -14370,6 +14381,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setDefaultLanguage']                    = asc_docs_api.prototype.asc_setDefaultLanguage;
 	asc_docs_api.prototype['asc_getDefaultLanguage']                    = asc_docs_api.prototype.asc_getDefaultLanguage;
 	asc_docs_api.prototype['asc_getKeyboardLanguage']                   = asc_docs_api.prototype.asc_getKeyboardLanguage;
+	asc_docs_api.prototype['asc_getInputLanguage']                      = asc_docs_api.prototype.asc_getInputLanguage;
 	asc_docs_api.prototype['asc_setSpellCheckSettings']                 = asc_docs_api.prototype.asc_setSpellCheckSettings;
 	asc_docs_api.prototype['asc_getSpellCheckSettings']                 = asc_docs_api.prototype.asc_getSpellCheckSettings;
 	asc_docs_api.prototype['asc_setSpellCheck']                         = asc_docs_api.prototype.asc_setSpellCheck;

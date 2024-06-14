@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -47,6 +47,7 @@ var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
 
 var UndoRedoDataTypes = AscCommonExcel.UndoRedoDataTypes;
 var UndoRedoData_IndexSimpleProp = AscCommonExcel.UndoRedoData_IndexSimpleProp;
+var UndoRedoData_FromTo = AscCommonExcel.UndoRedoData_FromTo;
 
 var UndoRedoData_Layout = AscCommonExcel.UndoRedoData_Layout;
 
@@ -15352,6 +15353,14 @@ function RangeDataManagerElem(bbox, data)
 	asc_CExternalReference.prototype.asc_getData = function () {
 		return this.data;
 	};
+	asc_CExternalReference.prototype.asc_getLink = function () {
+		let res = null;
+		//if link on portal(example - importRange function)
+		if (this.externalReference && this.externalReference.isExternalLink()) {
+			res = this.externalReference && this.externalReference.Id;
+		}
+		return res;
+	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
 		let id = this.externalReference && this.externalReference.Id;
 		if (id) {
@@ -17056,6 +17065,548 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	/**
+	 * Class representing "Formulas" properties specifies calculation options
+	 * @constructor
+	 */
+	function CCalcPr() {
+		this.calcId = null;
+		this.calcMode = null;
+		this.fullCalcOnLoad = null;
+		this.refMode = null;
+		this.iterate = null;
+		this.iterateCount = null;
+		this.iterateDelta = null;
+		this.fullPrecision = null;
+		this.calcCompleted = null;
+		this.calcOnSave = null;
+		this.concurrentCalc = null;
+		this.concurrentManualCount = null;
+		this.forceFullCalc = null;
+	}
+
+	/**
+	 * Method clones calculation options
+	 * @memberof CCalcPr
+	 * @returns {CCalcPr}
+	 */
+	CCalcPr.prototype.clone = function () {
+		var res = new CCalcPr();
+
+		res.calcId = this.calcId;
+		res.calcMode = this.calcMode;
+		res.fullCalcOnLoad = this.fullCalcOnLoad;
+		res.refMode = this.refMode;
+		res.iterate = this.iterate;
+		res.iterateCount = this.iterateCount;
+		res.iterateDelta = this.iterateDelta;
+		res.fullPrecision = this.fullPrecision;
+		res.calcCompleted = this.calcCompleted;
+		res.calcOnSave = this.calcOnSave;
+		res.concurrentCalc = this.concurrentCalc;
+		res.concurrentManualCount = this.concurrentManualCount;
+		res.forceFullCalc = this.forceFullCalc;
+
+		return res;
+	};
+	/**
+	 * Method returns "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @returns {boolean}
+	 */
+	CCalcPr.prototype.getIterate = function () {
+		return this.iterate;
+	};
+	/**
+	 * Method returns "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateCount = function () {
+		return this.iterateCount;
+	};
+	/**
+	 * Method returns "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @returns {number}
+	 */
+	CCalcPr.prototype.getIterateDelta = function () {
+		return this.iterateDelta;
+	};
+	/**
+	 * Method returns "calcMode" attribute specifies when the application should calculate formulas in the workbook.
+	 * @memberof CCalcPr
+	 * @returns {Asc.c_oAscCalcMode}
+	 */
+	CCalcPr.prototype.getCalcMode = function () {
+		return this.calcMode;
+	};
+	/**
+	 * Method sets "iterate" attribute specifies whether the application should attempt to calculate formulas
+	 * that contain circular references.
+	 * @memberof CCalcPr
+	 * @param {boolean} bIterate
+	 */
+	CCalcPr.prototype.setIterate = function (bIterate) {
+		const DEFAULT_ITERATE = false;
+		this.iterate = DEFAULT_ITERATE !== bIterate ? bIterate : null;
+	};
+	/**
+	 * Method sets "iterateCount" attribute specifies the number of iterations attempts when calculating a
+	 * workbook with circular references, when the "iterate" attribute is true.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateCount
+	 */
+	CCalcPr.prototype.setIterateCount = function (nIterateCount) {
+		const DEFAULT_ITER_COUNT = 100;
+		this.iterateCount = DEFAULT_ITER_COUNT !== nIterateCount ? nIterateCount : null;
+	};
+	/**
+	 * Method sets "iterateDelta" attribute specifies the maximum change for iterative calculations.
+	 * @memberof CCalcPr
+	 * @param {number} nIterateDelta
+	 */
+	CCalcPr.prototype.setIterateDelta = function (nIterateDelta) {
+		const DEFAULT_ITER_DELTA = 1e-3;
+		this.iterateDelta = DEFAULT_ITER_DELTA !== nIterateDelta ? nIterateDelta : null;
+	};
+	/**
+	 * Method updates calcPr attributes
+	 * @memberof CCalcPr
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	CCalcPr.prototype.updateCalcProperties = function (oCalcSettings, oWbModel) {
+		let bIterativeCalc = oCalcSettings.asc_getIterativeCalc();
+		let nMaxIterations = oCalcSettings.asc_getMaxIterations();
+		let nMaxChange = oCalcSettings.asc_getMaxChange();
+
+		let bOldIterate = this.getIterate();
+		let nOldIterateCount = this.getIterateCount();
+		let nOldIterateDelta = this.getIterateDelta();
+
+		this.setIterate(bIterativeCalc);
+		this.setIterateCount(nMaxIterations);
+		this.setIterateDelta(nMaxChange);
+
+		if (History.Is_On()) {
+			let oUpdateSheet = oWbModel.getActiveWs();
+			let oUpdateRange = new Asc.Range(0, 0, oUpdateSheet.getColsCount(), oUpdateSheet.getRowsCount());
+
+			if (this.getIterate() !== bOldIterate) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterate,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(bOldIterate, this.getIterate()));
+			}
+			if (this.getIterateCount() !== nOldIterateCount) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateCount,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateCount, this.getIterateCount()));
+			}
+			if (this.getIterateDelta() !== nOldIterateDelta) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_CalcPr_iterateDelta,
+					oUpdateSheet.getId(), oUpdateRange, new UndoRedoData_FromTo(nOldIterateDelta, this.getIterateDelta()));
+			}
+		}
+	};
+
+	/**
+	 * Class representing calculation settings for UI interface
+	 * @constructor
+	 */
+	function asc_CCalcSettings() {
+		// Default values if calcPr is empty
+		this.bIterativeCalc = false;
+		this.nMaxIterations = 100;
+		this.nMaxChange = 1e-3;
+	}
+
+	/**
+	 * Method sets "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {boolean} bIterativeCalc
+	 */
+	asc_CCalcSettings.prototype.asc_setIterativeCalc = function (bIterativeCalc) {
+		this.bIterativeCalc = bIterativeCalc
+	};
+	/**
+	 * Method returns "Enable iterative calculation" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {boolean}
+	 */
+	asc_CCalcSettings.prototype.asc_getIterativeCalc = function () {
+		return this.bIterativeCalc;
+	};
+	/**
+	 * Method sets "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxIterations
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxIterations = function (nMaxIterations) {
+		this.nMaxIterations = nMaxIterations;
+	};
+	/**
+	 * Method returns "Maximum iterations" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxIterations = function () {
+		return this.nMaxIterations;
+	};
+	/**
+	 * Method sets "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @param {number} nMaxChange
+	 */
+	asc_CCalcSettings.prototype.asc_setMaxChange = function (nMaxChange) {
+		this.nMaxChange = nMaxChange;
+	};
+	/**
+	 * Method returns "Maximum change" setting
+	 * @memberof asc_CCalcSettings
+	 * @returns {number}
+	 */
+	asc_CCalcSettings.prototype.asc_getMaxChange = function () {
+		return this.nMaxChange;
+	};
+	/**
+	 * Method initializes settings according CalcPr
+	 * @memberof asc_CCalcSettings
+	 * @param {Workbook} oWbModel
+	 */
+	asc_CCalcSettings.prototype.asc_initSettings = function (oWbModel) {
+		const oCalcPr = oWbModel.calcPr;
+		if (oCalcPr.getIterate() != null) {
+			this.asc_setIterativeCalc(oCalcPr.getIterate());
+		}
+		if (oCalcPr.getIterateCount() != null) {
+			this.asc_setMaxIterations(oCalcPr.getIterateCount());
+		}
+		if (oCalcPr.getIterateDelta() != null) {
+			this.asc_setMaxChange(oCalcPr.getIterateDelta());
+		}
+	};
+	/**
+	 * Method checks if the given CalcPr object is equal to the current object.
+	 * @memberof asc_CCalcSettings
+	 * @param {CCalcPr} oCalcPr - The CalcPr to compare with.
+	 * @returns {boolean} - True if the objects are equal, false otherwise.
+	 */
+	asc_CCalcSettings.prototype.asc_isEqual = function (oCalcPr) {
+		const DEFAULT_ITERATE = false;
+		const DEFAULT_MAX_ITERATE = 100;
+		const DEFAULT_MAX_CHANGE = 1e-3;
+
+		const bIterativeCalcEqual = this.asc_getIterativeCalc() === oCalcPr.getIterate();
+		const bMaxIterationEqual = this.asc_getMaxIterations() === oCalcPr.getIterateCount();
+		const bMaxChangeEqual = this.asc_getMaxChange() === oCalcPr.getIterateDelta();
+		const bIterCalcDefaultVal = this.asc_getIterativeCalc() === DEFAULT_ITERATE && oCalcPr.getIterate() == null;
+		const bMaxIterDefaultVal = this.asc_getMaxIterations() === DEFAULT_MAX_ITERATE && oCalcPr.getIterateCount() == null;
+		const bMaxChangeDefaultVal = this.asc_getMaxChange() === DEFAULT_MAX_CHANGE && oCalcPr.getIterateDelta() == null;
+
+		return (bIterativeCalcEqual && bMaxIterationEqual && bMaxChangeEqual) ||
+			(bIterCalcDefaultVal && bMaxIterDefaultVal && bMaxChangeDefaultVal);
+	};
+
+	//****metadata****
+	function CMetadata() {
+		this.metadataTypes = null;
+		this.metadataStrings = null;
+		this.mdxMetadata = null;
+		this.cellMetadata = null;
+		this.valueMetadata = null;
+
+		this.aFutureMetadata = null;
+	}
+	CMetadata.prototype.clone = function () {
+		let res = new CMetadata();
+
+		res.metadataTypes = this.metadataTypes && this.metadataTypes.clone();
+		res.metadataStrings = this.metadataStrings && this.metadataStrings.clone();
+		res.mdxMetadata = this.mdxMetadata && this.mdxMetadata.clone();
+		res.cellMetadata = this.cellMetadata && this.cellMetadata.clone();	// CMetadataRecord.clone
+		res.valueMetadata = this.valueMetadata && this.valueMetadata.clone();	// CMetadataRecord.clone
+
+		res.aFutureMetadata = this.aFutureMetadata && this.aFutureMetadata.clone();
+
+		return res;
+	};
+
+	function CFutureMetadata() {
+		this.name = null;
+		this.futureMetadataBlocks = null;
+	}
+	CFutureMetadata.prototype.clone = function () {
+		let res = new CFutureMetadata();
+
+		res.name = this.name;
+		res.futureMetadataBlocks = this.futureMetadataBlocks && this.futureMetadataBlocks.clone();
+
+		return res;
+	};
+
+	function CMetadataType() {
+		this.minSupportedVersion = null;
+		this.ghostRow = null;
+		this.ghostCol = null;
+		this.edit = null;
+		this.delete = null;
+		this.copy = null;
+		this.pasteAll = null;
+		this.pasteFormulas = null;
+		this.pasteValues = null;
+		this.pasteFormats = null;
+		this.pasteComments = null;
+		this.pasteDataValidation = null;
+		this.pasteBorders = null;
+		this.pasteColWidths = null;
+		this.pasteNumberFormats = null;
+		this.merge = null;
+		this.splitFirst = null;
+		this.splitAll = null;
+		this.rowColShift = null;
+		this.clearAll = null;
+		this.clearFormats = null;
+		this.clearContents = null;
+		this.clearComments = null;
+		this.assign = null;
+		this.coerce = null;
+		this.cellMeta = null;
+	}
+	CMetadataType.prototype.clone = function () {
+		let res = new CMetadataType();
+
+		res.minSupportedVersion = this.minSupportedVersion;
+		res.ghostRow = this.ghostRow;
+		res.ghostCol = this.ghostCol;
+		res.edit = this.edit;
+		res.delete = this.delete;
+		res.copy = this.copy;
+		res.pasteAll = this.pasteAll;
+		res.pasteFormulas = this.pasteFormulas;
+		res.pasteValues = this.pasteValues;
+		res.pasteFormats = this.pasteFormats;
+		res.pasteComments = this.pasteComments;
+		res.pasteDataValidation = this.pasteDataValidation;
+		res.pasteBorders = this.pasteBorders;
+		res.pasteColWidths = this.pasteColWidths;
+		res.pasteNumberFormats = this.pasteNumberFormats;
+		res.merge = this.merge;
+		res.splitFirst = this.splitFirst;
+		res.splitAll = this.splitAll;
+		res.rowColShift = this.rowColShift;
+		res.clearAll = this.clearAll;
+		res.clearFormats = this.clearFormats;
+		res.clearContents = this.clearContents;
+		res.clearComments = this.clearComments;
+		res.assign = this.assign;
+		res.coerce = this.coerce;
+		res.cellMeta = this.cellMeta;
+
+		return res;
+	};
+
+	function CMetadataString() {
+		this.v = null;
+	}
+	CMetadataString.prototype.clone = function () {
+		let res = new CMetadataString();
+
+		res.v = this.v;
+
+		return res;
+	};
+
+	function CMdx() {
+		this.mdxTuple = null;
+		this.mdxSet = null;
+		this.mdxKPI = null;
+		this.mdxMemeberProp = null;
+
+		this.n = null;
+		this.f = null;
+	}
+	CMdx.prototype.clone = function () {
+		let res = new CMdx();
+
+		res.mdxTuple = this.mdxTuple && this.mdxTuple.clone();
+		res.mdxSet = this.mdxSet && this.mdxSet.clone();
+		res.mdxKPI = this.mdxKPI && this.mdxKPI.clone();
+
+		res.mdxMemeberProp = this.mdxMemeberProp && this.mdxMemeberProp.clone();
+
+		res.n = this.n;
+		res.f = this.f;
+
+		return res;
+	};
+
+	function CMdxTuple() {
+		this.c = null;
+		this.ct = null;
+		this.si = null;
+		this.fi = null;
+		this.bc = null;
+		this.fc = null;
+		this.i = null;
+		this.u = null;
+		this.st = null;
+		this.b = null;
+
+		this.metadataStringIndexes = null;
+	}
+	CMdxTuple.prototype.clone = function () {
+		let res = new CMdxTuple();
+
+		res.c = this.c;
+		res.ct = this.ct;
+		res.si = this.si;
+		res.fi = this.fi;
+		res.bc = this.bc;
+		res.fc = this.fc;
+		res.i = this.i;
+		res.u = this.u;
+		res.st = this.st;
+		res.b = this.b;
+
+		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
+
+		return res;
+	};
+
+	function CMdxSet() {
+		this.ns = null;
+		this.c = null;
+		this.o = null;
+
+		this.metadataStringIndexes = null;
+	}
+	CMdxSet.prototype.clone = function () {
+		let res = new CMdxSet();
+
+		res.ns = this.ns;
+		res.c = this.c;
+		res.o = this.o;
+
+		res.metadataStringIndexes = this.metadataStringIndexes && this.metadataStringIndexes.clone();
+
+		return res;
+	};
+
+	function CMetadataStringIndex() {
+		this.x = null;
+		this.s = null;
+
+	}
+	CMetadataStringIndex.prototype.clone = function () {
+		let res = new CMetadataStringIndex();
+
+		res.x = this.x;
+		res.s = this.s;
+
+		return res;
+	};
+
+	function CMdxMemeberProp() {
+		this.n = null;
+		this.np = null;
+
+	}
+	CMdxMemeberProp.prototype.clone = function () {
+		let res = new CMdxMemeberProp();
+
+		res.n = this.n;
+		res.np = this.np;
+
+		return res;
+	};
+
+	function CMdxKPI() {
+		this.n = null;
+		this.np = null;
+		this.p = null;
+	}
+	CMdxKPI.prototype.clone = function () {
+		let res = new CMdxKPI();
+
+		res.n = this.n;
+		res.np = this.np;
+		res.p = this.p;
+
+		return res;
+	};
+
+	function CMetadataBlock() {
+		this.elems = null;
+	}
+	CMetadataBlock.prototype.clone = function () {
+		let res = new CMetadataBlock();
+
+		res.elems = this.elems;
+
+		return res;
+	};
+
+	function CMetadataRecord() {
+		this.t = null;
+		this.v = null;
+	}
+	CMetadataRecord.prototype.clone = function () {
+		let res = new CMetadataRecord();
+
+		res.t = this.t;
+		res.v = this.v;
+
+		return res;
+	};
+
+	function CFutureMetadataBlock() {
+		this.extLst = null;
+	}
+	CFutureMetadataBlock.prototype.clone = function () {
+		let res = new CFutureMetadataBlock();
+
+		res.extLst = this.extLst && this.extLst.clone();
+
+		return res;
+	};
+
+	function CMetadataBlockExt() {
+		this.richValueBlock = null;
+		this.dynamicArrayProperties = null;
+	}
+	CMetadataBlockExt.prototype.clone = function () {
+		let res = new CMetadataBlockExt();
+
+		res.richValueBlock = this.richValueBlock && this.richValueBlock.clone();
+		res.dynamicArrayProperties = this.dynamicArrayProperties && this.dynamicArrayProperties.clone();
+
+		return res;
+	};
+	//TODO move to extensions?
+	function CDynamicArrayProperties() {
+		this.fDynamic = null;
+		this.fCollapsed = null;
+	}
+	CDynamicArrayProperties.prototype.clone = function () {
+		let res = new CDynamicArrayProperties();
+
+		res.fDynamic = this.fDynamic;
+		res.fCollapsed = this.fCollapsed;
+
+		return res;
+	};
+
+	function CRichValueBlock() {
+		this.i = null;
+	}
+	CRichValueBlock.prototype.clone = function () {
+		let res = new CRichValueBlock();
+
+		res.i = this.i;
+
+		return res;
+	};
 
 	function CCustomFunctionEngine(wb) {
 		this.wb = wb;
@@ -17234,6 +17785,27 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+	CCustomFunctionEngine.prototype.clear = function () {
+		if (AscCommonExcel.cFormulaFunctionGroup["Custom"] && AscCommonExcel.cFormulaFunctionGroup["Custom"].length) {
+			let aCustomFunc = AscCommonExcel.cFormulaFunctionGroup["Custom"];
+			for (let i = 0; i < aCustomFunc.length; i++) {
+				let sName = aCustomFunc[i].prototype.name;
+				AscCommonExcel.removeCustomFunction(sName);
+			}
+			AscCommonExcel.cFormulaFunctionGroup["Custom"] = [];
+
+			this.wb.initFormulasList && this.wb.initFormulasList();
+			if (this.wb && this.wb.Api) {
+				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
+			}
+			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
+
+			return true;
+		}
+
+		return false;
+	};
+
 	CCustomFunctionEngine.prototype.setActiveLocale = function (sLocale) {
 		this.activeLocale = sLocale;
 	};
@@ -17244,7 +17816,7 @@ function RangeDataManagerElem(bbox, data)
 		if (!aArgs) {
 			return argsInfo;
 		}
-		
+
 		let paramsMap = {};
 		if (params) {
 			for (let i in params) {
@@ -18115,6 +18687,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_isExternalLink"] = prot.isExternalLink;
 	prot["asc_getPath"] = prot.asc_getPath;
+	prot["asc_getLink"] = prot.asc_getLink;
 
 
 
@@ -18252,6 +18825,35 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
 
+	window["AscCommonExcel"].CCalcPr = CCalcPr;
+
+	window["Asc"]["asc_CCalcSettings"] = window["Asc"].asc_CCalcSettings = asc_CCalcSettings;
+	prot = asc_CCalcSettings.prototype;
+	prot["asc_getIterativeCalc"] = prot.asc_getIterativeCalc;
+	prot["asc_getMaxIterations"] = prot.asc_getMaxIterations;
+	prot["asc_getMaxChange"] = prot.asc_getMaxChange;
+
+	prot["asc_setIterativeCalc"] = prot.asc_setIterativeCalc;
+	prot["asc_setMaxIterations"] = prot.asc_setMaxIterations;
+	prot["asc_setMaxChange"] = prot.asc_setMaxChange;
+	prot["asc_initSettings"] = prot.asc_initSettings;
+
+	window["AscCommonExcel"].CMetadata = CMetadata;
+	window["AscCommonExcel"].CMetadataType = CMetadataType;
+	window["AscCommonExcel"].CMetadataString = CMetadataString;
+	window["AscCommonExcel"].CFutureMetadata = CFutureMetadata;
+	window["AscCommonExcel"].CMdx = CMdx;
+	window["AscCommonExcel"].CMdxTuple = CMdxTuple;
+	window["AscCommonExcel"].CMdxSet = CMdxSet;
+	window["AscCommonExcel"].CMetadataStringIndex = CMetadataStringIndex;
+	window["AscCommonExcel"].CMdxMemeberProp = CMdxMemeberProp;
+	window["AscCommonExcel"].CMdxKPI = CMdxKPI;
+	window["AscCommonExcel"].CMetadataBlock = CMetadataBlock;
+	window["AscCommonExcel"].CMetadataRecord = CMetadataRecord;
+	window["AscCommonExcel"].CFutureMetadataBlock = CFutureMetadataBlock;
+	window["AscCommonExcel"].CMetadataBlockExt = CMetadataBlockExt;
+	window["AscCommonExcel"].CDynamicArrayProperties = CDynamicArrayProperties;
+	window["AscCommonExcel"].CRichValueBlock = CRichValueBlock;
 	window["AscCommonExcel"].CCustomFunctionEngine = CCustomFunctionEngine;
 
 	window["AscCommonExcel"].CCustomFunctionInfo = CCustomFunctionInfo;

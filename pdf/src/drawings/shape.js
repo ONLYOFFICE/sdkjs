@@ -50,10 +50,10 @@
     };
     CPdfShape.prototype.ShouldDrawImaginaryBorder = function(graphicsWord) {
         let bDraw = !!(this.spPr && this.spPr.hasNoFill() && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)));
-        bDraw &&= this.IsFromScan();
-        bDraw &&= !Asc.editor.isRestrictionView();
-        bDraw &&= !graphicsWord.isThumbnails;
-
+        bDraw = bDraw && this.IsFromScan();
+        bDraw = bDraw && !Asc.editor.isRestrictionView();
+        bDraw = bDraw && !graphicsWord.isThumbnails;
+    
         return bDraw;
     };
     CPdfShape.prototype.CheckTextOnOpen = function() {
@@ -70,10 +70,9 @@
 
         this.recalcGeometry();
         this.recalculateContent();
-        this.checkExtentsByDocContent(true, true);
-        this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.recalculate();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
@@ -91,14 +90,7 @@
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        if ((this.hitInInnerArea(X, Y) && !this.hitInTextRect(X, Y)) || this.hitToHandles(X, Y) != -1 || this.hitInPath(X, Y)) {
-            this.SetInTextBox(false);
-        }
-        else {
-            this.SetInTextBox(true);
-        }
-
-        oDrawingObjects.OnMouseDown(e, X, Y, this.selectStartPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 		let docContent = this.GetDocContent();
 		if (docContent)
 			docContent.RecalculateCurPos();
@@ -107,11 +99,7 @@
         return this.getDocContent();
     };
     CPdfShape.prototype.createTextBody = function () {
-        let oDoc = this.GetDocument();
         AscFormat.CShape.prototype.createTextBody.call(this);
-        if (oDoc && oDoc.GetActiveObject() == this) {
-            this.SetInTextBox(true);
-        }
         this.SetNeedRecalc(true);
     };
 

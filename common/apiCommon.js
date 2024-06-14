@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -3898,7 +3898,7 @@ function (window, undefined) {
 		if(window["IS_NATIVE_EDITOR"]) {
 			let fGetOriginalImageSize = window["native"]["GetOriginalImageSize"] ||
 				window["native"]["DD_GetOriginalImageSize"];
-			let sizes = fGetOriginalImageSize(this.ImageUrl);
+			let sizes = fGetOriginalImageSize.call(window["native"], this.ImageUrl);
 			let w = sizes[0];
 			let h = sizes[1];
 			let isN = AscFormat.isRealNumber;
@@ -4650,6 +4650,7 @@ function (window, undefined) {
 		this.IsEnabledMacroses = true;
 		this.IsWebOpening = false;
 		this.SupportsOnSaveDocument = false;
+		this.Wopi = null;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4808,6 +4809,12 @@ function (window, undefined) {
 	};
 	prot.get_SupportsOnSaveDocument = prot.asc_getSupportsOnSaveDocument = function () {
 		return this.SupportsOnSaveDocument;
+	};
+	prot.put_Wopi = prot.asc_putWopi = function (v) {
+		this.Wopi = v;
+	};
+	prot.get_Wopi = prot.asc_getWopi = function () {
+		return this.Wopi;
 	};
 
 	function COpenProgress() {
@@ -5100,7 +5107,7 @@ function (window, undefined) {
 					}
 					case AscCommon.c_oEditorId.Presentation: {
 						oShape.setWordShape(false);
-						oShape.setParent(oApi.WordControl.m_oLogicDocument.Slides[oApi.WordControl.m_oLogicDocument.CurPage]);
+						oShape.setParent(oApi.WordControl.m_oLogicDocument.GetCurrentSlide());
 						break;
 					}
 					case AscCommon.c_oEditorId.Spreadsheet: {
@@ -6795,6 +6802,8 @@ function (window, undefined) {
 	prot["get_IsWebOpening"] = prot["asc_getIsWebOpening"] = prot.asc_getIsWebOpening;
 	prot["put_SupportsOnSaveDocument"] = prot["asc_putSupportsOnSaveDocument"] = prot.asc_putSupportsOnSaveDocument;
 	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
+	prot["put_Wopi"] = prot["asc_putWopi"] = prot.asc_putWopi;
+	prot["get_Wopi"] = prot["asc_getWopi"] = prot.asc_getWopi;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

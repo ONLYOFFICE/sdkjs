@@ -1022,6 +1022,33 @@
 			TextPr         : {
 				VertAlign : AscCommon.vertalign_SuperScript
 			}
+		},
+		{
+			StyleId        : "Hyperlink",
+			Type           : AscWord.styletype_Character,
+			Name           : "Hyperlink",
+			BasedOn        : "DefaultParagraphFont",
+			UiPriority     : 99,
+			UnhideWhenUsed : true,
+			TextPr         : {
+				Color      : {r : 0x05, g : 0x63, b : 0xC1},
+				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorHyperlink, null, null),
+				Underline  : true
+			}
+		},
+		{
+			StyleId        : "FollowedHyperlink",
+			Type           : AscWord.styletype_Character,
+			Name           : "FollowedHyperlink",
+			BasedOn        : "DefaultParagraphFont",
+			UiPriority     : 99,
+			SemiHidden     : true,
+			UnhideWhenUsed : true,
+			TextPr         : {
+				Color      : {r : 0x95, g : 0x4F, b : 0x72},
+				Unifill    : AscCommonWord.CreateThemeUnifill(EThemeColor.themecolorFollowedHyperlink, null, null),
+				Underline  : true
+			}
 		}
 	];
 	

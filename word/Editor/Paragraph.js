@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -13756,6 +13756,7 @@ Paragraph.prototype.GetSelectionState = function()
 		X          : this.CurPos.X,
 		Y          : this.CurPos.Y,
 		Line       : this.CurPos.Line,
+		Range      : this.CurPos.Range,
 		ContentPos : this.Get_ParaContentPos(false, false),
 		RealX      : this.CurPos.RealX,
 		RealY      : this.CurPos.RealY,
@@ -13784,16 +13785,17 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 		return;
 
 	var ParaState = State[StateIndex];
-
-	this.CurPos.X        = ParaState.CurPos.X;
-	this.CurPos.Y        = ParaState.CurPos.Y;
-	this.CurPos.Line     = ParaState.CurPos.Line;
-	this.CurPos.RealX    = ParaState.CurPos.RealX;
-	this.CurPos.RealY    = ParaState.CurPos.RealY;
-	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 	
 	this.RemoveSelection();
 	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
+	
+	this.CurPos.X        = ParaState.CurPos.X;
+	this.CurPos.Y        = ParaState.CurPos.Y;
+	this.CurPos.Line     = ParaState.CurPos.Line;
+	this.CurPos.Range    = ParaState.CurPos.Range;
+	this.CurPos.RealX    = ParaState.CurPos.RealX;
+	this.CurPos.RealY    = ParaState.CurPos.RealY;
+	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 	
 	this.Selection.Start = ParaState.Selection.Start;
 	this.Selection.Use   = ParaState.Selection.Use;

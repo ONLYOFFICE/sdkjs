@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1172,24 +1172,22 @@ TextArtPreviewManager.prototype.getShape =  function()
 	var oShape = new AscFormat.CShape();
 	var oParent = null, oWorkSheet = null;
 	var bWord = true;
-	if (Asc['editor'] && AscCommon.c_oEditorId.Spreadsheet === Asc['editor'].getEditorId()) {
+	let nEditorId = Asc['editor'].getEditorId();
+	if (Asc.editor.isPdfEditor()) {
+		bWord = false;
+	}
+	else if(nEditorId === AscCommon.c_oEditorId.Spreadsheet) {
 		var api_sheet = Asc['editor'];
 		oShape.setWorksheet(api_sheet.wb.getWorksheet().model);
 		oWorkSheet = api_sheet.wb.getWorksheet().model;
 		bWord = false;
 	}
-	else if (Asc.editor.isPdfEditor()) {
+	else if(nEditorId === AscCommon.c_oEditorId.Presentation) {
+		let oPres = Asc.editor.private_GetLogicDocument();
+		let oSlide = oPres.GetCurrentSlide();
+		oShape.setParent(oSlide);
+		oParent = oSlide;
 		bWord = false;
-	} else {
-		if (editor && editor.WordControl && Array.isArray(editor.WordControl.m_oLogicDocument.Slides)) {
-			if (editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]) {
-				oShape.setParent(editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage]);
-				oParent = editor.WordControl.m_oLogicDocument.Slides[editor.WordControl.m_oLogicDocument.CurPage];
-				bWord = false;
-			} else {
-				return null;
-			}
-		}
 	}
 
 

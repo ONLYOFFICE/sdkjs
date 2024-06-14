@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -180,7 +180,7 @@
 		let oActiveDrawing	= oDoc.activeDrawing;
 
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
-			let sText = oActiveForm.content.GetSelectedText(true);
+			let sText = oActiveForm.content.GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -191,7 +191,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let sText = oActiveAnnot.GetDocContent().GetSelectedText(true);
+			let sText = oActiveAnnot.GetDocContent().GetSelectedText(false);
 			if (!sText)
 				return;
 
@@ -245,30 +245,9 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		let oDoc			= this.DocumentRenderer.getPDFDoc();
-		let oField			= oDoc.activeForm;
-		let oActiveAnnot	= oDoc.mouseDownAnnot;
-		let oActiveDrawing	= oDoc.activeDrawing;
-
-		if (oField && oField.IsCanEditText()) {
-			if (oField.content.IsSelectionUse()) {
-				oField.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			let oContent = oActiveAnnot.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveAnnot.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
-		}
-		else if (oActiveDrawing && oActiveDrawing.IsInTextBox()) {
-			let oContent = oActiveDrawing.GetDocContent();
-			if (oContent.IsSelectionUse()) {
-				oActiveDrawing.Remove(-1);
-				oDoc.UpdateCopyCutState();
-			}
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		if (oDoc.CanCopyCut().cut) {
+			oDoc.Remove(1);
 		}
 	};
 	PDFEditorApi.prototype.onUpdateRestrictions = function() {
@@ -314,13 +293,19 @@
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
+		this.needPasteText = false; // если не вставили бинарник, то вставляем текст
 		// пока что копирование бинарником только внутри drawings или самих drawings
-		if (_format !== AscCommon.c_oAscClipboardDataFormat.Text && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
+		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
-			return;
+		}
+		else {
+			this.needPasteText = true;
 		}
 		
+		if (!this.needPasteText || typeof(data) != "string")
+			return;
+
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
@@ -474,6 +459,7 @@
 		let viewer = this.DocumentRenderer;
 		let doc    = viewer.getPDFDoc();
 		let drDoc  = doc.GetDrawingDocument();
+		let drController = doc.GetController();
 		
 		let textController = doc.getTextController();
 		if (!textController)
@@ -482,11 +468,15 @@
 			return false;
 		}
 		
+		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
+		if (null == drController.getTargetTextObject()) {
+			drController.selection.textSelection = textController;
+		}
+
 		drDoc.showTarget(true);
 		drDoc.TargetStart();
-		let docContent = textController.GetDocContent();
 		
 		if (docContent.IsSelectionUse() && !docContent.IsSelectionEmpty())
 			drDoc.TargetEnd();
@@ -575,12 +565,22 @@
 		oViewer.navigateToPage(nPage - 1 >= 0 ? nPage - 1 : 0);
 		oDoc.TurnOffHistory();
 	};
-	PDFEditorApi.prototype.asc_GetSelectedText = function() {
+	PDFEditorApi.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
 		if (!this.DocumentRenderer)
 			return "";
 
-		var textObj = {Text : ""};
-		this.DocumentRenderer.Copy(textObj);
+		let oDoc		= this.getPDFDoc();
+		let oTxObject	= oDoc.getTextController();
+		let textObj		= {Text : ""};
+		
+		if (oTxObject) {
+			let oContent = oTxObject.GetDocContent();
+			textObj.Text = oContent ? oContent.GetSelectedText(bClearText, select_Pr) : "";
+		}
+		else {
+			this.DocumentRenderer.Copy(textObj);
+		}
+		
 		if (textObj.Text.trim() === "")
 			return "";
 		
@@ -1890,25 +1890,81 @@
 		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
+		let nNativeW		= oViewer.file.pages[nPage].W;
+		let nNativeH		= oViewer.file.pages[nPage].H;
+		let nPageRotate		= oViewer.getPageRotate(nPage);
 		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
         let nScaleX			= oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W;
-		let nCommentWidth	= 33 * nScaleX;
-		let nCommentHeight	= 33 * nScaleY;
+		let nCommentWidth	= 40 * nScaleX;
+		let nCommentHeight	= 40 * nScaleY;
 		let oDoc			= oViewer.getPDFDoc();
 
+		let oBasePos = {
+			x: 10,
+			y: 10
+		}
+
+		switch (nPageRotate) {
+			case 90: {
+				oBasePos.y = nNativeH - nCommentHeight;
+				break;
+			}
+			case 180: {
+				oBasePos.x = nNativeW - nCommentWidth;
+				oBasePos.y = nNativeH - nCommentHeight;
+				break;
+			}
+			case 270: {
+				oBasePos.x = nNativeW - nCommentWidth;
+				break;
+			}
+		}
+
+		if (pageObject && (pageObject.x > nNativeW || pageObject.x < 0 || pageObject.y > nNativeH || pageObject.y < 0)) {
+			pageObject = null;
+		}
+
 		if (!pageObject) {
-			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(oBasePos.x, oBasePos.y, nPage);
 			oDoc.anchorPositionToAdd = {
-				x: 10,
-				y: 10
+				x: oBasePos.x,
+				y: oBasePos.y
 			};
 			return new AscCommon.asc_CRect(oPos["X"] + nCommentWidth, oPos["Y"] + nCommentHeight / 2, 0, 0);
 		}
 
-		oDoc.anchorPositionToAdd = {
-			x: pageObject.x,
-			y: pageObject.y
-		};
+		switch (nPageRotate) {
+			case 0: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x,
+					y: pageObject.y
+				};
+				break;
+			}
+			case 90: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x,
+					y: pageObject.y - nCommentHeight / 4
+				};
+				break;
+			}
+			case 180: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x - nCommentWidth / 4,
+					y: pageObject.y - nCommentHeight / 4
+				};
+				break;
+			}
+			case 270: {
+				oDoc.anchorPositionToAdd = {
+					x: pageObject.x - nCommentWidth / 4,
+					y: pageObject.y
+				};
+				break;
+			}
+		}
+
+		
 
 		if (oDoc.mouseDownAnnot) {
 			let aRect = oDoc.mouseDownAnnot.GetOrigRect();
@@ -1916,7 +1972,9 @@
 			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
-		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
+		let oPos = AscPDF.GetGlobalCoordsByPageCoords(pageObject.x, pageObject.y, nPage);
+
+		return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id)
 	{
@@ -2209,7 +2267,9 @@
 		this.sendMathToMenu();
 		this.sendStandartTextures();
 		//выставляем тип copypaste
+		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
+		AscCommon.PasteElementsId.g_bIsPDFCopyPaste = true;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));

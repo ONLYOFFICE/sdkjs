@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -5760,6 +5760,36 @@
 		}
 		this.customFunctionEngine.add(func, options);
 	};
+	/**
+	 * Updates calculating settings properties
+	 * @memberof WorkbookView
+	 * @param {asc_CCalcSettings} oCalcSettings
+	 */
+	WorkbookView.prototype.updateCalcSettings = function (oCalcSettings) {
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
+		const oCalcPr = this.model.calcPr;
+		if (!oCalcSettings || oCalcSettings.asc_isEqual(oCalcPr)) {
+			return;
+		}
+
+		const ws = this.getWorksheet();
+		const oThis = this;
+		const callback = function (isSuccess) {
+			const g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+			History.Create_NewPoint();
+			History.StartTransaction();
+			oCalcPr.updateCalcProperties(oCalcSettings, oThis.model);
+			g_cCalcRecursion.initCalcProperties(oCalcPr);
+			History.EndTransaction();
+
+			ws._updateRange(new Asc.Range(0, 0, ws.model.getColsCount(), ws.model.getRowsCount()), true);
+			ws.draw();
+		};
+
+		callback();
+	};
 
 	WorkbookView.prototype.initCustomEngine = function() {
 		if (!this.customFunctionEngine) {
@@ -6028,7 +6058,8 @@
 		if (-1 !== this.CurId) {
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
-			let ws = this.wb.getActiveWS();
+			// it's necessary because into the docbuilder "this.wb.wsActive" is "-1" and search doesn't work
+			let ws = this.wb.model.getActiveWs();
 			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;

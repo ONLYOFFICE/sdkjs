@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -4254,6 +4254,44 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
+	c_oAscDateTimeFormat[lcid_srCyrlRS]     = [
+		"dd.MM.yyyy.",
+		"dddd, d. MMMM yyyy.",
+		"d. MMMM yyyy.",
+		"dd.MM.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd/MM/yyyy",
+		"d. MMM. yy.",
+		"dd/MM/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd.MM.yyyy. H:mm",
+		"dd.MM.yyyy. H:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
+	c_oAscDateTimeFormat[lcid_srLatnRS]     = [
+		"d.M.yyyy.",
+		"dddd, dd. MMMM yyyy.",
+		"dd. MMMM yyyy.",
+		"d.M.yy.",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"d/M/yyyy",
+		"dd. MMM. yy.",
+		"d/M/yy",
+		"MMMM yy",
+		"MMM-yy",
+		"d.M.yyyy. HH:mm",
+		"d.M.yyyy. HH:mm:ss",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_skSK]     = [
 		"d. M. yyyy",
 		"dddd d. MMMM yyyy",
@@ -4961,6 +4999,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Review']       = prot.Review;
 	prot['Eyedropper']   = prot.Eyedropper;
 	prot['Placeholder']   = prot.Placeholder;
+	prot['EffectInfo']   = prot.EffectInfo;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;

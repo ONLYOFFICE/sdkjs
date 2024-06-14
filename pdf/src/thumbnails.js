@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -80,9 +80,14 @@
         var pixels = ctx.getImageData(0, 0, w, h).data;
         var index = 0;
         var indexLast = 4 * w * h;
+
+        let whiteLimit = 255;
+        if (AscCommon.AscBrowser.isSafariMacOs)
+            whiteLimit = 250; // BUG 67674
+
         while (index < indexLast)
         {
-            if (pixels[index] !== 255 || pixels[index + 1] !== 255 || pixels[index + 2] !== 255)
+            if (pixels[index] < whiteLimit || pixels[index + 1] < whiteLimit || pixels[index + 2] < whiteLimit)
                 break;
             index += 4;
         }

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2024
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -189,7 +189,9 @@ CChartsDrawer.prototype =
 		//CHARTS
 		if (!chartSpace.bEmptySeries) {
 			for(var i in this.charts) {
-				this.charts[i].recalculate();
+				if (this.charts.hasOwnProperty(i) && this.charts[i]) {
+					this.charts[i].recalculate();
+				}
 			}
 		}
 
@@ -204,6 +206,23 @@ CChartsDrawer.prototype =
 		//this._testChartsPaths();
 	},
 
+	createChartEx: function (seria) {
+		this.charts = {};
+		switch (seria.layoutId) {
+			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
+				this.charts[null] = new drawHistogramChart(seria, this)
+				break
+			case AscFormat.SERIES_LAYOUT_WATERFALL :
+				this.charts[null] = new drawWaterfallChart(seria, this)
+				break
+			case AscFormat.SERIES_LAYOUT_FUNNEL :
+				this.charts[null] = new drawFunnelChart(seria, this)
+				break
+			default :
+				this.charts[null] = null;
+		}
+	},
+
 	init: function(chartSpace) {
 		//создаём область
 		this.areaChart = new areaChart();
@@ -215,60 +234,68 @@ CChartsDrawer.prototype =
 		this.backWall3DChart = new backWall3DChart();
 
 		//draw chart
-		var newChart;
-		for (var i = 0; i < chartSpace.chart.plotArea.charts.length; i++) {
-			var chart = chartSpace.chart.plotArea.charts[i];
-			switch (this._getChartType(chart)) {
-				case c_oChartTypes.Bar: {
-					newChart = new drawBarChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Line: {
-					newChart = new drawLineChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.HBar: {
-					newChart = new drawHBarChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Pie: {
-					newChart = new drawPieChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Scatter: {
-					newChart = new drawScatterChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Area: {
-					newChart = new drawAreaChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Stock: {
-					newChart = new drawStockChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.DoughnutChart: {
-					newChart = new drawDoughnutChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Radar: {
-					newChart = new drawRadarChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.BubbleChart: {
-					newChart = new drawBubbleChart(chart, this);
-					break;
-				}
-				case c_oChartTypes.Surface: {
-					newChart = new drawSurfaceChart(chart, this);
-					break;
-				}
+		let plotArea = chartSpace.chart.plotArea;
+		let newChart;
+		if (plotArea.isChartEx()) {
+			const series = plotArea.plotAreaRegion.series;
+			for (let i = 0; i < series.length; i++) {
+				this.createChartEx(series[i]);
 			}
-			if (i === 0) {
-				this.chart = newChart;
-				this.charts = {};
+		} else {
+			for (let i = 0; i < plotArea.charts.length; i++) {
+				let chart = plotArea.charts[i];
+				switch (this._getChartType(chart)) {
+					case c_oChartTypes.Bar: {
+						newChart = new drawBarChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Line: {
+						newChart = new drawLineChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.HBar: {
+						newChart = new drawHBarChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Pie: {
+						newChart = new drawPieChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Scatter: {
+						newChart = new drawScatterChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Area: {
+						newChart = new drawAreaChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Stock: {
+						newChart = new drawStockChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.DoughnutChart: {
+						newChart = new drawDoughnutChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Radar: {
+						newChart = new drawRadarChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.BubbleChart: {
+						newChart = new drawBubbleChart(chart, this);
+						break;
+					}
+					case c_oChartTypes.Surface: {
+						newChart = new drawSurfaceChart(chart, this);
+						break;
+					}
+				}
+				if (i === 0) {
+					this.chart = newChart;
+					this.charts = {};
+				}
+				this.charts[chart.Id] = newChart;
 			}
-			this.charts[chart.Id] = newChart;
 		}
 	},
 
@@ -279,7 +306,6 @@ CChartsDrawer.prototype =
 
 		var cShapeDrawer = new AscCommon.CShapeDrawer();
 		cShapeDrawer.Graphics = graphics;
-		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
 
 		this.cShapeDrawer = cShapeDrawer;
 
@@ -291,35 +317,46 @@ CChartsDrawer.prototype =
 			if(!bBeforeAxes && t.nDimensionCount === 3) {
 				return;
 			}
+			if (!chartSpace || !chartSpace.chart || !chartSpace.chart.plotArea) {
+				return;
+			}
 
-			//для начала нужно отсортировать
-			var sortCharts = t._sortChartsForDrawing(chartSpace);
-			for(var i = 0; i < sortCharts.length; i++) {
-				var id = sortCharts[i];
-				var chartModel = t._getChartModelById(chartSpace.chart.plotArea, id);
-				if(!chartModel) {
-					continue;
+			if (chartSpace.isChartEx()) {
+				for (i in t.charts) {
+					if (t.charts.hasOwnProperty(i) && t.charts[i]) {
+						t.charts[i].draw();
+					}
 				}
-
-				var type = chartModel.getObjectType();
-				var isLinesChart = type === AscDFH.historyitem_type_LineChart || type === AscDFH.historyitem_type_ScatterChart;
-				//рисуем линейные диаграммы после отрисовки сетки
-				if(t.nDimensionCount !== 3 && ((isLinesChart && bBeforeAxes) || (!isLinesChart && !bBeforeAxes))) {
-					continue;
-				}
-
-				var bIsNoSmartAttack = false;
-				if(t.nDimensionCount === 3 || isLinesChart) {
-					bIsNoSmartAttack = true;
-				}
-
-				if(bIsNoSmartAttack) {
-					t.cShapeDrawer.bIsNoSmartAttack = true;
-				}
-				t.calcProp.series = chartModel.series;
-				t.charts[id].draw();
-				if(bIsNoSmartAttack) {
-					t.cShapeDrawer.bIsNoSmartAttack = false;
+			} else {
+				//для начала нужно отсортировать
+				var sortCharts = t._sortChartsForDrawing(chartSpace);
+				for(var i = 0; i < sortCharts.length; i++) {
+					var id = sortCharts[i];
+					var chartModel = t._getChartModelById(chartSpace.chart.plotArea, id);
+					if(!chartModel) {
+						continue;
+					}
+	
+					var type = chartModel.getObjectType();
+					var isLinesChart = type === AscDFH.historyitem_type_LineChart || type === AscDFH.historyitem_type_ScatterChart;
+					//рисуем линейные диаграммы после отрисовки сетки
+					if(t.nDimensionCount !== 3 && ((isLinesChart && bBeforeAxes) || (!isLinesChart && !bBeforeAxes))) {
+						continue;
+					}
+	
+					var bIsNoSmartAttack = false;
+					if(t.nDimensionCount === 3 || isLinesChart) {
+						bIsNoSmartAttack = true;
+					}
+	
+					if(bIsNoSmartAttack) {
+						t.cShapeDrawer.bIsNoSmartAttack = true;
+					}
+	
+					t.charts[id].draw();
+					if(bIsNoSmartAttack) {
+						t.cShapeDrawer.bIsNoSmartAttack = false;
+					}
 				}
 			}
 		};
@@ -586,6 +623,7 @@ CChartsDrawer.prototype =
 
 		if (!this.cChartSpace.bEmptySeries) {
 			var type = obj.getObjectType();
+
 			switch (type) {
 				case AscDFH.historyitem_type_DLbl: {
 					pos = this._calculatePositionDlbl(obj);
@@ -595,7 +633,7 @@ CChartsDrawer.prototype =
 					var parentType = obj.parent ? obj.parent.getObjectType() : null;
 					if (parentType === AscDFH.historyitem_type_Chart) {
 						pos = this._calculatePositionTitle(obj);
-					} else if (parentType === AscDFH.historyitem_type_ValAx || parentType === AscDFH.historyitem_type_CatAx || parentType === AscDFH.historyitem_type_DateAx) {
+					} else if (parentType === AscDFH.historyitem_type_ValAx || parentType === AscDFH.historyitem_type_CatAx || parentType === AscDFH.historyitem_type_DateAx || parentType === AscDFH.historyitem_type_Axis) {
 						pos = this._calculatePositionAxisTitle(obj.parent);
 					}
 					break;
@@ -639,18 +677,23 @@ CChartsDrawer.prototype =
 	
 	_calculatePositionDlbl: function(obj/*chartSpace, ser, val, bLayout*/)
 	{
-		var res = null;
-
-		var chartSpace = obj.chart;
-		var bLayout = AscCommon.isRealObject(obj.layout) && (AscFormat.isRealNumber(obj.layout.x) || AscFormat.isRealNumber(obj.layout.y));
-		var serIdx = obj.series.idx;
-		var valIdx = obj.pt.idx;
-
-		var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
-		if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
-			//TODO нужно переделать все массивы с патами по idx
-			var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
-			res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
+		let res = null;
+		if (obj.showChartExVal) {
+			if (this.charts && this.charts.null) {
+				res = this.charts.null._calculateDLbl(obj);
+			}
+		} else {
+			var chartSpace = obj.chart;
+			var bLayout = AscCommon.isRealObject(obj.layout) && (AscFormat.isRealNumber(obj.layout.x) || AscFormat.isRealNumber(obj.layout.y));
+			var serIdx = obj.series.idx;
+			var valIdx = obj.pt.idx;
+	
+			var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
+			if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
+				//TODO нужно переделать все массивы с патами по idx
+				var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
+				res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
+			}
 		}
 
 		return res;
@@ -864,22 +907,22 @@ CChartsDrawer.prototype =
 	},
 
 	_calculatePositionLabelsCatAxForRadar: function (idx) {
-		var chartProp = this.calcProp;
+		let chartProp = this.calcProp;
 
-		var trueWidth = chartProp.trueWidth;
-		var trueHeight = chartProp.trueHeight;
-		var xCenter = (chartProp.chartGutter._left + trueWidth / 2) / chartProp.pxToMM;
-		var yCenter = (chartProp.chartGutter._top + trueHeight / 2) / chartProp.pxToMM;
+		let trueWidth = chartProp.trueWidth;
+		let trueHeight = chartProp.trueHeight;
+		let xCenter = (chartProp.chartGutter._left + trueWidth / 2) / chartProp.pxToMM;
+		let yCenter = (chartProp.chartGutter._top + trueHeight / 2) / chartProp.pxToMM;
 
-		var seria = chartProp.series;
-		var numChache = this.getNumCache(seria[0].val);
+		let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+		let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
 
-		var angle = (Math.PI * 2 / numChache.ptCount) * idx;
-		var radius = (trueHeight / 2) / chartProp.pxToMM;
-		var startAngle = (Math.PI / 2) * 3 + angle;
+		let angle = (Math.PI * 2 / ptCount) * idx;
+		let radius = (trueHeight / 2) / chartProp.pxToMM;
+		let startAngle = (Math.PI / 2) * 3 + angle;
 
-		var x = xCenter + radius * Math.cos(startAngle);
-		var y = yCenter + radius * Math.sin(startAngle);
+		let x = xCenter + radius * Math.cos(startAngle);
+		let y = yCenter + radius * Math.sin(startAngle);
 
 		return { x: x, y: y };
 	},
@@ -1119,12 +1162,15 @@ CChartsDrawer.prototype =
 		var horizontalAxis = horizontalAxes ? horizontalAxes[0] : null;
 		var verticalAxis = verticalAxes ? verticalAxes[0] : null;
 		var crossBetween = null;
+		const plotArea = chartSpace && chartSpace.chart ? chartSpace.chart.plotArea : null;
+		const seria = plotArea && plotArea.plotAreaRegion ? plotArea.plotAreaRegion.series[0] : null;
+		const type = seria ? seria.layoutId : null;
+		const isChartEx = AscFormat.isRealNumber(type) && chartSpace ? chartSpace.isChartEx() : false;
 		if(verticalAxis instanceof AscFormat.CValAx) {
 			crossBetween = verticalAxis.crossBetween;
 		} else if(horizontalAxis instanceof AscFormat.CValAx) {
 			crossBetween = horizontalAxis.crossBetween;
 		}
-
 		if (horizontalAxis && horizontalAxis.xPoints && horizontalAxis.xPoints.length && this.calcProp.widthCanvas != undefined) {
 			if (horizontalAxis instanceof AscFormat.CValAx) {
 				if (!horizontalAxis.isReversed()) {
@@ -1134,33 +1180,31 @@ CChartsDrawer.prototype =
 					calculateLeft = horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos;
 					calculateRight = this.calcProp.widthCanvas / pxToMM - horizontalAxis.xPoints[0].pos;
 				}
-			} else if ((horizontalAxis instanceof AscFormat.CCatAx || horizontalAxis instanceof AscFormat.CDateAx) && verticalAxis && !isNaN(verticalAxis.posX)) {
+			} else if (((horizontalAxis instanceof AscFormat.CCatAx || horizontalAxis instanceof AscFormat.CDateAx) && verticalAxis && !isNaN(verticalAxis.posX)) || isChartEx) {
 				diffPoints = horizontalAxis.xPoints[1] ? Math.abs(horizontalAxis.xPoints[1].pos - horizontalAxis.xPoints[0].pos) : Math.abs(horizontalAxis.xPoints[0].pos - verticalAxis.posX) * 2;
 
-				curBetween = 0;
-				if (!horizontalAxis.isReversed()) {
-					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
-						curBetween = diffPoints / 2;
-					}
-
-					calculateLeft = horizontalAxis.xPoints[0].pos - curBetween;
-					calculateRight = this.calcProp.widthCanvas / pxToMM - (horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos + curBetween);
-				} else {
-					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
-						curBetween = diffPoints / 2;
-					}
-
-					calculateLeft = horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos - curBetween;
-					calculateRight = this.calcProp.widthCanvas / pxToMM - (horizontalAxis.xPoints[0].pos + curBetween);
-				}
+				curBetween = (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN || isChartEx) ? diffPoints / 2 :  0;
+				// for reversed cases, start and end indexes are reversed!
+				const isReversed = horizontalAxis.isReversed();
+				const startIndex = (!isReversed || isChartEx) ? 0 : horizontalAxis.xPoints.length - 1;
+				const endIndex = (!isReversed || isChartEx) ? horizontalAxis.xPoints.length - 1 : 0;
+				calculateLeft = horizontalAxis.xPoints[startIndex].pos - curBetween;
+				calculateRight = this.calcProp.widthCanvas / pxToMM - (horizontalAxis.xPoints[endIndex].pos + curBetween);
 			}
 		}
 
 		if (verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length && this.calcProp.heightCanvas != undefined) {
-			if (verticalAxis instanceof AscFormat.CValAx) {
-				if (!verticalAxis.isReversed()) {
-					calculateTop = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos;
-					calculateBottom = this.calcProp.heightCanvas / pxToMM - verticalAxis.yPoints[0].pos;
+			if (verticalAxis instanceof AscFormat.CValAx || isChartEx) {
+				if (!verticalAxis.isReversed() || isChartEx) {
+					if (isChartEx && type === AscFormat.SERIES_LAYOUT_FUNNEL && verticalAxis.yPoints.length === 1) {
+						// for diagrams with single axis and single data point
+						let oSize = chartSpace ? chartSpace.getChartSizes() : {startY : 0, h : 0};
+						calculateTop = oSize.startY;
+						calculateBottom = this.calcProp.heightCanvas / pxToMM - (oSize.h + oSize.startY);
+					} else {
+						calculateTop = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos;
+						calculateBottom = this.calcProp.heightCanvas / pxToMM - verticalAxis.yPoints[0].pos;
+					}
 				} else {
 					calculateTop = verticalAxis.yPoints[0].pos;
 					calculateBottom = this.calcProp.heightCanvas / pxToMM - verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos;
@@ -1186,6 +1230,15 @@ CChartsDrawer.prototype =
 					calculateBottom = this.calcProp.heightCanvas / pxToMM - (verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos + curBetween);
 				}
 			}
+		}
+
+		// for funnel chart
+		if (!horizontalAxis && isChartEx && verticalAxis.labels && verticalAxis.yPoints) {
+			calculateLeft = this.cChartSpace && this.cChartSpace.plotAreaRect ? this.cChartSpace.plotAreaRect.x : 0;
+			let curBetween = verticalAxis.yPoints[1] ? Math.abs(verticalAxis.yPoints[1].pos - verticalAxis.yPoints[0].pos) / 2 : 0;
+			// curBetween = !curBetween && this.cChartSpace && this.cChartSpace.plotAreaRect ? verticalAxis.yPoints[0].pos - this.cChartSpace.plotAreaRect.y : curBetween;
+			calculateTop -= curBetween;
+			calculateBottom -= curBetween;
 		}
 
 		return {calculateLeft: calculateLeft, calculateRight : calculateRight, calculateTop: calculateTop, calculateBottom: calculateBottom};
@@ -1267,10 +1320,11 @@ CChartsDrawer.prototype =
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
 			let orientationVerAxis = !verticalAxis.isReversed();
 			diffPoints = 0;
+			const isChartEx = chartSpace.isChartEx();
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
 			}
-			if(orientationVerAxis) {
+			if(orientationVerAxis || isChartEx) {
 				leftDownPointY = verticalAxis.yPoints[0].pos + diffPoints;
 				rightUpPointY = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos - diffPoints;
 			} else {
@@ -1314,20 +1368,35 @@ CChartsDrawer.prototype =
 		var priorityAxis = [];
 
 		let charts = chartSpace.chart.plotArea.charts;
-		for (let i = 0; i < charts.length; i++) {
-			for (let j = 0; j < charts[i].axId.length; j++) {
-				var axis = charts[i].axId[j];
+		const isChartEx = chartSpace.isChartEx();
+		if (isChartEx) {
+			var axId = chartSpace.chart.plotArea.axId;
+			for(var i = 0; i < axId.length; i++) {
+				var axis = chartSpace.chart.plotArea.axId[i];
 				if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
-					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
-						priorityAxis.push(axis);
-					} else {
-						res.push(axis);
+					if(!res) {
+						res = [];
+					}
+					res.push(axis);
+				}
+			}
+			return res;
+		} else {
+			for (let i = 0; i < charts.length; i++) {
+				for (let j = 0; j < charts[i].axId.length; j++) {
+					var axis = charts[i].axId[j];
+					if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
+						if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+							priorityAxis.push(axis);
+						} else {
+							res.push(axis);
+						}
 					}
 				}
 			}
+			return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 		}
 
-		return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 	},
 
 	isRadarChart: function(axis) {
@@ -1758,8 +1827,15 @@ CChartsDrawer.prototype =
 					pointVal = oErrVal.val;
 				}
 
-				var plusErrVal = oErrVal.plusErrVal;
-				var minusErrVal = oErrVal.minusErrVal
+				const remainder = oErrVal.plusErrVal % 1;
+				var plusErrVal = remainder <= 0.5 ? Math.floor(oErrVal.plusErrVal) : Math.ceil(oErrVal.plusErrVal);
+				var minusErrVal = Math.floor(oErrVal.minusErrVal);
+				if (!AscFormat.isRealNumber(plusErrVal)) {
+					plusErrVal = 0;
+				}
+				if (!AscFormat.isRealNumber(minusErrVal)) {
+					plusErrVal = 0;
+				}
 				switch (errBar.errBarType) {
 					case AscFormat.st_errbartypeBOTH: {
 						if (maxErr === null || maxErr < pointVal + plusErrVal) {
@@ -1959,6 +2035,7 @@ CChartsDrawer.prototype =
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//для оси категорий берем интервал 1
 		let arrayValues;
+
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
 			arrayValues = [];
 			let max = axis.max;
@@ -2202,9 +2279,8 @@ CChartsDrawer.prototype =
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		*/
-		let kF = 1000000000;
-		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? this._roundValue(axis.scaling.min) : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? this._roundValue(axis.scaling.max) : null;
 		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
@@ -2448,27 +2524,377 @@ CChartsDrawer.prototype =
 		this.calcProp.pathH = 1000000000;
 		this.calcProp.pathW = 1000000000;
 
-		this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
-		this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
-
 		this.calcProp.xaxispos = null;
 		this.calcProp.yaxispos = null;
 
-		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
+
 		if (!notCalcExtremum) {
-			this._calculateExtremumAllCharts(chartSpace);
+			const isChartEx = chartSpace.isChartEx();
+			if (!isChartEx) {
+				this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
+				this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
+				//calculate calcProp -> /min/max/ymax/ymin/
+				this._calculateExtremumAllCharts(chartSpace);
+			} else {
+				this._prepChartExData(chartSpace)
+			}
 		}
-
-		//***series***
-		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
-
-		//отсеиваем пустые серии
-		var countSeries = this.calculateCountSeries(chartSpace.chart.plotArea.chart);
-		this.calcProp.seriesCount = countSeries.series;
-		this.calcProp.ptCount = countSeries.points;
 
 		this.calcProp.widthCanvas = chartSpace.extX * this.calcProp.pxToMM;
 		this.calcProp.heightCanvas = chartSpace.extY * this.calcProp.pxToMM;
+	},
+
+	_handleUserTypedChartExValMinMax: function (axis) {
+		if (!axis) {
+			return;
+		}
+		//check for user typed max and min properties
+		let trueMin = (axis.scaling && axis.scaling.min != null) ? this._roundValue(axis.scaling.min) : null;
+		let trueMax = (axis.scaling && axis.scaling.max != null) ? this._roundValue(axis.scaling.max) : null;
+		const isTrueMin = AscFormat.isRealNumber(trueMin);
+		const isTreuMax = AscFormat.isRealNumber(trueMax);
+
+		if (isTrueMin && isTreuMax && trueMin >= trueMax) {
+			axis.max = 0;
+			axis.min = 0;
+		} else {
+			trueMin = AscFormat.isRealNumber(trueMin) ? trueMin : axis.min;
+			trueMax = AscFormat.isRealNumber(trueMax) ? trueMax : axis.max;
+
+			//for special cases, when min greater than max, or max is negative
+			trueMax = (trueMax === 0 && trueMin >= 0) ? 1 : trueMax;
+			trueMax = (trueMin > 1 && trueMin > trueMax - 1) ? trueMax * 2 : trueMax;
+			trueMin = (trueMax < 0 && trueMax < trueMin) ? trueMax * 2 : trueMin;
+
+			axis.max = trueMax;
+			axis.min = trueMin;
+		}
+	},
+
+	_chartExHandleAxesConfigurations: function (axes, axisProperties) {
+		if (!axes || !Array.isArray(axes) || !axisProperties ) {
+			return;
+		}
+
+		for (let i = 0; i < axes.length; i++) {
+			const customAxis = axes[i].axPos === window['AscFormat'].AX_POS_T || axes[i].axPos === window['AscFormat'].AX_POS_B ? axisProperties.cat : axisProperties.val;
+			axes[i].min = customAxis.min;
+			axes[i].max = customAxis.max;
+			this._handleUserTypedChartExValMinMax(axes[i]);
+			axes[i].scale = customAxis.scale.length > 0 ? customAxis.scale : this._roundValues(this._getAxisValues2(axes[i], this.cChartSpace, false, false));
+		}
+	},
+
+	_chartExSetAxisMinAndMax: function (axis, num) {
+		if (!axis || (num !== 0 && !num)) {
+			return;
+		}
+		axis.max = (axis.max === null || num > axis.max) ? num : axis.max;
+		axis.min = (axis.min === null || num < axis.min) ? num : axis.min;
+	},
+
+	_chartExHandleAggregation: function (type, cachedData, numArr, strArr, axisProperties) {
+		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !strArr || !axisProperties) {
+			return;
+		}
+		if (cachedData.aggregation) {
+			const aggregation = cachedData.aggregation;
+			axisProperties.cat.scale.push(1);
+			if (strArr.length !== 0) {
+				// create object of key and values
+				for (let i = 0; i < numArr.length; i++) {
+					const key = strArr[i].val;
+					if (!aggregation.hasOwnProperty(key)) {
+						aggregation[key] = 0;
+					}
+					aggregation[key] += numArr[i].val;
+					this._chartExSetAxisMinAndMax(axisProperties.val, aggregation[key]);
+				}
+			} else {
+				// Cases when labels do not exist
+				const val = numArr[0].val ? numArr[0].val : 0;
+				aggregation[''] = val;
+				this._chartExSetAxisMinAndMax(axisProperties.val, val);
+			}
+		}
+	},
+
+
+	_chartExHandleBinning: function (type, cachedData, numArr, axisProperties) {
+		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !axisProperties) {
+			return;
+		}
+		if (cachedData.binning) {
+			const handleCatLimits = function (localBinning, axisProperties) {
+				if (!localBinning || !axisProperties || !axisProperties.cat) {
+					return;
+				}
+				// uncomment when excel will fix the problem of overflow and underflow being incorrect in some moments
+				// const statement1 = localBinning.intervalClosed !== AscFormat.INTERVAL_CLOSED_SIDE_L ? localBinning.overflow < axisProperties.cat.max && localBinning.overflow >= axisProperties.cat.min : localBinning.overflow <= axisProperties.cat.max && localBinning.overflow > axisProperties.cat.min;
+				// const statement2 = localBinning.intervalClosed !== AscFormat.INTERVAL_CLOSED_SIDE_L ? localBinning.underflow >= axisProperties.cat.min && localBinning.underflow < axisProperties.cat.max : localBinning.underflow > axisProperties.cat.min && localBinning.underflow <= axisProperties.cat.max;
+				// localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
+				// localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
+				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < axisProperties.cat.max && localBinning.overflow >= axisProperties.cat.min) ? localBinning.overflow : null;
+				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > axisProperties.cat.min && localBinning.underflow <= axisProperties.cat.max) ? localBinning.underflow : null;
+				const limits = {
+					isOverflowExist : localBinning.overflow === 0 || localBinning.overflow ? true : false,
+					isUnderflowExist : localBinning.underflow === 0 || localBinning.underflow ? true : false,
+					trueMax : null,
+					trueMin : null,
+				}
+				if (limits.isOverflowExist && limits.isUnderflowExist && localBinning.underflow > localBinning.overflow) {
+					localBinning.overflow = null;
+					limits.isOverflowExist = false;
+				}
+				limits.trueMax = limits.isOverflowExist ? localBinning.overflow : axisProperties.cat.max;
+				limits.trueMin = limits.isUnderflowExist ? localBinning.underflow : axisProperties.cat.min;
+				return limits;
+			}
+			
+			const calculateBinSizeAndCount = function (localBinning, cL, numArr, axisProperties) {
+				if (!localBinning || !cL || !numArr || !axisProperties) {
+					return;
+				}
+				if (localBinning.binSize) {
+					localBinning.binCount = Math.max(Math.ceil((cL.trueMax - cL.trueMin) / localBinning.binSize), 1);
+					localBinning.normalized = true;
+				} else if (localBinning.binCount) {
+					localBinning.binCount -= (cL.isOverflowExist ? 1 : 0) + (cL.isUnderflowExist ? 1 : 0);
+					localBinning.binCount = Math.max(localBinning.binCount, 0);
+					localBinning.binSize = (localBinning.binCount != 0) ? ((cL.trueMax - cL.trueMin) / localBinning.binCount) : null;
+					localBinning.normalized = true;;
+				} else {
+					// Find stdev 
+					// formula = sqrt((∑(x - mean)^2)/(n-1))
+					let isUnique = true;
+					let mean = 0;
+					let stDev = 0;
+					for (let i = 0; i < numArr.length; i++) {
+						mean += numArr[i].val;
+					}
+					mean /= numArr.length;
+
+					for (let i = 0; i < numArr.length; i++) {
+						isUnique = numArr[i].val === numArr[0].val ? true : false;
+						stDev += Math.pow((numArr[i].val - mean), 2);
+					}
+					stDev = Math.sqrt(stDev / Math.max(numArr.length - 1, 1));
+
+					// Calculate bin size and bin count
+					localBinning.binSize = (3.5 * stDev) / (Math.pow(numArr.length, 1 / 3));
+					localBinning.binCount = (localBinning.binSize) ? Math.max(Math.ceil((cL.trueMax - cL.trueMin) / localBinning.binSize), 1) : 1;
+					localBinning.normalized = false;
+					if (isUnique) {
+						localBinning.binSize = 5;
+						localBinning.binCount = 1;
+						localBinning.overflow = null;
+						localBinning.underflow = null;
+					}
+				}
+			}
+
+			const addRangesAndFillCatScale = function (localResults, localBinning, cL, axisProperties) {
+				if (!localResults || !localBinning || !cL || !axisProperties) {
+					return;
+				}
+				let prev = cL.trueMin;
+				const addRange = function (minVal, maxVal) {
+					localResults.push({ min: minVal, max: maxVal, occurrence: 0 });
+				}
+				if (cL.isUnderflowExist) {
+					addRange(null, prev);
+				}
+
+				axisProperties.cat.scale.push(prev);
+				for (let i = 0; i < localBinning.binCount; i++) {
+					let curr = prev + localBinning.binSize;
+
+					if (cL.isOverflowExist) {
+						curr = Math.min(curr, cL.trueMax);
+					}
+
+					addRange(prev, curr);
+					prev = curr;
+					axisProperties.cat.scale.push(curr);
+				}
+
+				if (cL.isOverflowExist) {
+					addRange(cL.trueMax, null);
+				}
+			}
+
+			const countOccurrencesAndValExtremum = function (localResults, localBinning, numArr, axisProperties, chartsDrawer) {
+				if (!localResults || !localBinning || !numArr || !axisProperties) {
+					return ;
+				}
+				if (numArr.length === 1) {
+					localResults[0].occurrence++;
+					chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, 1);
+				} else {
+					for (let i = 0; i < numArr.length; i++) {
+						// sometimes when bincount is fixed, values shifts into the last bean. 
+						// if this issue will be fixed remove isFound and last if case
+						let isFound = false;
+						for (let j = 0; j < localResults.length; j++) {
+							const min = localResults[j].min;
+							const max = localResults[j].max;
+							const statement1 = (j === 0 && numArr[i].val === min);
+							const statement2 = localBinning.intervalClosed !== AscFormat.INTERVAL_CLOSED_SIDE_L ? 
+								((!min || numArr[i].val > min) && (!max || numArr[i].val <= max)) : 
+								((!min || numArr[i].val >= min) && (!max || numArr[i].val < max));
+							if (statement1 || statement2) {
+								isFound = true;
+								localResults[j].occurrence++;
+								chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, localResults[j].occurrence);
+							}
+						}
+						if (!isFound && localResults.length > 1) {
+							const lastIndex = localResults.length - 1;
+							localResults[lastIndex].occurrence++;
+							chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, localResults[lastIndex].occurrence);
+						}
+					}
+				}
+			}
+
+			const localBinning = cachedData.binning;
+			const localResults = cachedData.results;
+			const catLimits = handleCatLimits(localBinning, axisProperties);
+			calculateBinSizeAndCount(localBinning, catLimits, numArr, axisProperties);
+			// if binSize is calculated automatically, it must be rounded to two digits. Example: 78.65 = 79, 0.856 : 0.86!
+			const BINNING_PRECISION = 1;
+			localBinning.binSize = !localBinning.normalized ? this._roundValue(localBinning.binSize, true, BINNING_PRECISION) : localBinning.binSize;
+			addRangesAndFillCatScale(localResults, localBinning, catLimits, axisProperties);
+			countOccurrencesAndValExtremum(localResults, localBinning, numArr, axisProperties, this);
+		}
+	},
+
+	_chartExHandleClusteredColumn: function (type, cachedData, numArr, strArr, axisProperties) { 
+		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !axisProperties) {
+			return;
+		}
+
+		if (!cachedData.clusteredColumn) {
+			cachedData.clusteredColumn = {};
+		}
+		this._chartExSetAxisMinAndMax(axisProperties.val, 0);
+		this._chartExHandleAggregation(type, cachedData.clusteredColumn, numArr, strArr, axisProperties);
+		this._chartExHandleBinning(type, cachedData.clusteredColumn, numArr, axisProperties);
+	},
+
+	_chartExHandleWaterfall: function (type, cachedData, numArr, axisProperties) {
+		if (type != AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !axisProperties || !cachedData) {
+			return;
+		}
+
+		if (!cachedData.waterfall) {
+			cachedData.waterfall = [];
+		}
+
+		axisProperties.val.min = 0;
+		axisProperties.val.max = 0;
+		let sum = 0;
+		for (let i = 0; i < numArr.length; i++) {
+			cachedData.waterfall.push(numArr[i].val);
+			sum += numArr[i].val;
+			this._chartExSetAxisMinAndMax(axisProperties.val, sum);
+			axisProperties.cat.scale.push(numArr[i].idx + 1);
+		}
+	},
+
+	_chartExHandleFunnel: function (type, cachedData, numArr, axisProperties) {
+		if (type != AscFormat.SERIES_LAYOUT_FUNNEL || !numArr || !axisProperties || !cachedData) {
+			return;
+		}
+
+		if (!cachedData.funnel) {
+			cachedData.funnel = [];
+		}
+
+		//if there is at least one element in the array then min is 1, however if there is no elements then min is 0
+		axisProperties.val.min = 0;
+		axisProperties.val.max = 0;
+		for (let i = 0; i < numArr.length; i++) {
+			this._chartExSetAxisMinAndMax(axisProperties.val, numArr[i].val);
+			cachedData.funnel.push(numArr[i].val);
+			axisProperties.val.scale.push(numArr.length - i);
+		}
+	},
+
+	_prepChartExData: function (chartSpace) {
+		// plotArea: CPlotArea
+		// data: CNumericPoint
+		if (!chartSpace || !chartSpace.chart || !chartSpace.chart.plotArea || !chartSpace.chart.plotArea.plotAreaRegion || !chartSpace.chart.plotArea.plotAreaRegion.series) {
+			return;
+		}
+
+		const plotArea = chartSpace.chart.plotArea;
+		const seria = plotArea.plotAreaRegion.series[0];
+		const type = seria.layoutId;
+		const strCache = seria.getCatLit(type);
+		const numLit = seria.getValLit();
+
+		//createCache for storing information
+		const createCachedData = function (chart, seria) {
+			if (!chart || !seria) {
+				return;
+			}
+
+			chart.cachedData = {}
+
+			if (seria.layoutPr) {
+				const binning = seria.layoutPr.binning;
+				const aggregation = seria.layoutPr.aggregation;
+				if (aggregation) {
+					chart.cachedData.clusteredColumn = {aggregation : {}};
+				}
+				if (binning) {
+					if (!chart.cachedData.clusteredColumn) {
+						chart.cachedData.clusteredColumn = {};
+					}
+					chart.cachedData.clusteredColumn.binning = {intervalClosed: binning.intervalClosed, overflow: binning.overflow, underflow: binning.underflow, binCount : binning.binCount, binSize : binning.binSize };
+					chart.cachedData.clusteredColumn.results = [];
+				}
+			}
+		}
+		
+		createCachedData(plotArea.plotAreaRegion, seria);
+
+		if (numLit && numLit.pts && numLit.pts.length > 0) {
+
+			const numArr = numLit.pts;
+			const strArr = strCache ? strCache.pts : [];
+			const cachedData = plotArea.plotAreaRegion.cachedData;
+			const axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+
+			if (cachedData) {
+
+				const calculateExtremums = function (type, axisProperties, numArr, chartsDrawer) {
+					// Histogram has unique labels. Example: [1, 3], (3, 7], ... etc.
+					if (type === AscFormat.SERIES_LAYOUT_FUNNEL || !axisProperties || !numArr || axisProperties.mean || axisProperties.catMax || axisProperties.catMin) {
+						return;
+					}
+					const isUniqueLabels = (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN) ? true : false;
+					if (isUniqueLabels) {
+						for (let i = 0; i < numArr.length; i++) {
+							chartsDrawer._chartExSetAxisMinAndMax(axisProperties.cat, numArr[i].val);
+						}
+					} else {
+						axisProperties.cat.min = numArr.length > 0 ? numArr[0].idx + 1 : 0;
+						axisProperties.cat.max = numArr.length > 0 ? numArr[numArr.length - 1].idx + 1 : 0;
+					}
+				}
+
+				calculateExtremums(type, axisProperties, numArr, this);
+				this._chartExHandleClusteredColumn(type, plotArea.plotAreaRegion.cachedData, numArr, strArr, axisProperties);
+				this._chartExHandleWaterfall(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
+				this._chartExHandleFunnel(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
+				this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);
+			}
+		}
 	},
 
 	_getChartType: function (chart) {
@@ -2925,7 +3351,7 @@ CChartsDrawer.prototype =
 			}*/
 
 
-			var getResult = function(index) {
+			var getResult = function(index, isChartEx) {
 				resPos = Math.abs(yPoints[index + 1].pos - yPoints[index].pos);
 				resVal = yPoints[index + 1].val - yPoints[index].val;
 
@@ -2936,29 +3362,22 @@ CChartsDrawer.prototype =
 				var res;
 				var startPos = yPoints[index].pos;
 
-				if (!isOx) {
-					if (!axis.isReversed()) {
-						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
-					} else {
-						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
-					}
-				} else {
-					if (axis.isReversed()) {
-						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
-					} else {
-						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
-					}
-				}
+				// for the cases of reversed axis, direction is calculated 
+				let firstDirection = !isOx && (!axis.isReversed() || isChartEx) ? -1 : 1;
+				let secondDirection = isOx && (axis.isReversed() || isChartEx) ? -1 : 1;
+
+				res = (firstDirection * secondDirection * (resPos / resVal) * (Math.abs(val - yPoints[index].val))) + startPos;
 
 				return res;
 			};
 
 			var i = 0, j = yPoints.length - 1, k;
+			const isChartEx = this.cChartSpace.isChartEx();
 			while (i <= j) {
 				k = Math.floor((i + j) / 2);
 
 				if (val >= yPoints[k].val && yPoints[k + 1] && val <= yPoints[k + 1].val) {
-					result = getResult(k);
+					result = getResult(k, isChartEx);
 					break;
 				} else if (val < yPoints[k].val) {
 					j = k - 1;
@@ -3270,18 +3689,58 @@ CChartsDrawer.prototype =
 	_roundValues: function (values) {
 		if (values.length) {
 		  for (let i = 0; i < values.length; i++) {
-			let count = 1;
-			let kF = 1000000000;
-			if (values[i] !== 0 && Math.abs(values[i] * kF) < 1) {
-				while (Math.abs(values[i]*kF) < 1) {
-					kF *= 10;
-				}
-			}
-			values[i] = Math.round(values[i] * kF) / (kF * count);
+			values[i] = this._roundValue(values[i]);
 		  }
 		}
 	  
 		return values;
+	},
+
+	// if rounding is strong it affects whole number. Example 106.82 -> 107, for the precision 2
+	// if weak, then only decimal places. Example 106.82 ->106.8, for the precision 1
+	_roundValue: function (num, isStrong, precision) {
+		if (num !== 0 && (!num || !isFinite(num))) {
+			return 1;
+		}
+
+		if (num === 0) {
+			return num;
+		}
+
+		// if num is negative
+		let isNegative = false;
+		if (num < 0) {
+			isNegative = true;
+			num = -num;
+		}
+
+		if (!precision || precision < 0) {
+			//default precision is 9! 
+			precision = 9;
+		}
+
+		let count = 0;
+
+		// Normalize the number by adjusting its scale
+		if (isStrong) {
+			while (num >= 10) {
+				num /= 10;
+				count++;
+			}
+		}
+
+		while (num < 1) {
+			num *= 10;
+			count--;
+		}
+
+		// Round the number to two decimal places
+		const kF = Math.pow(10, precision);
+		const roundedNum = Math.round(num * kF) / kF;
+
+		// Return the normalized number with the appropriate scale
+		num = (count >= 0) ? roundedNum * Math.pow(10, count) : roundedNum / Math.pow(10, -count);
+		return isNegative ? -num : num;
 	},
 	
 	
@@ -3457,6 +3916,12 @@ CChartsDrawer.prototype =
 		}
 
 		return {series: counter, points: ptCount};
+	},
+
+	calculateFirstChartCountSeries: function () {
+		let chart = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.charts &&
+			this.cChartSpace.chart.plotArea.charts[0];
+		return chart ? this.calculateCountSeries(chart) : null;
 	},
 	
 	//вспомогательные функции работающие с тремя координатами
@@ -4242,6 +4707,66 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
+	// Draws a rectangle, 
+	// params are start x and y, width, height and isCOnverted
+	_calculateRect: function (x, y, w, h, isPxToMmConverted) {
+		if (!this.cChartSpace || !this.calcProp) {
+			return null;
+		}
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.calcProp.pathH;
+		const pathW = this.calcProp.pathW;
+
+		if (!isPxToMmConverted) {
+			const pxToMm = this.calcProp.pxToMM;
+			x = x / pxToMm;
+			y = y / pxToMm;
+			w = w / pxToMm;
+			h = h / pxToMm;
+		}
+
+		path.moveTo(x * pathW, y * pathH);
+		path.lnTo(x * pathW, (y - h) * pathH);
+		path.lnTo((x + w) * pathW, (y - h) * pathH);
+		path.lnTo((x + w) * pathW, y * pathH);
+		path.lnTo(x * pathW, y * pathH);
+
+		return pathId;
+	},
+
+	// Draws a line, 
+	// params are point1, length, constPoint, isVertical, and isPxToMmConverted
+	_calculateLine: function (p1, l, constP, isVertical, isPxToMmConverted) {
+		if (!this.cChartSpace || !this.calcProp) {
+			return null;
+		}
+
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.calcProp.pathH;
+		const pathW = this.calcProp.pathW;
+
+		if (!isPxToMmConverted) {
+			const pxToMm = this.calcProp.pxToMM;
+			p1 = p1 / pxToMm;
+			l = l / pxToMm;
+			constP = constP / pxToMm;
+		}
+
+		if (isVertical) {
+			path.moveTo(constP * pathW, p1 * pathH);
+			path.lnTo(constP * pathW, (p1 - l) * pathH);
+		} else {
+			path.moveTo(p1 * pathW, constP * pathH);
+			path.lnTo(p1 + l * pathW, constP * pathH);
+		}
+
+		return pathId;
+	},
+
 	_calculatePathFaceCylinder: function(segmentPoints, segmentPoints2, up, down, isConvertPxToMM, check)
 	{
 		var pxToMm = 1;
@@ -4500,10 +5025,10 @@ CChartsDrawer.prototype =
 
 	//common functions for grid
 	getHorizontalGridLines: function (axis, isCatAxis) {
-		var t = this;
-		var gridLines, minorGridLines;
-		var crossBetween = this.cChartSpace.getValAxisCrossType();
-		var points = axis.yPoints;
+		let t = this;
+		let gridLines, minorGridLines;
+		let crossBetween = this.cChartSpace.getValAxisCrossType();
+		let points = axis.yPoints;
 
 		if(!points) {
 			return;
@@ -4512,24 +5037,25 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		var widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
-		var bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
-		var posX = this.calcProp.chartGutter._left;
-		var posMinorY, posY, crossDiff;
+		let widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
+		let bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
+		let posX = this.calcProp.chartGutter._left;
+		let posMinorY, posY, crossDiff;
 
 		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && isCatAxis) {
-			var posAxis = (this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom)/this.calcProp.pxToMM;
+			let posAxis = (this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom)/this.calcProp.pxToMM;
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
 		let isRadarValues = axis.isRadarValues();
-
-		//TODO пересмотреть отрисовку сетки для Radar, не использовать numCache!
-		var numCache, tempAngle, trueHeight, trueWidth, xDiff, xCenter, yCenter;
+		
+		let ptCount, tempAngle, trueHeight, trueWidth, xDiff, xCenter, yCenter;
 		if(isRadarValues) {
-			numCache = this.getNumCache(this.calcProp.series[0].val);
-			if(numCache) {
-				tempAngle = 2 * Math.PI / numCache.length;
+			let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.getPtCount(radarChart.series);
+			
+			if(ptCount) {
+				tempAngle = 2 * Math.PI / ptCount;
 				trueHeight = this.calcProp.trueHeight;
 				trueWidth = this.calcProp.trueWidth;
 				xDiff = ((trueHeight / 2) / points.length) / this.calcProp.pxToMM;
@@ -4538,10 +5064,10 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		var calculateRadarGridLines = function () {
-			var y, x, radius, xFirst, yFirst;
+		let calculateRadarGridLines = function () {
+			let y, x, radius, xFirst, yFirst;
 
-			for (var k = 0; k < numCache.length; k++) {
+			for (let k = 0; k < ptCount; k++) {
 				y = i * xDiff;
 				x = xCenter;
 
@@ -4550,8 +5076,8 @@ CChartsDrawer.prototype =
 				y = yCenter - radius * Math.cos(k * tempAngle);
 				x = x + radius * Math.sin(k * tempAngle);
 
-				var pathH = t.calcProp.pathH;
-				var pathW = t.calcProp.pathW;
+				let pathH = t.calcProp.pathH;
+				let pathW = t.calcProp.pathW;
 
 				path.stroke = true;
 				if (k === 0) {
@@ -4559,7 +5085,7 @@ CChartsDrawer.prototype =
 					yFirst = y;
 					path.moveTo(x * pathW, y * pathH);
 				} else {
-					if (k === numCache.length - 1) {
+					if (k === ptCount - 1) {
 						path.lnTo(x * pathW, y * pathH);
 						path.lnTo(xFirst * pathW, yFirst * pathH);
 					} else {
@@ -4573,16 +5099,16 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var minorLinesCount = isCatAxis ? 2 : 5;
-		var stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - axis.posY) * 2;
-		var minorStep = (stepY / minorLinesCount) * this.calcProp.pxToMM;
+		let minorLinesCount = isCatAxis ? 2 : 5;
+		let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - axis.posY) * 2;
+		let minorStep = (stepY / minorLinesCount) * this.calcProp.pxToMM;
 
-		var pathId = t.cChartSpace.AllocPath();
-		var path = t.cChartSpace.GetPath(pathId);
-		var i;
+		let pathId = t.cChartSpace.AllocPath();
+		let path = t.cChartSpace.GetPath(pathId);
+		let i;
 		for (i = 0; i < points.length; i++) {
 			if(isRadarValues) {
-				if(numCache) {
+				if(ptCount) {
 					calculateRadarGridLines();
 				}
 			} else {
@@ -4616,8 +5142,8 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		var pathIdMinor = t.cChartSpace.AllocPath();
-		var pathMinor = t.cChartSpace.GetPath(pathIdMinor);
+		let pathIdMinor = t.cChartSpace.AllocPath();
+		let pathMinor = t.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
 			if(!isRadarValues) {
 				if(isCatAxis && points[i].val < 0) {
@@ -4631,7 +5157,7 @@ CChartsDrawer.prototype =
 				}
 
 				//промежуточные линии
-				for (var n = 0; n < minorLinesCount; n++) {
+				for (let n = 0; n < minorLinesCount; n++) {
 					posMinorY = posY + n * minorStep;
 
 					if (posMinorY < this.calcProp.chartGutter._top || posMinorY > bottomMargin) {
@@ -4647,16 +5173,20 @@ CChartsDrawer.prototype =
 			}
 		}
 
-
 		return {gridLines: gridLines, minorGridLines: minorGridLines};
 	},
 
 	getVerticalGridLines: function (axis, isCatAxis) {
 		var gridLines, minorGridLines;
+		const isChartEx = this.cChartSpace.isChartEx();
 
 		var crossBetween = this.cChartSpace.getValAxisCrossType();
 		if(null === crossBetween && isCatAxis) {
 			crossBetween = axis.crossAx ? axis.crossAx.crossBetween : null;
+		}
+
+		if(null === crossBetween && isChartEx) {
+			crossBetween = 0;
 		}
 
 		var heightLine = this.calcProp.heightCanvas - (this.calcProp.chartGutter._bottom + this.calcProp.chartGutter._top);
@@ -4671,15 +5201,14 @@ CChartsDrawer.prototype =
 		if(!axis.majorGridlines && !axis.minorGridlines) {
 			return;
 		}
-
-		var minorLinesCount = isCatAxis ? 2 : 5;
+		var minorLinesCount = isCatAxis || isChartEx ? 2 : 5;
 
 		var posAxis = this.calcProp.chartGutter._left / this.calcProp.pxToMM;
 		var stepX = points[1] ? Math.abs((points[1].pos - points[0].pos)) : (Math.abs(points[0].pos - posAxis) * 2);
 		var minorStep = (stepX * this.calcProp.pxToMM) / minorLinesCount;
 		var posX, crossDiff;
 
-		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && isCatAxis) {
+		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && (isCatAxis || isChartEx)) {
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
@@ -4687,7 +5216,7 @@ CChartsDrawer.prototype =
 		var path = this.cChartSpace.GetPath(pathId);
 		var i;
 		for (i = 0; i < points.length; i++) {
-			if(isCatAxis && points[i].val < 0) {
+			if((isCatAxis && points[i].val < 0) && !isChartEx) {
 				continue;
 			}
 
@@ -4718,7 +5247,7 @@ CChartsDrawer.prototype =
 		var pathIdMinor = this.cChartSpace.AllocPath();
 		var pathMinor = this.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
-			if(isCatAxis && points[i].val < 0) {
+			if((isCatAxis && points[i].val < 0) && !isChartEx) {
 				continue;
 			}
 
@@ -4873,7 +5402,9 @@ CChartsDrawer.prototype =
 				yCenter = (this.calcProp.chartGutter._top + trueHeight / 2) / this.calcProp.pxToMM;
 			}
 
-			var ptCount = this.getPtCount(this.calcProp.series);
+			let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.getPtCount(radarChart.series);
+
 			if (!ptCount) {
 				return null;
 			}
@@ -5942,6 +6473,15 @@ CChartsDrawer.prototype =
 
 		return pathId;
 	},
+
+	getChartByType: function (type) {
+		for (let i in this.charts) {
+			if (this.charts[i] && this.charts[i].chart.getObjectType() === type) {
+				return this.charts[i].chart;
+			}
+		}
+		return null;
+	}
 };
 
 
@@ -6182,7 +6722,7 @@ drawBarChart.prototype = {
 
 					cubeCount++;
 				} else {
-					paths = this._calculateRect(startX, startY, individualBarWidth, height);
+					paths = this.cChartDrawer._calculateRect(startX, startY, individualBarWidth, height);
 				}
 
 				var serIdx = this.chart.series[i].idx;
@@ -6631,25 +7171,6 @@ drawBarChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
-	},
-
-	_calculateRect: function (x, y, w, h) {
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-
-		var pxToMm = this.chartProp.pxToMM;
-
-		path.moveTo(x / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo(x / pxToMm * pathW, (y - h) / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, (y - h) / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo(x / pxToMm * pathW, y / pxToMm * pathH);
-
-		return pathId;
 	},
 
 
@@ -7206,6 +7727,589 @@ drawBarChart.prototype = {
 	}
 };
 
+
+
+/** @constructor */
+function drawHistogramChart(seria, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.seria = seria;
+
+	this.catAx = null;
+	this.valAx = null;
+
+	this.ptCount = null;
+	this.seriesCount = null;
+	this.subType = null;
+
+	this.paths = {};
+}
+
+drawHistogramChart.prototype = {
+	constructor: drawHistogramChart,
+
+	recalculate: function () {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId || this.cChartSpace.chart.plotArea.axId.length < 2) {
+			return;
+		}
+		const cachedData = this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData;
+		if (cachedData && this.chartProp && this.chartProp.chartGutter && cachedData.clusteredColumn) {
+			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
+
+			const catStart = this.chartProp.chartGutter._left;
+			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			const coeff = catAxis.scaling.gapWidth;
+
+			const isAggregation = cachedData.clusteredColumn.aggregation;
+			// two different ways of storing information, object and array, therefore convert object into array
+			const sections = isAggregation ? Object.values(cachedData.clusteredColumn.aggregation) : cachedData.clusteredColumn.results;
+			if (sections) {
+				// 1 px gap for each section length
+				const gapWidth = 0.5 / this.chartProp.pxToMM;
+				const gapNumber = sections.length;
+				//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+				const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / sections.length;
+				const barWidth = (initialBarWidth / (1 + coeff));
+				const margin = (initialBarWidth - barWidth) / 2;
+
+				let start = (catStart + margin + gapWidth);
+				for (let i = 0; i < sections.length; i++) {
+					// aggregation object does not have field occurrence;
+					const val = isAggregation ? sections[i] : sections[i].occurrence;
+					const startY = this.cChartDrawer.getYPosition(val, valAxis, true);
+					const bW = i === 0 ? barWidth : barWidth - gapWidth;
+					if (this.chartProp && this.chartProp.pxToMM ) {
+						const height = valStart - (startY * this.chartProp.pxToMM);
+						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, bW, height);
+					}		
+					start += (bW + margin + gapWidth + gapWidth + margin);
+				}
+			}
+
+		}
+	},
+
+	draw: function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+
+		//TODO !!!
+		//series color
+		/*<cx:plotArea>
+		<cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="60000"/>
+			<a:lumOff val="40000"/>
+			</a:srgbClr>
+			</a:solidFill>*/
+
+		//point color
+		/*cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:dataPt idx="2">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="40000"/>
+			<a:lumOff val="60000"/>
+			</a:srgbClr>
+			</a:solidFill>
+			</cx:spPr>*/
+
+		//this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].spPr.Fill.ln
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
+			}
+		}
+		
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	},
+
+	_calculateDLbl: function (compiledDlb) {
+		if (!this.paths || !this.chartProp) {
+			return;
+		}
+		const path = this.paths[compiledDlb.idx];
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const width = compiledDlb.extX;
+		const height = compiledDlb.extY;
+
+		let centerX, centerY;
+		// DATA_LABEL_POS_IN_END
+		switch (compiledDlb.dLblPos) {
+			case AscFormat.DATA_LABEL_POS_CTR: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h / 2 - height / 2;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_BASE: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - height;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_OUT_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h - height;
+				break;
+			}
+		}
+
+		const top = this.chartProp.chartGutter._top / pxToMm;
+		if (centerY < top) {
+			centerY = top;
+		}
+
+		const bottom = ((this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm) - height ;
+		if (centerY >= bottom) {
+			centerY = bottom;
+		}
+
+		return {x: centerX, y: centerY};
+	}
+};
+
+/** @constructor */
+function drawWaterfallChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.chart = chart;
+
+	this.catAx = null;
+	this.valAx = null;
+
+	this.ptCount = null;
+	this.seriesCount = null;
+	this.subType = null;
+
+	this.paths = {};
+}
+
+drawWaterfallChart.prototype = {
+	constructor: drawWaterfallChart,
+
+	recalculate: function () {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId) {
+			return;
+		}
+		const seria = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0];
+		const numLit = seria.getValLit();
+		const data = numLit ? numLit.pts : null;
+		if (data && data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
+			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
+
+			const catStart = this.chartProp.chartGutter._left;
+			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			if (AscFormat.isRealNumber(valStart)) {
+				const coeff = catAxis.scaling.gapWidth;
+				// 1 px gap for each section length
+				const gapWidth = 0.5 / this.chartProp.pxToMM;
+				const gapNumber = data.length;
+				//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+				const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber))/ data.length;
+				const barWidth = (initialBarWidth / (1 + coeff));
+				const margin = (initialBarWidth - barWidth) / 2;
+
+				let sum = 0;
+				let start = (catStart + margin + gapWidth); 
+				for (let i = 0; i < data.length; i++) {
+					sum += data[i].val;
+					const valPos = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM; // calc roof of the current bar
+					const next = start + (barWidth + margin + gapWidth + gapWidth + margin); // start of the next bar
+					if (this.chartProp && this.chartProp.pxToMM ) {
+						const height = valStart - valPos;
+						this.paths[i] = [];
+						this.paths[i].push(this.cChartDrawer._calculateRect(start, valStart, barWidth, height));
+						//dont need last connectorLine
+						if (i !== data.length - 1 && margin !== 0) {
+							//exclude gapWidth from connector line
+							this.paths[i].push(this._calculateConnectorLine(valPos, start + barWidth + gapWidth, next - gapWidth))
+						}
+					}
+					valStart = valPos;	// go up in y direction
+					start = next;	// go right in x direction
+				}
+			}
+		}
+	},
+
+	_calculateConnectorLine: function (y, x1, x2) {
+		if (!this.cChartSpace || !this.chartProp) {
+			return null;
+		}
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.chartProp.pathH;
+		const pathW = this.chartProp.pathW;
+		const pxToMm = this.chartProp.pxToMM;
+
+		path.moveTo((x1 / pxToMm) * pathW, (y / pxToMm)  * pathH);
+		path.lnTo((x2 / pxToMm) * pathW, (y / pxToMm)  * pathH);
+
+		return pathId;
+	},
+
+	draw: function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+
+		//TODO !!!
+		//series color
+		/*<cx:plotArea>
+		<cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="60000"/>
+			<a:lumOff val="40000"/>
+			</a:srgbClr>
+			</a:solidFill>*/
+
+		//point color
+		/*cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:dataPt idx="2">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="40000"/>
+			<a:lumOff val="60000"/>
+			</a:srgbClr>
+			</a:solidFill>
+			</cx:spPr>*/
+
+		//this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].spPr.Fill.ln
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					for (let j in this.paths[i]) {
+						if (this.paths[i].hasOwnProperty(j) && this.paths[i][j]) {
+							let nPtIdx = parseInt(i);
+							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+							let brush = oSeries.getPtBrush(nPtIdx);
+							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
+						}
+					}
+				}
+			}
+		}
+		
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	}, 
+
+	_calculateDLbl: function (compiledDlb) {
+		if (!this.paths || !this.chartProp) {
+			return;
+		}
+		const path = this.paths[compiledDlb.idx][0];
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const width = compiledDlb.extX;
+		const height = compiledDlb.extY;
+
+		let centerX, centerY;
+		// DATA_LABEL_POS_IN_END
+		switch (compiledDlb.dLblPos) {
+			case AscFormat.DATA_LABEL_POS_CTR: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h / 2 - height / 2;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_BASE: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - height;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_OUT_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h - height;
+				break;
+			}
+		}
+
+		const top = this.chartProp.chartGutter._top / pxToMm;
+		if (centerY < top) {
+			centerY = top;
+		}
+
+		const bottom = ((this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm) - height ;
+		if (centerY >= bottom) {
+			centerY = bottom;
+		}
+
+		return {x: centerX, y: centerY};
+	}
+}
+
+/** @constructor */
+function drawFunnelChart(chart, chartsDrawer) {
+	this.chartProp = chartsDrawer.calcProp;
+	this.cChartDrawer = chartsDrawer;
+	this.cChartSpace = chartsDrawer.cChartSpace;
+
+	this.chart = chart;
+
+	this.catAx = null;
+	this.valAx = null;
+
+	this.ptCount = null;
+	this.seriesCount = null;
+	this.subType = null;
+
+	this.paths = {};
+	this.linePath = null;
+}
+
+drawFunnelChart.prototype = {
+	constructor: drawFunnelChart,
+
+	recalculate: function () {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId) {
+			return;
+		}
+		const seria = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0];
+		const numLit = seria.getValLit();
+		const data = numLit ? numLit.pts : null;
+		if (data && data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
+			const valAxis = this.cChartSpace.chart.plotArea.axId[0];
+			const isSinglePoint = data.length === 1;
+			const catMiddle = (this.chartProp.trueWidth / 2 + this.chartProp.chartGutter._left );
+			let valStart = this.chartProp.chartGutter._top;
+			let chartHeight = this.chartProp.trueHeight;
+			const pxToMM = this.chartProp.pxToMM;
+			if (AscFormat.isRealNumber(valStart) && AscFormat.isRealNumber(catMiddle)) {
+				const coeff = valAxis.scaling.gapWidth;
+				// 1 px gap for each section length
+				const gapWidth = 0.5 / pxToMM;
+				const gapNumber = data.length;
+				//Each bar will have 2 gapWidth and 2 margins , on top and bottom sides
+				const initialBarHeight = (chartHeight - (2 * gapWidth * gapNumber))/ data.length;
+				const barHeight = (initialBarHeight / (1 + coeff));
+				const margin = (initialBarHeight - barHeight) / 2;
+
+				// because calculate rect accepts bottom left point as starting y, we add barHeight to the calculation of starting point 
+				let startVertical = (valStart + margin + gapWidth + barHeight); 
+				for (let i = 0; i < data.length; i++) {
+					if (this.chartProp && pxToMM) {
+						const barWidth = valAxis.max && data[i].val > 0 ? (data[i].val / valAxis.max) * this.chartProp.trueWidth: 0;
+						this.paths[i] = this.cChartDrawer._calculateRect(catMiddle - (barWidth / 2), startVertical, barWidth, barHeight);
+					}
+					startVertical += margin + gapWidth + gapWidth + margin + barHeight;
+				}
+				// vertical line with 1 px from left 
+				this.linePath = this.cChartDrawer._calculateLine(startVertical, (startVertical - valStart), this.chartProp.chartGutter._left + 1, true);
+			}
+		}
+	},
+
+	draw: function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+			return;
+		}
+
+		// find chart starting coordinates, width and height;
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
+			return
+		}
+
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
+
+		//TODO !!!
+		//series color
+		/*<cx:plotArea>
+		<cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="60000"/>
+			<a:lumOff val="40000"/>
+			</a:srgbClr>
+			</a:solidFill>*/
+
+		//point color
+		/*cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:dataPt idx="2">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="40000"/>
+			<a:lumOff val="60000"/>
+			</a:srgbClr>
+			</a:solidFill>
+			</cx:spPr>*/
+
+		//this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].spPr.Fill.ln
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let oSeries = series[0];
+		if(oSeries) {
+			if (this.linePath) {
+				let pen = this.cChartSpace.pen;
+				this.cChartDrawer.drawPath(this.linePath, pen);
+			}
+			for (let i in this.paths) {
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
+			}
+		}
+		
+		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	}, 
+
+	_calculateDLbl: function (compiledDlb) {
+		if (!this.paths || !this.chartProp) {
+			return;
+		}
+		const path = this.paths[compiledDlb.idx];
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const width = compiledDlb.extX;
+		const height = compiledDlb.extY;
+
+		let centerX, centerY;
+
+		centerX = x + w / 2 - width / 2;
+		centerY = y - h / 2 - height / 2;
+		const top = this.chartProp.chartGutter._top / pxToMm;
+		if (centerY < top) {
+			centerY = top;
+		}
+
+		const bottom = ((this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm) - height ;
+		if (centerY >= bottom) {
+			centerY = bottom;
+		}
+
+		return {x: centerX, y: centerY};
+	}
+}
 
 /** @constructor */
 function drawLineChart(chart, chartsDrawer) {
@@ -8870,6 +9974,9 @@ drawAreaChart.prototype = {
 			return pathId;
 		};
 
+		let countSeries = oThis.cChartDrawer.calculateCountSeries(oThis.chart);
+		let ptCount = countSeries.points;
+
 		//left
 		paths[2] = null;
 		if (this.darkFaces["left"] && point === 0) {
@@ -8878,7 +9985,7 @@ drawAreaChart.prototype = {
 
 		//right
 		paths[3] = null;
-		if (this.darkFaces["right"] && point === t.cChartDrawer.calcProp.ptCount - 2) {
+		if (this.darkFaces["right"] && point === ptCount - 2) {
 			paths[3] = calculateSimpleFace(point4, point8, point7, point3, point44, point88, point77, point33, 3);
 		}
 
@@ -9086,11 +10193,6 @@ drawAreaChart.prototype = {
 			this.chartProp.trueWidth / this.chartProp.pxToMM, this.chartProp.trueHeight / this.chartProp.pxToMM);
 
 		for (var i = 0; i < this.chart.series.length; i++) {
-
-			//в случае накопительных дигарамм, рисуем в обратном порядке
-			/*if(this.chartProp.subType == "stackedPer" || this.chartProp.subType == "stacked")
-			 seria = this.chartProp.series[this.chartProp.series.length - 1 - i];
-			 else*/
 			seria = this.chart.series[i];
 			numCache = this.cChartDrawer.getNumCache(seria.val);
 			dataSeries = numCache && numCache.pts ? numCache.pts : null;
@@ -9484,7 +10586,7 @@ drawHBarChart.prototype = {
 						seriesHeight, i, idx, cubeCount, shapeType, maxH, minH);
 					cubeCount++;
 				} else {
-					paths = this._calculateRect(newStartX, newStartY / this.chartProp.pxToMM, width, individualBarHeight / this.chartProp.pxToMM);
+					paths = this.cChartDrawer._calculateRect(newStartX, newStartY / this.chartProp.pxToMM, width, individualBarHeight / this.chartProp.pxToMM, true);
 				}
 
 				var serIdx = this.chart.series[i].idx;
@@ -9810,21 +10912,6 @@ drawHBarChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
-	},
-
-	_calculateRect: function (x, y, w, h) {
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-		path.moveTo(x * pathW, y * pathH);
-		path.lnTo(x * pathW, (y - h) * pathH);
-		path.lnTo((x + w) * pathW, (y - h) * pathH);
-		path.lnTo((x + w) * pathW, y * pathH);
-		path.lnTo(x * pathW, y * pathH);
-		return pathId;
 	},
 
 	calculateParallalepiped: function (newStartX, newStartY, val, width, DiffGapDepth, perspectiveDepth,
@@ -14409,11 +15496,11 @@ axisChart.prototype = {
 	},
 
 	_calculateValAxis: function () {
-		var axisPos;
-		var left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
-		var right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
-		var top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
-		var bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
+		let axisPos;
+		let left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		let right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
+		let top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
+		let bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
 
 		if (this.axis && this.axis.isRadarValues()) {
 
@@ -14422,7 +15509,7 @@ axisChart.prototype = {
 			var orientation = !axis.isReversed();
 			var xCenter = axis.posX;
 
-			var yCenter, trueHeight;
+			let yCenter, trueHeight;
 			if (yPoints.length > 0) {
 				yCenter = orientation ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 			} else {
@@ -14430,15 +15517,16 @@ axisChart.prototype = {
 				yCenter = (this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
 			}
 
-			var ptCount = this.cChartDrawer.getPtCount(this.chartProp.series);
+			let radarChart = this.cChartDrawer.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
 			if (!ptCount) {
 				return;
 			}
-			var tempAngle = 2 * Math.PI / ptCount;
+			let tempAngle = 2 * Math.PI / ptCount;
 
-			var radius, x, y;
+			let radius, x, y;
 			radius = Math.abs(yPoints[yPoints.length - 1].pos - yPoints[0].pos);
-			for (var n = 0; n < ptCount; n++) {
+			for (let n = 0; n < ptCount; n++) {
 				x = xCenter + radius * Math.sin(n * tempAngle);
 				y = yCenter - radius * Math.cos(n * tempAngle);
 
@@ -14768,7 +15856,9 @@ axisChart.prototype = {
 			let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepY / minorLinesCount;
 
-			let ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
+			let radarChart = this.cChartDrawer.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
+
 			let tempAngle = 2 * Math.PI / ptCount;
 			let x1, y1, x2, y2;
 			for (let nDataPt = 0; nDataPt < ptCount; nDataPt++) {
@@ -14855,31 +15945,33 @@ axisChart.prototype = {
 	},
 
 	_calculateSerTickMark: function () {
-		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-		var tickmarksProps = this._getTickmarksPropsSer();
-		var widthLine = tickmarksProps.widthLine;
+		let perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+		let tickmarksProps = this._getTickmarksPropsSer();
+		let widthLine = tickmarksProps.widthLine;
 
+		let seriesCount = this.axis.labels.count;
+		
 		if (widthLine !== 0) {
-			var positionX = this.cChartDrawer.processor3D.calculateXPositionSerAxis();
-			var stepY = perspectiveDepth / this.chartProp.seriesCount;
-			var startX;
+			let positionX = this.cChartDrawer.processor3D.calculateXPositionSerAxis();
+			let stepY = perspectiveDepth / seriesCount;
+			let startX;
 			if (positionX) {
 				startX = this.chartProp.chartGutter._left;
 			} else {
 				startX = this.chartProp.widthCanvas - this.chartProp.chartGutter._right;
 			}
 
-			var startY = this.axis.posY * this.chartProp.pxToMM;
+			let startY = this.axis.posY * this.chartProp.pxToMM;
 
-			for (var i = 0; i <= this.chartProp.seriesCount; i++) {
+			for (let i = 0; i <= seriesCount; i++) {
 				//основные линии
 				if (!this.paths.tickMarks) {
 					this.paths.tickMarks = [];
 				}
 
-				var convertResult = this.cChartDrawer._convertAndTurnPoint(startX, startY, i * stepY);
-				var x = convertResult.x / this.chartProp.pxToMM;
-				var y = convertResult.y / this.chartProp.pxToMM;
+				let convertResult = this.cChartDrawer._convertAndTurnPoint(startX, startY, i * stepY);
+				let x = convertResult.x / this.chartProp.pxToMM;
+				let y = convertResult.y / this.chartProp.pxToMM;
 
 				this.paths.tickMarks[i] = this._calculateLine(x, y, x + widthLine / this.chartProp.pxToMM, y);
 			}
