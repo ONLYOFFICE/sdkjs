@@ -721,31 +721,30 @@
 
 	function CLabel(oParentControl, sString, nFontSize, bBold, nParaAlign) {
 		CControl.call(this, oParentControl);
+		this.string = sString;
+		this.fontSize = nFontSize;
+		this.bold = bBold;
+		this.paraAlign = nParaAlign;
+
 		AscFormat.ExecuteNoHistory(function () {
-			this.string = sString;
-			this.fontSize = nFontSize;
-			this.createTextBody();
+			const oRGB = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneText);
+			const oColor = new AscCommonWord.CDocumentColor(oRGB.R, oRGB.G, oRGB.B, false);
+
 			var oTxLstStyle = new AscFormat.TextListStyle();
 			oTxLstStyle.levels[0] = new CParaPr();
 			oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-			oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
-			oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
-
-			let oColor = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
-			let sTextColor = GlobalSkin.AnimPaneText;
-			if (sTextColor) {
-				let oRGB = AscCommon.RgbaHexToRGBA(sTextColor);
-				oColor = new AscCommonWord.CDocumentColor(oRGB.R, oRGB.G, oRGB.B, false);
-			}
+			oTxLstStyle.levels[0].DefaultRunPr.FontSize = this.fontSize;
+			oTxLstStyle.levels[0].DefaultRunPr.Bold = this.bold;
 			oTxLstStyle.levels[0].DefaultRunPr.Color = oColor;
 			oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
-			if (AscFormat.isRealNumber(nParaAlign)) {
-				oTxLstStyle.levels[0].Jc = nParaAlign;
-			}
+			if (AscFormat.isRealNumber(this.paraAlign)) oTxLstStyle.levels[0].Jc = this.paraAlign;
+
+			this.createTextBody();
 			this.txBody.setLstStyle(oTxLstStyle);
+
 			this.bodyPr = new AscFormat.CBodyPr();
 			this.bodyPr.setDefault();
-			this.bodyPr.anchor = 1;//vertical align ctr
+			this.bodyPr.anchor = 1; //vertical align ctr
 			this.bodyPr.resetInsets();
 			this.bodyPr.horzOverflow = AscFormat.nHOTClip;
 			this.bodyPr.vertOverflow = AscFormat.nVOTClip;
@@ -758,12 +757,17 @@
 		return AscCommon.translateManager.getValue(this.string);
 	};
 	CLabel.prototype.recalculateContent = function () {
-		//this.recalculateGeometry();
-		this.recalculateTransform();
-		//        this.txBody.content.Recalc_AllParagraphs_CompiledPr();
+		const oRGB = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneText);
+		const oColor = new AscCommonWord.CDocumentColor(oRGB.R, oRGB.G, oRGB.B, false);
+		this.txBody.lstStyle.levels[0].DefaultRunPr.Color = oColor;
+
 		if (!this.txBody.bFit || !AscFormat.isRealNumber(this.txBody.fitWidth) || this.txBody.fitWidth > this.getWidth()) {
 			this.txBody.recalculateOneString(this.getString());
 		}
+
+		// this.recalculateGeometry();
+		this.recalculateTransform();
+		this.txBody.content.Recalc_AllParagraphs_CompiledPr();
 	};
 	CLabel.prototype.canHandleEvents = function () {
 		return false;
