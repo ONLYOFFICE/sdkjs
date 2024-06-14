@@ -11552,7 +11552,7 @@ function(window, undefined) {
 
 		// if rotation is not set
 		this.calculateRotation(oLabelsBox, fAxisLength);
-	}
+	};
 
 	CLabelsParameters.prototype.saveParams = function (oLabelsBox) {
 		if (!oLabelsBox || !oLabelsBox.axis || !oLabelsBox.axis.txPr || !oLabelsBox.axis.txPr.bodyPr) {
@@ -11572,14 +11572,14 @@ function(window, undefined) {
 	CLabelsParameters.prototype.calculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
 		//default nLblTickSkip should be 1!
 		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || !oLabelsBox.aLabels.length || !fAxisLength) {
-			this.nLblTickSkip = 1
+			this.nLblTickSkip = 1;
 			return;
 		}
 
 		if (!this.isUserDefinedTickSkip) {
 			this.nLblTickSkip = this.manuallyCalculateNLblTickSkip(oLabelsBox, fAxisLength, oLabelsBox.aLabels.length);
 		} 
-	}
+	};
 
 	CLabelsParameters.prototype.getHeight = function (aLabels) {
 		for (let i = 0; i < aLabels.length; i++) {
@@ -11599,7 +11599,7 @@ function(window, undefined) {
 			}
 		}
 		return 0;
-	}
+	};
 
 	CLabelsParameters.prototype.manuallyCalculateNLblTickSkip = function (oLabelsBox, fAxisLength, nLabelsCount) {
 		const cellHeight = this.getHeight(oLabelsBox.aLabels);
@@ -11636,7 +11636,7 @@ function(window, undefined) {
 
 		// default is always 1
 		return 1;
-	}
+	};
 
 	CLabelsParameters.prototype.calculateRotation = function (oLabelsBox, fAxisLength) {
 
@@ -11672,7 +11672,7 @@ function(window, undefined) {
 
 		// vertical angle is 90 degree
 		this.rot = this.isUserDefinedTickSkip && oLabelsBox.maxMinWidth < cellHeight? 0 : -90 * this.degree;
-	}
+	};
 
 	CLabelsParameters.prototype.isRotated = function () {
 		//case when rot parameter is unset
@@ -11685,7 +11685,7 @@ function(window, undefined) {
 		}
 
 		return true;
-	} 
+	};
 
 
 	function CChartStyleCache() {
