@@ -584,7 +584,7 @@ function (window, undefined) {
 				if (this.checkCircularReference(cellIndex, true)) {
 					return;
 				}
-				if (this.checkPassedDependents(+cellIndex)) {
+				if (this.checkPassedDependents(cellIndex)) {
 					return;
 				}
 				// if dependents by cellIndex aldready exist, check current tree
@@ -621,7 +621,7 @@ function (window, undefined) {
 						}
 
 						// if the child cell does not yet have a dependency with listeners, create it
-						if (!this._getDependents(cellIndex, elemCellIndex)) {
+						if (!this._getDependents(cellIndex, elemCellIndex) && cellIndex !== elemCellIndex) {
 							this._setDependents(cellIndex, elemCellIndex);
 							this._setPrecedents(elemCellIndex, cellIndex, true);
 							isUpdated = true;
@@ -630,10 +630,10 @@ function (window, undefined) {
 				}
 
 				if (!isUpdated) {
-					this.setPassedDependents(+cellIndex);
+					this.setPassedDependents(cellIndex);
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
-							this._calculateDependents(i, curListener, true);
+							this._calculateDependents(+i, curListener, true);
 						}
 					}
 					if (!isSecondCall) {
