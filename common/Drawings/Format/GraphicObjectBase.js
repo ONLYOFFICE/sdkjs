@@ -1051,10 +1051,23 @@
 		}
 	};
 	CGraphicObjectBase.prototype.getOuterShdw = function () {
-		if (this.spPr && this.spPr.effectProps && this.spPr.effectProps.EffectLst && this.spPr.effectProps.EffectLst.outerShdw) {
-			return this.spPr.effectProps.EffectLst.outerShdw;
+		let outerShdw = null;
+		if (this.spPr) {
+			outerShdw = this.spPr.getOuterShdw();
 		}
-		return null;
+		if(!outerShdw) {
+			if(this.getHierarchy) {
+				let aHierarchy = this.getHierarchy();
+				for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
+					let oDrawing = aHierarchy[nIdx];
+					outerShdw = oDrawing.getOuterShdw();
+					if(outerShdw) {
+						break;
+					}
+				}
+			}
+		}
+		return outerShdw;
 	};
 	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
 		const oShdw = this.getOuterShdw();
