@@ -4830,9 +4830,7 @@ function CEditorPage(api)
 
 		GlobalSkin.SupportNotes = bEnabled;
 		this.IsSupportNotes = bEnabled;
-		this.Splitter2Pos = 0;
-
-		this.OnResizeSplitter();
+		this.ShowNotes(bEnabled);
 	};
 
 	this.setAnimPaneEnable = function(bEnabled)
@@ -5042,12 +5040,12 @@ function CEditorPage(api)
 		{
 			case Asc.c_oAscPresentationViewMode.normal:
 			{
-				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				this.GoToPage(0);
-				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				this.setNotesEnable(true);
 				this.setAnimPaneEnable(true);
 				this.m_oApi.hideMediaControl();
+				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
+				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}
 			case Asc.c_oAscPresentationViewMode.masterSlide:
