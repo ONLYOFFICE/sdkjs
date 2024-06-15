@@ -17123,6 +17123,10 @@ function RangeDataManagerElem(bbox, data)
 			console.log("REGISTRAION_ERROR_CONFLICTED_FUNCTION_NAME");
 		}
 
+		if (this.funcsMapInfo[funcName]) {
+			this.remove(funcName);
+		}
+
 		let params = options && options.params;
 		let argsInfo = this._getParamsInfo(func, params);
 
@@ -17238,6 +17242,8 @@ function RangeDataManagerElem(bbox, data)
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
 			}
+			this.removeInfo(sName);
+
 			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
 			return true;
 		}
@@ -17257,6 +17263,8 @@ function RangeDataManagerElem(bbox, data)
 			if (this.wb && this.wb.Api) {
 				this.wb.Api.formulasList = AscCommonExcel.getFormulasInfo();
 			}
+			this.clearInfo();
+
 			this.wb.handlers && this.wb.handlers.trigger("asc_onRemoveCustomFunction");
 
 			return true;
@@ -17320,6 +17328,16 @@ function RangeDataManagerElem(bbox, data)
 		if (this.funcsMapInfo[funcName]) {
 			//reload translations
 			this.pushTranslations(funcName, translations);
+			//reload description
+			this.funcsMapInfo[funcName].description = description;
+
+			//reload args info
+			this.funcsMapInfo[funcName].args = [];
+			if (args) {
+				for (let i = 0; i < args.length; i++) {
+					this.funcsMapInfo[funcName].args.push(new CCustomFunctionArgInfo(args[i].name, args[i].isOptional));
+				}
+			}
 
 			let customFunctionList = AscCommonExcel.cFormulaFunctionGroup["Custom"];
 			for (let i in customFunctionList) {
@@ -17702,6 +17720,38 @@ function RangeDataManagerElem(bbox, data)
 		return false;
 	};
 
+	CCustomFunctionEngine.prototype.removeInfo = function (sName) {
+		if (this.funcsMapInfo[sName]) {
+			delete this.funcsMapInfo[sName];
+		}
+		this.removeLocalizationInfo(sName);
+	};
+
+	CCustomFunctionEngine.prototype.removeLocalizationInfo = function (sName) {
+		for (let i in this.localiztionMap) {
+			if (this.localiztionMap.hasOwnProperty(i)) {
+				if (this.localiztionMap[i].fullNameToLocalName && this.localiztionMap[i].fullNameToLocalName[sName]) {
+					delete this.localiztionMap[i].fullNameToLocalName[sName];
+				}
+
+				if (this.localiztionMap[i].localNameToFullName) {
+					for (let j in this.localiztionMap[i].localNameToFullName) {
+						if (this.localiztionMap[i].localNameToFullName.hasOwnProperty(j)) {
+							if (this.localiztionMap[i].localNameToFullName[j] === sName) {
+								delete this.localiztionMap[i].localNameToFullName[j];
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+
+	CCustomFunctionEngine.prototype.clearInfo = function () {
+		this.funcsMapInfo = {};
+		this.localiztionMap = {};
+	};
 
 	function CCustomFunctionInfo(name) {
 		this.name = name;
