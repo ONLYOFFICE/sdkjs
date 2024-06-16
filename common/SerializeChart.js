@@ -5844,10 +5844,8 @@ BinaryChartReader.prototype.ExternalReadCT_ChartSpace = function (length, val, c
         if(this.curWorksheet.getDrawingDocument) {
             this.drawingDocument = this.curWorksheet.getDrawingDocument();
         }
-        else {
-            if(this.curWorksheet.DrawingDocument) {
-                this.drawingDocument = this.curWorksheet.DrawingDocument;
-            }
+        if (!this.drawingDocument && this.curWorksheet.DrawingDocument) {
+            this.drawingDocument = this.curWorksheet.DrawingDocument;
         }
     }
 

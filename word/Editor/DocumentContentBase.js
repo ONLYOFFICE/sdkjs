@@ -73,7 +73,8 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 };
 CDocumentContentBase.prototype.getDrawingDocument = function()
 {
-	return this.GetApi().getDrawingDocument();
+	let api = this.GetApi();
+	return api && api.getDrawingDocument();
 };
 /**
  * Получаем тип активной части документа.
