@@ -910,6 +910,9 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.drawViewPrMarks = function(oGraphics) {
         return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
     };
+    SlideLayout.prototype.checkPlaceholders = function(oPlaceholders) {
+        return AscCommonSlide.Slide.prototype.checkPlaceholders.call(this, oPlaceholders);
+    };
 
     let LAYOUT_TYPE_MAP = {};
     LAYOUT_TYPE_MAP["blank"] = AscFormat.nSldLtTBlank;

@@ -1094,6 +1094,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 			oSp.handleUpdateTheme();
 		});
     };
+    Slide.prototype.checkPlaceholders = function(aPlaceholders)
+    {
+        let bResult = false;
+		this.cSld.forEachSp(function(oSp) {
+			let bSpResult = oSp.checkPlaceholders(aPlaceholders);
+            if(bSpResult) {
+                bResult = true;
+            }
+		});
+        return bResult;
+    };
 
     Slide.prototype.checkSlideColorScheme = function()
     {

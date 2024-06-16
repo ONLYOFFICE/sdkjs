@@ -1060,9 +1060,11 @@
 				let aHierarchy = this.getHierarchy();
 				for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
 					let oDrawing = aHierarchy[nIdx];
-					outerShdw = oDrawing.getOuterShdw();
-					if(outerShdw) {
-						break;
+					if(oDrawing) {
+						outerShdw = oDrawing.getOuterShdw();
+						if(outerShdw) {
+							break;
+						}
 					}
 				}
 			}
@@ -1212,6 +1214,11 @@
 			return isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph);
 		}
 		return false;
+	};
+	CGraphicObjectBase.prototype.getHierarchy = function () {
+		return [];
+	};
+	CGraphicObjectBase.prototype.recalculate = function () {
 	};
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
@@ -3684,6 +3691,18 @@
 		}
 		this.ResetParametersWithResize(true);
 		this.checkDrawingBaseCoords();
+	};
+	CGraphicObjectBase.prototype.checkPlaceholders = function(oPlaceholders) {
+		let aHierarchy = this.getHierarchy();
+		for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
+			let oDrawing = aHierarchy[nIdx];
+			if(oDrawing && oPlaceholders[oDrawing.Id]) {
+				this.setRecalculateInfo();
+				this.recalculate();
+				return true;
+			}
+		}
+		return false;
 	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
