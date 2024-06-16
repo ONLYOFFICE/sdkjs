@@ -818,6 +818,7 @@ MasterSlide.prototype.IsUseInDocument = function() {
     return false;
 };
 MasterSlide.prototype.drawViewPrMarks = function(oGraphics) {
+    if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
     return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
 };
 function CMasterThumbnailDrawer()

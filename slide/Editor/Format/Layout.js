@@ -908,6 +908,7 @@ SlideLayout.prototype.getMaster = function(){
         return false;
     };
     SlideLayout.prototype.drawViewPrMarks = function(oGraphics) {
+        if(oGraphics.isSupportTextDraw && !oGraphics.isSupportTextDraw()) return;
         return AscCommonSlide.Slide.prototype.drawViewPrMarks.call(this, oGraphics);
     };
     SlideLayout.prototype.checkPlaceholders = function(oPlaceholders) {
