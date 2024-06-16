@@ -1183,7 +1183,7 @@ function CLayoutThumbnailDrawer()
                 {
                     _master.recalculate();
                 }
-                _master.draw(g);
+                _master.drawNoPlaceholdersShapesOnly(g);
             }
         }
 

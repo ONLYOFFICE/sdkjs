@@ -8898,14 +8898,12 @@ CPresentation.prototype.RemoveBeforePaste = function () {
 };
 
 CPresentation.prototype.addNextSlide = function (layoutIndex) {
+	if(this.IsMasterMode()) {
+		return;
+	}
 	this.Api.inkDrawer.startSilentMode();
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_AddNextSlide);
-	if(this.IsMasterMode()) {
-		this.inse
-	}
-	else {
-		this.addNextSlideAction(layoutIndex);
-	}
+	this.addNextSlideAction(layoutIndex);
 	this.Recalculate();
 	this.DrawingDocument.m_oWordControl.GoToPage(this.CurPage + 1);
 	this.Api.inkDrawer.endSilentMode();
