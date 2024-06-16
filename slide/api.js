@@ -6539,7 +6539,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_DeleteMaster    = function()
 	{
-		this.DeleteSlide();
+		this.WordControl.m_oLogicDocument.deleteMaster();
 	};
 	asc_docs_api.prototype.asc_DeleteLayout    = function()
 	{

@@ -9141,13 +9141,44 @@ CPresentation.prototype.shiftSlides = function (pos, array, bCopy) {
 
 	return _newSelectedPage;
 };
-
+CPresentation.prototype.deleteMaster = function() {
+	if(!this.IsMasterMode()) {
+		return;
+	}
+	let oMaster = this.GetCurrentMaster();
+	if(!oMaster) return;
+	let nMasterIdx = -1;
+	for(let nMaster = 0; nMaster < this.slideMasters.length; ++nMaster) {
+		if(this.slideMasters[nMaster] === oMaster) {
+			nMasterIdx = nMaster;
+			break;
+		}
+	}
+	History.Create_NewPoint(AscDFH.historydescription_Presentation_DeleteSlides);
+	let nIdx = this.GetSlideIndex(oMaster);
+	this.removeSlide(nIdx);
+	let nNewIdx = this.GetSlideIndex(oMaster);
+	if(nNewIdx === -1) {
+		let nCurIdx = 0;
+		if(nMasterIdx > 0) {
+			nCurIdx = nMasterIdx - 1;
+		}
+		let nPageIdx = this.GetSlideIndex(this.slideMasters[nCurIdx]);
+		this.DrawingDocument.m_oWordControl.GoToPage(nPageIdx, undefined, undefined, true);
+		this.Api.sync_HideComment();
+		this.Document_UpdateUndoRedoState();
+		this.Recalculate();
+	}
+};
 CPresentation.prototype.deleteSlides = function (array) {
 	if (array.length > 0 && (this.Document_Is_SelectionLocked(AscCommon.changestype_RemoveSlide, array) === false)) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_DeleteSlides);
-		var oldLen = this.GetSlidesCount();
+		let oldLen = this.GetSlidesCount();
+		let nMinMasterIdx = -1;
 		array.sort(AscCommon.fSortAscending);
 		for (var i = array.length - 1; i > -1; --i) {
+			let nIdx = array[i];
+			let oSlide = this.GetSlide(nIdx);
 			this.removeSlide(array[i]);
 		}
 		if(!this.IsMasterMode()) {
@@ -9155,9 +9186,14 @@ CPresentation.prototype.deleteSlides = function (array) {
 				this.Slides[i].changeNum(i);
 			}
 		}
+		else {
+
+		}
 		this.DrawingDocument.UpdateThumbnailsAttack();
 		if (array[array.length - 1] != oldLen - 1) {
-			this.DrawingDocument.m_oWordControl.GoToPage(array[array.length - 1] + 1 - array.length, undefined, undefined, true);
+			let nIdx = array[array.length - 1] + 1 - array.length;
+			nIdx = Math.min(this.GetSlidesCount() - 1, nIdx);
+			this.DrawingDocument.m_oWordControl.GoToPage(nIdx, undefined, undefined, true);
 		} else {
 			this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlidesCount() - 1, undefined, undefined, true);
 		}
