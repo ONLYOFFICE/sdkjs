@@ -4908,7 +4908,9 @@
 	baseEditorsApi.prototype.getInkCursorType = function() {
 		return this.inkDrawer.getCursorType();
 	};
-	
+	baseEditorsApi.prototype.isMasterMode = function(){
+		return false;
+	};
 	baseEditorsApi.prototype.getSelectionState = function() {
 	};
 	baseEditorsApi.prototype.getSpeechDescription = function(prevState, action) {
