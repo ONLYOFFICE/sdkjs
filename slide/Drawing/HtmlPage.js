@@ -1331,6 +1331,15 @@ function CEditorPage(api)
 			this.m_oNotes_scroll.HtmlElement.style.display = "block";
 		}
 
+		if(this.IsAnimPaneShown())
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "block";
+		}
+		else
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
+
 		if (true !== isNoNeedResize)
 			this.OnResize2(true);
 	};

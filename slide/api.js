@@ -7861,6 +7861,7 @@ background-repeat: no-repeat;\
 			_button2.innerHTML = this.reporterTranslates[2];
 			this.WordControl.OnResizeReporter();
 		}
+		this.WordControl.UpdateBottomControlsParams();
 	};
 
 	asc_docs_api.prototype.sendToReporter = function(value)
