@@ -2831,6 +2831,7 @@
 				break;
 			}
 			case AscFormat.phType_dgm: {
+				aButtons.push(AscCommon.PlaceholderButtonType.SmartArt);
 				break;
 			}
 			case AscFormat.phType_dt: {

@@ -3145,6 +3145,7 @@
 					|| phldrType == AscFormat.phType_ftr
 					|| phldrType == AscFormat.phType_hdr
 					|| phldrType == AscFormat.phType_sldNum
+					|| phldrType == AscFormat.phType_dgm
 					|| phldrType == AscFormat.phType_sldImg) {
 					if (this.txBody) {
 						if (this.txBody.content) {
