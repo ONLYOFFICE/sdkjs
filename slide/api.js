@@ -5469,6 +5469,11 @@ background-repeat: no-repeat;\
 
 		if (isFromInput !== true && AscCommon.g_inputContext)
 			AscCommon.g_inputContext.setInterfaceEnableKeyEvents(value);
+
+		if(!value)
+		{
+			this.asc_hideMediaControl();
+		}
 	};
 
 
@@ -8280,7 +8285,6 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.sync_ContextMenuCallback = function(Data)
 	{
-		this.asc_hideMediaControl();
 		this.sendEvent("asc_onContextMenu", Data);
 	};
 
