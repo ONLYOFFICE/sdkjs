@@ -2887,10 +2887,7 @@
 			}
 		}
 		var nPageNum;
-		if (this.parent && this.parent.getObjectType
-			&& (this.parent.getObjectType() === AscDFH.historyitem_type_Slide
-				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout
-				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster )) {
+		if (AscFormat.isSlideLikeObject(this.parent)) {
 			nPageNum = this.getParentNum();
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
