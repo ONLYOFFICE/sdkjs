@@ -1420,7 +1420,7 @@
 		return this.cacheLabel(nTime, scale);
 	};
 	CTimeline.prototype.cacheLabel = function (nTime, scale) {
-		var oLabel = new CLabel(this, this.getTimeString(nTime), TIMELINE_LABEL_FONTSIZE);
+		var oLabel = new CLabel(this, this.getTimeString(nTime), TIMELINE_LABEL_FONTSIZE, false, AscCommon.align_Center);
 		var oContent = oLabel.txBody.content;
 		oLabel.setLayout(0, 0, TIMELINE_LABEL_WIDTH, this.getHeight());
 		if (this.cachedParaPr) {
