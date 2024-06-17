@@ -10597,6 +10597,7 @@ CPresentation.prototype.SetLayoutTitle = function (bVal) {
 	}
 	if(!bVal) {
 		if(oSp) {
+			oCurSlide.graphicObjects.deselectObject(oSp);
 			oCurSlide.removeFromSpTreeById(oSp.Get_Id());
 		}
 	}
