@@ -292,6 +292,14 @@
 	function ApiColor(color) {
 		this.color = color;
 	}
+	/**
+	 * Returns the color number.
+	 * @memberof ApiColor
+	 * @returns {number | null}
+	 */
+	ApiColor.prototype.GetRGB = function () {
+		return this.color ? this.color.getRgb() : null;
+	};
 
 	/**
 	 * Class representing a name.
@@ -13184,12 +13192,13 @@
 	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
-	ApiOleObject.prototype["SetData"]              = ApiOleObject.prototype.SetData;
-	ApiOleObject.prototype["GetData"]              = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                 = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
-	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetClassType"]                =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetRGB"]                      =  ApiColor.prototype.GetRGB;
 
 
 	ApiName.prototype["GetName"]                 =  ApiName.prototype.GetName;
