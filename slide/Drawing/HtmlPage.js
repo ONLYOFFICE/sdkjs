@@ -5012,7 +5012,7 @@ function CEditorPage(api)
 				let _b = _y + _h;
 
 				nX = (oMediaFrameRect.l + oMediaFrameRect.r) / 2.0 - nWidth / 2 + 0.5 >> 0;
-				nY = oMediaFrameRect.b - MEDIA_CONTROL_TOP_MARGIN + 0.5 >> 0;
+				nY = oMediaFrameRect.b - MEDIA_CONTROL_TOP_MARGIN - MEDIA_CONTROL_HEIGHT + 0.5 >> 0;
 
 				if(nX < _x)
 					nX = _x;
@@ -5083,7 +5083,7 @@ function CEditorPage(api)
 	};
 }
 
-const MEDIA_CONTROL_HEIGHT = 70;
+const MEDIA_CONTROL_HEIGHT = 40;
 const MIN_MEDIA_CONTROL_WIDTH = 560;
 const MIN_MEDIA_CONTROL_CONTROL_INSET = 20;
 const MEDIA_CONTROL_TOP_MARGIN = 10;
