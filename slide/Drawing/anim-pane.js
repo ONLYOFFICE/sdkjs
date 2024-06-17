@@ -757,6 +757,7 @@
 		return AscCommon.translateManager.getValue(this.string);
 	};
 	CLabel.prototype.recalculateContent = function () {
+		this.txBody.content.Recalc_AllParagraphs_CompiledPr();
 		const oRGB = AscCommon.RgbaHexToRGBA(AscCommon.GlobalSkin.AnimPaneText);
 		const oColor = new AscCommonWord.CDocumentColor(oRGB.R, oRGB.G, oRGB.B, false);
 		this.txBody.lstStyle.levels[0].DefaultRunPr.Color = oColor;
@@ -767,7 +768,6 @@
 
 		// this.recalculateGeometry();
 		this.recalculateTransform();
-		this.txBody.content.Recalc_AllParagraphs_CompiledPr();
 	};
 	CLabel.prototype.canHandleEvents = function () {
 		return false;
@@ -1027,6 +1027,9 @@
 	};
 	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
 		let gap;
+		this.moveUpButton.icon.src =AscCommon.GlobalSkin.type == 'light' ? arrowUpIcon_dark : arrowUpIcon_light;
+		this.moveDownButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? arrowDownIcon_dark : arrowDownIcon_light;
+		this.closeButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? closeIcon_dark : closeIcon_light;
 
 		this.label.setLayout(COMMON_LEFT_MARGIN, 0, HEADER_LABEL_WIDTH, this.getHeight());
 
@@ -1152,6 +1155,8 @@
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
 
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
+		this.zoomOutButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? zoomOutIcon_dark : zoomOutIcon_light;
+		this.zoomInButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? zoomInIcon_dark : zoomInIcon_light;
 		this.zoomInButton.setLayout(
 			TIMELINE_SCROLL_ABSOLUTE_LEFT - TIMELINE_HEIGHT + (TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
 			(TIMELINE_HEIGHT - ZOOM_BUTTON_SIZE) / 2,
@@ -1272,15 +1277,15 @@
 		this.cachedParaPr = null
 
 		this.onMouseDownCallback = function stickToPointer(event, x, y) {
-			if (!this.hitInScroller(x, y)) { return }
-			this.isStickedToPointer = true
+			if (!this.hitInScroller(x, y)) { return; }
+			this.isStickedToPointer = true;
 			this.onUpdate()
 		}
 
 		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
 			this.isStickedToPointer = false;
-			if (this.isOnScroll()) { this.endScroll() }
-			this.onUpdate()
+			if (this.isOnScroll()) { this.endScroll(); }
+			this.onUpdate();
 		}
 
 		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
@@ -1288,10 +1293,10 @@
 			const tmpIsScrollerHovered = this.hitInScroller(x, y);
 			if (this.isScrollerHovered !== tmpIsScrollerHovered) {
 				this.isScrollerHovered = tmpIsScrollerHovered;
-				this.onUpdate()
+				this.onUpdate();
 			}
 
-			if (!this.isStickedToPointer) { return }
+			if (!this.isStickedToPointer) { return; }
 
 			let oInv = this.getInvFullTransformMatrix();
 			let tx = oInv.TransformPointX(x, y);
@@ -1300,7 +1305,7 @@
 
 			// Check if the boundaried are reached and start scrolling if so
 			let leftBorder = this.getRulerStart();
-			let rightBorder = this.getRulerEnd()
+			let rightBorder = this.getRulerEnd();
 			if (tx <= leftBorder || tx >= rightBorder) {
 				if (!this.isOnScroll()) {
 					let scrollStep = this.getWidth() * SCROLL_STEP / 10;
@@ -1310,7 +1315,7 @@
 					this.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
 				}
 			}
-			else this.endScroll()
+			else this.endScroll();
 
 			// Updating scrollOffset
 			this.setScrollOffset(newScrollOffset)
@@ -1484,6 +1489,16 @@
 		var dHeight = this.getHeight() / 3;
 		var nPenW = this.getPenWidth(graphics);
 		graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
+	};
+	CTimeline.prototype.handleUpdateExtents = function () {
+		this.labels = {};
+		this.usedLabels = {};
+		this.cachedParaPr = null;
+		if(this.startButton && this.endButton) {
+			this.startButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? arrowLeftIcon_dark : arrowLeftIcon_light;
+			this.endButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? arrowRightIcon_dark : arrowRightIcon_light;
+		}
+		CControlContainer.prototype.handleUpdateExtents.call(this);
 	};
 	CTimeline.prototype.draw = function (graphics) {
 		if (this.isHidden()) { return false }

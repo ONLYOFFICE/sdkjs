@@ -7139,10 +7139,9 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{};
 	oThis.Init = function ()
 	{
-		//var oHtmlElem = oThis.GetHtmlElement();
-		//oHtmlElem.onmousedown = oThis.onMouseDown;
-		//oHtmlElem.onmousemove = oThis.onMouseMove;
-		//oHtmlElem.onmouseup =  oThis.onMouseUp;
+
+		var oHtmlElem = oThis.GetHtmlElement();
+		AscCommon.addMouseEvent(oHtmlElem, "up", oThis.onMouseUp);
 		oThis.CheckSubscribeMouseWheel();
 	};
 	oThis.GetCurrentSlideNumber = function ()
@@ -7579,9 +7578,10 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.timeline.Init();
 
 		var oHtmlElem = oThis.GetHtmlElement();
-		oHtmlElem.onmousedown = oThis.onMouseDown;
-		oHtmlElem.onmousemove = oThis.onMouseMove;
-		oHtmlElem.onmouseup = oThis.onMouseUp;
+
+		AscCommon.addMouseEvent(oHtmlElem, "down", oThis.onMouseDown);
+		AscCommon.addMouseEvent(oHtmlElem, "move", oThis.onMouseMove);
+		AscCommon.addMouseEvent(oHtmlElem, "up", oThis.onMouseUp);
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
 			// Here we need to check if all animEffects havent been changed
@@ -7719,9 +7719,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.onMouseUp = function (e)
 	{
-		oThis.header.onMouseUp(e);
-		oThis.list.onMouseUp(e);
-		oThis.timeline.onMouseUp(e);
 	};
 	oThis.onMouseWhell = function(e)
 	{
@@ -7770,9 +7767,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 		Asc.editor.sync_MouseMoveCallback(Data);
 		Asc.editor.sync_MouseMoveEndCallback();
 	};
-	oThis.RedrawAnimPane = function() {
-		console.log('Redraw Animation Pane');
-	}
 }
 
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
