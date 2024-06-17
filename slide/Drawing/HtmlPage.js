@@ -4819,7 +4819,9 @@ function CEditorPage(api)
 			this.Splitter2Pos = 0;
 			this.OnResizeSplitter();
 			this.OldSplitter2Pos = old;
-			this.m_oLogicDocument.CheckNotesShow();
+			if(this.m_oLogicDocument) {
+				this.m_oLogicDocument.CheckNotesShow();
+			}
 		}
 	};
 
