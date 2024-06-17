@@ -6790,6 +6790,7 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 		if (!oTargetDocContent) {
 			if (oTextPr && oParaPr) {
 				this.Api.UpdateParagraphProp(oParaPr);
+				this.Api.UpdateTextPr(oTextPr);
 			}
 
 		}
