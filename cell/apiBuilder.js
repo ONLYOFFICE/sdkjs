@@ -295,10 +295,13 @@
 	/**
 	 * Returns the color number.
 	 * @memberof ApiColor
-	 * @returns {number | null}
+	 * @returns {number}
 	 */
 	ApiColor.prototype.GetRGB = function () {
-		return this.color ? this.color.getRgb() : null;
+		if (!this.color) {
+			return 0;
+		}
+		return this.color.getRgb();
 	};
 
 	/**
