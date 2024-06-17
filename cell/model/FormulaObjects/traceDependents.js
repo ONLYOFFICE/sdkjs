@@ -959,6 +959,8 @@ function (window, undefined) {
 						isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
 						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 						isTable = elemType === cElementType.table, areaName;
+					let bPinCell = false;
+					let sValue = null;
 
 					if (elemType === cElementType.cell || is3D || isArea || isDefName || isTable) {
 						let cellRange = new asc_Range(col, row, col, row), elemRange, elemCellIndex;
@@ -978,6 +980,8 @@ function (window, undefined) {
 							} else if (elemRange.isOneCell()) {
 								isArea = false;
 							}
+							sValue = elemValue.value;
+							bPinCell = sValue.includes("$");
 						} else if (isTable) {
 							let currentWsId = elem.ws.Id,
 								elemWsId = elem.area.ws ? elem.area.ws.Id : elem.area.wsFrom.Id;
@@ -986,6 +990,8 @@ function (window, undefined) {
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 							isArea = ref ? true : !elemRange.isOneCell();
 						} else {
+							sValue = elem.value;
+							bPinCell = sValue.includes("$");
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
 
@@ -1012,6 +1018,20 @@ function (window, undefined) {
 											elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
 										}
 									}
+								}
+							} else if (bPinCell) {
+								const FIRST_INDEX_VALUE = 0;
+								let nIndex = sValue.indexOf("$");
+								if (nIndex === FIRST_INDEX_VALUE) {
+									sValue = sValue.slice(nIndex + 1);
+									let bStaticCell = sValue.includes("$");
+									if (bStaticCell) {
+										elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
+									} else {
+										elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1);
+									}
+								} else {
+									elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1 + (col - base.nCol));
 								}
 							} else {
 								elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1 + (row - base.nRow), elemRange.c1 + (col - base.nCol));
