@@ -3053,6 +3053,10 @@
 			this.callMediaPlayerCommand("hideMediaControl", null);
 		}
 	};
+	baseEditorsApi.prototype.asc_hideMediaControl = function()
+	{
+		this.hideMediaControl();
+	};
 
 
 	baseEditorsApi.prototype.asc_onMediaPlayerEvent = function(evt, mediaData)
@@ -5112,6 +5116,7 @@
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
 	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
+	prot['asc_hideMediaControl'] = prot.asc_hideMediaControl;
 	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
 
 	// passwords

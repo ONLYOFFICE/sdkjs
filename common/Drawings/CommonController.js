@@ -2341,27 +2341,29 @@
 					}
 				},
 				checkShowMediaControlOnHover: function (oDrawing) {
-					let oCurMediaSp = null;
-					let oCurMediaData = Asc.editor.mediaData;
-					if(oCurMediaData) {
-						oCurMediaSp = oCurMediaData.getDrawing();
-					}
-					let oDrawingMediaData;
+					if(Asc.editor.isSlideShow && Asc.editor.isSlideShow()) {
+						let oCurMediaSp = null;
+						let oCurMediaData = Asc.editor.mediaData;
+						if(oCurMediaData) {
+							oCurMediaSp = oCurMediaData.getDrawing();
+						}
+						let oDrawingMediaData;
 
-					if(oDrawing) {
-						oDrawingMediaData = oDrawing.getMediaData();
-					}
+						if(oDrawing) {
+							oDrawingMediaData = oDrawing.getMediaData();
+						}
 
-					if(!oDrawingMediaData) {
-						if(oCurMediaSp) {
-							if(!oCurMediaSp.selected) {
-								Asc.editor.hideMediaControl();
+						if(!oDrawingMediaData) {
+							if(oCurMediaSp) {
+								if(!oCurMediaSp.selected) {
+									Asc.editor.hideMediaControl();
+								}
 							}
 						}
-					}
-					else {
-						if(!oCurMediaSp || !oCurMediaSp.selected) {
-							Asc.editor.callMediaPlayerCommand("showMediaControl", oDrawingMediaData);
+						else {
+							if(!oCurMediaSp || !oCurMediaSp.selected) {
+								Asc.editor.callMediaPlayerCommand("showMediaControl", oDrawingMediaData);
+							}
 						}
 					}
 				},
