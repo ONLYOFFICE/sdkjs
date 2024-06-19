@@ -323,6 +323,11 @@
         this.compiledStyles = [];
         this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
     };
+    CPdfShape.prototype.copy = function (oPr) {
+        let copy = new CPdfShape();
+        this.fillObject(copy, oPr);
+        return copy;
+    };
     window["AscPDF"].CPdfShape = CPdfShape;
 })();
 
