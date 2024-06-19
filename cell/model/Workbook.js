@@ -20467,69 +20467,208 @@
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
 	};
 
+	function SweepLineRowIterator() {
+		this.cellsByCol = null;
+		this.row = -1;
+		this.col = -1;
+		this.colData = null;
+
+		this.colDatas = [];
+		this.colDatasCol = [];
+		this.colDatasIndex = 0;
+
+		this.toInsert = [];
+		this.toInsertIndex = 0;
+		this.toDelete = [];
+		this.toDeleteIndex = 0;
+
+		this.r1 = [];
+		this.r1Index = 0;
+		this.r2 = [];
+		this.r2Index = 0;
+	}
+
+	SweepLineRowIterator.prototype.init = function (cellsByCol, r1, c1, c2) {
+		this.cellsByCol = cellsByCol;
+		this.row = r1 - 1;
+		this.col = -1;
+		this.colData = null;
+
+		this.colDatas = [];
+		this.colDatasCol = [];
+		this.colDatasIndex = 0;
+
+		this.toInsert = [];
+		this.toInsertIndex = 0;
+		this.toDelete = [];
+		this.toDeleteIndex = 0;
+		this.r1 = [];
+		this.r1Index = 0;
+		this.r2 = [];
+		this.r2Index = 0;
+
+		c2 = Math.min(c2, this.cellsByCol.length - 1);
+		for (let i = c1; i <= c2; i++) {
+			let colData = this.cellsByCol[i];
+			if (colData && r1 <= colData.getMaxIndex()) {
+				//minIndex is max of
+				let elem = {col: i, minIndex: Math.max(r1, colData.getMinIndex()), maxIndex: colData.getMaxIndex(), isInserted: false}
+				this.r1.push(elem);
+				this.r2.push(elem);
+			}
+		}
+		//Array.sort is stable in all browsers
+		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility
+		this.r1.sort(function (a, b) {
+			return a.minIndex - b.minIndex
+		});
+		this.r2.sort(function (a, b) {
+			return a.maxIndex - b.maxIndex
+		});
+	};
+	SweepLineRowIterator.prototype.setRow = function (row) {
+		while (this.row < row) {
+			//structure of r1 and r2 forces rows to be changed with fixed step
+			this.nextRow();
+			if (this.row < row) {
+				while (this.nextCol()) {
+				}
+			}
+		}
+	}
+	SweepLineRowIterator.prototype.nextRow = function () {
+		this.row++;
+		this.col = -1;
+		this.colData = null;
+		this.colDatasIndex = 0;
+		while (this.r1Index < this.r1.length && this.row >= this.r1[this.r1Index].minIndex) {
+			let elem = this.r1[this.r1Index];
+			if (this.row <= elem.maxIndex) {
+				elem.isInserted = true;
+				this.toInsert.push(elem.col);
+			}
+			this.r1Index++;
+		}
+		while (this.r2Index < this.r2.length && this.row > this.r2[this.r2Index].maxIndex) {
+			let elem = this.r2[this.r2Index];
+			if (elem.isInserted) {
+				this.toDelete.push(elem.col);
+			}
+			this.r2Index++;
+		}
+	}
+	SweepLineRowIterator.prototype.nextCol = function () {
+		this.col = -1;
+		this.colData = null;
+		if (this.colDatasIndex < this.colDatasCol.length) {
+			this.col = this.colDatasCol[this.colDatasIndex];
+			this.colData = this.colDatas[this.colDatasIndex];
+			this.colDatasIndex++;
+			//delete
+			let toDeleteOld = this.toDeleteIndex;
+			while (this.toDeleteIndex < this.toDelete.length && this.toDelete[this.toDeleteIndex] === this.col) {
+				this.toDeleteIndex++;
+				if (this.colDatasIndex < this.colDatasCol.length) {
+					this.col = this.colDatasCol[this.colDatasIndex];
+					this.colData = this.colDatas[this.colDatasIndex];
+					this.colDatasIndex++;
+				} else {
+					this.col = -1;
+					this.colData = undefined;
+				}
+			}
+			if (toDeleteOld !== this.toDeleteIndex) {
+				let deleteCount = this.toDeleteIndex - toDeleteOld;
+				this.colDatasIndex -= -1 === this.col ? deleteCount : deleteCount + 1;
+				this.colDatas.splice(this.colDatasIndex, deleteCount);
+				this.colDatasCol.splice(this.colDatasIndex, deleteCount);
+				if (this.colDatasIndex < this.colDatasCol.length) {
+					this.col = this.colDatasCol[this.colDatasIndex];
+					this.colData = this.colDatas[this.colDatasIndex];
+					this.colDatasIndex++;
+				} else {
+					this.col = -1;
+					this.colData = undefined;
+				}
+			}
+		}
+		//insert
+		let toInsertOld = this.toInsertIndex;
+		if (-1 !== this.col) {
+			while (this.toInsertIndex < this.toInsert.length && this.toInsert[this.toInsertIndex] < this.col) {
+				this.toInsertIndex++;
+			}
+		} else {
+			this.toInsertIndex = this.toInsert.length;
+		}
+		if (toInsertOld !== this.toInsertIndex) {
+			let cols = [];
+			let datas = [];
+			for (let i = toInsertOld; i < this.toInsertIndex; ++i) {
+				let curCol = this.toInsert[i];
+				let colData = this.cellsByCol[curCol];
+				if (colData && this.row <= colData.getMaxIndex()) {
+					cols.push(curCol);
+					datas.push(colData);
+				}
+			}
+			if (-1 !== this.col) {
+				this.colDatasIndex--;
+			}
+			this.colDatas.splice.apply(this.colDatas, [this.colDatasIndex, 0].concat(datas));
+			this.colDatasCol.splice.apply(this.colDatasCol, [this.colDatasIndex, 0].concat(cols));
+
+			if (this.colDatasIndex < this.colDatasCol.length) {
+				this.col = this.colDatasCol[this.colDatasIndex];
+				this.colData = this.colDatas[this.colDatasIndex];
+				this.colDatasIndex++;
+			} else {
+				this.col = -1;
+				this.colData = undefined;
+			}
+		}
+		return -1 !== this.col;
+	};
+
 	function RowIterator() {
 	}
 
-	RowIterator.prototype.init = function(ws, r1, c1, c2) {
+	RowIterator.prototype.init = function (ws, r1, c1, c2) {
 		this.ws = ws;
 		this.cell = new Cell(ws);
-		this.c1 = c1;
-		this.c2 = Math.min(c2, ws.getColDataLength() - 1);
-		this.indexRow = r1;
-		this.indexCol = 0;
-
-		this.colDatas = [];
-		this.colDatasIndex = [];
-		for (var i = this.c1; i <= this.c2; i++) {
-			var colData = this.ws.getColDataNoEmpty(i);
-			if (colData) {
-				this.colDatas.push(colData);
-				this.colDatasIndex.push(i);
-			}
-		}
 		this.ws.workbook.loadCells.push(this.cell);
+
+		this.iter = new SweepLineRowIterator();
+		this.iter.init(ws.cellsByCol, r1, c1, c2);
 	};
-	RowIterator.prototype.release = function() {
+	RowIterator.prototype.release = function () {
 		this.cell.saveContent(true);
 		this.ws.workbook.loadCells.pop();
 	};
-	RowIterator.prototype.setRow = function(index) {
-		this.indexRow = index;
-		this.indexCol = 0;
+	RowIterator.prototype.setRow = function (index) {
+		this.iter.setRow(index);
 	};
-	RowIterator.prototype.next = function() {
+	RowIterator.prototype.next = function () {
 		var wb = this.ws.workbook;
 		this.cell.saveContent(true);
-		for (; this.indexCol < this.colDatasIndex.length; this.indexCol++) {
-			var colData = this.colDatas[this.indexCol];
-			var nCol = this.colDatasIndex[this.indexCol];
-			if (colData.hasIndex(this.indexRow)) {
-				var targetCell = null;
-				for (var k = 0; k < wb.loadCells.length - 1; ++k) {
-					var elem = wb.loadCells[k];
-					if (elem.nRow == this.indexRow && elem.nCol == nCol && this.ws === elem.ws) {
-						targetCell = elem;
-						break;
-					}
+		while (this.iter.nextCol()) {
+			var nRow = this.iter.row;
+			var nCol = this.iter.col;
+			var colData = this.iter.colData;
+			var targetCell = null;
+			for (var k = 0; k < wb.loadCells.length - 1; ++k) {
+				var elem = wb.loadCells[k];
+				if (elem.nRow === nRow && elem.nCol === nCol && this.ws === elem.ws) {
+					targetCell = elem;
+					break;
 				}
-				if (null === targetCell) {
-					if (this.cell.loadContent(this.indexRow, nCol, colData)) {
-						this.indexCol++;
-						return this.cell;
-					}
-				} else {
-					this.indexCol++;
-					return targetCell;
+			}
+			if (null === targetCell) {
+				if (this.cell.loadContent(nRow, nCol, colData)) {
+					return this.cell;
 				}
-			} else if (colData.getMaxIndex() < this.indexRow) {
-				//splice by one element is too slow
-				var endIndex = this.indexCol + 1;
-				while (endIndex < this.colDatasIndex.length && this.colDatas[endIndex].getMaxIndex() < this.indexRow) {
-					endIndex++;
-				}
-				this.colDatas.splice(this.indexCol, endIndex - this.indexCol);
-				this.colDatasIndex.splice(this.indexCol, endIndex - this.indexCol);
-				this.indexCol--;
+			} else {
+				return targetCell;
 			}
 		}
 	};
@@ -22042,5 +22181,6 @@
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
 	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
 	window['AscCommonExcel'].CSerial = CSerial;
+	window['AscCommonExcel'].SweepLineRowIterator = SweepLineRowIterator;
 
 })(window);

@@ -53,7 +53,6 @@
 		this.y = 0;
 		
 		this.bidi = new AscWord.BidiFlow(this);
-		this.rtl  = false;
 		
 		this.isNextCurrent = false;
 		this.nextRun       = null;
@@ -98,7 +97,7 @@
 		if (p.Numbering.checkRange(range, line))
 			this.x += p.Numbering.WidthVisible;
 		
-		this.bidi.begin();
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
@@ -115,7 +114,7 @@
 			this.posInfo.y = this.y;
 			this.posInfo.run = run;
 			
-			if (lastCombItem.getBidiType() === AscWord.BidiType.rtl)
+			if (lastCombItem.getBidiType() & AscBidi.FLAG.RTL)
 				this.posInfo.x -= lastCombItem.GetWidthVisible();
 			
 			if (lastCombItem.RGapCount)
@@ -159,7 +158,7 @@
 		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
-	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data)
+	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element   = data[0];
 		let run       = data[1];
@@ -181,7 +180,7 @@
 				this.posInfo.x = this.prev.x;
 				this.posInfo.y = this.prev.y;
 				
-				if (lastElement.getBidiType() !== AscWord.BidiType.rtl)
+				if (!(lastElement.getBidiType() & AscBidi.FLAG.RTL))
 					this.posInfo.x += lastElement.GetWidthVisible();
 				
 				this.posInfo.run = this.prev.run;
@@ -195,7 +194,7 @@
 				this.posInfo.x = this.x;
 				this.posInfo.y = this.y;
 				
-				if (element.getBidiType() === AscWord.BidiType.rtl)
+				if (direction === AscBidi.DIRECTION.R)
 					this.posInfo.x += w;
 				
 				this.posInfo.run = run;
@@ -233,7 +232,7 @@
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
 		this.bidi.end();
-		this.bidi.begin(this.rtl);
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		if (!isCurrentRun)
 			return;

@@ -49,7 +49,6 @@
 		this.h = 0;
 		this.x = 0;
 		
-		this.rtl  = false;
 		this.bidi = new AscWord.BidiFlow(this);
 		
 		this.page  = 0;
@@ -90,7 +89,7 @@
 		if (this.paragraph.Numbering.checkRange(this.line, this.range))
 			this.x += this.paragraph.Numbering.WidthVisible;
 		
-		this.bidi.begin(this.rtl);
+		this.bidi.begin(this.paragraph.isRtlDirection());
 		
 		this.beginElement = null;
 		this.endElement   = null;
@@ -162,7 +161,7 @@
 			if (element === this.beginElement)
 			{
 				this.beginInfo = {
-					x : direction === AscWord.BidiType.rtl ? this.x + w : this.x,
+					x : direction === AscBidi.DIRECTION.R ? this.x + w : this.x,
 					w : 0,
 					y : this.y,
 					h : this.h
@@ -172,7 +171,7 @@
 			if (element === this.endElement)
 			{
 				this.endInfo = {
-					x : direction === AscWord.BidiType.rtl ? this.x : this.x + w,
+					x : direction === AscBidi.DIRECTION.R ? this.x : this.x + w,
 					w : 0,
 					y : this.y,
 					h : this.h

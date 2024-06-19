@@ -3144,8 +3144,9 @@ function (window, undefined) {
 		//из обработанных элементов выбираем те, которые больше(меньше) -> из них уже ищем наименьший(наибольший)
 		//т.е. в итоге получаем следующий наименьший/наибольший элемент
 		const _binarySearch = function (revert) {
+			let canCompare;
+			
 			i = 0;
-
 			//TODO проверить обратный поиск
 			if (revert) {
 				j = length - 1;
@@ -3172,12 +3173,22 @@ function (window, undefined) {
 					k = Math.floor((i + j) / 2);
 					elem = cacheArray[k];
 					val = elem.v;
+					canCompare = true;
 					if (val.type === cElementType.empty) {
 						val = val.tocBool();
 					}
+
+					if (valueForSearching.type !== val.type) {
+						if (valueForSearching.type !== cElementType.string && val.type !== cElementType.string) {
+							canCompare = true;
+						} else {
+							canCompare = false;
+						}
+					}
+
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
-					} else if (_compareValues(valueForSearching, val, "<")) {
+					} else if (canCompare && _compareValues(valueForSearching, val, "<")) {
 						j = k - 1;
 						opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching, true);
 					} else {

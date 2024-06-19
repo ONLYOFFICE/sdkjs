@@ -24652,7 +24652,6 @@ CDocument.prototype.AddCaption = function(oPr)
             {
                 let oDocContent = oDrawing.GetDocumentContent();
                 NewParagraph = new AscWord.Paragraph();
-                NewParagraph.SetParagraphStyle("Caption");
                 oDocContent.Internal_Content_Add(oPr.get_Before() ? oDrawing.Get_ParentParagraph().Index : (oDrawing.Get_ParentParagraph().Index + 1), NewParagraph, true);
             }
             else
@@ -24696,29 +24695,34 @@ CDocument.prototype.AddCaption = function(oPr)
 					NewParagraph = oContent.Content[0];
                     NewParagraph.RemoveFromContent(0, NewParagraph.Content.length - 1);
                     NewParagraph.Clear_Formatting();
-                    NewParagraph.SetParagraphStyle("Caption");
 				}
             }
         }
     }
     else
     {
-        if(this.Selection.Use)
-        {
-            var oTable = this.Content[this.Selection.StartPos];
-            NewParagraph = new AscWord.Paragraph();
-            NewParagraph.SetParagraphStyle("Caption");
-            this.Internal_Content_Add(oPr.get_Before() ? oTable.Index : (oTable.Index + 1), NewParagraph, true);
-        }
-        else
-        {
-            NewParagraph = new AscWord.Paragraph();
-            NewParagraph.SetParagraphStyle("Caption");
-            this.Internal_Content_Add(oPr.get_Before() ? this.CurPos.ContentPos : (this.CurPos.ContentPos + 1), NewParagraph, true);
-        }
+		let targetElement = this.GetCurrentTable();
+		if (!targetElement)
+			targetElement = this.GetCurrentParagraph();
+		
+		let docContent = targetElement ? targetElement.GetParent() : null;
+		if (docContent)
+		{
+			let targetPos = targetElement.GetIndex();
+			if (!oPr.get_Before() || -1 === targetPos)
+				++targetPos;
+			
+			NewParagraph = new AscWord.Paragraph();
+			this.RemoveSelection();
+			docContent.AddToContent(targetPos, NewParagraph);
+		}
     }
     if(NewParagraph)
     {
+		let captionStyleId = this.Styles.GetStyleIdByName("Caption", true);
+		if (captionStyleId)
+			NewParagraph.SetParagraphStyleById(captionStyleId);
+		
         var NewRun;
         var nCurPos = 0;
         var oComplexField;

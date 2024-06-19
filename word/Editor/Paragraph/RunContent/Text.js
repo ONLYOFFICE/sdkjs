@@ -289,12 +289,7 @@
 	};
 	CRunText.prototype.getBidiType = function()
 	{
-		if (this.Flags & FLAGS_RTL || 0x060C <= this.Value && this.Value <= 0x074A)
-			return AscWord.BidiType.rtl;
-		else if (this.IsPunctuation())
-			return AscWord.BidiType.neutral;
-		
-		return AscWord.BidiType.ltr;
+		return AscBidi.getType(this.Value);
 	};
 	CRunText.prototype.SetWidth = function(nWidth)
 	{

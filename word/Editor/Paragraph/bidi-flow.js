@@ -34,13 +34,6 @@
 
 (function(window)
 {
-	const BidiType = {
-		ltr : 0, // strong rtl
-		rtl : 1, // strong ltr
-		weak : 2,
-		neutral : 3
-	};
-	
 	/**
 	 * Class for handling bidirectional flow of text or other content
 	 * @param handler - handler for elements in the flow
@@ -52,62 +45,161 @@
 		this.buffer    = [];
 		this.direction = null;
 		
+		
 		this.neutralBuffer = [];
+		this.bufferLTR     = [];
 	}
 	/**
-	 * @param direction - main flow direction
+	 * @param isRtlDirection - main flow direction
 	 */
-	BidiFlow.prototype.begin = function(direction)
+	BidiFlow.prototype.begin = function(isRtlDirection)
 	{
-		this.direction     = direction;
-		this.buffer.length = 0;
+		this.direction            = isRtlDirection ? AscBidi.DIRECTION.R : AscBidi.DIRECTION.L;
+		this.buffer.length        = 0;
+		this.neutralBuffer.length = 0;
+		this.bufferLTR.length     = 0;
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
-		if (bidiType === AscWord.BidiType.rtl)
+		if (AscBidi.DIRECTION.R === this.direction)
 		{
-			if (this.neutralBuffer.length)
+			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
 			{
-				this.buffer = this.buffer.concat(this.neutralBuffer);
-				this.neutralBuffer.length = 0;
+				this.flushLTR();
+				this.flushNeutralRTL()
+				this.buffer.push([element, AscBidi.DIRECTION.R]);
 			}
-			
-			this.buffer.push(element);
-		}
-		else if (bidiType === AscWord.BidiType.neutral && this.buffer.length)
-		{
-			this.neutralBuffer.push(element);
+			else if (bidiType & AscBidi.FLAG.STRONG)
+			{
+				this.flushNeutralLTR();
+				this.bufferLTR.push(element);
+			}
+			else
+			{
+				this.neutralBuffer.push([bidiType, element]);
+			}
 		}
 		else
 		{
-			this.flushBuffer();
-			this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
+			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
+			{
+				this.flushNeutralRTL();
+				this.buffer.push([element, AscBidi.DIRECTION.R]);
+			}
+			else if (bidiType & AscBidi.FLAG.STRONG || 0 === this.buffer.length)
+			{
+				this.flush();
+				this.handler.handleBidiFlow(element, AscBidi.DIRECTION.L);
+			}
+			else
+			{
+				this.neutralBuffer.push([bidiType, element]);
+			}
 		}
 	};
 	BidiFlow.prototype.end = function()
 	{
-		this.flushBuffer();
+		if (AscBidi.DIRECTION.R === this.direction)
+		{
+			this.flushLTR();
+			this.flushNeutralRTL();
+		}
+		
+		this.flush();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	BidiFlow.prototype.flushBuffer = function()
+	BidiFlow.prototype.flush = function()
 	{
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
-			this.handler.handleBidiFlow(this.buffer[i], AscWord.BidiType.rtl);
+			this.handler.handleBidiFlow(this.buffer[i][0], this.buffer[i][1]);
 		}
 		this.buffer.length = 0;
 		
 		for (let i = 0; i < this.neutralBuffer.length; ++i)
 		{
-			this.handler.handleBidiFlow(this.neutralBuffer[i], AscWord.BidiType.ltr);
+			this.handler.handleBidiFlow(this.neutralBuffer[i][1], AscBidi.DIRECTION.L);
 		}
 		this.neutralBuffer.length = 0;
 	};
+	BidiFlow.prototype.flushNeutralRTL = function()
+	{
+		let weakBuffer   = [];
+		let numberBuffer = [];
+		let buffer       = this.buffer;
+		
+		function flushNumber()
+		{
+			for (let i = numberBuffer.length - 1; i >= 0; --i)
+			{
+				buffer.push([numberBuffer[i], AscBidi.DIRECTION.L]);
+			}
+			numberBuffer.length = 0;
+		}
+		
+		function flushWeak()
+		{
+			for (let i = 0; i < weakBuffer.length; ++i)
+			{
+				let type = weakBuffer[i][0];
+				if (type & AscBidi.FLAG.NUMBER
+					|| (type & AscBidi.FLAG.NUMBER_SEP_TER
+						&& 0 !== i
+						&& i !== weakBuffer.length - 1
+						&& weakBuffer[i - 1][0] & AscBidi.FLAG.NUMBER
+						&& weakBuffer[i + 1][0] & AscBidi.FLAG.NUMBER))
+				{
+					numberBuffer.push(weakBuffer[i][1]);
+				}
+				else
+				{
+					flushNumber();
+					buffer.push([weakBuffer[i][1], AscBidi.DIRECTION.L]);
+				}
+			}
+			flushNumber();
+			weakBuffer.length = 0;
+		}
+		
+		for (let i = 0; i < this.neutralBuffer.length; ++i)
+		{
+			let type = this.neutralBuffer[i][0];
+			if (AscBidi.FLAG.NEUTRAL & type)
+			{
+				flushWeak(this.buffer);
+				this.buffer.push([this.neutralBuffer[i][1], AscBidi.DIRECTION.R]);
+			}
+			else
+			{
+				weakBuffer.push([type, this.neutralBuffer[i][1]]);
+			}
+		}
+		flushWeak(this.buffer);
+		this.neutralBuffer.length = 0;
+	};
+	BidiFlow.prototype.flushNeutralLTR = function()
+	{
+		if (!this.bufferLTR.length)
+			return this.flushNeutralRTL();
+		
+		for (let i = 0; i < this.neutralBuffer.length; ++i)
+		{
+			this.bufferLTR.push(this.neutralBuffer[i][1]);
+		}
+		this.neutralBuffer.length = 0;
+	};
+	BidiFlow.prototype.flushLTR = function()
+	{
+		for (let i = this.bufferLTR.length - 1; i >= 0; --i)
+		{
+			this.buffer.push([this.bufferLTR[i], AscBidi.DIRECTION.L]);
+		}
+		this.bufferLTR.length = 0;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.BidiFlow = BidiFlow;
-	AscWord.BidiType = BidiType;
 	
 })(window);
 

@@ -5127,6 +5127,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.name = 'SUMIFS';
 	cSUMIFS.prototype.argumentsMin = 3;
 	cSUMIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1};
+	cSUMIFS.prototype.exactTypes = {0: 1, 1: 1};	// in this function every odd argument is should be checked for type reference
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.Calculate = function (arg) {
 		let arg0 = arg[0];
@@ -5284,6 +5285,24 @@ function (window, undefined) {
 	};
 	cSUMIFS.prototype.checkArguments = function (countArguments) {
 		return 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
+	};
+	cSUMIFS.prototype.checkArgumentsTypes = function (args) {
+		// check first element, then all odd ones
+		if (!cBaseFunction.prototype.checkArgumentsTypes.call(this, [args[0]])) {
+			return false
+		}
+
+		for (let i = 1; i < args.length; i += 2) {
+			// check reference type for each odd element
+			let oddArgument = args[i];
+			if (oddArgument && this.exactTypes[1]) {
+				if (oddArgument.type !== cElementType.cellsRange && oddArgument.type !== cElementType.cellsRange3D 
+					&& oddArgument.type !== cElementType.cell && oddArgument.type !== cElementType.cell3D) {
+						return false
+				}
+			}
+		}
+		return true;
 	};
 
 	/**

@@ -3884,7 +3884,14 @@ FormatParser.prototype =
                                 prev.date = true;
                         }
                         if (i + 1 < length) {
-                            var next = match[i + 1];
+                            let next = match[i + 1]
+                            // processing the option when the date is given as the format "October 11, 2008"
+                            if (i === 0 && i + 2 < length) {
+                                let afterNext = match[i + 2];
+                                if (oDataTypes.digit == afterNext.type && false == afterNext.time) {
+                                    afterNext.date = true;
+                                }
+                            }
                             if (oDataTypes.digit == next.type && false == next.time)
                                 next.date = true;
                         }
@@ -3931,7 +3938,7 @@ FormatParser.prototype =
                     bError = true;//случай "1-2-3 10"
             }
             var nDateLength = aDate.length;
-            if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength)))
+            if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength || (3 == nDateLength && 0 == nMonthIndex))))
                 bError = true;
             var nTimeLength = aTime.length;
             if (nTimeLength > 3)
@@ -3969,12 +3976,18 @@ FormatParser.prototype =
                                         bError = true;
                                 }
                             }
-                        }
-                        else {
-                            res.sDateFormat = "d-mmm-yy";
-                            res.d = aDate[0];
-                            res.m = aDate[1];
-                            res.y = aDate[2];
+                        } else {
+                            if (nMonthIndex == 0) {
+                                res.sDateFormat = "dd-mmm-yy";
+                                res.m = aDate[0];
+                                res.d = aDate[1];
+                                res.y = aDate[2];
+                            } else {
+                                res.sDateFormat = "d-mmm-yy";
+                                res.d = aDate[0];
+                                res.m = aDate[1];
+                                res.y = aDate[2];
+                            }
                         }
                     }
                     else {
@@ -4252,7 +4265,7 @@ FormatParser.prototype =
                 break;
             }
         }
-        return bRes;
+        return length === 0 ? false: bRes;
     },
 	parseDate: function (value, cultureInfo)
 	{
@@ -4273,7 +4286,7 @@ FormatParser.prototype =
 		    var oDataType = null;
 		    if("0" <= sChar && sChar <= "9")
 		        oDataType = oDataTypes.digit;
-		    else if(" " == sChar)
+		    else if(" " == sChar || "," == sChar)
 		        oDataType = oDataTypes.space;
 		    else if ("/" == sChar || "-" == sChar || ":" == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
 		        oDataType = oDataTypes.delimiter;
@@ -4329,7 +4342,7 @@ FormatParser.prototype =
 		        }
 		        else if (!bMonth) {
 		            bMonth = true;
-		            var aArraysToCheck = [{ arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }, { arr: cultureInfo.MonthNames, format: "mmmm" }];
+					let aArraysToCheck = [{ arr: cultureInfo.MonthNames, format: "mmmm" }, { arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }];
 		            var bFound = false;
 		            for (var index in aArraysToCheck) {
 		                var aArrayTemp = aArraysToCheck[index];

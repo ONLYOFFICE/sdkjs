@@ -1906,6 +1906,14 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             var Item = this.Content[Pos];
             Item.Recalculate_Range_Width( PRSC, CurLine, CurRange );
         }
+		
+		// TODO: Right edge is wrong
+		let jc = ParaPr.Jc;
+		if (ParaPr.Bidi && (jc === AscCommon.align_Left || jc === AscCommon.align_Justify))
+		{
+			PRSC.Range.W += PRSC.SpaceLen;
+			PRSC.SpaceLen = 0;
+		}
 
         var JustifyWord  = 0;
         var JustifySpace = 0;
@@ -1932,8 +1940,16 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             }
             else
             {
-                // RangeWidth - ширина всего пространства в данном отрезке, а Range.W - ширина занимаемого пространства
-                switch (ParaPr.Jc)
+				if (ParaPr.Bidi)
+				{
+					if (AscCommon.align_Left === jc)
+						jc = AscCommon.align_Right;
+					else if (AscCommon.align_Right === jc)
+						jc = AscCommon.align_Left;
+				}
+				
+				// RangeWidth - ширина всего пространства в данном отрезке, а Range.W - ширина занимаемого пространства
+                switch (jc)
                 {
                     case AscCommon.align_Left :
                     {
@@ -2038,6 +2054,13 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
             PRSA.Y1 += _LineMetrics.LineGap;
 
         this.Lines[CurLine].Ranges[CurRange].XVisible = X;
+		if (ParaPr.Bidi && Line.Info & paralineinfo_End && CurRange === Line.Ranges.length - 1)
+		{
+			let paraMark = this.GetParaEndRun().GetParaEnd();
+			if (paraMark)
+				this.Lines[CurLine].Ranges[CurRange].XVisible -= paraMark.GetWidthVisible();
+		}
+			
 
         if ( 0 === CurRange )
             this.Lines[CurLine].X = X - PRSW.XStart;

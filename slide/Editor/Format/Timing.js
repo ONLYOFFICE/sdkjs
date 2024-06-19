@@ -667,19 +667,22 @@
                     var oTrigger = new CAnimComplexTrigger();
                     var aChildren = this.getChildrenTimeNodes();
                     var oThis = this;
-                    oTrigger.addTrigger(function () {
-                        for (var nChild = 0; nChild < aChildren.length; ++nChild) {
-                            if (!aChildren[nChild].isAtEnd()) {
-                                return false;
-                            }
-                        }
-                        if (oThis.checkRepeatCondition(oPlayer)) {
-                            return false;
-                        }
-                        return true;
-                    });
+
                     if (oEndSync) {
                         oEndSync.fillTrigger(oPlayer, oTrigger);
+                    }
+                    else {
+                        oTrigger.addTrigger(function () {
+                            for (var nChild = 0; nChild < aChildren.length; ++nChild) {
+                                if (!aChildren[nChild].isAtEnd()) {
+                                    return false;
+                                }
+                            }
+                            if (oThis.checkRepeatCondition(oPlayer)) {
+                                return false;
+                            }
+                            return true;
+                        });
                     }
                     return oTrigger;
                 }
@@ -2667,44 +2670,76 @@
     };
     CTiming.prototype.createDemoTiming = function (bDisableSmooth) {
         return AscFormat.ExecuteNoHistory(function () {
-            if (!this.canStartDemo()) {
-                return null;
-            }
-            var aEffectsForDemo = this.getEffectsForDemo();
-            if (!aEffectsForDemo) {
-                return null;
-            }
-            var aSeqs = [];
-            var aSeq = [null];
-            var oEffect;
+            if (!this.canStartDemo()) return null;
+
+            const aEffectsForDemo = this.getEffectsForDemo();
+            if (!aEffectsForDemo) return null;
+
+            const aSeqs = [];
+            const aSeq = [null];
             aSeqs.push(aSeq);
-            for (var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
-                oEffect = aEffectsForDemo[nIdx];
-                var oCopyEffect = oEffect.createDuplicate();
-                oCopyEffect.originalNode = oEffect;
+
+            const aEffectCopies = [];
+            for (let nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
+                const oEffect = aEffectsForDemo[nIdx];
+                const oEffectCopy = oEffect.createDuplicate();
+                oEffectCopy.originalNode = oEffect;
+                oEffect.copyNode = oEffectCopy;
+                aEffectCopies.push(oEffectCopy);
+            }
+
+            for (let nIdx = 0; nIdx < aEffectCopies.length; ++nIdx) {
+                const oEffectCopy = aEffectCopies[nIdx];
                 if (!bDisableSmooth) {
-                    if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
-                        oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
+                    if (oEffectCopy.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                        oEffectCopy.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                     }
-                    var nRepeatCount = oCopyEffect.asc_getRepeatCount();
+
+                    const nRepeatCount = oEffectCopy.asc_getRepeatCount();
                     if (nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
-                        oCopyEffect.cTn.changeRepeatCount(1000);
+                        const lastFiniteEffect = (nRepeatCount === AscFormat.untilNextSlide)
+                            ? this.getLastFiniteEffect(aEffectsForDemo)
+                            : this.getLastFiniteEffect(oEffectCopy.originalNode.getTimeNodeWithLvl(2).getAllAnimEffects());
+
+                        if (lastFiniteEffect === oEffectCopy) {
+                            oEffectCopy.cTn.changeRepeatCount(1000);
+                        } else {
+                            const oEndSync = new CCond();
+                            oEndSync.setEvt(COND_EVNT_ON_END);
+                            oEndSync.setTn(lastFiniteEffect.copyNode.getAttributesObject().id);
+                            oEffectCopy.cTn.setEndSync(oEndSync);
+                        }
                     }
-                    var nDur = oCopyEffect.asc_getDuration();
+
+                    const nDur = oEffectCopy.asc_getDuration();
                     if (nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
-                        oCopyEffect.cTn.changeEffectDuration(1000);
+                        oEffectCopy.cTn.changeEffectDuration(1000);
                     }
                     if (AscFormat.isRealNumber(nDur) && nDur < 50) {
-                        oCopyEffect.cTn.changeEffectDuration(750);
+                        oEffectCopy.cTn.changeEffectDuration(750);
                     }
                 }
-                aSeq.push(oCopyEffect);
+                aSeq.push(oEffectCopy);
             }
-            var oTiming = new CTiming();
+            const oTiming = new CTiming();
             oTiming.setParent(this.parent);
             oTiming.buildTree(aSeqs);
             return oTiming;
         }, this, []);
+    };
+    CTiming.prototype.getLastFiniteEffect = function (aEffects) {
+        let maxEndTime = 0;
+        let effect = null;
+        for (let nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            const oEffect = aEffects[nEffect];
+            const repeatCount = oEffect.asc_getRepeatCount();
+            const endTime = oEffect.getFullDelay() + oEffect.asc_getDuration() * (repeatCount >= 0 ? repeatCount : 1000);
+            if (endTime >= maxEndTime) {
+                maxEndTime = endTime;
+                effect = oEffect;
+            }
+        }
+        return effect;
     };
     CTiming.prototype.createDemoPlayer = function () {
         if (!this.canStartDemo()) {
@@ -5822,7 +5857,7 @@
     };
     CCond.prototype.createOnEndTrigger = function (oPlayer) {
         return this.createTimeNodeTrigger(oPlayer, function (oTimeNode) {
-            return oTimeNode.isFinished();
+            return oTimeNode.isAtEnd();
         });
     };
     CCond.prototype.fillTrigger = function (oPlayer, oTrigger) {

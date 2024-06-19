@@ -951,9 +951,9 @@
 					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal);
 
 					const data = [new ClipboardItem({
-						["text/plain"]    : new Blob([copy_data.data[c_oAscClipboardDataFormat.Text]], {type: "text/plain"}),
-						["text/html"]     : new Blob([copy_data.data[c_oAscClipboardDataFormat.Html]], {type: "text/html"}),
-						["web text/x-custom"] : new Blob(["asc_internalData2;" + copy_data.data[c_oAscClipboardDataFormat.Internal]], {type: "web text/x-custom"})
+						"text/plain"        : new Blob([copy_data.data[c_oAscClipboardDataFormat.Text]], {type: "text/plain"}),
+						"text/html"         : new Blob([copy_data.data[c_oAscClipboardDataFormat.Html]], {type: "text/html"}),
+						"web text/x-custom" : new Blob(["asc_internalData2;" + copy_data.data[c_oAscClipboardDataFormat.Internal]], {type: "web text/x-custom"})
 					})];
 
 					navigator.clipboard.write(data).then(function(){},function(){});

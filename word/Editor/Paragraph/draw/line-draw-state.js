@@ -104,7 +104,6 @@
 		
 		this.collPrChangeColor = null;
 		
-		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphLineDrawState.prototype.init = function()
@@ -152,7 +151,7 @@
 		this.X      = x;
 		this.Spaces = spaces;
 		
-		this.bidiFlow.begin(this.rtl);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 		
 		this.paraLineRange = this.Paragraph.Lines[this.Line].Ranges[this.Range];
 	};

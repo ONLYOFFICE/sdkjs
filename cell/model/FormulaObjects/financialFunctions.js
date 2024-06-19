@@ -3606,61 +3606,61 @@ function (window, undefined) {
 	cODDFYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any, argType.any, argType.any,
 		argType.any, argType.any, argType.any];
 	cODDFYIELD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
+		let settlement = arg[0], maturity = arg[1], issue = arg[2], first_coupon = arg[3], rate = arg[4], pr = arg[5],
 			redemption = arg[6], frequency = arg[7],
 			basis = arg[8] && !(arg[8] instanceof cEmpty) ? arg[8] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (issue instanceof cArea || issue instanceof cArea3D) {
+		if (issue.type === cElementType.cellsRange || issue.type === cElementType.cellsRange3D) {
 			issue = issue.cross(arguments[1]);
-		} else if (issue instanceof cArray) {
+		} else if (issue.type === cElementType.array) {
 			issue = issue.getElementRowCol(0, 0);
 		}
 
-		if (first_coupon instanceof cArea || first_coupon instanceof cArea3D) {
+		if (first_coupon.type === cElementType.cellsRange || first_coupon.type === cElementType.cellsRange3D) {
 			first_coupon = first_coupon.cross(arguments[1]);
-		} else if (first_coupon instanceof cArray) {
+		} else if (first_coupon.type === cElementType.array) {
 			first_coupon = first_coupon.getElementRowCol(0, 0);
 		}
 
-		if (rate instanceof cArea || rate instanceof cArea3D) {
+		if (rate.type === cElementType.cellsRange || rate.type === cElementType.cellsRange3D) {
 			rate = rate.cross(arguments[1]);
-		} else if (rate instanceof cArray) {
+		} else if (rate.type === cElementType.array) {
 			rate = rate.getElementRowCol(0, 0);
 		}
 
-		if (pr instanceof cArea || pr instanceof cArea3D) {
+		if (pr.type === cElementType.cellsRange || pr.type === cElementType.cellsRange3D) {
 			pr = pr.cross(arguments[1]);
-		} else if (pr instanceof cArray) {
+		} else if (pr.type === cElementType.array) {
 			pr = pr.getElementRowCol(0, 0);
 		}
 
-		if (redemption instanceof cArea || redemption instanceof cArea3D) {
+		if (redemption.type === cElementType.cellsRange || redemption.type === cElementType.cellsRange3D) {
 			redemption = redemption.cross(arguments[1]);
-		} else if (redemption instanceof cArray) {
+		} else if (redemption.type === cElementType.array) {
 			redemption = redemption.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
 		}
 
@@ -3674,31 +3674,31 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (issue instanceof cError) {
+		if (issue.type === cElementType.error) {
 			return issue;
 		}
-		if (first_coupon instanceof cError) {
+		if (first_coupon.type === cElementType.error) {
 			return first_coupon;
 		}
-		if (rate instanceof cError) {
+		if (rate.type === cElementType.error) {
 			return rate;
 		}
-		if (pr instanceof cError) {
+		if (pr.type === cElementType.error) {
 			return pr;
 		}
-		if (redemption instanceof cError) {
+		if (redemption.type === cElementType.error) {
 			return redemption;
 		}
-		if (frequency instanceof cError) {
+		if (frequency.type === cElementType.error) {
 			return frequency;
 		}
-		if (basis instanceof cError) {
+		if (basis.type === cElementType.error) {
 			return basis;
 		}
 
@@ -3737,7 +3737,7 @@ function (window, undefined) {
 			x = xN;
 		}
 		if (isNaN(x) || Infinity == Math.abs(x)) {
-			var max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
+			let max = Number.MAX_VALUE, min = -Number.MAX_VALUE, step = 1.6,
 				low = guess - 0.01 <= min ? min + g_Eps : guess - 0.01,
 				high = guess + 0.01 >= max ? max - g_Eps : guess + 0.01, i, xBegin, xEnd, x, y, currentIter = 0;
 
@@ -3764,7 +3764,7 @@ function (window, undefined) {
 				return new cError(cErrorType.not_numeric);
 			}
 
-			var fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
+			let fXbegin = iterF(xBegin), fXend = iterF(xEnd), fXi, xI;
 
 			if (Math.abs(fXbegin) < g_Eps) {
 				return new cNumber(fXbegin);

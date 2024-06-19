@@ -4389,7 +4389,7 @@ var CPresentation = CPresentation || function(){};
                     return pasteObj.Drawing;
                 });
 
-                aDrToPaste.forEach(function(drawing) {
+                aDrToPaste.forEach(function(drawing, index) {
                     let oXfrm = drawing.getXfrm();
                     let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
                     oXfrm.setOffX(oPos.x);
@@ -4403,11 +4403,15 @@ var CPresentation = CPresentation || function(){};
                     }
 
                     oThis.AddDrawing(drawing, oThis.GetCurPage());
+
                     if (drawing.IsGraphicFrame()) {
                         oController.Check_GraphicFrameRowHeight(drawing);
                     }
+                    
+                    if (index == 0) {
+                        oThis.SetMouseDownObject(drawing);
+                    }
                     drawing.select(oController, nCurPage);
-                    oThis.SetMouseDownObject(drawing);
                 });
 
                 bResult = true;
@@ -4879,28 +4883,38 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
-        let oDrDoc      = this.GetDrawingDocument();
         let nCurPage    = oViewer.currentPage;
-        let oPageInfo   = oDrDoc.m_arrPages[nCurPage];
+        let oController = this.GetController();
+        let nPageW      = this.GetPageWidthMM(nCurPage);
+        let nPageH      = this.GetPageHeightMM(nCurPage);
         
+        this.BlurActiveObject();
+
         for (let i = 0; i < arrImages.length; i++) {
             let _image  = arrImages[i];
+
             let nExtX   = Math.max(1, _image.Image.width * g_dKoef_pix_to_mm);
             let nExtY   = Math.max(1, _image.Image.height * g_dKoef_pix_to_mm);
-            let nPageW  = oPageInfo.width_mm;
-            let nPageH  = oPageInfo.height_mm;
             let nKoeff  = Math.min(1.0, 1.0 / Math.max(nExtX / nPageW, nExtY / nPageH));
-
-            let nNewExtX = Math.max(5, nExtX * nKoeff); 
-            let nNewExtY = Math.max(5, nExtY * nKoeff); 
             
-            let nCenterX = (nPageW - nNewExtX) / 2;
-            let nCenterY = (nPageH - nNewExtY) / 2;
+            let nNewExtX    = Math.max(5, nExtX * nKoeff); 
+            let nNewExtY    = Math.max(5, nExtY * nKoeff); 
+            let oPos        = private_computeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
 
             let oImage = new AscPDF.CPdfImage();
+            AscFormat.fillImage(oImage, _image.src, 0, 0, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
 
-            AscFormat.fillImage(oImage, _image.src, nCenterX, nCenterY, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
+            let oXfrm = oImage.getXfrm();
+            oXfrm.setOffX(oPos.x);
+            oXfrm.setOffY(oPos.y);
+
             this.AddDrawing(oImage, nCurPage);
+
+            if (i == 0) {
+                this.SetMouseDownObject(oImage);
+            }
+
+            oImage.select(oController, nCurPage);
         }
     };
     CPDFDoc.prototype.ShapeApply = function(shapeProps) {
@@ -5306,6 +5320,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetRecalcId = function () {
         return Infinity;
     };
+    CPDFDoc.prototype.Document_UpdateInterfaceState = function() {};
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
     };

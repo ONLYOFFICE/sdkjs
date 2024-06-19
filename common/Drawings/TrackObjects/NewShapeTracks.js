@@ -135,7 +135,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
     this.startShape = null;
     this.endShape = null;
     this.endConnectionInfo = null;
-    this.placeholderType = nPlaceholderType || null;
+    this.placeholderType = nPlaceholderType;
     this.bVertical = bVertical;
     this.parentObject = slide || layout || master;
 
@@ -570,12 +570,16 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         this.overlayObject.draw(overlay);
     };
 
+
+    this.isPlaceholderTrack = function() {
+        return this.placeholderType !== undefined;
+    };
     this.createDrawing = function() {
         let oDrawing;
         if(this.bConnector) {
             oDrawing = new AscFormat.CConnectionShape();
         }
-        else if(this.placeholderType !== null && this.placeholderType !== undefined) {
+        else if(this.isPlaceholderTrack()) {
             oDrawing = AscCommonSlide.CreatePlaceholder(this.placeholderType, this.bVertical);
         }
         else if(this.drawingsController) {
@@ -643,7 +647,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             shape.nvSpPr.setUniSpPr(nvUniSpPr);
         }
         else{
-            if(this.placeholderType === null) {
+            if(!this.isPlaceholderTrack()) {
                 if(drawingObjects)
                 {
                     shape.setDrawingObjects(drawingObjects);
@@ -680,7 +684,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
         shape.setBDeleted(false);
 
-        if(this.placeholderType === null)
+        if(!this.isPlaceholderTrack())
         {
             if(this.presetGeom && this.presetGeom.indexOf("textRect") === 0)
             {
@@ -734,7 +738,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     shape.txBody.setContent(content);
                     var bNeedCheckExtents = false;
                     if(drawingObjects){
-                        if((drawingObjects.cSld || Asc.editor.isPdfEditor()) && this.placeholderType === null) {
+                        if((drawingObjects.cSld || Asc.editor.isPdfEditor()) && !this.isPlaceholderTrack()) {
                             body_pr.textFit = new AscFormat.CTextFit();
                             body_pr.textFit.type = AscFormat.text_fit_Auto;
                             if (isClickMouseEvent) {
@@ -810,7 +814,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
             }
         }
 
-        if(this.placeholderType !== null && this.placeholderType !== undefined)
+        if(this.isPlaceholderTrack())
         {
             shape.checkDrawingUniNvPr();
             let oNvPr = shape.getNvProps();

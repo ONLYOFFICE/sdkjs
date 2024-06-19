@@ -3058,6 +3058,10 @@
 			this.callMediaPlayerCommand("hideMediaControl", null);
 		}
 	};
+	baseEditorsApi.prototype.asc_hideMediaControl = function()
+	{
+		this.hideMediaControl();
+	};
 
 
 	baseEditorsApi.prototype.asc_onMediaPlayerEvent = function(evt, mediaData)
@@ -4913,7 +4917,9 @@
 	baseEditorsApi.prototype.getInkCursorType = function() {
 		return this.inkDrawer.getCursorType();
 	};
-	
+	baseEditorsApi.prototype.isMasterMode = function(){
+		return false;
+	};
 	baseEditorsApi.prototype.getSelectionState = function() {
 	};
 	baseEditorsApi.prototype.getSpeechDescription = function(prevState, action) {
@@ -5115,6 +5121,7 @@
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
 	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
 	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
+	prot['asc_hideMediaControl'] = prot.asc_hideMediaControl;
 	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
 
 	// passwords

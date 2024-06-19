@@ -2124,7 +2124,7 @@
 				var diffX = 0;
 				var diffY = 0;
 				if (oSmartArt.group) {
-					if (bForceSlideTransform || (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+					if (bForceSlideTransform || (AscFormat.isSlideLikeObject(this.parent) || this.worksheet)) {
 						const oMainGroupRelativePosition = oSmartArt.group.getRelativePosition();
 						diffX = oMainGroupRelativePosition.x;
 						diffY = oMainGroupRelativePosition.y;
@@ -2167,7 +2167,7 @@
 				var extX = (oRect.r - oRect.l) / 2;
 				var extY = (oRect.b - oRect.t) / 2;
 				var deltaTranslateX = 0, deltaTranslateY = 0;
-				if (bForceSlideTransform || (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+				if (bForceSlideTransform || (AscFormat.isSlideLikeObject(deltaShape.parent) || this.worksheet)) {
 					deltaTranslateX = deltaShape.group.group.x;
 					deltaTranslateY = deltaShape.group.group.y;
 				}
@@ -3119,8 +3119,7 @@
 			return this.transformText.CreateDublicate();
 		};
 		CShape.prototype.canAddButtonPlaceholder = function () {
-			return (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide) ||
-				this.isObjectInSmartArt());
+			return AscFormat.isSlideLikeObject(this.parent) || this.isObjectInSmartArt();
 		};
 		CShape.prototype.isEmptyPlaceholder = function (bDefaultEmpty) {
 			if (this.isObjectInSmartArt()) {
@@ -3146,6 +3145,7 @@
 					|| phldrType == AscFormat.phType_ftr
 					|| phldrType == AscFormat.phType_hdr
 					|| phldrType == AscFormat.phType_sldNum
+					|| phldrType == AscFormat.phType_dgm
 					|| phldrType == AscFormat.phType_sldImg) {
 					if (this.txBody) {
 						if (this.txBody.content) {

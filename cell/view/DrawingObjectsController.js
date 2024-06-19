@@ -692,7 +692,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                     {
                         oItem = new AscWord.CRunText(Code);
                     }
-                    this.paragraphAdd(oItem, false);
+                    this.paragraphAdd(oItem, true);
                 }
             }
             else
@@ -706,7 +706,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                 {
                     oItem = new AscWord.CRunText(Code);
                 }
-                this.paragraphAdd(oItem, false);
+                this.paragraphAdd(oItem, true);
             }
             this.checkMobileCursorPosition();
             this.recalculateCurPos(true, true);

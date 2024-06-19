@@ -6596,6 +6596,8 @@ ContentIterator.prototype.CheckRules = function ()
 		[true, "⃡" ],
 		[true, "⃐" ],
 		[true, "⃑" ],
+		[true, "̳" ],
+		[true, "̲"],
 
 		[true, "′" ],
 		[true, "'" ],
