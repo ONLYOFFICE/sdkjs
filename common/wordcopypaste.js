@@ -4088,7 +4088,13 @@ PasteProcessor.prototype =
 				}
 			} else if (base64FromPDF)//вставка из pdf редактора
 			{
-				bInsertFromBinary = null !== this._pasteBinaryFromPDFToPDF(base64FromPDF);
+				if (PasteElementsId.g_bIsPDFCopyPaste) {
+					bInsertFromBinary = null !== this._pasteBinaryFromPDFToPDF(base64FromPDF);
+				} else if (PasteElementsId.g_bIsDocumentCopyPaste) {
+					bInsertFromBinary = null !== this._pasteBinaryFromPDFToWord(base64FromPDF);
+				} else {
+					bInsertFromBinary = null !== this._pasteBinaryFromPDFToPresentation(base64FromPDF);
+				}
 			}
 		}
 
@@ -5232,6 +5238,264 @@ PasteProcessor.prototype =
 		}
 	},
 
+	//from PDF to WORD
+	_pasteBinaryFromPDFToWord: function (base64) {
+		var oThis = this;
+
+		var fPrepasteCallback = function () {
+			if (false === oThis.bNested) {
+				oThis.InsertInDocument();
+				if (oThis.pasteCallback) {
+					oThis.pasteCallback();
+				}
+			}
+		};
+
+		var oSelectedContent2 = this._readPDFSelectedContent2(base64);
+		var selectedContent2 = oSelectedContent2.content;
+		var pasteObj = selectedContent2[0] ? selectedContent2[0] : selectedContent2[1];
+
+		var arr_Images, fonts, content = null, font_map = {};
+		if (pasteObj) {
+			arr_Images = pasteObj.images;
+			fonts = pasteObj.fonts;
+			content = pasteObj.content;
+		}
+
+		if (null === content) {
+			return null;
+		}
+
+		if (content && content.DocContent) {
+			let aElements = content.DocContent.Elements;
+			let aContent = [];
+			let bNeedDocElement = !this.oDocument.bPresentation;
+			let oNewParent = this.oDocument;
+			for (let nElement = 0; nElement < aElements.length; nElement++) {
+				let oContentElement = aElements[nElement].Element;
+				if(bNeedDocElement) {
+					aContent.push(AscFormat.ConvertParagraphToWord(oContentElement, oNewParent));
+				} else {
+					aContent.push(oContentElement.Copy(oNewParent, oNewParent.DrawingDocument));
+				}
+			}
+			this.aContent = aContent;
+			oThis.api.pre_Paste(fonts, arr_Images, fPrepasteCallback);
+
+		} else if (content && content.Drawings) {
+
+			var arr_shapes = content.Drawings;
+			var arrImages = pasteObj.images;
+			if (content.Drawings.length === selectedContent2[1].content.Drawings.length) {
+				AscFormat.checkDrawingsTransformBeforePaste(content, selectedContent2[1].content, null);
+			}
+			//****если записана одна табличка, то вставляем html и поддерживаем все цвета и стили****
+			if (!arrImages.length && arr_shapes.length === 1 && arr_shapes[0] && arr_shapes[0].Drawing &&
+				arr_shapes[0].Drawing.graphicObject) {
+
+				var drawing = arr_shapes[0].Drawing;
+
+				if (typeof CGraphicFrame !== "undefined" && drawing instanceof CGraphicFrame) {
+					var aContent = [];
+					var table = AscFormat.ConvertGraphicFrameToWordTable(drawing, this.oLogicDocument);
+					table.Document_Get_AllFontNames(font_map);
+
+					//перебираем шрифты
+					for (var i in font_map) {
+						fonts.push(new CFont(i));
+					}
+
+					//TODO стиль не прокидывается. в будущем нужно реализовать
+					table.TableStyle = null;
+					aContent.push(table);
+
+					this.aContent = aContent;
+					oThis.api.pre_Paste(fonts, aContent.images, fPrepasteCallback);
+
+					return;
+				}
+			}
+
+
+			//если несколько графических объектов, то собираем base64 у таблиц(graphicFrame)
+			if (arr_shapes.length > 1) {
+				for (var i = 0; i < arr_shapes.length; i++) {
+					if (arr_shapes[i].Drawing && arr_shapes[i].Drawing.isTable()) {
+						arrImages.push(new AscCommon.CBuilderImages(null, arr_shapes[i].base64, arr_shapes[i], null, null));
+					}
+				}
+			}
+
+			var oObjectsForDownload = GetObjectsForImageDownload(arrImages);
+			var aImagesToDownload = oObjectsForDownload.aUrls;
+
+			AscCommon.sendImgUrls(oThis.api, aImagesToDownload, function (data) {
+				var image_map = {};
+				for (var i = 0, length = Math.min(data.length, arrImages.length); i < length; ++i) {
+					var elem = data[i];
+					if (null != elem.url) {
+						var name = g_oDocumentUrls.imagePath2Local(elem.path);
+						var imageElem = oObjectsForDownload.aBuilderImagesByUrl[i];
+						if (null != imageElem) {
+							if (Array.isArray(imageElem)) {
+								for (var j = 0; j < imageElem.length; ++j) {
+									var curImageElem = imageElem[j];
+									if (null != curImageElem) {
+										if (curImageElem.ImageShape && curImageElem.ImageShape.base64) {
+											curImageElem.ImageShape.base64 = name;
+										} else {
+											curImageElem.SetUrl(name);
+										}
+									}
+								}
+							} else {
+								//для вставки graphicFrame в виде картинки(если было при копировании выделено несколько графических объектов)
+								if (imageElem.ImageShape && imageElem.ImageShape.base64) {
+									imageElem.ImageShape.base64 = name;
+								} else {
+									imageElem.SetUrl(name);
+								}
+							}
+						}
+						image_map[i] = name;
+					} else {
+						image_map[i] = aImagesToDownload[i];
+					}
+				}
+
+				aContent = oThis._convertExcelBinary(null, arr_shapes);
+				oThis.aContent = aContent.content;
+				oThis.api.pre_Paste(fonts, image_map, fPrepasteCallback);
+			}, true);
+		}
+	},
+
+	//from PDF to PRESENTATION
+	_pasteBinaryFromPDFToPresentation: function (base64, bDuplicate) {
+		var oThis = this;
+		var presentation = editor.WordControl.m_oLogicDocument;
+
+		var oSelectedContent2 = this._readPDFSelectedContent2(base64, bDuplicate);
+		var p_url = oSelectedContent2.p_url;
+		var p_theme = oSelectedContent2.p_theme;
+		var selectedContent2 = oSelectedContent2.content;
+		var multipleParamsCount = selectedContent2 ? selectedContent2.length : 0;
+		
+		for (let i = 0; i < selectedContent2.length; i++) {
+			let oPdfContent = selectedContent2[i].content;
+
+			selectedContent2[i].content = new PresentationSelectedContent();
+			selectedContent2[i].content.Drawings = oPdfContent.Drawings || [];
+			selectedContent2[i].content.DocContent = oPdfContent.DocContent;
+		}
+
+		if (multipleParamsCount) {
+			var aContents = [];
+			for (var i = 0; i < multipleParamsCount; i++) {
+				var curContent = selectedContent2[i];
+				aContents.push(curContent.content);
+			}
+
+			var specialOptionsArr = [];
+			var specialProps = Asc.c_oSpecialPasteProps;
+			if (1 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting];
+			} else if (2 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting, specialProps.sourceformatting];
+			} else if (3 === multipleParamsCount) {
+				specialOptionsArr = [specialProps.destinationFormatting, specialProps.sourceformatting, specialProps.picture];
+			}
+
+			var pasteObj = selectedContent2[0];
+			var nIndex = 0;
+			if (window['AscCommon'].g_specialPasteHelper.specialPasteStart) {
+				var props = window['AscCommon'].g_specialPasteHelper.specialPasteProps;
+				switch (props) {
+					case Asc.c_oSpecialPasteProps.destinationFormatting: {
+						break;
+					}
+					case Asc.c_oSpecialPasteProps.sourceformatting: {
+						if (selectedContent2[1]) {
+							pasteObj = selectedContent2[1];
+							nIndex = 1;
+						}
+						break;
+					}
+					case Asc.c_oSpecialPasteProps.picture: {
+						if (selectedContent2[2]) {
+							pasteObj = selectedContent2[2];
+							nIndex = 2;
+						}
+						break;
+					}
+					case Asc.c_oSpecialPasteProps.keepTextOnly: {
+						//в идеале у этом случае нужно использовать данные plain text из буфера обмена
+						//pasteObj = selectedContent2[2];
+						break;
+					}
+				}
+			}
+
+			var arr_Images = pasteObj.images;
+			var fonts = pasteObj.fonts;
+			var presentationSelectedContent = pasteObj.content;
+
+			if (null === presentationSelectedContent) {
+				return null;
+			}
+
+			if (presentationSelectedContent.Drawings && presentationSelectedContent.Drawings.length > 0) {
+				var controller = this.oDocument.GetCurrentController();
+				var curTheme = controller ? controller.getTheme() : null;
+				if (curTheme && curTheme.name === p_theme) {
+					specialOptionsArr.splice(1, 1);
+				}
+			}
+
+			var paste_callback = function () {
+				if (false === oThis.bNested) {
+					var bPaste = presentation.InsertContent2(aContents, nIndex);
+
+
+					presentation.FinalizeAction();
+					presentation.UpdateInterface();
+
+					//пока не показываю значок специальной вставки после copy/paste слайдов
+					var bSlideObjects = aContents[nIndex] && aContents[nIndex].SlideObjects && aContents[nIndex].SlideObjects.length > 0;
+					if (specialOptionsArr.length >= 1 /*&& !bSlideObjects*/ && bPaste) {
+						if (presentationSelectedContent && presentationSelectedContent.DocContent) {
+							specialOptionsArr.push(Asc.c_oSpecialPasteProps.keepTextOnly);
+						}
+
+						oThis._setSpecialPasteShowOptionsPresentation(specialOptionsArr);
+					} else {
+						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+					}
+
+					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
+				}
+			};
+
+			var oObjectsForDownload = GetObjectsForImageDownload(arr_Images, p_url === this.api.documentId);
+			if (oObjectsForDownload.aUrls.length > 0) {
+				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
+					let oImageMap = {};
+					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
+					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
+				}, true);
+			} else {
+				let oImageMap = {};
+				for(let nImg = 0; nImg < arr_Images.length; ++nImg) {
+					oImageMap[nImg] = arr_Images[nImg].Url
+				}
+				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
+			}
+		} else {
+			return null;
+		}
+	},
+
 	//from PRESENTATION to PDF
 	_pasteBinaryFromPresentationToPDF: function (base64, bDuplicate) {
 		let oThis = this;
@@ -5397,7 +5661,7 @@ PasteProcessor.prototype =
 				var countContent = stream.GetULong();
 				for (var i = 0; i < countContent; i++) {
 					if (null === oPDFSelContent) {
-						oPDFSelContent = new AscPDF.PDFSelectedContent();
+						oPDFSelContent = window["AscPDF"] && window["AscPDF"].PDFSelectedContent ? new window["AscPDF"].PDFSelectedContent() : {};
 					}
 					var first_string = stream.GetString2();
 					if ("DocContent" !== first_string) {
@@ -5419,6 +5683,10 @@ PasteProcessor.prototype =
 
 			if (bIsEmptyContent) {
 				oPDFSelContent = null;
+			}
+
+			for (var key in oFontMap) {
+				fonts.push(new CFont(key));
 			}
 
 			return {content: oPDFSelContent, fonts: fonts, images: arr_Images};
