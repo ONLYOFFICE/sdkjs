@@ -1035,9 +1035,11 @@ function(window, undefined) {
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
+				console.log(jump);
 				fCurX += (jump * fInterval);
 				loopsCount++;
 			}
+			console.log("/////////////");
 		}
 
 		this.aLabels = aLabels;
@@ -1292,7 +1294,7 @@ function(window, undefined) {
 				msg = AscFormat.isRealNumber(val) ? msg + val : msg;
 			}
 		}
-		return statement1 || statement2 ? (isDate ? msg : 'string') : 'number'; 
+		return statement2 ? (isDate ? msg : 'string') : 'number'; 
 	}
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {
@@ -1342,32 +1344,51 @@ function(window, undefined) {
 		const nAxisType = oLabelParams.nAxisType;
 		const sDataType = oLabelParams.sDataType;
 		const oStartingDate = oLabelParams.oStartingDate;
-		const startingDay = oLabelParams.oStartingDate ? oStartingDate.getUTCDate() : 0
-		const startingMonth = oLabelParams.oStartingDate ? oStartingDate.getUTCMonth() : 0
-		const startingYear = oLabelParams.oStartingDate ? oStartingDate.getUTCFullYear() : 0
+		const startingDay = oLabelParams.oStartingDate ? oStartingDate.getUTCDate() : 0;
+		const startingMonth = oLabelParams.oStartingDate ? oStartingDate.getUTCMonth() : 0;
+		const startingYear = oLabelParams.oStartingDate ? oStartingDate.getUTCFullYear() : 0;
+
+		const calcYearlyStep = function (yearsCounter) {
+			if (!AscFormat.isRealNumber(yearsCounter) && yearsCounter < 0) {
+				return 366;
+			}
+			let res = 0;
+			for (let i = 0; i < yearsCounter; i++) {
+				const year = 1900 + (loopsCount * yearsCounter) + i + startingYear;
+				const days = isLeap(year) ? 366 : 365;
+				res += days
+			}
+			return res;
+		} 
+
+		const calcMonthlyStep = function (loopsCount, iterations) { 
+			let year = 1700 + Math.floor(loopsCount / 12);
+			let month = (loopsCount + startingMonth) % 12;
+			if (AscFormat.isRealNumber(month)) {
+				const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+				// february can have 28/29 days
+				let skipDays = isLeap(year) && month === 1 ? months[month] + 1 : months[month];
+				const diffDays = startingDay - months[(startingMonth + iterations) % 12];
+				let negOffset = loopsCount === 0  && diffDays > 0 ? diffDays : 0;
+				let posOffset = loopsCount >= iterations && negOffset >= 0 ? months[(month + 1) % 12] - months[month] : 0;
+				// console.log( skipDays, diffDays, negOffset, posOffset);
+				skipDays = skipDays - negOffset + posOffset;
+				// console.log(skipDays);
+				return skipDays;
+			}
+			return 31;
+		}
 
 		if (nAxisType === AscDFH.historyitem_type_DateAx) {
-			const msg = sDataType.split('_');
-			const val = msg.length > 1 ? +msg[1] : null;
 			if (nLblTickSkip % 366 === 0) {
-				const year = 1900 + loopsCount + startingYear;
-				return isLeap(year) ? 366 : 365;
+				return calcYearlyStep(nLblTickSkip / 366);
 			} else if (nLblTickSkip % 31 === 0) {
-				const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-				let year = 1700 + Math.floor(loopsCount / 12);
-				let month = (loopsCount + startingMonth) % 12;
-				if (AscFormat.isRealNumber(month)) {
-					// february can have 28/29 days
-					let skipDays = isLeap(year) && month === 1 ? months[month] + 1 : months[month];
-					const diffDays = startingDay - months[(startingMonth + 1) % 12];
-					let negOffset = loopsCount === 0  && diffDays > 0? diffDays : 0;
-					let posOffset = loopsCount !== 0 && negOffset >= 0 ? months[(month + 1) % 12] - months[month] : 0;
-
-					skipDays = skipDays - negOffset + posOffset;
-					console.log(skipDays);
-					return skipDays;
+				let res = 0;
+				let monthCounter = nLblTickSkip / 31;
+				for (let i = 0; i < monthCounter; i++) {
+					res += calcMonthlyStep((loopsCount * monthCounter) + i, monthCounter);
 				}
-				return 31;
+				return res;
 			} 
 		}
 
@@ -11633,12 +11654,10 @@ function(window, undefined) {
 					return 7;
 				} else if (nLblTickSkip > 7 && nLblTickSkip <= 14) {
 					return 14;
-				} else if (nLblTickSkip > 14 && nLblTickSkip <= 31) {
-					return 31;
-				} else if (nLblTickSkip > 31 && nLblTickSkip <= 62) {
-					return 62;
-				} else if (nLblTickSkip > 62) {
-					return 366;
+				} else if (nLblTickSkip > 14 && nLblTickSkip <= 365) {
+					return Math.ceil(nLblTickSkip / 31) * 31;
+				} else if (nLblTickSkip > 365) {
+					return Math.ceil(nLblTickSkip / 366) * 366;
 				}
 			}
 		}
