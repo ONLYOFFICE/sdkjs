@@ -1035,11 +1035,9 @@ function(window, undefined) {
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
-				console.log(jump);
 				fCurX += (jump * fInterval);
 				loopsCount++;
 			}
-			console.log("/////////////");
 		}
 
 		this.aLabels = aLabels;
@@ -1371,9 +1369,7 @@ function(window, undefined) {
 				const diffDays = startingDay - months[(startingMonth + iterations) % 12];
 				let negOffset = loopsCount === 0  && diffDays > 0 ? diffDays : 0;
 				let posOffset = loopsCount >= iterations && negOffset >= 0 ? months[(month + 1) % 12] - months[month] : 0;
-				// console.log( skipDays, diffDays, negOffset, posOffset);
 				skipDays = skipDays - negOffset + posOffset;
-				// console.log(skipDays);
 				return skipDays;
 			}
 			return 31;
