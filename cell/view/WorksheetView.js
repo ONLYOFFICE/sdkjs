@@ -8520,6 +8520,8 @@
             maxW -= indent * 3 * this.defaultSpaceWidth;
         }
 
+		let needCalculateHeightWithoutWrap = mergeType && fl.wrapText;
+
 		//чтобы грамотно расчитать высоту строки, необходимо знать размер текста в ячейке. если скрыт столбец, то maxW всегда будет 0 и расчёт measureString будет неверным
 		//добавляю следующую заглушку для этого - _getColumnWidthIgnoreHidden
 		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW === 0 ? Math.max(this._getColumnWidthIgnoreHidden(col) - this.settings.cells.padding * 2 - gridlineSize, 0) : maxW));
@@ -8607,6 +8609,7 @@
             }
             textBound.height += 3;
             textBound.dy -= 1.5;
+			needCalculateHeightWithoutWrap = false;
         }
 
         let cache = this._fetchCellCache(col, row);
@@ -8630,7 +8633,13 @@
         if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
-		this._updateRowHeight(cache, row, maxW, colWidth);
+		let tm2;
+		if (needCalculateHeightWithoutWrap) {
+			fl.wrapText = false;
+			tm2 = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW === 0 ? Math.max(this._getColumnWidthIgnoreHidden(col) - this.settings.cells.padding * 2 - gridlineSize, 0) : maxW));
+			fl.wrapText = true;
+		}
+		this._updateRowHeight(cache, row, maxW, colWidth, tm2);
 
         return mc ? mc.c2 : col;
     };
@@ -8680,7 +8689,7 @@
 		rowInfo.descender = d;
 		return th;
 	};
-	WorksheetView.prototype._updateRowHeight = function (cache, row, maxW, colWidth) {
+	WorksheetView.prototype._updateRowHeight = function (cache, row, maxW, colWidth, tm2) {
 		if (this.skipUpdateRowHeight) {
 			return;
 		}
@@ -8689,6 +8698,11 @@
 		//not find a case where the ms does not update the height with the columns merged ans wrap
 		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
+		let tmHeight = tm.height;
+		if (mergeType && cache.flags.wrapText && tm2) {
+			//tm = tm2;
+			tm.height = Math.max(AscCommonExcel.convertPtToPx(this.model.getRowHeight(row)), tm2.height);
+		}
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
 		var rowInfo = this.rows[row];
@@ -8700,6 +8714,8 @@
 				rowInfo.descender = newDescender;
 			}
 		}
+
+		//var isCustomHeight1 = this.model.getRowHeight(row);
 
 		var isCustomHeight = this.model.getRowCustomHeight(row);
 		// update row's height
@@ -8744,6 +8760,7 @@
 				this.isChanged = true;
 			}
 		}
+		tm.height = tmHeight;
 		return res;
 	};
 
