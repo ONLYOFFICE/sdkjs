@@ -14171,10 +14171,10 @@ drawScatterChart.prototype = {
 						//this.paths.series[i][n] = {path: this.cChartDrawer.calculateSplineLine(x, y, x1, y1, x2, y2, x3, y3, this.catAx, this.valAx), idx: points[i][n].idx};
 						this.paths.series[i][n] = this.cChartDrawer.calculateSplineLine(x, y, x1, y1, x2, y2, x3, y3, this.catAx, this.valAx);
 					} else {
-						x = this.cChartDrawer.getYPosition(points[i][n].x, this.catAx);
+						x = this.cChartDrawer.getYPosition(points[i][n].x, this.catAx, true);
 						y = this.cChartDrawer.getYPosition(points[i][n].y, this.valAx, true);
 
-						x1 = this.cChartDrawer.getYPosition(points[i][n + 1].x, this.catAx);
+						x1 = this.cChartDrawer.getYPosition(points[i][n + 1].x, this.catAx, true);
 						y1 = this.cChartDrawer.getYPosition(points[i][n + 1].y, this.valAx, true);
 
 						//this.paths.series[i][n] = {path: this._calculateLine(x, y, x1, y1), idx: points[i][n].idx};
