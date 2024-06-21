@@ -1474,6 +1474,16 @@ function(window, undefined) {
 		}
 		return -1;
 	};
+	CChartSpace.prototype.getSeriesByIdx = function (nSeriesIdx) {
+		let aAllSeries = this.getAllSeries();
+		for(let nIdx = 0; nIdx < aAllSeries.length; ++nIdx) {
+			let oSer = aAllSeries[nIdx];
+			if(oSer.idx === nSeriesIdx) {
+				return oSer;
+			}
+		}
+		return null;
+	};
 	CChartSpace.prototype._getPtArrayIdx = function (oChart, nSeriesIdx, nPtIdx) {
 		var oSeries = oChart.series[this._getSeriesArrayIdx(nSeriesIdx)];
 		if (oSeries) {

@@ -3582,6 +3582,17 @@
 	ApiChart.prototype.constructor = ApiChart;
 
 	/**
+	 * Class representing a chart series.
+	 * @constructor
+	 *
+	 */
+	function ApiChartSeries(oChartSpace, nIdx)
+	{
+		this.ChartSpace = oChartSpace;
+		this.Idx = nIdx;
+	}
+
+	/**
 	 * Class representing a base class for color types.
 	 * @constructor
 	 */
@@ -3866,7 +3877,7 @@
 	 *     "barStackedPercent3DPerspective" | "horizontalBar" | "horizontalBarStacked" | "horizontalBarStackedPercent"
 	 *     | "horizontalBar3D" | "horizontalBarStacked3D" | "horizontalBarStackedPercent3D" | "lineNormal" |
 	 *     "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock" |
-	 *     "area" | "areaStacked" | "areaStackedPercent")} ChartType
+	 *     "area" | "areaStacked" | "areaStackedPercent" | "comboBarLine" | "comboBarLineSecondary" | "comboCustom" | "unknown")} ChartType
 	 */
 
 	/**
@@ -4347,7 +4358,7 @@
 		oChartSpace.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oChartSpace);
 		oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
-		return new ApiChart(oChartSpace);
+		return this.private_CreateApiChart(oChartSpace);
 	};
 
 	/**
@@ -5347,16 +5358,9 @@
 	 */
 	ApiDocumentContent.prototype.GetAllShapes = function()
 	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiShapes;
+		let arrAllDrawing = this.Document.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
 	 * Returns a collection of image objects from the document content.
@@ -5366,16 +5370,9 @@
 	 */
 	ApiDocumentContent.prototype.GetAllImages = function()
 	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiImages  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiImages;
+		let arrAllDrawing = this.Document.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
 	 * Returns a collection of chart objects from the document content.
@@ -5385,16 +5382,9 @@
 	 */
 	ApiDocumentContent.prototype.GetAllCharts = function()
 	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiCharts  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiCharts;
+		let arrAllDrawing = this.Document.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
 	 * Returns a collection of OLE objects from the document content.
@@ -5404,16 +5394,9 @@
 	 */
 	ApiDocumentContent.prototype.GetAllOleObjects = function()
 	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiOleObjects  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
-				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiOleObjects;
+		let arrAllDrawing = this.Document.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
 	 * Returns an array of all paragraphs from the current document content.
@@ -8192,16 +8175,9 @@
 	 */
 	ApiParagraph.prototype.GetAllShapes = function()
 	{
-		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
-		}
-
-		return arrApiShapes;
+		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_Shape,
+			function(oDrawing) {return new ApiShape(oDrawing);});
 	};
 	/**
 	 * Returns a collection of image objects in the paragraph.
@@ -8211,16 +8187,9 @@
 	 */
 	ApiParagraph.prototype.GetAllImages = function()
 	{
-		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		var arrApiImages  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
-		}
-
-		return arrApiImages;
+		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ImageShape,
+			function(oDrawing) {return new ApiImage(oDrawing);});
 	};
 	/**
 	 * Returns a collection of chart objects in the paragraph.
@@ -8230,16 +8199,9 @@
 	 */
 	ApiParagraph.prototype.GetAllCharts = function()
 	{
-		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		var arrApiCharts  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
-		}
-
-		return arrApiCharts;
+		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_ChartSpace,
+			function(oDrawing) {return new ApiChart(oDrawing);});
 	};
 	/**
 	 * Returns a collection of OLE objects in the paragraph.
@@ -8249,16 +8211,9 @@
 	 */
 	ApiParagraph.prototype.GetAllOleObjects = function()
 	{
-		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
-		var arrApiOleObjects  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
-				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
-		}
-
-		return arrApiOleObjects;
+		let arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		return private_GetAllDrawingsWithType(arrAllDrawing, AscDFH.historyitem_type_OleObject,
+			function(oDrawing) {return new ApiOleObject(oDrawing);});
 	};
 	/**
 	 * Returns a content control that contains the current paragraph.
@@ -15329,7 +15284,7 @@
 	/**
 	 * Returns a type of the ApiChart class.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @returns {"chart"}
 	 */
 	ApiChart.prototype.GetClassType = function()
@@ -15337,32 +15292,26 @@
 		return "chart";
 	};
 
-	ApiChart.prototype.CreateTitle = function(sTitle, nFontSize){
+	/**
+	 * Returns a type of the chart object.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @returns {ChartType}
+	 */
+	ApiChart.prototype.GetChartType = function()
+	{
 		if(!this.Chart)
 		{
-			return null;
+			return "unknown";
 		}
-		if(typeof sTitle === "string" && sTitle.length > 0){
-			var oTitle = new AscFormat.CTitle();
-			oTitle.setOverlay(false);
-			oTitle.setTx(new AscFormat.CChartText());
-			var oTextBody = AscFormat.CreateTextBodyFromString(sTitle, this.Chart.getDrawingDocument(), oTitle.tx);
-			if(AscFormat.isRealNumber(nFontSize)){
-				oTextBody.content.SetApplyToAll(true);
-				oTextBody.content.AddToParagraph(new ParaTextPr({ FontSize : nFontSize}));
-				oTextBody.content.SetApplyToAll(false);
-			}
-			oTitle.tx.setRich(oTextBody);
-			return oTitle;
-		}
-		return null;
+		let nType = this.Chart.getChartType();
+		return private_ChartInternalTypeToBuilder(nType);
 	};
-
 
 	/**
 	 *  Specifies the chart title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
@@ -15375,7 +15324,7 @@
 	/**
 	 *  Specifies the chart horizontal axis title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
@@ -15388,7 +15337,7 @@
 	/**
 	 *  Specifies the chart vertical axis title.
 	 *  @memberof ApiChart
-	 *  @typeofeditors ["CDE"]
+	 *  @typeofeditors ["CDE", "CSE", "CPE"]
 	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
@@ -15401,7 +15350,7 @@
 	/**
 	 * Specifies the vertical axis orientation.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
 	 * */
 	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
@@ -15411,7 +15360,7 @@
 	/**
 	 * Specifies the horizontal axis orientation.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
 	 * */
 	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
@@ -15421,7 +15370,7 @@
 	/**
 	 * Specifies the chart legend position.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
 	 * */
 	ApiChart.prototype.SetLegendPos = function(sLegendPos)
@@ -15481,7 +15430,7 @@
 	/**
 	 * Specifies the legend font size.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
 	 * */
 	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
@@ -15492,7 +15441,7 @@
 	/**
 	 * Specifies which chart data labels are shown for the chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
 	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
@@ -15507,7 +15456,7 @@
 	/**
 	 * Spicifies the show options for data labels.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {number} nSeriesIndex - The series index from the array of the data used to build the chart from.
 	 * @param {number} nPointIndex - The point index from this series.
 	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
@@ -15523,7 +15472,7 @@
 	/**
 	 * Spicifies tick labels position for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
 	 * */
 	ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
@@ -15534,7 +15483,7 @@
 	/**
 	 * Spicifies tick labels position for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
 	 * */
 	ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
@@ -15545,7 +15494,7 @@
 	/**
 	 * Specifies major tick mark for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
 	ApiChart.prototype.SetHorAxisMajorTickMark = function(sTickMark){
@@ -15555,7 +15504,7 @@
 	/**
 	 * Specifies minor tick mark for the horizontal axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
 	ApiChart.prototype.SetHorAxisMinorTickMark = function(sTickMark){
@@ -15565,7 +15514,7 @@
 	/**
 	 * Specifies major tick mark for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
 
@@ -15576,7 +15525,7 @@
 	/**
 	 * Specifies minor tick mark for the vertical axis.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
 	ApiChart.prototype.SetVertAxisMinorTickMark = function(sTickMark){
@@ -15586,7 +15535,7 @@
 	/**
 	 * Specifies major vertical gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
 	ApiChart.prototype.SetMajorVerticalGridlines = function(oStroke)
@@ -15597,7 +15546,7 @@
 	/**
 	 * Specifies minor vertical gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
 	ApiChart.prototype.SetMinorVerticalGridlines = function(oStroke)
@@ -15609,7 +15558,7 @@
 	/**
 	 * Specifies major horizontal gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
 	ApiChart.prototype.SetMajorHorizontalGridlines = function(oStroke)
@@ -15620,7 +15569,7 @@
 	/**
 	 * Specifies minor horizontal gridline visual properties.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
 	ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
@@ -16048,6 +15997,100 @@
 	ApiChart.prototype.SetDataPointNumFormat = function(sFormat, nSeria, nDataPoint, bAllSeries)
 	{
 		return this.Chart.SetDataPointNumFormat(sFormat, nSeria, nDataPoint, bAllSeries);
+	};
+
+	/**
+	 * Returns all series from the chart space.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {ApiChartSeries[]}
+	 */
+	ApiChart.prototype.GetAllSeries = function()
+	{
+		if(!this.Chart) return [];
+		let aAllSeries = this.Chart.getAllSeries();
+		let aBuilderSeries = [];
+		for(let nSer = 0; nSer < aAllSeries.length; ++nSer)
+		{
+			let oSer = aAllSeries[nSer];
+			let oBuilderSer = new ApiChartSeries(this.Chart, oSer.idx);
+			aBuilderSeries.push(oBuilderSer);
+		}
+		return aBuilderSeries;
+	};
+	
+	/**
+	 * Returns the series with specific index.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {number} nIdx - Series index.
+	 * @returns {?ApiChartSeries}
+	 */
+	ApiChart.prototype.GetSeries = function(nIdx)
+	{
+		if(!this.Chart) return null;
+		let oSeries = this.Chart.getSeriesByIdx(nIdx);
+		if(!oSeries) return null;
+		return new ApiChartSeries(this.Chart, nIdx);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiChartSeries
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	ApiChartSeries.prototype.private_GetSeries = function()
+	{
+		if(!this.ChartSpace) return null;
+		return this.ChartSpace.getSeriesByIdx(this.Idx);
+	};
+
+	/**
+	 * Returns a type of the ApiChartSeries class.
+	 * @memberof ApiChartSeries
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {"chartSeries"}
+	 */
+	ApiChartSeries.prototype.GetClassType = function()
+	{
+		return "chartSeries";
+	};
+
+	/**
+	 * Tries to change the type of the series. Returns true in case of success.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {ChartType} sType - Series index.
+	 * @returns {boolean}
+	 */
+	ApiChartSeries.prototype.ChangeChartType = function(sType)
+	{
+		let oSeries = this.private_GetSeries();
+		if(!oSeries)
+		{
+			return false;
+		}
+		let nType = AscFormat.ChartBuilderTypeToInternal(sType);
+		let nResult = oSeries.tryChangeChartType(nType);
+		return nResult === Asc.c_oAscError.ID.No;
+	};
+
+	/**
+	 * Returns a chart type of the series.
+	 * @memberof ApiChartSeries
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {ChartType}
+	 */
+	ApiChartSeries.prototype.GetChartType = function()
+	{
+		let oSeries = this.private_GetSeries();
+		if(!oSeries)
+		{
+			return "unknown";
+		}
+		let nType = oSeries.asc_getChartType();
+		return private_ChartInternalTypeToBuilder(nType);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -20820,6 +20863,7 @@
 	ApiShape.prototype["GetPrevShape"]               = ApiShape.prototype.GetPrevShape;
 
 	ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
+	ApiChart.prototype["GetChartType"]                 = ApiChart.prototype.GetChartType;
 	ApiChart.prototype["SetTitle"]                     = ApiChart.prototype.SetTitle;
 	ApiChart.prototype["SetHorAxisTitle"]              = ApiChart.prototype.SetHorAxisTitle;
 	ApiChart.prototype["SetVerAxisTitle"]              = ApiChart.prototype.SetVerAxisTitle;
@@ -20865,6 +20909,8 @@
 	ApiChart.prototype["SetAxieNumFormat"]             =  ApiChart.prototype.SetAxieNumFormat;
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
+	ApiChart.prototype["GetAllSeries"]                 =  ApiChart.prototype.GetAllSeries;
+	ApiChart.prototype["GetSeries"]                    =  ApiChart.prototype.GetSeries;
 
 	ApiOleObject.prototype["GetClassType"]             = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]               = ApiOleObject.prototype.SetData;
@@ -21104,6 +21150,9 @@
 	ApiWatermarkSettings.prototype["GetImageHeight"] =  ApiWatermarkSettings.prototype.GetImageHeight;
 	ApiWatermarkSettings.prototype["SetImageSize"]   =  ApiWatermarkSettings.prototype.SetImageSize;
 
+	ApiChartSeries.prototype["GetClassType"]      =  ApiChartSeries.prototype.GetClassType;
+	ApiChartSeries.prototype["ChangeChartType"]   =  ApiChartSeries.prototype.ChangeChartType;
+	ApiChartSeries.prototype["GetChartType"]      =  ApiChartSeries.prototype.GetChartType;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21143,6 +21192,7 @@
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
+	window['AscBuilder'].ApiChart     = ApiChart;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21780,6 +21830,115 @@
 		return undefined;
 	}
 
+	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
+		let aWrappers = [];
+		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {
+			let oDrawing = aDrawings[nIdx];
+			let oGrObj = oDrawing.GraphicObj;
+			if(oGrObj && oGrObj.getObjectType() === nObjectType) {
+				aWrappers.push(fCreateBuilderWrapper(oGrObj));
+			}
+		}
+		return aWrappers;
+	}
+
+
+	function private_ChartInternalTypeToBuilder(sType) {
+		switch (sType) {
+			case Asc.c_oAscChartTypeSettings.unknown: {
+				return "unknown";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal: {
+				return "bar";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked: {
+				return "barStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer: {
+				return "barStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3d: {
+				return "bar3D";
+			}
+			case Asc.c_oAscChartTypeSettings.barStacked3d: {
+				return "barStacked3D";
+			}
+			case Asc.c_oAscChartTypeSettings.barStackedPer3d: {
+				return "barStackedPercent3D";
+			}
+			case Asc.c_oAscChartTypeSettings.barNormal3dPerspective: {
+				return "barStackedPercent3DPerspective";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal: {
+				return "horizontalBar";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked: {
+				return "horizontalBarStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer: {
+				return "horizontalBarStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarNormal3d: {
+				return "horizontalBar3D";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStacked3d: {
+				return "horizontalBarStacked3D";
+			}
+			case Asc.c_oAscChartTypeSettings.hBarStackedPer3d: {
+				return "horizontalBarStackedPercent3D";
+			}
+			case Asc.c_oAscChartTypeSettings.lineNormal: {
+				return "lineNormal";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStacked: {
+				return "lineStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.lineStackedPer: {
+				return "lineStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.line3d: {
+				return "line3D";
+			}
+			case Asc.c_oAscChartTypeSettings.pie: {
+				return "pie";
+			}
+			case Asc.c_oAscChartTypeSettings.pie3d: {
+				return "pie3D";
+			}
+			case Asc.c_oAscChartTypeSettings.doughnut: {
+				return "doughnut";
+			}
+			case Asc.c_oAscChartTypeSettings.scatter: {
+				return "scatter";
+			}
+			case Asc.c_oAscChartTypeSettings.stock: {
+				return "stock";
+			}
+			case Asc.c_oAscChartTypeSettings.areaNormal: {
+				return "area";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStacked: {
+				return "areaStacked";
+			}
+			case Asc.c_oAscChartTypeSettings.areaStackedPer: {
+				return "areaStackedPercent";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLine: {
+				return "comboBarLine";
+			}
+			case Asc.c_oAscChartTypeSettings.comboBarLineSecondary: {
+				return "comboBarLineSecondary";
+			}
+			case Asc.c_oAscChartTypeSettings.comboCustom: {
+				return "comboCustom";
+			}
+			case Asc.c_oAscChartTypeSettings.comboCustom: {
+				return "comboCustom";
+			}
+		}
+		return "unknown";
+	}
+
 	function logError(err) {
 		if (console.error)
 			console.error(err);
@@ -22310,6 +22469,9 @@
 	};
 	Api.prototype.private_CreateApiComment = function(oComment){
 		return new ApiComment(oComment);
+	};
+	Api.prototype.private_CreateApiChart = function(oChartSpace){
+		return new ApiChart(oChartSpace);
 	};
 
 }(window, null));

@@ -169,17 +169,7 @@
 	ApiImage.prototype = Object.create(ApiDrawing.prototype);
 	ApiImage.prototype.constructor = ApiImage;
 
-	/**
-	 * Class representing a chart.
-	 * @constructor
-	 */
-	function ApiChart(oChart) {
-		ApiDrawing.call(this, oChart);
-		this.Chart = oChart;
-	}
 
-	ApiChart.prototype = Object.create(ApiDrawing.prototype);
-	ApiChart.prototype.constructor = ApiChart;
 
 	/**
 	 * Class representing an OLE object.
@@ -7776,7 +7766,7 @@
 				oChart.setStyle(nStyleIndex);
 			}
 			oChart.recalculateReferences();
-			return new ApiChart(oChart);
+			return Asc.editor.private_CreateApiChart(oChart);
 		};
 
 
@@ -7974,7 +7964,7 @@
 
 		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
 			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()) {
-				allApiDrawings.push(new ApiChart(allDrawings[nDrawing].graphicObject));
+				allApiDrawings.push(Asc.editor.private_CreateApiChart(allDrawings[nDrawing].graphicObject));
 			}
 		}
 		return allApiDrawings;
@@ -10322,270 +10312,20 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * Returns a type of the ApiChart class.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @returns {"chart"}
-	 */
-	ApiChart.prototype.GetClassType = function () {
-		return "chart";
-	};
-
-	/**
-	 *  Specifies the chart title with the specified parameters.
-	 *  @memberof ApiChart
-	 *  @typeofeditors ["CSE"]
-	 *  @param {string} sTitle - The title which will be displayed for the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
-	 */
-	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold) {
-		AscFormat.builder_SetChartTitle(this.Chart, sTitle, nFontSize, bIsBold);
-	};
-
-	/**
-	 *  Specifies the chart horizontal axis title.
-	 *  @memberof ApiChart
-	 *  @typeofeditors ["CSE"]
-	 *  @param {string} sTitle - The title which will be displayed for the horizontal axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
-	 * */
-	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold) {
-		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
-	};
-
-	/**
-	 *  Specifies the chart vertical axis title.
-	 *  @memberof ApiChart
-	 *  @typeofeditors ["CSE"]
-	 *  @param {string} sTitle - The title which will be displayed for the vertical axis of the current chart.
-	 *  @param {pt} nFontSize - The text size value measured in points.
-	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
-	 * */
-	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold) {
-		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
-	};
 
 
-	/**
-	 * Specifies the direction of the data displayed on the vertical axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the vertical axis (from minimum to maximum).
-	 * The <code>false</code> value sets the inverted data direction for the vertical axis (from maximum to minimum).
-	 * */
-	ApiChart.prototype.SetVerAxisOrientation = function (bIsMinMax) {
-		AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
-	};
 
 
-	/**
-	 * Specifies the major tick mark for the horizontal axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * */
-	ApiChart.prototype.SetHorAxisMajorTickMark = function (sTickMark) {
-		AscFormat.builder_SetChartHorAxisMajorTickMark(this.Chart, sTickMark);
-	};
-
-	/**
-	 * Specifies the minor tick mark for the horizontal axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * */
-	ApiChart.prototype.SetHorAxisMinorTickMark = function (sTickMark) {
-		AscFormat.builder_SetChartHorAxisMinorTickMark(this.Chart, sTickMark);
-	};
-
-	/**
-	 * Specifies the major tick mark for the vertical axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * */
-	ApiChart.prototype.SetVertAxisMajorTickMark = function (sTickMark) {
-		AscFormat.builder_SetChartVerAxisMajorTickMark(this.Chart, sTickMark);
-	};
-
-	/**
-	 * Specifies the minor tick mark for the vertical axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickMark} sTickMark - The type of tick mark appearance.
-	 * */
-	ApiChart.prototype.SetVertAxisMinorTickMark = function (sTickMark) {
-		AscFormat.builder_SetChartVerAxisMinorTickMark(this.Chart, sTickMark);
-	};
-
-	/**
-	 * Specifies the direction of the data displayed on the horizontal axis.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the horizontal axis
-	 * (from minimum to maximum). The <code>false</code> value sets the inverted data direction for the horizontal axis (from maximum to minimum).
-	 * */
-	ApiChart.prototype.SetHorAxisOrientation = function (bIsMinMax) {
-		AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
-	};
-
-	/**
-	 * Specifies the chart legend position.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
-	 * */
-	ApiChart.prototype.SetLegendPos = function (sLegendPos) {
-		if (sLegendPos === "left" || sLegendPos === "top" || sLegendPos === "right" || sLegendPos === "bottom" || sLegendPos === "none")
-			AscFormat.builder_SetChartLegendPos(this.Chart, sLegendPos);
-		else
-			AscFormat.builder_SetChartLegendPos(this.Chart, "none");
-	};
-
-	/**
-	 * Specifies the legend font size.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
-	 * */
-	ApiChart.prototype.SetLegendFontSize = function (nFontSize) {
-		AscFormat.builder_SetLegendFontSize(this.Chart, nFontSize);
-	};
-
-	/**
-	 * Specifies which chart data labels are shown for the chart.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
-	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
-	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
-	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
-	 * */
-	ApiChart.prototype.SetShowDataLabels = function (bShowSerName, bShowCatName, bShowVal, bShowPercent) {
-		AscFormat.builder_SetShowDataLabels(this.Chart, bShowSerName, bShowCatName, bShowVal, bShowPercent);
-	};
-
-	/**
-	 * Spicifies the show options for the data labels.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {number} nSeriesIndex - The series index from the array of the data used to build the chart from.
-	 * @param {number} nPointIndex - The point index from this series.
-	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
-	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
-	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
-	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
-	 * */
-	ApiChart.prototype.SetShowPointDataLabel = function (nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
-		AscFormat.builder_SetShowPointDataLabel(this.Chart, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent);
-	};
-
-	/**
-	 * Sets the possible values for the position of the chart tick labels in relation to the main vertical label or the chart data values.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
-	 * */
-	ApiChart.prototype.SetVertAxisTickLabelPosition = function (sTickLabelPosition) {
-		AscFormat.builder_SetChartVertAxisTickLablePosition(this.Chart, sTickLabelPosition);
-	};
-
-	/**
-	 * Sets the possible values for the position of the chart tick labels in relation to the main horizontal label or the chart data values.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
-	 * */
-	ApiChart.prototype.SetHorAxisTickLabelPosition = function (sTickLabelPosition) {
-		AscFormat.builder_SetChartHorAxisTickLablePosition(this.Chart, sTickLabelPosition);
-	};
-
-	/**
-	 * Specifies the visual properties of the major vertical gridline.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * */
-	ApiChart.prototype.SetMajorVerticalGridlines = function (oStroke) {
-		AscFormat.builder_SetVerAxisMajorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
-	};
-
-	/**
-	 * Specifies the visual properties of the minor vertical gridline.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * */
-	ApiChart.prototype.SetMinorVerticalGridlines = function (oStroke) {
-		AscFormat.builder_SetVerAxisMinorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
-	};
 
 
-	/**
-	 * Specifies the visual properties of the major horizontal gridline.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 * */
-	ApiChart.prototype.SetMajorHorizontalGridlines = function (oStroke) {
-		AscFormat.builder_SetHorAxisMajorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
-	};
-
-	/**
-	 * Specifies the visual properties of the minor vertical gridline.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
-	 */
-	ApiChart.prototype.SetMinorHorizontalGridlines = function (oStroke) {
-		AscFormat.builder_SetHorAxisMinorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
-	};
 
 
-	/**
-	 * Specifies the font size to the horizontal axis labels.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
-	 */
-	ApiChart.prototype.SetHorAxisLablesFontSize = function (nFontSize) {
-		AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
-	};
 
-	/**
-	 * Specifies the font size to the vertical axis labels.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CSE"]
-	 * @param {pt} nFontSize - The text size value measured in points.
-	 */
-	ApiChart.prototype.SetVertAxisLablesFontSize = function (nFontSize) {
-		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
-	};
 
-	/**
-	 * Sets a style to the current chart by style ID.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param nStyleId - One of the styles available in the editor.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.ApplyChartStyle = function (nStyleId) {
-		if (typeof (nStyleId) !== "number" || nStyleId < 0)
-			return false;
 
-		var nChartType = this.Chart.getChartType();
-		var aStyle = AscCommon.g_oChartStyles[nChartType] && AscCommon.g_oChartStyles[nChartType][nStyleId];
 
-		if (aStyle) {
-			this.Chart.applyChartStyleByIds(aStyle);
-			return true;
-		}
 
-		return false;
-	};
+	let ApiChart = AscBuilder.ApiChart;
 
 	/**
 	 * Sets values from the specified range to the specified series.
@@ -10666,232 +10406,10 @@
 			this.Chart.addSeries(sNameRange, sValuesRange);
 	};
 
-	/**
-	 * Removes the specified series from the current chart.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {number} nSeria - The index of the chart series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.RemoveSeria = function (nSeria) {
-		return this.Chart.RemoveSeria(nSeria);
-	};
 
-	/**
-	 * Sets the fill to the chart plot area.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetPlotAreaFill = function (oFill) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
 
-		this.Chart.SetPlotAreaFill(oFill.UniFill);
-		return true;
-	};
 
-	/**
-	 * Sets the outline to the chart plot area.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetPlotAreaOutLine = function (oStroke) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
 
-		this.Chart.SetPlotAreaOutLine(oStroke.Ln);
-		return true;
-	};
-
-	/**
-	 * Sets the fill to the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the series.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetSeriesFill = function (oFill, nSeries, bAll) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
-
-		return this.Chart.SetSeriesFill(oFill.UniFill, nSeries, bAll);
-	};
-
-	/**
-	 * Sets the outline to the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetSeriesOutLine = function (oStroke, nSeries, bAll) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
-
-		return this.Chart.SetSeriesOutLine(oStroke.Ln, nSeries, bAll);
-	};
-
-	/**
-	 * Sets the fill to the data point in the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the data point.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
-	 * @param {boolean} [bAllSeries=false] - Specifies if the fill will be applied to the specified data point in all series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetDataPointFill = function (oFill, nSeries, nDataPoint, bAllSeries) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
-
-		return this.Chart.SetDataPointFill(oFill.UniFill, nSeries, nDataPoint, bAllSeries);
-	};
-
-	/**
-	 * Sets the outline to the data point in the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
-	 * @param {boolean} bAllSeries - Specifies if the outline will be applied to the specified data point in all series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetDataPointOutLine = function (oStroke, nSeries, nDataPoint, bAllSeries) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
-
-		return this.Chart.SetDataPointOutLine(oStroke.Ln, nSeries, nDataPoint, bAllSeries);
-	};
-
-	/**
-	 * Sets the fill to the marker in the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the marker.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {number} nMarker - The index of the marker in the specified chart series.
-	 * @param {boolean} [bAllMarkers=false] - Specifies if the fill will be applied to all markers in the specified chart series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetMarkerFill = function (oFill, nSeries, nMarker, bAllMarkers) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
-
-		return this.Chart.SetMarkerFill(oFill.UniFill, nSeries, nMarker, bAllMarkers);
-	};
-
-	/**
-	 * Sets the outline to the marker in the specified chart series.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
-	 * @param {number} nSeries - The index of the chart series.
-	 * @param {number} nMarker - The index of the marker in the specified chart series.
-	 * @param {boolean} [bAllMarkers=false] - Specifies if the outline will be applied to all markers in the specified chart series.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetMarkerOutLine = function (oStroke, nSeries, nMarker, bAllMarkers) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
-
-		return this.Chart.SetMarkerOutLine(oStroke.Ln, nSeries, nMarker, bAllMarkers);
-	};
-
-	/**
-	 * Sets the fill to the chart title.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the title.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetTitleFill = function (oFill) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
-
-		return this.Chart.SetTitleFill(oFill.UniFill);
-	};
-
-	/**
-	 * Sets the outline to the chart title.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetTitleOutLine = function (oStroke) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
-
-		return this.Chart.SetTitleOutLine(oStroke.Ln);
-	};
-
-	/**
-	 * Sets the fill to the chart legend.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiFill} oFill - The fill type used to fill the legend.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetLegendFill = function (oFill) {
-		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
-			return false;
-
-		return this.Chart.SetLegendFill(oFill.UniFill);
-	};
-
-	/**
-	 * Sets the outline to the chart legend.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetLegendOutLine = function (oStroke) {
-		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
-			return false;
-
-		return this.Chart.SetLegendOutLine(oStroke.Ln);
-	};
-
-	/**
-	 * Sets the specified numeric format to the axis values.
-	 * @memberof ApiChart
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
-	 * @param {AxisPos} - Axis position.
-	 * @returns {boolean}
-	 */
-	ApiChart.prototype.SetAxieNumFormat = function (sFormat, sAxiePos) {
-		var nAxiePos = -1;
-		switch (sAxiePos) {
-			case "bottom":
-				nAxiePos = AscFormat.AX_POS_B;
-				break;
-			case "left":
-				nAxiePos = AscFormat.AX_POS_L;
-				break;
-			case "right":
-				nAxiePos = AscFormat.AX_POS_R;
-				break;
-			case "top":
-				nAxiePos = AscFormat.AX_POS_T;
-				break;
-			default:
-				return false;
-		}
-
-		return this.Chart.SetAxieNumFormat(sFormat, nAxiePos);
-	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -13293,52 +12811,13 @@
 	ApiShape.prototype["GetContent"]                   =  ApiShape.prototype.GetContent;
 	ApiShape.prototype["SetVerticalTextAlign"]         =  ApiShape.prototype.SetVerticalTextAlign;
 
-	ApiChart.prototype["GetClassType"]                 =  ApiChart.prototype.GetClassType;
-	ApiChart.prototype["SetTitle"]                     =  ApiChart.prototype.SetTitle;
-	ApiChart.prototype["SetHorAxisTitle"]              =  ApiChart.prototype.SetHorAxisTitle;
-	ApiChart.prototype["SetVerAxisTitle"]              =  ApiChart.prototype.SetVerAxisTitle;
-	ApiChart.prototype["SetVerAxisOrientation"]        =  ApiChart.prototype.SetVerAxisOrientation;
-	ApiChart.prototype["SetHorAxisOrientation"]        =  ApiChart.prototype.SetHorAxisOrientation;
-	ApiChart.prototype["SetLegendPos"]                 =  ApiChart.prototype.SetLegendPos;
-	ApiChart.prototype["SetLegendFontSize"]            =  ApiChart.prototype.SetLegendFontSize;
-	ApiChart.prototype["SetShowDataLabels"]            =  ApiChart.prototype.SetShowDataLabels;
-	ApiChart.prototype["SetShowPointDataLabel"]        =  ApiChart.prototype.SetShowPointDataLabel;
-	ApiChart.prototype["SetVertAxisTickLabelPosition"] =  ApiChart.prototype.SetVertAxisTickLabelPosition;
-	ApiChart.prototype["SetHorAxisTickLabelPosition"]  =  ApiChart.prototype.SetHorAxisTickLabelPosition;
-
-	ApiChart.prototype["SetHorAxisMajorTickMark"]  =  ApiChart.prototype.SetHorAxisMajorTickMark;
-	ApiChart.prototype["SetHorAxisMinorTickMark"]  =  ApiChart.prototype.SetHorAxisMinorTickMark;
-	ApiChart.prototype["SetVertAxisMajorTickMark"]  =  ApiChart.prototype.SetVertAxisMajorTickMark;
-	ApiChart.prototype["SetVertAxisMinorTickMark"]  =  ApiChart.prototype.SetVertAxisMinorTickMark;
 
 
-
-	ApiChart.prototype["SetMajorVerticalGridlines"]   =  ApiChart.prototype.SetMajorVerticalGridlines;
-	ApiChart.prototype["SetMinorVerticalGridlines"]   =  ApiChart.prototype.SetMinorVerticalGridlines;
-	ApiChart.prototype["SetMajorHorizontalGridlines"] =  ApiChart.prototype.SetMajorHorizontalGridlines;
-	ApiChart.prototype["SetMinorHorizontalGridlines"] =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]    =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]   =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["ApplyChartStyle"]             =  ApiChart.prototype.ApplyChartStyle;
 	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
 	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
 	ApiChart.prototype["SetSeriaName"]                =  ApiChart.prototype.SetSeriaName;
 	ApiChart.prototype["SetCatFormula"]               =  ApiChart.prototype.SetCatFormula;
 	ApiChart.prototype["AddSeria"]                    =  ApiChart.prototype.AddSeria;
-	ApiChart.prototype["RemoveSeria"]                 =  ApiChart.prototype.RemoveSeria;
-	ApiChart.prototype["SetPlotAreaFill"]             =  ApiChart.prototype.SetPlotAreaFill;
-	ApiChart.prototype["SetPlotAreaOutLine"]          =  ApiChart.prototype.SetPlotAreaOutLine;
-	ApiChart.prototype["SetSeriesFill"]               =  ApiChart.prototype.SetSeriesFill;
-	ApiChart.prototype["SetSeriesOutLine"]            =  ApiChart.prototype.SetSeriesOutLine;
-	ApiChart.prototype["SetDataPointFill"]            =  ApiChart.prototype.SetDataPointFill;
-	ApiChart.prototype["SetDataPointOutLine"]         =  ApiChart.prototype.SetDataPointOutLine;
-	ApiChart.prototype["SetMarkerFill"]               =  ApiChart.prototype.SetMarkerFill;
-	ApiChart.prototype["SetMarkerOutLine"]            =  ApiChart.prototype.SetMarkerOutLine;
-	ApiChart.prototype["SetTitleFill"]                =  ApiChart.prototype.SetTitleFill;
-	ApiChart.prototype["SetTitleOutLine"]             =  ApiChart.prototype.SetTitleOutLine;
-	ApiChart.prototype["SetLegendFill"]               =  ApiChart.prototype.SetLegendFill;
-	ApiChart.prototype["SetLegendOutLine"]            =  ApiChart.prototype.SetLegendOutLine;
-	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
