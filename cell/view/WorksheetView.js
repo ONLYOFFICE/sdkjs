@@ -8696,16 +8696,26 @@
 			if (cache.angle) {
 				isMergedRows = true;
 			} else {
-				let _rowHeight = AscCommonExcel.convertPtToPx(this.model.getRowHeight(row));
-				let maxHeight = 0;
+				//ms use ht if multitext cell inside and use text 1 line height metrics if not multitext
+				//while such as detect different text settings into 1 cell. probably, need get info from model
+				let textHeight;
 				if (cache.state && cache.state.lines) {
 					for (let i = 0 ; i < cache.state.lines.length; i++) {
-						maxHeight = Math.max(maxHeight, cache.state.lines[i].th);
+						if (!textHeight) {
+							textHeight = cache.state.lines[i].th;
+						} else if (textHeight !== cache.state.lines[i].th) {
+							textHeight = null;
+							break;
+						}
 					}
 				}
-
-				if (maxHeight || (_rowHeight && !isNaN(_rowHeight))) {
-					mergedWrapHeight = Math.max(_rowHeight, maxHeight);
+				if (textHeight) {
+					mergedWrapHeight = textHeight;
+				} else {
+					let _rowHeight = AscCommonExcel.convertPtToPx(this.model.getRowHeight(row));
+					if (_rowHeight && !isNaN(_rowHeight)) {
+						mergedWrapHeight = _rowHeight;
+					}
 				}
 			}
 		}
