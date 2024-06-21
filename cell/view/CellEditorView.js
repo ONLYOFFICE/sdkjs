@@ -1853,14 +1853,14 @@ function (window, undefined) {
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
-		while (i1 < l && s1.charAt(i1) === s2.charAt(i1)) {
+		while (i1 < l && s1[i1] === s2[i1]) {
 			++i1;
 		}
 		i2 = i1 + 1;
 		if (i2 >= l) {
 			i2 = Math.max(s1.length, s2.length);
 		} else {
-			while (i2 < l && s1.charAt(i1) !== s2.charAt(i2)) {
+			while (i2 < l && s1[i1] !== s2[i2]) {
 				++i2;
 			}
 		}
