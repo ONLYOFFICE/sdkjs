@@ -311,6 +311,7 @@
 			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
+			"word/Editor/InsertDocumentFile.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 			"word/Editor/Merge.js",
 

@@ -12535,7 +12535,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_CompareDocumentFile_local = function (oOptions) {
 		var t = this;
-		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file){
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file) {
 			var file = _file;
 			if (Array.isArray(file))
 				file = file[0];
@@ -12626,11 +12626,10 @@ background-repeat: no-repeat;\
 		});
 	};
 
-	asc_docs_api.prototype._ConvertDocument = function (document, fEndCallback) {
-		var stream = null;
-		var oApi = this;
+	asc_docs_api.prototype._ConvertDocuments = function (documents, isUseDirectUrlError, fForEachCallback, fEndCallback) {
+		fEndCallback = fEndCallback || function (api) {};
 		this.insertDocumentUrlsData = {
-			imageMap: null, documents: [document], convertCallback: function (_api, url) {
+			imageMap: null, documents: documents, convertCallback: function (_api, url) {
 				_api.insertDocumentUrlsData.imageMap = url;
 				if (!url['output.bin']) {
 					_api.endInsertDocumentUrls();
@@ -12639,27 +12638,33 @@ background-repeat: no-repeat;\
 					return;
 				}
 				AscCommon.loadFileContent(url['output.bin'], function (httpRequest) {
-					if (null === httpRequest || !(stream = AscCommon.initStreamFromResponse(httpRequest))) {
-						_api.endInsertDocumentUrls();
+					const stream = httpRequest && AscCommon.initStreamFromResponse(httpRequest);
+					if (stream) {
+						fForEachCallback(stream);
+					} else {
 						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 							Asc.c_oAscError.Level.NoCritical);
 						return;
 					}
-					_api.endInsertDocumentUrls();
+					if (_api.insertDocumentUrlsData.documents.length > 0) {
+						const options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
+						options.isNaturalDownload = true;
+						options.isGetTextFromUrl = true;
+						if (isUseDirectUrlError) {
+							options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
+						}
+						_api.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
+					} else {
+						_api.endInsertDocumentUrls();
+					}
 				}, "arraybuffer");
-			}, endCallback: function (_api) {
-
-				if (stream) {
-					fEndCallback(stream);
-					stream = null;
-				}
-			}
+			}, endCallback: fEndCallback
 		};
 
-		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
+		const options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 		options.isNaturalDownload = true;
 		options.isGetTextFromUrl = true;
-		if (document.url) {
+		if (isUseDirectUrlError) {
 			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
@@ -12667,14 +12672,14 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocument(document, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream) {
 			AscCommonWord.CompareBinary(oThis, stream, oOptions);
 		});
 	};
 
 	asc_docs_api.prototype._MergeDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocument(document, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream) {
 			AscCommonWord.mergeBinary(oThis, stream, oOptions);
 		});
 	};
@@ -13994,6 +13999,15 @@ background-repeat: no-repeat;\
 		
 		return logicDocument.Background.getAscColor();
 	};
+
+	asc_docs_api.prototype.asc_insertTextFromFile = function () {
+		const insertDocumentManager = new AscCommonWord.CInsertDocumentManager(this);
+		insertDocumentManager.insertTextFromFile();
+	};
+	asc_docs_api.prototype.asc_insertTextFromUrl = function (url, token) {
+		const insertDocumentManager = new AscCommonWord.CInsertDocumentManager(this);
+		insertDocumentManager.insertTextFromUrl(url, token);
+	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
@@ -14802,6 +14816,9 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype["asc_putPageColor"] = asc_docs_api.prototype.asc_putPageColor;
 	asc_docs_api.prototype["asc_getPageColor"] = asc_docs_api.prototype.asc_getPageColor;
+
+	asc_docs_api.prototype["asc_insertTextFromFile"] = asc_docs_api.prototype.asc_insertTextFromFile;
+	asc_docs_api.prototype["asc_insertTextFromUrl"] = asc_docs_api.prototype.asc_insertTextFromUrl;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

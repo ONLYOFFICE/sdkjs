@@ -8398,13 +8398,13 @@ function BinaryFileReader(doc, openParams)
 
 			var tryAddStyle = function (_stylePaste, _elem, _basedOnElems) {
 				var isEqualName = null, isAlreadyContainsStyle;
-
+				const isDefaultStyleName = oDocumentStyles.IsStyleDefaultByName(_stylePaste.style.GetName(true), true);
 				for (var j in oDocumentStyles.Style) {
 					var styleDoc = oDocumentStyles.Style[j];
-					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style);
+					isAlreadyContainsStyle = styleDoc.isEqual(_stylePaste.style, isDefaultStyleName);
 
 					//TODO пока закомментировал, поскольку всегда добавляем новый стиль
-					if (styleDoc.Name === _stylePaste.style.Name /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
+					if (styleDoc.GetName(isDefaultStyleName) === _stylePaste.style.GetName(isDefaultStyleName) /*|| (styleDoc.Custom === false && stylePaste.style.Custom === false && styleDoc.Name.toLowerCase() === stylePaste.style.Name.toLowerCase())*/) {
 						isEqualName = j;
 					}
 

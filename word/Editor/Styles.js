@@ -609,9 +609,9 @@ CStyle.prototype =
 		this.Name = Value;
 	},
 
-    Get_Name : function()
+    Get_Name : function(isSimplify)
     {
-        return this.Name;
+        return isSimplify ? this.Name.toLowerCase().replace(/\s/g,"") : this.Name;
     },
 
 	Set_BasedOn : function(Value)
@@ -5891,10 +5891,10 @@ CStyle.prototype =
 
     },
 
-    isEqual: function(cStyles)
+    isEqual: function(cStyles, isSimplifyName)
     {
         var result = false;
-        if(this.BasedOn == cStyles.BasedOn && this.Name == cStyles.Name && this.Next == cStyles.Next && this.Type == cStyles.Type && this.hidden == cStyles.hidden)
+        if(this.BasedOn == cStyles.BasedOn && this.GetName(isSimplifyName) == cStyles.GetName(isSimplifyName) && this.Next == cStyles.Next && this.Type == cStyles.Type && this.hidden == cStyles.hidden)
         {
             if(this.qFormat == cStyles.qFormat && this.semiHidden == cStyles.semiHidden && this.uiPriority == cStyles.uiPriority && this.unhideWhenUsed == cStyles.unhideWhenUsed)
             {
@@ -6574,9 +6574,9 @@ CStyle.prototype.GetUnhideWhenUsed = function()
 {
 	return this.unhideWhenUsed;
 };
-CStyle.prototype.GetName = function()
+CStyle.prototype.GetName = function(isSimplify)
 {
-	return this.Get_Name();
+	return this.Get_Name(isSimplify);
 };
 CStyle.prototype.GetBasedOn = function()
 {
@@ -8608,14 +8608,15 @@ CStyles.prototype.GetRelatedStyles = function(styleId)
  * Получаем идентификатор стиля по его имени
  * @param {string} sName
  * @param {boolean} [isReturnParaDefault=false] Возвращать ли дефолтовый стиль для параграфа, если стиль не найден
+ * @param {boolean} [isOnlyCharChecking=false] Проверять ли имя стиля только по символам
  * @returns {?string}
  */
-CStyles.prototype.GetStyleIdByName = function(sName, isReturnParaDefault)
+CStyles.prototype.GetStyleIdByName = function(sName, isReturnParaDefault, isSimplify)
 {
 	for (var sId in this.Style)
 	{
 		var oStyle = this.Style[sId];
-		if (sName === oStyle.GetName())
+		if (sName === oStyle.GetName(isSimplify))
 			return sId;
 	}
 
@@ -8787,9 +8788,9 @@ CStyles.prototype.Remove_AllCustomStylesFromInterface = function()
 		}
 	}
 };
-CStyles.prototype.IsStyleDefaultByName = function(styleName)
+CStyles.prototype.IsStyleDefaultByName = function(styleName, isSimplify)
 {
-	var styleId = this.GetStyleIdByName(styleName);
+	var styleId = this.GetStyleIdByName(styleName, false, isSimplify);
 	if (!styleId)
 		return false;
 

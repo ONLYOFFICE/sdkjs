@@ -2258,8 +2258,8 @@
 			fileName.click();
 		}
 	}
-	function ShowDocumentFileDialog(callback) {
-		if (false === _ShowFileDialog(getAcceptByArray(c_oAscDocumentUploadProp.SupportedFormats), false, false, ValidateUploadDocument, callback)) {
+	function ShowDocumentFileDialog(callback, isAllowMultiple) {
+		if (false === _ShowFileDialog(getAcceptByArray(c_oAscDocumentUploadProp.SupportedFormats), false, !!isAllowMultiple, ValidateUploadDocument, callback)) {
 			callback(Asc.c_oAscError.ID.Unknown);
 		}
 	}
