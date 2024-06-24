@@ -223,11 +223,7 @@
 	};
 
 	CInsertDocumentManager.prototype.pasteData = function (stream) {
-		const api = this.api;
-		const logicDocument = this.getLogicDocument();
-		api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, stream, undefined, undefined, true, function () {
-			logicDocument.MoveCursorRight(false, false, true);
-		}, false);
+		this.api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, stream, undefined, undefined, true, function () {}, false);
 	};
 
 	AscCommonWord.CInsertDocumentManager = CInsertDocumentManager;
