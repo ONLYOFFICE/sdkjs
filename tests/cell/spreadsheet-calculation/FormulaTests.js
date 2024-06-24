@@ -23046,6 +23046,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"INDEX\"", function (assert) {
+		let array;
 
 		ws.getRange2("A651").setValue("1");
 		ws.getRange2("A652").setValue("2");
@@ -23075,7 +23076,7 @@ $(function () {
 
 		oParser = new parserFormula("INDEX(\"Apples\",2,2)", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
 
 		oParser = new parserFormula("INDEX({\"Apples\",\"Lemons\"},,2)", "A2", ws);
 		assert.ok(oParser.parse());
@@ -23171,6 +23172,96 @@ $(function () {
 		oParser = new parserFormula("INDEX(A651:A655,A651,0)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().getValue(), 1);
+
+		// val from arr
+		oParser = new parserFormula('INDEX({"",1,2,3,4,5},1)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "");
+
+		oParser = new parserFormula('INDEX({"",1,2,3,4,5},2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('INDEX({"",1,2,3,4,5},5)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4);
+
+		oParser = new parserFormula('INDEX({1,2,3,4,5},,1)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('INDEX({1,2,3,4,5},,2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('INDEX({1,2,3,4,5},,10)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+
+		oParser = new parserFormula('INDEX({"";1;2;3;4;5},1)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "");
+
+		oParser = new parserFormula('INDEX({"";1;2;3;4;5},5)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 4);
+
+		// arr
+		oParser = new parserFormula('INDEX({"";1;2;3;4;5},,1)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "", 'Result of INDEX({"";1;2;3;4;5},,1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of INDEX({"";1;2;3;4;5},,1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2, 'Result of INDEX({"";1;2;3;4;5},,1)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 3, 'Result of INDEX({"";1;2;3;4;5},,1)[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 4, 'Result of INDEX({"";1;2;3;4;5},,1)[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 5, 'Result of INDEX({"";1;2;3;4;5},,1)[5,0]');
+		
+		oParser = new parserFormula('INDEX({"";1;2;3;4;5},,)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "", 'Result of INDEX({"";1;2;3;4;5},,)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of INDEX({"";1;2;3;4;5},,)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2, 'Result of INDEX({"";1;2;3;4;5},,)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 3, 'Result of INDEX({"";1;2;3;4;5},,)[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 4, 'Result of INDEX({"";1;2;3;4;5},,)[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 5, 'Result of INDEX({"";1;2;3;4;5},,)[5,0]');
+
+		oParser = new parserFormula('INDEX({"";1;2;3;4;5},,55)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+		
+		// arr two dimensional
+		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},,)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "Apples", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "Lemons", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "Apple", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "Lemon", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,)[1,1]');
+
+		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},1,)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "Apples", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},1,)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "Lemons", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},1,)[0,1]');
+
+		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},2,)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "Apple", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},2,)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "Lemon", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},2,)[0,1]');
+
+		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},,1)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "Apples", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "Apple", 'Result of INDEX({"Apples","Lemons";"Apple","Lemon"},,1)[1,0]');
+
+		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},3,2)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+		
 	});
 
 	QUnit.test("Test: \"INDIRECT\"", function (assert) {
