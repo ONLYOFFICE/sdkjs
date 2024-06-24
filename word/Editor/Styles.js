@@ -12248,9 +12248,31 @@ CRFonts.prototype.Is_Equal = function(oRFonts)
 {
 	return this.IsEqual(oRFonts);
 };
-CRFonts.prototype.Compare = function(oRFonts)
+CRFonts.prototype.Compare = function(rFonts)
 {
-	return this.IsEqual(oRFonts);
+	if (!this.private_IsEqual(this.Ascii, rFonts.Ascii))
+		this.Ascii = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.EastAsia, rFonts.EastAsia))
+		this.EastAsia = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.HAnsi, rFonts.HAnsi))
+		this.HAnsi = {Name : undefined, Index : -1};
+	
+	if (!this.private_IsEqual(this.CS, rFonts.CS))
+		this.CS = {Name : undefined, Index : -1};
+	
+	if (this.AsciiTheme !== rFonts.AsciiTheme)
+		this.AsciiTheme = undefined;
+	
+	if (this.EastAsiaTheme !== rFonts.EastAsiaTheme)
+		this.EastAsiaTheme = undefined;
+	
+	if (this.HAnsiTheme !== rFonts.HAnsiTheme)
+		this.HAnsiTheme = undefined;
+	
+	if (this.CSTheme !== rFonts.CSTheme)
+		this.CSTheme = undefined;
 };
 CRFonts.prototype.Write_ToBinary = function(oWriter)
 {
@@ -15703,6 +15725,7 @@ CCalculatedFrame.prototype.GetFramePr = function()
 
 function CParaPr()
 {
+	this.Bidi              = undefined;
 	this.ContextualSpacing = undefined;          // Удалять ли интервал между параграфами одинакового стиля
 	this.Ind               = new CParaInd();     // Отступы
 	this.Jc                = undefined;          // Прилегание параграфа
@@ -15747,6 +15770,7 @@ CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 {
 	var ParaPr = new CParaPr();
 
+	ParaPr.Bidi = this.Bidi;
 	ParaPr.ContextualSpacing = this.ContextualSpacing;
 
 	if (undefined != this.Ind)
@@ -15863,6 +15887,9 @@ CParaPr.prototype.createDuplicateForSmartArt = function (bCopyPrChange, oPr) {
 };
 CParaPr.prototype.Merge = function(ParaPr)
 {
+	if (undefined !== ParaPr.Bidi)
+		this.Bidi = ParaPr.Bidi;
+	
 	if (undefined != ParaPr.ContextualSpacing)
 		this.ContextualSpacing = ParaPr.ContextualSpacing;
 
@@ -16013,6 +16040,7 @@ CParaPr.prototype.Merge = function(ParaPr)
 };
 CParaPr.prototype.InitDefault = function(nCompatibilityMode)
 {
+	this.Bidi                      = false;
 	this.ContextualSpacing         = false;
 	this.Ind                       = new CParaInd();
 	this.Ind.Left                  = 0;
@@ -16054,6 +16082,7 @@ CParaPr.prototype.InitDefault = function(nCompatibilityMode)
 };
 CParaPr.prototype.Set_FromObject = function(ParaPr)
 {
+	this.Bidi              = ParaPr.Bidi;
 	this.ContextualSpacing = ParaPr.ContextualSpacing;
 
 	this.Ind = new CParaInd();
@@ -16186,6 +16215,9 @@ CParaPr.prototype.Compare = function(ParaPr)
 	// При сравнении добавляем 1 элемент Locked
 	var Result_ParaPr    = new CParaPr();
 	Result_ParaPr.Locked = false;
+	
+	if (ParaPr.Bidi === this.Bidi)
+		Result_ParaPr.Bidi = ParaPr.Bidi;
 
 	if (ParaPr.ContextualSpacing === this.ContextualSpacing)
 		Result_ParaPr.ContextualSpacing = ParaPr.ContextualSpacing;
@@ -16466,6 +16498,12 @@ CParaPr.prototype.Write_ToBinary = function(Writer)
 		Writer.WriteBool(this.SuppressLineNumbers);
 		Flags |= 16777216;
 	}
+	
+	if (undefined !== this.Bidi)
+	{
+		Writer.WriteBool(this.Bidi);
+		Flags |= (1 << 25);
+	}
 
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
@@ -16598,6 +16636,9 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 16777216)
 		this.SuppressLineNumbers = Reader.GetBool();
+	
+	if (Flags & (1 << 25))
+		this.Bidi = Reader.GetBool();
 };
 CParaPr.prototype.isEqual = function(ParaPrUOld,ParaPrNew)
 {
@@ -16644,7 +16685,9 @@ CParaPr.prototype.Is_Equal = function(ParaPr)
 		|| this.PStyle !== ParaPr.PStyle
 		|| true !== IsEqualStyleObjects(this.FramePr, ParaPr.FramePr)
 		|| this.OutlineLvl !== ParaPr.OutlineLvl
-		|| this.SuppressLineNumbers !== ParaPr.SuppressLineNumbers);
+		|| this.SuppressLineNumbers !== ParaPr.SuppressLineNumbers
+		|| this.Bidi !== ParaPr.Bidi
+	);
 };
 CParaPr.prototype.IsEqual = function(paraPr)
 {
@@ -16721,6 +16764,9 @@ CParaPr.prototype.GetDiff = function(oParaPr)
 
 	if (this.SuppressLineNumbers !== oParaPr.SuppressLineNumbers)
 		oResultParaPr.SuppressLineNumbers = this.SuppressLineNumbers;
+	
+	if (this.Bidi !== oParaPr.Bidi)
+		oResultParaPr.Bidi = this.Bidi;
 
 	return oResultParaPr;
 };
@@ -16852,7 +16898,9 @@ CParaPr.prototype.Is_Empty = function(oPr)
 		|| undefined !== this.NumPr
 		|| undefined !== this.PStyle
 		|| undefined !== this.OutlineLvl
-		|| undefined !== this.SuppressLineNumbers);
+		|| undefined !== this.SuppressLineNumbers
+		|| undefined !== this.Bidi
+	);
 };
 CParaPr.prototype.IsEmpty = function()
 {
@@ -16943,6 +16991,14 @@ CParaPr.prototype.RemovePrChange = function()
 {
 	delete this.PrChange;
 	delete this.ReviewInfo;
+};
+CParaPr.prototype.GetBidi = function()
+{
+	return this.Bidi;
+};
+CParaPr.prototype.SetBidi = function(isBidi)
+{
+	this.Bidi = isBidi;
 };
 CParaPr.prototype.GetContextualSpacing = function()
 {
@@ -17136,6 +17192,8 @@ CParaPr.prototype.CheckBorderSpaces = function()
 //----------------------------------------------------------------------------------------------------------------------
 // CParaPr Export
 //----------------------------------------------------------------------------------------------------------------------
+CParaPr.prototype['get_Bidi']                     = CParaPr.prototype.get_Bidi                     = CParaPr.prototype['Get_Bidi']                     = CParaPr.prototype.GetBidi;
+CParaPr.prototype['put_Bidi']                     = CParaPr.prototype.put_Bidi                     = CParaPr.prototype.SetBidi;
 CParaPr.prototype['get_ContextualSpacing']        = CParaPr.prototype.get_ContextualSpacing        = CParaPr.prototype['Get_ContextualSpacing']        = CParaPr.prototype.GetContextualSpacing;
 CParaPr.prototype['put_ContextualSpacing']        = CParaPr.prototype.put_ContextualSpacing        = CParaPr.prototype.SetContextualSpacing;
 CParaPr.prototype['get_IndLeft']                  = CParaPr.prototype.get_IndLeft                  = CParaPr.prototype['Get_IndLeft']                  = CParaPr.prototype.GetIndLeft;

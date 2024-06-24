@@ -7139,10 +7139,9 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{};
 	oThis.Init = function ()
 	{
-		//var oHtmlElem = oThis.GetHtmlElement();
-		//oHtmlElem.onmousedown = oThis.onMouseDown;
-		//oHtmlElem.onmousemove = oThis.onMouseMove;
-		//oHtmlElem.onmouseup =  oThis.onMouseUp;
+
+		var oHtmlElem = oThis.GetHtmlElement();
+		AscCommon.addMouseEvent(oHtmlElem, "up", oThis.onMouseUp);
 		oThis.CheckSubscribeMouseWheel();
 	};
 	oThis.GetCurrentSlideNumber = function ()
@@ -7579,9 +7578,10 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.timeline.Init();
 
 		var oHtmlElem = oThis.GetHtmlElement();
-		oHtmlElem.onmousedown = oThis.onMouseDown;
-		oHtmlElem.onmousemove = oThis.onMouseMove;
-		oHtmlElem.onmouseup = oThis.onMouseUp;
+
+		AscCommon.addMouseEvent(oHtmlElem, "down", oThis.onMouseDown);
+		AscCommon.addMouseEvent(oHtmlElem, "move", oThis.onMouseMove);
+		AscCommon.addMouseEvent(oHtmlElem, "up", oThis.onMouseUp);
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
 			// Here we need to check if all animEffects havent been changed
@@ -7719,12 +7719,10 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.onMouseUp = function (e)
 	{
-		oThis.header.onMouseUp(e);
-		oThis.list.onMouseUp(e);
-		oThis.timeline.onMouseUp(e);
 	};
 	oThis.onMouseWhell = function(e)
 	{
+		return oThis.list.onMouseWhell(e);
 	};
 	oThis.onSelectWheel = function()
 	{
@@ -7744,10 +7742,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.list.CheckPaint();
 		oThis.timeline.CheckPaint();
 	};
-	oThis.onMouseWhell = function(e)
-	{
-		return oThis.list.onMouseWhell(e);
-	};
 
 	oThis.UpdateState = function () {
 		if (!oThis.header.Control) { return }
@@ -7756,7 +7750,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 		// TODO: oThis.list.UpdateState();
 		oThis.timeline.UpdateState();
 	};
-
 	oThis.SetCursorType = function(sType, Data) {
 		let elem = this.HtmlElement;
 		// if (Asc.editor.WordControl.DemonstrationManager.Mode)

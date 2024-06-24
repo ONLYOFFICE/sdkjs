@@ -1120,7 +1120,7 @@
 	asc_docs_api.prototype.getSelectedElements             = function(bUpdate)
 	{
 		if (true === bUpdate)
-			this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState(true);
 
 		return this.SelectedObjectsStack;
 	};
@@ -2774,10 +2774,25 @@ background-repeat: no-repeat;\
 		}
 		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
+		let isCloudLocal = false;
+		if (this.isUseNativeViewer && this.isDocumentRenderer()) {
+			isCloudLocal = this.isCloudSaveAsLocalToDrawingFormat(Asc.c_oAscAsyncAction.DownloadAs, Asc.c_oAscFileType.PDF);
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+			if (!changes && isCloudLocal)
+				window["AscDesktopEditor"]["emulateCloudPrinting"](false);
+		}
 
 		if (changes) {
+			if (isCloudLocal) {
+				this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+				this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
+
+				window["AscDesktopEditor"]["localSaveToDrawingFormat2"](this.documentTitle, this.DocumentUrl || "", "",
+					AscCommon.Base64.encode(changes), AscCommon.Base64.encode(this.DocumentRenderer.getFileNativeBinary()), this.currentPassword || "");
+
+				return true;
+			}
+
 			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
@@ -10951,19 +10966,21 @@ background-repeat: no-repeat;\
 				}, false, oLogicDocument.IsFormFieldEditing());
 			}
 		}
-
-		if (!isLocked)
-		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlListPr);
-			oContentControl.ApplyDatePickerPr(oPr, updateDate);
-			oLogicDocument.Recalculate();
-			oLogicDocument.UpdateInterface();
-			oLogicDocument.UpdateTracks();
-			oLogicDocument.FinalizeAction();
-		}
 		
 		oContentControl.SkipSpecialContentControlLock(false);
 		oContentControl.SkipFillingFormModeCheck(false);
+		
+		if (isLocked)
+			return;
+		
+		oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlListPr);
+		oContentControl.ApplyDatePickerPr(oPr, updateDate);
+		oContentControl.MoveCursorToContentControl(false);
+		oLogicDocument.Recalculate();
+		oLogicDocument.UpdateInterface();
+		oLogicDocument.UpdateTracks();
+		oLogicDocument.UpdateSelection();
+		oLogicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.asc_SetContentControlDatePickerDate = function(oPr, sId)
 	{

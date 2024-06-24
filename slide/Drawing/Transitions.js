@@ -233,11 +233,21 @@ function CTransitionAnimation(htmlpage)
 
     this.GetSlide = function(nIdx)
     {
-        return this.GetPresentation().Slides[nIdx];
+        let oPresentation = this.GetPresentation();
+        if(oPresentation)
+        {
+            return oPresentation.Slides[nIdx];
+        }
+        return null;
     };
     this.GetSlidesCount = function()
     {
-        return this.GetPresentation().Slides.length;
+        let oPresentation = this.GetPresentation();
+        if(oPresentation)
+        {
+            return oPresentation.Slides.length;
+        }
+        return 0;
     };
 
     this.StopIfPlaying = function()

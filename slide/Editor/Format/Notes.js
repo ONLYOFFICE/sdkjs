@@ -341,6 +341,12 @@
         }
         return AscFormat.GetDefaultColorMap();
     };
+    CNotes.prototype.IsUseInDocument = function() {
+        if(this.slide){
+            return this.slide.IsUseInDocument();
+        }
+        return false;
+    };
 
     function CreateNotes(){
         var oN = new CNotes();

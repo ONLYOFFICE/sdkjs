@@ -54,7 +54,10 @@ CShape.prototype.IsUseInDocument = function()
     if(this.parent && this.parent.cSld){
         var aSpTree = this.parent.cSld.spTree;
         for(var i = 0; i < aSpTree.length; ++i){
-            if(aSpTree[i] === this){
+            if(aSpTree[i] === this) {
+                if(this.parent.IsUseInDocument) {
+                    return this.parent.IsUseInDocument();
+                }
                 return true;
             }
         }
@@ -64,7 +67,7 @@ CShape.prototype.IsUseInDocument = function()
 
 CShape.prototype.getDrawingObjectsController = function()
 {
-    if(this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide ||  this.parent.getObjectType() === AscDFH.historyitem_type_Notes))
+    if(this.parent && (AscFormat.isSlideLikeObject(this.parent) ||  this.parent.getObjectType() === AscDFH.historyitem_type_Notes))
     {
         return this.parent.graphicObjects;
     }
@@ -86,26 +89,29 @@ function editorAddToDrawingObjects(oGraphicObject, pos, type)
     function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder)
     {
         let oSlide = oGraphicObject.parent;
-        if(oSlide && oSlide.cSld && oSlide.cSld.spTree)
+        if(AscFormat.isSlideLikeObject(oSlide))
         {
-            var pos = oSlide.removeFromSpTreeById(oGraphicObject.Id);
-            var phType = oGraphicObject.getPlaceholderType();
-            if(bCheckPlaceholder && oGraphicObject.isPlaceholder() && !oGraphicObject.isEmptyPlaceholder()
-                && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
-                && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt )
+            let pos = oSlide.removeFromSpTreeById(oGraphicObject.Id);
+            let phType = oGraphicObject.getPlaceholderType();
+            if (oSlide.getObjectType() === AscDFH.historyitem_type_Slide)
             {
-                var hierarchy = oGraphicObject.getHierarchy();
-                if(hierarchy[0])
+                if(bCheckPlaceholder && oGraphicObject.isPlaceholder() && !oGraphicObject.isEmptyPlaceholder()
+                    && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
+                    && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt)
                 {
-                    var copy = hierarchy[0].copy(undefined);
-                    copy.setParent(oSlide);
-                    copy.addToDrawingObjects(pos);
-                    var doc_content = copy.getDocContent && copy.getDocContent();
-                    if(doc_content)
+                    let hierarchy = oGraphicObject.getHierarchy();
+                    if(hierarchy[0])
                     {
-                        doc_content.SetApplyToAll(true);
-                        doc_content.Remove(-1);
-                        doc_content.SetApplyToAll(false);
+                        var copy = hierarchy[0].copy(undefined);
+                        copy.setParent(oSlide);
+                        copy.addToDrawingObjects(pos);
+                        var doc_content = copy.getDocContent && copy.getDocContent();
+                        if(doc_content)
+                        {
+                            doc_content.SetApplyToAll(true);
+                            doc_content.Remove(-1);
+                            doc_content.SetApplyToAll(false);
+                        }
                     }
                 }
             }

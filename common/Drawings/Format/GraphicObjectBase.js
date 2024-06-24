@@ -1051,10 +1051,25 @@
 		}
 	};
 	CGraphicObjectBase.prototype.getOuterShdw = function () {
-		if (this.spPr && this.spPr.effectProps && this.spPr.effectProps.EffectLst && this.spPr.effectProps.EffectLst.outerShdw) {
-			return this.spPr.effectProps.EffectLst.outerShdw;
+		let outerShdw = null;
+		if (this.spPr) {
+			outerShdw = this.spPr.getOuterShdw();
 		}
-		return null;
+		if(!outerShdw) {
+			if(this.getHierarchy) {
+				let aHierarchy = this.getHierarchy();
+				for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
+					let oDrawing = aHierarchy[nIdx];
+					if(oDrawing) {
+						outerShdw = oDrawing.getOuterShdw();
+						if(outerShdw) {
+							break;
+						}
+					}
+				}
+			}
+		}
+		return outerShdw;
 	};
 	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
 		const oShdw = this.getOuterShdw();
@@ -1199,6 +1214,11 @@
 			return isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph);
 		}
 		return false;
+	};
+	CGraphicObjectBase.prototype.getHierarchy = function () {
+		return [];
+	};
+	CGraphicObjectBase.prototype.recalculate = function () {
 	};
 
 	CGraphicObjectBase.prototype.drawShdw = function (graphics) {
@@ -2761,10 +2781,11 @@
 	};
 	CGraphicObjectBase.prototype.createPlaceholderControl = function (aControls) {
 
-		if(!this.parent) return;
-		if(!this.parent.getObjectType) return;
+		let nParentType = null;
+		if(this.parent && this.parent.getObjectType) {
+			nParentType = this.parent.getObjectType();
+		}
 		let bCanAdd = false;
-		let nParentType = this.parent.getObjectType();
 		if(this.isPlaceholder() &&
 			(nParentType === AscDFH.historyitem_type_SlideMaster || nParentType === AscDFH.historyitem_type_SlideLayout)) {
 			bCanAdd = true;
@@ -2811,6 +2832,7 @@
 				break;
 			}
 			case AscFormat.phType_dgm: {
+				aButtons.push(AscCommon.PlaceholderButtonType.SmartArt);
 				break;
 			}
 			case AscFormat.phType_dt: {
@@ -2867,10 +2889,7 @@
 			}
 		}
 		var nPageNum;
-		if (this.parent && this.parent.getObjectType
-			&& (this.parent.getObjectType() === AscDFH.historyitem_type_Slide
-				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout
-				|| this.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster )) {
+		if (AscFormat.isSlideLikeObject(this.parent)) {
 			nPageNum = this.getParentNum();
 		} else if (this.worksheet) {
 			nPageNum = this.worksheet.workbook && this.worksheet.workbook.nActive;
@@ -3671,6 +3690,18 @@
 		}
 		this.ResetParametersWithResize(true);
 		this.checkDrawingBaseCoords();
+	};
+	CGraphicObjectBase.prototype.checkPlaceholders = function(oPlaceholders) {
+		let aHierarchy = this.getHierarchy();
+		for(let nIdx = 0; nIdx < aHierarchy.length; ++nIdx) {
+			let oDrawing = aHierarchy[nIdx];
+			if(oDrawing && oPlaceholders[oDrawing.Id]) {
+				this.setRecalculateInfo();
+				this.recalculate();
+				return true;
+			}
+		}
+		return false;
 	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;

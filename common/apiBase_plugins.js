@@ -152,7 +152,7 @@
 
 	/**
 	 * The OLE object properties
-	 * @typed {Object} OLEProperties
+	 * @typedef {Object} OLEProperties
 	 * @property {string} data - OLE object data (internal format).
 	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
 	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.

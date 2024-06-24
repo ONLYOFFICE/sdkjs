@@ -61,6 +61,7 @@ var AscCommonSlide = {};
 var AscBuilder = {};
 var AscWord = {};
 var AscJsonConverter = {};
+var AscBidi = {};
 
 function Image()
 {

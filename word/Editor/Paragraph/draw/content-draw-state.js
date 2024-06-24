@@ -62,8 +62,6 @@
 		this.X = 0;
 		this.Y = 0;
 		
-		this.rtl = false;
-		
 		this.LineTop    = 0;
 		this.LineBottom = 0;
 		this.BaseLine   = 0;
@@ -82,7 +80,6 @@
 		this.mathTextInfo = null;
 		this.paraMath     = null;
 		
-		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphContentDrawState.prototype.init = function()
@@ -121,7 +118,7 @@
 		this.Range = range;
 		
 		this.X = x;
-		this.bidiFlow.begin(this.rtl);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 	};
 	ParagraphContentDrawState.prototype.endRange = function()
 	{
@@ -359,7 +356,7 @@
 		}
 		
 		paraMark.Draw(this.X, y - this.yOffset, this.Graphics);
-		this.X += paraMark.GetWidth();
+		this.X += paraMark.GetWidthVisible();
 	};
 	/**
 	 * @param element {CMathText | CMathAmp}

@@ -1078,7 +1078,7 @@
 		};
 
 	asc_docs_api.prototype.isMasterMode = function() {
-		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide;
+		return this.presentationViewMode === Asc.c_oAscPresentationViewMode.masterSlide && !this.isSlideShow();
 	};
 
 	asc_docs_api.prototype.asc_AddMasterSlide = function() {
@@ -1691,6 +1691,7 @@ background-repeat: no-repeat;\
 
 		if (this.WordControl && this.WordControl.m_oBody)
 			this.WordControl.OnResize(true);
+
 	};
 
 	asc_docs_api.prototype.initDefaultShortcuts = function()
@@ -5468,6 +5469,11 @@ background-repeat: no-repeat;\
 
 		if (isFromInput !== true && AscCommon.g_inputContext)
 			AscCommon.g_inputContext.setInterfaceEnableKeyEvents(value);
+
+		if(!value)
+		{
+			this.asc_hideMediaControl();
+		}
 	};
 
 
@@ -6539,7 +6545,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_DeleteMaster    = function()
 	{
-		this.DeleteSlide();
+		this.WordControl.m_oLogicDocument.deleteMaster();
 	};
 	asc_docs_api.prototype.asc_DeleteLayout    = function()
 	{
@@ -6814,12 +6820,20 @@ background-repeat: no-repeat;\
 	//-----------------------------------------------------------------
 	asc_docs_api.prototype.can_AddHyperlink = function()
 	{
-		//if ( true === CollaborativeEditing.Get_GlobalLock() )
-		//    return false;
-
-		var bCanAdd = this.WordControl.m_oLogicDocument.CanAddHyperlink(true);
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation) return false;
+		var bCanAdd = oPresentation.CanAddHyperlink(true);
 		if (true === bCanAdd)
-			return this.WordControl.m_oLogicDocument.GetSelectedText(true);
+		{
+			let oController = oPresentation.GetCurrentController();
+			if(!oController)
+			{
+				return null;
+			}
+			let oTargetContent = oController.getTargetDocContent();
+			if(!oTargetContent) return null;
+			return oPresentation.GetSelectedText(true);
+		}
 
 		return false;
 	};
@@ -7805,8 +7819,11 @@ background-repeat: no-repeat;\
 	{
 		if (data["translate"])
 			this.translateManager = AscCommon.translateManager.init(data["translate"]);
-		if (data["skin"])
+		if (data["skin"]) {
+			let oSkin = data["skin"];
+			oSkin.SupportNotes = true;
 			this.asc_setSkin(data["skin"]);
+		}
 
 		this.reporterTranslates = [data["translations"]["reset"], data["translations"]["slideOf"], data["translations"]["endSlideshow"], data["translations"]["finalMessage"]];
 
@@ -7844,6 +7861,7 @@ background-repeat: no-repeat;\
 			_button2.innerHTML = this.reporterTranslates[2];
 			this.WordControl.OnResizeReporter();
 		}
+		this.WordControl.UpdateBottomControlsParams();
 	};
 
 	asc_docs_api.prototype.sendToReporter = function(value)

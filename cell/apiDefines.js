@@ -365,7 +365,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     sheetRename: 4,
     sheetChangeIndex: 5,
     markModifiedSearch: 6,
-    mergeRange: 7
+    mergeRange: 7,
+    removeRows: 8
   };
 
   var c_oAscLockNameFrozenPane = "frozenPane";

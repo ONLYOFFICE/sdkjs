@@ -4816,11 +4816,12 @@ _func[cElementType.string][cElementType.number] = function ( arg0, arg1, what ) 
 };
 
 _func[cElementType.string][cElementType.string] = function ( arg0, arg1, what ) {
+	//TODO need change opt_return_bool. for example >  change on props -> .returnBool & .useLowerCase & ...
 	let opt_return_bool = arguments[5];
 	let res = null;
 
 	let isEqualStrings = function (str1, str2) {
-		return str1 === str2;
+		return opt_return_bool ? str1 === str2 : str1.toLowerCase() === str2.toLowerCase();
 	};
 
 	let _arg0, _arg1;

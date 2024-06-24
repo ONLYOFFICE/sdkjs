@@ -16161,6 +16161,24 @@
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerColor(this.Unicolor));
 	};
+	/**
+	 * Returns a color value in RGB format.
+	 * @memberof ApiUniColor
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 */
+	ApiUniColor.prototype.GetRGB = function()
+	{
+		if (!this.Unicolor || !this.Unicolor.RGBA)
+			return 0;
+		
+		let logicDocument = private_GetLogicDocument();
+		if (this.Unicolor.check && logicDocument)
+			this.Unicolor.check(logicDocument.GetTheme(), logicDocument.GetColorMap());
+		
+		let c = this.Unicolor.RGBA;
+		return (c.R << 16) | (c.G << 8) | c.B;
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -16800,10 +16818,11 @@
 	};
 	
 	/**
-	 * Place cursor before/after the current content control
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current content control.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @since 8.1.0
 	 */
 	ApiInlineLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
@@ -17860,10 +17879,11 @@
 	};
 	
 	/**
-	 * Place cursor before/after the current content control
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current content control.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
+	 * @since 8.1.0
 	 */
 	ApiBlockLvlSdt.prototype.MoveCursorOutside = function(isAfter)
 	{
@@ -18231,10 +18251,11 @@
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
 	};
 	/**
-	 * Place cursor before/after the current form.
-	 * @param {boolean?} [isAfter=true]
+	 * Places a cursor before/after the current form.
+	 * @param {boolean?} [isAfter=true] - Specifies whether a cursor will be placed before (false) or after (true) the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @since 8.1.0
 	 */
 	ApiFormBase.prototype.MoveCursorOutside = function(isAfter)
 	{
@@ -20862,6 +20883,7 @@
 
 	ApiUniColor.prototype["GetClassType"]            = ApiUniColor.prototype.GetClassType;
 	ApiUniColor.prototype["ToJSON"]                  = ApiUniColor.prototype.ToJSON;
+	ApiUniColor.prototype["GetRGB"]                  = ApiUniColor.prototype.GetRGB;
 
 	ApiRGBColor.prototype["GetClassType"]            = ApiRGBColor.prototype.GetClassType;
 	ApiRGBColor.prototype["ToJSON"]                  = ApiRGBColor.prototype.ToJSON;

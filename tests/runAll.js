@@ -60,6 +60,7 @@ const allTests = [
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
 	'word/plugins/pluginsApi.html',
+	'word/revisions/document-content.html',
 	'word/revisions/paragraph.html',
 	'word/merge-documents/mergeDocuments.html',
 

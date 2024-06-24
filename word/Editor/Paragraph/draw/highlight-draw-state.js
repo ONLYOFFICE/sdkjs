@@ -92,7 +92,6 @@
 		
 		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		
-		this.rtl = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		
 		this.run       = null;
@@ -149,7 +148,7 @@
 		this.checkNumbering();
 		
 		this.spaces = spaceCount;
-		this.bidiFlow.begin(this.rtl);
+		this.bidiFlow.begin(this.Paragraph.isRtlDirection());
 		
 		this.InlineSdt = [];
 		

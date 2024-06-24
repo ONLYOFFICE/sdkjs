@@ -6137,6 +6137,9 @@
 			case AscCommonExcel.docChangedType.rangeValues:
 				this.changeRangeValue(arg1, arg2);
 				break;
+			case AscCommonExcel.docChangedType.removeRows:
+				this.changeRemoveRows(arg1, arg2);
+				break;
 			case AscCommonExcel.docChangedType.sheetContent:
 				this.changeSheetContent(arg1, arg2);
 				break;
@@ -6169,6 +6172,22 @@
 			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.changeRemoveRows = function (ws, range) {
+		if (this.isNotEmpty()) {
+			for (let i in this.Elements) {
+				if (this.Elements[i].index === ws.index && this.Elements[i].row > range.r2) {
+					let keyOld = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+
+					this.Elements[i].row = this.Elements[i].row - (range.r2 - range.r1 + 1);
+
+					let keyNew = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let oldId = this.mapFindCells[keyOld];
+					delete this.mapFindCells[keyOld];
+					this.mapFindCells[keyNew] = oldId;
+				}
 			}
 		}
 	};

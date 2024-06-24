@@ -18802,6 +18802,10 @@ Paragraph.prototype.getLayoutFontSizeCoefficient = function()
 	
 	return logicDocument.GetDocumentLayout().GetFontScale();
 };
+Paragraph.prototype.isRtlDirection = function()
+{
+	return !!this.Get_CompiledPr2(false).ParaPr.Bidi;
+};
 
 Paragraph.prototype.asc_getText = function()
 {

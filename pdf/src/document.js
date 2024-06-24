@@ -1095,6 +1095,27 @@ var CPresentation = CPresentation || function(){};
         this.DocContent = null;
     }
 
+    const PDF_SEL_CONTENT_TYPES = {
+        EMPTY:      0,
+        DRAWINGS:   1,
+        CONTENT:    2
+    };
+
+    PDFSelectedContent.prototype.getContentType = function () {
+        if (this.Drawings.length > 0) {
+            return PDF_SEL_CONTENT_TYPES.DRAWINGS;
+        } else if (this.DocContent) {
+            return PDF_SEL_CONTENT_TYPES.CONTENT;
+        }
+        return PDF_SEL_CONTENT_TYPES.EMPTY;
+    };
+    PDFSelectedContent.prototype.isDrawingsContent = function () {
+        return this.getContentType() === PDF_SEL_CONTENT_TYPES.DRAWINGS;
+    };
+    PDFSelectedContent.prototype.isDocContent = function () {
+        return this.getContentType() === PDF_SEL_CONTENT_TYPES.CONTENT;
+    };
+
     /**Returns array of PDFSelectedContent for special paste
      * @returns {Array}
      **/
@@ -1682,7 +1703,6 @@ var CPresentation = CPresentation || function(){};
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
-            e.IsLocked = false;
             return;
         }
 
@@ -1714,8 +1734,6 @@ var CPresentation = CPresentation || function(){};
             oViewer.navigateToLink(oMouseUpLink);
         }
         
-        e.IsLocked = false;
-
         this.UpdateInterface();
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();
@@ -4348,15 +4366,16 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
         let oThis = this;
-        
-        this.CreateNewHistoryPoint();
-        oThis.InsertContent(aSelContent[nIndex]);
-        this.TurnOffHistory();
+        return oThis.InsertContent(aSelContent[nIndex]);
     };
     CPDFDoc.prototype.InsertContent = function(oSelContent) {
         let oThis       = this;
         let oController = this.GetController();
         let nCurPage    = this.GetCurPage();
+
+        this.CreateNewHistoryPoint();
+
+        let bResult = false;
 
         // во view шейпы не вставляем
         if (false == this.Api.isRestrictionView()) {
@@ -4367,24 +4386,32 @@ var CPresentation = CPresentation || function(){};
                     return pasteObj.Drawing;
                 });
 
-                aDrToPaste.forEach(function(drawing) {
+                aDrToPaste.forEach(function(drawing, index) {
+                    let oXfrm = drawing.getXfrm();
+                    let oPos = private_computeDrawingAddingPos(nCurPage, oXfrm.extX, oXfrm.extY);
+                    oXfrm.setOffX(oPos.x);
+                    oXfrm.setOffY(oPos.y);
+
                     // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
                     let nShift = oController.getDrawingsPasteShift([drawing]);
 
                     if (nShift > 0) {
-                        let oXfrm = drawing.getXfrm();
-                        if (oXfrm) {
-                            oXfrm.shift(nShift, nShift);
-                        }
+                        oXfrm.shift(nShift, nShift);
                     }
 
                     oThis.AddDrawing(drawing, oThis.GetCurPage());
+
                     if (drawing.IsGraphicFrame()) {
                         oController.Check_GraphicFrameRowHeight(drawing);
                     }
+                    
+                    if (index == 0) {
+                        oThis.SetMouseDownObject(drawing);
+                    }
                     drawing.select(oController, nCurPage);
-                    oThis.SetMouseDownObject(drawing);
                 });
+
+                bResult = true;
             }
             else if (oSelContent.DocContent) {
 				oSelContent.DocContent.EndCollect(this);
@@ -4412,8 +4439,14 @@ var CPresentation = CPresentation || function(){};
 						this.CreateAndAddShapeFromSelectedContent(oSelContent.DocContent);
 					}
 				}
+
+                bResult = true;
             }
         }
+
+        this.TurnOffHistory();
+
+        return bResult;
     };
     CPDFDoc.prototype.CreateAndAddShapeFromSelectedContent = function (oDocContent) {
         let nPage   = this.GetCurPage();
@@ -4847,28 +4880,38 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
-        let oDrDoc      = this.GetDrawingDocument();
         let nCurPage    = oViewer.currentPage;
-        let oPageInfo   = oDrDoc.m_arrPages[nCurPage];
+        let oController = this.GetController();
+        let nPageW      = this.GetPageWidthMM(nCurPage);
+        let nPageH      = this.GetPageHeightMM(nCurPage);
         
+        this.BlurActiveObject();
+
         for (let i = 0; i < arrImages.length; i++) {
             let _image  = arrImages[i];
+
             let nExtX   = Math.max(1, _image.Image.width * g_dKoef_pix_to_mm);
             let nExtY   = Math.max(1, _image.Image.height * g_dKoef_pix_to_mm);
-            let nPageW  = oPageInfo.width_mm;
-            let nPageH  = oPageInfo.height_mm;
             let nKoeff  = Math.min(1.0, 1.0 / Math.max(nExtX / nPageW, nExtY / nPageH));
-
-            let nNewExtX = Math.max(5, nExtX * nKoeff); 
-            let nNewExtY = Math.max(5, nExtY * nKoeff); 
             
-            let nCenterX = (nPageW - nNewExtX) / 2;
-            let nCenterY = (nPageH - nNewExtY) / 2;
+            let nNewExtX    = Math.max(5, nExtX * nKoeff); 
+            let nNewExtY    = Math.max(5, nExtY * nKoeff); 
+            let oPos        = private_computeDrawingAddingPos(nCurPage, nNewExtX, nNewExtY);
 
             let oImage = new AscPDF.CPdfImage();
+            AscFormat.fillImage(oImage, _image.src, 0, 0, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
 
-            AscFormat.fillImage(oImage, _image.src, nCenterX, nCenterY, nNewExtX, nNewExtY, _image.videoUrl, _image.audioUrl);
+            let oXfrm = oImage.getXfrm();
+            oXfrm.setOffX(oPos.x);
+            oXfrm.setOffY(oPos.y);
+
             this.AddDrawing(oImage, nCurPage);
+
+            if (i == 0) {
+                this.SetMouseDownObject(oImage);
+            }
+
+            oImage.select(oController, nCurPage);
         }
     };
     CPDFDoc.prototype.ShapeApply = function(shapeProps) {
@@ -5271,6 +5314,10 @@ var CPresentation = CPresentation || function(){};
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.Is_Inline = function() {};
+    CPDFDoc.prototype.GetRecalcId = function () {
+        return Infinity;
+    };
+    CPDFDoc.prototype.Document_UpdateInterfaceState = function() {};
     CPDFDoc.prototype.IsViewModeInReview = function() {
         return false;
     };
@@ -6173,6 +6220,7 @@ var CPresentation = CPresentation || function(){};
     window["AscPDF"].CreateAscAnnotPropFromObj  = CreateAscAnnotPropFromObj;
     window["AscPDF"].CPDFCompositeInput         = CPDFCompositeInput;
     window["AscPDF"].PDFSelectedContent         = PDFSelectedContent;
+    window["AscPDF"].DrawingCopyObject          = DrawingCopyObject;
     window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
     window["AscPDF"]["ConvertCoordsToAnotherPage"]  = window["AscPDF"].ConvertCoordsToAnotherPage = ConvertCoordsToAnotherPage;

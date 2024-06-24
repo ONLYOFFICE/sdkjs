@@ -8630,6 +8630,7 @@
         if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
+
 		this._updateRowHeight(cache, row, maxW, colWidth);
 
         return mc ? mc.c2 : col;
@@ -8689,6 +8690,35 @@
 		//not find a case where the ms does not update the height with the columns merged ans wrap
 		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
+
+		let mergedWrapHeight = null;
+		if (mergeType && cache.flags.wrapText) {
+			if (cache.angle) {
+				isMergedRows = true;
+			} else {
+				//ms use ht if multitext cell inside and use text 1 line height metrics if not multitext
+				//while such as detect different text settings into 1 cell. probably, need get info from model
+				let textHeight;
+				if (cache.state && cache.state.lines) {
+					for (let i = 0 ; i < cache.state.lines.length; i++) {
+						if (!textHeight) {
+							textHeight = cache.state.lines[i].th;
+						} else if (textHeight !== cache.state.lines[i].th) {
+							textHeight = null;
+							break;
+						}
+					}
+				}
+				if (textHeight) {
+					mergedWrapHeight = textHeight;
+				} else {
+					let _rowHeight = AscCommonExcel.convertPtToPx(this.model.getRowHeight(row));
+					if (_rowHeight && !isNaN(_rowHeight)) {
+						mergedWrapHeight = _rowHeight;
+					}
+				}
+			}
+		}
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
 		var rowInfo = this.rows[row];
@@ -8705,7 +8735,7 @@
 		// update row's height
 		// Замерженная ячейка (с 2-мя или более строками) не влияет на высоту строк!
 		if (!isCustomHeight && !(window["NATIVE_EDITOR_ENJINE"] && this.notUpdateRowHeight) && !isMergedRows) {
-			var newHeight = tm.height;
+			var newHeight = mergedWrapHeight ? mergedWrapHeight : tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
 			if (cache.angle && textBound) {
 				newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
@@ -13934,8 +13964,16 @@
 			}
 
 			if (shiftMove) {
-				arnFrom = lastSelection;
 				arnTo = t.model.selectionRange.getLast().clone();
+				if (lastSelection.getType() === c_oAscSelectionType.RangeCol && lastSelection.c1 > arnTo.c1) {
+					let diff = arnFrom.c2 - arnFrom.c1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1 + diff, lastSelection.r1, lastSelection.c2 + diff, lastSelection.r2);
+				} else if (lastSelection.getType() === c_oAscSelectionType.RangeRow && lastSelection.r1 > arnTo.r1) {
+					let diff = arnFrom.r2 - arnFrom.r1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1, lastSelection.r1 + diff, lastSelection.c2, lastSelection.r2 + diff);
+				} else {
+					arnFrom = lastSelection;
+				}
 			}
 
 			//***array-formula***
@@ -13986,11 +14024,13 @@
 				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
 			}
 
-			if (colByX != null || rowByY != null) {
+			if (t.model.selectionRange.getLast().isEqual(lastSelection) !== true &&(colByX != null || rowByY != null)) {
 				History.Create_NewPoint();
 				History.StartTransaction();
-				let insProp = colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
+				let insProp = null != colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
 				this.changeWorksheet("insCell", insProp, doMove, true);
+			} else {
+				this._cleanSelectionMoveRange();
 			}
 		} else {
 			doMove(true);

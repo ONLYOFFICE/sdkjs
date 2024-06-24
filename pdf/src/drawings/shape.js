@@ -70,10 +70,10 @@
 
         this.recalcGeometry();
         this.recalculateContent();
-        this.checkExtentsByDocContent(true, true);
-        this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.checkExtentsByDocContent();
+        this.recalculate();
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };

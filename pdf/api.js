@@ -293,13 +293,19 @@
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		let oActiveDrawing	= oDoc.activeDrawing;
 
+		this.needPasteText = false; // если не вставили бинарник, то вставляем текст
 		// пока что копирование бинарником только внутри drawings или самих drawings
 		if ([AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.HtmlElement].includes(_format) && ((oDoc.GetActiveObject() == null) || oActiveDrawing)) {
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
-			return;
+		}
+		else {
+			this.needPasteText = true;
 		}
 		
+		if (!this.needPasteText || typeof(data) != "string")
+			return;
+
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
@@ -465,7 +471,7 @@
 		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
-		if (null == drController.getTargetTextObject()) {
+		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
 			drController.selection.textSelection = textController;
 		}
 
@@ -493,6 +499,7 @@
 			return oSmartArt;
 		});
 	};
+	PDFEditorApi.prototype.asc_undoAllChanges = function() {};
 	PDFEditorApi.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder) {
 		let oDoc	= this.getPDFDoc();
 		let oViewer	= this.getDocumentRenderer();
@@ -2263,6 +2270,7 @@
 		//выставляем тип copypaste
 		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
+		AscCommon.PasteElementsId.g_bIsPDFCopyPaste = true;
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
@@ -2367,6 +2375,7 @@
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
 	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
+	PDFEditorApi.prototype['asc_undoAllChanges']		   = PDFEditorApi.prototype.asc_undoAllChanges;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;

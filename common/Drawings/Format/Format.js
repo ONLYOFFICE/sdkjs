@@ -7960,6 +7960,12 @@
 				this.setFill(this.ln.Fill.createDuplicate());
 			}
 		};
+		CSpPr.prototype.getOuterShdw = function () {
+			if (this.effectProps && this.effectProps.EffectLst && this.effectProps.EffectLst.outerShdw) {
+				return this.effectProps.EffectLst.outerShdw;
+			}
+			return null;
+		};
 // ----------------------------------
 
 // THEME ----------------------------
@@ -8886,7 +8892,7 @@
 		};
 		CTheme.prototype.GetPresentation = function () {
 			let oLogicDoc = this.GetLogicDocument();
-			if(oLogicDoc instanceof AscCommonSlide.CPresentation) {
+			if(AscCommonSlide.CPresentation && oLogicDoc instanceof AscCommonSlide.CPresentation) {
 				return oLogicDoc;
 			}
 			return null;

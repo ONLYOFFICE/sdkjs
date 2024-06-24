@@ -47,6 +47,7 @@
 		this.range = 0;
 		this.page  = 0;
 		
+		this.paragraph  = null;
 		this.centerMode = true;  // Search the closest position (relative to the middle of the element), or we search a position beyond the specified x-coordinate
 		this.stepEnd    = false; // Search for position beyond the mark of paragraph
 		
@@ -63,7 +64,6 @@
 		this.paraEnd   = false;
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
-		this.rtl      = false;
 		
 		// TODO: Unite with CRunWithPosition class
 		this.pos     = null;
@@ -85,6 +85,8 @@
 		this.paragraph  = paragraph;
 		this.stepEnd    = undefined !== stepEnd ? stepEnd : false;
 		this.centerMode = undefined !== centerMode ? centerMode : true;
+		
+		this.bidiFlow.begin(paragraph.isRtlDirection());
 	};
 	ParagraphSearchPositionXY.prototype.setDiff = function(diff)
 	{
@@ -301,7 +303,7 @@
 			this.inTextPosInfo.pos = inRunPos;
 		}
 		
-		if (direction === AscWord.BidiType.rtl)
+		if (direction === AscBidi.DIRECTION.R)
 		{
 			let tmp = diffR;
 			diffR = diffL;

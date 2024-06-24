@@ -53,7 +53,7 @@
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
-	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents a list of functions.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -266,7 +266,7 @@
 	 */
 
 	/**
-	 * The cell references type.
+	 * The cell reference type.
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
 	 * */
 
@@ -280,7 +280,7 @@
 	 * */
 
 	/**
-	 * Specifies how numeric data will be calculated with the destinations cells on the worksheet.
+	 * The mathematical operation which will be applied to the copied data.
 	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
 	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
 	 * */
@@ -292,6 +292,17 @@
 	function ApiColor(color) {
 		this.color = color;
 	}
+	/**
+	 * Returns a color value in RGB format.
+	 * @memberof ApiColor
+	 * @returns {number}
+	 */
+	ApiColor.prototype.GetRGB = function () {
+		if (!this.color) {
+			return 0;
+		}
+		return this.color.getRgb();
+	};
 
 	/**
 	 * Class representing a name.
@@ -507,7 +518,7 @@
 	};
 
 	/**
-	 * Remove a custom function.
+	 * Removes a custom function.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a custom function.
@@ -517,10 +528,10 @@
 		return this.removeCustomFunction(sName);
 	};
 	/**
-	 * Clear all custom functions.
+	 * Clears all custom functions.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {boolean} - returns false if such a functions does not exist.
+	 * @returns {boolean} - returns false if such functions do not exist.
 	 */
 	Api.prototype.ClearCustomFunctions = function () {
 		return this.clearCustomFunctions();
@@ -1243,6 +1254,10 @@
 		"YIELD": "yield"
 	};
 
+	/**
+	 * Class representing a worksheet function.
+	 * @constructor
+	 */
 	function ApiWorksheetFunction(api) {
 		this.api = api;
 	}
@@ -1455,96 +1470,102 @@
 	};
 
 	/**
-	 * For Double-byte character set (DBCS) languages, the function changes full-width (double-byte) characters to half-width (single-byte) characters.
+	 * For double-byte character set (DBCS) languages, the function changes full-width (double-byte) characters to half-width (single-byte) characters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text or a reference to a cell containing the text to change.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.ASC = function (arg1) {
 		return this.private_calculateFunction("ASC", arguments);
 	};
 	/**
-	 * Returns the character specified by the code number from the character set for your computer.
+	 * Returns the character specified by the code number from your computer's character set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number between 1 and 255 specifying which character you want.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number between 1 and 255 specifying a character from the computer character set.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
 		return this.private_calculateFunction("CHAR", arguments);
 	};
 	/**
-	 * Removes all nonprintable characters from text.
+	 * Removes all the nonprintable characters from the text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is any worksheet information from which you want to remove nonprintable characters.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - A string from which nonprintable characters will be removed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
 		return this.private_calculateFunction("CLEAN", arguments);
 	};
 	/**
-	 * Returns a numeric code for the first character in a text string, in the character set used by your computer.
+	 * Returns the code number from your computer's character set for the first character in the specified text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text for which you want the code of the first character.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text for which to get the code of the first character.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CODE = function (arg1) {
 		return this.private_calculateFunction("CODE", arguments);
 	};
 	/**
-	 * Joins several text strings into one text string.
+	 * Combines multiple text strings into one text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {string} arg_n - Up to 255 data values that will be combined.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.CONCATENATE = function () {
 		return this.private_calculateFunction("CONCATENATE", arguments);
 	};
 	/**
-	 * Converts a number to text, using currency format.
+	 * Converts a number to text, using a currency format $#.##.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number, a reference to a cell containing a number, or a formula that evaluates to a number.
-	 * @param {?number} arg2 Is the number of digits to the right of the decimal point. The number is rounded as necessary; if omitted, Decimals = 2.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number, a reference to a cell containing a number, or a formula that returns a number.
+	 * @param {?number} arg2 - A number of digits to the right of the decimal point. The number is rounded as necessary.
+	 * If it is omitted, the function will assume it to be 2.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLAR", arguments);
 	};
 	/**
-	 * Checks whether two text strings are exactly the same, and returns TRUE or FALSE. EXACT is case-sensitive.
+	 * Checks whether two text strings are exactly the same, and returns <b>true</b> or <b>false</b>. This function is case-sensitive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the first text string.
-	 * @param {string} arg2 Is the second text string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The first text string.
+	 * @param {string} arg2 - The second text string.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
 		return this.private_calculateFunction("EXACT", arguments);
 	};
 	/**
-	 * Returns the starting position of one text string within another text string. FIND is case-sensitive.
+	 * Returns the starting position of one text string within another text string. This function is case-sensitive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to find. Use double quotes (empty text) to match the first character in Within_text; wildcard characters not allowed.
-	 * @param {string} arg2 Is the text containing the text you want to find.
-	 * @param {?number} arg3 Specifies the character at which to start the search. The first character in Within_text is character number 1. If omitted, Start_num = 1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
+	 * Wildcard characters are not allowed.
+	 * @param {string} arg2 - The text containing the text to find.
+	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * If omitted, this parameter is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIND", arguments);
 	};
 	/**
-	 * Finds the specified substring (string-1) within a string (string-2) and is intended for languages the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Finds the specified substring within another string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {string} arg2.
-	 * @param {?number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. Use double quotes (empty text) to match the first character in the search string.
+	 * Wildcard characters are not allowed.
+	 * @param {string} arg2 - The text containing the text to find.
+	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
+	 * If omitted, this parameter is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FINDB", arguments);
@@ -1553,10 +1574,10 @@
 	 * Rounds a number to the specified number of decimals and returns the result as text with or without commas.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number you want to round and convert to text.
-	 * @param {?number} arg2 Is the number of digits to the right of the decimal point. If omitted, Decimals = 2.
-	 * @param {?boolean} arg3 Is a logical value: do not display commas in the returned text = TRUE; do display commas in the returned text = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number to round and convert to text.
+	 * @param {?number} arg2 - The number of digits to the right of the decimal point. If omitted, the function will assume it to be 2.
+	 * @param {?boolean} arg3 - Specifies whether do display commas in the returned text (<b>false</b> or omitted) or not (<b>true</b>).
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIXED", arguments);
@@ -1565,20 +1586,20 @@
 	 * Returns the specified number of characters from the start of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string containing the characters you want to extract.
-	 * @param {?number} arg2 Specifies how many characters you want LEFT to extract; 1 if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string containing the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters. It must be greater than or equal to 0.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFT", arguments);
 	};
 	/**
-	 * Extracts the substring from the specified string starting from the left character and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts the substring from the specified string starting from the left character and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string containing the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFTB", arguments);
@@ -1587,18 +1608,18 @@
 	 * Returns the number of characters in a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text whose length you want to find. Spaces count as characters.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LEN = function (arg1) {
 		return this.private_calculateFunction("LEN", arguments);
 	};
 	/**
-	 * Analyses the specified string and returns the number of characters it contains and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Analyses the specified string and returns the number of characters it contains and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LENB = function (arg1) {
 		return this.private_calculateFunction("LENB", arguments);
@@ -1607,8 +1628,8 @@
 	 * Converts all letters in a text string to lowercase.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to convert to lowercase. Characters in Text that are not letters are not changed.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to convert to lowercase. The text characters that are not letters are not changed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
 		return this.private_calculateFunction("LOWER", arguments);
@@ -1617,44 +1638,44 @@
 	 * Returns the characters from the middle of a text string, given a starting position and length.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string from which you want to extract the characters.
-	 * @param {number} arg2 Is the position of the first character you want to extract. The first character in Text is 1.
-	 * @param {number} arg3 Specifies how many characters to return from Text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string from which to extract the characters.
+	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
+	 * @param {number} arg3 - A number of the characters to extract.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MID", arguments);
 	};
 	/**
-	 * Extracts the characters from the specified string starting from any position and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts the characters from the specified string starting from any position and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {number} arg2.
-	 * @param {number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string from which to extract the characters.
+	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
+	 * @param {number} arg3 - A number of the characters to extract, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MIDB", arguments);
 	};
 	/**
-	 * Converts text to number in a locale-independent manner.
+	 * Converts text to a number, in a locale-independent way.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the string representing the number you want to convert.
-	 * @param {?string} arg2 Is the character used as the decimal separator in the string.
-	 * @param {?string} arg3 Is the character used as the group separator in the string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The string representing a number to convert.
+	 * @param {?string} arg2 - The character used as the decimal separator in the string.
+	 * @param {?string} arg3 - The character used as the group separator in the string.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NUMBERVALUE", arguments);
 	};
 	/**
-	 * Converts a text string to proper case; the first letter in each word to uppercase, and all other letters to lowercase.
+	 * Converts a text string to proper case: the first letter in each word to uppercase, and all other letters to lowercase.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is text enclosed in quotation marks, a formula that returns text, or a reference to a cell containing text to partially capitalize.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text enclosed in quotation marks, a formula that returns text, or a reference to a cell containing text to partially capitalize.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
 		return this.private_calculateFunction("PROPER", arguments);
@@ -1663,35 +1684,35 @@
 	 * Replaces part of a text string with a different text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is text in which you want to replace some characters.
-	 * @param {number} arg2 Is the position of the character in Old_text that you want to replace with New_text.
-	 * @param {number} arg3 Is the number of characters in Old_text that you want to replace.
-	 * @param {string} arg4 Is the text that will replace characters in Old_text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text where some characters will be replaced.
+	 * @param {number} arg2 - The position of the character in the original text that will be replaced with the new text.
+	 * @param {number} arg3 - The number of characters in the original text that will be replaced.
+	 * @param {string} arg4 - The text that will replace characters in the original text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACE", arguments);
 	};
 	/**
-	 * Replaces a set of characters, based on the number of characters and the start position you specify, with a new set of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Replaces a set of characters, based on the number of characters and the start position specified, with a new set of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {number} arg2.
-	 * @param {number} arg3.
-	 * @param {string} arg4.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text where some characters will be replaced.
+	 * @param {number} arg2 - The position of the character in the original text that will be replaced with the new text.
+	 * @param {number} arg3 - The number of characters in the original text that will be replaced, based on bytes.
+	 * @param {string} arg4 - The text that will replace characters in the original text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACEB", arguments);
 	};
 	/**
-	 * Repeats text a given number of times. Use REPT to fill a cell with a number of instances of a text string.
+	 * Repeats text a given number of times. Use this function to fill a cell with a number of instances of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to repeat.
-	 * @param {number} arg2 Is a positive number specifying the number of times to repeat text.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text that will be repeated.
+	 * @param {number} arg2 - A positive number specifying the number of times to repeat text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
 		return this.private_calculateFunction("REPT", arguments);
@@ -1700,20 +1721,20 @@
 	 * Returns the specified number of characters from the end of a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text string that contains the characters you want to extract.
-	 * @param {?number} arg2 Specifies how many characters you want to extract, 1 if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string that contains the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters. If it is omitted, the function will assume it to be 1.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHT", arguments);
 	};
 	/**
-	 * Extracts a substring from a string starting from the right-most character, based on the specified number of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Extracts a substring from a string starting from the right-most character, based on the specified number of characters and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text string that contains the characters to extract.
+	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHTB", arguments);
@@ -1722,22 +1743,22 @@
 	 * Returns the number of the character at which a specific character or text string is first found, reading left to right (not case-sensitive).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want to find. You can use the ? and * wildcard characters; use ~? and ~* to find the ? and * characters.
-	 * @param {string} arg2 Is the text in which you want to search for Find_text.
-	 * @param {?number} arg3 Is the character number in Within_text, counting from the left, at which you want to start searching. If omitted, 1 is used.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
+	 * @param {string} arg2 - The text where to search for the specified text.
+	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCH", arguments);
 	};
 	/**
-	 * Returns the location of the specified substring in a string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc..
+	 * Returns the location of the specified substring in a string and is intended for languages that use the double-byte character set (DBCS) like Japanese, Chinese, Korean etc.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1.
-	 * @param {string} arg2.
-	 * @param {?number} arg3.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text to find. The ? and * wildcard characters can be used. Use ~? and ~* to find the ? and * characters.
+	 * @param {string} arg2 - The text where to search for the specified text.
+	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCHB", arguments);
@@ -1746,11 +1767,11 @@
 	 * Replaces existing text with new text in a text string.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text or the reference to a cell containing text in which you want to substitute characters.
-	 * @param {string} arg2 Is the existing text you want to replace. If the case of Old_text does not match the case of text, SUBSTITUTE will not replace the text.
-	 * @param {string} arg3 Is the text you want to replace Old_text with.
-	 * @param {?string} arg4 Specifies which occurrence of Old_text you want to replace. If omitted, every instance of Old_text is replaced.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text or the reference to a cell containing text in which the characters will be substituted.
+	 * @param {string} arg2 - The existing text to replace. If the case of the original text does not match the case of text, the function will not replace the text.
+	 * @param {string} arg3 - The text to replace the original text with.
+	 * @param {?string} arg4 - Specifies which occurrence of the original text to replace. If omitted, every instance of the original text will be replaced.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SUBSTITUTE", arguments);
@@ -1759,8 +1780,8 @@
 	 * Checks whether a value is text, and returns the text if it is, or returns double quotes (empty text) if it is not.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to test.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - The value to test.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.T = function (arg1) {
 		return this.private_calculateFunction("T", arguments);
@@ -1769,9 +1790,9 @@
 	 * Converts a value to text in a specific number format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a number, a formula that evaluates to a numeric value, or a reference to a cell containing a numeric value.
-	 * @param {string} arg2 Is a number format in text form from the Category box on the Number tab in the Format Cells dialog box.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number, a formula that evaluates to a numeric value, or a reference to a cell containing a numeric value.
+	 * @param {string} arg2 - A number format in the text form from the <b>Number format</b> combo box on the <b>Home</b> tab.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
 		return this.private_calculateFunction("TEXT", arguments);
@@ -1780,8 +1801,8 @@
 	 * Removes all spaces from a text string except for single spaces between words.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text from which you want spaces removed.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text from which the spaces will be removed.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
 		return this.private_calculateFunction("TRIM", arguments);
@@ -1790,8 +1811,8 @@
 	 * Returns the Unicode character referenced by the given numeric value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the Unicode number representing a character.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The Unicode number representing a character.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
 		return this.private_calculateFunction("UNICHAR", arguments);
@@ -1800,8 +1821,8 @@
 	 * Returns the number (code point) corresponding to the first character of the text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the character that you want the Unicode value of.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The character for which the Unicode value will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
 		return this.private_calculateFunction("UNICODE", arguments);
@@ -1810,8 +1831,8 @@
 	 * Converts a text string to all uppercase letters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text you want converted to uppercase, a reference or a text string.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text which will be converted to uppercase, a reference or a text string.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
 		return this.private_calculateFunction("UPPER", arguments);
@@ -1820,56 +1841,69 @@
 	 * Converts a text string that represents a number to a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the text enclosed in quotation marks or a reference to a cell containing the text you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text enclosed in quotation marks or a reference to a cell containing the text which will be converted to a number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
 		return this.private_calculateFunction("VALUE", arguments);
 	};
 	/**
-	 * Returns the average of the absolute deviations of data points from their mean. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * Returns the average of the absolute deviations of data points from their mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average of the absolute deviations will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVEDEV = function () {
 		return this.private_calculateFunction("AVEDEV", arguments);
 	};
 	/**
-	 * Returns the average (arithmetic mean) of its arguments, which can be numbers or names, arrays or references that contain numbers.
+	 * Returns the average (arithmetic mean) of the specified arguments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGE = function () {
 		return this.private_calculateFunction("AVERAGE", arguments);
 	};
 	/**
-	 * Returns the average (arithmetic mean) of its arguments, evaluating text and FALSE in arguments as 0; TRUE evaluates as 1. Arguments can be numbers, names, arrays or references.
+	 * Returns the average (arithmetic mean) of the specified arguments, evaluating text and <b>false</b> in arguments as 0; <b>true</b> evaluates as 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers, text representations of numbers,
+	 * or logical values, such as <b>true</b> and <b>false</b>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEA = function () {
 		return this.private_calculateFunction("AVERAGEA", arguments);
 	};
 	/**
-	 * Finds average (arithmetic mean) for the cells specified by a given condition or criteria.
+	 * Finds the average (arithmetic mean) for the cells specified by a given condition or criteria.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells you want evaluated.
-	 * @param {any} arg2 Is the condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
-	 * @param {?ApiRange} arg3 Are the actual cells to be used to find the average. If omitted, the cells in range are used.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells which will be evaluated.
+	 * @param {number | string} arg2 - The condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
+	 * @param {?ApiRange} arg3 - The actual cells to be used to find the average. If omitted, the cells in the range are used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("AVERAGEIF", arguments);
 	};
 	/**
-	 * Finds average (arithmetic mean) for the cells specified by a given set of conditions or criteria.
+	 * Finds the average (arithmetic mean) for the cells specified by a given set of conditions or criteria.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells which will be evaluated.
+	 * @param {number | string} arg2 - The first condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
+	 * @param {?ApiRange} arg3 - The actual cells to be used to find the average. If omitted, the cells in the range are used.
+	 * @param {number | string} arg4 - Up to 127 additional conditions or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
+	 * These arguments are optional.
+	 * @param {?ApiRange} arg5 - Up to 127 actual ranges to be used to find the average. If omitted, the cells in the range are used. These arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIFS = function () {
 		return this.private_calculateFunction("AVERAGEIFS", arguments);
@@ -1878,12 +1912,12 @@
 	 * Returns the cumulative beta probability density function.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value between A and B at which to evaluate the function.
-	 * @param {number} arg2 Is a parameter to the distribution and must be greater than 0.
-	 * @param {number} arg3 Is a parameter to the distribution and must be greater than 0.
-	 * @param {?number} arg4 Is an optional lower bound to the interval of x. If omitted, A = 0.
-	 * @param {?number} arg5 Is an optional upper bound to the interval of x. If omitted, B = 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value between A and B at which to evaluate the function.
+	 * @param {number} arg2 - The alpha parameter of the distribution which must be greater than 0.
+	 * @param {number} arg3 - The beta parameter of the distribution which must be greater than 0.
+	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BETADIST = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETADIST", arguments);
@@ -1892,41 +1926,41 @@
 	 * Returns the beta probability distribution function.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value between A and B at which to evaluate the function.
-	 * @param {number} arg2 Is a parameter to the distribution and must be greater than 0.
-	 * @param {number} arg3 Is a parameter to the distribution and must be greater than 0.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @param {?number} arg5 Is an optional lower bound to the interval of x. If omitted, A = 0.
-	 * @param {?number} arg6 Is an optional upper bound to the interval of x. If omitted, B = 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value between A and B at which to evaluate the function.
+	 * @param {number} arg2 - The alpha parameter of the distribution which must be greater than 0.
+	 * @param {number} arg3 - The beta parameter of the distribution which must be greater than 0.
+	 * @param {boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability density function (<b>false</b>).
+	 * @param {?number} arg5 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {?number} arg6 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BETA_DIST = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("BETA.DIST", arguments);
 	};
 	/**
-	 * Returns the inverse of the cumulative beta probability density function (BETA.DIST).
+	 * Returns the inverse of the cumulative beta probability density function (BETA_DIST).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the beta distribution.
-	 * @param {number} arg2 Is a parameter to the distribution and must be greater than 0.
-	 * @param {number} arg3 Is a parameter to the distribution and must be greater than 0.
-	 * @param {?number} arg4 Is an optional lower bound to the interval of x. If omitted, A = 0.
-	 * @param {?number} arg5 Is an optional upper bound to the interval of x. If omitted, B = 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the beta distribution.
+	 * @param {number} arg2 - The alpha parameter of the distribution which must be greater than 0.
+	 * @param {number} arg3 - The beta parameter of the distribution which must be greater than 0.
+	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BETA_INV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETA.INV", arguments);
 	};
 	/**
-	 * Returns the inverse of the cumulative beta probability density function (BETADIST).
+	 * Returns the inverse of the cumulative beta probability density function for a specified beta distribution (BETADIST).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the beta distribution.
-	 * @param {number} arg2 Is a parameter to the distribution and must be greater than 0.
-	 * @param {number} arg3 Is a parameter to the distribution and must be greater than 0.
-	 * @param {?number} arg4 Is an optional lower bound to the interval of x. If omitted, A = 0.
-	 * @param {?number} arg5 Is an optional upper bound to the interval of x. If omitted, B = 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the beta distribution.
+	 * @param {number} arg2 - The alpha parameter of the distribution which must be greater than 0.
+	 * @param {number} arg3 - The beta parameter of the distribution which must be greater than 0.
+	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
+	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BETAINV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETAINV", arguments);
@@ -1935,11 +1969,11 @@
 	 * Returns the individual term binomial distribution probability.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of successes in trials.
-	 * @param {number} arg2 Is the number of independent trials.
-	 * @param {number} arg3 Is the probability of success on each trial.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of successes in trials.
+	 * @param {number} arg2 - The number of independent trials.
+	 * @param {number} arg3 - The probability of success on each trial.
+	 * @param {boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability mass function (<b>false</b>).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BINOMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOMDIST", arguments);
@@ -1948,11 +1982,11 @@
 	 * Returns the individual term binomial distribution probability.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of successes in trials.
-	 * @param {number} arg2 Is the number of independent trials.
-	 * @param {number} arg3 Is the probability of success on each trial.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of successes in trials.
+	 * @param {number} arg2 - The number of independent trials.
+	 * @param {number} arg3 - The probability of success on each trial.
+	 * @param {boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability mass function (<b>false</b>).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOM.DIST", arguments);
@@ -1961,11 +1995,12 @@
 	 * Returns the probability of a trial result using a binomial distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of independent trials.
-	 * @param {number} arg2 Is the probability of success on each trial.
-	 * @param {number} arg3 Is the number of successes in trials.
-	 * @param {?number} arg4 If provided this function returns the probability that the number of successful trials shall lie between number_s and number_s2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of independent trials.
+	 * @param {number} arg2 - The probability of success on each trial.
+	 * @param {number} arg3 - The minimum number of successes in the trials to calculate probability for, a numeric value greater than or equal to 0.
+	 * @param {?number} arg4 - The maximum number of successes in the trials to calculate probability for,
+	 * a numeric value greater than the minimum number of successes and less than or equal to trials.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST_RANGE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOM.DIST.RANGE", arguments);
@@ -1974,10 +2009,10 @@
 	 * Returns the smallest value for which the cumulative binomial distribution is greater than or equal to a criterion value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of Bernoulli trials.
-	 * @param {number} arg2 Is the probability of success on each trial, a number between 0 and 1 inclusive.
-	 * @param {number} arg3 Is the criterion value, a number between 0 and 1 inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of Bernoulli trials.
+	 * @param {number} arg2 - The probability of success on each trial, a number between 0 and 1 inclusive.
+	 * @param {number} arg3 - The criterion value, a number between 0 and 1 inclusive.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BINOM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("BINOM.INV", arguments);
@@ -1986,9 +2021,9 @@
 	 * Returns the right-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which you want to evaluate the distribution, a nonnegative number.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which the distribution will be evaluated, a nonnegative number.
+	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHIDIST = function (arg1, arg2) {
 		return this.private_calculateFunction("CHIDIST", arguments);
@@ -1997,9 +2032,9 @@
 	 * Returns the inverse of the right-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
+	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHIINV = function (arg1, arg2) {
 		return this.private_calculateFunction("CHIINV", arguments);
@@ -2008,10 +2043,11 @@
 	 * Returns the left-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which you want to evaluate the distribution, a nonnegative number.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {boolean} arg3 Is a logical value for the function to return: the cumulative distribution function = TRUE; the probability density function = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which the distribution will be evaluated, a nonnegative number.
+	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {boolean} arg3 - A logical value that determines the form of the function. If this argument is equal to <b>true</b>,
+	 * the cumulative distribution function is returned; if  it is equal to <b>false</b>, the probability density function is returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CHISQ.DIST", arguments);
@@ -2020,9 +2056,9 @@
 	 * Returns the right-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which you want to evaluate the distribution, a nonnegative number.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which the distribution will be evaluated, a nonnegative number.
+	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.DIST.RT", arguments);
@@ -2031,9 +2067,9 @@
 	 * Returns the inverse of the left-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
+	 * @param {number} arg2- The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.INV", arguments);
@@ -2042,9 +2078,9 @@
 	 * Returns the inverse of the right-tailed probability of the chi-squared distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
+	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.INV.RT", arguments);
@@ -2068,9 +2104,9 @@
 	 * Returns the test for independence: the value from the chi-squared distribution for the statistic and the appropriate degrees of freedom.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the range of data that contains observations to test against expected values.
-	 * @param {any} arg2 Is the range of data that contains the ratio of the product of row totals and column totals to the grand total.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - The range of data that contains observations to test against expected values.
+	 * @param {any} arg2 - The range of data that contains the ratio of the product of row totals and column totals to the grand total.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
 		return this.private_calculateFunction("CHITEST", arguments);
@@ -2091,10 +2127,10 @@
 	 * Returns the confidence interval for a population mean, using a normal distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the significance level used to compute the confidence level, a number greater than 0 and less than 1.
-	 * @param {number} arg2 Is the population standard deviation for the data range and is assumed to be known. Standard_dev must be greater than 0.
-	 * @param {number} arg3 Is the sample size.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The significance level used to compute the confidence level, a number greater than 0 and less than 1.
+	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
+	 * @param {number} arg3 - The sample size.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE", arguments);
@@ -2103,22 +2139,22 @@
 	 * Returns the confidence interval for a population mean, using a normal distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the significance level used to compute the confidence level, a number greater than 0 and less than 1.
-	 * @param {number} arg2 Is the population standard deviation for the data range and is assumed to be known. Standard_dev must be greater than 0.
-	 * @param {number} arg3 Is the sample size.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The significance level used to compute the confidence level, a number greater than 0 and less than 1.
+	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
+	 * @param {number} arg3 - The sample size.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_NORM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE.NORM", arguments);
 	};
 	/**
-	 * Returns the confidence interval for a population mean, using a Student's T distribution.
+	 * Returns the confidence interval for a population mean, using a Student's t distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the significance level used to compute the confidence level, a number greater than 0 and less than 1.
-	 * @param {number} arg2 Is the population standard deviation for the data range and is assumed to be known. Standard_dev must be greater than 0.
-	 * @param {number} arg3 Is the sample size.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The significance level used to compute the confidence level, a number greater than 0 and less than 1.
+	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
+	 * @param {number} arg3 - The sample size.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE.T", arguments);
@@ -2136,49 +2172,55 @@
 	// 	return this.private_calculateFunction("CORREL", arguments);
 	// };
 	/**
-	 * Counts the number of cells in a range that contain numbers.
+	 * Counts a number of cells in a range that contains numbers ignoring empty cells or those contaning text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count numbers. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNT = function () {
 		return this.private_calculateFunction("COUNT", arguments);
 	};
 	/**
-	 * Counts the number of cells in a range that are not empty.
+	 * Counts a number of cells in a range that are not empty.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count values. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNTA = function () {
 		return this.private_calculateFunction("COUNTA", arguments);
 	};
 	/**
-	 * Counts the number of empty cells in a specified range of cells.
+	 * Counts a number of empty cells in a specified range of cells.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range from which you want to count the empty cells.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range to count the empty cells.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNTBLANK = function (arg1) {
 		return this.private_calculateFunction("COUNTBLANK", arguments);
 	};
 	/**
-	 * Counts the number of cells within a range that meet the given condition.
+	 * Counts a number of cells within a range that meet the given condition.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells from which you want to count nonblank cells.
-	 * @param {any} arg2 Is the condition in the form of a number, expression, or text that defines which cells will be counted.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells to count nonblank cells.
+	 * @param {number | string} arg2 - The condition in the form of a number, expression, or text that defines which cells will be counted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNTIF = function (arg1, arg2) {
 		return this.private_calculateFunction("COUNTIF", arguments);
 	};
 	/**
-	 * Counts the number of cells specified by a given set of conditions or criteria.
+	 * Counts a number of cells specified by a given set of conditions or criteria.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The first range of cells to count nonblank cells.
+	 * @param {number | string} arg2 - The first condition in the form of a number, expression, or text that defines which cells will be counted.
+	 * @param {ApiRange} arg3 - Up to 127 additional ranges of cells to count nonblank cells. This argument is optional.
+	 * @param {number | string} arg4 - Up to 127 additional conditions in the form of a number, expression, or text that define which cells will be counted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNTIFS = function () {
 		return this.private_calculateFunction("COUNTIFS", arguments);
@@ -2226,10 +2268,10 @@
 	 * Returns the smallest value for which the cumulative binomial distribution is greater than or equal to a criterion value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of Bernoulli trials.
-	 * @param {number} arg2 Is the probability of success on each trial, a number between 0 and 1 inclusive.
-	 * @param {number} arg3 Is the criterion value, a number between 0 and 1 inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of Bernoulli trials.
+	 * @param {number} arg2 - The probability of success on each trial, a number between 0 and 1 inclusive.
+	 * @param {number} arg3 - The criterion value, a number between 0 and 1 inclusive.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CRITBINOM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CRITBINOM", arguments);
@@ -2238,7 +2280,8 @@
 	 * Returns the sum of squares of deviations of data points from their sample mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 numerical values for which to find the sum of squares of deviations. The first argument is required, subsequent arguments are optional. 
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DEVSQ = function () {
 		return this.private_calculateFunction("DEVSQ", arguments);
@@ -2247,10 +2290,11 @@
 	 * Returns the exponential distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value of the function, a nonnegative number.
-	 * @param {number} arg2 Is the parameter value, a positive number.
-	 * @param {boolean} arg3 Is a logical value for the function to return: the cumulative distribution function = TRUE; the probability density function = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value of the x function, a nonnegative number.
+	 * @param {number} arg2 - The lambda parameter value, a positive number.
+	 * @param {boolean} arg3 - A logical value that determines the function form. If this parameter is <b>true</b>,
+	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EXPON_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("EXPON.DIST", arguments);
@@ -2259,10 +2303,11 @@
 	 * Returns the exponential distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value of the function, a nonnegative number.
-	 * @param {number} arg2 Is the parameter value, a positive number.
-	 * @param {boolean} arg3 Is a logical value for the function to return: the cumulative distribution function = TRUE; the probability density function = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value of the x function, a nonnegative number.
+	 * @param {number} arg2 - The lambda parameter value, a positive number.
+	 * @param {boolean} arg3 - A logical value that determines the function form. If this parameter is <b>true</b>,
+	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EXPONDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("EXPONDIST", arguments);
@@ -2271,11 +2316,12 @@
 	 * Returns the (left-tailed) F probability distribution (degree of diversity) for two data sets.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a nonnegative number.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {boolean} arg4 Is a logical value for the function to return: the cumulative distribution function = TRUE; the probability density function = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a nonnegative number.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {boolean} arg4 - A logical value that determines the function form. If this parameter is <b>true</b>,
+	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.F_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("F.DIST", arguments);
@@ -2284,10 +2330,10 @@
 	 * Returns the (right-tailed) F probability distribution (degree of diversity) for two data sets.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a nonnegative number.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a nonnegative number.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FDIST", arguments);
@@ -2296,10 +2342,10 @@
 	 * Returns the (right-tailed) F probability distribution (degree of diversity) for two data sets.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a nonnegative number.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a nonnegative number.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.F_DIST_RT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.DIST.RT", arguments);
@@ -2308,10 +2354,10 @@
 	 * Returns the inverse of the (left-tailed) F probability distribution: if p = F.DIST(x,...), then F.INV(p,...) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.F_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.INV", arguments);
@@ -2320,10 +2366,10 @@
 	 * Returns the inverse of the (right-tailed) F probability distribution: if p = FDIST(x,...), then FINV(p,...) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FINV", arguments);
@@ -2332,10 +2378,10 @@
 	 * Returns the inverse of the (right-tailed) F probability distribution: if p = F.DIST.RT(x,...), then F.INV.RT(p,...) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @param {number} arg3 Is the denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the F cumulative distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.F_INV_RT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.INV.RT", arguments);
@@ -2344,8 +2390,8 @@
 	 * Returns the Fisher transformation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the transformation, a number between -1 and 1, excluding -1 and 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for the transformation, a number between -1 and 1, excluding -1 and 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FISHER = function (arg1) {
 		return this.private_calculateFunction("FISHER", arguments);
@@ -2354,8 +2400,8 @@
 	 * Returns the inverse of the Fisher transformation: if y = FISHER(x), then FISHERINV(y) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want to perform the inverse of the transformation.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to perform the inverse of the transformation.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
 		return this.private_calculateFunction("FISHERINV", arguments);
@@ -2374,60 +2420,93 @@
 	// 	return this.private_calculateFunction("FORECAST", arguments);
 	// };
 	/**
-	 * Returns the forecasted value for a specific future target date using exponential smoothing method..
+	 * A numeric value that specifies which function should be used to aggregate identical time values in the timeline data range.
+	 * * <b>1</b> (or omitted) - AVERAGE.
+	 * * <b>2</b> - COUNT.
+	 * * <b>3</b> - COUNTA.
+	 * * <b>4</b> - MAX.
+	 * * <b>5</b> - MEDIAN.
+	 * * <b>6</b> - MIN.
+	 * * <b>7</b> - SUM.
+	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
+	 * **/
+	
+	/**
+	 * Сalculates or predicts a future value based on existing (historical) values by using the AAA version of the Exponential Smoothing (ETS) algorithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1.
-	 * @param {ApiRange} arg2.
-	 * @param {ApiRange} arg3.
-	 * @param {?number} arg4.
-	 * @param {?number} arg5.
-	 * @param {?number} arg6.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A date for which a new value will be predicted. Must be after the last date in the timeline.
+	 * @param {ApiRange | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg3 - A range of date/time values that correspond to the historical values.
+	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
+	 * @param {?number} arg4 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * The 0 value means no seasonality.
+	 * @param {?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {Aggregation} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("FORECAST.ETS", arguments);
 	};
 	/**
-	 * Returns a confidence interval for the forecast value at the specified target date..
+	 * Returns a confidence interval for the forecast value at the specified target date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the data point for which Microsoft Excel predicts a value. It should carry on the pattern of values in the timeline..
-	 * @param {ApiRange} arg2 Is the array or range of numeric data you're predicting..
-	 * @param {ApiRange} arg3 Is the independent array or range of numeric data. The dates in the timeline must have a consistent step between them and can't be zero..
-	 * @param {?number} arg4 Is a number between 0 and 1 that shows the confidence level for the calculated confidence interval. The default value is .95..
-	 * @param {?number} arg5 Is an optional numeric value that indicates the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically..
-	 * @param {?number} arg6 Is an optional value for handling missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros..
-	 * @param {?number} arg7 Is an optional numeric value for aggregating multiple values with the same time stamp. If blank, Microsoft Excel .
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A date for which a new value will be predicted. Must be after the last date in the timeline.
+	 * @param {ApiRange | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg3 - A range of date/time values that correspond to the historical values.
+	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
+	 * @param {?number} arg4 - A number between 0 and 1 that shows the confidence level for the calculated confidence interval. The default value is .95.
+	 * @param {?number} arg5 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * The 0 value means no seasonality.
+	 * @param {?number} arg6 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {Aggregation} arg7 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_CONFINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("FORECAST.ETS.CONFINT", arguments);
 	};
 	/**
-	 * Returns the length of the repetitive pattern an application detects for the specified time series..
+	 * Returns the length of the repetitive pattern an application detects for the specified time series.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the array or range of numeric data you're predicting..
-	 * @param {ApiRange} arg2 Is the independent array or range of numeric data. The dates in the timeline must have a consistent step between them and can't be zero..
-	 * @param {?number} arg3 Is an optional value for handling missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros..
-	 * @param {?number} arg4 Is an optional numeric value for aggregating multiple values with the same time stamp. If blank, Microsoft Excel averages the values..
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg2 - A range of date/time values that correspond to the historical values.
+	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
+	 * @param {?number} arg3 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {Aggregation} arg4 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_SEASONALITY = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
 	};
+
 	/**
-	 * Returns the requested statistic for the forecast..
+	 * A numeric value between 1 and 8 that specifies which statistic will be returned.
+	 * * <b>1</b> - Alpha parameter of ETS algorithm - the base value parameter.
+	 * * <b>2</b> - Beta parameter of ETS algorithm - the trend value parameter.
+	 * * <b>3</b> - Gamma parameter of ETS algorithm - the seasonality value parameter.
+	 * * <b>4</b> - MASE (mean absolute scaled error) metric - a measure of the accuracy of forecasts.
+	 * * <b>5</b> - SMAPE (symmetric mean absolute percentage error) metric - a measure of the accuracy based on percentage errors.
+	 * * <b>6</b> - MAE (mean absolute error) metric - a measure of the accuracy of forecasts.
+	 * * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
+	 * * <b>8</b> - Step size detected in the timeline.
+	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
+	 * **/
+
+	/**
+	 * Returns the requested statistic for the forecast.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the array or range of numeric data you're predicting..
-	 * @param {ApiRange} arg2 Is the independent array or range of numeric data. The dates in the timeline must have a consistent step between them and can't be zero..
-	 * @param {number} arg3 Is a number between 1 and 8, indicating which statistic Microsoft Excel will return for the calculated forecast..
-	 * @param {?number} arg4 Is an optional numeric value that indicates the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically..
-	 * @param {?number} arg5 Is an optional value for handling missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros..
-	 * @param {?number} arg6 Is an optional numeric value for aggregating multiple values with the same time stamp. If blank, Microsoft Excel averages the values..
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg2 - A range of date/time values that correspond to the historical values.
+	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
+	 * @param {StatisticType} arg3 - A number between 1 and 8, indicating which statistic will be returned for the calculated forecast.
+	 * @param {?number} arg4 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
+	 * The 0 value means no seasonality.
+	 * @param {?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
+	 * @param {Aggregation} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
@@ -2446,12 +2525,12 @@
 	// 	return this.private_calculateFunction("FORECAST.LINEAR", arguments);
 	// };
 	/**
-	 * Calculates how often values occur within a range of values and then returns a vertical array of numbers that have one more element than Bins_array.
+	 * Calculates how often values occur within a range of values and then returns the first value of the returned vertical array of numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is an array of or reference to a set of values for which you want to count frequencies (blanks and text are ignored).
-	 * @param {ApiRange} arg2 Is an array of or reference to intervals into which you want to group the values in data_array.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - An array of values or the selected range for which the frequencies will be counted (blanks and text are ignored).
+	 * @param {ApiRange | number[]} arg2 - An array of intervals or the selected range into which the values in the first array will be grouped.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
 		return this.private_calculateFunction("FREQUENCY", arguments);
@@ -2481,11 +2560,11 @@
 	// 	return this.private_calculateFunction("F.TEST", arguments);
 	// };
 	/**
-	 * Returns the Gamma function value.
+	 * Returns the gamma function value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want to calculate Gamma.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the gamma function will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA = function (arg1) {
 		return this.private_calculateFunction("GAMMA", arguments);
@@ -2494,11 +2573,12 @@
 	 * Returns the gamma distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which you want to evaluate the distribution, a nonnegative number.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number. If beta = 1, GAMMA.DIST returns the standard gamma distribution.
-	 * @param {boolean} arg4 Is a logical value: return the cumulative distribution function = TRUE; return the probability mass function = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which the distribution will be calculated, a nonnegative number.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
+	 * @param {boolean} arg4 - A logical value (<b>true</b>> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GAMMA.DIST", arguments);
@@ -2507,11 +2587,12 @@
 	 * Returns the gamma distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which you want to evaluate the distribution, a nonnegative number.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number. If beta = 1, GAMMADIST returns the standard gamma distribution.
-	 * @param {boolean} arg4 Is a logical value: return the cumulative distribution function = TRUE; return the probability mass function = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which the distribution will be calculated, a nonnegative number.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
+	 * @param {boolean} arg4 - A logical value (<b>true</b>> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMADIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GAMMADIST", arguments);
@@ -2520,10 +2601,10 @@
 	 * Returns the inverse of the gamma cumulative distribution: if p = GAMMA.DIST(x,...), then GAMMA.INV(p,...) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the probability associated with the gamma distribution, a number between 0 and 1, inclusive.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number. If beta = 1, GAMMA.INV returns the inverse of the standard gamma distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The probability associated with the gamma distribution, a number between 0 and 1, inclusive.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("GAMMA.INV", arguments);
@@ -2532,10 +2613,10 @@
 	 * Returns the inverse of the gamma cumulative distribution: if p = GAMMADIST(x,...), then GAMMAINV(p,...) = x.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the probability associated with the gamma distribution, a number between 0 and 1, inclusive.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number. If beta = 1, GAMMAINV returns the inverse of the standard gamma distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The probability associated with the gamma distribution, a number between 0 and 1, inclusive.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMAINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("GAMMAINV", arguments);
@@ -2544,8 +2625,8 @@
 	 * Returns the natural logarithm of the gamma function.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want to calculate GAMMALN, a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the natural logarithm of the gamma function will be calculated, a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN = function (arg1) {
 		return this.private_calculateFunction("GAMMALN", arguments);
@@ -2554,18 +2635,18 @@
 	 * Returns the natural logarithm of the gamma function.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want to calculate GAMMALN.PRECISE, a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the natural logarithm of the gamma function will be calculated, a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN_PRECISE = function (arg1) {
 		return this.private_calculateFunction("GAMMALN.PRECISE", arguments);
 	};
 	/**
-	 * Returns 0.5 less than the standard normal cumulative distribution.
+	 * Calculates the probability that a member of a standard normal population will fall between the mean and arg1 standard deviations from the mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the distribution will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GAUSS = function (arg1) {
 		return this.private_calculateFunction("GAUSS", arguments);
@@ -2574,20 +2655,22 @@
 	 * Returns the geometric mean of an array or range of positive numeric data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the geometric mean will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GEOMEAN = function () {
 		return this.private_calculateFunction("GEOMEAN", arguments);
 	};
 	/**
-	 * Returns numbers in an exponential growth trend matching known data points.
+	 * Calculates predicted exponential growth by using existing data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the set of y-values you already know in the relationship y = b*m^x, an array or range of positive numbers.
-	 * @param {?ApiRange} arg2 Is an optional set of x-values that you may already know in the relationship y = b*m^x, an array or range the same size as Known_y's.
-	 * @param {?ApiRange} arg3 Are new x-values for which you want GROWTH to return corresponding y-values.
-	 * @param {?boolean} arg4 Is a logical value: the constant b is calculated normally if Const = TRUE; b is set equal to 1 if Const = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers.
+	 * @param {?ApiRange | number[]} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
+	 * @param {?ApiRange | number[]} arg3 - New x-values for which the function will return the corresponding y-values.
+	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
+	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GROWTH", arguments);
@@ -2596,7 +2679,8 @@
 	 * Returns the harmonic mean of a data set of positive numbers: the reciprocal of the arithmetic mean of reciprocals.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the harmonic mean will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HARMEAN = function () {
 		return this.private_calculateFunction("HARMEAN", arguments);
@@ -2605,11 +2689,11 @@
 	 * Returns the hypergeometric distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of successes in the sample.
-	 * @param {number} arg2 Is the size of the sample.
-	 * @param {number} arg3 Is the number of successes in the population.
-	 * @param {number} arg4 Is the population size.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of successes in the sample.
+	 * @param {number} arg2 - The size of the sample.
+	 * @param {number} arg3 - The number of successes in the population.
+	 * @param {number} arg4 - The population size.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("HYPGEOMDIST", arguments);
@@ -2618,12 +2702,13 @@
 	 * Returns the hypergeometric distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of successes in the sample.
-	 * @param {number} arg2 Is the size of the sample.
-	 * @param {number} arg3 Is the number of successes in the population.
-	 * @param {number} arg4 Is the population size.
-	 * @param {boolean} arg5 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of successes in the sample.
+	 * @param {number} arg2 - The size of the sample.
+	 * @param {number} arg3 - The number of successes in the population.
+	 * @param {number} arg4 - The population size.
+	 * @param {boolean} arg5 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("HYPGEOM.DIST", arguments);
@@ -2644,7 +2729,8 @@
 	 * Returns the kurtosis of a data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the kurtosis will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.KURT = function () {
 		return this.private_calculateFunction("KURT", arguments);
@@ -2653,9 +2739,9 @@
 	 * Returns the k-th largest value in a data set. For example, the fifth largest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data for which you want to determine the k-th largest value.
-	 * @param {number} arg2 Is the position (from the largest) in the array or cell range of the value to return.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - The array or range of data for which the k-th largest value will be determined.
+	 * @param {number} arg2 - The position (from the largest) in the array or cell range of data to return.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
 		return this.private_calculateFunction("LARGE", arguments);
@@ -2664,11 +2750,13 @@
 	 * Returns statistics that describe a linear trend matching known data points, by fitting a straight line using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the set of y-values you already know in the relationship y = mx + b.
-	 * @param {?ApiRange} arg2 Is an optional set of x-values that you may already know in the relationship y = mx + b.
-	 * @param {?boolean} arg3 Is a logical value: the constant b is calculated normally if Const = TRUE or omitted; b is set equal to 0 if Const = FALSE.
-	 * @param {?boolean} arg4 Is a logical value: return additional regression statistics = TRUE; return m-coefficients and the constant b = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The set of y-values from the <em>y = mx + b</em> equation.
+	 * @param {?ApiRange} arg2 - An optional set of x-values from the <em>y = mx + b</em> equation.
+	 * @param {?boolean} arg3 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @param {?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
+	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LINEST", arguments);
@@ -2677,60 +2765,64 @@
 	 * Returns statistics that describe an exponential curve matching known data points.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the set of y-values you already know in the relationship y = b*m^x.
-	 * @param {?ApiRange} arg2 Is an optional set of x-values that you may already know in the relationship y = b*m^x.
-	 * @param {?boolean} arg3 Is a logical value: the constant b is calculated normally if Const = TRUE or omitted; b is set equal to 1 if Const = FALSE.
-	 * @param {?boolean} arg4 Is a logical value: return additional regression statistics = TRUE; return m-coefficients and the constant b = FALSE or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The set of y-values from the <em>y = b*m^x</em> equation.
+	 * @param {?ApiRange} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation.
+	 * @param {?boolean} arg3 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b>.
+	 * @param {?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
+	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOGEST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LOGEST", arguments);
 	};
 	/**
-	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
+	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with the specified parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the lognormal distribution, a number between 0 and 1, inclusive.
-	 * @param {number} arg2 Is the mean of ln(x).
-	 * @param {number} arg3 Is the standard deviation of ln(x), a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the lognormal distribution, a number between 0 and 1, inclusive.
+	 * @param {number} arg2 - The mean of ln(x).
+	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOGINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGINV", arguments);
 	};
 	/**
-	 * Returns the lognormal distribution of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
+	 * Returns the lognormal distribution of x, where ln(x) is normally distributed with the specified parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a positive number.
-	 * @param {number} arg2 Is the mean of ln(x).
-	 * @param {number} arg3 Is the standard deviation of ln(x), a positive number.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a positive number.
+	 * @param {number} arg2 - The mean of ln(x).
+	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LOGNORM.DIST", arguments);
 	};
 	/**
-	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
+	 * Returns the inverse of the lognormal cumulative distribution function of x, where ln(x) is normally distributed with the specified parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability associated with the lognormal distribution, a number between 0 and 1, inclusive.
-	 * @param {number} arg2 Is the mean of ln(x).
-	 * @param {number} arg3 Is the standard deviation of ln(x), a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability associated with the lognormal distribution, a number between 0 and 1, inclusive.
+	 * @param {number} arg2 - The mean of ln(x).
+	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGNORM.INV", arguments);
 	};
 	/**
-	 * Returns the cumulative lognormal distribution of x, where ln(x) is normally distributed with parameters Mean and Standard_dev.
+	 * Returns the cumulative lognormal distribution of x, where ln(x) is normally distributed with the specified parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a positive number.
-	 * @param {number} arg2 Is the mean of ln(x).
-	 * @param {number} arg3 Is the standard deviation of ln(x), a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a positive number.
+	 * @param {number} arg2 - The mean of ln(x).
+	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOGNORMDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGNORMDIST", arguments);
@@ -2739,7 +2831,9 @@
 	 * Returns the largest value in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the largest number will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MAX = function () {
 		return this.private_calculateFunction("MAX", arguments);
@@ -2748,7 +2842,9 @@
 	 * Returns the largest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MAXA = function () {
 		return this.private_calculateFunction("MAXA", arguments);
@@ -2757,7 +2853,9 @@
 	 * Returns the median, or the number in the middle of the set of given numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the median will be calculated.
+	 * The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MEDIAN = function () {
 		return this.private_calculateFunction("MEDIAN", arguments);
@@ -2766,7 +2864,9 @@
 	 * Returns the smallest number in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the smallest number will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MIN = function () {
 		return this.private_calculateFunction("MIN", arguments);
@@ -2775,7 +2875,9 @@
 	 * Returns the smallest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
+	 * The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MINA = function () {
 		return this.private_calculateFunction("MINA", arguments);
@@ -2811,26 +2913,28 @@
 	// 	return this.private_calculateFunction("MODE.SNGL", arguments);
 	// };
 	/**
-	 * Returns the negative binomial distribution, the probability that there will be Number_f failures before the Number_s-th success, with Probability_s probability of a success.
+	 * Returns the negative binomial distribution, the probability that there will be the specified number of failures before the last success, with the specified probability of a success.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of failures.
-	 * @param {number} arg2 Is the threshold number of successes.
-	 * @param {number} arg3 Is the probability of a success; a number between 0 and 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of failures.
+	 * @param {number} arg2 - The threshold number of successes.
+	 * @param {number} arg3 - The probability of a success; a number between 0 and 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOMDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NEGBINOMDIST", arguments);
 	};
 	/**
-	 * Returns the negative binomial distribution, the probability that there will be Number_f failures before the Number_s-th success, with Probability_s probability of a success.
+	 * Returns the negative binomial distribution, the probability that there will be the specified number of failures before the last success, with the specified probability of a success.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of failures.
-	 * @param {number} arg2 Is the threshold number of successes.
-	 * @param {number} arg3 Is the probability of a success; a number between 0 and 1.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of failures.
+	 * @param {number} arg2 - The threshold number of successes.
+	 * @param {number} arg3 - The probability of a success; a number between 0 and 1.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NEGBINOM.DIST", arguments);
@@ -2839,11 +2943,13 @@
 	 * Returns the normal cumulative distribution for the specified mean and standard deviation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the distribution.
-	 * @param {number} arg2 Is the arithmetic mean of the distribution.
-	 * @param {number} arg3 Is the standard deviation of the distribution, a positive number.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the distribution will be returned.
+	 * @param {number} arg2 - The arithmetic mean of the distribution.
+	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NORMDIST", arguments);
@@ -2852,11 +2958,13 @@
 	 * Returns the normal distribution for the specified mean and standard deviation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the distribution.
-	 * @param {number} arg2 Is the arithmetic mean of the distribution.
-	 * @param {number} arg3 Is the standard deviation of the distribution, a positive number.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the distribution will be returned.
+	 * @param {number} arg2 - The arithmetic mean of the distribution.
+	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NORM.DIST", arguments);
@@ -2865,10 +2973,10 @@
 	 * Returns the inverse of the normal cumulative distribution for the specified mean and standard deviation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the arithmetic mean of the distribution.
-	 * @param {number} arg3 Is the standard deviation of the distribution, a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - The arithmetic mean of the distribution.
+	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORMINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NORMINV", arguments);
@@ -2877,10 +2985,10 @@
 	 * Returns the inverse of the normal cumulative distribution for the specified mean and standard deviation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is the arithmetic mean of the distribution.
-	 * @param {number} arg3 Is the standard deviation of the distribution, a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - The arithmetic mean of the distribution.
+	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NORM.INV", arguments);
@@ -2889,8 +2997,8 @@
 	 * Returns the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the distribution will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORMSDIST = function (arg1) {
 		return this.private_calculateFunction("NORMSDIST", arguments);
@@ -2899,9 +3007,11 @@
 	 * Returns the standard normal distribution (has a mean of zero and a standard deviation of one).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value for which you want the distribution.
-	 * @param {boolean} arg2 Is a logical value for the function to return: the cumulative distribution function = TRUE; the probability density function = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value for which the distribution will be returned.
+	 * @param {boolean} arg2 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_DIST = function (arg1, arg2) {
 		return this.private_calculateFunction("NORM.S.DIST", arguments);
@@ -2910,8 +3020,8 @@
 	 * Returns the inverse of the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORMSINV = function (arg1) {
 		return this.private_calculateFunction("NORMSINV", arguments);
@@ -2920,8 +3030,8 @@
 	 * Returns the inverse of the standard normal cumulative distribution (has a mean of zero and a standard deviation of one).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
 		return this.private_calculateFunction("NORM.S.INV", arguments);
@@ -2943,9 +3053,9 @@
 	 * Returns the k-th percentile of values in a range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data that defines relative standing.
-	 * @param {number} arg2 Is the percentile value that is between 0 through 1, inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE", arguments);
@@ -2954,9 +3064,9 @@
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, exclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data that defines relative standing.
-	 * @param {number} arg2 Is the percentile value that is between 0 through 1, inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {number} arg2 - The percentile value that is greater than 0 but less than 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_EXC = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE.EXC", arguments);
@@ -2965,9 +3075,9 @@
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, inclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data that defines relative standing.
-	 * @param {number} arg2 Is the percentile value that is between 0 through 1, inclusive.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_INC = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE.INC", arguments);
@@ -2976,34 +3086,34 @@
 	 * Returns the rank of a value in a data set as a percentage of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data with numeric values that defines relative standing.
-	 * @param {number} arg2 Is the value for which you want to know the rank.
-	 * @param {?number} arg3 Is an optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {number} arg2 - The value for which the rank will be returned.
+	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK", arguments);
 	};
 	/**
-	 * Returns the rank of a value in a data set as a percentage of the data set as a percentage (0..1, exclusive) of the data set.
+	 * Returns the rank of a value in a data set as a percentage (0..1, exclusive) of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data with numeric values that defines relative standing.
-	 * @param {number} arg2 Is the value for which you want to know the rank.
-	 * @param {?number} arg3 Is an optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {number} arg2 - The value for which the rank will be returned.
+	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_EXC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK.EXC", arguments);
 	};
 	/**
-	 * Returns the rank of a value in a data set as a percentage of the data set as a percentage (0..1, inclusive) of the data set.
+	 * Returns the rank of a value in a data set as a percentage (0..1, inclusive) of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data with numeric values that defines relative standing.
-	 * @param {number} arg2 Is the value for which you want to know the rank.
-	 * @param {?number} arg3 Is an optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {number} arg2 - The value for which the rank will be returned.
+	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_INC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK.INC", arguments);
@@ -3012,9 +3122,9 @@
 	 * Returns the number of permutations for a given number of objects that can be selected from the total objects.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the total number of objects.
-	 * @param {number} arg2 Is the number of objects in each permutation.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The total number of objects.
+	 * @param {number} arg2 - The number of objects in each permutation.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERMUT = function (arg1, arg2) {
 		return this.private_calculateFunction("PERMUT", arguments);
@@ -3023,9 +3133,9 @@
 	 * Returns the number of permutations for a given number of objects (with repetitions) that can be selected from the total objects.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the total number of objects.
-	 * @param {number} arg2 Is the number of objects in each permutation.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The total number of objects.
+	 * @param {number} arg2 - The number of objects in each permutation.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PERMUTATIONA = function (arg1, arg2) {
 		return this.private_calculateFunction("PERMUTATIONA", arguments);
@@ -3034,8 +3144,8 @@
 	 * Returns the value of the density function for a standard normal distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want the density of the standard normal distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number for which the density of the standard normal distribution will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PHI = function (arg1) {
 		return this.private_calculateFunction("PHI", arguments);
@@ -3044,10 +3154,12 @@
 	 * Returns the Poisson distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of events.
-	 * @param {number} arg2 Is the expected numeric value, a positive number.
-	 * @param {boolean} arg3 Is a logical value: for the cumulative Poisson probability, use TRUE; for the Poisson probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of events.
+	 * @param {number} arg2 - The expected numeric value, a positive number.
+	 * @param {boolean} arg3 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative Poisson probability.
+	 * If it is <b>false</b>, the function returns the Poisson probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.POISSON = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("POISSON", arguments);
@@ -3056,10 +3168,12 @@
 	 * Returns the Poisson distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of events.
-	 * @param {number} arg2 Is the expected numeric value, a positive number.
-	 * @param {boolean} arg3 Is a logical value: for the cumulative Poisson probability, use TRUE; for the Poisson probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of events.
+	 * @param {number} arg2 - The expected numeric value, a positive number.
+	 * @param {boolean} arg3 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative Poisson probability.
+	 * If it is <b>false</b>, the function returns the Poisson probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("POISSON.DIST", arguments);
@@ -3082,9 +3196,9 @@
 	 * Returns the quartile of a data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or cell range of numeric values for which you want the quartile value.
-	 * @param {number} arg2 Is a number: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE", arguments);
@@ -3093,9 +3207,9 @@
 	 * Returns the quartile of a data set, based on percentile values from 0..1, exclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or cell range of numeric values for which you want the quartile value.
-	 * @param {number} arg2 Is a number: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {number} arg2 - The quartile value to return: 1st quartile = 1; median value = 2; 3rd quartile = 3.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_EXC = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE.EXC", arguments);
@@ -3104,9 +3218,9 @@
 	 * Returns the quartile of a data set, based on percentile values from 0..1, inclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or cell range of numeric values for which you want the quartile value.
-	 * @param {number} arg2 Is a number: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_INC = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE.INC", arguments);
@@ -3115,34 +3229,37 @@
 	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want to find the rank.
-	 * @param {ApiRange} arg2 Is an array of, or a reference to, a list of numbers. Nonnumeric values are ignored.
-	 * @param {?boolean} arg3 Is a number: rank in the list sorted descending = 0 or omitted; rank in the list sorted ascending = any nonzero value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number for which the rank will be returned.
+	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RANK = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK", arguments);
 	};
 	/**
-	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list; if more than one value has the same rank, the average rank is returned.
+	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list. If more than one value has the same rank, the average rank is returned.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want to find the rank.
-	 * @param {ApiRange} arg2 Is an array of, or a reference to, a list of numbers. Nonnumeric values are ignored.
-	 * @param {?boolean} arg3 Is a number: rank in the list sorted descending = 0 or omitted; rank in the list sorted ascending = any nonzero value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number for which the rank will be returned.
+	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RANK_AVG = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK.AVG", arguments);
 	};
 	/**
-	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list; if more than one value has the same rank, the top rank of that set of values is returned.
+	 * Returns the rank of a number in a list of numbers: its size relative to other values in the list. If more than one value has the same rank, the top rank of that set of values is returned.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want to find the rank.
-	 * @param {ApiRange} arg2 Is an array of, or a reference to, a list of numbers. Nonnumeric values are ignored.
-	 * @param {?boolean} arg3 Is a number: rank in the list sorted descending = 0 or omitted; rank in the list sorted ascending = any nonzero value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number for which the rank will be returned.
+	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
+	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK.EQ", arguments);
@@ -3161,19 +3278,21 @@
 	// };
 
 	/**
-	 * Returns the skewness of a distribution: a characterisation of the degree of asymmetry of a distribution around its mean.
+	 * Returns the skewness of a distribution: a characterization of the degree of asymmetry of a distribution around its mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SKEW = function () {
 		return this.private_calculateFunction("SKEW", arguments);
 	};
 	/**
-	 * Returns the skewness of a distribution based on a population: a characterisation of the degree of asymmetry of a distribution around its mean.
+	 * Returns the skewness of a distribution based on a population: a characterization of the degree of asymmetry of a distribution around its mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SKEW_P = function () {
 		return this.private_calculateFunction("SKEW.P", arguments);
@@ -3194,9 +3313,9 @@
 	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is an array or range of numerical data for which you want to determine the k-th smallest value.
-	 * @param {number} arg2 Is the position (from the smallest) in the array or range of the value to return.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - An array or range of numerical data for which the k-th smallest value will be determined.
+	 * @param {number} arg2 - The position (from the smallest) in the array or range of the value to return.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
 		return this.private_calculateFunction("SMALL", arguments);
@@ -3205,10 +3324,10 @@
 	 * Returns a normalised value from a distribution characterised by a mean and standard deviation.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value you want to normalize.
-	 * @param {number} arg2 Is the arithmetic mean of the distribution.
-	 * @param {number} arg3 Is the standard deviation of the distribution, a positive number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to normalize.
+	 * @param {number} arg2 - The arithmetic mean of the distribution.
+	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STANDARDIZE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("STANDARDIZE", arguments);
@@ -3217,7 +3336,8 @@
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV = function () {
 		return this.private_calculateFunction("STDEV", arguments);
@@ -3226,16 +3346,18 @@
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_S = function () {
 		return this.private_calculateFunction("STDEV.S", arguments);
 	};
 	/**
-	 * Estimates standard deviation based on a sample, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
+	 * Estimates standard deviation based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEVA = function () {
 		return this.private_calculateFunction("STDEVA", arguments);
@@ -3244,7 +3366,8 @@
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEVP = function () {
 		return this.private_calculateFunction("STDEVP", arguments);
@@ -3253,15 +3376,17 @@
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_P = function () {
 		return this.private_calculateFunction("STDEV.P", arguments);
 	};
 	/**
-	 * Calculates standard deviation based on an entire population, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
+	 * Calculates standard deviation based on an entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
+	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEVPA = function () {
@@ -3283,10 +3408,10 @@
 	 * Returns the Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the numeric value at which to evaluate the distribution.
-	 * @param {number} arg2 Is an integer indicating the number of degrees of freedom that characterize the distribution.
-	 * @param {number} arg3 Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
+	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
+	 * @param {number} arg3 - Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TDIST", arguments);
@@ -3295,10 +3420,12 @@
 	 * Returns the left-tailed Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the numeric value at which to evaluate the distribution.
-	 * @param {number} arg2 Is an integer indicating the number of degrees of freedom that characterize the distribution.
-	 * @param {boolean} arg3 Is a logical value: for the cumulative distribution function, use TRUE; for the probability density function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
+	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
+	 * @param {boolean} arg3 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability density function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("T.DIST", arguments);
@@ -3307,9 +3434,9 @@
 	 * Returns the two-tailed Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the numeric value at which to evaluate the distribution.
-	 * @param {number} arg2 Is an integer indicating the number of degrees of freedom that characterize the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
+	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_2T = function (arg1, arg2) {
 		return this.private_calculateFunction("T.DIST.2T", arguments);
@@ -3318,9 +3445,9 @@
 	 * Returns the right-tailed Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the numeric value at which to evaluate the distribution.
-	 * @param {number} arg2 Is an integer indicating the number of degrees of freedom that characterize the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
+	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("T.DIST.RT", arguments);
@@ -3329,9 +3456,9 @@
 	 * Returns the left-tailed inverse of the Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is a positive integer indicating the number of degrees of freedom to characterize the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.T_INV = function (arg1, arg2) {
 		return this.private_calculateFunction("T.INV", arguments);
@@ -3340,9 +3467,9 @@
 	 * Returns the two-tailed inverse of the Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is a positive integer indicating the number of degrees of freedom to characterize the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.T_INV_2T = function (arg1, arg2) {
 		return this.private_calculateFunction("T.INV.2T", arguments);
@@ -3351,9 +3478,9 @@
 	 * Returns the two-tailed inverse of the Student's t-distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
-	 * @param {number} arg2 Is a positive integer indicating the number of degrees of freedom to characterize the distribution.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
+	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TINV = function (arg1, arg2) {
 		return this.private_calculateFunction("TINV", arguments);
@@ -3362,11 +3489,12 @@
 	 * Returns numbers in a linear trend matching known data points, using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is a range or array of y-values you already know in the relationship y = mx + b.
-	 * @param {?ApiRange} arg2 Is an optional range or array of x-values that you know in the relationship y = mx + b, an array the same size as Known_y's.
-	 * @param {?ApiRange} arg3 Is a range or array of new x-values for which you want TREND to return corresponding y-values.
-	 * @param {?boolean} arg4 Is a logical value: the constant b is calculated normally if Const = TRUE or omitted; b is set equal to 0 if Const = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - A range or array of y-values from the <em>y = mx + b</em> equation.
+	 * @param {?ApiRange | number[]} arg2 - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
+	 * @param {?ApiRange | number[]} arg3 - A range or array of new x-values for which this function will return corresponding y-values.
+	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
+	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("TREND", arguments);
@@ -3375,9 +3503,9 @@
 	 * Returns the mean of the interior portion of a set of data values.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the range or array of values to trim and average.
-	 * @param {number} arg2 Is the fractional number of data points to exclude from the top and bottom of the data set.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number[]} arg1 - The range or array of values to trim and average.
+	 * @param {number} arg2 - The fractional number of data points to exclude from the top and bottom of the data set.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
 		return this.private_calculateFunction("TRIMMEAN", arguments);
@@ -3414,16 +3542,18 @@
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR = function () {
 		return this.private_calculateFunction("VAR", arguments);
 	};
 	/**
-	 * Estimates variance based on a sample, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
+	 * Estimates variance based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARA = function () {
 		return this.private_calculateFunction("VARA", arguments);
@@ -3432,7 +3562,8 @@
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARP = function () {
 		return this.private_calculateFunction("VARP", arguments);
@@ -3441,7 +3572,8 @@
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR_P = function () {
 		return this.private_calculateFunction("VAR.P", arguments);
@@ -3450,16 +3582,18 @@
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR_S = function () {
 		return this.private_calculateFunction("VAR.S", arguments);
 	};
 	/**
-	 * Calculates variance based on the entire population, including logical values and text. Text and the logical value FALSE have the value 0; the logical value TRUE has the value 1.
+	 * Calculates variance based on the entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARPA = function () {
 		return this.private_calculateFunction("VARPA", arguments);
@@ -3468,11 +3602,13 @@
 	 * Returns the Weibull distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a nonnegative number.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a nonnegative number.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WEIBULL", arguments);
@@ -3481,11 +3617,13 @@
 	 * Returns the Weibull distribution.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value at which to evaluate the function, a nonnegative number.
-	 * @param {number} arg2 Is a parameter to the distribution, a positive number.
-	 * @param {number} arg3 Is a parameter to the distribution, a positive number.
-	 * @param {boolean} arg4 Is a logical value: for the cumulative distribution function, use TRUE; for the probability mass function, use FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function, a nonnegative number.
+	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
+	 * @param {number} arg3 - The beta parameter of the distribution, a positive number.
+	 * @param {boolean} arg4 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
+	 * If it is <b>true</b>, the function returns the cumulative distribution function.
+	 * If it is <b>false</b>, the function returns the probability mass function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WEIBULL.DIST", arguments);
@@ -3494,10 +3632,10 @@
 	 * Returns the one-tailed P-value of a z-test.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data against which to test X.
-	 * @param {number} arg2 Is the value to test.
-	 * @param {?number} arg3 Is the population (known) standard deviation. If omitted, the sample standard deviation is used.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data against which to test X.
+	 * @param {number} arg2 - The value to test.
+	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ZTEST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("ZTEST", arguments);
@@ -3506,22 +3644,22 @@
 	 * Returns the one-tailed P-value of a z-test.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the array or range of data against which to test X.
-	 * @param {number} arg2 Is the value to test.
-	 * @param {?number} arg3 Is the population (known) standard deviation. If omitted, the sample standard deviation is used.
-	 * @returns {number | string | boolean}
+	 * @param {number[] | ApiRange} arg1 - The array or range of data against which to test X.
+	 * @param {number} arg2 - The value to test.
+	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.Z_TEST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("Z.TEST", arguments);
 	};
 	/**
-	 * Returns the number that represents the date in the date-time code.
+	 * Returns a number that represents the date in the date-time code.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number from 1900 or 1904 (depending on the workbook's date system) to 9999.
-	 * @param {number} arg2 Is a number from 1 to 12 representing the month of the year.
-	 * @param {number} arg3 Is a number from 1 to 31 representing the day of the month.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number from 1900 or 1904 (depending on the workbook's date system) to 9999.
+	 * @param {number} arg2 - A number from 1 to 12 representing the month of the year.
+	 * @param {number} arg3 - A number from 1 to 31 representing the day of the month.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DATE", arguments);
@@ -3530,29 +3668,29 @@
 	 * Converts a date in the form of text to a number that represents the date in the date-time code.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is text that represents a date in a Microsoft Excel date format, between 1/1/1900 or 1/1/1904 (depending on the workbook's date system) and 12/31/9999.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The text that represents a date, between 1/1/1900 or 1/1/1904 (depending on the workbook's date system) and 12/31/9999.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
 		return this.private_calculateFunction("DATEVALUE", arguments);
 	};
 	/**
-	 * Returns the day of the month, a number from 1 to 31..
+	 * Returns the day of the date given in the numerical format, a number from 1 to 31.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number in the date-time code.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAY = function (arg1) {
 		return this.private_calculateFunction("DAY", arguments);
 	};
 	/**
-	 * Returns the number of days between the two dates..
+	 * Returns the number of days between the two dates.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {number} arg2 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Start date from which days will be counted.
+	 * @param {number} arg2 - End date until which days will be counted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
 		return this.private_calculateFunction("DAYS", arguments);
@@ -3561,21 +3699,25 @@
 	 * Returns the number of days between two dates based on a 360-day year (twelve 30-day months).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {number} arg2 Start_date and end_date are the two dates between which you want to know the number of days.
-	 * @param {?boolean} arg3 Is a logical value specifying the calculation method: U.S. (NASD) = FALSE or omitted; European = TRUE..
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Start date from which days will be counted.
+	 * @param {number} arg2 - End date until which days will be counted.
+	 * @param {?boolean} arg3 - A logical value that specifies whether to use the U.S. (NASD) (false or omitted) or European (true) method in the calculation.
+	 * According to the European method, the start and end dates that occur on the 31st of a month become equal to the 30th of the same month.
+	 * According to the U.S. method, the start date is the last day of a month, it becomes equal to the 30th of the same month.
+	 * If the end date is the last day of a month and the start date is earlier than the 30th of a month, the end date becomes equal to the 1st of the next month.
+	 * Otherwise the end date becomes equal to the 30th of the same month.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DAYS360", arguments);
 	};
 	/**
-	 * Returns the serial number of the date that is the indicated number of months before or after the start date.
+	 * Returns the serial number of the date which comes the indicated number of months before or after the start date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is the number of months before or after start_date.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - A serial date number that represents the start date.
+	 * @param {any} arg2 - The number of months before or after the start date.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
 		return this.private_calculateFunction("EDATE", arguments);
@@ -3586,7 +3728,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a serial date number that represents the start date.
 	 * @param {any} arg2 Is the number of months before or after the start_date.
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
 		return this.private_calculateFunction("EOMONTH", arguments);
@@ -6839,10 +6981,11 @@
 	});
 
 	/**
-	 * Returns the cell references style.
+	 * Returns the cell reference style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {ReferenceStyle}
+	 * @returns {ReferenceStyle} - The cell reference style.
+	 * @since 8.1.0
 	 * */
 	Api.prototype.GetReferenceStyle = function () {
 		let bReferenceStyle = this.asc_getR1C1Mode();
@@ -6850,10 +6993,11 @@
 	};
 
 	/**
-	 * Sets the cell references style.
+	 * Sets the cell reference style.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ReferenceStyle} sReferenceStyle - Type of reference style
+	 * @param {ReferenceStyle} sReferenceStyle - The cell reference style.
+	 * @since 8.1.0
 	 */
 	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
 		let bReferenceMode = null;
@@ -7987,10 +8131,10 @@
 	});
 
 	/**
-	 * Pastes the contents of the Clipboard onto the sheet.
-	 * @memberof ApiRange
+	 * Pastes the contents of the clipboard to the current sheet.
+	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Object that specifies where the Clipboard contents should be pasted. If this argument is omitted, the current selection is used.
+	 * @param {ApiRange?} [destination] - The cell range where the clipboard contents should be pasted. If this argument is omitted, the current selection is used.
 	 * @since 8.1.0
 	 */
 	ApiWorksheet.prototype.Paste = function (destination) {
@@ -9455,10 +9599,10 @@
 	});
 
 	/**
-	 * Copies the range to the specified range or to the Clipboard.
+	 * Copies the range to the specified range or to the clipboard.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, the range will be copied to the clipboard.
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		var oApi = Asc["editor"];
@@ -9484,10 +9628,11 @@
 	};
 
 	/**
-	 * Cuts the range to the specified range or to the Clipboard.
+	 * Cuts the range and save it to the clipboard or paste it to the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be cuted. If this argument is omitted, Onlyoffice copies the range to the Clipboard.
+	 * @param {ApiRange?} [destination] - Specifies the new range to which the cut range will be pasted. If this argument is omitted, the range will be copied to the clipboard.
+	 * @since 8.1.0
 	 */
 	ApiRange.prototype.Cut = function (destination) {
 		var oApi = Asc["editor"];
@@ -9534,13 +9679,14 @@
 	};
 
 	/**
-	 * Pastes the Range object to the specified range.
+	 * Pastes the Range object to the specified range using the special paste options.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Type of special paste
-	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - Operation of special paste
-	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Case sensitive or not. The default value is "false".
-	 * @param {boolean} bTranspose [bTranspose=false] - Case sensitive or not. The default value is "false".
+	 * @param {PasteType} [sPasteType="xlPasteAll"]  - Paste option.
+	 * @param {PasteSpecialOperation} [sPasteSpecialOperation="xlPasteSpecialOperationNone"] - The mathematical operation which will be applied to the copied data.
+	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
+	 * @param {boolean} bTranspose [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
+	 * @since 8.1.0
 	 */
 	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
 		if (sPasteType && typeof sPasteType !== 'string') {
@@ -12697,6 +12843,17 @@
 	};
 
 	/**
+	 * Removes all frozen panes in the current worksheet.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @since 8.0.0
+	 */
+	ApiFreezePanes.prototype.Unfreeze = function () {
+		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
+			this.ws.workbook.oApi.asc_freezePane(undefined);
+	};
+
+	/**
 	 * Class representing a user-protected range.
 	 * @constructor
 	 */
@@ -13184,12 +13341,13 @@
 	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
-	ApiOleObject.prototype["SetData"]              = ApiOleObject.prototype.SetData;
-	ApiOleObject.prototype["GetData"]              = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                 = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
-	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetClassType"]                =  ApiColor.prototype.GetClassType;
+	ApiColor.prototype["GetRGB"]                      =  ApiColor.prototype.GetRGB;
 
 
 	ApiName.prototype["GetName"]                 =  ApiName.prototype.GetName;
