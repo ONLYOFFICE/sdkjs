@@ -3337,8 +3337,7 @@
     /**
      * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @returns {bool}
      */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -3357,8 +3356,7 @@
 	/**
      * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
      */
@@ -3488,11 +3486,7 @@
     // ApiChart
     //
     //------------------------------------------------------------------------------------------------------------------
-    /**
-     * Returns the type of the ApiChart class.
-     * @typeofeditors ["CPE"]
-     * @returns {"chart"}
-     */
+
 
 
     //------------------------------------------------------------------------------------------------------------------
@@ -4355,7 +4349,24 @@
     ApiDrawing.prototype["SetLockValue"]                  = ApiDrawing.prototype.SetLockValue;
 
 
+
     ApiDrawing.prototype["ToJSON"]                        = ApiDrawing.prototype.ToJSON;
+
+
+	let ApiChart = AscBuilder.ApiChart;
+	ApiChart.prototype["SetSize"]         = ApiChart.prototype.SetSize           = ApiDrawing.prototype.SetSize;
+	ApiChart.prototype["SetPosition"]     = ApiChart.prototype.SetPosition       = ApiDrawing.prototype.SetPosition;
+	ApiChart.prototype["GetParent"]       = ApiChart.prototype.GetParent         = ApiDrawing.prototype.GetParent;
+	ApiChart.prototype["GetParentSlide"]  = ApiChart.prototype.GetParentSlide    = ApiDrawing.prototype.GetParentSlide;
+	ApiChart.prototype["GetParentLayout"] = ApiChart.prototype.GetParentLayout   = ApiDrawing.prototype.GetParentLayout;
+	ApiChart.prototype["GetParentMaster"] = ApiChart.prototype.GetParentMaster   = ApiDrawing.prototype.GetParentMaster;
+	ApiChart.prototype["Delete"]          = ApiChart.prototype.Delete            = ApiDrawing.prototype.Delete;
+	ApiChart.prototype["SetPlaceholder"]  = ApiChart.prototype.SetPlaceholder    = ApiDrawing.prototype.SetPlaceholder;
+	ApiChart.prototype["GetPlaceholder"]  = ApiChart.prototype.GetPlaceholder    = ApiDrawing.prototype.GetPlaceholder;
+	ApiChart.prototype["GetWidth"]        = ApiChart.prototype.GetWidth          = ApiDrawing.prototype.GetWidth;
+	ApiChart.prototype["GetHeight"]       = ApiChart.prototype.GetHeight         = ApiDrawing.prototype.GetHeight;
+	ApiChart.prototype["GetLockValue"]    = ApiChart.prototype.GetLockValue      = ApiDrawing.prototype.GetLockValue;
+	ApiChart.prototype["SetLockValue"]    = ApiChart.prototype.SetLockValue      = ApiDrawing.prototype.SetLockValue;
 
     ApiImage.prototype["GetClassType"]                    = ApiImage.prototype.GetClassType;
 
@@ -4364,9 +4375,10 @@
     ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
     ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
 
+
     ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
-	ApiOleObject.prototype["SetData"]                  = ApiOleObject.prototype.SetData;
-	ApiOleObject.prototype["GetData"]                  = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetData"]                     = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                     = ApiOleObject.prototype.GetData;
 	ApiOleObject.prototype["SetApplicationId"]            = ApiOleObject.prototype.SetApplicationId;
 	ApiOleObject.prototype["GetApplicationId"]            = ApiOleObject.prototype.GetApplicationId;
 

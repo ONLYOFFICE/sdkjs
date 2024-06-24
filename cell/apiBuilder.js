@@ -10175,8 +10175,7 @@
 	/**
 	 * Returns the lock value for the specified lock type of the current drawing.
 	 * @typeofeditors ["CSE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @returns {bool}
 	 */
 	ApiDrawing.prototype.GetLockValue = function (sType) {
@@ -10194,8 +10193,7 @@
 	/**
 	 * Sets the lock value to the specified lock type of the current drawing.
 	 * @typeofeditors ["CSE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
 	 */
@@ -12818,6 +12816,12 @@
 	ApiChart.prototype["SetSeriaName"]                =  ApiChart.prototype.SetSeriaName;
 	ApiChart.prototype["SetCatFormula"]               =  ApiChart.prototype.SetCatFormula;
 	ApiChart.prototype["AddSeria"]                    =  ApiChart.prototype.AddSeria;
+	ApiChart.prototype["SetSize"]                     =  ApiChart.prototype.SetSize      = ApiDrawing.prototype.SetSize;
+	ApiChart.prototype["SetPosition"]                 =  ApiChart.prototype.SetPosition  = ApiDrawing.prototype.SetPosition;
+	ApiChart.prototype["GetWidth"]                    =  ApiChart.prototype.GetWidth     = ApiDrawing.prototype.GetWidth;
+	ApiChart.prototype["GetHeight"]                   =  ApiChart.prototype.GetHeight    = ApiDrawing.prototype.GetHeight;
+	ApiChart.prototype["GetLockValue"]                =  ApiChart.prototype.GetLockValue = ApiDrawing.prototype.GetLockValue;
+	ApiChart.prototype["SetLockValue"]                =  ApiChart.prototype.SetLockValue = ApiDrawing.prototype.SetLockValue;
 
 	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
 	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;

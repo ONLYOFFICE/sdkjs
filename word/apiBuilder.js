@@ -201,10 +201,9 @@
 			let oDrawing = oApiDrawing.Drawing;
 			if(oDrawing)
 			{
-				if(oDrawing.GraphicObj &&
-					oDrawing.GraphicObj.getObjectType() === AscDFH.historyitem_type_OleObject)
+				if(oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
 				{
-					let oData = oDrawing.GraphicObj.getDataObject();
+					let oData = oDrawing.getDataObject();
 					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
 				}
 			}
@@ -3538,7 +3537,7 @@
 	 */
 	function ApiImage(Image)
 	{
-		ApiDrawing.call(this, Image.parent);
+		ApiDrawing.call(this, Image);
 		this.Image = Image
 	}
 	ApiImage.prototype = Object.create(ApiDrawing.prototype);
@@ -3550,7 +3549,7 @@
 	 */
 	function ApiOleObject(OleObject)
 	{
-		ApiDrawing.call(this, OleObject.parent);
+		ApiDrawing.call(this, OleObject);
 		this.OleObject = OleObject
 	}
 	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
@@ -3562,7 +3561,7 @@
 	 * */
 	function ApiShape(Shape)
 	{
-		ApiDrawing.call(this, Shape.parent);
+		ApiDrawing.call(this, Shape);
 		this.Shape = Shape;
 	}
 	ApiShape.prototype = Object.create(ApiDrawing.prototype);
@@ -3575,7 +3574,7 @@
 	 */
 	function ApiChart(Chart)
 	{
-		ApiDrawing.call(this, Chart.parent);
+		ApiDrawing.call(this, Chart);
 		this.Chart = Chart;
 	}
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
@@ -3879,6 +3878,14 @@
 	 *     "lineStacked" | "lineStackedPercent" | "line3D" | "pie" | "pie3D" | "doughnut" | "scatter" | "stock" |
 	 *     "area" | "areaStacked" | "areaStackedPercent" | "comboBarLine" | "comboBarLineSecondary" | "comboCustom" | "unknown")} ChartType
 	 */
+
+	/**
+	 * This type specifies the type of drawing lock.
+	 * @typedef {("noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
+	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox")} DrawingLockType
+	 */
+
+
 
 	/**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
@@ -4954,7 +4961,7 @@
 				oResult = new ApiTable(oReader.TableFromJSON(oParsedObj));
 				break;
 			case "paraDrawing":
-				oResult = new ApiDrawing(oReader.ParaDrawingFromJSON(oParsedObj));
+				oResult = new ApiDrawing(oReader.ParaDrawingFromJSON(oParsedObj).GraphicObj);
 				break;
 			case "nextPage":
 			case "oddPage":
@@ -5346,7 +5353,7 @@
 		var arrApiShapes  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
 		
 		return arrApiShapes;
 	};
@@ -6271,9 +6278,13 @@
 	 */
 	ApiDocument.prototype.AddDrawingToPage = function(oDrawing, nPage, x, y)
 	{
-		if (!(oDrawing instanceof ApiDrawing) || oDrawing.Drawing.IsUseInDocument())
+		if (!(oDrawing instanceof ApiDrawing))
 			return false;
-		
+
+		let drawing = oDrawing.getParaDrawing();
+		if(drawing.IsUseInDocument())
+			return false;
+
 		this.ForceRecalculate(nPage + 1);
 		if (this.Document.GetPagesCount() <= nPage)
 			return false;
@@ -6283,8 +6294,7 @@
 		let paragraph = this.Document.GetCurrentParagraph();
 		if (!paragraph)
 			return false;
-		
-		let drawing = oDrawing.Drawing;
+
 		drawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, private_EMU2MM(x), false);
 		drawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, private_EMU2MM(y), false);
 		drawing.Set_DrawingType(drawing_Anchor);
@@ -6846,7 +6856,7 @@
 			else if (aSelected[nDrawing].isShape())
 				aResult.push(new ApiShape(aSelected[nDrawing]));
 			else
-				aResult.push(new ApiDrawing(aSelected[nDrawing].parent));
+				aResult.push(new ApiDrawing(aSelected[nDrawing]));
 		}
 
 		var aSelectedInText = this.Document.GetSelectedDrawingObjectsInText();
@@ -6859,7 +6869,7 @@
 			else if (aSelectedInText[nDrawing].GraphicObj.isShape())
 				aResult.push(new ApiShape(aSelectedInText[nDrawing].GraphicObj));
 			else
-				aResult.push(new ApiDrawing(aSelected[nDrawing]));
+				aResult.push(new ApiDrawing(aSelected[nDrawing].GraphicObj));
 		}
 
 		return aResult;
@@ -6893,28 +6903,31 @@
 	 */
 	ApiDocument.prototype.ReplaceDrawing = function(oOldDrawing, oNewDrawing, bSaveOldDrawingPr)
 	{
-		if (!(oOldDrawing instanceof ApiDrawing) || !oOldDrawing.Drawing.Parent || !(oNewDrawing instanceof ApiDrawing))
+		if (!(oOldDrawing instanceof ApiDrawing) || !(oNewDrawing instanceof ApiDrawing))
 			return false;
 
-		var oDrawing = oNewDrawing.Copy();
+		let oOldParaDrawing = oOldDrawing.getParaDrawing();
+		if(!oOldParaDrawing || !oOldParaDrawing.Parent)
+			return false;
+		let oDrawing = oNewDrawing.Copy();
 
 		if (bSaveOldDrawingPr === true)
 			oDrawing.SetDrawingPrFromDrawing(oOldDrawing);
 
-		var oDocument = private_GetLogicDocument();
-		var oRun = oOldDrawing.Drawing.Parent.Get_DrawingObjectRun(oOldDrawing.Drawing.Id);
+		let oDocument = private_GetLogicDocument();
+		let oRun = oOldParaDrawing.Parent.Get_DrawingObjectRun(oOldParaDrawing.Id);
 		if (oRun)
 		{
-			var oldSelectionInfo = oDocument.SaveDocumentState();
+			let oldSelectionInfo = oDocument.SaveDocumentState();
 
-			for ( var CurPos = 0; CurPos < oRun.Content.length; CurPos++ )
+			for ( let CurPos = 0; CurPos < oRun.Content.length; CurPos++ )
 			{
-				var Element = oRun.Content[CurPos];
+				let Element = oRun.Content[CurPos];
 
-				if ( para_Drawing === Element.Type && oOldDrawing.Drawing.Id === Element.Get_Id() )
+				if ( para_Drawing === Element.Type && oOldParaDrawing.Id === Element.Get_Id() )
 				{
 					oRun.Remove_FromContent(CurPos, 1);
-					oRun.Add_ToContent(CurPos, oDrawing.Drawing);
+					oRun.Add_ToContent(CurPos, oDrawing.getParaDrawing());
 					break;
 				}
 			}
@@ -7594,14 +7607,18 @@
 	 */
 	ApiParagraph.prototype.AddDrawing = function(oDrawing)
 	{
-		var oRun = new ParaRun(this.Paragraph, false);
+		let oRun = new ParaRun(this.Paragraph, false);
 
 		if (!(oDrawing instanceof ApiDrawing))
 			return new ApiRun(oRun);
 
-		oRun.Add_ToContent(0, oDrawing.Drawing);
+		let oParaDrawing = oDrawing.getParaDrawing();
+		if(!oParaDrawing)
+			return new ApiRun(oRun);
+
+		oRun.Add_ToContent(0, oParaDrawing);
 		private_PushElementToParagraph(this.Paragraph, oRun);
-		oDrawing.Drawing.Set_Parent(oRun);
+		oParaDrawing.Set_Parent(oRun);
 		private_CheckDrawingOnAdd(oDrawing);
 		return new ApiRun(oRun);
 	};
@@ -8162,7 +8179,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 		{
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
 		}
 		
 		return arrApiShapes;
@@ -9204,8 +9221,9 @@
 		if (!(oDrawing instanceof ApiDrawing))
 			return false;
 
-		this.Run.Add_ToContent(this.Run.Content.length, oDrawing.Drawing);
-		oDrawing.Drawing.Set_Parent(this.Run);
+		let oParaDrawing = oDrawing.getParaDrawing();
+		this.Run.Add_ToContent(this.Run.Content.length, oParaDrawing);
+		oParaDrawing.Set_Parent(this.Run);
 		private_CheckDrawingOnAdd(oDrawing);
 		return true;
 	};
@@ -14360,7 +14378,11 @@
 	// ApiDrawing
 	//
 	//------------------------------------------------------------------------------------------------------------------
-
+	ApiDrawing.prototype.getParaDrawing = function()
+	{
+		if(!this.Drawing) return null;
+		return this.Drawing.parent;
+	};
 	/**
 	 * Returns a type of the ApiDrawing class.
 	 * @memberof ApiDrawing
@@ -14380,13 +14402,13 @@
 	 */
 	ApiDrawing.prototype.SetSize = function(nWidth, nHeight)
 	{
-		var fWidth = private_EMU2MM(nWidth);
-		var fHeight = private_EMU2MM(nHeight);
-		this.Drawing.setExtent(fWidth, fHeight);
-		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+		let fWidth = private_EMU2MM(nWidth);
+		let fHeight = private_EMU2MM(nHeight);
+		this.getParaDrawing().setExtent(fWidth, fHeight);
+		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
 		{
-			this.Drawing.GraphicObj.spPr.xfrm.setExtX(fWidth);
-			this.Drawing.GraphicObj.spPr.xfrm.setExtY(fHeight);
+			this.Drawing.spPr.xfrm.setExtX(fWidth);
+			this.Drawing.spPr.xfrm.setExtY(fHeight);
 		}
 	};
 	/**
@@ -14405,54 +14427,55 @@
 	 */
 	ApiDrawing.prototype.SetWrappingStyle = function(sType)
 	{
-		if(this.Drawing)
+		let oParaDrawing = this.getParaDrawing();
+		if(oParaDrawing)
 		{
 			if ("inline" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Inline);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-				this.Drawing.Set_BehindDoc(false);
+				oParaDrawing.Set_DrawingType(drawing_Inline);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+				oParaDrawing.Set_BehindDoc(false);
 			}
 			else if ("square" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
-				this.Drawing.Set_BehindDoc(false);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+				oParaDrawing.Set_BehindDoc(false);
 			}
 			else if ("tight" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_TIGHT);
-				this.Drawing.Set_BehindDoc(true);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_TIGHT);
+				oParaDrawing.Set_BehindDoc(true);
 			}
 			else if ("through" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_THROUGH);
-				this.Drawing.Set_BehindDoc(true);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_THROUGH);
+				oParaDrawing.Set_BehindDoc(true);
 			}
 			else if ("topAndBottom" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_TOP_AND_BOTTOM);
-				this.Drawing.Set_BehindDoc(false);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_TOP_AND_BOTTOM);
+				oParaDrawing.Set_BehindDoc(false);
 			}
 			else if ("behind" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-				this.Drawing.Set_BehindDoc(true);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+				oParaDrawing.Set_BehindDoc(true);
 			}
 			else if ("inFront" === sType)
 			{
-				this.Drawing.Set_DrawingType(drawing_Anchor);
-				this.Drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-				this.Drawing.Set_BehindDoc(false);
+				oParaDrawing.Set_DrawingType(drawing_Anchor);
+				oParaDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+				oParaDrawing.Set_BehindDoc(false);
 			}
-			this.Drawing.Check_WrapPolygon();
-			if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.setRecalculateInfo)
+			oParaDrawing.Check_WrapPolygon();
+			if(this.Drawing.setRecalculateInfo)
 			{
-				this.Drawing.GraphicObj.setRecalculateInfo();
+				this.Drawing.setRecalculateInfo();
 			}
 		}
 	};
@@ -14465,9 +14488,9 @@
 	 */
 	ApiDrawing.prototype.SetHorAlign = function(sRelativeFrom, sAlign)
 	{
-		var nAlign        = private_GetAlignH(sAlign);
-		var nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
-		this.Drawing.Set_PositionH(nRelativeFrom, true, nAlign, false);
+		let nAlign        = private_GetAlignH(sAlign);
+		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
+		this.getParaDrawing().Set_PositionH(nRelativeFrom, true, nAlign, false);
 	};
 	/**
 	 * Specifies how the floating object will be vertically aligned.
@@ -14478,9 +14501,9 @@
 	 */
 	ApiDrawing.prototype.SetVerAlign = function(sRelativeFrom, sAlign)
 	{
-		var nAlign        = private_GetAlignV(sAlign);
-		var nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
-		this.Drawing.Set_PositionV(nRelativeFrom, true, nAlign, false);
+		let nAlign        = private_GetAlignV(sAlign);
+		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
+		this.getParaDrawing().Set_PositionV(nRelativeFrom, true, nAlign, false);
 	};
 	/**
 	 * Sets the absolute measurement for the horizontal positioning of the floating object.
@@ -14491,9 +14514,9 @@
 	 */
 	ApiDrawing.prototype.SetHorPosition = function(sRelativeFrom, nDistance)
 	{
-		var nValue        = private_EMU2MM(nDistance);
-		var nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
-		this.Drawing.Set_PositionH(nRelativeFrom, false, nValue, false);
+		let nValue        = private_EMU2MM(nDistance);
+		let nRelativeFrom = private_GetRelativeFromH(sRelativeFrom);
+		this.getParaDrawing().Set_PositionH(nRelativeFrom, false, nValue, false);
 	};
 	/**
 	 * Sets the absolute measurement for the vertical positioning of the floating object.
@@ -14504,9 +14527,9 @@
 	 */
 	ApiDrawing.prototype.SetVerPosition = function(sRelativeFrom, nDistance)
 	{
-		var nValue        = private_EMU2MM(nDistance);
-		var nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
-		this.Drawing.Set_PositionV(nRelativeFrom, false, nValue, false);
+		let nValue        = private_EMU2MM(nDistance);
+		let nRelativeFrom = private_GetRelativeFromV(sRelativeFrom);
+		this.getParaDrawing().Set_PositionV(nRelativeFrom, false, nValue, false);
 	};
 	/**
 	 * Specifies the minimum distance which will be maintained between the edges of the current drawing object and any
@@ -14520,7 +14543,7 @@
 	 */
 	ApiDrawing.prototype.SetDistances = function(nLeft, nTop, nRight, nBottom)
 	{
-		this.Drawing.Set_Distance(private_EMU2MM(nLeft), private_EMU2MM(nTop), private_EMU2MM(nRight), private_EMU2MM(nBottom));
+		this.getParaDrawing().Set_Distance(private_EMU2MM(nLeft), private_EMU2MM(nTop), private_EMU2MM(nRight), private_EMU2MM(nBottom));
 	};
 	/**
 	 * Returns a parent paragraph that contains the graphic object.
@@ -14530,10 +14553,9 @@
 	 */
 	ApiDrawing.prototype.GetParentParagraph = function()
 	{
-		var Paragraph = this.Drawing.GetParagraph();
-
+		let Paragraph = this.getParaDrawing().GetParagraph();
 		if (Paragraph)
-			return new ApiParagraph(this.Drawing.GetParagraph());
+			return new ApiParagraph(Paragraph);
 		else 
 			return null;
 	};
@@ -14585,13 +14607,14 @@
 	 */
 	ApiDrawing.prototype.Delete = function()
 	{
-		var ParaParent = this.GetParentParagraph();
+		let ParaParent = this.GetParentParagraph();
 
 		if (ParaParent)
 		{
-			this.Drawing.PreDelete();
-			var oParentRun = this.Drawing.GetRun();
-			oParentRun.RemoveElement(this.Drawing);
+			let oParaDrawing = this.getParaDrawing();
+			oParaDrawing.PreDelete();
+			let oParentRun = oParaDrawing.GetRun();
+			oParentRun.RemoveElement(oParaDrawing);
 
 			return true;
 		}
@@ -14606,14 +14629,7 @@
 	 */
 	ApiDrawing.prototype.Copy = function()
 	{
-		var oDrawing = this.Drawing.copy();
-
-		if (this instanceof ApiShape
-			|| this instanceof ApiChart
-			|| this instanceof ApiImage)
-			return new this.constructor(oDrawing.GraphicObj);
-
-		return new ApiDrawing(oDrawing);
+		return new this.constructor(this.Drawing.copy());
 	};
 	/**
 	 * Wraps the graphic object with a rich text content control.
@@ -14624,11 +14640,12 @@
 	 */
 	ApiDrawing.prototype.InsertInContentControl = function(nType)
 	{
-		var Document			= editor.private_GetLogicDocument();
-		var ContentControl;
-		var paragraphInControl	= null;
-		var parentParagraph		= this.Drawing.GetParagraph();
-		var paraIndex 			= -1;
+		let Document			= editor.private_GetLogicDocument();
+		let ContentControl;
+		let paragraphInControl	= null;
+		let paraDrawing         = this.getParaDrawing();
+		let parentParagraph		= paraDrawing.GetParagraph();
+		let paraIndex 			= -1;
 		if (parentParagraph)
 			paraIndex = parentParagraph.Index;
 
@@ -14648,7 +14665,7 @@
 				paragraphInControl.RemoveFromContent(0, paragraphInControl.Content.length - 1);
 				paragraphInControl.CorrectContent();
 			}
-			paragraphInControl.Add(this.Drawing);
+			paragraphInControl.Add(paraDrawing);
 			ContentControl.Sdt.SetShowingPlcHdr(false);
 		}
 
@@ -14690,7 +14707,7 @@
 	{
 		var Api = editor;
 		var oDocument = Api.GetDocument();
-		this.Drawing.SelectAsText();
+		this.getParaDrawing().SelectAsText();
 		oDocument.Document.UpdateSelection();
 	};
 	/**
@@ -14703,7 +14720,8 @@
 	 */	
 	ApiDrawing.prototype.AddBreak = function(breakType, position)
 	{
-		var ParentRun	= (new ApiRun(this.Drawing.GetRun()));
+		let oParaDrawing = this.getParaDrawing();
+		var ParentRun	= (new ApiRun(oParaDrawing.GetRun()));
 
 		if (!ParentRun || position !== "before" && position !== "after" || breakType !== 1 && breakType !== 0)
 			return false;
@@ -14711,16 +14729,16 @@
 		if (breakType === 0)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(oParaDrawing), new AscWord.CRunBreak(AscWord.break_Page));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(oParaDrawing) + 1, new AscWord.CRunBreak(AscWord.break_Page));
 		}
 		else if (breakType === 1)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(oParaDrawing), new AscWord.CRunBreak(AscWord.break_Line));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(oParaDrawing) + 1, new AscWord.CRunBreak(AscWord.break_Line));
 		}
 
 		return true;
@@ -14733,8 +14751,8 @@
 	 */	
 	ApiDrawing.prototype.SetHorFlip = function(bFlip)
 	{
-		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
-			this.Drawing.GraphicObj.spPr.xfrm.setFlipH(bFlip);
+		if (this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			this.Drawing.spPr.xfrm.setFlipH(bFlip);
 	};
 	/**
 	 * Flips the current drawing vertically.
@@ -14748,8 +14766,8 @@
 		if (typeof(bFlip) !== "boolean")
 			return false;
 
-		if (this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
-			this.Drawing.GraphicObj.spPr.xfrm.setFlipV(bFlip);
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
+			this.Drawing.spPr.xfrm.setFlipV(bFlip);
 		
 		return true;
 	};
@@ -14765,13 +14783,14 @@
 		if (typeof(coefficient) !== "number")
 			return false;
 
-		var currentHeight = this.Drawing.getXfrmExtY();
-		var currentWidth  = this.Drawing.getXfrmExtX();
+		let oParaDrawing = this.getParaDrawing();
+		var currentHeight = oParaDrawing.getXfrmExtY();
+		var currentWidth  = oParaDrawing.getXfrmExtX();
 
-		this.Drawing.setExtent(currentWidth, currentHeight * coefficient);
-		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+		oParaDrawing.setExtent(currentWidth, currentHeight * coefficient);
+		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
 		{
-			this.Drawing.GraphicObj.spPr.xfrm.setExtY(currentHeight * coefficient);
+			this.Drawing.spPr.xfrm.setExtY(currentHeight * coefficient);
 		}
 
 		return true;
@@ -14787,14 +14806,14 @@
 	{
 		if (typeof(coefficient) !== "number")
 			return false;
+		let oParaDrawing  = this.getParaDrawing();
+		var currentHeight = oParaDrawing.getXfrmExtY();
+		var currentWidth  = oParaDrawing.getXfrmExtX();
 
-		var currentHeight = this.Drawing.getXfrmExtY();
-		var currentWidth  = this.Drawing.getXfrmExtX();
-
-		this.Drawing.setExtent(currentWidth * coefficient, currentHeight);
-		if(this.Drawing.GraphicObj && this.Drawing.GraphicObj.spPr && this.Drawing.GraphicObj.spPr.xfrm)
+		oParaDrawing.setExtent(currentWidth * coefficient, currentHeight);
+		if(this.Drawing.spPr && this.Drawing.spPr.xfrm)
 		{
-			this.Drawing.GraphicObj.spPr.xfrm.setExtX(currentWidth * coefficient);
+			this.Drawing.spPr.xfrm.setExtX(currentWidth * coefficient);
 		}
 
 		return true;
@@ -14811,7 +14830,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		this.Drawing.GraphicObj.spPr.setFill(oFill.UniFill);
+		this.Drawing.spPr.setFill(oFill.UniFill);
 		return true;
 	};
 	/**
@@ -14826,7 +14845,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		this.Drawing.GraphicObj.spPr.setLn(oStroke.Ln);
+		this.Drawing.spPr.setLn(oStroke.Ln);
 		return true;
 	};
 	/**
@@ -14837,13 +14856,14 @@
 	 */
 	ApiDrawing.prototype.GetNextDrawing = function()
 	{
-		var oDocument				= editor.GetDocument();
-		var GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
-		var drawingIndex			= null;
+		let oDocument				= editor.GetDocument();
+		let GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
+		let drawingIndex			= null;
+		let paraDrawingId           = this.getParaDrawing().Id;
 
-		for (var Index = 0; Index < GetAllDrawingObjects.length; Index++)
+		for (let Index = 0; Index < GetAllDrawingObjects.length; Index++)
 		{
-			if (GetAllDrawingObjects[Index].Drawing.Id === this.Drawing.Id)
+			if (GetAllDrawingObjects[Index].getParaDrawing().Id === paraDrawingId)
 			{
 				drawingIndex = Index;
 				break;
@@ -14863,13 +14883,14 @@
 	 */
 	ApiDrawing.prototype.GetPrevDrawing = function()
 	{
-		var oDocument				= editor.GetDocument();
-		var GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
-		var drawingIndex			= null;
+		let oDocument				= editor.GetDocument();
+		let GetAllDrawingObjects	= oDocument.GetAllDrawingObjects();
+		let drawingIndex			= null;
+		let paraDrawingId           = this.getParaDrawing().Id;
 
-		for (var Index = 0; Index < GetAllDrawingObjects.length; Index++)
+		for (let Index = 0; Index < GetAllDrawingObjects.length; Index++)
 		{
-			if (GetAllDrawingObjects[Index].Drawing.Id === this.Drawing.Id)
+			if (GetAllDrawingObjects[Index].getParaDrawing().Id === paraDrawingId)
 			{
 				drawingIndex = Index;
 				break;
@@ -14892,7 +14913,7 @@
 	ApiDrawing.prototype.ToJSON = function(bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
-		var oJSON = oWriter.SerParaDrawing(this.Drawing);
+		var oJSON = oWriter.SerParaDrawing(this.getParaDrawing());
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		if (bWriteStyles)
@@ -14908,7 +14929,7 @@
 	 */
 	ApiDrawing.prototype.GetWidth = function()
 	{
-		return private_MM2EMU(this.Drawing.getXfrmExtX());
+		return private_MM2EMU(this.getParaDrawing().getXfrmExtX());
 	};
 	/**
 	 * Returns the height of the current drawing.
@@ -14918,13 +14939,12 @@
 	 */
 	ApiDrawing.prototype.GetHeight = function()
 	{
-		return private_MM2EMU(this.Drawing.getXfrmExtY());
+		return private_MM2EMU(this.getParaDrawing().getXfrmExtY());
 	};
 	/**
      * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CDE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @returns {bool}
      */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -14934,8 +14954,8 @@
 		if (nLockType === -1)
 			return false;
 
-		if (this.Drawing && this.Drawing.GraphicObj)
-			return this.Drawing.GraphicObj.getLockValue(nLockType);
+		if (this.Drawing)
+			return this.Drawing.getLockValue(nLockType);
 
 		return false;
 	};
@@ -14943,8 +14963,7 @@
 	/**
      * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CDE"]
-	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
      */
@@ -14955,9 +14974,9 @@
 		if (nLockType === -1)
 			return false;
 
-		if (this.Drawing && this.Drawing.GraphicObj)
+		if (this.Drawing)
 		{
-			this.Drawing.GraphicObj.setLockValue(nLockType, bValue);
+			this.Drawing.setLockValue(nLockType, bValue);
 			return true;
 		}
 
@@ -14977,7 +14996,7 @@
 		if (!(oAnotherDrawing instanceof ApiDrawing))
 			return false;
 
-		this.Drawing.SetDrawingPrFromDrawing(oAnotherDrawing.Drawing);
+		this.getParaDrawing().SetDrawingPrFromDrawing(oAnotherDrawing.getParaDrawing());
 		return true;
 	};
 
@@ -17499,7 +17518,7 @@
 		var arrApiDrawings  = [];
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index]));
+			arrApiDrawings.push(new ApiDrawing(arrAllDrawing[Index].GraphicObj));
 
 		return arrApiDrawings;
 	};
@@ -19622,7 +19641,7 @@
 		oArt.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oArt);
 
-		return new ApiDrawing(oDrawing);
+		return new ApiDrawing(oArt);
 	};
 
 	/**
@@ -21192,7 +21211,6 @@
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
 	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
-	window['AscBuilder'].ApiChart     = ApiChart;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22278,7 +22296,7 @@
 		if (this.IsFixed() && (oShape = this.GetWrapperShape()))
 		{
 			let oRun = new ParaRun(null, false);
-			oRun.AddToContent(0, oShape.Drawing);
+			oRun.AddToContent(0, oShape.getParaDrawing());
 			return oRun;
 		}
 
