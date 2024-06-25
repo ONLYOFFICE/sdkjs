@@ -4801,15 +4801,15 @@ function(window, undefined) {
 
 				if (nPtsLength > aStrings.length) {
 					let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLength >= SKIP_LBL_LIMIT;
-					// let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
-					let nTickLblSkip = 1;
+					let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
+					// let nTickLblSkip = 1;
 					let nStartLength = aStrings.length;
 
 					// // different label skip implementation for catAxis
-					// const nAxisType = oAxis.getObjectType();
-					// if (AscFormat.isRealNumber(nAxisType) && AscDFH.historyitem_type_CatAx) {
-					// 	nTickLblSkip = 1;
-					// }
+					const nAxisType = oAxis.getObjectType();
+					if (AscFormat.isRealNumber(nAxisType) && (AscDFH.historyitem_type_CatAx === nAxisType || AscDFH.historyitem_type_DateAx === nAxisType)) {
+						nTickLblSkip = 1;
+					}
 
 
 					for (i = aStrings.length; i < nPtsLength; ++i) {
