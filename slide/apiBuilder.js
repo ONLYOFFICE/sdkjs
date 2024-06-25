@@ -726,66 +726,6 @@
 		this.SaveAfterMacros = true;
 	};
 
-    Api.prototype.private_checkDrawingUniNvPr = function(oDrawing)
-    {
-        var nv_sp_pr;
-        var drawing = oDrawing.Drawing;
-
-        if (drawing)
-        {
-            switch (drawing.getObjectType())
-            {
-                case AscDFH.historyitem_type_ChartSpace:
-                case AscDFH.historyitem_type_GraphicFrame:
-                { 
-                    if(!drawing.nvGraphicFramePr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        nv_sp_pr.cNvPr.setId(++this.maxId);
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_GroupShape:
-                {
-                    if(!drawing.nvGrpSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        nv_sp_pr.cNvPr.setId(++this.maxId);
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    for(var i = 0; i < drawing.spTree.length; ++i)
-                    {
-                        this.checkDrawingUniNvPr(drawing.spTree[i]);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_ImageShape:
-                case AscDFH.historyitem_type_OleObject:
-                {
-                    if(!drawing.nvPicPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        nv_sp_pr.cNvPr.setId(++this.maxId);
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-                case AscDFH.historyitem_type_Shape:
-                case AscDFH.historyitem_type_Cnx:
-                {
-                    if(!drawing.nvSpPr)
-                    {
-                        nv_sp_pr = new AscFormat.UniNvPr();
-                        nv_sp_pr.cNvPr.setId(++this.maxId);
-                        drawing.setNvSpPr(nv_sp_pr);
-                    }
-                    break;
-                }
-            }
-        }
-    };
-
     /**
 	 * Checks for duplicate placeholders and sets indexes.
      * Called when a placeholder is added to a shape.
@@ -3234,7 +3174,8 @@
         var drawingParent       = this.GetParent();
         var allDrawingsInParent = null;
 
-        editor.private_checkDrawingUniNvPr(this);
+
+		this.Drawing.checkDrawingUniNvPr();
 
         switch (this.Drawing.getObjectType())
         {
@@ -3286,7 +3227,7 @@
 
         if (this.Drawing)
         {
-            editor.private_checkDrawingUniNvPr(this);
+			this.Drawing.checkDrawingUniNvPr();
             switch (this.Drawing.getObjectType())
             {
                 case AscDFH.historyitem_type_ChartSpace:
@@ -4438,13 +4379,7 @@
     }
 
     function private_GetDrawingDocument(){
-        if(editor && editor.WordControl){
-            return editor.WordControl.m_oDrawingDocument;
-        }
-        if(Asc["editor"] && Asc["editor"].wbModel) {
-            return Asc["editor"].wbModel.DrawingDocument;
-        }
-        return null;
+		return Asc.editor.getDrawingDocument();
     }
 
     function private_GetPresentation(){

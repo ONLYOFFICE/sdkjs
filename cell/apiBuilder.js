@@ -12865,6 +12865,7 @@
 
 	ApiCommentReply.prototype["GetClassType"]         =  ApiCommentReply.prototype.GetClassType;
 	ApiCommentReply.prototype["GetText"]              =  ApiCommentReply.prototype.GetText;
+	ApiCommentReply.prototype["SetText"]              =  ApiCommentReply.prototype.SetText;
 	ApiCommentReply.prototype["SetTextGetAuthorName"] =  ApiCommentReply.prototype.SetTextGetAuthorName;
 	ApiCommentReply.prototype["GetAuthorName"]        =  ApiCommentReply.prototype.GetAuthorName;
 	ApiCommentReply.prototype["SetAuthorName"]        =  ApiCommentReply.prototype.SetAuthorName;

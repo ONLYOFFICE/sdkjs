@@ -9017,7 +9017,6 @@ CPresentation.prototype.DublicateMaster = function () {
 		let oSlide = aSelectedSlides[nIdx];
 		if(oSlide.isMaster()) {
 			let oMaster = oSlide.createDuplicate();
-			oMaster.setTheme(oSlide.Theme.createDuplicate());
 			aCopyMasters.push(oMaster);
 			oLastMaster = oSlide;
 		}

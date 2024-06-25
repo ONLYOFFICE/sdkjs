@@ -704,6 +704,9 @@ MasterSlide.prototype.createDuplicate = function (IdMap) {
     for(let nIdx = 0; nIdx < this.sldLayoutLst.length; ++nIdx) {
         copy.addToSldLayoutLstToPos(nIdx, this.sldLayoutLst[nIdx].createDuplicate(IdMap));
     }
+    if(this.Theme) {
+        copy.setTheme(this.Theme.createDuplicate());
+    }
     return copy;
 };
 MasterSlide.prototype.Clear_ContentChanges = function()
