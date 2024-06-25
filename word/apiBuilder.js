@@ -1403,6 +1403,40 @@
 			}
 		}
 	};
+	ApiRange.prototype.private_GetTextPr = function() {
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
+		let oDocument            = private_GetLogicDocument();
+		let oldSelectionInfo    = oDocument.SaveDocumentState();
+
+		this.Select(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			oDocument.LoadDocumentState(oldSelectionInfo);
+			return;
+		}
+
+		let oFirstRun = null;
+		let oTextPr = null;
+
+		let compareTextPr = function(run) {
+			if (null == oFirstRun) {
+				oFirstRun = run;
+				oTextPr = run.GetTextPr();
+				return;
+			}
+
+			oTextPr.Compare(run.GetTextPr());
+		}
+		
+		oDocument.CheckAllRunContent(compareTextPr);
+
+		oDocument.LoadDocumentState(oldSelectionInfo);
+		oDocument.UpdateSelection();
+
+		return oTextPr;
+	};
 	
 	/**
 	 * Returns a type of the ApiRange class.
@@ -2735,6 +2769,19 @@
 		return this;
 	};
 
+	/**
+	 * Returns the merged text properties of entire range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTextPr}
+	 * @since 8.2.0
+	 */
+	ApiRange.prototype.GetTextPr = function()
+	{
+		let oTextPr = this.private_GetTextPr();
+		return new ApiRangeTextPr(this, oTextPr);
+	};
+	
 	/**
 	 * Deletes all the contents from the current range.
 	 * @memberof ApiRange
@@ -20379,6 +20426,7 @@
 	ApiRange.prototype["SetFontFamily"]              = ApiRange.prototype.SetFontFamily;
 	ApiRange.prototype["SetStyle"]                   = ApiRange.prototype.SetStyle;
 	ApiRange.prototype["SetTextPr"]                  = ApiRange.prototype.SetTextPr;
+	ApiRange.prototype["GetTextPr"]                  = ApiRange.prototype.GetTextPr;
 	ApiRange.prototype["Delete"]                     = ApiRange.prototype.Delete;
 	ApiRange.prototype["ToJSON"]                     = ApiRange.prototype.ToJSON;
 	ApiRange.prototype["AddComment"]                 = ApiRange.prototype.AddComment;
@@ -21275,6 +21323,31 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	function ApiRangeTextPr(oApiRange, oTextPr)
+	{
+		ApiTextPr.call(this, oApiRange, oTextPr);
+	}
+	ApiRangeTextPr.prototype = Object.create(ApiTextPr.prototype);
+	ApiRangeTextPr.prototype.constructor = ApiRangeTextPr;
+	(function(prototype) {
+		function doBefore(obj, methodName, beforeFn) {
+			let originalMethod = obj[methodName];
+			obj[methodName] = function() {
+				beforeFn.apply(this, arguments);
+				return originalMethod.apply(this, arguments);
+			};
+		}
+
+		for (let key in prototype) {
+			if (typeof(prototype[key]) === 'function' && key.startsWith('Get')) {
+				doBefore(prototype, key, function() {
+					this.TextPr.Set_FromObject(this.Parent.private_GetTextPr());
+				});
+			}
+		}
+	})(ApiRangeTextPr.prototype);
+
+
 	function ToApiForm(oForm)
 	{
 		if (!oForm)
@@ -22228,6 +22301,11 @@
 	{
 		let oComment = new ApiComment(this.Comment);
 		oComment.private_OnChange();
+	};
+
+	ApiRange.prototype.OnChangeTextPr = function(oApiTextPr)
+	{
+		this.SetTextPr(oApiTextPr);
 	};
 
 	Api.prototype.private_CreateApiParagraph = function(oParagraph){
