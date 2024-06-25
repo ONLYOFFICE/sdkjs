@@ -1342,50 +1342,57 @@ function(window, undefined) {
 		const nAxisType = oLabelParams.nAxisType;
 		const sDataType = oLabelParams.sDataType;
 		const oStartingDate = oLabelParams.oStartingDate;
-		const startingDay = oLabelParams.oStartingDate ? oStartingDate.getUTCDate() : 0;
-		const startingMonth = oLabelParams.oStartingDate ? oStartingDate.getUTCMonth() : 0;
-		const startingYear = oLabelParams.oStartingDate ? oStartingDate.getUTCFullYear() : 0;
+		const currentDay = oLabelParams.oStartingDate ? oStartingDate.getDate() : 0;
+		const currentMonth = oLabelParams.oStartingDate ? oStartingDate.getMonth() : 0;
+		const currentYear = oLabelParams.oStartingDate ? oStartingDate.getFullYear() : 0;
 
 		const calcYearlyStep = function (yearsCounter) {
 			if (!AscFormat.isRealNumber(yearsCounter) && yearsCounter < 0) {
 				return 366;
 			}
 			let res = 0;
-			for (let i = 0; i < yearsCounter; i++) {
-				const year = 1900 + (loopsCount * yearsCounter) + i + startingYear;
+			let year = 0;
+			for (let i = 1; i <= yearsCounter; i++) {
+				year = currentYear + i;
 				const days = isLeap(year) ? 366 : 365;
 				res += days
 			}
+			oStartingDate.setFullYear(year);
 			return res;
 		} 
 
-		const calcMonthlyStep = function (loopsCount, iterations) { 
-			let year = 1700 + Math.floor(loopsCount / 12);
-			let month = (loopsCount + startingMonth) % 12;
-			if (AscFormat.isRealNumber(month)) {
-				const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-				// february can have 28/29 days
-				let skipDays = isLeap(year) && month === 1 ? months[month] + 1 : months[month];
-				const diffDays = startingDay - months[(startingMonth + iterations) % 12];
-				let negOffset = loopsCount === 0  && diffDays > 0 ? diffDays : 0;
-				let posOffset = loopsCount >= iterations && negOffset >= 0 ? months[(month + 1) % 12] - months[month] : 0;
-				skipDays = skipDays - negOffset + posOffset;
-				return skipDays;
+		const calcMonthlyStep = function (monthCounter) { 
+			const findDays = function (arr, startIndex, step) {
+				let sum = 0;
+				for (let i = startIndex; i < startIndex + step; i++) {
+					sum += arr[i % 12];
+				}
+				return sum;
 			}
-			return 31;
+			const months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+			// february can have 28/29 days
+			months[1] = isLeap(currentYear) ? months[1] + 1 : months[1];
+			const currMonth = months[currentMonth];
+			const nextMonth = months[(currentMonth + monthCounter) % 12];
+			const days = findDays(months, currentMonth, monthCounter);
+
+			//check if next month has less days, example 29 January, where February can not contain more
+			const negOffset = currentDay > nextMonth ? currentDay - nextMonth : 0;
+
+			//check if last day, days must be added example : 28 + (31-28);
+			const posOffset = currentDay === currMonth && nextMonth > currMonth ? nextMonth - currMonth : 0;
+			const skipDays = days - negOffset + posOffset;
+
+			oStartingDate.setDate(oStartingDate.getDate() + skipDays);
+			return skipDays;
 		}
 
-		if (nAxisType === AscDFH.historyitem_type_DateAx) {
+		if (nAxisType === AscDFH.historyitem_type_DateAx && oStartingDate && nLblTickSkip !== 0) {
 			if (nLblTickSkip % 366 === 0) {
 				return calcYearlyStep(nLblTickSkip / 366);
 			} else if (nLblTickSkip % 31 === 0) {
-				let res = 0;
-				let monthCounter = nLblTickSkip / 31;
-				for (let i = 0; i < monthCounter; i++) {
-					res += calcMonthlyStep((loopsCount * monthCounter) + i, monthCounter);
-				}
-				return res;
-			} 
+				return calcMonthlyStep(nLblTickSkip / 31);;
+			}
 		}
 
 		return AscFormat.isRealNumber(nLblTickSkip) && nLblTickSkip > 0 ? nLblTickSkip : 1;
@@ -11571,6 +11578,10 @@ function(window, undefined) {
 			// date.setDate(date.getDateFromExcel(+msg[1]));
 			let date = new AscCommonExcel.cDate();
 			this.oStartingDate = date.getDateFromExcel(+msg[1]);
+		} else if (msg[0] === 'number'){
+			let date = new AscCommonExcel.cDate();
+			// 2 days + 1899/12/39 will create 1900/01/01
+			this.oStartingDate = date.getDateFromExcel(2);
 		}
 
 		// find label skip
@@ -11638,28 +11649,28 @@ function(window, undefined) {
 		const cellWidth = radianAngle && updatedCellWidth ? updatedCellWidth : cellHeight;
 
 		// return minimum amount of skips needed to place a vertical labels into fAxisLength
+		let nLblTickSkip = 1;
+
 		if (cellWidth) {
-			const nLblTickSkip = Math.floor((cellWidth * nLabelsCount) / (fAxisLength)) + 1;
-			if (this.nAxisType === AscDFH.historyitem_type_CatAx) {
-				return (nLblTickSkip === 0) ? 1 : nLblTickSkip;
-			} else if (this.nAxisType === AscDFH.historyitem_type_DateAx) {
-				const arr = [1, 2, 7, 14];
-				if (nLblTickSkip > 1 && nLblTickSkip <= 2) {
-					return 2;
-				}else if (nLblTickSkip > 2 && nLblTickSkip <= 7) {
-					return 7;
-				} else if (nLblTickSkip > 7 && nLblTickSkip <= 14) {
-					return 14;
-				} else if (nLblTickSkip > 14 && nLblTickSkip <= 365) {
-					return Math.ceil(nLblTickSkip / 31) * 31;
-				} else if (nLblTickSkip > 365) {
-					return Math.ceil(nLblTickSkip / 366) * 366;
+			nLblTickSkip = Math.floor((cellWidth * nLabelsCount) / (fAxisLength)) + 1;
+			// date ax skips labels by significant days 
+			// two days, week or weeks, mounths, years
+			if (this.nAxisType === AscDFH.historyitem_type_DateAx && this.sDataType !== 'string') {
+				// lowLimits indicate necessary count of days for following skips, month and years
+				const lowLimitMonths = 21;
+				const lowLimitYears = 341;
+				if (nLblTickSkip > 2 && nLblTickSkip < lowLimitMonths) {
+					nLblTickSkip = Math.ceil(nLblTickSkip / 7) * 7;
+				} else if (nLblTickSkip > 14 && nLblTickSkip < lowLimitYears) {
+					nLblTickSkip = Math.ceil(nLblTickSkip / 31) * 31;
+				} else if (nLblTickSkip >= lowLimitYears) {
+					nLblTickSkip = Math.ceil(nLblTickSkip / 366) * 366;
 				}
 			}
 		}
 
 		// default is always 1
-		return 1;
+		return (!AscFormat.isRealNumber(nLblTickSkip) || nLblTickSkip === 0) ? 1 : nLblTickSkip;
 	};
 
 	CLabelsParameters.prototype.calculateRotation = function (oLabelsBox, fAxisLength) {
