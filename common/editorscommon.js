@@ -2877,42 +2877,52 @@
 
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
-		url = url && url.split(FormulaSeparators.functionArgumentSeparator)[0];
-		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
-			for (i = url.length - 1; i >= 0; i--) {
-				if (url[i] === "!" && url[i - 1] === "'") {
-					startLink = true;
-					i--;
-					continue;
+		if (url && url.indexOf("[") !== -1) {
+			//todo check on other separators, exm -> SUM(A2 '[new.xlsx]Sheet1'!A1 '[new.xlsx]Sheet1'!A2)
+			for (let j = 0; j < url.length; j++) {
+				if (url[j] === FormulaSeparators.functionArgumentSeparator || url[j] === FormulaSeparators.functionArgumentSeparatorDef || url[j] === ";")  {
+					url = url.substring(0, j);
+					break;
 				}
-				if (startLink) {
-					if (name) {
-						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
-							break;
+			}
+
+
+			if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+				for (i = url.length - 1; i >= 0; i--) {
+					if (url[i] === "!" && url[i - 1] === "'") {
+						startLink = true;
+						i--;
+						continue;
+					}
+					if (startLink) {
+						if (name) {
+							if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
+								break;
+							} else {
+								name.end--;
+							}
 						} else {
-							name.end--;
-						}
-					} else {
-						if("]" === url[i]) {
-							name = {start: i, end: i};
+							if("]" === url[i]) {
+								name = {start: i, end: i};
+							}
 						}
 					}
 				}
-			}
-			if (name) {
-				var fullname = url.substring(0, name.start + 1);
-				path = url.substring(1, name.end - 1);
-				name = url.substring(name.end, name.start);
-				return {name: name, path: path, fullname: fullname};
-			}
-		} else if (url && url[0] === "[") { // [name]Sheet1!A1
-			for (i = 1; i < url.length; i++) {
-				if (url[i] === "]") {
-					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				if (name) {
+					var fullname = url.substring(0, name.start + 1);
+					path = url.substring(1, name.end - 1);
+					name = url.substring(name.end, name.start);
+					return {name: name, path: path, fullname: fullname};
 				}
-			}
-		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+			} else if (url && url[0] === "[") { // [name]Sheet1!A1
+				for (i = 1; i < url.length; i++) {
+					if (url[i] === "]") {
+						return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+					}
+				}
+			} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
 
+			}
 		}
 
 		return null;
