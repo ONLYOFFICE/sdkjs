@@ -1937,7 +1937,33 @@ window.AscCommon.g_cIsBeta = "false";
 		sysDash       : 7,
 		sysDashDot    : 8,
 		sysDashDotDot : 9,
-		sysDot        : 10
+		sysDot        : 10,
+		// visio types
+		vsdxTransparent		: 11, // 0 visio value
+		vsdxSolid			: 12,
+		vsdxDash			: 13,
+		vsdxDot				: 14,
+		vsdxDashDot			: 15,
+		vsdxDashDotDot		: 16,
+		vsdxDashDashDot		: 17,
+		vsdxLongDashShortDash   		: 18,
+		vsdxLongDashShortDashShortDash  : 19,
+		vsdxHalfDash  			: 20,
+		vsdxHalfDot				: 21,
+		vsdxHalfDashDot			: 22,
+		vsdxHalfDashDotDot		: 23,
+		vsdxHalfDashDashDot   	: 24,
+		vsdxHalfLongDashShortDash   		 : 25,
+		vsdxHalfLongDashShortDashShortDash   : 26,
+		vsdxDoubleDash   		: 27,
+		vsdxDoubleDot   		: 28,
+		vsdxDoubleDashDot   	: 29,
+		vsdxDoubleDashDotDot   	: 30,
+		vsdxDoubleDashDashDot   : 31,
+		vsdxDoubleLongDashShortDash   			: 32,
+		vsdxDoubleLongDashShortDashShortDash    : 33,
+		vsdxHalfHalfDash   		: 34,
+
 	};
 
 

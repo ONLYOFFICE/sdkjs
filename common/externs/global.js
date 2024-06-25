@@ -42,6 +42,7 @@ var AscCommon;
 var AscCommonWord;
 var AscCommonExcel;
 var AscCommonSlide;
+var AscCommonDraw;
 var AscBuilder;
 var AscWord;
 var AscMath;
