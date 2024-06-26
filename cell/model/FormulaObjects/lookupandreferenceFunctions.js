@@ -1574,6 +1574,7 @@ function (window, undefined) {
 			let dimension = arg0.getDimensions();
 			let isSingleRowCol = (dimension.row > 1 && dimension.col > 1) ? false : true;
 			let isByColumn = (dimension.row > 1) ? true : false;
+			let isArray = cElementType.array === arg0.type;
 
 			let diffArg1 = arg1 === 0 ? 0 : 1;
 			let diffArg2 = arg2 === 0 ? 0 : 1;
@@ -1581,12 +1582,11 @@ function (window, undefined) {
 			if (arg[2] !== undefined && (arg1 > dimension.row || arg2 > dimension.col)) {
 				/* if the col_num and row_num in the arguments is greater than the array size, return an error */
 				res = new cError(cErrorType.bad_reference);
-			} else if (arg[2] === undefined && !isSingleRowCol) {
-				/* if the second arg is ommited and array is two dimensional, return an error */
+			} else if (!isArray && arg[2] === undefined && !isSingleRowCol) {
+				/* if the second arg is ommited and range(exactly reference) is two dimensional, return an error */
 				res = new cError(cErrorType.bad_reference);
 			} else if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type) {
 				let ws = arg0.getWS ? arg0.getWS() : null, bbox = arg0.getBBox0 ? arg0.getBBox0() : null;
-				let isArray = cElementType.array === arg0.type;
 
 				if (!isSingleRowCol) {
 					/* r&c > 1 */

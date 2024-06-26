@@ -23359,6 +23359,24 @@ $(function () {
 		oParser = new parserFormula('INDEX({"Apples","Lemons";"Apple","Lemon"},3,2)', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+
+		ws.getRange2("A100").setValue("1")
+		ws.getRange2("B100").setValue("2")
+		ws.getRange2("A101").setValue("3")
+		ws.getRange2("B101").setValue("4")
+
+		// the behavior with array and range is different in these case(when arg2 is ommited)
+		oParser = new parserFormula('INDEX({1,2;3,4},)', "A2", ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of INDEX({1,2;3,4},)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, 'Result of INDEX({1,2;3,4},)[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of INDEX({1,2;3,4},)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of INDEX({1,2;3,4},)[1,1]');
+
+		oParser = new parserFormula('INDEX(A100:B101,)', "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
 		
 	});
 
