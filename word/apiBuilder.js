@@ -10563,7 +10563,7 @@
 	/**
 	 * Selects the current table.
 	 * @memberof ApiTable
-	 * @typeofeditors ["CDE", "CPE"]
+	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
 	ApiTable.prototype.Select = function()
@@ -14629,7 +14629,10 @@
 	 */
 	ApiDrawing.prototype.Copy = function()
 	{
-		return new this.constructor(this.Drawing.copy());
+		let oParaDrawing = this.getParaDrawing();
+		if(!oParaDrawing) return null;
+		let oCopyParaDrawing = oParaDrawing.copy();
+		return new this.constructor(oCopyParaDrawing.GraphicObj);
 	};
 	/**
 	 * Wraps the graphic object with a rich text content control.
