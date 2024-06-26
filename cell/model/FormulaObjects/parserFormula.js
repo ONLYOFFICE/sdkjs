@@ -7787,6 +7787,11 @@ function parserFormula( formula, parent, _ws ) {
 				currentElement.bArrayFormula = true;
 			}
 
+			/* concatenation should be done as an array formula - via ref */
+			if (currentElement.name && currentElement.name === "&") {
+				currentElement.bArrayFormula = true;
+			}
+
 			if (currentElement.type === cElementType.operator || currentElement.type === cElementType.func) {
 				argumentsCount = "number" === typeof(this.outStack[i - 1]) ? this.outStack[i - 1] : currentElement.argumentsCurrent;
 				if (argumentsCount < 0) {
