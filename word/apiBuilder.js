@@ -16081,9 +16081,9 @@
 
 	/**
 	 * Tries to change the type of the series. Returns true in case of success.
-	 * @memberof ApiChart
+	 * @memberof ApiChartSeries
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {ChartType} sType - Series index.
+	 * @param {ChartType} sType - Chart type.
 	 * @returns {boolean}
 	 */
 	ApiChartSeries.prototype.ChangeChartType = function(sType)
