@@ -9031,12 +9031,14 @@ function RangeDataManagerElem(bbox, data)
 						if (handleSelectionRange.c1 === this.Ref.c1 && handleSelectionRange.c2 === this.Ref.c2) {
 							//all row
 							//Table1[@]
-							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
+
+							//return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
 						} else {
 							//part of row
 							//Table1[@[Column2]:[Column3]]
 							//Table1[@Column1]
-							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
+
+							//return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
 						}
 					}
 				}
