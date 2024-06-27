@@ -501,14 +501,14 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	this.private_UpdateInstruction();
 
 	if (!this.Instruction || !this.IsValid())
-		return;
+		return false;
 
 	this.SelectFieldValue();
 
 	if (true === isCreateHistoryPoint)
 	{
 		if (true === this.LogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-			return;
+			return false;
 
 		this.LogicDocument.StartAction();
 	}
@@ -561,6 +561,8 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	{
 		this.LogicDocument.FinalizeAction();
 	}
+	
+	return true;
 };
 CComplexField.prototype.CalculateValue = function()
 {
@@ -1237,7 +1239,16 @@ CComplexField.prototype.private_UpdateREF = function()
 };
 CComplexField.prototype.private_CalculateREF = function()
 {
-	var oSelectedContent = this.private_GetREFContent();
+	let logicDocument = this.LogicDocument;
+	
+	let state = logicDocument ? logicDocument.SaveDocumentState() : null;
+	
+	let oSelectedContent = this.private_GetREFContent();
+	oSelectedContent.GetText(null);
+	
+	if (state)
+		logicDocument.LoadDocumentState(state);
+	
 	return oSelectedContent.GetText(null);
 };
 CComplexField.prototype.private_GetMessageContent = function(sMessage, oTextPr)

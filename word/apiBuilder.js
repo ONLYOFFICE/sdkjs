@@ -8711,7 +8711,7 @@
 				&& !oManager.IsHiddenBookmark(sBookmarkName))
 			{
 				let instr = AscWord.getRefInstruction(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
-				logicDocument.addFieldWithInstructionToParagraph(this.Paragraph, instr);
+				logicDocument.addFieldWithInstructionToParagraph(this.Paragraph, instr, null, true);
 				return true;
 			}
 		}

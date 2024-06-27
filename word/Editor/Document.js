@@ -22657,7 +22657,7 @@ CDocument.prototype.AddFieldWithInstruction = function(instructionLine, textPr)
 	
 	return this.addFieldWithInstructionToParagraph(oParagraph, instructionLine, textPr);
 };
-CDocument.prototype.addFieldWithInstructionToParagraph = function(paragraph, instructionLine, textPr)
+CDocument.prototype.addFieldWithInstructionToParagraph = function(paragraph, instructionLine, textPr, forceUpdate)
 {
 	let beginChar    = new ParaFieldChar(fldchartype_Begin, this);
 	let separateChar = new ParaFieldChar(fldchartype_Separate, this);
@@ -22679,7 +22679,13 @@ CDocument.prototype.addFieldWithInstructionToParagraph = function(paragraph, ins
 	complexField.SetInstructionLine(instructionLine);
 	complexField.SetSeparateChar(separateChar);
 	complexField.SetEndChar(endChar);
-	complexField.Update(false);
+	if (!complexField.Update(false) && forceUpdate)
+	{
+		// TODO: Добавил эту ветку, потому что у нас после InsertContent пока не обновляются поля
+		let value = complexField.CalculateValue();
+		let pos = run.GetElementPosition(endChar);
+		run.AddText(value, pos);
+	}
 	
 	if (textPr)
 		run.SetPr(textPr);
