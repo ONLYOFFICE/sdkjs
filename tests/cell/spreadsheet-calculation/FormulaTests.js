@@ -16671,6 +16671,127 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
+		// bool, ref, num, string, err
+		ws.getRange2("A88").setValue("#DIV/0!");
+		ws.getRange2("A89").setValue("#NUM!");
+		ws.getRange2("A90").setValue("TRUE");
+		ws.getRange2("A91").setValue("TRUE");
+		ws.getRange2("A92").setValue("FALSE");
+		ws.getRange2("A93").setValue("FALSE");
+		ws.getRange2("A94").setValue("1");
+		ws.getRange2("A95").setValue("0");
+		ws.getRange2("A96").setValue("1s");
+		ws.getRange2("A97").setValue("1");
+		ws.getRange2("A97").setNumFormat("@");
+		ws.getRange2("A98").setValue("");
+		ws.getRange2("A99").setValue("0");
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,TRUE)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A90)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,FALSE)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A92)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,1)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A94)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A97)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,0)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A95)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,"")', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A98)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A88)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,#DIV/0!)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,#NUM!)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		oParser = new parserFormula('COUNTIFS(A90:A99,A89)', "E1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
+		// arg0 = #DIV/0!
+		oParser = new parserFormula('COUNTIFS(A88,A88:A99)', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1, 'Result of COUNTIFS(A88,A88:A99)[0,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Result of COUNTIFS(A88,A88:A99)[1,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 0, 'Result of COUNTIFS(A88,A88:A99)[2,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 0, 'Result of COUNTIFS(A88,A88:A99)[3,0]');
+
+		// arg0 = TRUE
+		oParser = new parserFormula('COUNTIFS(A90,A88:A99)', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 0, 'Result of COUNTIFS(A90,A88:A99)[0,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 0, 'Result of COUNTIFS(A90,A88:A99)[1,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 1, 'Result of COUNTIFS(A90,A88:A99)[2,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 1, 'Result of COUNTIFS(A90,A88:A99)[3,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 0, 'Result of COUNTIFS(A90,A88:A99)[4,0]');
+
+		// arg0 = 0
+		oParser = new parserFormula('COUNTIFS(A95,A88:A99)', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 0, 'Result of COUNTIFS(A95,A88:A99)[4,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), 0, 'Result of COUNTIFS(A95,A88:A99)[5,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 0, 'Result of COUNTIFS(A95,A88:A99)[6,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(7,0).getValue(), 1, 'Result of COUNTIFS(A95,A88:A99)[7,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(8,0).getValue(), 0, 'Result of COUNTIFS(A95,A88:A99)[8,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(9,0).getValue(), 0, 'Result of COUNTIFS(A95,A88:A99)[9,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(10,0).getValue(), 1, 'Result of COUNTIFS(A95,A88:A99)[10,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(11,0).getValue(), 1, 'Result of COUNTIFS(A95,A88:A99)[11,0]');
+
+		// arg0 = cEmpty
+		oParser = new parserFormula('COUNTIFS(A98,A88:A99)', "E1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[4,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[5,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[6,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(7,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[7,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(8,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[8,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(9,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[9,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(10,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[10,0]');
+		assert.strictEqual(oParser.calculate().getElementRowCol(11,0).getValue(), 0, 'Result of COUNTIFS(A98,A88:A99)[11,0]');
+
+
 		// bug 58497
 		ws.getRange2("A100:Z300").cleanAll();
 		ws.getRange2("A101").setValue("str1");
@@ -16680,7 +16801,8 @@ $(function () {
 
 		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104)', "E1", ws);
 		assert.ok(oParser.parse(), "COUNTIFS(A101:A104,A101:A104)");
-		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of COUNTIFS(A101:A104,A101:A104)");		// 1
+		// without setArrayFormulaRef executed as .cross and as result and as a result, #VALUE comes into the second argument
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of COUNTIFS(A101:A104,A101:A104)");
 
 		oParser = new parserFormula('COUNTIFS(A101:A104,A101:A104&"")', "E1", ws);
 		assert.ok(oParser.parse(), 'COUNTIFS(A101:A104,A101:A104&"")');

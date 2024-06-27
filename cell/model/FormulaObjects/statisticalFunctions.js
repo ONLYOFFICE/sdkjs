@@ -5200,8 +5200,8 @@ function (window, undefined) {
 				arg1 = arg1.getValue();
 			}
 
-			if (cElementType.error === arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();
