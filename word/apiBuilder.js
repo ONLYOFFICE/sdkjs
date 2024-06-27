@@ -5835,6 +5835,7 @@
 	 * @property {ReviewReportRecordType} Type - Review record type.
 	 * @property {string} [Value=undefined] - Review change value that is set for the "TextAdd" and "TextRem" types only.
 	 * @property {number} Date - The time when this change was made.
+	 * @property {ApiParagraph | ApiTable} ReviewedElement - Element that has been reviewed
 	 */
 	
 	/**
@@ -5845,8 +5846,8 @@
 	 * 	{
 	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161, Element: ApiParagraph},
 	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189, Element: ApiParagraph}],
-	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942, Element: ApiParagraph},
-	 * 	                  {Type: 'TextPr', Date: 1679941757832, Element: ApiParagraph}]
+	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942, ReviewedElement: ApiParagraph},
+	 * 	                  {Type: 'TextPr', Date: 1679941757832, ReviewedElement: ApiParagraph}]
 	 * 	}
 	 */
 	
@@ -5917,9 +5918,9 @@
 					};
 				}
 				oElement["Date"] = oChange.get_DateTime();
+				oElement["ReviewedElement"] = private_GetReviewedElement(oChange.GetElement());
+				
 				oResult[sUserName].push(oElement);
-
-				oElement["Element"] = private_GetSupportedDocContentElement(oChange.Element);
 			}
 		}
 		return oResult;
@@ -21440,15 +21441,24 @@
 	}
 	function private_GetSupportedDocContentElement(oElement)
 	{
-		let Type = oElement.GetType();
-		if (type_Paragraph === Type)
+		if (oElement instanceof AscWord.Paragraph)
 			return new ApiParagraph(oElement);
-		else if (type_Table === Type)
+		else if (oElement instanceof AscWord.Table)
 			return new ApiTable(oElement);
-		else if (type_BlockLevelSdt === Type)
+		else if (oElement instanceof AscWord.CBlockLevelSdt)
 			return new ApiBlockLvlSdt(oElement);
 		else
 			return new ApiUnsupported();
+	}
+	function private_GetReviewedElement(oElement)
+	{
+		if (oElement instanceof AscWord.Paragraph)
+			return new ApiParagraph(oElement);
+		else if (oElement instanceof AscWord.Table)
+			return new ApiTable(oElement);
+		
+		// Такого не должно быть (возможно стоит выбросить исключение)
+		return null;
 	}
 
 	function private_CheckForm(oSdt)
