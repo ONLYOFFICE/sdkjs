@@ -2254,7 +2254,9 @@ CChartsDrawer.prototype =
 		} else {
 			if (AscFormat.isRealNumber(manualMax) && manualMax > axisMin && manualMax > 0) {
 				const upperLimit = Math.ceil(Math.ceil(manualMax / step) * step);
-				minUnit = Math.min(minUnit, manualMax - upperLimit);
+				const diff = manualMax - upperLimit;
+				minUnit = axisMin >= 0 ? Math.min(minUnit, diff) : Math.floor(axisMin + diff);
+				// minUnit = Math.min(minUnit, manualMax - upperLimit);
 			} else if (AscFormat.isRealNumber(manualMax)) {
 				if (manualMax > 0) {
 					minUnit = 0;
