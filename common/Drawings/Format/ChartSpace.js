@@ -1471,7 +1471,7 @@ function(window, undefined) {
 				oLabelParams.calculateParams(oLabelsBox, fAxisLength);
 
 				// save some updated params for future use
-				oLabelParams.saveParams();
+				oLabelParams.saveParams(oLabelsBox);
 			// }
 
 			//check whether rotation is applied or not
@@ -11596,7 +11596,7 @@ function(window, undefined) {
 			return;
 		}
 		const bodyPr = oLabelsBox.axis.txPr.bodyPr;
-		bodyPr.updatedRot = oLabelParams ? oLabelParams.rot : bodyPr.rot;
+		bodyPr.updatedRot = AscFormat.isRealNumber(this.rot) ? this.rot : bodyPr.rot;
 	};
 
 	CLabelsParameters.prototype.setMaxHeight = function (diagramHeight, chartHeight, titleHeight) {
