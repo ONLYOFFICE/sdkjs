@@ -2035,8 +2035,8 @@ CChartsDrawer.prototype =
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//для оси категорий берем интервал 1
 		let arrayValues;
-
-		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
+		const axisType = axis.getObjectType();
+		if(AscDFH.historyitem_type_CatAx === axisType || AscDFH.historyitem_type_DateAx === axisType) {
 			arrayValues = [];
 			let max = axis.max;
 			for(let i = axis.min; i <= max; i++) {
@@ -2095,7 +2095,7 @@ CChartsDrawer.prototype =
 			} else {
 				//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
 				if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
-					_step = t._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
+					_step = t._getStep(firstDegree.val);
 				} else {
 					_step = t._getStep(firstDegree.val);
 				}
@@ -2240,27 +2240,58 @@ CChartsDrawer.prototype =
 	},
 
 	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax, isRadarChart) {
+		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || !AscFormat.isRealNumber(step)) {
+			return [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+		}
+
 		var arrayValues;
 		//минимальное значение оси
 		//TODO use axisMin
-		var minUnit = 0;
+		let minUnit = 0;
 
-		if (manualMin != null) {
+		if (AscFormat.isRealNumber(manualMin)) {
 			minUnit = manualMin;
-		} else if (manualMin == null && axisMin != null && axisMin != 0 && axisMin > 0 && axisMax > 0)//TODO пересмотреть все значения, где-то могут быть расхождения с EXCEL
-		{
-			minUnit = parseInt(axisMin / step) * step;
 		} else {
-			if (axisMin < 0) {
-				while ((!isRadarChart && minUnit >= axisMin) || (isRadarChart && minUnit > axisMin)) {
-					minUnit -= step;
+			if (AscFormat.isRealNumber(manualMax) && manualMax > axisMin && manualMax > 0) {
+				const upperLimit = Math.ceil(Math.ceil(manualMax / step) * step);
+				minUnit = Math.min(minUnit, manualMax - upperLimit);
+			} else if (AscFormat.isRealNumber(manualMax)) {
+				if (manualMax > 0) {
+					minUnit = 0;
+				} else if (manualMax === 0) {
+					minUnit = -1;
+				} else {
+					minUnit = manualMax * 2;
 				}
-			} else if (axisMin > 0) {
-				while (minUnit < axisMin && minUnit > (axisMin - step)) {
-					minUnit += step;
-				}
+			} else if (axisMin < 0){
+				// const statement1 = !isRadarChart && minUnit >= axisMin;
+				// const statement2 = isRadarChart && minUnit > axisMin;
+				minUnit = Math.floor(axisMin / step) * step;
+			} else {
+				minUnit = Math.ceil(axisMin / step) * step;
 			}
 		}
+		
+		
+		// else if (manualMin == null && axisMin != null && axisMin != 0 && axisMin > 0 && axisMax > 0)//TODO пересмотреть все значения, где-то могут быть расхождения с EXCEL
+		// {
+		// 	minUnit = parseInt(axisMin / step) * step;
+		// } else {
+		// 	if (axisMin < 0) {
+		// 		const statement1 = !isRadarChart && minUnit >= axisMin;
+		// 		const statement2 = isRadarChart && minUnit > axisMin;
+		// 		if (statement1 || statement2) {
+		// 			minUnit = Math.ceil(axisMin / step) * step;
+		// 		}
+		// 		// while ((!isRadarChart && minUnit >= axisMin) || (isRadarChart && minUnit > axisMin)) {
+		// 		// 	minUnit -= step;
+		// 		// }
+		// 	} else if (axisMin > 0) {
+		// 		while (minUnit < axisMin && minUnit > (axisMin - step)) {
+		// 			minUnit += step;
+		// 		}
+		// 	}
+		// }
 
 		//массив подписей
 		arrayValues = this._getArrayAxisValues(minUnit, axisMin, axisMax, step, manualMin, manualMax);
