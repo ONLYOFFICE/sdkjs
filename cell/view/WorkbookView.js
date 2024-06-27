@@ -6029,7 +6029,10 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			let ws = this.wb.getActiveWS();
-			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
+			if (!ws) {
+				ws = this.wb && this.wb.model && this.wb.model.getActiveWs && this.wb.model.getActiveWs();
+			}
+			let selectionRange = (this.props && this.props.selectionRange) || (ws && ws.selectionRange) || (ws && ws.copySelection);
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
@@ -6066,7 +6069,7 @@
 			let sheetArr = [];
 			let checkElem = function (indexElem, index) {
 				//нужный нам лист
-				if (ws.sName === t.Elements[indexElem].sheet) {
+				if (ws && ws.sName === t.Elements[indexElem].sheet) {
 
 					let prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
 					let prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
