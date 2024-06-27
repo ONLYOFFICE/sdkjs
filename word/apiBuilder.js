@@ -5843,10 +5843,10 @@
 	 * @typedef {Object.<string, Array.<ReviewReportRecord>>} ReviewReport
 	 * @example
 	 * 	{
-	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161},
-	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189}],
-	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942},
-	 * 	                  {Type: 'TextPr', Date: 1679941757832}]
+	 * 	  "John Smith" : [{Type: 'TextRem', Value: 'Hello, Mark!', Date: 1679941734161, Element: ApiParagraph},
+	 * 	                {Type: 'TextAdd', Value: 'Dear Mr. Pottato.', Date: 1679941736189, Element: ApiParagraph}],
+	 * 	  "Mark Pottato" : [{Type: 'ParaRem', Date: 1679941755942, Element: ApiParagraph},
+	 * 	                  {Type: 'TextPr', Date: 1679941757832, Element: ApiParagraph}]
 	 * 	}
 	 */
 	
@@ -5918,6 +5918,8 @@
 				}
 				oElement["Date"] = oChange.get_DateTime();
 				oResult[sUserName].push(oElement);
+
+				oElement["Element"] = private_GetSupportedDocContentElement(oChange.Element);
 			}
 		}
 		return oResult;
@@ -21433,6 +21435,18 @@
 			return new ApiHyperlink(oElement);
 		else if (oElement instanceof ApiFormBase)
 			return (new ApiInlineLvlSdt(oElement)).GetForm();
+		else
+			return new ApiUnsupported();
+	}
+	function private_GetSupportedDocContentElement(oElement)
+	{
+		let Type = oElement.GetType();
+		if (type_Paragraph === Type)
+			return new ApiParagraph(oElement);
+		else if (type_Table === Type)
+			return new ApiTable(oElement);
+		else if (type_BlockLevelSdt === Type)
+			return new ApiBlockLvlSdt(oElement);
 		else
 			return new ApiUnsupported();
 	}
