@@ -1403,39 +1403,24 @@
 			}
 		}
 	};
-	ApiRange.prototype.private_GetTextPr = function() {
+	ApiRange.prototype.private_GetTextPr = function()
+	{
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
-
-		let oDocument            = private_GetLogicDocument();
-		let oldSelectionInfo    = oDocument.SaveDocumentState();
-
+		
+		let logicDocument = private_GetLogicDocument();
+		let docState = logicDocument.SaveDocumentState();
+		
 		this.Select(false);
 		if (this.isEmpty || this.isEmpty === undefined)
 		{
-			oDocument.LoadDocumentState(oldSelectionInfo);
+			logicDocument.LoadDocumentState(docState);
 			return;
 		}
-
-		let oFirstRun = null;
-		let oTextPr = null;
-
-		let compareTextPr = function(run) {
-			if (null == oFirstRun) {
-				oFirstRun = run;
-				oTextPr = run.GetTextPr();
-				return;
-			}
-
-			oTextPr.Compare(run.GetTextPr());
-		}
 		
-		oDocument.CheckAllRunContent(compareTextPr);
-
-		oDocument.LoadDocumentState(oldSelectionInfo);
-		oDocument.UpdateSelection();
-
-		return oTextPr;
+		let textPr = logicDocument.GetCalculatedTextPr();
+		logicDocument.LoadDocumentState(docState);
+		return textPr;
 	};
 	
 	/**
@@ -21323,26 +21308,34 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * @param oApiRange
+	 * @param oTextPr
+	 * @constructor
+	 */
 	function ApiRangeTextPr(oApiRange, oTextPr)
 	{
 		ApiTextPr.call(this, oApiRange, oTextPr);
 	}
 	ApiRangeTextPr.prototype = Object.create(ApiTextPr.prototype);
 	ApiRangeTextPr.prototype.constructor = ApiRangeTextPr;
+	ApiRangeTextPr.prototype.private_Update = function()
+	{
+		if (!this.Parent)
+			return;
+		
+		this.TextPr.Set_FromObject(this.Parent.private_GetTextPr());
+	};
 	(function(prototype) {
-		function doBefore(obj, methodName, beforeFn) {
-			let originalMethod = obj[methodName];
-			obj[methodName] = function() {
-				beforeFn.apply(this, arguments);
-				return originalMethod.apply(this, arguments);
-			};
-		}
-
-		for (let key in prototype) {
-			if (typeof(prototype[key]) === 'function' && key.startsWith('Get')) {
-				doBefore(prototype, key, function() {
-					this.TextPr.Set_FromObject(this.Parent.private_GetTextPr());
-				});
+		for (let key in prototype)
+		{
+			if (typeof(prototype[key]) === 'function' && key.startsWith('Get'))
+			{
+				prototype[key] = function()
+				{
+					this.private_Update();
+					return ApiTextPr.prototype[key].apply(this, arguments);
+				};
 			}
 		}
 	})(ApiRangeTextPr.prototype);
