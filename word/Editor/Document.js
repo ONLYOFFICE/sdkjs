@@ -22649,38 +22649,42 @@ CDocument.prototype.AddField = function(nType, oPr)
 
 	return false;
 };
-CDocument.prototype.AddFieldWithInstruction = function(sInstruction, textPr)
+CDocument.prototype.AddFieldWithInstruction = function(instructionLine, textPr)
 {
 	var oParagraph = this.GetCurrentParagraph(false, false, {ReplacePlaceHolder : true});
 	if (!oParagraph)
 		return null;
-
-    var oBeginChar    = new ParaFieldChar(fldchartype_Begin, this),
-        oSeparateChar = new ParaFieldChar(fldchartype_Separate, this),
-        oEndChar      = new ParaFieldChar(fldchartype_End, this);
-
-    var oRun = new ParaRun();
-    oRun.AddToContent(-1, oBeginChar);
-    oRun.AddInstrText(sInstruction);
-    oRun.AddToContent(-1, oSeparateChar);
-    oRun.AddToContent(-1, oEndChar);
-    oParagraph.Add(oRun);
-
-    oBeginChar.SetRun(oRun);
-    oSeparateChar.SetRun(oRun);
-    oEndChar.SetRun(oRun);
-
-    var oComplexField = oBeginChar.GetComplexField();
-    oComplexField.SetBeginChar(oBeginChar);
-    oComplexField.SetInstructionLine(sInstruction);
-    oComplexField.SetSeparateChar(oSeparateChar);
-    oComplexField.SetEndChar(oEndChar);
-    oComplexField.Update(false);
+	
+	return this.addFieldWithInstructionToParagraph(oParagraph, instructionLine, textPr);
+};
+CDocument.prototype.addFieldWithInstructionToParagraph = function(paragraph, instructionLine, textPr)
+{
+	let beginChar    = new ParaFieldChar(fldchartype_Begin, this);
+	let separateChar = new ParaFieldChar(fldchartype_Separate, this);
+	let endChar      = new ParaFieldChar(fldchartype_End, this);
+	
+	var run = new AscWord.Run();
+	run.AddToContent(-1, beginChar);
+	run.AddInstrText(instructionLine);
+	run.AddToContent(-1, separateChar);
+	run.AddToContent(-1, endChar);
+	paragraph.Add(run);
+	
+	beginChar.SetRun(run);
+	separateChar.SetRun(run);
+	endChar.SetRun(run);
+	
+	let complexField = beginChar.GetComplexField();
+	complexField.SetBeginChar(beginChar);
+	complexField.SetInstructionLine(instructionLine);
+	complexField.SetSeparateChar(separateChar);
+	complexField.SetEndChar(endChar);
+	complexField.Update(false);
 	
 	if (textPr)
-		oRun.SetPr(textPr);
+		run.SetPr(textPr);
 	
-    return oComplexField;
+	return complexField;
 };
 CDocument.prototype.AddDateTime = function(oPr)
 {
@@ -22781,65 +22785,7 @@ CDocument.prototype.AddRefToBookmark = function(sBookmarkName, nType, bHyperlink
 };
 CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)
 {
-	if(!(typeof sBookmarkName === "string" && sBookmarkName.length > 0))
-	{
-		return;
-	}
-	var sInstr = "";
-	var sSuffix = "";
-	if(bHyperlink)
-	{
-		sSuffix += " \\h";
-	}
-	if(bAboveBelow && nType !== Asc.c_oAscDocumentRefenceToType.AboveBelow)
-	{
-		sSuffix += " \\p";
-	}
-	if(typeof sSeparator === "string" && sSeparator.length > 0)
-	{
-		sSuffix += " \\d " + sSeparator;
-	}
-	switch (nType)
-	{
-		case Asc.c_oAscDocumentRefenceToType.PageNum:
-		{
-			sInstr = " PAGEREF " + sBookmarkName;
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.Text:
-		case Asc.c_oAscDocumentRefenceToType.OnlyCaptionText:
-		case Asc.c_oAscDocumentRefenceToType.OnlyLabelAndNumber:
-		{
-			sInstr = " REF " + sBookmarkName + " ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNum:
-		{
-			sInstr = " REF " + sBookmarkName + " \\r ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNumNoContext:
-		{
-			sInstr = " REF " + sBookmarkName + " \\n ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNumFullContex:
-		{
-			sInstr = " REF " + sBookmarkName + " \\w ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.AboveBelow:
-		{
-			sInstr = " REF " + sBookmarkName + " \\p ";
-            sInstr += sSuffix;
-			break;
-		}
-	}
+	let sInstr = AscWord.getRefInstruction(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
 	var oComplexField = this.AddFieldWithInstruction(sInstr);
     if(nType === Asc.c_oAscDocumentRefenceToType.PageNum)
     {

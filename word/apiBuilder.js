@@ -8662,7 +8662,7 @@
 	 * <note>Please note that this paragraph must be in the document.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {bookmarkRefTo} sRefType - The text or numeric value of a bookmark reference you want to insert.
+	 * @param {bookmarkRefTo} sRefTo - The text or numeric value of a bookmark reference you want to insert.
 	 * @param {string} sBookmarkName - The name of the bookmark to be referred to (must be in the document).
 	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
 	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "text" and "aboveBelow" sRefType).
@@ -8693,7 +8693,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.IsUseInDocument())
+		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0)
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -8701,21 +8701,17 @@
 			bAboveBelow = false;
 		if (typeof(sSepWith) !== "string" || nRefTo !== 4)
 			sSepWith = "";
-
-		var oDocument = private_GetLogicDocument();
-		var oManager = oDocument.GetBookmarksManager();
-		var sName, oldSelectionInfo;
+		
+		let logicDocument = private_GetLogicDocument();
+		let oManager = logicDocument.GetBookmarksManager();
 		for (var nBookmark = 0, nCount = oManager.GetCount(); nBookmark < nCount; nBookmark++)
 		{
-			sName = oManager.GetName(nBookmark);
-			if (!oManager.IsInternalUseBookmark(sName) && !oManager.IsHiddenBookmark(sName) && sName === sBookmarkName)
+			if (sBookmarkName === oManager.GetName(nBookmark)
+				&& !oManager.IsInternalUseBookmark(sBookmarkName)
+				&& !oManager.IsHiddenBookmark(sBookmarkName))
 			{
-				oldSelectionInfo = oDocument.SaveDocumentState();
-				oDocument.RemoveSelection();
-				this.Paragraph.Document_SetThisElementCurrent();
-				this.Paragraph.SetCurrentPos(this.Paragraph.Content.length - 1);
-				oDocument.AddRefToBookmark(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
-				oDocument.LoadDocumentState(oldSelectionInfo);
+				let instr = AscWord.getRefInstruction(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
+				logicDocument.addFieldWithInstructionToParagraph(this.Paragraph, instr);
 				return true;
 			}
 		}
