@@ -2768,9 +2768,13 @@
 				if (!this.file.pages[i].isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
-						page.Image = this.file.getPage(i, w, h, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);						
+						page.Image = this.file.getPage(i, w, h, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);
+						
 						if (this.bCachedMarkupAnnnots) {
-							this._drawMarkupAnnotsOnCtx(i, page.Image.getContext("2d"));
+							let ctx = page.Image.getContext("2d");
+							
+							this._drawDrawingsOnCtx(i, ctx);
+							this._drawMarkupAnnotsOnCtx(i, ctx);
 							oImageToDraw = page.Image;
 						}
 
@@ -2805,6 +2809,7 @@
 						markupContext.fillRect(0, 0, w, h);
 					}
 
+					this._drawDrawingsOnCtx(i, markupContext);
 					this._drawMarkupAnnotsOnCtx(i, markupContext);
 					oImageToDraw = markupCanvas;
 				}
@@ -2844,7 +2849,6 @@
 				oDoc.BlurActiveObject();
 			}
 
-			this._paintDrawings();
 			this._paintAnnots();
 			this._paintForms();
 			this._paintFormsHighlight();
@@ -4021,8 +4025,8 @@
 
 		let ctx = image.getContext('2d');
 
-		this._drawMarkupAnnotsOnCtx(nPage, ctx);
 		this._drawDrawingsOnCtx(nPage, ctx, true);
+		this._drawMarkupAnnotsOnCtx(nPage, ctx);
 		this._drawAnnotsOnCtx(nPage, ctx, true);
 		this._drawFieldsOnCtx(nPage, ctx, true);
 
