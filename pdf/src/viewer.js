@@ -3292,6 +3292,7 @@
 		{
 			var bRetValue	= false;
 			let oDoc		= this.getPDFDoc();
+			let oDrDoc		= oDoc.GetDrawingDocument();
 
 			if (e.KeyCode === 8) // BackSpace
 			{
@@ -3300,9 +3301,24 @@
 			else if (e.KeyCode === 9) // Tab
 			{
 				window.event.preventDefault();
+
 				let oActiveObj = oDoc.GetActiveObject();
 				if (oActiveObj && oActiveObj.IsDrawing()) {
-					oDoc.AddToParagraph(new AscWord.CRunTab());
+					if (oActiveObj.IsGraphicFrame()) {
+						oDoc.CreateNewHistoryPoint({objects: [oActiveObj]});
+						oActiveObj.graphicObject.MoveCursorToCell(e.ShiftKey ? false : true);
+						if (false == AscCommon.History.Is_LastPointEmpty()) {
+							oActiveObj.SetNeedRecalc(true);
+						}
+
+						oDrDoc.showTarget(true);
+						oDoc.SetNeedUpdateTarget(true);
+						this._checkTargetUpdate();
+						oDoc.TurnOffHistory();
+					}
+					else {
+						oDoc.AddToParagraph(new AscWord.CRunTab());
+					}
 				}
 				else {
 					if (true == e.ShiftKey)
