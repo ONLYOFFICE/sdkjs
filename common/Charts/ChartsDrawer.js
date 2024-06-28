@@ -2535,7 +2535,6 @@ CChartsDrawer.prototype =
 		}
 
 		if (!notCalcExtremum) {
-			const isChartEx = chartSpace.isChartEx();
 			if (!isChartEx) {
 				//calculate calcProp -> /min/max/ymax/ymin/
 				this._calculateExtremumAllCharts(chartSpace);
