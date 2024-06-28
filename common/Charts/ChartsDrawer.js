@@ -6493,7 +6493,7 @@ function drawBarChart(chart, chartsDrawer) {
 	this.chartProp = chartsDrawer.calcProp;
 	this.cChartDrawer = chartsDrawer;
 	this.cChartSpace = chartsDrawer.cChartSpace;
-	console.log(this.chartProp)
+
 	this.chart = chart;
 	this.catAx = null;
 	this.valAx = null;
