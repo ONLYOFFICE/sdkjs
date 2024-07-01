@@ -868,7 +868,7 @@
 
 	SmartArtAlgorithm.prototype.setConstraints = function (constr) {
 		const node = this.getCurrentPresNode();
-		node.setLayoutConstraints(constr);
+		node.setLayoutConstraints(constr, this);
 	}
 	SmartArtAlgorithm.prototype.setRules = function (rules) {
 		const node = this.getCurrentPresNode();
@@ -7045,8 +7045,49 @@ PresNode.prototype.addChild = function (ch, pos) {
 			this.algorithm.calcScaleCoefficients(smartartAlgorithm);
 		}
 	}
-	PresNode.prototype.setLayoutConstraints = function (lst) {
+
+	function CalcConstr() {
+		this.calcFunc = null;
+	}
+	PresNode.prototype.setLayoutConstraints = function (lst, smartartAlgorithm) {
+		const oThis = this;
 		this.layoutInfo.constrLst = lst;
+		const constrObj = {};
+		if (this.node.isRoot()) {
+			const smartart = smartartAlgorithm.smartart;
+			constrObj[AscFormat.Constr_type_w][AscFormat.ElementType_value_all][AscFormat.Constr_for_self].withoutName = function () {
+				return smartart.spPr.xfrm.extX;
+			};
+			constrObj[AscFormat.Constr_type_h][AscFormat.ElementType_value_all][AscFormat.Constr_for_self].withoutName = function () {
+				return smartart.spPr.xfrm.extY;
+			};
+		}
+		for (let i = 0; lst.length; i += 1) {
+			const constr = lst[i];
+			const calcConstr = new CalcConstr();
+			calcConstr.calcFunc = function () {
+				let calcFunc;
+				if (constr.refForName && constrObj[constr.refFor].name[constr.refForName]) {
+					calcFunc = constrObj[constr.refFor].name[constr.refForName][constr.refType];
+				}
+				if (calcFunc === undefined) {
+					calcFunc = constrObj[constr.refFor].noName[constr.refType];
+				}
+
+				if (calcFunc) {
+
+				}
+			};
+			const ptType = constr.ptType.getVal();
+			if (constr.forName) {
+				constrObj[constr.type][constr.op][ptType][constr.for].withName[constr.forName] = constr;
+			} else {
+				constrObj[constr.type][constr.op][ptType][constr.for].withoutName = constr;
+			}
+		}
+
+
+
 	};
 	PresNode.prototype.setLayoutRules = function (lst) {
 		this.layoutInfo.ruleLst = lst;
