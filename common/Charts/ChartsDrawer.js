@@ -1554,7 +1554,7 @@ CChartsDrawer.prototype =
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
 								for (let k = 0; k < valPts.length; k++) {
-									const catVal = catPts ? catPts[k].val : valPts[k].idx + 1;
+									const catVal = catPts && catPts[k] ? catPts[k].val : valPts[k].idx + 1;
 									this.trendline.addCoordinate(catVal, valPts[k].val , charts[i].Id, seria.Id);
 								}
 							}
