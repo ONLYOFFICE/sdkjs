@@ -3652,10 +3652,11 @@
 	}
 	function RemoveCountFormMathContent (oContent, nCount, isSkipFirst)
 	{
+		let oCurrentContent;
 		for (let i = oContent.Content.length - 1; i >= 0; i--)
 		{
 			let isSkippedFirst = false;
-			let oCurrentContent = oContent.Content[i];
+			oCurrentContent = oContent.Content[i];
 			for (let j = oCurrentContent.Content.length - 1; j >= 0; j--)
 			{
 				if (isSkipFirst === true)
@@ -3671,6 +3672,7 @@
 					return oCurrentContent;
 			}
 		}
+		return oCurrentContent;
 	}
 
 	function CorrectSpecialWordOnCursor(oCMathContent, IsLaTeX)
