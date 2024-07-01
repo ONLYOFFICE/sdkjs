@@ -1553,7 +1553,8 @@ CChartsDrawer.prototype =
 								// if xVal is given
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
-								for (let k = 0; k < valPts.length; k++) {
+								const pointLength = catPts ? Math.min(valPts.length, catPts.length) : valPts.length;
+								for (let k = 0; k < pointLength; k++) {
 									const catVal = catPts && catPts[k] ? catPts[k].val : valPts[k].idx + 1;
 									this.trendline.addCoordinate(catVal, valPts[k].val , charts[i].Id, seria.Id);
 								}
