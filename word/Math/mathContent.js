@@ -7245,7 +7245,7 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 	for (let i = nStartPos; i <= nEndPos; i++)
 	{
 		let oElement = this.Content[i];
-		oMathText.Add(oElement, false, false, true);
+		oMathText.Add(oElement, false, false, bSelectedText);
 	}
 
 	return {str: oMathText.GetText(), content: oMathText};
