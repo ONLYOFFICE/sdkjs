@@ -181,7 +181,6 @@
         let aCurIdxs    = this.GetCurIdxs();
 
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
 
@@ -197,7 +196,7 @@
             this.SetApiCurIdxs(aCurIdxs);
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         aFields.forEach(function(field) {
             field.SetWasChanged(true);
@@ -226,6 +225,8 @@
                 field._originShiftView.y = oThis._originShiftView.y;
             }
         });
+
+        oDoc.EndNoHistoryMode();
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {

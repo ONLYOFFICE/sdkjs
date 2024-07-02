@@ -129,37 +129,37 @@
             return;
         }
 
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        aFields.forEach(function(field) {
-            if (field.GetHeaderPosition() == position["textOnly"])
-                return;
-
-            field.SetWasChanged(true);
-            field.DoInitialRecalc();
-            field.SetNeedRecalc(true);
-            field.SetImageData(oImgData, nAPType);
-
-            let sTargetSrc;
-            if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
-                sTargetSrc = oImgData.src;
-            }
-
-            field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
-        });
-        
-        if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
+        oDoc.DoAction(function() {
             aFields.forEach(function(field) {
                 if (field.GetHeaderPosition() == position["textOnly"])
                     return;
-
+    
+                field.SetWasChanged(true);
+                field.DoInitialRecalc();
                 field.SetNeedRecalc(true);
+                field.SetImageData(oImgData, nAPType);
+    
+                let sTargetSrc;
+                if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
+                    sTargetSrc = oImgData.src;
+                }
+    
+                field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
             });
             
-            let oDoc            = this.GetDocument();
-            let oActionsQueue   = oDoc.GetActionsQueue();
-            oActionsQueue.Continue();   
-        }
+            if (oViewer.IsOpenFormsInProgress == false) {
+                aFields.forEach(function(field) {
+                    if (field.GetHeaderPosition() == position["textOnly"])
+                        return;
+    
+                    field.SetNeedRecalc(true);
+                });
+                
+                let oDoc            = this.GetDocument();
+                let oActionsQueue   = oDoc.GetActionsQueue();
+                oActionsQueue.Continue();   
+            }
+        }, AscDFH.historydescription_Pdf_FieldImportImage, this);
     };
     CPushButtonField.prototype.IsImageChanged = function(nAPType) {
         switch (nAPType) {
@@ -207,6 +207,8 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetImage = function(oImgData) {
+        let oDoc = this.GetDocument();
+
         if (!oImgData) {
             return;
         }
@@ -215,6 +217,7 @@
             return;
         }
 
+        oDoc.StartNoHistoryMode();
         this.RemoveImage();
         
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
@@ -366,6 +369,8 @@
         
         let oIconPos = this.GetIconPosition();
         this.SetIconPosition(oIconPos.X, oIconPos.Y);
+
+        oDoc.EndNoHistoryMode();
     };
     CPushButtonField.prototype.RemoveImage = function() {
         let oExistDrawing = this.GetDrawing();
@@ -711,9 +716,7 @@
         }
 
         if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.History.TurnOn();
             oDoc.History.Add(new CChangesPDFPushbuttonImage(this, [oPrevImgData, nAPType], [oImgData, nAPType]));
-            oDoc.TurnOffHistory();
         }
     };
     CPushButtonField.prototype.DrawPressed = function() {

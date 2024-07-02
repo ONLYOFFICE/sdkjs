@@ -89,28 +89,6 @@
     CPdfChart.prototype.SelectAllText = function() {
         this.GetDocContent().SelectAll();
     };
-    /**
-     * Exit from this annot.
-     * @memberof CTextField
-     * @typeofeditors ["PDF"]
-     */
-    CPdfChart.prototype.Blur = function() {
-        let oDoc        = this.GetDocument();
-        let oContent    = this.GetDocContent();
-        let oPara       = oContent.GetElement(0);
-
-        oPara.SetApplyToAll(true);
-        let sText = oPara.GetSelectedText(true, {NewLine: true});
-        oPara.SetApplyToAll(false);
-
-        if (this.GetContents() != sText) {
-            oDoc.CreateNewHistoryPoint();
-            this.SetContents(sText);
-            oDoc.TurnOffHistory();
-        }
-        
-        oDoc.GetDrawingDocument().TargetEnd();
-    };
 
     CPdfChart.prototype.onMouseUp = function(x, y, e) {
         let oViewer         = Asc.editor.getDocumentRenderer();

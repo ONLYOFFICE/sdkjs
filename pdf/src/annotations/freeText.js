@@ -994,10 +994,7 @@
 		docContent.RecalculateCurPos();
 	};
 	CAnnotationFreeText.prototype.EnterText = function(value) {
-		let doc        = this.GetDocument();
 		let docContent = this.GetDocContent();
-		
-		doc.CreateNewHistoryPoint({objects : [this]});
 		
 		let result = docContent.EnterText(value);
 		this.OnChangeTextContent();
@@ -1006,8 +1003,6 @@
 	CAnnotationFreeText.prototype.CorrectEnterText = function(oldValue, newValue) {
 		let doc = this.GetDocument();
 		let docContent = this.GetDocContent();
-		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		
 		// TODO: Нужно реализовать метод checkAsYouType, чтобы он проверял что иммено сейчас происходил ввод в данном месте
 		let result = docContent.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){
@@ -1032,9 +1027,6 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CAnnotationFreeText.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
         let oContent = this.GetDocContent();
         oContent.Remove(nDirection, true, false, false, isCtrlKey);
         oContent.RecalculateCurPos();
@@ -1067,19 +1059,18 @@
         this.SetInTextBox(false);
 
         if (this.GetContents() != sText || this.IsNeedUpdateRC()) {
-            oDoc.CreateNewHistoryPoint();
-            this.GetContents() != sText && this.SetContents(sText);
+            oDoc.DoAction(function() {
+                this.GetContents() != sText && this.SetContents(sText);
             
-            if (this.IsNeedUpdateRC()) {
-                let aCurRc = this.GetRichContents();
-                let aNewRc = this.GetRichContents(true);
-                
-                this._richContents = aNewRc;
-                oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
-                this.SetNeedUpdateRC(false);
-            }
-
-            oDoc.TurnOffHistory();
+                if (this.IsNeedUpdateRC()) {
+                    let aCurRc = this.GetRichContents();
+                    let aNewRc = this.GetRichContents(true);
+                    
+                    this._richContents = aNewRc;
+                    oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
+                    this.SetNeedUpdateRC(false);
+                }
+            }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
         }
         
         this.resetSelection();
@@ -1678,13 +1669,13 @@
         let aAnnotRect = oParentAnnot.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
+        oShape.setGroup(oParentAnnot);
         oShape.spPr.xfrm.setOffX(Math.abs(xMin - aAnnotRect[0]));
         oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
         oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
-        oShape.setGroup(oParentAnnot);
         oShape.spPr.setLn(new AscFormat.CLn());
         oShape.recalculateTransform();
         oShape.updateTransformMatrix();
@@ -1732,13 +1723,13 @@
             return measure * g_dKoef_pix_to_mm;
         });
         
+        oShape.setGroup(oParentAnnot);
         oShape.spPr.xfrm.setOffX(Math.abs(xMin - aAnnotRect[0]));
         oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
         oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
-        oShape.setGroup(oParentAnnot);
         oShape.spPr.setLn(new AscFormat.CLn());
         oShape.recalculateTransform();
         oShape.updateTransformMatrix();

@@ -67,6 +67,9 @@
     CPdfDrawingPrototype.prototype.IsDrawing = function() {
         return true;
     };
+    CPdfDrawingPrototype.prototype.OnContentChange = function() {
+        return this.SetNeedRecalc(true);
+    };
     CPdfDrawingPrototype.prototype.IsPdfDrawing = function() {
         return true;
     };
@@ -76,14 +79,30 @@
     CPdfDrawingPrototype.prototype.IsGraphicFrame = function() {
         return false;
     };
-	
 	CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
 		if (this.group && this.group.IsUseInDocument)
 			return this.group.IsUseInDocument();
 		
 		return (-1 !== this.GetDocument().drawings.indexOf(this));
-	};
-    CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
+	};    CPdfDrawingPrototype.prototype.OnBlur = function() {
+        
+        let nPtIndex = AscCommon.History.Index;
+        if (AscCommon.History.Points[nPtIndex]) {
+            AscCommon.History.Points[nPtIndex].forbitUnion = true;
+        }
+    };
+    CPdfDrawingPrototype.prototype.recalculateContent = function() {
+        let parentPrototype = Object.getPrototypeOf(Object.getPrototypeOf(this));
+        let oRecalcData = null;
+        // Вызов родительского метода
+        if (parentPrototype && parentPrototype.recalculateContent) {
+            oRecalcData = parentPrototype.recalculateContent.call(this);
+        }
+
+        this.AddToRedraw();
+
+        return oRecalcData;
+    };    CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();
         let oViewer     = oDoc.Viewer;
         let oFile       = oViewer.file;
@@ -254,6 +273,11 @@
         let oViewer = Asc.editor.getDocumentRenderer();
         let nPage   = this.GetPage();
         
+        if (this.group && this.group.IsAnnot()) {
+            this.group.AddToRedraw();
+            return;
+        }
+
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
                 oViewer.pagesInfo.pages[nPage].needRedrawDrawings = true;
@@ -285,6 +309,11 @@
             this._needRecalc = false;
         }
         else {
+            if (this.group && this.group.IsAnnot()) {
+                this.group.SetNeedRecalc(bRecalc, bSkipAddToRedraw);
+                return;
+            }
+
             let oDoc = Asc.editor.getPDFDoc();
             oDoc.ClearSearch();
 
@@ -297,6 +326,9 @@
                 this.group.SetNeedRecalc(true);
             }
         }
+    };
+    CPdfDrawingPrototype.prototype.addToRecalculate = function() {
+        this.SetNeedRecalc(true);
     };
     CPdfDrawingPrototype.prototype.GetAllFonts = function(fontMap) {
         fontMap = fontMap || {};
@@ -332,13 +364,9 @@
 		if (!doc || !content)
 			return;
 		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		content.Remove(direction, true, false, false, isWord);
 		this.SetNeedRecalc(true);
 		content.RecalculateCurPos();
-		
-		if (AscCommon.History.Is_LastPointEmpty())
-			AscCommon.History.Remove_LastPoint();
 	};
 	CPdfDrawingPrototype.prototype.EnterText = function(value) {
 		let doc = this.GetDocument();
@@ -346,9 +374,7 @@
 		if (!doc || !content)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		let result = content.EnterText(value);
-		this.SetNeedRecalc(true);
 		content.RecalculateCurPos();
 		return result;
 	};
@@ -358,9 +384,7 @@
 		if (!doc || !content)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		let result = content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
-		this.SetNeedRecalc(true);
 		content.RecalculateCurPos();
 		return result;
 	};
@@ -375,14 +399,6 @@
 		}
 	};
     
-    /////////////////////////////
-    /// saving
-    ////////////////////////////
-
-    CPdfDrawingPrototype.prototype.WriteToBinary = function(memory) {
-        this.toXml(memory, '');
-    };
-
     //////////////////////////////////////////////////////////////////////////////
     ///// Overrides
     /////////////////////////////////////////////////////////////////////////////

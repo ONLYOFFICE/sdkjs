@@ -4848,7 +4848,22 @@
 	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
 	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;
 	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01b6;
-
+	// pdf
+	window['AscDFH'].historydescription_Pdf_AddAnnot			= 0x29a;
+	window['AscDFH'].historydescription_Pdf_FreeTextGeom		= 0x29b;
+	window['AscDFH'].historydescription_Pdf_AddPage				= 0x29c;
+	window['AscDFH'].historydescription_Pdf_RemovePage			= 0x29d;
+	window['AscDFH'].historydescription_Pdf_AddHighlightAnnot	= 0x29e;
+	window['AscDFH'].historydescription_Pdf_EraseInk			= 0x29f;
+	window['AscDFH'].historydescription_Pdf_RemoveComment		= 0x2a0;
+	window['AscDFH'].historydescription_Pdf_EditPage			= 0x2a1;
+	window['AscDFH'].historydescription_Pdf_ContextMenuRemove	= 0x2a2;
+	window['AscDFH'].historydescription_Pdf_RotatePage			= 0x2a3;
+	window['AscDFH'].historydescription_Pdf_UpdateAnnotRC		= 0x2a4;
+	window['AscDFH'].historydescription_Pdf_ClickCheckbox		= 0x2a5;
+	window['AscDFH'].historydescription_Pdf_FieldCommit			= 0x2a6;
+	window['AscDFH'].historydescription_Pdf_FieldImportImage	= 0x2a6;
+	window['AscDFH'].historydescription_Pdf_FieldSelectOption	= 0x2a7;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

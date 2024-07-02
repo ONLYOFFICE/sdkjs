@@ -393,42 +393,48 @@
     };
     CBaseCheckBoxField.prototype.onMouseUp = function() {
         let oDoc = this.GetDocument();
+        let oViewer = oDoc.Viewer;
 
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-        if (this.IsChecked()) {
-            if (this._noToggleToOff == false) {
-                this.SetChecked(false);
-                this.SetApiValue("Off");
-            }
-        }
-        else {
-            let oParent = this.GetParent();
-            let aOpt    = oParent ? oParent.GetOptions() : undefined;
-            let aKids   = oParent ? oParent.GetKids() : undefined;
-            this.SetChecked(true);
-            if (aOpt && aKids) {
-                this.SetApiValue(String(aKids.indexOf(this)));
+        let oThis = this;
+
+        oDoc.DoAction(function() {
+            let bCommit = false;
+            if (oThis.IsChecked()) {
+                if (oThis.IsNoToggleToOff() == false) {
+                    oThis.SetChecked(false);
+                    oThis.SetApiValue("Off");
+                    bCommit = true;
+                }
             }
             else {
-                this.SetApiValue(this.GetExportValue());
-            }
-        }
-        
-        if (AscCommon.History.Is_LastPointEmpty())
-            AscCommon.History.Remove_LastPoint();
-        else {
-            this.SetNeedCommit(true);
-            this.Commit2();
-        }
+                let oParent = oThis.GetParent();
+                let aOpt    = oParent ? oParent.GetOptions() : undefined;
+                let aKids   = oParent ? oParent.GetKids() : undefined;
+                oThis.SetChecked(true);
+                if (aOpt && aKids) {
+                    oThis.SetApiValue(String(aKids.indexOf(oThis)));
+                }
+                else {
+                    oThis.SetApiValue(oThis.GetExportValue());
+                }
 
+                bCommit = true;
+            }
+            
+            if (bCommit) {
+                oThis.SetNeedCommit(true);
+                oThis.Commit2();
+            }
+        }, AscDFH.historydescription_Pdf_ClickCheckbox);
+        
         this.DrawUnpressed();
         
-        let oOverlay        = editor.getDocumentRenderer().overlay;
+        let oOverlay        = oViewer.overlay;
         oOverlay.max_x      = 0;
         oOverlay.max_y      = 0;
         oOverlay.ClearAll   = true;
 
-        editor.getDocumentRenderer().onUpdateOverlay();
+        oViewer.onUpdateOverlay();
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
     };
     /**

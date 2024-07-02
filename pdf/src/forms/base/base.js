@@ -723,7 +723,7 @@
         let oActionsQueue   = oDoc.GetActionsQueue();
         let oTrigger        = this.GetTrigger(nType);
         
-        if (oTrigger && oTrigger.Actions.length > 0) {
+        if (oTrigger && oTrigger.Actions.length > 0 && false == AscCommon.History.UndoRedoInProgress) {
             oActionsQueue.AddActions(oTrigger.Actions);
             oActionsQueue.Start();
         }
@@ -1263,6 +1263,7 @@
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
+    CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged) {
         let oViewer = editor.getDocumentRenderer();
 
