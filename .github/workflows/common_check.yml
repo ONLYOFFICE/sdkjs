@@ -87,7 +87,7 @@ jobs:
             node-version: 12
       - name: Run builder tests
         run: |
-           sdkjs/
+           cd sdkjs
            npm install -g grunt-cli
            npm install --prefix build
            grunt --level=WHITESPACE_ONLY --addon=sdkjs-forms --base build --gruntfile build/Gruntfile.js
