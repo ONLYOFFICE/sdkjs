@@ -1617,13 +1617,21 @@ CChartsDrawer.prototype =
 								if (!valPts || !valPts.length || seria.isHidden === true || valPts.length < 2) {
 									continue;
 								}
-								this.trendline.init(valNumCache.ptCount);
 
 								// if xVal is given
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
-								for (let k = 0; k < valPts.length; k++) {
-									const catVal = catPts ? catPts[k].val : valPts[k].idx + 1;
+								const pointsLength = catPts ? Math.min(valPts.length, catPts.length) : valPts.length;
+								let offset = 0;
+								for (let k = 0; k + offset < pointsLength; k++) {
+									let catVal = null
+									if (catPts[k + offset].idx === valPts[k].idx) {
+										catVal = catPts ? catPts[k + offset].val : valPts[k].idx + 1;
+									}else {
+										offset += 1;
+										k -= 1;
+										continue;
+									}
 									this.trendline.addCoordinate(catVal, valPts[k].val , charts[i].Id, seria.Id);
 								}
 							}
@@ -17415,7 +17423,7 @@ CColorObj.prototype =
 	function CTrendline(chartsDrawer) {
 		this.cChartDrawer = chartsDrawer;
 		this.storage = {};//[chartId][seriaId]
-		this.ptCount = null;
+		this.ptCount = 0;
 
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
@@ -17426,15 +17434,6 @@ CColorObj.prototype =
 	CTrendline.prototype = {
 
 		constructor: CTrendline,
-
-		// find max ptCount
-		init: function (ptCount) {
-			if (!this.ptCount) {
-				this.ptCount = ptCount;
-			} else {
-				this.ptCount = Math.max(ptCount);
-			}
-		},
 
 		addCoordinate: function (xVal, yVal, chartId, seriaId) {
 			if (!this.storage[chartId]) {
@@ -17449,6 +17448,7 @@ CColorObj.prototype =
 
 			// in the case of duplicated data, no further adding should be allowed
 			if (!this.stopAdding) {
+				this.ptCount+=1;
 				this.storage[chartId][seriaId].addCatVal(xVal);
 				this.storage[chartId][seriaId].addValVal(yVal);
 	
