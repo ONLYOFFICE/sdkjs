@@ -531,21 +531,25 @@ ParaRun.prototype.GetText = function(oText)
 /**
  *
  * @param {MathTextAndStyles | boolean} oMathText
+ * @param {boolean} isSelectedText
  * @constructor
  */
-ParaRun.prototype.GetTextOfElement = function(oMathText)
+ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	
 	let isLatex = oMathText.IsLaTeX();
 	let isOperator = false;
 
-	if (this.Content.length === 1 && this.Content[0].value === 11034)
-		return false;
+	let nStartPos = (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
+	let nEndPos   = (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
 
-	for (let i = 0; i < this.Content.length; i++)
+	for (let i = nStartPos; i < nEndPos; i++)
 	{
 		let oCurrentElement = this.Content[i];
+
+		if (this.Content.length === 1 && oCurrentElement.value === 11034)
+			return oMathText;
 
 		// for now
 		// todo check what's wrong

@@ -4729,10 +4729,11 @@
 	 * @param oContent
 	 * @param isNew {boolean} - Нужно ли отделять текущий контент в отдельный MathTextAndStyles
 	 * @param [Wrap] {number|Array} Unicode: 0 - not wrap; 1 - special wrap; LaTeX: 1 - wrap
+	 * @param isSelectedText
 	 * @return {PosInMathText|false}
 	 * @constructor
 	 */
-	MathTextAndStyles.prototype.Add = function(oContent, isNew, Wrap)
+	MathTextAndStyles.prototype.Add = function(oContent, isNew, Wrap, isSelectedText)
 	{
 		if (!(oContent instanceof MathTextAndStyles) && oContent.Content.length === 0)
 			return this.GetLastPos();
@@ -4748,7 +4749,7 @@
 		if (isNew)
 		{
 			let oMath = this.AddContainer();
-			oContent.GetTextOfElement(oMath);
+			oContent.GetTextOfElement(oMath, isSelectedText);
 			this.DelEmptyContainer();
 
 			if (oMath.IsEmpty())
@@ -4786,7 +4787,7 @@
 			if (this.IsSetLastInner)
 				this.SetGetInnerStyle(true);
 
-			oContent.GetTextOfElement(this);
+			oContent.GetTextOfElement(this, isSelectedText);
 
 			this.ClearReviewInfo();
 

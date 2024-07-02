@@ -7227,32 +7227,26 @@ CMathContent.prototype.GetTextOfElement = function(oMathText)
 
 	return oMathText;
 };
-CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX, isOnlyText)
+CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 {
-    if (undefined === isLaTeX || null === isLaTeX)
+	if (undefined === isLaTeX || null === isLaTeX)
 		isLaTeX = false;
 
-	let str = "";
-	let StartPos = 0;
-	let EndPos = this.Content.length;
-    let arr = []
+	let nStartPos	= 0;
+	let nEndPos		= this.Content.length;
+	let oMathText	= new AscMath.MathTextAndStyles(isLaTeX);
 
 	if (bSelectedText)
-    {
-		StartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
-		EndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
+	{
+		nStartPos = (this.Selection.Use == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
+		nEndPos   = (this.Selection.Use == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.CurPos.ContentPos);
 	}
 
-    let oMathText = new AscMath.MathTextAndStyles(isLaTeX);
-
-	for (let i = StartPos; i <= EndPos; i++)
-    {
-        let oElement = this.Content[i];
-        oMathText.Add(oElement, false);
+	for (let i = nStartPos; i <= nEndPos; i++)
+	{
+		let oElement = this.Content[i];
+		oMathText.Add(oElement, false, false, true);
 	}
-
-    if (isOnlyText)
-        return str;
 
 	return {str: oMathText.GetText(), content: oMathText};
 };
