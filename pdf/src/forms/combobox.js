@@ -295,9 +295,6 @@
         if (this.GetCurIdxs() == nIdx)
             return;
 
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
         let oPara = this.content.GetElement(0);
         let oRun = oPara.GetElement(0);
 
@@ -413,7 +410,6 @@
 			return false;
 		
 		this.UpdateSelectionByEvent();
-		doc.CreateNewHistoryPoint({objects : [this]});
 		
 		this.content.EnterText(aChars);
 		
@@ -431,8 +427,6 @@
 		if (!newValue.length && !oldValue.length)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects : [this]});
-		
 		let result = this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
 		
 		this.SetNeedRecalc(true);
@@ -449,7 +443,6 @@
         let oDoc        = this.GetDocument();
         let aFields     = oDoc.GetAllWidgets(this.GetFullName());
 
-        oDoc.SetGlobalHistory();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
@@ -459,13 +452,12 @@
         }
 
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
@@ -510,6 +502,8 @@
 
         this.SetNeedCommit(false);
         this.needValidate = true;
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);

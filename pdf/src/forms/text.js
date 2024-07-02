@@ -297,6 +297,7 @@
 	};
 	CTextField.prototype.OnContentChange = function() {
 		this._useDisplayValue = false;
+        this.SetNeedRecalc(true);
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
@@ -959,8 +960,6 @@
 		if (0 === aChars.length)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects: [this]});
-		
 		if (!this.content.EnterText(aChars))
 			return false;
 		
@@ -990,8 +989,6 @@
 		
 		let doc = this.GetDocument();
 		newValue = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
-		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		
 		if (!this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;}))
 			return false;
@@ -1093,7 +1090,6 @@
         let oDoc        = this.GetDocument();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        oDoc.SetGlobalHistory();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
@@ -1103,14 +1099,12 @@
         }
         
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
-            
             this.SetApiValue(this.GetValue());
         }
 
-        TurnOffHistory();
-        
+        oDoc.StartNoHistoryMode();
+
         if (aFields.length == 1)
             this.SetNeedCommit(false);
 
@@ -1159,6 +1153,8 @@
 
         this.SetNeedCommit(false);
         this.needValidate = true;
+
+        oDoc.EndNoHistoryMode();
     };
 	CTextField.prototype.SetAlign = function(nAlignType) {
         this._alignment = nAlignType;
@@ -1322,8 +1318,6 @@
 			return false;
 		
 		let oDoc = this.GetDocument();
-		oDoc.CreateNewHistoryPoint({objects : [this]});
-		
 		this.UpdateSelectionByEvent();
 		
 		if (this.content.IsSelectionUse())
@@ -1332,9 +1326,7 @@
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
 
-        if (AscCommon.History.Is_LastPointEmpty())
-            AscCommon.History.Remove_LastPoint();
-        else {
+        if (false == AscCommon.History.Is_LastPointEmpty()) {
             this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
             this.SetNeedRecalc(true);
             this.SetNeedCommit(true);

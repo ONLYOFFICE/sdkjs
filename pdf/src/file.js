@@ -616,24 +616,23 @@ void main() {\n\
         this.onUpdateOverlay();
 
         if (this.viewer.Api.isMarkerFormat) {
-            let oDoc = this.viewer.getPDFDoc();
-            let oColor = oDoc.GetMarkerColor(this.viewer.Api.curMarkerType);
-            oDoc.CreateNewHistoryPoint();
-            switch (this.viewer.Api.curMarkerType) {
-				case AscPDF.ANNOTATIONS_TYPES.Highlight:
-					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Underline:
-					this.viewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
-					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-			}
+            let oDoc    = this.viewer.getPDFDoc();
+            let oViewer = this.viewer;
+            let oColor  = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
 
-            if (AscCommon.History.Is_LastPointEmpty())
-                AscCommon.History.Remove_LastPoint();
-            oDoc.TurnOffHistory();
+            oDoc.DoAction(function() {
+                switch (oViewer.Api.curMarkerType) {
+                    case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                        oViewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Underline:
+                        oViewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                        oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                }
+            }, AscDFH.historydescription_Pdf_AddHighlightAnnot);
         }
     };
 

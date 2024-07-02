@@ -102,10 +102,8 @@
      * @typeofeditors ["PDF"]
      */
     CPdfGraphicFrame.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
         let oContent = this.GetDocContent();
+
         if (oContent) {
             oContent.Remove(nDirection, true, false, false, isCtrlKey);
         }
@@ -164,7 +162,7 @@
             this._needRecalc = false;
         }
         else {
-            this.GetDocument().SetNeedUpdateTarget(true);
+            // this.GetDocument().SetNeedUpdateTarget(true);
             this._needRecalc = true;
             this.recalcInfo.recalculateTable = true;
            

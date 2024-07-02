@@ -372,6 +372,10 @@
         let nDeltaX = x - nOldX;
         let nDeltaY = y - nOldY;
 
+        if (0 == nDeltaX && 0 == nDeltaY) {
+            return;
+        }
+
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
@@ -638,6 +642,10 @@
         return !(this.IsFreeText() || this.IsLine() && this.IsDoCaption());
     };
     CAnnotationBase.prototype.Recalculate = function() {
+        if (false == this.IsNeedRecalc()) {
+            return;
+        }
+
         let oViewer     = editor.getDocumentRenderer();
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
@@ -645,9 +653,9 @@
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
         
-        this.handleUpdatePosition();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY)
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationBase.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
@@ -816,6 +824,10 @@
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
         let nPage   = this.GetPage();
+
+        if (false == this.IsUseInDocument()) {
+            return;
+        }
 
         function setRedrawPageOnRepaint() {
             if (oViewer.pagesInfo.pages[nPage]) {
