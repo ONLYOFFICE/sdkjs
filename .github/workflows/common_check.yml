@@ -74,11 +74,13 @@ jobs:
   builder-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          path: main
+      - uses: actions/checkout@v4
         with:
           repository: ONLYOFFICE/sdkjs-forms
-          path: sdkjs/sdkjs-forms
-      - uses: actions/checkout@v3
+          path: sdkjs-forms
       - name: Use Node.js 12
         uses: actions/setup-node@v1
         with:
