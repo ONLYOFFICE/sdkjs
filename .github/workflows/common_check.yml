@@ -75,9 +75,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
         with:
-            repository: ONLYOFFICE/sdkjs-forms
+          repository: ONLYOFFICE/sdkjs-forms
+          path: sdkjs/sdkjs-forms
+      - uses: actions/checkout@v3
       - name: Use Node.js 12
         uses: actions/setup-node@v1
         with:
