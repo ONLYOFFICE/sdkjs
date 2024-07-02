@@ -8527,11 +8527,17 @@ function BinaryFileReader(doc, openParams)
 		if(this.Document.Styles)
         this.Document.Styles.Document_Get_AllFontNames(AllFonts);
 
-        for (var Index = 0, Count = aContent.length; Index < Count; Index++)
-            aContent[Index].Document_Get_AllFontNames(AllFonts);
+		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
+		for (var Index = 0, Count = aContent.length; Index < Count; Index++) {
+			aContent[Index].Document_Get_AllFontNames(AllFonts);
+			if (!aContent[Index].Parent && aContent[Index].Set_Parent) {
+				//aContent[Index].Set_Parent(oDocument);
+				aContent[Index].Parent = oDocument;
+			}
+		}
+
         var aPrepeareFonts = [];
 
-		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
 
 		var fontScheme;
 		var m_oLogicDocument = editor.WordControl.m_oLogicDocument;
