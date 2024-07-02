@@ -67,14 +67,20 @@ CParagraphBookmark.prototype.GetId = function()
 };
 CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	let sId = this.BookmarkId;
+	let nId = this.BookmarkId;
+	let nComparisonId;
 	if (oPr && oPr.Comparison)
 	{
-		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
-		if (sComparisonId)
-			sId = sComparisonId;
+		nComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (AscFormat.isRealNumber(nComparisonId))
+			nId = nComparisonId;
 	}
-	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
+	const oCopy = new CParagraphBookmark(this.Start, nId, this.BookmarkName);
+
+	if (AscFormat.isRealNumber(nComparisonId))
+		oPr.Comparison.oBookmarkManager.addToLink(oCopy.Id, nComparisonId);
+
+	return oCopy;
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {
@@ -327,7 +333,8 @@ CBookmarksManager.prototype.GetBookmarkById = function(Id)
 
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
-		if (this.Bookmarks[nIndex].GetBookmarkId() === Id)
+		var oStart = this.Bookmarks[nIndex][0];
+		if (oStart.GetBookmarkId() === Id)
 			return this.Bookmarks[nIndex];
 	}
 

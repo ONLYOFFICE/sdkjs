@@ -19020,11 +19020,18 @@ CTable.prototype.HavePrChange = function()
 {
 	return this.Pr.HavePrChange();
 };
-CTable.prototype.AddPrChange = function()
+CTable.prototype.AddPrChange = function(oPr)
 {
 	if (false === this.HavePrChange())
 	{
-		this.Pr.AddPrChange();
+		if (oPr && oPr.Comparison)
+		{
+			oPr.Comparison.addTablePrChange(this.Pr);
+		}
+		else
+		{
+			this.Pr.AddPrChange();
+		}
 		AscCommon.History.Add(new CChangesTablePrChange(this, {
 			PrChange   : undefined,
 			ReviewInfo : undefined

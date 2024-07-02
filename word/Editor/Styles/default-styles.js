@@ -846,11 +846,11 @@
 				Tabs    : {
 					Tabs : [
 						{
-							Value : Asc.c_oAscTabType.tab_Center,
+							Value : Asc.c_oAscTabType.Center,
 							Pos   : tw2mm(4844)
 						},
 						{
-							Value : Asc.c_oAscTabType.tab_Right,
+							Value : Asc.c_oAscTabType.Right,
 							Pos   : tw2mm(9689)
 						}
 					]
@@ -882,11 +882,11 @@
 				Tabs : {
 					Tabs : [
 						{
-							Value : Asc.c_oAscTabType.tab_Center,
+							Value : Asc.c_oAscTabType.Center,
 							Pos   : tw2mm(4844)
 						},
 						{
-							Value : Asc.c_oAscTabType.tab_Right,
+							Value : Asc.c_oAscTabType.Right,
 							Pos   : tw2mm(9689)
 						}
 					]
