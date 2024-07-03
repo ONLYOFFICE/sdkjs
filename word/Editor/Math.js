@@ -1301,14 +1301,13 @@ ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 
 ParaMath.prototype.GetText = function(isLaTeX)
 {
-    var res = "";
-    if (this.Root && this.Root.GetTextContent) {
-        var textContent = this.Root.GetTextContent(false, isLaTeX);
-        if (textContent && textContent.str) {
-            res = textContent.str;
-        }
-    }
-    return res;
+    let oMathText = this.GetTextOfElement(isLaTeX);
+    return oMathText.GetText();
+};
+
+ParaMath.prototype.GetTextOfElement = function (isLaTeX)
+{
+    return this.Root.GetTextOfElement(isLaTeX);
 };
 
 ParaMath.prototype.GetSelectDirection = function()
@@ -3181,47 +3180,36 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
-	AscMath.SetIsLaTeXGetParaRun(false);
-	var strLaTeX = this.GetText(true);
-	AscMath.SetIsLaTeXGetParaRun(true);
-
+	var oLaTeX = this.GetTextOfElement(true);
     this.Root.Remove_Content(0, this.Root.Content.length);
-    this.Root.Correct_Content(true);
-    AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
-    this.Root.CorrectAllMathWords(true);
-    this.Root.ConvertAllSpecialWords(true);
+    this.Root.CurPos = 0;
+    AscMath.ConvertLaTeXToTokensList(oLaTeX, this.Root);
+    // this.Root.CorrectAllMathWords(true);
+    // this.Root.ConvertAllSpecialWords(true);
 	this.Root.Correct_Content(true);
+    this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToLaTeX = function()
 {
-	var strLatex = this.GetText(true);
-	this.Root.Remove_Content(0,this.Root.Content.length);
-	this.Root.Add_Text(strLatex, this.Paragraph);
-    this.Root.CurPos = this.Root.Content.length - 1;
+	let oLaTeXContent = this.GetTextOfElement(true);
+    oLaTeXContent.Flat(this.Root);
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
-    this.Root.CorrectAllMathWords(false);
-    this.Root.ConvertAllSpecialWords(false);
-	var strUnicode = this.GetText();
-	if (strUnicode[strUnicode.length - 1] === " ")
-	{
-		strUnicode = strUnicode.slice(0, -1)
-	}
+	let oUnicode = this.GetTextOfElement(false);
 	this.Root.Remove_Content(0,this.Root.Content.length);
-    this.Root.Correct_Content(true);
-	AscMath.CUnicodeConverter(strUnicode, this.Root);
+    this.Root.CurPos = 0;
+	AscMath.CUnicodeConverter(oUnicode, this.Root);
 	this.Root.Correct_Content(true);
+    this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
-	var strUnicode = this.GetText();
-    if (strUnicode[strUnicode.length - 1] === " ")
-    {
-        strUnicode = strUnicode.slice(0, -1)
-    }
-	this.Root.Remove_Content(0,this.Root.Content.length);
-	this.Root.Add_Text(strUnicode, this.Paragraph);
+	let oUnicodeContent = this.GetTextOfElement(false);
+    oUnicodeContent.Flat(this.Root);
+    this.Paragraph.updateTrackRevisions();
+    //this.Root.AddTextWithStyles(strUnicode);
+	//this.Root.Add_Text(strUnicode, this.Paragraph);
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {

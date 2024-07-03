@@ -339,6 +339,12 @@ function CMathRadicalPr()
 {
     this.type    = DEGREE_RADICAL;
     this.degHide = false;
+	this.ctrPr   = new CMathCtrlPr();
+}
+
+CMathRadicalPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
 }
 
 CMathRadicalPr.prototype.Set_FromObject = function(Obj)
@@ -356,6 +362,8 @@ CMathRadicalPr.prototype.Set_FromObject = function(Obj)
         this.degHide = false;
         this.type = DEGREE_RADICAL;
     }
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 CMathRadicalPr.prototype.ChangeType = function()
 {
@@ -376,6 +384,7 @@ CMathRadicalPr.prototype.Copy = function()
 
     NewPr.type    = this.type;
     NewPr.degHide = this.degHide;
+	NewPr.ctrPr   = this.ctrPr;
 
     return NewPr;
 };
@@ -387,6 +396,9 @@ CMathRadicalPr.prototype.Write_ToBinary = function(Writer)
 
     Writer.WriteLong(this.type);
     Writer.WriteBool(this.degHide);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 
 CMathRadicalPr.prototype.Read_FromBinary = function(Reader)
@@ -396,6 +408,11 @@ CMathRadicalPr.prototype.Read_FromBinary = function(Reader)
 
     this.type    = Reader.GetLong();
     this.degHide = Reader.GetBool();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -750,48 +767,88 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
 
     return false;
 };
-CRadical.prototype.GetTextOfElement = function(isLaTeX)
+/**
+ *
+ * @param {MathTextAndStyles} oMathText
+ * @constructor
+ */
+CRadical.prototype.GetTextOfElement = function(oMathText)
 {
-	var strTemp = "";
-	var strDegree = this.getDegree().GetMultipleContentForGetText(isLaTeX, true);
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	if (isLaTeX)
-    {
-        if (strDegree.length > 0)
-            strDegree = '[' + strDegree + ']';
+	let oDegree		= this.getDegree();
+	let oBase		= this.getBase();
+	let oStart;
 
-        strTemp = '\\sqrt' + strDegree + "{" + strBase + "}";
-    }
+	if (oMathText.IsLaTeX())
+	{
+		oMathText.SetGlobalStyle(this);
+		let oDegreeText		= oDegree.GetTextOfElement();
+
+		if (!oDegreeText.IsEmpty())
+		{
+			let oIterator = oMathText.Add(oDegree, true);
+			oStart = oMathText.AddBefore(oIterator, new AscMath.MathText("[", this));
+			oMathText.AddAfter(oIterator, new AscMath.MathText("]", this));
+
+			let oPosBase		= oMathText.Add(oBase, true);
+			oMathText.AddBefore(oStart, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst(this)));
+		}
+		else
+		{
+			let oPosBase		= oMathText.Add(oBase, true);
+			oMathText.AddBefore(oPosBase, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst(this)));
+		}
+	}
 	else
-    {
-		var strRadicalSymbol = "√";
+	{
+		let oDegreeText		= oDegree.GetTextOfElement();
+		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("√", this), true);
+		let nLengthOfDegree	= oDegreeText.GetLength();
 
-        if (strDegree === "3" || strDegree === "4")
-        {
-            strRadicalSymbol = strDegree === "3" ?  "∛" : "∜";
-            strTemp = strRadicalSymbol + strBase;
-        }
-        else
-        {
-            if (strDegree.length > 0)
-            {
-                strDegree = "(" + strDegree + '&';
-                if (strBase[0] != "(" && strBase[strBase.length - 1] !== ")")
-                {
-                    strBase = strBase + ")";
-                }
-            }
-            else
-            {
-                strBase = "(" + strBase + ")";
-            }
+		if (nLengthOfDegree === 0 || !oDegreeText.IsHasText())
+		{
+			let oBaseText	= oBase.GetTextOfElement();
+			let nMathBase	= oBaseText.GetLength();
 
-            strTemp = strRadicalSymbol + strDegree + strBase;
-        }
+			if (nMathBase <= 1 || !oBaseText.IsHasText() || oBaseText.IsBracket)
+			{
+				oMathText.AddAfter(oPosSqrt, oBaseText);
+			}
+			else
+			{
+				let oStartPos	= oMathText.AddAfter(oPosSqrt, new AscMath.MathText("(", this));
+				let oPosBase	= oMathText.AddAfter(oStartPos, oBaseText);
+				oMathText.AddAfter(oPosBase, new AscMath.MathText(")", this));
+			}
+		}
+		else
+		{
+			let strDegree = oDegreeText.GetText();
+			if (strDegree === "3" || strDegree === "4")
+			{
+				if (strDegree === "3")
+				{
+					oMathText.ChangeContent(new AscMath.MathText("∛", this));
+				}
+				else if (strDegree === "4")
+				{
+					oMathText.ChangeContent(new AscMath.MathText("∜", this));
+				}
+				oMathText.Add(oBase, true);
+			}
+			else
+			{
+				oMathText.AddText(new AscMath.MathText("(", this));
+				oMathText.AddText(oDegreeText);
+				oMathText.AddText(new AscMath.MathText("&", this));
+				oMathText.Add(oBase, true, 0);
+				oMathText.AddText(new AscMath.MathText(")", this));
+			}
+		}
 	}
 
-	return strTemp;
+	return oMathText;
 };
 
 /**

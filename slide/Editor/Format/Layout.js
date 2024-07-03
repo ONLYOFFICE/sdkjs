@@ -192,7 +192,16 @@ SlideLayout.prototype.getDrawingsForController = function(){
 };
 
 SlideLayout.prototype.getTheme = function(){
-    return this.Master && this.Master.Theme || null;
+    return this.Master && this.Master.getTheme();
+};
+
+SlideLayout.prototype.getColorMap = function() {
+    if(this.Master) {
+        if(this.Master.clrMap) {
+            return this.Master.clrMap;
+        }
+    }
+    return AscFormat.GetDefaultColorMap();
 };
 SlideLayout.prototype.getMaster = function(){
     return this.getParentObjects().master;

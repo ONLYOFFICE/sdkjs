@@ -43,6 +43,12 @@
 			CS : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1}
 		}
 	});
+	STYLES.Default.ParaPr.Merge({
+		KeepLines : false,
+		KeepNext : false,
+		WidowControl : false,
+		PageBreakBefore : false
+	});
 	
 	/**
 	 * Class for working with rich text
@@ -213,6 +219,4 @@
 	window['AscPDF'].getPdfTypeAlignByInternal	= getPdfTypeAlignByInternal;
 	window['AscPDF'].CTextBoxContent			= CTextBoxContent;
 	
-	
 })(window);
-

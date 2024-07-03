@@ -3677,12 +3677,13 @@ PasteProcessor.prototype =
 	},
 
 	_setSpecialPasteShowOptionsPresentation: function(props){
-		var presentation = editor.WordControl.m_oLogicDocument;
-		var stateSelection = presentation.GetSelectionState();
-		var curPage = stateSelection.CurPage;
-		var pos = presentation.GetTargetPosition();
+		let presentation = editor.WordControl.m_oLogicDocument;
+		if(presentation.IsMasterMode()) return;
+		let stateSelection = presentation.GetSelectionState();
+		let curPage = stateSelection.CurPage;
+		let pos = presentation.GetTargetPosition();
 		props = !props ? [Asc.c_oSpecialPasteProps.sourceformatting, Asc.c_oSpecialPasteProps.keepTextOnly] : props;
-		var x, y, w, h;
+		let x, y, w, h;
 		if (null === pos) {
 			pos = presentation.GetSelectedBounds();
 			w = pos.w;
@@ -3712,17 +3713,17 @@ PasteProcessor.prototype =
 			screenPos = presentation.DrawingDocument.ConvertCoordsToCursorWR(x, y, curPage);
 		}
 
-		var specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
+		let specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
 		specialPasteShowOptions.asc_setOptions(props);
 
-		var targetDocContent = presentation.Get_TargetDocContent();
+		let targetDocContent = presentation.Get_TargetDocContent();
 		if(targetDocContent && targetDocContent.Id) {
 			specialPasteShowOptions.setShapeId(targetDocContent.Id);
 		} else {
 			specialPasteShowOptions.setShapeId(null);
 		}
 
-		var curCoord = new AscCommon.asc_CRect( screenPos.X, screenPos.Y, 0, 0 );
+		let curCoord = new AscCommon.asc_CRect( screenPos.X, screenPos.Y, 0, 0 );
 		specialPasteShowOptions.asc_setCellCoord(curCoord);
 		specialPasteShowOptions.setFixPosition({x: x, y: y, pageNum: curPage, w: w, h: h, slideId: sSlideId});
 	},

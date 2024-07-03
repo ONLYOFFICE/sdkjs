@@ -1566,27 +1566,32 @@ CNumberingLvl.prototype.IsNumbered = function()
  */
 CNumberingLvl.prototype.GetRelatedLvlList = function()
 {
-	var arrLvls = [];
+	let relatedLvl = [];
 	for (var nIndex = 0, nCount = this.LvlText.length; nIndex < nCount; ++nIndex)
 	{
-		if (numbering_lvltext_Num === this.LvlText[nIndex].Type)
+		if (numbering_lvltext_Num !== this.LvlText[nIndex].Type)
+			continue;
+		
+		var nLvl  = this.LvlText[nIndex].Value;
+		let insertIndex = 0;
+		for (let lvlCount = relatedLvl.length; insertIndex < lvlCount; ++insertIndex)
 		{
-			var nLvl  = this.LvlText[nIndex].Value;
-
-			if (arrLvls.length <= 0)
-				arrLvls.push(nLvl);
-
-			for (var nLvlIndex = 0, nLvlsCount = arrLvls.length; nLvlIndex < nLvlsCount; ++nLvlIndex)
-			{
-				if (arrLvls[nLvlIndex] === nLvl)
-					break;
-				else if (arrLvls[nLvlIndex] > nLvl)
-					arrLvls.splice(nLvlIndex, 0, nLvl);
-			}
+			if (relatedLvl[insertIndex] < nLvl)
+				continue;
+			
+			if (relatedLvl[insertIndex] === nLvl)
+				insertIndex = -1;
+			
+			break;
 		}
+		
+		if (insertIndex === relatedLvl.length)
+			relatedLvl.push(nLvl);
+		else if (-1 !== insertIndex)
+			relatedLvl.splice(insertIndex, 0, nLvl);
 	}
-
-	return arrLvls;
+	
+	return relatedLvl;
 };
 CNumberingLvl.prototype.SetFormat = function(nFormat)
 {

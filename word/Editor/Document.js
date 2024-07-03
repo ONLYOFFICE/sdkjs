@@ -1784,6 +1784,21 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
+let ACTION_FLAGS = {
+	RECALCULATE      : 0x0001,
+	SCROLL_TO_TARGET : 0x0002,
+	UPDATE_SELECTION : 0x0004,
+	UPDATE_INTERFACE : 0x0008,
+	UPDATE_RULERS    : 0x0010,
+	UPDATE_UNDO_REDO : 0x0020,
+	UPDATE_TRACKS    : 0x0040
+};
+
+ACTION_FLAGS.UPDATEALL = ACTION_FLAGS.UPDATE_SELECTION | ACTION_FLAGS.UPDATE_INTERFACE | ACTION_FLAGS.UPDATE_RULERS | ACTION_FLAGS.UPDATE_UNDO_REDO | ACTION_FLAGS.UPDATE_TRACKS;
+ACTION_FLAGS.UPDATEALL_RECALCULATE_NOSCROLL = ACTION_FLAGS.UPDATEALL | ACTION_FLAGS.RECALCULATE;
+
+AscWord.ACTION_FLAGS = ACTION_FLAGS;
+
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -1922,6 +1937,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		UpdateRulers    : false,
 		UpdateUndoRedo  : false,
 		UpdateStates    : false,
+		ScrollToTarget  : true,
 		Redraw          : {
 			Start : undefined,
 			End   : undefined
@@ -2556,8 +2572,9 @@ CDocument.prototype.GetColorMap = function()
  * Начинаем новое действие, связанное с изменением документа
  * @param {number} nDescription
  * @param {object} [oSelectionState=null] - начальное состояние селекта, до начала действия
+ * @param {number} [flags=null]
  */
-CDocument.prototype.StartAction = function(nDescription, oSelectionState)
+CDocument.prototype.StartAction = function(nDescription, oSelectionState, flags)
 {
 	this.sendEvent("asc_onUserActionStart");
 	
@@ -2582,9 +2599,21 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 		this.Action.UpdateRulers    = false;
 		this.Action.UpdateUndoRedo  = false;
 		this.Action.UpdateTracks    = false;
+		this.Action.ScrollToTarget  = true;
 		this.Action.Redraw.Start    = undefined;
 		this.Action.Redraw.End      = undefined;
 		this.Action.Additional      = {};
+		
+		if (undefined !== flags && null !== flags)
+		{
+			this.Action.Recalculate     = !!(flags & ACTION_FLAGS.RECALCULATE);
+			this.Action.UpdateSelection = !!(flags & ACTION_FLAGS.UPDATE_SELECTION);
+			this.Action.UpdateInterface = !!(flags & ACTION_FLAGS.UPDATE_INTERFACE);
+			this.Action.UpdateRulers    = !!(flags & ACTION_FLAGS.UPDATE_RULERS);
+			this.Action.UpdateUndoRedo  = !!(flags & ACTION_FLAGS.UPDATE_UNDO_REDO);
+			this.Action.UpdateTracks    = !!(flags & ACTION_FLAGS.UPDATE_TRACKS);
+			this.Action.ScrollToTarget  = !!(flags & ACTION_FLAGS.SCROLL_TO_TARGET);
+		}
 	}
 };
 /**
@@ -2834,7 +2863,8 @@ CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 	this.Action.UpdateUndoRedo     = false;
 	this.Action.UpdateTracks       = false;
 	this.Action.UpdatePlaceholders = false;
-	
+	this.Action.ScrollToTarget     = true;
+
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
@@ -3239,7 +3269,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.private_ClearSearchOnRecalculate();
 
     // Обновляем позицию курсора
-    this.NeedUpdateTarget = true;
+    this.NeedUpdateTarget = this.Action.Start ? this.Action.ScrollToTarget : true;
 
     // Увеличиваем номер пересчета
     this.RecalcId++;
@@ -3266,6 +3296,9 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     var RecalcData = History.Get_RecalcData(_RecalcData);
 
     History.Reset_RecalcIndex();
+	
+	if (RecalcData.ResetCache)
+		this.Reset_RecalculateCache();
 
     this.DrawingObjects.recalculate(RecalcData.Drawings);
 
@@ -8284,15 +8317,11 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 					arrParagraphs[0].AddTrackMoveMark(true, true, this.TrackMoveId);
 				}
 			}
-
-            // Если надо удаляем выделенную часть (пересчет отключаем на время удаления)
-            if (true !== bCopy)
-            {
-                this.TurnOff_Recalculate();
-                this.TurnOff_InterfaceEvents();
-                this.Remove(1, false, false, true);
-                this.TurnOn_Recalculate(false);
-                this.TurnOn_InterfaceEvents(false);
+			
+			if (!bCopy)
+			{
+				// TODO: Проверить, зачем тут посылается isOnAddText=true. Когда выделены ячейки таблицы точно нужно посылать false
+				this.Remove(1, false, false, !this.IsTableCellSelection());
 
                 if (false === Para.IsUseInDocument())
                 {
@@ -10338,7 +10367,11 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			{
 				this.CurPos.SetCC(oCC);
 				oCC.SkipSpecialContentControlLock(true);
-				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode() && this.CheckOFormUserMaster(oCC)))
+				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, {
+					Type      : AscCommon.changestype_2_Element_and_Type,
+					Element   : oCC,
+					CheckType : AscCommon.changestype_Paragraph_Content
+				}, true, this.IsFillingFormMode() && this.CheckOFormUserMaster(oCC)))
 				{
 					this.RemoveTextSelection();
 					this.StartAction();
@@ -12895,12 +12928,16 @@ CDocument.prototype.Refresh_RecalcData = function(oData)
 		case AscDFH.historyitem_Document_MathSettings:
 		case AscDFH.historyitem_Document_Settings_GutterAtTop:
 		case AscDFH.historyitem_Document_Settings_MirrorMargins:
+		{
+			nChangePos = 0;
+			break;
+		}
 		case AscDFH.historyitem_Document_Settings_AutoHyphenation:
 		case AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit:
 		case AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps:
 		case AscDFH.historyitem_Document_Settings_HyphenationZone:
 		{
-			nChangePos = 0;
+			this.History.RecalcData_Add({Type : AscDFH.historyitem_recalctype_FromStart});
 			break;
 		}
 	}
@@ -16596,10 +16633,8 @@ CDocument.prototype.setAutoHyphenation = function(isAuto)
 	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
 		return
 
-	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation);
+	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE_NOSCROLL);
 	this.Settings.setAutoHyphenation(isAuto);
-	this.Recalculate();
-	this.UpdateInterface();
 	this.FinalizeAction();
 };
 CDocument.prototype.setConsecutiveHyphenLimit = function(limit)
@@ -18721,7 +18756,8 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 			var ItemReviewType = Item.GetReviewType();
 			// Создаем новый параграф
 			var NewParagraph   = new AscWord.Paragraph();
-
+			
+			let firstPara, secondPara;
 			if (Item.IsCursorAtBegin())
 			{
 				// Продолжаем (в плане настроек) новый параграф
@@ -18733,6 +18769,9 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				var nContentPos = this.CurPos.ContentPos;
 				this.AddToContent(nContentPos, NewParagraph);
 				this.CurPos.ContentPos = nContentPos + 1;
+				
+				firstPara  = NewParagraph;
+				secondPara = Item;
 			}
 			else
 			{
@@ -18793,20 +18832,23 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				var nContentPos = this.CurPos.ContentPos + 1;
 				this.AddToContent(nContentPos, NewParagraph);
 				this.CurPos.ContentPos = nContentPos;
+				
+				firstPara  = Item;
+				secondPara = NewParagraph;
 			}
-
-			if (true === this.IsTrackRevisions())
+			
+			if (this.IsTrackRevisions())
 			{
-				Item.RemovePrChange();
-				NewParagraph.SetReviewType(ItemReviewType);
-				Item.SetReviewType(reviewtype_Add);
+				firstPara.RemovePrChange();
+				firstPara.SetReviewType(reviewtype_Add);
+				secondPara.SetReviewType(ItemReviewType);
 			}
 			else if (reviewtype_Common !== ItemReviewType)
 			{
-				NewParagraph.SetReviewType(ItemReviewType);
-				Item.SetReviewType(reviewtype_Common);
+				firstPara.SetReviewType(reviewtype_Common);
+				secondPara.SetReviewType(ItemReviewType);
 			}
-            NewParagraph.CheckSignatureLinesOnAdd();
+			NewParagraph.CheckSignatureLinesOnAdd();
 		}
 
 		if (isCheckAutoCorrect)
@@ -21610,11 +21652,12 @@ CDocument.prototype.controller_UpdateSelectionState = function()
 		{
 			if (false === this.IsSelectionEmpty() || !this.RemoveEmptySelection)
 			{
-				if (true !== this.Selection.Start)
+				if (true !== this.Selection.Start && (!this.Action.UpdateStates || this.Action.ScrollToTarget))
 				{
 					this.private_CheckCurPage();
 					this.RecalculateCurPos();
 				}
+				
 				this.private_UpdateTracks(true, false);
 
 				this.DrawingDocument.TargetEnd();
@@ -22308,39 +22351,8 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	
 	// TODO: По хорошему надо сделать метод у CStdBase и перенести реализации в соответствующие классы
 	this.RemoveSelection();
-	if (oContentControl.IsBlockLevel())
-	{
-		if (!oContentControl.Parent)
-			return;
-		
-		var oDocContent = oContentControl.Parent;
-		oDocContent.Update_ContentIndexing();
-		var nIndex = oContentControl.GetIndex();
-
-		var nCurPos = oDocContent.CurPos.ContentPos;
-		oDocContent.Remove_FromContent(nIndex, 1);
-
-		if (nIndex === nCurPos)
-		{
-			if (nIndex >= oDocContent.GetElementsCount())
-			{
-				oDocContent.MoveCursorToEndPos();
-			}
-			else
-			{
-				oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nIndex));;
-				oDocContent.Content[oDocContent.CurPos.ContentPos].MoveCursorToStartPos();
-			}
-		}
-		else if (nIndex < nCurPos)
-		{
-			oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nCurPos - 1));
-		}
-	}
-	else if (oContentControl.IsInlineLevel())
-	{
+	if (oContentControl.IsBlockLevel() || oContentControl.IsInlineLevel())
 		oContentControl.RemoveThisFromParent(true);
-	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
@@ -22633,38 +22645,48 @@ CDocument.prototype.AddField = function(nType, oPr)
 
 	return false;
 };
-CDocument.prototype.AddFieldWithInstruction = function(sInstruction, textPr)
+CDocument.prototype.AddFieldWithInstruction = function(instructionLine, textPr)
 {
 	var oParagraph = this.GetCurrentParagraph(false, false, {ReplacePlaceHolder : true});
 	if (!oParagraph)
 		return null;
-
-    var oBeginChar    = new ParaFieldChar(fldchartype_Begin, this),
-        oSeparateChar = new ParaFieldChar(fldchartype_Separate, this),
-        oEndChar      = new ParaFieldChar(fldchartype_End, this);
-
-    var oRun = new ParaRun();
-    oRun.AddToContent(-1, oBeginChar);
-    oRun.AddInstrText(sInstruction);
-    oRun.AddToContent(-1, oSeparateChar);
-    oRun.AddToContent(-1, oEndChar);
-    oParagraph.Add(oRun);
-
-    oBeginChar.SetRun(oRun);
-    oSeparateChar.SetRun(oRun);
-    oEndChar.SetRun(oRun);
-
-    var oComplexField = oBeginChar.GetComplexField();
-    oComplexField.SetBeginChar(oBeginChar);
-    oComplexField.SetInstructionLine(sInstruction);
-    oComplexField.SetSeparateChar(oSeparateChar);
-    oComplexField.SetEndChar(oEndChar);
-    oComplexField.Update(false);
+	
+	return this.addFieldWithInstructionToParagraph(oParagraph, instructionLine, textPr);
+};
+CDocument.prototype.addFieldWithInstructionToParagraph = function(paragraph, instructionLine, textPr, forceUpdate)
+{
+	let beginChar    = new ParaFieldChar(fldchartype_Begin, this);
+	let separateChar = new ParaFieldChar(fldchartype_Separate, this);
+	let endChar      = new ParaFieldChar(fldchartype_End, this);
+	
+	var run = new AscWord.Run();
+	run.AddToContent(-1, beginChar);
+	run.AddInstrText(instructionLine);
+	run.AddToContent(-1, separateChar);
+	run.AddToContent(-1, endChar);
+	paragraph.Add(run);
+	
+	beginChar.SetRun(run);
+	separateChar.SetRun(run);
+	endChar.SetRun(run);
+	
+	let complexField = beginChar.GetComplexField();
+	complexField.SetBeginChar(beginChar);
+	complexField.SetInstructionLine(instructionLine);
+	complexField.SetSeparateChar(separateChar);
+	complexField.SetEndChar(endChar);
+	if (!complexField.Update(false) && forceUpdate)
+	{
+		// TODO: Добавил эту ветку, потому что у нас после InsertContent пока не обновляются поля
+		let value = complexField.CalculateValue();
+		let pos = run.GetElementPosition(endChar);
+		run.AddText(value, pos);
+	}
 	
 	if (textPr)
-		oRun.SetPr(textPr);
+		run.SetPr(textPr);
 	
-    return oComplexField;
+	return complexField;
 };
 CDocument.prototype.AddDateTime = function(oPr)
 {
@@ -22765,65 +22787,7 @@ CDocument.prototype.AddRefToBookmark = function(sBookmarkName, nType, bHyperlink
 };
 CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)
 {
-	if(!(typeof sBookmarkName === "string" && sBookmarkName.length > 0))
-	{
-		return;
-	}
-	var sInstr = "";
-	var sSuffix = "";
-	if(bHyperlink)
-	{
-		sSuffix += " \\h";
-	}
-	if(bAboveBelow && nType !== Asc.c_oAscDocumentRefenceToType.AboveBelow)
-	{
-		sSuffix += " \\p";
-	}
-	if(typeof sSeparator === "string" && sSeparator.length > 0)
-	{
-		sSuffix += " \\d " + sSeparator;
-	}
-	switch (nType)
-	{
-		case Asc.c_oAscDocumentRefenceToType.PageNum:
-		{
-			sInstr = " PAGEREF " + sBookmarkName;
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.Text:
-		case Asc.c_oAscDocumentRefenceToType.OnlyCaptionText:
-		case Asc.c_oAscDocumentRefenceToType.OnlyLabelAndNumber:
-		{
-			sInstr = " REF " + sBookmarkName + " ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNum:
-		{
-			sInstr = " REF " + sBookmarkName + " \\r ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNumNoContext:
-		{
-			sInstr = " REF " + sBookmarkName + " \\n ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.ParaNumFullContex:
-		{
-			sInstr = " REF " + sBookmarkName + " \\w ";
-			sInstr += sSuffix;
-			break;
-		}
-		case Asc.c_oAscDocumentRefenceToType.AboveBelow:
-		{
-			sInstr = " REF " + sBookmarkName + " \\p ";
-            sInstr += sSuffix;
-			break;
-		}
-	}
+	let sInstr = AscWord.getRefInstruction(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
 	var oComplexField = this.AddFieldWithInstruction(sInstr);
     if(nType === Asc.c_oAscDocumentRefenceToType.PageNum)
     {
@@ -26520,7 +26484,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							NewContent.content.push(oNewParagraph);
 							break;
 						default:
-							oText = new AscWord.CRunText(oProps.separator);
+							oText = AscWord.codePointToRunElement(oProps.separator);
 							break;
 					}
 					if (oText)

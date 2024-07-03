@@ -181,11 +181,11 @@
 	};
 
 	/**
-	 * Returns local custom functions library.
+	 * Returns a library of local custom functions.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias GetCustomFunctions
-	 * @return {string} The custom functions library as json.
+	 * @return {string} A library of custom functions in JSON format.
 	 * @since 8.1.0
 	 */
 	Api.prototype["pluginMethod_GetCustomFunctions"] = function()
@@ -203,11 +203,11 @@
 	};
 
 	/**
-	 * Update local custom functions library
+	 * Updates a library of local custom functions.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias SetCustomFunctions
-	 * @param {string} jsonString - The custom functions library.
+	 * @param {string} jsonString - A library of custom functions in JSON format.
 	 * @since 8.1.0
 	 */
 	Api.prototype["pluginMethod_SetCustomFunctions"] = function(jsonString)

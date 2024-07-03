@@ -194,9 +194,8 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 
 	var isCopyReviewPr = oPr.CopyReviewPr;
 
-    var bMath = this.Type == para_Math_Run ? true : false;
-
-    var NewRun = new ParaRun(this.Paragraph, bMath);
+	let isMathRun = this.IsMathRun();
+	let NewRun = new AscWord.Run(undefined, isMathRun);
 
 	NewRun.Set_Pr(this.Pr.Copy(isCopyReviewPr, oPr));
 
@@ -218,9 +217,9 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 	{
 		NewRun.SetReviewType(reviewtype_Add);
 	}
-
-    if(true === bMath)
-        NewRun.Set_MathPr(this.MathPrp.Copy());
+	
+	if (isMathRun)
+		NewRun.Set_MathPr(this.MathPrp.Copy());
 
 
 
@@ -528,65 +527,48 @@ ParaRun.prototype.GetText = function(oText)
 	this.Get_Text(oText);
 	return oText.Text;
 };
-
-ParaRun.prototype.GetTextOfElement = function(isLaTeX, isSelected)
+/**
+ *
+ * @param {MathTextAndStyles | boolean} oMathText
+ * @param {boolean} isSelectedText
+ * @constructor
+ */
+ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 {
-	let str = "";
-	let strCurrentStyleGroup = "";
-	let strCurrentTemp = "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	
-	let startPos = isSelected ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0;
-	let endPos   = isSelected ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length;
+	let isLatex = oMathText.IsLaTeX();
+	let isOperator = false;
 
-	for (let i = startPos; i < endPos; i++)
+	let nStartPos = (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
+	let nEndPos   = (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
+
+	for (let i = nStartPos; i < nEndPos; i++)
 	{
-		if (this.Content[i])
+		let oCurrentElement = this.Content[i];
+
+		if (this.Content.length === 1 && oCurrentElement.value === 11034)
+			return oMathText;
+
+		// for now
+		// todo check what's wrong
+		if (oCurrentElement instanceof CMathAmp && !oCurrentElement.Parent)
 		{
-			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
-
-			if (!isLaTeX)
-			{
-				str += strTemp;
-				continue;
-			}
-			let arrCurrentToken = window.AscMath.GetLaTeXFont[strTemp];
-
-			if (!arrCurrentToken)
-			{
-				let strSymbol = AscMath.SymbolsToLaTeX[strTemp];
-				if (strSymbol)
-					strTemp = strSymbol + " ";
-
-				if (strCurrentStyleGroup)
-				{
-					str += strCurrentStyleGroup + "{" + strCurrentTemp + "}";
-					strCurrentStyleGroup = "";
-					strCurrentTemp = "";
-				}
-				str += strTemp;
-				continue;
-			}
-
-			let arrClassToken = arrCurrentToken[0];
-			let strNamesOfClassToken = window.AscMath.GetNamesTypeFontLaTeX(arrClassToken)[0];
-			let strDefaultLetter = arrCurrentToken[1];
-
-			if (strCurrentStyleGroup === "")
-			{
-				strCurrentStyleGroup = strNamesOfClassToken;
-				strCurrentTemp += strDefaultLetter;
-			}
-			else
-			{
-				strCurrentTemp += strDefaultLetter; 
-			}
+			oCurrentElement.Parent = this;
 		}
+
+		let strCurrentElement = oCurrentElement.GetTextOfElement(isLatex).GetText();
+
+		if (AscMath.MathLiterals.operator.SearchU(strCurrentElement) || AscMath.MathLiterals.horizontal.SearchU(strCurrentElement))
+			isOperator = true;
+
+		if (AscMath.MathLiterals.number.GetByOneRule(strCurrentElement))
+			oMathText.SetIsNumbers(true);
+
+		oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
 	}
 
-	if (strCurrentStyleGroup)
-		return str + strCurrentStyleGroup + "{" + strCurrentTemp + "}";
-	else
-		return str;
+	return oMathText;
 };
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
 {
@@ -620,13 +602,13 @@ ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTe
 			}
 		}
 
-		if (AscMath.MathLiterals.lBrackets.IsIncludes(strContent))
+		if (AscMath.MathLiterals.lBrackets.SearchU(strContent))
 			intCount = -1;
-		else if (AscMath.MathLiterals.rBrackets.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.rBrackets.SearchU(strContent))
 			intCount = 1;
-		else if (AscMath.MathLiterals.lrBrackets.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.lrBrackets.SearchU(strContent))
 			intCount = 0;
-		else if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+		else if (AscMath.MathLiterals.operator.SearchU(strContent))
 			intCount = 2;
 
 		if (intCount === null && isOpen)
@@ -654,7 +636,7 @@ ParaRun.prototype.MathAutocorrection_GetOperatorInfo = function ()
 	{
 		let strContent = String.fromCharCode(this.Content[intCounter].value);
 
-		if (AscMath.MathLiterals.operators.IsIncludes(strContent))
+		if (AscMath.MathLiterals.operator.SearchU(strContent))
 			arrOperatorContent.push(intCounter);
 	}
 
@@ -683,7 +665,7 @@ ParaRun.prototype.MathAutocorrection_IsLastElement = function(type)
 
 	let oLastElement = this.Content[this.Content.length - 1];
 	let strLastElement = String.fromCharCode(oLastElement.value);
-	return type.IsIncludes(strLastElement);
+	return type.SearchU(strLastElement);
 }
 
 ParaRun.prototype.MathAutoCorrection_DeleteLastSpace = function()
@@ -771,7 +753,7 @@ ParaRun.prototype.IsStartFromNewLine = function()
 ParaRun.prototype.Add = function(oItem)
 {
 	var oRun = this.CheckRunBeforeAdd(oItem);
-	if (!oRun)
+	if (!oRun || oItem instanceof CMathText)
 		oRun = this;
 
 	oRun.private_AddItemToRun(oRun.State.ContentPos, oItem);
@@ -7538,18 +7520,19 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 
 	// Получим настройки текста, для данного параграфа
 	var TextPr = this.Paragraph.Get_CompiledPr2(false).TextPr.Copy();
+	
+	let paraParent = this.Paragraph.GetParent();
+	let Styles     = paraParent && paraParent.Get_Styles() ? paraParent.Get_Styles() : null;
 
 	// Мержим настройки стиля.
 	// Одно исключение, когда задан стиль Hyperlink внутри класса Hyperlink внутри поля TOC, то стиль
 	// мержить не надо и, более того, цвет и подчеркивание из прямых настроек тоже не используется.
-	if (undefined !== this.Pr.RStyle)
+	if (Styles
+		&& this.Pr.RStyle
+		&& (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC()))
 	{
-		if (!this.IsStyleHyperlink() || !this.IsInHyperlinkInTOC())
-		{
-			var Styles      = this.Paragraph.Parent.Get_Styles();
-			var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
-			TextPr.Merge(StyleTextPr);
-		}
+		var StyleTextPr = Styles.Get_Pr(this.Pr.RStyle, styletype_Character).TextPr;
+		TextPr.Merge(StyleTextPr);
 	}
 
 	if (this.Type === para_Math_Run)
@@ -7564,10 +7547,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 			return TextPr;
 		}
 
-		if (!this.IsNormalText()) // math text
+		if (!this.IsNormalText() && Styles) // math text
 		{
 			// выставим дефолтные текстовые настройки  для математических Run
-			var Styles  = this.Paragraph.Parent.Get_Styles();
 			var StyleId = this.Paragraph.Style_Get();
 			// скопируем текстовые настройки прежде чем подменим на пустые
 
@@ -9318,7 +9300,7 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentMathText = this.Content[i];
-		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operators.IsIncludes(String.fromCharCode(oCurrentMathText.value));
+		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operator.SearchU(String.fromCharCode(oCurrentMathText.value));
 		if (oCurrentMathText.IsBreakOperator() || isNamesOFLiteralsOperator)
 			return true;
 	}

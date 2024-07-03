@@ -302,6 +302,13 @@ CMathBase.prototype.SetPlaceholder = function()
 		}
 	}
 };
+CMathBase.prototype.CheckRunContent = function(fCheck)
+{
+    for(var i = 0; i < this.Content.length; ++i)
+    {
+        this.Content[i].CheckRunContent(fCheck);
+    }
+};
 CMathBase.prototype.addMCToContent = function(elements)
 {
     if(elements.length == this.nRow*this.nCol)
@@ -2803,9 +2810,10 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     }
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
-CMathBase.prototype.GetTextOfElement = function()
+CMathBase.prototype.GetTextOfElement = function(oMathText)
 {
-	return "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	return oMathText;
 };
 
 CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
@@ -3237,6 +3245,150 @@ CMathMenuBase.prototype.Set_DeleteForcedBreak = function()
     this.CanDeleteForcedBreak = true;
 };
 
+
+/**
+ * ctrlPr - Control Properties
+ * @constructor
+ */
+function CMathCtrlPr(oParagraph)
+{
+	this.rPr = new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
+	this.del = new CTextPr();
+	this.ins = new CTextPr();
+}
+
+/**
+ * Set Run Properties
+ * rPr set properties of control characters that cannot be selected.
+ * Examples of control characters are n-ary operators (excluding their limits and bases),
+ * fraction bars (excluding the numerator and denominator), and grouping characters (excluding the base).
+ * @param rPr {CTextPr}
+ * @constructor
+ */
+CMathCtrlPr.prototype.SetRPr = function (rPr)
+{
+	if (!rPr)
+		return;
+	this.rPr = rPr;
+}
+/**
+ * Get current rPr
+ * @return {CTextPr}
+ * @constructor
+ */
+CMathCtrlPr.prototype.GetRPr = function ()
+{
+	return this.rPr;
+}
+/**
+ * Deleted Math Control Character
+ *
+ * This element specifies that the Office Open XML Math control character which contains this element was
+ * deleted and tracked as a revision
+ *
+ * @param delPr {CTextPr}
+ * @constructor
+ */
+CMathCtrlPr.prototype.SetDel = function (delPr)
+{
+	this.del = delPr
+}
+/**
+ * Inserted Math Control Character
+ *
+ * This element specifies that the Office Open XML Math control character which contains this element was
+ * inserted and tracked as a revision.
+ * @param insPr {CTextPr}
+ * @constructor
+ */
+CMathCtrlPr.prototype.SetIns = function (insPr)
+{
+	this.ins = insPr;
+}
+/**
+ *
+ * @param Obj {Object}
+ * @param Obj.rPr {CTextPr | undefined}
+ * @param Obj.delPr {CTextPr | undefined}
+ * @param Obj.insPr {CTextPr | undefined}
+ * @constructor
+ */
+CMathCtrlPr.prototype.SetFromObject = function (Obj)
+{
+	if (Obj.rPr !== undefined)
+	{
+		this.rPr = Obj.rPr;
+	}
+
+	if (Obj.delPr !== undefined)
+	{
+		this.delPr = Obj.delPr;
+	}
+
+	if (Obj.insPr !== undefined)
+	{
+		this.insPr = Obj.insPr;
+	}
+}
+
+CMathCtrlPr.prototype.Write_ToBinary = function (Writer)
+{
+	if (this.rPr)
+	{
+		Writer.WriteBool(true);
+		this.rPr.WriteToBinary(Writer);
+	}
+	else
+	{
+		Writer.WriteBool(false);
+	}
+
+	if (this.del)
+	{
+		Writer.WriteBool(true);
+		this.del.WriteToBinary(Writer);
+	}
+	else
+	{
+		Writer.WriteBool(false);
+	}
+
+	if (this.ins)
+	{
+		Writer.WriteBool(true);
+		this.ins.WriteToBinary(Writer);
+	}
+	else
+	{
+		Writer.WriteBool(false);
+	}
+}
+
+CMathCtrlPr.prototype.Read_FromBinary = function (Reader)
+{
+	this.rPr = undefined;
+	if (Reader.GetBool())
+	{
+		this.rPr = new CTextPr();
+		this.rPr.ReadFromBinary(Reader);
+	}
+
+	this.del = undefined;
+	if (Reader.GetBool())
+	{
+		this.del = new CTextPr();
+		this.del.ReadFromBinary(Reader);
+	}
+
+	this.ins = undefined;
+	if (Reader.GetBool())
+	{
+		this.ins = new CTextPr();
+		this.ins.ReadFromBinary(Reader);
+	}
+};
+
+window["CMathCtrlPr"]                                  = CMathCtrlPr;
 window["CMathMenuBase"]                                = CMathMenuBase;
 CMathMenuBase.prototype["get_Type"]                    = CMathMenuBase.prototype.get_Type;
 CMathMenuBase.prototype["remove_AccentCharacter"]      = CMathMenuBase.prototype.remove_AccentCharacter;
