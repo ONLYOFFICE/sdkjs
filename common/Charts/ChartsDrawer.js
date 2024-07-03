@@ -1621,7 +1621,7 @@ CChartsDrawer.prototype =
 								// if xVal is given
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
-								const pointsLength = catPts ? Math.min(valPts.length, catPts.length) : valPts.length;
+								const pointsLength = catPts ? catPts.length : valPts.length;
 								let offset = 0;
 								for (let k = 0; k + offset < pointsLength; k++) {
 									let catVal = null
