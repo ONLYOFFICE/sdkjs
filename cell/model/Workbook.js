@@ -5388,6 +5388,8 @@
 		this.rowsData = new SheetMemory(AscCommonExcel.g_nRowStructSize, gc_nMaxRow0);
 		this.cellsByCol = [];
 		this.cellsByColRowsCount = 0;//maximum rows count in cellsByCol
+		this.cellsXfByCol = [];
+		this.cellsXfByColRowsCount = 0;//maximum rows count in cellsByCol
 		this.aCols = [];// 0 based
 		this.hiddenManager = new HiddenManager(this);
 		this.Drawings = [];
@@ -5552,6 +5554,24 @@
 	};
 	Worksheet.prototype.getColDataLength = function() {
 		return this.cellsByCol.length;
+	};
+	/**
+	 * @param {number}index
+	 * @returns {AscCommonExcel.CAttrArray}
+	 */
+	Worksheet.prototype.getColXfData = function(index) {
+		var attrArray = this.cellsXfByCol[index];
+		if(!attrArray){
+			attrArray = new AscCommonExcel.CAttrArray();
+			this.cellsXfByCol[index] = attrArray;
+		}
+		return attrArray;
+	};
+	Worksheet.prototype.getColXfNoEmpty = function(index) {
+		return this.cellsXfByCol[index];
+	};
+	Worksheet.prototype.getColXfLength = function() {
+		return this.cellsXfByCol.length;
 	};
 	//returns minimal range containing all no empty cells
 	Worksheet.prototype.getMinimalRange = function() {
@@ -13462,7 +13482,6 @@
 			var wb = this.ws.workbook;
 			var sheetMemory = this.ws.getColData(this.nCol);
 			sheetMemory.checkIndex(this.nRow);
-			var xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			var numberSave = 0;
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() :  0;
 			var flagValue = 0;
@@ -13479,11 +13498,15 @@
 				sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
 			}
 			sheetMemory.setUint8(this.nRow, g_nCellOffsetFlag, this._toFlags(flagValue));
-			sheetMemory.setUint32(this.nRow, g_nCellOffsetXf, xfSave);
+			// sheetMemory.setUint32(this.nRow, g_nCellOffsetXf, xfSave);
 			sheetMemory.setUint32(this.nRow, g_nCellOffsetFormula, formulaSave);
+
+			let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
+			let attrArray = this.ws.getColXfData(this.nCol);
+			attrArray.set(this.nRow, xfSave, true);
 		}
 	};
-	Cell.prototype.loadContent = function(row, col, opt_sheetMemory) {
+	Cell.prototype.loadContent = function(row, col, opt_sheetMemory, opt_xfArray) {
 		var res = false;
 		this.clear();
 		this.nRow = row;
@@ -13492,10 +13515,11 @@
 		if (sheetMemory) {
 			if (sheetMemory.hasIndex(this.nRow)) {
 				var flags = sheetMemory.getUint8(this.nRow, g_nCellOffsetFlag);
-				if (0 != (g_nCellFlag_init & flags)) {
+				if (0 !== (g_nCellFlag_init & flags)) {
 					var wb = this.ws.workbook;
 					var flagValue = this._fromFlags(flags);
-					this.xfs = g_StyleCache.getXf(sheetMemory.getUint32(this.nRow, g_nCellOffsetXf));
+					// this.xfs = g_StyleCache.getXf(sheetMemory.getUint32(this.nRow, g_nCellOffsetXf));
+
 					this.formulaParsed = wb.workbookFormulas.get(sheetMemory.getUint32(this.nRow, g_nCellOffsetFormula));
 					if (1 === flagValue) {
 						this.number = sheetMemory.getFloat64(this.nRow, g_nCellOffsetValue);
@@ -13508,6 +13532,13 @@
 					}
 					res = true;
 				}
+			}
+		}
+		let attrArray = opt_xfArray ? opt_xfArray : this.ws.getColXfNoEmpty(this.nCol);
+		if (attrArray) {
+			let xfSave = attrArray.get(this.nRow);
+			if (null !== xfSave) {
+				this.xfs = g_StyleCache.getXf(xfSave);
 			}
 		}
 		return res;

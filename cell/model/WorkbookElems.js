@@ -18363,6 +18363,163 @@ function RangeDataManagerElem(bbox, data)
 		return this.index;
 	};
 
+	function CAttrEntry() {
+		this.data = null;
+		this.endRow = 0;
+	}
+	CAttrEntry.prototype.set = function(data, endRow) {
+		this.data = data;
+		this.endRow = endRow;
+	}
+	CAttrEntry.prototype.isEqual = function(entry) {
+		return this.data === entry.data && this.endRow === entry.endRow;
+	}
+	function CAttrArray(def) {
+		this.data = null;
+		let elem = new CAttrEntry();
+		elem.set(def, AscCommon.gc_nMaxRow0);
+		this.reset(elem);
+	}
+	CAttrArray.prototype.set = function(index, entry, opt_append) {
+		this.setArea(index, index, entry, opt_append);
+	}
+	CAttrArray.prototype.setArea = function(from, to, data, opt_append) {
+		if (from < 0 || to > AscCommon.gc_nMaxRow0) {
+			return;
+		}
+		if (from === 0 && to === AscCommon.gc_nMaxRow0) {
+			this.reset(data);
+			return;
+		}
+
+		let fromIndex = 0;
+		if (from > 0) {
+			if (opt_append) {
+				fromIndex = this.data.length - 1;
+			} else {
+				fromIndex = this.searchIndex(from);
+			}
+		}
+		let fromElem = this.data[fromIndex];
+		let preFromElem = fromIndex > 0 ? this.data[fromIndex - 1] : null;
+
+		let insertIndex = -1;
+		let combine = false;
+		let split = false;
+		if (from > 0) {
+			//todo comparison and copy
+			if (fromElem.data !== data) {
+				if (!preFromElem || preFromElem.endRow < from - 1) {
+					if (fromElem.endRow > to) {
+						split = true;
+					}
+					fromIndex++;
+					fromElem = this.data[fromIndex];
+					preFromElem = this.data[fromIndex - 1];
+					insertIndex = fromIndex;
+				} else if (preFromElem.endRow === from - 1) {
+					insertIndex = -1;
+				}
+			}
+			if (preFromElem && preFromElem.data === data) {
+				// combine
+				preFromElem.endRow = to;
+				insertIndex = -1;
+				combine = true;
+			}
+		} else {
+			insertIndex = 0;
+		}
+
+		let toIndex = fromIndex;
+		while (toIndex < this.data.length && this.data[toIndex].endRow <= to) {
+			toIndex++;
+		}
+		if ( !split ) {
+			// toIndex = this.searchIndex(to, fromIndex);
+			// if (this.data[toIndex].endRow <= to) {
+			// 	toIndex++;
+			// }
+
+			let toElem = toIndex < this.data.length ? this.data[toIndex] : null;
+			if (toElem && toElem.data === data) {
+				// combine
+				if (preFromElem) {
+					if (preFromElem.data === data) {
+						preFromElem.endRow = this.data[toIndex].endRow;
+					} else if(fromIndex === insertIndex){
+						// shrink
+						preFromElem.endRow = from - 1;
+					}
+				}
+				insertIndex = -1;
+				combine = true;
+			} else if(preFromElem && fromIndex === insertIndex) {
+				// shrink
+				preFromElem.endRow = from - 1;
+			}
+		}
+		if (fromIndex < toIndex) {
+			if (!combine) {
+				fromElem.endRow = to;
+				fromElem.data = data;
+				fromIndex++;
+				insertIndex = -1;
+			}
+			if (fromIndex < toIndex) {
+				this.data.splice(fromIndex, toIndex - fromIndex);
+			}
+		}
+		if (insertIndex >= 0) {
+			if (insertIndex <= this.data.length) {
+				let newElem = new CAttrEntry()
+				newElem.set(data, to);
+				if (!split) {
+					this.data.splice(insertIndex, 0, newElem);
+				} else {
+					//todo copy
+					let newElemSplit = new CAttrEntry()
+					newElemSplit.set(preFromElem.data, preFromElem.endRow);
+					this.data.splice(insertIndex, 0, newElem, newElemSplit);
+				}
+				if (preFromElem) {
+					preFromElem.endRow = from - 1;
+				}
+			}
+		}
+	}
+	CAttrArray.prototype.get = function(row, opt_startIndex) {
+		return this.search(row, opt_startIndex);
+	}
+	CAttrArray.prototype.reset = function(entry) {
+		this.data = [entry];
+	}
+	CAttrArray.prototype.searchIndex = function(row, opt_startIndex) {
+		//function to implement Binary Search on this.data
+		if (this.data.length === 0) {
+			return -1;
+		}
+		let hi = this.data.length - 1;
+		let lo = opt_startIndex ? opt_startIndex : 0;
+		while (lo <= hi) {
+			let mid = Math.floor((lo + hi) / 2);
+			if (this.data[mid].endRow < row) {
+				lo = mid + 1;
+			} else if (mid  > 0 && this.data[mid - 1].endRow >= row) {
+				hi = mid - 1;
+			} else {
+				return mid;
+			}
+		}
+	}
+	CAttrArray.prototype.search = function(row, opt_startIndex) {
+		let index = this.searchIndex(row, opt_startIndex);
+		if (index >= 0) {
+			return this.data[index].data;
+		}
+		return null;
+	}
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -18932,5 +19089,6 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getIndex"] = prot.asc_getIndex;
 
 
+	window["AscCommonExcel"].CAttrArray = CAttrArray;
 
 })(window);
