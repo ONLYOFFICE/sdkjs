@@ -11631,7 +11631,6 @@ function(window, undefined) {
 		for (let i = 0; i < aLabels.length; i++) {
 			//check if there multiple lines exist
 			//if so, take the height of first line
-			if (aLabels[i]) {
 				const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
 				const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
 				const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
@@ -11644,7 +11643,6 @@ function(window, undefined) {
 				if (AscFormat.isRealNumber(labelSize.h)) {
 					return labelSize.h;
 				}
-			}
 		}
 		return 0;
 	};
