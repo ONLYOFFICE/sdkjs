@@ -1603,6 +1603,7 @@ CChartsDrawer.prototype =
 		// add Trendline coordinates and precalculate all the necessary results
 		if (chartSpace && chartSpace.chart && chartSpace.chart.plotArea && chartSpace.chart.plotArea.charts) {
 			const charts = chartSpace.chart.plotArea.charts;
+			const dispBlanksAs = chartSpace.chart.dispBlanksAs;
 			for (let i = 0; i < charts.length; i++) {
 				if (charts[i].series) {
 					const subType = this.getChartGrouping(charts[i]);
@@ -1621,18 +1622,41 @@ CChartsDrawer.prototype =
 								// if xVal is given
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
-								const pointsLength = catPts ? catPts.length : valPts.length;
-								let offset = 0;
-								for (let k = 0; k + offset < pointsLength; k++) {
-									let catVal = null
-									if (catPts[k + offset].idx === valPts[k].idx) {
-										catVal = catPts ? catPts[k + offset].val : valPts[k].idx + 1;
-									}else {
-										offset += 1;
-										k -= 1;
-										continue;
+
+								// obtain reference of targetPts either catpts or valpts;
+								const targetPts = catPts ? catPts : valPts;
+								let valIterator = 0;
+								let catIterator = 0;
+
+								const decideCatValue = function (index) {
+									++catIterator;
+									return catPts ? targetPts[index].val : targetPts[index].idx + 1;
+								}
+
+								const decideValValue = function () {
+									return valPts[valIterator++].val
+								}
+
+								if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO) {
+									const ptCount = catNumCache ? catNumCache.ptCount : valNumCache.ptCount;
+									for (let k = 0; k < ptCount; k++) {
+										const statement1 = catIterator < targetPts.length;
+										const statement2 = valIterator < valPts.length;
+										const catVal = statement1 && k === targetPts[catIterator].idx ? decideCatValue(catIterator) : 0;
+										const valVal = statement2 && k === valPts[valIterator].idx ? decideValValue() : 0;
+										this.trendline.addCoordinate(catVal, valVal, charts[i].Id, seria.Id);
 									}
-									this.trendline.addCoordinate(catVal, valPts[k].val , charts[i].Id, seria.Id);
+								} else {
+									for (let k = 0; k < targetPts.length, valIterator < valPts.length; k++) {
+										if ( targetPts[k].idx === valPts[valIterator].idx) {
+											const catVal = decideCatValue(k);
+											const valVal = decideValValue();
+											this.trendline.addCoordinate(catVal, valVal, charts[i].Id, seria.Id);
+										} else if (targetPts[k].idx > valPts[valIterator].idx) {
+											valIterator++;
+											k--;
+										}
+									}
 								}
 							}
 						}
