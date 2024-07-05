@@ -12830,10 +12830,10 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (TextPr.Shd)
 		this.Shd = TextPr.Shd.Copy();
 
-	if (undefined !== TextPr.Vanish)
+	if (undefined !== TextPr.Vanish && null !== TextPr.Vanish)
 		this.Vanish = TextPr.Vanish;
 
-	if (undefined !== TextPr.Ligatures)
+	if (undefined !== TextPr.Ligatures && null !== TextPr.Ligatures)
 		this.Ligatures = TextPr.Ligatures;
 
 	if (TextPr.TextOutline)
