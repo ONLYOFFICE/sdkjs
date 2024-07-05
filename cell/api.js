@@ -5309,7 +5309,9 @@ var editor;
         return;
       }
       AscCommon.sendImgUrls(this, [sImageUrl], function (data) {
-
+        // TODO: remove this code!!!
+        if (window["IS_NATIVE_EDITOR"] && Asc.editor.isLocalDocument && data.length === 0)
+          data[0] = {url:sImageUrl,path:sImageUrl};
         if (data && data[0] && data[0].url !== "error") {
           fReplaceCallback(data[0].url);
           ws.objectRender.setGraphicObjectProps(props);

@@ -622,8 +622,11 @@
 				}
 			}
 
-			if (type == "init")
+			if (type === "init")
 				window.Asc.plugin.info = pluginData;
+
+			if (type === "updateOptions" && pluginData.options)
+				window.Asc.plugin.info.options = pluginData.options;
 
 			if (undefined !== pluginData.theme)
 			{
@@ -856,6 +859,11 @@
 						}
 					}
 					break;
+				}
+				case "updateOptions":
+				{
+					if (window.Asc.plugin.onUpdateOptions)
+						window.Asc.plugin.onUpdateOptions();
 				}
 				default:
 					break;

@@ -56,6 +56,7 @@ var BAR_FRACTION            	=  0;
 var SKEWED_FRACTION         	=  1;
 var LINEAR_FRACTION         	=  2;
 var NO_BAR_FRACTION         	=  3;
+var LITTLE_FRACTION				=  4;
 
 var DEGREE_SUPERSCRIPT      	=  1;
 var DEGREE_SUBSCRIPT        	= -1;

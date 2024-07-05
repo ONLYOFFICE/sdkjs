@@ -5196,9 +5196,12 @@ function (window, undefined) {
 				arg1 = arg1.getElementRowCol(0, 0);
 			}
 
-			arg1 = arg1.tocString();
-			if (cElementType.string !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();

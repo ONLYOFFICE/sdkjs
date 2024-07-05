@@ -907,7 +907,7 @@
             }
         }
         else {
-            if (e.shiftKey) {
+            if (e.ShiftKey) {
                 this.GetDocContent().StartSelectionFromCurPos();
                 oDoc.SelectionSetEnd(x, y, e);
             }

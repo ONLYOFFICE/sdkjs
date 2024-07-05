@@ -459,7 +459,7 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 	if (this.LogicDocument)
 		return this.LogicDocument.GetStyles();
 
-	return AscCommonWord.DEFAULT_STYLES;
+	return AscWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {
@@ -2700,7 +2700,8 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
                 var ItemReviewType = Item.GetReviewType();
                 // Создаем новый параграф
                 var NewParagraph   = new AscWord.Paragraph(this, this.bPresentation === true);
-
+	
+				let firstPara, secondPara;
 				if (Item.IsCursorAtBegin())
 				{
 					// Продолжаем (в плане настроек) новый параграф
@@ -2712,6 +2713,9 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos + 1;
+					
+					firstPara  = NewParagraph;
+					secondPara = Item;
 				}
 				else
 				{
@@ -2767,19 +2771,22 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos + 1;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos;
+					
+					firstPara  = Item;
+					secondPara = NewParagraph;
 				}
-
-                if (true === this.IsTrackRevisions())
-                {
-                    Item.RemovePrChange();
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Add);
-                }
-                else if (reviewtype_Common !== ItemReviewType)
-                {
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Common);
-                }
+				
+				if (this.IsTrackRevisions())
+				{
+					firstPara.RemovePrChange();
+					firstPara.SetReviewType(reviewtype_Add);
+					secondPara.SetReviewType(ItemReviewType);
+				}
+				else if (reviewtype_Common !== ItemReviewType)
+				{
+					firstPara.SetReviewType(reviewtype_Common);
+					secondPara.SetReviewType(ItemReviewType);
+				}
 				NewParagraph.CheckSignatureLinesOnAdd();
             }
 

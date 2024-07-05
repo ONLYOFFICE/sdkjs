@@ -14831,18 +14831,29 @@
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "comboBarLine": {
+					return Asc.c_oAscChartTypeSettings.comboBarLine;
+				}
+				case "comboBarLineSecondary": {
+					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
+				}
+				case "comboCustom": {
+					return Asc.c_oAscChartTypeSettings.comboCustom;
+				}
 			}
 			return null;
 		}
 
+
+
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
-			var settings = new Asc.asc_ChartSettings();
+			let settings = new Asc.asc_ChartSettings();
 			settings.type = ChartBuilderTypeToInternal(sType);
-			var aAscSeries = [];
-			var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-			var oCat, i;
+			let aAscSeries = [];
+			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+			let oCat, i;
 			if (aCatNames.length > 0) {
-				var aNumCache = [];
+				let aNumCache = [];
 				for (i = 0; i < aCatNames.length; ++i) {
 					aNumCache.push({val: aCatNames[i] + ""});
 				}
@@ -14852,10 +14863,10 @@
 				};
 			}
 			for (i = 0; i < aSeries.length; ++i) {
-				var oAscSeries = new AscFormat.asc_CChartSeria();
+				let oAscSeries = new AscFormat.asc_CChartSeria();
 				oAscSeries.Val.NumCache = [];
-				var aData = aSeries[i];
-				var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
+				let aData = aSeries[i];
+				let sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
 				oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
 				if (aSeriesNames[i]) {
 					oAscSeries.TxCache.Formula = 'Sheet1!' + '$A$' + (i + 2);
@@ -14873,7 +14884,7 @@
 				if (Array.isArray(aNumFormats) && typeof (aNumFormats[i]) === "string")
 					oAscSeries.FormatCode = aNumFormats[i];
 
-				for (var j = 0; j < aData.length; ++j) {
+				for (let j = 0; j < aData.length; ++j) {
 					oAscSeries.Val.NumCache.push({
 						numFormatStr: oAscSeries.FormatCode !== "" ? null : "General",
 						isDateTimeFormat: false,
@@ -14884,7 +14895,7 @@
 				aAscSeries.push(oAscSeries);
 			}
 
-			var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
+			let oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
 			if (!oChartSpace) {
 				return null;
 			}

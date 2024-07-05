@@ -7263,7 +7263,7 @@ function CStyles(bCreateDefault)
 
         this.Style = [];
 		
-		// TODO: Сейчас почти все стили параграфа и текста заданы в AscWord.DEFAULT_STYLES
+		// TODO: Сейчас почти все стили параграфа и текста заданы в AscWord.DEFAULT_STYLE_LIST
 		//       Стили таблиц нужно переделать также
 		
 		// Создаем стандартный стиль для таблиц
@@ -7793,7 +7793,7 @@ function CStyles(bCreateDefault)
 		this.Add( Style_Table_Bordered_Accent_6 );
 		
 		
-		this.AddStylesFromObject(AscWord.DEFAULT_STYLES);
+		this.AddStylesFromObject(AscWord.DEFAULT_STYLE_LIST);
 		this.UpdateDefaultStyleLinks();
 
 		for (var nLvl = 0; nLvl <= 8; ++nLvl)
@@ -12255,13 +12255,13 @@ CRFonts.prototype.Compare = function(rFonts)
 		this.Ascii = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.EastAsia, rFonts.EastAsia))
-		this.EastAsia = {Name : undefined, Index : -1};;
+		this.EastAsia = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.HAnsi, rFonts.HAnsi))
-		this.HAnsi = {Name : undefined, Index : -1};;
+		this.HAnsi = {Name : undefined, Index : -1};
 	
 	if (!this.private_IsEqual(this.CS, rFonts.CS))
-		this.CS = {Name : undefined, Index : -1};;
+		this.CS = {Name : undefined, Index : -1};
 	
 	if (this.AsciiTheme !== rFonts.AsciiTheme)
 		this.AsciiTheme = undefined;
@@ -15914,27 +15914,30 @@ CParaPr.prototype.Merge = function(ParaPr)
 
 	if (undefined != ParaPr.Shd && (!this.Shd || !ParaPr.Shd.IsNil()))
 		this.Shd = ParaPr.Shd.Copy();
-
-	if (undefined != ParaPr.Brd.First)
-		this.Brd.First = ParaPr.Brd.First;
-
-	if (undefined != ParaPr.Brd.Last)
-		this.Brd.Last = ParaPr.Brd.Last;
-
-	if (undefined != ParaPr.Brd.Between)
-		this.Brd.Between = ParaPr.Brd.Between.Copy();
-
-	if (undefined != ParaPr.Brd.Bottom)
-		this.Brd.Bottom = ParaPr.Brd.Bottom.Copy();
-
-	if (undefined != ParaPr.Brd.Left)
-		this.Brd.Left = ParaPr.Brd.Left.Copy();
-
-	if (undefined != ParaPr.Brd.Right)
-		this.Brd.Right = ParaPr.Brd.Right.Copy();
-
-	if (undefined != ParaPr.Brd.Top)
-		this.Brd.Top = ParaPr.Brd.Top.Copy();
+	
+	if (ParaPr.Brd)
+	{
+		if (undefined != ParaPr.Brd.First)
+			this.Brd.First = ParaPr.Brd.First;
+		
+		if (undefined != ParaPr.Brd.Last)
+			this.Brd.Last = ParaPr.Brd.Last;
+		
+		if (undefined != ParaPr.Brd.Between)
+			this.Brd.Between = ParaPr.Brd.Between.Copy();
+		
+		if (undefined != ParaPr.Brd.Bottom)
+			this.Brd.Bottom = ParaPr.Brd.Bottom.Copy();
+		
+		if (undefined != ParaPr.Brd.Left)
+			this.Brd.Left = ParaPr.Brd.Left.Copy();
+		
+		if (undefined != ParaPr.Brd.Right)
+			this.Brd.Right = ParaPr.Brd.Right.Copy();
+		
+		if (undefined != ParaPr.Brd.Top)
+			this.Brd.Top = ParaPr.Brd.Top.Copy();
+	}
 
 	if (undefined != ParaPr.WidowControl)
 		this.WidowControl = ParaPr.WidowControl;
@@ -17398,7 +17401,7 @@ AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 
-window["AscCommonWord"].DEFAULT_STYLES                = new CStyles(false);
+window["AscWord"].DEFAULT_STYLES = new CStyles(false);
 window["AscCommonWord"].g_oDocumentDefaultFillColor   = g_oDocumentDefaultFillColor;
 window["AscCommonWord"].g_oDocumentDefaultStrokeColor = g_oDocumentDefaultStrokeColor;
 

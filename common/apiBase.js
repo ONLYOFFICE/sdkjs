@@ -694,6 +694,7 @@
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -704,12 +705,14 @@
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
 	{
@@ -1037,11 +1040,8 @@
 	{
 		this.sendEvent("asc_onPrint");
 	};
-	// Open
-	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	baseEditorsApi.prototype._getOpenCmd = function(versionHistory)
 	{
-		// Меняем тип состояния (на открытие)
-		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
@@ -1054,7 +1054,7 @@
 				}
 			}
 			let convertToOrigin = '';
-			if (!!this.DocInfo.get_DirectUrl() && this["asc_isSupportFeature"]("ooxml")) {
+			if (!!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml")) {
 				convertToOrigin = '.docx.xlsx.pptx';
 			}
 
@@ -1078,15 +1078,25 @@
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
-                rData["closeonerror"] = versionHistory.isRequested;
+				rData["closeonerror"] = versionHistory.isRequested;
 				rData["tokenHistory"] = versionHistory.token;
 				//чтобы результат пришел только этому соединению, а не всем кто в документе
 				rData["userconnectionid"] = this.CoAuthoringApi.getUserConnectionId();
 			}
 		}
+		return rData;
+	}
+	// Open
+	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	{
+		// Меняем тип состояния (на открытие)
+		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
+
+		let rData = this._getOpenCmd(versionHistory);
 		if (versionHistory) {
 			this.CoAuthoringApi.versionHistory(rData);
 		} else {
+			//todo auth on connection
 			this.CoAuthoringApi.auth(this.getViewMode(), rData);
 		}
 
@@ -1611,6 +1621,7 @@
 			if (!t.isOnLoadLicense) {
 				t._onEndPermissions();
 			} else {
+				//todo auth on connection
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
@@ -1909,7 +1920,9 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
+
+		let openCmd = this._getOpenCmd();
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, openCmd);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -5049,6 +5062,14 @@
 		});
 	};
 
+	baseEditorsApi.prototype.setPluginsOptions = function(options)
+	{
+		this.externalPluginsOptions = options;
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onUpdateOptions();
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -5123,6 +5144,8 @@
 	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
 	prot['asc_hideMediaControl'] = prot.asc_hideMediaControl;
 	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
+
+	prot['setPluginsOptions'] = prot.setPluginsOptions;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;

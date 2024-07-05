@@ -251,6 +251,8 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
     this.m_oContentChanges = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
+	
+	this.updateTrackRevisions();
 }
 
 CTable.prototype = Object.create(CDocumentContentElementBase.prototype);
@@ -6257,14 +6259,8 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			Cell.Content.SelectAll();
 			Cell.Content.Remove(Count, bOnlyText, bRemoveOnlySelection, true, false);
 
+			this.RemoveSelection();
 			this.CurCell = Cell;
-
-			this.Selection.Use   = false;
-			this.Selection.Start = false;
-
-			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
-			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
-
 			this.Document_SetThisElementCurrent(true);
 		}
 		else
@@ -14824,6 +14820,7 @@ CTable.prototype.private_RemoveRow = function(nIndex)
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
 	this.OnContentChange();
+	this.updateTrackRevisions();
 };
 CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewRow)
 {
@@ -14871,6 +14868,7 @@ CTable.prototype.private_AddRow = function(Index, CellsCount, bReIndexing, _NewR
 	this.private_CheckCurCell();
 	this.private_UpdateTableGrid();
 	this.OnContentChange();
+	this.updateTrackRevisions();
 
 	return NewRow;
 };
@@ -16597,8 +16595,15 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 			var nCurRow = arrSelectedRows[nSelectedRowIndex];
 			var oRow    = this.GetRow(nCurRow);
 			
-			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+			
+			if (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType)
+			{
+				for (let iCell = 0, nCells = oRow.GetCellsCount(); iCell < nCells; ++iCell)
+				{
+					oRow.GetCell(iCell).AcceptPrChange();
+				}
 				oRow.AcceptPrChange();
+			}
 			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
@@ -16709,8 +16714,14 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 			var nCurRow = arrSelectedRows[nSelectedRowIndex];
 			var oRow    = this.GetRow(nCurRow);
 			
-			if (oRow.HavePrChange() && (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType))
+			if (undefined === nType || c_oAscRevisionsChangeType.TableRowPr === nType)
+			{
+				for (let iCell = 0, nCells = oRow.GetCellsCount(); iCell < nCells; ++iCell)
+				{
+					oRow.GetCell(iCell).RejectPrChange();
+				}
 				oRow.RejectPrChange();
+			}
 			
 			var nRowReviewType = oRow.GetReviewType();
 			if (reviewtype_Add === nRowReviewType && (undefined === nType || c_oAscRevisionsChangeType.RowsAdd === nType))
@@ -16824,7 +16835,10 @@ CTable.prototype.GetRevisionsChangeElement = function(oSearchEngine)
 
 	while (oCell && vmerge_Restart !== oCell.GetVMerge())
 	{
-		oCell = this.private_GetPrevCell(nCurRow, nCurCell);
+		if (oSearchEngine.GetDirection() > 0)
+			oCell = this.private_GetNextCell(oCell.GetRow().GetIndex(), oCell.GetIndex());
+		else
+			oCell = this.private_GetPrevCell(oCell.GetRow().GetIndex(), oCell.GetIndex());
 	}
 
 	oCell.GetContent().GetRevisionsChangeElement(oSearchEngine);
@@ -19134,8 +19148,17 @@ CTable.prototype.CheckRevisionsChanges = function(oRevisionsManager)
 		var nRowReviewType = oRow.GetReviewType();
 		var oRowReviewInfo = oRow.GetReviewInfo();
 		
-		if (!tablePrChange && oRow.HavePrChange() && oRow.Pr.ReviewInfo)
-			private_FlushTableRowPrChange(oRow.Pr.ReviewInfo, oRow.GetIndex(), oRow.GetIndex());
+		if (!tablePrChange)
+		{
+			let rowReviewInfo = null;
+			if (oRow.HavePrChange() && oRow.Pr.ReviewInfo)
+				rowReviewInfo = oRow.Pr.ReviewInfo;
+			else if (oRow.HaveCellPrChange())
+				rowReviewInfo = oRow.GetFirstCellReviewInfo();
+			
+			if (rowReviewInfo)
+				private_FlushTableRowPrChange(rowReviewInfo, oRow.GetIndex(), oRow.GetIndex());
+		}
 
 		if (reviewtype_Common === nType)
 		{

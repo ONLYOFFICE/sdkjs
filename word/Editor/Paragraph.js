@@ -13615,7 +13615,7 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 	let nCount = oPara.Content.length;
 	for (let nPos = 0; nPos < nCount; ++nPos)
 	{
-		this.AddToContent(nPos, oPara.Content[nPos].Copy());
+		this.AddToContent(nPos, oPara.Content[nPos].Copy(false, {CopyReviewPr : true}));
 	}
 
 	// Класс нужно почистить, чтобы сообщить внутренним классам, что они больше не используются

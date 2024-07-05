@@ -1277,6 +1277,58 @@
 		
 		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
 	};
+	/**
+	 * Undo the user's last action.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias Undo
+	 * @since 8.2.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("Undo");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_Undo"] = function()
+	{
+		this.Undo();
+	};
+	/**
+	 * Revert the user's last undone action.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias Redo
+	 * @since 8.2.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("Redo");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_Redo"] = function()
+	{
+		this.Redo();
+	};
+	/**
+	 * Check if it possible to undo the user's last action.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias CanUndo
+	 * @since 8.2.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("CanUndo");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_CanUndo"] = function()
+	{
+		return this.asc_getCanUndo();
+	};
+	/**
+	 * Check if it possible to revert the user's last undone action.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias CanRedo
+	 * @since 8.2.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("CanRedo");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_CanRedo"] = function()
+	{
+		return this.asc_getCanRedo();
+	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{

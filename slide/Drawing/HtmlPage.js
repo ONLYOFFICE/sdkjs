@@ -5055,6 +5055,7 @@ function CEditorPage(api)
 				this.setNotesEnable(true);
 				this.setAnimPaneEnable(true);
 				this.m_oApi.hideMediaControl();
+				this.m_oApi.asc_hideComments();
 				this.m_oLogicDocument.Recalculate({Drawings:{All:true, Map:{}}});
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
@@ -5074,6 +5075,7 @@ function CEditorPage(api)
 				this.setNotesEnable(false);
 				this.setAnimPaneEnable(false);
 				this.m_oApi.hideMediaControl();
+				this.m_oApi.asc_hideComments();
 				this.m_oLogicDocument.Document_UpdateInterfaceState();
 				break;
 			}

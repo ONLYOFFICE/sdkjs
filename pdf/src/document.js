@@ -114,7 +114,7 @@ var CPresentation = CPresentation || function(){};
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
-        this.styles                 = AscCommonWord.DEFAULT_STYLES.Copy();
+        this.styles                 = AscWord.DEFAULT_STYLES.Copy();
         this.TableStylesIdMap       = {};
         this.InitDefaultTextListStyles();
         this.InitDefaultTableStyles();
@@ -840,6 +840,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
         Asc.editor.sendEvent('asc_onHidePdfFormsActions');
+        Asc.editor.SetShowTextSelectPanel(true);
 
         let oViewer = this.Viewer;
         if (!oViewer.canInteract()) {
@@ -853,6 +854,7 @@ var CPresentation = CPresentation || function(){};
         let IsOnDrawer      = this.Api.isDrawInkMode();
         let IsOnEraser      = this.Api.isEraseInkMode();
         let IsOnAddAddShape = this.Api.isStartAddShape;
+        let IsPageHighlight = this.Api.IsCommentMarker();
 
         let oMouseDownLink      = oViewer.getPageLinkByMouse();
         let oMouseDownField     = oViewer.getPageFieldByMouse();
@@ -889,15 +891,21 @@ var CPresentation = CPresentation || function(){};
             oController.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
-        // если выделение текста на странице
-        else if (oViewer.Api.curMarkerType != undefined) {
+        // если хайлайт (аннотация) текста на странице (селектим текст на странице, если не попали в фигуру в режиме view).
+        // если попали в фигуру, то селектим в ней (т.к. это типо текст на странице)
+        else if (IsPageHighlight) {
             oViewer.isMouseMoveBetweenDownUp = true;
-            oViewer.onMouseDownEpsilon(e);
-            return;
+            this.BlurActiveObject();
+            
+            if (null == oMouseDownDrawing) {
+                oViewer.onMouseDownEpsilon(e);
+                return;
+            }
         }
         
-        // докидываем в селект
         let oCurObject = this.GetMouseDownObject();
+        
+        // докидываем в селект
         if (e.CtrlKey && (oCurObject && oCurObject.IsDrawing() && oMouseDownDrawing && oCurObject != oMouseDownDrawing) && oMouseDownDrawing.GetPage() == oMouseDownDrawing.GetPage()) {
             oController.selectObject(oMouseDownDrawing, oMouseDownDrawing.GetPage());
             return;
@@ -1466,7 +1474,7 @@ var CPresentation = CPresentation || function(){};
         let IsOnDrawer      = this.Api.isDrawInkMode();
         let IsOnEraser      = this.Api.isEraseInkMode();
         let IsOnAddAddShape = this.Api.isStartAddShape;
-        let IsPageHighlight = this.Api.curMarkerType != undefined;
+        let IsPageHighlight = this.Api.IsCommentMarker();
 
         let oMouseMoveLink          = oViewer.getPageLinkByMouse();
         let oMouseMoveField         = oViewer.getPageFieldByMouse();
@@ -1703,7 +1711,6 @@ var CPresentation = CPresentation || function(){};
         // если рисование или добавление шейпа то просто заканчиваем его
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
-            e.IsLocked = false;
             return;
         }
 
@@ -1723,7 +1730,7 @@ var CPresentation = CPresentation || function(){};
             }
 
             oController.OnMouseUp(e, X, Y, pageObject.index);
-            if (this.Api.isMarkerFormat && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
+            if (this.Api.isMarkerFormat && !this.Api.IsCommentMarker() && this.HighlightColor && this.activeDrawing.IsInTextBox()) {
                 this.SetHighlight(this.HighlightColor.r, this.HighlightColor.g, this.HighlightColor.b);
             }
 
@@ -1735,8 +1742,6 @@ var CPresentation = CPresentation || function(){};
             oViewer.navigateToLink(oMouseUpLink);
         }
         
-        e.IsLocked = false;
-
         this.UpdateInterface();
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();
@@ -3883,13 +3888,12 @@ var CPresentation = CPresentation || function(){};
             a: opacity
         };
 
+        let oDrawing        = this.activeDrawing;
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelQuads       = oFile.getSelectionQuads();
+        let aSelQuads       = null == oDrawing ? oFile.getSelectionQuads() : oDrawing.GetSelectionQuads();
 
-        let oDrawing = this.activeDrawing;
-
-        if (oDrawing) {
+        if (oDrawing && false == this.Api.IsCommentMarker()) {
             this.SetParagraphHighlight(AscCommon.isNumber(r) && AscCommon.isNumber(g) && AscCommon.isNumber(b), r, g, b);
             return;
         }
@@ -3959,11 +3963,11 @@ var CPresentation = CPresentation || function(){};
             a: opacity
         };
 
+        let oDrawing        = this.activeDrawing;
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelQuads;
-
-        aSelQuads = oFile.getSelectionQuads();
+        let aSelQuads       = null == oDrawing ? oFile.getSelectionQuads() : oDrawing.GetSelectionQuads();
+        
         if (aSelQuads.length == 0)
             return;
 
@@ -4012,11 +4016,11 @@ var CPresentation = CPresentation || function(){};
             a: opacity
         };
 
+        let oDrawing        = this.activeDrawing;
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelQuads;
+        let aSelQuads       = null == oDrawing ? oFile.getSelectionQuads() : oDrawing.GetSelectionQuads();
 
-        aSelQuads = oFile.getSelectionQuads();
         if (aSelQuads.length == 0) return;
 
         for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
@@ -5580,10 +5584,10 @@ var CPresentation = CPresentation || function(){};
 		return this.Api.canEdit();
 	};
     CPDFDoc.prototype.IsShowShapeAdjustments = function() {
-        return this.Api.canEdit();
+        return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsShowTableAdjustments = function() {
-        return this.Api.canEdit();;
+        return this.Api.canEdit() && false == this.Api.IsCommentMarker();
     };
     CPDFDoc.prototype.IsViewerObject = function(oObject) {
         return !!(oObject && oObject.IsAnnot && (oObject.IsAnnot() || oObject.IsForm() || oObject.group && oObject.group.IsAnnot()));

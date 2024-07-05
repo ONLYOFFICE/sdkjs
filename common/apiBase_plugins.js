@@ -152,7 +152,7 @@
 
 	/**
 	 * The OLE object properties
-	 * @typed {Object} OLEProperties
+	 * @typedef {Object} OLEProperties
 	 * @property {string} data - OLE object data (internal format).
 	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
 	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
@@ -812,6 +812,22 @@
             }
         }
     };
+
+	/**
+	 * Set options for all plugins. This method can be used only in connectors.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias SetPluginsOptions
+	 * @param {object} options - Object with properties ({ all : { key, value }, plugin_giud : { keyForSpecificPlugin : valueForSpecificPlugin } }
+	 */
+	Api.prototype["pluginMethod_SetPluginsOptions"] = function(options)
+	{
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		let runObject = window.g_asc_plugins.runnedPluginsMap[guid];
+		if (!runObject.isConnector)
+			return;
+		this.setPluginsOptions(options);
+	};
 
     /**
      * Shows the input helper.

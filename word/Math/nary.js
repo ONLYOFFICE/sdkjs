@@ -44,7 +44,13 @@ function CMathNaryPr()
     this.limLoc  = undefined;
     this.subHide = false;
     this.supHide = false;
+	this.ctrPr   = new CMathCtrlPr();
 }
+
+CMathNaryPr.prototype.GetRPr = function ()
+{
+	return this.ctrPr.GetRPr();
+};
 
 CMathNaryPr.prototype.Set_FromObject = function(Obj)
 {
@@ -62,6 +68,8 @@ CMathNaryPr.prototype.Set_FromObject = function(Obj)
 
     if(true === Obj.supHide === true || 1 === Obj.supHide)
         this.supHide = true;
+
+	this.ctrPr.SetRPr(Obj.ctrPrp);
 };
 
 CMathNaryPr.prototype.Copy = function()
@@ -74,6 +82,7 @@ CMathNaryPr.prototype.Copy = function()
     NewPr.limLoc  = this.limLoc ;
     NewPr.subHide = this.subHide;
     NewPr.supHide = this.supHide;
+	NewPr.ctrPr = this.ctrPr;
 
     return NewPr;
 };
@@ -120,6 +129,9 @@ CMathNaryPr.prototype.Write_ToBinary = function(Writer)
     Writer.WriteBool(this.grow);
     Writer.WriteBool(this.subHide);
     Writer.WriteBool(this.supHide);
+
+	Writer.WriteBool(true);
+	this.ctrPr.Write_ToBinary(Writer);
 };
 
 CMathNaryPr.prototype.Read_FromBinary = function(Reader)
@@ -154,6 +166,11 @@ CMathNaryPr.prototype.Read_FromBinary = function(Reader)
     this.grow    = Reader.GetBool();
     this.subHide = Reader.GetBool();
     this.supHide = Reader.GetBool();
+
+	if (Reader.GetBool())
+	{
+		this.ctrPr.Read_FromBinary(Reader);
+	}
 };
 
 /**
@@ -180,6 +197,10 @@ function CNary(props)
 
     if(props !== null && props !== undefined)
         this.init(props);
+
+	// согласно формату CtrPrp должен находится в NaryPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
+	if (this.Pr.ctrPr.rPr)
+		this.CtrPrp = this.Pr.ctrPr.rPr;
 
     AscCommon.g_oTableId.Add( this, this.Id );
 }
@@ -815,64 +836,83 @@ CNary.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 2 && false === this.Is_SelectInside();
 };
-CNary.prototype.GetTextOfElement = function(isLaTeX)
+/**
+ *
+ * @param {MathTextAndStyles} oMathText
+ * @return {*}
+ * @constructor
+ */
+CNary.prototype.GetTextOfElement = function(oMathText)
 {
-	var strTemp = "";
+	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	var strStartCode = String.fromCharCode(this.Pr.chr || this.getSign().chrCode);
-	var strSupContent = this.getSupMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
-	var strSubContent = this.getSubMathContent().GetMultipleContentForGetText(isLaTeX, undefined, true);
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	let strStartCode;
+	let oBase	= this.getBase();
+	let oUpper	= this.getUpperIterator();
+	let oLower	= this.getLowerIterator();
 
-    if (isLaTeX)
-    {
-        switch (strStartCode.codePointAt())
-        {
-            case 8747:	strStartCode = '\\int';			break;
-            case 8748:	strStartCode = '\\iint';		break;
-            case 8749:	strStartCode = '\\iiint';		break;
-            case 8750:
-            case 8755:	strStartCode = '\\oint';		break;
-            case 8751:	strStartCode = '\\oiint';		break;
-            case 8752:	strStartCode = '\\oiiint';		break;
-            case 8721:	strStartCode = '\\sum';			break;
-            case 8719:	strStartCode = '\\prod';		break;
-            case 8720:	strStartCode = '\\coprod';		break;
-            case 8899:	strStartCode = '\\bigcup';		break;
-            case 8898:	strStartCode = '\\bigcap';		break;
-            case 8897:	strStartCode = '\\bigvee';		break;
-            case 8896:	strStartCode = '\\bigwedge';	break;
-            case 10753:	strStartCode = '\\bigoplus';	break;
-            case 10754:	strStartCode = '\\bigotimes';	break;
-            case 10756:	strStartCode = '\\biguplus';	break;
-            case 10764:	strStartCode = '\\iiiint';		break;
-            case 10758: strStartCode = '\\bigsqcup';	break;
-            case 10752: strStartCode = '\\bigodot';		break;
-            default: break;
-        }
-        if (strSupContent.length === 0 && strSubContent.length === 0)
-        {
-            strStartCode += " ";
-        }
-    }
-    else if (!isLaTeX && strBase.length > 0)
-    {
-        strBase = '▒' + strBase;
+	if (oMathText.IsLaTeX())
+	{
+		strStartCode = AscMath.MathLiterals.nary.Unicode[String.fromCharCode(this.Pr.chr)];
+
+		if (oLower)
+		{
+			oMathText.SetGlobalStyle(oLower);
+			let oLowerPos	= oMathText.Add(oLower, true, oMathText.IsLaTeX() ? 1 : undefined);
+			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oMathText.GetStyleFromFirst()));
+			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
+		}
+
+		if (oUpper)
+		{
+			oMathText.SetNotGetStyleFromFirst();
+			let oUpperPos = oMathText.AddText(new AscMath.MathText("^", oUpper));
+
+			oMathText.SetGlobalStyle(oUpper);
+			oMathText.Add(oUpper, true, 1);
+
+			if (!oLower)
+				oMathText.AddBefore(oUpperPos, new AscMath.MathText(strStartCode, oUpper));
+		}
+
+		if (oBase)
+		{
+			oMathText.SetGlobalStyle(this);
+			oMathText.Add(oBase, true, 0);
+		}
+	}
+	else
+	{
+		let oLastPos = oMathText.AddText(new AscMath.MathText(String.fromCharCode(this.Pr.chr), this));
+		let isScript = false;
+
+		if (oLower)
+		{
+			isScript = true;
+			oMathText.SetGlobalStyle(this);
+			oLastPos = oMathText.Add(oLower, true);
+			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower));
+		}
+
+		if (oUpper)
+		{
+			isScript = true;
+			oMathText.SetGlobalStyle(this);
+			oLastPos = oMathText.Add(oUpper, true);
+			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper));
+		}
+
+		if (oBase)
+		{
+			if (oBase.GetCountForAutoProcessing() >= 1)
+				oMathText.AddText(new AscMath.MathText("▒", oBase));
+
+			oLastPos = oMathText.Add(oBase, true, 1);
+			let oBaseText = oMathText.GetExact(oLastPos);
+		}
 	}
 
-	strTemp += strStartCode;
-
-	if (strSupContent.length > 0)
-    {
-		strTemp += "^" + strSupContent;
-	}
-	if (strSubContent.length > 0)
-    {
-		strTemp += "_" + strSubContent;
-	}
-	strTemp += strBase;
-
-	return strTemp;
+	return oMathText;
 };
 
 /**
@@ -2390,9 +2430,9 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
     pGraphics.SetIntegerGrid(false);
 
     this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
-	
-	if (pGraphics.isSupportTextOutline())
-	{
+
+    if(pGraphics.Start_Command)
+    {
         for(var i = 0; i < CircleLng; i++)
         {
             ExtX[i]     = this.pos.x + x + shX + CircleX[i]*alpha*1.1 - CircleW*alpha*0.04;

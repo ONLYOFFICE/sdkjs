@@ -50,7 +50,7 @@
     this._onlineWork = false;
   }
 
-  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc) {
+  CDocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, openCmd) {
     if (this._CoAuthoringApi && this._CoAuthoringApi.isRightURL()) {
       var t = this;
       this._CoAuthoringApi.onAuthParticipantsChanged = function(e, id) {
@@ -145,7 +145,7 @@
         t.callback_OnLicenseChanged(res);
 	  };
 
-      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc);
+      this._CoAuthoringApi.init(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, openCmd);
       this._onlineWork = true;
     } else {
       // Фиктивные вызовы
@@ -645,12 +645,12 @@
     this.mode = undefined;
     this.permissions = undefined;
     this.lang = undefined;
+    this.openCmd = undefined;
     this.jwtOpen = undefined;
     this.jwtSession = undefined;
     this.encrypted = undefined;
     this.IsAnonymousUser = undefined;
     this.coEditingMode = undefined;
-    this._isViewer = false;
     this._isReSaveAfterAuth = false;	// Флаг для сохранения после повторной авторизации (для разрыва соединения во время сохранения)
     this._lockBuffer = [];
     this._saveChangesChunks = [];
@@ -1641,7 +1641,7 @@
     this._authOtherChanges = [];
   };
 
-  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc) {
+  DocsCoApi.prototype.init = function(user, docid, documentCallbackUrl, token, editorType, documentFormatSave, docInfo, shardKey, wopiSrc, openCmd) {
     this._user = user;
     this._docid = null;
     this._documentCallbackUrl = documentCallbackUrl;
@@ -1656,6 +1656,7 @@
 	this.mode = docInfo.get_Mode();
 	this.permissions = docInfo.get_Permissions();
 	this.lang = docInfo.get_Lang();
+    this.openCmd = openCmd;
 	this.jwtOpen = docInfo.get_Token();
     this.encrypted = docInfo.get_Encrypted() || docInfo.get_IsWebOpening();
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
@@ -1674,9 +1675,7 @@
     this._docid = docid;
     this.socketio_url = AscCommon.getBaseUrlPathname() + '../../../../doc/' + docid + '/c';
   };
-  // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
-  DocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
-    this._isViewer = isViewer;
+  DocsCoApi.prototype.getAuthCommand = function(opt_openCmd, opt_isIdle) {
     if (this._locks) {
       this.ownedLockBlocks = [];
       //If we already have locks
@@ -1689,7 +1688,7 @@
       }
       this._locks = {};
     }
-    this._send({
+    return {
       'type': 'auth',
       'docid': this._docid,
       'documentCallbackUrl': this._documentCallbackUrl,
@@ -1705,10 +1704,9 @@
       'lastOtherSaveTime': this.lastOtherSaveTime,
       'block': this.ownedLockBlocks,
       'sessionId': this._id,
-	  'sessionTimeConnect': this._sessionTimeConnect,
+      'sessionTimeConnect': this._sessionTimeConnect,
       'sessionTimeIdle': opt_isIdle >= 0 ? opt_isIdle : 0,
       'documentFormatSave': this._documentFormatSave,
-      'view': this._isViewer,
       'isCloseCoAuthoring': this.isCloseCoAuthoring,
       'openCmd': opt_openCmd,
       'lang': this.lang,
@@ -1722,9 +1720,12 @@
       'jwtSession': this.jwtSession,
       'time': Math.round(performance.now()),
       'supportAuthChangesAck': true
-    });
+    };
   };
-
+  // Авторизация (ее нужно делать после выставления состояния редактора view-mode)
+  DocsCoApi.prototype.auth = function(isViewer, opt_openCmd, opt_isIdle) {
+    this._send(this.getAuthCommand(opt_openCmd, opt_isIdle));
+  };
   function CNativeSocket(settings)
   {
     this.engine = window['SockJS'];
@@ -1783,6 +1784,7 @@
         "reconnectionDelayMax": 10000,
         "randomizationFactor": 0.5,
         "auth": {
+          "data": this.getAuthCommand(this.openCmd),
           "token": this.jwtOpen,
           "session": this.jwtSession
         }
