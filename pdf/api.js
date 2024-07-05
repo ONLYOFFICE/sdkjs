@@ -472,7 +472,7 @@
 		let result = textController.EnterText(codePoints);
 		
 		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
-			if (textController.IsFreeText()) {
+			if (textController.IsAnnot() && textController.IsFreeText()) {
 				drController.selection.groupSelection = textController;
 				textController.selection.textSelection = textController.GetTextBoxShape()
 			}
