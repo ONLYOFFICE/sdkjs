@@ -1647,7 +1647,7 @@ CChartsDrawer.prototype =
 										this.trendline.addCoordinate(catVal, valVal, charts[i].Id, seria.Id);
 									}
 								} else {
-									for (let k = 0; k < targetPts.length, valIterator < valPts.length; k++) {
+									for (let k = 0; k < targetPts.length && valIterator < valPts.length; k++) {
 										if ( targetPts[k].idx === valPts[valIterator].idx) {
 											const catVal = decideCatValue(k);
 											const valVal = decideValValue();
