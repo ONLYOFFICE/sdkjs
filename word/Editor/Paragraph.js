@@ -546,7 +546,7 @@ Paragraph.prototype.GetAllParagraphs = function(Props, ParaArray)
 		if (!oCurNumPr)
 			return;
 
-		if (Props.NumPr instanceof CNumPr)
+		if (Props.NumPr instanceof AscWord.NumPr)
 		{
 			var oNumPr = Props.NumPr;
 			if (oCurNumPr.NumId === oNumPr.NumId && (oCurNumPr.Lvl === oNumPr.Lvl || undefined === oNumPr.Lvl || null === oNumPr.Lvl))
@@ -9904,8 +9904,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 				}
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, nLvl);
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
@@ -9943,8 +9942,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 				this.Pr.Ind.Left      = undefined;
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, LvlFound);
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, LvlFound);
 			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
@@ -9957,8 +9955,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	else
 	{
 		// просто меняем список, так чтобы он не двигался
-		this.Pr.NumPr = new CNumPr();
-		this.Pr.NumPr.Set(sNumId, nLvl);
+		this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 
 		AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr_old);
@@ -10021,7 +10018,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 		this.private_AddPrChange();
 
-		var oNewNumPr = new CNumPr(sNumId, nLvl);
+		var oNewNumPr = new AscWord.NumPr(sNumId, nLvl);
 
 		AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
 		this.private_RefreshNumbering(oNewNumPr);
@@ -10051,7 +10048,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 	
 	this.private_AddPrChange();
 	
-	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new CNumPr(numPr.NumId, newLvl));
+	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new AscWord.NumPr(numPr.NumId, newLvl));
 	AscCommon.History.Add(change);
 	change.Redo();
 	
@@ -10073,7 +10070,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
- * @returns {?CNumPr}
+ * @returns {?AscWord.NumPr}
  */
 Paragraph.prototype.GetNumPr = function()
 {
@@ -10094,8 +10091,7 @@ Paragraph.prototype.RemoveNumPr = function()
 	var NewNumPr = undefined;
 	if (undefined != this.CompiledPr.Pr.ParaPr.StyleNumPr)
 	{
-		NewNumPr = new CNumPr();
-		NewNumPr.Set(0, 0);
+		NewNumPr = new AscWord.NumPr(0, 0);
 	}
 
 	this.private_AddPrChange();
@@ -15284,7 +15280,7 @@ Paragraph.prototype.GetPrChangeNumPr = function()
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr)
-			oPrevNumPr = new CNumPr(oPrevNumPr.NumId, oNumPr.Lvl);
+			oPrevNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oNumPr.Lvl);
 	}
 
 	return oPrevNumPr;
@@ -15358,7 +15354,7 @@ Paragraph.prototype.SetNumPrToPrChange = function(numId, iLvl)
 	
 	let prChange   = this.Pr.PrChange.Copy();
 	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
-	prChange.NumPr = new AscWord.CNumPr(numId, iLvl);
+	prChange.NumPr = new AscWord.NumPr(numId, iLvl);
 	
 	this.SetPrChange(prChange, reviewInfo);
 };

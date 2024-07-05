@@ -15066,7 +15066,7 @@ CDocument.prototype.GetAllNumberedParagraphs = function()
 			var oLvl = oNum.GetLvl(nLvl);
 			if(oLvl && oLvl.IsNumbered())
 			{
-				oProps.NumPr.push(new CNumPr(oNum.GetId(), nLvl));
+				oProps.NumPr.push(new AscWord.NumPr(oNum.GetId(), nLvl));
 			}
 		}
 	}
@@ -23900,7 +23900,7 @@ CDocument.prototype.GetHyperlinkAnchors = function()
 /**
  * Получаем текущую выделенную нумерацию
  * @param [isCheckSelection=false] {boolean} - проверять ли по селекту
- * @returns {?CNumPr} Если выделено несколько параграфов с одним NumId, но с разными уровнями, то Lvl = null
+ * @returns {?AscWord.NumPr} Если выделено несколько параграфов с одним NumId, но с разными уровнями, то Lvl = null
  */
 CDocument.prototype.GetSelectedNum = function(isCheckSelection)
 {
@@ -23969,7 +23969,7 @@ CDocument.prototype.ContinueNumbering = function()
 		return false;
 
 	var bFind                 = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new AscWord.NumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
 	AscWord.sortByDocumentPosition(arrParagraphs);
 
@@ -24045,7 +24045,7 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 	var bFind                 = false;
 	var nPrevLvl              = null;
 	var isFirstParaOnLvl      = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new AscWord.NumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
 	var isRelated             = this.Numbering.GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
 	AscWord.sortByDocumentPosition(arrParagraphs);
@@ -28160,7 +28160,7 @@ CDocumentNumberingInfoCounter.prototype.CheckNum = function(oNum)
 /**
  * Класс для рассчета значение номера для нумерации заданного параграфа
  * @param oPara {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oNumbering {AscWord.CNumbering}
  * @constructor
  */
@@ -28480,7 +28480,7 @@ CDocumentFootnotesRangeEngine.prototype.IsCheckEndnotes = function()
 /**
  * Класс для поиска подходящей нумерации в документе
  * @param oParagraph {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oNumbering {AscWord.CNumbering}
  */
 function CDocumentNumberingContinueEngine(oParagraph, oNumPr, oNumbering)
@@ -28521,7 +28521,7 @@ CDocumentNumberingContinueEngine.prototype.CheckParagraph = function(oParagraph)
 		{
 			if (oNumPr.Lvl > 0)
 			{
-				this.SimilarNumPr = new CNumPr(oNumPr.NumId, this.NumPr.Lvl);
+				this.SimilarNumPr = new AscWord.NumPr(oNumPr.NumId, this.NumPr.Lvl);
 			}
 			else
 			{
@@ -28529,16 +28529,16 @@ CDocumentNumberingContinueEngine.prototype.CheckParagraph = function(oParagraph)
 				var oLvl    = this.Numbering.GetNum(this.NumPr.NumId).GetLvl(0);
 
 				if (oCurLvl.IsSimilar(oLvl) || (oCurLvl.GetFormat() === oLvl.GetFormat() && Asc.c_oAscNumberingFormat.Bullet === oCurLvl.GetFormat()))
-					this.SimilarNumPr = new CNumPr(oNumPr.NumId, 0);
+					this.SimilarNumPr = new AscWord.NumPr(oNumPr.NumId, 0);
 			}
 
-			this.LastNumPr = new CNumPr(oNumPr.NumId, this.NumPr.Lvl);
+			this.LastNumPr = new AscWord.NumPr(oNumPr.NumId, this.NumPr.Lvl);
 		}
 	}
 };
 /**
  * Получаем подходящую нумерацию
- * @returns {?CNumPr}
+ * @returns {?AscWord.NumPr}
  */
 CDocumentNumberingContinueEngine.prototype.GetNumPr = function()
 {

@@ -1688,7 +1688,7 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
 /**
  * Получаем массив всех параграфов с заданной нумерацией
  * NB: массив НЕ отсортирован по позиции в документе (для сортировки, если нужно, вызывать метод AscWord.sortByDocumentPosition)
- * @param oNumPr {CNumPr | CNumPr[]}
+ * @param oNumPr {AscWord.NumPr | AscWord.NumPr[]}
  * @returns {Paragraph[]}
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
@@ -1724,7 +1724,7 @@ CDocumentContentBase.prototype.GetAllTables = function(oProps, arrTables)
 };
 /**
  * Выделяем заданную нумерацию
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oPara {Paragraph} - текущий парограф
  */
 CDocumentContentBase.prototype.SelectNumbering = function(oNumPr, oPara)
@@ -1783,7 +1783,7 @@ CDocumentContentBase.prototype.RemoveNumberingSelection = function()
 /**
  * Рассчитываем значение нумерованного списка для заданной нумерации
  * @param oPara {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param [isUseReview=false] {boolean}
  * @returns {number[]}
  */

@@ -401,7 +401,7 @@ CStyle.prototype =
 		var New = new CParaPr();
 		New.Set_FromObject(Value);
 		
-		if (isHandleNumbering && Value.NumPr instanceof CNumPr && Value.NumPr.IsValid())
+		if (isHandleNumbering && Value.NumPr instanceof AscWord.NumPr && Value.NumPr.IsValid())
 		{
 			var oLogicDocument = private_GetWordLogicDocument();
 			if (oLogicDocument)
@@ -414,7 +414,7 @@ CStyle.prototype =
 					oNumLvl.SetPStyle(this.GetId());
 					oNum.SetLvl(oNumLvl, Value.NumPr.Lvl);
 
-					New.NumPr = new CNumPr(Value.NumPr.NumId, Value.NumPr.Lvl);
+					New.NumPr = new AscWord.NumPr(Value.NumPr.NumId, Value.NumPr.Lvl);
 				}
 			}
 		}
@@ -6484,7 +6484,7 @@ CStyle.prototype.SetNumPr = function(numId, iLvl)
 	let paraPr = this.GetParaPr().Copy();
 	
 	if (null !== numId)
-		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
+		paraPr.NumPr = new AscWord.NumPr(numId, iLvl);
 	else
 		paraPr.NumPr = undefined;
 	
@@ -15220,7 +15220,7 @@ CParaSpacing.prototype.SetLineTwips = function (val) {
 function CNumPr(numId, iLvl)
 {
     this.NumId = numId;
-    this.Lvl   = undefined !== iLvl ? iLvl : 0;
+    this.Lvl   = iLvl;
 }
 
 CNumPr.prototype =
@@ -15294,10 +15294,7 @@ CNumPr.prototype =
 };
 CNumPr.prototype.Copy = function()
 {
-	var oNumPr = new CNumPr();
-	oNumPr.NumId = this.NumId;
-	oNumPr.Lvl   = this.Lvl;
-	return oNumPr;
+	return new CNumPr(this.NumId, this.Lvl);
 };
 CNumPr.prototype.IsValid = function()
 {
@@ -16172,7 +16169,7 @@ CParaPr.prototype.Set_FromObject = function(ParaPr)
 
 	if (undefined != ParaPr.NumPr)
 	{
-		this.NumPr = new CNumPr();
+		this.NumPr = new AscWord.NumPr();
 		this.NumPr.Set_FromObject(ParaPr.NumPr);
 	}
 	else
@@ -16300,7 +16297,7 @@ CParaPr.prototype.Compare = function(ParaPr)
 	// NumPr
 	if (undefined != this.NumPr && undefined != ParaPr.NumPr && this.NumPr.NumId === ParaPr.NumPr.NumId)
 	{
-		Result_ParaPr.NumPr       = new CNumPr();
+		Result_ParaPr.NumPr       = new AscWord.NumPr();
 		Result_ParaPr.NumPr.NumId = ParaPr.NumPr.NumId;
 		Result_ParaPr.NumPr.Lvl   = Math.max(this.NumPr.Lvl, ParaPr.NumPr.Lvl);
 	}
@@ -16591,7 +16588,7 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 32768)
 	{
-		this.NumPr = new CNumPr();
+		this.NumPr = new AscWord.NumPr();
 		this.NumPr.Read_FromBinary(Reader);
 	}
 
@@ -17131,7 +17128,7 @@ CParaPr.prototype.SetNumPr = function(sNumId, nLvl)
 	if (undefined === sNumId)
 		this.NumPr = undefined;
 	else
-		this.NumPr = new CNumPr(sNumId, nLvl);
+		this.NumPr = new AscWord.NumPr(sNumId, nLvl);
 };
 CParaPr.prototype.GetPStyle = function()
 {
@@ -17363,6 +17360,7 @@ window["AscWord"].CTextPr = CTextPr;
 window["AscWord"].CParaPr = CParaPr;
 window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
+window["AscWord"].NumPr   = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
 window["AscWord"].CStyles = CStyles;
