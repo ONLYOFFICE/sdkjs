@@ -5558,7 +5558,9 @@ CDocument.prototype.CheckViewPosition = function()
 	else
 		this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(anchor.X, anchor.Y + distance, anchor.Page, true);
 	
+	this.Api.asc_LockScrollToTarget(true);
 	this.RecalculateCurPos();
+	this.Api.asc_LockScrollToTarget(false);
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
