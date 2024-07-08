@@ -2692,8 +2692,8 @@ var CPresentation = CPresentation || function(){};
         let oViewer     = editor.getDocumentRenderer();
         let oController = this.GetController();
 
-        let oDrawing  = this.drawings.find(function(annot) {
-            return annot.GetId() === Id;
+        let oDrawing  = this.drawings.find(function(drawing) {
+            return drawing.GetId() === Id;
         });
 
         if (!oDrawing)
@@ -2708,12 +2708,9 @@ var CPresentation = CPresentation || function(){};
         this.drawings.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
         
-        if (this.mouseDownAnnot == oDrawing)
-            this.mouseDownAnnot = null;
-
         this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oDrawing]));
 
-        oController.resetSelection();
+        oController.resetSelection(true);
         oController.resetTrackState();
 
         if (this.activeDrawing == oDrawing) {
@@ -5203,7 +5200,7 @@ var CPresentation = CPresentation || function(){};
             oTable.Parent.SetNeedRecalc(true);
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
-                this.RemoveDrawing(oTable.Parent);
+                this.RemoveDrawing(oTable.Parent.GetId());
                 return result;
             }
             this.TurnOffHistory();

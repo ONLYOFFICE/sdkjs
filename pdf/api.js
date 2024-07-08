@@ -1209,10 +1209,12 @@
 	};
 	PDFEditorApi.prototype.remTable = function() {
 		let oDoc = this.getPDFDoc();
-		let oGrFrame = oDoc.SelectTable(c_oAscTableSelectionType.Table);
+		let oObject = oDoc.GetActiveObject();
 		
-		if (oGrFrame) {
-			oDoc.RemoveDrawing(oGrFrame.GetId());
+		if (oObject && oObject.IsDrawing() && oObject.IsGraphicFrame()) {
+			oDoc.CreateNewHistoryPoint();
+			oDoc.RemoveDrawing(oObject.GetId());
+			oDoc.TurnOffHistory();
 			return true;
 		}
 
