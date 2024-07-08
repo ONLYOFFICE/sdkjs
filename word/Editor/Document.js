@@ -411,6 +411,8 @@ function CDocumentRecalculateState()
 
     this.UseRecursion = true;
     this.Continue     = false; // параметр сигнализирующий, о том что нужно продолжить пересчет (для нерекурсивного метода)
+	
+	this.ScrollToTarget = true;
 }
 
 function CDocumentRecalculateHdrFtrPageCountState()
@@ -3535,6 +3537,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	this.FullRecalc.StartTime         = performance.now();
 	this.FullRecalc.TimerStartTime    = this.FullRecalc.StartTime;
 	this.FullRecalc.TimerStartPage    = StartPage;
+	this.FullRecalc.ScrollToTarget    = true;
 
 
 	// Если у нас произошли какие-либо изменения с основной частью документа, тогда начинаем его пересчитывать сразу,
@@ -4568,9 +4571,9 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             else
                 this.CurPage = PageIndex; // TODO: переделать
         }
-
-        if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
-            this.private_UpdateCursorXY(true, true);
+		
+		if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
+			this.UpdateCursorOnRecalculate();
     }
 
     if (Index >= Count)
@@ -5506,6 +5509,8 @@ CDocument.prototype.CheckViewPosition = function()
 		this.RecalculateCurPos();
 		return;
 	}
+	
+	this.FullRecalc.ScrollToTarget = false;
 	
 	let anchorPos = this.ViewPosition.AnchorPos;
 	let alignTop  = this.ViewPosition.AlignTop;
@@ -14406,6 +14411,20 @@ CDocument.prototype.private_UpdateCurPage = function()
 		return;
 
 	this.private_CheckCurPage();
+};
+CDocument.prototype.UpdateCursorOnRecalculate = function()
+{
+	let isLockScroll = false;
+	if ((this.FullRecalc.Id && !this.FullRecalc.ScrollToTarget) || this.ViewPosition)
+		isLockScroll = true;
+	
+	if (isLockScroll)
+		this.Api.asc_LockScrollToTarget(true);
+		
+	this.private_UpdateCursorXY(true, true);
+	
+	if (isLockScroll)
+		this.Api.asc_LockScrollToTarget(false);
 };
 CDocument.prototype.private_UpdateCursorXY = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
