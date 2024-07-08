@@ -15389,7 +15389,9 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	}
 	
 	// TODO: Решить проблему, когда видно больше 2 страниц и курсор находится на средней странице
-	if (-1 !== cursorPage
+	// Использовать положение курсора оказалось не всегда удачно, т.к. при многократном быстром расчете курсор может
+	// может попасть в поле экрана и тогда скролл потянется сразу за ним, что может быть неверным
+	if (false && -1 !== cursorPage
 		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
 			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
 	{
@@ -15460,8 +15462,9 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 				_xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
 			}
 			
-			if (y >= y1)
-				_anchorPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
+			// TODO: Если подбираем другую точку, то нужно у данной страницы запросить её позицию во view port (расстояние до верха экрана)
+			// if (y >= y1)
+			// 	_anchorPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
 		}
 		
 		if (_anchorPos)
