@@ -4407,10 +4407,10 @@
 			oMemory.WriteByte(nType);
 			oMemory.WriteLong(oPageInfo.originIndex != undefined ? oPageInfo.originIndex : oPageInfo.curIndex);
 			
-			let nRotAngle = this.getPageRotate(oPageInfo.curIndex);
-			let bClearPage = !!oFile.pages[oPageInfo.curIndex].isConvertedToShapes;
-
 			if (nType == 0 || nType == 1) {
+				let nRotAngle = this.getPageRotate(oPageInfo.curIndex);
+				let bClearPage = !!oFile.pages[oPageInfo.curIndex].isConvertedToShapes;
+
 				oMemory.WriteByte(AscCommon.CommandType.ctPageRotate);
 				oMemory.WriteLong(8);
 				oMemory.WriteLong(nRotAngle);
@@ -4616,13 +4616,15 @@
 			let nPage = aOrder[i][0];
 			let nType = aOrder[i][1];
 
-			aPagesInfo[nPage].originIndex = undefined;
-			aPagesInfo[nPage].curIndex = nPage;
+			let oPageInfo = aPagesInfo[nPage] || {}; // при удалении страницы нет
 
-			writePageInfo.call(this, aPagesInfo[nPage], nType);
+			oPageInfo.originIndex = undefined;
+			oPageInfo.curIndex = nPage;
 
-			delete aPagesInfo[nPage].originIndex;
-			delete aPagesInfo[nPage].curIndex;
+			writePageInfo.call(this, oPageInfo || {}, nType);
+
+			delete oPageInfo.originIndex;
+			delete oPageInfo.curIndex;
 		}
 
 		if (oMemory) {
