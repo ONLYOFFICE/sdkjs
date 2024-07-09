@@ -4394,7 +4394,7 @@
 		// add		- 1
 		// delete	- 2
 
-		function writePageInfo(oPageInfo, nType) {
+		function writePageInfo(nType, curIndex, originIndex) {
 			if (!oMemory)
 			{
 				oMemory = new AscCommon.CMemory(true);
@@ -4405,12 +4405,12 @@
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			oMemory.WriteByte(nType);
-			oMemory.WriteLong(oPageInfo.originIndex != undefined ? oPageInfo.originIndex : oPageInfo.curIndex);
+			oMemory.WriteLong(originIndex != undefined ? originIndex : curIndex);
 			
-			let nRotAngle = this.getPageRotate(oPageInfo.curIndex);
-			let bClearPage = !!oFile.pages[oPageInfo.curIndex].isConvertedToShapes;
-
 			if (nType == 0 || nType == 1) {
+				let nRotAngle = this.getPageRotate(curIndex);
+				let bClearPage = !!oFile.pages[curIndex].isConvertedToShapes;
+				
 				oMemory.WriteByte(AscCommon.CommandType.ctPageRotate);
 				oMemory.WriteLong(8);
 				oMemory.WriteLong(nRotAngle);
@@ -4425,10 +4425,10 @@
 				// add page
 				if (nType == 1) {
 					oMemory.WriteByte(AscCommon.CommandType.ctPageWidth);
-					oMemory.WriteDouble(oFile.pages[oPageInfo.curIndex].W);
+					oMemory.WriteDouble(oFile.pages[curIndex].W);
 					
 					oMemory.WriteByte(AscCommon.CommandType.ctPageHeight);
-					oMemory.WriteDouble(oFile.pages[oPageInfo.curIndex].H);
+					oMemory.WriteDouble(oFile.pages[curIndex].H);
 				}
 			}
 			
@@ -4441,10 +4441,12 @@
 				oMemory.Seek(nEndPos);
 				return;
 			}
+			
+			let oPageInfo = aPagesInfo[curIndex];
 
 			// annots
 			if (oPageInfo.annots) {
-				this.InitAnnotsRenderer(oMemory, oPageInfo.curIndex);
+				this.InitAnnotsRenderer(oMemory, curIndex);
 				
 				for (let nAnnot = 0; nAnnot < oPageInfo.annots.length; nAnnot++) {
 					oPageInfo.annots[nAnnot].IsChanged() && oPageInfo.annots[nAnnot].WriteToBinary(oMemory);
@@ -4454,11 +4456,11 @@
 				}
 			}
 
-			if (aDeleted[oPageInfo.curIndex]) {
-				for (let j = 0; j < aDeleted[oPageInfo.curIndex].length; j++) {
+			if (aDeleted[curIndex]) {
+				for (let j = 0; j < aDeleted[curIndex].length; j++) {
 					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
 					oMemory.WriteLong(8);
-					oMemory.WriteLong(aDeleted[oPageInfo.curIndex][j]);
+					oMemory.WriteLong(aDeleted[curIndex][j]);
 				}
 			}
 
@@ -4494,7 +4496,7 @@
 				oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
 				// graphics
-				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(oPageInfo.curIndex), oDoc.GetPageHeightMM(oPageInfo.curIndex));
+				oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(curIndex), oDoc.GetPageHeightMM(curIndex));
 				oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
 				oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
@@ -4598,13 +4600,7 @@
 		// сначала edit исходных страниц
 		for (let i = 0; i < aPagesInfo.length; i++) {
 			if (checkNeedEditOrigPage(i)) {
-				aPagesInfo[i].originIndex = oFile.pages[i].originIndex;
-				aPagesInfo[i].curIndex = i;
-
-				writePageInfo.call(this, aPagesInfo[i], 0);
-
-				delete aPagesInfo[i].originIndex;
-				delete aPagesInfo[i].curIndex;
+				writePageInfo.call(this, 0, i, oFile.pages[i].originIndex);
 			}
 		}
 
@@ -4613,16 +4609,7 @@
 
 		// пишем по порядку
 		for (let i = 0; i < aOrder.length; i++) {
-			let nPage = aOrder[i][0];
-			let nType = aOrder[i][1];
-
-			aPagesInfo[nPage].originIndex = undefined;
-			aPagesInfo[nPage].curIndex = nPage;
-
-			writePageInfo.call(this, aPagesInfo[nPage], nType);
-
-			delete aPagesInfo[nPage].originIndex;
-			delete aPagesInfo[nPage].curIndex;
+			writePageInfo.call(this, aOrder[i][1], aOrder[i][0], undefined);
 		}
 
 		if (oMemory) {
