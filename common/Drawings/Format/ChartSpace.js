@@ -722,7 +722,7 @@ function(window, undefined) {
 		let fContentWidth = fForceContentWidth ? fForceContentWidth : Math.abs(fInterval);
 		let nLblTickSkip = 1;
 		let nLblTickType = null;
-		if (oLabelParams) {
+		if (oLabelParams && oLabelParams.valid) {
 			nLblTickSkip = oLabelParams.nLblTickSkip;
 			nLblTickType = oLabelParams.nLblTickType;
 			fContentWidth = fContentWidth * nLblTickSkip;
@@ -870,7 +870,7 @@ function(window, undefined) {
 		let rotatedMaxWidth = null;
 		let direction = 1;
 
-		if (oLabelParams) {
+		if (oLabelParams && oLabelParams.valid) {
 			fAngle = getRotationAngle(oLabelParams.rot);
 			sinAlpha = Math.abs(Math.sin(fAngle));
 			cosAlpha = Math.abs(Math.cos(fAngle));
@@ -1447,35 +1447,17 @@ function(window, undefined) {
 				}
 			}
 
-			// find rot parameter responsible for the rotation of axis labels
+			// find axis type and data type
 			const nAxisType = oLabelsBox && oLabelsBox.axis ? oLabelsBox.axis.getObjectType() : null;
-			let oLabelParams = null;
-			let bodyPr = false;
+			const sDataType = oLabelsBox.getLabelsDataType();
 
-			// extract data type
-			// oLabelParams = new CLabelsParameters(nAxisType, sDataType, oLabelsBox)
-			// oLabelParams.calculateParameters(fAxisLength)
-			// oLabelParams.setUpdatedRot();
+			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
+			const oLabelParams = new CLabelsParameters(nAxisType, sDataType);
 
-			// if (AscFormat.isRealNumber(nAxisType) && nAxisType === AscDFH.historyitem_type_CatAx) {
-
-				const sDataType = oLabelsBox.getLabelsDataType();
-
-				// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
-				oLabelParams = new CLabelsParameters(nAxisType, sDataType);
-
-				// check whether user has defined some parameters
-				oLabelParams.getUserDefinedSettings(oLabelsBox);
-
-				// automatically calculate remaining parameters
-				oLabelParams.calculateParams(oLabelsBox, fAxisLength);
-
-				// save some updated params for future use
-				oLabelParams.saveParams(oLabelsBox);
-			// }
+			oLabelParams.calculate(oLabelsBox, fAxisLength);
 
 			//check whether rotation is applied or not
-			let statement = oLabelParams ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
+			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
 
 			if (statement) {
 				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, oLabelParams);
@@ -11554,7 +11536,21 @@ function(window, undefined) {
 		this.nAxisType = nAxisType;
 		this.sDataType = sDataType;
 		this.oStartingDate = null;
+		this.valid = AscFormat.isRealNumber(nAxisType) && (this.nAxisType === AscDFH.historyitem_type_CatAx || this.nAxisType === AscDFH.historyitem_type_DateAx);
 	}
+
+	CLabelsParameters.prototype.calculate = function (oLabelsBox, fAxisLength) {
+		if (this.valid) {
+			// check whether user has defined some parameters
+			this.getUserDefinedSettings(oLabelsBox);
+
+			// automatically calculate remaining parameters
+			this.calculateParams(oLabelsBox, fAxisLength);
+
+			// save some updated params for future use
+			this.saveParams(oLabelsBox);
+		}
+	};
 
 	CLabelsParameters.prototype.getUserDefinedSettings = function (oLabelsBox) {
 		if (!oLabelsBox) {
@@ -11631,17 +11627,19 @@ function(window, undefined) {
 		for (let i = 0; i < aLabels.length; i++) {
 			//check if there multiple lines exist
 			//if so, take the height of first line
-			const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
-			const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
-			const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
-			if (AscFormat.isRealNumber(height)) {
-				return height;
-			}
-
-			//check the height of the label
-			const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
-			if (AscFormat.isRealNumber(labelSize.h)) {
-				return labelSize.h;
+			if (aLabels[i]) {
+				const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
+				const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
+				const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
+				if (AscFormat.isRealNumber(height)) {
+					return height;
+				}
+	
+				//check the height of the label
+				const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
+				if (AscFormat.isRealNumber(labelSize.h)) {
+					return labelSize.h;
+				}
 			}
 		}
 		return 0;
