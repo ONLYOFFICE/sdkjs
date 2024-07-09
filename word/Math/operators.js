@@ -4080,12 +4080,9 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		strStartSymbol		= this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-		strEndSymbol		= this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+		strStartSymbol		= this.Pr.begChr === -1 ? "〖" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
+		strEndSymbol		= this.Pr.endChr === -1 ? "〗" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 	}
-
-	if (strStartSymbol === "(" && strEndSymbol === ")")
-		oMathText.IsUnicodeBracket = true;
 
 	if (oMathText.IsLaTeX())
 	{
@@ -4141,8 +4138,8 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 	else
 	{
 		let strCloseSymbol;
-		let isCloseToken = AscMath.MathLiterals.rBrackets.SearchU(strEndSymbol);
-		if ((!isCloseToken || isCloseToken && !(oMathText.arr[oMathText.arr.length - 1] instanceof AscMath.MathTextAndStyles)) && !AscMath.MathLiterals.lrBrackets.SearchU(strStartSymbol))
+		let isCloseToken = AscMath.MathLiterals.rBrackets.SearchU(strEndSymbol) || AscMath.MathLiterals.lrBrackets.SearchU(strEndSymbol) ;
+		if (!isCloseToken)
 		{
 			strCloseSymbol = "┤" + strEndSymbol;
 		}

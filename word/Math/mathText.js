@@ -1215,6 +1215,13 @@ CMathAmp.prototype.Copy = function()
 {
     return new CMathAmp();
 };
+CMathAmp.prototype.SetParent = function (oParent)
+{
+	if (!oParent)
+		return;
+
+	this.Parent = oParent;
+}
 CMathAmp.prototype.Write_ToBinary = function(Writer)
 {
     // Long : Type
@@ -1226,7 +1233,7 @@ CMathAmp.prototype.Read_FromBinary = function(Reader)
 CMathAmp.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	oMathText.AddText(new AscMath.MathText("&", this.Parent));
+	oMathText.AddText(new AscMath.MathText("&", this.Parent ? this.Parent : oMathText.GetFirstStyle()));
 
 	return oMathText;
 };

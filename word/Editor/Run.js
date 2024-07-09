@@ -538,10 +538,14 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	
 	let isLatex = oMathText.IsLaTeX();
-	let isOperator = false;
 
 	let nStartPos = (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
 	let nEndPos   = (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
+
+	// if (this.MathPrp.nor === true)
+	// {
+	// 	oMathText.AddText(new AscMath.MathText("\"", this));
+	// }
 
 	for (let i = nStartPos; i < nEndPos; i++)
 	{
@@ -550,23 +554,15 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		if (this.Content.length === 1 && oCurrentElement.value === 11034)
 			return oMathText;
 
-		// for now
-		// todo check what's wrong
-		if (oCurrentElement instanceof CMathAmp && !oCurrentElement.Parent)
-		{
-			oCurrentElement.Parent = this;
-		}
-
 		let strCurrentElement = oCurrentElement.GetTextOfElement(isLatex).GetText();
-
-		if (AscMath.MathLiterals.operator.SearchU(strCurrentElement) || AscMath.MathLiterals.horizontal.SearchU(strCurrentElement))
-			isOperator = true;
-
-		if (AscMath.MathLiterals.number.GetByOneRule(strCurrentElement))
-			oMathText.SetIsNumbers(true);
 
 		oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
 	}
+
+	// if (this.MathPrp.nor === true)
+	// {
+	// 	oMathText.AddText(new AscMath.MathText("\"", this));
+	// }
 
 	return oMathText;
 };
@@ -9300,12 +9296,25 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentMathText = this.Content[i];
-		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operator.SearchU(String.fromCharCode(oCurrentMathText.value));
+		let strOperator = String.fromCharCode(oCurrentMathText.value);
+		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operator.SearchU(strOperator);
 		if (oCurrentMathText.IsBreakOperator() || isNamesOFLiteralsOperator)
 			return true;
 	}
 	return false;
 };
+ParaRun.prototype.IsContainSpaces = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		let strSpace = String.fromCharCode(oCurrentMathText.value);
+		let isSpace = AscMath.MathLiterals.space.SearchU(strSpace);
+		if (isSpace)
+			return true;
+	}
+	return false;
+}
 ParaRun.prototype.IsContainNormalText = function()
 {
 	for (let i = 0; i < this.Content.length; i++)
