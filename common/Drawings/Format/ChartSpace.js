@@ -720,12 +720,8 @@ function(window, undefined) {
 		}
 		let oFirstLabel = null, fFirstLabelCenterX = null, oLastLabel = null, fLastLabelCenterX = null;
 		let fContentWidth = fForceContentWidth ? fForceContentWidth : Math.abs(fInterval);
-		let nLblTickSkip = 1;
-		let nLblTickType = null;
 		if (oLabelParams && oLabelParams.valid) {
-			nLblTickSkip = oLabelParams.nLblTickSkip;
-			nLblTickType = oLabelParams.nLblTickType;
-			fContentWidth = fContentWidth * nLblTickSkip;
+			fContentWidth = oLabelParams.isUserDefinedTickSkip ? fContentWidth : fContentWidth / oLabelParams.nLblTickSkip;
 		}
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
@@ -1326,7 +1322,7 @@ function(window, undefined) {
 
 	function skipCond (oLabelParams, loopsCount) {
 		if (!oLabelParams) {
-			return;
+			return 1;
 		}
 
 		const isLeap = function (y) {
@@ -1458,11 +1454,11 @@ function(window, undefined) {
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
-
+			fForceContentWidth_ = oLabelParams.valid ? fAxisLength : fForceContentWidth_;
 			if (statement) {
 				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, oLabelParams);
 			} else {
-				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, oLabelsBox.maxMinWidth + 0.2, oLabelParams);
+				oLabelsBox.layoutHorNormal(fY, fDistance, fXStart, fInterval, bOnTickMark_, fForceContentWidth_, oLabelParams);
 			}
 		}
 	}
