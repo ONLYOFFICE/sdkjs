@@ -1708,10 +1708,10 @@
 		}
 	};
 	PDFEditorApi.prototype._autoSave = function () {
-		this.canUnlockDocument = true;
+		// this.canUnlockDocument = true;
 		this.isCanSendChanges = true;
 
-		if (this.canSave && (!this.isViewMode || this.isLiveViewer()) && (this.canUnlockDocument)) {
+		if (this.canSave && (!this.isViewMode || this.isLiveViewer()) && (this.canUnlockDocument || 0 !== this.autoSaveGap)) {
 			if (this.canUnlockDocument) {
 				this.lastSaveTime = new Date();
 				// Check edit mode after unlock document http://bugzilla.onlyoffice.com/show_bug.cgi?id=35971

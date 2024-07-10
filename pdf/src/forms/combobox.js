@@ -377,7 +377,8 @@
     CComboBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -399,6 +400,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
 		if (!this.DoKeystrokeAction(aChars))
@@ -738,12 +741,6 @@
 	CComboBoxField.prototype.IsDoNotScroll = function() {
 		return true;
 	};
-	
-	
-	function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 	
 	if (!window["AscPDF"])
 		window["AscPDF"] = {};

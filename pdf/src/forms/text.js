@@ -57,12 +57,12 @@
 		this._useDisplayValue   = true;
 
         // internal
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 		this.content = new AscPDF.CTextBoxContent(this, oDoc);
-
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
+        oDoc.EndNoHistoryMode();
 
         this._scrollInfo = null;
         this._markRect = {};
@@ -204,6 +204,8 @@
         let oDoc        = this.GetDocument();
         let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
 
+        oDoc.StartNoHistoryMode();
+
         if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text) {
             let nCharLimit = this.GetCharLimit();
             if (nCharLimit !== 0)
@@ -235,6 +237,7 @@
             _t.content.MoveCursorToStartPos();
         }
 		
+        oDoc.EndNoHistoryMode();
 	};
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.GetDocument().GetCalculateInfo().ids.indexOf(this.GetApIdx());
@@ -1352,7 +1355,8 @@
     CTextField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -1669,11 +1673,6 @@
 		return element;
 	}
 	
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

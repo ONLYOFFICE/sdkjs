@@ -84,11 +84,6 @@
         // to do
     };
 	
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

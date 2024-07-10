@@ -144,7 +144,8 @@
     CListBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -166,6 +167,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
     /**
 	 * Applies value of this field to all field with the same name.
@@ -938,11 +941,6 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 
     function getPdfAlignType(nPdfAlign) {
         switch (nPdfAlign) {

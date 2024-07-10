@@ -4319,6 +4319,7 @@
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
 	AscDFH.historyitem_Pdf_Form_Add_Kid			= AscDFH.historyitem_type_Pdf_Form | 2;
 	AscDFH.historyitem_Pdf_Form_Remove_Kid		= AscDFH.historyitem_type_Pdf_Form | 3;
+	AscDFH.historyitem_Pdf_Form_Change_Display	= AscDFH.historyitem_type_Pdf_Form | 4;
 	
 	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs	= AscDFH.historyitem_type_Pdf_List_Form | 1;
 
@@ -4836,6 +4837,7 @@
 	window['AscDFH'].historydescription_Pdf_FieldCommit			= 0x2a6;
 	window['AscDFH'].historydescription_Pdf_FieldImportImage	= 0x2a6;
 	window['AscDFH'].historydescription_Pdf_FieldSelectOption	= 0x2a7;
+	window['AscDFH'].historydescription_Pdf_ExecActions			= 0x2a8;
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

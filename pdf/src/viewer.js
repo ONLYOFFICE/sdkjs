@@ -803,6 +803,8 @@
 			if (this.drawingPages[0]) {
 				this.navigateToPage(0, 0, this.scrollMaxX / 2);
 			}
+
+			this.doc.TurnOnHistory();
 		};
 
 		this.open = function(data, password)

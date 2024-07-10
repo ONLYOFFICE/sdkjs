@@ -120,11 +120,6 @@
         };
     }
 
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
-	window["AscPDF"].CSignatureField = CSignatureField;
+    window["AscPDF"].CSignatureField = CSignatureField;
 })();
 

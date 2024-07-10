@@ -88,8 +88,6 @@
         this._width         = undefined;
         this._fillColor     = [1, 0.82, 0];
 
-        // internal
-        TurnOffHistory();
         this._replies = [];
     }
     CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
@@ -195,7 +193,7 @@
     };
     CAnnotationText.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -224,6 +222,8 @@
         oNewAnnot.SetModDate(this.GetModDate());
         oNewAnnot.SetCreationDate(this.GetCreationDate());
         oNewAnnot.SetContents(this.GetContents());
+
+        oDoc.EndNoHistoryMode();
 
         return oNewAnnot;
     };
@@ -371,12 +371,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    // CAnnotationText.prototype.ClearCache = function() {};
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
     window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;

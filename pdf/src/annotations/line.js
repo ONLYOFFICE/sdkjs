@@ -89,9 +89,6 @@
         this._captionPos        = CAPTION_POSITIONING.Inline; // CP
         this._captionOffset     = undefined;  // CO
         this._needRecalc        = false;
-
-        // internal
-        TurnOffHistory();
     }
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
     AscFormat.InitClass(CAnnotationLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
@@ -130,9 +127,10 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         AscPDF.fillShapeByPoints([aLinePoints], aShapeRectInMM, this);
-        
+        oDoc.EndNoHistoryMode();
+
         this._points = aPoints;
     }
     CAnnotationLine.prototype.SetLeaderLineOffset = function(nValue) {
@@ -204,7 +202,7 @@
     };
     CAnnotationLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -239,6 +237,7 @@
         oLine._points = this._points.slice();
         oLine.recalculate();
 
+        oDoc.EndNoHistoryMode();
         return oLine;
     };
     CAnnotationLine.prototype.IsLine = function() {
@@ -335,11 +334,11 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
+        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        oDoc.EndNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
@@ -663,11 +662,6 @@
         }
 
         return oSize;
-    }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
     }
 
     window["AscPDF"].CAnnotationLine    = CAnnotationLine;

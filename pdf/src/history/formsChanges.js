@@ -35,7 +35,10 @@
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]			= CChangesPDFFormValue;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Add_Kid]			= CChangesPDFFormAddKid;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Remove_Kid]		= CChangesPDFFormRemoveKid;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Change_Display]	= CChangesPDFFormDisplay;
+
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_List_Form_Cur_Idxs]	= CChangesPDFListFormCurIdxs;
+
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]		= CChangesPDFPushbuttonImage;
 
 /**
@@ -51,8 +54,9 @@ CChangesPDFFormValue.prototype.constructor = CChangesPDFFormValue;
 CChangesPDFFormValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Value;
 CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 {
-	var oField = this.Class;
+	let oField = this.Class;
 	oField.SetValue(Value);
+	oField.Commit();
 };
 
 /**
@@ -147,6 +151,23 @@ CChangesPDFFormRemoveKid.prototype.Redo = function()
 	
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFormDisplay(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFormDisplay.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFormDisplay.prototype.constructor = CChangesPDFFormDisplay;
+CChangesPDFFormDisplay.prototype.Type = AscDFH.historyitem_Pdf_Form_Change_Display;
+CChangesPDFFormDisplay.prototype.private_SetValue = function(Value)
+{
+	let oField = this.Class;
+	oField.SetDisplay(Value);
 };
 
 /**

@@ -77,10 +77,7 @@
         this.recalcInfo.recalculateGeometry = true;
         this.isInTextBox                    = false; // флаг, что внутри текстбокса
         this.defaultPerpLength              = 12; // длина выступающего перпендикуляра callout по умолчанию
-        
-        // internal
-        TurnOffHistory();
-    }
+    };
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
     AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_GroupShape);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
@@ -429,13 +426,15 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
         this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
         this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
         this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
         this.updateTransformMatrix();
+
+        oDoc.EndNoHistoryMode();
 
         this.recalcGeometry();
         this.SetNeedRecalc(true);
@@ -459,7 +458,7 @@
     };
     CAnnotationFreeText.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -497,6 +496,7 @@
         oFreeText.SetWasChanged(oFreeText.IsChanged());
         oFreeText.recalcGeometry();
         
+        oDoc.EndNoHistoryMode();
         return oFreeText;
     };
     CAnnotationFreeText.prototype.Recalculate = function() {
@@ -594,11 +594,13 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
-        fillShapeByPoints(aFreeTextPoints, aShapeRectInMM, this);
+        oDoc.StartNoHistoryMode();
 
+        fillShapeByPoints(aFreeTextPoints, aShapeRectInMM, this);
         this.recalcInfo.recalculateGeometry = false;
         this.CheckInnerShapesProps();
+
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationFreeText.prototype.recalcGeometry = function () {
         this.recalcInfo.recalculateGeometry = true;
@@ -1802,11 +1804,6 @@
         return nInnerType;
     }
     
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     window["AscPDF"].CAnnotationFreeText    = CAnnotationFreeText;
     window["AscPDF"].FREE_TEXT_INTENT_TYPE  = window["AscPDF"]["FREE_TEXT_INTENT_TYPE"] = FREE_TEXT_INTENT_TYPE;
     FREE_TEXT_INTENT_TYPE['FreeText']           = FREE_TEXT_INTENT_TYPE.FreeText;

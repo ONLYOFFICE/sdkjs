@@ -53,9 +53,6 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-
-        // internal
-        TurnOffHistory();
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
     AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
@@ -66,7 +63,7 @@
     };
     CAnnotationCircle.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -100,6 +97,7 @@
         oCircle.SetDash(this.GetDash());
         oCircle.recalculate();
 
+        oDoc.EndNoHistoryMode();
         return oCircle;
     };
     CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
@@ -121,13 +119,14 @@
             ];
         }
         
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
             generateCloudyGeometry(undefined, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
         }
         else {
             oGeometry.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
         }
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationCircle.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -153,8 +152,6 @@
 
         this.SetRectangleDiff([0, 0, 0, 0]);
         oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
-
-        oDoc.TurnOffHistory();
 
         this.recalcGeometry();
         this.AddToRedraw();
@@ -232,11 +229,6 @@
         memory.Seek(nEndPos);
     };
     
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {
         let xMin = aBounds[0];
         let yMin = aBounds[1];
