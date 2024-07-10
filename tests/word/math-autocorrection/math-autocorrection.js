@@ -210,9 +210,8 @@ $(function () {
 			Test("base┴2┴x+2", [["ParaRun", ""], ["CLimit", "base┴(2┴x)"], ["ParaRun", "+2"]], false, "Check diacritics");
 			Test("base┴2┴(x/y+6)+2", [["ParaRun", ""], ["CLimit", "base┴(2┴(x/y+6))"], ["ParaRun", "+2"]], false, "Check diacritics");
 
-			// for now, we don't trigger autocorrection by divide
-			//Test("x^23┴2/y", 2, [["ParaRun", ""], ["CAccent", "e⃗"], ["ParaRun", ""]], false, "Check diacritics");
-			//Test("(x^23)┴2/y", 2, [["ParaRun", ""], ["CAccent", "e⃗"], ["ParaRun", ""]], false, "Check diacritics");
+			Test("x^23┴2/y", [["ParaRun", ""], ["CLimit", "(x^23)┴2"], ["ParaRun", "/y"]], false, "Start autocorrection by divide");
+			Test("(x^23)┴2/y", [["ParaRun", ""], ["CLimit", "(x^23)┴2"], ["ParaRun", "/y"]], false, "Start autocorrection by divide");
 		})
 
 		QUnit.module( "Box and Rect", function ()
@@ -259,21 +258,21 @@ $(function () {
 			Test(`{1+2} -X`, [["ParaRun", ""], ["CDelimiter", "{1+2}"], ["ParaRun", "-X"]], false, "Check Unicode bracket", false);
 			Test(`[1+2] *i`, [["ParaRun", ""], ["CDelimiter", "[1+2]"], ["ParaRun", "*i"]], false, "Check Unicode bracket", false);
 			Test(`|1+2| -89/2 `, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", false);
-			Test(`|1+2| -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", false);
-			Test(`⌈1+2⌉ -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "⌈1+2⌉"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", false);
-			Test(`⌊1+2⌋ -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "⌊1+2⌋"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", false);
-			Test(`〖89/2〗/2 `, [["ParaRun", ""], ["CFraction", "〖89/2〗/2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`|1+2| -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", false);
+			Test(`⌈1+2⌉ -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "⌈1+2⌉"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", false);
+			Test(`⌊1+2⌋ -〖89/2〗 `, [["ParaRun", ""], ["CDelimiter", "⌊1+2⌋"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", false);
+			Test(`〖89/2〗/2 `, [["ParaRun", ""], ["CFraction", "(89/2)/2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
 			Test(`√〖89/2〗 `, [["ParaRun", ""], ["CRadical", "√(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`〖89/2〗_2 `, [["ParaRun", ""], ["CDegree", "〖89/2〗_2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`〖89/2〗^2 `, [["ParaRun", ""], ["CDegree", "〖89/2〗^2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2_〖89/2〗 `, [["ParaRun", ""], ["CDegree", "2_〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2^〖89/2〗 `, [["ParaRun", ""], ["CDegree", "2^〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2_〖89/2〗_2 `, [["ParaRun", "2_"], ["CDegree", "〖89/2〗_2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2^〖89/2〗^2 `, [["ParaRun", "2^"], ["CDegree", "〖89/2〗^2"], ["ParaRun", ""]], false, "Check Unicode bracket",  false);
-			Test(`2┴〖89/2〗 `, [["ParaRun", ""], ["CLimit", "2┴〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2┴〖89/2〗┴2 `, [["ParaRun", "2┴"], ["CLimit", "〖89/2〗┴2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2┬〖89/2〗 `, [["ParaRun", ""], ["CLimit", "2┬〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
-			Test(`2┬〖89/2〗┬2 `, [["ParaRun", "2┬"], ["CLimit", "〖89/2〗┬2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`〖89/2〗_2 `, [["ParaRun", ""], ["CDegree", "(89/2)_2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`〖89/2〗^2 `, [["ParaRun", ""], ["CDegree", "(89/2)^2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2_〖89/2〗 `, [["ParaRun", ""], ["CDegree", "2_(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2^〖89/2〗 `, [["ParaRun", ""], ["CDegree", "2^(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2_〖89/2〗_2 `, [["ParaRun", "2_"], ["CDegree", "(89/2)_2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2^〖89/2〗^2 `, [["ParaRun", "2^"], ["CDegree", "(89/2)^2"], ["ParaRun", ""]], false, "Check Unicode bracket",  false);
+			Test(`2┴〖89/2〗 `, [["ParaRun", ""], ["CLimit", "2┴(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2┴〖89/2〗┴2 `, [["ParaRun", "2┴"], ["CLimit", "(89/2)┴2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2┬〖89/2〗 `, [["ParaRun", ""], ["CLimit", "2┬(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
+			Test(`2┬〖89/2〗┬2 `, [["ParaRun", "2┬"], ["CLimit", "(89/2)┬2"], ["ParaRun", ""]], false, "Check Unicode bracket", false);
 			Test(`├]a+b┤[ `, [["ParaRun", ""], ["CDelimiter", "├]a+b┤["], ["ParaRun", ""]], false, "Check Unicode bracket", false);
 
 			Test("(", [["ParaRun", "("]], false);
@@ -420,22 +419,24 @@ $(function () {
 			Test(`{1+2}-X`, [["ParaRun", ""], ["CDelimiter", "{1+2}"], ["ParaRun", "-X"]], false, "Check Unicode bracket", true);
 			Test(`[1+2]*i`, [["ParaRun", ""], ["CDelimiter", "[1+2]"], ["ParaRun", "*i"]], false, "Check Unicode bracket", true);
 			Test(`|1+2|-89/2`, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", true);
-			Test(`|1+2|-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", true);
-			Test(`⌈1+2⌉-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "⌈1+2⌉"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", true);
-			Test(`⌊1+2⌋-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "⌊1+2⌋"], ["ParaRun", "-"], ["CDelimiter", "〖89/2〗"]], false, "Check Unicode bracket", true);
-			Test(`〖89/2〗/2`, [["ParaRun", ""], ["CFraction", "〖89/2〗/2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`|1+2|-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "|1+2|"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", true);
+			Test(`⌈1+2⌉-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "⌈1+2⌉"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", true);
+			Test(`⌊1+2⌋-〖89/2〗`, [["ParaRun", ""], ["CDelimiter", "⌊1+2⌋"], ["ParaRun", "-"], ["CFraction", "89/2"]], false, "Check Unicode bracket", true);
+			Test(`〖89/2〗/2`, [["ParaRun", ""], ["CFraction", "(89/2)/2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
 			Test(`√〖89/2〗`, [["ParaRun", ""], ["CRadical", "√(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`〖89/2〗_2`, [["ParaRun", ""], ["CDegree", "〖89/2〗_2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`〖89/2〗^2`, [["ParaRun", ""], ["CDegree", "〖89/2〗^2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2_〖89/2〗`, [["ParaRun", ""], ["CDegree", "2_〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2^〖89/2〗`, [["ParaRun", ""], ["CDegree", "2^〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2_〖89/2〗_2`, [["ParaRun", ""], ["CDegree", "2_(〖89/2〗_2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2^〖89/2〗^2`, [["ParaRun", ""], ["CDegree", "2^(〖89/2〗^2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true );
-			Test(`2┴〖89/2〗`, [["ParaRun", ""], ["CLimit", "2┴〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2┴〖89/2〗┴2`, [["ParaRun", ""], ["CLimit", "2┴(〖89/2〗┴2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2┬〖89/2〗`, [["ParaRun", ""], ["CLimit", "2┬〖89/2〗"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
-			Test(`2┬〖89/2〗┬2`, [["ParaRun", ""], ["CLimit", "2┬(〖89/2〗┬2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`〖89/2〗_2`, [["ParaRun", ""], ["CDegree", "(89/2)_2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`〖89/2〗^2`, [["ParaRun", ""], ["CDegree", "(89/2)^2"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2_〖89/2〗`, [["ParaRun", ""], ["CDegree", "2_(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2^〖89/2〗`, [["ParaRun", ""], ["CDegree", "2^(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2_〖89/2〗_2`, [["ParaRun", ""], ["CDegree", "2_((89/2)_2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2^〖89/2〗^2`, [["ParaRun", ""], ["CDegree", "2^((89/2)^2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true );
+			Test(`2┴〖89/2〗`, [["ParaRun", ""], ["CLimit", "2┴(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2┴〖89/2〗┴2`, [["ParaRun", ""], ["CLimit", "2┴((89/2)┴2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2┬〖89/2〗`, [["ParaRun", ""], ["CLimit", "2┬(89/2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+			Test(`2┬〖89/2〗┬2`, [["ParaRun", ""], ["CLimit", "2┬((89/2)┬2)"], ["ParaRun", ""]], false, "Check Unicode bracket", true);
 			Test(`├]a+b┤[`, [["ParaRun", ""], ["CDelimiter", "├]a+b┤["], ["ParaRun", ""]], false, "Check Unicode bracket", true);
+
+			Test(`〖1∣2〗`, [["ParaRun", ""], ["CDelimiter", "〖1∣2〗"], ["ParaRun", ""]], false, "Check special bracket with some contents", true);
 		})
 
 		QUnit.module( "Complex", function ()
@@ -476,11 +477,11 @@ $(function () {
 		QUnit.module( "Horizontal brackets", function ()
 		{
 			QUnit.module( " convert hbrackets");
-			// Test(`⏞(x+⋯+x)`, [["ParaRun", ""], ["CGroupCharacter", "⏞(x+⋯+x)"], ["ParaRun", ""]], false, "Check hbrack content", true);
-			// Test(`⏞(x+⋯+x)^2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┴2"], ["ParaRun", ""]], false, "Check hbrack content", true);
-			// Test(`⏞(x+⋯+x)_2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬2"], ["ParaRun", ""]], false, "Check hbrack content", true);
-			// Test(`⏞(x+⋯+x)_2^Y`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬2^Y"], ["ParaRun", ""]], false, "Check hbrack content", true);
-			// Test(`⏞(x+⋯+x)_2^2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬2^2"], ["ParaRun", ""]], false, "Check hbrack content", true);
+			Test(`⏞(x+⋯+x)`, [["ParaRun", ""], ["CGroupCharacter", "⏞(x+⋯+x)"], ["ParaRun", ""]], false, "Check hbrack content", true);
+			Test(`⏞(x+⋯+x)^2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┴2"], ["ParaRun", ""]], false, "Check hbrack content", true);
+			Test(`⏞(x+⋯+x)_2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬2"], ["ParaRun", ""]], false, "Check hbrack content", true);
+			Test(`⏞(x+⋯+x)_2^Y`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬(2^Y)"], ["ParaRun", ""]], false, "Check hbrack content", true);
+			Test(`⏞(x+⋯+x)_2^2`, [["ParaRun", ""], ["CLimit", "⏞(x+⋯+x)┬(2^2)"], ["ParaRun", ""]], false, "Check hbrack content", true);
 		})
 
 		QUnit.module( "Autocorrection", function ()
@@ -729,7 +730,7 @@ $(function () {
 
 		QUnit.module( "Degree", function ()
 		{
-			QUnit.module( "degree");
+			QUnit.module( "convert");
 			Test("2^2 + 2", [["ParaRun", ""], ["CDegree", "2^2"], ["ParaRun", "+ 2"]], false, "Check scripts", true)
 			Test("x^2+2", [["ParaRun", ""], ["CDegree", "x^2"], ["ParaRun", "+2"]], false, "Check scripts", true)
 			Test("x^(256+34)*y", [["ParaRun", ""], ["CDegree", "x^(256+34)"], ["ParaRun", "*y"]], false, "Check scripts", true)
@@ -752,9 +753,9 @@ $(function () {
 			Test("x_[1+2] ", [["ParaRun", ""], ["CDegree", "x_[1+2]"], ["ParaRun", ""]], false, "Check degree");
 			Test("x_[1+2} ", [["ParaRun", ""], ["CDegree", "x_[1+2}"], ["ParaRun", ""]], false, "Check degree");
 			Test("x_1/2", [["ParaRun", ""], ["CDegree", "x_1"], ["ParaRun", "/2"]], false, "Check degree");
-			// Test("x_1/2 ", [["ParaRun", ""], ["CFraction", "x_1/2"], ["ParaRun", ""]], false, "Check degree");
+			Test("x_1/2 ", [["ParaRun", ""], ["CFraction", "(x_1)/2"], ["ParaRun", ""]], false, "Check degree");
 
-			QUnit.module( "[U-AC] degree");
+			QUnit.module( "autocorrect");
 			Test("^ ", [["ParaRun", ""], ["CDegree", "^"]], false, "Check index");
 			Test("x^y ", [["ParaRun", ""], ["CDegree", "x^y"], ["ParaRun", ""]], false, "Check index");
 			Test("x^1 ", [["ParaRun", ""], ["CDegree", "x^1"], ["ParaRun", ""]], false, "Check index");
@@ -762,8 +763,8 @@ $(function () {
 			Test("x^(1+2) ", [["ParaRun", ""], ["CDegree", "x^(1+2)"], ["ParaRun", ""]], false, "Check index");
 			Test("x^[1+2] ", [["ParaRun", ""], ["CDegree", "x^[1+2]"], ["ParaRun", ""]], false, "Check index");
 			Test("x^[1+2} ", [["ParaRun", ""], ["CDegree", "x^[1+2}"], ["ParaRun", ""]], false, "Check index");
-			//Test("x^1/2", [["ParaRun", ""], ["CFraction", "x^1"], ["ParaRun", "/2"]], false, "Check index");
-			//Test("x^1/2 ", [["ParaRun", ""], ["CFraction", "x^1/2"], ["ParaRun", ""]], false, "Check index");
+			Test("x^1/2", [["ParaRun", ""], ["CDegree", "x^1"], ["ParaRun", "/2"]], false, "Check index");
+			Test("x^1/2 ", [["ParaRun", ""], ["CFraction", "(x^1)/2"], ["ParaRun", ""]], false, "Check index");
 
 			Test("x^y_1 ", [["ParaRun", ""], ["CDegreeSubSup", "x_1^y"], ["ParaRun", ""]], false, "Check index degree");
 			Test("x^1_i ", [["ParaRun", ""], ["CDegreeSubSup", "x_i^1"], ["ParaRun", ""]], false, "Check index degree");
@@ -771,8 +772,8 @@ $(function () {
 			Test("x^[1+2]_[g_i] ", [["ParaRun", ""], ["CDegreeSubSup", "x_[g_i]^[1+2]"], ["ParaRun", ""]], false, "Check index degree");
 			Test("x^[1+2}_[6+1} ", [["ParaRun", ""], ["CDegreeSubSup", "x_[6+1}^[1+2}"], ["ParaRun", ""]], false, "Check index degree");
 			//Test("x^1/2_1/2 ", [["ParaRun", ""], ["CFraction", "x^1/(2_1/2)"], ["ParaRun", ""]], false, "Check index degree");
+			Test("𝑊^3𝛽_𝛿1𝜌1𝜎2 ", [["ParaRun", ""], ["CDegreeSubSup", "𝑊_𝛿1𝜌1𝜎2^3𝛽"], ["ParaRun", ""]], false, "Check index degree with Unicode symbols");
 
-			//Test("𝑊^3𝛽_𝛿1𝜌1𝜎2 ", [["ParaRun", ""], ["CDegree", "𝑊^3𝛽_𝛿1𝜌1𝜎2"], ["ParaRun", ""]], false, "Check index degree with Unicode symbols");
 			QUnit.module( "pre-script");
 			// Test("(_1^f)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_1^f)f"], ["ParaRun", ""]], false, "Check prescript index degree");
 			// Test("(_(1/2)^y)f ", [["ParaRun", ""], ["CDegreeSubSup", "(_(1/2)^y)f"], ["ParaRun", ""]], false, "Check prescript index degree");
@@ -782,33 +783,33 @@ $(function () {
 		QUnit.module( "Radicals", function ()
 		{
 			QUnit.module( " convert radicals");
-			Test("√5", [["ParaRun", ""]], false, "Check special", true)
-			Test("√a", [["ParaRun", ""]], false, "Check special", true)
-			Test("√a/2", [["ParaRun", ""]], false, "Check special", true)
-			Test("√(2&a-4)", [["ParaRun", ""]], false, "Check special", true)
-			Test("∛5", [["ParaRun", ""]], false, "Check special", true)
-			Test("∛a", [["ParaRun", ""]], false, "Check special", true)
-			Test("∛a/2", [["ParaRun", ""]], false, "Check special", true)
-			Test("∛(a-4)", [["ParaRun", ""]], false, "Check special", true)
-			Test("∜5", [["ParaRun", ""]], false, "Check special", true)
-			Test("∜a", [["ParaRun", ""]], false, "Check special", true)
-			Test("∜a/2", [["ParaRun", ""]], false, "Check special", true)
-			Test("∜(a-4)", [["ParaRun", ""]], false, "Check special", true)
-			Test("√(10&a/4)", [["ParaRun", ""]], false, "Check special", true)
-			Test("√(10^2&a/4+2)", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5^2", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5_2", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5^2_x", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5_2^x", [["ParaRun", ""]], false, "Check special", true)
-			Test("(_5^2)√5", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5┴exp1", [["ParaRun", ""]], false, "Check special", true)
-			Test("√5┬exp1", [["ParaRun", ""]], false, "Check special", true)
-			Test("(√5┬exp1]", [["ParaRun", ""]], false, "Check special", true)
-			Test("□√5", [["ParaRun", ""]], false, "Check special", true)
-			Test("▭√5", [["ParaRun", ""]], false, "Check special", true)
-			Test("▁√5", [["ParaRun", ""]], false, "Check special", true)
-			// Test(` ̄√5`.trim(), [["ParaRun", ""]], false, "Check special", true)
-			Test("∑_√5^√5", [["ParaRun", ""]], false, "Check special", true)
+			Test("√5", [["ParaRun", ""], ["CRadical", "√5"],["ParaRun", ""]], false, "Check special", true)
+			Test("√a", [["ParaRun", ""], ["CRadical", "√a"],["ParaRun", ""]], false, "Check special", true)
+			Test("√a/2", [["ParaRun", ""], ["CFraction", "√a/2"],["ParaRun", ""]], false, "Check special", true)
+			Test("√(2&a-4)", [["ParaRun", ""], ["CRadical", "√(2&a-4)"],["ParaRun", ""]], false, "Check special", true)
+			Test("∛5", [["ParaRun", ""], ["CRadical", "∛5"],["ParaRun", ""]], false, "Check special", true)
+			Test("∛a", [["ParaRun", ""], ["CRadical", "∛a"],["ParaRun", ""]], false, "Check special", true)
+			Test("∛a/2", [["ParaRun", ""], ["CFraction", "∛a/2"],["ParaRun", ""]], false, "Check special", true)
+			Test("∛(a-4)", [["ParaRun", ""], ["CRadical", "∛(a-4)"],["ParaRun", ""]], false, "Check special", true)
+			Test("∜5", [["ParaRun", ""], ["CRadical", "∜5"],["ParaRun", ""]], false, "Check special", true)
+			Test("∜a", [["ParaRun", ""], ["CRadical", "∜a"],["ParaRun", ""]], false, "Check special", true)
+			Test("∜a/2", [["ParaRun", ""], ["CFraction", "∜a/2"],["ParaRun", ""]], false, "Check special", true)
+			Test("∜(a-4)", [["ParaRun", ""], ["CRadical", "∜(a-4)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√(10&a/4)", [["ParaRun", ""], ["CRadical", "√(10&a/4)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√(10^2&a/4+2)", [["ParaRun", ""], ["CRadical", "√(10^2&a/4+2)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5^2", [["ParaRun", ""], ["CRadical", "√(5^2)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5_2", [["ParaRun", ""], ["CRadical", "√(5_2)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5^2_x", [["ParaRun", ""], ["CRadical", "√(5_x^2)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5_2^x", [["ParaRun", ""], ["CRadical", "√(5_2^x)"],["ParaRun", ""]], false, "Check special", true)
+			Test("(_5^2)√5", [["ParaRun", ""], ["CDegreeSubSup", "(_5^2)√5"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5┴exp1", [["ParaRun", ""], ["CRadical", "√(5┴exp1)"],["ParaRun", ""]], false, "Check special", true)
+			Test("√5┬exp1", [["ParaRun", ""], ["CRadical", "√(5┬exp1)"],["ParaRun", ""]], false, "Check special", true)
+			Test("(√5┬exp1]", [["ParaRun", ""], ["CDelimiter", "(√(5┬exp1)]"],["ParaRun", ""]], false, "Check special", true)
+			//Test("□√5", [["ParaRun", ""], ["CBox", "□(√5)"],["ParaRun", ""]], false, "Check special", true)
+			//Test("▭√5", [["ParaRun", ""], ["CRect", "▭(√5)"],["ParaRun", ""]], false, "Check special", true)
+			//Test("▁√5", [["ParaRun", ""], ["CBar", "▁(√5)"],["ParaRun", ""]], false, "Check special", true)
+			//Test(`¯√5`, [["ParaRun", ""], ["CBar", "¯(√5)"],["ParaRun", ""]], false, "Check special", true)
+			Test("∑_√5^√5", [["ParaRun", ""], ["CNary", "∑_√(5^√5)"],["ParaRun", ""]], false, "Check special", true)
 
 			Test("\\sqrt ", [["ParaRun", "√"]], false, "Check");
 			Test("\\sqrt (2&1+2) ", [["ParaRun", ""], ["CRadical", "√(2&1+2)"], ["ParaRun", ""]], false, "Check radical");
@@ -906,10 +907,9 @@ $(function () {
 			Test("   𝐀𝐁𝐂𝐨𝐹   ", [["ParaRun", "   𝐀𝐁𝐂𝐨𝐹   "]], false, "Check literal")
 			Test(" 	𝐀𝐁𝐂𝐨𝐹  	 ", [["ParaRun", " 	𝐀𝐁𝐂𝐨𝐹  	 "]], false, "Check literal")
 			Test(`1+fbnd+(3+𝐀𝐁𝐂𝐨𝐹)+c+5`, [["ParaRun", "1+fbnd+"], ["CDelimiter", "(3+𝐀𝐁𝐂𝐨𝐹)"], ["ParaRun", "+c+5"]], false, "Check literal")
-			//Test(`1/3.1416`, 1, [["ParaRun", ""]], false, "Check literal")
-			// Test("1\\above2", 2, [["ParaRun", ""], ["CLimit", "1┴2"]], false, "Check literal", true)
-			// Test("1\\acute2", 2, [["ParaRun", ""], ["ParaRun", ""]], false, "Check literal", true)
-
+			Test(`1/3.1416 `, [["ParaRun", ""], ["CFraction", "1/3.1416"],["ParaRun", ""]], false, "Check literal")
+			Test("1\\above 2 ", [["ParaRun", ""], ["CLimit", "1┴2"]], false, "Check literal")
+			Test("1\\acute 2 ", [["ParaRun", ""], ["CAccent", "1́"], ["ParaRun", "2"]], false, "Check literal")
 
 			//QUnit.module( " convert operators");
 			// Test("2⁰¹²³⁴⁵⁶⁷⁸⁹", 1, [], false, "Check special")
@@ -948,7 +948,6 @@ $(function () {
 
 		QUnit.module( "Functions", function ()
 		{
-
 			Test("sin ", [["ParaRun", ""], ["CMathFunc", "sin⁡"]], false, "Check functions");
 			Test("cos ", [["ParaRun", ""], ["CMathFunc", "cos⁡"]], false, "Check functions");
 			Test("tan ", [["ParaRun", ""], ["CMathFunc", "tan⁡"]], false, "Check functions");
@@ -1003,8 +1002,8 @@ $(function () {
 
 		QUnit.module( "Matrix", function ()
 		{
-			// Test("■ ", [["ParaRun", "■ "]], false, "Check matrix");
-			// Test("■(1&2@3&4) ", [["ParaRun", ""], ["CMathMatrix", "■(1&2@3&4)"], ["ParaRun", ""]], false, "Check matrix");
+			Test("■ ", [["ParaRun", "■ "]], false, "Check matrix");
+			Test("■(1&2@3&4) ", [["ParaRun", ""], ["CMathMatrix", "■(1&2@3&4)"], ["ParaRun", ""]], false, "Check matrix");
 			Test("■(1&2) ", [["ParaRun", ""], ["CMathMatrix", "■(1&2)"], ["ParaRun", ""]], false, "Check matrix");
 			//Test("■(&1&2@3&4) ", [["ParaRun", ""], ["CMathMatrix", "■(&1&2@3&4&)"], ["ParaRun", ""]], false, "Check matrix");
 		})
@@ -1017,8 +1016,8 @@ $(function () {
 			Test("e\\dot  ", [["ParaRun", ""], ["CAccent", "ė"], ["ParaRun", ""]], false, "Check diacritics");
 			Test("e\\ddot  ", [["ParaRun", ""], ["CAccent", "ë"], ["ParaRun", ""]], false, "Check diacritics");
 			Test("e\\dddot  ", [["ParaRun", ""], ["CAccent", "e⃛"], ["ParaRun", ""]], false, "Check diacritics");
-			// Test("e\\prime  ", [["ParaRun", ""], ["CAccent", "e′"], ["ParaRun", ""]], false, "Check diacritics");
-			// Test("e\\pprime  ", [["ParaRun", ""], ["CAccent", "e″"], ["ParaRun", ""]], false, "Check diacritics");
+			Test("e\\prime  ", [["ParaRun", ""], ["CDegree", "e^′"], ["ParaRun", ""]], false, "Check diacritics");
+			Test("e\\pprime  ", [["ParaRun", ""], ["CDegree", "e^″"], ["ParaRun", ""]], false, "Check diacritics");
 			Test("e\\check  ", [["ParaRun", ""], ["CAccent", "ě"], ["ParaRun", ""]], false, "Check diacritics");
 			Test("e\\acute  ", [["ParaRun", ""], ["CAccent", "é"], ["ParaRun", ""]], false, "Check diacritics");
 			Test("e\\grave  ", [["ParaRun", ""], ["CAccent", "è"], ["ParaRun", ""]], false, "Check diacritics");
@@ -1031,6 +1030,7 @@ $(function () {
 
 		QUnit.module( "Bugs", function ()
 		{
+			Test("(1/2)/", [["ParaRun", ""], ["CDelimiter", "(1/2)"], ["ParaRun", "/"]], false, "Check devide");
 			// QUnit.module( "Check bug #61007" );
 			// Test("\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}"]], true, "Check bug #61007 default matrix");
 			// Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}"]], true, "Check bug #61007 pmatrix");
@@ -1086,61 +1086,61 @@ $(function () {
 
 	QUnit.module( "LaTeX", function ()
 	{
-		// Test("\\dot{a}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\ddot{b}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\acute{c}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\grave{d}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\check{e}", [["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\dot{a}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\ddot{b}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\acute{c}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\grave{d}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\check{e}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
 		//
-		// Test("\\breve{f}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\tilde{g}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\bar{h}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\widehat{j}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\vec{k}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\vec \\frac{k}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("5''", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{4}{5}''", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("(a)[b]\\{c\\}|d|\\|e\\|\\langlef\\rangle\\lfloorg\\rfloor\\lceilh\\rceil\\ulcorneri\\urcorner/j\\backslash", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("(2+1]", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\left.1+2\\right)", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("|2|+\\{1\\}+|2|", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2^2", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a^b", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a^2", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2^b", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2_2", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a_b", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("a_2", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("2_b", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`k_{n+1} = n^2 + k_n^2 - k_{n-1}`, [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`\\frac{1}{2}^{2}`, [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test(`\\frac{1}{2}_2`, [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_2^y", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_{2}^{y}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}_1_2_3_4_5_6_7", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}^1^2^3^4^5^6^7", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}^1^2^3^4^5^6^7_x", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1+\\frac{x}{y}}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frac{1^x}{2_y}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sum^{2}_{x}4", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\int^2_x{4}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\binom{1}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sum_{i=1}^{10} t_i", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\exp_a b = a^b, \\exp b = e^b, 10^m, \\exp_{a}^x {b}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\ln c, \\lg d = \\log e, \\log_{10} f", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sin a, \\cos b, \\tan c, \\cot d, \\sec e, \\csc f, \\cos^2_{y}{b}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\arcsin h, \\arccos_x i, \\arctan^y_{x} {j}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sinhk, \\cosh {l}, \\tanh_x^y m, \\coth^{x}_y_1_2 {n}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\left\\vert s \\right\\vert", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\min(x,y), \\max(x,y)", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("0 \\leq \\lim_{n\\to \\infty}\\frac{n!}{(2n)!} \\leq \\lim_{n\\to \\infty} \\frac{n!}{(n!)^2} = \\lim_{k \\to \\infty, k = n!}\\frac{k}{k^2} = \\lim_{k \\to \\infty} \\frac{1}{k} = 0", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt5", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt\\frac{1}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt[2^2]\\frac{1}{2}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\sqrt[2^2] {\\frac{1}{2}+3}", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\doubleAB", [["ParaRun", ""]], true, "Check LaTeX words");
-		// Test("\\frakturAB", [["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\breve{f}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\tilde{g}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\bar{h}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\widehat{j}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\vec{k}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\vec \\frac{k}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("5''", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{4}{5}''", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("(a)[b]\\{c\\}|d|\\|e\\|\\langlef\\rangle\\lfloorg\\rfloor\\lceilh\\rceil\\ulcorneri\\urcorner/j\\backslash", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("(2+1]", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\left.1+2\\right)", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("|2|+\\{1\\}+|2|", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("2^2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("a^b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("a^2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("2^b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("2_2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("a_b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("a_2", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("2_b", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test(`k_{n+1} = n^2 + k_n^2 - k_{n-1}`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test(`\\frac{1}{2}^{2}`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test(`\\frac{1}{2}_2`, [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}_2^y", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}_{2}^{y}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}_1_2_3_4_5_6_7", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}^1^2^3^4^5^6^7", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}^1^2^3^4^5^6^7_x", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1+\\frac{x}{y}}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frac{1^x}{2_y}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sum^{2}_{x}4", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\int^2_x{4}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\binom{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sum_{i=1}^{10} t_i", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\exp_a b = a^b, \\exp b = e^b, 10^m, \\exp_{a}^x {b}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\ln c, \\lg d = \\log e, \\log_{10} f", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sin a, \\cos b, \\tan c, \\cot d, \\sec e, \\csc f, \\cos^2_{y}{b}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\arcsin h, \\arccos_x i, \\arctan^y_{x} {j}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sinhk, \\cosh {l}, \\tanh_x^y m, \\coth^{x}_y_1_2 {n}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\left\\vert s \\right\\vert", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\min(x,y), \\max(x,y)", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("0 \\leq \\lim_{n\\to \\infty}\\frac{n!}{(2n)!} \\leq \\lim_{n\\to \\infty} \\frac{n!}{(n!)^2} = \\lim_{k \\to \\infty, k = n!}\\frac{k}{k^2} = \\lim_{k \\to \\infty} \\frac{1}{k} = 0", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sqrt5", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sqrt\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sqrt[2^2]\\frac{1}{2}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\sqrt[2^2] {\\frac{1}{2}+3}", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\doubleAB", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
+		// Test("\\frakturAB", [["ParaRun", ""], ["ParaRun", ""],["ParaRun", ""]], true, "Check LaTeX words");
 		// Test("\\dd", [["ParaRun", "𝑑"]], true, "Check LaTeX words");
 		// Test("\\Dd", [["ParaRun", "𝐷"]], true, "Check LaTeX words");
 		// Test("\\ee", [["ParaRun", "𝑒"]], true, "Check LaTeX words");

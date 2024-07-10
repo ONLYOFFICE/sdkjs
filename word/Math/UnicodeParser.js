@@ -424,13 +424,13 @@
 	//Custom horizontal (1+2)\underbrace2
 	CUnicodeParser.prototype.GetSpecialHBracket = function (oBase)
 	{
-		let strHBracket = this.EatToken(Literals.hbrack.id).data;
-		if (strHBracket[0] === "\\")
-			strHBracket = AscMath.AutoCorrection[strHBracket];
+		let strHBracket = this.oLookahead;
+		this.EatToken(Literals.hbrack.id);
 
-		let oPos = AscMath.GetHBracket(strHBracket);
-		let oOperand = this.GetOperandLiteral("custom");
-		let oUp, oDown;
+		let oPos = Literals.hbrack.GetPos(strHBracket),
+			oOperand = this.GetOperandLiteral("custom"),
+			oUp,
+			oDown;
 
 		if (oPos === VJUST_BOT)
 			oDown = oOperand;
@@ -438,40 +438,13 @@
 			oUp = oOperand;
 
 		return {
-			type: Struc.horizontal,
+			type: Struc.group_character,
 			hBrack: strHBracket,
 			value: oBase,
 			up: oUp,
 			down: oDown,
 		};
 	};
-	// CUnicodeParser.prototype.GetHBracketLiteral = function ()
-	// {
-	// 	this.SaveTokensWhileReturn();
-	// 	let oUp, oDown, oOperand;
-	// 	if (this.IsOperandLiteral()) {
-	// 		let strHBracket = this.EatToken(Literals.hbrack.id).data;
-	// 		oOperand = this.GetOperandLiteral("custom");
-	// 		if (this.oLookahead.data === "_" || this.oLookahead.data === "^" || this.oLookahead.data === "┬" || this.oLookahead.data === "┴") {
-	// 			if (this.oLookahead.data === "_" || this.oLookahead.data === "┬") {
-	// 				this.EatToken(this.oLookahead.class);
-	// 				oDown = this.GetSoOperandLiteral();
-	// 			}
-	// 			else if (this.oLookahead.data === "^" || this.oLookahead.data === "┴") {
-	// 				this.EatToken(this.oLookahead.class);
-	// 				oUp = this.GetSoOperandLiteral();
-	// 			}
-	// 		}
-	// 		return {
-	// 			type: oLiteralNames.hBracketLiteral[num],
-	// 			hBrack: strHBracket,
-	// 			value: oOperand,
-	// 			up: oUp,
-	// 			down: oDown,
-	// 		};
-	// 	}
-	// 	return this.WriteSavedTokens();
-	// };
 	CUnicodeParser.prototype.GetHBracketLiteral = function (oBase)
 	{
 		let strHBracket = this.oLookahead,
@@ -517,16 +490,11 @@
 				oDown = this.GetOperandLiteral("custom");
 
 				return {
-					type: Struc.limit,
-					base: {
-						type: Struc.group_character,
-						hBrack: strHBracket,
-						value: oBase,
-						up: oUp,
-						down: oDown,
-						style: oPr,
-					},
-					value: oDown,
+					type: Struc.group_character,
+					hBrack: strHBracket,
+					value: oBase,
+					up: oUp,
+					down: oDown,
 					style: oPr,
 				}
 			}
@@ -855,6 +823,9 @@
 					style: startStyle,
 				}, oExp]
 			}
+
+			if (strOpen === "〖" && strClose === "〗" && counter === 1)
+				return oExp;
 
 			return {
 				type: Struc.bracket_block,
@@ -2162,7 +2133,8 @@
 		{
 			return {
 				type: Literals.char.id,
-				value: type
+				value: type,
+				style: styles.head,
 			}
 		}
 		else

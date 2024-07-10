@@ -748,8 +748,13 @@ ParaRun.prototype.IsStartFromNewLine = function()
  */
 ParaRun.prototype.Add = function(oItem)
 {
-	var oRun = this.CheckRunBeforeAdd(oItem);
-	if (!oRun || oItem instanceof CMathText)
+	var oRun;
+
+	// don't create unnecessary empty run in Math
+	if (!(oItem instanceof CMathText))
+		oRun = this.CheckRunBeforeAdd(oItem);
+
+	if (!oRun)
 		oRun = this;
 
 	oRun.private_AddItemToRun(oRun.State.ContentPos, oItem);
