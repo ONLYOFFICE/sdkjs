@@ -1671,7 +1671,63 @@
 			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
 		}
 	};
-	PDFEditorApi.prototype._autoSaveInner = function() {};
+	PDFEditorApi.prototype._autoSaveInner = function() {
+		let _curTime = new Date();
+		if (null === this.lastSaveTime) {
+			this.lastSaveTime = _curTime;
+		}
+
+
+		if (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser()) {
+			this.WordControl.m_oLogicDocument.Continue_FastCollaborativeEditing();
+		}
+		else if (this.isLiveViewer()) {
+			if (AscCommon.CollaborativeEditing.Have_OtherChanges()) {
+				AscCommon.CollaborativeEditing.Apply_Changes();
+			}
+		}
+		else {
+			let _bIsWaitScheme = false;
+			if (AscCommon.History.Points && AscCommon.History.Index >= 0 && AscCommon.History.Index < AscCommon.History.Points.length) {
+				if ((_curTime - AscCommon.History.Points[AscCommon.History.Index].Time) < this.intervalWaitAutoSave) {
+					_bIsWaitScheme = true;
+				}
+			}
+
+			if (!_bIsWaitScheme) {
+				let _interval = (AscCommon.CollaborativeEditing.m_nUseType <= 0) ? this.autoSaveGapSlow :
+					this.autoSaveGapFast;
+
+				if ((_curTime - this.lastSaveTime) > _interval) {
+					if (AscCommon.History.Have_Changes(true) == true) {
+						this.asc_Save(true);
+					}
+					this.lastSaveTime = _curTime;
+				}
+			}
+		}
+	};
+	PDFEditorApi.prototype._autoSave = function () {
+		this.canUnlockDocument = true;
+		this.isCanSendChanges = true;
+
+		if (this.canSave && (!this.isViewMode || this.isLiveViewer()) && (this.canUnlockDocument)) {
+			if (this.canUnlockDocument) {
+				this.lastSaveTime = new Date();
+				// Check edit mode after unlock document http://bugzilla.onlyoffice.com/show_bug.cgi?id=35971
+				// Close cell edit without errors (isIdle = true)
+				this.asc_Save(true, true);
+			} else {
+				this._autoSaveInner();
+			}
+		}
+	};
+	PDFEditorApi.prototype.pre_Save = function(_images) {
+		this.isSaveFonts_Images = true;
+		this.saveImageMap       = _images;
+		this.pre_SaveCallback();
+	};
+
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};
 	PDFEditorApi.prototype.asc_getSelectedDrawingObjectsCount = function() {
 		return this.WordControl.m_oLogicDocument.GetSelectedDrawingObjectsCount();

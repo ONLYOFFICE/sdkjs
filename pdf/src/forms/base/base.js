@@ -162,7 +162,8 @@
 
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
-        
+        AscCommon.g_oTableId.Add(this, this._id);
+
         this._isWidget = aRect && aRect.length == 4 ? true : false;
 
         this.contentRect = {
@@ -205,9 +206,6 @@
             mouseDown:  null,
             rollover:   null
         }
-
-        editor.getDocumentRenderer().ImageMap = {};
-        editor.getDocumentRenderer().InitDocument = function() {return};
 
         this._partialName = sName;
         this.api = this.GetFormApi();
