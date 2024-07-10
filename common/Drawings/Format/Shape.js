@@ -6726,6 +6726,91 @@
 			return true;
 		};
 
+		CShape.prototype.checkEditTextStyle = function (fDocContentMethod, params, bSelect) {
+			let nParentType = null;
+			if(this.parent && this.parent.getObjectType) {
+				nParentType = this.parent.getObjectType();
+			}
+			if(nParentType !== AscDFH.historyitem_type_SlideMaster &&
+				nParentType !== AscDFH.historyitem_type_SlideLayout) {
+				return false;
+			}
+			if(!this.isPlaceholder()) {
+				return false;
+			}
+			let oTxBody = this.txBody;
+			if(!oTxBody) {
+				return false;
+			}
+			let oContent = oTxBody.content;
+			if(!oContent) {
+				return false;
+			}
+			let oParaPrToApply = new AscWord.CParaPr();
+			let bIncreaseFontSize = null;
+			let oDCP = AscFormat.CDrawingDocContent.prototype;
+			if(fDocContentMethod === oDCP.Set_ParagraphPresentationNumbering) {
+				oParaPrToApply.Bullet = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphIndent) {
+				oParaPrToApply.Ind = new CParaInd();
+				oParaPrToApply.Ind.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.ClearParagraphFormatting) {
+				oParaPrToApply = null;
+				if(nParentType === AscDFH.historyitem_type_SlideMaster) {
+					return true;
+				}
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphSpacing) {
+				oParaPrToApply.Spacing = new CParaSpacing();
+				oParaPrToApply.Spacing.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.IncreaseDecreaseFontSize) {
+				bIncreaseFontSize = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphAlign) {
+				oParaPrToApply.Jc = params[0];
+			}
+			else if(fDocContentMethod === CDocumentContent.prototype.AddToParagraph && params[0].Type === para_TextPr) {
+				oParaPrToApply.DefaultRunPr = params[0].Value;
+			}
+			else {
+				return false;
+			}
+
+			let oTextStyles;
+			if(oTxBody.lstStyle) {
+				oTextStyles = oTxBody.lstStyle.createDuplicate();
+			}
+			else {
+				oTextStyles = new AscFormat.TextListStyle();
+			}
+			if(bSelect) {
+				let oLvls = {};
+				let aParagraphs = [];
+				oContent.GetCurrentParagraph(false, aParagraphs, {});
+				for(let nIdx = 0; nIdx < aParagraphs.length; ++nIdx) {
+					let oParagraph = aParagraphs[nIdx];
+					let nLvl = 0;
+					if(AscFormat.isRealNumber(oParagraph.Pr.Lvl)) {
+						nLvl = oParagraph.Pr.Lvl;
+					}
+					if(!oLvls[nLvl]) {
+						oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+						oLvls[nLvl] = true;
+					}
+				}
+			}
+			else {
+				for(let nLvl = 0; nLvl < 9; ++nLvl) {
+					oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+				}
+			}
+			oTxBody.setLstStyle(oTextStyles);
+			return true;
+		};
+
 		CShape.prototype.pasteFormatting = function (oFormatData) {
 			if(!oFormatData)
 				return;

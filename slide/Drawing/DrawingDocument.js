@@ -4767,7 +4767,7 @@ function CThumbnailsManager()
 			// это трек
 			oThis.MouseDownTrack.SetPosition(oThis.ConvertCoords2(global_mouseEvent.X, global_mouseEvent.Y));
 
-			if (-1 !== oThis.MouseDownTrack.GetPosition() && !oThis.MouseDownTrack.IsSamePos())
+			if (-1 !== oThis.MouseDownTrack.GetPosition() && (!oThis.MouseDownTrack.IsSamePos() || AscCommon.global_mouseEvent.CtrlKey))
 			{
 				// вызвать функцию апи для смены слайдов местами
 				var _array = oThis.GetSelectedArray();
@@ -6383,6 +6383,10 @@ function CSlideDrawer()
 		this.IsCached = false;
 		if (4 * _need_pix_width * _need_pix_height < this.CONST_MAX_SLIDE_CACHE_SIZE)
 			this.IsCached = true;
+
+		// See bug 68871
+		if (this.m_oWordControl.m_oApi.isMobileVersion)
+			this.IsCached = false;
 
 		if (this.IsCached)
 		{

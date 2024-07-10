@@ -76,6 +76,13 @@
     CPdfDrawingPrototype.prototype.IsGraphicFrame = function() {
         return false;
     };
+	
+	CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
+		if (this.group && this.group.IsUseInDocument)
+			return this.group.IsUseInDocument();
+		
+		return (-1 !== this.GetDocument().drawings.indexOf(this));
+	};
     CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();
         let oViewer     = oDoc.Viewer;
@@ -187,12 +194,6 @@
         }
 
         return aInfo;
-    };
-    CPdfDrawingPrototype.prototype.IsUseInDocument = function() {
-        if (this.GetDocument().drawings.indexOf(this) == -1)
-            return false;
-
-        return true;
     };
     CPdfDrawingPrototype.prototype.SetFromScan = function(bFromScan) {
         this._isFromScan = bFromScan;

@@ -1212,6 +1212,12 @@
 			{
 				this.isDisableKeyboard = true;
 			}
+
+			if (this.Api.isPdfEditor() && this.Api.isMobileVersion)
+			{
+				// temporary
+				this.isDisableKeyboard = true;
+			}
 		}
 
 		if (oldDisableKeyboard !== this.isDisableKeyboard)

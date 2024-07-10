@@ -1828,8 +1828,82 @@
         }
     };
 
+	WorksheetView.prototype._getAutocompleteValues = function () {
+		const t = this;
+		let canExecuteFormula;
+		/* setRows|setCols - arrays with positions of all real elements */
+		/* setNumberRows|setNumberCols - arrays with positions of all "numeric" elements */
+		let setCols = [], setRows = [], setNumberCols = [], setNumberRows = [];
+		let selection = this.model.getSelection();
+		let selectionRange = selection.getLast();
+		let mergedRange = this.model.getMergedByCell(selectionRange.r1, selectionRange.c1);
+		if (mergedRange && mergedRange.isEqual(selectionRange)) {
+			// There is no need to do anything for one cell
+			return null;
+		}
+
+		if (c_oAscSelectionType.RangeMax === selectionRange.getType()) {
+			return null;
+		}
+
+		let c2 = Math.min(selectionRange.c2, this.nColsCount - 1);
+		let r2 = Math.min(selectionRange.r2, this.nRowsCount - 1);
+		for (let c = selectionRange.c1; c <= c2; ++c) {
+			for (let r = selectionRange.r1; r <= r2; ++r) {
+				let cellCache = this._getCellTextCache(c, r, true);
+				if (cellCache) {
+					if (!canExecuteFormula) {
+						this.model._getCellNoEmpty(r, c, function (cell) {
+							if (cell && !cell.isNullText() && cell.type !== CellValueType.String) {
+								let xfs = cell.getCompiledStyle();
+								let numFormatStr, info;
+								if (xfs && xfs.num) {
+									// numFormatStr = xfs.num.getNumFormat();
+									info = xfs.asc_getNumFormatInfo();
+								}
+
+								if (!info) {
+									canExecuteFormula = true
+								} else if (info && info.type !== Asc.c_oAscNumFormatType.Date && info.type !== Asc.c_oAscNumFormatType.LongDate
+									&& info.type !== Asc.c_oAscNumFormatType.None && info.type !== Asc.c_oAscNumFormatType.Text) {
+									canExecuteFormula = true
+								}
+
+							}
+						});
+					}
+
+					if (cellCache.cellType !== CellValueType.String) {
+						if (setNumberRows.indexOf(r) === -1) {
+							setNumberRows.push(r);
+						}
+						if (setNumberCols.indexOf(c) === -1) {
+							setNumberCols.push(c);
+						}
+					}
+
+					if (setRows.indexOf(r) === -1) {
+						setRows.push(r);
+					}
+					if (setCols.indexOf(c) === -1) {
+						setCols.push(c);
+					}
+				}
+			}
+		}
+
+		if (canExecuteFormula && (setRows.length > 0 || setCols.length > 0) && (setNumberRows.length > 0 || setNumberCols.length > 0)) {
+			// return an object with information about the positions of real and only numeric values
+			return {
+				allExistedValPos: {arrCols: setCols.sort(fSortAscending), arrRows: setRows.sort(fSortAscending)},
+				allNumberPos: {arrCols: setNumberCols.sort(fSortAscending), arrRows: setNumberRows.sort(fSortAscending)}
+			};
+		} else {
+			return null;
+		}
+	};
     // Autocomplete formula with range if possible
-    WorksheetView.prototype.autoCompleteFormula = function (functionName) {
+    WorksheetView.prototype.autoCompleteFormula = function (functionName, callFromWizard) {
         const t = this;
         // ToDo autoComplete with multiselect
         let selection = this.model.getSelection();
@@ -1847,10 +1921,11 @@
         let c = activeCell.col - 1;
         let cell, cellType, isNumberFormat;
         let result = {};
-        // Get all numeric values ​​in the range
-        let hasNumber = this._getValuesPositionsInRange(true);
+        // let hasNumber = this._getValuesPositionsInRange(true);
+        let hasNumber = !callFromWizard && this._getAutocompleteValues();		// Get all valid values ​​for autocomplete according to the cell format and type
+
         // Get all non-empty values ​​in the range
-        let realValues = this._getValuesPositionsInRange();
+        // let realValues = this._getValuesPositionsInRange();
         let val, text;
 
         /*
@@ -1871,6 +1946,9 @@
 
         if (hasNumber) {
             let i;
+            let realValues = hasNumber.allExistedValPos;
+            hasNumber = hasNumber.allNumberPos;
+            
             // Are there numeric values ​​in the last row and column
             let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
             let hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
@@ -2094,7 +2172,12 @@
 				result.notEditCell = true;
 				return result;
 			}
-        }
+		} else {
+			// change selection to the last cell if the values ​​in the range are not valid in the autocomplete formula
+			if (!result.text && !result.notEditCell) {
+				selection.setActiveCell(ar.r2, ar.c2);
+			}
+		}
 
         // Ищем первую ячейку с числом
         for (; r >= vr.r1; --r) {

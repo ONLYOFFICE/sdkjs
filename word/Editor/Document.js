@@ -411,6 +411,8 @@ function CDocumentRecalculateState()
 
     this.UseRecursion = true;
     this.Continue     = false; // параметр сигнализирующий, о том что нужно продолжить пересчет (для нерекурсивного метода)
+	
+	this.ScrollToTarget = true;
 }
 
 function CDocumentRecalculateHdrFtrPageCountState()
@@ -3535,6 +3537,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	this.FullRecalc.StartTime         = performance.now();
 	this.FullRecalc.TimerStartTime    = this.FullRecalc.StartTime;
 	this.FullRecalc.TimerStartPage    = StartPage;
+	this.FullRecalc.ScrollToTarget    = true;
 
 
 	// Если у нас произошли какие-либо изменения с основной частью документа, тогда начинаем его пересчитывать сразу,
@@ -4568,9 +4571,9 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             else
                 this.CurPage = PageIndex; // TODO: переделать
         }
-
-        if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
-            this.private_UpdateCursorXY(true, true);
+		
+		if (docpostype_Content === this.GetDocPosType() && ((true !== this.Selection.Use && Index === this.CurPos.ContentPos + 1) || (true === this.Selection.Use && Index === (Math.max(this.Selection.EndPos, this.Selection.StartPos) + 1))))
+			this.UpdateCursorOnRecalculate();
     }
 
     if (Index >= Count)
@@ -5507,6 +5510,8 @@ CDocument.prototype.CheckViewPosition = function()
 		return;
 	}
 	
+	this.FullRecalc.ScrollToTarget = false;
+	
 	let anchorPos = this.ViewPosition.AnchorPos;
 	let alignTop  = this.ViewPosition.AlignTop;
 	let distance  = this.ViewPosition.Distance;
@@ -5558,7 +5563,9 @@ CDocument.prototype.CheckViewPosition = function()
 	else
 		this.DrawingDocument.m_oWordControl.ScrollToAbsolutePosition(anchor.X, anchor.Y + distance, anchor.Page, true);
 	
+	this.Api.asc_LockScrollToTarget(true);
 	this.RecalculateCurPos();
+	this.Api.asc_LockScrollToTarget(false);
 };
 CDocument.prototype.RecalculateCurPos = function()
 {
@@ -5646,10 +5653,13 @@ CDocument.prototype.Draw                                     = function(nPageInd
 	this.HdrFtr.Draw(nPageIndex, pGraphics);
 
 	// Рисуем содержимое документа на данной странице
-	if (docpostype_HdrFtr === this.CurPos.Type)
-		pGraphics.put_GlobalAlpha(true, 0.4);
-	else if (!this.IsViewMode())
-		pGraphics.End_GlobalAlpha();
+	if (pGraphics.isSupportEditFeatures())
+	{
+		if (docpostype_HdrFtr === this.CurPos.Type)
+			pGraphics.put_GlobalAlpha(true, 0.4);
+		else if (!this.IsViewMode())
+			pGraphics.End_GlobalAlpha();
+	}
 	
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
@@ -14402,6 +14412,20 @@ CDocument.prototype.private_UpdateCurPage = function()
 
 	this.private_CheckCurPage();
 };
+CDocument.prototype.UpdateCursorOnRecalculate = function()
+{
+	let isLockScroll = false;
+	if ((this.FullRecalc.Id && !this.FullRecalc.ScrollToTarget) || this.ViewPosition)
+		isLockScroll = true;
+	
+	if (isLockScroll)
+		this.Api.asc_LockScrollToTarget(true);
+		
+	this.private_UpdateCursorXY(true, true);
+	
+	if (isLockScroll)
+		this.Api.asc_LockScrollToTarget(false);
+};
 CDocument.prototype.private_UpdateCursorXY = function(bUpdateX, bUpdateY, isUpdateTarget)
 {
 	if (undefined === isUpdateTarget)
@@ -15066,7 +15090,7 @@ CDocument.prototype.GetAllNumberedParagraphs = function()
 			var oLvl = oNum.GetLvl(nLvl);
 			if(oLvl && oLvl.IsNumbered())
 			{
-				oProps.NumPr.push(new CNumPr(oNum.GetId(), nLvl));
+				oProps.NumPr.push(new AscWord.NumPr(oNum.GetId(), nLvl));
 			}
 		}
 	}
@@ -15365,7 +15389,9 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	}
 	
 	// TODO: Решить проблему, когда видно больше 2 страниц и курсор находится на средней странице
-	if (-1 !== cursorPage
+	// Использовать положение курсора оказалось не всегда удачно, т.к. при многократном быстром расчете курсор может
+	// может попасть в поле экрана и тогда скролл потянется сразу за ним, что может быть неверным
+	if (false && -1 !== cursorPage
 		&& ((viewPort[0].Page === cursorPage && cursorY + cursorH > viewPort[0].Y)
 			|| (viewPort[1].Page === cursorPage && cursorY < viewPort[1].Y)))
 	{
@@ -15436,8 +15462,9 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 				_xyInfo = this.private_GetXYByDocumentPosition(_anchorPos);
 			}
 			
-			if (y >= y1)
-				_anchorPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
+			// TODO: Если подбираем другую точку, то нужно у данной страницы запросить её позицию во view port (расстояние до верха экрана)
+			// if (y >= y1)
+			// 	_anchorPos = this.GetDocumentPositionByXY(pageIndex + 1, 0, 0);
 		}
 		
 		if (_anchorPos)
@@ -19832,7 +19859,9 @@ CDocument.prototype.controller_MoveCursorUp = function(AddToSelect)
 };
 CDocument.prototype.controller_MoveCursorDown = function(AddToSelect)
 {
-	if (true === this.IsSelectionUse() && true !== AddToSelect)
+	if (this.IsSelectionUse()
+		&& !AddToSelect
+		&& !this.IsTableCellSelection())
 	{
 		var oCurParagraph = this.GetCurrentParagraph(true);
 		this.MoveCursorRight(false, false);
@@ -23898,7 +23927,7 @@ CDocument.prototype.GetHyperlinkAnchors = function()
 /**
  * Получаем текущую выделенную нумерацию
  * @param [isCheckSelection=false] {boolean} - проверять ли по селекту
- * @returns {?CNumPr} Если выделено несколько параграфов с одним NumId, но с разными уровнями, то Lvl = null
+ * @returns {?AscWord.NumPr} Если выделено несколько параграфов с одним NumId, но с разными уровнями, то Lvl = null
  */
 CDocument.prototype.GetSelectedNum = function(isCheckSelection)
 {
@@ -23967,7 +23996,7 @@ CDocument.prototype.ContinueNumbering = function()
 		return false;
 
 	var bFind                 = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new AscWord.NumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
 	AscWord.sortByDocumentPosition(arrParagraphs);
 
@@ -24043,7 +24072,7 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 	var bFind                 = false;
 	var nPrevLvl              = null;
 	var isFirstParaOnLvl      = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new AscWord.NumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
 	var isRelated             = this.Numbering.GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
 	AscWord.sortByDocumentPosition(arrParagraphs);
@@ -28158,7 +28187,7 @@ CDocumentNumberingInfoCounter.prototype.CheckNum = function(oNum)
 /**
  * Класс для рассчета значение номера для нумерации заданного параграфа
  * @param oPara {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oNumbering {AscWord.CNumbering}
  * @constructor
  */
@@ -28478,7 +28507,7 @@ CDocumentFootnotesRangeEngine.prototype.IsCheckEndnotes = function()
 /**
  * Класс для поиска подходящей нумерации в документе
  * @param oParagraph {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oNumbering {AscWord.CNumbering}
  */
 function CDocumentNumberingContinueEngine(oParagraph, oNumPr, oNumbering)
@@ -28519,7 +28548,7 @@ CDocumentNumberingContinueEngine.prototype.CheckParagraph = function(oParagraph)
 		{
 			if (oNumPr.Lvl > 0)
 			{
-				this.SimilarNumPr = new CNumPr(oNumPr.NumId, this.NumPr.Lvl);
+				this.SimilarNumPr = new AscWord.NumPr(oNumPr.NumId, this.NumPr.Lvl);
 			}
 			else
 			{
@@ -28527,16 +28556,16 @@ CDocumentNumberingContinueEngine.prototype.CheckParagraph = function(oParagraph)
 				var oLvl    = this.Numbering.GetNum(this.NumPr.NumId).GetLvl(0);
 
 				if (oCurLvl.IsSimilar(oLvl) || (oCurLvl.GetFormat() === oLvl.GetFormat() && Asc.c_oAscNumberingFormat.Bullet === oCurLvl.GetFormat()))
-					this.SimilarNumPr = new CNumPr(oNumPr.NumId, 0);
+					this.SimilarNumPr = new AscWord.NumPr(oNumPr.NumId, 0);
 			}
 
-			this.LastNumPr = new CNumPr(oNumPr.NumId, this.NumPr.Lvl);
+			this.LastNumPr = new AscWord.NumPr(oNumPr.NumId, this.NumPr.Lvl);
 		}
 	}
 };
 /**
  * Получаем подходящую нумерацию
- * @returns {?CNumPr}
+ * @returns {?AscWord.NumPr}
  */
 CDocumentNumberingContinueEngine.prototype.GetNumPr = function()
 {

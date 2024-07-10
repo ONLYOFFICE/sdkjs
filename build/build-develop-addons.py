@@ -11,12 +11,13 @@ try:
     base.cmd_in_dir('.', "grunt", ["--level=WHITESPACE_ONLY", "--addon=sdkjs-forms", "--addon=sdkjs-ooxml"])
     base.cmd_in_dir('.', "grunt", ["develop", "--addon=sdkjs-forms", "--addon=sdkjs-ooxml"])
 
-    raw_input("Press Enter to continue...")
-
+    input("Press Enter to continue...")
+    exit(0)
 except SystemExit:
-    raw_input("Ignoring SystemExit. Press Enter to continue...")
+    input("Ignoring SystemExit. Press Enter to continue...")
     exit(0)
 except KeyboardInterrupt:
     pass
 except:
-    raw_input("Unexpected error. " + traceback.format_exc() + "Press Enter to continue...")
+    input("Unexpected error. " + traceback.format_exc() + "Press Enter to continue...")
+    exit(0)

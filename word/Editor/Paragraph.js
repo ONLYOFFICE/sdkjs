@@ -546,7 +546,7 @@ Paragraph.prototype.GetAllParagraphs = function(Props, ParaArray)
 		if (!oCurNumPr)
 			return;
 
-		if (Props.NumPr instanceof CNumPr)
+		if (Props.NumPr instanceof AscWord.NumPr)
 		{
 			var oNumPr = Props.NumPr;
 			if (oCurNumPr.NumId === oNumPr.NumId && (oCurNumPr.Lvl === oNumPr.Lvl || undefined === oNumPr.Lvl || null === oNumPr.Lvl))
@@ -7846,7 +7846,9 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 		TextPr.RStyle    = editor && editor.isDocumentEditor ? editor.WordControl.m_oLogicDocument.Get_Styles().GetDefaultHyperlink() : null;
 		if (!this.bFromDocument)
 		{
-			//TextPr.Unifill   = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
+			if (editor && editor.isPdfEditor())
+				TextPr.Unifill = AscFormat.CreateUniFillSchemeColorWidthTint(11, 0);
+			
 			TextPr.Underline = true;
 		}
 		Hyperlink.Apply_TextPr(TextPr, undefined, false);
@@ -7902,8 +7904,9 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 		{
 			HyperRun.Set_Pr(TextPr.Copy());
 			HyperRun.Set_Color(undefined);
-			//HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
 			HyperRun.SetUnderline(true);
+			if (editor && editor.isPdfEditor())
+				HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
 		}
 
 		// Заполняем ран гиперссылки текстом
@@ -9901,8 +9904,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 				}
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, nLvl);
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
@@ -9940,8 +9942,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 				this.Pr.Ind.Left      = undefined;
 			}
 
-			this.Pr.NumPr = new CNumPr();
-			this.Pr.NumPr.Set(sNumId, LvlFound);
+			this.Pr.NumPr = new AscWord.NumPr(sNumId, LvlFound);
 			AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 			this.private_RefreshNumbering(NumPr_old);
 			this.private_RefreshNumbering(this.Pr.NumPr);
@@ -9954,8 +9955,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	else
 	{
 		// просто меняем список, так чтобы он не двигался
-		this.Pr.NumPr = new CNumPr();
-		this.Pr.NumPr.Set(sNumId, nLvl);
+		this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 
 		AscCommon.History.Add(new CChangesParagraphNumbering(this, NumPr_old, this.Pr.NumPr));
 		this.private_RefreshNumbering(NumPr_old);
@@ -10018,7 +10018,7 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 
 		this.private_AddPrChange();
 
-		var oNewNumPr = new CNumPr(sNumId, nLvl);
+		var oNewNumPr = new AscWord.NumPr(sNumId, nLvl);
 
 		AscCommon.History.Add(new CChangesParagraphNumbering(this, this.Pr.NumPr, oNewNumPr));
 		this.private_RefreshNumbering(oNewNumPr);
@@ -10048,7 +10048,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 	
 	this.private_AddPrChange();
 	
-	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new CNumPr(numPr.NumId, newLvl));
+	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new AscWord.NumPr(numPr.NumId, newLvl));
 	AscCommon.History.Add(change);
 	change.Redo();
 	
@@ -10070,7 +10070,7 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
- * @returns {?CNumPr}
+ * @returns {?AscWord.NumPr}
  */
 Paragraph.prototype.GetNumPr = function()
 {
@@ -10091,8 +10091,7 @@ Paragraph.prototype.RemoveNumPr = function()
 	var NewNumPr = undefined;
 	if (undefined != this.CompiledPr.Pr.ParaPr.StyleNumPr)
 	{
-		NewNumPr = new CNumPr();
-		NewNumPr.Set(0, 0);
+		NewNumPr = new AscWord.NumPr(0, 0);
 	}
 
 	this.private_AddPrChange();
@@ -10522,9 +10521,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else if (null === PrevEl)
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var PrevEl = Cell.GetLastElementInPrevCell();
@@ -10628,9 +10627,9 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 	else
 	{
-		if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
+		if (true === this.IsTableCellContent() && true === Pr.ParaPr.ContextualSpacing)
 		{
-			var Cell = this.Parent.IsTableCellContent(true);
+			var Cell = this.IsTableCellContent(true);
 			if (Cell)
 			{
 				var NextEl = Cell.GetFirstElementInNextCell();
@@ -10640,7 +10639,7 @@ Paragraph.prototype.Get_CompiledPr = function()
 				}
 			}
 		}
-		else if (true === this.Parent.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
+		else if (true === this.IsTableCellContent() && true === Pr.ParaPr.Spacing.AfterAutoSpacing)
 		{
 			Pr.ParaPr.Spacing.After = 0;
 		}
@@ -11966,8 +11965,20 @@ Paragraph.prototype.private_CorrectNearestPos = function(ContentPos, Anchor, Dra
 				this.Set_ParaContentPos(ContentPos, false, -1, -1);
 			}
 		}
+		
+		// TODO: Пока сделаем так, чтобы картинка перемещался в заданный параграф. По-хорошему нужно найти ближайшую
+		//  позицию за пределами формы или другого запрещенного элемента
+		let classes = this.GetClassesByPos(ContentPos);
+		for (let index = 0; index < classes.length; ++index)
+		{
+			if (classes[index] instanceof AscWord.CInlineLevelSdt && classes[index].IsForm())
+			{
+				ContentPos = this.GetStartPos();
+				break;
+			}
+		}
 	}
-
+	
 	return ContentPos;
 };
 Paragraph.prototype.Check_NearestPos = function(NearPos)
@@ -12091,7 +12102,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var Bottom_Margin = Y_Bottom_Margin;
 			var Page_H        = Page_Height;
 
-			if (true === this.Parent.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
+			if (true === this.IsTableCellContent() && undefined != Drawing && true == Drawing.Use_TextWrap())
 			{
 				Top_Margin    = 0;
 				Bottom_Margin = 0;
@@ -12099,7 +12110,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			}
 
 			var PageLimitsOrigin = this.Parent.Get_PageLimits(PageRel);
-			if (true === this.Parent.IsTableCellContent() && false === Drawing.IsLayoutInCell())
+			if (true === this.IsTableCellContent() && false === Drawing.IsLayoutInCell())
 			{
 				PageLimitsOrigin     = LogicDocument.Get_PageLimits(PageAbs);
 				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
@@ -13433,7 +13444,7 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	var oLogicDocument = this.GetLogicDocument();
 	var oStyles        = oLogicDocument && oLogicDocument.GetStyles ? oLogicDocument.GetStyles() : null;
-	if (oStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
+	if (oStyles instanceof AscWord.CStyles && (TextPr.RStyle === oStyles.GetDefaultEndnoteReference() || TextPr.RStyle === oStyles.GetDefaultFootnoteReference()))
 	{
 		TextPr        = TextPr.Copy();
 		TextPr.RStyle = undefined;
@@ -15269,7 +15280,7 @@ Paragraph.prototype.GetPrChangeNumPr = function()
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr)
-			oPrevNumPr = new CNumPr(oPrevNumPr.NumId, oNumPr.Lvl);
+			oPrevNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oNumPr.Lvl);
 	}
 
 	return oPrevNumPr;
@@ -15343,7 +15354,7 @@ Paragraph.prototype.SetNumPrToPrChange = function(numId, iLvl)
 	
 	let prChange   = this.Pr.PrChange.Copy();
 	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
-	prChange.NumPr = new AscWord.CNumPr(numId, iLvl);
+	prChange.NumPr = new AscWord.NumPr(numId, iLvl);
 	
 	this.SetPrChange(prChange, reviewInfo);
 };
@@ -17322,9 +17333,12 @@ Paragraph.prototype.RemoveTabsForTOC = function()
  * Проверяем лежит ли данный параграф в таблице
  * @returns {boolean}
  */
-Paragraph.prototype.IsTableCellContent = function()
+Paragraph.prototype.IsTableCellContent = function(bReturnCell)
 {
-	return (this.Parent && this.Parent.IsTableCellContent() ? true : false);
+	if (bReturnCell)
+		return (this.Parent ? this.Parent.IsTableCellContent(true) : null);
+	
+	return !!(this.Parent && this.Parent.IsTableCellContent());
 };
 /**
  * Проверяем является ли данный параграф последним в ячейке (возвращаем false, если параграф не лежит в таблице вообще)

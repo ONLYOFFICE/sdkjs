@@ -8521,20 +8521,14 @@ function BinaryFileReader(doc, openParams)
             bInBlock = true;
         //создаем список используемых шрифтов
         var AllFonts = {};
-
-		if(this.Document.Numbering)
+		
+		if (this.Document.Numbering)
 			this.Document.Numbering.GetAllFontNames(AllFonts);
-		if(this.Document.Styles)
-        this.Document.Styles.Document_Get_AllFontNames(AllFonts);
-
-		var oDocument = this.Document && this.Document.LogicDocument ? this.Document.LogicDocument : this.Document;
-		for (var Index = 0, Count = aContent.length; Index < Count; Index++) {
+		if (this.Document.Styles)
+			this.Document.Styles.Document_Get_AllFontNames(AllFonts);
+		
+		for (var Index = 0, Count = aContent.length; Index < Count; Index++)
 			aContent[Index].Document_Get_AllFontNames(AllFonts);
-			if (!aContent[Index].Parent && aContent[Index].Set_Parent) {
-				//aContent[Index].Set_Parent(oDocument);
-				aContent[Index].Parent = oDocument;
-			}
-		}
 
         var aPrepeareFonts = [];
 
@@ -9138,8 +9132,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
 					this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle, this.isPrChange));
                 break;
             case c_oSerProp_pPrType.numPr:
-                var numPr = new CNumPr();
-				numPr.Set(undefined, undefined);
+                var numPr = new AscWord.NumPr(undefined, undefined);
                 res = this.bcr.Read2(length, function(t, l){
                     return oThis.ReadNumPr(t, l, numPr);
                 });

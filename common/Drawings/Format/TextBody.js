@@ -232,6 +232,11 @@
             if(Data.Type === AscDFH.historyitem_TextBodySetBodyPr) {
                 this.recalcInfo.recalculateBodyPr = true;
             }
+            if(Data.Type === AscDFH.historyitem_TextBodySetLstStyle) {
+                if(this.content) {
+                    this.content.Recalc_AllParagraphs_CompiledPr();
+                }
+            }
         }
     };
     CTextBody.prototype.isEmpty = function() {

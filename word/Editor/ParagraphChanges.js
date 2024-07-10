@@ -571,7 +571,7 @@ CChangesParagraphNumbering.prototype.constructor = CChangesParagraphNumbering;
 CChangesParagraphNumbering.prototype.Type = AscDFH.historyitem_Paragraph_Numbering;
 CChangesParagraphNumbering.prototype.private_CreateObject = function()
 {
-	return new CNumPr();
+	return new AscWord.NumPr();
 };
 CChangesParagraphNumbering.prototype.private_SetValue = function(newNumPr)
 {

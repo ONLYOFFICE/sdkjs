@@ -401,7 +401,7 @@ CStyle.prototype =
 		var New = new CParaPr();
 		New.Set_FromObject(Value);
 		
-		if (isHandleNumbering && Value.NumPr instanceof CNumPr && Value.NumPr.IsValid())
+		if (isHandleNumbering && Value.NumPr instanceof AscWord.NumPr && Value.NumPr.IsValid())
 		{
 			var oLogicDocument = private_GetWordLogicDocument();
 			if (oLogicDocument)
@@ -414,7 +414,7 @@ CStyle.prototype =
 					oNumLvl.SetPStyle(this.GetId());
 					oNum.SetLvl(oNumLvl, Value.NumPr.Lvl);
 
-					New.NumPr = new CNumPr(Value.NumPr.NumId, Value.NumPr.Lvl);
+					New.NumPr = new AscWord.NumPr(Value.NumPr.NumId, Value.NumPr.Lvl);
 				}
 			}
 		}
@@ -6484,7 +6484,7 @@ CStyle.prototype.SetNumPr = function(numId, iLvl)
 	let paraPr = this.GetParaPr().Copy();
 	
 	if (null !== numId)
-		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
+		paraPr.NumPr = new AscWord.NumPr(numId, iLvl);
 	else
 		paraPr.NumPr = undefined;
 	
@@ -12485,6 +12485,29 @@ CLang.prototype =
             this.Val = Reader.GetLong();
     }
 };
+CLang.prototype.Clear = function()
+{
+	this.Bidi     = undefined;
+	this.EastAsia = undefined;
+	this.Val      = undefined;
+};
+CLang.prototype.Apply = function(lang)
+{
+	if (null === lang.Bidi)
+		this.Bidi = undefined;
+	else if (undefined !== lang.Bidi)
+		this.Bidi = lang.Bidi;
+	
+	if (null === lang.EastAsia)
+		this.EastAsia = undefined;
+	else if (undefined !== lang.EastAsia)
+		this.EastAsia = lang.EastAsia;
+	
+	if (null === lang.Val)
+		this.Val = undefined;
+	else if (undefined !== lang.Val)
+		this.Val = lang.Val;
+};
 CLang.prototype.Is_Empty = function()
 {
 	if (undefined !== this.Bidi
@@ -12831,10 +12854,10 @@ CTextPr.prototype.Merge = function(TextPr)
 	if (TextPr.Shd)
 		this.Shd = TextPr.Shd.Copy();
 
-	if (undefined !== TextPr.Vanish)
+	if (undefined !== TextPr.Vanish && null !== TextPr.Vanish)
 		this.Vanish = TextPr.Vanish;
 
-	if (undefined !== TextPr.Ligatures)
+	if (undefined !== TextPr.Ligatures && null !== TextPr.Ligatures)
 		this.Ligatures = TextPr.Ligatures;
 
 	if (TextPr.TextOutline)
@@ -12852,6 +12875,174 @@ CTextPr.prototype.Merge = function(TextPr)
 	{
 		this.FontScale = TextPr.FontScale;
 	}
+};
+/**
+ * Накатываем на данные настройки те, которые пришли, причем если какое-то значение null, то это поле мы делаем undefined
+ * @param {CTextPr} textPr
+ */
+CTextPr.prototype.Apply = function(textPr)
+{
+	if (null === textPr.Bold)
+		this.Bold = undefined;
+	else if (undefined !== textPr.Bold)
+		this.Bold = textPr.Bold;
+	
+	if (null === textPr.BoldCS)
+		this.BoldCS = undefined;
+	else if (undefined !== textPr.BoldCS)
+		this.BoldCS = textPr.BoldCS;
+	
+	if (null === textPr.Italic)
+		this.Italic = undefined;
+	else if (undefined !== textPr.Italic)
+		this.Italic = textPr.Italic;
+	
+	if (null === textPr.ItalicCS)
+		this.ItalicCS = undefined;
+	else if (undefined !== textPr.ItalicCS)
+		this.ItalicCS = textPr.ItalicCS;
+	
+	if (null === textPr.Strikeout)
+		this.Strikeout = undefined;
+	else if (undefined !== textPr.Strikeout)
+		this.Strikeout = textPr.Strikeout;
+	
+	if (null === textPr.Underline)
+		this.Underline = undefined;
+	else if (undefined !== textPr.Underline)
+		this.Underline = textPr.Underline;
+
+	if (null === textPr.FontFamily)
+	{
+		this.FontFamily = undefined;
+	}
+	else if (undefined !== textPr.FontFamily)
+	{
+		this.FontFamily = {
+			Name  : textPr.FontFamily.Name,
+			Index : textPr.FontFamily.Index,
+		};
+	}
+	
+	if (null === textPr.FontSize)
+		this.FontSize = undefined;
+	else if (undefined !== textPr.FontSize)
+		this.FontSize = textPr.FontSize;
+	
+	if (null === textPr.FontSizeCS)
+		this.FontSizeCS = undefined;
+	else if (undefined !== textPr.FontSizeCS)
+		this.FontSizeCS = textPr.FontSizeCS;
+	
+	if (null === textPr.Color)
+		this.Color = undefined;
+	else if (undefined !== textPr.Color)
+		this.Color = textPr.Color.Copy();
+	
+	if (null === textPr.VertAlign)
+		this.VertAlign = undefined;
+	else if (undefined !== textPr.VertAlign)
+		this.VertAlign = textPr.VertAlign;
+	
+	if (null === textPr.HighLight)
+		this.HighLight = undefined;
+	else if (highlight_None === textPr.HighLight)
+		this.HighLight = highlight_None;
+	else if (undefined !== textPr.HighLight)
+		this.HighLight = textPr.HighLight.Copy();
+	
+	if (null === textPr.RStyle)
+		this.RStyle = undefined;
+	else if (undefined !== textPr.RStyle)
+		this.RStyle = textPr.RStyle;
+	
+	if (null === textPr.Spacing)
+		this.Spacing = undefined;
+	else if (undefined !== textPr.Spacing)
+		this.Spacing = textPr.Spacing;
+	
+	if (null === textPr.DStrikeout)
+		this.DStrikeout = undefined;
+	else if (undefined !== textPr.DStrikeout)
+		this.DStrikeout = textPr.DStrikeout;
+	
+	if (null === textPr.SmallCaps)
+		this.SmallCaps = undefined;
+	else if (undefined !== textPr.SmallCaps)
+		this.SmallCaps = textPr.SmallCaps;
+	
+	if (null === textPr.Caps)
+		this.Caps = undefined;
+	else if (undefined !== textPr.Caps)
+		this.Caps = textPr.Caps;
+	
+	if (null === textPr.Position)
+		this.Position = undefined;
+	else if (undefined !== textPr.Position)
+		this.Position = textPr.Position;
+	
+	if (textPr.RFonts)
+		this.RFonts.Merge(textPr.RFonts);
+	
+	if (null === textPr.CS)
+		this.CS = undefined;
+	else if (undefined !== textPr.CS)
+		this.CS = textPr.CS;
+	
+	if (null === textPr.RTL)
+		this.RTL = undefined;
+	else if (undefined !== textPr.RTL)
+		this.RTL = textPr.RTL;
+	
+	if (null === textPr.Lang)
+		this.Lang.Clear();
+	else if (textPr.Lang)
+		this.Lang.Apply(textPr.Lang);
+	
+	if (null === textPr.Unifill)
+		this.Unifill = undefined;
+	else if (textPr.Unifill)
+		this.Unifill = textPr.Unifill.createDuplicate();
+	
+	if (null === textPr.FontRef)
+		this.FontRef = undefined;
+	else if (textPr.FontRef)
+		this.FontRef = textPr.FontRef.createDuplicate();
+	
+	if (null === textPr.TextOutline)
+		this.TextOutline = undefined;
+	else if (textPr.TextOutline)
+		this.TextOutline = textPr.TextOutline.createDuplicate();
+	
+	if (null === textPr.TextFill)
+		this.TextFill = undefined;
+	else if (textPr.TextFill)
+		this.TextFill = textPr.TextFill.createDuplicate();
+	
+	if (null === textPr.HighlightColor)
+		this.HighlightColor = undefined;
+	else if (textPr.HighlightColor)
+		this.HighlightColor = textPr.HighlightColor.createDuplicate();
+	
+	if (null === textPr.Shd)
+		this.Shd = undefined;
+	else if (undefined !== textPr.Shd)
+		this.Shd = textPr.Shd.Copy();
+	
+	if (null === textPr.Vanish)
+		this.Vanish = undefined;
+	else if (undefined !== textPr.Vanish)
+		this.Vanish = textPr.Vanish;
+	
+	if (null === textPr.Ligatures)
+		this.Ligatures = undefined;
+	else if (undefined !== textPr.Ligatures)
+		this.Ligatures = textPr.Ligatures;
+	
+	if (null === textPr.FontScale)
+		this.FontScale = undefined;
+	else if (undefined !== textPr.FontScale)
+		this.FontScale = textPr.FontScale;
 };
 CTextPr.prototype.InitDefault = function(nCompatibilityMode)
 {
@@ -15221,7 +15412,7 @@ CParaSpacing.prototype.SetLineTwips = function (val) {
 function CNumPr(numId, iLvl)
 {
     this.NumId = numId;
-    this.Lvl   = undefined !== iLvl ? iLvl : 0;
+    this.Lvl   = iLvl;
 }
 
 CNumPr.prototype =
@@ -15295,10 +15486,7 @@ CNumPr.prototype =
 };
 CNumPr.prototype.Copy = function()
 {
-	var oNumPr = new CNumPr();
-	oNumPr.NumId = this.NumId;
-	oNumPr.Lvl   = this.Lvl;
-	return oNumPr;
+	return new CNumPr(this.NumId, this.Lvl);
 };
 CNumPr.prototype.IsValid = function()
 {
@@ -16173,7 +16361,7 @@ CParaPr.prototype.Set_FromObject = function(ParaPr)
 
 	if (undefined != ParaPr.NumPr)
 	{
-		this.NumPr = new CNumPr();
+		this.NumPr = new AscWord.NumPr();
 		this.NumPr.Set_FromObject(ParaPr.NumPr);
 	}
 	else
@@ -16301,7 +16489,7 @@ CParaPr.prototype.Compare = function(ParaPr)
 	// NumPr
 	if (undefined != this.NumPr && undefined != ParaPr.NumPr && this.NumPr.NumId === ParaPr.NumPr.NumId)
 	{
-		Result_ParaPr.NumPr       = new CNumPr();
+		Result_ParaPr.NumPr       = new AscWord.NumPr();
 		Result_ParaPr.NumPr.NumId = ParaPr.NumPr.NumId;
 		Result_ParaPr.NumPr.Lvl   = Math.max(this.NumPr.Lvl, ParaPr.NumPr.Lvl);
 	}
@@ -16592,7 +16780,7 @@ CParaPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 32768)
 	{
-		this.NumPr = new CNumPr();
+		this.NumPr = new AscWord.NumPr();
 		this.NumPr.Read_FromBinary(Reader);
 	}
 
@@ -17132,7 +17320,7 @@ CParaPr.prototype.SetNumPr = function(sNumId, nLvl)
 	if (undefined === sNumId)
 		this.NumPr = undefined;
 	else
-		this.NumPr = new CNumPr(sNumId, nLvl);
+		this.NumPr = new AscWord.NumPr(sNumId, nLvl);
 };
 CParaPr.prototype.GetPStyle = function()
 {
@@ -17364,6 +17552,7 @@ window["AscWord"].CTextPr = CTextPr;
 window["AscWord"].CParaPr = CParaPr;
 window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
+window["AscWord"].NumPr   = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
 window["AscWord"].CStyles = CStyles;

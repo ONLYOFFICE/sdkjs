@@ -2503,7 +2503,7 @@ background-repeat: no-repeat;\
 		}
 	};
 	asc_docs_api.prototype._autoSaveInner = function () {
-		if (this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode) {
+		if (this.isSlideShow()) {
 			return;
 		}
 
@@ -2542,7 +2542,7 @@ background-repeat: no-repeat;\
 		}
 	};
 	asc_docs_api.prototype._saveCheck = function() {
-		return !this.isLongAction() && !(this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode);
+		return !this.isLongAction() && !(this.isSlideShow());
 	};
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
@@ -7604,7 +7604,7 @@ background-repeat: no-repeat;\
 
 		if (!bIsReporter)
 		{
-			this.cancelEyedropper();
+			this.turnOffSpecialModes();
 		}
 
 		if (bIsReporter)

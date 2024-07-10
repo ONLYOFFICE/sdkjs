@@ -2687,6 +2687,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
+	cStrucTable.prototype.getRange = function () {
+		return this.area && this.area.getRange && this.area.getRange();
+	};
 
 	/**
 	 * @constructor
@@ -8740,7 +8743,8 @@ function parserFormula( formula, parent, _ws ) {
 		for (var i = 0; i < this.outStack.length; i++) {
 			var elem = this.outStack[i];
 			if (cElementType.cell === elem.type || cElementType.cell3D === elem.type ||
-				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type) {
+				cElementType.cellsRange === elem.type || cElementType.cellsRange3D === elem.type
+				|| cElementType.table === elem.type) {
 				res = elem.getRange();
 				break;
 			}

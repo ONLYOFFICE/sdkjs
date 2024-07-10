@@ -885,7 +885,7 @@
             if(oDocument.BookmarksManager.SelectBookmark(this.bookmarkName)){
                 var oCurrentParagraph = oDocument.GetCurrentParagraph();
                 if(oCurrentParagraph.Parent){
-                    oCell = oCurrentParagraph.Parent.IsTableCellContent(true);
+                    oCell = oCurrentParagraph.IsTableCellContent(true);
                     if(oCell){
                         oRow = oCell.GetRow();
                         if(oRow){

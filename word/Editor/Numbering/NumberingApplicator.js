@@ -104,7 +104,7 @@
 		if (!numId)
 			this.LastBulleted = null;
 		else
-			this.LastBulleted = new AscWord.CNumPr(numId, ilvl);
+			this.LastBulleted = new AscWord.NumPr(numId, ilvl);
 	};
 	CNumberingApplicator.prototype.GetLastNumbered = function()
 	{
@@ -115,7 +115,7 @@
 		if (!numId)
 			this.LastNumbered = null;
 		else
-			this.LastNumbered = new AscWord.CNumPr(numId, ilvl);
+			this.LastNumbered = new AscWord.NumPr(numId, ilvl);
 	};
 	CNumberingApplicator.prototype.GetCurrentNumPr = function()
 	{
@@ -520,7 +520,7 @@
 	CNumberingApplicator.prototype.CheckPrevNumPr = function(numId, ilvl)
 	{
 		if (this.Paragraphs.length !== 1 || this.Document.IsSelectionUse())
-			return new AscWord.CNumPr(numId, ilvl);
+			return new AscWord.NumPr(numId, ilvl);
 
 		var prevParagraph = this.Paragraphs[0].GetPrevParagraph();
 		while (prevParagraph)
@@ -538,10 +538,10 @@
 			let currLvl = this.Numbering.GetNum(numId).GetLvl(ilvl);
 
 			if (prevLvl.IsSimilar(currLvl))
-				return new AscWord.CNumPr(prevNumPr.NumId, prevNumPr.Lvl);
+				return new AscWord.NumPr(prevNumPr.NumId, prevNumPr.Lvl);
 		}
 
-		return new AscWord.CNumPr(numId, ilvl);
+		return new AscWord.NumPr(numId, ilvl);
 	};
 	CNumberingApplicator.prototype.MergeTextPrFromCommonNum = function(numId, iLvl)
 	{
@@ -611,7 +611,7 @@
 			}
 		}
 
-		return new AscWord.CNumPr(numId, ilvl);
+		return new AscWord.NumPr(numId, ilvl);
 	};
 	CNumberingApplicator.prototype.GetCommonNumId = function()
 	{

@@ -695,7 +695,7 @@ CHistory.prototype =
         this.RecalculateData.Update = false;
         for (var NumId in this.RecalculateData.NumPr)
         {
-            var NumPr = new CNumPr();
+            var NumPr = new AscWord.NumPr();
             NumPr.NumId = NumId;
             for (var Lvl = 0; Lvl < 9; ++Lvl)
             {

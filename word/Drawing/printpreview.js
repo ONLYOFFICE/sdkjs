@@ -97,6 +97,7 @@
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
 		g.isPrintMode = true;
+		g.isSupportEditFeatures = function() { return false; };
 
 		return g;
 	};

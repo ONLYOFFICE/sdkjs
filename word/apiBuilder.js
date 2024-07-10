@@ -13457,15 +13457,14 @@
 	{
 		if (!(oNumPr instanceof ApiNumbering))
 			return;
-
-		this.ParaPr.NumPr       = new CNumPr();
-		this.ParaPr.NumPr.NumId = oNumPr.Num.GetId();
-		this.ParaPr.NumPr.Lvl   = undefined;
-
+		
+		let numId  = oNumPr.Num.GetId();
+		let numLvl = undefined;
+		
 		if (this.Parent instanceof ApiParagraph)
-		{
-			this.ParaPr.NumPr.Lvl = Math.min(8, Math.max(0, (nLvl ? nLvl : 0)));
-		}
+			numLvl = Math.min(8, Math.max(0, (nLvl ? nLvl : 0)));
+		
+		this.ParaPr.NumPr = new AscWord.NumPr(numId, numLvl);
 		this.private_OnChange();
 	};
 	/**

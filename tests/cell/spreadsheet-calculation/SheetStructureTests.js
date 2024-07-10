@@ -3035,7 +3035,174 @@ $(function () {
 		assert.strictEqual(resCell.getValueWithFormat(), "1", "Value after B20:E20 autosum");
 		assert.strictEqual(resCell.getValueForEdit(), "=SUM(B20:D20)", "Formula after B20:E20 autosum");
 		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "B20:E20", "Selection after B20:E20 autosum");
+
+		// for bug 37318
+		ws.getRange2("A20:A22").cleanAll();
+		ws.getRange2("A20:A22").setValue("1");
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("m/d/yyyy");		// change to the short date format
+		// wsView.setSelectionInfo("format", "m/d/yyyy");
+
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only dates in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only dates in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only dates in range) autosum");
+
+
+		// number 
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00"); 	// change to the number format
+
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only number in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only number in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only number in range) autosum");
+
+
+		// fraction
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("# ?/?"); 	// change to the fraction format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only fraction in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only fraction in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only fraction in range) autosum");
+
+
+		// scientific
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00E+00"); 	// change to the scientific format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only scientific in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only scientific in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only scientific in range) autosum");
+
+
+		// accounting
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("_([$$-409]* #,##0.00_);_([$$-409]* \\(#,##0.00\\);_([$$-409]* \"-\"??_);_(@_)"); 	// change to the accounting format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only accounting in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only accounting in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only accounting in range) autosum");
+
+
+		// percentage
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("0.00%"); 	// change to the percentage format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "3", "Value after A20:A22(only percents in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "=SUM(A20:A22)", "Formula after A20:A22(only percents in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A23", "Selection after A20:A22(only percents in range) autosum");
+
+
+		// l.date
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("[$-F800]dddd\,\ mmmm\ d\,\ yyyy"); 	// change to the long date format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only dates in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only dates in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only dates in range) autosum");
+
+
+		// text
+		fillRange = ws.getRange2("A20:A22");
+		fillRange.setNumFormat("@"); 	// change to the text format
+		ws.getRange2("A23").cleanAll();
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		resCell = ws.getRange2("A23");
+		assert.strictEqual(resCell.getValueWithFormat(), "", "Value after A20:A22(only text in range) autosum");
+		assert.strictEqual(resCell.getValueForEdit(), "", "Formula after A20:A22(only text in range) autosum");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A20:A22", "Selection after A20:A22(only text in range) autosum");
+
+		/* activeCell tests */
+		/* if the data type does not allow the formula to be executed, the active cell is moved to the end of the select */
+		let activeCell, supposedActiveCell;
+
+		ws.getRange2("A1:Z100").cleanAll();
+		ws.getRange2("B10").setValue("111");
+		ws.getRange2("B20:B22").setValue("ds");
+		fillRange = ws.getRange2("B20:B22");
+		fillRange.setNumFormat("@");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
+
+		ws.getRange2("B10").cleanAll();
+		ws.getRange2("A20:A21").setValue("111");
+		fillRange = ws.getRange2("B20:B22");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
+
+		ws.getRange2("A22").setValue("111");
+		fillRange = ws.getRange2("B20:B22");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		autoCompleteRes = wsView.autoCompleteFormula("SUM");
+
+		activeCell = ws.selectionRange.activeCell;
+		supposedActiveCell = ws.getCell2("B22");
+		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
+
 		
+		ws.getRange2("A1:Z100").cleanAll();
 	});
 
 	QUnit.test('sortRangeTest', function (assert) {

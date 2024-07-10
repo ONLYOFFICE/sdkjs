@@ -1373,14 +1373,14 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 				oNewTextPr.FontSizeCS = oCompiledTextPr.GetIncDecFontSizeCS(IncFontSize);
 
 				var oTempTextPr = this.Pr.TextPr.Copy();
-				oTempTextPr.Merge(oNewTextPr);
+				oTempTextPr.Apply(oNewTextPr);
 				this.SetDefaultTextPr(oTempTextPr);
 			}
 		}
 		else
 		{
 			var oTempTextPr = this.Pr.TextPr.Copy();
-			oTempTextPr.Merge(TextPr);
+			oTempTextPr.Apply(TextPr);
 			this.SetDefaultTextPr(oTempTextPr);
 		}
 	}

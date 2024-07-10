@@ -1124,7 +1124,7 @@ ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 	oNewRun = this.private_CheckTrackRevisionsBeforeAdd(oNewRun);
 
 	if (oNewRun)
-		oNewRun.Make_ThisElementCurrent();
+		oNewRun.SetThisElementCurrentInParagraph();
 
 	return oNewRun;
 };
@@ -3082,7 +3082,7 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 				if (oPr && true === oPr.NewLineParagraph)
 				{
 					var oParagraph = this.GetParagraph();
-					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.Parent.IsTableCellContent())
+					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.IsTableCellContent())
 					{
 						if (!oParagraph.Parent.IsLastTableCellInRow(true))
 							Str += oPr.TableCellSeparator ? oPr.TableCellSeparator : '\t';
@@ -4272,7 +4272,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Добавляем разрыв страницы. Если это первая страница, тогда ставим разрыв страницы в начале параграфа,
                             // если нет, тогда в начале текущей строки.
 
-                            if (null != Para.Get_DocumentPrev() && true != Para.Parent.IsTableCellContent() && 0 === CurPage)
+                            if (null != Para.Get_DocumentPrev() && true != Para.IsTableCellContent() && 0 === CurPage)
                             {
                                 Para.Recalculate_Drawing_AddPageBreak(0, 0, true);
                                 PRS.RecalcResult = recalcresult_NextPage | recalcresultflags_Page;
@@ -5313,7 +5313,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var X_Right_Margin  = PageLimits.XLimit - PageFields.XLimit;
                 var Y_Bottom_Margin = PageLimits.YLimit - PageFields.YLimit;
 
-                var isTableCellContent = Para.Parent.IsTableCellContent();
+                var isTableCellContent = Para.IsTableCellContent();
                 var isUseWrap          = Item.Use_TextWrap();
                 var isLayoutInCell     = Item.IsLayoutInCell();
 

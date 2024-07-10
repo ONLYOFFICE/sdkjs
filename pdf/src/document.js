@@ -250,6 +250,84 @@ var CPresentation = CPresentation || function(){};
             });
         }
     };
+    CPDFDoc.prototype.GetPageTransform = function(nPage, bForcedCalc) {
+        if (!bForcedCalc) {
+            return this.pagesTransform[nPage];
+        }
+
+        let oPage   = this.Viewer.drawingPages[nPage];
+        let nAngle  = this.Viewer.getPageRotate(nPage);
+
+        let oPageTr = new AscCommon.CMatrix();
+
+        let xCenter = this.Viewer.width >> 1;
+        if (this.Viewer.documentWidth > this.Viewer.width)
+            xCenter = (this.Viewer.documentWidth >> 1) - (this.Viewer.scrollX) >> 0;
+
+        let nPageW  = oPage.W;
+        let nPageH  = oPage.H;
+        let xInd    = xCenter - (oPage.W >> 1);
+        let yInd    = -(this.Viewer.scrollY - this.Viewer.drawingPages[nPage].Y);
+        
+        let nScale = this.Viewer.file.pages[nPage].W / this.Viewer.drawingPages[nPage].W;
+
+        let shx = 0, shy = 0, sx = 1, sy = 1, tx = 0, ty = 0;
+
+        switch (nAngle) {
+            case 0: {
+                tx = -xInd * nScale;
+                ty = -yInd * nScale;
+                sx = nScale;
+                sy = nScale;
+                shx = 0;
+                shy = 0;
+                break;
+            }
+            case 90: {
+                // Новый отступ слева после поворота
+                let newXInd = xInd + (nPageW - nPageH >> 1);
+                tx = -yInd * nScale - (0.5 / this.Viewer.zoom); // магическое число
+                ty = (nPageH + newXInd) * nScale - (0.5 / this.Viewer.zoom); // магическое число
+                sx = 0;
+                sy = 0;
+                shx = 1 * nScale;
+                shy = -1 * nScale;
+                break;
+            }
+            case 180: {
+                tx = (xInd + nPageW) * nScale - (1.5 / this.Viewer.zoom); // магическое число
+                ty = (yInd + nPageH) * nScale;
+                sx = -nScale;
+                sy = -nScale;
+                shx = 0;
+                shy = 0;
+                break;
+            }
+            case 270: {
+                // Новый отступ слева после поворота
+                let newXInd = xInd + (nPageW - nPageH >> 1);
+                tx = (nPageW + yInd) * nScale;
+                ty = -newXInd * nScale + (1.5 / this.Viewer.zoom); // магическое число;
+                sx = 0;
+                sy = 0;
+                shx = -1 * nScale;
+                shy = 1 * nScale;
+                break;
+            }
+        }
+        
+        oPageTr.shx = shx;
+        oPageTr.shy = shy;
+        oPageTr.sx  = sx;
+        oPageTr.sy  = sy;
+        oPageTr.tx  = tx;
+        oPageTr.ty  = ty;
+        
+        return {
+            normal: oPageTr,
+            invert: AscCommon.global_MatrixTransformer.Invert(oPageTr)
+        }
+    };
 
     /////////// методы для открытия //////////////
     CPDFDoc.prototype.AddFieldToChildsMap = function(oField, nParentIdx) {
@@ -1028,12 +1106,6 @@ var CPresentation = CPresentation || function(){};
         this.Viewer.onUpdateOverlay();
     };
     CPDFDoc.prototype.SetMouseDownObject = function(oObject) {
-        if (this.GetActiveObject() == oObject) {
-            return;
-        }
-
-        this.Viewer.file.removeSelection();
-        
         if (!oObject) {
             this.BlurActiveObject();
 
@@ -1043,6 +1115,12 @@ var CPresentation = CPresentation || function(){};
             this.mouseDownLinkObject    = null;
             return;
         }
+
+        if (this.GetActiveObject() == oObject) {
+            return;
+        }
+
+        this.Viewer.file.removeSelection();
 
         if (oObject.IsForm && oObject.IsForm()) {
             // если попали в другую форму, то выход из текущей
@@ -2700,8 +2778,8 @@ var CPresentation = CPresentation || function(){};
         let oViewer     = editor.getDocumentRenderer();
         let oController = this.GetController();
 
-        let oDrawing  = this.drawings.find(function(annot) {
-            return annot.GetId() === Id;
+        let oDrawing  = this.drawings.find(function(drawing) {
+            return drawing.GetId() === Id;
         });
 
         if (!oDrawing)
@@ -2716,12 +2794,9 @@ var CPresentation = CPresentation || function(){};
         this.drawings.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
         
-        if (this.mouseDownAnnot == oDrawing)
-            this.mouseDownAnnot = null;
-
         this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oDrawing]));
 
-        oController.resetSelection();
+        oController.resetSelection(true);
         oController.resetTrackState();
 
         if (this.activeDrawing == oDrawing) {
@@ -5210,7 +5285,7 @@ var CPresentation = CPresentation || function(){};
             oTable.Parent.SetNeedRecalc(true);
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
-                this.RemoveDrawing(oTable.Parent);
+                this.RemoveDrawing(oTable.Parent.GetId());
                 return result;
             }
             this.TurnOffHistory();

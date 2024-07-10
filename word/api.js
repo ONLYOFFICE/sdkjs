@@ -8945,6 +8945,7 @@ background-repeat: no-repeat;\
 			if (null == this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 			{
 				this.WordControl.m_oDrawingDocument.ClearCachePages();
+				this.WordControl.m_oDrawingDocument.FirePaint();
 				this.WordControl.HideRulers();
 			}
 			else
