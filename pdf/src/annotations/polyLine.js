@@ -61,9 +61,6 @@
         this._lineEnd       = undefined;
         this._vertices      = undefined;
         this._width         = undefined;
-
-        // internal
-        TurnOffHistory();
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
     AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
@@ -120,8 +117,9 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         fillShapeByPoints([aPolygonPoints], aShapeRectInMM, this);
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationPolyLine.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -147,17 +145,17 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
+        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        oDoc.EndNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationPolyLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -192,6 +190,9 @@
         oPolyline.recalcInfo.recalculateGeometry = true;
         oPolyline._vertices = this._vertices.slice();
         oPolyline.SetWasChanged(oPolyline.IsChanged());
+
+        oDoc.EndNoHistoryMode();
+
         return oPolyline;
     };
     CAnnotationPolyLine.prototype.onMouseDown = function(x, y, e) {
@@ -472,11 +473,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMax = aShapeRect[2];
         let xMin = aShapeRect[0];

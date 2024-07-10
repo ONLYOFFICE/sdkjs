@@ -163,7 +163,37 @@ CPDFCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Additiona
 
     editor.WordControl.m_oLogicDocument.getCompositeInput().checkState();
 };
+CPDFCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
+{
+    // Данная функция вызывается, когда загрузились внешние объекты (картинки и шрифты)
 
+    // Снимаем лок
+    AscCommon.CollaborativeEditing.Set_GlobalLock(false);
+    AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
+
+	if (this.m_fEndLoadCallBack)
+	{
+		this.m_fEndLoadCallBack();
+		this.m_fEndLoadCallBack = null;
+	}
+
+	this.m_oLogicDocument.ResumeRecalculate();
+	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, undefined);
+	this.m_oLogicDocument.UpdateTracks();
+	
+	let oform = this.m_oLogicDocument.GetOFormDocument();
+	if (oform)
+		oform.onEndLoadChanges();
+
+    editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
+};
+CPDFCollaborativeEditing.prototype.canSendChanges = function(){
+    let oApi = this.GetEditorApi();
+    let oDoc = oApi.getPDFDoc();
+    let oActionQueue = oDoc.GetActionsQueue();
+
+    return oApi && oApi.canSendChanges() && !oActionQueue.IsInProgress();
+};
 CPDFCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function() {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
 };

@@ -83,10 +83,10 @@
         this._pressed = false;
         this._hovered = false;
 
-        // internal
-        TurnOffHistory();
-		this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        oDoc.StartNoHistoryMode();
+        this.content = new AscPDF.CTextBoxContent(this, oDoc);
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
+        oDoc.EndNoHistoryMode();
 
         this._imgData           = {
             normal:     null,
@@ -1768,7 +1768,8 @@
     CPushButtonField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -1804,6 +1805,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
     /**
      * Applies value of this field to all field with the same name.
@@ -1811,10 +1814,11 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Commit = function() {
+        let oDoc = this.GetDocument();
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
@@ -1837,6 +1841,8 @@
 
             aFields[i].SetNeedRecalc(true);
         }
+
+        oDoc.EndNoHistoryMode();
     };
 
     CPushButtonField.prototype.Reset = function() {
@@ -1970,11 +1976,6 @@
             g: grayG,
             b: grayB
         };
-    }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
     }
 
     if (!window["AscPDF"])

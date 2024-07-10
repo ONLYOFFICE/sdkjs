@@ -228,13 +228,15 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
+        oDoc.StartNoHistoryMode();
+        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
         
         this.Recalculate();
         this.AddToRedraw();
         this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
+
+        oDoc.EndNoHistoryMode();
 
         this.SetWasChanged(true);
     };
@@ -439,7 +441,7 @@
     };
     CAnnotationInk.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -471,6 +473,7 @@
         oNewInk.SetContents(this.GetContents());
         oNewInk.recalcInfo.recalculateGeometry = true;
 
+        oDoc.EndNoHistoryMode();
         return oNewInk;
     };
     CAnnotationInk.prototype.GetRelativePaths = function() {
@@ -747,11 +750,6 @@
         }
 
         return [xMin, yMin, xMax, yMax];
-    }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
     }
 
     window["AscPDF"].fillShapeByPoints  = fillShapeByPoints;

@@ -884,7 +884,7 @@
     };
     CAnnotationBase.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -910,6 +910,7 @@
         oNewAnnot.SetCreationDate(this.GetCreationDate());
         oNewAnnot.SetContents(this.GetContents());
 
+        oDoc.EndNoHistoryMode();
         return oNewAnnot;
     };
 

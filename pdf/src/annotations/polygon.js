@@ -59,9 +59,6 @@
         this._width         = undefined;
         this._vertices      = undefined;
         this._intent        = undefined;
-
-        // internal
-        TurnOffHistory();
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
     AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
@@ -118,7 +115,7 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let geometry;
         if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
@@ -130,6 +127,8 @@
 
         if (this.spPr.geometry == null)
             this.spPr.setGeometry(geometry);
+
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationPolygon.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -155,17 +154,17 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
+        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        oDoc.EndNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationPolygon.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -199,6 +198,8 @@
         oPolygon._vertices = this._vertices.slice();
         oPolygon.SetWasChanged(oPolygon.IsChanged());
         oPolygon.recalculate();
+
+        oDoc.EndNoHistoryMode();
 
         return oPolygon;
     };
@@ -241,11 +242,11 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
-
+        oDoc.StartNoHistoryMode();
         this._internalGeomForEdit = generateGeometry(aPolygonPoints, aShapeRectInMM, this._internalGeomForEdit);
         this._internalGeomForEdit.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
-        
+        oDoc.EndNoHistoryMode();
+
         return this._internalGeomForEdit;
     };
     CAnnotationPolygon.prototype.IsPolygon = function() {
@@ -368,12 +369,7 @@
         geometry.rectS = null;
         return geometry;
     }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     window["AscPDF"].CAnnotationPolygon = CAnnotationPolygon;
 })();
 

@@ -53,9 +53,6 @@
         this._stateModel    = undefined;
         this._width         = undefined;
         this._rectDiff      = undefined;
-
-        // internal
-        TurnOffHistory();
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
     AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
@@ -63,7 +60,7 @@
 
     CAnnotationSquare.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -95,6 +92,8 @@
         oSquare.recalcInfo.recalculateGeometry = true;
         this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());
         oSquare.recalculate();
+
+        oDoc.EndNoHistoryMode();
 
         return oSquare;
     };
@@ -137,8 +136,10 @@
             ]
         }
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         AscPDF.generateCloudyGeometry(aPoints, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
+        oDoc.EndNoHistoryMode();
+
         oGeometry.preset = undefined;
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
@@ -184,8 +185,6 @@
 
         this.SetRectangleDiff([0, 0, 0, 0]);
         oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
-
-        oDoc.TurnOffHistory();
 
         this.recalcGeometry();
         this.AddToRedraw();
@@ -265,11 +264,6 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 
     window["AscPDF"].CAnnotationSquare = CAnnotationSquare;
 })();

@@ -59,6 +59,10 @@
 			this.Points[this.Index].Additional.Pdf = aObj;
 		}
 	};
+    History.prototype.CanAddChanges = function() {
+        return !this.UndoRedoInProgress && AscCommon.CHistory.prototype.CanAddChanges.call(this);
+    };
+    History.prototype.Get_DocumentPositionBinary = function() {};
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())
 			return;

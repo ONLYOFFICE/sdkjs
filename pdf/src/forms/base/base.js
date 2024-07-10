@@ -1404,7 +1404,10 @@
         return false;
     };
     CBaseField.prototype.SetDisplay = function(nType) {
+        AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
+
         this._display = nType;
+
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
@@ -1438,7 +1441,6 @@
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             this.SetValue(defValue);
-            this.SetApiValue(defValue);
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }

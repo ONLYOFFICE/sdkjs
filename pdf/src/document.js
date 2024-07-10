@@ -1073,6 +1073,8 @@ var CPresentation = CPresentation || function(){};
             if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.button].includes(oActiveObj.GetType())) {
                 oActiveObj.SetPressed(false);
                 oActiveObj.SetHovered(false);
+                oActiveObj.AddToRedraw();
+                oActiveObj.Blur();
                 return;
             }
             else {
@@ -1852,7 +1854,6 @@ var CPresentation = CPresentation || function(){};
             }
 
             this.ClearSearch();
-            this.TurnOffHistory();
             this.currInkInDrawingProcess = null;
 
             let nCurPoindIdx = AscCommon.History.Index;
@@ -1872,13 +1873,8 @@ var CPresentation = CPresentation || function(){};
                     // в глобальной истории должен срабатывать commit
                     if (AscCommon.History == this.History) {
                         oDrDoc.TargetEnd(); // убираем курсор
-                            
-                        // изменение кнопки не вызывает commit со всеми вытекающими (calculation)
-                        if (oSourceObj.GetType() != AscPDF.FIELD_TYPES.button)
-                            this.CommitField(oSourceObj);
                         
-                        if (this.activeForm)
-                        {
+                        if (this.activeForm) {
                             this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
                             this.activeForm.SetDrawHighlight(true);
                             this.activeForm = null;
@@ -1911,7 +1907,6 @@ var CPresentation = CPresentation || function(){};
             }
 
             this.ClearSearch();
-            this.TurnOffHistory();
             this.currInkInDrawingProcess = null;
 
             let arrChanges = AscCommon.History.Redo();
@@ -1931,12 +1926,7 @@ var CPresentation = CPresentation || function(){};
                     if (AscCommon.History == this.History) {
                         oDrDoc.TargetEnd(); // убираем курсор
                             
-                        // изменение кнопки не вызывает commit со всеми вытекающими (calculation)
-                        if (oSourceObj.GetType() != AscPDF.FIELD_TYPES.button)
-                            this.CommitField(oSourceObj);
-    
-                        if (this.activeForm)
-                        {
+                        if (this.activeForm) {
                             this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
                             this.activeForm.SetDrawHighlight(true);
                             this.activeForm = null;
@@ -2026,7 +2016,9 @@ var CPresentation = CPresentation || function(){};
             let oActionRunScript = oCalcTrigget ? oCalcTrigget.GetActions()[0] : null;
 
             if (oActionRunScript) {
+                oThis.StartNoHistoryMode();
                 oActionRunScript.RunScript();
+                oThis.EndNoHistoryMode();
                 if (oField.IsNeedCommit()) {
                     oField.SetNeedRecalc(true);
                     oThis.fieldsToCommit.push(oField);
@@ -2516,9 +2508,6 @@ var CPresentation = CPresentation || function(){};
                 break;
         }
 
-        if (!AscCommon.History.IsOn()) {
-            AscCommon.History.TurnOn();
-        }
         if (AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
         }
@@ -2553,8 +2542,10 @@ var CPresentation = CPresentation || function(){};
         }
     };
 
-    CPDFDoc.prototype.FinalizeAction = function() {
-        this.TurnOffHistory();
+    CPDFDoc.prototype.FinalizeAction = function(checkEmptyAction) {
+        if (checkEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
+            AscCommon.History.Remove_LastPoint();
+        }
 
         AscCommon.History.Reset_RecalcIndex();
         
@@ -2591,10 +2582,6 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.TurnOffHistory = function() {
-        if (AscCommon.History.Is_LastPointEmpty()) {
-            AscCommon.History.Remove_LastPoint();
-        }
-
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     };
@@ -3148,7 +3135,7 @@ var CPresentation = CPresentation || function(){};
     }
 
     /**
-	 * Changes the interactive field name.
+	 * Resets the forms values.
      * Note: This method used by forms actions.
 	 * @memberof CPDFDoc
      * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
@@ -3159,34 +3146,51 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue = this.GetActionsQueue();
         let oThis = this;
 
+        let aReseted = [];
+
         if (aNames.length > 0) {
             if (bAllExcept) {
                 for (let nField = 0; nField < this.widgets.length; nField++) {
                     let oField = this.widgets[nField];
-                    if (aNames.includes(oField.GetFullName()) == false)
+                    let sFieldName = oField.GetFullName();
+
+                    if (aNames.includes(sFieldName) == false && false == aReseted.includes(sFieldName)) {
                         oField.Reset();
+                        aReseted.push(sFieldName);
+                        this.AddFieldToCommit(oField);
+                    }
                 }
             }
             else {
                 aNames.forEach(function(name) {
-                    let aFields = oThis.GetAllWidgets(name);
-                    if (aFields.length > 0)
-                        AscCommon.History.Clear()
-    
-                    aFields.forEach(function(field) {
-                        field.Reset();
-                    });
+                    let oField = oThis.GetField(name);
+                    let sFieldName = oField.GetFullName();
+
+                    if (aNames.includes(sFieldName) == true && false == aReseted.includes(sFieldName)) {
+                        oField.Reset();
+                        aReseted.push(sFieldName);
+                        this.AddFieldToCommit(oField);
+                    }
                 });
             }
         }
         else {
             this.widgets.forEach(function(field) {
-                field.Reset();
+                let sFieldName = field.GetFullName();
+
+                if (false == aReseted.includes(sFieldName)) {
+                    field.Reset();
+                    aReseted.push(sFieldName);
+                    this.AddFieldToCommit(field);
+                }
             });
             if (this.widgets.length > 0)
                 AscCommon.History.Clear()
         }
 
+        this.CommitFields();
+        this.DoCalculateFields();
+        
         oActionsQueue.Continue();
     };
     /**
@@ -4340,9 +4344,6 @@ var CPresentation = CPresentation || function(){};
                 bResult = true;
             }
         }
-
-        this.TurnOffHistory();
-
         return bResult;
     };
     CPDFDoc.prototype.CreateAndAddShapeFromSelectedContent = function (oDocContent) {
@@ -5163,12 +5164,64 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.PauseRecalculate = function() {};
     CPDFDoc.prototype.EndPreview_MailMergeResult = function() {};
     CPDFDoc.prototype.Get_SelectionState2 = function() {};
+    CPDFDoc.prototype.Save_DocumentStateBeforeLoadChanges = function() {};
+    CPDFDoc.prototype.Load_DocumentStateAfterLoadChanges = function() {};
     CPDFDoc.prototype.Check_MergeData = function() {};
     CPDFDoc.prototype.Set_SelectionState2 = function() {};
     CPDFDoc.prototype.ResumeRecalculate = function() {};
     CPDFDoc.prototype.RecalculateByChanges = function() {};
     CPDFDoc.prototype.UpdateTracks = function() {};
     CPDFDoc.prototype.GetOFormDocument = function() {};
+    CPDFDoc.prototype.Continue_FastCollaborativeEditing = function() {
+        let oController = this.GetController();
+
+        if (true === this.CollaborativeEditing.Get_GlobalLock()) {
+            if (this.Api.forceSaveUndoRequest) {
+                this.Api.asc_Save(true);
+            }
+
+            return;
+        }
+
+        if (this.Api.isLongAction()) {
+            return;
+        }
+
+        if (true !== this.CollaborativeEditing.Is_Fast() || true === this.CollaborativeEditing.Is_SingleUser()) {
+            return;
+        }
+
+        if (true === this.Api.isStartAddShape || oController.isTrackingDrawings() || this.Api.isOpenedChartFrame) {
+            return;
+        }
+
+        let HaveChanges = this.History.Have_Changes(true);
+        if (true !== HaveChanges && (true === this.CollaborativeEditing.Have_OtherChanges() || 0 !== this.CollaborativeEditing.getOwnLocksLength())) {
+            // Принимаем чужие изменения. Своих нет, но функцию отсылки надо вызвать, чтобы снять локи.
+            this.CollaborativeEditing.Apply_Changes();
+            this.CollaborativeEditing.Send_Changes();
+        }
+        else if (true === HaveChanges || true === this.CollaborativeEditing.Have_OtherChanges()) {
+            this.Api.asc_Save(true);
+        }
+
+        let CurTime = new Date().getTime();
+        if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000)) {
+            this.NeedUpdateTargetForCollaboration = false;
+
+            if (true !== HaveChanges) {
+                
+                let CursorInfo = this.History.Get_DocumentPositionBinary();
+                if (null !== CursorInfo) {
+                    this.Api.CoAuthoringApi.sendCursor(CursorInfo);
+                    this.LastUpdateTargetTime = CurTime;
+                }
+            }
+            else {
+                this.LastUpdateTargetTime = CurTime;
+            }
+        }
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
@@ -5630,6 +5683,8 @@ var CPresentation = CPresentation || function(){};
         this.callbackAfterFocus = null;
     };
     CActionQueue.prototype.Stop = function() {
+        Asc.editor.canSave = true;
+
         this.SetInProgress(false);
     };
     CActionQueue.prototype.IsInProgress = function() {
@@ -5643,14 +5698,18 @@ var CPresentation = CPresentation || function(){};
     };
     CActionQueue.prototype.Start = function() {
         if (this.IsInProgress() == false) {
-            let oFirstAction = this.actions[0];
-            if (oFirstAction) {
-                this.SetInProgress(true);
-                this.SetCurActionIdx(0);
-                setTimeout(function() {
-                    oFirstAction.Do();
-                }, 100);
-            }
+            this.doc.DoAction(function() {
+                Asc.editor.canSave = false;
+
+                let oFirstAction = this.actions[0];
+                if (oFirstAction) {
+                    this.SetInProgress(true);
+                    this.SetCurActionIdx(0);
+                    setTimeout(function() {
+                        oFirstAction.Do();
+                    }, 100);
+                }
+            }, AscDFH.historydescription_Pdf_ExecActions, this);
         }
     };
     CActionQueue.prototype.Continue = function() {
