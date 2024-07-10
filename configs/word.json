@@ -373,6 +373,7 @@
 			"pdf/src/history/formsChanges.js",
 			"pdf/src/history/drawingsChanges.js",
 			"pdf/src/apiPDF.js",
+			"pdf/src/CollaborativeEditing.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
 			"word/Math/NamesOfLiterals.js",

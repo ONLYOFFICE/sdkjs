@@ -105,7 +105,7 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
-        this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
+        this.CollaborativeEditing   = new AscPDF.CPDFCollaborativeEditing();
         this.CollaborativeEditing.m_oLogicDocument = this;
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
@@ -157,7 +157,8 @@ var CPresentation = CPresentation || function(){};
 		this.LocalHistory   = new AscPDF.History(this);
         
 		AscCommon.History = this.History;
-		
+		AscCommon.CollaborativeEditing = this.CollaborativeEditing;
+
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
         this.Api        = Asc.editor;
@@ -5157,6 +5158,19 @@ var CPresentation = CPresentation || function(){};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Collaborative editing
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    CPDFDoc.prototype.PauseRecalculate = function() {};
+    CPDFDoc.prototype.EndPreview_MailMergeResult = function() {};
+    CPDFDoc.prototype.Get_SelectionState2 = function() {};
+    CPDFDoc.prototype.Check_MergeData = function() {};
+    CPDFDoc.prototype.Set_SelectionState2 = function() {};
+    CPDFDoc.prototype.ResumeRecalculate = function() {};
+    CPDFDoc.prototype.RecalculateByChanges = function() {};
+    CPDFDoc.prototype.UpdateTracks = function() {};
+    CPDFDoc.prototype.GetOFormDocument = function() {};
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Required extensions
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     CPDFDoc.prototype.Is_Inline = function() {};
@@ -5898,6 +5912,8 @@ var CPresentation = CPresentation || function(){};
 			return null;
 		}
 		compositeInput.runInput.begin(run);
+
+        this.inUse = true;
 		return compositeInput;
 	};
 	CPDFCompositeInput.prototype.end = function() {
@@ -5913,6 +5929,8 @@ var CPresentation = CPresentation || function(){};
         oDoc.DoAction(function() {
             this.textController.EnterText(codePoints);    
         }, AscDFH.historydescription_Document_AddLetter, this);
+
+        this.inUse = false;
 	};
 	CPDFCompositeInput.prototype.add = function(codePoint) {
 		this.createNewHistoryPoint();
@@ -5952,6 +5970,14 @@ var CPresentation = CPresentation || function(){};
 			--this.pointCount;
 		}
 	};
+    CPDFCompositeInput.prototype.checkState = function() {};
+    CPDFDoc.prototype.getCompositeInput = function() {
+        if (!this.compositeInput) {
+            this.compositeInput = new AscWord.DocumentCompositeInput(this);
+        }
+        
+        return this.compositeInput;
+    };
 
     /**
 	 * Converts global coords to page coords.
