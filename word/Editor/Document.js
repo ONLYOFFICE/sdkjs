@@ -13621,7 +13621,7 @@ CDocument.prototype.EditComment = function(Id, CommentData)
 CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
 {
 	if (null === Id)
-		return;
+		return false;
 
 	if (true === this.Comments.Remove_ById(Id))
 	{
@@ -13634,7 +13634,11 @@ CDocument.prototype.RemoveComment = function(Id, bSendEvent, bRecalculate)
 
 		if (true === bSendEvent)
 			this.Api.sync_RemoveComment(Id);
+
+		return true;
 	}
+
+	return false;
 };
 CDocument.prototype.CanAddComment = function()
 {
@@ -22140,6 +22144,9 @@ CDocument.prototype.IsInFormField = function(isAllowComplexForm, isCheckCurrentU
 	var oField        = oSelectedInfo.GetField();
 	var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
 	var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
+	
+	if (oInlineSdt && oInlineSdt.IsContentControlEquation())
+		return false;
 	
 	if (isCheckCurrentUser
 		&& oInlineSdt

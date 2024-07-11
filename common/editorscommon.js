@@ -972,6 +972,9 @@
 		if (editor.documentWopiSrc) {
 			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(editor.documentWopiSrc);
 		}
+		if (editor.documentUserSessionId) {
+			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(editor.documentUserSessionId);
+		}
 		asc_ajax({
 			type:        'POST',
 			url:         url,
@@ -994,7 +997,7 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, wopiSrc, userSessionId, data, fError, fsuccess)
 	{
 		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
 		let url =sSaveFileLocalUrl + '/' + docId;
@@ -1004,6 +1007,9 @@
 		}
 		if (wopiSrc) {
 			url += '&' + Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc);
+		}
+		if (userSessionId) {
+			url += '&' + Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId);
 		}
 		asc_ajax({
 			type:        'POST',
@@ -2214,7 +2220,7 @@
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
@@ -2226,6 +2232,9 @@
 			}
 			if (wopiSrc) {
 				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (userSessionId) {
+				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
 			}
 			if (jwt) {
 				queryParams.push('token=' + encodeURIComponent(jwt));
@@ -2440,7 +2449,7 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, wopiSrc, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback)
 	{
 		if (files.length > 0)
 		{
@@ -2451,6 +2460,9 @@
 			}
 			if (wopiSrc) {
 				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (userSessionId) {
+				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
 			}
 			if (queryParams.length > 0) {
 				url += '?' + queryParams.join('&');
@@ -2513,7 +2525,7 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, wopiSrc, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, wopiSrc, userSessionId, callback)
     {
         if (files.length > 0)
         {
@@ -2524,6 +2536,9 @@
 			}
 			if (wopiSrc) {
 				queryParams.push(Asc.c_sWopiSrcName + '=' + encodeURIComponent(wopiSrc));
+			}
+			if (userSessionId) {
+				queryParams.push(Asc.c_sUserSessionIdName + '=' + encodeURIComponent(userSessionId));
 			}
 			if (queryParams.length > 0) {
 				url += '?' + queryParams.join('&');
@@ -11418,7 +11433,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, obj.options.api.documentWopiSrc, function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, obj.options.api.documentWopiSrc, obj.options.api.documentUserSessionId, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -14305,7 +14320,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, _editor.documentWopiSrc, _editor.documentUserSessionId, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);

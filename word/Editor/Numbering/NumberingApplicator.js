@@ -297,7 +297,7 @@
 		if (prevNumPr && numberingManager.CheckFormat(prevNumPr.NumId, prevNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
 		{
 			numId = prevNumPr.NumId;
-			ilvl  = prevNumPr.Lvl;
+			ilvl  = undefined;
 		}
 
 		if (!numId)
@@ -306,7 +306,7 @@
 			if (nextNumPr && numberingManager.CheckFormat(nextNumPr.NumId, nextNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
 			{
 				numId = nextNumPr.NumId;
-				ilvl  = nextNumPr.Lvl;
+				ilvl  = undefined;
 			}
 		}
 
@@ -360,8 +360,10 @@
 			}
 		}
 		
-		this.MergeTextPrFromCommonNum(numId, ilvl);
-		this.SetLastNumbered(numId, ilvl);
+		let _ilvl = undefined !== ilvl ? ilvl : 0;
+		
+		this.MergeTextPrFromCommonNum(numId, _ilvl);
+		this.SetLastNumbered(numId, _ilvl);
 		this.ApplyNumPr(numId, ilvl);
 		return true;
 	};
@@ -506,15 +508,31 @@
 		if (!this.Paragraphs || !this.Paragraphs.length)
 			return null;
 
-		let prevParagraph = this.Paragraphs[0];
+		let prevParagraph = this.Paragraphs[0].GetPrevParagraph();
+		while (prevParagraph)
+		{
+			if (prevParagraph.GetNumPr() || !prevParagraph.IsEmpty())
+				break;
+			
+			prevParagraph = prevParagraph.GetPrevParagraph();
+		}
+		
 		return prevParagraph ? prevParagraph.GetNumPr() : null;
 	};
 	CNumberingApplicator.prototype.GetNextNumPr = function()
 	{
 		if (!this.Paragraphs || !this.Paragraphs.length)
 			return null;
-
-		let nextParagraph = this.Paragraphs[this.Paragraphs.length - 1];
+		
+		let nextParagraph = this.Paragraphs[this.Paragraphs.length - 1].GetNextParagraph();
+		while (nextParagraph)
+		{
+			if (nextParagraph.GetNumPr() || !nextParagraph.IsEmpty())
+				break;
+			
+			nextParagraph = nextParagraph.GetNextParagraph();
+		}
+		
 		return nextParagraph ? nextParagraph.GetNumPr() : null;
 	};
 	CNumberingApplicator.prototype.CheckPrevNumPr = function(numId, ilvl)

@@ -370,7 +370,7 @@
 	CPdfDrawingPrototype.prototype.beforeCompositeInput = function() {
 		let docContent = this.GetDocContent();
 		if (docContent.IsSelectionUse()) {
-			docContent.Remove(1, true, false, false);
+			docContent.Remove(1, true, false, true);
 			docContent.RemoveSelection();
 		}
 	};

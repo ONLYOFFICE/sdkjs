@@ -3208,8 +3208,6 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 	let oUnicodeContent = this.GetTextOfElement(false);
     oUnicodeContent.Flat(this.Root);
     this.Paragraph.updateTrackRevisions();
-    //this.Root.AddTextWithStyles(strUnicode);
-	//this.Root.Add_Text(strUnicode, this.Paragraph);
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {

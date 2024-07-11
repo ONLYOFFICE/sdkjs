@@ -804,14 +804,15 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 	{
 		let oDegreeText		= oDegree.GetTextOfElement();
 		let oPosSqrt		= oMathText.AddText(new AscMath.MathText("√", this), true);
-		let nLengthOfDegree	= oDegreeText.GetLength();
 
-		if (nLengthOfDegree === 0 || !oDegreeText.IsHasText())
+		let nLengthOfDegree	= oDegreeText.GetText();
+
+		if (nLengthOfDegree.length === 0 || !oDegreeText.IsHasText())
 		{
 			let oBaseText	= oBase.GetTextOfElement();
-			let nMathBase	= oBaseText.GetLength();
+			let nMathBase	= oBaseText.GetText();
 
-			if (nMathBase <= 1 || !oBaseText.IsHasText() || oBaseText.IsBracket)
+			if (nMathBase.length <= 1 || !oBaseText.IsHasText())
 			{
 				oMathText.AddAfter(oPosSqrt, oBaseText);
 			}

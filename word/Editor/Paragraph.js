@@ -9869,7 +9869,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	// Если у параграфа не было никакой нумерации изначально
 	if (undefined === NumPr_old)
 	{
-		if (true === SelectedOneElement || false === SelectionUse)
+		if ((true === SelectedOneElement || false === SelectionUse) && undefined !== nLvl && null !== nLvl)
 		{
 			// Проверим сначала предыдущий элемент, если у него точно такая же нумерация, тогда копируем его сдвиги
 			var Prev          = this.Get_DocumentPrev();
@@ -9954,6 +9954,9 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 	}
 	else
 	{
+		if (undefined === nLvl || null === nLvl)
+			nLvl = NumPr_old.Lvl;
+		
 		// просто меняем список, так чтобы он не двигался
 		this.Pr.NumPr = new AscWord.NumPr(sNumId, nLvl);
 

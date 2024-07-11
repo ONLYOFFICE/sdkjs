@@ -457,6 +457,7 @@ window.AscCommon.g_cIsBeta = "false";
 	var c_sNativeViewerFormats = '.pdf.xps.oxps.djvu';
 	var c_sShardKeyName = 'shardkey';
 	var c_sWopiSrcName = 'WOPISrc';
+	var c_sUserSessionIdName = 'usid';
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
@@ -4493,6 +4494,7 @@ window.AscCommon.g_cIsBeta = "false";
 	window['Asc']['c_sNativeViewerFormats'] = window['Asc'].c_sNativeViewerFormats = c_sNativeViewerFormats;
 	window['Asc']['c_sShardKeyName'] = window['Asc'].c_sShardKeyName = c_sShardKeyName;
 	window['Asc']['c_sWopiSrcName'] = window['Asc'].c_sWopiSrcName = c_sWopiSrcName;
+	window['Asc']['c_sUserSessionIdName'] = window['Asc'].c_sUserSessionIdName = c_sUserSessionIdName;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
 	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;

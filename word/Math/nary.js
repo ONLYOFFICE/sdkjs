@@ -884,11 +884,9 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 	else
 	{
 		let oLastPos = oMathText.AddText(new AscMath.MathText(String.fromCharCode(this.Pr.chr), this));
-		let isScript = false;
 
 		if (oLower)
 		{
-			isScript = true;
 			oMathText.SetGlobalStyle(this);
 			oLastPos = oMathText.Add(oLower, true);
 			oMathText.AddBefore(oLastPos, new AscMath.MathText("_", oLower));
@@ -896,7 +894,6 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 		if (oUpper)
 		{
-			isScript = true;
 			oMathText.SetGlobalStyle(this);
 			oLastPos = oMathText.Add(oUpper, true);
 			oMathText.AddBefore(oLastPos, new AscMath.MathText("^", oUpper));
@@ -904,11 +901,12 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 		if (oBase)
 		{
-			if (oBase.GetCountForAutoProcessing() >= 1)
-				oMathText.AddText(new AscMath.MathText("▒", oBase));
+			let oPosBeforeBase	= oLastPos.Copy();
+			oLastPos			= oMathText.Add(oBase, true, 1);
+			let strBase			= oBase.GetTextOfElement().GetText();
 
-			oLastPos = oMathText.Add(oBase, true, 1);
-			let oBaseText = oMathText.GetExact(oLastPos);
+			if (strBase.length > 0)
+				oMathText.AddAfter(oPosBeforeBase, new AscMath.MathText("▒", oBase));
 		}
 	}
 

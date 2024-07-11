@@ -513,28 +513,27 @@ CMathFunc.prototype.fillContent = function()
 CMathFunc.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-
 	let oFuncName = this.getFName();
 	let oArgument = this.getArgument();
 	oMathText.SetGlobalStyle(this);
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPosFuncName = oMathText.Add(oFuncName, false);
-		let oStrContent = oMathText.GetExact(oPosFuncName, true);
-		oMathText.AddBefore(oPosFuncName, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()))
+		let oPosFuncName	= oMathText.Add(oFuncName, false);
+		let oStrContent		= oMathText.GetExact(oPosFuncName, true);
 
+		oMathText.AddBefore(oPosFuncName, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()))
 		oMathText.Add(oArgument, true, 1);
 	}
 	else
 	{
-		oMathText.Add(oFuncName, true, 0);
-		let oArgumentPos = oMathText.Add(oArgument, true, 0);
+		let oNamePos		= oMathText.Add(oFuncName, true, 0);
+		let oArgumentPos	= oMathText.Add(oArgument, true, 0);
+		let oArgumentToken	= oMathText.GetExact(oArgumentPos);
 
-		let oArgumentToken = oMathText.GetExact(oArgumentPos);
-		oMathText.AddBefore(oArgumentPos,  new AscMath.MathText("⁡", this.Pr.GetRPr()));
+		oMathText.AddAfter(oNamePos, new AscMath.MathText("⁡", this.Pr.GetRPr()));
 
-		if (oArgumentToken.GetLength() > 1 && !oArgumentToken.IsBracket)
+		if (oArgument.haveMixedContent() && !oArgumentToken.IsBracket)
 		{
 			oMathText.SetGlobalStyle(this.Pr.GetRPr());
 			oMathText.WrapExactElement(oArgumentPos, "〖", "〗");
