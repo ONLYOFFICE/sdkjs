@@ -7427,7 +7427,6 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
     //     res = c_oSerConstants.ReadUnknown;
     // } 
     else if(c_oserct_chartExSpaceCOLORS === type) {
-        this.curChart.oChartColorsData = AscCommon.fSaveStream(this.bcr.stream, length);
         oNewVal = new AscFormat.CChartColors();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartColors(t, l, oNewVal);
@@ -7435,7 +7434,6 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
         val.setChartColors(oNewVal);
     } 
     else if(c_oserct_chartExSpaceSTYLES === type) {
-        this.curChart.oChartStyleData = AscCommon.fSaveStream(this.bcr.stream, length);
         oNewVal = new AscFormat.CChartStyle();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartStyle(t, l, oNewVal);
