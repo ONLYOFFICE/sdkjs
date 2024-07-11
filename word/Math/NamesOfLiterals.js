@@ -997,6 +997,8 @@
 			"\\hvec" : "⃑",
 			"\\tvec" : "⃡",
 			"\\lvec" : "⃖",
+			"\\ubar": "̲",
+			"\\Ubar": "̳",
 		};
 		this.Unicode = {};
 
@@ -1217,6 +1219,7 @@
 			"\\overbrace": "⏞",
 			"\\overline": "¯",
 			"\\underbar" : "▁",
+			"\\overbar" : "¯",
 			"\\underbrace": "⏟",
 			"\\overshell": "⏠",
 			"\\undershell": "⏡",
@@ -2717,15 +2720,6 @@
 						oBorderBox.getBase(),
 					)
 					break;
-				// case MathStructures.bar:
-				// 	let intLocation = oTokens.overUnder === "▁" ? LOCATION_BOT : LOCATION_TOP;
-				// 	let oBar = oContext.Add_Bar({ctrPrp: new CTextPr(), pos: intLocation}, null);
-				// 	UnicodeArgument(
-				// 		oTokens.value,
-				// 		MathStructures.bracket_block,
-				// 		oBar.getBase(),
-				// 	);
-				// 	break;
 				case MathStructures.limit:
 					let oLimit = oContext.Add_Limit({ctrPrp: oTokens.style.style, type: oTokens.isBelow});
 					UnicodeArgument(
@@ -4206,9 +4200,9 @@
 	{
 		let isConvert 		= false;
 		let isSkipFirst 	= isSkipFirstLetter === true;
-		let strLast = oCMathContent.GetLastTextElement();
-		let isLastOperator 	= oCMathContent.IsLastElement(AscMath.MathLiterals.operator) || strLast === "(" || strLast === ")";
-		let oContent= new CMathContentIterator(oCMathContent);
+		let strLast			= oCMathContent.GetLastTextElement();
+		let isLastOperator	= oCMathContent.IsLastElement(AscMath.MathLiterals.operator) || strLast === "(" || strLast === ")";
+		let oContent		= new CMathContentIterator(oCMathContent);
 		let oLastOperator;
 
 		if (strLast === " ")
@@ -6229,10 +6223,11 @@
 			{
 				let arrCurrentBracket = arrBracketsPair[i];
 				let oStartPos = arrCurrentBracket[1];
+				oStartPos.DecreasePosition();
 				let arrPos = oStartPos.position;
 
 				// если после матрицы есть скобка
-				if (arrPos[0] === arrLastPos[0] && arrPos[1] - 1 === arrLastPos[1])
+				if (arrPos[0] === arrLastPos[0] && arrPos[1] === arrLastPos[1])
 				{
 					let oParamsCutContent	= {oDelMark : oLast, isDelLastSpace: true};
 					let oMathContent 		= CutContentFromEnd(this.oCMathContent, oParamsCutContent);
@@ -6309,7 +6304,8 @@
 			return false;
 
 		let intLastTokenType = oLast.GetType();
-		return MathLiterals.accent.id 	=== intLastTokenType
+
+		return MathLiterals.accent.id 	=== intLastTokenType;
 	};
 	/**
 	 * Processing PRFunction type of math content.
@@ -6601,6 +6597,33 @@
 			oContent.MoveCursorToEndPos(true);
 
 		return isConvert;
+	}
+	function IsNeedSkipSpecial(oContentIterator, isSkipSpecial, currentContent)
+	{
+		return isSkipSpecial
+			&& oContentIterator.counter === 1
+			&& (
+				currentContent === " "
+				|| MathLiterals.operator.SearchU(currentContent)
+				|| MathLiterals.lBrackets.SearchU(currentContent)
+			);
+	}
+	function ConvertRuleDataToText(rule)
+	{
+		if (Array.isArray(rule))
+		{
+			let strRule = "";
+			for (let nCount = 0; nCount < rule.length; nCount++)
+			{
+				strRule += String.fromCharCode(rule[nCount]);
+			}
+
+			return strRule;
+		}
+		else
+		{
+			return String.fromCharCode(rule)
+		}
 	}
 
 	function ConvertBracketContent(oTokens, oCMathContent)
