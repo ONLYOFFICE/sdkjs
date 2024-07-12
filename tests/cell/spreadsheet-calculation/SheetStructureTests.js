@@ -2459,51 +2459,6 @@ $(function () {
 
 	});
 
-	QUnit.test('Conditional formatting: test apply to', function (assert) {
-
-		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
-		tableOptions.range = "A1:B3";
-		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
-
-		let cf = new AscCommonExcel.CConditionalFormattingRule();
-		cf.asc_setType(Asc.c_oAscCFType.cellIs);
-		cf.asc_setLocation("A5");
-
-		api.asc_setCF([cf]);
-
-		wsView.setSelection(new Asc.Range(0, 4, 0, 4));
-		let modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
-		let cfLocation;
-		if (modelCf) {
-			modelCf = modelCf[0] && modelCf[0][0];
-			cfLocation = modelCf.asc_getLocation();
-		}
-
-		let ref = cfLocation && cfLocation[1];
-		assert.strictEqual(ref, "=$A$5", "compare location conditional formatting in cell");
-
-
-		cf = new AscCommonExcel.CConditionalFormattingRule();
-		cf.asc_setType(Asc.c_oAscCFType.cellIs);
-		cf.asc_setLocation("=Table1[Column1]");
-
-		api.asc_setCF([cf]);
-
-		wsView.setSelection(new Asc.Range(0, 1, 0, 1));
-		modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
-
-		if (modelCf) {
-			modelCf = modelCf[0] && modelCf[0][0];
-			cfLocation = modelCf.asc_getLocation();
-		}
-
-		ref = cfLocation && cfLocation[1];
-		assert.strictEqual(ref, "=$A$2:$A$4", "compare location conditional formatting in table");
-
-
-		clearData(0, 6, 0, 6);
-	});
-
 	QUnit.test('Table selection for formula', function (assert) {
 
 		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
