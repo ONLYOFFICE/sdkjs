@@ -719,10 +719,7 @@ function(window, undefined) {
 			fCurX += fInterval;
 		}
 		let oFirstLabel = null, fFirstLabelCenterX = null, oLastLabel = null, fLastLabelCenterX = null;
-		let fContentWidth = fForceContentWidth ? fForceContentWidth : Math.abs(fInterval);
-		if (oLabelParams && oLabelParams.valid) {
-			fContentWidth = oLabelParams.isUserDefinedTickSkip ? fContentWidth : fContentWidth / oLabelParams.nLblTickSkip;
-		}
+		let fContentWidth = fForceContentWidth || (oLabelParams && oLabelParams.valid) ? fForceContentWidth : Math.abs(fInterval);
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
 
@@ -1454,7 +1451,12 @@ function(window, undefined) {
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
-			fForceContentWidth_ = oLabelParams.valid ? fAxisLength : fForceContentWidth_;
+			if (oLabelParams.valid) {
+				// if oLabelParams is valid then one label = axis lenght / (number of labels); number of labels = allLabels / labelsTickSkip
+				const fLabelWidth = fAxisLength / Math.ceil(oLabelsBox.aLabels.length / oLabelParams.nLblTickSkip);
+				// if userDefinedTickSkip then each label has same width as axislength
+				fForceContentWidth_ = oLabelParams.isUserDefinedTickSkip ? fAxisLength : fLabelWidth;
+			}
 			if (statement) {
 				oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_, oLabelParams);
 			} else {
