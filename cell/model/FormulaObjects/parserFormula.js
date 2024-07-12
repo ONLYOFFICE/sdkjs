@@ -2380,8 +2380,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 						}
 					}
 
-					if (this.hdtcstartIndex === null) {
-						// If the formula looks like =Table[[#Headers|#All|#Data|#Totals]] - remove inner brackets
+					if (this.hdtcstartIndex === null && this.hdtIndexes.length === 1) {
+						// If the formula contains a single hdt index, remove the inner brackets =Table[[#Headers|#All|#Data|#Totals]]
 						tblStr += this._buildLocalTableString(this.hdtIndexes[i], isLocal);
 					} else {
 						tblStr += "[" + this._buildLocalTableString(this.hdtIndexes[i], isLocal) + "]";
@@ -2416,7 +2416,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.tableName = val['tableName'];
 		if (val['oneColumn']) {
 			startCol = val['oneColumn'].replace(/'([#[\]])/g, '$1');
-			if (startCol.includes("@") && startCol[0] === "@") {
+			if (startCol[0] === "@") {
 				this.isDynamic = true;
 			}
 
