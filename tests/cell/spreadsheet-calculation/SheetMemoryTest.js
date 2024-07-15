@@ -479,7 +479,7 @@ $(function () {
 		if (res !== testData.expected) {
 			assert.strictEqual(res, testData.expected, JSON.stringify(data));
 		}
-		if (sweepLine.colDatas.length !== sweepLine.colDatasIndex) {
+		if (sweepLine.colDatasLen !== sweepLine.colDatasIndex) {
 			assert.strictEqual(sweepLine.colDatas.length, sweepLine.colDatasIndex, "colDatas");
 		}
 		if (sweepLine.toInsert.length !== sweepLine.toInsertIndex) {

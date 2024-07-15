@@ -21358,6 +21358,7 @@
 		this.colDatas = [];
 		this.colDatasCol = [];
 		this.colDatasIndex = 0;
+		this.colDatasLen = 0;
 
 		this.toInsert = [];
 		this.toInsertIndex = 0;
@@ -21379,6 +21380,7 @@
 		this.colDatas = [];
 		this.colDatasCol = [];
 		this.colDatasIndex = 0;
+		this.colDatasLen = 0;
 
 		this.toInsert = [];
 		this.toInsertIndex = 0;
@@ -21442,7 +21444,7 @@
 	SweepLineRowIterator.prototype.nextCol = function () {
 		this.col = -1;
 		this.colData = null;
-		if (this.colDatasIndex < this.colDatasCol.length) {
+		if (this.colDatasIndex < this.colDatasLen) {
 			this.col = this.colDatasCol[this.colDatasIndex];
 			this.colData = this.colDatas[this.colDatasIndex];
 			this.colDatasIndex++;
@@ -21450,7 +21452,7 @@
 			let toDeleteOld = this.toDeleteIndex;
 			while (this.toDeleteIndex < this.toDelete.length && this.toDelete[this.toDeleteIndex] === this.col) {
 				this.toDeleteIndex++;
-				if (this.colDatasIndex < this.colDatasCol.length) {
+				if (this.colDatasIndex < this.colDatasLen) {
 					this.col = this.colDatasCol[this.colDatasIndex];
 					this.colData = this.colDatas[this.colDatasIndex];
 					this.colDatasIndex++;
@@ -21462,9 +21464,12 @@
 			if (toDeleteOld !== this.toDeleteIndex) {
 				let deleteCount = this.toDeleteIndex - toDeleteOld;
 				this.colDatasIndex -= -1 === this.col ? deleteCount : deleteCount + 1;
-				this.colDatas.splice(this.colDatasIndex, deleteCount);
-				this.colDatasCol.splice(this.colDatasIndex, deleteCount);
-				if (this.colDatasIndex < this.colDatasCol.length) {
+				for (let i = this.colDatasIndex + deleteCount; i < this.colDatasLen; ++i) {
+					this.colDatas[i - deleteCount] = this.colDatas[i];
+					this.colDatasCol[i - deleteCount] = this.colDatasCol[i];
+				}
+				this.colDatasLen -= deleteCount;
+				if (this.colDatasIndex < this.colDatasLen) {
 					this.col = this.colDatasCol[this.colDatasIndex];
 					this.colData = this.colDatas[this.colDatasIndex];
 					this.colDatasIndex++;
@@ -21484,23 +21489,26 @@
 			this.toInsertIndex = this.toInsert.length;
 		}
 		if (toInsertOld !== this.toInsertIndex) {
-			let cols = [];
-			let datas = [];
-			for (let i = toInsertOld; i < this.toInsertIndex; ++i) {
-				let curCol = this.toInsert[i];
-				let colData = this.cellsByCol[curCol];
-				if (colData && this.row <= colData.getMaxIndex()) {
-					cols.push(curCol);
-					datas.push(colData);
-				}
-			}
 			if (-1 !== this.col) {
 				this.colDatasIndex--;
 			}
-			this.colDatas.splice.apply(this.colDatas, [this.colDatasIndex, 0].concat(datas));
-			this.colDatasCol.splice.apply(this.colDatasCol, [this.colDatasIndex, 0].concat(cols));
-
-			if (this.colDatasIndex < this.colDatasCol.length) {
+			let insertCount = this.toInsertIndex - toInsertOld;
+			if (this.colDatas.length < this.colDatasLen + insertCount) {
+				this.colDatas.length = this.colDatasLen + insertCount
+				this.colDatasCol.length = this.colDatasLen + insertCount
+			}
+			for (let i = this.colDatasLen - 1; i >= this.colDatasIndex; --i) {
+				this.colDatas[i + insertCount] = this.colDatas[i];
+				this.colDatasCol[i + insertCount] = this.colDatasCol[i];
+			}
+			this.colDatasLen += insertCount;
+			for (let i = 0; i < insertCount; ++i) {
+				let curCol = this.toInsert[toInsertOld + i];
+				let colData = this.cellsByCol[curCol];
+				this.colDatasCol[this.colDatasIndex + i] = curCol;
+				this.colDatas[this.colDatasIndex + i] = colData;
+			}
+			if (this.colDatasIndex < this.colDatasLen) {
 				this.col = this.colDatasCol[this.colDatasIndex];
 				this.colData = this.colDatas[this.colDatasIndex];
 				this.colDatasIndex++;
