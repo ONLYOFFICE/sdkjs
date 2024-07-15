@@ -202,6 +202,10 @@ $(function () {
 		return c;
 	};
 
+	function compareAscColorAndRgbColor (ascColor, rgbColor) {
+		return ascColor.get_r() === rgbColor.getR() && ascColor.get_g() === rgbColor.getG() && ascColor.get_b() === rgbColor.getB();
+	};
+
 	QUnit.test('Conditional formatting: test apply to', function (assert) {
 
 		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
@@ -260,14 +264,17 @@ $(function () {
 		let newRule = new AscCommonExcel.CConditionalFormattingRule();
 		newRule.asc_setType(Asc.c_oAscCFType.cellIs);
 		let xfs = new Asc.asc_CellXfs();
-		xfs.asc_setFontColor(getRgbColor("9C0006"));
-		xfs.asc_setFillColor(getRgbColor("FFC7CE"));
+		let fontColor = getRgbColor("9C0006");
+		let fillColor = getRgbColor("FFC7CE");
+		xfs.asc_setFontColor(fontColor);
+		xfs.asc_setFillColor(fillColor);
 		newRule.asc_setDxf(xfs);
 		newRule.asc_setOperator(AscCommonExcel.ECfOperator.Operator_greaterThan);
 		newRule.asc_setValue1("99");
 		newRule.asc_setLocation("$A$1");
 
 		api.asc_setCF([newRule]);
+		ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, AscCommon.gc_nMaxCol0, AscCommon.gc_nMaxRow0)]));
 
 		wsView.setSelection(new Asc.Range(0, 0, 0, 0));
 		let modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
@@ -280,6 +287,11 @@ $(function () {
 
 		let ref = cfLocation && cfLocation[1];
 		assert.strictEqual(ref, "=$A$1", "compare location conditional formatting");
+
+
+		let compiledStyle = ws.getCompiledStyle(0, 0);
+		let rgbColor = compiledStyle.fill.bg();
+		assert.strictEqual(compareAscColorAndRgbColor(fillColor, rgbColor), true, "compare fill color _1");
 
 
 		//Clearing data of sheet
