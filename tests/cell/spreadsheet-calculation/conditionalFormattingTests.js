@@ -299,5 +299,5 @@ $(function () {
 	});
 
 
-	QUnit.module("Sheet structure");
+	QUnit.module("Conditional formatting");
 });
