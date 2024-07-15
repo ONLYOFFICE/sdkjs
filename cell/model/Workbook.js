@@ -20715,6 +20715,13 @@
 				this.oDataRow[nRow] = row;
 			}
 			row[nCol] = new cDataRow(nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods);
+			// Checking Date format has Date & Time
+			if (bDate && oAdditional.xfs && oAdditional.xfs.num && oAdditional.xfs.num.getFormat()) {
+				let oNumFormat = oNumFormatCache.get(oAdditional.xfs.num.getFormat());
+				if (oNumFormat.isTimeFormat()) {
+					row[nCol].setIsDateTime(true);
+				}
+			}
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
@@ -20844,7 +20851,7 @@
 					var nMaxPadding = 0;
 					//анализируем последовательность, если числа расположены не на одинаковом расстоянии, то считаем их сплошной последовательностью
 					//последовательность с промежутками может быть только целочисленной
-					for(var i = 0, length = aCurSequence.length; i < length; i++) {
+					for(let i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
 						var nCurX = data.getCol();
 						let nCurVal = data.getVal();
@@ -20884,7 +20891,7 @@
 					var bExistSpace = false;
 					nPrevX = null;
 					var aDigits = [];
-					for(var i = 0, length = aCurSequence.length; i < length; i++) {
+					for (let i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
 						data.setPadding(nMaxPadding);
 						var nCurX = data.getCol();
@@ -20895,25 +20902,74 @@
 							bExistSpace = true;
 						var y = data.getVal();
 						//даты автозаполняем только по целой части
-						if(data.getIsDate())
+						if(data.getIsDate() && !data.getIsDateTime() && !data.getIsMixedDateFormat()) {
 							y = parseInt(y);
+						}
 						aDigits.push({x: x, y: y});
 						nPrevX = nCurX;
 					}
 					if(aDigits.length > 0) {
-						var oSequence = this._promoteSequence(aDigits);
-						if(1 == aDigits.length && this.bReverse) {
+						let bMixedDateFormat = oFirstData.getIsMixedDateFormat();
+						let oSequence = null;
+
+						if (bMixedDateFormat) {
+							/* In a mixed date format, the promotion sequence should be calculated similarly to the Date format.
+							But, the original array should be saved to use the time portion of the cell with the Date & Time format
+							 as a constant value for the correct sequence. */
+							let aIntDigits = aDigits.map(function (elem) {
+								return {x: elem.x, y: parseInt(elem.y)};
+							});
+							oSequence = this._promoteSequence(aIntDigits);
+						} else {
+							oSequence = this._promoteSequence(aDigits);
+						}
+						if(aDigits.length === 1 && this.bReverse) {
 							//меняем коэффициенты для случая одного числа в последовательности, иначе она в любую сторону будет возрастающей
 							oSequence.a1 *= -1;
 						}
-						var bIsIntegerSequence = oSequence.a1 != parseInt(oSequence.a1);
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
+						let bIsNotIntegerSequence = oSequence.a1 !== parseInt(oSequence.a1);
 						let sPrefix = oFirstData.getPrefix();
 						let bDate = oFirstData.getIsDate();
+						let bDateTime = oFirstData.getIsDateTime();
 						let bDelimiter = oFirstData.getDelimiter();
-						if(!((null != sPrefix || true == bDate) && bIsIntegerSequence)) {
-							if(false == bWithSpace && bExistSpace) {
-								for(var i = nMinIndex; i <= nMaxIndex; i++) {
+						// For Date format
+						let bStepForDateIsZero = bDate && oSequence.a1 === 0;
+						let bIntStartValue = bDate && oSequence.a0 === parseInt(oSequence.a0);
+						// For Date & Time format
+						let bDayOfDateDiff = aDigits.length > 1 ? Math.floor(aDigits[0].y) !== Math.floor(aDigits[1].y) : true;
+						let bDateTimeSeqIsCorrect = aDigits[0].y.toFixed(3) === oSequence.a0.toFixed(3);
+						// If Date & Time format hasn't diff in days of date, but sequence by time is not correct we use step = 0
+						// and start sequence point is equal first element of aDigits or for reverse sequence the last element of aDigit.
+						if (bDateTime && !bDayOfDateDiff && !bDateTimeSeqIsCorrect && (oSequence.a1 < 1 && oSequence.a1 > -1)) {
+							oSequence.a0 = this.bReverse ? aDigits[aDigits.length - 1].y : aDigits[0].y;
+							oSequence.a1 = parseInt(oSequence.a1);
+						}
+						if (bMixedDateFormat) {
+							// The start element needs to add part of the time from the first (or last for reverse sequences) cell
+							// with Date & Time format from the selected range.
+							let aDigitsWithDateTime = aDigits.filter(function(item) {
+								return item.y !== parseInt(item.y);
+							});
+							let nDateTimeVal = this.bReverse ? aDigitsWithDateTime[aDigitsWithDateTime.length - 1].y : aDigitsWithDateTime[0].y;
+							let nTimePart = nDateTimeVal - parseInt(nDateTimeVal);
+							oSequence.a0 = parseInt(oSequence.a0) + nTimePart;
+						}
+						if(!((sPrefix != null || (bDate && !bDateTime && !bMixedDateFormat)) && bIsNotIntegerSequence)) {
+							// If for Date or Date & Time format the sequence is not correct or sequence step is 0, skip work with oSequence
+							if (bDate) {
+								if (bStepForDateIsZero && !bDateTime && !bMixedDateFormat) {
+									return;
+								}
+								if (!bIntStartValue && !bDateTime) {
+									return;
+								}
+								if (bDateTime && bDayOfDateDiff && !bDateTimeSeqIsCorrect) {
+									return;
+								}
+							}
+							if(!bWithSpace && bExistSpace) {
+								for (let i = nMinIndex; i <= nMaxIndex; i++) {
 									var data = row[i];
 									if(null == data) {
 										data = new cDataRow(i, null, bDelimiter, sPrefix, null, bDate);
@@ -20923,7 +20979,7 @@
 								}
 							}
 							else {
-								for(var i = 0, length = aCurSequence.length; i < length; i++) {
+								for(let i = 0, length = aCurSequence.length; i < length; i++) {
 									var nCurX = aCurSequence[i].nCol;
 									if(null != nCurX)
 										row[nCurX].setSequence(oSequence);
@@ -20953,6 +21009,17 @@
 					for(var j = 0, length2 = aSortIndex.length; j < length2; j++) {
 						var nColIndex = aSortIndex[j];
 						var rowData = row[nColIndex];
+						let rowDataNext = nColIndex + 1 < length2 && row[nColIndex + 1];
+						let bDate = rowData.getIsDate();
+						let bDateTime = rowData.getIsDateTime();
+						let bDateNextRow = rowDataNext && rowDataNext.getIsDate();
+						let bDateTimeNextRow = rowDataNext && rowDataNext.getIsDateTime();
+						if ((bDate && bDateTime && bDateNextRow && !bDateTimeNextRow) || (bDate && !bDateTime && bDateNextRow && bDateTimeNextRow)) {
+							let nFirstColIndex = aSortIndex[0];
+							let oFirstRowData = row[nFirstColIndex];
+							oFirstRowData.setIsMixedDateFormat(true);
+							oFirstRowData.setIsDateTime(false);
+						}
 						var bAddToSequence = false;
 						let nVal = rowData.getVal();
 						let bDelimiter = rowData.getDelimiter();
@@ -20983,18 +21050,24 @@
 			this.oCurRow = this.oDataRow[index];
 			this.nCurColIndex = 0;
 		},
-		getNext: function(){
-			var oRes = null;
+		getNext: function() {
+			let oRes = null;
 			if(this.oCurRow) {
-				var oRes = this.oCurRow[this.nCurColIndex];
-				if(null != oRes) {
+				oRes = this.oCurRow[this.nCurColIndex];
+				if(oRes != null) {
 					oRes.setCurValue(null);
-					if(null != oRes.getSequence()) {
-						var sequence = oRes.getSequence();
-						if((oRes.getIsDate() && !oRes.getTimePeriods()) || null != oRes.getPrefix())
-							oRes.setCurValue( Math.abs(sequence.a1 * sequence.nX + sequence.a0));
-						else
+					if(oRes.getSequence() != null) {
+						let sequence = oRes.getSequence();
+						if(oRes.getPrefix() != null) {
+							oRes.setCurValue(Math.abs(sequence.a1 * sequence.nX + sequence.a0));
+						} else if (oRes.getIsDate() && !oRes.getTimePeriods()) {
+							let nCurValue = sequence.a1 * sequence.nX + sequence.a0;
+							if (nCurValue >= 0 || (oRes.getIsDateTime() && parseInt(sequence.a1) !== sequence.a1)) {
+								oRes.setCurValue(nCurValue);
+							}
+						} else {
 							oRes.setCurValue(sequence.a1 * sequence.nX + sequence.a0);
+						}
 						sequence.nX++;
 					}
 				}
@@ -21153,6 +21226,8 @@
 		this.sPrefix = sPrefix;
 		this.nPadding = nPadding;
 		this.bDate = bDate;
+		this.bDateTime = false;
+		this.bMixedDateFormat = false;
 		this.oAdditional = oAdditional;
 		this.aTimePeriods = aTimePeriods;
 		this.oSequence = null;
@@ -21179,6 +21254,18 @@
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
 	};
+	cDataRow.prototype.getIsDateTime = function() {
+		return this.bDateTime;
+	};
+	cDataRow.prototype.setIsDateTime = function(bDateTime) {
+		this.bDateTime = bDateTime;
+	};
+	cDataRow.prototype.getIsMixedDateFormat = function () {
+		return this.bMixedDateFormat;
+	};
+	cDataRow.prototype.setIsMixedDateFormat = function (bMixedDateFormat) {
+		this.bMixedDateFormat = bMixedDateFormat;
+	}
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
 	};

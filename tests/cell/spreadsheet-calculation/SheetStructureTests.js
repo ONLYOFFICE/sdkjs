@@ -172,6 +172,7 @@ $(function () {
 	};
 	const clearData = function (c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0,0,0,0));
+		ws.TableParts = [];
 		ws.removeRows(r1, r2, false);
 		ws.removeCols(c1, c2);
 	};
@@ -3419,7 +3420,452 @@ $(function () {
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
 	});
-	
+	QUnit.test("Autofill - format Date and Date & Time.", function (assert) {
+		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
+			const [c1From, c2From, r1From, r2From] = aFrom;
+			const [c1To, c2To, r1To, r2To] = aTo;
+			const nHandleDirection = r1To === r2To ? 0 : 1; // 0 - Horizontal, 1 - Vertical
+			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
+			let  autoFillRange;
+
+			if (nHandleDirection === 0) {
+				let autofillC1 = nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
+				autoFillRange = getRange(autofillC1, r1To, c2To, r2To);
+			} else {
+				let autofillR1 = nFillHandleArea === 3 ? r2From + 1 : r1From - 1;
+				autoFillRange = getRange(c1To, autofillR1, c2To, r2To);
+			}
+			ws.selectionRange.ranges = [getRange(c1From, r1From, c2From, r2From)];
+			wsView = getAutoFillRange(wsView, c1To, r1To, c2To, r2To, nHandleDirection, nFillHandleArea);
+			let undoRes = nHandleDirection === 0 ? [undoData] : undoData;
+			let expectedRes = nHandleDirection === 0 ? [expectedData] : expectedData;
+			checkUndoRedo(function (_desc) {
+				autoFillAssert(assert, autoFillRange, undoRes, _desc);
+			}, function (_desc) {
+				autoFillAssert(assert, autoFillRange, expectedRes, _desc);
+			}, sDescription);
+		}
+
+		ws.getRange2('A1:Z100').cleanAll();
+		// Case #1: Format Date. Asc sequence. Vertical. Selected 2 cell
+		let testData = [
+			['12/12/2000', '12/12/2000'],
+			['12/13/2000', '12/14/2000']
+		];
+		let range = ws.getRange4(0,0);
+		range.fillData(testData);
+		let undoData = [[''], [''], [''], ['']];
+
+		// nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		// aFrom, aTo: [c1,c2,r1,r2]
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, 'Format Date. Asc sequence. Vertical. Selected 2 cell', [['36874'], ['36875'], ['36876'], ['36877']]);
+		getAutofillCase([1, 1, 0, 1], [1, 1, 2, 5], 3, 'Format Date. Asc sequence. Vertical. Selected 2 cell, even step.', [['36876'], ['36878'], ['36880'], ['36882']]);
+		// Case #2: Format Date. Reverse sequence. Vertical. Selected 2 cell
+		undoData = [[''],[''],['36873'], ['36872']];
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+
+		getAutofillCase([0, 0, 4, 5], [0, 0, 3, 0], 1, 'Format Date. Reverse sequence. Vertical. Selected 2 cell', [['36871'], ['36870'], ['36869'], ['36868']]);
+		undoData = [[''],[''],['36874'], ['36872']];
+		getAutofillCase([1, 1, 4, 5], [1, 1, 3, 0], 1, 'Format Date. Reverse sequence. Vertical. Selected 2 cell, even step', [['36870'], ['36868'], ['36866'], ['36864']]);
+		// Case #3: Format Date. Asc sequence. Horizontal. Selected 1 cell
+		clearData(0, 0, 1, 5);
+		testData = [
+			['12/12/2000']
+		];
+		undoData = ['', '', '', ''];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		getAutofillCase([0, 0, 0, 0], [1, 4, 0, 0], 3, 'Format Date. Asc sequence. Horizontal. Selected 1 cell', ['36873', '36874', '36875', '36876']);
+		// Case #4: Format Date. Reverse sequence. Horizontal. Selected 1 cell
+		undoData = ['', '', '', '36872'];
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+
+		getAutofillCase([4, 4, 0, 0], [3, 0, 0, 0], 1, 'Format Date. Reverse sequence. Horizontal. Selected 1 cell', ['36871', '36870', '36869', '36868']);
+		// Case #5: Format Date. Asc sequence. Vertical. Selected 3 cells. Negative case - 12/12/2000, 12/13/2000, 12/12/2000.
+		testData = [
+			['12/12/2000'],
+			['12/13/2000'],
+			['12/12/2000']
+		];
+		undoData = [[''], [''], [''], ['']];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Format Date. Asc sequence. Vertical. Selected 3 cells. Negative case - 12/12/2000, 12/13/2000, 12/12/2000.', [['36872'], ['36873'], ['36872'], ['36872']]);
+		// Case #6: Format Date. Reverse sequence. Vertical. Selected 3 cells. Negative case - 12/12/2000, 12/13/2000, 12/12/2000.
+		undoData = [[''], ['36872'], ['36873'], ['36872']];
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Format Date. Reverse sequence. Vertical. Selected 3 cells. Negative case - 12/12/2000, 12/13/2000, 12/12/2000.', [['36872'], ['36873'], ['36872'], ['36872']]);
+		// Case #7: Format Date. Asc sequence. Horizontal. Selected 4 cells. Negative case - 12/12/2000, 12/13/2000, 12/14/2000, 12/16/2000.
+		clearData(0, 0, 0, 6);
+		testData = [
+			['12/12/2000', '12/13/2000', '12/14/2000', '12/16/2000']
+		];
+		undoData = ['', '', '', '', ''];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		getAutofillCase([0, 3, 0, 0], [4, 8, 0, 0], 3, 'Format Date. Asc sequence. Horizontal. Selected 4 cells. Negative case - 12/12/2000, 12/13/2000, 12/14/2000, 12/16/2000.', ['36872', '36873', '36874', '36876', '36872']);
+		// Case #8: Format Date. Reverse sequence. Horizontal. Selected 4 cells. Negative case - 12/12/2000, 12/13/2000, 12/14/2000, 12/16/2000.
+		undoData = ['', '36876', '36874', '36873', '36872'];
+		range = ws.getRange4(0, 5);
+		range.fillData(testData);
+
+		getAutofillCase([5, 8, 0, 0], [4, 0, 0, 0], 1, 'Format Date. Reverse sequence. Horizontal. Selected 4 cells. Negative case - 12/12/2000, 12/13/2000, 12/14/2000, 12/16/2000.', ['36876', '36874', '36873', '36872', '36876']);
+		// Case #9: Format Date. Asc sequence. Vertical. Selected 1 cell. Non integer value in Date format.
+		ws.getRange2('A1:I1').cleanAll();
+		ws.getRange2('A1').setValue('12/12/2000');
+		ws._getCell(0, 0,function(cell) {
+			cell.setValueNumberInternal(36872.5);
+		});
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 0], [0, 0, 1, 4], 3, 'Format Date. Asc sequence. Vertical. Selected 1 cell. Non integer value in Date format.', [['36873'], ['36874'], ['36875'], ['36876']]);
+		// Case #10: Format Date. Reverse sequence. Horizontal. Selected 2 cells. Non integer value in Date format.
+		ws.getRange2('E1').setValue('12/12/2000');
+		ws.getRange2('F1').setValue('12/13/2000');
+		ws._getCell(0, 4, function (cell) {
+			cell.setValueNumberInternal(36872.5);
+		});
+		ws._getCell(0, 5, function (cell) {
+			cell.setValueNumberInternal(36873.6);
+		});
+		undoData = ['', '', '', '36872.5'];
+
+		getAutofillCase([4, 5, 0, 0], [3, 0, 0, 0], 1, 'Format Date. Reverse sequence. Horizontal. Selected 2 cells. Non integer value in Date format.', ['36871', '36870', '36869', '36868']);
+		// Case #11: Format Date. Asc sequence. Vertical. Selected 2 cells. Step 0.
+		ws.getRange2('A1:F9').cleanAll();
+		testData = [
+			['12/12/2000'],
+			['12/12/2000']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, 'Format Date. Asc sequence. Vertical. Selected 2 cells. Step 0.', [['36872'], ['36872'], ['36872'], ['36872']]);
+		// Case #12: Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Step - time.
+		ws.getRange2('A1:A6').cleanAll();
+		testData = [
+			['12/12/2000 12:00'],
+			['12/12/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, 'Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Step - time.', [['36872.583333333336'], ['36872.62500000001'], ['36872.66666666668'], ['36872.70833333335']]);
+		// Case #13: Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Step - time.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['36872.541666666664'], ['36872.5']];
+
+		getAutofillCase([0, 0, 4, 5], [0, 0, 3, 0], 1, 'Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Step - time.', [['36872.45833333334'], ['36872.416666666686'], ['36872.37500000003'], ['36872.33333333337']]);
+		// Case #14: Format Date & Time. Asc sequence. Horizontal. Selected 1 cell.
+		ws.getRange2('A1:A6').cleanAll();
+		testData = [
+			['12/12/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 0, 0, 0], [1, 4, 0, 0], 3, 'Format Date & Time. Asc sequence. Horizontal. Selected 1 cell.', ['36873.541666666664', '36874.541666666664', '36875.541666666664', '36876.541666666664']);
+		// Case #15: Format Date & Time. Reverse sequence. Horizontal. Selected 1 cell.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '', '', '36872.541666666664'];
+
+		getAutofillCase([4, 4, 0, 0], [3, 0, 0, 0], 1, 'Format Date & Time. Reverse sequence. Horizontal. Selected 1 cell.', ['36871.541666666664', '36870.541666666664', '36869.541666666664', '36868.541666666664']);
+		// Case #16: Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Diff days, same time.
+		ws.getRange2('A1:F1').cleanAll();
+		testData = [
+			['12/12/2000 14:00'],
+			['12/14/2000 14:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, 'Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Diff days, same time.', [['36876.583333333336'], ['36878.583333333336'], ['36880.583333333336'], ['36882.583333333336']]);
+		// Case #17: Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Diff days, same time.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['36874.583333333336'], ['36872.583333333336']];
+
+		getAutofillCase([0, 0, 4, 5], [0, 0, 3, 0], 1, 'Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Diff days, same time.', [['36870.583333333336'], ['36868.583333333336'], ['36866.583333333336'], ['36864.583333333336']]);
+		// Case #18: Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Step - time & day.
+		testData = [
+			['12/12/2000 12:00'],
+			['12/14/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['36872.583333333336'], ['36874.583333333336']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, 'Format Date & Time. Asc sequence. Vertical. Selected 2 cells. Step - time & day.', [['36876.583333333336'], ['36878.62500000001'], ['36880.66666666668'], ['36882.70833333335']]);
+		// Case #19: Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Step - time & day.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['36874.541666666664'], ['36872.5']];
+
+		getAutofillCase([0, 0, 4, 5], [0, 0, 3, 0], 1, 'Format Date & Time. Reverse sequence. Vertical. Selected 2 cells. Step - time & day.', [['36870.45833333334'], ['36868.416666666686'], ['36866.37500000003'], ['36864.33333333337']]);
+		// Case #20: Format Date & Time. Asc sequence. Horizontal. Negative case. Same day, time - 12:00, 13:00, 12:00.
+		ws.getRange2('A1:A6').cleanAll();
+		testData = [
+			['12/12/2000 12:00', '12/12/2000 13:00', '12/12/2000 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 2, 0, 0], [3, 6, 0, 0], 3, 'Format Date & Time. Asc sequence. Horizontal. Negative case: Same day, time - 12:00, 13:00, 12:00.', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #21: Format Date & Time. Reverse sequence. Horizontal. Negative case. Same day, time - 12:00, 13:00, 12:00.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '36872.5', '36872.541666666664', '36872.5'];
+
+		getAutofillCase([4, 6, 0, 0], [3, 0, 0, 0], 1, 'Format Date & Time. Reverse sequence. Horizontal. Negative case: Same day, time - 12:00, 13:00, 12:00.', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #22: Format Date & Time. Asc sequence. Horizontal. Negative case. Same day, time - 13:00, 14:00, 16:00.
+		testData = [
+			['12/12/2000 13:00', '12/12/2000 14:00', '12/12/2000 16:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '36872.5', '36872.541666666664', '36872.5'];
+
+		getAutofillCase([0, 2, 0, 0], [3, 6, 0, 0], 3, 'Format Date & Time. Asc sequence. Horizontal. Negative case: Same day, time - 13:00, 14:00, 16:00.', ['36872.541666666664', '36872.541666666664', '36872.541666666664', '36872.541666666664']);
+		// Case #23: Format Date & Time. Reverse sequence. Horizontal. Negative case. Same day, time - 13:00, 14:00, 16:00.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '36872.666666666664', '36872.583333333336', '36872.541666666664'];
+
+		getAutofillCase([4, 6, 0, 0], [3, 0, 0, 0], 1, 'Format Date & Time. Reverse sequence. Horizontal. Negative case: Same day, time - 13:00, 14:00, 16:00.', ['36872.541666666664', '36872.541666666664', '36872.541666666664', '36872.541666666664']);
+		// Case #24: Format Date & Time. Asc sequence. Vertical. Negative case. Diff days, same time.
+		ws.getRange2('A1:F1').cleanAll();
+		testData = [
+			['12/12/2000 12:00'],
+			['12/13/2000 12:00'],
+			['12/12/2000 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Format Date & Time. Asc sequence. Vertical. Negative case: Diff days, same time.', [['36872.5'], ['36873.5'], ['36872.5'], ['36872.5']]);
+		// Case #25: Format Date & Time. Reverse sequence. Vertical. Negative case. Diff days, same time.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36872.5'], ['36873.5'], ['36872.5']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Format Date & Time. Reverse sequence. Vertical. Negative case: Diff days, same time.', [['36872.5'], ['36873.5'], ['36872.5'], ['36872.5']]);
+		// Case #26: Format Date & Time. Asc sequence. Vertical. Negative case. Diff days & time.
+		testData = [
+			['12/12/2000 12:00'],
+			['12/13/2000 13:00'],
+			['12/15/2000 14:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36872.5'], ['36873.5'], ['36872.5']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Format Date & Time. Asc sequence. Vertical. Negative case: Diff days & time.', [['36872.5'], ['36873.541666666664'], ['36875.583333333336'], ['36872.5']]);
+		// Case #27: Format Date & Time. Reverse sequence. Vertical. Negative case. Diff days & time.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36875.583333333336'], ['36873.541666666664'], ['36872.5']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Format Date & Time. Reverse sequence. Vertical. Negative case: Diff days & time.', [['36875.583333333336'], ['36873.541666666664'], ['36872.5'], ['36875.583333333336']]);
+		// Case #28: Mixed format. Asc sequence. Horizontal. Same day, diff time.
+		ws.getRange2('A1:G7').cleanAll();
+		testData = [
+			['12/12/2000', '12/12/2000 12:00', '12/12/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 2, 0, 0], [3, 6, 0, 0], 3, 'Mixed format. Asc sequence. Horizontal. Same day, diff time.', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #29: Mixed format. Reverse sequence. Horizontal. Same day, diff time. First cell with Date format
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '36872.541666666664', '36872.5', '36872'];
+
+		getAutofillCase([4, 6, 0, 0], [3, 0, 0, 0], 1, 'Mixed format. Reverse sequence. Horizontal. Same day, diff time. First Date', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #30: Mixed format. Asc sequence. Horizontal. Same day, diff time. First cell with Date & Time format
+		testData = [
+			['12/12/2000 12:00', '12/12/2000', '12/12/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '36872', '36872.5', '36872.541666666664'];
+
+		getAutofillCase([0, 2, 0, 0], [3, 6, 0, 0], 3, 'Mixed format. Asc sequence. Horizontal. Same day, diff time. First Date & Time', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #31: Mixed format. Reverse sequence. Horizontal. Same day, diff time. First cell with Date & Time format
+		ws.getRange2('A1:F1').cleanAll();
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([4, 6, 0, 0], [3, 0, 0, 0], 1, 'Mixed format. Reverse sequence. Horizontal. Same day, diff time. First Date & Time', ['36872.5', '36872.5', '36872.5', '36872.5']);
+		// Case #32: Mixed format.  Asc sequence. Vertical. Diff day, same time. First  Date format.
+		ws.getRange2('A1:F1').cleanAll();
+		testData = [
+			['12/12/2000'],
+			['12/13/2000 12:00'],
+			['12/14/2000 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Mixed format. Asc sequence. Vertical. Diff day, same time. First Date', [['36875.5'], ['36876.5'], ['36877.5'], ['36878.5']]);
+		// Case #33: Mixed format. Reverse sequence. Vertical. Diff day, same time. First  Date format.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36874.5'], ['36873.5'], ['36872']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Mixed format. Reverse sequence. Vertical. Diff day, same time. First Date', [['36871.5'], ['36870.5'], ['36869.5'], ['36868.5']]);
+		// Case #34: Mixed format.  Asc sequence. Vertical. Diff day, same time. First  Date & Time format.
+		ws.getRange2('A1:A8').cleanAll();
+		testData = [
+			['12/12/2000 12:00'],
+			['12/14/2000 12:00'],
+			['12/16/2000']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Mixed format. Asc sequence. Vertical. Diff day, same time. First Date & Time', [['36878.5'], ['36880.5'], ['36882.5'], ['36884.5']]);
+		// Case #35: Mixed format. Reverse sequence. Vertical. Diff day, same time. First  Date & Time format.
+		ws.getRange2('A1:A8').cleanAll();
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Mixed format. Reverse sequence. Vertical. Diff day, same time. First Date & Time', [['36870.5'], ['36868.5'], ['36866.5'], ['36864.5']]);
+		// Case #36: Mixed format.  Asc sequence.  Vertical. Negative case: 12/12/2000, 12/13/2000, 12/12/2000 12:00. First Date format.
+		ws.getRange2('A1:A8').cleanAll();
+		testData = [
+			['12/12/2000'],
+			['12/13/2000 12:00'],
+			['12/12/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Mixed format. Asc sequence. Vertical. Negative case. First Date', [['36872'], ['36873.5'], ['36872.541666666664'], ['36872']]);
+		// Case #37: Mixed format. Reverse sequence.  Vertical. Negative case: 12/12/2000, 12/13/2000 12:00, 12/12/2000 13:00. First Date format.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36872.541666666664'], ['36873.5'], ['36872']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Mixed format. Reverse sequence. Vertical. Negative case. First Date', [['36872.541666666664'], ['36873.5'], ['36872'], ['36872.541666666664']]);
+		// Case #38: Mixed format.  Asc sequence.  Vertical. Negative case: 12/12/2000 12:00, 12/13/2000, 12/15/2000 13:00. First Date & Time format.
+		ws.getRange2('A1:A8').cleanAll();
+		testData = [
+			['12/12/2000 12:00'],
+			['12/13/2000'],
+			['12/15/2000 13:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 2], [0, 0, 3, 6], 3, 'Mixed format. Asc sequence. Vertical. Negative case. First Date & Time', [['36872.5'], ['36873'], ['36875.541666666664'], ['36872.5']]);
+		// Case #39: Mixed format. Reverse sequence.  Vertical. Negative case: 12/12/2000 12:00, 12/13/2000, 12/15/2000 13:00. First Date & Time format.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], ['36875.541666666664'], ['36873'], ['36872.5']];
+
+		getAutofillCase([0, 0, 4, 6], [0, 0, 3, 0], 1, 'Mixed format. Reverse sequence. Vertical. Negative case. First Date & Time', [['36875.541666666664'], ['36873'], ['36872.5'], ['36875.541666666664']]);
+		// Case #40: 1900 year. Asc sequence. Horizontal. One selected cell. Date format.
+		ws.getRange2('A1:A8').cleanAll();
+		testData = [
+			['01/01/1900']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 0, 0, 0], [1, 4, 0, 0], 3, '1900 year. Asc sequence. Horizontal. One selected cell. Date format', ['2', '3', '4', '5']);
+		// Case #41: 1900 year.  Reverse sequence. Horizontal. One selected cell. Date format.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '', '', '1'];
+
+		getAutofillCase([4, 4, 0, 0], [3, 0, 0, 0], 1, '1900 year. Reverse sequence. Horizontal. One selected cell. Date format', ['0', '1', '1', '1']);
+		// Case #42: 1900 year.  Asc sequence. Horizontal. Date format.
+		testData = [
+			['01/01/1900', '01/03/1900']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '1', ''];
+
+		getAutofillCase([0, 1, 0, 0], [2, 5, 0, 0], 3, '1900 year. Asc sequence. Horizontal. Date format', ['5', '7', '9', '11']);
+		// Case #43: 1900 year.  Reverse sequence. Horizontal. Date format.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '', '3', '1'];
+
+		getAutofillCase([4, 5, 0, 0], [3, 0, 0, 0], 1, '1900 year. Reverse sequence. Horizontal. Date format', ['3', '1', '3', '1']);
+		// Case #44: 1900 year.  Asc sequence. Vertical. One selected cell. Date & Time format.
+		ws.getRange2('A1:F1').cleanAll();
+		testData = [
+			['01/01/1900 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 0], [0, 0, 1, 4], 3, '1900 year. Asc sequence. Vertical. One selected cell. Date & Time format', [['2.5'], ['3.5'], ['4.5'], ['5.5']]);
+		// Case #45: 1900 year.  Reverse sequence. Vertical. One selected cell. Date & Time format.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['1.5']];
+
+		getAutofillCase([0, 0, 4, 4], [0, 0, 3, 0], 1, '1900 year. Reverse sequence. Vertical. One selected cell. Date & Time format', [['0.5'], ['1.5'], ['1.5'], ['1.5']]);
+		// Case #46: 1900 year.  Asc sequence. Vertical. Date & Time format.
+		testData = [
+			['01/01/1900 1:00'],
+			['01/01/1900 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['1.5'], ['']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 5], 3, '1900 year. Asc sequence. Vertical. Date & Time format', [['1.958333333333333'], ['2.416666666666666'], ['2.874999999999999'], ['3.333333333333332']]);
+		// Case #47: 1900 year.  Reverse sequence. Vertical. Date & Time format.
+		range = ws.getRange4(4, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], ['1.5'], ['1.0416666666666667']];
+
+		getAutofillCase([0, 0, 4, 5], [0, 0, 3, 0], 1, '1900 year. Reverse sequence. Vertical. Date & Time format', [['0.5833333333333333'], ['0.12499999999999978'], ['-0.3333333333333337'], ['-0.7916666666666672']]);
+		// Case #48: 1900 year.  Asc sequence. Horizontal. Mixed format.
+		ws.getRange2('A1:A8').cleanAll();
+		testData = [
+			['01/01/1900', '01/02/1900 12:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 1, 0, 0], [2, 5, 0, 0], 3, '1900 year. Asc sequence. Horizontal. Mixed format', ['3.5', '4.5', '5.5', '6.5']);
+		// Case #49: 1900 year.  Reverse sequence. Horizontal. Mixed format.
+		range = ws.getRange4(0, 4);
+		range.fillData(testData);
+		undoData = ['', '', '2.5', '1'];
+
+		getAutofillCase([4, 5, 0, 0], [3, 0, 0, 0], 1, '1900 year. Reverse sequence. Horizontal. Mixed format', ['0.5', '1', '2.5', '1']);
+	});
 
 	QUnit.module("Sheet structure");
 });
