@@ -1042,7 +1042,7 @@ CMathMatrix.prototype.GetTextOfElement = function (oMathText)
 		// 		strMatrixSymbol = "Vmatrix";
 		// 		break;
 		// }
-		strMatrixSymbol = strBrackets === "()" ? "pmatrix" : "matrix";
+		strMatrixSymbol = "matrix"; // = strBrackets === "()" ? "pmatrix" : "matrix";
 		oMathText.AddText(new AscMath.MathText("\\begin{" + strMatrixSymbol + "}", this))
 	}
 	else

@@ -560,10 +560,13 @@ CDegree.prototype.GetTextOfElement = function(oMathText)
 	let oBase           = this.getBase();
 	let oIterator       = this.getIterator();
 
-	oMathText.Add(oBase, true);
+	if (oMathText.IsLaTeX())
+		oMathText.SetNotWrap();
+
+	oMathText.Add(oBase, true, oMathText.IsLaTeX() ? 1 : undefined);
 	oMathText.AddText(new AscMath.MathText(this.Pr.type === 1 ? "^" : "_", this));
 	oMathText.SetGlobalStyle(this);
-	oMathText.Add(oIterator, true);
+	oMathText.Add(oIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
 
 	return oMathText;
 };
@@ -1254,6 +1257,9 @@ CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
     }
     else
     {
+		if (oMathText.IsLaTeX())
+			oMathText.SetNotWrap();
+
         oMathText.Add(oBase, true, 1);
         oMathText.AddText(new AscMath.MathText("_", oLowerIterator));
 

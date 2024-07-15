@@ -1085,11 +1085,20 @@ CMathText.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-    if (this.value && this.value !== 11034)
-    {
-        let oText = new AscMath.MathText(AscCommon.encodeSurrogateChar(this.value), this.Parent)
-        oMathText.AddText(oText);
-    }
+	if (this.value && this.value !== 11034)
+	{
+		let strValue = AscCommon.encodeSurrogateChar(this.value);
+
+		if (oMathText.IsLaTeX())
+		{
+			let strMath = AscMath.SymbolsToLaTeX[strValue];
+			if (strMath)
+				strValue = strMath;
+		}
+
+		let oText = new AscMath.MathText(strValue, this.Parent)
+		oMathText.AddText(oText);
+	}
 
     return oMathText;
 };

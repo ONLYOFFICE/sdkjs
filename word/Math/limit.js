@@ -519,11 +519,9 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPosFuncName	= oMathText.Add(oFuncName, false);
-		let oStrContent		= oMathText.GetExact(oPosFuncName, true);
-
-		oMathText.AddBefore(oPosFuncName, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()))
-		oMathText.Add(oArgument, true, 1);
+		let oArgPos = oMathText.Add(oArgument, true, 2);
+		let oNamePos = oMathText.AddBefore(oArgPos, oFuncName.GetTextOfElement(true));
+		oMathText.AddBefore(oNamePos, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()));
 	}
 	else
 	{

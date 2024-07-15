@@ -652,8 +652,8 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPosNumerator	= oMathText.Add(oNumerator, true, 1);
-		let oPosDenominator	= oMathText.Add(oDenominator, true, 1);
+		let oPosNumerator	= oMathText.Add(oNumerator, true, 2);
+		let oPosDenominator	= oMathText.Add(oDenominator, true, 2);
 		switch (this.Pr.type)
 		{
 			case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;

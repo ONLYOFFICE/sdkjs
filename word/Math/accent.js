@@ -730,7 +730,7 @@ CAccent.prototype.GetTextOfElement = function(oMathText)
 		if (this.Pr.chr === 831)
 			oStartPos = oMathText.Add(oBase, true, 0);
 		else
-			oStartPos = oMathText.Add(oBase, true, 1);
+			oStartPos = oMathText.Add(oBase, true, 2);
 
 		switch (this.Pr.chr)
 		{

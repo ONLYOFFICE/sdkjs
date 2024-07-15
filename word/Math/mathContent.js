@@ -5929,7 +5929,7 @@ CMathContent.prototype.Refresh_ContentChanges = function()
 {
 	this.m_oContentChanges.Refresh();
 };
-CMathContent.prototype.haveMixedContent = function()
+CMathContent.prototype.haveMixedContent = function(isLaTeX)
 {
 	let isOperator = 0;
 	let isNormalText = 0;
@@ -5948,6 +5948,10 @@ CMathContent.prototype.haveMixedContent = function()
 		}
 		else
 		{
+			if (isLaTeX &&
+				oCurrentContent instanceof CDelimiter)
+				return true;
+
 			if (isCustomContent
 				|| oCurrentContent instanceof CFraction
 				|| oCurrentContent instanceof CDegree
@@ -5958,7 +5962,7 @@ CMathContent.prototype.haveMixedContent = function()
 			
 			isCustomContent = 1;
 		}
-		
+
 		if (isOperator + isNormalText + isCustomContent > 1)
 			return true;
 	}

@@ -4086,6 +4086,11 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
+		if (strStartSymbol === "{")
+			strStartSymbol = "\\{";
+		if (strEndSymbol === "}")
+			strEndSymbol = "\\}";
+
 		if (strStartSymbol && !AscMath.MathLiterals.lBrackets.IsSimple(strStartSymbol))
 		{
 			let tempStrSymbol = strStartSymbol;

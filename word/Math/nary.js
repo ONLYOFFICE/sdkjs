@@ -858,7 +858,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		if (oLower)
 		{
 			oMathText.SetGlobalStyle(oLower);
-			let oLowerPos	= oMathText.Add(oLower, true, oMathText.IsLaTeX() ? 1 : undefined);
+			let oLowerPos	= oMathText.Add(oLower, true,  2);
 			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oMathText.GetStyleFromFirst()));
 			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
 		}
@@ -869,7 +869,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 			let oUpperPos = oMathText.AddText(new AscMath.MathText("^", oUpper));
 
 			oMathText.SetGlobalStyle(oUpper);
-			oMathText.Add(oUpper, true, 1);
+			oMathText.Add(oUpper, true, 2);
 
 			if (!oLower)
 				oMathText.AddBefore(oUpperPos, new AscMath.MathText(strStartCode, oUpper));
@@ -878,7 +878,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		if (oBase)
 		{
 			oMathText.SetGlobalStyle(this);
-			oMathText.Add(oBase, true, 0);
+			oMathText.Add(oBase, true, 1);
 		}
 	}
 	else
