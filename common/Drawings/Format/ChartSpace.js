@@ -1446,14 +1446,15 @@ function(window, undefined) {
 
 			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
 			const oLabelParams = new CLabelsParameters(nAxisType, sDataType);
-
+			fAxisLength = fAxisLength * 1.027;
 			oLabelParams.calculate(oLabelsBox, fAxisLength);
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
 			if (oLabelParams.valid) {
 				// if oLabelParams is valid then one label = axis lenght / (number of labels); number of labels = allLabels / labelsTickSkip
-				const fLabelWidth = fAxisLength / Math.ceil(oLabelsBox.aLabels.length / oLabelParams.nLblTickSkip);
+
+				const fLabelWidth =  fAxisLength / Math.ceil(oLabelParams.nLabelsCount / oLabelParams.nLblTickSkip);
 				// if userDefinedTickSkip then each label has same width as axislength
 				fForceContentWidth_ = oLabelParams.isUserDefinedTickSkip ? fAxisLength : fLabelWidth;
 			}
@@ -11535,6 +11536,7 @@ function(window, undefined) {
 		this.sDataType = sDataType;
 		this.oStartingDate = null;
 		this.valid = AscFormat.isRealNumber(nAxisType) && (this.nAxisType === AscDFH.historyitem_type_CatAx || this.nAxisType === AscDFH.historyitem_type_DateAx);
+		this.nLabelsCount = 0;
 	}
 
 	CLabelsParameters.prototype.calculate = function (oLabelsBox, fAxisLength) {
@@ -11542,12 +11544,23 @@ function(window, undefined) {
 			// check whether user has defined some parameters
 			this.getUserDefinedSettings(oLabelsBox);
 
+			// calculate number of labels
+			this.calculateLabelsNumber(oLabelsBox);
+
 			// automatically calculate remaining parameters
 			this.calculateParams(oLabelsBox, fAxisLength);
 
 			// save some updated params for future use
 			this.saveParams(oLabelsBox);
 		}
+	};
+
+	CLabelsParameters.prototype.calculateLabelsNumber = function (oLabelsBox) {
+			for (let i = 0; i < oLabelsBox.aLabels.length; i++) {
+				if (oLabelsBox.aLabels[i]) {
+					this.nLabelsCount++;
+				}
+			}
 	};
 
 	CLabelsParameters.prototype.getUserDefinedSettings = function (oLabelsBox) {
@@ -11611,13 +11624,13 @@ function(window, undefined) {
 
 	CLabelsParameters.prototype.calculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
 		//default nLblTickSkip should be 1!
-		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || !oLabelsBox.aLabels.length || !fAxisLength) {
+		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || this.nLabelsCount === 0 || !fAxisLength) {
 			this.nLblTickSkip = 1;
 			return;
 		}
 
 		if (!this.isUserDefinedTickSkip) {
-			this.nLblTickSkip = this.manuallyCalculateNLblTickSkip(oLabelsBox, fAxisLength, oLabelsBox.aLabels.length);
+			this.nLblTickSkip = this.manuallyCalculateNLblTickSkip(oLabelsBox, fAxisLength);
 		} 
 	};
 
@@ -11643,7 +11656,7 @@ function(window, undefined) {
 		return 0;
 	};
 
-	CLabelsParameters.prototype.manuallyCalculateNLblTickSkip = function (oLabelsBox, fAxisLength, nLabelsCount) {
+	CLabelsParameters.prototype.manuallyCalculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
 		const cellHeight = this.getHeight(oLabelsBox.aLabels);
 		// due to the rotation of the labels, the width necessary to place all of them is recalculated according to its height and some trigonometric formulas 
 		const radianAngle = AscFormat.isRealNumber(this.rot) ? (Math.abs(this.rot / this.degree) * Math.PI) / 180 : Math.PI / 2.0;
@@ -11657,7 +11670,7 @@ function(window, undefined) {
 		let nLblTickSkip = 1;
 
 		if (cellWidth) {
-			nLblTickSkip = Math.floor((cellWidth * nLabelsCount) / (fAxisLength)) + 1;
+			nLblTickSkip = Math.floor((cellWidth * this.nLabelsCount) / (fAxisLength)) + 1;
 			// date ax skips labels by significant days 
 			// two days, week or weeks, mounths, years
 			if (this.nAxisType === AscDFH.historyitem_type_DateAx && this.sDataType !== 'string') {
@@ -11680,11 +11693,12 @@ function(window, undefined) {
 
 	CLabelsParameters.prototype.calculateRotation = function (oLabelsBox, fAxisLength) {
 
-		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || !oLabelsBox.aLabels.length || !fAxisLength || this.isUserDefinedRot) {
+		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || this.nLabelsCount === 0|| !fAxisLength || this.isUserDefinedRot) {
+			this.rot = 0;
 			return;
 		}
 
-		const updatedLabelsCount = Math.ceil(oLabelsBox.aLabels.length / this.nLblTickSkip);
+		const updatedLabelsCount = Math.ceil(this.nLabelsCount / this.nLblTickSkip);
 
 		// Check if horizontal labels can fit into axis width
 		const cellHeight = this.getHeight(oLabelsBox.aLabels);

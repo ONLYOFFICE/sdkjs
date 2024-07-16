@@ -2094,7 +2094,7 @@ CChartsDrawer.prototype =
 		var bIsManualStep = false;
 		let t = this;
 		let calcAxisMinMax = function (isDefaultMinMax) {
-			let trueMinMax = t._getTrueMinMax((manualMin !== null && manualMin > yMin) ? manualMin : yMin, (manualMax !== null && manualMax < yMax) ? manualMax : yMax, isDefaultMinMax, isScatter);
+			let trueMinMax = t._getTrueMinMax((manualMin !== null && manualMin > yMin) ? manualMin : yMin, (manualMax !== null && manualMax < yMax) ? manualMax : yMax, isDefaultMinMax, isScatter, manualMax);
 			let _axisMin, _axisMax, _step, firstDegree;
 			//TODO временная проверка для некорректных минимальных и максимальных значений
 			if (manualMax && manualMin && manualMax < manualMin) {
@@ -2127,7 +2127,8 @@ CChartsDrawer.prototype =
 			} else {
 				//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
 				if (isOx /*&& !isScatter && axisMin !== 0 && axisMax !== 0*/) {
-					_step = t._getStep(firstDegree.val);
+					_step = t._getStep(firstDegree.val + (firstDegree.val / 10) * 1.1111);
+					// _step = t._getStep(firstDegree.val);
 				} else {
 					_step = t._getStep(firstDegree.val);
 				}
@@ -2155,7 +2156,11 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+			if (manualMax <= 0) {
+				arrayValues = [-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0];
+			} else {
+				arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+			}
 		} else {
 			if (false && isRadarChart) {
 				arrayValues = this._getRadarAxisValues(axisMin, axisMax, step);
@@ -2238,7 +2243,8 @@ CChartsDrawer.prototype =
 			} else {
 				var limitArr = [0, 0, 32, 26, 24, 22, 21, 19, 18, 17, 16];
 				var limit = limitArr[res.length - 1];
-				var heightGrid = Math.round((trueHeight / (res.length - 1)));
+				const num = (trueHeight / (res.length - 1));
+				var heightGrid = Math.round(num);
 				while (heightGrid <= limit) {
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
@@ -2284,10 +2290,9 @@ CChartsDrawer.prototype =
 		if (AscFormat.isRealNumber(manualMin)) {
 			minUnit = manualMin;
 		} else {
-			if (AscFormat.isRealNumber(manualMax) && manualMax > axisMin && manualMax > 0) {
-				const upperLimit = Math.ceil(Math.ceil(manualMax / step) * step);
-				const diff = manualMax - upperLimit;
-				minUnit = axisMin >= 0 ? Math.min(minUnit, diff) : Math.floor(axisMin + diff);
+			if (AscFormat.isRealNumber(manualMax) && manualMax > axisMin && manualMax >= 0) {
+				const stepCount = Math.ceil((manualMax - axisMin) / step);
+				minUnit = manualMax - (stepCount * step);
 				// minUnit = Math.min(minUnit, manualMax - upperLimit);
 			} else if (AscFormat.isRealNumber(manualMax)) {
 				if (manualMax > 0) {
@@ -2302,7 +2307,7 @@ CChartsDrawer.prototype =
 				// const statement2 = isRadarChart && minUnit > axisMin;
 				minUnit = Math.floor(axisMin / step) * step;
 			} else {
-				minUnit = Math.ceil(axisMin / step) * step;
+				minUnit = Math.floor(axisMin / step) * step;
 			}
 		}
 		
@@ -2533,7 +2538,7 @@ CChartsDrawer.prototype =
 		return step;
 	},
 
-	_getTrueMinMax: function (yMin, yMax, isStackedType, isScatter) {
+	_getTrueMinMax: function (yMin, yMax, isStackedType, isScatter, isMaxSet) {
 
 		var axisMax, axisMin, diffMaxMin;
 		var cDiff = 1/6;
@@ -2542,13 +2547,13 @@ CChartsDrawer.prototype =
 		// TODO пересмотреть все остальные ситуации!
 		if (yMin >= 0 && yMax >= 0) {
 			diffMaxMin = (yMax - yMin) / yMax;
-			if (cDiff > diffMaxMin) {
+			if (isMaxSet === null && cDiff > diffMaxMin) {
 				if (isScatter) {
-					axisMin = isStackedType ? yMin : yMin - 0.05 * (yMax - yMin);
-					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
+					axisMin = isStackedType ? yMin : yMin - 0.075 * (yMax - yMin);
+					axisMax = isStackedType ? yMax : yMax + 0.075 * (yMax - yMin);
 				} else {
 					axisMin = yMin - ((yMax - yMin) / 2);
-					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
+					axisMax = isStackedType ? yMax : yMax + 0.075 * (yMax - yMin);
 				}
 			} else {
 				axisMin = 0;
