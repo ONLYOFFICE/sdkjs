@@ -3130,18 +3130,37 @@
 
 	WorkbookView.prototype.insertArgumentsInFormula = function (args, argNum, argType, name) {
 		if (this.getCellEditMode()) {
-			var sArguments = args.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+			const ws = this.getActiveWS();
+			// If we expect a string as an argument, then we check whether the current argument is a string
+			// The check is performed using regular expressions from parserHelper
+			if (argType !== undefined && argType === AscCommonExcel.cElementType.string) {
+				let argN = args[argNum];
+				if (argN !== undefined) {
+					let parserHelp = AscCommon.parserHelp;
+					let isString = parserHelp.isString('"' + argN + '"', 0);
+					let isRef = parserHelp.isRef(argN, 0);
+					let is3DRef = parserHelp.is3DRef(argN, 0)[0];
+					let isArea = parserHelp.isArea(argN, 0);
+
+					let isName = ws.workbook.dependencyFormulas.getDefNameByName( argN, ws.getId() );
+
+					// depending on the result, put quotes in the argument (we are interested in the string only and no other match)
+					if (isString && !isRef && !is3DRef && !isArea && !isName) {
+						argN = '"' + argN + '"';
+						args[argNum] = argN;
+					}
+				}
+			}
+			let sArguments = args.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
 			this.cellEditor.changeCellText(sArguments);
 
 			if (name) {
-				var ws = this.getActiveWS();
-
-				var res = new AscCommonExcel.CFunctionInfo(name);
+				let res = new AscCommonExcel.CFunctionInfo(name);
 				res.argumentsResult = [];
-				var argCalc = ws.calculateWizardFormula(args[argNum], argType);
+				let argCalc = ws.calculateWizardFormula(args[argNum], argType);
 				res.argumentsResult[argNum] = argCalc.str;
 				if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
-					var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
+					let funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
 					res.functionResult = funcCalc.str;
 					if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
 						res.formulaResult = ws.calculateWizardFormula(this.cellEditor.getText().substring(1)).str;
