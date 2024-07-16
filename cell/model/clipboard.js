@@ -780,6 +780,15 @@
 				if (isIntoShape) {
 					res = t._getTextFromShape(isIntoShape);
 				} else {
+					if (!range) {
+						let activeRange, selectionRange;
+						if (1 !== worksheet.model.selectionRange.ranges.length) {
+							selectionRange = new AscCommonExcel.MultiplyRange(worksheet.model.selectionRange.ranges).getUnionRange();
+							range = worksheet.model.getRange3(selectionRange.r1, selectionRange.c1, selectionRange.r2, selectionRange.c2);
+						} else {
+							range = worksheet.getSelectedRange();
+						}
+					}
 					res = t._getTextFromSheet(range, worksheet);
 				}
 

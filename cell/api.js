@@ -5258,10 +5258,11 @@ var editor;
         return AscCommonExcel.getFragmentsText(fragments);
       }
     }
-    if (ws && ws.objectRender && ws.objectRender.controller) {
+    if (ws && ws.objectRender && ws.objectRender.controller && ws.objectRender.controller.getTargetDocContent()) {
       return ws.objectRender.controller.GetSelectedText(bClearText, select_Pr);
     }
-    return "";
+
+    return AscCommonExcel.g_clipboardExcel.copyProcessor.getText(null, ws);
   };
 
   spreadsheet_api.prototype.asc_setGraphicObjectProps = function(props) {
@@ -6050,6 +6051,8 @@ var editor;
 	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
      return;
     }
+
+	  this.asc_GetSelectedText()
 
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
