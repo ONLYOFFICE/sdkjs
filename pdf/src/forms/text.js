@@ -1093,13 +1093,16 @@
         let oDoc        = this.GetDocument();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         
+        oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
+            oDoc.EndNoHistoryMode();
             return;
         }
+        oDoc.EndNoHistoryMode();
         
         if (this.GetApiValue() != this.GetValue()) {
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
