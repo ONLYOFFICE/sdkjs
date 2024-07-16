@@ -957,7 +957,7 @@ CChartsDrawer.prototype =
 		//добавляем размеры подписей осей + размеры названия
 		//TODO генерировать extX для всех осей
 		var axId = chartSpace.chart.plotArea.axId;
-		let tickLblPos = AscFormat.TICK_LABEL_POSITION_NEXT_TO;
+		let tickLblPos = AscFormat.TICK_LABEL_POSITION_NONE;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -986,7 +986,7 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
-				if (axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) {
+				if ((axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) && !axId[i].bDelete) {
 					tickLblPos =  axId[i].tickLblPos;
 				}
 			}
