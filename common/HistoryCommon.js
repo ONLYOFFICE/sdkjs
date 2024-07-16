@@ -1836,7 +1836,6 @@
 	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
 
 
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4284,7 +4283,7 @@
 	AscDFH.historyitem_Series_SetLayoutId   = AscDFH.historyitem_type_Series | 8;
 	AscDFH.historyitem_Series_SetHidden     = AscDFH.historyitem_type_Series | 9;
 	AscDFH.historyitem_Series_SetOwnerIdx   = AscDFH.historyitem_type_Series | 10;
-	AscDFH.historyitem_Series_SetUniqueId   = AscDFH.historyitem_type_Series | 12;
+	AscDFH.historyitem_Series_SetUniqueId   = AscDFH.historyitem_type_Series | 11;
 	AscDFH.historyitem_Series_SetFormatIdx  = AscDFH.historyitem_type_Series | 12;
 
 	AscDFH.historyitem_SeriesElementVisibilities_SetConnectorLines = AscDFH.historyitem_type_ViewPrScale | 1;
@@ -4381,12 +4380,10 @@
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Text Shape 
+	// Типы изменений в PDF drawing prototype
 	//------------------------------------------------------------------------------------------------------------------
 
-	AscDFH.historyitem_Pdf_Drawing_Rect	= AscDFH.historyitem_Pdf_Drawing | 0;
 	AscDFH.historyitem_Pdf_Drawing_Page	= AscDFH.historyitem_Pdf_Drawing | 1;
-	AscDFH.historyitem_Pdf_Drawing_Rot	= AscDFH.historyitem_Pdf_Drawing | 2;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

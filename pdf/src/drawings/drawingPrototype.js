@@ -84,7 +84,8 @@
 			return this.group.IsUseInDocument();
 		
 		return (-1 !== this.GetDocument().drawings.indexOf(this));
-	};    CPdfDrawingPrototype.prototype.OnBlur = function() {
+	};
+    CPdfDrawingPrototype.prototype.OnBlur = function() {
         
         let nPtIndex = AscCommon.History.Index;
         if (AscCommon.History.Points[nPtIndex]) {
@@ -234,21 +235,22 @@
         if (nPage == nCurPage)
             return;
 
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+
+        AscCommon.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
+
         // initial set
         if (nCurPage == undefined) {
             this._page = nPage;
             return;
         }
-
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
         
         let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage] && oViewer.pagesInfo.pages[nCurPage].drawings ? oViewer.pagesInfo.pages[nCurPage].drawings.indexOf(this) : -1;
         if (oViewer.pagesInfo.pages[nPage]) {
             if (oDoc.drawings.indexOf(this) != -1) {
                 if (nCurIdxOnPage != -1) {
                     oViewer.pagesInfo.pages[nCurPage].drawings.splice(nCurIdxOnPage, 1);
-                    oDoc.History.Add(new CChangesPDFDrawingPage(this, nCurPage, nPage));
                 }
     
                 if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].drawings.indexOf(this) == -1)

@@ -36,15 +36,14 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfShape()
-    {
+    function CPdfShape() {
         AscFormat.CShape.call(this);
     }
     
     CPdfShape.prototype.constructor = CPdfShape;
     CPdfShape.prototype = Object.create(AscFormat.CShape.prototype);
     Object.assign(CPdfShape.prototype, AscPDF.PdfDrawingPrototype.prototype);
-
+    
     CPdfShape.prototype.IsTextShape = function() {
         return true;
     };

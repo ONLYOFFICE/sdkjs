@@ -152,7 +152,8 @@ var CPresentation = CPresentation || function(){};
         this.mouseDownAnnot     = null;
 
         this._id = AscCommon.g_oIdCounter.Get_NewId();
-		
+		AscCommon.g_oTableId.Add(this, this._id);
+        
 		this.History        = new AscPDF.History(this);
 		this.LocalHistory   = new AscPDF.History(this);
         

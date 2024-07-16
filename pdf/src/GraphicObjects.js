@@ -150,6 +150,7 @@
                 oTable.graphicObject.Set_Props(props);
                 oTable.graphicObject.RemoveSelection();
             }
+            oTable.SetNeedRecalc(true);
             props.TableCaption = sCaption;
             props.TableDescription = sDescription;
             props.RowHeight = dRowHeight;

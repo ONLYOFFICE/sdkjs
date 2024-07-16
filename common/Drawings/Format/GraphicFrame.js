@@ -39,8 +39,7 @@
 	var HitInLine = AscFormat.HitInLine;
 
 	var isRealObject = AscCommon.isRealObject;
-	var History = AscCommon.History;
-
+	
 
 	window['AscDFH'].drawingsChangesMap[AscDFH.historyitem_GraphicFrameSetSpPr] = function (oClass, value) {
 		oClass.spPr = value;
@@ -237,7 +236,7 @@
 	};
 
 	CGraphicFrame.prototype.setSpPr = function (spPr) {
-		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSpPr, this.spPr, spPr));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSpPr, this.spPr, spPr));
 		this.spPr = spPr;
 		if (spPr) {
 			spPr.setParent(this);
@@ -245,7 +244,7 @@
 	};
 
 	CGraphicFrame.prototype.setGraphicObject = function (graphicObject) {
-		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetGraphicObject, this.graphicObject, graphicObject));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetGraphicObject, this.graphicObject, graphicObject));
 		this.graphicObject = graphicObject;
 		if (this.graphicObject) {
 			this.graphicObject.Index = 0;
@@ -254,17 +253,17 @@
 	};
 
 	CGraphicFrame.prototype.setNvSpPr = function (pr) {
-		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetNvSpPr, this.nvGraphicFramePr, pr));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetNvSpPr, this.nvGraphicFramePr, pr));
 		this.nvGraphicFramePr = pr;
 	};
 
 	CGraphicFrame.prototype.setParent = function (parent) {
-		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetParent, this.parent, parent));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetParent, this.parent, parent));
 		this.parent = parent;
 	};
 
 	CGraphicFrame.prototype.setGroup = function (group) {
-		History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetGroup, this.group, group));
+		AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSetGroup, this.group, group));
 		this.group = group;
 	};
 

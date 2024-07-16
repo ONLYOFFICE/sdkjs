@@ -38,13 +38,13 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Drawing_Rot]	= CChangesPDFDrawingRo
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
 function CChangesPDFDrawingPage(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFDrawingPage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDrawingPage.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDrawingPage.prototype.constructor = CChangesPDFDrawingPage;
 CChangesPDFDrawingPage.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Page;
 CChangesPDFDrawingPage.prototype.private_SetValue = function(Value)
@@ -55,13 +55,13 @@ CChangesPDFDrawingPage.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
 function CChangesPDFDrawingRot(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFDrawingRot.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDrawingRot.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDrawingRot.prototype.constructor = CChangesPDFDrawingRot;
 CChangesPDFDrawingRot.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Rot;
 CChangesPDFDrawingRot.prototype.private_SetValue = function(Value)

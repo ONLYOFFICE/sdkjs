@@ -478,6 +478,13 @@
 
 		}
 
+		if (Asc.editor.isPdfEditor())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_Shape] = AscPDF.CPdfShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame] = AscPDF.CPdfGraphicFrame;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape] = AscPDF.CPdfImage;
+		}
+
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
 		
 		this.InitOFormClasses();

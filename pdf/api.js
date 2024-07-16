@@ -1725,7 +1725,7 @@
 	PDFEditorApi.prototype.pre_Save = function(_images) {
 		this.isSaveFonts_Images = true;
 		this.saveImageMap       = _images;
-		this.pre_SaveCallback();
+		this.FontLoader.LoadDocumentFonts2([]);
 	};
 
 	PDFEditorApi.prototype.ChangeReaderMode = function() {};
@@ -2262,45 +2262,52 @@
 	};
 	PDFEditorApi.prototype.asyncImagesDocumentEndLoaded = function() {
 		this.ImageLoader.bIsLoadDocumentFirst = false;
-		
-		if (!this.DocumentRenderer)
-			return;
-		
-		if (this.EndActionLoadImages === 1) {
+		var _bIsOldPaste                      = this.isPasteFonts_Images;
+
+		// на методе _openDocumentEndCallback может поменяться this.EndActionLoadImages
+		if (this.EndActionLoadImages == 1) {
 			this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadDocumentImages);
 		}
-		else if (this.EndActionLoadImages === 2) {
-			if (this.isPasteFonts_Images)
+		else if (this.EndActionLoadImages == 2) {
+			if (_bIsOldPaste)
 				this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.LoadImage);
 			else
 				this.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.LoadImage);
 		}
-		
 		this.EndActionLoadImages = 0;
-		if (this.isPasteFonts_Images) {
-			this.isPasteFonts_Images = false;
-			this.pasteImageMap       = null;
-			this.pasteCallback();
-			this.pasteCallback            = null;
-			this.decrementCounterLongAction();
-		}
 
-		if (false === this.isPasteFonts_Images && false === this.isSaveFonts_Images && false === this.isLoadImagesCustom)
-		{
+		// размораживаем меню... и начинаем считать документ
+		if (false === this.isPasteFonts_Images && false === this.isSaveFonts_Images && false === this.isLoadImagesCustom) {
 			this.ServerImagesWaitComplete = true;
 			this._openDocumentEndCallback();
 		}
-		
-		this.WordControl.m_oDrawingDocument.OpenDocument();
-		
-		this.LoadedObject = null;
-		
-		this.bInit_word_control = true;
-		
-		this.WordControl.InitControl();
-		
-		if (this.isViewMode)
-			this.asc_setViewMode(true);
+		else {
+			if (this.isPasteFonts_Images) {
+				this.isPasteFonts_Images = false;
+				this.pasteImageMap       = null;
+				this.pasteCallback();
+				this.pasteCallback            = null;
+				this.decrementCounterLongAction();
+			}
+			else if (this.isSaveFonts_Images) {
+				this.isSaveFonts_Images = false;
+				this.saveImageMap       = null;
+				this.pre_SaveCallback();
+
+				if (this.bInit_word_control === false)
+				{
+					this.bInit_word_control = true;
+					this.onDocumentContentReady();
+				}
+			}
+			else if (this.isLoadImagesCustom) {
+				this.isLoadImagesCustom = false;
+				this.loadCustomImageMap = null;
+
+				if (!this.ImageLoader.bIsAsyncLoadDocumentImages)
+					this.SyncLoadImages_callback();
+			}
+		}
 	};
 	PDFEditorApi.prototype.Input_UpdatePos = function() {
 		if (this.DocumentRenderer)
