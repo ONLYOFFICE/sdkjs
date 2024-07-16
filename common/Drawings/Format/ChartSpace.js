@@ -1446,7 +1446,7 @@ function(window, undefined) {
 
 			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
 			const oLabelParams = new CLabelsParameters(nAxisType, sDataType);
-			fAxisLength = fAxisLength * 1.027;
+			// fAxisLength = fAxisLength * 1.027;
 			oLabelParams.calculate(oLabelsBox, fAxisLength);
 
 			//check whether rotation is applied or not

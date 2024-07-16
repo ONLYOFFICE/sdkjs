@@ -956,8 +956,8 @@ CChartsDrawer.prototype =
 
 		//добавляем размеры подписей осей + размеры названия
 		//TODO генерировать extX для всех осей
-		let leftAxis, rightAxis;
 		var axId = chartSpace.chart.plotArea.axId;
+		let tickLblPos = AscFormat.TICK_LABEL_POSITION_NEXT_TO;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -977,20 +977,17 @@ CChartsDrawer.prototype =
 						if (null !== axId[i].title) {
 							leftTextLabels += axId[i].title.extX;
 						}
-						if (!axId[i].bDelete) {
-							leftAxis = true;
-						}
 						break;
 					}
 					case window['AscFormat'].AX_POS_R: {
 						if (null !== axId[i].title) {
 							rightTextLabels += axId[i].title.extX;
 						}
-						if (!axId[i].bDelete) {
-							rightAxis = true;
-						}
 						break;
 					}
+				}
+				if (axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) {
+					tickLblPos =  axId[i].tickLblPos;
 				}
 			}
 		}
@@ -1088,10 +1085,13 @@ CChartsDrawer.prototype =
 		}
 
 		if((null === pieChart) || is3dChart) {
-			left += this._getStandartMargin(/*leftAxis ? 1 :*/ left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
+			const isLeftAxis = tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
+			const isRightAxis = tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
+
+			left += this._getStandartMargin(isLeftAxis ? 1 : left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
-			right += this._getStandartMargin(/*rightAxis ? 1 :*/ right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
+			right += this._getStandartMargin(isRightAxis ? 1 : right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
 		}
 
 		var pxLeft = calculateLeft ? calculateLeft * pxToMM : left * pxToMM;
