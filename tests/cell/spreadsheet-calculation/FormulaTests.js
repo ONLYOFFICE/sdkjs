@@ -10540,6 +10540,18 @@ $(function () {
 		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,,)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
+
+		// cellsRange3D test
+		// col delimiter
+		oParser = new parserFormula("TEXTSPLIT(A2,Sheet1!A1:B2)", "A1", ws);
+		assert.ok(oParser.parse(), "TEXTSPLIT(A2,Sheet1!A1:B2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,Sheet1!A1:B2)");
+
+		// row delimiter
+		oParser = new parserFormula("TEXTSPLIT(A2,,Sheet1!A1:B2)", "A1", ws);
+		assert.ok(oParser.parse(), "TEXTSPLIT(A2,,Sheet1!A1:B2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,,Sheet1!A1:B2)");
+
 	});
 
 	function putStackData() {
