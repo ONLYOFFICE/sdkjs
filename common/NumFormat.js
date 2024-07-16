@@ -2869,6 +2869,14 @@ CellFormat.prototype =
 			return this.aComporationFormats[0].bDateTime;
 		return false;
 	},
+	isTimeFormat : function() {
+		if (null != this.oPositiveFormat) {
+			return this.oPositiveFormat.bTime;
+		} else if (null != this.aComporationFormats && this.aComporationFormats.length > 0) {
+			return this.aComporationFormats[0].bTime;
+		}
+		return false;
+	},
 	getTextFormat: function () {
 	    var oRes = null;
 	    if (null == this.aComporationFormats) {

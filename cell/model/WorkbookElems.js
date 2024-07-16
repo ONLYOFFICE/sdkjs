@@ -9032,13 +9032,13 @@ function RangeDataManagerElem(bbox, data)
 							//all row
 							//Table1[@]
 
-							//return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
+							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
 						} else {
 							//part of row
 							//Table1[@[Column2]:[Column3]]
 							//Table1[@Column1]
 
-							//return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
+							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
 						}
 					}
 				}
@@ -14953,7 +14953,7 @@ function RangeDataManagerElem(bbox, data)
 
 		if (this.DefinedNames) {
 			for (var i = 0; i < this.DefinedNames.length; i++) {
-				newObj.DefinedNames.push(this.DefinedNames[i].clone);
+				newObj.DefinedNames.push(this.DefinedNames[i].clone());
 			}
 		}
 

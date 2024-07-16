@@ -1494,7 +1494,8 @@
 			structured_tables_headata        = new XRegExp('(?:\\[\\#' + loc_headers + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_data + '\\])'),
 			structured_tables_datals         = new XRegExp('(?:\\[\\#' + loc_data + '\\]\\' + FormulaSeparators.functionArgumentSeparator + '\\[\\#' + loc_totals + '\\])'),
 			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
-			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + '|' + loc_this_row + ')|@');
+			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + /*'|' + loc_this_row + */')'),
+			structured_tables_thisRow        = new XRegExp('(?:\\#(?:' + loc_this_row +')|(?:\\@))');
 
 
 		//Table4[[#Data];[#Totals]]
@@ -1510,22 +1511,34 @@
 
 		//Table1[[#Headers],[#Data],[Column1]:[Column2]]
 
+		// @ === [#This Row],
+		// Table[@]
+		// Table[@Column1]
+		// Table[@Column1:[Column2]] === Table[@[Column1]:[Column2]]
+
 		let argsSeparator = FormulaSeparators.functionArgumentSeparator;
 		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
-			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
+			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}}|{{thisRow}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
 				"userColumn":      structured_tables_userColumn,
 				"reservedColumn":  structured_tables_reservedColumn,
+				"thisRow": structured_tables_thisRow,
 				"userColumnRange": XRegExp.build('\\[(?<colStart>{{uc}})\\]\\:\\[(?<colEnd>{{uc}})\\]', {
 					"uc": structured_tables_userColumn
 				}),
 				//fixed: added [{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\] for:
 				//Table1[[#Data],[#Totals]]
 				//Table1[[#Headers],[#Data]]
-				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + argsSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
+
+				// '(?<hdt>\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + argsSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+
+				// last used: '(?<hdt>(?:\\[{{rc}}\\])?(?:\@)?)(?:(?:\\'+argsSeparator+')?(?:\\\[?(?<hdtcstart>{{uc}})\\\]?)(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+				"hdtcc":           XRegExp.build('(?<hdt>(?:\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})|(?:\\[{{tr}}\\])|\@)(?:(?:\\' + argsSeparator + ')?(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?'
+					, {
 					"rc": structured_tables_reservedColumn,
 					"hd": structured_tables_headata,
 					"dt": structured_tables_datals,
+					"tr": structured_tables_thisRow,
 					"uc": structured_tables_userColumn
 				})
 			})
@@ -3735,8 +3748,8 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+		let subSTR = formula.substring(start_pos),
+		match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
 
 		if (match != null && match["tableName"])
 		{

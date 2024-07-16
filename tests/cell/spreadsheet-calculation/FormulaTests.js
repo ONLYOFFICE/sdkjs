@@ -7730,6 +7730,46 @@ $(function () {
 		assert.ok(oParser.parse(), 'EOMONTH(#NUM!,#N/A)');
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of EOMONTH(#NUM!,#N/A)');
 
+		ws.getRange2("A100").setValue("44227.50069");
+		ws.getRange2("A101").setValue("44227.49861");
+		ws.getRange2("A102").setValue("44227.00069");
+
+		oParser = new parserFormula("EOMONTH(A100,0)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A100,0)');
+		assert.strictEqual(oParser.calculate().getValue(), 44227, 'Result of EOMONTH(A100,0)');
+
+		oParser = new parserFormula("EOMONTH(A100,1.5)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A100,1.5)');
+		assert.strictEqual(oParser.calculate().getValue(), 44255, 'Result of EOMONTH(A100,1.5)');
+
+		oParser = new parserFormula("EOMONTH(A100,-1.6)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A100,-1.6)');
+		assert.strictEqual(oParser.calculate().getValue(), 44196, 'Result of EOMONTH(A100,-1.6)');
+
+		oParser = new parserFormula("EOMONTH(A101,0)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A100,0)');
+		assert.strictEqual(oParser.calculate().getValue(), 44227, 'Result of EOMONTH(A100,0)');
+
+		oParser = new parserFormula("EOMONTH(A101,1.5)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A101,1.5)');
+		assert.strictEqual(oParser.calculate().getValue(), 44255, 'Result of EOMONTH(A101,1.5)');
+
+		oParser = new parserFormula("EOMONTH(A101,-1.6)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A101,-1.6)');
+		assert.strictEqual(oParser.calculate().getValue(), 44196, 'Result of EOMONTH(A102,-1.6)');
+
+		oParser = new parserFormula("EOMONTH(A102,0)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A102,0)');
+		assert.strictEqual(oParser.calculate().getValue(), 44227, 'Result of EOMONTH(A102,0)');
+
+		oParser = new parserFormula("EOMONTH(A102,1.5)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A102,1.5)');
+		assert.strictEqual(oParser.calculate().getValue(), 44255, 'Result of EOMONTH(A102,1.5)');
+
+		oParser = new parserFormula("EOMONTH(A102,-1.6)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(A102,-1.6)');
+		assert.strictEqual(oParser.calculate().getValue(), 44196, 'Result of EOMONTH(A102,-1.6)');
+
 		// set 1904 mode
 		ws.workbook.setDate1904(true, true);
 
@@ -7773,6 +7813,10 @@ $(function () {
 		oParser = new parserFormula("EOMONTH(DATE(2004,1,15),-23)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 35853);
+
+		oParser = new parserFormula("EOMONTH(0,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(0,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(0,1)');
 
 		// base mode
 		ws.workbook.setDate1904(false, true);

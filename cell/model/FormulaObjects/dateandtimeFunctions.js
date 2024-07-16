@@ -1196,6 +1196,7 @@ function (window, undefined) {
 		}
 
 		let val = arg0.getValue();
+		val = parseInt(val);
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
 		} else if (!AscCommon.bDate1904) {

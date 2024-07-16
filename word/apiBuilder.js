@@ -5933,6 +5933,24 @@
 						"Type" : "ParaPr"
 					};
 				}
+				else if (c_oAscRevisionsChangeType.RowsAdd === nType)
+				{
+					oElement = {
+						"Type" : "RowsAdd"
+					};
+				}
+				else if (c_oAscRevisionsChangeType.RowsRem === nType)
+				{
+					oElement = {
+						"Type" : "RowsRem"
+					};
+				}
+				else if (c_oAscRevisionsChangeType.TablePr === nType)
+				{
+					oElement = {
+						"Type" : "TablePr"
+					};
+				}
 				else
 				{
 					oElement = {
