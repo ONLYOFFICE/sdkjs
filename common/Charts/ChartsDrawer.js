@@ -956,27 +956,40 @@ CChartsDrawer.prototype =
 
 		//добавляем размеры подписей осей + размеры названия
 		//TODO генерировать extX для всех осей
+		let leftAxis, rightAxis;
 		var axId = chartSpace.chart.plotArea.axId;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
-				if(null !== axId[i].title) {
-					switch (axId[i].axPos) {
-						case window['AscFormat'].AX_POS_B: {
+				switch (axId[i].axPos) {
+					case window['AscFormat'].AX_POS_B: {
+						if (null !== axId[i].title) {
 							bottomTextLabels += axId[i].title.extY;
-							break;
 						}
-						case window['AscFormat'].AX_POS_T: {
+						break;
+					}
+					case window['AscFormat'].AX_POS_T: {
+						if (null !== axId[i].title) {
 							topTextLabels += axId[i].title.extY;
-							break;
 						}
-						case window['AscFormat'].AX_POS_L: {
+						break;
+					}
+					case window['AscFormat'].AX_POS_L: {
+						if (null !== axId[i].title) {
 							leftTextLabels += axId[i].title.extX;
-							break;
 						}
-						case window['AscFormat'].AX_POS_R: {
+						if (!axId[i].bDelete) {
+							leftAxis = true;
+						}
+						break;
+					}
+					case window['AscFormat'].AX_POS_R: {
+						if (null !== axId[i].title) {
 							rightTextLabels += axId[i].title.extX;
-							break;
 						}
+						if (!axId[i].bDelete) {
+							rightAxis = true;
+						}
+						break;
 					}
 				}
 			}
@@ -1075,10 +1088,10 @@ CChartsDrawer.prototype =
 		}
 
 		if((null === pieChart) || is3dChart) {
-			left += this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
+			left += this._getStandartMargin(/*leftAxis ? 1 :*/ left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
-			right += this._getStandartMargin(right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
+			right += this._getStandartMargin(/*rightAxis ? 1 :*/ right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
 		}
 
 		var pxLeft = calculateLeft ? calculateLeft * pxToMM : left * pxToMM;
@@ -1249,31 +1262,31 @@ CChartsDrawer.prototype =
 		var defMargin = standartMarginForCharts / this.calcProp.pxToMM;
 		var result;
 
-		if (labelsMargin == 0 && keyMargin == 0 && textMargin == 0 && topMainTitleMargin == 0) {
+		if (labelsMargin === 0 && keyMargin === 0 && textMargin === 0 && topMainTitleMargin === 0) {
 			result = defMargin;
-		} else if (labelsMargin != 0 && keyMargin == 0 && textMargin == 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin !== 0 && keyMargin === 0 && textMargin === 0 && topMainTitleMargin === 0) {
 			result = defMargin / 2;
-		} else if (labelsMargin != 0 && keyMargin == 0 && textMargin != 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin !== 0 && keyMargin === 0 && textMargin !== 0 && topMainTitleMargin === 0) {
 			result = defMargin;
-		} else if (labelsMargin != 0 && keyMargin != 0 && textMargin != 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin !== 0 && keyMargin !== 0 && textMargin !== 0 && topMainTitleMargin === 0) {
 			result = defMargin + defMargin / 2;
-		} else if (labelsMargin == 0 && keyMargin != 0 && textMargin == 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin === 0 && keyMargin !== 0 && textMargin === 0 && topMainTitleMargin === 0) {
 			result = defMargin;
-		} else if (labelsMargin == 0 && keyMargin == 0 && textMargin != 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin === 0 && keyMargin === 0 && textMargin !== 0 && topMainTitleMargin === 0) {
 			result = defMargin;
-		} else if (labelsMargin == 0 && keyMargin != 0 && textMargin != 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin === 0 && keyMargin !== 0 && textMargin !== 0 && topMainTitleMargin === 0) {
 			result = defMargin + defMargin / 2;
-		} else if (labelsMargin != 0 && keyMargin != 0 && textMargin == 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin !== 0 && keyMargin !== 0 && textMargin === 0 && topMainTitleMargin === 0) {
 			result = defMargin;
-		} else if (labelsMargin == 0 && keyMargin != 0 && textMargin != 0 && topMainTitleMargin == 0) {
+		} else if (labelsMargin === 0 && keyMargin !== 0 && textMargin !== 0 && topMainTitleMargin === 0) {
 			result = defMargin + defMargin / 2;
-		} else if (labelsMargin == 0 && keyMargin == 0 && topMainTitleMargin != 0) {
+		} else if (labelsMargin === 0 && keyMargin === 0 && topMainTitleMargin !== 0) {
 			result = defMargin + defMargin / 2;
-		} else if (labelsMargin == 0 && keyMargin != 0 && topMainTitleMargin != 0) {
+		} else if (labelsMargin === 0 && keyMargin !== 0 && topMainTitleMargin !== 0) {
 			result = 2 * defMargin;
-		} else if (labelsMargin != 0 && keyMargin == 0 && topMainTitleMargin != 0) {
+		} else if (labelsMargin !== 0 && keyMargin === 0 && topMainTitleMargin !== 0) {
 			result = defMargin;
-		} else if (labelsMargin != 0 && keyMargin != 0 && topMainTitleMargin != 0) {
+		} else if (labelsMargin !== 0 && keyMargin !== 0 && topMainTitleMargin !== 0) {
 			result = 2 * defMargin;
 		}
 
@@ -1291,12 +1304,22 @@ CChartsDrawer.prototype =
 		let horizontalAxis = horizontalAxes ? horizontalAxes[0] : null;
 		let verticalAxis = verticalAxes ? verticalAxes[0] : null;
 
+		let getInterval = function (_axis) {
+			if (_axis.interval) {
+				return Math.abs((horizontalAxis.interval) / 2);
+			}
+			if (_axis.scale && _axis.scale.length > 1) {
+				return Math.abs(_axis.scale[1] - _axis.scale[0]);
+			}
+			return 1;
+		};
+
 		let diffPoints;
 		if(horizontalAxis && horizontalAxis.xPoints &&  horizontalAxis.xPoints.length) {
 			let orientationHorAxis = !horizontalAxis.isReversed();
 			diffPoints = 0;
 			if((horizontalAxis instanceof AscFormat.CDateAx || horizontalAxis instanceof AscFormat.CCatAx) && crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
-				diffPoints = Math.abs((horizontalAxis.interval) / 2);
+				diffPoints = getInterval(horizontalAxis);
 			}
 			if(orientationHorAxis) {
 				leftDownPointX = horizontalAxis.xPoints[0].pos - diffPoints;
@@ -1322,7 +1345,7 @@ CChartsDrawer.prototype =
 			diffPoints = 0;
 			const isChartEx = chartSpace.isChartEx();
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
-				diffPoints = Math.abs((verticalAxis.interval) / 2);
+				diffPoints = getInterval(verticalAxis);
 			}
 			if(orientationVerAxis || isChartEx) {
 				leftDownPointY = verticalAxis.yPoints[0].pos + diffPoints;
