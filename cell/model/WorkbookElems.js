@@ -15831,6 +15831,8 @@ function RangeDataManagerElem(bbox, data)
 		newObj.RefersTo = this.RefersTo;
 		newObj.SheetId = this.SheetId;
 
+		newObj.parent = this.parent;
+
 		return newObj;
 	};
 	ExternalDefinedName.prototype.updateFromSheet = function(sheet) {
@@ -15839,15 +15841,26 @@ function RangeDataManagerElem(bbox, data)
 			//sheet.workbook.dependencyFormulas.defNames
 			//check on sheet name and def name
 			let defNames = sheet.workbook && sheet.workbook.dependencyFormulas && sheet.workbook.dependencyFormulas.defNames;
-			if (defNames) {
-				for (let i in defNames.sheet) {
-
+			let thisSheet = defNames && this.parent.SheetNames[this.SheetId];
+			if (thisSheet) {
+				if (defNames.sheet[thisSheet]) {
+					if (defNames.sheet[thisSheet][this.Name]) {
+						isChanged = true;
+					}
 				}
-				for (let i in defNames.wb) {
 
+				if (!isChanged) {
+					if (defNames.wb[this.Name]) {
+						this.RefersTo = defNames.wb[this.Name].getRef();
+						//need init from range + updateFromSheet from data set
+						if (this.RefersTo) {
+							this.parent.updateSheetData(thisSheet, sheet, [AscCommonExcel.g_oRangeCache.getAscRange(this.RefersTo.split("!")[1])]);
+						}
+
+						isChanged = true;
+					}
 				}
 			}
-
 
 			/*var t = this;
 
