@@ -5335,8 +5335,8 @@
 		let _transform = new AscCommon.CMatrix();
 		let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
 		//transformMatrix.RotateAt(180, this.drawingCtx.getWidth() / 2, this.drawingCtx.getHeight() / 2);
-		_ctx.setTransform(transformMatrix.sx, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
 
+		_ctx.setTransform(transformMatrix.sx, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
 		_ctx.updateTransforms();
 
 		// draw text
@@ -5778,7 +5778,7 @@
 				ctx.RemoveClipRect();
 			}
 		} else {
-			ctx.AddClipRect(x1, y1, w, h);
+			window.rightToleft ? ctx.AddClipRect(x1, y1, Math.abs(w), h) : ctx.AddClipRect(x1, y1, w, h);
 			if (this._getCellCF(cfIterator, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === ct.cellHA*/) {
 				var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
 				//TODO оставляю отступ 0, пересмотреть!
