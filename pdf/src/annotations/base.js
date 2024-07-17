@@ -548,7 +548,8 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
-        if (this.GetDocument().annots.indexOf(this) == -1)
+        let oDoc = Asc.editor.getPDFDoc();
+        if (oDoc.annots.indexOf(this) == -1)
             return false;
 
         return true;

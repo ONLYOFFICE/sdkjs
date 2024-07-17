@@ -139,13 +139,13 @@ annotChangesMap[AscDFH.historyitem_Pdf_Annot_Document] = function (oAnnot, value
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseObjectProperty}
  */
 function CChangesPDFCommentData(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFCommentData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFCommentData.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
 CChangesPDFCommentData.prototype.constructor = CChangesPDFCommentData;
 CChangesPDFCommentData.prototype.Type = AscDFH.historyitem_Pdf_Comment_Data;
 CChangesPDFCommentData.prototype.private_SetValue = function(Value)
@@ -158,7 +158,10 @@ CChangesPDFCommentData.prototype.private_SetValue = function(Value)
 
 	editor.sync_ChangeCommentData(oComment.GetId(), CommentData);
 };
-
+CChangesPDFCommentData.prototype.private_CreateObject = function()
+{
+	return new AscCommon.CCommentData();
+};
 
 /**
  * @constructor
