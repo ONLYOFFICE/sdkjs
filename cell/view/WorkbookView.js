@@ -3129,6 +3129,24 @@
     };
 
 	WorkbookView.prototype.insertArgumentsInFormula = function (args, argNum, argType, name) {
+		function checkParser (arg, parserHelp, ws) {
+			// If any parser returns true, we return it immediately
+			if (parserHelp.isRef(arg, 0)) {
+				return true	
+			} 			
+			if (parserHelp.is3DRef(arg, 0)[0]) {
+				return true
+			}
+			if (parserHelp.isArea(arg, 0)) {
+				return true
+			}
+			if (ws.workbook.dependencyFormulas.getDefNameByName(arg, ws.getId())) {
+				return true
+			}
+			return false;
+		}
+
+
 		if (this.getCellEditMode()) {
 			const ws = this.getActiveWS();
 			// If we expect a string as an argument, then we check whether the current argument is a string
@@ -3138,16 +3156,13 @@
 				if (argN !== undefined) {
 					let parserHelp = AscCommon.parserHelp;
 					let isString = parserHelp.isString('"' + argN + '"', 0);
-					let isRef = parserHelp.isRef(argN, 0);
-					let is3DRef = parserHelp.is3DRef(argN, 0)[0];
-					let isArea = parserHelp.isArea(argN, 0);
+					if (isString) {
+						let anyConditionMet = checkParser(argN, parserHelp, ws);
 
-					let isName = ws.workbook.dependencyFormulas.getDefNameByName( argN, ws.getId() );
-
-					// depending on the result, put quotes in the argument (we are interested in the string only and no other match)
-					if (isString && !isRef && !is3DRef && !isArea && !isName) {
-						argN = '"' + argN + '"';
-						args[argNum] = argN;
+						if (!anyConditionMet) {
+							argN = '"' + argN + '"';
+							args[argNum] = argN;
+						}
 					}
 				}
 			}
