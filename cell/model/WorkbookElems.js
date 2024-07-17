@@ -15766,21 +15766,21 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	ExternalDefinedName.prototype.Write_ToBinary2 = function(w) {
-		if (null != this.Ref) {
+		if (null != this.Name) {
 			w.WriteBool(true);
 			w.WriteString2(this.Name);
 		} else {
 			w.WriteBool(false);
 		}
 
-		if (null != this.CellType) {
+		if (null != this.RefersTo) {
 			w.WriteBool(true);
 			w.WriteString2(this.RefersTo);
 		} else {
 			w.WriteBool(false);
 		}
 
-		if (null != this.CellValue) {
+		if (null != this.SheetId) {
 			w.WriteBool(true);
 			w.WriteString2(this.SheetId);
 		} else {

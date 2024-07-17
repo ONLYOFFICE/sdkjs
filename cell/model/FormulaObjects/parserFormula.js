@@ -2769,8 +2769,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @constructor
 	 * @extends {cName}
 	 */
-	function cName3D(val, ws) {
+	function cName3D(val, ws, externalLink) {
 		cName.call(this, val, ws);
+		this.externalLink = externalLink;
 	}
 
 	cName3D.prototype = Object.create(cName.prototype);
@@ -2783,15 +2784,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else {
 			ws = this.ws;
 		}
-		var oRes = new cName3D(this.value, ws);
+		var oRes = new cName3D(this.value, ws, this.externalLink);
 		this.cloneTo(oRes);
 		return oRes;
 	};
+
 	cName3D.prototype.toString = function () {
-		return parserHelp.getEscapeSheetName(this.ws.getName()) + "!" + cName.prototype.toString.call(this);
+		var exPath = this.getExternalLinkStr(this.externalLink);
+		return parserHelp.getEscapeSheetName(exPath + this.ws.getName()) + "!" + cName.prototype.toString.call(this);
 	};
 	cName3D.prototype.toLocaleString = function () {
-		return parserHelp.getEscapeSheetName(this.ws.getName()) + "!" + cName.prototype.toLocaleString.call(this);
+		var exPath = this.getExternalLinkStr(this.externalLink, true);
+		return parserHelp.getEscapeSheetName(exPath + this.ws.getName()) + "!" + cName.prototype.toLocaleString.call(this);
+	};
+	cName3D.prototype.getWsId = function () {
+		return this.ws && this.ws.Id;
 	};
 
 	/**
@@ -7340,7 +7347,7 @@ function parserFormula( formula, parent, _ws ) {
 					t.ca = isRecursiveFormula(found_operand, t);
 				} else {
 					parserHelp.isName.call(ph, t.Formula, ph.pCurrPos);
-					found_operand = new cName3D(ph.operand_str, wsF);
+					found_operand = new cName3D(ph.operand_str, wsF, externalLink);
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 					t.ca = isRecursiveFormula(found_operand, t);
 				}
