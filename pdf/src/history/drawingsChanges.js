@@ -32,8 +32,8 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Drawing_Page]	= CChangesPDFDrawingPage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Drawing_Rot]	= CChangesPDFDrawingRot;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Page]	= CChangesPDFDrawingPage;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Rot]	= CChangesPDFDrawingRot;
 
 
 /**
@@ -46,7 +46,7 @@ function CChangesPDFDrawingPage(Class, Old, New, Color)
 }
 CChangesPDFDrawingPage.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDrawingPage.prototype.constructor = CChangesPDFDrawingPage;
-CChangesPDFDrawingPage.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Page;
+CChangesPDFDrawingPage.prototype.Type = AscDFH.historyitem_type_Pdf_Drawing_Page;
 CChangesPDFDrawingPage.prototype.private_SetValue = function(Value)
 {
 	let oDrawing = this.Class;
@@ -63,7 +63,7 @@ function CChangesPDFDrawingRot(Class, Old, New, Color)
 }
 CChangesPDFDrawingRot.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDrawingRot.prototype.constructor = CChangesPDFDrawingRot;
-CChangesPDFDrawingRot.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Rot;
+CChangesPDFDrawingRot.prototype.Type = AscDFH.historyitem_type_Pdf_Drawing_Rot;
 CChangesPDFDrawingRot.prototype.private_SetValue = function(Value)
 {
 	let oDrawing = this.Class;
