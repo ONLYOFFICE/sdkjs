@@ -2555,7 +2555,8 @@ var CPresentation = CPresentation || function(){};
             return annot.GetId() === Id;
         });
 
-        let oCurData = oAnnotToEdit.GetAscCommentData();
+        var oCurData = new AscCommon.CCommentData();
+		oCurData.Read_FromAscCommentData(oAnnotToEdit.GetAscCommentData());
 
         this.History.Add(new CChangesPDFCommentData(oAnnotToEdit, oCurData, CommentData));
         

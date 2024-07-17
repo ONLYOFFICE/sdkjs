@@ -257,6 +257,14 @@ function CCommentData()
             this.m_aReplies.push( oReply );
         }
     };
+
+	this.Write_ToBinary = function (Writer) {
+		this.Write_ToBinary2(Writer);
+	};
+
+	this.Read_FromBinary = function (Reader) {
+		this.Read_FromBinary2(Reader);
+	};
 }
 CCommentData.prototype.GetUserName = function()
 {
