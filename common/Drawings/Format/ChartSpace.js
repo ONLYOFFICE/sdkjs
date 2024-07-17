@@ -11631,17 +11631,19 @@ function(window, undefined) {
 		for (let i = 0; i < aLabels.length; i++) {
 			//check if there multiple lines exist
 			//if so, take the height of first line
-			const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
-			const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
-			const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
-			if (AscFormat.isRealNumber(height)) {
-				return height;
-			}
-
-			//check the height of the label
-			const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
-			if (AscFormat.isRealNumber(labelSize.h)) {
-				return labelSize.h;
+			if (aLabels[i]) {
+				const content = aLabels[i].tx && aLabels[i].tx.rich && aLabels[i].tx.rich.content ? aLabels[i].tx.rich.content.Content : null;
+				const lines = content && Array.isArray(content) && content.length > 0 && content[0] ? content[0].Lines : null;
+				const height = lines && Array.isArray(lines) && lines.length > 0 ? lines[0].Y : null;
+				if (AscFormat.isRealNumber(height)) {
+					return height;
+				}
+	
+				//check the height of the label
+				const labelSize = aLabels[i].tx.rich.getContentOneStringSizes();
+				if (AscFormat.isRealNumber(labelSize.h)) {
+					return labelSize.h;
+				}
 			}
 		}
 		return 0;
