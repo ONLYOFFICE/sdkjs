@@ -85,6 +85,17 @@
 		"₍": "(",
 		"₎": ")",
 	}
+	const oStandardFont = {
+		// Standart Word functions with higher proirity for linear format
+		"7" : "\\mathcal",
+		"3" : "\\mathsf",
+		"-1" : "\\mathrm",
+		//"1" : "\\mathit",
+		"9" : "\\mathfrak",
+		//"8" : "\\mathbfcal",
+		"0" : "\\mathbf",
+		"12" : "\\mathbb",
+	}
 	const GetTypeFont = {
 		// Standart Word functions with higher proirity for linear format
 		"\\mathcal": 7,
@@ -246,6 +257,23 @@
 		'8': {0: '𝟖', 12: '𝟠', 3: '𝟪', 4: '𝟴', 11: '𝟾'},
 		'9': {0: '𝟗', 12: '𝟡', 3: '𝟫', 4: '𝟵', 11: '𝟿'},
 	};
+	function GetNamesTypeFontLaTeX(nType)
+	{
+		let arrNamesGetTypeFont = Object.entries(GetTypeFont);
+		return arrNamesGetTypeFont.find(function (element){return element[1] === Number(nType)})
+	}
+	let GetLaTeXFont = {};
+	let nameOfLaTeX = Object.keys(GetMathFontChar)
+	for (let i = 0; i < nameOfLaTeX.length; i++)
+	{
+		let part_font = GetMathFontChar[nameOfLaTeX[i]];
+		let part_keys = Object.keys(part_font);
+
+		for (let j = 0; j < part_keys.length; j++)
+		{
+			GetLaTeXFont[part_font[part_keys[j]]] = [part_keys[j], nameOfLaTeX[i]];
+		}
+	}
 
 	function LexerLiterals()
 	{
@@ -1336,39 +1364,46 @@
 	{
 		this.id = 31;
 		this.Unicode = {};
-		this.LaTeX = {};
+		this.LaTeX = {
+			// Standart Word functions with higher proirity for linear format
+			"\\mathcal": "\\mathcal",
+			"\\mathsf": "\\mathsf",
+			"\\mathrm": "\\mathrm",
+			"\\mathit": "\\mathit",
+			"\\mathfrak": "\\mathfrak",
+			"\\mathbfcal": "\\mathbfcal",
+			"\\mathbf": "\\mathbf",
+			"\\mathbb": "\\mathbb",
+
+			// other LaTeX functions
+			"\\sf": "\\sf",
+			"\\script":"\\script",
+			"\\scr":"\\scr",
+			"\\rm": "\\rm",
+			"\\oldstyle":"\\oldstyle",
+			"\\mathtt": "\\mathtt",
+			"\\mathsfit":"\\mathsfit",
+			"\\mathsfbfit":"\\mathsfbfit",
+			"\\mathsfbf":"\\mathsfbf",
+			"\\mathbfit":"\\mathbfit",
+			"\\mathbffrak": "\\mathbffrak",
+			"\\it":"\\it",
+			"\\fraktur":"\\fraktur",
+			"\\frak":"\\frak",
+			"\\double": "\\double",
+		};
 		this.Init();
 	}
 	TokenFont.prototype = Object.create(LexerLiterals.prototype);
 	TokenFont.prototype.constructor = TokenFont;
+	TokenFont.prototype.GetType = function (strToken)
+	{
+		return GetTypeFont[strToken];
+	};
 	TokenFont.prototype.GetTypes = function ()
 	{
-		return {
-			"\\sf": 3,
-			"\\script": 7,
-			"\\scr": 7,
-			"\\rm": -1,
-			"\\oldstyle": 7,
-			"\\mathtt": 11,
-			"\\mathsfit": 5,
-			"\\mathsfbfit": 6,
-			"\\mathsfbf": 4,
-			"\\mathsf": 3,
-			"\\mathrm": -1,
-			"\\mathit": 1,
-			"\\mathfrak": 9,
-			"\\mathcal": 7,
-			"\\mathbfit": 2,
-			"\\mathbffrak": 10,
-			"\\mathbfcal": 8,
-			"\\mathbf": 0,
-			"\\mathbb": 12,
-			"\\it": 1,
-			"\\fraktur": 9,
-			"\\frak": 9,
-			"\\double": 12,
-		}
-	};
+		return GetTypeFont;
+	}
 
 	function TokenOf()
 	{
@@ -1484,6 +1519,7 @@
 		MathLiterals.arrayMatrix,
 		MathLiterals.eqArray,
 		MathLiterals.punct,
+		MathLiterals.font,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2158,22 +2194,14 @@
 					}
 					break;
 				case MathStructures.other:
-					let intCharCode = oTokens.value.codePointAt()
-					oContext.Add_Symbol(intCharCode);
+					for (const oUnicodeIterator =  oTokens.value.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+					{
+						oContext.Add_Text(AscCommon.encodeSurrogateChar(oUnicodeIterator.value()), undefined, undefined, oTokens.style[oUnicodeIterator.position()]);
+						//oContext.Add_Text(oTokens.value[nTokenStyle], undefined, undefined, oTokens.style[nTokenStyle]
+					}
 					break;
-				case oNamesOfLiterals.functionNameLiteral[num]:
-				case oNamesOfLiterals.specialScriptNumberLiteral[num]:
-				case oNamesOfLiterals.specialScriptCharLiteral[num]:
-				case oNamesOfLiterals.specialScriptBracketLiteral[num]:
-				case oNamesOfLiterals.specialScriptOperatorLiteral[num]:
-				case oNamesOfLiterals.specialIndexNumberLiteral[num]:
-				case oNamesOfLiterals.specialIndexCharLiteral[num]:
-				case oNamesOfLiterals.specialIndexBracketLiteral[num]:
-				case oNamesOfLiterals.specialIndexOperatorLiteral[num]:
-				case oNamesOfLiterals.opDecimal[num]:
 				case MathStructures.char:
 				case MathStructures.space:
-				case oNamesOfLiterals.mathOperatorLiteral[num]:
 				case MathStructures.number:
 					if (oTokens.decimal)
 					{
@@ -2260,7 +2288,6 @@
 						oAccent.getBase()
 					)
 					break;
-				case oNamesOfLiterals.skewedFractionLiteral[num]:
 				case MathStructures.frac:
 					if (oTokens.fracType === LITTLE_FRACTION)
 					{
@@ -2677,12 +2704,6 @@
 						oTokens.third,
 						oFunc.getArgument(),
 					)
-					break;
-				case oNamesOfLiterals.mathFontLiteral[num]:
-					ConvertTokens(
-						oTokens.value,
-						oContext,
-					);
 					break;
 				case MathStructures.matrix:
 					let strStartBracket, strEndBracket;
@@ -7086,4 +7107,8 @@
 	window["AscMath"].GetAutoConvertation			= GetAutoConvertation;
 	window["AscMath"].SetAutoConvertation			= SetAutoConvertation;
 	window["AscMath"].ProceedTokens					= ProceedTokens;
+	window["AscMath"].GetLaTeXFont					= GetLaTeXFont;
+	window["AscMath"].GetNamesTypeFontLaTeX			= GetNamesTypeFontLaTeX;
+	window["AscMath"].oStandardFont					= oStandardFont;
+	window["AscMath"].GetTypeFont					= GetTypeFont;
 })(window);

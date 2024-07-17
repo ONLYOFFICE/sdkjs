@@ -86,9 +86,7 @@ $(function () {
                 AddText(str);
 
 				if (isConvertAfter || isLaTeX)
-				{
 					MathContent.ConvertView(false, isLaTeX ? Asc.c_oAscMathInputType.LaTeX : Asc.c_oAscMathInputType.Unicode);
-				}
 
                 for (let i = CurPos; i < Root.Content.length; i++)
 				{
@@ -1165,10 +1163,8 @@ $(function () {
 
 		QUnit.module( "bugs", function ()
 		{
-
 			QUnit.module( "Check bug #61007", function ()
 			{
-				QUnit.module( "" );
 				Test("\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}", [["ParaRun", ""], ["CMathMatrix", "\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}"]], true, "Check bug #61007 default matrix");
 				Test("\\begin{pmatrix}1&2\\\\3&4\\\\\\end{pmatrix}", [["ParaRun", ""], ["CDelimiter", "\\left(\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right)"]], true, "Check bug #61007 pmatrix");
 				Test("\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]", [["ParaRun", ""], ["CDelimiter", "\\left[\\begin{matrix}1&2\\\\3&4\\\\\\end{matrix}\\right]"]], true, "Check bug #61007 pmatrix");
@@ -1176,58 +1172,36 @@ $(function () {
 
 			QUnit.module( "Check bug #67181", function ()
 			{
-				// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true);
-				// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181", true);
-				// Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181", true);
-				// Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181", true);
-				// Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181");
-				//
-				// Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181", true);
-				// Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathit{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true);
-				// Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓺𝔀𝓮𝓻𝓽𝔂𝓾𝓲𝓸𝓹𝓪𝓼𝓭𝓯𝓰𝓱𝓳𝓴𝓵𝔃𝔁𝓬𝓿𝓫𝓷𝓶"]], true, "Check bug #67181", true);
-				// Test("\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbfcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝐪𝐰𝐞𝐫𝐭𝐲𝐮𝐢𝐨𝐩𝐚𝐬𝐝𝐟𝐠𝐡𝐣𝐤𝐥𝐳𝐱𝐜𝐯𝐛𝐧𝐦"]], true, "Check bug #67181", true);
-				// Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true);
-				// Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// // в будущем лучше объединять такие последовательности в один Run, когда будет готова работа со стилями перепроверить
-				// Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶"], ["ParaRun", ""],["ParaRun", "𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true);
-				// Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwerty}"], ["ParaRun", ""], ["ParaRun", "\\mathfrak{uiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
-				//
-				// // non-standard for Word LaTeX operations
-				// Test("\\fraktur{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181 check non-standard", true);
-				// Test("\\fraktur{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-				//
-				// Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181 check non-standard", true);
-				// Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-				//
-				// Test("\\script{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181 check non-standard", true);
-				// Test("\\script{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
-				//
-				// Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181 check non-standard", true);
-				// Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
+				Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝓆𝓌ℯ𝓇𝓉𝓎𝓊𝒾ℴ𝓅𝒶𝓈𝒹𝒻ℊ𝒽𝒿𝓀𝓁𝓏𝓍𝒸𝓋𝒷𝓃𝓂"]], true, "Check bug #67181", true, true);
+				Test("\\mathcal{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathcal{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181", true, true);
+				Test("\\mathsf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181", true, true);
+				Test("\\mathrm{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "qwertyuiopasdfghjklzxcvbnm"]], true, "Check bug #67181");
+
+				Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181", true, true);
+				Test("\\mathit{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝑞𝑤𝑒𝑟𝑡𝑦𝑢𝑖𝑜𝑝𝑎𝑠𝑑𝑓𝑔ℎ𝑗𝑘𝑙𝑧𝑥𝑐𝑣𝑏𝑛𝑚"]], true, "Check bug #67181"); // in word not convert
+
+				Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true, true);
+				Test("\\mathfrak{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝐪𝐰𝐞𝐫𝐭𝐲𝐮𝐢𝐨𝐩𝐚𝐬𝐝𝐟𝐠𝐡𝐣𝐤𝐥𝐳𝐱𝐜𝐯𝐛𝐧𝐦"]], true, "Check bug #67181", true, true);
+				Test("\\mathbf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181", true, true);
+				Test("\\mathbb{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "𝔮𝔴𝔢𝔯𝔱𝔶𝔲𝔦𝔬𝔭𝔞𝔰𝔡𝔣𝔤𝔥𝔧𝔨𝔩𝔷𝔵𝔠𝔳𝔟𝔫𝔪"]], true, "Check bug #67181", true, true);
+				Test("\\mathfrak{qwerty}\\mathfrak{uiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathfrak{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181");
+
+				Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝗊𝗐𝖾𝗋𝗍𝗒𝗎𝗂𝗈𝗉𝖺𝗌𝖽𝖿𝗀𝗁𝗃𝗄𝗅𝗓𝗑𝖼𝗏𝖻𝗇𝗆"]], true, "Check bug #67181 check non-standard", true, true);
+				Test("\\sf{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathsf{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
+
+				Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "𝕢𝕨𝕖𝕣𝕥𝕪𝕦𝕚𝕠𝕡𝕒𝕤𝕕𝕗𝕘𝕙𝕛𝕜𝕝𝕫𝕩𝕔𝕧𝕓𝕟𝕞"]], true, "Check bug #67181 check non-standard", true, true);
+				Test("\\double{qwertyuiopasdfghjklzxcvbnm}", [["ParaRun", "\\mathbb{qwertyuiopasdfghjklzxcvbnm}"]], true, "Check bug #67181 check non-standard");
 			})
 		})
-
-
-
-
-
-
 	})
-
  })
-

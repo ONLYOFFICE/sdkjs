@@ -32,15 +32,14 @@
 
 "use strict";
 (function (window) {
-	const Literals = AscMath.MathLiterals;
-	const Struc = AscMath.MathStructures;
+	const Literals			= AscMath.MathLiterals;
+	const Struc				= AscMath.MathStructures;
 
-	const ConvertTokens = window.AscMath.ConvertTokens;
-	const Tokenizer = window.AscMath.Tokenizer;
-	const LimitFunctions = window.AscMath.LimitFunctions;
-	const FunctionNames = window.AscMath.MathAutoCorrectionFuncNames;
-	const GetTypeFont = window.AscMath.GetTypeFont;
-	const GetMathFontChar = window.AscMath.GetMathFontChar;
+	const ConvertTokens		= AscMath.ConvertTokens;
+	const Tokenizer			= AscMath.Tokenizer;
+	const LimitFunctions	= AscMath.LimitFunctions;
+	const GetTypeFont		= AscMath.GetTypeFont;
+	const GetMathFontChar	= AscMath.GetMathFontChar;
 
 	function CLaTeXParser() {
 		this.oTokenizer = new Tokenizer(true);
@@ -60,27 +59,45 @@
 		let styles = [];
 
 		let isOne = this.isReceiveOneTokenAtTime;
+		let isSymbol;
 
-		if (isOne)
+		if (isOne && this.oLookahead.class === arrTypeOfLiteral.id)
 		{
-			let strValue = this.EatToken(arrTypeOfLiteral).data;
-			let oLiteral = {
-				type: type,
-				value: this.intMathFontType === -1
+			let oItem		= this.oLookahead;
+			let strValue	= this.EatToken(arrTypeOfLiteral.id).data;
+			let oStyle		= oItem.style;
+			type			= Struc.char;
+
+			strLiteral = this.intMathFontType === -1
 					? strValue
-					: GetMathFontChar[strValue][this.intMathFontType],
-			};
+					: GetMathFontChar[strValue][this.intMathFontType];
+
+			styles.push(oStyle);
 		}
 		else
 		{
 			while (this.oLookahead.class === arrTypeOfLiteral.id && this.EscapeSymbol !== this.oLookahead.data)
 			{
-				styles.push(this.oLookahead.style);
-				strLiteral += this.EatToken(this.oLookahead.class).data;
+				let oCurrentItem	= this.oLookahead;
+				let strCurrent		= oCurrentItem.data;
+				let oStyle			= oCurrentItem.style;
+				this.EatToken(arrTypeOfLiteral.id);
+
+				if (GetMathFontChar[strCurrent] && GetMathFontChar[strCurrent][this.intMathFontType])
+				{
+					strLiteral += GetMathFontChar[strCurrent][this.intMathFontType];
+					isSymbol = true;
+				}
+				else
+				{
+					strLiteral += strCurrent;
+				}
+
+				styles.push(oStyle);
 			}
 		}
 
-		arrLiterals.push({type: type, value: strLiteral, style: styles});
+		arrLiterals.push({type: isSymbol ? Struc.other : type, value: strLiteral, style: styles});
 
 		if (arrLiterals.length === 1)
 			return arrLiterals[0];
@@ -415,7 +432,7 @@
 			this.oLookahead.class === "\\middle" ||
 			this.IsAccentLiteral() ||
 			this.IsPreScript() ||
-			this.IsChangeMathFont() ||
+			this.IsMathFontLiteral() ||
 			this.oLookahead.class === "{" ||
 			this.oLookahead.class === Literals.operator.id ||
 			this.IsReactLiteral() ||
@@ -524,13 +541,10 @@
 		{
 			return this.GetPreScriptLiteral();
 		}
-		else if (this.IsChangeMathFont())
+		else if (this.IsMathFontLiteral())
 		{
 			return this.GetMathFontLiteral();
 		}
-		// else if (this.IsSymbolLiteral()) {
-		// 	return this.GetSymbolLiteral()
-		// }
 		else if (this.oLookahead.data === "{")
 		{
 			return this.GetArguments(1)[0];
@@ -1022,27 +1036,20 @@
 			oOutput.index = oIndexContent;
 		return oOutput;
 	};
-	CLaTeXParser.prototype.IsChangeMathFont = function ()
+	CLaTeXParser.prototype.IsMathFontLiteral = function ()
 	{
-		return false //this.oLookahead.class === oLiteralNames.mathFontLiteral[0]
-	};
+		return this.oLookahead.class === Literals.font.id;
+	}
 	CLaTeXParser.prototype.GetMathFontLiteral = function ()
 	{
-		// let intPrevType = this.intMathFontType;
-		// this.intMathFontType = GetTypeFont[this.oLookahead.data];
-		//
-		// if (this.oLookahead.data !== "{") {
-		// 	this.isReceiveOneTokenAtTime = true;
-		// }
-		//
-		// this.EatToken(this.oLookahead.class)
-		// let oOutput = {
-		// 	type: oLiteralNames.mathFontLiteral[num],
-		// 	value: this.GetArguments(1)
-		// };
-		// this.isReceiveOneTokenAtTime = false;
-		// this.intMathFontType = intPrevType;
-		// return oOutput;
+		let intPrevType = this.intMathFontType;
+		this.intMathFontType = GetTypeFont[this.oLookahead.data];
+
+		this.EatToken(this.oLookahead.class);
+		let oOutput = this.GetArguments(1);
+
+		this.intMathFontType = intPrevType;
+		return oOutput;
 	};
 	CLaTeXParser.prototype.IsMatrixLiteral = function ()
 	{

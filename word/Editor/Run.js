@@ -536,33 +536,54 @@ ParaRun.prototype.GetText = function(oText)
 ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	
-	let isLatex = oMathText.IsLaTeX();
 
-	let nStartPos = (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
-	let nEndPos   = (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
+	let isLatex		= oMathText.IsLaTeX();
 
-	// if (this.MathPrp.nor === true)
-	// {
-	// 	oMathText.AddText(new AscMath.MathText("\"", this));
-	// }
+	let nStartPos	= (isSelectedText == true ? Math.min(this.Selection.StartPos, this.Selection.EndPos) : 0);
+	let nEndPos		= (isSelectedText == true ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : this.Content.length);
+
+	let isStrFont	= false;
+	let arrFont		= [];
 
 	for (let i = nStartPos; i < nEndPos; i++)
 	{
 		let oCurrentElement = this.Content[i];
+		let strCurrentElement = oCurrentElement.GetTextOfElement().GetText();
 
 		if (this.Content.length === 1 && oCurrentElement.value === 11034)
 			return oMathText;
 
-		let strCurrentElement = oCurrentElement.GetTextOfElement(isLatex).GetText();
+		let arrFontContent = oMathText.IsLaTeX() ? AscMath.GetLaTeXFont[strCurrentElement] : undefined;
+		let strMathFontName = arrFontContent ? AscMath.oStandardFont[arrFontContent[0]] : undefined;
 
-		oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+		if (!strMathFontName && isLatex)
+		{
+			let strTemp = AscMath.SymbolsToLaTeX[strCurrentElement];
+			if (strTemp)
+				strCurrentElement = strTemp;
+		}
+
+		if (strMathFontName)
+		{
+			if (!isStrFont)
+				oMathText.AddText(new AscMath.MathText(strMathFontName + "{", this));
+
+			isStrFont = true;
+			oMathText.AddText(new AscMath.MathText(arrFontContent[1], this));
+		}
+		else if (isStrFont && !arrFontContent)
+		{
+			isStrFont = false;
+			oMathText.AddText(new AscMath.MathText('}', this));
+		}
+		else
+		{
+			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+		}
 	}
 
-	// if (this.MathPrp.nor === true)
-	// {
-	// 	oMathText.AddText(new AscMath.MathText("\"", this));
-	// }
+	if (isStrFont)
+		oMathText.AddText(new AscMath.MathText('}', this));
 
 	return oMathText;
 };
