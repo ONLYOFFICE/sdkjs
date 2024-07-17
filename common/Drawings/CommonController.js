@@ -11030,9 +11030,9 @@
 					return null;
 				}
 			}
-			if (oSelectionState2.geometryObject) {
+			if (oSelectionState2.geometryObject && oSelectionState2.geometryObject.drawing) {
 				if(oSelectionState1.geometryObject !== oSelectionState2.geometryObject) {
-					return getTextObj(oSelectionState2.geometryObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+					return getTextObj(oSelectionState2.geometryObject.drawing.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				else {
 					return null;

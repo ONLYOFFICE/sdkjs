@@ -10679,24 +10679,36 @@ CTable.prototype.AddTableColumn = function(bBefore, nCount)
 	}
 
 	this.Internal_CreateNewGrid(Rows_info);
-
-	// Выделим новые строки
+	
+	// Выделим добавленные ячейки
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Cell;
-
-	var arrSelectionData = [];
+	
+	let selectionData = [];
 	for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
 	{
 		var StartCell = ( true === bBefore ? Add_info[CurRow] : Add_info[CurRow] + 1 );
 		for (var Index = 0; Index < Count; Index++)
 		{
-			arrSelectionData.push({Row : CurRow, Cell : StartCell + Index});
+			selectionData.push({Row : CurRow, Cell : StartCell + Index});
 		}
 	}
-	this.private_SetSelectionData(arrSelectionData);
-
+	
+	if (selectionData.length)
+	{
+		this.private_SetSelectionData(selectionData);
+		let startPos = selectionData[0];
+		let endPos   = selectionData[selectionData.length - 1];
+		
+		this.Selection.StartPos.Pos = {Row : startPos.Row, Cell : startPos.Cell};
+		this.Selection.EndPos.Pos   = {Row : endPos.Row, Cell : endPos.Cell};
+	}
+	else
+	{
+		this.RemoveSelection();
+	}
+	
 	this.private_RecalculateGrid();
-	this.Internal_Recalculate_1();
 };
 CTable.prototype.DrawTableCells = function(X1, Y1, X2, Y2, CurPageStart, CurPageEnd, drawMode)
 {

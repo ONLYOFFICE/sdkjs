@@ -1162,14 +1162,14 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		for (var nIndex = 0, nCount = marksToCheck.length; nIndex < nCount; ++nIndex)
 		{
-			var oMark      = marksToCheck[nIndex];
-			var sCommentId = oMark.GetCommentId();
-			var oComment   = this.Get_ById(sCommentId);
-			var oParagraph = oMark.GetParagraph();
-			if (oComment && oParagraph)
-			{
-				oComment.SetRangeMark(oMark);
-			}
+			let mark = marksToCheck[nIndex];
+			if (!mark.IsUseInDocument())
+				continue;
+			
+			let commentId = mark.GetCommentId();
+			let comment   = this.Get_ById(commentId);
+			if (comment)
+				comment.SetRangeMark(mark);
 		}
 		
 		marksToCheck.length = 0;

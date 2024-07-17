@@ -1765,6 +1765,7 @@ var editor;
         if(this.wb.MobileTouchManager) {
             this.wb.MobileTouchManager.Destroy();
         }
+		this.sendEvent("asc_onCloseFile");
 	};
 
 	spreadsheet_api.prototype.openDocumentFromZip = function (wb, data) {
