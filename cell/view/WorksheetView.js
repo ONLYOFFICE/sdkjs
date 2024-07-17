@@ -1199,13 +1199,35 @@
         };
     };
 
-	WorksheetView.prototype._getColLeft = function (i) {
-		this._updateColumnPositions();
+	WorksheetView.prototype._getColLeft = function (i, saveRealRightToleft) {
+		var ctx = this.drawingCtx;
+		let realRightToleft = window.rightToleft;
+		if (!saveRealRightToleft) {
+			window.rightToleft = false;
+		}
+		let l = this.cols.length;
+		let leftPosCol;
+		if (i < l) {
+			leftPosCol = window.rightToleft ? (ctx.getWidth() - this.cols[i].left - this.cols[i].width) : this.cols[i].left;
+		} else {
+			if (window.rightToleft) {
+				leftPosCol = ((0 === l) ? ctx.getWidth() : this.cols[l - 1].left);
+			} else {
+				leftPosCol = ((0 === l) ? 0 : this.cols[l - 1].left + this.cols[l - 1].width);
+			}
 
-		var l = this.cols.length;
-		return this.cellsLeft + ((i < l) ? this.cols[i].left : (((0 === l) ? 0 :
-			this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) *
-			Asc.round(this.defaultColWidthPx * this.getZoom(true) * this.getRetinaPixelRatio()) * (i - l)));
+			if (!this.model.isDefaultWidthHidden()) {
+				let ratio = this.getZoom(true) * this.getRetinaPixelRatio();
+				if (window.rightToleft) {
+					leftPosCol -= Asc.round(this.defaultColWidthPx * ratio) * (i - l + 1);
+				} else {
+					leftPosCol += Asc.round(this.defaultColWidthPx * ratio) * (i - l);
+				}
+			}
+		}
+		let res = window.rightToleft ? leftPosCol - this.cellsLeft : this.cellsLeft + leftPosCol;
+		window.rightToleft = realRightToleft;
+		return res;
 	};
     WorksheetView.prototype.getCellLeft = function (column, units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
@@ -5307,9 +5329,25 @@
 				drawCells[i] = 1;
 			}
 		}
+
+		let _ctx = drawingCtx || this.drawingCtx;
+		let _originalMatrix = _ctx.Transform ? _ctx.Transform.CreateDublicate() : _ctx._mbt.clone();
+		let _transform = new AscCommon.CMatrix();
+		let transformMatrix = _transform.CreateDublicate ? _transform.CreateDublicate() : _transform.clone();
+		//transformMatrix.RotateAt(180, this.drawingCtx.getWidth() / 2, this.drawingCtx.getHeight() / 2);
+		_ctx.setTransform(transformMatrix.sx, transformMatrix.shy, transformMatrix.shx, transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
+
+		_ctx.updateTransforms();
+
 		// draw text
 		for (i in drawCells) {
 			this._drawCellText(drawingCtx, cfIterator, i >> 0, row, colStart, colEnd, offsetX, offsetY);
+		}
+
+		if (_originalMatrix) {
+			_ctx.setTransform(_originalMatrix.sx, _originalMatrix.shy, _originalMatrix.shx,
+				_originalMatrix.sy, _originalMatrix.tx, _originalMatrix.ty);
+			_ctx.updateTransforms();
 		}
     };
 
@@ -5588,15 +5626,15 @@
 			}
 		}
 
-		var x1 = this._getColLeft(colL) - offsetX;
+		var x1 = this._getColLeft(colL, true) - offsetX;
 		var y1 = this._getRowTop(rowT) - offsetY;
-		var w = this._getColLeft(colR + 1) - offsetX - x1;
+		var w = this._getColLeft(colR + 1, true) - offsetX - x1;
 		var h = this._getRowTop(rowB + 1) - offsetY - y1;
 		var x2 = x1 + w - (isTrimmedR ? 0 : gridlineSize);
 		var y2 = y1 + h;
 		var bl = y2 - Asc.round(
 				(isMerged ? (ct.metrics.height - ct.metrics.baseline) : this._getRowDescender(rowB)) * this.getZoom());
-		var x1ct = isMerged ? x1 : this._getColLeft(col) - offsetX;
+		var x1ct = isMerged ? x1 : this._getColLeft(col, true) - offsetX;
 		var x2ct = isMerged ? x2 : x1ct + this._getColumnWidth(col) - gridlineSize;
 		var textX = this._calcTextHorizPos(x1ct, x2ct, ct.metrics, ct.cellHA);
 		var textY = this._calcTextVertPos(y1, h, bl, ct.metrics, ct.cellVA);
@@ -5610,7 +5648,7 @@
 
 		if (ct.angle) {
 
-			xb1 = this._getColLeft(col) - offsetX;
+			xb1 = this._getColLeft(col, true) - offsetX;
 			yb1 = this._getRowTop(row) - offsetY;
 			wb = this._getColumnWidth(col);
 			hb = this._getRowHeight(row);
@@ -5619,7 +5657,7 @@
 			txtRotW = ct.textBound.width + xb1 - ct.textBound.offsetX;
 
 			if (isMerged) {
-				wb = this._getColLeft(colR + 1) - this._getColLeft(colL);
+				wb = this._getColLeft(colR + 1, true) - this._getColLeft(colL, true);
 				hb = this._getRowTop(rowB + 1) - this._getRowTop(rowT);
 				ctx.AddClipRect(xb1, yb1, wb, hb);
 				clipUse = true;
@@ -5648,7 +5686,7 @@
 							if (0 == colLeft) {
 								break;
 							}
-							if (txtRotX >= this._getColLeft(colLeft)) {
+							if (txtRotX >= this._getColLeft(colLeft, true)) {
 								break;
 							}
 							--colLeft;
@@ -5663,7 +5701,7 @@
 								--colRight;
 								break;
 							}
-							if (txtRotW <= this._getColLeft(colRight)) {
+							if (txtRotW <= this._getColLeft(colRight, true)) {
 								--colRight;
 								break;
 							}
@@ -5776,8 +5814,9 @@
 					}
 				}
 			}
-			//this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
-			this._drawText(this.stringRender.restoreInternalState(ct.state), drawingCtx, textX, textY, textW, color)
+
+			this.stringRender.restoreInternalState(ct.state).render(drawingCtx, textX, textY, textW, color);
+			//this._drawText(this.stringRender.restoreInternalState(ct.state), this.drawingCtx, textX, textY, textW, color)
 			ctx.RemoveClipRect();
 		}
 
@@ -17291,7 +17330,7 @@
 				var i, w, h, arrLeftS = [], arrRightS = [], arrBottomS = [];
 				var offsX = t._getColLeft(vro.vr.c1) - t._getColLeft(0) - vro.offsetX;
 				var offsY = t._getRowTop(vro.vr.r1) - t._getRowTop(0) - vro.offsetY;
-				var cellX = t._getColLeft(_c1) - offsX, cellY = t._getRowTop(_r1) - offsY;
+				var cellX = t._getColLeft(_c1, true) - offsX, cellY = t._getRowTop(_r1) - offsY;
 				var _left = cellX;
 				for (i = _c1; i >= vro.vr.c1; --i) {
 					w = t._getColumnWidth(i);
