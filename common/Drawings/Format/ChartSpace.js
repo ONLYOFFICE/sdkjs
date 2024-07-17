@@ -5532,13 +5532,13 @@ function(window, undefined) {
 					aAxes.push(oAxesMap[sAxId]);
 				}
 			}
-			var aAllAxes = [[]];//array of axes sets
+			var aAllAxes = [];//array of axes sets
 			var aSeriesAxes = [];
 			var dSeriesLabelsWidth = 0;
 			var oSetAxis;
 			if (isChartEx) {
-				for (let i = 0; i < this.chart.plotArea.axId.length; i++) {
-					aAllAxes[0].push(this.chart.plotArea.axId[i]);
+				if (this.chart.plotArea.axId && Array.isArray(this.chart.plotArea.axId)) {
+					aAllAxes.push(this.chart.plotArea.axId);
 				}
 			} else {
 				while (aAxes.length > 0) {
