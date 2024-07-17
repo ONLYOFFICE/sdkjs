@@ -10541,16 +10541,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
 
+		ws.getRange2("A100:A101").setValue("1");
 		// cellsRange3D test
 		// col delimiter
-		oParser = new parserFormula("TEXTSPLIT(A2,Sheet1!A1:B2)", "A1", ws);
-		assert.ok(oParser.parse(), "TEXTSPLIT(A2,Sheet1!A1:B2)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,Sheet1!A1:B2)");
+		let currentWsName = ws.getName();
+		oParser = new parserFormula("TEXTSPLIT(A2," + currentWsName + "!A100:A101)", "A1", ws);
+		assert.ok(oParser.parse(), "TEXTSPLIT(A2,Sheet1!A100:A101)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,Sheet1!A100:A101)");
 
 		// row delimiter
-		oParser = new parserFormula("TEXTSPLIT(A2,,Sheet1!A1:B2)", "A1", ws);
-		assert.ok(oParser.parse(), "TEXTSPLIT(A2,,Sheet1!A1:B2)");
-		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,,Sheet1!A1:B2)");
+		oParser = new parserFormula("TEXTSPLIT(A2,," + currentWsName + "!A100:A101)", "A1", ws);
+		assert.ok(oParser.parse(), "TEXTSPLIT(A2,,Sheet1!A100:A101)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous", "Result of TEXTSPLIT(A2,,Sheet1!A100:A101)");
 
 	});
 
