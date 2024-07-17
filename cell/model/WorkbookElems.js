@@ -14846,7 +14846,7 @@ function RangeDataManagerElem(bbox, data)
 		var i;
 		var length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var definedName = new ExternalDefinedName();
+			var definedName = new ExternalDefinedName(this);
 			definedName.Read_FromBinary2(r);
 			if(!this.DefinedNames) {
 				this.DefinedNames = [];
@@ -14986,6 +14986,21 @@ function RangeDataManagerElem(bbox, data)
 		return newObj;
 	};
 
+	ExternalReference.prototype.getDefinedNamesBySheetIndex = function (index) {
+		let res = null;
+		if (this.DefinedNames && this.DefinedNames.length) {
+			for (let i = 0; i < this.DefinedNames.length; i++) {
+				if (this.DefinedNames[i].SheetId === index) {
+					if (!res) {
+						res = [];
+					}
+					res.push(this.DefinedNames[i]);
+				}
+			}
+		}
+		return res;
+	};
+	
 	ExternalReference.prototype.updateData = function (arr, oPortalData) {
 		var t = this;
 		var isChanged = false;
@@ -15018,6 +15033,14 @@ function RangeDataManagerElem(bbox, data)
 					if (externalSheetDataSet) {
 						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
 							isChanged = true;
+						}
+					}
+					let externalDefName = this.getDefinedNamesBySheetIndex(index);
+					if (externalDefName) {
+						for (let i = 0; i < externalDefName.length; i++) {
+							if (externalDefName[i].updateFromSheet(t.worksheets[sheetName])) {
+								isChanged = true;
+							}
 						}
 					}
 				}
@@ -15274,6 +15297,18 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
+	};
+
+	ExternalReference.prototype.initDefinedName = function (val) {
+		if (!val) {
+			return;
+		}
+
+		let defName = new ExternalDefinedName(this);
+		defName.Name = val.value;
+		var index = this.getSheetByName(val.ws.sName);
+		defName.SheetId = index;
+		this.DefinedNames.push(defName);
 	};
 
 	ExternalReference.prototype.removeSheetById = function (sheetId) {
@@ -15748,10 +15783,12 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
-	function ExternalDefinedName() {
+	function ExternalDefinedName(parent) {
 		this.Name = null;
 		this.RefersTo = null;
 		this.SheetId = null;
+
+		this.parent = parent;
 	}
 
 	ExternalDefinedName.prototype.Read_FromBinary2 = function(r) {
@@ -15788,7 +15825,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	ExternalDefinedName.prototype.clone = function () {
-		var newObj = new ExternalDefinedName();
+		var newObj = new ExternalDefinedName(this);
 
 		newObj.Name = this.Name;
 		newObj.RefersTo = this.RefersTo;
@@ -15796,7 +15833,52 @@ function RangeDataManagerElem(bbox, data)
 
 		return newObj;
 	};
+	ExternalDefinedName.prototype.updateFromSheet = function(sheet) {
+		var isChanged = false;
+		if (sheet) {
+			//sheet.workbook.dependencyFormulas.defNames
+			//check on sheet name and def name
+			let defNames = sheet.workbook && sheet.workbook.dependencyFormulas && sheet.workbook.dependencyFormulas.defNames;
+			if (defNames) {
+				for (let i in defNames.sheet) {
 
+				}
+				for (let i in defNames.wb) {
+
+				}
+			}
+
+
+			/*var t = this;
+
+			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
+			for (var i = 0; i < this.Row.length; i++) {
+				var row = this.Row[i];
+				if (!row) {
+					continue;
+				}
+				for (var j = 0; j < this.Row[i].Cell.length; j++) {
+					var externalCell = this.Row[i].Cell[j];
+					if (!externalCell) {
+						continue;
+					}
+					var range = sheet.getRange2(externalCell.Ref);
+					range._foreach(function (cell) {
+
+						let changedCell = externalCell.initFromCell(cell, true);
+						if (!isChanged) {
+							isChanged = changedCell;
+						}
+
+						var api_sheet = Asc['editor'];
+						var wb = api_sheet.wbModel;
+						wb.dependencyFormulas.addToChangedCell(cell);
+					});
+				}
+			}*/
+		}
+		return isChanged;
+	};
 
 	//CellWatch
 	function CCellWatch(ws) {

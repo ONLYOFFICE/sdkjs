@@ -24866,12 +24866,18 @@
 				let needCalc = false;
 				if (fP) {
 					for (let i = 0; i < fP.outStack.length; i++) {
-						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
+						let type = fP.outStack[i].type;
+						if ((AscCommonExcel.cElementType.cellsRange3D === type || AscCommonExcel.cElementType.cell3D === type ||
+							AscCommonExcel.cElementType.name3D === type) && fP.outStack[i].externalLink) {
 							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
-									eR.initRows(fP.outStack[i].getRange());
+									if (AscCommonExcel.cElementType.name3D === type) {
+										eR.initDefinedName(fP.outStack[i]);
+									} else {
+										eR.initRows(fP.outStack[i].getRange());
+									}
 								}
 							}
 						} else if (initStructure && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
