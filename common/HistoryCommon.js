@@ -1827,13 +1827,14 @@
 	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
-	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2217 << 16;
-	window['AscDFH'].historyitem_Pdf_FreeText				= 2218 << 16;
-	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot				= 2213 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Ink			= 2214 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Line		= 2215 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_FreeText	= 2216 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Text		= 2217 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2218 << 16;
+	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2219 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2220 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4363,27 +4364,34 @@
 	AscDFH.historyitem_Pdf_Annot_Replies			= AscDFH.historyitem_type_Pdf_Annot | 5;
 	AscDFH.historyitem_Pdf_Annot_RD					= AscDFH.historyitem_type_Pdf_Annot | 6;
 	AscDFH.historyitem_Pdf_Annot_Vertices			= AscDFH.historyitem_type_Pdf_Annot | 7;
+	AscDFH.historyitem_Pdf_Annot_Creation_Date		= AscDFH.historyitem_type_Pdf_Annot | 8;
+	AscDFH.historyitem_Pdf_Annot_Mod_Date			= AscDFH.historyitem_type_Pdf_Annot | 9;
+	AscDFH.historyitem_Pdf_Annot_Author				= AscDFH.historyitem_type_Pdf_Annot | 10;
+	AscDFH.historyitem_Pdf_Annot_Display			= AscDFH.historyitem_type_Pdf_Annot | 11;
+	AscDFH.historyitem_Pdf_Annot_Name				= AscDFH.historyitem_type_Pdf_Annot | 12;
+	AscDFH.historyitem_Pdf_Annot_File_Idx			= AscDFH.historyitem_type_Pdf_Annot | 13;
+	AscDFH.historyitem_Pdf_Annot_Document			= AscDFH.historyitem_type_Pdf_Annot | 14;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
 
 	// Ink
-	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Ink | 1;
-	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Ink | 2;
-	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Ink | 3;
+	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Annot_Ink | 1;
+	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Annot_Ink | 2;
+	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Annot_Ink | 3;
 
 	// FreeText
-	AscDFH.historyitem_Pdf_FreeText_CL			= AscDFH.historyitem_Pdf_FreeText | 1;
-	AscDFH.historyitem_Pdf_FreeText_RC			= AscDFH.historyitem_Pdf_FreeText | 2;
+	AscDFH.historyitem_type_Pdf_Annot_FreeText_CL			= AscDFH.historyitem_type_Pdf_Annot_FreeText | 1;
+	AscDFH.historyitem_type_Pdf_Annot_FreeText_RC			= AscDFH.historyitem_type_Pdf_Annot_FreeText | 2;
 
 	// annot line
-	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
+	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Annot_Line | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF drawing prototype
 	//------------------------------------------------------------------------------------------------------------------
 
-	AscDFH.historyitem_Pdf_Drawing_Page	= AscDFH.historyitem_Pdf_Drawing | 1;
+	AscDFH.historyitem_type_Pdf_Drawing_Page	= AscDFH.historyitem_type_Pdf_Drawing | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

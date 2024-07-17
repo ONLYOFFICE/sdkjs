@@ -90,7 +90,7 @@
 
         this._replies = [];
     }
-    CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
+    AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
     
     CAnnotationText.prototype.SetState = function(nType) {
@@ -328,9 +328,6 @@
     };
     CAnnotationText.prototype.IsComment = function() {
         return true;
-    };
-    CAnnotationText.prototype.getObjectType = function() {
-        return -1;
     };
     
     CAnnotationText.prototype.WriteToBinary = function(memory) {

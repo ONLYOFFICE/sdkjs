@@ -2310,29 +2310,18 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oAnnot;
-        AscFormat.ExecuteNoHistory(function () {
-            AscCommon.g_oTableId.TurnOn();
-            oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
-        }, this);
-
-        this.annots.push(oAnnot);
-        oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
-
+        AscCommon.g_oTableId.TurnOn();
+        let oAnnot = AscPDF.CreateAnnotByProps(oProps, this);
+        
+        oAnnot.SetNeedRecalc(true);
         oAnnot.SetDisplay(this.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 
-        if (oPagesInfo.pages[nPageNum].annots == null) {
-            oPagesInfo.pages[nPageNum].annots = [];
-        }
+        this.annots.push(oAnnot);
         oPagesInfo.pages[nPageNum].annots.push(oAnnot);
 
         this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
         
-        if (oProps.apIdx == null)
-            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
-        else
-            oAnnot.SetApIdx(oProps.apIdx);
-
+        oAnnot.SetApIdx(oProps.apIdx == null ? this.GetMaxApIdx() + 2 : oProps.apIdx);
         oAnnot.AddToRedraw();
 
         return oAnnot;

@@ -133,7 +133,7 @@
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
-        this._lineWidth     = undefined;  // In older versions of this specification, this property was borderWidth
+        this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
         this._name          = sName;         // partial field name
         this._page          = nPage;        // integer | array
