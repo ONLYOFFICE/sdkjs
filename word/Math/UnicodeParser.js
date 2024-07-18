@@ -1468,9 +1468,9 @@
 			if (isBinomialWithBrackets)
 			{
 				return {
-					type: oLiteralNames.bracketBlockLiteral[num],
+					type: Struc.bracket_block,
 					value: {
-						type: oLiteralNames.fractionLiteral[num],
+						type: Struc.frac,
 						up: oNumerator || {},
 						down: oOperand || {},
 						fracType: intTypeFraction,
@@ -1553,8 +1553,9 @@
 	{
 		const oAnMathLiteral = this.EatToken(oLiteralNames.anMathLiteral[0]);
 		return {
-			type: oLiteralNames.anMathLiteral[num],
+			type: Struc.char,
 			value: oAnMathLiteral.data,
+			style: oAnMathLiteral.style,
 		};
 	};
 	CUnicodeParser.prototype.IsAnMathLiteral = function ()
@@ -2006,7 +2007,6 @@
 		let arrRows = [];
 		let nRow = 0;
 		let isHasContent = false;
-		let innerStyles = {};
 
         while (this.IsRowLiteral() || this.oLookahead.data === "@")
 		{
@@ -2027,11 +2027,6 @@
 	            rows[nRow] = {}
                 arrRows.push(this.GetRowLiteral(rows[nRow]));
 			}
-		}
-
-		if (innerStyles[0])
-		{
-			oStyles[nRow] = {head: undefined, body: innerStyles};
 		}
 
 		if (arrRows.length === 0)
