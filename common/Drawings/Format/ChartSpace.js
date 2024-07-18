@@ -11693,11 +11693,15 @@ function(window, undefined) {
 
 	CLabelsParameters.prototype.calculateRotation = function (oLabelsBox, fAxisLength) {
 
-		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || this.nLabelsCount === 0|| !fAxisLength || this.isUserDefinedRot) {
+		if (!oLabelsBox || !Array.isArray(oLabelsBox.aLabels) || this.nLabelsCount === 0|| !fAxisLength) {
 			this.rot = 0;
 			return;
 		}
 
+		if (this.isUserDefinedRot) {
+			return;
+		}
+		
 		const updatedLabelsCount = Math.ceil(this.nLabelsCount / this.nLblTickSkip);
 
 		// Check if horizontal labels can fit into axis width
