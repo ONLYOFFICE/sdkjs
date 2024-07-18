@@ -2581,11 +2581,11 @@ CChartsDrawer.prototype =
 			diffMaxMin = (yMax - yMin) / yMax;
 			if (isMaxSet === null && cDiff > diffMaxMin) {
 				if (isScatter) {
-					axisMin = isStackedType ? yMin : yMin - 0.075 * (yMax - yMin);
-					axisMax = isStackedType ? yMax : yMax + 0.075 * (yMax - yMin);
+					axisMin = isStackedType ? yMin : yMin - 0.05 * (yMax - yMin);
+					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
 				} else {
 					axisMin = yMin - ((yMax - yMin) / 2);
-					axisMax = isStackedType ? yMax : yMax + 0.075 * (yMax - yMin);
+					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
 				}
 			} else {
 				axisMin = 0;
