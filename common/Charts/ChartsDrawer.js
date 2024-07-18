@@ -986,8 +986,17 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
-				if ((axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) && !axId[i].bDelete) {
-					tickLblPos =  axId[i].tickLblPos;
+				if (!axId[i].bDelete) {
+					if (axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) {
+						tickLblPos =  axId[i].tickLblPos;
+					}
+					if (axId[i].axPos === AscFormat.AX_POS_R ) {
+						if (tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW) {
+							tickLblPos = AscFormat.TICK_LABEL_POSITION_HIGH;
+						} else if (tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH) {
+							tickLblPos = AscFormat.TICK_LABEL_POSITION_NEXT_TO;
+						}
+					}
 				}
 			}
 		}
