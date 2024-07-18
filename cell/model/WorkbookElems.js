@@ -18968,31 +18968,47 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	function CAttrEntry() {
-		this.data = null;
+		this.val = null;
 		this.endRow = 0;
 	}
-	CAttrEntry.prototype.set = function(data, endRow) {
-		this.data = data;
+	CAttrEntry.prototype.set = function(val, endRow) {
+		this.val = val;
 		this.endRow = endRow;
 	}
+	CAttrEntry.prototype.clone = function() {
+		let res = new CAttrEntry();
+		res.set(this.val, this.endRow);
+		return res;
+	}
 	CAttrEntry.prototype.isEqual = function(entry) {
-		return this.data === entry.data && this.endRow === entry.endRow;
+		return this.endRow === entry.endRow && this.isEqualVal(entry.val);
+	}
+	CAttrEntry.prototype.isEqualVal = function(val) {
+		return this.val === val;
+	}
+	CAttrEntry.prototype.isDefault = function() {
+		return null === this.val;
 	}
 	function CAttrArray(def) {
+		/**@type {CAttrEntry[]} */
 		this.data = null;
 		let elem = new CAttrEntry();
 		elem.set(def, AscCommon.gc_nMaxRow0);
 		this.reset(elem);
 	}
+
+	CAttrArray.prototype.size = function() {
+		return this.data ? this.data.length : 0;
+	}
 	CAttrArray.prototype.set = function(index, entry, opt_append) {
 		this.setArea(index, index, entry, opt_append);
 	}
-	CAttrArray.prototype.setArea = function(from, to, data, opt_append) {
+	CAttrArray.prototype.setArea = function(from, to, val, opt_append) {
 		if (from < 0 || to > AscCommon.gc_nMaxRow0) {
 			return;
 		}
 		if (from === 0 && to === AscCommon.gc_nMaxRow0) {
-			this.reset(data);
+			this.reset(val);
 			return;
 		}
 
@@ -19012,7 +19028,7 @@ function RangeDataManagerElem(bbox, data)
 		let split = false;
 		if (from > 0) {
 			//todo comparison and copy
-			if (fromElem.data !== data) {
+			if (fromElem.isEqualVal(val)) {
 				if (!preFromElem || preFromElem.endRow < from - 1) {
 					if (fromElem.endRow > to) {
 						split = true;
@@ -19025,7 +19041,7 @@ function RangeDataManagerElem(bbox, data)
 					insertIndex = -1;
 				}
 			}
-			if (preFromElem && preFromElem.data === data) {
+			if (preFromElem && preFromElem.isEqualVal(val)) {
 				// combine
 				preFromElem.endRow = to;
 				insertIndex = -1;
@@ -19046,10 +19062,10 @@ function RangeDataManagerElem(bbox, data)
 			// }
 
 			let toElem = toIndex < this.data.length ? this.data[toIndex] : null;
-			if (toElem && toElem.data === data) {
+			if (toElem && toElem.isEqualVal(val)) {
 				// combine
 				if (preFromElem) {
-					if (preFromElem.data === data) {
+					if (preFromElem.isEqualVal(val)) {
 						preFromElem.endRow = this.data[toIndex].endRow;
 					} else if(fromIndex === insertIndex){
 						// shrink
@@ -19065,8 +19081,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 		if (fromIndex < toIndex) {
 			if (!combine) {
-				fromElem.endRow = to;
-				fromElem.data = data;
+				fromElem.set(val, to);
 				fromIndex++;
 				insertIndex = -1;
 			}
@@ -19082,8 +19097,7 @@ function RangeDataManagerElem(bbox, data)
 					this.data.splice(insertIndex, 0, newElem);
 				} else {
 					//todo copy
-					let newElemSplit = new CAttrEntry()
-					newElemSplit.set(preFromElem.data, preFromElem.endRow);
+					let newElemSplit = preFromElem.clone();
 					this.data.splice(insertIndex, 0, newElem, newElemSplit);
 				}
 				if (preFromElem) {
@@ -19094,6 +19108,9 @@ function RangeDataManagerElem(bbox, data)
 	}
 	CAttrArray.prototype.get = function(row, opt_startIndex) {
 		return this.search(row, opt_startIndex);
+	}
+	CAttrArray.prototype.getEntry = function(index) {
+		return this.data[index];
 	}
 	CAttrArray.prototype.reset = function(entry) {
 		this.data = [entry];
@@ -19119,11 +19136,99 @@ function RangeDataManagerElem(bbox, data)
 	CAttrArray.prototype.search = function(row, opt_startIndex) {
 		let index = this.searchIndex(row, opt_startIndex);
 		if (index >= 0) {
-			return this.data[index].data;
+			return this.data[index].val;
 		}
 		return null;
 	}
+	CAttrArray.prototype.getMinIndex = function() {
+		let res = 0;
+		let first = this.data[0];
+		if (null === first.val) {
+			res = Math.min(first.endRow + 1, AscCommon.gc_nMaxRow0);
+		}
+		return  res;
+	}
+	CAttrArray.prototype.getMaxIndex = function() {
+		let res = 0;
+		let last = this.data[this.data.length - 1];
+		if (null === last.val && this.data.length > 1) {
+			res = this.data[this.data.length - 2].endRow;
+		}
+		return  res;
+	}
 
+	/**
+	 * @param {CAttrArray} attrArray
+	 * @param {number} from
+	 * @param {number} to
+	 * @constructor
+	 */
+	function CAttrArrayIteratorNoEmpty(attrArray, from, to) {
+		/**@type {CAttrArray} */
+		this.attrArray = attrArray;
+		this.nextRow = from;
+		this.to = to;
+		this.lastIndex = this.attrArray.size() - 1;
+
+		//output
+		this.curIndex = 0;
+		this.curFrom = null;
+		this.curTo = null;
+		this.curVal = null;
+
+		if (this.nextRow > 0 && this.attrArray.size() > 0) {
+			this.curIndex = this.attrArray.searchIndex(this.nextRow);
+			//skip empty
+			while (this.curIndex < this.attrArray.size()) {
+				let elem = this.attrArray.getEntry(this.curIndex);
+				if (!elem.isDefault()) {
+					break;
+				}
+				this.nextRow = elem.endRow + 1;
+				this.curIndex++;
+			}
+		}
+		if (this.to > 0 && this.curIndex < this.lastIndex) {
+			this.lastIndex = this.attrArray.searchIndex(this.to, this.curIndex);
+			//skip empty
+			while (this.curIndex < this.lastIndex) {
+				let elem = this.attrArray.getEntry(this.lastIndex);
+				if (!elem.isDefault()) {
+					break;
+				}
+				this.lastIndex--;
+			}
+		}
+	}
+	CAttrArrayIteratorNoEmpty.prototype.next = function () {
+		if (this.curIndex <= this.lastIndex && this.nextRow <= this.to) {
+			let entry = this.attrArray.getEntry(this.curIndex);
+			this.curFrom = this.nextRow;
+			this.curTo = Math.min(entry.endRow, this.to);
+			this.curVal = entry.val;
+			this.nextRow = this.curTo + 1;
+			this.curIndex++;
+			return true;
+		}
+		return false;
+	}
+	CAttrArrayIteratorNoEmpty.prototype.isEmpty = function () {
+		return !(this.curIndex < this.attrArray.size() && this.curIndex <= this.lastIndex && this.nextRow <= this.to);
+	}
+	CAttrArrayIteratorNoEmpty.prototype.getMinIndex = function () {
+		let res = 0;
+		if (this.curIndex > 0) {
+			res = this.attrArray.getEntry(this.curIndex - 1).endRow + 1;
+		}
+		return res;
+	}
+	CAttrArrayIteratorNoEmpty.prototype.getMaxIndex = function () {
+		let res = 0;
+		if (this.lastIndex < this.attrArray.size()) {
+			res = this.attrArray.getEntry(this.his.lastIndex).endRow;
+		}
+		return res;
+	}
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -19699,6 +19804,7 @@ function RangeDataManagerElem(bbox, data)
 
 
 	window["AscCommonExcel"].CAttrArray = CAttrArray;
+	window["AscCommonExcel"].CAttrArrayIteratorNoEmpty = CAttrArrayIteratorNoEmpty;
 
 
 })(window);

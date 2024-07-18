@@ -8272,9 +8272,9 @@
 	Worksheet.prototype.getRange4=function(r, c){
 		return new Range(this, r, c, r, c);
 	};
-	Worksheet.prototype.getRowIterator=function(r1, c1, c2, callback){
+	Worksheet.prototype.getRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new RowIterator();
-		it.init(this, r1, c1, c2);
+		it.init(this, r1, c1, r2, c2);
 		callback(it);
 		it.release();
 	};
@@ -14126,7 +14126,7 @@
 		this.clear();
 		this.nRow = row;
 		this.nCol = col;
-		var sheetMemory = opt_sheetMemory ? opt_sheetMemory : this.ws.getColDataNoEmpty(this.nCol);
+		var sheetMemory = undefined !== opt_sheetMemory ? opt_sheetMemory : this.ws.getColDataNoEmpty(this.nCol);
 		if (sheetMemory) {
 			if (sheetMemory.hasIndex(this.nRow)) {
 				var flags = sheetMemory.getUint8(this.nRow, g_nCellOffsetFlag);
@@ -17357,7 +17357,7 @@
 		if (actionCell || actionRow) {
 			var itRow = new RowIterator();
 			if (actionCell) {
-				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.c2);
+				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2);
 			}
 			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
 			var excludedCount = 0;
@@ -21349,67 +21349,75 @@
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
 	};
 
-	function SweepLineRowIterator() {
-		this.cellsByCol = null;
-		this.row = -1;
-		this.col = -1;
-		this.colData = null;
-
-		this.colDatas = [];
-		this.colDatasCol = [];
-		this.colDatasIndex = 0;
-		this.colDatasLen = 0;
-
-		this.toInsert = [];
-		this.toInsertIndex = 0;
-		this.toDelete = [];
-		this.toDeleteIndex = 0;
-
-		this.r1 = [];
-		this.r1Index = 0;
-		this.r2 = [];
-		this.r2Index = 0;
-	}
-
-	SweepLineRowIterator.prototype.init = function (cellsByCol, r1, c1, c2) {
+	function SweepLineRowIterator(cellsByCol, xfsByCol, r1, c1, r2, c2) {
 		this.cellsByCol = cellsByCol;
+		this.xfsByCol = xfsByCol;
 		this.row = r1 - 1;
 		this.col = -1;
-		this.colData = null;
+		this.sheetMemory = undefined;
+		this.xf = undefined;
 
-		this.colDatas = [];
-		this.colDatasCol = [];
-		this.colDatasIndex = 0;
-		this.colDatasLen = 0;
+		this.rowData = [];
+		this.rowDataIndex = 0;
+		this.rowDataLen = 0;
 
 		this.toInsert = [];
 		this.toInsertIndex = 0;
 		this.toDelete = [];
 		this.toDeleteIndex = 0;
-		this.r1 = [];
-		this.r1Index = 0;
-		this.r2 = [];
-		this.r2Index = 0;
+		//events
+		this.events = [];
+		this.eventsIndex = 0;
 
-		c2 = Math.min(c2, this.cellsByCol.length - 1);
-		for (let i = c1; i <= c2; i++) {
-			let colData = this.cellsByCol[i];
-			if (colData && r1 <= colData.getMaxIndex()) {
-				//minIndex is max of
-				let elem = {col: i, minIndex: Math.max(r1, colData.getMinIndex()), maxIndex: colData.getMaxIndex(), isInserted: false}
-				this.r1.push(elem);
-				this.r2.push(elem);
+		if (!this.cellsByCol && !this.xfsByCol) {
+			return;
+		}
+		let c2Data = this.cellsByCol ? this.cellsByCol.length - 1 : c2;
+		let c2Xf = this.xfsByCol ? this.xfsByCol.length - 1 : c2;
+		let c2NoEmpty = Math.min(c2, Math.max(c2Data, c2Xf));
+		for (let i = c1; i <= c2NoEmpty; i++) {
+			let sheetMemory = this.cellsByCol[i];
+			let colXf = this.xfsByCol[i];
+			let colXfIter = colXf && new AscCommonExcel.CAttrArrayIteratorNoEmpty(colXf, r1, r2);
+			let data = {col: i, sheetMemory: undefined, xf: undefined};
+			let elemAddData, elemRemoveData, elemAddXf, elemRemoveXf;
+			if (sheetMemory && r1 <= sheetMemory.getMaxIndex()) {
+				elemAddData = {col: i, index: Math.max(r1, sheetMemory.getMinIndex()), type: "addData", mod: sheetMemory, data: data};
+				this.events.push(elemAddData);
+				elemRemoveData = {col: i, index: sheetMemory.getMaxIndex() + 1, type: "removeData", data: data};
+				this.events.push(elemRemoveData);
+			}
+			if (colXfIter && !colXfIter.isEmpty()) {
+				if (colXfIter.next()) {
+					let xf = g_StyleCache.getXf(colXfIter.curVal);
+					elemAddXf = {col: i, index: Math.max(r1, colXfIter.curFrom), type: "addXf", mod: xf, data: data};
+					this.events.push(elemAddXf);
+					while (colXfIter.next()) {
+						this.events.push({col: i, index: colXfIter.curFrom, type: "addXfMod", mod: xf, data: data});
+					}
+					elemRemoveXf = {col: i, index: colXfIter.curTo + 1, type: "removeXf", data: data};
+					this.events.push(elemRemoveXf);
+				}
+			}
+			if (elemAddData && elemRemoveData && elemAddXf && elemRemoveXf) {
+				if (elemAddData.index > elemAddXf.index) {
+					elemAddData.type = "addDataMod";
+				} else {
+					elemAddXf.type = "addXfMod";
+				}
+				if (elemRemoveData.index > elemRemoveXf.index) {
+					elemRemoveData.type = "removeDataMod";
+				} else {
+					elemRemoveXf.type = "removeXfMod";
+				}
 			}
 		}
 		//Array.sort is stable in all browsers
 		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility
-		this.r1.sort(function (a, b) {
-			return a.minIndex - b.minIndex
+		this.events.sort(function (a, b) {
+			return a.index - b.index;
 		});
-		this.r2.sort(function (a, b) {
-			return a.maxIndex - b.maxIndex
-		});
-	};
+	}
 	SweepLineRowIterator.prototype.setRow = function (row) {
 		while (this.row < row) {
 			//structure of r1 and r2 forces rows to be changed with fixed step
@@ -21423,66 +21431,92 @@
 	SweepLineRowIterator.prototype.nextRow = function () {
 		this.row++;
 		this.col = -1;
-		this.colData = null;
-		this.colDatasIndex = 0;
-		while (this.r1Index < this.r1.length && this.row >= this.r1[this.r1Index].minIndex) {
-			let elem = this.r1[this.r1Index];
-			if (this.row <= elem.maxIndex) {
-				elem.isInserted = true;
-				this.toInsert.push(elem.col);
+		this.sheetMemory = undefined;
+		this.rowDataIndex = 0;
+		while (this.eventsIndex < this.events.length && this.row >= this.events[this.eventsIndex].index) {
+			let elem = this.events[this.eventsIndex];
+			switch (elem.type) {
+				case "addData":
+					elem.data.sheetMemory = elem.mod;
+					this.toInsert.push(elem.data);
+					break;
+				case "addDataMod":
+					elem.data.sheetMemory = elem.mod;
+					break;
+				case "removeData":
+					elem.data.sheetMemory = undefined;
+					this.toDelete.push(elem.data.col);
+					break;
+				case "removeDataMod":
+					elem.data.sheetMemory = undefined;
+					break;
+				case "addXf":
+					elem.data.xf = elem.mod;
+					this.toInsert.push(elem.data);
+					break;
+				case "addXfMod":
+					elem.data.xf = elem.mod;
+					break;
+				case "removeXf":
+					elem.data.xf = undefined;
+					this.toDelete.push(elem.data.col);
+					break;
+				case "removeXfMod":
+					elem.data.xf = undefined;
+					break;
 			}
-			this.r1Index++;
-		}
-		while (this.r2Index < this.r2.length && this.row > this.r2[this.r2Index].maxIndex) {
-			let elem = this.r2[this.r2Index];
-			if (elem.isInserted) {
-				this.toDelete.push(elem.col);
-			}
-			this.r2Index++;
+			this.eventsIndex++;
 		}
 	}
 	SweepLineRowIterator.prototype.nextCol = function () {
 		this.col = -1;
-		this.colData = null;
-		if (this.colDatasIndex < this.colDatasLen) {
-			this.col = this.colDatasCol[this.colDatasIndex];
-			this.colData = this.colDatas[this.colDatasIndex];
-			this.colDatasIndex++;
+		this.sheetMemory = undefined;
+		if (this.rowDataIndex < this.rowDataLen) {
+			let elem = this.rowData[this.rowDataIndex];
+			this.col = elem.col;
+			this.sheetMemory = elem.sheetMemory;
+			this.xf = elem.xf;
+			this.rowDataIndex++;
 			//delete
 			let toDeleteOld = this.toDeleteIndex;
 			while (this.toDeleteIndex < this.toDelete.length && this.toDelete[this.toDeleteIndex] === this.col) {
 				this.toDeleteIndex++;
-				if (this.colDatasIndex < this.colDatasLen) {
-					this.col = this.colDatasCol[this.colDatasIndex];
-					this.colData = this.colDatas[this.colDatasIndex];
-					this.colDatasIndex++;
+				if (this.rowDataIndex < this.rowDataLen) {
+					let elem = this.rowData[this.rowDataIndex];
+					this.col = elem.col;
+					this.sheetMemory = elem.sheetMemory;
+					this.xf = elem.xf;
+					this.rowDataIndex++;
 				} else {
 					this.col = -1;
-					this.colData = undefined;
+					this.sheetMemory = undefined;
+					this.xf = undefined;
 				}
 			}
 			if (toDeleteOld !== this.toDeleteIndex) {
 				let deleteCount = this.toDeleteIndex - toDeleteOld;
-				this.colDatasIndex -= -1 === this.col ? deleteCount : deleteCount + 1;
-				for (let i = this.colDatasIndex + deleteCount; i < this.colDatasLen; ++i) {
-					this.colDatas[i - deleteCount] = this.colDatas[i];
-					this.colDatasCol[i - deleteCount] = this.colDatasCol[i];
+				this.rowDataIndex -= -1 === this.col ? deleteCount : deleteCount + 1;
+				for (let i = this.rowDataIndex + deleteCount; i < this.rowDataLen; ++i) {
+					this.rowData[i - deleteCount] = this.rowData[i];
 				}
-				this.colDatasLen -= deleteCount;
-				if (this.colDatasIndex < this.colDatasLen) {
-					this.col = this.colDatasCol[this.colDatasIndex];
-					this.colData = this.colDatas[this.colDatasIndex];
-					this.colDatasIndex++;
+				this.rowDataLen -= deleteCount;
+				if (this.rowDataIndex < this.rowDataLen) {
+					let elem = this.rowData[this.rowDataIndex];
+					this.col = elem.col;
+					this.sheetMemory = elem.sheetMemory;
+					this.xf = elem.xf;
+					this.rowDataIndex++;
 				} else {
 					this.col = -1;
-					this.colData = undefined;
+					this.sheetMemory = undefined;
+					this.xf = undefined;
 				}
 			}
 		}
 		//insert
 		let toInsertOld = this.toInsertIndex;
 		if (-1 !== this.col) {
-			while (this.toInsertIndex < this.toInsert.length && this.toInsert[this.toInsertIndex] < this.col) {
+			while (this.toInsertIndex < this.toInsert.length && this.toInsert[this.toInsertIndex].col < this.col) {
 				this.toInsertIndex++;
 			}
 		} else {
@@ -21490,31 +21524,29 @@
 		}
 		if (toInsertOld !== this.toInsertIndex) {
 			if (-1 !== this.col) {
-				this.colDatasIndex--;
+				this.rowDataIndex--;
 			}
 			let insertCount = this.toInsertIndex - toInsertOld;
-			if (this.colDatas.length < this.colDatasLen + insertCount) {
-				this.colDatas.length = this.colDatasLen + insertCount
-				this.colDatasCol.length = this.colDatasLen + insertCount
+			if (this.rowData.length < this.rowDataLen + insertCount) {
+				this.rowData.length = this.rowDataLen + insertCount;
 			}
-			for (let i = this.colDatasLen - 1; i >= this.colDatasIndex; --i) {
-				this.colDatas[i + insertCount] = this.colDatas[i];
-				this.colDatasCol[i + insertCount] = this.colDatasCol[i];
+			for (let i = this.rowDataLen - 1; i >= this.rowDataIndex; --i) {
+				this.rowData[i + insertCount] = this.rowData[i];
 			}
-			this.colDatasLen += insertCount;
+			this.rowDataLen += insertCount;
 			for (let i = 0; i < insertCount; ++i) {
-				let curCol = this.toInsert[toInsertOld + i];
-				let colData = this.cellsByCol[curCol];
-				this.colDatasCol[this.colDatasIndex + i] = curCol;
-				this.colDatas[this.colDatasIndex + i] = colData;
+				this.rowData[this.rowDataIndex + i] = this.toInsert[toInsertOld + i];
 			}
-			if (this.colDatasIndex < this.colDatasLen) {
-				this.col = this.colDatasCol[this.colDatasIndex];
-				this.colData = this.colDatas[this.colDatasIndex];
-				this.colDatasIndex++;
+			if (this.rowDataIndex < this.rowDataLen) {
+				let elem = this.rowData[this.rowDataIndex];
+				this.col = elem.col;
+				this.sheetMemory = elem.sheetMemory;
+				this.xf = elem.xf;
+				this.rowDataIndex++;
 			} else {
 				this.col = -1;
-				this.colData = undefined;
+				this.sheetMemory = undefined;
+				this.xf = undefined;
 			}
 		}
 		return -1 !== this.col;
@@ -21523,13 +21555,12 @@
 	function RowIterator() {
 	}
 
-	RowIterator.prototype.init = function (ws, r1, c1, c2) {
+	RowIterator.prototype.init = function (ws, r1, c1, r2, c2) {
 		this.ws = ws;
 		this.cell = new Cell(ws);
 		this.ws.workbook.loadCells.push(this.cell);
 
-		this.iter = new SweepLineRowIterator();
-		this.iter.init(ws.cellsByCol, r1, c1, c2);
+		this.iter = new SweepLineRowIterator(ws.cellsByCol, ws.cellsXfByCol, r1, c1, r2, c2);
 	};
 	RowIterator.prototype.release = function () {
 		this.cell.saveContent(true);
@@ -21544,7 +21575,8 @@
 		while (this.iter.nextCol()) {
 			var nRow = this.iter.row;
 			var nCol = this.iter.col;
-			var colData = this.iter.colData;
+			var sheetMemory = this.iter.sheetMemory;
+			var xf = this.iter.xf;
 			var targetCell = null;
 			for (var k = 0; k < wb.loadCells.length - 1; ++k) {
 				var elem = wb.loadCells[k];
@@ -21554,7 +21586,7 @@
 				}
 			}
 			if (null === targetCell) {
-				if (this.cell.loadContent(nRow, nCol, colData)) {
+				if (this.cell.loadContent(nRow, nCol, sheetMemory, xf)) {
 					return this.cell;
 				}
 			} else {

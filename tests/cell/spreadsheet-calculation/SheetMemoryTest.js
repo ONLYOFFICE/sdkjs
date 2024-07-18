@@ -439,7 +439,7 @@ $(function () {
 			// let rowsTest = offset + 2 + stepRow;
 			// let colsTest = 2;
 			// let dataTest = [0,2,3,4,0,0,0,0];
-			// testCellsByCol(dataTest, rowsTest + 1, colsTest, offset, stepRow, assert);
+			// testCellsByCol(dataTest, rowsTest, colsTest, offset, stepRow, assert);
 
 			let rows = offset + 3 + stepRow;//stepRow rows are needed to properly clean
 			let cols = 3;
@@ -467,20 +467,19 @@ $(function () {
 		let testData = getTestDataFromArray(data, rows, cols, offset, stepRow);
 		let r1 = offset;
 
-		let sweepLine = new AscCommonExcel.SweepLineRowIterator();
-		sweepLine.init(testData.cellsByCol, r1, 0, cols);
+		let sweepLine = new AscCommonExcel.SweepLineRowIterator(testData.cellsByCol, [], r1, 0, rows, cols);
 		for (let i = r1; i < rows; i += stepRow) {
 			sweepLine.setRow(i);
 			while (sweepLine.nextCol()) {
-				res += `${i}-${sweepLine.col}-${sweepLine.colData.getUint8(i, 0)};`;
+				res += `${i}-${sweepLine.col}-${sweepLine.sheetMemory.getUint8(i, 0)};`;
 			}
 		}
 		//many asserts processes very slow
 		if (res !== testData.expected) {
 			assert.strictEqual(res, testData.expected, JSON.stringify(data));
 		}
-		if (sweepLine.colDatasLen !== sweepLine.colDatasIndex) {
-			assert.strictEqual(sweepLine.colDatas.length, sweepLine.colDatasIndex, "colDatas");
+		if (sweepLine.rowDataLen !== sweepLine.rowDataIndex) {
+			assert.strictEqual(sweepLine.rowDataLen, sweepLine.rowDataIndex, "rowData");
 		}
 		if (sweepLine.toInsert.length !== sweepLine.toInsertIndex) {
 			assert.strictEqual(sweepLine.toInsert.length, sweepLine.toInsertIndex, "toInsert");
@@ -488,11 +487,8 @@ $(function () {
 		if (sweepLine.toDelete.length !== sweepLine.toDeleteIndex) {
 			assert.strictEqual(sweepLine.toDelete.length, sweepLine.toDeleteIndex, "toDelete");
 		}
-		if (sweepLine.r1.length !== sweepLine.r1Index) {
-			assert.strictEqual(sweepLine.r1.length, sweepLine.r1Index, "r1");
-		}
-		if (sweepLine.r2.length !== sweepLine.r2Index) {
-			assert.strictEqual(sweepLine.r2.length, sweepLine.r2Index, "r2");
+		if (sweepLine.events.length !== sweepLine.eventsIndex) {
+			assert.strictEqual(sweepLine.events.length, sweepLine.eventsIndex, "events");
 		}
 	}
 

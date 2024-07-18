@@ -9596,7 +9596,7 @@
 		    range = this.arrRecalcRangesWithHeight[i];
 			this.canChangeColWidth = this.arrRecalcRangesCanChangeColWidth[i];
 
-			this.model.getRowIterator(range.r1, 0, gc_nMaxCol0, function(itRow) {
+			this.model.getRowIterator(range.r1, 0, gc_nMaxRow0, gc_nMaxCol0, function(itRow) {
 				for (var r = range.r1; r <= range.r2 && r < t.rows.length; duplicate[r++] = 1) {
 					if (duplicate[r]) {
 						continue;
