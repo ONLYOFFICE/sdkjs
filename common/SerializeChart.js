@@ -14708,9 +14708,9 @@ BinaryChartReader.prototype.ReadAlternateContentFallback = function (type, lengt
 	window['AscFormat'].ERR_VAL_TYPE_STD_DEV    = ERR_VAL_TYPE_STD_DEV;
 	window['AscFormat'].ERR_VAL_TYPE_STD_ERR    = ERR_VAL_TYPE_STD_ERR;
 
-    window['AscFormat'].TICK_LABEL_POSITION_HIGH    = st_ticklblposHIGH;
-	window['AscFormat'].TICK_LABEL_POSITION_LOW    = st_ticklblposLOW;
-	window['AscFormat'].TICK_LABEL_POSITION_NEXT_TO    = st_ticklblposNEXTTO;
-	window['AscFormat'].TICK_LABEL_POSITION_NONE    = st_ticklblposNONE;
+	window['AscFormat'].TICK_LABEL_POSITION_HIGH = st_ticklblposHIGH;
+	window['AscFormat'].TICK_LABEL_POSITION_LOW = st_ticklblposLOW;
+	window['AscFormat'].TICK_LABEL_POSITION_NEXT_TO = st_ticklblposNEXTTO;
+	window['AscFormat'].TICK_LABEL_POSITION_NONE = st_ticklblposNONE;
 
 })(window);

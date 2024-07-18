@@ -11529,8 +11529,10 @@ function(window, undefined) {
 		this.isUserDefinedTickSkip = false;
 		this.isUserDefinedLabelFormat = false;
 		this.isUserDefinedRot = false;
+		// excel calculates one degree as 60000
 		this.degree = 60000;
 		this.maxHeight = null;
+		// excel works in the range of -90 degree to 90 degree -> [-90 * 60000; 60000 * 90]
 		this.range = 60000 * 90;
 		this.nAxisType = nAxisType;
 		this.sDataType = sDataType;
@@ -11701,7 +11703,7 @@ function(window, undefined) {
 		if (this.isUserDefinedRot) {
 			return;
 		}
-		
+
 		const updatedLabelsCount = Math.ceil(this.nLabelsCount / this.nLblTickSkip);
 
 		// Check if horizontal labels can fit into axis width

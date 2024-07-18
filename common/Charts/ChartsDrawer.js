@@ -957,7 +957,8 @@ CChartsDrawer.prototype =
 		//добавляем размеры подписей осей + размеры названия
 		//TODO генерировать extX для всех осей
 		var axId = chartSpace.chart.plotArea.axId;
-		let tickLblPos = AscFormat.TICK_LABEL_POSITION_NONE;
+		let isLeftAxis = false;
+		let isRightAxis = false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -987,15 +988,13 @@ CChartsDrawer.prototype =
 					}
 				}
 				if (!axId[i].bDelete) {
-					if (axId[i].axPos === AscFormat.AX_POS_L || axId[i].axPos === AscFormat.AX_POS_R) {
-						tickLblPos =  axId[i].tickLblPos;
+					if (axId[i].axPos === AscFormat.AX_POS_L) {
+						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
+						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
 					}
 					if (axId[i].axPos === AscFormat.AX_POS_R ) {
-						if (tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW) {
-							tickLblPos = AscFormat.TICK_LABEL_POSITION_HIGH;
-						} else if (tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH) {
-							tickLblPos = AscFormat.TICK_LABEL_POSITION_NEXT_TO;
-						}
+						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
+						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 					}
 				}
 			}
@@ -1094,9 +1093,6 @@ CChartsDrawer.prototype =
 		}
 
 		if((null === pieChart) || is3dChart) {
-			const isLeftAxis = tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
-			const isRightAxis = tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
-
 			left += this._getStandartMargin(isLeftAxis ? 1 : left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
@@ -2334,35 +2330,13 @@ CChartsDrawer.prototype =
 				} else {
 					minUnit = manualMax * 2;
 				}
-			} else if (axisMin < 0){
+			} else {
+				// possible problems if axisMin < 0 should be checked
 				// const statement1 = !isRadarChart && minUnit >= axisMin;
 				// const statement2 = isRadarChart && minUnit > axisMin;
 				minUnit = Math.floor(axisMin / step) * step;
-			} else {
-				minUnit = Math.floor(axisMin / step) * step;
 			}
 		}
-		
-		
-		// else if (manualMin == null && axisMin != null && axisMin != 0 && axisMin > 0 && axisMax > 0)//TODO пересмотреть все значения, где-то могут быть расхождения с EXCEL
-		// {
-		// 	minUnit = parseInt(axisMin / step) * step;
-		// } else {
-		// 	if (axisMin < 0) {
-		// 		const statement1 = !isRadarChart && minUnit >= axisMin;
-		// 		const statement2 = isRadarChart && minUnit > axisMin;
-		// 		if (statement1 || statement2) {
-		// 			minUnit = Math.ceil(axisMin / step) * step;
-		// 		}
-		// 		// while ((!isRadarChart && minUnit >= axisMin) || (isRadarChart && minUnit > axisMin)) {
-		// 		// 	minUnit -= step;
-		// 		// }
-		// 	} else if (axisMin > 0) {
-		// 		while (minUnit < axisMin && minUnit > (axisMin - step)) {
-		// 			minUnit += step;
-		// 		}
-		// 	}
-		// }
 
 		//массив подписей
 		arrayValues = this._getArrayAxisValues(minUnit, axisMin, axisMax, step, manualMin, manualMax);
