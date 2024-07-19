@@ -15317,11 +15317,31 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 
+		const index = this.getSheetByName(val.ws.sName);
+		const name = val.value;
+
+		//check on exist
+		if (this.getDefName(name, index)) {
+			return;
+		}
+
 		let defName = new ExternalDefinedName(this);
-		defName.Name = val.value;
-		var index = this.getSheetByName(val.ws.sName);
+		defName.Name = name;
 		defName.SheetId = index;
+		this.addDefName(defName);
+	};
+
+	ExternalReference.prototype.addDefName = function (defName) {
 		this.DefinedNames.push(defName);
+	};
+
+	ExternalReference.prototype.getDefName = function (name, sheetId) {
+		for (let i in this.DefinedNames) {
+			if (this.DefinedNames[i] && this.DefinedNames[i].SheetId === sheetId && this.DefinedNames[i].Name === name) {
+				return this.DefinedNames[i];
+			}
+		}
+		return null;
 	};
 
 	ExternalReference.prototype.removeSheetById = function (sheetId) {
