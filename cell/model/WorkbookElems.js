@@ -15019,14 +15019,22 @@ function RangeDataManagerElem(bbox, data)
 				//меняем лист
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
+
+						let defNames = wsTo.workbook && wsTo.workbook.dependencyFormulas && wsTo.workbook.dependencyFormulas.defNames;
+						wsTo.workbook.dependencyFormulas._foreachDefName(function (defName) {
+							var api_sheet = Asc['editor'];
+							var wb = api_sheet.wbModel;
+							let realWb = defName.wb;
+							defName.wb = wb;
+							defName.onFormulaEvent(AscCommon.c_oNotifyParentType.Change);
+							defName.wb = realWb;
+						})
+
 						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
 						oAllRange.cleanAll();
 						wsTo.copyFrom(arr[i], wsTo.sName);
 
-						let defNames = wsTo.workbook && wsTo.workbook.dependencyFormulas && wsTo.workbook.dependencyFormulas.defNames;
-						wsTo.workbook.dependencyFormulas._foreachDefName(function (defName) {
-							defName.onFormulaEvent(AscCommon.c_oNotifyParentType.Change);
-						})
+
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
