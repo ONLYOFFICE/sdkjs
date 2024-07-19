@@ -4479,7 +4479,92 @@ $(function () {
 			['0.25'], ['0.20833333333333337'], ['0.16666666666666674'], ['0.125'], ['0.08333333333333337'], ['0.04166666666666674'], ['0']];
 
 		getAutofillCase([0, 0, 24, 24], [0, 0, 23, 0], 1, 'Time format. Reverse sequence. Vertical. One selected cell', expectedData);
+		// Case #52: Time format. Asc sequence. Vertical. Multiple selected cells.
+		testData = [
+			['12:00:00'],
+			['14:00:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], ['']];
 
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 7], 3, 'Time format. Asc sequence. Vertical. Multiple selected cells', [['0.6666666666666666'], ['0.7499999999999999'], ['0.8333333333333331'], ['0.9166666666666664'], ['0.9999999999999997'], ['1.083333333333333']]);
+		// Case #53: Time format.  Reverse sequence. Vertical. Multiple selected cells.
+		testData = [
+			['23:00:00'],
+			['0:00:00']
+		];
+		range = ws.getRange4(23, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''],
+			[''], [''], [''], [''], ['0.5833333333333334'], ['0.5']];
+		expectedData = [
+			['1.9166666666666667'], ['2.875'], ['3.8333333333333335'], ['4.791666666666667'], ['5.75'],
+			['6.708333333333334'], ['7.666666666666667'], ['8.625'], ['9.583333333333334'], ['10.541666666666668'], ['11.5'],
+			['12.458333333333334'], ['13.416666666666668'], ['14.375'], ['15.333333333333334'], ['16.291666666666668'],
+			['17.25'], ['18.208333333333336'], ['19.166666666666668'], ['20.125'], ['21.083333333333336'], ['22.041666666666668'], ['23']
+		];
+
+		getAutofillCase([0, 0, 23, 24], [0, 0, 22, 0], 1, 'Time format. Reverse sequence. Vertical. Multiple selected cells', expectedData);
+		// Case #54: Time format.  Asc sequence. Horizontal. Multiple selected cells. Start from 1.
+		ws.getRange2('A1').setValue('0:00:00');
+		ws.getRange2('B1').setValue('1:00:00');
+		ws._getCell(0, 0, function (cell) {
+			cell.setValueNumberInternal(1);
+		});
+		ws._getCell(0, 1, function (cell) {
+			cell.setValueNumberInternal(1.04166666666667);
+		});
+		undoData = ['', '', '', ''];
+
+		getAutofillCase([0, 1, 0, 0], [2, 5, 0, 0], 3, 'Time format. Asc sequence. Horizontal. Multiple selected cells. Start from 1.', ['1.0833333333333401', '1.1250000000000102', '1.1666666666666803', '1.2083333333333504']);
+		// Case #55: Time format.  Reverse sequence. Horizontal. Multiple selected cells. Start from 1.
+		ws.getRange2('A1:Z30').cleanAll();
+		ws.getRange2('Y1').setValue('23:00:00');
+		ws.getRange2('Z1').setValue('00:00:00');
+		ws._getCell(0, 24, function (cell) {
+			cell.setValueNumberInternal(0.958333333333333);
+		});
+		ws._getCell(0, 25, function (cell) {
+			cell.setValueNumberInternal(1);
+		});
+		undoData = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+		expectedData = ['0.9166666666666661', '0.8749999999999991', '0.8333333333333321', '0.7916666666666652', '0.7499999999999982', '0.7083333333333313', '0.6666666666666643',
+			'0.6249999999999973', '0.5833333333333304', '0.5416666666666634', '0.49999999999999645', '0.4583333333333295', '0.4166666666666625', '0.37499999999999556', '0.3333333333333286',
+			'0.29166666666666163', '0.24999999999999467', '0.2083333333333277', '0.16666666666666075', '0.12499999999999378', '0.08333333333332682', '0.04166666666665986', '1', '0.958333333333333'];
+
+		getAutofillCase([24, 25, 0, 0], [23, 0, 0, 0], 1, 'Time format. Reverse sequence. Horizontal. Multiple selected cells. Start from 1.', expectedData);
+		// Case #56: Time format.  Asc sequence. Vertical. Multiple selected cells. Start from 36872.5.
+		ws.getRange2('A1:Z1').cleanAll();
+		ws.getRange2('A1').setValue('12:00:00');
+		ws.getRange2('A2').setValue('13:00:00');
+		ws._getCell(0, 0, function (cell) {
+			cell.setValueNumberInternal(36872.5);
+		});
+		ws._getCell(1, 0, function (cell) {
+			cell.setValueNumberInternal(36873.5416666667);
+		});
+		undoData = [[''], [''], [''], [''], [''], [''], [''], [''], [''], [''], ['']];
+		expectedData = [['36872.5833333334'], ['36872.6250000001'], ['36872.6666666668'], ['36872.7083333335'], ['36872.750000000204'], ['36872.791666666904'], ['36872.833333333605'],
+			['36872.875000000306'], ['36872.916666667006'], ['36872.95833333371'], ['36873.00000000041']];
+
+		getAutofillCase([0, 0, 0, 1], [0, 0, 2, 12], 3, 'Time format. Asc sequence. Vertical. Multiple selected cells. Start from 36872.5.', expectedData);
+		// Case #57: Time format.  Reverse sequence. Vertical. Multiple selected cells. Start from 36872.5.
+		ws.getRange2('A14').setValue('12:00:00');
+		ws.getRange2('A15').setValue('13:00:00');
+		ws._getCell(13, 0, function (cell) {
+			cell.setValueNumberInternal(36872.5);
+		});
+		ws._getCell(14, 0, function (cell) {
+			cell.setValueNumberInternal(36873.5416666667);
+		});
+		undoData = [[''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], ['36873.5416666667'], ['36872.5']];
+		expectedData = [['36872.4583333333'], ['36872.4166666666'], ['36872.3749999999'], ['36872.3333333332'], ['36872.2916666665'],
+			['36872.249999999796'], ['36872.208333333096'], ['36872.166666666395'], ['36872.124999999694'], ['36872.083333332994'], ['36872.04166666629'],
+			['36871.99999999959'], ['36871.95833333289']];
+
+		getAutofillCase([0, 0, 13, 14], [0, 0, 12, 0], 1, 'Time format. Reverse sequence. Vertical. Multiple selected cells. Start from 36872.5.', expectedData);
+		ws.getRange2('A1:A20').cleanAll();
 	});
 
 	QUnit.module("Sheet structure");
