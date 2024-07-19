@@ -4012,7 +4012,7 @@ $(function () {
 		compareData(assert, range.bbox, expectedRes.reverse(), "Desc check_sort_18");
 
 	});
-	QUnit.test("Autofill - format Date and Date & Time.", function (assert) {
+	QUnit.test("Autofill - format Date, Date & Time and Time.", function (assert) {
 		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
 			const [c1From, c2From, r1From, r2From] = aFrom;
 			const [c1To, c2To, r1To, r2To] = aTo;
@@ -4457,6 +4457,29 @@ $(function () {
 		undoData = ['', '', '2.5', '1'];
 
 		getAutofillCase([4, 5, 0, 0], [3, 0, 0, 0], 1, '1900 year. Reverse sequence. Horizontal. Mixed format', ['0.5', '1', '2.5', '1']);
+		// Case #50: Time format. Asc sequence. Vertical. One selected cell.
+		ws.getRange2('A1:F1').cleanAll();
+		testData = [
+			['12:00:00']
+		];
+		range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], ['']];
+
+		getAutofillCase([0, 0, 0, 0], [0, 0, 1, 4], 3, 'Time format. Asc sequence. Vertical. One selected cell', [['0.5416666666666666'], ['0.5833333333333334'], ['0.625'], ['0.6666666666666666']]);
+		// Case #51: Time format.  Reverse sequence. Vertical. One selected cell.
+		testData = [['0:00:00']]
+		range = ws.getRange4(24, 0);
+		range.fillData(testData);
+		undoData = [[''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''], [''],
+			[''], [''], [''], [''], [''], [''], [''], [''], ['0.5']];
+		let expectedData = [['0.9583333333333334'], ['0.9166666666666666'], ['0.875'], ['0.8333333333333334'], ['0.7916666666666667'],
+			['0.75'], ['0.7083333333333334'], ['0.6666666666666667'], ['0.625'], ['0.5833333333333334'], ['0.5416666666666667'],
+			['0.5'], ['0.45833333333333337'], ['0.41666666666666674'], ['0.375'], ['0.33333333333333337'], ['0.29166666666666674'],
+			['0.25'], ['0.20833333333333337'], ['0.16666666666666674'], ['0.125'], ['0.08333333333333337'], ['0.04166666666666674'], ['0']];
+
+		getAutofillCase([0, 0, 24, 24], [0, 0, 23, 0], 1, 'Time format. Reverse sequence. Vertical. One selected cell', expectedData);
+
 	});
 
 	QUnit.module("Sheet structure");
