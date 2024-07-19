@@ -5400,7 +5400,7 @@
 								//g_DefNameWorksheet use on parse def name ref. here need use external ws.
 								let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
 								AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wb, -1);
-								wb.dependencyFormulas.initOpen()
+								wb.dependencyFormulas.initOpen();
 								AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
 								if (wb.aWorksheets) {
 									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);

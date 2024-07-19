@@ -15022,6 +15022,11 @@ function RangeDataManagerElem(bbox, data)
 						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
 						oAllRange.cleanAll();
 						wsTo.copyFrom(arr[i], wsTo.sName);
+
+						let defNames = wsTo.workbook && wsTo.workbook.dependencyFormulas && wsTo.workbook.dependencyFormulas.defNames;
+						wsTo.workbook.dependencyFormulas._foreachDefName(function (defName) {
+							defName.onFormulaEvent(AscCommon.c_oNotifyParentType.Change);
+						})
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
