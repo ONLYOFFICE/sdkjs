@@ -2605,6 +2605,10 @@
 		this.timelineCaches.forEach(function(elem){
 			elem.initPostOpen(tableIds, sheetIds);
 		});
+		//timelinecache
+		this.externalReferences.forEach(function(elem){
+			elem.initPostOpen();
+		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
 		if (wsActive && wsActive.getHidden()) {

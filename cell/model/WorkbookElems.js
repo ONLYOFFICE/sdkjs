@@ -14986,6 +14986,16 @@ function RangeDataManagerElem(bbox, data)
 		return newObj;
 	};
 
+	ExternalReference.prototype.initPostOpen = function () {
+		let res = null;
+		if (this.DefinedNames && this.DefinedNames.length) {
+			for (let i = 0; i < this.DefinedNames.length; i++) {
+				this.DefinedNames[i].parent = this;
+			}
+		}
+		return res;
+	};
+
 	ExternalReference.prototype.getDefinedNamesBySheetIndex = function (index) {
 		let res = null;
 		if (this.DefinedNames && this.DefinedNames.length) {

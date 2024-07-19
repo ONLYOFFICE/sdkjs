@@ -4076,12 +4076,12 @@
 			var oThis = this;
 			if (null != definedName.Name) {
                 this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameName, function() {
-                    oThis.memory.WriteString2(definedName.Name);
+                    oThis.memory.WriteString3(definedName.Name);
                 });
 			}
 			if (null != definedName.RefersTo) {
                 this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameRefersTo, function() {
-                    oThis.memory.WriteString2(definedName.RefersTo);
+                    oThis.memory.WriteString3(definedName.RefersTo);
                 });
 			}
 			if (null != definedName.SheetId) {
