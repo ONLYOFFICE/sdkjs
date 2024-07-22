@@ -704,11 +704,15 @@ $(function () {
 	};
 
 	let initDefinedName = function (eR, sheetName, range, name) {
+		let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
+		AscCommonExcel.g_DefNameWorksheet = eR.worksheets[sheetName];
+		wb.dependencyFormulas.initOpen();
 		let _obj = {
 			value: name,
 			ws: {sName: sheetName}
 		};
 		eR.initDefinedName(_obj);
+		AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
 	};
 
 	let createExternalWorksheet = function (name) {
@@ -801,7 +805,6 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add area');
 
 		//update external reference structure
-		initDefinedName(wb.externalReferences[0], "Sheet1", "A1:A2", "test");
 		initReference(wb.externalReferences[0], "Sheet1", "A1:A2", [["1000"],["2000"]], true);
 		assert.strictEqual(oParser.calculate().getValue(), 3000, 'EXTERNAL_AREA_1_AFTER_INIT');
 
@@ -827,14 +830,18 @@ $(function () {
 		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 		assert.strictEqual(wb.externalReferences.length, 1, 'SUM_2_external_reference_length_after_add');
 
-		oParser.isParsed = false;
-		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
-		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add area');
-
 		//update external reference structure
-		initDefinedName(wb.externalReferences[0], "test", "A1:A2");
+		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "A1:A2");
+		wb.externalReferences[0].getWb().editDefinesNames(null, oDefName);
+
+		oParser.isParsed = false;
+		oParser.outStack = [];
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add name');
+
+		initDefinedName(wb.externalReferences[0], "Sheet1", "A1:A2", "test");
 		initReference(wb.externalReferences[0], "Sheet1", "A1:A2", [["1000"],["2000"]], true);
-		assert.strictEqual(oParser.calculate().getValue(), 3000, 'EXTERNAL_AREA_1_AFTER_INIT');
+		assert.strictEqual(oParser.calculate().getValue(), 3000, 'EXTERNAL_NAME_1_AFTER_INIT');
 
 		//create new ws and put date
 		externalWs = createExternalWorksheet("Sheet1");
@@ -842,11 +849,11 @@ $(function () {
 		externalWs.getRange2("A2").setValue("4000")
 		//such as update from portal
 		wb.externalReferences[0].updateData([externalWs]);
-		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_AREA_2_AFTER_UPDATE');
+		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_NAME_2_AFTER_UPDATE');
 
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
-		assert.strictEqual(wb.externalReferences.length, 0, 'external_area_length_after_delete');
+		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
 
 	});
 
