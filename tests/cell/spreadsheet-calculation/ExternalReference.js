@@ -703,6 +703,14 @@ $(function () {
 		}
 	};
 
+	let initDefinedName = function (eR, sheetName, range, name) {
+		let _obj = {
+			value: name,
+			ws: {sName: sheetName}
+		};
+		eR.initDefinedName(_obj);
+	};
+
 	let createExternalWorksheet = function (name) {
 		let externalWs = new AscCommonExcel.Worksheet(wb);
 		externalWs.sName = name;
@@ -778,10 +786,10 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_reference_length_after_delete');
 
 		// 2.Area
-		//'[new.xlsx]Sheet1'!A1
+		//'[new.xlsx]Sheet1'!A1:A2
 		parseResult = new AscCommonExcel.ParseResult([]);
 		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)", 'A2', ws);
-		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)");
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
 
 		assert.strictEqual(wb.externalReferences.length, 0, 'SUM_2_external_reference_length_before_add');
@@ -789,10 +797,11 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 1, 'SUM_2_external_reference_length_after_add');
 
 		oParser.isParsed = false;
-		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)");
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)");
 		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add area');
 
 		//update external reference structure
+		initDefinedName(wb.externalReferences[0], "Sheet1", "A1:A2", "test");
 		initReference(wb.externalReferences[0], "Sheet1", "A1:A2", [["1000"],["2000"]], true);
 		assert.strictEqual(oParser.calculate().getValue(), 3000, 'EXTERNAL_AREA_1_AFTER_INIT');
 
@@ -808,7 +817,36 @@ $(function () {
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_area_length_after_delete');
 
-		// 3.Area
+		// 3. Name
+		//'[new.xlsx]Sheet1'!test
+		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)", 'A2', ws);
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
+
+		assert.strictEqual(wb.externalReferences.length, 0, 'SUM_2_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'SUM_2_external_reference_length_after_add');
+
+		oParser.isParsed = false;
+		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'result after add area');
+
+		//update external reference structure
+		initDefinedName(wb.externalReferences[0], "test", "A1:A2");
+		initReference(wb.externalReferences[0], "Sheet1", "A1:A2", [["1000"],["2000"]], true);
+		assert.strictEqual(oParser.calculate().getValue(), 3000, 'EXTERNAL_AREA_1_AFTER_INIT');
+
+		//create new ws and put date
+		externalWs = createExternalWorksheet("Sheet1");
+		externalWs.getRange2("A1").setValue("2000");
+		externalWs.getRange2("A2").setValue("4000")
+		//such as update from portal
+		wb.externalReferences[0].updateData([externalWs]);
+		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_AREA_2_AFTER_UPDATE');
+
+		//remove external reference
+		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
+		assert.strictEqual(wb.externalReferences.length, 0, 'external_area_length_after_delete');
 
 	});
 
