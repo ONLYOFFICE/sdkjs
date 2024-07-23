@@ -831,8 +831,16 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 1, 'SUM_2_external_reference_length_after_add');
 
 		//update external reference structure
+		let externalWb = wb.externalReferences[0].getWb();
+		let exWs = wb.externalReferences[0].worksheets["Sheet1"];
+		externalWb.insertWorksheet(0, exWs);
+		//on parse name3d use g_DefNameWorksheet
+		let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
+		AscCommonExcel.g_DefNameWorksheet = exWs;
 		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "A1:A2");
-		wb.externalReferences[0].getWb().editDefinesNames(null, oDefName);
+		externalWb.editDefinesNames(null, oDefName);
+		AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
+
 
 		oParser.isParsed = false;
 		oParser.outStack = [];
@@ -846,7 +854,7 @@ $(function () {
 		//create new ws and put date
 		externalWs = createExternalWorksheet("Sheet1");
 		externalWs.getRange2("A1").setValue("2000");
-		externalWs.getRange2("A2").setValue("4000")
+		externalWs.getRange2("A2").setValue("4000");
 		//such as update from portal
 		wb.externalReferences[0].updateData([externalWs]);
 		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_NAME_2_AFTER_UPDATE');
