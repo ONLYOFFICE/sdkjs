@@ -15046,8 +15046,6 @@ function RangeDataManagerElem(bbox, data)
 						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
 						oAllRange.cleanAll();
 						wsTo.copyFrom(arr[i], wsTo.sName);
-
-
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -15933,34 +15931,6 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 			}
-
-			/*var t = this;
-
-			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
-			for (var i = 0; i < this.Row.length; i++) {
-				var row = this.Row[i];
-				if (!row) {
-					continue;
-				}
-				for (var j = 0; j < this.Row[i].Cell.length; j++) {
-					var externalCell = this.Row[i].Cell[j];
-					if (!externalCell) {
-						continue;
-					}
-					var range = sheet.getRange2(externalCell.Ref);
-					range._foreach(function (cell) {
-
-						let changedCell = externalCell.initFromCell(cell, true);
-						if (!isChanged) {
-							isChanged = changedCell;
-						}
-
-						var api_sheet = Asc['editor'];
-						var wb = api_sheet.wbModel;
-						wb.dependencyFormulas.addToChangedCell(cell);
-					});
-				}
-			}*/
 		}
 		return isChanged;
 	};

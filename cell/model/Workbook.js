@@ -2605,7 +2605,7 @@
 		this.timelineCaches.forEach(function(elem){
 			elem.initPostOpen(tableIds, sheetIds);
 		});
-		//timelinecache
+		//external references
 		this.externalReferences.forEach(function(elem){
 			elem.initPostOpen();
 		});
