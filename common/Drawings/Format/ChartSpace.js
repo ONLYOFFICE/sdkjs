@@ -722,7 +722,7 @@ function(window, undefined) {
 		let fContentWidth = fForceContentWidth || (oLabelParams && oLabelParams.valid) ? fForceContentWidth : Math.abs(fInterval);
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
-
+		console.log(fContentWidth);
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
@@ -1446,7 +1446,6 @@ function(window, undefined) {
 
 			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
 			const oLabelParams = new CLabelsParameters(nAxisType, sDataType);
-			// fAxisLength = fAxisLength * 1.027;
 			oLabelParams.calculate(oLabelsBox, fAxisLength);
 
 			//check whether rotation is applied or not
@@ -1456,6 +1455,7 @@ function(window, undefined) {
 
 				const fLabelWidth =  fAxisLength / Math.ceil(oLabelParams.nLabelsCount / oLabelParams.nLblTickSkip);
 				// if userDefinedTickSkip then each label has same width as axislength
+				console.log(fLabelWidth, oLabelParams.nLabelsCount, oLabelParams.nLblTickSkip, fAxisLength, Math.ceil(oLabelParams.nLabelsCount / oLabelParams.nLblTickSkip))
 				fForceContentWidth_ = oLabelParams.isUserDefinedTickSkip ? fAxisLength : fLabelWidth;
 			}
 			if (statement) {
@@ -5167,7 +5167,7 @@ function(window, undefined) {
 			}
 			let oLabelsBox = null, fPos;
 			let fPosStart = oCurAxis.grid.fStart;
-			let fPosEnd = oCurAxis.grid.fStart + oCurAxis.grid.nCount * oCurAxis.grid.fStride;
+			let fPosEnd = oCurAxis.grid.nCount > 1 ? oCurAxis.grid.fStart + (oCurAxis.grid.nCount - 1) * oCurAxis.grid.fStride : oCurAxis.grid.fStart;
 
 			let bForceVertical = false;
 			let bNumbers = false;//TODO
@@ -11661,18 +11661,22 @@ function(window, undefined) {
 	CLabelsParameters.prototype.manuallyCalculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
 		const cellHeight = this.getHeight(oLabelsBox.aLabels);
 		// due to the rotation of the labels, the width necessary to place all of them is recalculated according to its height and some trigonometric formulas 
-		const radianAngle = AscFormat.isRealNumber(this.rot) ? (Math.abs(this.rot / this.degree) * Math.PI) / 180 : Math.PI / 2.0;
+		const radianAngle = this.isUserDefinedRot ? (Math.abs(this.rot / this.degree) * Math.PI) / 180 : Math.PI / 2.0;
 		// if the rotation parameter is set then we need to measure the new width of the label
 		const rotationWidth = cellHeight / Math.sin(radianAngle);
 		// if the rotation width is higher than normal width, then take normal width 
-		const updatedCellWidth = rotationWidth && oLabelsBox.maxMinWidth ? Math.min(rotationWidth, oLabelsBox.maxMinWidth) : null;
-		const cellWidth = radianAngle && updatedCellWidth ? updatedCellWidth : cellHeight;
+		const updatedCellWidth = AscFormat.isRealNumber(oLabelsBox.maxMinWidth) ? Math.min(rotationWidth, oLabelsBox.maxMinWidth) : null;
+		const cellWidth = AscFormat.isRealNumber(updatedCellWidth) ? updatedCellWidth : cellHeight;
 
 		// return minimum amount of skips needed to place a vertical labels into fAxisLength
 		let nLblTickSkip = 1;
 
 		if (cellWidth) {
-			nLblTickSkip = Math.floor((cellWidth * this.nLabelsCount) / (fAxisLength)) + 1;
+			// toDo test configurations for different number labels on excel: finalTestCatAxis
+			// const newCellWidth = cellWidth * 1.01203;
+			const labelCount = fAxisLength > 0 && fAxisLength >= cellWidth ? Math.floor(fAxisLength / cellWidth) : 1;
+			nLblTickSkip = Math.ceil(this.nLabelsCount / labelCount);
+			console.log(nLblTickSkip, fAxisLength, labelCount);
 			// date ax skips labels by significant days 
 			// two days, week or weeks, mounths, years
 			if (this.nAxisType === AscDFH.historyitem_type_DateAx && this.sDataType !== 'string') {
@@ -11709,7 +11713,7 @@ function(window, undefined) {
 		// Check if horizontal labels can fit into axis width
 		const cellHeight = this.getHeight(oLabelsBox.aLabels);
 		const labelWidth = oLabelsBox.maxMinWidth * updatedLabelsCount;
-
+		console.log(labelWidth, updatedLabelsCount, oLabelsBox.maxMinWidth, cellHeight)
 		if (labelWidth && labelWidth <= fAxisLength) {
 			this.rot = 0;
 			return;
