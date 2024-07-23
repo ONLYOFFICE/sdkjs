@@ -811,7 +811,7 @@ $(function () {
 		//create new ws and put date
 		externalWs = createExternalWorksheet("Sheet1");
 		externalWs.getRange2("A1").setValue("2000");
-		externalWs.getRange2("A2").setValue("4000")
+		externalWs.getRange2("A2").setValue("4000");
 		//such as update from portal
 		wb.externalReferences[0].updateData([externalWs]);
 		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_AREA_2_AFTER_UPDATE');
