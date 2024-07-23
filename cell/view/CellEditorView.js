@@ -951,7 +951,8 @@ function (window, undefined) {
 				bboxOper = null;
 				r = this._parseResult.refPos[index];
 				oper = r.oper;
-				if (cElementType.table === oper.type || cElementType.name === oper.type || cElementType.name3D === oper.type) {
+				if ((cElementType.table === oper.type || cElementType.name === oper.type ||
+					cElementType.name3D === oper.type) && oper.externalLink == null) {
 					oper = r.oper.toRef(bbox);
 					if (oper instanceof AscCommonExcel.cError) {
 						continue;

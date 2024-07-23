@@ -14993,6 +14993,9 @@ function RangeDataManagerElem(bbox, data)
 				this.DefinedNames[i].parent = this;
 			}
 		}
+		this.initWorksheetsFromSheetDataSet();
+		this.initWorkbook();
+
 		return res;
 	};
 
@@ -15038,7 +15041,7 @@ function RangeDataManagerElem(bbox, data)
 							defName.wb = wb;
 							defName.onFormulaEvent(AscCommon.c_oNotifyParentType.Change);
 							defName.wb = realWb;
-						})
+						});
 
 						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
 						oAllRange.cleanAll();
@@ -15263,12 +15266,38 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 
+	ExternalReference.prototype.initWorkbook = function () {
+		if (this.DefinedNames) {
+			let wb = this.getWb();
+			for (let i = 0; i < this.DefinedNames.length; i++) {
+				let defName = this.DefinedNames[i];
+				let ws = this.getSheetByIndex(defName.SheetId);
+				if (ws != null) {
+					//on parse name3d use g_DefNameWorksheet
+					let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
+					AscCommonExcel.g_DefNameWorksheet = ws;
+					let oDefName = new Asc.asc_CDefName(defName.Name, defName.RefersTo);
+					wb.editDefinesNames(null, oDefName);
+					AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;	
+				}
+			}
+		}
+	};
+
 	ExternalReference.prototype.getSheetByName = function (val) {
 		for (var i = 0; i < this.SheetNames.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			if (this.SheetNames[i] === val) {
 				return i;
 			}
+		}
+		return null;
+	};
+
+	ExternalReference.prototype.getSheetByIndex = function (val) {
+		let sheetName = this.SheetNames[val];
+		if (sheetName != null) {
+			return this.worksheets && this.worksheets[sheetName];
 		}
 		return null;
 	};
