@@ -14691,7 +14691,7 @@
 			if (oListenerCell instanceof DefName) {
 				let oParserRef = oListenerCell.parsedRef;
 				let aRef = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
-				let oOutStackElem = oParserRef.outStack.find(function (oElem) {
+				let oOutStackElem = oParserRef && oParserRef.outStack.find(function (oElem) {
 					return aRef.includes(oElem.type);
 				});
 				let oRange = oOutStackElem && oOutStackElem.getRange();

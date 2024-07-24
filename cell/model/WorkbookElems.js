@@ -15274,7 +15274,11 @@ function RangeDataManagerElem(bbox, data)
 					//on parse name3d use g_DefNameWorksheet
 					let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
 					AscCommonExcel.g_DefNameWorksheet = ws;
-					let oDefName = new Asc.asc_CDefName(defName.Name, defName.RefersTo);
+					let refersTo = defName.RefersTo;
+					if (refersTo && refersTo[0] === "=") {
+						refersTo = refersTo.slice(1);
+					}
+					let oDefName = new Asc.asc_CDefName(defName.Name, refersTo);
 					wb.editDefinesNames(null, oDefName);
 					AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;	
 				}
