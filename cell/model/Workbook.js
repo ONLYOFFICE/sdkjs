@@ -14748,11 +14748,11 @@
 		let nFirstCellIndex = getCellIndex(oFirstCell.nRow, oFirstCell.nCol);
 		aPassedCells = aPassedCells || [];
 		_foreachListeners(function (nListenerCellIndex, oListenerCell, oThis) {
-			if (nCellIndex === nListenerCellIndex && oThis.ws.getName() === oListenerCell.ws.getName()) {
+			if (nCellIndex === nListenerCellIndex && oThis.ws.getName() === oListenerCell.ws.getName() && oThis.ws.getId() === oListenerCell.ws.getId()) {
 				g_cCalcRecursion.setStartCellIndex({cellId: nCellIndex, wsName: oThis.ws.getName().toLowerCase()});
 				g_cCalcRecursion.resetRecursionCounter();
 				return true;
-			} else if (nPrevCellIndex != null && nListenerCellIndex === nPrevCellIndex && oPrevCell.ws.getName() === oListenerCell.ws.getName()) {
+			} else if (nPrevCellIndex != null && nListenerCellIndex === nPrevCellIndex && oPrevCell.ws.getName() === oListenerCell.ws.getName() && oPrevCell.ws.getId() === oListenerCell.ws.getId()) {
 				let sPrevCellWsName = oPrevCell.ws.getName().toLowerCase();
 				let sThisCellWsName = oThis.ws.getName().toLowerCase();
 				let sCellProp = sPrevCellWsName !== sThisCellWsName ? sThisCellWsName : nCellIndex.toString();
@@ -14764,7 +14764,7 @@
 				}
 				g_cCalcRecursion.resetRecursionCounter();
 				return true;
-			} else if (nFirstCellIndex === nListenerCellIndex && oFirstCell.ws.getName() === oListenerCell.ws.getName()) {
+			} else if (nFirstCellIndex === nListenerCellIndex && oFirstCell.ws.getName() === oListenerCell.ws.getName() && oFirstCell.ws.getId() === oListenerCell.ws.getId()) {
 				g_cCalcRecursion.setStartCellIndex({cellId: nFirstCellIndex, wsName: oFirstCell.ws.getName().toLowerCase()});
 				g_cCalcRecursion.resetRecursionCounter();
 				return true;
@@ -14914,7 +14914,7 @@
 			g_cCalcRecursion.resetRecursionCounter();
 			return false;
 		}
-		if (nCellIndexFromOperand === nCellIndexFromFormula && this.ws.getName() === oCellWithFormula.ws.getName()) {
+		if (nCellIndexFromOperand === nCellIndexFromFormula && this.ws.getName() === oCellWithFormula.ws.getName() && this.ws.getId() === oCellWithFormula.ws.getId()) {
 			g_cCalcRecursion.resetRecursionCounter();
 			return true;
 		}
