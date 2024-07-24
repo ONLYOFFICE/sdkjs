@@ -14716,6 +14716,9 @@
 			if (nListenerCellIndex == null) {
 				return;
 			}
+			if (oListenerCell instanceof Asc.CT_WorksheetSource) {
+				continue;
+			}
 			let oRes = fAction(nListenerCellIndex, oListenerCell, oCell);
 			if (oRes != null) {
 				return;
