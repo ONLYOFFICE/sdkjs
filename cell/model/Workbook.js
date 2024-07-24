@@ -14714,7 +14714,7 @@
 				nListenerCellIndex = getCellIndex(oListenerCell.nRow, oListenerCell.nCol);
 			}
 			if (nListenerCellIndex == null) {
-				return;
+				continue;
 			}
 			if (oListenerCell instanceof Asc.CT_WorksheetSource) {
 				continue;
