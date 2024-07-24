@@ -12227,11 +12227,14 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_EditSelectAll = function()
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return null;
-
-		oLogicDocument.SelectAll();
+		
+		if (this.isTargetHandMode() && !logicDocument.IsInFormField())
+			this.asc_setViewerTargetType("select");
+		
+		logicDocument.SelectAll();
 	};
 	asc_docs_api.prototype.asc_enterText = function(value)
 	{
