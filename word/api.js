@@ -1499,6 +1499,7 @@ background-repeat: no-repeat;\
 		this.isHandMode = ("hand" === type);
 		this.WordControl.checkMouseHandMode();
 		this.WordControl.onMouseMove();
+		this.sendEvent("asc_onChangeViewerTargetType", this.isHandMode);
 	};
 
 	function BeforeOpenDocument()
