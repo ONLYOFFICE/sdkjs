@@ -546,7 +546,7 @@
         return max_width;
     };
     CTextBody.prototype.getMaxContentWidth = function(maxWidth, bLeft) {
-        this.content.Reset(0, 0, maxWidth - 0.01, 20000);
+        this.content.Reset(0, 0, maxWidth, 20000);
         if(bLeft) {
             this.content.SetApplyToAll(true);
             this.content.SetParagraphAlign(AscCommon.align_Left);
@@ -561,7 +561,7 @@
                     max_width = paragraph_lines[j].Ranges[0].W;
             }
         }
-        return max_width + 0.01;
+        return Math.max(max_width, 0.01);
     };
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;

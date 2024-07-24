@@ -722,6 +722,10 @@ function(window, undefined) {
 		let fContentWidth = fForceContentWidth || (oLabelParams && oLabelParams.valid) ? fForceContentWidth : Math.abs(fInterval);
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
+		let bNeedMaxWidth = false;
+		if(this.axis && this.axis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+			bNeedMaxWidth = true;
+		}
 		console.log(fContentWidth);
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
@@ -757,8 +761,10 @@ function(window, undefined) {
 					}
 					oLastLabel = oLabel;
 					fLastLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
-	
-					fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+
+					if(bNeedMaxWidth) {
+						fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+					}
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
