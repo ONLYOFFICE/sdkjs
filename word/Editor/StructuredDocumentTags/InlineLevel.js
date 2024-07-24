@@ -2427,6 +2427,10 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 {
 	if (!this.Pr.Date)
 		return;
+	
+	let isTemporary = this.Pr.Temporary;
+	if (isTemporary)
+		this.Pr.Temporary = false;
 
 	if (this.IsPlaceHolder())
 		this.ReplacePlaceHolderWithContent();
@@ -2484,6 +2488,12 @@ CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 
 	if (oRun)
 		oRun.AddText(sText);
+	
+	if (isTemporary)
+	{
+		this.Pr.Temporary = true;
+		this.RemoveContentControlWrapper();
+	}
 };
 /**
  * Является ли данный контейнер специальной текстовой формой
