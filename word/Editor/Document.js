@@ -8091,7 +8091,7 @@ CDocument.prototype.CheckPosInSelection = function(X, Y, PageAbs, NearPos)
  */
 CDocument.prototype.SelectAll = function()
 {
-	if (this.IsFillingFormMode())
+	if (this.IsFillingFormMode() && this.Api.isTargetHandMode())
 	{
 		var oSelectedElementsInfo = this.GetSelectedElementsInfo();
 
@@ -8809,6 +8809,9 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.EditSelectAll:
 		{
+			if (this.Api.isTargetHandMode() && !this.IsInFormField())
+				this.Api.asc_setViewerTargetType("select");
+			
 			this.SelectAll();
 			bUpdateSelection = false;
 			bRetValue        = keydownresult_PreventAll;
