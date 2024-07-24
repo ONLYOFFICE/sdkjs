@@ -2607,7 +2607,7 @@
 		});
 		//external references
 		this.externalReferences.forEach(function(elem){
-			elem.initPostOpen();
+			elem && elem.initPostOpen && elem.initPostOpen();
 		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
