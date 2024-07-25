@@ -4767,6 +4767,11 @@
 		//'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1	           | false link                   |	abracadabra1://abracadabra2:file.abracadabra3
 		//'abracadabra1://abrac/adabra2:[file.abracadabra3]Sheet1'!A1	           | false link                   |	abracadabra1://abrac/adabra2:file.abracadabra3
 
+		//also available
+		//1. without file:/// prefix:
+		//'C:\Users\user\Downloads\[test_links.xlsx]Sheet1'!$B$13                  |  to other file in other disk | C:\Users\user\Downloads\test_links.xlsx
+		//2. backslash
+		//'C:\Users\user\Downloads\[test_links.xlsx]Sheet1'!$B$13                  |  to other file in other disk | C:\Users/user/Downloads/test_links.xlsx
 
 		var res = this.externalReferences && this.externalReferences[index];
 		if (needSplit && res) {
