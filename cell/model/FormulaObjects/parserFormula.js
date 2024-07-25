@@ -649,6 +649,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return "[" + index + "]";
 		}
 		var path = externalLink && externalLink.path;
+		/*if (locale && path && path.indexOf("file:///") === 0) {
+			path = path.substr("file:///".length);
+		}*/
 		var name = externalLink && externalLink.name;
 		var res = "";
 		if (path || name) {

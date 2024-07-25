@@ -15439,7 +15439,7 @@ function RangeDataManagerElem(bbox, data)
 			//sAbsolutePath - > C:\root\from.xlsx
 			// need -> /root/from.xlsx
 			if (sAbsolutePath) {
-				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"))
+				sPath = sAbsolutePath.substring(sAbsolutePath.indexOf("\\"));
 				sPath = sPath.replace(/\\/g,"/")
 			}
 		} else if (sPath && -1 !== sPath.indexOf(":/")) {

@@ -4757,6 +4757,17 @@
 	//далее отображаем в таком виде в зависимости от самой ссылки 'https://s3.amazonaws.com/xlsx/[ExternalLinksDestination.xlsx]Sheet1'!A1:A2
 	//при вводе с клавиатуры сложнее - мс пропускает ссылки в достаточно странном виде 'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1:A2
 	Workbook.prototype.getExternalLinkByIndex = function (index, needSplit) {
+
+		//string link	                                                           | description	              | link in file
+		//'C:\Users\user\Downloads\[Book1.xlsx]Sheet2'!$E$2                        | to other file in this folder |	Book1.xlsx
+		//'C:\Users\user\Downloads\test\[Book1.xlsx]Sheet2'!$E$2                   | to other file deep folder	  | test/Book1.xlsx
+		//'C:\Users\user\[Book1.xlsx]Sheet2'!$E$2	                               | to other file up folder	  | /Users/user/Book1.xlsx
+		//'D:\downloads\[BookLink.xlsx]Sheet1'!$A$1	                               | to other file in other disk  | file:///D:\downloads\BookLink.xlsx
+		//'https://s3.amazonaws.com/xlsx/[ExternalLinksDestination.xlsx]Sheet1'!A1 | web link                     |	https://s3.amazonaws.com/xlsx/ExternalLinksDestination.xlsx
+		//'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1	           | false link                   |	abracadabra1://abracadabra2:file.abracadabra3
+		//'abracadabra1://abrac/adabra2:[file.abracadabra3]Sheet1'!A1	           | false link                   |	abracadabra1://abrac/adabra2:file.abracadabra3
+
+
 		var res = this.externalReferences && this.externalReferences[index];
 		if (needSplit && res) {
 			//разбиваем на имя и путь
