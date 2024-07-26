@@ -204,79 +204,94 @@
     /**
      * Twentieths of a point (equivalent to 1/1440th of an inch).
      * @typedef {number} twips
-     */
+     * @see office-js-api/Examples/Enumerations/twips.js
+	 */
 
     /**
      * 240ths of a line.
      * @typedef {number} line240
-     */
+     * @see office-js-api/Examples/Enumerations/line240.js
+	 */
 
     /**
      * Half-points (2 half-points = 1 point).
      * @typedef {number} hps
-     */
+     * @see office-js-api/Examples/Enumerations/hps.js
+	 */
 
     /**
      * A numeric value from 0 to 255.
      * @typedef {number} byte
-     */
+     * @see office-js-api/Examples/Enumerations/byte.js
+	 */
 
     /**
      * 60000th of a degree (5400000 = 90 degrees).
      * @typedef {number} PositiveFixedAngle
-     * */
+     * * @see office-js-api/Examples/Enumerations/PositiveFixedAngle.js
+	 */
 
     /**
      * A border type.
      * @typedef {("none" | "single")} BorderType
-     */
+     * @see office-js-api/Examples/Enumerations/BorderType.js
+	 */
 
     /**
      * Types of custom tab.
      * @typedef {("clear" | "left" | "right" | "center")} TabJc
-     */
+     * @see office-js-api/Examples/Enumerations/TabJc.js
+	 */
 
     /**
      * Eighths of a point (24 eighths of a point = 3 points).
      * @typedef {number} pt_8
-     */
+     * @see office-js-api/Examples/Enumerations/pt_8.js
+	 */
 
     /**
      * A point.
      * @typedef {number} pt
-     */
+     * @see office-js-api/Examples/Enumerations/pt.js
+	 */
 
 
     /**
      * English measure unit. 1 mm = 36000 EMUs, 1 inch = 914400 EMUs.
      * @typedef {number} EMU
-     */
+     * @see office-js-api/Examples/Enumerations/EMU.js
+	 */
 
     /**
      * This type specifies the preset shape geometry that will be used for a shape.
      * @typedef {("accentBorderCallout1" | "accentBorderCallout2" | "accentBorderCallout3" | "accentCallout1" | "accentCallout2" | "accentCallout3" | "actionButtonBackPrevious" | "actionButtonBeginning" | "actionButtonBlank" | "actionButtonDocument" | "actionButtonEnd" | "actionButtonForwardNext" | "actionButtonHelp" | "actionButtonHome" | "actionButtonInformation" | "actionButtonMovie" | "actionButtonReturn" | "actionButtonSound" | "arc" | "bentArrow" | "bentConnector2" | "bentConnector3" | "bentConnector4" | "bentConnector5" | "bentUpArrow" | "bevel" | "blockArc" | "borderCallout1" | "borderCallout2" | "borderCallout3" | "bracePair" | "bracketPair" | "callout1" | "callout2" | "callout3" | "can" | "chartPlus" | "chartStar" | "chartX" | "chevron" | "chord" | "circularArrow" | "cloud" | "cloudCallout" | "corner" | "cornerTabs" | "cube" | "curvedConnector2" | "curvedConnector3" | "curvedConnector4" | "curvedConnector5" | "curvedDownArrow" | "curvedLeftArrow" | "curvedRightArrow" | "curvedUpArrow" | "decagon" | "diagStripe" | "diamond" | "dodecagon" | "donut" | "doubleWave" | "downArrow" | "downArrowCallout" | "ellipse" | "ellipseRibbon" | "ellipseRibbon2" | "flowChartAlternateProcess" | "flowChartCollate" | "flowChartConnector" | "flowChartDecision" | "flowChartDelay" | "flowChartDisplay" | "flowChartDocument" | "flowChartExtract" | "flowChartInputOutput" | "flowChartInternalStorage" | "flowChartMagneticDisk" | "flowChartMagneticDrum" | "flowChartMagneticTape" | "flowChartManualInput" | "flowChartManualOperation" | "flowChartMerge" | "flowChartMultidocument" | "flowChartOfflineStorage" | "flowChartOffpageConnector" | "flowChartOnlineStorage" | "flowChartOr" | "flowChartPredefinedProcess" | "flowChartPreparation" | "flowChartProcess" | "flowChartPunchedCard" | "flowChartPunchedTape" | "flowChartSort" | "flowChartSummingJunction" | "flowChartTerminator" | "foldedCorner" | "frame" | "funnel" | "gear6" | "gear9" | "halfFrame" | "heart" | "heptagon" | "hexagon" | "homePlate" | "horizontalScroll" | "irregularSeal1" | "irregularSeal2" | "leftArrow" | "leftArrowCallout" | "leftBrace" | "leftBracket" | "leftCircularArrow" | "leftRightArrow" | "leftRightArrowCallout" | "leftRightCircularArrow" | "leftRightRibbon" | "leftRightUpArrow" | "leftUpArrow" | "lightningBolt" | "line" | "lineInv" | "mathDivide" | "mathEqual" | "mathMinus" | "mathMultiply" | "mathNotEqual" | "mathPlus" | "moon" | "nonIsoscelesTrapezoid" | "noSmoking" | "notchedRightArrow" | "octagon" | "parallelogram" | "pentagon" | "pie" | "pieWedge" | "plaque" | "plaqueTabs" | "plus" | "quadArrow" | "quadArrowCallout" | "rect" | "ribbon" | "ribbon2" | "rightArrow" | "rightArrowCallout" | "rightBrace" | "rightBracket" | "round1Rect" | "round2DiagRect" | "round2SameRect" | "roundRect" | "rtTriangle" | "smileyFace" | "snip1Rect" | "snip2DiagRect" | "snip2SameRect" | "snipRoundRect" | "squareTabs" | "star10" | "star12" | "star16" | "star24" | "star32" | "star4" | "star5" | "star6" | "star7" | "star8" | "straightConnector1" | "stripedRightArrow" | "sun" | "swooshArrow" | "teardrop" | "trapezoid" | "triangle" | "upArrowCallout" | "upDownArrow" | "upDownArrow" | "upDownArrowCallout" | "uturnArrow" | "verticalScroll" | "wave" | "wedgeEllipseCallout" | "wedgeRectCallout" | "wedgeRoundRectCallout")} ShapeType
-     */
+     * @see office-js-api/Examples/Enumerations/ShapeType.js
+	 */
 
     /**
     * A bullet type which will be added to the paragraph in spreadsheet or presentation.
     * @typedef {("None" | "ArabicPeriod"  | "ArabicParenR"  | "RomanUcPeriod" | "RomanLcPeriod" | "AlphaLcParenR" | "AlphaLcPeriod" | "AlphaUcParenR" | "AlphaUcPeriod")} BulletType
-    */
+    * @see office-js-api/Examples/Enumerations/BulletType.js
+	 */
 
 
     /**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
      * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
-     * */
+     * * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
+	 */
 
     /**
      * The available color scheme identifiers.
      * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
-     * */
+     * * @see office-js-api/Examples/Enumerations/SchemeColorId.js
+	 */
 
     /**
      * The available preset color names.
      * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" | "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate" | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" | "darkGray" | "darkGreen" | "darkGrey" | "darkKhaki" | "darkMagenta" | "darkOliveGreen" | "darkOrange" | "darkOrchid" | "darkRed" | "darkSalmon" | "darkSeaGreen" | "darkSlateBlue" | "darkSlateGray" | "darkSlateGrey" | "darkTurquoise" | "darkViolet" | "deepPink" | "deepSkyBlue" | "dimGray" | "dimGrey" | "dkBlue" | "dkCyan" | "dkGoldenrod" | "dkGray" | "dkGreen" | "dkGrey" | "dkKhaki" | "dkMagenta" | "dkOliveGreen" | "dkOrange" | "dkOrchid" | "dkRed" | "dkSalmon" | "dkSeaGreen" | "dkSlateBlue" | "dkSlateGray" | "dkSlateGrey" | "dkTurquoise" | "dkViolet" | "dodgerBlue" | "firebrick" | "floralWhite" | "forestGreen" | "fuchsia" | "gainsboro" | "ghostWhite" | "gold" | "goldenrod" | "gray" | "green" | "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
-     * */
+     * * @see office-js-api/Examples/Enumerations/PresetColor.js
+	 */
 
 
     /**
@@ -286,26 +301,30 @@
      * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
      * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-     * **/
+     * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+	 */
 
     /**
      * The type of a fill which uses an image as a background.
      * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
-     * */
+     * * @see office-js-api/Examples/Enumerations/BlipFillType.js
+	 */
 
     /**
      * The available preset patterns which can be used for the fill.
      * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
-     * */
+     * * @see office-js-api/Examples/Enumerations/PatternType.js
+	 */
 
 
 
     /**
      * The available types of tick mark appearance.
      * @typedef {("cross" | "in" | "none" | "out")} TickMark
-     * */
+     * * @see office-js-api/Examples/Enumerations/TickMark.js
+	 */
 
     /**
      * Text transform type.
@@ -315,11 +334,13 @@
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
 	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
-	 * */
+	 * * @see office-js-api/Examples/Enumerations/TextTransform.js
+	 */
 
     /**
 	 * Axis position in the chart.
 	 * @typedef {("top" | "bottom" | "right" | "left")} AxisPos
+	 * @see office-js-api/Examples/Enumerations/AxisPos.js
 	 */
 
     /**
@@ -328,6 +349,7 @@
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
+	 * @see office-js-api/Examples/Enumerations/NumFormat.js
 	 */
 
     //------------------------------------------------------------------------------------------------------------------
@@ -339,7 +361,8 @@
     /**
      * The 1000th of a percent (100000 = 100%).
      * @typedef {number} PositivePercentage
-     * */
+     * * @see office-js-api/Examples/Enumerations/PositivePercentage.js
+	 */
 
     /**
      * Returns the main presentation.
@@ -605,6 +628,7 @@
 	 * @param {string} sData - The OLE object string data.
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {ApiOleObject}
+	 * @see office-js-api/Examples/Slide/Api/Methods/CreateOleObject.js
 	 */
 	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
 	{
@@ -631,7 +655,8 @@
 	 * @param {ApiFill} [oFill    = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke    = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
      * @returns {ApiShape}
-     * */
+     * * @see office-js-api/Examples/Slide/Api/Methods/CreateShape.js
+	 */
     Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
         var oCurrentSlide = private_GetCurrentSlide();
         sType   = sType   || "rect";
@@ -721,6 +746,7 @@
 	 * Saves changes to the specified document.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
+	 * @see office-js-api/Examples/Slide/Api/Methods/Save.js
 	 */
 	Api.prototype.Save = function () {
 		this.SaveAfterMacros = true;
@@ -784,6 +810,7 @@
      * @param {EMU} [nIndLeft=ApiPresentation.GetWidth() / 2] - The Text Art left side indentation value measured in English measure units.
 	 * @param {EMU} [nIndTop=ApiPresentation.GetHeight() / 2] - The Text Art top side indentation value measured in English measure units.
 	 * @returns {ApiDrawing}
+	 * @see office-js-api/Examples/Slide/Api/Methods/CreateWordArt.js
 	 */
     Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
         var oPres = private_GetPresentation();
@@ -811,6 +838,7 @@
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
 	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/Slide/Api/Methods/FromJSON.js
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
@@ -1095,6 +1123,7 @@
 	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
 	 * RFC 4646/BCP 47. Example: "en-CA".
      * @returns {boolean}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/SetLanguage.js
 	 */
     ApiPresentation.prototype.SetLanguage = function(sLangId)
     {
@@ -1184,6 +1213,7 @@
      * @param {Number} [nCount=ApiPresentation.GetSlidesCount()] - The number of slides to delete.
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/RemoveSlides.js
 	 */
     ApiPresentation.prototype.RemoveSlides = function(nStart, nCount)
 	{
@@ -1234,6 +1264,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/ToJSON.js
 	 */
     ApiPresentation.prototype.ToJSON = function(bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -1253,6 +1284,7 @@
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON[]}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/SlidesToJSON.js
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -1291,6 +1323,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiComment[]}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetAllComments.js
 	 */
 	ApiPresentation.prototype.GetAllComments = function()
 	{
@@ -1318,6 +1351,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
+	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetDocumentInfo.js
 	 */
 	ApiPresentation.prototype.GetDocumentInfo = function()
 	{
@@ -1713,6 +1747,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiMaster/Methods/ToJSON.js
 	 */
     ApiMaster.prototype.ToJSON = function(bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -2021,6 +2056,7 @@
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiLayout/Methods/ToJSON.js
 	 */
     ApiLayout.prototype.ToJSON = function(bWriteMaster, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -2301,6 +2337,7 @@
 	 * @memberof ApiThemeColorScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/ToJSON.js
 	 */
     ApiThemeColorScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -2444,6 +2481,7 @@
 	 * @memberof ApiThemeFormatScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ToJSON.js
 	 */
     ApiThemeFormatScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -2532,6 +2570,7 @@
 	 * @memberof ApiThemeFontScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/ToJSON.js
 	 */
     ApiThemeFontScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -3079,6 +3118,7 @@
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
 	 * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiSlide/Methods/ToJSON.js
 	 */
     ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -3340,6 +3380,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
+	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetWidth.js
 	 */
 	ApiDrawing.prototype.GetWidth = function()
 	{
@@ -3350,6 +3391,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
+	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetHeight.js
 	 */
 	ApiDrawing.prototype.GetHeight = function()
 	{
@@ -3403,6 +3445,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/ToJSON.js
 	 */
 	ApiDrawing.prototype.ToJSON = function()
 	{
@@ -3522,6 +3565,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {"oleObject"}
+	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetClassType.js
 	 */
 	ApiOleObject.prototype.GetClassType = function()
 	{
@@ -3534,6 +3578,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/SetData.js
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
 	{
@@ -3549,6 +3594,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
+	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetData.js
 	 */
 	ApiOleObject.prototype.GetData = function()
 	{
@@ -3564,6 +3610,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/SetApplicationId.js
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
 	{
@@ -3579,6 +3626,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
+	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetApplicationId.js
 	 */
 	ApiOleObject.prototype.GetApplicationId = function()
 	{
@@ -3850,6 +3898,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
+	 * @see office-js-api/Examples/Slide/ApiTable/Methods/ToJSON.js
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
 	{
@@ -4602,5 +4651,6 @@
 	}
 
 })(window, null);
+
 
 
