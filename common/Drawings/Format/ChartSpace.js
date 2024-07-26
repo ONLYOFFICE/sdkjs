@@ -722,7 +722,10 @@ function(window, undefined) {
 		let fContentWidth = fForceContentWidth || (oLabelParams && oLabelParams.valid) ? fForceContentWidth : Math.abs(fInterval);
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
-
+		let bNeedMaxWidth = false;
+		if(this.axis && this.axis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+			bNeedMaxWidth = true;
+		}
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
@@ -757,8 +760,10 @@ function(window, undefined) {
 					}
 					oLastLabel = oLabel;
 					fLastLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
-	
-					fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+
+					if(bNeedMaxWidth) {
+						fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+					}
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
@@ -5375,6 +5380,7 @@ function(window, undefined) {
 			}
 			else {
 				fDiff = oBaseRect.x - fL;
+				console.log(oBaseRect.x, fL, fDiff);
 				if(/*fDiff > 0.0 && */!AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
 					oCorrectedRect.x += fDiff;
 					if(bWEdge) {
@@ -5383,6 +5389,7 @@ function(window, undefined) {
 					bCorrected = true;
 				}
 				fDiff = oBaseRect.x + oBaseRect.w - fR;
+				console.log(oBaseRect.x, oBaseRect.w, fR, fDiff);
 				if(/*fDiff < 0.0 && */!AscFormat.fApproxEqual(fDiff, 0.0, fPrecision)) {
 					oCorrectedRect.w += fDiff;
 					bCorrected = true;
@@ -5401,6 +5408,7 @@ function(window, undefined) {
 					bCorrected = true;
 				}
 			}
+			console.log(oCorrectedRect, oBaseRect);
 			if(oCorrectedRect && bCorrected) {
 				if(oCorrectedRect.w > oRect.w) {
 					return this.recalculateAxesSet(aAxesSet, oCorrectedRect, oBaseRect, ++nIndex, fHorInterval);
@@ -11539,7 +11547,7 @@ function(window, undefined) {
 	}
 
 	CLabelsParameters.prototype.calculate = function (nIndex, oLabelsBox, fAxisLength) {
-		if (this.valid && nIndex === 0) {
+		if (this.valid) {
 			// check whether user has defined some parameters
 			this.getUserDefinedSettings(oLabelsBox);
 
@@ -11674,7 +11682,7 @@ function(window, undefined) {
 			// toDo test configurations for different number labels on excel: finalTestCatAxis
 			const labelCount = fAxisLength > 0 && fAxisLength >= cellWidth ? Math.floor(fAxisLength / cellWidth) : 1;
 			nLblTickSkip = Math.ceil(this.nLabelsCount / labelCount);
-
+			console.log(fAxisLength, cellWidth, labelCount)
 			// date ax skips labels by significant days 
 			// two days, week or weeks, mounths, years
 			if (this.nAxisType === AscDFH.historyitem_type_DateAx && this.sDataType !== 'string') {
