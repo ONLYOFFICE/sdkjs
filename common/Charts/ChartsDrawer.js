@@ -1251,7 +1251,7 @@ CChartsDrawer.prototype =
 		}
 
 		// for funnel chart
-		if (!horizontalAxis && isChartEx && verticalAxis.labels && verticalAxis.yPoints) {
+		if (!horizontalAxis && isChartEx && verticalAxis && verticalAxis.labels && verticalAxis.yPoints) {
 			calculateLeft = this.cChartSpace && this.cChartSpace.plotAreaRect ? this.cChartSpace.plotAreaRect.x : 0;
 			let curBetween = verticalAxis.yPoints[1] ? Math.abs(verticalAxis.yPoints[1].pos - verticalAxis.yPoints[0].pos) / 2 : 0;
 			// curBetween = !curBetween && this.cChartSpace && this.cChartSpace.plotAreaRect ? verticalAxis.yPoints[0].pos - this.cChartSpace.plotAreaRect.y : curBetween;
