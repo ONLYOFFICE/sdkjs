@@ -14379,7 +14379,7 @@
         this.newDefinedNames = [];
     }
 
-    CT_Workbook.prototype.fromXml = function (reader) {
+    CT_Workbook.prototype.fromXmlSimple = function (reader) {
         if (!reader.ReadNextNode()) {
             return;
         }

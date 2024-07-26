@@ -248,7 +248,9 @@
 			TraceDependentsNoFormulas: 1060,
 			TracePrecedentsNoValidReference: 1061,
 
-			MustIntegerOrDecimalNumber: 1070
+			MustIntegerOrDecimalNumber: 1070,
+
+			DocumentAndChangeMismatch: 1080
 		}
 	};
 

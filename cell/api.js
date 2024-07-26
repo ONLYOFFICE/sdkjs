@@ -1795,38 +1795,41 @@ var editor;
 			var doc = new openXml.OpenXmlPackage(jsZlib, null);
 			var reader, i, j;
 
-			//core
-			var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
-			if (coreXmlPart) {
-				var contentCore = coreXmlPart.getDocumentContent();
-				if (contentCore) {
-					wb.Core = new AscCommon.CCore();
-					reader = new StaxParser(contentCore, coreXmlPart, xmlParserContext);
-					wb.Core.fromXml(reader, true);
-				}
-			}
-
-			//app
-			var appXmlPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
-			if (appXmlPart) {
-				var contentApp = appXmlPart.getDocumentContent();
-				if (contentApp) {
-					wb.App = new AscCommon.CApp();
-					reader = new StaxParser(contentApp, appXmlPart, xmlParserContext);
-					wb.App.fromXml(reader, true);
-				}
-			}
-
 			//workbook
 			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
 			if (wbPart) {
 				var contentWorkbook = wbPart.getDocumentContent();
 				wbXml = new AscCommonExcel.CT_Workbook(wb);
 				reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
-				wbXml.fromXml(reader);
+				if (t.isOpenOOXInBrowser) {
+					wbXml.fromXml(reader);
+				} else {
+					wbXml.fromXmlSimple(reader);
+				}
 			}
 
 			if (t.isOpenOOXInBrowser) {
+				//core
+				var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
+				if (coreXmlPart) {
+					var contentCore = coreXmlPart.getDocumentContent();
+					if (contentCore) {
+						wb.Core = new AscCommon.CCore();
+						reader = new StaxParser(contentCore, coreXmlPart, xmlParserContext);
+						wb.Core.fromXml(reader, true);
+					}
+				}
+
+				//app
+				var appXmlPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
+				if (appXmlPart) {
+					var contentApp = appXmlPart.getDocumentContent();
+					if (contentApp) {
+						wb.App = new AscCommon.CApp();
+						reader = new StaxParser(contentApp, appXmlPart, xmlParserContext);
+						wb.App.fromXml(reader, true);
+					}
+				}
 				//metadata
 				if (AscCommonExcel.bIsSupportDynamicArrays) {
 					let metaData = wbPart.getPartByRelationshipType(openXml.Types.metadata.relationType);

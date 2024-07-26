@@ -2026,6 +2026,21 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 
 	return oCurPosInfo;
 };
+Paragraph.prototype.GetStartPosXY = function()
+{
+	if (!this.IsRecalculated())
+		return null;
+	
+	let curPos = this.Get_StartPos();
+	if (!curPos)
+		return null;
+	
+	let state = this.SaveSelectionState();
+	this.Set_ParaContentPos(curPos, false, -1, -1, true); // Обязательно корректируем позицию
+	let result = this.GetCalculatedCurPosXY();
+	this.LoadSelectionState(state);
+	return result;
+};
 Paragraph.prototype.GetCalculatedCurPosXY = function()
 {
 	return this.Internal_Recalculate_CurPos(false, false, true);
@@ -11523,36 +11538,39 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 };
 Paragraph.prototype.Set_Tabs = function(Tabs)
 {
-	var _Tabs = new CParaTabs();
-
-	if (Tabs)
+	if (Tabs != this.Pr.Tabs)
 	{
-		var StyleTabs = this.Get_CompiledPr2(false).ParaPr.StyleTabs;
+		var _Tabs = Tabs ? new CParaTabs() : Tabs;
 
-		// 1. Ищем табы, которые уже есть в стиле (такие добавлять не надо)
-		for (var Index = 0; Index < Tabs.Tabs.length; Index++)
+		if (Tabs)
 		{
-			var Value = StyleTabs.Get_Value(Tabs.Tabs[Index].Pos);
-			if (-1 === Value)
-				_Tabs.Add(Tabs.Tabs[Index]);
+			var StyleTabs = this.Get_CompiledPr2(false).ParaPr.StyleTabs;
+
+			// 1. Ищем табы, которые уже есть в стиле (такие добавлять не надо)
+			for (var Index = 0; Index < Tabs.Tabs.length; Index++)
+			{
+				var Value = StyleTabs.Get_Value(Tabs.Tabs[Index].Pos);
+				if (-1 === Value)
+					_Tabs.Add(Tabs.Tabs[Index]);
+			}
+
+			// 2. Ищем табы в стиле, которые нужно отменить
+			for (var Index = 0; Index < StyleTabs.Tabs.length; Index++)
+			{
+				var Value = _Tabs.Get_Value(StyleTabs.Tabs[Index].Pos);
+				if (tab_Clear != StyleTabs.Tabs[Index] && -1 === Value)
+					_Tabs.Add(new CParaTab(tab_Clear, StyleTabs.Tabs[Index].Pos));
+			}
 		}
 
-		// 2. Ищем табы в стиле, которые нужно отменить
-		for (var Index = 0; Index < StyleTabs.Tabs.length; Index++)
-		{
-			var Value = _Tabs.Get_Value(StyleTabs.Tabs[Index].Pos);
-			if (tab_Clear != StyleTabs.Tabs[Index] && -1 === Value)
-				_Tabs.Add(new CParaTab(tab_Clear, StyleTabs.Tabs[Index].Pos));
-		}
+		this.private_AddPrChange();
+		AscCommon.History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
+		this.Pr.Tabs = _Tabs;
+
+		// Надо пересчитать конечный стиль
+		this.CompiledPr.NeedRecalc = true;
+		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 	}
-
-	this.private_AddPrChange();
-	AscCommon.History.Add(new CChangesParagraphTabs(this, this.Pr.Tabs, _Tabs));
-	this.Pr.Tabs = _Tabs;
-
-	// Надо пересчитать конечный стиль
-	this.CompiledPr.NeedRecalc = true;
-	this.private_UpdateTrackRevisionOnChangeParaPr(true);
 };
 Paragraph.prototype.Set_ContextualSpacing = function(Value)
 {
