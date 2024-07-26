@@ -4785,7 +4785,9 @@ function(window, undefined) {
 								oCurPts = oSeries.val.numLit;
 							}
 							if (oCurPts) {
-								nPtsLength = Math.max(nPtsLength, oCurPts.ptCount);
+								const forward = oSeries.trendline && oSeries.trendline.forward ? oSeries.trendline.forward : 0;
+								const newNPtsLength = oCurPts.ptCount + forward;
+								nPtsLength = Math.max(nPtsLength, newNPtsLength);
 							}
 						}
 					}
