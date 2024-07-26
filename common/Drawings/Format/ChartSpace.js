@@ -722,7 +722,10 @@ function(window, undefined) {
 		let fContentWidth = fForceContentWidth || (oLabelParams && oLabelParams.valid) ? fForceContentWidth : Math.abs(fInterval);
 		let fHorShift = Math.abs(fInterval) / 2.0 - fContentWidth / 2.0;
 		let fMaxContentWidth = 0;
-
+		let bNeedMaxWidth = false;
+		if(this.axis && this.axis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+			bNeedMaxWidth = true;
+		}
 		if (Array.isArray(this.aLabels) && this.aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
@@ -757,8 +760,10 @@ function(window, undefined) {
 					}
 					oLastLabel = oLabel;
 					fLastLabelCenterX = fCurX + Math.abs(fInterval) / 2.0;
-	
-					fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+
+					if(bNeedMaxWidth) {
+						fMaxContentWidth = Math.max(fMaxContentWidth, oLabel.tx.rich.getMaxContentWidth(fContentWidth));
+					}
 				}
 
 				jump = skipCond(oLabelParams, loopsCount);
@@ -1389,7 +1394,7 @@ function(window, undefined) {
 		return AscFormat.isRealNumber(nLblTickSkip) && nLblTickSkip > 0 ? nLblTickSkip : 1;
 	}
 
-	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex) {
+	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth) {
 		if (!oLabelsBox) {
 			return;
 		}
@@ -1443,8 +1448,8 @@ function(window, undefined) {
 			const sDataType = oLabelsBox.getLabelsDataType();
 
 			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
-			const oLabelParams = oLabelsBox.axis.labelParams ? oLabelsBox.axis.labelParams : new CLabelsParameters(nAxisType, sDataType);
-			oLabelParams.calculate(nIndex, oLabelsBox, fAxisLength);
+			const oLabelParams = new CLabelsParameters(nAxisType, sDataType);
+			oLabelParams.calculate(oLabelsBox, fAxisLength);
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
@@ -5245,7 +5250,7 @@ function(window, undefined) {
 						fForceContentWidth = Math.abs(fHorInterval) + fHorInterval / nTickLblSkip;
 					}
 					fDistance = fDistanceSign * oLabelsBox.getLabelsOffset();
-					fLayoutHorLabelsBox(oLabelsBox, fPos, fPosStart, fPosEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex);
+					fLayoutHorLabelsBox(oLabelsBox, fPos, fPosStart, fPosEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth);
 					if(bLabelsExtremePosition) {
 						if(fDistance > 0) {
 							fVertPadding = -oLabelsBox.extY;
@@ -11538,8 +11543,8 @@ function(window, undefined) {
 		this.nLabelsCount = 0;
 	}
 
-	CLabelsParameters.prototype.calculate = function (nIndex, oLabelsBox, fAxisLength) {
-		if (this.valid && nIndex === 0) {
+	CLabelsParameters.prototype.calculate = function (oLabelsBox, fAxisLength) {
+		if (this.valid) {
 			// check whether user has defined some parameters
 			this.getUserDefinedSettings(oLabelsBox);
 
@@ -11613,7 +11618,6 @@ function(window, undefined) {
 		}
 		const bodyPr = oLabelsBox.axis.txPr.bodyPr;
 		bodyPr.updatedRot = AscFormat.isRealNumber(this.rot) ? this.rot : bodyPr.rot;
-		oLabelsBox.axis.labelParams = this;
 	};
 
 	CLabelsParameters.prototype.setMaxHeight = function (diagramHeight, chartHeight, titleHeight) {
