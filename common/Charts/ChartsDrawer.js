@@ -2003,7 +2003,7 @@ CChartsDrawer.prototype =
 							const ptCount = numCache && AscFormat.isRealNumber(numCache.ptCount) ? numCache.ptCount : 0;
 							// trendline can affect max value
 							const newMax = seria.trendline && seria.trendline.forward && ptCount > 1 ? ptCount + seria.trendline.forward : ptCount;
-							max = numCache ? Math.max(max, newMax) : max;
+							max = Math.max(max, newMax);
 						}
 					}
 				}
