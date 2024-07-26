@@ -1997,7 +1997,7 @@ CChartsDrawer.prototype =
 					max = 1;
 					// find max value across each seria
 					for (let i = 0; i < series.length; i++) {
-						const seria = series[0];
+						const seria = series[i];
 						if (seria) {
 							numCache = t.getNumCache(seria.val);
 							const ptCount = numCache && AscFormat.isRealNumber(numCache.ptCount) ? numCache.ptCount : 0;
