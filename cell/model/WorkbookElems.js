@@ -5641,6 +5641,53 @@ StyleManager.prototype =
 	{
 		return this._setAlignProperty(oItemWithXfs, val, "indent", Align.prototype.getIndent, Align.prototype.setIndent);
 	},
+	setByHistoryType : function(historyType, oItemWithXfs, val)
+	{
+		switch (historyType) {
+			case AscCH.historyitem_Cell_Num:
+				return this.setNum(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Font:
+				return this.setFont(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Fontname:
+				return this.setFontname(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Fontsize:
+				return this.setFontsize(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Fontcolor:
+				return this.setFontcolor(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Bold:
+				return this.setBold(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Italic:
+				return this.setItalic(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Underline:
+				return this.setUnderline(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Strikeout:
+				return this.setStrikeout(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_FontAlign:
+				return this.setFontAlign(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_AlignVertical:
+				return this.setAlignVertical(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_AlignHorizontal:
+				return this.setAlignHorizontal(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Fill:
+				return this.setFill(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Border:
+				return this.setBorder(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_ShrinkToFit:
+				return this.setShrinkToFit(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Wrap:
+				return this.setWrap(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Angle:
+				return this.setAngle(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_Indent:
+				return this.setIndent(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_SetApplyProtection:
+				return this.setApplyProtection(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_SetLocked:
+				return this.setLocked(oItemWithXfs, val);
+			case AscCH.historyitem_Cell_SetHidden:
+				return this.setHiddenFormulas(oItemWithXfs, val);
+		}
+	},
 	_initXf: function(oItemWithXfs){
 		var xfs = oItemWithXfs.xfs;
 		if (!xfs) {
@@ -19028,7 +19075,7 @@ function RangeDataManagerElem(bbox, data)
 		let split = false;
 		if (from > 0) {
 			//todo comparison and copy
-			if (fromElem.isEqualVal(val)) {
+			if (!fromElem.isEqualVal(val)) {
 				if (!preFromElem || preFromElem.endRow < from - 1) {
 					if (fromElem.endRow > to) {
 						split = true;
@@ -19038,7 +19085,7 @@ function RangeDataManagerElem(bbox, data)
 					preFromElem = this.data[fromIndex - 1];
 					insertIndex = fromIndex;
 				} else if (preFromElem.endRow === from - 1) {
-					insertIndex = -1;
+					insertIndex = fromIndex;
 				}
 			}
 			if (preFromElem && preFromElem.isEqualVal(val)) {
@@ -19092,7 +19139,7 @@ function RangeDataManagerElem(bbox, data)
 		if (insertIndex >= 0) {
 			if (insertIndex <= this.data.length) {
 				let newElem = new CAttrEntry()
-				newElem.set(data, to);
+				newElem.set(val, to);
 				if (!split) {
 					this.data.splice(insertIndex, 0, newElem);
 				} else {
@@ -19161,74 +19208,131 @@ function RangeDataManagerElem(bbox, data)
 	 * @param {CAttrArray} attrArray
 	 * @param {number} from
 	 * @param {number} to
+	 * @param {boolean} [opt_trimEmpty=false]
+	 * @param {boolean} [opt_isReserve=false]
 	 * @constructor
 	 */
-	function CAttrArrayIteratorNoEmpty(attrArray, from, to) {
+	function CAttrArrayIterator(attrArray, from, to, opt_trimEmpty, opt_isReserve) {
 		/**@type {CAttrArray} */
 		this.attrArray = attrArray;
-		this.nextRow = from;
+		this.from = from;
+		this.fromIndex = 0;
+		this.nextFrom = from;
 		this.to = to;
-		this.lastIndex = this.attrArray.size() - 1;
+		this.toIndex = this.attrArray.size() - 1;
+		this.nextTo = to;
 
 		//output
-		this.curIndex = 0;
+		this.curIndex = -1;
 		this.curFrom = null;
 		this.curTo = null;
-		this.curVal = null;
+		this.xfs = null;//todo refactor StyleManager remove 'xfs' name required
 
-		if (this.nextRow > 0 && this.attrArray.size() > 0) {
-			this.curIndex = this.attrArray.searchIndex(this.nextRow);
-			//skip empty
-			while (this.curIndex < this.attrArray.size()) {
-				let elem = this.attrArray.getEntry(this.curIndex);
-				if (!elem.isDefault()) {
+		this._init(opt_trimEmpty, opt_isReserve);
+	}
+	CAttrArrayIterator.prototype._init = function (trimEmpty, isReserve) {
+		if (this.from > 0 && this.attrArray.size() > 0) {
+			this.fromIndex = this.attrArray.searchIndex(this.from);
+		}
+		if (this.to > 0 && this.fromIndex < this.toIndex) {
+			this.toIndex = this.attrArray.searchIndex(this.to, this.fromIndex);
+		}
+		if (trimEmpty) {
+			while (this.fromIndex < this.attrArray.size()) {
+				let elem = this.attrArray.getEntry(this.fromIndex);
+				if (elem && !elem.isDefault()) {
 					break;
 				}
-				this.nextRow = elem.endRow + 1;
-				this.curIndex++;
+				this.fromIndex++;
+				this.nextFrom = elem.endRow + 1;
+			}
+			while (this.fromIndex < this.toIndex) {
+				let elem = this.attrArray.getEntry(this.toIndex);
+				if (elem && !elem.isDefault()) {
+					break;
+				}
+				this.toIndex--;
+				if (this.toIndex >= 0) {
+					this.nextTo = this.attrArray.getEntry(this.toIndex).endRow;
+				} else {
+					this.nextTo = 0;
+				}
 			}
 		}
-		if (this.to > 0 && this.curIndex < this.lastIndex) {
-			this.lastIndex = this.attrArray.searchIndex(this.to, this.curIndex);
-			//skip empty
-			while (this.curIndex < this.lastIndex) {
-				let elem = this.attrArray.getEntry(this.lastIndex);
-				if (!elem.isDefault()) {
-					break;
-				}
-				this.lastIndex--;
-			}
+		if (isReserve) {
+			this.curIndex = this.toIndex;
+		} else {
+			this.curIndex = this.fromIndex;
 		}
 	}
-	CAttrArrayIteratorNoEmpty.prototype.next = function () {
-		if (this.curIndex <= this.lastIndex && this.nextRow <= this.to) {
+
+	CAttrArrayIterator.prototype.next = function () {
+		if (this.curIndex <= this.toIndex && this.nextFrom <= this.to) {
 			let entry = this.attrArray.getEntry(this.curIndex);
-			this.curFrom = this.nextRow;
+			this.xfs = g_StyleCache.getXf(entry.val);
+			this.curFrom = this.nextFrom;
 			this.curTo = Math.min(entry.endRow, this.to);
-			this.curVal = entry.val;
-			this.nextRow = this.curTo + 1;
+			this.nextFrom = this.curTo + 1;
 			this.curIndex++;
 			return true;
 		}
 		return false;
 	}
-	CAttrArrayIteratorNoEmpty.prototype.isEmpty = function () {
-		return !(this.curIndex < this.attrArray.size() && this.curIndex <= this.lastIndex && this.nextRow <= this.to);
+	CAttrArrayIterator.prototype.getCurFrom = function () {
+		return this.curFrom;
 	}
-	CAttrArrayIteratorNoEmpty.prototype.getMinIndex = function () {
-		let res = 0;
-		if (this.curIndex > 0) {
-			res = this.attrArray.getEntry(this.curIndex - 1).endRow + 1;
+	CAttrArrayIterator.prototype.getCurTo = function () {
+		return this.curTo;
+	}
+	CAttrArrayIterator.prototype.getCurVal = function () {
+		return this.xfs;
+	}
+	CAttrArrayIterator.prototype.nextNoEmpty = function () {
+		while (this.next() && !this.xfs) {
+		}
+		return !!this.xfs;
+	}
+	CAttrArrayIterator.prototype.prev = function () {
+		if (this.fromIndex <= this.curIndex && this.from <= this.nextTo) {
+			let entry = this.attrArray.getEntry(this.curIndex);
+			this.xfs = g_StyleCache.getXf(entry.val);
+			if (this.curIndex > 0) {
+				this.curFrom =  Math.max(this.from, this.attrArray.getEntry(this.curIndex - 1).endRow + 1);
+			} else {
+				this.curFrom = 0;
+			}
+			this.curTo = this.nextTo;
+			this.nextTo = this.curFrom - 1;
+			this.curIndex--;
+			return true;
+		}
+		return false;
+	}
+	CAttrArrayIterator.prototype.prevNoEmpty = function () {
+		while (this.prev() && !this.xfs) {
+		}
+		return !!this.xfs;
+	}
+	CAttrArrayIterator.prototype.getMinIndex = function () {
+		// return this.from;
+		let res = -1;
+		if (this.fromIndex > 0) {
+			res = this.attrArray.getEntry(this.fromIndex - 1).endRow + 1;
 		}
 		return res;
 	}
-	CAttrArrayIteratorNoEmpty.prototype.getMaxIndex = function () {
-		let res = 0;
-		if (this.lastIndex < this.attrArray.size()) {
-			res = this.attrArray.getEntry(this.his.lastIndex).endRow;
+	CAttrArrayIterator.prototype.getMaxIndex = function () {
+		// return this.to;
+		let res = -1;
+		if (this.toIndex < this.attrArray.size()) {
+			res = this.attrArray.getEntry(this.toIndex).endRow;
 		}
 		return res;
 	}
+	CAttrArrayIterator.prototype.setStyleInternal = function(xfs) {
+		//todo refactor StyleManager
+		this.xfs = g_StyleCache.addXf(xfs);
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -19804,7 +19908,7 @@ function RangeDataManagerElem(bbox, data)
 
 
 	window["AscCommonExcel"].CAttrArray = CAttrArray;
-	window["AscCommonExcel"].CAttrArrayIteratorNoEmpty = CAttrArrayIteratorNoEmpty;
+	window["AscCommonExcel"].CAttrArrayIterator = CAttrArrayIterator;
 
 
 })(window);

@@ -3166,97 +3166,81 @@ function (window, undefined) {
 		if (null == ws) {
 			return;
 		}
-		var nRow = Data.nRow;
-		var nCol = Data.nCol;
-		if (this.wb.bCollaborativeChanges) {
-			var collaborativeEditing = this.wb.oApi.collaborativeEditing;
-			nRow = collaborativeEditing.getLockOtherRow2(nSheetId, nRow);
-			nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, nCol);
-			var oLockInfo = new AscCommonExcel.asc_CLockInfo();
-			oLockInfo["sheetId"] = nSheetId;
-			oLockInfo["type"] = c_oAscLockTypeElem.Range;
-			oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
-			this.wb.aCollaborativeChangeElements.push(oLockInfo);
-		}
-		ws._getCell(nRow, nCol, function (cell) {
-			var Val = bUndo ? Data.oOldVal : Data.oNewVal;
-			if (AscCH.historyitem_Cell_Fontname == Type) {
-				cell.setFontname(Val);
-			} else if (AscCH.historyitem_Cell_Fontsize == Type) {
-				cell.setFontsize(Val);
-			} else if (AscCH.historyitem_Cell_Fontcolor == Type) {
-				cell.setFontcolor(Val);
-			} else if (AscCH.historyitem_Cell_Bold == Type) {
-				cell.setBold(Val);
-			} else if (AscCH.historyitem_Cell_Italic == Type) {
-				cell.setItalic(Val);
-			} else if (AscCH.historyitem_Cell_Underline == Type) {
-				cell.setUnderline(Val);
-			} else if (AscCH.historyitem_Cell_Strikeout == Type) {
-				cell.setStrikeout(Val);
-			} else if (AscCH.historyitem_Cell_FontAlign == Type) {
-				cell.setFontAlign(Val);
-			} else if (AscCH.historyitem_Cell_AlignVertical == Type) {
-				cell.setAlignVertical(Val);
-			} else if (AscCH.historyitem_Cell_AlignHorizontal == Type) {
-				cell.setAlignHorizontal(Val);
-			} else if (AscCH.historyitem_Cell_Fill == Type) {
-				cell.setFill(Val);
-			} else if (AscCH.historyitem_Cell_Border == Type) {
-				if (null != Val) {
-					cell.setBorder(Val.clone());
-				} else {
-					cell.setBorder(null);
-				}
-			} else if (AscCH.historyitem_Cell_ShrinkToFit == Type) {
-				cell.setShrinkToFit(Val);
-			} else if (AscCH.historyitem_Cell_Wrap == Type) {
-				cell.setWrap(Val);
-			} else if (AscCH.historyitem_Cell_Num == Type) {
-				cell.setNum(Val);
-			} else if (AscCH.historyitem_Cell_Angle == Type) {
-				cell.setAngle(Val);
-			} else if (AscCH.historyitem_Cell_Indent == Type) {
-				cell.setIndent(Val);
-			} else if (AscCH.historyitem_Cell_ChangeArrayValueFormat == Type) {
-				var multiText = [];
-				for (var i = 0, length = Val.length; i < length; ++i) {
-					multiText.push(Val[i].clone());
-				}
-				cell.setValueMultiTextInternal(multiText);
-			} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
-				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
-					cell.setValueData(Val);
-				}
-			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
-				if (null != Val) {
-					cell.setStyle(Val);
-				} else {
-					cell.setStyle(null);
-				}
-			} else if (AscCH.historyitem_Cell_SetFont == Type) {
-				cell.setFont(Val);
-			} else if (AscCH.historyitem_Cell_SetQuotePrefix == Type) {
-				cell.setQuotePrefix(Val);
-			} else if (AscCH.historyitem_Cell_SetPivotButton == Type) {
-				cell.setPivotButton(Val);
-			} else if (AscCH.historyitem_Cell_Style == Type) {
-				cell.setCellStyle(Val);
-			} else if (AscCH.historyitem_Cell_RemoveSharedFormula == Type) {
-				if (null !== Val && bUndo) {
-					var parsed = ws.workbook.workbookFormulas.get(Val);
-					if (parsed) {
-						cell.setFormulaParsed(parsed);
+		if (AscCH.historyitem_Cell_ChangeArrayValueFormat === Type || AscCH.historyitem_Cell_ChangeValue === Type ||
+			AscCH.historyitem_Cell_ChangeValueUndo === Type || historyitem_Cell_RemoveSharedFormula === Type) {
+			var nRow = Data.nRow;
+			var nCol = Data.nCol;
+			if (this.wb.bCollaborativeChanges) {
+				var collaborativeEditing = this.wb.oApi.collaborativeEditing;
+				nRow = collaborativeEditing.getLockOtherRow2(nSheetId, nRow);
+				nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, nCol);
+				var oLockInfo = new AscCommonExcel.asc_CLockInfo();
+				oLockInfo["sheetId"] = nSheetId;
+				oLockInfo["type"] = c_oAscLockTypeElem.Range;
+				oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
+				this.wb.aCollaborativeChangeElements.push(oLockInfo);
+			}
+			ws._getCell(nRow, nCol, function (cell) {
+				var Val = bUndo ? Data.oOldVal : Data.oNewVal;
+				if (AscCH.historyitem_Cell_ChangeArrayValueFormat == Type) {
+					var multiText = [];
+					for (var i = 0, length = Val.length; i < length; ++i) {
+						multiText.push(Val[i].clone());
+					}
+					cell.setValueMultiTextInternal(multiText);
+				} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
+					if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
+						cell.setValueData(Val);
+					}
+				} else if (AscCH.historyitem_Cell_RemoveSharedFormula == Type) {
+					if (null !== Val && bUndo) {
+						var parsed = ws.workbook.workbookFormulas.get(Val);
+						if (parsed) {
+							cell.setFormulaParsed(parsed);
+						}
 					}
 				}
-			} else if (AscCH.historyitem_Cell_SetApplyProtection == Type) {
-				cell.setApplyProtection(Val);
-			} else if (AscCH.historyitem_Cell_SetLocked == Type) {
-				cell.setLocked(Val);
-			} else if (AscCH.historyitem_Cell_SetHidden == Type) {
-				cell.setHiddenFormulas(Val);
+			});
+		} else {
+			var bbox = Data.index;
+			if (this.wb.bCollaborativeChanges) {
+				let collaborativeEditing = this.wb.oApi.collaborativeEditing;
+				nRow = collaborativeEditing.getLockOtherRow2(nSheetId, nRow);
+				nCol = collaborativeEditing.getLockOtherColumn2(nSheetId, nCol);
+				let oLockInfo = new AscCommonExcel.asc_CLockInfo();
+				oLockInfo["sheetId"] = nSheetId;
+				oLockInfo["type"] = c_oAscLockTypeElem.Range;
+				oLockInfo["rangeOrObjectId"] = new Asc.Range(nCol, nRow, nCol, nRow);
+				this.wb.aCollaborativeChangeElements.push(oLockInfo);
 			}
-		});
+			var Val = bUndo ? Data.oOldVal : Data.oNewVal;
+			var range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
+			range._applyCellStyle(false, Val, Type);
+			//todo
+			// } else if (AscCH.historyitem_Cell_Border == Type) {
+			// 	if (null != Val) {
+			// 		cell.setBorder(Val.clone());
+			// 	} else {
+			// 		cell.setBorder(null);
+			// 	}
+			// } else if (AscCH.historyitem_Cell_SetStyle == Type) {
+			// 	if (null != Val) {
+			// 		cell.setStyle(Val);
+			// 	} else {
+			// 		cell.setStyle(null);
+			// 	}
+			// } else if (AscCH.historyitem_Cell_RemoveSharedFormula == Type) {
+			// 	if (null !== Val && bUndo) {
+			// 		var parsed = ws.workbook.workbookFormulas.get(Val);
+			// 		if (parsed) {
+			// 			cell.setFormulaParsed(parsed);
+			// 		}
+			// 	}
+			// } else if (AscCH.historyitem_Cell_SetHidden == Type) {
+			// 	//todo
+			// 	//cell.setHiddenFormulas(Val);
+			// }
+		}
 	};
 	UndoRedoCell.prototype.forwardTransformationGet = function (Type, Data, nSheetId) {
 		if (AscCH.historyitem_Cell_ChangeValue === Type && Data.oNewVal && Data.oNewVal.formula) {
