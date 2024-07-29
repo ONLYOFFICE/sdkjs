@@ -8431,6 +8431,9 @@ CDocumentContent.prototype.Get_LogicDocument = function()
 };
 CDocumentContent.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
 };
 CDocumentContent.prototype.RemoveTextSelection = function()

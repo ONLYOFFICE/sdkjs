@@ -56,6 +56,7 @@ const allTests = [
 	'word/numbering/numberingCalculation.html',
 	'word/numbering/numberingAutocorrect.html',
 	'word/api/api.html',
+	'word/api/cross-ref.html',
 	'word/api/textInput.html',
 	'word/styles/displayStyle.html',
 	'word/styles/paraPr.html',

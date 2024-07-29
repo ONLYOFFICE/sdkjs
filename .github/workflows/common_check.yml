@@ -64,6 +64,7 @@ jobs:
           node-qunit-puppeteer tests/word/numbering/numberingCalculation.html
           node-qunit-puppeteer tests/word/numbering/numberingAutocorrect.html
           node-qunit-puppeteer tests/word/api/api.html
+          node-qunit-puppeteer tests/word/api/cross-ref.html
           node-qunit-puppeteer tests/word/api/textInput.html
           node-qunit-puppeteer tests/word/styles/displayStyle.html
           node-qunit-puppeteer tests/word/styles/paraPr.html

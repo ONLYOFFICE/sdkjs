@@ -16835,10 +16835,11 @@ Paragraph.prototype.GetComplexFieldsArrayByType = function(nType)
 };
 Paragraph.prototype.AddBookmarkForTOC = function()
 {
-	if (!this.LogicDocument)
-		return;
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return null;
 
-	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
+	var oBookmarksManager = logicDocument.GetBookmarksManager();
 
 	var sId   = oBookmarksManager.GetNewBookmarkId();
 	var sName = oBookmarksManager.GetNewBookmarkNameTOC();
@@ -16852,7 +16853,8 @@ Paragraph.prototype.AddBookmarkForTOC = function()
 };
 Paragraph.prototype.AddBookmarkForRef = function()
 {
-	if (!this.LogicDocument)
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return null;
 
 	//check is ref bookmark in paragraph
@@ -16866,7 +16868,7 @@ Paragraph.prototype.AddBookmarkForRef = function()
 			return aPair[0].GetBookmarkName();
 		}
 	}
-	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
+	var oBookmarksManager = logicDocument.GetBookmarksManager();
 	var sId   = oBookmarksManager.GetNewBookmarkId();
 	var sBookmarkName = oBookmarksManager.GetNewBookmarkNameRef();
 	this.Add_ToContent(0, new CParagraphBookmark(true, sId, sBookmarkName));
@@ -17059,6 +17061,7 @@ Paragraph.prototype.private_GetLastSEQPos = function(sCaption)
 };
 Paragraph.prototype.CanAddRefAfterSEQ = function(sCaption)
 {
+	
 	if (!this.LogicDocument)
 		return false;
 	var oSEQPos = this.private_GetLastSEQPos(sCaption);
