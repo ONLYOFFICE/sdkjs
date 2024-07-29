@@ -22796,18 +22796,15 @@ CDocument.prototype.private_FinalizeValidateComplexFields = function()
 };
 CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, sSeparator)
 {
-	if(false === this.IsSelectionLocked(AscCommon.changestype_Document_Content, {
-		Type      : changestype_2_ElementsArray_and_Type,
-		Elements  : [oParagraph],
-		CheckType : changestype_Paragraph_Content
-	}))
+	// Мы не проверяем тут, что параграф, к которому добавляется ссылка залочен (в контроле или совместкой),
+	// т.к. это невидимое для пользователя действие, не меняющее вид параграфа
+	if (!this.IsSelectionLocked(AscCommon.changestype_Document_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_AddCrossRef);
-		var sBookmarkName = oParagraph.AddBookmarkForRef();
-		if(sBookmarkName)
-		{
-			this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
-		}
+		let bookmarkName = oParagraph.AddBookmarkForRef();
+		if (bookmarkName)
+			this.private_AddRefToBookmark(bookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
+		
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.FinalizeAction();
