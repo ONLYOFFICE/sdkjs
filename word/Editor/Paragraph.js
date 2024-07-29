@@ -16851,23 +16851,33 @@ Paragraph.prototype.AddBookmarkForTOC = function()
 
 	return sName;
 };
+/**
+ * Проверяем, есть ли в параграфе уже закладка для ссылки на данный параграф
+ * @returns {string}
+ */
+Paragraph.prototype.GetBookmarkRefToParagraph = function()
+{
+	let startBookmarks = this.private_FindBookmarks(0, this.Content.length - 1);
+	if (startBookmarks.length <= 0)
+		return "";
+	
+	let endBookmarks = this.private_FindBookmarks(this.Content.length - 2, 0);
+	let pair = this.private_FindPairBookmarks(startBookmarks, endBookmarks, "_Ref");
+	if (pair)
+		return pair[0].GetBookmarkName();
+	
+	return "";
+};
 Paragraph.prototype.AddBookmarkForRef = function()
 {
 	let logicDocument = this.GetLogicDocument();
 	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return null;
-
-	//check is ref bookmark in paragraph
-	var aStartBookmarks = this.private_FindBookmarks(0, this.Content.length - 1), aEndBookmarks;
-	if(aStartBookmarks.length > 0)
-	{
-		aEndBookmarks = this.private_FindBookmarks(this.Content.length - 2, 0);
-		var aPair = this.private_FindPairBookmarks(aStartBookmarks, aEndBookmarks, "_Ref");
-		if(aPair)
-		{
-			return aPair[0].GetBookmarkName();
-		}
-	}
+	
+	let bookmark = this.GetBookmarkRefToParagraph();
+	if (bookmark)
+		return bookmark;
+	
 	var oBookmarksManager = logicDocument.GetBookmarksManager();
 	var sId   = oBookmarksManager.GetNewBookmarkId();
 	var sBookmarkName = oBookmarksManager.GetNewBookmarkNameRef();

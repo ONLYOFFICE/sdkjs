@@ -61,6 +61,7 @@ $(function () {
 		
 		logicDocument.AddRefToParagraph(headingParagraph, 0, true, false, undefined);
 		assert.strictEqual(AscTest.GetParagraphText(p), "HeadingText", "Check text after adding ref to a block-level sdt");
+		assert.strictEqual(headingParagraph.GetBookmarkRefToParagraph(), "_Ref1", "Check bookmark name");
 		
 		// Check bug 69293. Adding a cross-ref to a locked block-level sdt
 		
@@ -85,6 +86,6 @@ $(function () {
 		
 		logicDocument.AddRefToParagraph(headingParagraph, 0, true, false, undefined);
 		assert.strictEqual(AscTest.GetParagraphText(p), "HeadingText", "Check text after adding ref to a locked block-level sdt");
-
+		assert.strictEqual(headingParagraph.GetBookmarkRefToParagraph(), "_Ref1", "Check bookmark name");
 	});
 });
