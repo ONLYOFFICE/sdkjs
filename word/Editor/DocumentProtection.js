@@ -66,6 +66,7 @@ function CDocProtect() {
 	this.enforcement = null;
 	this.formatting = null;
 	this.hashValue = null;
+	this.hashValueOdt = null;
 	this.saltValue = null;
 	this.spinCount = null;
 
@@ -159,6 +160,7 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 	this.spinCount = oProps.spinCount;
 	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
 	this.hashValue = oProps.hashValue;
+	this.hashValueOdt = oProps.hashValueOdt;
 	this.cryptProviderType = oProps.cryptProviderType;
 
 	this.enforcement = oProps.enforcement;
@@ -172,6 +174,7 @@ CDocProtect.prototype.copyTo = function(docProtect)
 	docProtect.enforcement = this.enforcement;
 	docProtect.formatting = this.formatting;
 	docProtect.hashValue = this.hashValue;
+	docProtect.hashValueOdt = this.hashValueOdt;
 	docProtect.saltValue = this.saltValue;
 	docProtect.spinCount = this.spinCount;
 	docProtect.algIdExt = this.algIdExt;

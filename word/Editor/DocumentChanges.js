@@ -735,6 +735,7 @@ function CChangesDocumentProtection(Class, Old, New, sUserId) {
 		this.OldEnforcement = Old.enforcement;
 		this.OldFormatting = Old.formatting;
 		this.OldHashValue = Old.hashValue;
+		this.OldHashValueOdt = Old.hashValueOdt;
 		this.OldSaltValue = Old.saltValue;
 		this.OldSpinCount = Old.spinCount;
 		this.OldAlgIdExt = Old.algIdExt;
@@ -752,6 +753,7 @@ function CChangesDocumentProtection(Class, Old, New, sUserId) {
 		this.NewEnforcement = New.enforcement === Old.enforcement ? undefined : New.enforcement;
 		this.NewFormatting = New.formatting === Old.formatting ? undefined : New.formatting;
 		this.NewHashValue = New.hashValue === Old.hashValue ? undefined : New.hashValue;
+		this.NewHashValueOdt = New.hashValueOdt === Old.hashValueOdt ? undefined : New.hashValueOdt;
 		this.NewSaltValue = New.saltValue === Old.saltValue ? undefined : New.saltValue;
 		this.NewSpinCount = New.spinCount === Old.spinCount ? undefined : New.spinCount;
 		this.NewAlgIdExt = New.algIdExt === Old.algIdExt ? undefined : New.algIdExt;
@@ -769,6 +771,7 @@ function CChangesDocumentProtection(Class, Old, New, sUserId) {
 		this.OldEnforcement = undefined;
 		this.OldFormatting = undefined;
 		this.OldHashValue = undefined;
+		this.OldHashValueOdt = undefined;
 		this.OldSaltValue = undefined;
 		this.OldSpinCount = undefined;
 		this.OldAlgIdExt = undefined;
@@ -786,6 +789,7 @@ function CChangesDocumentProtection(Class, Old, New, sUserId) {
 		this.NewEnforcement = undefined;
 		this.NewFormatting = undefined;
 		this.NewHashValue = undefined;
+		this.NewHashValueOdt = undefined;
 		this.NewSaltValue = undefined;
 		this.NewSpinCount = undefined;
 		this.NewAlgIdExt = undefined;
@@ -814,6 +818,7 @@ CChangesDocumentProtection.prototype.Undo = function () {
 	this.Class.formatting = this.OldFormatting;
 
 	this.Class.hashValue = this.OldHashValue;
+	this.Class.hashValueOdt = this.OldHashValueOdt;
 	this.Class.saltValue = this.OldSaltValue;
 	this.Class.spinCount = this.OldSpinCount;
 	this.Class.algIdExt = this.OldAlgIdExt;
@@ -843,6 +848,7 @@ CChangesDocumentProtection.prototype.Redo = function (sUserId, isLoadChanges) {
 	this.Class.enforcement = this.NewEnforcement;
 	this.Class.formatting = this.NewFormatting;
 	this.Class.hashValue = this.NewHashValue;
+	this.Class.hashValueOdt = this.NewHashValueOdt;
 	this.Class.saltValue = this.NewSaltValue;
 	this.Class.spinCount = this.NewSpinCount;
 	this.Class.formatting = this.NewFormatting;
@@ -910,6 +916,12 @@ CChangesDocumentProtection.prototype.WriteToBinary = function (Writer) {
 	if (null != this.NewHashValue) {
 		Writer.WriteBool(true);
 		Writer.WriteString2(this.NewHashValue);
+	} else {
+		Writer.WriteBool(false);
+	}
+	if (null != this.NewHashValueOdt) {
+		Writer.WriteBool(true);
+		Writer.WriteString2(this.NewHashValueOdt);
 	} else {
 		Writer.WriteBool(false);
 	}
@@ -1011,6 +1023,9 @@ CChangesDocumentProtection.prototype.ReadFromBinary = function (Reader) {
 		this.NewHashValue = Reader.GetString2();
 	}
 	if (Reader.GetBool()) {
+		this.NewHashValueOdt = Reader.GetString2();
+	}
+	if (Reader.GetBool()) {
 		this.NewSaltValue = Reader.GetString2();
 	}
 	if (Reader.GetBool()) {
@@ -1058,6 +1073,7 @@ CChangesDocumentProtection.prototype.CreateReverseChange = function () {
 	ret.OldEnforcement = this.NewEnforcement;
 	ret.OldFormatting = this.NewFormatting;
 	ret.OldHashValue = this.NewHashValue;
+	ret.OldHashValueOdt = this.NewHashValueOdt;
 	ret.OldSaltValue = this.NewSaltValue;
 	ret.OldSpinCount = this.NewSpinCount;
 	ret.OldAlgIdExt = this.NewAlgIdExt;
@@ -1074,7 +1090,7 @@ CChangesDocumentProtection.prototype.CreateReverseChange = function () {
 	ret.NewEdit = this.OldEdit;
 	ret.NewEnforcement = this.OldEnforcement;
 	ret.NewFormatting = this.OldFormatting;
-	ret.NewHashValue = this.OldHashValue;
+	ret.NewHashValueOdt = this.OldHashValueOdt;
 	ret.NewSaltValue = this.OldSaltValue;
 	ret.NewSpinCount = this.OldSpinCount;
 	ret.NewAlgIdExt = this.OldAlgIdExt;

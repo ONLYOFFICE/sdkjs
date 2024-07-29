@@ -13761,7 +13761,7 @@ background-repeat: no-repeat;\
 
 		let t = this;
 
-		let calculatedHashValue;
+		let calculatedHashValue, calculatedHashValueOdt;
 		let callback = function (res) {
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
@@ -13776,6 +13776,8 @@ background-repeat: no-repeat;\
 					props.hashValue = calculatedHashValue;
 					props.enforcement = props.edit !== Asc.c_oAscEDocProtect.None;
 					props.cryptProviderType = cryptProviderType;
+
+					props.hashValueOdt = calculatedHashValueOdt;
 
 					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
@@ -13817,6 +13819,7 @@ background-repeat: no-repeat;\
 				if (props != null && props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None) {
 					//устанавливаем защиту
 					calculatedHashValue = hash && hash[0] ? hash[0] : null;
+					calculatedHashValueOdt = hash && hash[1] ? hash[1] : null;
 					callback(true);
 				} else {
 					//пробуем снять защиту
@@ -13836,6 +13839,7 @@ background-repeat: no-repeat;\
 			}
 		};
 
+		let supportOdtPassword = true;
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (password != null) {
 			if (password === "") {
@@ -13847,6 +13851,10 @@ background-repeat: no-repeat;\
 				let hashPassword = AscCommon.prepareWordPassword(password);
 				let hashArr = [];
 				if (hashPassword) {
+					hashArr.push({password: hashPassword, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
+				}
+				if (supportOdtPassword) {
+					//PBKDF2
 					hashArr.push({password: hashPassword, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
 				}
 				hashArr.push({password: password, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});

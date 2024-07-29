@@ -747,7 +747,8 @@ var c_oDocProtect = {
 	CryptProvider: 12,
 	CryptProviderType: 13,
 	CryptProviderTypeExt: 14,
-	CryptProviderTypeExtSource: 15
+	CryptProviderTypeExtSource: 15,
+	HashValueOdt: 16
 };
 var c_oWriteProtect = {
 	AlgorithmName: 0,
@@ -7367,6 +7368,12 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		{
 			this.bs.WriteItem(c_oDocProtect.HashValue, function () {
 				oThis.memory.WriteString3(oDocProtect.hashValue);
+			});
+		}
+		if (oDocProtect.hashValueOdt)
+		{
+			this.bs.WriteItem(c_oDocProtect.HashValueOdt, function () {
+				oThis.memory.WriteString3(oDocProtect.hashValueOdt);
 			});
 		}
 		if (oDocProtect.saltValue)
@@ -16875,6 +16882,10 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		else if (c_oDocProtect.HashValue == type)
 		{
 			pDocProtect.hashValue = this.stream.GetString2LE(length);
+		}
+		else if (c_oDocProtect.HashValueOdt == type)
+		{
+			pDocProtect.hashValueOdt = this.stream.GetString2LE(length);
 		}
 		else if (c_oDocProtect.SaltValue == type)
 		{
