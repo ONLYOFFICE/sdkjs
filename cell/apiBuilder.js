@@ -10266,7 +10266,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, true, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
@@ -10297,7 +10297,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, false, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
