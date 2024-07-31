@@ -175,8 +175,8 @@
 			}
 			else
 			{
-				this.Changes[i].Redo();
-				changes.push(this.Changes[i]);
+				change.Redo();
+				changes.push(change);
 			}
 		}
 		return changes;
@@ -198,8 +198,8 @@
 			}
 			else
 			{
-				this.Changes[i].Undo();
-				changes.push(this.Changes[i]);
+				change.Undo();
+				changes.push(change);
 			}
 		}
 		return changes;

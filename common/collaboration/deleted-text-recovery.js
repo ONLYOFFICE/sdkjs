@@ -65,7 +65,7 @@
 		let oCoHistory			= AscCommon.CollaborativeEditing.CoHistory;
 		let arrChangesList		= oCoHistory.Changes;
 		let arrPointsList		= AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
-		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
+		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex + 1;
 		let arrChanges			= arrChangesList.slice(0, arrPointsList[nIndex]);
 
 		if (!arrChanges || !arrChanges.length)
@@ -139,7 +139,7 @@
 		for (let nCounter = 0; nCounter < this.m_RewiewDelPoints.length; nCounter++)
 		{
 			let arrCurr = this.m_RewiewDelPoints[nCounter];
-			if (nCounter + 1 < AscCommon.CollaborativeEditing.CoHistory.curChangeIndex)
+			if (nCounter < AscCommon.CollaborativeEditing.CoHistory.curChangeIndex)
 			{
 				let arrTemp = [];
 				for (let j = 0; j < arrCurr.length; j++)

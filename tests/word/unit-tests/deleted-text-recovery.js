@@ -635,31 +635,31 @@ $(function () {
 
 		Init(undefined, true);
 
-		MoveToPoint(9)
+		MoveToPoint(8)
 		assert.ok(true, "Move to point 9");
 
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello", "Input 'Hello'");
 
-		MoveToPoint(4)
+		MoveToPoint(3)
 		assert.ok(true, "Move to point 4");
 
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello word", "Input 'Hello word'");
 
-		MoveToPoint(2)
+		MoveToPoint(1)
 		assert.ok(true, "Move to point 2");
 
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello3", "Input 'Hello3'");
 
-		MoveToPoint(9)
+		MoveToPoint(8)
 		assert.ok(true, "Move to point 9");
 
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello", "Input 'Hello'");
 
-		MoveToPoint(4)
+		MoveToPoint(3)
 		assert.ok(true, "Move to point 4");
 
 		strDeletedText = AscTest.GetParagraphText(p);
