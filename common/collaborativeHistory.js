@@ -61,9 +61,8 @@
 		if (!this.Changes || !this.Changes || this.ChangesSplitByPoints.length !== 0)
 			return;
 
-		let arrCurrent		= [];
-
-		for (let i = 0; i < this.Changes.length; i++)
+		let arrCurrent = [0];
+		for (let i = 1; i < this.Changes.length; i++)
 		{
 			let oCurrentChange = this.Changes[i];
 			let oPrevChange = (i === 0)
@@ -78,7 +77,7 @@
 
 		arrCurrent.push(this.Changes.length);
 		this.ChangesSplitByPoints = arrCurrent;
-		this.curChangeIndex = arrCurrent.length;
+		this.curChangeIndex = arrCurrent.length - 1;
 	};
 	CCollaborativeHistory.prototype.clear = function()
 	{
@@ -92,36 +91,32 @@
 		this.textRecovery = null;
 	};
 	/**
-	 * Отменяем изменения хождения по истории ревизии
-	 */
-	CCollaborativeHistory.prototype.UndoNavigationRevision = function ()
-	{
-		if (this.curChangeIndex !== -1)
-		{
-			let arr = this.ChangesSplitByPoints[this.curChangeIndex - 1];
-			let arrInput = this.RedoUndoChanges(arr, false);
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
-		}
-	};
-	/**
 	 * Перемещаемся по истории ревизии на заданную точку
-	 * @param {number} intCount - Позиция на которую необходимо переместится
+	 * @param {number} pointIndex - Позиция на которую необходимо переместится
 	 * @constructor
 	 */
-	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount)
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function(pointIndex)
 	{
-		this.SplitChangesByPoints();
-
-		if (intCount <= 0 || intCount > this.ChangesSplitByPoints.length || intCount === this.curChangeIndex)
+		let logicDocument = this.CoEditing.GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
 			return false;
 
-		this.UndoNavigationRevision();
-		this.curChangeIndex	= intCount;
-		let arr	= this.ChangesSplitByPoints[intCount - 1];
-
-		let arrInput		= this.RedoUndoChanges(arr, true);
-		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
-
+		this.SplitChangesByPoints();
+		if (this.curChangeIndex < 0)
+			return false;
+		
+		pointIndex = Math.max(0, Math.min(pointIndex, this.ChangesSplitByPoints.length - 1));
+		if (pointIndex === this.curChangeIndex)
+			return false;
+		
+		let changes;
+		if (this.curChangeIndex < pointIndex)
+			changes = this._RedoChanges(this.ChangesSplitByPoints[this.curChangeIndex], this.ChangesSplitByPoints[pointIndex]);
+		else
+			changes = this._UndoChanges(this.ChangesSplitByPoints[this.curChangeIndex], this.ChangesSplitByPoints[pointIndex]);
+		
+		this.curChangeIndex	= pointIndex;
+		logicDocument.RecalculateByChanges(changes);
 		return true;
 	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
@@ -163,73 +158,51 @@
 	{
 		return (this.OwnRanges.length > 0)
 	};
-	/**
-	 * Накатываем/откатываем полученный массив изменений
-	 * @param {array} arr
-	 * @param {boolean} isReverse - нужно ли обратить входящие изменения
-	 * @returns {[]} возвращаем массив действий
-	 */
-	CCollaborativeHistory.prototype.RedoUndoArr = function (arr, isReverse)
+	CCollaborativeHistory.prototype._RedoChanges = function(startPos, endPos)
 	{
-		let changeArray = [];
-
-		for (let i = 0; i < arr.length; i++)
+		let changes = [];
+		for (let i = startPos; i < endPos; ++i)
 		{
-			let change = arr[i];
-
-			if (change.IsContentChange && change.IsContentChange())
+			let change = this.Changes[i];
+			if (change.IsContentChange())
 			{
 				let simpleChanges = change.ConvertToSimpleChanges();
-
-				for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; simpleIndex--)
+				for (let simpleIndex = 0; simpleIndex < simpleChanges.length; ++simpleIndex)
 				{
-					let tmpChange = simpleChanges[simpleIndex];
-					if (isReverse)
-						tmpChange = tmpChange.CreateReverseChange();
-
-					tmpChange.Redo();
-					changeArray.push(tmpChange);
+					simpleChanges[simpleIndex].Redo();
+					changes.push(simpleChanges[simpleIndex]);
 				}
 			}
 			else
 			{
-				if (isReverse)
-					change = change.CreateReverseChange();
-
-				if (!change)
-					continue;
-
-				change.Redo();
-				changeArray.push(change);
+				this.Changes[i].Redo();
+				changes.push(this.Changes[i]);
 			}
 		}
-
-		return changeArray;
+		return changes;
 	};
-	/**
-	 * Берем изменения из this.Changes накатываем/откатываем заданное количество действий без изменений для this.Changes
-	 * @param {number} count
-	 * @param {boolean} isReverse - нужно ли обратить входящие изменения
-	 * @returns {[]} возвращаем массив действий
-	 */
-	CCollaborativeHistory.prototype.RedoUndoChanges = function(count, isReverse)
+	CCollaborativeHistory.prototype._UndoChanges = function(startPos, endPos)
 	{
-		this.UndoDeletedTextRecovery();
-
-		if (isNaN(count))
-			return [];
-
-		let arr = [];
-
-		if (isReverse)
-			arr = this.Changes.slice(count, this.Changes.length).reverse();
-		else
-			arr = this.Changes.slice(count, this.Changes.length);
-
-		if (arr.length === 0)
-			return [];
-
-		return this.RedoUndoArr(arr, isReverse);
+		let changes = [];
+		for (let i = startPos - 1; i >= endPos; --i)
+		{
+			let change = this.Changes[i];
+			if (change.IsContentChange())
+			{
+				let simpleChanges = change.ConvertToSimpleChanges();
+				for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; --simpleIndex)
+				{
+					simpleChanges[simpleIndex].Undo();
+					changes.push(simpleChanges[simpleIndex]);
+				}
+			}
+			else
+			{
+				this.Changes[i].Undo();
+				changes.push(this.Changes[i]);
+			}
+		}
+		return changes;
 	};
 	/**
 	 * Откатываем заданное количество действий
