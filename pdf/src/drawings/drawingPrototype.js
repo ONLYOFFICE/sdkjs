@@ -112,8 +112,8 @@
             let nEndInPara   = oPara.Selection.EndPos;
             if (nStartInPara > nEndInPara) [nStartInPara, nEndInPara] = [nEndInPara, nStartInPara];
 
-            let nStartLine = oPara.Pages[nPage].StartLine;
-			let nEndLine   = oPara.Pages[nPage].EndLine;
+            let nStartLine = oPara.Pages[0].StartLine;
+			let nEndLine   = oPara.Pages[0].EndLine;
 
             if (nStartInPara > oPara.Lines[nEndLine].Get_EndPos() || nEndInPara < oPara.Lines[nStartLine].Get_StartPos()) {
 				return aInfo;
@@ -124,7 +124,7 @@
 			}
 
             let oDrawSelectionState = new AscWord.ParagraphDrawSelectionState(oPara);
-			oDrawSelectionState.resetPage(nPage);
+			oDrawSelectionState.resetPage(0);
 
             for (let iLine = nStartLine; iLine <= nEndLine; ++iLine) {
                 let oLine = oPara.Lines[iLine];
