@@ -7196,7 +7196,8 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			if (nOperandType === cElementType.cellsRange3D) {
 				const oParentCell = parserFormula.getParent();
-				if (oParentCell instanceof AscCommonExcel.DefName) {
+				if (oParentCell instanceof AscCommonExcel.DefName ||
+					oParentCell instanceof CT_WorksheetSource || typeof oParentCell === 'string') {
 					return false;
 				}
 				const aRanges = found_operand.getRanges().filter(function (oRange) {
