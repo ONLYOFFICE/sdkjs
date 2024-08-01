@@ -5812,7 +5812,11 @@ function(window, undefined) {
 						} else {
 							if (oAxisLabels.align) {
 								var labels_offset = oCatAx.labels.getLabelsOffset();
-								const rot = oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr ? oAxisLabels.axis.txPr.bodyPr.updatedRot : oAxisLabels.axis.txPr.bodyPr.rot ;
+								const _bodyPr = oAxisLabels.axis && oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr;
+								let rot = 0;
+								if (_bodyPr) {
+									rot = _bodyPr.updatedRot ? _bodyPr.updatedRot : _bodyPr.rot;
+								}
 								let fAngle = getRotationAngle(rot);
 								for (i = 0; i < oAxisLabels.aLabels.length; ++i) {
 									if (oAxisLabels.aLabels[i]) {
