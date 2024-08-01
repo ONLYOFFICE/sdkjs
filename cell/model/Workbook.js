@@ -5677,6 +5677,9 @@
 		wsFrom._forEachColData(function(sheetMemory, index){
 			t.cellsByCol[index] = sheetMemory.clone();
 		});
+		wsFrom._forEachColXf(function(attrArray, index){
+			t.cellsXfByCol[index] = attrArray.clone();
+		});
 		this.cellsByColRowsCount = wsFrom.cellsByColRowsCount;
 
 		var aMerged = wsFrom.mergeManager.getAll();
@@ -6383,6 +6386,14 @@
 			}
 		}
 	};
+	Worksheet.prototype._forEachColXf = function(fAction) {
+		for (var i = 0; i < this.cellsXfByCol.length; ++i) {
+			var attrArray = this.cellsXfByCol[i];
+			if (attrArray) {
+				fAction(attrArray, i);
+			}
+		}
+	};
 	Worksheet.prototype._forEachCell = function(fAction) {
 		this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0)._foreachNoEmpty(fAction);
 	};
@@ -6706,6 +6717,12 @@
 		this._forEachColData(function(sheetMemory) {
 			sheetMemory.deleteRange(start, (-nDif));
 		});
+		for (let i = 0; i < this.cellsXfByCol.length; ++i) {
+			let attrArray = this.cellsXfByCol[i];
+			if (attrArray) {
+				attrArray.deleteRange(start, -nDif);
+			}
+		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
 		this.workbook.dependencyFormulas.notifyChanged(renameRes && renameRes.changed);
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_RemoveRows, this.getId(), new Asc.Range(0, start, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromToRowCol(true, start, stop));
@@ -6782,14 +6799,23 @@
 			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
 		});
 		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
+		for (let i = 0; i < this.cellsXfByCol.length; ++i) {
+			let attrArray = this.cellsXfByCol[i];
+			if (attrArray) {
+				attrArray.insertRange(index, count);
+			}
+		}
 		//copy property from row/cell above
 		if (index > 0 && !this.workbook.bUndoChanges)
 		{
 			this.rowsData.copyRangeByChunk((index - 1), 1, index, count);
 			this.nRowsCount = Math.max(this.nRowsCount, this.rowsData.getMaxIndex() + 1);
-			this._forEachColData(function(sheetMemory) {
-				sheetMemory.copyRangeByChunk((index - 1), 1, index, count);
-				t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+			// this._forEachColData(function(sheetMemory) {
+			// 	sheetMemory.copyRangeByChunk((index - 1), 1, index, count);
+			// 	t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+			// });
+			this._forEachColXf(function(attrArray) {
+				attrArray.copyRangeByChunk((index - 1), 1, index, count);
 			});
 			this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
 			//show rows and remain only cell xf property
@@ -8300,6 +8326,12 @@
 				sheetMemory.deleteRange(nTop, -dif);
 			}
 		}
+		for (let i = 0; i < this.cellsXfByCol.length; ++i) {
+			let attrArray = this.cellsXfByCol[i];
+			if (attrArray) {
+				attrArray.deleteRange(nTop, -dif);
+			}
+		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
 		this.workbook.dependencyFormulas.notifyChanged(renameRes.changed);
 		AscCommon.History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ShiftCellsTop, this.getId(), oActualRange, new UndoRedoData_BBox(oBBox));
@@ -8338,26 +8370,45 @@
 			borders = this._getBordersForInsert(oBBox, false);
 		}
 		var cellsByColLength = this.getColDataLength();
-		for (var i = cellsByColLength - 1; i >= nLeft; --i) {
-			var sheetMemoryFrom = this.getColDataNoEmpty(i);
+		for (let i = cellsByColLength - 1; i >= nLeft; --i) {
+			let sheetMemoryFrom = this.getColDataNoEmpty(i);
 			if (sheetMemoryFrom) {
 				if (i + dif <= gc_nMaxCol0) {
 					this.getColData(i + dif).copyRange(sheetMemoryFrom, oBBox.r1, oBBox.r1, oBBox.r2 - oBBox.r1 + 1);
 				}
 				sheetMemoryFrom.clear(oBBox.r1, oBBox.r2 + 1);
 			}
+			let attrArray = this.getColXfNoEmpty(i);
+			if (attrArray) {
+				if (i + dif <= gc_nMaxCol0) {
+					this.getColXf(i + dif).copyRange(attrArray, oBBox.r1, oBBox.r1, oBBox.r2 - oBBox.r1 + 1);
+				}
+				attrArray.clear(oBBox.r1, oBBox.r2 + 1);
+			}
 		}
 		this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 		//copy property from row/cell above
 		if (nLeft > 0 && !this.workbook.bUndoChanges)
 		{
+
 			var prevSheetMemory = this.getColDataNoEmpty(nLeft - 1);
 			if (prevSheetMemory) {
 				//todo hidden, keep only style
 				for (var i = nLeft; i <= nRight; ++i) {
 					this.getColData(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, oBBox.r2 - oBBox.r1 + 1);
+					this.getColXf(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, oBBox.r2 - oBBox.r1 + 1);
 				}
 				this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
+				// var attrArray = this.worksheet.getColXfNoEmpty(i);
+				// if (attrArray) {
+				// 	attrArray.copyRange(attrArray, oBBox.r1, 0, height);
+				// 	for (j in oSortedIndexes) {
+				// 		nIndexFrom = j - 0;
+				// 		nIndexTo = oSortedIndexes[j];
+				// 		tempSheetMemory.copyRange(attrArray, nIndexFrom, nIndexTo - oBBox.r1, 1);
+				// 	}
+				// 	attrArray.copyRange(tempSheetMemory, 0, oBBox.r1, height);
+				// }
 				//show rows and remain only cell xf property
 				this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell) {
 					cell.clearDataKeepXf(borders[cell.nRow]);
@@ -8416,6 +8467,13 @@
 			}
 		}
 		this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
+		for (let i = 0; i < this.cellsXfByCol.length; ++i) {
+			let attrArray = this.cellsXfByCol[i];
+			if (attrArray) {
+				attrArray.insertRange(nTop, dif);
+			}
+		}
+
 		if (nTop > 0 && !this.workbook.bUndoChanges)
 		{
 			for (var i = oBBox.c1; i <= oBBox.c2; ++i) {
@@ -8423,6 +8481,10 @@
 				if (sheetMemory) {
 					sheetMemory.copyRangeByChunk((nTop - 1), 1, nTop, dif);
 					t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
+				}
+				let attrArray = this.getColXfNoEmpty(i);
+				if (attrArray) {
+					attrArray.copyRangeByChunk((nTop - 1), 1, nTop, dif);
 				}
 			}
 			this.nRowsCount = Math.max(this.nRowsCount, this.cellsByColRowsCount);
@@ -13470,6 +13532,8 @@
 		this._hasChanged = true;
 	};
 	Cell.prototype.clearDataKeepXf = function(border) {
+		//todo
+		return;
 		var xfs = this.xfs;
 		this.clearData();
 		this.xfs = xfs;
@@ -13477,7 +13541,7 @@
 		this.setBorder(border);
 		AscCommon.History.TurnOn();
 	};
-	Cell.prototype.saveContent = function(opt_inCaseOfChange) {
+	Cell.prototype.saveContent = function(opt_inCaseOfChange, opt_append) {
 		if (this.hasRowCol() && (!opt_inCaseOfChange || this._hasChanged)) {
 			this._hasChanged = false;
 			var wb = this.ws.workbook;
@@ -13504,7 +13568,7 @@
 
 			let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			let attrArray = this.ws.getColXf(this.nCol);
-			attrArray.set(this.nRow, xfSave, true);
+			attrArray.set(this.nRow, xfSave, opt_append);
 		}
 	};
 	Cell.prototype.loadContent = function(row, col, opt_extMemory, opt_sheetMemory, opt_extXf, opt_xf) {
@@ -13537,12 +13601,14 @@
 		}
 		if (opt_extXf) {
 			this.xfs = opt_xf;
+			res = res || null !== this.xfs;
 		} else {
 			let attrArray = this.ws.getColXfNoEmpty(this.nCol);
 			if (attrArray) {
 				let xfSave = attrArray.get(this.nRow);
 				if (null !== xfSave) {
 					this.xfs = g_StyleCache.getXf(xfSave);
+					res = res || null !== this.xfs;
 				}
 			}
 		}
@@ -16669,7 +16735,7 @@
 							continue;
 						}
 						if (colXfIter && colXfIter.getCurFrom() <= i && i <= colXfIter.getCurTo()) {
-							xf = colXfIter.getCurVal();
+							xf = colXfIter.getCurXf();
 							if (!colXfIter.next()) {
 								colXfIter = undefined;
 							}
@@ -17130,7 +17196,7 @@
 	};
 	Range.prototype._applyCellStyleIter = function (colXf, colXfIter, val, historyType) {
 		let oRes = this.worksheet.workbook.oStyleManager.setByHistoryType(historyType, colXfIter, val);
-		colXf.setArea(colXfIter.getCurFrom(), colXfIter.getCurTo(), colXfIter.getCurVal().getIndexNumber());
+		colXf.setArea(colXfIter.getCurFrom(), colXfIter.getCurTo(), colXfIter.getCurXf().getIndexNumber());
 		if (AscCommon.History.Is_On() && oRes.oldVal !== oRes.newVal) {
 			//todo to many objects
 			let bbox = new Asc.Range(this.bbox.c1, colXfIter.getCurFrom(), this.bbox.c2, colXfIter.getCurTo());
@@ -19500,6 +19566,7 @@
 				}
 			}
 		} else {
+			//todo
 			tempSheetMemory = new SheetMemory(g_nCellStructSize, height);
 			for (i = oBBox.c1; i <= oBBox.c2; ++i) {
 				var sheetMemory = this.worksheet.getColDataNoEmpty(i);
@@ -19511,6 +19578,16 @@
 						tempSheetMemory.copyRange(sheetMemory, nIndexFrom, nIndexTo - oBBox.r1, 1);
 					}
 					sheetMemory.copyRange(tempSheetMemory, 0, oBBox.r1, height);
+				}
+				var attrArray = this.worksheet.getColXfNoEmpty(i);
+				if (attrArray) {
+					attrArray.copyRange(attrArray, oBBox.r1, 0, height);
+					for (j in oSortedIndexes) {
+						nIndexFrom = j - 0;
+						nIndexTo = oSortedIndexes[j];
+						tempSheetMemory.copyRange(attrArray, nIndexFrom, nIndexTo - oBBox.r1, 1);
+					}
+					attrArray.copyRange(tempSheetMemory, 0, oBBox.r1, height);
 				}
 			}
 		}
@@ -20579,14 +20656,16 @@
 			let colXfIter = colXf && new AscCommonExcel.CAttrArrayIterator(colXf, r1, r2, true);
 			if (colXfIter) {
 				if (r1 <= colXfIter.getMaxIndex() && colXfIter.next()) {
-					let xf = colXfIter.getCurVal();
+					let xf = colXfIter.getCurXf();
 					elemAddXf = {col: i, index: Math.max(r1, colXfIter.getCurFrom()), type: "addXf", mod: xf, data: data};
 					this.events.push(elemAddXf);
+					let lastCurTo = colXfIter.getCurTo();
 					while (colXfIter.next()) {
-						let xf = colXfIter.getCurVal();
+						let xf = colXfIter.getCurXf();
 						this.events.push({col: i, index: colXfIter.getCurFrom(), type: "addXfMod", mod: xf, data: data});
+						lastCurTo = colXfIter.getCurTo();
 					}
-					elemRemoveXf = {col: i, index: colXfIter.getCurTo() + 1, type: "removeXf", data: data};
+					elemRemoveXf = {col: i, index: lastCurTo + 1, type: "removeXf", data: data};
 					this.events.push(elemRemoveXf);
 				}
 			}

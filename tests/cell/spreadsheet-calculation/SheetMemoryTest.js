@@ -33,6 +33,7 @@
 $(function () {
 	let SheetMemory = AscCommonExcel.SheetMemory;
 
+	QUnit.module("SheetMemory");
 	QUnit.test("Test: \"checkIndex\"", function (assert) {
 
 		let sheetMemory = new SheetMemory(2, 100);
@@ -431,7 +432,7 @@ $(function () {
 	testForeachNoEmpty("Test: SweepLineRowIterator step" + 1, 1, 1);
 	testForeachNoEmpty("Test: SweepLineRowIterator step" + 2, 1, 1);
 
-	QUnit.module("SheetMemory");
+
 	function testForeachNoEmpty(name, offset, stepRow) {
 		QUnit.test(name, function (assert) {
 			// console.profile('testForeachNoEmpty');
@@ -523,5 +524,39 @@ $(function () {
 			}
 		}
 		return {cellsByCol, expected}
+	}
+
+	QUnit.module("CAttrArray");
+	QUnit.test("Test: \"set\"", function (assert) {
+		let attrArray = new AscCommonExcel.CAttrArray(null);
+		attrArray.set(0, 1, true);
+		attrArray.set(1, 2, true);
+		attrArray.set(2, 2, true);
+		attrArray.set(3, 3, true);
+		attrArray.set(4, 3, true);
+		attrArray.set(5, 3, true);
+		let expected = [1, 2, 2, 3, 3, 3];
+		let res = checkAttrArrayByArray(attrArray, expected);
+
+		assert.deepEqual(res, expected);
+	});
+	// QUnit.test("Test: \"setArea\"", function (assert) {
+	//
+	// 	let attrArray = new AscCommonExcel.CAttrArray(null);
+	// 	attrArray.set(0,  1, true);
+	// 	attrArray.set(1, 2, true);
+	// 	attrArray.set(2, 2, true);
+	// 	attrArray.set(3, 3, true);
+	// 	attrArray.set(4, 3, true);
+	// 	attrArray.set(5, 3, true);
+	// });
+
+	function checkAttrArrayByArray(attrArray, expected) {
+		let res = new Array(expected.length);
+		let colXfIter = new AscCommonExcel.CAttrArrayIterator(attrArray, 0, expected.length);
+		while (colXfIter.next()) {
+			res.fill(colXfIter.getCurVal(), colXfIter.getCurFrom(), colXfIter.getCurTo() + 1);
+		}
+		return res;
 	}
 });
