@@ -6779,6 +6779,7 @@ function parserFormula( formula, parent, _ws ) {
 		var argFuncMap = [];
 		var argPosArrMap = [];
 		var startArrayArg = null;
+		let bConditionalFormula = false;
 
 		var t = this;
 		var _checkReferenceCount = function (weight) {
@@ -7179,15 +7180,26 @@ function parserFormula( formula, parent, _ws ) {
 			parseResult.operand_expected = false;
 			return true;
 		};
+		const getFunctionName = function (sFormula) {
+			const regFormulaName = new XRegExp("^((?:_xlfn.)?[\\p{L}\\d._]+ *)[-+*/^&%<=>:;\\(\\)]");
+			const sFormulaName = sFormula.match(regFormulaName) && sFormula.match(regFormulaName)[1].toUpperCase();
+
+			return sFormulaName && cFormulaList[sFormulaName] && cFormulaList[sFormulaName].prototype.name;
+		};
 		const isRecursiveFormula = function (found_operand, parserFormula) {
 			const nOperandType = found_operand.type;
 			let oRange = null;
 			let bRecursiveCell = parserFormula.ca;
+			let sFunctionName = getFunctionName(parserFormula.Formula, cFormulaList);
 
 			if (parserFormula.getParent() == null) {
 				return bRecursiveCell;
 			}
 			if (parserFormula.ca) {
+				return bRecursiveCell;
+			}
+			if (sFunctionName && sFunctionName.includes("IF")) {
+				bConditionalFormula = true;
 				return bRecursiveCell;
 			}
 			if (nOperandType === cElementType.cellsRange || nOperandType === cElementType.cellsRange3D) {
@@ -7632,7 +7644,16 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		setArgInfo();
-
+		if (bConditionalFormula) {
+			let oParentCellValue = null;
+			t.ws._getCell(t.parent.nRow, t.parent.nCol, function (oCell) {
+				let nCellValue = oCell.getNumberValue();
+				oParentCellValue = new cNumber(nCellValue == null ? 0 : nCellValue);
+			});
+			const aConditions = t.outStack.filter(function (outStackElem) {
+				return outStackElem.type === cElementType.number || outStackElem.type === cElementType.string;
+			})
+		}
 		if (parseResult.operand_expected) {
 			this.outStack = [];
 			parseResult.setError(c_oAscError.ID.FrmlOperandExpected);
