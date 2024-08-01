@@ -19203,6 +19203,88 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return  res;
 	}
+	CAttrArray.prototype.clone = function() {
+		let res = new CAttrArray();
+		res.data = this.data.map(function(elem){
+			return elem.clone();
+		});
+		return res;
+	};
+	CAttrArray.prototype.deleteRange = function(start, deleteCount) {
+		let first = true;
+		let startIndex = 0;
+		let endIndex = 0;
+		for (let i = 0; i < this.data.length; ++i) {
+			let elem = this.data[i];
+			if (start <= elem.endRow && elem.endRow <= start + deleteCount - 1) {
+				if (first) {
+					first = false;
+					startIndex = i;
+				}
+				endIndex = i;
+			}
+		}
+		if (!first) {
+			let startCur = 0;
+			if (startIndex > 0) {
+				startCur = this.data[startIndex - 1].endRow + 1;
+			}
+			if (startCur < start) {
+				this.data[startIndex].endRow = start - 1;
+				startIndex++;
+			}
+			if (endIndex >= startIndex) {
+				this.data.splice(startIndex, endIndex - startIndex + 1);
+				if (startIndex > 0 && this.data[startIndex - 1].isEqualVal(this.data[startIndex])) {
+					this.data.splice(startIndex - 1, 1);
+				}
+			}
+		}
+		for (let i = 0; i < this.data.length; ++i) {
+			let elem = this.data[i];
+			if (elem.endRow >= start) {
+				elem.endRow -= deleteCount;
+			}
+		}
+		if (this.data.length > 0) {
+			this.setArea(this.data[this.data.length - 1].endRow + 1, AscCommon.gc_nMaxRow0, null, true);
+		}
+	};
+	CAttrArray.prototype.insertRange = function (start, insertCount) {
+		let i;
+		let prev = start > 0 ? start - 1 : 0;
+		let startIndex = this.searchIndex(prev);
+		//shift endRow
+		for (i = startIndex; i < this.data.length; ++i) {
+			let elem = this.data[i];
+			elem.endRow += insertCount;
+			if (elem.endRow >= AscCommon.gc_nMaxRow0) {
+				elem.endRow = AscCommon.gc_nMaxRow0;
+				break;
+			}
+		}
+		//remove tail
+		this.data.length = i + 1;
+		//first row is special
+		if (0 === start) {
+			this.clear(0, insertCount - 1);
+		}
+	};
+	CAttrArray.prototype.copyRange = function(attrArray, startFrom, startTo, count) {
+		let iter = new CAttrArrayIterator(attrArray, startFrom, startFrom + count - 1);
+		while (iter.next()) {
+			let xf = iter.getCurXf();
+			this.setArea(iter.getCurFrom(), iter.getCurTo(), xf ? xf.getIndexNumber() : null);
+		}
+	};
+	CAttrArray.prototype.copyRangeByChunk = function(from, fromCount, to, toCount) {
+		return;
+		let val = this.search(from);
+		this.setArea(to, to + toCount - 1, val);
+	};
+	CAttrArray.prototype.clear = function(start, end) {
+		this.setArea(start, end, null);
+	};
 
 	/**
 	 * @param {CAttrArray} attrArray
@@ -19226,6 +19308,7 @@ function RangeDataManagerElem(bbox, data)
 		this.curIndex = -1;
 		this.curFrom = null;
 		this.curTo = null;
+		this.curVal = null;
 		this.xfs = null;//todo refactor StyleManager remove 'xfs' name required
 
 		this._init(opt_trimEmpty, opt_isReserve);
@@ -19269,13 +19352,18 @@ function RangeDataManagerElem(bbox, data)
 	CAttrArrayIterator.prototype.next = function () {
 		if (this.curIndex <= this.toIndex && this.nextFrom <= this.to) {
 			let entry = this.attrArray.getEntry(this.curIndex);
-			this.xfs = g_StyleCache.getXf(entry.val);
+			this.curVal = entry.val;
+			this.xfs = g_StyleCache.getXf(this.curVal);
 			this.curFrom = this.nextFrom;
 			this.curTo = Math.min(entry.endRow, this.to);
 			this.nextFrom = this.curTo + 1;
 			this.curIndex++;
 			return true;
 		}
+		this.curFrom = null;
+		this.curTo = null;
+		this.curVal = null;
+		this.xfs = null;
 		return false;
 	}
 	CAttrArrayIterator.prototype.getCurFrom = function () {
@@ -19285,6 +19373,9 @@ function RangeDataManagerElem(bbox, data)
 		return this.curTo;
 	}
 	CAttrArrayIterator.prototype.getCurVal = function () {
+		return this.curVal;
+	}
+	CAttrArrayIterator.prototype.getCurXf = function () {
 		return this.xfs;
 	}
 	CAttrArrayIterator.prototype.nextNoEmpty = function () {
@@ -19295,17 +19386,22 @@ function RangeDataManagerElem(bbox, data)
 	CAttrArrayIterator.prototype.prev = function () {
 		if (this.fromIndex <= this.curIndex && this.from <= this.nextTo) {
 			let entry = this.attrArray.getEntry(this.curIndex);
+			this.curVal = entry.val;
 			this.xfs = g_StyleCache.getXf(entry.val);
 			if (this.curIndex > 0) {
 				this.curFrom =  Math.max(this.from, this.attrArray.getEntry(this.curIndex - 1).endRow + 1);
 			} else {
-				this.curFrom = 0;
+				this.curFrom = this.from;
 			}
 			this.curTo = this.nextTo;
 			this.nextTo = this.curFrom - 1;
 			this.curIndex--;
 			return true;
 		}
+		this.curFrom = null;
+		this.curTo = null;
+		this.curVal = null;
+		this.xfs = null;
 		return false;
 	}
 	CAttrArrayIterator.prototype.prevNoEmpty = function () {
