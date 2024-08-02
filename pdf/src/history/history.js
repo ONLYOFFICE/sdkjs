@@ -62,6 +62,14 @@
     History.prototype.CanAddChanges = function() {
         return !this.UndoRedoInProgress && AscCommon.CHistory.prototype.CanAddChanges.call(this);
     };
+    History.prototype.StartNoHistoryMode = function() {
+        if (this.IsOn() == true)
+            this.TurnOff();
+    };
+    History.prototype.EndNoHistoryMode = function() {
+        if (this.IsOn() == false)
+            this.TurnOn();
+    };
     History.prototype.Get_DocumentPositionBinary = function() {};
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())

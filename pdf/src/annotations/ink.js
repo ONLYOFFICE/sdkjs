@@ -41,20 +41,19 @@
         AscPDF.CPdfShape.call(this);
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
         
+        AscCommon.History.StartNoHistoryMode();
         initShape(this);
+        AscCommon.History.EndNoHistoryMode();
 
-        this._point         = undefined;
-        this._popupOpen     = false;
-        this._popupRect     = undefined;
-        this._richContents  = undefined;
-        this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
+        this._gestures      = [];
+        this._relativePaths = [];
         this._width         = 1;
     }
     
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
-    AscFormat.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationInk, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Ink);
     Object.assign(CAnnotationInk.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationInk.prototype.IsInk = function() {
@@ -100,110 +99,75 @@
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-        let nPage   = this.GetPage();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        let aShapePaths = [];
-        for (let nPath = 0; nPath < aSourcePaths.length; nPath++) {
-            let aSourcePath = aSourcePaths[nPath];
-            let aShapePath  = [];
-            
-            for (let i = 0; i < aSourcePath.length - 1; i += 2) {
-                aShapePath.push({
-                    x: aSourcePath[i] * g_dKoef_pix_to_mm * nScaleX,
-                    y: (aSourcePath[i + 1])* g_dKoef_pix_to_mm * nScaleY
-                });
-            }
-
-            aShapePaths.push(aShapePath);
-        }
-        
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
-        });
-
-        fillShapeByPoints(aShapePaths, aShapeRectInMM, this);
-
-        let aRelPointsPos   = [];
-        let aAllPoints      = [];
-
-        for (let i = 0; i < aShapePaths.length; i++)
-            aAllPoints = aAllPoints.concat(aShapePaths[i]);
-
-        let aMinRect = getMinRect(aAllPoints);
-        let xMin = aMinRect[0];
-        let yMin = aMinRect[1];
-        let xMax = aMinRect[2];
-        let yMax = aMinRect[3];
-
-        // считаем относительное положение точек внутри фигуры
-        for (let nPath = 0; nPath < aShapePaths.length; nPath++) {
-            let aPoints         = aShapePaths[nPath]
-            let aTmpRelPoints   = [];
-            
-            for (let nPoint = 0; nPoint < aPoints.length; nPoint++) {
-                let oPoint = aPoints[nPoint];
-
-                let nIndX = oPoint.x - xMin;
-                let nIndY = oPoint.y - yMin;
-
-                aTmpRelPoints.push({
-                    relX: nIndX / (xMax - xMin),
-                    relY: nIndY / (yMax - yMin)
-                });
-            }
-            
-            aRelPointsPos.push(aTmpRelPoints);
-        }
-        
-        this._relativePaths = aRelPointsPos;
-        this._gestures = aShapePaths;
+        let oThis = this;
+        aSourcePaths.forEach(function(aPath) {
+            oThis.AddInkPath(aPath);
+        })
     };
-    CAnnotationInk.prototype.FillShapeByPoints = function(aPoints) {
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
-        });
-        let shape = fillShapeByPoints([aPoints], aShapeRectInMM, this);
+    CAnnotationInk.prototype.AddInkPath = function(aInkPath) {
+        AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));
+        this._gestures.push(aInkPath);
 
-        let aRelPointsPos = [];
-        let aMinRect = getMinRect(aPoints);
-        let xMin = aMinRect[0];
-        let yMin = aMinRect[1];
-        let xMax = aMinRect[2];
-        let yMax = aMinRect[3];
-
-        // считаем относительное положение точек внутри фигуры
-        for (let nPoint = 0; nPoint < aPoints.length; nPoint++) {
-            let oPoint = aPoints[nPoint];
-
-            let nIndX = oPoint.x - xMin;
-            let nIndY = oPoint.y - yMin;
-
-            let oRelPos = {
-                relX: nIndX / (xMax - xMin),
-                relY: nIndY / (yMax - yMin)
-            };
-
-            if (isNaN(oRelPos.relX))
-                oRelPos.relX = 0;
-            if (isNaN(oRelPos.relY)) {
-                oRelPos.relY = 0;
-            }
-
-            aRelPointsPos.push(oRelPos);
-        }
-        
-        this._relativePaths = [aRelPointsPos];
-        this._gestures = [aPoints];
-
-        return shape;
+        this.SetWasChanged(true);
+        this.recalcGeometry();
+        this.SetNeedRecalc(true);
     };
+    CAnnotationInk.prototype.GetInkPoints = function() {
+        // считаем точки
+        let aRelPointsPos   = this.GetRelativePaths() || [];
+        let aGestures       = [];
+        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aBounds         = this.GetOrigRect();
 
+        let xMin;
+        let yMin;
+        let xMax;
+        let yMax;
+        if (this.IsNeedDrawFromStream() == false) {
+            xMin = aBounds[0] + nLineW * 0.75;
+            yMin = aBounds[1] + nLineW * 0.75;
+            xMax = aBounds[2] - nLineW * 0.75;
+            yMax = aBounds[3] - nLineW * 0.75;
+
+            let nWidthMM    = (xMax - xMin);
+            let nHeightMM   = (yMax - yMin);
+
+            for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
+                let aPath       = aRelPointsPos[nPath];
+                let aInkPath    = [];
+
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aInkPath.push(
+                        (nWidthMM) * aPath[nPoint].relX + xMin, 
+                        (nHeightMM) * aPath[nPoint].relY + yMin
+                    );
+                }
+                
+                aGestures.push(aInkPath);
+            }
+        }
+        else {
+            let oViewer = editor.getDocumentRenderer();
+            let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+            let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+            for (let nPath = 0; nPath < this._gestures.length; nPath++) {
+                let aPath       = this._gestures[nPath];
+                let aInkPath    = [];
+
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aInkPath.push(
+                        aPath[nPoint].x * g_dKoef_mm_to_pix / nScaleX,
+                        aPath[nPoint].y * g_dKoef_mm_to_pix / nScaleY
+                    );
+                }
+                
+                aGestures.push(aInkPath);
+            }
+        }
+
+        return aGestures;
+    };
     CAnnotationInk.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
@@ -228,16 +192,13 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.StartNoHistoryMode();
+        AscCommon.History.StartNoHistoryMode();
         this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
         this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
         
-        this.Recalculate();
-        this.AddToRedraw();
-        this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
-
-        oDoc.EndNoHistoryMode();
-
+        this.SetNeedRecalc(true);
+        AscCommon.History.EndNoHistoryMode();
+        
         this.SetWasChanged(true);
     };
     CAnnotationInk.prototype.SetFlipV = function(bFlip) {
@@ -259,11 +220,11 @@
         }
     };
     CAnnotationInk.prototype.AddPath = function(aNewPath) {
-        let oDoc    = this.GetDocument();
-        let nLineW  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aCurInkPoints   = this.GetInkPoints();
 
-        oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aNewPath));
-        
+        AscCommon.History.StartNoHistoryMode();
+
         let aCurAllPoints = [];
         for (let i = 0; i < this._gestures.length; i++)
             aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
@@ -337,73 +298,99 @@
         this._gestures.push(aNewPath);
         
         this.SetRect(aNewAnnotRect, true);
-    };
-    
-    CAnnotationInk.prototype.RemoveLastAddedPath = function() {
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-
-        let aCurAllPoints = [];
-        for (let i = 0; i < this._gestures.length; i++)
-            aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
-
-        let aNewAllPoints = [];
-        for (let i = 0; i < this._gestures.length - 1; i++)
-            aNewAllPoints = aNewAllPoints.concat(this._gestures[i]);
-
-        let aCurMinRect = getMinRect(aCurAllPoints);
-        let curMinX = aCurMinRect[0];
-        let curMinY = aCurMinRect[1];
-        let curMaxX = aCurMinRect[2];
-        let curMaxY = aCurMinRect[3];
-
-        let aNewMinRect = getMinRect(aNewAllPoints);
-        let newMinX = aNewMinRect[0];
-        let newMinY = aNewMinRect[1];
-        let newMaxX = aNewMinRect[2];
-        let newMaxY = aNewMinRect[3];
         
-        let aNewAnnotRect = [(newMinX * g_dKoef_mm_to_pix - nLineW), (newMinY * g_dKoef_mm_to_pix - nLineW), (newMaxX * g_dKoef_mm_to_pix + nLineW), (newMaxY * g_dKoef_mm_to_pix + nLineW)];
-
-        // пересчет текущих точек в новом ректе
-        let aCurRelPaths = this.GetRelativePaths();
-        aCurRelPaths.splice(aCurRelPaths.length - 1, 1);
-        this._gestures.splice(this._gestures.length - 1, 1);
-
-        for (let nPath = 0; nPath < aCurRelPaths.length; nPath++) {
-            let aPath = aCurRelPaths[nPath];
-            for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                let oPoint = aPath[nPoint];
-
-                // если предыдущий рект начинается левее старого
-                if (newMinX > curMinX)
-                    oPoint.relX = ((curMaxX - curMinX) * oPoint.relX + (curMinX - newMinX)) / (newMaxX - newMinX);
-                // если ширина нового ректа больше старого
-                else if (curMaxX - curMinX > newMaxX - newMinX)
-                    oPoint.relX = ((curMaxX - curMinX) * oPoint.relX) / (newMaxX - newMinX);
-
-
-                // если новый рект начинается выше старого
-                if (newMinY > curMinY)
-                    oPoint.relY = ((curMaxY - curMinY) * oPoint.relY + (curMinY - newMinY)) / (newMaxY - newMinY);
-                // если высота нового ректа больше старого
-                else if (curMaxY - curMinY > newMaxY - newMinY)
-                    oPoint.relY = ((curMaxY - curMinY) * oPoint.relY) / (newMaxY - newMinY);
-
-                if (isNaN(oPoint.relX))
-                    oPoint.relX = 0;
-                if (isNaN(oPoint.relY))
-                    oPoint.relY = 0;
-                        
-                continue;
-            }
+        AscCommon.History.EndNoHistoryMode();
+        AscCommon.History.Add(new CChangesPDFInkPoints(this, aCurInkPoints, this.GetInkPoints()));
+    };
+    CAnnotationInk.prototype.Recalculate = function() {
+        if (false == this.IsNeedRecalc()) {
+            return;
         }
 
-        this.spPr.xfrm.extX = (newMaxX + nLineW * g_dKoef_pix_to_mm) - (newMinX - nLineW * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.extY = (newMaxY + nLineW * g_dKoef_pix_to_mm) - (newMinY - nLineW * g_dKoef_pix_to_mm);
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
 
-        this.SetRect(aNewAnnotRect, true);
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        
+        if (this._relativePaths.length != this._gestures.length) {
+            this.InitGeometry();
+            return;
+        }
+
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
+    };
+    CAnnotationInk.prototype.InitGeometry = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aSourcePaths= this._gestures;
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let aShapePaths = [];
+        for (let nPath = 0; nPath < aSourcePaths.length; nPath++) {
+            let aSourcePath = aSourcePaths[nPath];
+            let aShapePath  = [];
+            
+            for (let i = 0; i < aSourcePath.length - 1; i += 2) {
+                aShapePath.push({
+                    x: aSourcePath[i] * g_dKoef_pix_to_mm * nScaleX,
+                    y: (aSourcePath[i + 1])* g_dKoef_pix_to_mm * nScaleY
+                });
+            }
+
+            aShapePaths.push(aShapePath);
+        }
+        
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+
+        fillShapeByPoints(aShapePaths, aShapeRectInMM, this);
+
+        let aRelPointsPos   = [];
+        let aAllPoints      = [];
+
+        for (let i = 0; i < aShapePaths.length; i++)
+            aAllPoints = aAllPoints.concat(aShapePaths[i]);
+
+        let aMinRect = getMinRect(aAllPoints);
+        let xMin = aMinRect[0];
+        let yMin = aMinRect[1];
+        let xMax = aMinRect[2];
+        let yMax = aMinRect[3];
+
+        // считаем относительное положение точек внутри фигуры
+        for (let nPath = 0; nPath < aShapePaths.length; nPath++) {
+            let aPoints         = aShapePaths[nPath]
+            let aTmpRelPoints   = [];
+            
+            for (let nPoint = 0; nPoint < aPoints.length; nPoint++) {
+                let oPoint = aPoints[nPoint];
+
+                let nIndX = oPoint.x - xMin;
+                let nIndY = oPoint.y - yMin;
+
+                aTmpRelPoints.push({
+                    relX: nIndX / (xMax - xMin),
+                    relY: nIndY / (yMax - yMin)
+                });
+            }
+            
+            aRelPointsPos.push(aTmpRelPoints);
+        }
+        
+        this._relativePaths = aRelPointsPos;
     };
     CAnnotationInk.prototype.RefillGeometry = function(oGeometry, aBounds) {
+        if (!this._relativePaths) {
+            return;
+        }
+
         let aRelPointsPos   = this._relativePaths;
         let aShapePaths     = [];
         
@@ -495,66 +482,15 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
         
-        // считаем точки
-        let aRelPointsPos   = this._relativePaths;
-        let aShapePaths     = [];
-        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aBounds         = this.GetOrigRect();
+        let aSourcePoints = this.GetInkPoints();
 
-        let xMin;
-        let yMin;
-        let xMax;
-        let yMax;
-        if (this.IsNeedDrawFromStream() == false) {
-            xMin = aBounds[0] + nLineW * 0.75;
-            yMin = aBounds[1] + nLineW * 0.75;
-            xMax = aBounds[2] - nLineW * 0.75;
-            yMax = aBounds[3] - nLineW * 0.75;
+        memory.WriteLong(aSourcePoints.length);
+        for (let i = 0; i < aSourcePoints.length; i++) {
+            memory.WriteLong(aSourcePoints[i].length * 2);
 
-            let nWidthMM    = (xMax - xMin);
-            let nHeightMM   = (yMax - yMin);
-
-            for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
-                let aPath       = aRelPointsPos[nPath];
-                let aShapePath  = [];
-
-                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                    aShapePath.push({
-                        x: (nWidthMM) * aPath[nPoint].relX + xMin,
-                        y: (nHeightMM) * aPath[nPoint].relY + yMin
-                    });
-                }
-                
-                aShapePaths.push(aShapePath);
-            }
-        }
-        else {
-            let oViewer = editor.getDocumentRenderer();
-            let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
-            let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
-
-            for (let nPath = 0; nPath < this._gestures.length; nPath++) {
-                let aPath       = this._gestures[nPath];
-                let aShapePath  = [];
-
-                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                    aShapePath.push({
-                        x: aPath[nPoint].x * g_dKoef_mm_to_pix / nScaleX,
-                        y: aPath[nPoint].y * g_dKoef_mm_to_pix / nScaleY
-                    });
-                }
-                
-                aShapePaths.push(aShapePath);
-            }
-        }
-
-        memory.WriteLong(aShapePaths.length);
-        for (let i = 0; i < aShapePaths.length; i++) {
-            memory.WriteLong(aShapePaths[i].length * 2);
-
-            for (let j = 0; j < aShapePaths[i].length; j++) {
-                memory.WriteDouble(aShapePaths[i][j].x);
-                memory.WriteDouble(aShapePaths[i][j].y);
+            for (let j = 0; j < aSourcePoints[i].length - 1; j+=2) {
+                memory.WriteDouble(aSourcePoints[i][j]);
+                memory.WriteDouble(aSourcePoints[i][j + 1]);
             }
         }
 
@@ -566,7 +502,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
+    
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMax = aShapeRect[2];
         let xMin = aShapeRect[0];
