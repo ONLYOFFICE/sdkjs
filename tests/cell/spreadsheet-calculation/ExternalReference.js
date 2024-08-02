@@ -839,7 +839,7 @@ $(function () {
 		//on parse name3d use g_DefNameWorksheet
 		let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
 		AscCommonExcel.g_DefNameWorksheet = exWs;
-		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "A1:A2");
+		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "$A$1:$A$2");
 		externalWb.editDefinesNames(null, oDefName);
 		AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
 
@@ -864,7 +864,6 @@ $(function () {
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
-
 	});
 
 
