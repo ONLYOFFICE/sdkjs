@@ -4062,7 +4062,7 @@
      * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
      * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-	 * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
@@ -4239,7 +4239,7 @@
      * * <b>"roman"</b> - lower Roman.
 	 * * <b>"Arabic"</b> - arabic.
 	 * @typedef {("ALPHABETIC" | "alphabetic" | "Roman" | "roman" | "Arabic")} CaptionNumberingFormat
-	 * ** @see office-js-api/Examples/Enumerations/CaptionNumberingFormat.js
+	 * @see office-js-api/Examples/Enumerations/CaptionNumberingFormat.js
 	 */
 
 	/**
@@ -4250,13 +4250,13 @@
      * * <b>"longDash"</b> - the "—" punctuation mark.
 	 * * <b>"dash"</b> - the "-" punctuation mark.
 	 * @typedef {("hyphen" | "period" | "colon" | "longDash" | "dash")} CaptionSep
-	 * ** @see office-js-api/Examples/Enumerations/CaptionSep.js
+	 * @see office-js-api/Examples/Enumerations/CaptionSep.js
 	 */
 
 	/**
      * Possible values for the caption label.
      * @typedef {("Table" | "Equation" | "Figure")} CaptionLabel
-	 * ** @see office-js-api/Examples/Enumerations/CaptionLabel.js
+	 * @see office-js-api/Examples/Enumerations/CaptionLabel.js
 	 */
 
 	/**
@@ -4307,19 +4307,19 @@
 	 * * <b>"dash"</b> - "-------"
 	 * * <b>"underline"</b> - "_______"
      * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
-	 * ** @see office-js-api/Examples/Enumerations/TocLeader.js
+	 * @see office-js-api/Examples/Enumerations/TocLeader.js
 	 */
 
 	/**
      * Possible values for the table of contents style.
      * @typedef {("simple" | "online" | "standard" | "modern" | "classic")} TocStyle
-	 * ** @see office-js-api/Examples/Enumerations/TocStyle.js
+	 * @see office-js-api/Examples/Enumerations/TocStyle.js
 	 */
 
 	/**
      * Possible values for the table of figures style.
      * @typedef {("simple" | "online" | "classic" | "distinctive" | "centered" | "formal")} TofStyle
-	 * ** @see office-js-api/Examples/Enumerations/TofStyle.js
+	 * @see office-js-api/Examples/Enumerations/TofStyle.js
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------

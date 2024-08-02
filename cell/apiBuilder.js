@@ -221,7 +221,7 @@
 	 * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
 	 * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-	 * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
@@ -2528,7 +2528,7 @@
 	 * * <b>6</b> - MIN.
 	 * * <b>7</b> - SUM.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
-	 * ** @see office-js-api/Examples/Enumerations/Aggregation.js
+	 * @see office-js-api/Examples/Enumerations/Aggregation.js
 	 */
 	
 	/**
@@ -2595,7 +2595,7 @@
 	 * * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
 	 * * <b>8</b> - Step size detected in the timeline.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
-	 * ** @see office-js-api/Examples/Enumerations/StatisticType.js
+	 * @see office-js-api/Examples/Enumerations/StatisticType.js
 	 */
 
 	/**

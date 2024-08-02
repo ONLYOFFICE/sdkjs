@@ -301,7 +301,7 @@
      * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
      * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-     * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+     * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
