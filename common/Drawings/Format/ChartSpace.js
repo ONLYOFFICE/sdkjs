@@ -7836,7 +7836,9 @@ function(window, undefined) {
 					} else if (style.line1 === EFFECT_INTENSE) {
 						default_line.merge(parents.theme.themeElements.fmtScheme.lnStyleLst[2]);
 					}
-					if (oChartSpace.style === 34)
+
+					let pts = oSeries.getNumPts && oSeries.getNumPts();
+					if (oChartSpace.style === 34 && pts)
 						base_line_fills = getArrayFillsFromBase(style.line2, getMaxIdx(pts));
 
 
@@ -7845,7 +7847,7 @@ function(window, undefined) {
 					compiled_line.Fill = new AscFormat.CUniFill();
 					if (oChartSpace.style !== 34)
 						compiled_line.Fill.merge(style.line2[0]);
-					else
+					else if (base_line_fills)
 						compiled_line.Fill.merge(base_line_fills[oSeries.idx]);
 					if (oSeries.spPr && oSeries.spPr.ln) {
 						compiled_line.merge(oSeries.spPr.ln);
@@ -7854,8 +7856,7 @@ function(window, undefined) {
 					oSeries.compiledSeriesPen.calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA, oChartSpace.clrMapOvr);
 
 
-					if(oSeries.getNumPts) {
-						let pts = oSeries.getNumPts();
+					if(pts) {
 						oChartSpace.ptsCount += pts.length;
 						for (let nPt = 0; nPt < pts.length; ++nPt) {
 							let oPt = pts[nPt];
