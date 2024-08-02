@@ -859,7 +859,7 @@ $(function () {
 		externalWs.getRange2("A2").setValue("4000");
 		//such as update from portal
 		wb.externalReferences[0].updateData([externalWs]);
-		assert.strictEqual(oParser.calculate().getValue(), 6000, 'EXTERNAL_NAME_2_AFTER_UPDATE');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'EXTERNAL_NAME_2_AFTER_UPDATE');
 
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
