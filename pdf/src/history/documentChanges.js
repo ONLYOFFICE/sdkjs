@@ -67,6 +67,7 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			
+			oItem.AddToRedraw();
 			oDocument.annots.splice(nPos, 1);
 			this.PosInPage = oViewer.pagesInfo.pages[nPage].annots.indexOf(oItem);
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 1);
@@ -79,6 +80,7 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			
+			oItem.AddToRedraw();
 			oDocument.drawings.splice(nPos, 1);
 			this.PosInPage = oViewer.pagesInfo.pages[nPage].drawings.indexOf(oItem);
 			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 1);
@@ -104,22 +106,21 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			
+			oItem.AddToRedraw();
 			oDocument.annots.splice(nPos, 0, oItem);
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 0, oItem);
 			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
-
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
-
 			oViewer.DrawingObjects.resetSelection();
 			oItem.AddToRedraw();
 		}
 		else if (oItem.IsDrawing()) {
 			let nPage = oItem.GetPage();
 			
+			oItem.AddToRedraw();
 			oDocument.drawings.splice(nPos, 0, oItem);
 			oViewer.pagesInfo.pages[nPage].drawings.splice(this.PosInPage, 0, oItem);
-
 			oViewer.DrawingObjects.resetSelection();
 			oItem.AddToRedraw();
 		}

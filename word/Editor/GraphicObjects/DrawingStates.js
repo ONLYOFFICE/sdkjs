@@ -196,14 +196,20 @@ StartAddNewShape.prototype =
                 // рисование кистью
                 if (Asc.editor.isInkDrawerOn()) {
                     oLogicDocument.DoAction(function() {
+                        let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
+                        let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
+
                         // добавлем path если рисование не закончено
                         if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
-                            oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
+                            let aInkPath = [];
+                            for (let i = 0; i < oTrack.arrPoint.length; i++) {
+                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pix / nScaleX);
+                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pix / nScaleY);
+                            }
+                            
+                            oLogicDocument.currInkInDrawingProcess.AddInkPath(aInkPath);
                         }
                         else {
-                            let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
-                            let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
-        
                             var bounds  = oTrack.getBounds();
                             
                             let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
@@ -218,16 +224,19 @@ StartAddNewShape.prototype =
                                 modDate:        (new Date().getTime()).toString()
                             });
         
-                            var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint);
-        
                             let oRGBPen = oTrack.pen.Fill.getRGBAColor();
+
+                            let aInkPath = [];
+                            for (let i = 0; i < oTrack.arrPoint.length; i++) {
+                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pix / nScaleX);
+                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pix / nScaleY);
+                            }
+
+                            oInkAnnot.AddInkPath(aInkPath);
                             oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
                             oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                             oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
                             
-                            oInkAnnot.AddToRedraw();
-                            shape.recalculate();
-        
                             // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
                             oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                         }

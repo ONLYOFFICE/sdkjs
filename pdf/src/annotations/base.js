@@ -161,6 +161,8 @@
         return this._fillColor;
     };
     CAnnotationBase.prototype.SetWidth = function(nWidthPt) {
+        AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
+
         this._width = nWidthPt;
 
         if (this.IsShapeBased()) {
@@ -997,6 +999,8 @@
     };
 
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
+
         this._strokeColor = aColor;
         this.SetWasChanged(true);
 
