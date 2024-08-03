@@ -9692,7 +9692,17 @@
 			this.Bounds.CheckPoint(_x1, _y1);
 			this.Bounds.CheckPoint(_x2, _y2);
 		};
-
+		/**
+		 * @param {{x: Number, y: Number, z? :Number}[]} points
+		 */
+		CSlideBoundsChecker.prototype.checkPoints = function (points) {
+			let thisContext = this;
+			points.forEach(function(point) {
+				let x = thisContext.m_oFullTransform.TransformPointX(point.x, point.y);
+				let y = thisContext.m_oFullTransform.TransformPointX(point.x, point.y);
+				thisContext.Bounds.CheckPoint(x, y);
+			})
+		};
 		// images
 		CSlideBoundsChecker.prototype.drawImage2 = function(img, x, y, w, h) {
 			var _x1 = this.m_oFullTransform.TransformPointX(x, y);

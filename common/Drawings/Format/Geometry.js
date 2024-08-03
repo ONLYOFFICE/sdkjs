@@ -100,6 +100,7 @@ var MAP_FMLA_TO_TYPE = {};
     MAP_TYPE_TO_FMLA[FORMULA_TYPE_VALUE] =   "val";
 
 var cToRad = Math.PI/(60000*180);
+// it is not cToDeg. it is radToC. cToDeg = 1/60000
 var cToDeg = 1/cToRad;
 var MAX_ITER_COUNT = 50;
 
@@ -1036,6 +1037,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             });
     };
 
+    // if cnx is connection so may be it should be cxn like in ECMA-376-1_5th_edition?
     Geometry.prototype.AddCnx = function(ang, x, y)
     {
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesGeometryAddCnx(this, ang, x, y));
@@ -1116,7 +1118,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             }
             case 3:
             {
-                this.pathLst[this.pathLst.length-1].arcTo(x1/*wR*/, y1/*hR*/, x2/*stAng*/, y2/*swAng*/);
+                this.pathLst[this.pathLst.length-1].arcTo(x1/*wR*/, y1/*hR*/, x2/*stAng*/, y2/*swAng*/, x3/*ellipseRotation*/);
                 break;
             }
             case 4:
@@ -1132,6 +1134,14 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             case 6:
             {
                 this.pathLst[this.pathLst.length-1].close();
+                break;
+            }
+            case 7:
+            {
+                // x, y, a, b, c, d
+                // https://learn.microsoft.com/en-us/office/client-developer/visio/ellipticalarcto-row-geometry-section
+                // but with a length in EMUs units and an angle in C-units, which will be expected clockwise as in other functions.
+                this.pathLst[this.pathLst.length-1].ellipticalArcTo(x1, y1, x2, y2, x3, y3);
                 break;
             }
         }
