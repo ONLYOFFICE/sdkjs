@@ -194,6 +194,12 @@ CPDFCollaborativeEditing.prototype.canSendChanges = function(){
 
     return oApi && oApi.canSendChanges() && !oActionQueue.IsInProgress();
 };
+CPDFCollaborativeEditing.prototype.Apply_Changes = function(fEndCallBack) {
+    if (this.m_aChanges.length > 0) {
+        this.GetDocument().currInkInDrawingProcess = null; // останавливаем ink рисование
+        AscCommon.CCollaborativeEditingBase.prototype.Apply_Changes.call(this, fEndCallBack);
+    }
+};
 CPDFCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function() {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
 };

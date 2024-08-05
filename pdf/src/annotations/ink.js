@@ -108,11 +108,52 @@
         AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));
         this._gestures.push(aInkPath);
 
+        this.SetRect(this.private_CalculateBoundingBox());
         this.SetWasChanged(true);
         this.recalcGeometry();
         this.SetNeedRecalc(true);
     };
+    CAnnotationInk.prototype.private_CalculateBoundingBox = function() {
+        if (this._gestures.length === 0) {
+            return null;
+        }
+    
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let nPage   = this.GetPage();
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+    
+        for (let i = 0; i < this._gestures.length; i++) {
+            let path = this._gestures[i];
+            for (let j = 0; j < path.length; j += 2) {
+                let x = path[j];
+                let y = path[j + 1];
+                if (x < minX) {
+                    minX = x;
+                }
+                if (y < minY) {
+                    minY = y;
+                }
+                if (x > maxX) {
+                    maxX = x;
+                }
+                if (y > maxY) {
+                    maxY = y;
+                }
+            }
+        }
+    
+        return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY]
+    };
     CAnnotationInk.prototype.GetInkPoints = function() {
+
+        return this._gestures;
+        
         // считаем точки
         let aRelPointsPos   = this.GetRelativePaths() || [];
         let aGestures       = [];
@@ -297,7 +338,7 @@
         aCurRelPaths.push(aRelPointsPos);
         this._gestures.push(aNewPath);
         
-        this.SetRect(aNewAnnotRect, true);
+        this.SetRect(aNewAnnotRect);
         
         AscCommon.History.EndNoHistoryMode();
         AscCommon.History.Add(new CChangesPDFInkPoints(this, aCurInkPoints, this.GetInkPoints()));
@@ -486,7 +527,7 @@
 
         memory.WriteLong(aSourcePoints.length);
         for (let i = 0; i < aSourcePoints.length; i++) {
-            memory.WriteLong(aSourcePoints[i].length * 2);
+            memory.WriteLong(aSourcePoints[i].length);
 
             for (let j = 0; j < aSourcePoints[i].length - 1; j+=2) {
                 memory.WriteDouble(aSourcePoints[i][j]);
