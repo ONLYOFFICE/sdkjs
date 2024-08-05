@@ -415,8 +415,8 @@
             for (let i = 0; i < this._gestures.length; i++) {
                 aPath = this._gestures[i];
                 for (let j = 0; j < aPath.length; j++) {
-                    aPath[j].x += nDeltaX * g_dKoef_pix_to_mm;
-                    aPath[j].y += nDeltaY * g_dKoef_pix_to_mm;
+                    aPath[j].x += nDeltaX / nScaleX;
+                    aPath[j].y += nDeltaY / nScaleY;
                 }
             }
         }
