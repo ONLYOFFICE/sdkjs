@@ -42,6 +42,7 @@ window.startPluginApi = function() {
 	 * Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 * Example: { "en" : "name", "ru" : "имя" }
 	 * @typedef { Object.<string, string> } localeTranslate
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/localeTranslate.js
 	 */
 
 	/**
@@ -51,7 +52,8 @@ window.startPluginApi = function() {
 	 * * <b>slide</b> - presentation editor,
 	 * * <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
-	 * */
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
+	 */
 
 	/**
 	 * The data type selected in the editor and sent to the plugin:
@@ -63,7 +65,8 @@ window.startPluginApi = function() {
      * * <b>none</b> - no data will be send to the plugin from the editor,
 	 * * <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
+	 */
 
 	/**
 	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true and isInsideMode == false).
@@ -72,6 +75,7 @@ window.startPluginApi = function() {
 	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
 	 * @property {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/Button.js
 	 */
 
 	/**
@@ -81,6 +85,7 @@ window.startPluginApi = function() {
 	 * @property {string} Id - A unique content control identifier. It can be used to search for a certain content control and make reference to it in your code.
 	 * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not.
 	 * @property {string} InternalId - A unique internal identifier of the content control. It is used for all operations with content controls.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControl.js
 	 */
 
 	/**
@@ -90,13 +95,15 @@ window.startPluginApi = function() {
 	 * * <b>1</b> - disable deleting or editing,
 	 * * <b>2</b> - only editing,
 	 * * <b>3</b> - full access.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
+	 */
 
 	/**
 	 * @typedef {Object} comment
 	 * Comment object.
 	 * @property {string} Id - The comment ID.
 	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
 	 */
 
 	/**
@@ -107,6 +114,7 @@ window.startPluginApi = function() {
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
 
@@ -184,6 +192,7 @@ window.startPluginApi = function() {
 	 * @alias init
 	 * @description The function called when the plugin is launched. It defines the data sent to the plugin describing what actions are to be performed and how they must be performed.
 	 * @param {string} text - Defines the data parameter that depends on the {@link /plugin/config#initDataType initDataType} setting specified in the *config.json* file.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/init.js
 	 */
 
 	/**
@@ -193,6 +202,7 @@ window.startPluginApi = function() {
 	 * @alias button
 	 * @description The function called when any of the plugin buttons is clicked. It defines the buttons used with the plugin and the plugin behavior when they are clicked.
 	 * @param {number} buttonIndex - Defines the button index in the {@link /plugin/config#buttons buttons} array of the *config.json* file. If *id == -1*, then the plugin considers that the <b>Close</b> window cross button has been clicked or its operation has been somehow interrupted.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/button.js
 	 */
 
 	/**
@@ -201,6 +211,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias onTargetPositionChanged
 	 * @description The function called when the target position in the editor is changed.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onTargetPositionChanged.js
 	 */
 
 	/**
@@ -209,6 +220,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias onDocumentContentReady
 	 * @description The function called when the document is completely loaded.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onDocumentContentReady.js
 	 */
 
 	/**
@@ -218,6 +230,7 @@ window.startPluginApi = function() {
 	 * @alias onClick
 	 * @description The function called when the user clicks on the element.
 	 * @param {boolean} isSelectionUse - Defines if the selection is used or not.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onClick.js
 	 */
 
 	/**
@@ -233,6 +246,7 @@ window.startPluginApi = function() {
 	 * * <b>id</b> - the item index,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "1".
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/inputHelper_onSelectItem.js
 	 */
 
 	/**
@@ -241,6 +255,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias onInputHelperClear
 	 * @description The function called when the user is trying to clear the text and the input helper disappears.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onInputHelperClear.js
 	 */
 
 	/**
@@ -256,6 +271,7 @@ window.startPluginApi = function() {
 	 * * <b>text</b> - the text which the user inputs,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "text".
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onInputHelperInput.js
 	 */
 
 	/**
@@ -264,6 +280,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias onTranslate
 	 * @description The function called right after the plugin startup or later in case the plugin language is changed.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onTranslate.js
 	 */
 
     /**
@@ -273,7 +290,8 @@ window.startPluginApi = function() {
      * @alias onEnableMouseEvent
 	 * @description The function called to turn the mouse or touchpad events on/off.
 	 * @param {boolean} isEnabled - Defines if the mouse or touchpad is enabled (**true**) or not (**false**).
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onEnableMouseEvent.js
+	 */
 
     /**
      * Event: onExternalMouseUp
@@ -281,7 +299,8 @@ window.startPluginApi = function() {
      * @memberof Plugin
      * @alias onExternalMouseUp
 	 * @description The function called when the mouse button is released outside the plugin iframe.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onExternalMouseUp.js
+	 */
 
     /**
      * Event: onExternalPluginMessage
@@ -296,7 +315,8 @@ window.startPluginApi = function() {
 	 * * <b>text</b> - the message text,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "text".
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onExternalPluginMessage.js
+	 */
 
 	/**
 	 * Event: onFocusContentControl
@@ -306,6 +326,7 @@ window.startPluginApi = function() {
 	 * @alias onFocusContentControl
 	 * @description The function called to show which content control has been focused.
 	 * @param {ContentControl} control - Defines the content control that has been focused.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onFocusContentControl.js
 	 */
 
 	/**
@@ -316,6 +337,7 @@ window.startPluginApi = function() {
 	 * @alias onBlurContentControl
 	 * @description The function called to show which content control has been blurred.
 	 * @param {ContentControl} control - Defines the content control that has been blurred.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onBlurContentControl.js
 	 */
 
 	/**
@@ -326,6 +348,7 @@ window.startPluginApi = function() {
 	 * @alias onChangeContentControl
 	 * @description The function called to show which content control has been changed.
 	 * @param {ContentControl} control - Defines the content control that has been changed.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onChangeContentControl.js
 	 */
 
 	/**
@@ -362,6 +385,7 @@ window.startPluginApi = function() {
 	 * because the editor waits for responses from all plugins before filling the context menu.</note>
 	 * @param {ContextMenuOptions} options - Defines the context menu information.
 	 * @since 7.4.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onContextMenuShow.js
 	 */
 
 	/**
@@ -372,6 +396,7 @@ window.startPluginApi = function() {
 	 * @description The function called when the context menu item has been clicked.
 	 * @param {string} id - Item ID.
 	 * @since 7.4.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onContextMenuClick.js
 	 */
 
 	/**
@@ -382,6 +407,7 @@ window.startPluginApi = function() {
 	 * @description The function called when the toolbar menu item has been clicked.
 	 * @param {string} id - Item ID.
 	 * @since 8.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onToolbarMenuClick.js
 	 */
 
 	/**
@@ -391,6 +417,7 @@ window.startPluginApi = function() {
 	 * @typeofeditors ["CDE"]
 	 * @alias onCommandCallback
 	 * @description The function called to return the result of the previously executed command. It can be used to return data after executing the {@link Plugin#callCommand callCommand} method.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onCommandCallback.js
 	 */
 
 	/**
@@ -401,6 +428,7 @@ window.startPluginApi = function() {
 	 * @alias onMethodReturn
 	 * @description The function called to return the result of the previously executed method. It can be used to return data after executing the {@link Plugin#executeMethod executeMethod} method.
 	 * @param returnValue - Defines the value that will be returned.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onMethodReturn.js
 	 */
 
 	/**
@@ -411,6 +439,7 @@ window.startPluginApi = function() {
 	 * @alias onAddComment
 	 * @description The function called when a comment is added to the document with the {@link /plugin/executeMethod/text/addcomment AddComment} method.
 	 * @param {comment} comment - Defines the comment object containing the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onAddComment.js
 	 */
 
 	/**
@@ -421,6 +450,7 @@ window.startPluginApi = function() {
 	 * @alias onChangeCommentData
 	 * @description The function called when the specified comment is changed with the {@link /plugin/executeMethod/text/changecomment ChangeComment} method.
 	 * @param {comment} comment - Defines the comment object containing the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onChangeCommentData.js
 	 */
 
 	/**
@@ -431,6 +461,7 @@ window.startPluginApi = function() {
 	 * @alias onRemoveComment
 	 * @description The function called when the specified comment is removed with the {@link /plugin/executeMethod/text/removecomments RemoveComments} method.
 	 * @param {comment} comment - Defines the comment object containing the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onRemoveComment.js
 	 */
 
 
@@ -538,6 +569,7 @@ window.startPluginApi = function() {
 	 * @param {Array} params - The arguments that the method in use has (if it has any).
      * @param {Function} callback - The result that the method returns.
 	 * @returns {boolean}
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/executeMethod.js
 	 */
 	Plugin.executeMethod = function(name, params, callback)
     {
@@ -589,6 +621,7 @@ window.startPluginApi = function() {
      * @param {number} minH - The window minimum height.
      * @param {number} maxW - The window maximum width.
 	 * @param {number} maxH - The window maximum height.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/resizeWindow.js
 	 */
 	Plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
     {
@@ -639,6 +672,7 @@ window.startPluginApi = function() {
 	 * The *true* value is used to recalculate the document after executing the function in the *func* parameter.
 	 * The *false* value will not recalculate the document (use it only when your edits surely will not require document recalculation).
 	 * @param {Function} callback - The result that the method returns. Only the js standart types are available (any objects will be replaced with *undefined*).
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/callCommand.js
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
@@ -665,6 +699,7 @@ window.startPluginApi = function() {
 	 * @param {boolean} isClose - Defines whether the plugin window must be closed after the code is executed or left open waiting for another action.
 	 * The *true* value is used to close the plugin window after executing a remotely located script.
 	 * The *false* value is used to execute the code and leave the window open waiting for the next action.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/callModule.js
 	 */
 	Plugin.callModule = function(url, callback, isClose)
     {
@@ -694,6 +729,7 @@ window.startPluginApi = function() {
 	 * @description Defines the method used to load a remotely located text resource.
      * @param {string} url - The resource code URL.
 	 * @param {Function} callback - The result that the method returns.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/loadModule.js
 	 */
 	Plugin.loadModule = function(url, callback)
     {
@@ -720,6 +756,7 @@ window.startPluginApi = function() {
 	 * The list of all the available events can be found {@link /plugin/events here}.
      * @param {string} id - The event name.
 	 * @param {Function} action - The event listener.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/attachEvent.js
 	 */
 
 	/**
@@ -729,6 +766,7 @@ window.startPluginApi = function() {
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
      * @param {string} id - The event name.
 	 * @param {Function} action - The event listener.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/attachContextMenuClickEvent.js
 	 */
 
 	/***********************************************************************
@@ -740,6 +778,7 @@ window.startPluginApi = function() {
 	 * @description Defines the input helper item.
 	 * @property {string} id - The item index.
 	 * @property {string} text - The item text.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/InputHelperItem.js
 	 */
 
 	/**
@@ -755,6 +794,7 @@ window.startPluginApi = function() {
 	 * @memberof InputHelper
 	 * @alias createWindow
 	 * @description Creates an input helper window.
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/createWindow.js
 	 */
 
 	/**
@@ -763,6 +803,7 @@ window.startPluginApi = function() {
 	 * @alias getItems
 	 * @description Returns an array of the {@link global#InputHelperItem InputHelperItem} objects that contain all the items from the input helper.
 	 * @return {InputHelperItem[]}
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/getItems.js
 	 */
 
 	/**
@@ -771,6 +812,7 @@ window.startPluginApi = function() {
 	 * @alias setItems
 	 * @description Sets the items to the input helper.
 	 * @param {InputHelperItem[]} items - Defines an array of the {@link global#InputHelperItem InputHelperItem} objects which contain all the items for the input helper.
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/setItems.js
 	 */
 
 	/**
@@ -781,6 +823,7 @@ window.startPluginApi = function() {
 	 * @param {number} width - The input helper window width measured in millimeters.
 	 * @param {number} height - The input helper window height measured in millimeters.
 	 * @param {boolean} isCaptureKeyboard - Defines if the keyboard is caught (**true**) or not (**false**).
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/show.js
 	 */
 
 	/**
@@ -788,6 +831,7 @@ window.startPluginApi = function() {
 	 * @memberof InputHelper
 	 * @alias unShow
 	 * @description Hides an input helper.
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/unShow.js
 	 */
 
 	/**
@@ -796,6 +840,7 @@ window.startPluginApi = function() {
 	 * @alias getScrollSizes
 	 * @description Returns the sizes of the input helper scrolled window. Returns an object with width and height parameters.
 	 * @return {number}
+	 * @see office-js-api/Examples/Plugins/{Editor}/InputHelper/Methods/getScrollSizes.js
 	 */
 
 	/**
@@ -803,6 +848,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias createInputHelper
 	 * @description Defines the method used to create an {@link inputhelper input helper} - a window that appears and disappears when you type text. Its location is tied to the cursor.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/createInputHelper.js
 	 */
 	Plugin.createInputHelper = function()
     {
@@ -816,6 +862,7 @@ window.startPluginApi = function() {
 	 * @alias getInputHelper
 	 * @description Defines the method used to get the {@link inputhelper InputHelper object}.
 	 * @return {InputHelper} Input helper object
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/getInputHelper.js
 	 */
 	Plugin.getInputHelper = function()
 	{
@@ -833,6 +880,7 @@ window.startPluginApi = function() {
 	 * @param {object} data - The event data.
 	 * @return {boolean} Returns true if the operation is successful.
 	 * @since 7.4.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/sendToPlugin.js
 	 */
 	Plugin.sendToPlugin = function(name, data)
 	{
@@ -857,3 +905,5 @@ window.startPluginApi = function() {
 	};
 
 };
+
+

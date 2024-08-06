@@ -2597,6 +2597,8 @@ CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 };
 CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 {
+	if(this.bPresentation)
+		return;
 	this.UpdateNumberingCollection(elements);
 	
 	let logicDocument = this.GetLogicDocument();

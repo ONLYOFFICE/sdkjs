@@ -2637,6 +2637,7 @@
 								{
 									oOriginalDocument.UpdateBookmarks();
 								}
+								oThis.updateCommentsQuoteText();
                 oOriginalDocument.Recalculate();
                 oOriginalDocument.UpdateInterface();
                 oOriginalDocument.FinalizeAction();
@@ -3107,7 +3108,6 @@
     };
     CDocumentComparison.prototype.copyComment = function(sId)
     {
-        let oCopyComment;
         if(!this.CommentsMap[sId])
         {
             const oComment = this.revisedDocument.Comments.Get_ById(sId);
@@ -3118,8 +3118,9 @@
                 {
                     const oOldParent = oComment.Parent;
                     oComment.Parent = oOrigComments;
-                    oCopyComment = oComment.Copy();
+                    const oCopyComment = oComment.Copy();
                     this.CommentsMap[sId] = oCopyComment;
+                    this.CommentsMap[oCopyComment.GetId()] = oCopyComment;
 										if (this.oCommentManager.mapLink[sId])
 										{
 											this.oCommentManager.addToLink(oCopyComment.GetId(), sId);
@@ -3130,12 +3131,7 @@
                 }
             }
         }
-        oCopyComment = this.CommentsMap[sId] || null;
-        if(oCopyComment)
-        {
-            return oCopyComment.Get_Id();
-        }
-        return null;
+        return this.CommentsMap[sId];
     };
     CDocumentComparison.prototype.getRevisedStyle = function(sStyleId)
     {
@@ -3704,6 +3700,29 @@
         return false;
     };
 
+	CDocumentComparison.prototype.updateCommentsQuoteText = function ()
+	{
+		const oLogicDocument = this.originalDocument;
+		const oSelectionState = oLogicDocument.SaveDocumentState(false);
+		const oComments = oLogicDocument.GetCommentsManager();
+		for (let sId in oComments.m_arrCommentsById)
+		{
+			const oComment = oComments.m_arrCommentsById[sId];
+			if (oComment.SelectCommentText())
+			{
+				const oCommentData = oComment.GetData();
+				const sSelectedText = oLogicDocument.GetSelectedText(false);
+				if (sSelectedText !== oCommentData.GetQuoteText())
+				{
+					const oCopyData = oCommentData.Copy();
+					oCopyData.Set_QuoteText(sSelectedText === "" ? null : sSelectedText);
+					oComment.SetData(oCopyData);
+					this.api.sync_ChangeCommentData(oComment.Id, oCopyData);
+				}
+			}
+		}
+		oLogicDocument.LoadDocumentState(oSelectionState);
+	};
 
     window['AscCommonWord'] = window['AscCommonWord'] || {};
     window['AscCommonWord'].CDocumentComparison = CDocumentComparison;
@@ -4039,6 +4058,8 @@
 		const oComment = this.getAddedComment(oCopyData);
 		const oStartParaComment = new AscCommon.ParaComment(true, oComment.GetId());
 		const oEndParaComment = new AscCommon.ParaComment(false, oComment.GetId());
+		oComment.SetRangeStart(oStartParaComment.GetId());
+		oComment.SetRangeEnd(oEndParaComment.GetId());
 		const oEndCommentElement = new CCommentElement(oComment, oEndParaComment);
 		arrCommentElements.push(oEndCommentElement);
 		this.addToMergeLater(oStartParaComment, sRevisedCommentId);

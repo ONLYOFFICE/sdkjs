@@ -7202,9 +7202,25 @@ function parserFormula( formula, parent, _ws ) {
 				bConditionalFormula = true;
 				return bRecursiveCell;
 			}
-			if (nOperandType === cElementType.cellsRange || nOperandType === cElementType.cellsRange3D) {
+			if (nOperandType === cElementType.cellsRange) {
 				oRange = found_operand.getRange();
 				return oRange.containCell2(parserFormula.getParent());
+			}
+			if (nOperandType === cElementType.cellsRange3D) {
+				const oParentCell = parserFormula.getParent();
+				if (oParentCell instanceof AscCommonExcel.DefName || oParentCell instanceof CT_WorksheetSource) {
+					return false;
+				}
+				const aRanges = found_operand.getRanges().filter(function (oRange) {
+					return oParentCell.ws.getId() === oRange.worksheet.getId();
+				});
+
+				for (let i = 0, length = aRanges.length; i < length; i++) {
+					if (aRanges[i].containCell2(oParentCell)) {
+						return true;
+					}
+				}
+				return false;
 			}
 			if (nOperandType === cElementType.name || nOperandType === cElementType.name3D) {
 				const oElemValue = found_operand.getValue();

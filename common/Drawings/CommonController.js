@@ -2064,7 +2064,7 @@
 
 					const oApi = this.getEditorApi();
 					let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
-					const nSelectedCount = this.selectedObjects;
+					const nSelectedCount = this.selectedObjects.length;
 					const oFirstSelected = this.selectedObjects[0];
 
 					if (nSelectedCount === 1

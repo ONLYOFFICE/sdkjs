@@ -16043,7 +16043,12 @@ axisChart.prototype = {
 		let tickmarksProps = this._getTickmarksPropsSer();
 		let widthLine = tickmarksProps.widthLine;
 
-		let seriesCount = this.axis.labels.count;
+		let seriesCount = this.axis.labels && this.axis.labels.count;
+		if (seriesCount == null) {
+			let _chart = this.axis.parent && this.axis.parent.chart;
+			let countSeries = this.cChartDrawer.calculateCountSeries(_chart);
+			seriesCount = countSeries.series;
+		}
 		
 		if (widthLine !== 0) {
 			let positionX = this.cChartDrawer.processor3D.calculateXPositionSerAxis();

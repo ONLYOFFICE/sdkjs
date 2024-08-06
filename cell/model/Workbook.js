@@ -14660,7 +14660,9 @@
 				}
 			} else if (oOutStackElem && (oOutStackElem.type === cElementType.name || oOutStackElem.type === cElementType.name3D)) {
 				let oRef = oOutStackElem.toRef();
-				sAreaIndex = oRef.value.replace(/\$/g, "");
+				if (oRef.type === cElementType.cellsRange || oRef.type === cElementType.cellsRange3D) {
+					sAreaIndex = oRef.value.replace(/\$/g, "");
+				}
 			}
 		}
 		const oSheetListeners = oDepFormulas.sheetListeners[ws.Id];

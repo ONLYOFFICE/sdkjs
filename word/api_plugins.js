@@ -48,7 +48,8 @@
      * @property {string} Id - A unique identifier of the content control. It can be used to search for a certain content control and make reference to it in the code.
      * @property {ContentControlLock} Lock - A value that defines if it is possible to delete and/or edit the content control or not: 0 - only deleting, 1 - no deleting or editing, 2 - only editing, 3 - full access.
      * @property {string} InternalId - A unique internal identifier of the content control. It is used for all operations with content controls.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControl.js
+	 */
 
     /**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
@@ -57,7 +58,8 @@
 	 * * <b>1</b> - disable deleting or editing
 	 * * <b>2</b> - only editing
 	 * * <b>3</b> - full access
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
+	 */
 
     /**
      * @typedef {(1 | 2 | 3 | 4)} ContentControlType
@@ -66,7 +68,8 @@
 	 * * <b>2</b> - inline content control
 	 * * <b>3</b> - row content control
 	 * * <b>4</b> - cell content control
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlType.js
+	 */
 
     /**
      * @typedef {Object} ContentControlPropertiesAndContent
@@ -74,7 +77,8 @@
      * @property  {ContentControlProperties} [ContentControlProperties = {}] - The content control properties.
      * @property  {string} Script - A script that will be executed to generate the data within the content control (can be replaced with the *Url* parameter).
      * @property  {string} Url - A link to the shared file (can be replaced with the *Script* parameter).
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlPropertiesAndContent.js
+	 */
 
     /**
      * @typedef {Object} ContentControlProperties
@@ -90,9 +94,8 @@
      * @property {number} Color.R - Red color component value.
      * @property {number} Color.G - Green color component value.
      * @property {number} Color.B - Blue color component value.
-     * @example
-     * {"Id": 100, "Tag": "CC_Tag", "Lock": 3}
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlProperties.js
+	 */
 	
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
@@ -101,6 +104,7 @@
 	 * * <b>comments</b> - allows editing comments,
 	 * * <b>forms</b> - allows editing form fields,
 	 * * <b>readOnly</b> - does not allow editing.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/DocumentEditingRestrictions.js
 	 */
 	
 	/**
@@ -109,6 +113,7 @@
 	 * * <b>entirely</b> - replaces/returns the whole text,
 	 * * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
 	 * * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/TextPartType.js
 	 */
 
     var Api = window["asc_docs_api"];
@@ -120,7 +125,8 @@
      * @alias OpenFile
      * @param {Uint8Array} binaryFile - A file in the format of the 8-bit unsigned integer array.
      * @param {string[]} fields - A list of field values.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/OpenFile.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_OpenFile"] = function(binaryFile, fields)
     {
         this.asc_CloseFile();
@@ -139,7 +145,8 @@
      * @typeofeditors ["CDE"]
      * @alias GetFields
      * @returns {string[]} - A list of field values.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFields.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_GetFields"] = function()
     {
         return this.asc_GetBlockChainData();
@@ -151,28 +158,8 @@
      * @alias InsertAndReplaceContentControls
      * @param {ContentControlPropertiesAndContent[]} arrDocuments - An array of properties and contents of the content control.
      * @return {ContentControlProperties[]} - An array of created content control properties.
-     * @example
-     * // Add new content control
-     * var arrDocuments = [{
-     *  "Props": {
-     *       "Id": 100,
-     *       "Tag": "CC_Tag",
-     *       "Lock": 3
-     *   },
-     *   "Script": "var oParagraph = Api.CreateParagraph();oParagraph.AddText('Hello world!');Api.GetDocument().InsertContent([oParagraph]);"
-     *}]
-     * window.Asc.plugin.executeMethod("InsertAndReplaceContentControls", [arrDocuments]);
-     *
-     * // Change existed content control
-     * var arrDocuments = [{
-     *  "Props": {
-     *       "InternalId": "2_803"
-     *   },
-     *   "Script": "var oParagraph = Api.CreateParagraph();oParagraph.AddText('New text');Api.GetDocument().InsertContent([oParagraph]);"
-     *}]
-     * window.Asc.plugin.executeMethod("InsertAndReplaceContentControls", [arrDocuments]);
-
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InsertAndReplaceContentControls.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_InsertAndReplaceContentControls"] = function(arrDocuments)
     {
         var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
@@ -184,9 +171,8 @@
      * @typeofeditors ["CDE"]
      * @alias RemoveContentControls
      * @param {ContentControl[]} arrDocuments - An array of content control internal IDs. Example: [{"InternalId": "5_556"}].
-     * @example
-     * window.Asc.plugin.executeMethod("RemoveContentControls", [[{"InternalId": "5_556"}]])
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveContentControls.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_RemoveContentControls"] = function(arrDocuments)
     {
         var _worker = new AscCommon.CContentControlPluginWorker(this, arrDocuments);
@@ -198,9 +184,8 @@
      * @typeofeditors ["CDE"]
      * @alias GetAllContentControls
      * @returns {ContentControl[]} - An array of content control objects.
-     * @example
-     * window.Asc.plugin.executeMethod("GetAllContentControls");
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllContentControls.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_GetAllContentControls"] = function()
     {
         var _blocks = this.WordControl.m_oLogicDocument.GetAllContentControls();
@@ -220,7 +205,8 @@
      * @property  {object} Parent - The content control parent. For example, oParagraph.
      * @property  {number} Pos - The content control position within the parent object.
      * @property  {number} Count - A number of elements in the parent object.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlParentPr.js
+	 */
 
     /**
      * Removes the currently selected content control retaining all its contents. The content control where the mouse cursor is currently positioned will be removed.
@@ -229,9 +215,8 @@
      * @alias RemoveContentControl
      * @param {string} InternalId - A unique internal identifier of the content control.
      * @returns {ContentControlParentPr} - An object which contains the following values: Parent - content control parent, Pos - content control position within the parent object, Count - a number of elements in the parent object.
-     * @example
-     * window.Asc.plugin.executeMethod("RemoveContentControl", ["InternalId"])
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveContentControl.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_RemoveContentControl"] = function(InternalId)
     {
         return this.asc_RemoveContentControlWrapper(InternalId);
@@ -242,9 +227,8 @@
      * @typeofeditors ["CDE"]
      * @alias GetCurrentContentControl
      * @returns {string} - The content control internal ID.
-     * @example
-     * window.Asc.plugin.executeMethod("GetCurrentContentControl");
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentContentControl.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControl"] = function()
     {
         return this.asc_GetCurrentContentControl();
@@ -256,9 +240,8 @@
      * @alias GetCurrentContentControlPr
 	 * @param {string} contentFormat - The content format ("none", "text", "html", "ole" or "desktop").
      * @returns {ContentControlProperties} - The content control properties.
-     * @example
-     * window.Asc.plugin.executeMethod("GetCurrentContentControlPr")
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentContentControlPr.js
+	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetCurrentContentControlPr"] = function(contentFormat)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
@@ -324,9 +307,8 @@
      * @typeofeditors ["CDE"]
      * @alias SelectContentControl
      * @param {string} id - A unique internal identifier of the content control.
-     * @example
-     * window.Asc.plugin.executeMethod("SelectContentControl", ["5_665"]);
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectContentControl.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_SelectContentControl"] = function(id)
     {
         var oLogicDocument = this.private_GetLogicDocument();
@@ -342,9 +324,8 @@
      * @alias MoveCursorToContentControl
      * @param {string} id - A unique internal identifier of the content control.
      * @param {boolean} [isBegin = false] - Defines if the cursor position changes in the content control. By default, a cursor will be placed to the content control begin (**false**).
-     * @example
-     * window.Asc.plugin.executeMethod("MoveCursorToContentControl", ["2_839", false])
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToContentControl.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_MoveCursorToContentControl"] = function(id, isBegin)
     {
         var oLogicDocument = this.private_GetLogicDocument();
@@ -358,9 +339,8 @@
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias RemoveSelectedContent
-     * @example
-     *  window.Asc.plugin.executeMethod("RemoveSelectedContent")
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveSelectedContent.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_RemoveSelectedContent"] = function()
     {
         var oLogicDocument = this.private_GetLogicDocument();
@@ -380,6 +360,7 @@
 	 * Comment object.
 	 * @property {string} Id - The comment ID.
 	 * @property {CommentData} Data - An object which contains the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/comment.js
 	 */
 
 	/**
@@ -391,6 +372,7 @@
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
 	/**
@@ -400,6 +382,7 @@
 	 * @alias AddComment
 	 * @param {CommentData}  oCommentData - An object which contains the comment data.
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddComment.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddComment"] = function(oCommentData)
 	{
@@ -419,7 +402,8 @@
      * @typeofeditors ["CDE"]
      * @alias MoveCursorToStart
      * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the beginning of the document body.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToStart.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_MoveCursorToStart"] = function(isMoveToMainContent)
     {
         var oLogicDocument = this.private_GetLogicDocument();
@@ -438,7 +422,8 @@
      * @typeofeditors ["CDE"]
      * @alias MoveCursorToEnd
      * @param {boolean} isMoveToMainContent - This flag ignores the current position and always moves a cursor to the end of the document body.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveCursorToEnd.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_MoveCursorToEnd"] = function(isMoveToMainContent)
     {
         var oLogicDocument = this.private_GetLogicDocument();
@@ -459,7 +444,8 @@
      * @param {string} oProperties.searchString - The search string.
      * @param {string} oProperties.replaceString - The replacement string.
      * @param {boolean} [oProperties.matchCase=true] - Case sensitive or not.
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SearchAndReplace.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_SearchAndReplace"] = function(oProperties)
     {
         var sReplace    = oProperties["replaceString"];
@@ -484,6 +470,7 @@
 	 * @param {boolean} [oProperties.matchCase=true] - Case sensitive or not.
 	 * @param {boolean} [isForward=true] - Search direction.
 	 * @returns {boolean} returns false if text was not found
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SearchNext.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SearchNext"] = function(oProperties, isForward)
 	{
@@ -509,9 +496,8 @@
      * @typeofeditors ["CDE"]
      * @alias GetFileHTML
      * @return {string} - The HTML file content in the string format.
-     * @example
-     * window.Asc.plugin.executeMethod("GetFileHTML")
-     */
+     * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetFileHTML.js
+	 */
     window["asc_docs_api"].prototype["pluginMethod_GetFileHTML"] = function()
     {
         return this.ContentToHTML(true);
@@ -522,6 +508,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias GetAllComments
 	 * @returns {comment[]} - An array of comment objects containing the comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllComments.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllComments"] = function()
 	{
@@ -546,6 +533,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias RemoveComments
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveComments.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
@@ -558,6 +546,7 @@
 	 * @alias ChangeComment
 	 * @param {string} sId - The comment ID.
 	 * @param {CommentData} oCommentData - An object which contains the new comment data.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeComment.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ChangeComment"] = function(sId, oCommentData)
 	{
@@ -588,6 +577,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias MoveToComment
 	 * @param {string} sId - The comment ID.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveToComment.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_MoveToComment"] = function(sId)
 	{
@@ -604,6 +594,7 @@
 	 * * <b>simple</b> - all changes are displayed but the balloons are turned off,
 	 * * <b>final</b> - all accepted changes are displayed,
 	 * * <b>original</b> - all rejected changes are displayed.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetDisplayModeInReview.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
 	{
@@ -628,10 +619,7 @@
 	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (block), <b>2</b> (inline), <b>3</b> (row), or <b>4</b> (cell).
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @returns {ContentControl} - A JSON object containing the data about the created content control.
-	 * @example
-	 * var type = 1;
-	 * var properties = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-	 * window.Asc.plugin.executeMethod("AddContentControl", [type, properties]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControl.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddContentControl"] = function(type, commonPr)
 	{
@@ -649,6 +637,7 @@
 	 * @property {boolean} Checked - Defines if the content control checkbox is checked or not.
 	 * @property {number} CheckedSymbol - A symbol in the HTML code format that is used when the checkbox is checked.
 	 * @property {number} UncheckedSymbol - A symbol in the HTML code format that is used when the checkbox is not checked.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlCheckBoxProperties.js
 	 */
 
 	/**
@@ -658,10 +647,7 @@
 	 * @alias AddContentControlCheckBox
 	 * @param {ContentControlCheckBoxProperties}  [checkBoxPr = {}] - The content control checkbox properties.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
-	 * @example
-	 * var checkBoxPr = {"Checked": false, "CheckedSymbol": 9746, "UncheckedSymbol": 9744};
-	 * var commonPr = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-	 * window.Asc.plugin.executeMethod("AddContentControlCheckBox", [checkBoxPr, commonPr]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlCheckBox.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddContentControlCheckBox"] = function(checkBoxPr, commonPr)
 	{
@@ -688,9 +674,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlPicture
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
-	 * @example
-	 * var commonPr = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-	 * window.Asc.plugin.executeMethod("AddContentControlPicture", [commonPr]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlPicture.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddContentControlPicture"] = function(commonPr)
 	{
@@ -706,11 +690,7 @@
 	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (combo box), <b>0</b> (dropdown list).
 	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
-	 * @example
-	 * var type = 1; //1 - ComboBox  0 - DropDownList
-	 * var List = [{Display: "Item1_D", Value: "Item1_V"}, {Display: "Item2_D", Value: "Item2_V"}];
-	 * var commonPr = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-	 * window.Asc.plugin.executeMethod("AddContentControlList", [type, List, commonPr]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlList.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddContentControlList"] = function(type, List, commonPr)
 	{
@@ -734,6 +714,7 @@
 	 * @property {string} DateFormat - A format in which the date will be displayed.
 	 * For example: *"MM/DD/YYYY", "dddd\,\ mmmm\ dd\,\ yyyy", "DD\ MMMM\ YYYY", "MMMM\ DD\,\ YYYY", "DD-MMM-YY", "MMMM\ YY", "MMM-YY", "MM/DD/YYYY\ hh:mm\ AM/PM", "MM/DD/YYYY\ hh:mm:ss\ AM/PM", "hh:mm", "hh:mm:ss", "hh:mm\ AM/PM", "hh:mm:ss:\ AM/PM"*.
 	 * @property {object} Date - The current date and time.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlDatePickerProperties.js
 	 */
 
 	/**
@@ -743,26 +724,7 @@
 	 * @alias AddContentControlDatePicker
 	 * @param {ContentControlDatePickerProperties}  [datePickerPr = {}] - The content control datepicker properties.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
-	 * @example
-	 * var DateFormats = [
-	 * "MM/DD/YYYY",
-	 * "dddd\,\ mmmm\ dd\,\ yyyy",
-	 * "DD\ MMMM\ YYYY",
-	 * "MMMM\ DD\,\ YYYY",
-	 * "DD-MMM-YY",
-	 * "MMMM\ YY",
-	 * "MMM-YY",
-	 * "MM/DD/YYYY\ hh:mm\ AM/PM",
-	 * "MM/DD/YYYY\ hh:mm:ss\ AM/PM",
-	 * "hh:mm",
-	 * "hh:mm:ss",
-	 * "hh:mm\ AM/PM",
-	 * "hh:mm:ss:\ AM/PM"
-	 * ];
-	 * var Date = new window.Date();
-	 * var datePickerPr = {"DateFormat" : DateFormats[2], "Date" : Date};
-	 * var commonPr = {"Id": 100, "Tag": "CC_Tag", "Lock": 3};
-	 * window.Asc.plugin.executeMethod("AddContentControlDatePicker", [datePickerPr, commonPr]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddContentControlDatePicker.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddContentControlDatePicker"] = function(datePickerPr, commonPr)
 	{
@@ -794,6 +756,7 @@
 	 * @property {number} Height - The OLE object height measured in millimeters.
 	 * @property {?number} WidthPix - The OLE object image width in pixels.
 	 * @property {?number} HeightPix - The OLE object image height in pixels.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/OLEObjectData.js
 	 */
 	
 	/**
@@ -802,6 +765,7 @@
 	 * @property {string} FieldId - Field identifier.
 	 * @property {string} Value - Field value.
 	 * @property {string} Content - Field text content.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/AddinFieldData.js
 	 */
 
 	/**
@@ -813,7 +777,8 @@
 	 * @param {?string} sPluginId - Plugin identifier. It must be of the *asc.{UUID}* type.
 	 * @returns {OLEObjectData[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
 	 * @since 7.1.0
-	 * */
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllOleObjects.js
+	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
 		let aDataObjects = [];
@@ -835,7 +800,8 @@
 	 * @alias RemoveOleObject
 	 * @param {string} sInternalId - The OLE object identifier which is used to work with OLE object added to the document.
 	 * @since 7.1.0
-	 * */
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObject.js
+	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
@@ -853,8 +819,7 @@
 	 * @alias RemoveOleObjects
 	 * @param {OLEObjectData[]} arrObjects An array of the identifiers which are used to work with OLE objects added to the document. Example: [{"InternalId": "5_556"}].
 	 * @since 7.1.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("RemoveOleObjects", [[{"InternalId": "5_556"}]])
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveOleObjects.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
 	{
@@ -879,8 +844,7 @@
 	 * @alias SelectOleObject
 	 * @param {string} id - The OLE object identifier which is used to work with OLE object added to the document.
 	 * @since 7.1.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("SelectOleObject", ["5_665"]);
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SelectOleObject.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SelectOleObject"] = function(id)
 	{
@@ -904,6 +868,7 @@
 	 * @param {OLEObjectData} NewObject - The OLEObjectData object.
 	 * @param {?boolean} bSelect - Defines if the OLE object will be selected after inserting into the document (**true**) or not (**false**).
 	 * @since 7.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/InsertOleObject.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_InsertOleObject"] = function(NewObject, bSelect)
 	{
@@ -928,6 +893,7 @@
 	 * @alias ChangeOleObject
 	 * @param {OLEObjectData} ObjectData - The OLEObjectData object.
 	 * @since 7.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeOleObject.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObject"] = function(ObjectData)
 	{
@@ -940,6 +906,7 @@
 	 * @alias ChangeOleObjects
 	 * @param {OLEObjectData[]} arrObjectData - An array of OLE object data.
 	 * @since 7.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeOleObjects.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObjects"] = function(arrObjectData)
 	{
@@ -1035,8 +1002,7 @@
 	 * @alias AcceptReviewChanges
 	 * @param {boolean} [isAll=false] Specifies if all changes will be accepted (**true**) or only changes from the current selection (**false**).
 	 * @since 7.2.1
-	 * @example
-	 * window.Asc.plugin.executeMethod("AcceptReviewChanges");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AcceptReviewChanges.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AcceptReviewChanges"] = function(isAll)
 	{
@@ -1052,8 +1018,7 @@
 	 * @alias RejectReviewChanges
 	 * @param {boolean} [isAll=false] Specifies if all changes will be rejected (**true**) or only changes from the current selection (**false**).
 	 * @since 7.2.1
-	 * @example
-	 * window.Asc.plugin.executeMethod("RejectReviewChanges");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RejectReviewChanges.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RejectReviewChanges"] = function(isAll)
 	{
@@ -1069,8 +1034,7 @@
 	 * @alias MoveToNextReviewChange
 	 * @param {boolean} [isForward=true] Specifies whether to navigate to the next (**true**) or previous (**false**) review change.
 	 * @since 7.2.1
-	 * @example
-	 * window.Asc.plugin.executeMethod("MoveToNextReviewChange");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/MoveToNextReviewChange.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_MoveToNextReviewChange"] = function(isForward)
 	{
@@ -1086,8 +1050,7 @@
 	 * @alias GetAllAddinFields
 	 * @returns {AddinFieldData[]} - An array of the AddinFieldData objects containing the data about the addin fields.
 	 * @since 7.3.3
-	 * @example
-	 * window.Asc.plugin.executeMethod("GetAllAddinFields");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllAddinFields.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetAllAddinFields"] = function()
 	{
@@ -1113,8 +1076,7 @@
 	 * @alias UpdateAddinFields
 	 * @param {AddinFieldData[]} arrData - An array of addin field data.
 	 * @since 7.3.3
-	 * @example
-	 * window.Asc.plugin.executeMethod("UpdateAddinFields");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/UpdateAddinFields.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_UpdateAddinFields"] = function(arrData)
 	{
@@ -1137,8 +1099,7 @@
 	 * @alias AddAddinField
 	 * @param {AddinFieldData} data - Addin field data.
 	 * @since 7.3.3
-	 * @example
-	 * window.Asc.plugin.executeMethod("AddAddinField");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddAddinField.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_AddAddinField"] = function(data)
 	{
@@ -1155,8 +1116,7 @@
 	 * @alias RemoveFieldWrapper
 	 * @param {string} [fieldId=undefined] - Field ID. If it is not specified, then the wrapper of the current field is removed.
 	 * @since 7.3.3
-	 * @example
-	 * window.Asc.plugin.executeMethod("RemoveFieldWrapper");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveFieldWrapper.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveFieldWrapper"] = function(fieldId)
 	{
@@ -1173,8 +1133,7 @@
 	 * @alias SetEditingRestrictions
 	 * @param {DocumentEditingRestrictions} restrictions - The document editing restrictions.
 	 * @since 7.3.3
-	 * @example
-	 * window.Asc.plugin.executeMethod("SetEditingRestrictions");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetEditingRestrictions.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SetEditingRestrictions"] = function(restrictions)
 	{
@@ -1204,8 +1163,7 @@
 	 * @param {TextPartType} [type="entirely"] - Specifies if the whole word or only its part will be returned.
 	 * @returns {string} - A word or its part.
 	 * @since 7.4.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("GetCurrentWord");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentWord.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function(type)
 	{
@@ -1223,8 +1181,7 @@
 	 * @param {string} replaceString - Replacement string.
 	 * @param {TextPartType} [type="entirely"] - Specifies if the whole word or only its part will be replaced.
 	 * @since 7.4.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("ReplaceCurrentWord");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceCurrentWord.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
 	{
@@ -1244,8 +1201,7 @@
 	 * @param {TextPartType} [type="entirely"] - Specifies if the whole sentence or only its part will be returned.
 	 * @returns {string} - A sentence or its part.
 	 * @since 7.4.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("GetCurrentSentence");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCurrentSentence.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function(type)
 	{
@@ -1263,8 +1219,7 @@
 	 * @param {string} replaceString - Replacement string.
 	 * @param {TextPartType} [type="entirely"] - Specifies if the whole sentence or only its part will be replaced.
 	 * @since 7.4.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("ReplaceCurrentSentence");
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ReplaceCurrentSentence.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
 	{
@@ -1283,8 +1238,6 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias Undo
 	 * @since 8.2.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("Undo");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_Undo"] = function()
 	{
@@ -1296,8 +1249,6 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias Redo
 	 * @since 8.2.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("Redo");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_Redo"] = function()
 	{
@@ -1309,8 +1260,6 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias CanUndo
 	 * @since 8.2.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("CanUndo");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_CanUndo"] = function()
 	{
@@ -1322,8 +1271,6 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias CanRedo
 	 * @since 8.2.0
-	 * @example
-	 * window.Asc.plugin.executeMethod("CanRedo");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_CanRedo"] = function()
 	{
@@ -1374,3 +1321,5 @@
 	}
 	
 })(window);
+
+

@@ -2703,24 +2703,30 @@ CTable.prototype.GetAllParagraphs = function(Props, ParaArray)
 
 	return ParaArray;
 };
-CTable.prototype.GetAllTables = function(oProps, arrTables)
+CTable.prototype.GetAllTables = function(oProps, tables)
 {
-	if (!arrTables)
-		arrTables = [];
-
-	arrTables.push(this);
-
-	var Count = this.Content.length;
-	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	if (!tables)
+		tables = [];
+	
+	tables.push(this);
+	this.GetNestedTables(tables);
+	return tables;
+};
+CTable.prototype.GetNestedTables = function(tables)
+{
+	if (!tables)
+		tables = [];
+	
+	for (let iRow = 0, rowCount = this.GetRowsCount(); iRow < rowCount; ++iRow)
 	{
-		var oRow = this.GetRow(nCurRow);
-		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		let row = this.GetRow(iRow);
+		for (let iCell = 0, cellCount = row.GetCellsCount(); iCell < cellCount; ++iCell)
 		{
-			oRow.GetCell(nCurCell).GetContent().GetAllTables(oProps, arrTables);
+			row.GetCell(iCell).GetContent().GetAllTables(undefined, tables);
 		}
 	}
-
-	return arrTables;
+	
+	return tables;
 };
 CTable.prototype.GetEndInfo = function()
 {

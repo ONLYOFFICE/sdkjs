@@ -5055,13 +5055,21 @@
 
 	baseEditorsApi.prototype.wrapEvent = function(name) 
 	{
+		var wrapArray = function(args) {
+			for (let i = 0, len = args.length; i < len; i++)
+			{
+				if (!args[i])
+					continue;
+				if (args[i].toCValue)
+					args[i] = args[i].toCValue();
+				else if (Array.isArray(args[i]))
+					wrapArray(args[i]);
+			}
+		};
+
 		this.asc_registerCallback(name, function()
 		{
-			for (let i = 0, len = arguments.length; i < len; i++) 
-			{
-				if (arguments[i] && arguments[i].toCValue)
-					arguments[i] = arguments[i].toCValue();
-			}
+			wrapArray(arguments);
 			window["native"]["onJsEvent"](name, Array.from(arguments));
 		});
 	};

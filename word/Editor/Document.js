@@ -12494,36 +12494,65 @@ CDocument.prototype.Get_ColumnsProps = function()
 
 	return ColumnsPr;
 };
-
-
+CDocument.prototype.GetWatermark = function()
+{
+	if (this.CurPage < this.Pages.length)
+	{
+		let pageInfo = this.Get_SectionPageNumInfo(this.CurPage);
+		let header = this.Get_SectionHdrFtr(this.CurPage, pageInfo.bFirst, pageInfo.bFirst.bEven).Header;
+		if (header)
+			return header.FindWatermark();
+		
+		return null;
+	}
+	else
+	{
+		// Case when the document wasn't calculated
+		let sectPr = this.SectionsInfo.Get(0).SectPr;
+		let header = sectPr.Get_Header_Default();
+		if (header)
+			return header.FindWatermark();
+		
+		return null;
+	}
+};
 CDocument.prototype.GetWatermarkProps = function()
 {
-    var SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
-    var bFirst = SectionPageInfo.bFirst;
-    var bEven  = SectionPageInfo.bEven;
-    var HdrFtr = this.Get_SectionHdrFtr(this.CurPage, false, false);
-    var Header = HdrFtr.Header;
-    var oProps;
-    if (null === Header)
-    {
-        oProps = new Asc.CAscWatermarkProperties();
-        oProps.put_Type(Asc.c_oAscWatermarkType.None);
-        oProps.put_Api(this.Api);
-        return oProps;
-    }
-    var oWatermark = Header.FindWatermark();
-    if(oWatermark)
-    {
-        oProps = oWatermark.GetWatermarkProps();
-        oProps.put_Api(this.Api);
-        return oProps;
-    }
-    oProps = new Asc.CAscWatermarkProperties();
-    oProps.put_Type(Asc.c_oAscWatermarkType.None);
-    oProps.put_Api(this.Api);
-    return oProps;
+	let watermark = this.GetWatermark();
+	
+	let props = new Asc.CAscWatermarkProperties();
+	props.put_Api(this.Api);
+	if (watermark)
+		props = watermark.GetWatermarkProps();
+	else
+		props.put_Type(Asc.c_oAscWatermarkType.None);
+	
+	return props;
 };
-
+CDocument.prototype.GetHeaderForWatermark = function()
+{
+	if (this.CurPage < this.Pages.length)
+	{
+		let pageInfo = this.Get_SectionPageNumInfo(this.CurPage);
+		let header = this.Get_SectionHdrFtr(this.CurPage, pageInfo.bFirst, pageInfo.bFirst.bEven).Header;
+		if (header)
+			return header;
+		
+		return this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
+	}
+	else
+	{
+		// Case when the document wasn't calculated
+		let sectPr = this.SectionsInfo.Get(0).SectPr;
+		let header = sectPr.Get_Header_Default();
+		if (header)
+			return header;
+		
+		header = new CHeaderFooter(this.HdrFtr, this, this.DrawingDocument, hdrftr_Header);
+		sectPr.Set_Header_Default(header);
+		return header;
+	}
+};
 CDocument.prototype.SetWatermarkProps = function(oProps)
 {
 	if (!this.CanPerformAction())
@@ -12532,42 +12561,31 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 	this.StartAction(AscDFH.historydescription_Document_AddWatermark);
 	this.SetWatermarkPropsAction(oProps);
 	this.Recalculate();
-	this.Document_UpdateInterfaceState();
-	this.Document_UpdateSelectionState();
-	this.Document_UpdateRulersState();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.UpdateRulers();
 	this.FinalizeAction(true);
 };
 
 CDocument.prototype.SetWatermarkPropsAction = function(oProps)
 {
-    const SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
-    const bFirst = SectionPageInfo.bFirst;
-    const bEven  = SectionPageInfo.bEven;
-    const HdrFtr = this.Get_SectionHdrFtr(this.CurPage, bFirst, bEven);
-    let Header = HdrFtr.Header;
-    if(null === Header)
-    {
-        if(Asc.c_oAscWatermarkType.None === oProps.get_Type())
-        {
-            this.FinalizeAction(true);
-            return;
-        }
-        Header = this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
-    }
-    let oWatermark = Header.FindWatermark();
-    if(oWatermark)
-    {
-        if(oWatermark.GraphicObj.selected)
-        {
-            this.RemoveSelection(true);
-        }
-        oWatermark.Remove_FromDocument(false);
-    }
-    oWatermark = this.DrawingObjects.createWatermark(oProps);
-    if(oWatermark)
-    {
+	let watermark = this.GetWatermark();
+	if (watermark)
+	{
+		if (watermark.GraphicObj.selected)
+			this.RemoveSelection(true);
+		watermark.Remove_FromDocument(false);
+	}
+	
+	if (Asc.c_oAscWatermarkType.None === oProps.get_Type())
+		return;
+	
+	let oWatermark = this.DrawingObjects.createWatermark(oProps);
+	if (oWatermark)
+	{
+    	let header = this.GetHeaderForWatermark();
         const oDocState = this.Get_SelectionState2();
-        const oContent = Header.Content;
+        const oContent = header.GetContent();
         let oWatermarkCC = null;
         const aAllContentControls = oContent.GetAllContentControls();
         const nCount = aAllContentControls.length;
