@@ -18510,6 +18510,7 @@ function RangeDataManagerElem(bbox, data)
 				if (preFromElem) {
 					if (preFromElem.isEqualVal(val)) {
 						preFromElem.endRow = this.data[toIndex].endRow;
+						toIndex++;
 					} else if(fromIndex === insertIndex){
 						// shrink
 						preFromElem.endRow = from - 1;
@@ -18526,6 +18527,8 @@ function RangeDataManagerElem(bbox, data)
 			if (!combine) {
 				fromElem.set(val, to);
 				fromIndex++;
+				fromElem = this.data[fromIndex];
+				preFromElem = this.data[fromIndex - 1];
 				insertIndex = -1;
 			}
 			if (fromIndex < toIndex) {
@@ -18631,7 +18634,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 			if (endIndex >= startIndex) {
 				this.data.splice(startIndex, endIndex - startIndex + 1);
-				if (startIndex > 0 && this.data[startIndex - 1].isEqualVal(this.data[startIndex])) {
+				if (startIndex > 0 && this.data[startIndex - 1].isEqualVal(this.data[startIndex].val)) {
 					this.data.splice(startIndex - 1, 1);
 				}
 			}
@@ -18651,13 +18654,14 @@ function RangeDataManagerElem(bbox, data)
 		let prev = start > 0 ? start - 1 : 0;
 		let startIndex = this.searchIndex(prev);
 		//shift endRow
-		for (i = startIndex; i < this.data.length; ++i) {
+		for (i = startIndex; i < this.data.length - 1; ++i) {
 			let elem = this.data[i];
-			elem.endRow += insertCount;
-			if (elem.endRow >= AscCommon.gc_nMaxRow0) {
+			let newEndRow = elem.endRow + insertCount;
+			if (newEndRow >= AscCommon.gc_nMaxRow0) {
 				elem.endRow = AscCommon.gc_nMaxRow0;
 				break;
 			}
+			elem.endRow = newEndRow;
 		}
 		//remove tail
 		this.data.length = i + 1;
