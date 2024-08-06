@@ -35,7 +35,7 @@
 (function (window) {
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
-	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
+	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = true;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -68,22 +68,6 @@
 		return rectSum < 0;
 	}
 
-	function checkPositionBounds(position, bounds) {
-		if (position.x < bounds.l) {
-			bounds.l = position.x;
-		}
-		if (position.y < bounds.t) {
-			bounds.t = position.y;
-		}
-		const right = position.x + position.width;
-		if (right > bounds.r) {
-			bounds.r = right;
-		}
-		const bottom = position.y + position.height;
-		if (bottom > bounds.b) {
-			bounds.b = bottom;
-		}
-	}
 	function checkBounds(firstBounds, secondBounds) {
 		if (secondBounds.l < firstBounds.l) {
 			firstBounds.l = secondBounds.l;
@@ -626,6 +610,9 @@
 			const colorStyleLbl = styleLblsByName[styleLbl];
 			if (colorStyleLbl) {
 				const presNodes = this.colorCheck[styleLbl];
+				const fills = [];
+				const lines = [];
+
 				for (let i = 0; i < presNodes.length; i += 1) {
 					const presNode = presNodes[i];
 					const mainShape = presNode.shape;

@@ -7517,7 +7517,6 @@ Because of this, the display is sometimes not correct.
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
-
     ColorDefStyleLbl.prototype.setEffectClrLst = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
       this.effectClrLst = oPr;
@@ -7682,6 +7681,7 @@ Because of this, the display is sometimes not correct.
 					return false;
 			}
 	  };
+
 	  ColorDefStyleLbl.prototype.checkNoLn = function () {
 		  switch (this.name) {
 			  case "sibTrans2D1":
@@ -7699,8 +7699,7 @@ Because of this, the display is sometimes not correct.
 		  if (lst && lst.length) {
 				const truthIndex = index % lst.length;
 				const uniColor = lst[truthIndex];
-				if (this.checkTransparent(uniColor) ||
-					shadowShape.shape.hideGeom ||
+				if (shadowShape.shape.hideGeom ||
 					this.checkNoFill() ||
 					shadowShape.type === AscFormat.LayoutShapeType_outputShapeType_conn) {
 					return AscFormat.CreateNoFillUniFill();
@@ -7851,12 +7850,109 @@ Because of this, the display is sometimes not correct.
 
     function ClrLst() {
       CCommonDataClrList.call(this);
-      this.hueDir = null;
-      this.meth = null;
+      this.hueDir = ClrLst_hueDir_cw;
+      this.meth = ClrLst_meth_span;
     }
 
     InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
 
+	  ClrLst.prototype.getCurColor = function (length) {
+			if (this.meth === ClrLst_meth_repeat) {
+				return this.getRepeatColor(length);
+			}
+
+		  const startColor = this.lst[0];
+		  const endColor = this.lst[1];
+		  if (startColor && endColor && length) {
+			  startColor.Calculate();
+			  endColor.Calculate();
+			  const resultColors = [];
+			  const startHSL = {};
+			  AscFormat.CColorModifiers.prototype.RGB2HSL(startColor.RGBA.R, startColor.RGBA.G, startColor.RGBA.B, startHSL);
+
+			  const endHSL = {};
+			  AscFormat.CColorModifiers.prototype.RGB2HSL(endColor.RGBA.R, endColor.RGBA.G, endColor.RGBA.B, endHSL);
+
+			  const diffHSL = {};
+			  if (this.hueDir === ClrLst_hueDir_ccw) {
+				  diffHSL.H = startHSL.H - endHSL.H;
+			  } else {
+				  diffHSL.H = endHSL.H - startHSL.H;
+			  }
+			  while (diffHSL.H < 0) {
+				  diffHSL.H += 255;
+			  }
+			  diffHSL.S = endHSL.S - startHSL.S;
+			  diffHSL.L = endHSL.L - endHSL.L;
+			  if (this.meth === ClrLst_meth_cycle) {
+				  return this.getCycleColor(diffHSL, length);
+			  } else {
+					return this.getSpanColor(diffHSL, length);
+			  }
+		  }
+	  };
+	  ClrLst.prototype.getRepeatColor = function (index) {
+		  const truthIndex = index % this.lst.length;
+		  const uniColor = this.lst[truthIndex];
+			return AscFormat.CreateUniFillByUniColorCopy(uniColor);
+	  };
+	  ClrLst.prototype.getInterpolateStartColor = function (diffHSL, scale) {
+		  const startColor = this.lst[0];
+
+		  const hueOff = diffHSL.H + diffHSL.H * scale;
+		  const satOff = diffHSL.S + diffHSL.S * scale;
+		  const lumOff = diffHSL.L + diffHSL.L * scale;
+		  const copyColor = startColor.createDuplicate();
+		  copyColor.addColorMod(new AscFormat.CColorMod("hueoff", ((hueOff / 255) * (360 * 60000))) >> 0);
+		  copyColor.addColorMod(new AscFormat.CColorMod("satoff", (satOff / 255 * 100000)) >> 0);
+		  copyColor.addColorMod(new AscFormat.CColorMod("lumoff", (lumOff / 255 * 100000)) >> 0);
+			return copyColor;
+	  };
+		ClrLst.prototype.getCycleColor = function (diffHSL, length) {
+			if (!length) {
+				return;
+			}
+			const startColor = this.lst[0];
+			const resultColors = [];
+			resultColors.push(startColor.createDuplicate());
+
+			if (length % 2 === 0) {
+				const newLength = length / 2;
+				for (let i = 0; i < newLength; i += 1) {
+					const scale = (i + 1) / newLength;
+					resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+				}
+
+				for (let i = 0; i < newLength - 1; i += 1) {
+					const scale = 1 - ((i + 1) / newLength);
+					resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+				}
+			} else {
+				const newLength = Math.floor(length / 2);
+				for (let i = 0; i < newLength; i += 1) {
+					const scale = (i + 1) / newLength;
+					resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+				}
+
+				for (let i = 0; i < newLength; i += 1) {
+					const scale = 1 - ((i + 1) / newLength);
+					resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+				}
+			}
+			return resultColors;
+		};
+		ClrLst.prototype.getSpanColor = function (diffHSL, length) {
+			if (!length) {
+				return;
+			}
+
+			const resultColors = [];
+			for (let i = 0; i < length; i += 1) {
+				const scale = i / (length - 1);
+				resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+			}
+			return resultColors;
+		}
     ClrLst.prototype.setHueDir = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
       this.hueDir = pr;
@@ -9921,6 +10017,114 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.getName = function () {
       return 'SmartArt';
     };
+
+		SmartArt.prototype.isCanGenerateSmartArt = function () {
+			const smartartType = this.getTypeOfSmartArt();
+			switch (smartartType) {
+				case Asc.c_oAscSmartArtTypes.AlternatingHexagonList:
+				case Asc.c_oAscSmartArtTypes.AlternatingPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.ArrowRibbon:
+				case Asc.c_oAscSmartArtTypes.AscendingPictureAccentProcess:
+				case Asc.c_oAscSmartArtTypes.Balance:
+				case Asc.c_oAscSmartArtTypes.BasicBlockList:
+				case Asc.c_oAscSmartArtTypes.BasicCycle:
+				case Asc.c_oAscSmartArtTypes.BasicMatrix:
+				case Asc.c_oAscSmartArtTypes.BasicBendingProcess:
+				case Asc.c_oAscSmartArtTypes.BasicPie:
+				case Asc.c_oAscSmartArtTypes.BasicProcess:
+				case Asc.c_oAscSmartArtTypes.BasicPyramid:
+				case Asc.c_oAscSmartArtTypes.BasicRadial:
+				case Asc.c_oAscSmartArtTypes.BasicTarget:
+				case Asc.c_oAscSmartArtTypes.BasicVenn:
+				case Asc.c_oAscSmartArtTypes.BendingPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.BendingPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.BendingPictureCaptionList:
+				case Asc.c_oAscSmartArtTypes.BendingPictureCaption:
+				case Asc.c_oAscSmartArtTypes.BendingPictureSemiTransparentText:
+				case Asc.c_oAscSmartArtTypes.BlockCycle:
+				case Asc.c_oAscSmartArtTypes.CaptionedPictures:
+				case Asc.c_oAscSmartArtTypes.ChevronAccentProcess:
+				case Asc.c_oAscSmartArtTypes.CircleArrowProcess:
+				case Asc.c_oAscSmartArtTypes.CircleProcess:
+				case Asc.c_oAscSmartArtTypes.CircleRelationship:
+				case Asc.c_oAscSmartArtTypes.ClosedChevronProcess:
+				case Asc.c_oAscSmartArtTypes.ContinuousCycle:
+				case Asc.c_oAscSmartArtTypes.ConvergingArrows:
+				case Asc.c_oAscSmartArtTypes.ConvergingRadial:
+				case Asc.c_oAscSmartArtTypes.ConvergingText:
+				case Asc.c_oAscSmartArtTypes.CounterbalanceArrows:
+				case Asc.c_oAscSmartArtTypes.CycleMatrix:
+				case Asc.c_oAscSmartArtTypes.DescendingProcess:
+				case Asc.c_oAscSmartArtTypes.DivergingArrows:
+				case Asc.c_oAscSmartArtTypes.DivergingRadial:
+				case Asc.c_oAscSmartArtTypes.Equation:
+				case Asc.c_oAscSmartArtTypes.Funnel:
+				case Asc.c_oAscSmartArtTypes.Gear:
+				case Asc.c_oAscSmartArtTypes.GridMatrix:
+				case Asc.c_oAscSmartArtTypes.GroupedList:
+				case Asc.c_oAscSmartArtTypes.HexagonCluster:
+				case Asc.c_oAscSmartArtTypes.IncreasingCircleProcess:
+				case Asc.c_oAscSmartArtTypes.InterconnectedBlockProcess:
+				case Asc.c_oAscSmartArtTypes.InterconnectedRings:
+				case Asc.c_oAscSmartArtTypes.InvertedPyramid:
+				case Asc.c_oAscSmartArtTypes.LinearVenn:
+				case Asc.c_oAscSmartArtTypes.MultiDirectionalCycle:
+				case Asc.c_oAscSmartArtTypes.NestedTarget:
+				case Asc.c_oAscSmartArtTypes.NonDirectionalCycle:
+				case Asc.c_oAscSmartArtTypes.OpposingArrows:
+				case Asc.c_oAscSmartArtTypes.OpposingIdeas:
+				case Asc.c_oAscSmartArtTypes.PhasedProcess:
+				case Asc.c_oAscSmartArtTypes.PictureAccentProcess:
+				case Asc.c_oAscSmartArtTypes.PictureCaptionList:
+				case Asc.c_oAscSmartArtTypes.PictureFrame:
+				case Asc.c_oAscSmartArtTypes.PictureLineup:
+				case Asc.c_oAscSmartArtTypes.PictureOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.PictureStrips:
+				case Asc.c_oAscSmartArtTypes.PlusAndMinus:
+				case Asc.c_oAscSmartArtTypes.ProcessList:
+				case Asc.c_oAscSmartArtTypes.RadialCluster:
+				case Asc.c_oAscSmartArtTypes.RadialCycle:
+				case Asc.c_oAscSmartArtTypes.RadialList:
+				case Asc.c_oAscSmartArtTypes.RadialPictureList:
+				case Asc.c_oAscSmartArtTypes.RadialVenn:
+				case Asc.c_oAscSmartArtTypes.RepeatingBendingProcess:
+				case Asc.c_oAscSmartArtTypes.ReverseList:
+				case Asc.c_oAscSmartArtTypes.SegmentedCycle:
+				case Asc.c_oAscSmartArtTypes.SegmentedProcess:
+				case Asc.c_oAscSmartArtTypes.SegmentedPyramid:
+				case Asc.c_oAscSmartArtTypes.SpiralPicture:
+				case Asc.c_oAscSmartArtTypes.StackedVenn:
+				case Asc.c_oAscSmartArtTypes.StaggeredProcess:
+				case Asc.c_oAscSmartArtTypes.TabList:
+				case Asc.c_oAscSmartArtTypes.TabbedArc:
+				case Asc.c_oAscSmartArtTypes.TableList:
+				case Asc.c_oAscSmartArtTypes.TextCycle:
+				case Asc.c_oAscSmartArtTypes.ThemePictureAccent:
+				case Asc.c_oAscSmartArtTypes.ThemePictureAlternatingAccent:
+				case Asc.c_oAscSmartArtTypes.ThemePictureGrid:
+				case Asc.c_oAscSmartArtTypes.TitledMatrix:
+				case Asc.c_oAscSmartArtTypes.TitledPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.TitledPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.TitlePictureLineup:
+				case Asc.c_oAscSmartArtTypes.TrapezoidList:
+				case Asc.c_oAscSmartArtTypes.UpwardArrow:
+				case Asc.c_oAscSmartArtTypes.VerticalPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.VerticalPictureList:
+				case Asc.c_oAscSmartArtTypes.HorizontalOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.HalfCircleOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.StackedList:
+				case Asc.c_oAscSmartArtTypes.HorizontalHierarchy:
+				case Asc.c_oAscSmartArtTypes.HorizontalMultiLevelHierarchy:
+				case Asc.c_oAscSmartArtTypes.OrganizationChart:
+				case Asc.c_oAscSmartArtTypes.NameAndTitleOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.CirclePictureHierarchy:
+				case Asc.c_oAscSmartArtTypes.HierarchyList:
+				case Asc.c_oAscSmartArtTypes.Hierarchy:
+					return true;
+				default:
+					return false;
+			}
+		};
     SmartArt.prototype.generateDrawingPart = function () {
       const smartArtAlgorithm = new AscFormat.SmartArtAlgorithm(this);
       smartArtAlgorithm.startFromBegin();
@@ -9958,7 +10162,6 @@ Because of this, the display is sometimes not correct.
         arrShapes.forEach(function (oShape) {
           if (oShape.spPr) {
             if (oShape.spPr.Fill && oShape.spPr.Fill.fill && !(oShape.spPr.Fill.fill instanceof AscFormat.CNoFill)) {
-              let mods = null;
               const id = oShape.spPr.Fill.fill.color.color.id;
               let standardColor;
               if (id === 0) {
@@ -9970,7 +10173,7 @@ Because of this, the display is sometimes not correct.
               }
 
               if (oShape.spPr.Fill.fill.color.Mods) {
-                mods = oShape.spPr.Fill.fill.color.Mods.Apply(standardColor);
+                oShape.spPr.Fill.fill.color.Mods.Apply(standardColor);
               }
               const grayscaleValue = AscFormat.getGrayscaleValue(standardColor);
 
