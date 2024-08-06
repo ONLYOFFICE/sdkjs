@@ -2159,6 +2159,7 @@
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
 		oAdditionalData["isSaveAs"] = options.isSaveAs;
+		oAdditionalData["saveAsPath"] = options.wopiSaveAsPath;
 		let locale = this.asc_getLocale() || undefined;
 		if (typeof locale === "string") {
 			locale = Asc.g_oLcidNameToIdMap[locale];
