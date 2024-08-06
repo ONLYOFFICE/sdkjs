@@ -529,33 +529,147 @@ $(function () {
 	QUnit.module("CAttrArray");
 	QUnit.test("Test: \"set\"", function (assert) {
 		let attrArray = new AscCommonExcel.CAttrArray(null);
-		attrArray.set(0, 1, true);
-		attrArray.set(1, 2, true);
-		attrArray.set(2, 2, true);
-		attrArray.set(3, 3, true);
-		attrArray.set(4, 3, true);
-		attrArray.set(5, 3, true);
-		let expected = [1, 2, 2, 3, 3, 3];
-		let res = checkAttrArrayByArray(attrArray, expected);
-
-		assert.deepEqual(res, expected);
+		attrArray.set(0, null, true);
+		attrArray.set(1, 1, true);
+		attrArray.set(2, null, true);
+		attrArray.set(3, 1, true);
+		attrArray.set(4, 1, true);
+		attrArray.set(5, null, true);
+		attrArray.set(6, 1, true);
+		attrArray.set(7, 1, true);
+		attrArray.set(8, 2, true);
+		attrArray.set(9, 2, true);
+		let expected = [null, 1, null, 1, 1, null, 1, 1, 2, 2];
+		checkAttrArrayByArray(attrArray, expected, 0, assert, "");
+		assert.ok(true);
 	});
-	// QUnit.test("Test: \"setArea\"", function (assert) {
-	//
-	// 	let attrArray = new AscCommonExcel.CAttrArray(null);
-	// 	attrArray.set(0,  1, true);
-	// 	attrArray.set(1, 2, true);
-	// 	attrArray.set(2, 2, true);
-	// 	attrArray.set(3, 3, true);
-	// 	attrArray.set(4, 3, true);
-	// 	attrArray.set(5, 3, true);
-	// });
+	QUnit.test("Test: \"setArea-cell\"", function (assert) {
+		// let data = [null,1,1,1,null];
+		// let attrArray = testAttrArraySetAreaCell(data);
+		// checkAttrArrayByArray(attrArray, data, 0, assert, "");
 
-	function checkAttrArrayByArray(attrArray, expected) {
-		let res = new Array(expected.length);
-		let colXfIter = new AscCommonExcel.CAttrArrayIterator(attrArray, 0, expected.length);
+		let baseLen = 5;
+		let data = new Array(baseLen);
+		data.fill(null);
+		let iterations = Math.pow(2, baseLen);
+		for (let i = 0; i < iterations; ++i) {
+			for (let j = 0; j < baseLen; ++j) {
+				let bit = ((i >> j) % 2 !== 0);
+				data[j] = bit ? 1 : null;
+			}
+			let attrArray = testAttrArraySetAreaCell(data);
+			checkAttrArrayByArray(attrArray, data, 0, assert, "");
+		}
+		assert.ok(true);
+	});
+	QUnit.test("Test: \"setArea-range\"", function (assert) {
+		// let data = [null, null, null, null, 1];
+		// let attrArray = testAttrArraySetAreaCell(data);
+		// checkAttrArrayByArray(attrArray, data, 0, assert, "");
+
+		let baseLen = 6;
+		let tail = 3;
+		let data = new Array(baseLen + tail);
+		for(let i = 0; i < baseLen; i++) {
+			for(let j = 0; j < baseLen; j++) {
+				for(let k = 0; k < baseLen; k++) {
+					let attrArray = new AscCommonExcel.CAttrArray(null);
+					data.fill(null);
+					attrArray.setArea(j, j + 1, 1);
+					data.fill(1, j, j + 2);
+					attrArray.setArea(k, k + 2, 2);
+					data.fill(2, k, k + 3);
+					attrArray.setArea(i, i, 1);
+					data.fill(1, i, i + 1);
+					checkAttrArrayByArray(attrArray, data, tail, assert, i+"-"+j+"-"+k);
+				}
+			}
+		}
+		assert.ok(true);
+	});
+	QUnit.test("Test: \"insertRange\"", function (assert) {
+		let baseLen = 5;
+		let iterations = Math.pow(2, baseLen);
+		for (let k = 1; k < baseLen; ++k) {
+			for (let i = 1; i < iterations; ++i) {
+				let data = new Array(baseLen);
+				data.fill(null);
+				for (let j = 0; j < baseLen; ++j) {
+					let bit = ((i >> j) % 2 !== 0);
+					data[j] = bit ? 1 : null;
+				}
+				let attrArray = testAttrArraySetAreaCell(data);
+				attrArray.insertRange(k, 1);
+				if (k > 0) {
+					data.splice(k, 0, data[k - 1]);
+				} else {
+					data.splice(k, 0, null);
+				}
+				checkAttrArrayByArray(attrArray, data, 0, assert, "");
+			}
+		}
+		assert.ok(true);
+	});
+	QUnit.test("Test: \"deleteRange\"", function (assert) {
+		let baseLen = 5;
+		let iterations = Math.pow(2, baseLen);
+		for (let k = 0; k < baseLen; ++k) {
+			for (let l = 0; l < baseLen - k - 1; ++l) {
+				let data = new Array(baseLen);
+				data.fill(null);
+				for (let i = 0; i < iterations; ++i) {
+					for (let j = 0; j < baseLen; ++j) {
+						let bit = ((i >> j) % 2 !== 0);
+						data[j] = bit ? 1 : null;
+					}
+					let attrArray = testAttrArraySetAreaCell(data);
+					attrArray.deleteRange(k, l);
+					data.splice(k, l);
+					checkAttrArrayByArray(attrArray, data, 0, assert, "");
+				}
+			}
+		}
+		assert.ok(true);
+	});
+
+	function testAttrArraySetAreaCell(data) {
+		let attrArray = new AscCommonExcel.CAttrArray(null);
+		for (let i = 0, j = data.length - 1; i <= j; ++i, --j) {
+			if (data[i]) {
+				attrArray.setArea(i, i, data[i]);
+			}
+			if (data[j]) {
+				attrArray.setArea(j, j, data[j]);
+			}
+		}
+		return attrArray;
+	}
+
+	function checkAttrArrayByArray(attrArray, expected, expectedTail, assert, message) {
+		let res = new Array(expected.length - expectedTail);
+		let chunks = 0;
+		let colXfIter = new AscCommonExcel.CAttrArrayIterator(attrArray, 0, expected.length - expectedTail - 1);
 		while (colXfIter.next()) {
+			chunks++;
 			res.fill(colXfIter.getCurVal(), colXfIter.getCurFrom(), colXfIter.getCurTo() + 1);
+		}
+		let chunksExpected = 1;
+		let prevElem = expected[0];
+		for (let i = 1; i < expected.length - expectedTail; ++i) {
+			if (expected[i] !== prevElem) {
+				prevElem = expected[i];
+				chunksExpected++;
+			}
+		}
+		//many asserts processes very slow
+		if (!res.every((val, idx) => val === expected[idx])) {
+			assert.deepEqual(res, expected, "checkAttrArrayByArray data" + message);
+		}
+		if (chunks !== chunksExpected) {
+			assert.equal(chunks, chunksExpected, "checkAttrArrayByArray chunks" + message + JSON.stringify(expected));
+		}
+		if (attrArray.data[attrArray.data.length - 1].endRow !== AscCommon.gc_nMaxRow0) {
+			assert.equal(attrArray.data[attrArray.data.length - 1].endRow, AscCommon.gc_nMaxRow0, "checkAttrArrayByArray endRow" + message + JSON.stringify(expected));
 		}
 		return res;
 	}
