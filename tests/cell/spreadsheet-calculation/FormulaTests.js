@@ -22054,6 +22054,28 @@ $(function () {
 		assert.ok(oParser.parse(), 'LOOKUP(5,A201:A203+{1},A201:D202)');
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of LOOKUP(5,A201:A203+{1},A201:D202)');
 
+		// for bug 69527
+		// cell3D tests
+		let currentSheet = ws.getName();
+
+		ws.getRange2("E200").setValue("3");
+		ws.getRange2("A200:A210").setValue("4000");
+		ws.getRange2("A205").setValue("3");
+		ws.getRange2("B200:B210").setValue("1000");
+		ws.getRange2("B200").setValue("1");
+		ws.getRange2("B205").setValue("55");
+
+		oParser = new parserFormula('LOOKUP(' + currentSheet + '!E200,A200:A210,B200:B210)', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(' + currentSheet + '!E200,A200:A210,B200:B210)');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 55, 'Result of LOOKUP(' + currentSheet + '!E200,A200:A210,B200:B210)');
+
+		oParser = new parserFormula('LOOKUP(E200,' + currentSheet + '!A205,B200:B210)', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(E200,' + currentSheet + '!A205,B200:B210)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of LOOKUP(E200,' + currentSheet + '!A205,B200:B210)');
+
+		oParser = new parserFormula('LOOKUP(E200,A200:A210,' + currentSheet + '!A205)', "A2", ws);
+		assert.ok(oParser.parse(), 'LOOKUP(E200,A200:A210,' + currentSheet + '!A205)');
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 3, 'Result of LOOKUP(E200,A200:A210,' + currentSheet + '!A205)');
 
 	});
 
