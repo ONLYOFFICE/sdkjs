@@ -198,7 +198,10 @@ CPDFCollaborativeEditing.prototype.Apply_Changes = function(fEndCallBack) {
     if (this.m_aChanges.length > 0) {
         this.GetDocument().currInkInDrawingProcess = null; // останавливаем ink рисование
         AscCommon.CCollaborativeEditingBase.prototype.Apply_Changes.call(this, fEndCallBack);
-    }
+    } else {
+		if (fEndCallBack)
+			fEndCallBack();
+	}
 };
 CPDFCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function() {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
@@ -208,3 +211,4 @@ CPDFCollaborativeEditing.prototype.Check_MergeData = function() {};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscPDF'] = window['AscPDF'] || {};
 window['AscPDF'].CPDFCollaborativeEditing = CPDFCollaborativeEditing;
+window['AscCommon'].CollaborativeEditing = new CPDFCollaborativeEditing();
