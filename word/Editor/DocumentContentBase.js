@@ -1688,7 +1688,7 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
 /**
  * Получаем массив всех параграфов с заданной нумерацией
  * NB: массив НЕ отсортирован по позиции в документе (для сортировки, если нужно, вызывать метод AscWord.sortByDocumentPosition)
- * @param oNumPr {CNumPr | CNumPr[]}
+ * @param oNumPr {AscWord.NumPr | AscWord.NumPr[]}
  * @returns {Paragraph[]}
  */
 CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
@@ -1724,7 +1724,7 @@ CDocumentContentBase.prototype.GetAllTables = function(oProps, arrTables)
 };
 /**
  * Выделяем заданную нумерацию
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param oPara {Paragraph} - текущий парограф
  */
 CDocumentContentBase.prototype.SelectNumbering = function(oNumPr, oPara)
@@ -1783,7 +1783,7 @@ CDocumentContentBase.prototype.RemoveNumberingSelection = function()
 /**
  * Рассчитываем значение нумерованного списка для заданной нумерации
  * @param oPara {Paragraph}
- * @param oNumPr {CNumPr}
+ * @param oNumPr {AscWord.NumPr}
  * @param [isUseReview=false] {boolean}
  * @returns {number[]}
  */
@@ -1937,8 +1937,14 @@ CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
 	{
 		if (1 === this.Content.length)
 		{
-			if (this.IsBlockLevelSdtContent())
-				this.GetParent().ReplaceContentWithPlaceHolder();
+			let parent = this.GetParent();
+			if (parent && parent instanceof AscWord.CBlockLevelSdt)
+			{
+				// Если после принятия других изменений контент не пустой, то не удаляем ничего,
+				// но если он пустой и нужно было удалить последний параграф в нем, то удаляем его целиком
+				if (parent.IsEmpty())
+					parent.RemoveThisFromParent();
+			}
 			else
 				this.RemoveFromContent(0, 1, true);
 		}
@@ -2591,6 +2597,8 @@ CDocumentContentBase.prototype.UpdateNumberingCollection = function(elements)
 };
 CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 {
+	if(this.bPresentation)
+		return;
 	this.UpdateNumberingCollection(elements);
 	
 	let logicDocument = this.GetLogicDocument();

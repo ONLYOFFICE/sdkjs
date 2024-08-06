@@ -459,7 +459,7 @@ CDocumentContent.prototype.GetStyles = function(nLvl)
 	if (this.LogicDocument)
 		return this.LogicDocument.GetStyles();
 
-	return AscCommonWord.DEFAULT_STYLES;
+	return AscWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {
@@ -765,7 +765,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
         this.Pages[PageIndex]     = new CDocumentPage();
         this.Pages[PageIndex].Pos = StartIndex;
 
-        if (this.LogicDocument && oDocContentRI === this)
+        if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && oDocContentRI === this)
             this.LogicDocument.DrawingObjects.resetDrawingArrays(this.Get_AbsolutePage(PageIndex), oDocContentRI);
     }
 
@@ -2700,7 +2700,8 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
                 var ItemReviewType = Item.GetReviewType();
                 // Создаем новый параграф
                 var NewParagraph   = new AscWord.Paragraph(this, this.bPresentation === true);
-
+	
+				let firstPara, secondPara;
 				if (Item.IsCursorAtBegin())
 				{
 					// Продолжаем (в плане настроек) новый параграф
@@ -2712,6 +2713,9 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos + 1;
+					
+					firstPara  = NewParagraph;
+					secondPara = Item;
 				}
 				else
 				{
@@ -2767,19 +2771,22 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 					var nContentPos = this.CurPos.ContentPos + 1;
 					this.AddToContent(nContentPos, NewParagraph);
 					this.CurPos.ContentPos = nContentPos;
+					
+					firstPara  = Item;
+					secondPara = NewParagraph;
 				}
-
-                if (true === this.IsTrackRevisions())
-                {
-                    Item.RemovePrChange();
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Add);
-                }
-                else if (reviewtype_Common !== ItemReviewType)
-                {
-                    NewParagraph.SetReviewType(ItemReviewType);
-                    Item.SetReviewType(reviewtype_Common);
-                }
+				
+				if (this.IsTrackRevisions())
+				{
+					firstPara.RemovePrChange();
+					firstPara.SetReviewType(reviewtype_Add);
+					secondPara.SetReviewType(ItemReviewType);
+				}
+				else if (reviewtype_Common !== ItemReviewType)
+				{
+					firstPara.SetReviewType(reviewtype_Common);
+					secondPara.SetReviewType(ItemReviewType);
+				}
 				NewParagraph.CheckSignatureLinesOnAdd();
             }
 
@@ -6259,7 +6266,11 @@ CDocumentContent.prototype.Selection_SetStart = function(X, Y, CurPage, MouseEve
 	// Сначала проверим, не попали ли мы в один из "плавающих" объектов
 	var bInText      = null !== this.IsInText(X, Y, CurPage);
 	var bTableBorder = null !== this.IsTableBorder(X, Y, CurPage);
-	var nInDrawing   = this.LogicDocument && this.LogicDocument.DrawingObjects.IsInDrawingObject(X, Y, AbsPage, this);
+	var nInDrawing   = -1;
+	if(this.LogicDocument && this.LogicDocument.IsDocumentEditor())
+	{
+		nInDrawing = this.LogicDocument && this.LogicDocument.DrawingObjects.IsInDrawingObject(X, Y, AbsPage, this);
+	}
 
 	if (this.Parent instanceof CHeaderFooter && ( nInDrawing === DRAWING_ARRAY_TYPE_BEFORE || nInDrawing === DRAWING_ARRAY_TYPE_INLINE || ( false === bTableBorder && false === bInText && nInDrawing >= 0 ) ))
 	{
@@ -7105,10 +7116,13 @@ CDocumentContent.prototype.Internal_GetContentPosByXY = function(X, Y, PageNum)
 
     PageNum = Math.max(0, Math.min(PageNum, this.Pages.length - 1));
 
-	var oFlow    = this.LogicDocument && this.LogicDocument.DrawingObjects.getTableByXY(X, Y, this.GetAbsolutePage(PageNum), this);
-	var nFlowPos = this.private_GetContentIndexByFlowObject(oFlow, X, Y);
-	if (-1 !== nFlowPos)
-		return nFlowPos;
+	if(this.LogicDocument && this.LogicDocument.IsDocumentEditor())
+	{
+		var oFlow    =  this.LogicDocument.DrawingObjects.getTableByXY(X, Y, this.GetAbsolutePage(PageNum), this);
+		var nFlowPos = this.private_GetContentIndexByFlowObject(oFlow, X, Y);
+		if (-1 !== nFlowPos)
+			return nFlowPos;
+	}
 
     // Теперь проверим пустые параграфы с окончанием секций (в нашем случае это пустой параграф послей таблицы внутри таблицы)
     var SectCount = this.Pages[PageNum].EndSectionParas.length;
@@ -8424,6 +8438,9 @@ CDocumentContent.prototype.Get_LogicDocument = function()
 };
 CDocumentContent.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
 };
 CDocumentContent.prototype.RemoveTextSelection = function()

@@ -162,8 +162,8 @@ function (window, undefined) {
 
 		/** @type RegExp */
 		this.rangeChars = ["=", "-", "+", "*", "/", "(", "{", "<", ">", "^", "!", "&", ":", " ", "."];
-		this.reNotFormula = new XRegExp("[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\]", "i");
-		this.reFormula = new XRegExp("^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.]*)", "i");
+		this.reNotFormula = new XRegExp("[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\@]", "i");
+		this.reFormula = new XRegExp("^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.@]*)", "i");
 
 		this.defaults = {
 			padding: padding,
@@ -421,8 +421,6 @@ function (window, undefined) {
 		if (this.isStartCompositeInput()) {
 			this.End_CompositeInput();
 		}
-
-		AscCommon.StartIntervalDrawText(false);
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
@@ -953,7 +951,8 @@ function (window, undefined) {
 				bboxOper = null;
 				r = this._parseResult.refPos[index];
 				oper = r.oper;
-				if (cElementType.table === oper.type || cElementType.name === oper.type || cElementType.name3D === oper.type) {
+				if ((cElementType.table === oper.type || cElementType.name === oper.type ||
+					cElementType.name3D === oper.type) && oper.externalLink == null) {
 					oper = r.oper.toRef(bbox);
 					if (oper instanceof AscCommonExcel.cError) {
 						continue;
@@ -1855,14 +1854,14 @@ function (window, undefined) {
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
-		while (i1 < l && s1.charAt(i1) === s2.charAt(i1)) {
+		while (i1 < l && s1[i1] === s2[i1]) {
 			++i1;
 		}
 		i2 = i1 + 1;
 		if (i2 >= l) {
 			i2 = Math.max(s1.length, s2.length);
 		} else {
-			while (i2 < l && s1.charAt(i1) !== s2.charAt(i2)) {
+			while (i2 < l && s1[i1] !== s2[i2]) {
 				++i2;
 			}
 		}
@@ -2389,6 +2388,7 @@ function (window, undefined) {
 			var applyByArray = t.textFlags && t.textFlags.ctrlKey;
 			if (!applyByArray && success) {
 				t.handlers.trigger("applyCloseEvent", event);
+				AscCommon.StartIntervalDrawText(false);
 			}
 		};
 		this.close(true, callback);
@@ -3155,6 +3155,12 @@ function (window, undefined) {
 		this.skipKeyPress = val;
 	};
 	CellEditor.prototype.getText = function (start, len) {
+		if (start == null) {
+			start = 0;
+		}
+		if (len == null) {
+			len = this.textRender.getCharsCount();
+		}
 		let chars = this.textRender.getChars(start, len);
 		let res = "";
 		for (let i in chars) {

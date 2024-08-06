@@ -907,7 +907,7 @@
             }
         }
         else {
-            if (e.shiftKey) {
+            if (e.ShiftKey) {
                 this.GetDocContent().StartSelectionFromCurPos();
                 oDoc.SelectionSetEnd(x, y, e);
             }
@@ -1414,10 +1414,6 @@
             for (let i = 0; i < aFillColor.length; i++)
                 memory.WriteDouble(aFillColor[i]);
         }
-
-        // render
-        memory.annotFlags |= (1 << 22);
-        this.WriteRenderToBinary(memory);
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);

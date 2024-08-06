@@ -3148,7 +3148,8 @@
 					|| phldrType == AscFormat.phType_media) {
 					return true;
 				}
-				if (phldrType == AscFormat.phType_pic) {
+				if (phldrType == AscFormat.phType_pic
+					|| phldrType == AscFormat.phType_tbl) {
 					var _b_empty_text = true;
 					if (this.txBody) {
 						if (this.txBody.content) {
@@ -3486,8 +3487,19 @@
 
 
 					var scale_scale_coefficients = this.group.getResultScaleCoefficients();
-					this.x = scale_scale_coefficients.cx * (xfrm.offX - this.group.spPr.xfrm.chOffX);
-					this.y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
+
+					let offX = xfrm.offX;
+					let offY = xfrm.offY;
+					let oGrXfrm = null;
+					if(this.group.spPr) {
+						oGrXfrm = this.group.spPr.xfrm;
+						if(oGrXfrm) {
+							offX -= oGrXfrm.chOffX;
+							offY -= oGrXfrm.chOffY;
+						}
+					}
+					this.x = scale_scale_coefficients.cx * offX;
+					this.y = scale_scale_coefficients.cy * offY;
 					this.extX = scale_scale_coefficients.cx * xfrm.extX;
 					this.extY = scale_scale_coefficients.cy * xfrm.extY;
 					this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
@@ -6739,6 +6751,91 @@
 					this.changeFill(oBlipFillUniFill);
 				}
 			}
+			return true;
+		};
+
+		CShape.prototype.checkEditTextStyle = function (fDocContentMethod, params, bSelect) {
+			let nParentType = null;
+			if(this.parent && this.parent.getObjectType) {
+				nParentType = this.parent.getObjectType();
+			}
+			if(nParentType !== AscDFH.historyitem_type_SlideMaster &&
+				nParentType !== AscDFH.historyitem_type_SlideLayout) {
+				return false;
+			}
+			if(!this.isPlaceholder()) {
+				return false;
+			}
+			let oTxBody = this.txBody;
+			if(!oTxBody) {
+				return false;
+			}
+			let oContent = oTxBody.content;
+			if(!oContent) {
+				return false;
+			}
+			let oParaPrToApply = new AscWord.CParaPr();
+			let bIncreaseFontSize = null;
+			let oDCP = AscFormat.CDrawingDocContent.prototype;
+			if(fDocContentMethod === oDCP.Set_ParagraphPresentationNumbering) {
+				oParaPrToApply.Bullet = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphIndent) {
+				oParaPrToApply.Ind = new CParaInd();
+				oParaPrToApply.Ind.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.ClearParagraphFormatting) {
+				oParaPrToApply = null;
+				if(nParentType === AscDFH.historyitem_type_SlideMaster) {
+					return true;
+				}
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphSpacing) {
+				oParaPrToApply.Spacing = new CParaSpacing();
+				oParaPrToApply.Spacing.Set_FromObject(params[0]);
+			}
+			else if(fDocContentMethod === oDCP.IncreaseDecreaseFontSize) {
+				bIncreaseFontSize = params[0];
+			}
+			else if(fDocContentMethod === oDCP.SetParagraphAlign) {
+				oParaPrToApply.Jc = params[0];
+			}
+			else if(fDocContentMethod === CDocumentContent.prototype.AddToParagraph && params[0].Type === para_TextPr) {
+				oParaPrToApply.DefaultRunPr = params[0].Value;
+			}
+			else {
+				return false;
+			}
+
+			let oTextStyles;
+			if(oTxBody.lstStyle) {
+				oTextStyles = oTxBody.lstStyle.createDuplicate();
+			}
+			else {
+				oTextStyles = new AscFormat.TextListStyle();
+			}
+			if(bSelect) {
+				let oLvls = {};
+				let aParagraphs = [];
+				oContent.GetCurrentParagraph(false, aParagraphs, {});
+				for(let nIdx = 0; nIdx < aParagraphs.length; ++nIdx) {
+					let oParagraph = aParagraphs[nIdx];
+					let nLvl = 0;
+					if(AscFormat.isRealNumber(oParagraph.Pr.Lvl)) {
+						nLvl = oParagraph.Pr.Lvl;
+					}
+					if(!oLvls[nLvl]) {
+						oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+						oLvls[nLvl] = true;
+					}
+				}
+			}
+			else {
+				for(let nLvl = 0; nLvl < 9; ++nLvl) {
+					oTextStyles.applyParaPr(nLvl, oParaPrToApply, bIncreaseFontSize, this);
+				}
+			}
+			oTxBody.setLstStyle(oTextStyles);
 			return true;
 		};
 

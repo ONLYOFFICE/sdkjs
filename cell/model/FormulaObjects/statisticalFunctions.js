@@ -4055,9 +4055,9 @@ function (window, undefined) {
 		ws = arg0.getWS();
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
 		if (cElementType.cellsRange === arg0.type) {
-			arg0.foreach2(function (v, cell) {
+			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
-					var offset = cell.getOffset3(r.bbox.c1 + 1, r.bbox.r1 + 1);
+					let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
 					r2.setOffset(offset);
 
 					var val;
@@ -5196,9 +5196,12 @@ function (window, undefined) {
 				arg1 = arg1.getElementRowCol(0, 0);
 			}
 
-			arg1 = arg1.tocString();
-			if (cElementType.string !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();

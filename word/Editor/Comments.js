@@ -725,6 +725,40 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return null;
 	};
+	/**
+	 * Выделяем текст в границах комментария
+	 * @returns {boolean} Получилось ли выделить комментарий
+	 */
+	CComment.prototype.SelectCommentText = function ()
+	{
+		const oStartMark = AscCommon.g_oTableId.Get_ById(this.GetRangeStart());
+		const oEndMark = AscCommon.g_oTableId.Get_ById(this.GetRangeEnd());
+		if (!oStartMark || !oEndMark)
+			return false;
+
+		const oStartParagraph = oStartMark.GetParagraph();
+		const oEndParagraph = oEndMark.GetParagraph();
+		if (oStartParagraph && oEndParagraph && oEndParagraph.Parent && oStartParagraph.Parent)
+		{
+			const oStartTopDocument = oStartParagraph.Parent.GetTopDocumentContent();
+			const oEndTopDocument = oEndParagraph.Parent.GetTopDocumentContent();
+			if (oStartTopDocument === oEndTopDocument)
+			{
+				const oLogicDocument = this.private_GetLogicDocument();
+
+				oStartMark.MoveCursorToMark();
+				const oStartPos = oStartTopDocument.GetContentPosition(false);
+				oEndMark.MoveCursorToMark();
+				const oEndPos = oStartTopDocument.GetContentPosition(false);
+
+				oStartTopDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
+				oLogicDocument.UpdateSelection();
+				oLogicDocument.UpdateInterface();
+				return true;
+			}
+		}
+		return false;
+	};
 	
 	// Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
 	let marksToCheck = [];
@@ -1162,14 +1196,14 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		for (var nIndex = 0, nCount = marksToCheck.length; nIndex < nCount; ++nIndex)
 		{
-			var oMark      = marksToCheck[nIndex];
-			var sCommentId = oMark.GetCommentId();
-			var oComment   = this.Get_ById(sCommentId);
-			var oParagraph = oMark.GetParagraph();
-			if (oComment && oParagraph)
-			{
-				oComment.SetRangeMark(oMark);
-			}
+			let mark = marksToCheck[nIndex];
+			if (!mark.IsUseInDocument())
+				continue;
+			
+			let commentId = mark.GetCommentId();
+			let comment   = this.Get_ById(commentId);
+			if (comment)
+				comment.SetRangeMark(mark);
 		}
 		
 		marksToCheck.length = 0;
@@ -1215,16 +1249,17 @@ ParaComment.prototype.GetId = function()
 };
 ParaComment.prototype.Copy = function(Selected, oPr)
 {
-    var sId = this.CommentId;
-    if(oPr && oPr.Comparison)
-    {
-			const sComparisonCommentId = oPr.Comparison.copyComment(this.CommentId);
-			if (sComparisonCommentId !== null)
-			{
-				sId = sComparisonCommentId;
-			}
-    }
-	return new ParaComment(this.Start, sId);
+	if (oPr && oPr.Comparison)
+	{
+		const oCopyComment = oPr.Comparison.copyComment(this.CommentId);
+		if (oCopyComment)
+		{
+			const oCopy = new ParaComment(this.Start, oCopyComment.Get_Id());
+			oCopyComment.SetRangeMark(oCopy);
+			return oCopy;
+		}
+	}
+	return new ParaComment(this.Start, this.CommentId);
 };
 ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRange, CurPage)
 {
@@ -1375,7 +1410,7 @@ ParaComment.prototype.MoveCursorToMark = function()
 	if (!oParagraph)
 		return;
 
-	oParagraph.MoveCursorToCommentMark(this.CommentId);
+	oParagraph.MoveCursorToCommentMark(this);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

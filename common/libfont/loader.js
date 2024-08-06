@@ -101,10 +101,6 @@
 			}
 		}
 
-		// отключаем wasm для мобильных
-		if (useWasm && (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid))
-			useWasm = false;
-
 		var engine_name_ext = useWasm ? ".js" : "_ie.js";
 		var _onSuccess = function(){
 		};

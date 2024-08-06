@@ -2836,6 +2836,7 @@
 			} else if (defName.type === Asc.c_oAscDefNameType.table && 0 === fName.indexOf(defNameStr.toLowerCase())) {
 				if (-1 !== fName.indexOf("[")) {
 					var tableNameParse = fName.split("[");
+					// add only columns to the dropdown menu if @ the last element
 					if (tableNameParse[0] && 0 === defNameStr.toLowerCase().indexOf(tableNameParse[0])) {
 						//ищем совпадения по названию столбцов
 						var table = this.model.getTableByName(defNameStr);
@@ -2846,7 +2847,15 @@
 								for (let j = 0; j < table.TableColumns.length; j++) {
 									_str = table.TableColumns[j].Name;
 									_type = c_oAscPopUpSelectorType.TableColumnName;
-									if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
+
+									let newStr;
+									if (sTableInner[0] === "@") {
+										newStr = sTableInner.slice(1);
+										if (newStr === "" || 0 === _str.toLowerCase().indexOf(newStr)) {
+											arrResult.push(getCompleteMenu(_str, _type));
+										}
+									} 
+									else if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
 										arrResult.push(getCompleteMenu(_str, _type));
 									}
 								}
@@ -2877,6 +2886,10 @@
 								}
 								fPos += defNameStr.length + (fName.length - defNameStr.length - sTableInner.length);
 								_lastFNameLength = sTableInner.length;
+								// shift for fPos for correct work when we use result from dropdown menu
+								if (sTableInner[0] === "@") {
+									fPos++
+								}
 							}
 						}
 					}
@@ -2911,6 +2924,11 @@
                 }
                 tmp = this.cellEditor.skipTLUpdate;
                 this.cellEditor.skipTLUpdate = false;
+
+				if (type === c_oAscPopUpSelectorType.TableThisRow) {
+					this.skipHelpSelector = false;
+				}
+
                 this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
                 this.cellEditor.skipTLUpdate = tmp;
             } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
@@ -3028,7 +3046,7 @@
 				let funcCalc = ws.calculateWizardFormula(_name + '(' + sArguments + ')');
 				_res.functionResult = funcCalc.str;
 				if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
-					_res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
+					_res.formulaResult = ws.calculateWizardFormula(t.cellEditor.getText().substring(1)).str;
 				}
 			}
 
@@ -3078,7 +3096,7 @@
 
 				let trueName = oFormulaList[name] && oFormulaList[name].prototype && oFormulaList[name].prototype.name;
 				if (allowCompleteFunctions[trueName]) {
-					cellRange = wsView.autoCompleteFormula(trueName);
+					cellRange = wsView.autoCompleteFormula(trueName, t.isWizardMode);
 				}
 
 				t.cellEditor.insertFormula(name, null, cellRange && !cellRange.notEditCell && cellRange.text);
@@ -5379,7 +5397,11 @@
 										oBinaryFileReader.Read(binaryData, wb);
 									});
 								});
-
+								//g_DefNameWorksheet use on parse def name ref. here need use external ws.
+								let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
+								AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wb, -1);
+								wb.dependencyFormulas.initOpen();
+								AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
 								if (wb.aWorksheets) {
 									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
@@ -6060,7 +6082,10 @@
 		} else {
 			// it's necessary because into the docbuilder "this.wb.wsActive" is "-1" and search doesn't work
 			let ws = this.wb.model.getActiveWs();
-			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
+			if (!ws) {
+				ws = this.wb && this.wb.model && this.wb.model.getActiveWs && this.wb.model.getActiveWs();
+			}
+			let selectionRange = (this.props && this.props.selectionRange) || (ws && ws.selectionRange) || (ws && ws.copySelection);
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
@@ -6097,7 +6122,7 @@
 			let sheetArr = [];
 			let checkElem = function (indexElem, index) {
 				//нужный нам лист
-				if (ws.sName === t.Elements[indexElem].sheet) {
+				if (ws && ws.sName === t.Elements[indexElem].sheet) {
 
 					let prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
 					let prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
@@ -6168,6 +6193,9 @@
 			case AscCommonExcel.docChangedType.rangeValues:
 				this.changeRangeValue(arg1, arg2);
 				break;
+			case AscCommonExcel.docChangedType.removeRows:
+				this.changeRemoveRows(arg1, arg2);
+				break;
 			case AscCommonExcel.docChangedType.sheetContent:
 				this.changeSheetContent(arg1, arg2);
 				break;
@@ -6200,6 +6228,22 @@
 			} else if (!this.modifiedDocument && cell.isEqual(this.props)) {
 				this.wb.handlers.trigger("asc_onModifiedDocument");
 				this.setModifiedDocument(true);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.changeRemoveRows = function (ws, range) {
+		if (this.isNotEmpty()) {
+			for (let i in this.Elements) {
+				if (this.Elements[i].index === ws.index && this.Elements[i].row > range.r2) {
+					let keyOld = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+
+					this.Elements[i].row = this.Elements[i].row - (range.r2 - range.r1 + 1);
+
+					let keyNew = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let oldId = this.mapFindCells[keyOld];
+					delete this.mapFindCells[keyOld];
+					this.mapFindCells[keyNew] = oldId;
+				}
 			}
 		}
 	};

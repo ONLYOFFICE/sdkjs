@@ -471,8 +471,14 @@
 		let docContent = textController.GetDocContent();
 		let result = textController.EnterText(codePoints);
 		
-		if (null == drController.getTargetTextObject()) {
-			drController.selection.textSelection = textController;
+		if (null == drController.getTargetTextObject() && false == textController.IsForm()) {
+			if (textController.IsAnnot() && textController.IsFreeText()) {
+				drController.selection.groupSelection = textController;
+				textController.selection.textSelection = textController.GetTextBoxShape()
+			}
+			else {
+				drController.selection.textSelection = textController;
+			}
 		}
 
 		drDoc.showTarget(true);
@@ -499,6 +505,7 @@
 			return oSmartArt;
 		});
 	};
+	PDFEditorApi.prototype.asc_undoAllChanges = function() {};
 	PDFEditorApi.prototype.asc_addChartDrawingObject = function(chartBinary, Placeholder) {
 		let oDoc	= this.getPDFDoc();
 		let oViewer	= this.getDocumentRenderer();
@@ -575,7 +582,7 @@
 		
 		if (oTxObject) {
 			let oContent = oTxObject.GetDocContent();
-			textObj.Text = oContent ? oContent.GetSelectedText(bClearText, select_Pr) : "";
+			textObj.Text = oContent ? (oContent.GetSelectedText(bClearText, select_Pr) || "") : "";
 		}
 		else {
 			this.DocumentRenderer.Copy(textObj);
@@ -730,7 +737,7 @@
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
 		
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, files)
 		{
 			// ошибка может быть объектом в случае отмены добавления картинки в форму
 			if (typeof(error) == "object")
@@ -837,12 +844,18 @@
 
 		this.curMarkerType	= value ? nType : undefined;
 		let oDoc			= this.getPDFDoc();
+		let oActiveObj		= oDoc.GetActiveObject();
 		let oViewer			= oDoc.Viewer;
 		let oDrDoc			= oDoc.GetDrawingDocument();
 		
 		if (value == true) {
-			oDoc.BlurActiveObject();
-			oDoc.UpdateInterface();
+			if (oActiveObj) {
+				oDoc.BlurActiveObject();
+				oDoc.UpdateInterface();
+			}
+		}
+		else {
+			oViewer.onUpdateOverlay();
 		}
 
 		if (this.isMarkerFormat) {
@@ -881,6 +894,9 @@
 			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
+	PDFEditorApi.prototype.IsCommentMarker = function() {
+        return this.curMarkerType !== undefined;
+    };
 
 	PDFEditorApi.prototype.get_PageWidth  = function(nPage) {
 		let oDoc = this.getPDFDoc();
@@ -1202,10 +1218,12 @@
 	};
 	PDFEditorApi.prototype.remTable = function() {
 		let oDoc = this.getPDFDoc();
-		let oGrFrame = oDoc.SelectTable(c_oAscTableSelectionType.Table);
+		let oObject = oDoc.GetActiveObject();
 		
-		if (oGrFrame) {
-			oDoc.RemoveDrawing(oGrFrame.GetId());
+		if (oObject && oObject.IsDrawing() && oObject.IsGraphicFrame()) {
+			oDoc.CreateNewHistoryPoint();
+			oDoc.RemoveDrawing(oObject.GetId());
+			oDoc.TurnOffHistory();
 			return true;
 		}
 
@@ -1241,6 +1259,15 @@
 		let oController	= oDoc.GetController();
 		
 		return oController.getPluginSelectionInfo();
+	};
+
+	PDFEditorApi.prototype.SetShowTextSelectPanel = function(bShow) {
+		this.showTextSelectPanel = bShow;
+		
+		this.getPDFDoc().UpdateSelectionTrackPos();
+	};
+	PDFEditorApi.prototype.NeedShowTextSelectPanel = function() {
+		return this.showTextSelectPanel;
 	};
 
 	/////////////////////////////////////////////////////////////
@@ -2374,6 +2401,7 @@
 	PDFEditorApi.prototype['asc_AddPage']                  = PDFEditorApi.prototype.asc_AddPage;
 	PDFEditorApi.prototype['asc_RemovePage']			   = PDFEditorApi.prototype.asc_RemovePage;
 	PDFEditorApi.prototype['asc_createSmartArt']		   = PDFEditorApi.prototype.asc_createSmartArt;
+	PDFEditorApi.prototype['asc_undoAllChanges']		   = PDFEditorApi.prototype.asc_undoAllChanges;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
@@ -2391,8 +2419,8 @@
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
 
-	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
-	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
+	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.getSelectionState;
+	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.getSpeechDescription;
 
 	PDFEditorApi.prototype['asc_ShowDocumentOutline']      = PDFEditorApi.prototype.asc_ShowDocumentOutline;
 	PDFEditorApi.prototype['asc_HideDocumentOutline']      = PDFEditorApi.prototype.asc_HideDocumentOutline;
@@ -2453,7 +2481,8 @@
 	PDFEditorApi.prototype['remove_Hyperlink']						= PDFEditorApi.prototype.remove_Hyperlink;
 	PDFEditorApi.prototype['change_Hyperlink']						= PDFEditorApi.prototype.change_Hyperlink;
 	PDFEditorApi.prototype['sync_HyperlinkClickCallback']			= PDFEditorApi.prototype.sync_HyperlinkClickCallback;
-
+	PDFEditorApi.prototype['SetShowTextSelectPanel']				= PDFEditorApi.prototype.SetShowTextSelectPanel;
+	PDFEditorApi.prototype['NeedShowTextSelectPanel']				= PDFEditorApi.prototype.NeedShowTextSelectPanel;
 
 	// table
 	PDFEditorApi.prototype['put_Table']						= PDFEditorApi.prototype.put_Table;

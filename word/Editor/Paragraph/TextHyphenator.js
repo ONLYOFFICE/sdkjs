@@ -241,6 +241,7 @@
 			let history    = this.document.GetHistory();
 			let recalcData = history.getRecalcDataByElements(paragraphs);
 			this.document.RecalculateWithParams(recalcData);
+			this.document.NeedUpdateTarget = false;
 		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------

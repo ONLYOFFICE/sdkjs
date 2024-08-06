@@ -2605,6 +2605,10 @@
 		this.timelineCaches.forEach(function(elem){
 			elem.initPostOpen(tableIds, sheetIds);
 		});
+		//external references
+		this.externalReferences.forEach(function(elem){
+			elem && elem.initPostOpen && elem.initPostOpen();
+		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
 		if (wsActive && wsActive.getHidden()) {
@@ -6693,7 +6697,8 @@
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, new Asc.Range(0, start, gc_nMaxCol0, gc_nMaxRow0), this.getId());
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, new Asc.Range(0, start, gc_nMaxCol0, stop), this.getId());
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.removeRows, this, new Asc.Range(0, start, gc_nMaxCol0, stop), this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -14655,7 +14660,9 @@
 				}
 			} else if (oOutStackElem && (oOutStackElem.type === cElementType.name || oOutStackElem.type === cElementType.name3D)) {
 				let oRef = oOutStackElem.toRef();
-				sAreaIndex = oRef.value.replace(/\$/g, "");
+				if (oRef.type === cElementType.cellsRange || oRef.type === cElementType.cellsRange3D) {
+					sAreaIndex = oRef.value.replace(/\$/g, "");
+				}
 			}
 		}
 		const oSheetListeners = oDepFormulas.sheetListeners[ws.Id];
@@ -14709,7 +14716,10 @@
 				nListenerCellIndex = getCellIndex(oListenerCell.nRow, oListenerCell.nCol);
 			}
 			if (nListenerCellIndex == null) {
-				return;
+				continue;
+			}
+			if (oListenerCell instanceof Asc.CT_WorksheetSource) {
+				continue;
 			}
 			let oRes = fAction(nListenerCellIndex, oListenerCell, oCell);
 			if (oRes != null) {
@@ -20697,6 +20707,7 @@
 			this.nColLength = this.bbox.c2 - this.bbox.c1 + 1;
 		}
 		this.bFillHandleRightClick = false;
+		this.bOneSelectedCell = false;
 	}
 	PromoteHelper.prototype = {
 		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods){
@@ -20714,6 +20725,15 @@
 				this.oDataRow[nRow] = row;
 			}
 			row[nCol] = new cDataRow(nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods);
+			// Checking Date format has Date & Time
+			if (bDate && oAdditional.xfs && oAdditional.xfs.num && oAdditional.xfs.num.getFormat()) {
+				let oNumFormat = oNumFormatCache.get(oAdditional.xfs.num.getFormat());
+				if (oNumFormat.isTimeFormat() && oNumFormat.isDateFormat()) {
+					row[nCol].setIsDateTime(true);
+				} else if (oNumFormat.isTimeFormat() && !oNumFormat.isDateFormat()) {
+					row[nCol].setIsTime(true);
+				}
+			}
 		},
 		isOnlyIntegerSequence: function(){
 			var bRes = true;
@@ -20843,7 +20863,7 @@
 					var nMaxPadding = 0;
 					//анализируем последовательность, если числа расположены не на одинаковом расстоянии, то считаем их сплошной последовательностью
 					//последовательность с промежутками может быть только целочисленной
-					for(var i = 0, length = aCurSequence.length; i < length; i++) {
+					for(let i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
 						var nCurX = data.getCol();
 						let nCurVal = data.getVal();
@@ -20883,7 +20903,7 @@
 					var bExistSpace = false;
 					nPrevX = null;
 					var aDigits = [];
-					for(var i = 0, length = aCurSequence.length; i < length; i++) {
+					for (let i = 0, length = aCurSequence.length; i < length; i++) {
 						var data = aCurSequence[i];
 						data.setPadding(nMaxPadding);
 						var nCurX = data.getCol();
@@ -20894,25 +20914,93 @@
 							bExistSpace = true;
 						var y = data.getVal();
 						//даты автозаполняем только по целой части
-						if(data.getIsDate())
+						if(data.getIsDate() && !data.getIsDateTime() && !data.getIsMixedDateFormat() && !data.getIsTime()) {
 							y = parseInt(y);
+						}
 						aDigits.push({x: x, y: y});
 						nPrevX = nCurX;
 					}
 					if(aDigits.length > 0) {
-						var oSequence = this._promoteSequence(aDigits);
-						if(1 == aDigits.length && this.bReverse) {
-							//меняем коэффициенты для случая одного числа в последовательности, иначе она в любую сторону будет возрастающей
-							oSequence.a1 *= -1;
+						let bMixedDateFormat = oFirstData.getIsMixedDateFormat();
+						let bTime = oFirstData.getIsTime();
+						let oSequence = null;
+
+						if (bMixedDateFormat) {
+							/* In a mixed date format, the promotion sequence should be calculated similarly to the Date format.
+							But, the original array should be saved to use the time portion of the cell with the Date & Time format
+							 as a constant value for the correct sequence. */
+							let aIntDigits = aDigits.map(function (elem) {
+								return {x: elem.x, y: parseInt(elem.y)};
+							});
+							oSequence = this._promoteSequence(aIntDigits);
+						} else {
+							oSequence = this._promoteSequence(aDigits);
 						}
-						var bIsIntegerSequence = oSequence.a1 != parseInt(oSequence.a1);
+						if (aDigits.length === 1) {
+							this.setIsOneSelectedCell(true);
+							if (bTime) {
+								// For one selected cell, step for Time format must be 1 hour.
+								// The time component of a serial value increases by 1/86,400 each second.
+								oSequence.a1 = (1 / 86400) * 3600;
+							}
+							if (this.bReverse) {
+								//меняем коэффициенты для случая одного числа в последовательности, иначе она в любую сторону будет возрастающей
+								oSequence.a1 *= -1;
+								if (bTime && oSequence.a0 === 0) {
+									oSequence.a0 = 1;
+								}
+							}
+						}
 						//для дат и чисел с префиксом автозаполняются только целочисленные последовательности
+						let bIsNotIntegerSequence = oSequence.a1 !== parseInt(oSequence.a1);
 						let sPrefix = oFirstData.getPrefix();
 						let bDate = oFirstData.getIsDate();
+						let bDateTime = oFirstData.getIsDateTime();
 						let bDelimiter = oFirstData.getDelimiter();
-						if(!((null != sPrefix || true == bDate) && bIsIntegerSequence)) {
-							if(false == bWithSpace && bExistSpace) {
-								for(var i = nMinIndex; i <= nMaxIndex; i++) {
+						// For Date format
+						let bStepForDateIsZero = bDate && oSequence.a1 === 0;
+						let bIntStartValue = bDate && oSequence.a0 === parseInt(oSequence.a0);
+						// For Date & Time format
+						let bDayOfDateDiff = aDigits.length > 1 ? Math.floor(aDigits[0].y) !== Math.floor(aDigits[1].y) : true;
+						let bDateTimeSeqIsCorrect = aDigits[0].y.toFixed(3) === oSequence.a0.toFixed(3);
+						// If Date & Time format hasn't diff in days of date, but sequence by time is not correct we use step = 0
+						// and start sequence point is equal first element of aDigits or for reverse sequence the last element of aDigit.
+						if (bDateTime && !bDayOfDateDiff && !bDateTimeSeqIsCorrect && (oSequence.a1 < 1 && oSequence.a1 > -1)) {
+							oSequence.a0 = this.bReverse ? aDigits[aDigits.length - 1].y : aDigits[0].y;
+							oSequence.a1 = parseInt(oSequence.a1);
+						}
+						if (bMixedDateFormat) {
+							// The start element needs to add part of the time from the first (or last for reverse sequences) cell
+							// with Date & Time format from the selected range.
+							let aDigitsWithDateTime = aDigits.filter(function(item) {
+								return item.y !== parseInt(item.y);
+							});
+							let nDateTimeVal = this.bReverse ? aDigitsWithDateTime[aDigitsWithDateTime.length - 1].y : aDigitsWithDateTime[0].y;
+							let nTimePart = nDateTimeVal - parseInt(nDateTimeVal);
+							oSequence.a0 = parseInt(oSequence.a0) + nTimePart;
+						}
+						if (bTime && bDayOfDateDiff && aDigits.length > 1) {
+							if (this.bReverse && aDigits[0].y - aDigits[aDigits.length - 1].y >= 1) {
+								let nDateVal = parseInt(aDigits[aDigits.length - 1].y)
+								oSequence.a0 = (oSequence.a0 - parseInt(oSequence.a0)) + nDateVal;
+							}
+							oSequence.a1 = oSequence.a1 - parseInt(oSequence.a1);
+						}
+						if(!((sPrefix != null || (bDate && !bDateTime && !bMixedDateFormat && !bTime)) && bIsNotIntegerSequence)) {
+							// If for Date or Date & Time format the sequence is not correct or sequence step is 0, skip work with oSequence
+							if (bDate) {
+								if (bStepForDateIsZero && !bDateTime && !bMixedDateFormat) {
+									return;
+								}
+								if (!bIntStartValue && !bDateTime && !bTime) {
+									return;
+								}
+								if (bDateTime && bDayOfDateDiff && !bDateTimeSeqIsCorrect) {
+									return;
+								}
+							}
+							if(!bWithSpace && bExistSpace) {
+								for (let i = nMinIndex; i <= nMaxIndex; i++) {
 									var data = row[i];
 									if(null == data) {
 										data = new cDataRow(i, null, bDelimiter, sPrefix, null, bDate);
@@ -20922,7 +21010,7 @@
 								}
 							}
 							else {
-								for(var i = 0, length = aCurSequence.length; i < length; i++) {
+								for(let i = 0, length = aCurSequence.length; i < length; i++) {
 									var nCurX = aCurSequence[i].nCol;
 									if(null != nCurX)
 										row[nCurX].setSequence(oSequence);
@@ -20952,6 +21040,17 @@
 					for(var j = 0, length2 = aSortIndex.length; j < length2; j++) {
 						var nColIndex = aSortIndex[j];
 						var rowData = row[nColIndex];
+						let rowDataNext = nColIndex + 1 < length2 && row[nColIndex + 1];
+						let bDate = rowData.getIsDate();
+						let bDateTime = rowData.getIsDateTime();
+						let bDateNextRow = rowDataNext && rowDataNext.getIsDate();
+						let bDateTimeNextRow = rowDataNext && rowDataNext.getIsDateTime();
+						if ((bDate && bDateTime && bDateNextRow && !bDateTimeNextRow) || (bDate && !bDateTime && bDateNextRow && bDateTimeNextRow)) {
+							let nFirstColIndex = aSortIndex[0];
+							let oFirstRowData = row[nFirstColIndex];
+							oFirstRowData.setIsMixedDateFormat(true);
+							oFirstRowData.setIsDateTime(false);
+						}
 						var bAddToSequence = false;
 						let nVal = rowData.getVal();
 						let bDelimiter = rowData.getDelimiter();
@@ -20982,18 +21081,28 @@
 			this.oCurRow = this.oDataRow[index];
 			this.nCurColIndex = 0;
 		},
-		getNext: function(){
-			var oRes = null;
+		getNext: function() {
+			let oRes = null;
 			if(this.oCurRow) {
-				var oRes = this.oCurRow[this.nCurColIndex];
-				if(null != oRes) {
+				oRes = this.oCurRow[this.nCurColIndex];
+				if(oRes != null) {
 					oRes.setCurValue(null);
-					if(null != oRes.getSequence()) {
-						var sequence = oRes.getSequence();
-						if((oRes.getIsDate() && !oRes.getTimePeriods()) || null != oRes.getPrefix())
-							oRes.setCurValue( Math.abs(sequence.a1 * sequence.nX + sequence.a0));
-						else
+					if(oRes.getSequence() != null) {
+						let sequence = oRes.getSequence();
+						if(oRes.getPrefix() != null) {
+							oRes.setCurValue(Math.abs(sequence.a1 * sequence.nX + sequence.a0));
+						} else if (oRes.getIsDate() && !oRes.getTimePeriods()) {
+							let nCurValue = sequence.a1 * sequence.nX + sequence.a0;
+							if (nCurValue >= 0 || (oRes.getIsDateTime() && parseInt(sequence.a1) !== sequence.a1)) {
+								oRes.setCurValue(nCurValue);
+							} else if (oRes.getIsTime() && nCurValue < 0) {
+								// Reset nX and start from beginning
+								sequence.nX = this.getIsOneSelectedCell() ? 1 : 0;
+								oRes.setCurValue(sequence.a1 * sequence.nX + sequence.a0);
+							}
+						} else {
 							oRes.setCurValue(sequence.a1 * sequence.nX + sequence.a0);
+						}
 						sequence.nX++;
 					}
 				}
@@ -21008,6 +21117,12 @@
 		},
 		setFillHandleRightClick: function (bFillHandleRightClick) {
 			this.bFillHandleRightClick = bFillHandleRightClick;
+		},
+		getIsOneSelectedCell: function () {
+			return this.bOneSelectedCell;
+		},
+		setIsOneSelectedCell: function (bOneSelectedCell) {
+			this.bOneSelectedCell = bOneSelectedCell;
 		}
 	};
 
@@ -21143,6 +21258,7 @@
 	}
 	//-------------------------------------------------------------------------------------------------
 	/**
+	 * Class represents data using for calculating a sequence of filling cells in autofill.
 	 * @constructor
 	 */
 	function cDataRow(nCol, nVal, bDelimiter, sPrefix, nPadding, bDate, oAdditional, aTimePeriods) {
@@ -21152,50 +21268,172 @@
 		this.sPrefix = sPrefix;
 		this.nPadding = nPadding;
 		this.bDate = bDate;
+		this.bDateTime = false;
+		this.bTime = false;
+		this.bMixedDateFormat = false;
 		this.oAdditional = oAdditional;
 		this.aTimePeriods = aTimePeriods;
 		this.oSequence = null;
 		this.nCurValue = null;
 	}
+
+	/**
+	 * Method returns column number
+	 * @memberof cDataRow
+	 * @returns {number}
+	 */
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
 	};
+	/**
+	 * Method returns value of current cell
+	 * @memberof cDataRow
+	 * @returns {number}
+	 */
 	cDataRow.prototype.getVal = function() {
 		return this.nVal;
 	};
+	/**
+	 * Method returns flag which checks cell has delimiter.
+	 * @memberof cDataRow
+	 * @returns {boolean}
+	 */
 	cDataRow.prototype.getDelimiter = function() {
 		return this.bDelimiter;
 	};
+	/**
+	 * Method returns prefix of current cell
+	 * @memberof cDataRow
+	 * @returns {string}
+	 */
 	cDataRow.prototype.getPrefix = function () {
 		return this.sPrefix;
 	};
+	/**
+	 * Method returns padding of current cell
+	 * @memberof cDataRow
+	 * @returns {number}
+	 */
 	cDataRow.prototype.getPadding = function() {
 		return this.nPadding;
 	};
+	/**
+	 * Method sets padding of current cell
+	 * @memberof cDataRow
+	 * @param {number} nPadding
+	 */
 	cDataRow.prototype.setPadding = function(nPadding) {
 		this.nPadding = nPadding;
 	};
+	/**
+	 * Method returns flag which recognizes a current cell has format Date or not.
+	 * @memberof cDataRow
+	 * @returns {boolean}
+	 */
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
 	};
+	/**
+	 * Method returns flag which recognizes a current cell has format Date & Time or not.
+	 * @memberof cDataRow
+	 * @returns {boolean}
+	 */
+	cDataRow.prototype.getIsDateTime = function() {
+		return this.bDateTime;
+	};
+	/**
+	 * Method sets flag which recognizes a current cell has format Date & Time or not.
+	 * @memberof cDataRow
+	 * @param {boolean} bDateTime
+	 */
+	cDataRow.prototype.setIsDateTime = function(bDateTime) {
+		this.bDateTime = bDateTime;
+	};
+	/**
+	 * Method returns flag which recognizes a current cell has mixed format of Dates or not.
+	 * @memberof cDataRow
+	 * @returns {boolean}
+	 */
+	cDataRow.prototype.getIsMixedDateFormat = function () {
+		return this.bMixedDateFormat;
+	};
+	/**
+	 * Method sets flag which recognizes a current cell has mixed format of Dates or not.
+	 * @memberof cDataRow
+	 * @param {boolean} bMixedDateFormat
+	 */
+	cDataRow.prototype.setIsMixedDateFormat = function (bMixedDateFormat) {
+		this.bMixedDateFormat = bMixedDateFormat;
+	};
+	/**
+	 * Method returns flag which recognizes a current cell has format Time or not.
+	 * @memberof cDataRow
+	 * @returns {boolean}
+	 */
+	cDataRow.prototype.getIsTime = function() {
+		return this.bTime;
+	};
+	/**
+	 * Method sets flag which recognizes a current cell has format Time or not.
+	 * @param {boolean} bTime
+	 */
+	cDataRow.prototype.setIsTime = function(bTime) {
+		this.bTime = bTime;
+	};
+	/**
+	 * Method returns additional data
+	 * @memberof cDataRow
+	 * @returns {Cell}
+	 */
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
 	};
+	/**
+	 * Method returns array of time periods
+	 * @memberof cDataRow
+	 * @returns {[]}
+	 */
 	cDataRow.prototype.getTimePeriods = function () {
 		return this.aTimePeriods;
 	};
+	/**
+	 * Method returns sequence of calculated step and start cell. For fill next cells in autofill.
+	 * @memberof cDataRow
+	 * @returns {null|object}
+	 */
 	cDataRow.prototype.getSequence = function() {
 		return this.oSequence;
 	};
+	/**
+	 * Method sets sequence of calculated step and start cell. For fill next cells in autofill.
+	 * @memberof cDataRow
+	 * @param {object} oSequence
+	 */
 	cDataRow.prototype.setSequence = function (oSequence) {
 		this.oSequence = oSequence;
 	};
+	/**
+	 * Method returns the current calculated value for cell who need to be filled.
+	 * @memberof cDataRow
+	 * @returns {number}
+	 */
 	cDataRow.prototype.getCurValue = function() {
 		return this.nCurValue;
 	};
+	/**
+	 * Method sets the current calculated value for cell who need to be filled.
+	 * @memberof cDataRow
+	 * @param {number} nCurValue
+	 */
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
 	};
+	/**
+	 * Method compares 2 DataRow objects for equality
+	 * @memberof cDataRow
+	 * @param {cDataRow} oComparedRowData
+	 * @returns {boolean}
+	 */
 	cDataRow.prototype.compare = function(oComparedRowData) {
 		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
 		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
@@ -21208,7 +21446,12 @@
 
 		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
 	};
-
+	/**
+	 * Method compares bDate and Prefix for equality between two DataRow objects.
+	 * @memberof cDataRow
+	 * @param {cDataRow} oComparedRowData
+	 * @returns {boolean}
+	 */
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
 		let sComparedPrefix = oComparedRowData.getPrefix();
 		let sPrefix = this.getPrefix();

@@ -166,6 +166,9 @@ MasterSlide.prototype.getDrawingDocument = function() {
 MasterSlide.prototype.getTheme = function(){
     return  this.Theme || null;
 };
+MasterSlide.prototype.getColorMap = function() {
+    return AscFormat.GetDefaultColorMap();
+};
 MasterSlide.prototype.getMaster = function(){
     return this.getParentObjects().master;
 };
@@ -703,6 +706,9 @@ MasterSlide.prototype.createDuplicate = function (IdMap) {
     copy.setSlideSize(this.Width, this.Height);
     for(let nIdx = 0; nIdx < this.sldLayoutLst.length; ++nIdx) {
         copy.addToSldLayoutLstToPos(nIdx, this.sldLayoutLst[nIdx].createDuplicate(IdMap));
+    }
+    if(this.Theme) {
+        copy.setTheme(this.Theme.createDuplicate());
     }
     return copy;
 };

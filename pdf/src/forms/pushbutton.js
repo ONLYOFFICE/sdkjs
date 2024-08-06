@@ -1274,7 +1274,7 @@
             });
         }
         else {
-            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, function(error, files)
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function(error, files)
             {
                 if (error.canceled == true) {
                     let oDoc            = oThis.GetDocument();

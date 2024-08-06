@@ -396,12 +396,19 @@
 			
 			if (form.IsRadioButton())
 			{
-				let key = form.GetRadioButtonGroupKey();
-				if (key && "" !== key)
-					continue;
+				let groupKey = form.GetRadioButtonGroupKey();
+				if (!groupKey || "" === groupKey)
+				{
+					groupKey = keyGenerator.GetNewKey(form);
+					form.SetRadioButtonGroupKey(groupKey);
+				}
 				
-				key = keyGenerator.GetNewKey(form);
-				form.SetRadioButtonGroupKey(key);
+				let choice = form.GetFormKey();
+				if (!choice || "" === choice)
+				{
+					choice = keyGenerator.GetNewChoice(form);
+					form.SetFormKey(choice);
+				}
 			}
 			else
 			{

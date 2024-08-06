@@ -2467,6 +2467,13 @@
 			}
 			return null;
 		};
+		CUniColor.prototype.getTransparency = function () {
+			let nAlphaVal = this.getModValue("alpha");
+			if(nAlphaVal === null) {
+				return 0;
+			}
+			return (100000 - nAlphaVal) / 1000;
+		};
 		CUniColor.prototype.checkWordMods = function () {
 			return this.Mods && this.Mods.Mods.length === 1
 				&& (this.Mods.Mods[0].name === "wordTint" || this.Mods.Mods[0].name === "wordShade");
@@ -4086,11 +4093,7 @@
 			if(!this.color) {
 				return 0;
 			}
-			let nAlphaVal = this.color.getModValue("alpha");
-			if(nAlphaVal === null) {
-				return 0;
-			}
-			return (100000 - nAlphaVal) / 1000;
+			return this.color.getTransparency();
 		};
 		asc_CShadowProperty.prototype.putTransparency = function(nVal) {
 			if(!this.color) {
@@ -9043,6 +9046,52 @@
 			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_HF_SetSldNum, this.sldNum, pr));
 			this.sldNum = pr;
 		};
+		HF.prototype.applySettings = function (oSettings) {
+			if(!oSettings) return;
+			if (oSettings.get_ShowSlideNum()) {
+				if (this.sldNum !== null) {
+					this.setSldNum(null);
+				}
+			}
+			else {
+				if (this.sldNum !== false) {
+					this.setSldNum(false);
+				}
+			}
+
+			if (oSettings.get_ShowFooter()) {
+				if (this.ftr !== null) {
+					this.setFtr(null);
+				}
+			}
+			else {
+				if (this.ftr !== false) {
+					this.setFtr(false);
+				}
+			}
+
+			if (oSettings.get_ShowHeader()) {
+				if (this.hdr !== null) {
+					this.setHdr(null);
+				}
+			}
+			else {
+				if (this.hdr !== false) {
+					this.setHdr(false);
+				}
+			}
+
+			if (oSettings.get_ShowDateTime()) {
+				if (this.dt !== null) {
+					this.setDt(null);
+				}
+			}
+			else {
+				if (this.dt !== false) {
+					this.setDt(false);
+				}
+			}
+		};
 
 		function CBgPr() {
 			CBaseNoIdObject.call(this)
@@ -10800,12 +10849,12 @@
 				return;
 			}
 			var _this = this;
-			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, files) {
+			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, files) {
 					if (Asc.c_oAscError.ID.No !== error) {
 						Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 					} else {
 						Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, urls) {
+						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, urls) {
 							if (Asc.c_oAscError.ID.No !== error) {
 								Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 								Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
@@ -11469,7 +11518,78 @@
 				}
 			}
 		};
+		TextListStyle.prototype.applyParaPr = function (nLvl, ParaPr, bIncreaseFontSize, oSp) {
 
+			let iN = AscFormat.isRealNumber;
+			if(bIncreaseFontSize === true || bIncreaseFontSize === false) {
+				if(!this.levels[nLvl]) {
+					this.levels[nLvl] = new AscWord.CParaPr();
+				}
+				let oLvl = this.levels[nLvl];
+				if(oLvl) {
+					if(!oLvl.DefaultRunPr) {
+						oLvl.DefaultRunPr = new AscWord.CTextPr();
+					}
+					let TextPr = oLvl.DefaultRunPr;
+					let Pr;
+					if(iN(TextPr.FontSize)) {
+						TextPr.FontSize = TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					else {
+						let oSpStyles = oSp.Get_Styles(nLvl);
+						let Styles      = oSpStyles.styles;
+						Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					if(iN(TextPr.FontSizeCS)) {
+						TextPr.FontSizeCS = TextPr.GetIncDecFontSizeCS(bIncreaseFontSize)
+					}
+
+					else {
+						if(!Pr) {
+							let oSpStyles = oSp.Get_Styles(nLvl);
+							let Styles      = oSpStyles.styles;
+							Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						}
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+				}
+				return;
+			}
+			if(!ParaPr) {
+				this.levels[nLvl] = null;
+				return;
+			}
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			oLvl.Merge(ParaPr);
+			if(!oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+			if(ParaPr.DefaultRunPr) {
+				let TextPr = ParaPr.DefaultRunPr;
+				if (TextPr.FontFamily) {
+					let FName = TextPr.FontFamily.Name;
+					let FIndex = TextPr.FontFamily.Index;
+					TextPr.RFonts = new CRFonts();
+					TextPr.RFonts.SetAll(FName, FIndex);
+				}
+				oLvl.DefaultRunPr.Apply(ParaPr.DefaultRunPr);
+			}
+		};
+		TextListStyle.prototype.changeFontSize = function (nLvl, bIncrease) {
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			if(oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+		};
 
 		function CBaseAttrObject() {
 			CBaseNoIdObject.call(this);
@@ -14831,18 +14951,29 @@
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "comboBarLine": {
+					return Asc.c_oAscChartTypeSettings.comboBarLine;
+				}
+				case "comboBarLineSecondary": {
+					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
+				}
+				case "comboCustom": {
+					return Asc.c_oAscChartTypeSettings.comboCustom;
+				}
 			}
 			return null;
 		}
 
+
+
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
-			var settings = new Asc.asc_ChartSettings();
+			let settings = new Asc.asc_ChartSettings();
 			settings.type = ChartBuilderTypeToInternal(sType);
-			var aAscSeries = [];
-			var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-			var oCat, i;
+			let aAscSeries = [];
+			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+			let oCat, i;
 			if (aCatNames.length > 0) {
-				var aNumCache = [];
+				let aNumCache = [];
 				for (i = 0; i < aCatNames.length; ++i) {
 					aNumCache.push({val: aCatNames[i] + ""});
 				}
@@ -14852,10 +14983,10 @@
 				};
 			}
 			for (i = 0; i < aSeries.length; ++i) {
-				var oAscSeries = new AscFormat.asc_CChartSeria();
+				let oAscSeries = new AscFormat.asc_CChartSeria();
 				oAscSeries.Val.NumCache = [];
-				var aData = aSeries[i];
-				var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
+				let aData = aSeries[i];
+				let sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
 				oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
 				if (aSeriesNames[i]) {
 					oAscSeries.TxCache.Formula = 'Sheet1!' + '$A$' + (i + 2);
@@ -14873,7 +15004,7 @@
 				if (Array.isArray(aNumFormats) && typeof (aNumFormats[i]) === "string")
 					oAscSeries.FormatCode = aNumFormats[i];
 
-				for (var j = 0; j < aData.length; ++j) {
+				for (let j = 0; j < aData.length; ++j) {
 					oAscSeries.Val.NumCache.push({
 						numFormatStr: oAscSeries.FormatCode !== "" ? null : "General",
 						isDateTimeFormat: false,
@@ -14884,7 +15015,7 @@
 				aAscSeries.push(oAscSeries);
 			}
 
-			var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
+			let oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
 			if (!oChartSpace) {
 				return null;
 			}

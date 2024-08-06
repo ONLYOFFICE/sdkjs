@@ -1593,7 +1593,7 @@
 
 		let nOpacity;
 		if (this.isStickedToPointer) {
-			nOpacity = oSkin.AnimPaneTimelineScrollerOpacityActive;
+			nOpacity = 0.5;//oSkin.AnimPaneTimelineScrollerOpacityActive;
 		} else if (this.isScrollerHovered) {
 			nOpacity = oSkin.AnimPaneTimelineScrollerOpacityHovered;
 		} else {

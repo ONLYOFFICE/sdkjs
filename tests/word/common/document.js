@@ -147,6 +147,10 @@
 		math.Root.AddToContent(0, run);
 		return math;
 	}
+	function CreateBlockLevelSdt()
+	{
+		return new AscWord.CBlockLevelSdt()
+	}
 	function CreateDefaultHeader(sectPr)
 	{
 		if (!sectPr || !logicDocument)
@@ -294,6 +298,12 @@
 			return;
 		
 		p.RemoveFromContent(0, p.GetElementsCount());
+	}
+	function AddTextToParagraph(p, text)
+	{
+		let run = CreateRun();
+		p.AddToContentToEnd(run);
+		run.AddText(text);
 	}
 	function EnterText(text)
 	{
@@ -469,6 +479,7 @@
 	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
 	AscTest.CreateRunStyle           = CreateRunStyle;
 	AscTest.CreateMath               = CreateMath;
+	AscTest.CreateBlockLvlSdt        = CreateBlockLevelSdt;
 	AscTest.CreateDefaultHeader      = CreateDefaultHeader;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
@@ -483,6 +494,7 @@
 	AscTest.ClickMouseButton         = ClickMouseButton;
 	AscTest.ClearDocument            = ClearDocument;
 	AscTest.ClearParagraph           = ClearParagraph;
+	AscTest.AddTextToParagraph       = AddTextToParagraph;
 	AscTest.EnterText                = EnterText;
 	AscTest.CorrectEnterText         = CorrectEnterText;
 	AscTest.BeginCompositeInput      = BeginCompositeInput;

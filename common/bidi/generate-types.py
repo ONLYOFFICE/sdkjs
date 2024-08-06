@@ -43,46 +43,38 @@ header = "/*\n\
 \n\
 (function()\n\
 {\n\
-	const L   = AscBidi.TYPE.L;\n\
-	const R   = AscBidi.TYPE.R;\n\
-	const AL  = AscBidi.TYPE.AL;\n\
-	const EN  = AscBidi.TYPE.EN;\n\
-	const ES  = AscBidi.TYPE.ES;\n\
-	const ET  = AscBidi.TYPE.ET;\n\
-	const AN  = AscBidi.TYPE.AN;\n\
-	const CS  = AscBidi.TYPE.CS;\n\
-	const NSM = AscBidi.TYPE.NSM;\n\
-	const BN  = AscBidi.TYPE.BN;\n\
-	const B   = AscBidi.TYPE.B;\n\
-	const S   = AscBidi.TYPE.S;\n\
-	const WS  = AscBidi.TYPE.WS;\n\
-	const ON  = AscBidi.TYPE.ON;\n\
-	const LRE = AscBidi.TYPE.LRE;\n\
-	const LRO = AscBidi.TYPE.LRO;\n\
-	const RLE = AscBidi.TYPE.RLE;\n\
-	const RLO = AscBidi.TYPE.RLO;\n\
-	const PDF = AscBidi.TYPE.PDF;\n\
-	const LRI = AscBidi.TYPE.LRI;\n\
-	const RLI = AscBidi.TYPE.RLI;\n\
-	const FSI = AscBidi.TYPE.FSI;\n\
-	const PDI = AscBidi.TYPE.PDI;\n\
-	const unicodeTable = new Uint32Array([\n		"
+	const m = [\n\
+		AscBidi.TYPE.L,\n\
+		AscBidi.TYPE.R,\n\
+		AscBidi.TYPE.AL,\n\
+		AscBidi.TYPE.EN,\n\
+		AscBidi.TYPE.ES,\n\
+		AscBidi.TYPE.ET,\n\
+		AscBidi.TYPE.AN,\n\
+		AscBidi.TYPE.CS,\n\
+		AscBidi.TYPE.NSM,\n\
+		AscBidi.TYPE.BN,\n\
+		AscBidi.TYPE.B,\n\
+		AscBidi.TYPE.S,\n\
+		AscBidi.TYPE.WS,\n\
+		AscBidi.TYPE.ON,\n\
+		AscBidi.TYPE.LRE,\n\
+		AscBidi.TYPE.LRO,\n\
+		AscBidi.TYPE.RLE,\n\
+		AscBidi.TYPE.RLO,\n\
+		AscBidi.TYPE.PDF,\n\
+		AscBidi.TYPE.LRI,\n\
+		AscBidi.TYPE.RLI,\n\
+		AscBidi.TYPE.FSI,\n\
+		AscBidi.TYPE.PDI\n\
+	];\n\
+	const t = new Uint8Array(0x110000).fill(0);\n"
 
-mid = "	]);\n\
-	const unicodeTable2 = {\n		"
-
-footer = "\n	};\n\
-	AscBidi.getType = function(codePoint)\n\
+footer = "	\n	AscBidi.getType = function(codePoint)\n\
 	{\n\
-		if (codePoint < 0xFFFE)\n\
-			return unicodeTable[codePoint];\n\
-		if (undefined !== unicodeTable2[codePoint])\n\
-			return unicodeTable2[codePoint];\n\
-		if (0x10800 <= codePoint && codePoint < 0x11000)\n\
-			return R;\n\
-		if (0xE0000 <= codePoint && codePoint < 0xE1000)\n\
-			return BN;\n\
-		return L;\n\
+		if (codePoint >= 0x110000 || codePoint < 0)\n\
+			return AscBidi.TYPE.L;\n\
+		return m[t[codePoint]];\n\
 	}\n\
 })(window);\n"
 
@@ -112,12 +104,39 @@ allTypes = {
     "PDI" : 0
 }
 
+mVal = {
+    "L" : 0,
+    "R" : 1,
+    "AL" : 2,
+    "EN" : 3,
+    "ES" : 4,
+    "ET" : 5,
+    "AN" : 6,
+    "CS" : 7,
+    "NSM" : 8,
+    "BN" : 9,
+    "B" : 10,
+    "S" : 11,
+    "WS" : 12,
+    "ON" : 13,
+    "LRE" : 14,
+    "LRO" : 15,
+    "RLE" : 16,
+    "RLO" : 17,
+    "PDF" : 18,
+    "LRI" : 19,
+    "RLI" : 20,
+    "FSI" : 21,
+    "PDI" : 22
+}
+
 
 h = header.split('\n')
 
 out.writelines(header)
 
-table = ["L"] * 0xFFFF
+tableLen = 0x110000
+table = ["L"] * tableLen
 
 # base case
 for c in range(0x0590, 0x0600):
@@ -143,11 +162,9 @@ for c in range(0xFDD0, 0xFDF0):
 for c in range(0xFFF0, 0xFFF9):
     table[c] = "BN"
 
-table2 = {}
-
 for c in range(0xFFFF, 0x110000, 0x10000):
-    table2[c - 1] = "BN"
-    table2[c]     = "BN"
+    table[c - 1] = "BN"
+    table[c]     = "BN"
 
 for line in data:
     cpData = line.split(';')
@@ -160,26 +177,41 @@ for line in data:
         print("Another type: " + bidiType)
         allTypes[bidiType] = 1
 
-    if unicode >= 0xFFFE:
-        table2[unicode] = bidiType
+    table[unicode] = bidiType
+
+val      = mVal["L"]
+count    = tableLen
+startPos = 0
+
+def writeLine():
+    if val == mVal["L"] or 0 == count:
+        return
+
+    out.write("	t.fill(")
+    out.write(str(val))
+    out.write(",")
+    out.write(str(startPos))
+    out.write(",")
+    out.write(str(startPos + count))
+    out.write(");\n")
+
+writeLine()
+
+val      = mVal[table[0]]
+count    = 1
+startPos = 0
+
+for i in range(1, tableLen):
+    _val = mVal[table[i]]
+    if val != _val:
+        writeLine()
+        val = _val
+        count = 1
+        startPos = i
     else:
-        table[unicode] = bidiType
+        count += 1
 
-for i in range(0xFFFE):
-    out.write(table[i])
-    if i != len(table) - 1:
-        out.write(",")
-
-out.writelines(mid)
-
-addComma = False
-for i in table2:
-    if addComma:
-        out.write(",")
-    out.write(str(i))
-    out.write(":")
-    out.write(table2[i])
-    addComma = True
+writeLine()
 
 out.writelines(footer)
 

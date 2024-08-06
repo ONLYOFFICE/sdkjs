@@ -51,6 +51,7 @@
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
 	/**
@@ -61,6 +62,7 @@
 	 * @param {CommentData}  oCommentData - An object which contains the comment data.
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddComment.js
 	 */
 	Api.prototype["pluginMethod_AddComment"] = function (oCommentData) {
 		if (!oCommentData)
@@ -86,6 +88,7 @@
 	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @return {boolean}
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeComment.js
 	 */
 	Api.prototype["pluginMethod_ChangeComment"] = function (sId, oCommentData) {
 		if (!oCommentData)
@@ -108,6 +111,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @alias RemoveComments
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveComments.js
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function (arrIds) {
 		for (let comm in arrIds) {
@@ -125,6 +129,7 @@
 	 * @alias GetAllComments
 	 * @returns {comment[]} - An array of comment objects containing the comment data.
 	 * @since 8.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllComments.js
 	 */
 	Api.prototype["pluginMethod_GetAllComments"] = function()
 	{
@@ -181,12 +186,13 @@
 	};
 
 	/**
-	 * Returns local custom functions library.
+	 * Returns a library of local custom functions.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias GetCustomFunctions
-	 * @return {string} The custom functions library as json.
+	 * @return {string} A library of custom functions in JSON format.
 	 * @since 8.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetCustomFunctions.js
 	 */
 	Api.prototype["pluginMethod_GetCustomFunctions"] = function()
 	{
@@ -203,12 +209,13 @@
 	};
 
 	/**
-	 * Update local custom functions library
+	 * Updates a library of local custom functions.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @alias SetCustomFunctions
-	 * @param {string} jsonString - The custom functions library.
+	 * @param {string} jsonString - A library of custom functions in JSON format.
 	 * @since 8.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetCustomFunctions.js
 	 */
 	Api.prototype["pluginMethod_SetCustomFunctions"] = function(jsonString)
 	{
@@ -226,3 +233,5 @@
 	};
 
 })(window);
+
+

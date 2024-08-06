@@ -85,6 +85,7 @@
 		this.documentShardKey  = undefined;
 		this.documentWopiSrc  = undefined;
 		this.documentIsWopi = false;
+		this.documentUserSessionId = undefined;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -488,6 +489,7 @@
 			if (this.DocInfo.get_Wopi())
 			{
 				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentUserSessionId = this.DocInfo.get_Wopi()["UserSessionId"];
 				this.documentIsWopi = true;
 			}
 			if (this.documentOpenOptions)
@@ -502,12 +504,6 @@
 				{
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
-				}
-
-				if (this.documentOpenOptions[Asc.c_sWopiSrcName])
-				{
-					this.documentWopiSrc = this.documentOpenOptions[Asc.c_sWopiSrcName];
-					this.documentIsWopi = true;
 				}
 			}
 			if (!this.documentWopiSrc) {
@@ -694,6 +690,7 @@
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -704,12 +701,14 @@
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
 		this.checkInputMode();
+		this.sendEvent("asc_onChangeRestrictions", this.restrictions);
 	};
 	baseEditorsApi.prototype.asc_setCanSendChanges           = function(canSend)
 	{
@@ -1037,11 +1036,8 @@
 	{
 		this.sendEvent("asc_onPrint");
 	};
-	// Open
-	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	baseEditorsApi.prototype._getOpenCmd = function(versionHistory)
 	{
-		// Меняем тип состояния (на открытие)
-		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
 		var rData                  = null;
 		if (!(this.DocInfo && this.DocInfo.get_OfflineApp()))
 		{
@@ -1054,7 +1050,7 @@
 				}
 			}
 			let convertToOrigin = '';
-			if (!!this.DocInfo.get_DirectUrl() && this["asc_isSupportFeature"]("ooxml")) {
+			if (!!(this.DocInfo && this.DocInfo.get_DirectUrl()) && this["asc_isSupportFeature"]("ooxml")) {
 				convertToOrigin = '.docx.xlsx.pptx';
 			}
 
@@ -1078,15 +1074,25 @@
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
-                rData["closeonerror"] = versionHistory.isRequested;
+				rData["closeonerror"] = versionHistory.isRequested;
 				rData["tokenHistory"] = versionHistory.token;
 				//чтобы результат пришел только этому соединению, а не всем кто в документе
 				rData["userconnectionid"] = this.CoAuthoringApi.getUserConnectionId();
 			}
 		}
+		return rData;
+	}
+	// Open
+	baseEditorsApi.prototype.asc_LoadDocument                    = function(versionHistory, isRepeat)
+	{
+		// Меняем тип состояния (на открытие)
+		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.Open;
+
+		let rData = this._getOpenCmd(versionHistory);
 		if (versionHistory) {
 			this.CoAuthoringApi.versionHistory(rData);
 		} else {
+			//todo auth on connection
 			this.CoAuthoringApi.auth(this.getViewMode(), rData);
 		}
 
@@ -1611,6 +1617,7 @@
 			if (!t.isOnLoadLicense) {
 				t._onEndPermissions();
 			} else {
+				//todo auth on connection
 				if (t.CoAuthoringApi.get_isAuth()) {
 					t.CoAuthoringApi.auth(t.getViewMode(), undefined, t.isIdle());
 				} else {
@@ -1909,7 +1916,9 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc);
+
+		let openCmd = this._getOpenCmd();
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, openCmd);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2360,7 +2369,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2393,7 +2402,7 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, this.documentWopiSrc, this.documentUserSessionId, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
@@ -2790,6 +2799,14 @@
 				}
 				this.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenFormat, c_oAscError.Level.Critical, errorData);
 				return;
+			}
+			if (this.VersionHistory && this.VersionHistory.documentSha256) {
+				let sha256 = AscCommon.Digest.sha256(this.openResult.data, 0, this.openResult.data.length);
+				if (this.VersionHistory.documentSha256 !== AscCommon.Hex.encode(sha256) ) {
+					this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
+					this.sendEvent("asc_onError", c_oAscError.ID.DocumentAndChangeMismatch, c_oAscError.Level.Critical);
+					return;
+				}
 			}
 
 			this.openDocument(this.openResult);
@@ -5038,15 +5055,31 @@
 
 	baseEditorsApi.prototype.wrapEvent = function(name) 
 	{
+		var wrapArray = function(args) {
+			for (let i = 0, len = args.length; i < len; i++)
+			{
+				if (!args[i])
+					continue;
+				if (args[i].toCValue)
+					args[i] = args[i].toCValue();
+				else if (Array.isArray(args[i]))
+					wrapArray(args[i]);
+			}
+		};
+
 		this.asc_registerCallback(name, function()
 		{
-			for (let i = 0, len = arguments.length; i < len; i++) 
-			{
-				if (arguments[i] && arguments[i].toCValue)
-					arguments[i] = arguments[i].toCValue();
-			}
+			wrapArray(arguments);
 			window["native"]["onJsEvent"](name, Array.from(arguments));
 		});
+	};
+
+	baseEditorsApi.prototype.setPluginsOptions = function(options)
+	{
+		this.externalPluginsOptions = options;
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onUpdateOptions();
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -5123,6 +5156,8 @@
 	prot['asc_onMediaPlayerEvent'] = prot.asc_onMediaPlayerEvent;
 	prot['asc_hideMediaControl'] = prot.asc_hideMediaControl;
 	prot['asc_getInputLanguage'] = prot.asc_getInputLanguage;
+
+	prot['setPluginsOptions'] = prot.setPluginsOptions;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;

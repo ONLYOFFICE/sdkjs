@@ -246,7 +246,7 @@
 
         function callbackAfterFocus(x, y, e) {
             oDoc.SetLocalHistory();
-            if (false == e.shiftKey) {
+            if (false == e.ShiftKey) {
                 oDoc.SelectionSetStart(x, y, e);
             }
             else {

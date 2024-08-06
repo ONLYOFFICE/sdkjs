@@ -1828,8 +1828,82 @@
         }
     };
 
+	WorksheetView.prototype._getAutocompleteValues = function () {
+		const t = this;
+		let canExecuteFormula;
+		/* setRows|setCols - arrays with positions of all real elements */
+		/* setNumberRows|setNumberCols - arrays with positions of all "numeric" elements */
+		let setCols = [], setRows = [], setNumberCols = [], setNumberRows = [];
+		let selection = this.model.getSelection();
+		let selectionRange = selection.getLast();
+		let mergedRange = this.model.getMergedByCell(selectionRange.r1, selectionRange.c1);
+		if (mergedRange && mergedRange.isEqual(selectionRange)) {
+			// There is no need to do anything for one cell
+			return null;
+		}
+
+		if (c_oAscSelectionType.RangeMax === selectionRange.getType()) {
+			return null;
+		}
+
+		let c2 = Math.min(selectionRange.c2, this.nColsCount - 1);
+		let r2 = Math.min(selectionRange.r2, this.nRowsCount - 1);
+		for (let c = selectionRange.c1; c <= c2; ++c) {
+			for (let r = selectionRange.r1; r <= r2; ++r) {
+				let cellCache = this._getCellTextCache(c, r, true);
+				if (cellCache) {
+					if (!canExecuteFormula) {
+						this.model._getCellNoEmpty(r, c, function (cell) {
+							if (cell && !cell.isNullText() && cell.type !== CellValueType.String) {
+								let xfs = cell.getCompiledStyle();
+								let numFormatStr, info;
+								if (xfs && xfs.num) {
+									// numFormatStr = xfs.num.getNumFormat();
+									info = xfs.asc_getNumFormatInfo();
+								}
+
+								if (!info) {
+									canExecuteFormula = true
+								} else if (info && info.type !== Asc.c_oAscNumFormatType.Date && info.type !== Asc.c_oAscNumFormatType.LongDate
+									&& info.type !== Asc.c_oAscNumFormatType.None && info.type !== Asc.c_oAscNumFormatType.Text) {
+									canExecuteFormula = true
+								}
+
+							}
+						});
+					}
+
+					if (cellCache.cellType !== CellValueType.String) {
+						if (setNumberRows.indexOf(r) === -1) {
+							setNumberRows.push(r);
+						}
+						if (setNumberCols.indexOf(c) === -1) {
+							setNumberCols.push(c);
+						}
+					}
+
+					if (setRows.indexOf(r) === -1) {
+						setRows.push(r);
+					}
+					if (setCols.indexOf(c) === -1) {
+						setCols.push(c);
+					}
+				}
+			}
+		}
+
+		if (canExecuteFormula && (setRows.length > 0 || setCols.length > 0) && (setNumberRows.length > 0 || setNumberCols.length > 0)) {
+			// return an object with information about the positions of real and only numeric values
+			return {
+				allExistedValPos: {arrCols: setCols.sort(fSortAscending), arrRows: setRows.sort(fSortAscending)},
+				allNumberPos: {arrCols: setNumberCols.sort(fSortAscending), arrRows: setNumberRows.sort(fSortAscending)}
+			};
+		} else {
+			return null;
+		}
+	};
     // Autocomplete formula with range if possible
-    WorksheetView.prototype.autoCompleteFormula = function (functionName) {
+    WorksheetView.prototype.autoCompleteFormula = function (functionName, callFromWizard) {
         const t = this;
         // ToDo autoComplete with multiselect
         let selection = this.model.getSelection();
@@ -1847,10 +1921,11 @@
         let c = activeCell.col - 1;
         let cell, cellType, isNumberFormat;
         let result = {};
-        // Get all numeric values ​​in the range
-        let hasNumber = this._getValuesPositionsInRange(true);
+        // let hasNumber = this._getValuesPositionsInRange(true);
+        let hasNumber = !callFromWizard && this._getAutocompleteValues();		// Get all valid values ​​for autocomplete according to the cell format and type
+
         // Get all non-empty values ​​in the range
-        let realValues = this._getValuesPositionsInRange();
+        // let realValues = this._getValuesPositionsInRange();
         let val, text;
 
         /*
@@ -1871,6 +1946,9 @@
 
         if (hasNumber) {
             let i;
+            let realValues = hasNumber.allExistedValPos;
+            hasNumber = hasNumber.allNumberPos;
+            
             // Are there numeric values ​​in the last row and column
             let hasNumberInLastColumn = (ar.c2 === hasNumber.arrCols[hasNumber.arrCols.length - 1]);
             let hasNumberInLastRow = (ar.r2 === hasNumber.arrRows[hasNumber.arrRows.length - 1]);
@@ -2094,7 +2172,12 @@
 				result.notEditCell = true;
 				return result;
 			}
-        }
+		} else {
+			// change selection to the last cell if the values ​​in the range are not valid in the autocomplete formula
+			if (!result.text && !result.notEditCell) {
+				selection.setActiveCell(ar.r2, ar.c2);
+			}
+		}
 
         // Ищем первую ячейку с числом
         for (; r >= vr.r1; --r) {
@@ -2761,6 +2844,16 @@
 		}
 
 		let isOnlyFirstPage = adjustPrint && adjustPrint.isOnlyFirstPage;
+
+		if (!isOnlyFirstPage) {
+			let printOptionsJson = this.workbook && this.workbook.getPrintOptionsJson();
+			let curPrintOptionsJson = (printOptionsJson && printOptionsJson["spreadsheetLayout"]) ? printOptionsJson["spreadsheetLayout"] : printOptionsJson;
+			let thumbnailFirst = curPrintOptionsJson && curPrintOptionsJson["thumbnail"] && curPrintOptionsJson["thumbnail"]["first"];
+			if (thumbnailFirst === true || (typeof thumbnailFirst === "string" && thumbnailFirst.toLowerCase() === "true")) {
+				isOnlyFirstPage = true;
+			}
+		}
+
 		let pageMargins, pageSetup, pageGridLines, pageHeadings;
         if (pageOptions) {
             pageMargins = pageOptions.asc_getPageMargins();
@@ -3473,7 +3566,9 @@
 
 			//special thumbnail split
 			let printOptionsJson = this.workbook && this.workbook.getPrintOptionsJson();
-			if (printOptionsJson && printOptionsJson["thumbnail"] && printOptionsJson["thumbnail"]["first"] === true) {
+			let curPrintOptionsJson = (printOptionsJson && printOptionsJson["spreadsheetLayout"]) ? printOptionsJson["spreadsheetLayout"] : printOptionsJson;
+			let thumbnailFirst = curPrintOptionsJson && curPrintOptionsJson["thumbnail"] && curPrintOptionsJson["thumbnail"]["first"];
+			if (thumbnailFirst === true || (typeof thumbnailFirst === "string" && thumbnailFirst.toLowerCase() === "true")) {
 				let thumbnailMaxRowCount = 100;
 				let currentRowCount = (printPagesData.pageRange.r2 - printPagesData.pageRange.r1) + (printPagesData.titleRowRange ? (printPagesData.titleRowRange.r2 - printPagesData.titleRowRange.r1) : 0);
 				if (currentRowCount > thumbnailMaxRowCount) {
@@ -3803,7 +3898,11 @@
 
 		var calcScale = this.calcPrintScale(width, height);
 		if(!isNaN(calcScale)) {
+			let realLockDraw = this.lockDraw;
+			//TODO add lock draw here. need review all draw calls(try to replace on recalculate)
+			this.lockDraw = true;
 			this._setPrintScale(calcScale);
+			this.lockDraw = realLockDraw;
 		}
 
 		//TODO нужно ли в данном случае лочить?
@@ -8634,6 +8733,7 @@
         if (!angle && !verticalText && (cto.leftSide !== 0 || cto.rightSide !== 0)) {
             this._addErasedBordersToCache(col - cto.leftSide, col + cto.rightSide, row);
         }
+
 		this._updateRowHeight(cache, row, maxW, colWidth);
 
         return mc ? mc.c2 : col;
@@ -8693,6 +8793,35 @@
 		//not find a case where the ms does not update the height with the columns merged ans wrap
 		var isMergedRows = (mergeType & c_oAscMergeType.rows)/* || (mergeType && cache.flags.wrapText)*/;
 		var tm = cache.metrics;
+
+		let mergedWrapHeight = null;
+		if (mergeType && cache.flags.wrapText) {
+			if (cache.angle) {
+				isMergedRows = true;
+			} else {
+				//ms use ht if multitext cell inside and use text 1 line height metrics if not multitext
+				//while such as detect different text settings into 1 cell. probably, need get info from model
+				let textHeight;
+				if (cache.state && cache.state.lines) {
+					for (let i = 0 ; i < cache.state.lines.length; i++) {
+						if (!textHeight) {
+							textHeight = cache.state.lines[i].th;
+						} else if (textHeight !== cache.state.lines[i].th) {
+							textHeight = null;
+							break;
+						}
+					}
+				}
+				if (textHeight) {
+					mergedWrapHeight = textHeight;
+				} else {
+					let _rowHeight = AscCommonExcel.convertPtToPx(this.model.getRowHeight(row));
+					if (_rowHeight && !isNaN(_rowHeight)) {
+						mergedWrapHeight = _rowHeight;
+					}
+				}
+			}
+		}
 		var va = cache.cellVA;
 		var textBound = cache.textBound;
 		var rowInfo = this.rows[row];
@@ -8709,7 +8838,7 @@
 		// update row's height
 		// Замерженная ячейка (с 2-мя или более строками) не влияет на высоту строк!
 		if (!isCustomHeight && !(window["NATIVE_EDITOR_ENJINE"] && this.notUpdateRowHeight) && !isMergedRows) {
-			var newHeight = tm.height;
+			var newHeight = mergedWrapHeight ? mergedWrapHeight : tm.height;
 			var oldHeight = this.updateRowHeightValuePx || AscCommonExcel.convertPtToPx(this._getRowHeightReal(row));
 			if (cache.angle && textBound) {
 				newHeight = Math.max(oldHeight, textBound.height / this.getZoom());
@@ -12078,7 +12207,7 @@
 
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
     };
-    WorksheetView.prototype.setSelection = function (range) {
+    WorksheetView.prototype.setSelection = function (range, onlyCells) {
     	if (!Array.isArray(range)) {
     		range = [AscCommonExcel.Range.prototype.createFromBBox(this.model, range)];
 		}
@@ -12104,7 +12233,7 @@
 			this.model.selectionRange.update();
 		}
 
-		this._fixSelectionOfMergedCells();
+		this._fixSelectionOfMergedCells(null, onlyCells);
 		this.updateSelectionWithSparklines();
 
 		this._updateSelectionNameAndInfo();
@@ -12273,7 +12402,7 @@
             // Не попали в выделение (меняем первую точку)
             this.cleanSelection();
             this.model.selectionRange.clean();
-			this.setSelection(range);
+			this.setSelection(range, true);
             this._drawSelection();
 
             this._updateSelectionNameAndInfo();
@@ -13938,8 +14067,16 @@
 			}
 
 			if (shiftMove) {
-				arnFrom = lastSelection;
 				arnTo = t.model.selectionRange.getLast().clone();
+				if (lastSelection.getType() === c_oAscSelectionType.RangeCol && lastSelection.c1 > arnTo.c1) {
+					let diff = arnFrom.c2 - arnFrom.c1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1 + diff, lastSelection.r1, lastSelection.c2 + diff, lastSelection.r2);
+				} else if (lastSelection.getType() === c_oAscSelectionType.RangeRow && lastSelection.r1 > arnTo.r1) {
+					let diff = arnFrom.r2 - arnFrom.r1 + 1;
+					arnFrom = new asc_Range(lastSelection.c1, lastSelection.r1 + diff, lastSelection.c2, lastSelection.r2 + diff);
+				} else {
+					arnFrom = lastSelection;
+				}
 			}
 
 			//***array-formula***
@@ -13990,11 +14127,13 @@
 				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
 			}
 
-			if (colByX != null || rowByY != null) {
+			if (t.model.selectionRange.getLast().isEqual(lastSelection) !== true &&(colByX != null || rowByY != null)) {
 				History.Create_NewPoint();
 				History.StartTransaction();
-				let insProp = colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
+				let insProp = null != colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
 				this.changeWorksheet("insCell", insProp, doMove, true);
+			} else {
+				this._cleanSelectionMoveRange();
 			}
 		} else {
 			doMove(true);
@@ -24731,12 +24870,18 @@
 				let needCalc = false;
 				if (fP) {
 					for (let i = 0; i < fP.outStack.length; i++) {
-						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
+						let type = fP.outStack[i].type;
+						if ((AscCommonExcel.cElementType.cellsRange3D === type || AscCommonExcel.cElementType.cell3D === type ||
+							AscCommonExcel.cElementType.name3D === type) && fP.outStack[i].externalLink) {
 							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
-									eR.initRows(fP.outStack[i].getRange());
+									if (AscCommonExcel.cElementType.name3D === type) {
+										eR.initDefinedName(fP.outStack[i]);
+									} else {
+										eR.initRows(fP.outStack[i].getRange());
+									}
 								}
 							}
 						} else if (initStructure && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
@@ -24959,7 +25104,7 @@
 		if (this.isPageBreakPreview(true)) {
 			this.model && this.model.PagePrintOptions && this.model.PagePrintOptions.initPrintTitles();
 			if (this.workbook && this.workbook.model && this.workbook.model.getActiveWs() === this.model) {
-				this.draw();
+				this.draw(this.lockDraw);
 			}
 		}
 	};

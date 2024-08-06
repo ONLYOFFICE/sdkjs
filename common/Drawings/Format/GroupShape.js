@@ -511,7 +511,7 @@
 		CGroupShape.prototype.getResultScaleCoefficients = function () {
 			if (this.recalcInfo.recalculateScaleCoefficients) {
 				var cx, cy;
-				if (this.spPr.xfrm.isNotNullForGroup()) {
+				if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNullForGroup()) {
 
 					var dExtX = this.spPr.xfrm.extX, dExtY = this.spPr.xfrm.extY;
 

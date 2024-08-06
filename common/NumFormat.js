@@ -2847,26 +2847,45 @@ CellFormat.prototype =
 {
 	isTextFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat  != null) {
 			return this.oPositiveFormat.bTextFormat;
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].bTextFormat;
+		}
 		return false;
 	},
 	isGeneralFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat != null) {
 			return this.oPositiveFormat.isGeneral();
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null  && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].isGeneral();
+		}
 		return false;
 	},
 	isDateTimeFormat : function()
 	{
-		if(null != this.oPositiveFormat)
+		if (this.oPositiveFormat != null) {
 			return this.oPositiveFormat.bDateTime;
-		else if(null != this.aComporationFormats && this.aComporationFormats.length > 0)
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
 			return this.aComporationFormats[0].bDateTime;
+		}
+		return false;
+	},
+	isTimeFormat : function() {
+		if (this.oPositiveFormat != null) {
+			return this.oPositiveFormat.bTime;
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
+			return this.aComporationFormats[0].bTime;
+		}
+		return false;
+	},
+	isDateFormat : function() {
+		if ( this.oPositiveFormat != null) {
+			return this.oPositiveFormat.bDate;
+		} else if (this.aComporationFormats != null && this.aComporationFormats.length > 0) {
+			return this.aComporationFormats[0].bDate;
+		}
 		return false;
 	},
 	getTextFormat: function () {

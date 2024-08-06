@@ -998,7 +998,7 @@
 					var oPrevNumLvl = oDocument.GetNumbering().GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
 					if (oPrevNumLvl.IsSimilar(oNumLvl))
 					{
-						oNumPr = new CNumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, oPrevNumPr.Lvl);
 					}
 				}
 
@@ -1007,7 +1007,7 @@
 					var oNum = oDocument.GetNumbering().CreateNum();
 					oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
 					oNum.SetLvl(oNumLvl, 0);
-					oNumPr = new CNumPr(oNum.GetId(), 0);
+					oNumPr = new AscWord.NumPr(oNum.GetId(), 0);
 				}
 			}
 		}
@@ -1073,7 +1073,7 @@
 					}
 
 					if (isAdd)
-						oNumPr = new CNumPr(oPrevNumPr.NumId, nResultLvL);
+						oNumPr = new AscWord.NumPr(oPrevNumPr.NumId, nResultLvL);
 				}
 				else
 				{
@@ -1100,7 +1100,7 @@
 							oNum.SetLvl(newLvl, iLvl);
 						}
 
-						oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);
+						oNumPr = new AscWord.NumPr(oNum.GetId(), arrResult.length - 1);
 					}
 				}
 			}

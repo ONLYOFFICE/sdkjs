@@ -348,7 +348,7 @@
 		};
 	}
 
-	AscCommon.CreateDrawingPlaceholder = function(id, buttons, page, rect, transform)
+	AscCommon.CreateDrawingPlaceholder = function(id, buttons, page, rect, transform, isDisabled)
 	{
 		var placeholder = new Placeholder();
 		placeholder.id = id;
@@ -356,7 +356,7 @@
 		placeholder.anchor.page = page;
 		placeholder.anchor.rect = rect;
 		placeholder.anchor.transform = transform;
-
+		placeholder.isDisabled = isDisabled;
 		for (var i = 0; i < placeholder.buttons.length; i++)
 			placeholder.states[i] = AscCommon.PlaceholderButtonState.None;
 
@@ -388,6 +388,8 @@
 			rect : { x : 0, y : 0, w : 0, h : 0 },
 			transform : null
 		};
+
+		this.isDisabled = false;
 	}
 
 	Placeholder.prototype.getCenterInPixels = function(pixelsRect, pageWidthMM, pageHeightMM)
@@ -513,8 +515,9 @@
 
 	Placeholder.prototype.onPointerDown = function(x, y, pixelsRect, pageWidthMM, pageHeightMM)
 	{
-		var pointMenu = { x : 0, y : 0 };
-		var indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM, pointMenu);
+		if(this.isDisabled) return false;
+		let pointMenu = { x : 0, y : 0 };
+		let indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM, pointMenu);
 
 		if (-1 == indexButton)
 			return false;
@@ -569,6 +572,7 @@
 
 	Placeholder.prototype.onPointerMove = function(x, y, pixelsRect, pageWidthMM, pageHeightMM, checker)
 	{
+		if(this.isDisabled) return false;
 		var indexButton = this.isInside(x, y, pixelsRect, pageWidthMM, pageHeightMM);
 
 		// может в кнопку-то и не попали, но состояние могло смениться => нужно перерисовать интерфейс

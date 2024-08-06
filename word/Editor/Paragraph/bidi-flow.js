@@ -61,6 +61,9 @@
 	};
 	BidiFlow.prototype.add = function(element, bidiType)
 	{
+		if (bidiType === AscBidi.TYPE.B)
+			this.end();
+		
 		if (AscBidi.DIRECTION.R === this.direction)
 		{
 			if (bidiType & AscBidi.FLAG.STRONG && bidiType & AscBidi.FLAG.RTL)
@@ -99,7 +102,7 @@
 	};
 	BidiFlow.prototype.end = function()
 	{
-		if (AscBidi.DIRECTION.R === this.direction)
+		if (AscBidi.DIRECTION.R === this.direction || this.buffer.length)
 		{
 			this.flushLTR();
 			this.flushNeutralRTL();

@@ -114,7 +114,7 @@ function CThemeLoader()
         // применяется тема из стандартных.
         if (null != theme_load_info)
         {
-            if (indexTheme >= 0 && theme_load_info.Master.sldLayoutLst.length === 0)
+            if (indexTheme >= 0)
             {
                 // мега схема. нужно переоткрыть бинарник, чтобы все открылось с историей
                 this.IsReloadBinaryThemeEditorNow = true;

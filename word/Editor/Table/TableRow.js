@@ -1171,6 +1171,25 @@ CTableRow.prototype.RejectPrChange = function()
 		this.RemovePrChange();
 	}
 };
+CTableRow.prototype.HaveCellPrChange = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		if (this.GetCell(iCell).HavePrChange())
+			return true;
+	}
+	return false;
+};
+CTableRow.prototype.GetFirstCellReviewInfo = function()
+{
+	for (let iCell = 0, nCells = this.GetCellsCount(); iCell < nCells; ++iCell)
+	{
+		let reviewInfo = this.GetCell(iCell).Pr.ReviewInfo;
+		if (reviewInfo)
+			return reviewInfo;
+	}
+	return null;
+};
 CTableRow.prototype.private_CheckCurCell = function()
 {
 	if (this.GetTable())
