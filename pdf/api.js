@@ -2166,9 +2166,7 @@
 		
 		documentRenderer.registerEvent("onFileOpened", function() {
 			_t.disableRemoveFonts = true;
-			_t.onDocumentContentReady();
-			_t.bInit_word_control = true;
-			
+
 			var thumbnailsDivId = "thumbnails-list";
 			if (document.getElementById(thumbnailsDivId))
 			{
@@ -2180,6 +2178,7 @@
 				});
 			}
 			documentRenderer.isDocumentContentReady = true;
+			_t._openDocumentEndCallback();
 		});
 		documentRenderer.registerEvent("onHyperlinkClick", function(url){
 			_t.sendEvent("asc_onHyperlinkClick", url);
@@ -2344,7 +2343,7 @@
 		this.DocumentRenderer.resize();
 	};
 	PDFEditorApi.prototype._openDocumentEndCallback = function() {
-		if (this.isDocumentLoadComplete || !this.ServerImagesWaitComplete || !this.ServerIdWaitComplete || !this.WordControl || !this.WordControl.m_oLogicDocument)
+		if (this.isDocumentLoadComplete || !this.ServerImagesWaitComplete || !this.ServerIdWaitComplete || !this.WordControl || !this.WordControl.m_oLogicDocument || !this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.isDocumentContentReady)
 			return;
 
 		this.sendMathToMenu();
@@ -2353,6 +2352,35 @@
 		this.isDocumentEditor = false;
 		AscCommon.PasteElementsId.g_bIsDocumentCopyPaste = false;
 		AscCommon.PasteElementsId.g_bIsPDFCopyPaste = true;
+		if (this.isApplyChangesOnOpenEnabled)
+		{
+			if (AscCommon.EncryptionWorker)
+			{
+				AscCommon.EncryptionWorker.init();
+				if (!AscCommon.EncryptionWorker.isChangesHandled)
+					return AscCommon.EncryptionWorker.handleChanges(AscCommon.CollaborativeEditing.m_aChanges, this, this._openDocumentEndCallback);
+			}
+			this.bInit_word_control = true;
+			this.isApplyChangesOnOpenEnabled = false;
+			this._applyPreOpenLocks();
+
+			// TODO: onDocumentContentReady вызываем в конце загрузки всех изменений (и объектов для этих изменений)
+			let oThis = this;
+
+			let perfStart = performance.now();
+			let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
+			AscCommon.CollaborativeEditing.Apply_Changes(function()
+			{
+				let perfEnd = performance.now();
+				if (OtherChanges) {
+					AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), oThis);
+				}
+				oThis.onDocumentContentReady();
+			});
+			AscCommon.CollaborativeEditing.Release_Locks();
+
+			this.isApplyChangesOnOpen = true;
+		}
 	};
 	PDFEditorApi.prototype.sync_ContextMenuCallback = function(Data) {
 		this.sendEvent("asc_onContextMenu", new CPdfContextMenuData(Data));
