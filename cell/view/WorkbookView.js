@@ -3129,19 +3129,53 @@
     };
 
 	WorkbookView.prototype.insertArgumentsInFormula = function (args, argNum, argType, name) {
+		function checkParser (arg, parserHelp, ws) {
+			// If any parser returns true, we return it immediately
+			if (parserHelp.isRef(arg, 0)) {
+				return true	
+			} 			
+			if (parserHelp.is3DRef(arg, 0)[0]) {
+				return true
+			}
+			if (parserHelp.isArea(arg, 0)) {
+				return true
+			}
+			if (ws.workbook.dependencyFormulas.getDefNameByName(arg, ws.getId())) {
+				return true
+			}
+			return false
+		}
+
+
 		if (this.getCellEditMode()) {
-			var sArguments = args.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-			this.cellEditor.changeCellText(sArguments);
+			const ws = this.getActiveWS();
+			// If we expect a string as an argument, then we check whether the current argument is a string
+			// The check is performed using regular expressions from parserHelper
+			if (argType !== undefined && argType === AscCommonExcel.cElementType.string) {
+				let argN = args[argNum];
+				if (argN !== undefined) {
+					let parserHelp = AscCommon.parserHelp;
+					let isString = parserHelp.isString('"' + argN + '"', 0);
+					let isEmptyString = argN === "";	// if we receive an empty string, then we don't need to add quotes
+					if (isString && !isEmptyString) {
+						let anyConditionMet = checkParser(argN, parserHelp, ws);
+						if (!anyConditionMet) {
+							argN = '"' + argN + '"';
+							args[argNum] = argN;
+						}
+					}
+				}
+			}
+			let sArguments = args.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+			this.cellEditor.changeCellText(sArguments);		// changes the text of the arguments in the cell, but not in the wizard
 
 			if (name) {
-				var ws = this.getActiveWS();
-
-				var res = new AscCommonExcel.CFunctionInfo(name);
+				let res = new AscCommonExcel.CFunctionInfo(name);
 				res.argumentsResult = [];
-				var argCalc = ws.calculateWizardFormula(args[argNum], argType);
+				let argCalc = ws.calculateWizardFormula(args[argNum], argType);
 				res.argumentsResult[argNum] = argCalc.str;
 				if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
-					var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
+					let funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
 					res.functionResult = funcCalc.str;
 					if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
 						res.formulaResult = ws.calculateWizardFormula(this.cellEditor.getText().substring(1)).str;

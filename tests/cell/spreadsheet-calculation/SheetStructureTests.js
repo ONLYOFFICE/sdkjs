@@ -3024,6 +3024,101 @@ $(function () {
 		clearData(0, 99, 0, 105);
 	});
 
+	QUnit.test('Insert arguments from wizard', function (assert) { 
+		let argNum, res;
+
+		ws.getRange2("F1").setValue("1,2,3");
+		ws.getRange2("F2").setValue("1;2;3");
+		ws.getRange2("F3").setValue("1.2.3");
+
+		ws.getRange2("G1").setValue(";");
+		ws.getRange2("G2").setValue(",");
+		ws.getRange2("G3").setValue(".");
+		ws.getRange2("G4").setValue("test");
+
+		wb.dependencyFormulas.addDefName("dd", "Sheet1!$A$100:$A$104");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			getText: function () {
+				return "";
+			}
+		};
+
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+
+		// EXACT tests
+		argNum = 1;
+		res = api.asc_insertArgumentsInFormula(["G1", ";"], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "TRUE", 'EXACT(";",";")');
+		assert.strictEqual(res.argumentsResult[argNum], "\";\"", 'Second argument in EXACT(";",";") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["G1", "d"], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "FALSE", 'EXACT(";","d")');
+		assert.strictEqual(res.argumentsResult[argNum], "\"d\"", 'Second argument in EXACT(";","d") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["G1", "dd"], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "#VALUE!", 'EXACT(";","dd")');
+		assert.strictEqual(res.argumentsResult[argNum], "", 'Second argument in EXACT(";","dd") doesnt have quotes');
+
+		res = api.asc_insertArgumentsInFormula(["G2", ","], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "TRUE", 'EXACT(",",",")');
+		assert.strictEqual(res.argumentsResult[argNum], "\",\"", 'Second argument in EXACT(",",",") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["G3", "."], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "TRUE", 'EXACT(".",".")');
+		assert.strictEqual(res.argumentsResult[argNum], "\".\"", 'Second argument in EXACT(".",".") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["G4", "test"], argNum, AscCommonExcel.cElementType.string, "EXACT");
+		assert.strictEqual(res.functionResult, "TRUE", 'EXACT("test","test")');
+		assert.strictEqual(res.argumentsResult[argNum], "\"test\"", 'Second argument in EXACT("test","test") has quotes');
+
+		// TEXTSPLIT tests
+		res = api.asc_insertArgumentsInFormula(["F1", ","], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1\",\"2\",\"3\"}", 'TEXTSPLIT("1,2,3",",")');
+		assert.strictEqual(res.argumentsResult[argNum], "\",\"", 'Second argument in TEXTSPLIT("1,2,3",",") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F1", ";"], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1,2,3\"}", 'TEXTSPLIT("1,2,3",";")');
+		assert.strictEqual(res.argumentsResult[argNum], "\";\"", 'Second argument in TEXTSPLIT("1,2,3",";") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F1", "."], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1,2,3\"}", 'TEXTSPLIT("1,2,3",".")');
+		assert.strictEqual(res.argumentsResult[argNum], "\".\"", 'Second argument in TEXTSPLIT("1,2,3",".") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F2", ","], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1;2;3\"}", 'TEXTSPLIT("1;2;3",",")');
+		assert.strictEqual(res.argumentsResult[argNum], "\",\"", 'Second argument in TEXTSPLIT(1;2;3",",") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F2", ";"], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1\",\"2\",\"3\"}", 'TEXTSPLIT("1;2;3",";")');
+		assert.strictEqual(res.argumentsResult[argNum], "\";\"", 'Second argument in TEXTSPLIT("1;2;3",";") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F2", "."], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1;2;3\"}", 'TEXTSPLIT("1;2;3",".")');
+		assert.strictEqual(res.argumentsResult[argNum], "\".\"", 'Second argument in TEXTSPLIT("1;2;3",".") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F3", ","], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1.2.3\"}", 'TEXTSPLIT("1.2.3",",")');
+		assert.strictEqual(res.argumentsResult[argNum], "\",\"", 'Second argument in TEXTSPLIT(1.2.3",",") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F3", ";"], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1.2.3\"}", 'TEXTSPLIT("1.2.3",";")');
+		assert.strictEqual(res.argumentsResult[argNum], "\";\"", 'Second argument in TEXTSPLIT("1.2.3",";") has quotes');
+
+		res = api.asc_insertArgumentsInFormula(["F3", "."], argNum, AscCommonExcel.cElementType.string, "TEXTSPLIT");
+		assert.strictEqual(res.functionResult, "{\"1\",\"2\",\"3\"}", 'TEXTSPLIT("1.2.3",".")');
+		assert.strictEqual(res.argumentsResult[argNum], "\".\"", 'Second argument in TEXTSPLIT("1.2.3",".") has quotes');
+
+		// remove all created earlier defNames
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+
+	});
+
 	QUnit.test('autoCompleteFormula', function (assert) {
 		let resCell, range, fillRange, autoCompleteRes;
 
