@@ -3024,6 +3024,149 @@ $(function () {
 		clearData(0, 99, 0, 105);
 	});
 
+	/* for bug 61856 */
+	QUnit.test('Array of arguments check after calling the wizard for the function', function (assert) { 
+		let resArray;
+
+		ws.getRange2("D1").setValue("11");
+		ws.getRange2("D2").setValue("22");
+		ws.getRange2("D3").setValue("33");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			getText: function () {
+				return "";
+			}
+		};
+
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+
+		wb.dependencyFormulas.addDefName("def", "Sheet1!$A$100:$A$102");
+
+		// api.asc_startWizard();
+		let formula = "SUM(D1"
+		let parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, ws);
+		let _parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(D1" formula');
+
+
+		formula = "SUM(D1,"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlOperandExpected, 'Error in parseResult for "SUM(D1," formula');
+
+
+		formula = "SUM(D1,D2"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,D2"');
+		assert.strictEqual(resArray[1], "D2", 'Second argument in "SUM(D1,D2"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(D1,D2" formula');
+
+
+		formula = "SUM(D1,D2)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,D2)"');
+		assert.strictEqual(resArray[1], "D2", 'Second argument in "SUM(D1,D2)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1,D2)" formula');
+
+		
+		formula = "SUM(D1:D2)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1:D2", 'First argument in "SUM(D1:D2)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1:D2)" formula');
+
+
+		formula = "SUM(D1:D2,)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1:D2", 'First argument in "SUM(D1:D2,)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1:D2,)" formula');
+
+
+		formula = "SUM("
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "", 'First argument in "SUM("');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlOperandExpected, 'Error in parseResult for "SUM(" formula');
+
+
+		formula = "SUM(1"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1" formula');
+
+		formula = "SUM(1,D1"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1,D1"');
+		assert.strictEqual(resArray[1], "D1", 'Second argument in "SUM(1,D1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1,D1" formula');
+
+
+		formula = 'SUM(1,D1,"str",TRUE,def'
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[1], "D1", 'Second argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[2], "\"str\"", 'Third argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[3], "TRUE", 'Fourth argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[4], "def", 'Fifth argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1,D1,"str",TRUE,def" formula');
+
+		// remove all created earlier defNames
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+	});
+
 	QUnit.test('autoCompleteFormula', function (assert) {
 		let resCell, range, fillRange, autoCompleteRes;
 

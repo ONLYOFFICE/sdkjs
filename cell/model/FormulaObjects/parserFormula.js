@@ -6095,11 +6095,17 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 	};
 
 	ParseResult.prototype.getArgumentsValue = function(sFormula) {
-		var res = null;
+		let res = null;
 		if (sFormula && this.argPosArr) {
-			for (var i = 0; i < this.argPosArr.length; i++) {
+			for (let i = 0; i < this.argPosArr.length; i++) {
 				if (!res) {
 					res = [];
+				}
+
+				if (i === this.argPosArr.length - 1 && this.error !== undefined) {
+					// We don't cut off the line at the last element, but only if the formula is parsed with an error (the formula is not closed or not entered completely)
+					res.push(sFormula.substring(this.argPosArr[i].start - 1, this.argPosArr[i].end));
+					continue
 				}
 				res.push(sFormula.substring(this.argPosArr[i].start - 1, this.argPosArr[i].end - 1));
 			}
