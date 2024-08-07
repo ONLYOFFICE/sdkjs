@@ -3143,7 +3143,7 @@
 			if (ws.workbook.dependencyFormulas.getDefNameByName(arg, ws.getId())) {
 				return true
 			}
-			return false;
+			return false
 		}
 
 
@@ -3156,9 +3156,9 @@
 				if (argN !== undefined) {
 					let parserHelp = AscCommon.parserHelp;
 					let isString = parserHelp.isString('"' + argN + '"', 0);
-					if (isString) {
+					let isEmptyString = argN === "";	// if we receive an empty string, then we don't need to add quotes
+					if (isString && !isEmptyString) {
 						let anyConditionMet = checkParser(argN, parserHelp, ws);
-
 						if (!anyConditionMet) {
 							argN = '"' + argN + '"';
 							args[argNum] = argN;
@@ -3167,7 +3167,7 @@
 				}
 			}
 			let sArguments = args.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-			this.cellEditor.changeCellText(sArguments);
+			this.cellEditor.changeCellText(sArguments);		// changes the text of the arguments in the cell, but not in the wizard
 
 			if (name) {
 				let res = new AscCommonExcel.CFunctionInfo(name);
