@@ -603,24 +603,36 @@
 			this.colorCheck[styleLbl].push(presNode);
 		}
 	};
+	SmartArtAlgorithm.prototype.getParentObjects = function () {
+		const smartart = this.smartart;
+		return smartart.getParentObjects();
+	};
 	SmartArtAlgorithm.prototype.applyColorsDef = function () {
 		const colorsDef = this.smartart.getColorsDef();
 		const styleLblsByName = colorsDef.styleLblByName;
+		const parentObjects = this.getParentObjects();
 		for (let styleLbl in this.colorCheck) {
 			const colorStyleLbl = styleLblsByName[styleLbl];
 			if (colorStyleLbl) {
 				const presNodes = this.colorCheck[styleLbl];
-				const fills = [];
-				const lines = [];
+				const shapesByPresName = {};
 
-				for (let i = 0; i < presNodes.length; i += 1) {
+				for (let i = 0; i < presNodes.length; i++) {
 					const presNode = presNodes[i];
 					const mainShape = presNode.shape;
 					if (mainShape) {
+						const presName = presNode.getPresName();
+						if (!shapesByPresName[presName]) {
+							shapesByPresName[presName] = [];
+						}
 						const colorShape = mainShape.connectorShape || mainShape;
-						colorShape.setFill(colorStyleLbl.getShapeFill(i, colorShape));
-						colorShape.setLn(colorStyleLbl.getShapeLn(i, colorShape, !!mainShape.connectorShape));
+						shapesByPresName[presName].push(colorShape);
 					}
+				}
+				for (let presName in shapesByPresName) {
+					const shapes = shapesByPresName[presName];
+					colorStyleLbl.setShapeFill(shapes, parentObjects);
+					colorStyleLbl.setShapeLn(shapes, parentObjects);
 				}
 			}
 		}
