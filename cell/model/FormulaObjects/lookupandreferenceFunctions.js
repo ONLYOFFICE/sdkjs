@@ -3953,7 +3953,7 @@ function (window, undefined) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		if (cElementType.cell === arg0.type) {
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
 			arg0 = arg0.getValue();
 		}
 		if (cElementType.error === arg0.type) {
@@ -3992,7 +3992,7 @@ function (window, undefined) {
 		// variants check:
 		/* arg1 is not array/area */
 		if ( !(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) ) {
-			if (arg1.type === cElementType.cell) {
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 				arg1 = arg1.getValue();
 			}
 			if (arg1.type === cElementType.error) {
@@ -4006,7 +4006,7 @@ function (window, undefined) {
 
 				arg2 = arg2.getFirstElement();
 			}
-			if (arg2.type === cElementType.cell) {
+			if (arg2.type === cElementType.cell || arg2.type === cElementType.cell3D) {
 				arg2 = arg2.getValue();
 			}
 			if (arg2.type === cElementType.error) {
