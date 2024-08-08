@@ -7697,9 +7697,7 @@ Because of this, the display is sometimes not correct.
 	  };
 	  ColorDefStyleLbl.prototype.setShapeFill = function (shapes, parentObjects) {
 			if (shapes.length && this.fillClrLst) {
-				if (shapes[0].shape.hideGeom ||
-					this.checkNoFill() ||
-					shapes[0].type === AscFormat.LayoutShapeType_outputShapeType_conn) {
+				if (this.checkNoFill()) {
 					for (let i = 0; i < shapes.length; i++) {
 						shapes[i].setFill(AscFormat.CreateNoFillUniFill());
 					}
@@ -7707,7 +7705,11 @@ Because of this, the display is sometimes not correct.
 					const fills = this.fillClrLst.getCurColor(shapes.length, parentObjects);
 					if (fills) {
 						for (let i = 0; i < fills.length; i++) {
-							shapes[i].setFill(fills[i]);
+							if (shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn) {
+								shapes[i].setFill(AscFormat.CreateNoFillUniFill());
+							} else {
+								shapes[i].setFill(fills[i]);
+							}
 						}
 					}
 				}
@@ -7725,26 +7727,28 @@ Because of this, the display is sometimes not correct.
 	  }
 	  ColorDefStyleLbl.prototype.setShapeLn = function (shapes, parentObjects) {
 		  if (shapes.length && this.linClrLst) {
-			  let fills;
 
-			  if (shapes[0].shape.hideGeom || this.checkNoLn() ||
-				  shapes[0].node.isParNode() && shapes[0].type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
-				  fills = [];
+			  if (this.checkNoLn()) {
 					for (let i = 0; i < shapes.length; i++) {
-						fills.push(AscFormat.CreateNoFillUniFill());
+						shapes[i].setLn(AscFormat.CreateNoFillLine());
 				  }
 			  } else {
-				  fills = this.linClrLst.getCurColor(shapes.length, parentObjects);
-			  }
-			  if (fills) {
-				  for (let i = 0; i < fills.length; i++) {
-					  const shadowShape = shapes[i];
-					  const ln = new AscFormat.CLn();
-					  ln.setW(this.getLineWidth(shadowShape));
-					  ln.setFill(fills[i]);
-					  ln.tailEnd = shadowShape.tailLnArrow;
-					  ln.headEnd = shadowShape.headLnArrow;
-					  shadowShape.setLn(ln);
+				  const fills = this.linClrLst.getCurColor(shapes.length, parentObjects);
+				  if (fills) {
+					  for (let i = 0; i < fills.length; i++) {
+						  const shadowShape = shapes[i];
+						  if (shadowShape.shape.hideGeom ||
+							  shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
+							  shadowShape.setLn(AscFormat.CreateNoFillLine());
+						  } else {
+							  const ln = new AscFormat.CLn();
+							  ln.setW(this.getLineWidth(shadowShape));
+							  ln.setFill(fills[i]);
+							  ln.tailEnd = shadowShape.tailLnArrow;
+							  ln.headEnd = shadowShape.headLnArrow;
+							  shadowShape.setLn(ln);
+						  }
+					  }
 				  }
 			  }
 		  }

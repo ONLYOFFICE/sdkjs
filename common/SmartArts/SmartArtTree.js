@@ -35,7 +35,7 @@
 (function (window) {
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
-	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = true;
+	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -499,7 +499,6 @@
 		this.presRoot = null;
 		this.nodesStack = [];
 		this.presNodesStack = [];
-		this.colorCheck = {};
 		this.connectorAlgorithmStack = [];
 		this.moveShapeSettings = [];
 		this.forEachMap = null;
@@ -594,46 +593,32 @@
 	SmartArtAlgorithm.prototype.addConnectorAlgorithm = function (algorithm) {
 		this.connectorAlgorithmStack.push(algorithm);
 	}
-	SmartArtAlgorithm.prototype.addToColorCheck = function (presNode) {
-		const styleLbl = presNode.getPresStyleLbl();
-		if (styleLbl) {
-			if (!this.colorCheck[styleLbl]) {
-				this.colorCheck[styleLbl] = [];
-			}
-			this.colorCheck[styleLbl].push(presNode);
-		}
-	};
 	SmartArtAlgorithm.prototype.getParentObjects = function () {
 		const smartart = this.smartart;
 		return smartart.getParentObjects();
 	};
-	SmartArtAlgorithm.prototype.applyColorsDef = function () {
+	SmartArtAlgorithm.prototype.applyColorsDef = function (shadowShapes) {
 		const colorsDef = this.smartart.getColorsDef();
 		const styleLblsByName = colorsDef.styleLblByName;
 		const parentObjects = this.getParentObjects();
-		for (let styleLbl in this.colorCheck) {
+		const colorShapesByStyleLbl = {};
+		for (let i = 0; i < shadowShapes.length; i += 1) {
+			const shadowShape = shadowShapes[i];
+			const node = shadowShape.node;
+			const styleLbl = node.getPresStyleLbl();
+			if (styleLbl) {
+				if (!colorShapesByStyleLbl[styleLbl]) {
+					colorShapesByStyleLbl[styleLbl] = [];
+				}
+				colorShapesByStyleLbl[styleLbl].push(shadowShape.connectorShape || shadowShape);
+			}
+		}
+		for (let styleLbl in colorShapesByStyleLbl) {
 			const colorStyleLbl = styleLblsByName[styleLbl];
 			if (colorStyleLbl) {
-				const presNodes = this.colorCheck[styleLbl];
-				const shapesByPresName = {};
-
-				for (let i = 0; i < presNodes.length; i++) {
-					const presNode = presNodes[i];
-					const mainShape = presNode.shape;
-					if (mainShape) {
-						const presName = presNode.getPresName();
-						if (!shapesByPresName[presName]) {
-							shapesByPresName[presName] = [];
-						}
-						const colorShape = mainShape.connectorShape || mainShape;
-						shapesByPresName[presName].push(colorShape);
-					}
-				}
-				for (let presName in shapesByPresName) {
-					const shapes = shapesByPresName[presName];
+				const shapes = colorShapesByStyleLbl[styleLbl];
 					colorStyleLbl.setShapeFill(shapes, parentObjects);
 					colorStyleLbl.setShapeLn(shapes, parentObjects);
-				}
 			}
 		}
 	};
@@ -809,9 +794,6 @@
 		this.applySettingsForMove();
 		this.generateConnectors();
 		this.applySettingsForMove();
-		this.forEachPresFromTop(function (presNode) {
-			oThis.addToColorCheck(presNode);
-		});
 	};
 	SmartArtAlgorithm.prototype.generateConnectors = function () {
 		while (this.connectorAlgorithmStack.length) {
@@ -1846,16 +1828,17 @@
 		return this.parentNode;
 	};
 	BaseAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
-		smartartAlgorithm.applyColorsDef();
 		const shapes = [];
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
-		for (let i = 0; i < shadowShapes.length; i++) {
-			const shadowShape = shadowShapes[i];
-			if (!(shadowShape.shape.hideGeom && (shadowShape.height <= 0 || shadowShape.width <= 0)) && !(shadowShape.node.algorithm instanceof SpaceAlgorithm && shadowShape.shape.hideGeom) && !shadowShape.node.isTxXfrm()) {
-				const editorShape = shadowShape.getEditorShape();
-				if (editorShape) {
-					shapes.push(editorShape);
-				}
+		const correctShadowShapes = shadowShapes.filter(function (shadowShape) {
+			return !(shadowShape.shape.hideGeom && shadowShape.shape.type !== AscFormat.LayoutShapeType_shapeType_rect) && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
+		});
+		smartartAlgorithm.applyColorsDef(correctShadowShapes);
+		for (let i = 0; i < correctShadowShapes.length; i++) {
+			const shadowShape = correctShadowShapes[i];
+			const editorShape = shadowShape.getEditorShape();
+			if (editorShape) {
+				shapes.push(editorShape);
 			}
 		}
 		return shapes;
