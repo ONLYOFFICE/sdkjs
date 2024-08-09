@@ -1797,6 +1797,7 @@ let ACTION_FLAGS = {
 };
 
 ACTION_FLAGS.UPDATEALL = ACTION_FLAGS.UPDATE_SELECTION | ACTION_FLAGS.UPDATE_INTERFACE | ACTION_FLAGS.UPDATE_RULERS | ACTION_FLAGS.UPDATE_UNDO_REDO | ACTION_FLAGS.UPDATE_TRACKS;
+ACTION_FLAGS.UPDATEALL_RECALCULATE = ACTION_FLAGS.UPDATEALL | ACTION_FLAGS.RECALCULATE;
 ACTION_FLAGS.UPDATEALL_RECALCULATE_NOSCROLL = ACTION_FLAGS.UPDATEALL | ACTION_FLAGS.RECALCULATE;
 
 AscWord.ACTION_FLAGS = ACTION_FLAGS;
@@ -23912,6 +23913,52 @@ CDocument.prototype.GetCurrentComplexField = function()
 	}
 
 	return null;
+};
+/**
+ * Меняем инструкицю у заданного поля
+ * @param complexField {AscWord.CComplexField}
+ * @param newInstruction {string}
+ * @returns {boolean}
+ */
+CDocument.prototype.EditComplexFieldInstruction = function(complexField, newInstruction)
+{
+	if (!complexField || !(complexField instanceof AscWord.CComplexField))
+		return false;
+	
+	if (complexField.GetInstructionLine() === newInstruction)
+		return false;
+	
+	let paras = complexField.GetRelatedParagraphs();
+	if (this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : changestype_2_ElementsArray_and_Type,
+		Elements  : paras,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+		return false;
+	
+	this.StartAction(AscDFH.historydescription_Document_EditComplexFieldInstruction, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
+	complexField.ChangeInstruction(newInstruction);
+	complexField.Update();
+	this.FinalizeAction();
+	return true;
+};
+/**
+ * Добавляем сложное поле с заданной инструкцией в документ
+ * @param instruction {string}
+ * @returns {?AscWord.CComplexField}
+ */
+CDocument.prototype.AddComplexField = function(instruction)
+{
+	if (!instruction)
+		return null;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		return null;
+	
+	this.StartAction(AscDFH.historydescription_Document_AddComplexField, null, AscWord.ACTION_FLAGS.UPDATEALL_RECALCULATE);
+	let complexField = this.AddFieldWithInstruction(instruction);
+	this.FinalizeAction();
+	return complexField;
 };
 /**
  * Очищаем закэшированные списки, которые чаще всего используются

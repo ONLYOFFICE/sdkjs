@@ -11816,13 +11816,30 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return;
 		
-		return logicDocument.AddFieldWithInstruction(instruction);
+		return logicDocument.AddComplexField(instruction);
+	};
+	asc_docs_api.prototype.asc_EditComplexFieldInstruction = function(instruction)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		let complexField = logicDocument.GetCurrentComplexField();
+		return logicDocument.EditComplexFieldInstruction(complexField, instruction);
+	};
+	asc_docs_api.prototype.asc_GetComplexFieldInstruction = function()
+	{
+		let complexField = this.asc_GetCurrentComplexField();
+		if (!complexField || !(complexField instanceof AscWord.CComplexField))
+			return "";
+		
+		return complexField.GetInstructionLine();
 	};
 	asc_docs_api.prototype.asc_GetCurrentComplexField = function()
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
 		if (!oLogicDocument)
-			return;
+			return null;
 
 		return oLogicDocument.GetCurrentComplexField();
 	};
@@ -14706,6 +14723,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_GetTableOfFiguresPr']                   = asc_docs_api.prototype.asc_GetTableOfFiguresPr;
 	
 	asc_docs_api.prototype['asc_AddComplexFieldWithInstruction']        = asc_docs_api.prototype.asc_AddComplexFieldWithInstruction;
+	asc_docs_api.prototype['asc_GetComplexFieldInstruction']            = asc_docs_api.prototype.asc_GetComplexFieldInstruction;
+	asc_docs_api.prototype['asc_EditComplexFieldInstruction']           = asc_docs_api.prototype.asc_EditComplexFieldInstruction;
 	asc_docs_api.prototype['asc_GetCurrentComplexField']                = asc_docs_api.prototype.asc_GetCurrentComplexField;
 	asc_docs_api.prototype['asc_UpdateComplexField']                    = asc_docs_api.prototype.asc_UpdateComplexField;
 	asc_docs_api.prototype['asc_RemoveComplexField']                    = asc_docs_api.prototype.asc_RemoveComplexField;
