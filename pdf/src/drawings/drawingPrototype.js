@@ -36,8 +36,7 @@
 	 * Class representing a pdf text shape.
 	 * @constructor
     */
-    function CPdfDrawingPrototype()
-    {
+    function CPdfDrawingPrototype() {
         this._page          = undefined;
         this._apIdx         = undefined; // индекс объекта в файле
 
@@ -96,14 +95,14 @@
         let parentPrototype = Object.getPrototypeOf(Object.getPrototypeOf(this));
         let oRecalcData = null;
         // Вызов родительского метода
-        if (parentPrototype && parentPrototype.recalculateContent) {
+        if (parentPrototype && parentPrototype.recalculateContent && parentPrototype.recalculateContent != CPdfDrawingPrototype.prototype.recalculateContent) {
             oRecalcData = parentPrototype.recalculateContent.call(this);
+            this.AddToRedraw();
         }
 
-        this.AddToRedraw();
-
         return oRecalcData;
-    };    CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
+    };
+    CPdfDrawingPrototype.prototype.GetSelectionQuads = function() {
         let oDoc        = this.GetDocument();
         let oViewer     = oDoc.Viewer;
         let oFile       = oViewer.file;

@@ -232,9 +232,9 @@ StartAddNewShape.prototype =
                                 aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pix / nScaleY);
                             }
 
+                            oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                             oInkAnnot.AddInkPath(aInkPath);
                             oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
-                            oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                             oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
                             
                             // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
@@ -828,7 +828,7 @@ RotateState.prototype =
                             var oTrack  = aTracks[i];
                             bounds      = oTrack.getBounds();
                             
-                            oTrack.trackEnd(oTrack.originalObject.IsAnnot());
+                            oTrack.trackEnd(false);
     
                             // для аннотаций свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
                             if (oTrack.originalObject.IsAnnot() && (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack)) {

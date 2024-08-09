@@ -48,6 +48,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_File_Idx]		= CChangesPDFAnnot
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Document]		= CChangesAnnotObjectProperty;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Stroke]			= CChangesPDFAnnotStroke;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_StrokeWidth]		= CChangesPDFAnnotStrokeWidth;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Opacity]			= CChangesPDFAnnotOpacity;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]			= CChangesPDFCommentData;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]			= CChangesPDFInkPoints;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]				= CChangesPDFInkFlipV;
@@ -393,13 +394,30 @@ CChangesPDFAnnotStrokeWidth.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseDoubleProperty}
+ */
+function CChangesPDFAnnotOpacity(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotOpacity.prototype = Object.create(AscDFH.CChangesBaseDoubleProperty.prototype);
+CChangesPDFAnnotOpacity.prototype.constructor = CChangesPDFAnnotOpacity;
+CChangesPDFAnnotOpacity.prototype.Type = AscDFH.historyitem_Pdf_Annot_Opacity;
+CChangesPDFAnnotOpacity.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetOpacity(Value);
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesPDFAnnotRD(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotRD.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFAnnotRD.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
 CChangesPDFAnnotRD.prototype.constructor = CChangesPDFAnnotRD;
 CChangesPDFAnnotRD.prototype.Type = AscDFH.historyitem_Pdf_Annot_RD;
 CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
