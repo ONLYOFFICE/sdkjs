@@ -11617,7 +11617,7 @@ function(window, undefined) {
 	};
 
 	CLabelsParameters.prototype.saveParams = function (oLabelsBox) {
-		if (!oLabelsBox || !oLabelsBox.axis || !oLabelsBox.axis.txPr || !oLabelsBox.axis.txPr.bodyPr) {
+		if (!oLabelsBox) {
 			return;
 		}
 		oLabelsBox.updatedRot = AscFormat.isRealNumber(this.rot) ? this.rot : null;
