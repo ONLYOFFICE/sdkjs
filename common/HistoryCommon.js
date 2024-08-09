@@ -1832,9 +1832,10 @@
 	window['AscDFH'].historyitem_type_Pdf_Annot_Line		= 2215 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_FreeText	= 2216 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Text		= 2217 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2218 << 16;
-	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2219 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2220 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Circle		= 2218 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2219 << 16;
+	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2220 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2221 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4373,6 +4374,7 @@
 	AscDFH.historyitem_Pdf_Annot_Document			= AscDFH.historyitem_type_Pdf_Annot | 14;
 	AscDFH.historyitem_Pdf_Annot_Stroke				= AscDFH.historyitem_type_Pdf_Annot | 15;
 	AscDFH.historyitem_Pdf_Annot_StrokeWidth		= AscDFH.historyitem_type_Pdf_Annot | 16;
+	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 17;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;

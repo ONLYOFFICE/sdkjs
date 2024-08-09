@@ -80,6 +80,21 @@
         this.recalculateShdw();
         this.SetNeedRecalc(false);
     };
+    CPdfShape.prototype.recalculateBounds = function() {
+        let boundsChecker = new AscFormat.CSlideBoundsChecker();
+        boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
+        this.draw(boundsChecker);
+        boundsChecker.CorrectBounds();
+
+        this.bounds.x = boundsChecker.Bounds.min_x;
+        this.bounds.y = boundsChecker.Bounds.min_y;
+        this.bounds.l = boundsChecker.Bounds.min_x;
+        this.bounds.t = boundsChecker.Bounds.min_y;
+        this.bounds.r = boundsChecker.Bounds.max_x;
+        this.bounds.b = boundsChecker.Bounds.max_y;
+        this.bounds.w = boundsChecker.Bounds.max_x - boundsChecker.Bounds.min_x;
+        this.bounds.h = boundsChecker.Bounds.max_y - boundsChecker.Bounds.min_y;
+    };
     CPdfShape.prototype.onMouseDown = function(x, y, e) {
         let oDoc                = this.GetDocument();
         let oViewer             = oDoc.Viewer;

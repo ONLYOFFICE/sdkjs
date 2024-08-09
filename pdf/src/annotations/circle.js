@@ -55,7 +55,7 @@
         this._width         = undefined;
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
-    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Circle);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationCircle.prototype.IsCircle = function() {
@@ -75,7 +75,9 @@
             w: this._pagePos.w,
             h: this._pagePos.h
         }
+
         oCircle._origRect = this._origRect.slice();
+        oCircle._rect = this._rect.slice();
 
         this.fillObject(oCircle);
 
@@ -93,7 +95,7 @@
         oCircle.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oCircle.SetOpacity(this.GetOpacity());
         oCircle.recalcInfo.recalculateGeometry = true;
-        this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice());
+        this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice(), true);
         oCircle.SetDash(this.GetDash());
         oCircle.recalculate();
 
@@ -145,53 +147,83 @@
             h: (aRect[3] - aRect[1])
         };
 
+        AscCommon.History.StartNoHistoryMode();
+        let oXfrm = this.getXfrm();
+        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
+        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
+
         this._origRect[0] = this._rect[0] / nScaleX;
         this._origRect[1] = this._rect[1] / nScaleY;
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
+        this.SetRectangleDiff([0, 0, 0, 0], true);
 
-        this.SetRectangleDiff([0, 0, 0, 0]);
+        this.recalcBounds();
+        this.recalcGeometry();
+        this.Recalculate(true);
+        this.recalcInfo.recalculateGeometry = false;
+        AscCommon.History.EndNoHistoryMode();
+
+        let oGrBounds = this.bounds;
+        let oShapeBounds = this.getRectBounds();
+
+        this._origRect[0] = Math.round(oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX;
+        this._origRect[1] = Math.round(oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY;
+        this._origRect[2] = Math.round(oGrBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX;
+        this._origRect[3] = Math.round(oGrBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY;
+
+        AscCommon.History.StartNoHistoryMode();
+        this.SetRectangleDiff([
+            Math.round(oShapeBounds.l - oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX,
+            Math.round(oShapeBounds.t - oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY,
+            Math.round(oGrBounds.r - oShapeBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX,
+            Math.round(oGrBounds.b - oShapeBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY
+        ], true);
+        AscCommon.History.EndNoHistoryMode();
+
         oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
 
-        this.recalcGeometry();
-        this.AddToRedraw();
         this.SetWasChanged(true);
     };
-    CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff) {
+    CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff, bOnResize) {
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
 
         this._rectDiff = aDiff;
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
+        if (true != bOnResize) {
+            let oViewer     = editor.getDocumentRenderer();
+            let nPage       = this.GetPage();
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
-        let aOrigRect = this.GetOrigRect();
+            let aOrigRect = this.GetOrigRect();
 
-        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
-        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
-        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
-        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
+            let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
+            let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
 
-        this.spPr.xfrm.setExtX(extX);
-        this.spPr.xfrm.setExtY(extY);
+            this.spPr.xfrm.setOffX(aDiff[0] * nScaleX + this.spPr.xfrm.offX);
+            this.spPr.xfrm.setOffY(aDiff[1] * nScaleY + this.spPr.xfrm.offY);
+
+            this.spPr.xfrm.setExtX(extX);
+            this.spPr.xfrm.setExtY(extY);
+        }
     };
-    CAnnotationCircle.prototype.Recalculate = function() {
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
+    CAnnotationCircle.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
+            return;
+        }
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-        
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
-        this.handleUpdatePosition();
+
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationCircle.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);

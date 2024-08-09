@@ -1284,6 +1284,11 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 return;
             }
 
+            if (this.originalObject.IsAnnot && this.originalObject.IsAnnot()) {
+                // changed size in SetRect method
+                return;
+            }
+
             if(this.originalObject.animMotionTrack) 
             {
                 this.originalObject.updateAnimation(this.resizedPosX, this.resizedPosY, 

@@ -123,6 +123,8 @@
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
+        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
@@ -148,66 +150,10 @@
             }
         }
     
-        return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY]
+        return [minX * nScaleX - nLineW, minY * nScaleY - nLineW, maxX * nScaleX + nLineW, maxY * nScaleY + nLineW]
     };
     CAnnotationInk.prototype.GetInkPoints = function() {
-
         return this._gestures;
-        
-        // считаем точки
-        let aRelPointsPos   = this.GetRelativePaths() || [];
-        let aGestures       = [];
-        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aBounds         = this.GetOrigRect();
-
-        let xMin;
-        let yMin;
-        let xMax;
-        let yMax;
-        if (this.IsNeedDrawFromStream() == false) {
-            xMin = aBounds[0] + nLineW * 0.75;
-            yMin = aBounds[1] + nLineW * 0.75;
-            xMax = aBounds[2] - nLineW * 0.75;
-            yMax = aBounds[3] - nLineW * 0.75;
-
-            let nWidthMM    = (xMax - xMin);
-            let nHeightMM   = (yMax - yMin);
-
-            for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
-                let aPath       = aRelPointsPos[nPath];
-                let aInkPath    = [];
-
-                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                    aInkPath.push(
-                        (nWidthMM) * aPath[nPoint].relX + xMin, 
-                        (nHeightMM) * aPath[nPoint].relY + yMin
-                    );
-                }
-                
-                aGestures.push(aInkPath);
-            }
-        }
-        else {
-            let oViewer = editor.getDocumentRenderer();
-            let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
-            let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
-
-            for (let nPath = 0; nPath < this._gestures.length; nPath++) {
-                let aPath       = this._gestures[nPath];
-                let aInkPath    = [];
-
-                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                    aInkPath.push(
-                        aPath[nPoint].x * g_dKoef_mm_to_pix / nScaleX,
-                        aPath[nPoint].y * g_dKoef_mm_to_pix / nScaleY
-                    );
-                }
-                
-                aGestures.push(aInkPath);
-            }
-        }
-
-        return aGestures;
     };
     CAnnotationInk.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -236,8 +182,11 @@
         AscCommon.History.StartNoHistoryMode();
         this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
         this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setOffX(this._pagePos.x * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setOffY(this._pagePos.y * g_dKoef_pix_to_mm);
         
         this.SetNeedRecalc(true);
+        this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
         AscCommon.History.EndNoHistoryMode();
         
         this.SetWasChanged(true);
@@ -260,108 +209,19 @@
             this.recalculate();
         }
     };
-    CAnnotationInk.prototype.AddPath = function(aNewPath) {
-        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aCurInkPoints   = this.GetInkPoints();
-
-        AscCommon.History.StartNoHistoryMode();
-
-        let aCurAllPoints = [];
-        for (let i = 0; i < this._gestures.length; i++)
-            aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
-    
-        let aNewAllPoints = aCurAllPoints.slice();
-        aNewAllPoints = aNewAllPoints.concat(aNewPath);
-        
-        let aCurMinRect = getMinRect(aCurAllPoints);
-        let curMinX = aCurMinRect[0];
-        let curMinY = aCurMinRect[1];
-        let curMaxX = aCurMinRect[2];
-        let curMaxY = aCurMinRect[3];
-
-        let aNewMinRect = getMinRect(aNewAllPoints);
-        let newMinX = aNewMinRect[0];
-        let newMinY = aNewMinRect[1];
-        let newMaxX = aNewMinRect[2];
-        let newMaxY = aNewMinRect[3]; 
-        
-        let aNewAnnotRect = [(newMinX * g_dKoef_mm_to_pix - nLineW), (newMinY * g_dKoef_mm_to_pix - nLineW), (newMaxX * g_dKoef_mm_to_pix + nLineW), (newMaxY * g_dKoef_mm_to_pix + nLineW)];
-
-        // пересчет текущих точек в новом ректе
-        let aCurRelPaths = this.GetRelativePaths();
-
-        for (let nPath = 0; nPath < aCurRelPaths.length; nPath++) {
-            let aPath = aCurRelPaths[nPath];
-            for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                let oPoint = aPath[nPoint];
-
-                // если новый рект начинается левее старого
-                if (newMinX < curMinX)
-                    oPoint.relX = ((curMaxX - curMinX) * oPoint.relX + (curMinX - newMinX)) / (newMaxX - newMinX);
-                // если ширина нового ректа больше старого
-                else if (curMaxX - curMinX < newMaxX - newMinX)
-                    oPoint.relX = ((curMaxX - curMinX) * oPoint.relX) / (newMaxX - newMinX);
-
-
-                // если новый рект начинается выше старого
-                if (newMinY < curMinY)
-                    oPoint.relY = ((curMaxY - curMinY) * oPoint.relY + (curMinY - newMinY)) / (newMaxY - newMinY);
-                // если высота нового ректа больше старого
-                else if (curMaxY - curMinY < newMaxY - newMinY)
-                    oPoint.relY = ((curMaxY - curMinY) * oPoint.relY) / (newMaxY - newMinY);
-
-                if (isNaN(oPoint.relX))
-                    oPoint.relX = 0;
-                if (isNaN(oPoint.relY))
-                    oPoint.relY = 0;
-
-                continue;
-            }
-        }
-
-        // считаем новые точки
-        let aRelPointsPos = [];
-        for (let nPoint = 0; nPoint < aNewPath.length; nPoint++) {
-            let oPoint = aNewPath[nPoint];
-
-            let nIndX = oPoint.x - newMinX;
-            let nIndY = oPoint.y - newMinY;
-
-            aRelPointsPos.push({
-                relX: nIndX / (newMaxX - newMinX),
-                relY: nIndY / (newMaxY - newMinY)
-            });
-
-            continue;
-        }
-
-        aCurRelPaths.push(aRelPointsPos);
-        this._gestures.push(aNewPath);
-        
-        this.SetRect(aNewAnnotRect);
-        
-        AscCommon.History.EndNoHistoryMode();
-        AscCommon.History.Add(new CChangesPDFInkPoints(this, aCurInkPoints, this.GetInkPoints()));
-    };
-    CAnnotationInk.prototype.Recalculate = function() {
-        if (false == this.IsNeedRecalc()) {
+    CAnnotationInk.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
         }
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-        
         if (this._relativePaths.length != this._gestures.length) {
             this.InitGeometry();
             return;
         }
-
+        
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
         this.SetNeedRecalc(false);
     };
     CAnnotationInk.prototype.InitGeometry = function() {
@@ -392,7 +252,7 @@
         });
 
         fillShapeByPoints(aShapePaths, aShapeRectInMM, this);
-
+        
         let aRelPointsPos   = [];
         let aAllPoints      = [];
 
@@ -426,6 +286,8 @@
         }
         
         this._relativePaths = aRelPointsPos;
+
+        this.Recalculate(true);
     };
     CAnnotationInk.prototype.RefillGeometry = function(oGeometry, aBounds) {
         if (!this._relativePaths) {
@@ -550,13 +412,15 @@
         let yMin = aShapeRect[1];
         let yMax = aShapeRect[3];
 
-        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
-        
-        oParentAnnot.spPr.setGeometry(geometry);
-        oParentAnnot.updatePosition(xMin, yMin);
+        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax], oParentAnnot.spPr.geometry);
+        if (!oParentAnnot.spPr.geometry) {
+            oParentAnnot.spPr.setGeometry(geometry);
+        }
 
-        oParentAnnot.x = xMin;
-        oParentAnnot.y = yMin;
+        let oXfrm = oParentAnnot.getXfrm();
+        oXfrm.offX = xMin;
+        oXfrm.offY = yMin;
+
         return oParentAnnot;
     }
 
@@ -576,10 +440,9 @@
         oParentAnnot.spPr.setParent(oParentAnnot);
         oParentAnnot.spPr.setXfrm(new AscFormat.CXfrm());
         oParentAnnot.spPr.xfrm.setParent(oParentAnnot.spPr);
-        oParentAnnot.setWordShape(true);
         
-        oParentAnnot.spPr.xfrm.setOffX(0);
-        oParentAnnot.spPr.xfrm.setOffY(0);
+        oParentAnnot.spPr.xfrm.setOffX(xMin);
+        oParentAnnot.spPr.xfrm.setOffY(yMin);
         oParentAnnot.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oParentAnnot.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
         oParentAnnot.setStyle(AscFormat.CreateDefaultShapeStyle());
