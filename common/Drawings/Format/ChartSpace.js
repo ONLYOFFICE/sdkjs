@@ -5813,10 +5813,7 @@ function(window, undefined) {
 							if (oAxisLabels.align) {
 								var labels_offset = oCatAx.labels.getLabelsOffset();
 								const _bodyPr = oAxisLabels.axis && oAxisLabels.axis.txPr && oAxisLabels.axis.txPr.bodyPr;
-								let rot = 0;
-								if (_bodyPr) {
-									rot = _bodyPr.updatedRot ? _bodyPr.updatedRot : _bodyPr.rot;
-								}
+								const rot = oAxisLabels.updatedRot;
 								let fAngle = getRotationAngle(rot);
 								for (i = 0; i < oAxisLabels.aLabels.length; ++i) {
 									if (oAxisLabels.aLabels[i]) {
@@ -11623,8 +11620,7 @@ function(window, undefined) {
 		if (!oLabelsBox || !oLabelsBox.axis || !oLabelsBox.axis.txPr || !oLabelsBox.axis.txPr.bodyPr) {
 			return;
 		}
-		const bodyPr = oLabelsBox.axis.txPr.bodyPr;
-		bodyPr.updatedRot = AscFormat.isRealNumber(this.rot) ? this.rot : bodyPr.rot;
+		oLabelsBox.updatedRot = AscFormat.isRealNumber(this.rot) ? this.rot : null;
 	};
 
 	CLabelsParameters.prototype.setMaxHeight = function (diagramHeight, chartHeight, titleHeight) {

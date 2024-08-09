@@ -957,6 +957,7 @@ CChartsDrawer.prototype =
 		//добавляем размеры подписей осей + размеры названия
 		//TODO генерировать extX для всех осей
 		var axId = chartSpace.chart.plotArea.axId;
+		const is3DChart = chartSpace.is3dChart();
 		let isLeftAxis = false;
 		let isRightAxis = false;
 		if(axId) {
@@ -987,7 +988,7 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
-				if (!axId[i].bDelete) {
+				if (!axId[i].bDelete && !is3DChart) {
 					if (axId[i].axPos === AscFormat.AX_POS_L) {
 						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
