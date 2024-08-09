@@ -176,10 +176,10 @@
 
         AscCommon.History.StartNoHistoryMode();
         this.SetRectangleDiff([
-            Math.round(oShapeBounds.l - oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX,
-            Math.round(oShapeBounds.t - oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY,
-            Math.round(oGrBounds.r - oShapeBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX,
-            Math.round(oGrBounds.b - oShapeBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY
+            Math.round(oShapeBounds.l - oGrBounds.l) * g_dKoef_mm_to_pix / nScaleX,
+            Math.round(oShapeBounds.t - oGrBounds.t) * g_dKoef_mm_to_pix / nScaleY,
+            Math.round(oGrBounds.r - oShapeBounds.r) * g_dKoef_mm_to_pix / nScaleX,
+            Math.round(oGrBounds.b - oShapeBounds.b) * g_dKoef_mm_to_pix / nScaleY
         ], true);
         AscCommon.History.EndNoHistoryMode();
 

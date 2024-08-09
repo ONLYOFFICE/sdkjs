@@ -341,6 +341,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 // annnots
             case AscDFH.historyitem_type_Pdf_Annot_Ink:
             case AscDFH.historyitem_type_Pdf_Annot_Circle:
+            case AscDFH.historyitem_type_Pdf_Annot_Square:
             {
                 ret = handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
