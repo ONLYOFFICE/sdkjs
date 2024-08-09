@@ -1831,9 +1831,17 @@
 		const shapes = [];
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
 		const correctShadowShapes = shadowShapes.filter(function (shadowShape) {
-			return !(shadowShape.shape.hideGeom && shadowShape.shape.type !== AscFormat.LayoutShapeType_shapeType_rect) && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
+			if (shadowShape.height === 0 && shadowShape.width === 0 && shadowShape.node.algorithm instanceof TextAlgorithm) {
+				return false;
+			}
+			if (shadowShape.shape.hideGeom && shadowShape.shape.type === AscFormat.LayoutShapeType_shapeType_rect && shadowShape.node.algorithm instanceof TextAlgorithm && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none) {
+				return true;
+			}
+			return !shadowShape.shape.hideGeom && !shadowShape.node.isTxXfrm() && shadowShape.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
 		});
-		smartartAlgorithm.applyColorsDef(correctShadowShapes);
+		smartartAlgorithm.applyColorsDef(correctShadowShapes.slice().sort(function (shape1, shape2) {
+			return shape2.shape.zOrderOff - shape1.shape.zOrderOff;
+		}));
 		for (let i = 0; i < correctShadowShapes.length; i++) {
 			const shadowShape = correctShadowShapes[i];
 			const editorShape = shadowShape.getEditorShape();
@@ -7047,7 +7055,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const textBounds = textShape.getBounds(true);
 			const textWidth = textBounds.r - textBounds.l;
 			const textHeight = textBounds.b - textBounds.t;
-			if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
+			if (this.algorithm instanceof TextAlgorithm && this.parent.algorithm instanceof ConnectorAlgorithm) {
+				this._isTxXfrm = true;
+			} else if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
 				const childs = this.parent.childs;
 				for (let i = 0; i < childs.length; i++) {
 					const child = childs[i];

@@ -7238,9 +7238,6 @@ function BinaryPPTYLoader()
         else if(_smartArt != null)
         {
             _smartArt.checkEmptySpPrAndXfrm(_xfrm);
-	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN) {
-		        _smartArt.generateDrawingPart();
-	        }
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
             {
                 _smartArt.setNvSpPr(_nvGraphicFramePr);

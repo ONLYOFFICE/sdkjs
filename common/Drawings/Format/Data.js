@@ -7702,14 +7702,18 @@ Because of this, the display is sometimes not correct.
 						shapes[i].setFill(AscFormat.CreateNoFillUniFill());
 					}
 				} else {
-					const fills = this.fillClrLst.getCurColor(shapes.length, parentObjects);
+					const fillShapes = [];
+					for (let i = 0; i < shapes.length; i++) {
+						if (shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn) {
+							shapes[i].setFill(AscFormat.CreateNoFillUniFill());
+						} else {
+							fillShapes.push(shapes[i]);
+						}
+					}
+					const fills = this.fillClrLst.getCurColor(fillShapes.length, parentObjects);
 					if (fills) {
 						for (let i = 0; i < fills.length; i++) {
-							if (shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn) {
-								shapes[i].setFill(AscFormat.CreateNoFillUniFill());
-							} else {
-								shapes[i].setFill(fills[i]);
-							}
+							fillShapes[i].setFill(fills[i]);
 						}
 					}
 				}
@@ -7733,21 +7737,26 @@ Because of this, the display is sometimes not correct.
 						shapes[i].setLn(AscFormat.CreateNoFillLine());
 				  }
 			  } else {
-				  const fills = this.linClrLst.getCurColor(shapes.length, parentObjects);
+					const fillShapes = [];
+					for (let i = 0; i < shapes.length; i += 1) {
+						const shadowShape = shapes[i];
+						if (shadowShape.shape.hideGeom ||
+							shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
+							shadowShape.setLn(AscFormat.CreateNoFillLine());
+						} else {
+							fillShapes.push(shadowShape);
+						}
+					}
+				  const fills = this.linClrLst.getCurColor(fillShapes.length, parentObjects);
 				  if (fills) {
 					  for (let i = 0; i < fills.length; i++) {
-						  const shadowShape = shapes[i];
-						  if (shadowShape.shape.hideGeom ||
-							  shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) {
-							  shadowShape.setLn(AscFormat.CreateNoFillLine());
-						  } else {
-							  const ln = new AscFormat.CLn();
-							  ln.setW(this.getLineWidth(shadowShape));
-							  ln.setFill(fills[i]);
-							  ln.tailEnd = shadowShape.tailLnArrow;
-							  ln.headEnd = shadowShape.headLnArrow;
-							  shadowShape.setLn(ln);
-						  }
+						  const shadowShape = fillShapes[i];
+						  const ln = new AscFormat.CLn();
+						  ln.setW(this.getLineWidth(shadowShape));
+						  ln.setFill(fills[i]);
+						  ln.tailEnd = shadowShape.tailLnArrow;
+						  ln.headEnd = shadowShape.headLnArrow;
+						  shadowShape.setLn(ln);
 					  }
 				  }
 			  }
@@ -7863,35 +7872,49 @@ Because of this, the display is sometimes not correct.
     InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
 
 	  ClrLst.prototype.getCurColor = function (length, parentObjects) {
-			if (this.meth === ClrLst_meth_repeat) {
+			if (!length) {
+				return;
+			}
+			if (this.list.length === 0) {
+				return this.getNoFillColor(length);
+			}
+
+			if (this.meth === ClrLst_meth_repeat || this.list.length === 1) {
 				return this.getRepeatColor(length);
 			}
 
 		  const startColor = this.list[0];
 		  const endColor = this.list[1];
-		  if (startColor && endColor && length) {
-			  startColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
-			  endColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
-			  const startHSL = {};
-			  AscFormat.CColorModifiers.prototype.RGB2HSL(startColor.RGBA.R, startColor.RGBA.G, startColor.RGBA.B, startHSL);
+		  startColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
+		  endColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
+		  const startHSL = {};
+		  AscFormat.CColorModifiers.prototype.RGB2HSL(startColor.RGBA.R, startColor.RGBA.G, startColor.RGBA.B, startHSL);
 
-			  const endHSL = {};
-			  AscFormat.CColorModifiers.prototype.RGB2HSL(endColor.RGBA.R, endColor.RGBA.G, endColor.RGBA.B, endHSL);
+		  const endHSL = {};
+		  AscFormat.CColorModifiers.prototype.RGB2HSL(endColor.RGBA.R, endColor.RGBA.G, endColor.RGBA.B, endHSL);
 
-			  const diffHSL = {};
-			  if (this.hueDir === ClrLst_hueDir_ccw) {
-				  diffHSL.H = startHSL.H - endHSL.H;
-			  } else {
-				  diffHSL.H = endHSL.H - startHSL.H;
-			  }
-			  diffHSL.S = endHSL.S - startHSL.S;
-			  diffHSL.L = endHSL.L - startHSL.L;
-			  if (this.meth === ClrLst_meth_cycle) {
-				  return this.getCycleColor(diffHSL, length);
-			  } else {
-					return this.getSpanColor(diffHSL, length);
-			  }
+		  const diffHSL = {};
+		  if (this.hueDir === ClrLst_hueDir_ccw) {
+			  diffHSL.H = startHSL.H - endHSL.H;
+		  } else {
+			  diffHSL.H = endHSL.H - startHSL.H;
 		  }
+		  diffHSL.S = endHSL.S - startHSL.S;
+		  diffHSL.L = endHSL.L - startHSL.L;
+			diffHSL.A = endColor.RGBA.A - startColor.RGBA.A;
+		  if (this.meth === ClrLst_meth_cycle) {
+			  return this.getCycleColor(diffHSL, length);
+		  } else {
+				return this.getSpanColor(diffHSL, length);
+		  }
+	  };
+
+	  ClrLst.prototype.getNoFillColor = function (length) {
+		  const colors = [];
+		  for (let i = 0; i < length; i++) {
+			  colors.push(AscFormat.CreateNoFillUniFill());
+		  }
+		  return colors;
 	  };
 
 	  ClrLst.prototype.getRepeatColor = function (length) {
@@ -7910,10 +7933,12 @@ Because of this, the display is sometimes not correct.
 		  const hueOff = diffHSL.H * scale;
 		  const satOff = diffHSL.S * scale;
 		  const lumOff = diffHSL.L * scale;
+		  const alphaOff = diffHSL.A * scale;
 		  const copyColor = startColor.createDuplicate();
 		  copyColor.addColorMod(new AscFormat.CColorMod("hueOff", ((hueOff / 255) * (360 * 60000)) >> 0));
 		  copyColor.addColorMod(new AscFormat.CColorMod("satOff", (satOff / 255 * 100000) >> 0));
 		  copyColor.addColorMod(new AscFormat.CColorMod("lumOff", (lumOff / 255 * 100000) >> 0));
+		  copyColor.addColorMod(new AscFormat.CColorMod("alphaOff", (alphaOff / 255 * 100000) >> 0));
 			return AscFormat.CreateUniFillByUniColor(copyColor);
 	  };
 		ClrLst.prototype.getCycleColor = function (diffHSL, length) {
@@ -10194,6 +10219,11 @@ Because of this, the display is sometimes not correct.
         if (oldParaMarks) {
           editor.ShowParaMarks = false;
         }
+	      if (this.bFirstRecalculate) {
+		      if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN) {
+			      this.generateDrawingPart();
+		      }
+	      }
         CGroupShape.prototype.recalculate.call(this);
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
