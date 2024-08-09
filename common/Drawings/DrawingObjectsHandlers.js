@@ -342,6 +342,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_Pdf_Annot_Ink:
             case AscDFH.historyitem_type_Pdf_Annot_Circle:
             case AscDFH.historyitem_type_Pdf_Annot_Square:
+            case AscDFH.historyitem_type_Pdf_Annot_Line:
             {
                 ret = handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;

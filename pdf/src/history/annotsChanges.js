@@ -649,15 +649,15 @@ CChangesPDFAnnotPage.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesPDFLinePoints(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFLinePoints.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFLinePoints.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
 CChangesPDFLinePoints.prototype.constructor = CChangesPDFLinePoints;
-CChangesPDFLinePoints.prototype.Type = AscDFH.historyitem_Pdf_Line_Geometry;
+CChangesPDFLinePoints.prototype.Type = AscDFH.historyitem_Pdf_Line_Points;
 CChangesPDFLinePoints.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
