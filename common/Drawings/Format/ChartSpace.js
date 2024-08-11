@@ -11754,12 +11754,12 @@ function(window, undefined) {
 
 		// сheck if diagonal labels can fit into axis width
 		// also other suggestions to calculate diagonal width can be found in this function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
-		if (this.isUserDefinedLabelFormat || this.sDataType === 'string') {
+		if (this.isUserDefinedLabelFormat && this.sDataType[0] !== 'd' || this.sDataType === 'string') {
 			// multiplier is the square root of 2; 
 			// diagonal rectangle with h is equal to root(2) * h;
 			const fUpdatedLabelHight = 1.41421356237 * this.fLabelHeight;
 			const diagonalLabelWidth = fUpdatedLabelHight * updatedLabelsCount;
-
+			
 			// diagonal angle is 45 degree
 			if (diagonalLabelWidth && diagonalLabelWidth <= fAxisLength) {
 				this.fLabelWidth = fUpdatedLabelHight;
