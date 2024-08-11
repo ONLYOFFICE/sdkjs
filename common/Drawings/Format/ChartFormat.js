@@ -18968,6 +18968,13 @@
     };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartSpace_ChartColors] = CChartColors;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryLnRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryFillRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryEffectRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryFontRef] = AscFormat.FontRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryBodyPr] = AscFormat.CBodyPr;
+
+
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

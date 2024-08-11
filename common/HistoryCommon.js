@@ -1210,6 +1210,7 @@
 				break;
 			case AscDFH.historydescription_Document_ConvertTableToText:
 				sString = "Document_ConvertTableToText";
+				break;
 			case AscDFH.historydescription_Document_ResolveAllComments:
 				sString = "Document_ResolveAllComments";
 				break;
@@ -1224,6 +1225,7 @@
 				break;
 			case AscDFH.historydescription_Document_ConvertMathView:
 				sString = "Document_ConvertMathView";
+				break;
 			case AscDFH.historydescription_Document_ConvertMathDisplayMode:
 				sString = "Document_ConvertMathDisplayMode";
 				break;
@@ -1291,14 +1293,35 @@
 				sString = "Document_ComplexField_MergeFormat";
 				break;
 			case AscDFH.historydescription_Presentation_ResetSlideBackground:
-				sString = "historydescription_Presentation_ResetSlideBackground";
+				sString = "Presentation_ResetSlideBackground";
 				break;
 			case AscDFH.historydescription_Presentation_ApplyBackgroundToAll:
-				sString = "historydescription_Presentation_ApplyBackgroundToAll";
+				sString = "Presentation_ApplyBackgroundToAll";
 				break;
 			case AscDFH.historydescription_Presentation_ShowMasterShapes:
-				sString = "historydescription_Presentation_ShowMasterShapes";
+				sString = "Presentation_ShowMasterShapes";
 				break;
+			case AscDFH.historydescription_BuilderScript:
+				sString = "BuilderScript";
+				break;
+			case AscDFH.historydescription_Document_AddRemoveBeforeAfterParagraph:
+				sString = "Document_AddRemoveBeforeAfterParagraph";
+				break;
+			case AscDFH.historydescription_Document_SectionPageNumFormat:
+				sString = "Document_SectionPageNumFormat";
+				break;
+			case AscDFH.historydescription_Document_SetPageColor:
+				sString = "Document_SetPageColor";
+				break;
+			case AscDFH.historydescription_Document_InsertTextFromFile:
+				sString = "Document_InsertTextFromFile";
+				break;
+			case AscDFH.historydescription_Document_AddComplexField:
+				sString = "Document_AddComplexField";
+				break
+			case AscDFH.historydescription_Document_EditComplexFieldInstruction:
+				sString = "Document_EditComplexFieldInstruction";
+				break
 		}
 		return sString;
 	}
@@ -4819,6 +4842,8 @@
 	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
 	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
 	window['AscDFH'].historydescription_Document_InsertTextFromFile                 = 0x01b3;
+	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
+	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
