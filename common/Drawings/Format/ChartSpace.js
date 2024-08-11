@@ -1260,7 +1260,7 @@ function(window, undefined) {
 
 	CLabelsBox.prototype.getLabelsDataType = function () {
 		if (!this.chartSpace || !this.chartSpace.chart || !this.chartSpace.chart.plotArea || !this.axis) {
-			return false;
+			return 'number';
 		}
 		let oSeries = this.chartSpace.chart.plotArea.getSeriesWithSmallestIndexForAxis(this.axis);
 		// check if axis has user typed labels
@@ -11759,7 +11759,7 @@ function(window, undefined) {
 			// diagonal rectangle with h is equal to root(2) * h;
 			const fUpdatedLabelHight = 1.41421356237 * this.fLabelHeight;
 			const diagonalLabelWidth = fUpdatedLabelHight * updatedLabelsCount;
-			
+
 			// diagonal angle is 45 degree
 			if (diagonalLabelWidth && diagonalLabelWidth <= fAxisLength) {
 				this.fLabelWidth = fUpdatedLabelHight;
