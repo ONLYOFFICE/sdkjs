@@ -705,6 +705,7 @@ $(function () {
 
 		Init(2);
 		ShowDelText();
+		assert.ok(true, 'Show del text');
 
 		CheckRuns(assert, p, [
 			["Hel",		reviewtype_Common],
@@ -712,6 +713,27 @@ $(function () {
 			[" how",	reviewtype_Remove],
 			[" a",		reviewtype_Common],
 			["re you",	reviewtype_Common],
+		]);
+	});
+
+	QUnit.test("Check is not show del text in context of one revision", function (assert)
+	{
+		logicDocument.AddToContent(0, AscTest.CreateParagraph());
+
+		AscTest.EnterText("Hello");
+		DelLast(5, false);
+		AscTest.EnterText("World");
+		let p = logicDocument.Content[0];
+
+		assert.strictEqual(p.GetText(), "World ", "Text is \"World\"");
+
+		Init(0);
+		ShowDelText();
+		assert.ok(true, 'Show del text');
+		assert.strictEqual(p.GetText(), "World ", "Text is \"World\", 'Hello' not show");
+
+		CheckRuns(assert, p, [
+			["World",		reviewtype_Common],
 		]);
 	});
 });

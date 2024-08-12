@@ -158,17 +158,20 @@
 				}
 			}
 
+			if (oCurChange === undefined)
+				break;
+
 			if (oCurChange instanceof AscCommon.CChangesTableIdDescription || !oCurChange.Copy)
 				continue;
 
 			let oNewCurChange	= oCurChange.Copy();
 
-			oRemoveText.ProceedChange(oNewCurChange)
+			oRemoveText.ProceedChange(oNewCurChange);
 
 			if (oNewCurChange instanceof CChangesRunAddItem || oNewCurChange instanceof CChangesParagraphAddItem || oNewCurChange instanceof CChangesDocumentAddItem)
-				oAddText.Check(oNewCurChange, oRemoveText);
+				oAddText.Add(oCurChange.Class, oCurChange, oCurChange.UseArray ? oCurChange.PosArray[0] : oCurChange.Pos, i);
 			else if (oNewCurChange instanceof CChangesRunRemoveItem || oNewCurChange instanceof CChangesParagraphRemoveItem || oNewCurChange instanceof CChangesDocumentRemoveItem)
-				oRemoveText.AddToClass(oCurChange.Class, oCurChange, oCurChange.UseArray ? oCurChange.PosArray[0] : oCurChange.Pos, i);
+				oRemoveText.Check(oAddText, oCurChange, i);
 		}
 		oRemoveText.DelDuplicate();
 	}
@@ -221,7 +224,7 @@
 				? arrDelChanges[i].PosArray[0]
 				: arrDelChanges[i].Pos;
 
-			oRemoveText.AddToClass(
+			oRemoveText.Add(
 				arrDelChanges[i].Class,
 				arrDelChanges[i],
 				nPos,
@@ -444,17 +447,34 @@
 
 	function AddTextPositions()
 	{
-		this.data = {};
-		this.wait = {};
+		this.data		= {};
 
-		this.Check = function (oCurChange, oRemove)
+		this.Add = function (oClass, oItem, Pos, nIndex)
+		{
+			if (!this.data[oClass.Id])
+				this.data[oClass.Id] = [];
+
+			this.data[oClass.Id].push({item: oItem, pos: Pos, nIndex: nIndex});
+		}
+	}
+	function RemoveTextPositions()
+	{
+		this.data		= {};
+		this.oClasses	= {};
+		this.arrClasses	= [];
+
+		this.Check = function (oAddText, oCurChange, i)
 		{
 			if (oCurChange.Class)
 			{
 				let strCurrentId	= oCurChange.Class.Id;
-				let arrRemData		= oRemove.data[strCurrentId];
+				let arrRemData		= oAddText.data[strCurrentId];
+
 				if (!arrRemData)
-					return true;
+				{
+					this.Add(oCurChange.Class, oCurChange, oCurChange.UseArray ? oCurChange.PosArray[0] : oCurChange.Pos, i);
+					return;
+				}
 
 				let addItem			= oCurChange.Items[0];
 
@@ -464,26 +484,17 @@
 
 					if (oCurChange.UseArray && oCurChange.PosArray[0] === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Items[0].Value)
 					{
-						arrRemData.splice(i, 1);
 						return false;
 					}
 					else if (!oCurChange.UseArray && oCurChange.Pos === oCurrentRemItem.pos && addItem.Value === oCurrentRemItem.item.Items[0].Value)
 					{
-						arrRemData.splice(i, 1);
 						return false;
 					}
 				}
 			}
 
-			return true;
+			this.Add(oCurChange.Class, oCurChange, oCurChange.UseArray ? oCurChange.PosArray[0] : oCurChange.Pos, i);
 		}
-	}
-	function RemoveTextPositions()
-	{
-		this.data		= {};
-		this.oClasses	= {};
-		this.arrClasses	= [];
-
 		this.DelDuplicate = function ()
 		{
 			let arrKeys = Object.keys(this.data);
@@ -506,7 +517,7 @@
 				}
 			}
 		}
-		this.AddToClass = function (oClass, oItem, Pos, nIndex)
+		this.Add = function (oClass, oItem, Pos, nIndex)
 		{
 			if (!this.data[oClass.Id])
 				this.data[oClass.Id] = [];
