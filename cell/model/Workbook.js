@@ -17991,8 +17991,15 @@
 		this._applyCellStyle(c_oRangeType.All === nRangeType, val, AscCH.historyitem_Cell_Fontcolor);
 	};
 	Range.prototype._applyCellStyleIter = function (colXf, colXfIter, val, historyType) {
-		let oRes = this.worksheet.workbook.oStyleManager.setByHistoryType(historyType, colXfIter, val);
-		colXf.setArea(colXfIter.getCurFrom(), colXfIter.getCurTo(), colXfIter.getCurXf().getIndexNumber());
+		//todo refactor StyleManager
+		let tmp = {
+			xfs : colXfIter.getCurXf(),
+			setStyleInternal: function(xfs){
+				this.xfs = g_StyleCache.addXf(xfs);
+			}
+		};
+		let oRes = this.worksheet.workbook.oStyleManager.setByHistoryType(historyType, tmp, val);
+		colXf.setArea(colXfIter.getCurFrom(), colXfIter.getCurTo(), tmp.xfs ? tmp.xfs.getIndexNumber() : null);
 		if (AscCommon.History.Is_On() && oRes.oldVal !== oRes.newVal) {
 			//todo to many objects
 			let bbox = new Asc.Range(this.bbox.c1, colXfIter.getCurFrom(), this.bbox.c2, colXfIter.getCurTo());
@@ -21527,9 +21534,9 @@
 					elemAddXf.type = "addXfMod";
 				}
 				if (elemRemoveData.index > elemRemoveXf.index) {
-					elemRemoveData.type = "removeDataMod";
-				} else {
 					elemRemoveXf.type = "removeXfMod";
+				} else {
+					elemRemoveData.type = "removeDataMod";
 				}
 			}
 		}

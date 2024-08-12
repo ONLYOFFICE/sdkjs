@@ -19047,8 +19047,8 @@ function RangeDataManagerElem(bbox, data)
 	CAttrArray.prototype.size = function() {
 		return this.data ? this.data.length : 0;
 	}
-	CAttrArray.prototype.set = function(index, entry, opt_append) {
-		this.setArea(index, index, entry, opt_append);
+	CAttrArray.prototype.set = function(index, val, opt_append) {
+		this.setArea(index, index, val, opt_append);
 	}
 	CAttrArray.prototype.setArea = function(from, to, val, opt_append) {
 		if (from < 0 || to > AscCommon.gc_nMaxRow0) {
@@ -19277,8 +19277,7 @@ function RangeDataManagerElem(bbox, data)
 	CAttrArray.prototype.copyRange = function(attrArray, startFrom, startTo, count) {
 		let iter = new CAttrArrayIterator(attrArray, startFrom, startFrom + count - 1);
 		while (iter.next()) {
-			let xf = iter.getCurXf();
-			this.setArea(iter.getCurFrom(), iter.getCurTo(), xf ? xf.getIndexNumber() : null);
+			this.setArea(iter.getCurFrom(), iter.getCurTo(), iter.getCurVal());
 		}
 	};
 	CAttrArray.prototype.copyRangeByChunk = function(from, fromCount, to, toCount) {
@@ -19305,7 +19304,7 @@ function RangeDataManagerElem(bbox, data)
 		this.fromIndex = 0;
 		this.nextFrom = from;
 		this.to = to;
-		this.toIndex = this.attrArray.size() - 1;
+		this.toIndex = 0;
 		this.nextTo = to;
 
 		//output
@@ -19313,18 +19312,17 @@ function RangeDataManagerElem(bbox, data)
 		this.curFrom = null;
 		this.curTo = null;
 		this.curVal = null;
-		this.xfs = null;//todo refactor StyleManager remove 'xfs' name required
 
 		this._init(opt_trimEmpty, opt_isReserve);
 	}
-	CAttrArrayIterator.prototype._init = function (trimEmpty, isReserve) {
+	CAttrArrayIterator.prototype._init = function (opt_trimEmpty, opt_isReserve) {
 		if (this.from > 0 && this.attrArray.size() > 0) {
 			this.fromIndex = this.attrArray.searchIndex(this.from);
 		}
-		if (this.to > 0 && this.fromIndex < this.toIndex) {
+		if (this.to > 0) {
 			this.toIndex = this.attrArray.searchIndex(this.to, this.fromIndex);
 		}
-		if (trimEmpty) {
+		if (opt_trimEmpty) {
 			while (this.fromIndex < this.attrArray.size()) {
 				let elem = this.attrArray.getEntry(this.fromIndex);
 				if (elem && !elem.isDefault()) {
@@ -19346,7 +19344,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-		if (isReserve) {
+		if (opt_isReserve) {
 			this.curIndex = this.toIndex;
 		} else {
 			this.curIndex = this.fromIndex;
@@ -19357,7 +19355,6 @@ function RangeDataManagerElem(bbox, data)
 		if (this.curIndex <= this.toIndex && this.nextFrom <= this.to) {
 			let entry = this.attrArray.getEntry(this.curIndex);
 			this.curVal = entry.val;
-			this.xfs = g_StyleCache.getXf(this.curVal);
 			this.curFrom = this.nextFrom;
 			this.curTo = Math.min(entry.endRow, this.to);
 			this.nextFrom = this.curTo + 1;
@@ -19367,7 +19364,6 @@ function RangeDataManagerElem(bbox, data)
 		this.curFrom = null;
 		this.curTo = null;
 		this.curVal = null;
-		this.xfs = null;
 		return false;
 	}
 	CAttrArrayIterator.prototype.getCurFrom = function () {
@@ -19380,18 +19376,17 @@ function RangeDataManagerElem(bbox, data)
 		return this.curVal;
 	}
 	CAttrArrayIterator.prototype.getCurXf = function () {
-		return this.xfs;
+		return g_StyleCache.getXf(this.curVal);
 	}
 	CAttrArrayIterator.prototype.nextNoEmpty = function () {
-		while (this.next() && !this.xfs) {
+		while (this.next() && null === this.curVal) {
 		}
-		return !!this.xfs;
+		return null !== this.curVal;
 	}
 	CAttrArrayIterator.prototype.prev = function () {
 		if (this.fromIndex <= this.curIndex && this.from <= this.nextTo) {
 			let entry = this.attrArray.getEntry(this.curIndex);
 			this.curVal = entry.val;
-			this.xfs = g_StyleCache.getXf(entry.val);
 			if (this.curIndex > 0) {
 				this.curFrom =  Math.max(this.from, this.attrArray.getEntry(this.curIndex - 1).endRow + 1);
 			} else {
@@ -19405,34 +19400,35 @@ function RangeDataManagerElem(bbox, data)
 		this.curFrom = null;
 		this.curTo = null;
 		this.curVal = null;
-		this.xfs = null;
 		return false;
 	}
 	CAttrArrayIterator.prototype.prevNoEmpty = function () {
-		while (this.prev() && !this.xfs) {
+		while (this.prev() && null === this.curVal) {
 		}
-		return !!this.xfs;
+		return null !== this.curVal;
 	}
 	CAttrArrayIterator.prototype.getMinIndex = function () {
 		// return this.from;
 		let res = -1;
-		if (this.fromIndex > 0) {
-			res = this.attrArray.getEntry(this.fromIndex - 1).endRow + 1;
+		if (this.fromIndex <= this.toIndex) {
+			res = 0;
+			if (this.fromIndex > 0) {
+				res = this.attrArray.getEntry(this.fromIndex - 1).endRow + 1;
+			}
 		}
 		return res;
 	}
 	CAttrArrayIterator.prototype.getMaxIndex = function () {
 		// return this.to;
 		let res = -1;
-		if (this.toIndex < this.attrArray.size()) {
-			res = this.attrArray.getEntry(this.toIndex).endRow;
+		if (this.fromIndex <= this.toIndex) {
+			res = 0;
+			if (this.toIndex < this.attrArray.size()) {
+				res = this.attrArray.getEntry(this.toIndex).endRow;
+			}
 		}
 		return res;
 	}
-	CAttrArrayIterator.prototype.setStyleInternal = function(xfs) {
-		//todo refactor StyleManager
-		this.xfs = g_StyleCache.addXf(xfs);
-	};
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
