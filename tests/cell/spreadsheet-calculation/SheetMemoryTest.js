@@ -429,9 +429,11 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
 	});
 
-	testForeachNoEmpty("Test: SweepLineRowIterator step" + 1, 1, 1);
-	testForeachNoEmpty("Test: SweepLineRowIterator step" + 2, 1, 1);
+	testForeachNoEmpty("Test: SweepLineRowIterator data only step" + 1, 1, 1);
+	testForeachNoEmpty("Test: SweepLineRowIterator data only step" + 2, 1, 1);
 
+	testForeachNoEmptyWithAttr("Test: SweepLineRowIterator data and styles step" + 1, 1, 1);
+	testForeachNoEmptyWithAttr("Test: SweepLineRowIterator data and styles step" + 2, 1, 1);
 
 	function testForeachNoEmpty(name, offset, stepRow) {
 		QUnit.test(name, function (assert) {
@@ -440,7 +442,7 @@ $(function () {
 			// let rowsTest = offset + 2 + stepRow;
 			// let colsTest = 2;
 			// let dataTest = [0,2,3,4,0,0,0,0];
-			// testCellsByCol(dataTest, rowsTest, colsTest, offset, stepRow, assert);
+			// testCellsByCol(dataTest, [], rowsTest, colsTest, offset, stepRow, assert);
 
 			let rows = offset + 3 + stepRow;//stepRow rows are needed to properly clean
 			let cols = 3;
@@ -454,7 +456,7 @@ $(function () {
 					let bit = ((i >> j) % 2 !== 0);
 					data[j] = bit ? base[j] : 0;
 				}
-				testCellsByCol(data, rows, cols, offset, stepRow, assert);
+				testCellsByCol(data, [], rows, cols, offset, stepRow, assert);
 			}
 
 			// console.profileEnd('testForeachNoEmpty');
@@ -462,22 +464,65 @@ $(function () {
 			assert.ok(true);
 		});
 	}
+	function testForeachNoEmptyWithAttr(name, offset, stepRow) {
+		QUnit.test(name, function (assert) {
+			AscCommonExcel.g_StyleCache.xfs.list[0] = 1;
 
-	function testCellsByCol(data, rows, cols, offset, stepRow, assert) {
+			// console.profile('testForeachNoEmpty');
+
+			// let rowsTest = offset + 2 + stepRow;
+			// let colsTest = 2;
+			// let dataTest = [0,0,3,0,0,0,0,0];
+			// let dataAttr = [null,null,null,null,1,null,null,null];
+			// testCellsByCol(dataTest, dataAttr, rowsTest, colsTest, offset, stepRow, assert);
+
+			let rows = offset + 2 + stepRow;//stepRow rows are needed to properly clean
+			let cols = 2;
+			let baseLen = (rows - stepRow) * cols;//last row for correct cleaning
+			let base = [...Array(baseLen + 1).keys()].slice(1);
+			let data = new Array(rows * cols);
+			data.fill(0);
+			let dataAttr = new Array(rows * cols);
+			dataAttr.fill(null);
+			let iterations = Math.pow(2, baseLen);
+			for (let i = 0; i < iterations; ++i) {
+				for (let j = 0; j < baseLen; ++j) {
+					let bit = ((i >> j) % 2 !== 0);
+					data[j] = bit ? base[j] : 0;
+				}
+				for (let k = 0; k < iterations; ++k) {
+					for (let l = 0; l < baseLen; ++l) {
+						let bit = ((k >> l) % 2 !== 0);
+						dataAttr[l] = bit ? 1 : null;
+					}
+					testCellsByCol(data, dataAttr, rows, cols, offset, stepRow, assert);
+				}
+			}
+			// console.profileEnd('testForeachNoEmpty');
+
+			assert.ok(true);
+		});
+	}
+
+	function testCellsByCol(data, dataAttr, rows, cols, offset, stepRow, assert) {
 		let res = '';
-		let testData = getTestDataFromArray(data, rows, cols, offset, stepRow);
+		let testData = getTestDataFromArray(data, dataAttr, rows, cols, offset, stepRow);
 		let r1 = offset;
 
-		let sweepLine = new AscCommonExcel.SweepLineRowIterator(testData.cellsByCol, [], r1, 0, rows, cols);
+		let sweepLine = new AscCommonExcel.SweepLineRowIterator(testData.cellsByCol, testData.xfsByCol, r1, 0, rows, cols);
 		for (let i = r1; i < rows; i += stepRow) {
 			sweepLine.setRow(i);
 			while (sweepLine.nextCol()) {
-				res += `${i}-${sweepLine.col}-${sweepLine.sheetMemory.getUint8(i, 0)};`;
+				let dataStr = sweepLine.sheetMemory ? sweepLine.sheetMemory.getUint8(i, 0) : null;
+				let xfStr = sweepLine.xf ? sweepLine.xf : null;
+				if (dataStr || xfStr) {
+					res += `${i}-${sweepLine.col}-${dataStr}-${xfStr};`;
+				}
 			}
 		}
 		//many asserts processes very slow
 		if (res !== testData.expected) {
-			assert.strictEqual(res, testData.expected, JSON.stringify(data));
+			assert.strictEqual(res, testData.expected, JSON.stringify(data) + "-" + JSON.stringify(dataAttr));
 		}
 		if (sweepLine.rowDataLen !== sweepLine.rowDataIndex) {
 			assert.strictEqual(sweepLine.rowDataLen, sweepLine.rowDataIndex, "rowData");
@@ -493,13 +538,12 @@ $(function () {
 		}
 	}
 
-	function getTestDataFromArray(data, rows, cols, offset, stepRow) {
-		let expected = "";
+	function getTestDataFromArray(data, dataAttr, rows, cols, offset, stepRow) {
+		//SheetMemory
 		let cellsByCol = Array.from(Array(cols), () => {
 			return new SheetMemory(2, rows);
 		});
-		let dataLen = data.length;
-		for (let i = 0; i < dataLen; ++i) {
+		for (let i = 0; i < data.length; ++i) {
 			if (data[i] > 0) {
 				let row = Math.trunc(i / cols);
 				let col = i % cols;
@@ -513,17 +557,45 @@ $(function () {
 				delete cellsByCol[i];
 			}
 		}
-		for (let i = offset * cols; i < dataLen; ++i) {
+		//xf
+		let xfsByCol = Array.from(Array(cols), () => {
+			return new AscCommonExcel.CAttrArray(null);
+		});
+		for (let i = 0; i < dataAttr.length; ++i) {
+			if (null !== dataAttr[i]) {
+				let row = Math.trunc(i / cols);
+				let col = i % cols;
+				let attrArray = xfsByCol[col];
+				attrArray.set(row, dataAttr[i]);
+			}
+		}
+		for (let i = 0; i < xfsByCol.length; ++i) {
+			if (xfsByCol[i].size() === 0) {
+				delete xfsByCol[i];
+			}
+		}
+		//expected
+		let expected = "";
+		for (let i = offset * cols; i < data.length; ++i) {
 			let row = Math.trunc(i / cols);
 			let col = i % cols;
 			if(row % stepRow === 0) {
 				let sheetMemory = cellsByCol[col];
+				let dataStr = null;
 				if (sheetMemory && sheetMemory.hasIndex(row)) {
-					expected += `${row}-${col}-${data[i]};`;
+					dataStr = data[i];
+				}
+				let attrArray = xfsByCol[col];
+				let xfStr = null;
+				if (attrArray) {
+					xfStr = attrArray.search(row);
+				}
+				if (dataStr || xfStr) {
+					expected += `${row}-${col}-${dataStr}-${xfStr};`;
 				}
 			}
 		}
-		return {cellsByCol, expected}
+		return {cellsByCol, xfsByCol, expected}
 	}
 
 	QUnit.module("CAttrArray");
@@ -626,6 +698,136 @@ $(function () {
 					attrArray.deleteRange(k, l);
 					data.splice(k, l);
 					checkAttrArrayByArray(attrArray, data, 0, assert, "");
+				}
+			}
+		}
+		assert.ok(true);
+	});
+	QUnit.test("Test: \"copyRange\"", function (assert) {
+		let data = [null, 1, 2, 2, 3, 3, 3, null, 4, 4, 4, 4];
+		let attrArray = testAttrArraySetAreaCell(data);
+		for(let i = 0; i < data.length; i++) {
+			for(let j = i; j < data.length; j++) {
+				let attrArrayTemp = new AscCommonExcel.CAttrArray(null);
+				attrArrayTemp.copyRange(attrArray, i, i, j - i + 1);
+				let dataExpected = data.concat();
+				dataExpected.fill(null, 0, i);
+				dataExpected.fill(null, j + 1, data.length);
+				checkAttrArrayByArray(attrArrayTemp, dataExpected, 0, assert, i + "-" + j);
+			}
+		}
+		assert.ok(true);
+	});
+	QUnit.module("CAttrArrayIterator");
+	QUnit.test("Test: \"CAttrArrayIterator\"", function (assert) {
+		let data = [null, 1, 2, 2, 3, 3, 3, null, 4, 4, 4, 4];
+		let attrArray = testAttrArraySetAreaCell(data);
+
+		for (let i = 0; i < data.length; i++) {
+			for (let j = i; j < data.length; j++) {
+				let colXfIterForward = new AscCommonExcel.CAttrArrayIterator(attrArray, i, j, false, false);
+				let colXfIterForwardNoEmpty = new AscCommonExcel.CAttrArrayIterator(attrArray, i, j, true, false);
+				let colXfIterBackward = new AscCommonExcel.CAttrArrayIterator(attrArray, i, j, false, true);
+				let colXfIterBackwardNoEmpty = new AscCommonExcel.CAttrArrayIterator(attrArray, i, j, true, true);
+
+				let minIndex = -1;
+				for (let k = i; k >= 0 && data[k] === data[i]; k--) {
+					minIndex = k;
+				}
+				let maxIndex = -1;
+				for (let k = j; k < data.length && data[k] === data[j]; k++) {
+					maxIndex = k;
+				}
+				let minIndexNoEmpty = -1;
+				if (null !== data[i]) {
+					minIndexNoEmpty = minIndex;
+				} else {
+					for (let k = i; k <= j; k++) {
+						if (null !== data[k]) {
+							minIndexNoEmpty = k;
+							break;
+						}
+					}
+				}
+				let maxIndexNoEmpty = -1;
+				if (null !== data[j]) {
+					maxIndexNoEmpty = maxIndex;
+				} else {
+					for (let k = j; k >= i; k--) {
+						if (null !== data[k]) {
+							maxIndexNoEmpty = k;
+							break;
+						}
+					}
+				}
+
+				if (colXfIterForward.getMinIndex() !== minIndex) {
+					assert.deepEqual(colXfIterForward.getMinIndex(), minIndex, "colXfIterForward.getMinIndex " + i + "-" + j);
+				}
+				if (colXfIterForward.getMaxIndex() !== maxIndex) {
+					assert.deepEqual(colXfIterForward.getMaxIndex(), maxIndex, "colXfIterForward.getMaxIndex " + i + "-" + j);
+				}
+				if (colXfIterForwardNoEmpty.getMinIndex() !== minIndexNoEmpty) {
+					assert.deepEqual(colXfIterForwardNoEmpty.getMinIndex(), minIndexNoEmpty, "colXfIterForwardNoEmpty.getMinIndex " + i + "-" + j);
+				}
+				if (colXfIterForwardNoEmpty.getMaxIndex() !== maxIndexNoEmpty) {
+					assert.deepEqual(colXfIterForwardNoEmpty.getMaxIndex(), maxIndexNoEmpty, "colXfIterForwardNoEmpty.getMaxIndex " + i + "-" + j);
+				}
+				if (colXfIterBackward.getMinIndex() !== minIndex) {
+					assert.deepEqual(colXfIterBackward.getMinIndex(), minIndex, "colXfIterBackward.getMinIndex " + i + "-" + j);
+				}
+				if (colXfIterBackward.getMaxIndex() !== maxIndex) {
+					assert.deepEqual(colXfIterBackward.getMaxIndex(), maxIndex, "colXfIterBackward.getMaxIndex " + i + "-" + j);
+				}
+				if (colXfIterBackwardNoEmpty.getMinIndex() !== minIndexNoEmpty) {
+					assert.deepEqual(colXfIterBackwardNoEmpty.getMinIndex(), minIndexNoEmpty, "colXfIterBackwardNoEmpty.getMinIndex " + i + "-" + j);
+				}
+				if (colXfIterBackwardNoEmpty.getMaxIndex() !== maxIndexNoEmpty) {
+					assert.deepEqual(colXfIterBackwardNoEmpty.getMaxIndex(), maxIndexNoEmpty, "colXfIterBackwardNoEmpty.getMaxIndex " + i + "-" + j);
+				}
+
+				let expected = data.slice(i, j - i + 1);
+				let dataIterations = [];
+				while (colXfIterForward.next()) {
+					dataIterations.push({val: colXfIterForward.getCurVal(), from: colXfIterForward.getCurFrom(), to: colXfIterForward.getCurTo()});
+				}
+				let dataForward = new Array(expected.length);
+				dataIterations.forEach(function(elem) {
+					dataForward.fill(elem.val, elem.from - i, elem.to - i + 1);
+				})
+				if (!dataForward.every((val, idx) => val === expected[idx])) {
+					assert.deepEqual(dataForward, expected, "colXfIterForward " + i + "-" + j);
+				}
+
+				let expectedIterationsFilter = dataIterations.filter(function(elem) {
+					return null !== elem.val;
+				});
+				let dataIterationsNoEmpty = [];
+				while (colXfIterForwardNoEmpty.nextNoEmpty()) {
+					dataIterationsNoEmpty.push({val: colXfIterForwardNoEmpty.getCurVal(), from: colXfIterForwardNoEmpty.getCurFrom(), to: colXfIterForwardNoEmpty.getCurTo()});
+				}
+				if (!dataIterationsNoEmpty.every((val, idx) => val.val === expectedIterationsFilter[idx].val && val.from === expectedIterationsFilter[idx].from && val.to === expectedIterationsFilter[idx].to)) {
+					assert.deepEqual(dataIterationsNoEmpty, expectedIterationsFilter, "colXfIterForwardNoEmpty " + i + "-" + j);
+				}
+
+				let expectedIterationsBackward = dataIterations.concat().reverse();
+				let dataIterationsBackward = [];
+				while (colXfIterBackward.prev()) {
+					dataIterationsBackward.push({val: colXfIterBackward.getCurVal(), from: colXfIterBackward.getCurFrom(), to: colXfIterBackward.getCurTo()});
+				}
+				if (!dataIterationsBackward.every((val, idx) => val.val === expectedIterationsBackward[idx].val && val.from === expectedIterationsBackward[idx].from && val.to === expectedIterationsBackward[idx].to)) {
+					assert.deepEqual(dataIterationsBackward, expectedIterationsBackward, "colXfIterBackward " + i + "-" + j);
+				}
+
+				let expectedIterationsBackwardFilter = expectedIterationsBackward.filter(function(elem) {
+					return null !== elem.val;
+				});
+				let dataIterationsBackwardFilter = [];
+				while (colXfIterBackwardNoEmpty.prevNoEmpty()) {
+					dataIterationsBackwardFilter.push({val: colXfIterBackwardNoEmpty.getCurVal(), from: colXfIterBackwardNoEmpty.getCurFrom(), to: colXfIterBackwardNoEmpty.getCurTo()});
+				}
+				if (!dataIterationsBackwardFilter.every((val, idx) => val.val === expectedIterationsBackwardFilter[idx].val && val.from === expectedIterationsBackwardFilter[idx].from && val.to === expectedIterationsBackwardFilter[idx].to)) {
+					assert.deepEqual(dataIterationsBackwardFilter, expectedIterationsBackwardFilter, "colXfIterBackwardNoEmpty " + i + "-" + j);
 				}
 			}
 		}
