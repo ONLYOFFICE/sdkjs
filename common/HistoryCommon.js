@@ -4396,7 +4396,8 @@
 	// Типы изменений в PDF drawing prototype
 	//------------------------------------------------------------------------------------------------------------------
 
-	AscDFH.historyitem_type_Pdf_Drawing_Page	= AscDFH.historyitem_type_Pdf_Drawing | 1;
+	AscDFH.historyitem_type_Pdf_Drawing_Page		= AscDFH.historyitem_type_Pdf_Drawing | 1;
+	AscDFH.historyitem_type_Pdf_Drawing_Document	= AscDFH.historyitem_type_Pdf_Drawing | 2;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

@@ -172,32 +172,33 @@
         this._origRect[1] = this._rect[1] / nScaleY;
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
-        this.SetRectangleDiff([0, 0, 0, 0], true);
 
-        this.recalcBounds();
-        this.recalcGeometry();
-        this.Recalculate(true);
-        this.recalcInfo.recalculateGeometry = false;
-        AscCommon.History.EndNoHistoryMode();
+        if (false == AscCommon.History.UndoRedoInProgress) {
+            let aCurRD = this._rectDiff;
+            this.recalcBounds();
+            this.recalcGeometry();
+            this.Recalculate(true);
+            this.recalcInfo.recalculateGeometry = false;
+            AscCommon.History.EndNoHistoryMode();
 
-        let oGrBounds = this.bounds;
-        let oShapeBounds = this.getRectBounds();
+            let oGrBounds = this.bounds;
+            let oShapeBounds = this.getRectBounds();
 
-        this._origRect[0] = Math.round(oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX;
-        this._origRect[1] = Math.round(oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY;
-        this._origRect[2] = Math.round(oGrBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX;
-        this._origRect[3] = Math.round(oGrBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY;
+            this._origRect[0] = Math.round(oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX;
+            this._origRect[1] = Math.round(oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY;
+            this._origRect[2] = Math.round(oGrBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX;
+            this._origRect[3] = Math.round(oGrBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY;
 
-        AscCommon.History.StartNoHistoryMode();
-        this.SetRectangleDiff([
-            Math.round(oShapeBounds.l - oGrBounds.l) * g_dKoef_mm_to_pix / nScaleX,
-            Math.round(oShapeBounds.t - oGrBounds.t) * g_dKoef_mm_to_pix / nScaleY,
-            Math.round(oGrBounds.r - oShapeBounds.r) * g_dKoef_mm_to_pix / nScaleX,
-            Math.round(oGrBounds.b - oShapeBounds.b) * g_dKoef_mm_to_pix / nScaleY
-        ], true);
-        AscCommon.History.EndNoHistoryMode();
+            this._rectDiff = aCurRD;
+            this.SetRectangleDiff([
+                Math.round(oShapeBounds.l - oGrBounds.l) * g_dKoef_mm_to_pix / nScaleX,
+                Math.round(oShapeBounds.t - oGrBounds.t) * g_dKoef_mm_to_pix / nScaleY,
+                Math.round(oGrBounds.r - oShapeBounds.r) * g_dKoef_mm_to_pix / nScaleX,
+                Math.round(oGrBounds.b - oShapeBounds.b) * g_dKoef_mm_to_pix / nScaleY
+            ], true);
 
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+            oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+        }
 
         this.SetWasChanged(true);
     };

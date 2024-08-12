@@ -221,6 +221,11 @@
         return this._isFromScan;
     };
     CPdfDrawingPrototype.prototype.SetDocument = function(oDoc) {
+        if (this._doc == oDoc) {
+            return;
+        }
+
+        AscCommon.History.Add(new CChangesPdfDrawingObjectProperty(this, AscDFH.historyitem_type_Pdf_Drawing_Document, this._doc, oDoc));
         this._doc = oDoc;
     };
     CPdfDrawingPrototype.prototype.GetDocument = function() {
@@ -289,14 +294,6 @@
         oViewer.paint(setRedrawPageOnRepaint);
     };
     
-    CPdfDrawingPrototype.prototype.SetRot = function(dAngle) {
-        let oDoc = this.GetDocument();
-
-        oDoc.History.Add(new CChangesPDFDrawingRot(this, this.GetRot(), dAngle));
-
-        this.changeRot(dAngle);
-        this.SetNeedRecalc(true);
-    };
     CPdfDrawingPrototype.prototype.GetRot = function() {
         return this.rot;
     };
