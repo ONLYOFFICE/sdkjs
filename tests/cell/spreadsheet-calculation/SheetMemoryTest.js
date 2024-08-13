@@ -344,7 +344,7 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
 	});
 
-	QUnit.test("Test: \"copyRangeByChunk\"", function (assert) {
+	QUnit.test("Test: \"setAreaByRow\"", function (assert) {
 
 		let sheetMemory = new SheetMemory(2, 100);
 		sheetMemory.checkIndex(8);
@@ -352,7 +352,7 @@ $(function () {
 		sheetMemory.setUint8(8, 0, 1);
 		sheetMemory.setUint8(9, 0, 2);
 
-		sheetMemory.copyRangeByChunk(8, 1, 10, 2);
+		sheetMemory.setAreaByRow(8, 10, 2);
 		assert.strictEqual(sheetMemory.getMinIndex(), 8);
 		assert.strictEqual(sheetMemory.getMaxIndex(), 11);
 		assert.strictEqual(sheetMemory.getUint8(8, 0), 1);
@@ -360,22 +360,17 @@ $(function () {
 		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
 
-		sheetMemory.copyRangeByChunk(8, 5, 13, 7);
+		sheetMemory.setAreaByRow(8, 13, 3);
 		assert.strictEqual(sheetMemory.getMinIndex(), 8);
-		assert.strictEqual(sheetMemory.getMaxIndex(), 19);
+		assert.strictEqual(sheetMemory.getMaxIndex(), 15);
 		assert.strictEqual(sheetMemory.getUint8(8, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(9, 0), 2);
 		assert.strictEqual(sheetMemory.getUint8(10, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(11, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(12, 0), 0);
 		assert.strictEqual(sheetMemory.getUint8(13, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(14, 0), 2);
+		assert.strictEqual(sheetMemory.getUint8(14, 0), 1);
 		assert.strictEqual(sheetMemory.getUint8(15, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(16, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(17, 0), 0);
-		assert.strictEqual(sheetMemory.getUint8(18, 0), 1);
-		assert.strictEqual(sheetMemory.getUint8(19, 0), 2);
-		assert.strictEqual(sheetMemory.getUint8(20, 0), 1);
 	});
 
 	QUnit.test("Test: \"clear1\"", function (assert) {
@@ -672,11 +667,7 @@ $(function () {
 				}
 				let attrArray = testAttrArraySetAreaCell(data);
 				attrArray.insertRange(k, 1);
-				if (k > 0) {
-					data.splice(k, 0, data[k - 1]);
-				} else {
-					data.splice(k, 0, null);
-				}
+				data.splice(k, 0, null);
 				checkAttrArrayByArray(attrArray, data, 0, assert, "");
 			}
 		}
@@ -708,13 +699,30 @@ $(function () {
 		let attrArray = testAttrArraySetAreaCell(data);
 		for(let i = 0; i < data.length; i++) {
 			for(let j = i; j < data.length; j++) {
-				let attrArrayTemp = new AscCommonExcel.CAttrArray(null);
-				attrArrayTemp.copyRange(attrArray, i, i, j - i + 1);
-				let dataExpected = data.concat();
-				dataExpected.fill(null, 0, i);
-				dataExpected.fill(null, j + 1, data.length);
-				checkAttrArrayByArray(attrArrayTemp, dataExpected, 0, assert, i + "-" + j);
+				let count = j - i + 1;
+				for(let k = 0; k < data.length - count; k++) {
+					let attrArrayTemp = new AscCommonExcel.CAttrArray(null);
+					attrArrayTemp.copyRange(attrArray, i, k, count);
+					let dataExpected = new Array(data.length);
+					dataExpected.fill(null);
+					for (let l = i; l <= j; l++) {
+						dataExpected[k + l - i] = data[l];
+					}
+					checkAttrArrayByArray(attrArrayTemp, dataExpected, 0, assert, i + "-" + j);
+				}
 			}
+		}
+		assert.ok(true);
+	});
+	QUnit.test("Test: \"setAreaByRow\"", function (assert) {
+		let data = [null, 1, 2, 2, 3, 3, 3, null, 4, 4, 4, 4];
+		let dataExpected = data.concat();
+		let attrArray = testAttrArraySetAreaCell(data);
+		for (let i = 0; i < data.length; i += 3) {
+			attrArray.setAreaByRow(i, i + 1, 2);
+			dataExpected[i + 1] = dataExpected[i];
+			dataExpected[i + 2] = dataExpected[i];
+			checkAttrArrayByArray(attrArray, dataExpected, 0, assert, i);
 		}
 		assert.ok(true);
 	});

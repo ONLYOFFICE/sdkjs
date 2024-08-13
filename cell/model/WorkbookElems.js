@@ -19224,8 +19224,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 	CAttrArray.prototype.insertRange = function (start, insertCount) {
 		let i;
-		let prev = start > 0 ? start - 1 : 0;
-		let startIndex = this.searchIndex(prev);
+		let startIndex = this.searchIndex(start);
 		//shift endRow
 		for (i = startIndex; i < this.data.length - 1; ++i) {
 			let elem = this.data[i];
@@ -19238,19 +19237,16 @@ function RangeDataManagerElem(bbox, data)
 		}
 		//remove tail
 		this.data.length = i + 1;
-		//first row is special
-		if (0 === start) {
-			this.clear(0, insertCount - 1);
-		}
+		this.clear(start, start + insertCount);
 	};
 	CAttrArray.prototype.copyRange = function(attrArray, startFrom, startTo, count) {
+		let diff = startTo - startFrom;
 		let iter = new CAttrArrayIterator(attrArray, startFrom, startFrom + count - 1);
 		while (iter.next()) {
-			this.setArea(iter.getCurFrom(), iter.getCurTo(), iter.getCurVal());
+			this.setArea(iter.getCurFrom() + diff, iter.getCurTo() + diff, iter.getCurVal());
 		}
 	};
-	CAttrArray.prototype.copyRangeByChunk = function(from, fromCount, to, toCount) {
-		return;
+	CAttrArray.prototype.setAreaByRow = function(from, to, toCount) {
 		let val = this.search(from);
 		this.setArea(to, to + toCount - 1, val);
 	};
