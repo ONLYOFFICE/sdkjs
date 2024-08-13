@@ -4648,8 +4648,8 @@ function (window, undefined) {
 				row.setAngle(Val);
 			} else if (AscCH.historyitem_RowCol_SetStyle == Type) {
 				row.setStyle(Val);
-			} else if (AscCH.historyitem_RowCol_SetCellStyle == Type) {
-				row.setCellStyle(Val);
+			} else if (AscCH.historyitem_RowCol_XfId == Type) {
+				row.setXfId(Val);
 			} else if (AscCH.historyitem_RowCol_Indent == Type) {
 				row.setIndent(Val);
 			} else if (AscCH.historyitem_RowCol_ApplyProtection == Type) {

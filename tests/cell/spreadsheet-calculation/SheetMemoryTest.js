@@ -718,6 +718,18 @@ $(function () {
 		}
 		assert.ok(true);
 	});
+	QUnit.test("Test: \"clear\"", function (assert) {
+		let data = [null, 1, 2, 2, 3, 3, 3, null, 4, 4, 4, 4];
+		let attrArray = testAttrArraySetAreaCell(data);
+		attrArray.clear(0, 3);
+		data.fill(null, 0, 3);
+		checkAttrArrayByArray(attrArray, data, 0, assert, "clear1");
+		attrArray.clear(6, 9);
+		data.fill(null, 6, 9);
+		checkAttrArrayByArray(attrArray, data, 0, assert, "clear2");
+		assert.ok(true);
+	});
+
 	QUnit.module("CAttrArrayIterator");
 	QUnit.test("Test: \"CAttrArrayIterator\"", function (assert) {
 		let data = [null, 1, 2, 2, 3, 3, 3, null, 4, 4, 4, 4];
