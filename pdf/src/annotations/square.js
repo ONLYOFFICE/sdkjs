@@ -91,9 +91,9 @@
         oSquare.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
         oSquare.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oSquare.SetOpacity(this.GetOpacity());
-        oSquare.recalcInfo.recalculateGeometry = true;
+        oSquare.recalcGeometry()
         this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice(), true);
-        oSquare.recalculate();
+        oSquare.Recalculate(true);
 
         oDoc.EndNoHistoryMode();
 

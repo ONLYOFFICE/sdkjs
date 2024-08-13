@@ -94,10 +94,10 @@
         oCircle.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
         oCircle.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oCircle.SetOpacity(this.GetOpacity());
-        oCircle.recalcInfo.recalculateGeometry = true;
+        oCircle.recalcGeometry()
         this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice(), true);
         oCircle.SetDash(this.GetDash());
-        oCircle.recalculate();
+        oCircle.Recalculate(true);
 
         oDoc.EndNoHistoryMode();
         return oCircle;
@@ -177,14 +177,12 @@
             this._origRect[3] = Math.round(oGrBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY;
 
             this._rectDiff = aCurRD;
-            AscCommon.History.StartNoHistoryMode();
             this.SetRectangleDiff([
                 Math.round(oShapeBounds.l - oGrBounds.l) * g_dKoef_mm_to_pix / nScaleX,
                 Math.round(oShapeBounds.t - oGrBounds.t) * g_dKoef_mm_to_pix / nScaleY,
                 Math.round(oGrBounds.r - oShapeBounds.r) * g_dKoef_mm_to_pix / nScaleX,
                 Math.round(oGrBounds.b - oShapeBounds.b) * g_dKoef_mm_to_pix / nScaleY
             ], true);
-            AscCommon.History.EndNoHistoryMode();
 
             oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
         }
