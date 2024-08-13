@@ -7186,31 +7186,19 @@ function parserFormula( formula, parent, _ws ) {
 
 			return sFormulaName && cFormulaList[sFormulaName] && cFormulaList[sFormulaName].prototype.name;
 		};
-		const isRecursiveFormula = function (found_operand, parserFormula) {
+		const isAreaContainCell = function (found_operand, parserFormula) {
+			const oParentCell = parserFormula.getParent();
 			const nOperandType = found_operand.type;
 			let oRange = null;
-			let bRecursiveCell = parserFormula.ca;
-			let sFunctionName = getFunctionName(parserFormula.Formula, cFormulaList);
 
-			if (parserFormula.getParent() == null) {
-				return bRecursiveCell;
-			}
-			if (parserFormula.ca) {
-				return bRecursiveCell;
-			}
-			if (sFunctionName && sFunctionName.includes("IF")) {
-				bConditionalFormula = true;
-				return bRecursiveCell;
+			if (!(oParentCell instanceof AscCommonExcel.CCellWithFormula)) {
+				return false;
 			}
 			if (nOperandType === cElementType.cellsRange) {
 				oRange = found_operand.getRange();
-				return oRange.containCell2(parserFormula.getParent());
+				return oRange.containCell2(oParentCell);
 			}
 			if (nOperandType === cElementType.cellsRange3D) {
-				const oParentCell = parserFormula.getParent();
-				if (oParentCell instanceof AscCommonExcel.DefName || oParentCell instanceof CT_WorksheetSource) {
-					return false;
-				}
 				const aRanges = found_operand.getRanges().filter(function (oRange) {
 					return oParentCell.ws.getId() === oRange.worksheet.getId();
 				});
@@ -7221,6 +7209,36 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 				return false;
+			}
+			if (nOperandType === cElementType.name || nOperandType === cElementType.name3D) {
+				const oElemValue = found_operand.getValue();
+				const oElemType = oElemValue.type;
+				let aRef = [cElementType.cellsRange, cElementType.cellsRange3D];
+				if (!aRef.includes(oElemType)) {
+					return false;
+				}
+				return isAreaContainCell(oElemValue, parserFormula);
+			}
+		}
+		const isRecursiveFormula = function (found_operand, parserFormula) {
+			const nOperandType = found_operand.type;
+			const aExcludeCondFormulas = ["IFERROR", "IFNA", "COUNTIF"];
+			let oRange = null;
+			let bRecursiveCell = parserFormula.ca;
+			let sFunctionName = getFunctionName(parserFormula.Formula, cFormulaList);
+
+			if (parserFormula.getParent() == null) {
+				return bRecursiveCell;
+			}
+			if (parserFormula.ca) {
+				return bRecursiveCell;
+			}
+			if (sFunctionName && (sFunctionName.includes("IF") || sFunctionName.includes("SWITCH")) && !aExcludeCondFormulas.includes(sFunctionName)) {
+				bConditionalFormula = true;
+				return bRecursiveCell;
+			}
+			if (nOperandType === cElementType.cellsRange || nOperandType === cElementType.cellsRange3D) {
+				return isAreaContainCell(found_operand, parserFormula);
 			}
 			if (nOperandType === cElementType.name || nOperandType === cElementType.name3D) {
 				const oElemValue = found_operand.getValue();
@@ -7660,15 +7678,95 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		setArgInfo();
-		if (bConditionalFormula) {
-			let oParentCellValue = null;
-			t.ws._getCell(t.parent.nRow, t.parent.nCol, function (oCell) {
-				let nCellValue = oCell.getNumberValue();
-				oParentCellValue = new cNumber(nCellValue == null ? 0 : nCellValue);
-			});
-			const aConditions = t.outStack.filter(function (outStackElem) {
-				return outStackElem.type === cElementType.number || outStackElem.type === cElementType.string;
-			})
+		// TODO Convert to function.
+		if (bConditionalFormula && t.getParent() instanceof AscCommonExcel.CCellWithFormula) {
+			const oParentCell = t.getParent();
+			const sFunctionName = getFunctionName(t.Formula);
+			const aOutStack = t.outStack.map(function (elem) { return elem; });
+			const oFirstArg = aOutStack[0];
+			const nCountArgs = typeof aOutStack[aOutStack.length - 2] === 'number' ? aOutStack[aOutStack.length - 2] : aOutStack[aOutStack.length - 1].argumentsCurrent;
+			const aNameType = [cElementType.name, cElementType.name3D];
+			let bRange = false;
+			let aConditions = [];
+
+			if (oFirstArg.type === cElementType.cellsRange || oFirstArg.type === cElementType.cellsRange3D) {
+				bRange = true;
+			}
+			if (bRange) {
+				const aAreaType = [cElementType.cellsRange, cElementType.cellsRange3D];
+
+				// For formulas like SUMIF, COUNTIF, etc. with 2 arguments, check the range has the cycle link without criteria.
+				if (nCountArgs === 2) {
+					t.ca = isAreaContainCell(aOutStack[0], t);
+					if (!t.ca && (typeof aOutStack[nCountArgs - 1] !== 'number' && aAreaType.includes(aOutStack[nCountArgs - 1].type) &&
+						aNameType.includes(aOutStack[nCountArgs - 1].type))) {
+						t.ca = isAreaContainCell(aOutStack[nCountArgs - 1], t);
+					}
+				} else {
+					const aCriteriaRanges = [];
+					let oSumRange = null;
+
+					if (sFunctionName.includes('IFS')) {
+						oSumRange = aOutStack.shift();
+					} else {
+						oSumRange = aAreaType.includes(aOutStack[nCountArgs - 1].type) ? aOutStack[nCountArgs - 1] : aOutStack[nCountArgs];
+					}
+					for (let i = 0; i < nCountArgs; i++) {
+						if (typeof aOutStack[i] === 'number') {
+							continue;
+						}
+						if (oSumRange.value === aOutStack[i].value) {
+							continue;
+						}
+						if (i % 2 === 0 && aAreaType.includes(aOutStack[i].type)) {
+							aCriteriaRanges.push(aOutStack[i]);
+							continue;
+						}
+						aConditions.push(aOutStack[i]);
+					}
+					if (aCriteriaRanges.length && isAreaContainCell(aCriteriaRanges[0], t)) {
+						t.ca = true;
+					}
+					// Checking criteria for the range.
+					if(!t.ca && oSumRange && isAreaContainCell(oSumRange, t) && aCriteriaRanges.length && aConditions.length) {
+						let nLen = Math.floor(nCountArgs / 2);
+						let oRangeSum = oSumRange.getBBox0();
+						let bMatch = false;
+						for (let i = 0; i < nLen; i += 2) {
+							let nextIndex = i + 1 < nLen ? i + 1 : null;
+							let oCriteriaRange = aCriteriaRanges[i];
+							let oCondition = aConditions[i];
+							let oMatchInfo = AscCommonExcel.matchingValue(oCondition.tocString());
+							let oBBoxCriteria = oCriteriaRange.getBBox0();
+							let bVertical = oBBoxCriteria.r1 === oRangeSum.r1 && oBBoxCriteria.r2 === oRangeSum.r2;
+							let oCriteriaRangeVal = bVertical ? oCriteriaRange.getValueByRowCol(oParentCell.nRow - oBBoxCriteria.r1, 0) : oCriteriaRange.getValueByRowCol(0, oParentCell.nCol - oBBoxCriteria.c1);
+							bMatch = oCriteriaRangeVal && AscCommonExcel.matching(oCriteriaRangeVal, oMatchInfo)
+							if (bMatch && nextIndex) {
+								oCriteriaRange = aCriteriaRanges[nextIndex];
+								oCondition = aConditions[nextIndex];
+								oBBoxCriteria = oCriteriaRange.getBBox0();
+								let oMatchInfo = AscCommonExcel.matchingValue(oCondition.tocString());
+								if (isAreaContainCell(oCriteriaRange, t)) {
+									t.ca = true;
+									break;
+								}
+								let oCriteriaRangeVal = bVertical ? oCriteriaRange.getValueByRowCol(oParentCell.nRow - oBBoxCriteria.r1, 0) : oCriteriaRange.getValueByRowCol(0, oParentCell.nCol - oBBoxCriteria.c1);
+								bMatch = oCriteriaRangeVal && AscCommonExcel.matching(oCriteriaRangeVal, oMatchInfo)
+								if (!bMatch) {
+									break;
+								}
+								if (bMatch && nextIndex > nLen) {
+									t.ca = true;
+									break;
+								}
+							} else {
+								break;
+							}
+						}
+					}
+
+				}
+			}
 		}
 		if (parseResult.operand_expected) {
 			this.outStack = [];
