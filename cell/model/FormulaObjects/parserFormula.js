@@ -7443,6 +7443,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
 				t.ca = isRecursiveFormula(found_operand, t);
+				if (t.ca && defName && defName.parsedRef) {
+					defName.parsedRef.ca = t.ca;
+				}
 			}
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {

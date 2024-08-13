@@ -14691,6 +14691,9 @@
 			let oListenerCell = oListeners[i].getParent();
 			let nListenerCellIndex = null;
 			if (oListenerCell instanceof DefName) {
+				if (!oListeners[i].ca) {
+					continue;
+				}
 				let oParserRef = oListenerCell.parsedRef;
 				let aRef = [cElementType.cell, cElementType.cell3D, cElementType.cellsRange, cElementType.cellsRange3D];
 				let oOutStackElem = oParserRef.outStack.find(function (oElem) {
