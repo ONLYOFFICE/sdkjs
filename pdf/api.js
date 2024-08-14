@@ -153,6 +153,45 @@
 			"H": 25.4 * page.H / page.Dpi
 		}
 	};
+	PDFEditorApi.prototype["asc_nativeOpenFile"] = function(base64File, version) {
+		this.SpellCheckUrl = '';
+
+		this.User = new AscCommon.asc_CUser();
+		this.User.setId("TM");
+		this.User.setUserName("native");
+
+		this.WordControl.m_bIsRuler = false;
+		this.WordControl.Init();
+
+		this.initDocumentRenderer();
+		this.DocumentType   = 2;
+
+		AscCommon.g_oIdCounter.Set_Load(true);
+
+		if (undefined !== version)
+			AscCommon.CurFileVersion = version;
+
+		let openParams        = {};
+		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+		if (!oBinaryFileReader.Read(base64File))
+			this.sendEvent("asc_onError", Asc.c_oAscError.ID.MobileUnexpectedCharCount, Asc.c_oAscError.Level.Critical);
+
+		AscCommon.g_oIdCounter.Set_Load(false);
+		this.LoadedObject = 1;
+
+		if (window["NATIVE_EDITOR_ENJINE"] === true && undefined != window["native"])
+		{
+			AscCommon.CDocsCoApi.prototype.askSaveChanges = function(callback)
+			{
+				callback({"saveLock" : false});
+			};
+			AscCommon.CDocsCoApi.prototype.saveChanges    = function(arrayChanges, deleteIndex, excelAdditionalInfo)
+			{
+				if (window["native"]["SaveChanges"])
+					window["native"]["SaveChanges"](arrayChanges.join("\",\""), deleteIndex, arrayChanges.length);
+			};
+		}
+	};
 	PDFEditorApi.prototype.Undo           = function()
 	{
 		var oDoc = this.getPDFDoc();
