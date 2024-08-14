@@ -4644,7 +4644,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
 					isHiddenCFPart = PRS.ComplexFields.isComplexFieldCode();
 
-					if (Item.IsSeparate() && !isHiddenCFPart)
+					if (Item.IsEnd() && !isHiddenCFPart)
 					{
 						// Специальная ветка, для полей PAGE и NUMPAGES, находящихся в колонтитуле
 						var oComplexField = Item.GetComplexField();
