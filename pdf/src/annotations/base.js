@@ -663,7 +663,6 @@
 
         return true;
     };
-
     
     CAnnotationBase.prototype.GetRect = function() {
         return this._rect;

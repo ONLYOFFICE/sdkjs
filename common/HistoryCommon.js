@@ -1834,9 +1834,10 @@
 	window['AscDFH'].historyitem_type_Pdf_Annot_Text		= 2217 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Circle		= 2218 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Square		= 2219 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2220 << 16;
-	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2221 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2222 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Polygon		= 2220 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2221 << 16;
+	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2222 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2223 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

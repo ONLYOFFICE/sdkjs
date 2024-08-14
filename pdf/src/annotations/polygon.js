@@ -61,7 +61,7 @@
         this._intent        = undefined;
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
-    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polygon);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
@@ -77,23 +77,18 @@
         return this._vertices;
     };
 
-    CAnnotationPolygon.prototype.Recalculate = function() {
-        if (this.IsNeedRecalc() == false)
+    CAnnotationPolygon.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
+        }
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-        
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
-        this.handleUpdatePosition();
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationPolygon.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -155,8 +150,11 @@
         this._origRect[3] = this._rect[3] / nScaleY;
 
         oDoc.StartNoHistoryMode();
-        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        let oXfrm = this.getXfrm();
+        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
+        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
         oDoc.EndNoHistoryMode();
 
         this.AddToRedraw();

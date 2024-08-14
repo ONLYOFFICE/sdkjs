@@ -462,15 +462,15 @@ CChangesPDFFreeTextRC.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesPDFAnnotVertices(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFAnnotVertices.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFAnnotVertices.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
 CChangesPDFAnnotVertices.prototype.constructor = CChangesPDFAnnotVertices;
-CChangesPDFAnnotVertices.prototype.Type = AscDFH.historyitem_Pdf_Annot_Rect;
+CChangesPDFAnnotVertices.prototype.Type = AscDFH.historyitem_Pdf_Annot_Vertices;
 CChangesPDFAnnotVertices.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
