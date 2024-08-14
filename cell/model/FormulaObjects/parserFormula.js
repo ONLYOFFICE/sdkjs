@@ -2253,6 +2253,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.isDynamic = false;//#This row
 		this.area = null;
+
+		this.shortName = null;// Short name can only be used inside the table cell: "=Table[Column]" === "=[Column]"
 	}
 
 	cStrucTable.prototype = Object.create(cBaseType.prototype);
@@ -2266,6 +2268,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (res._parseVal(val)) {
 			res._updateArea(null, false);
 		}
+		if (val["shortName"]) {
+			// remove tableName in value string 
+			res.value = val["shortName"];
+			res.shortName = val["shortName"];
+		}
+
 		return (res.area && res.area.type != cElementType.error) ? res : new cError(cErrorType.bad_reference);
 	};
 	cStrucTable.prototype.clone = function (opt_ws) {
@@ -2323,13 +2331,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		// file works with "#This Row" - user with "@"
 		// isLocal - change "#This Row", to "@"
 		const table = this.wb.getDefinesNames(this.tableName, null);
-		let tblStr, columns_1, columns_2;
-		if (!table) {
-			tblStr = this.tableName;
-		} else {
-			tblStr = table.name;
+		let tblStr = "", columns_1, columns_2;
+		// if (!table) {
+		// 	tblStr = this.tableName;
+		// } else {
+		// 	tblStr = table.name;
+		// }
+
+		if (!this.shortName) {
+			// не используется краткая запись внутри таблицы
+			tblStr = table ? table.name : this.tableName;
 		}
 
+
+		// todo либо изменить valueName или добавить флаг использования сокращенной записи
 		if (this.oneColumnIndex) {
 			// TODO add this.isCrossSign to use?
 			columns_1 = this.oneColumnIndex.name.replace(/([#[\]])/g, "'$1");
@@ -7369,7 +7384,7 @@ function parserFormula( formula, parent, _ws ) {
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 
 				t.ca = isRecursiveFormula(found_operand, t);
-			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
+			} else if (_tableTMP = parserHelp.isTable.call(ph, t, ph.pCurrPos)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
 				//todo undo delete column
@@ -7420,7 +7435,7 @@ function parserFormula( formula, parent, _ws ) {
 					defName = found_operand.getDefName();
 				}
 
-				if (defName && defName.type === Asc.c_oAscDefNameType.table && (_tableTMP = parserHelp.isTable(sDefNameOperand + "[]", 0))) {
+				if (defName && defName.type === Asc.c_oAscDefNameType.table && (_tableTMP = parserHelp.isTable(t, 0,/*isLocal */ null,/*callFfromDefName*/ true))) {
 					found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws);
 					//need assemble becase source formula wrong
 					needAssemble = true;
