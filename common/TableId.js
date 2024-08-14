@@ -480,11 +480,14 @@
 
 		if (editor.isPdfEditor())
 		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]				= AscPDF.CPdfShape;
-			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]		= AscPDF.CPdfGraphicFrame;
-			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]		= AscPDF.CPdfImage;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]	= AscPDF.CAnnotationText;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]		= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

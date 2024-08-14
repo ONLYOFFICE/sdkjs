@@ -102,7 +102,7 @@
         let oThis = this;
         aSourcePaths.forEach(function(aPath) {
             oThis.AddInkPath(aPath);
-        })
+        });
     };
     CAnnotationInk.prototype.AddInkPath = function(aInkPath) {
         AscCommon.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aInkPath, true));

@@ -1836,9 +1836,14 @@
 	window['AscDFH'].historyitem_type_Pdf_Annot_Square		= 2219 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Polygon		= 2220 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot_Polyline	= 2221 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2222 << 16;
-	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2223 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2224 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Highlight	= 2222 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Underline	= 2223 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Strikeout	= 2224 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Squiggly	= 2225 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Caret		= 2226 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2227 << 16;
+	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2228 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2229 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4378,6 +4383,7 @@
 	AscDFH.historyitem_Pdf_Annot_Stroke				= AscDFH.historyitem_type_Pdf_Annot | 15;
 	AscDFH.historyitem_Pdf_Annot_StrokeWidth		= AscDFH.historyitem_type_Pdf_Annot | 16;
 	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 17;
+	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 18;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
