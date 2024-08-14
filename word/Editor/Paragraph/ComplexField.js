@@ -1644,7 +1644,7 @@ CComplexField.prototype.GetTopDocumentContent = function()
 	if (this.SeparateChar && topDocument !== this.SeparateChar.GetTopDocumentContent())
 		return null;
 	
-	return oTopDocument;
+	return topDocument;
 };
 CComplexField.prototype.IsUse = function()
 {
