@@ -105,8 +105,9 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
-        this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
-        this.CollaborativeEditing.m_oLogicDocument = this;
+        this.CollaborativeEditing   = new AscPDF.CPDFCollaborativeEditing(this);
+        AscCommon.CollaborativeEditing = this.CollaborativeEditing;
+
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.TextSelectTrackHandler = new AscPDF.CTextSelectTrackHandler(this.GetDrawingDocument(), Asc.editor);
@@ -156,7 +157,6 @@ var CPresentation = CPresentation || function(){};
         
 		this.History        = new AscPDF.History(this);
 		this.LocalHistory   = new AscPDF.History(this);
-        
 		AscCommon.History = this.History;
 
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();

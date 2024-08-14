@@ -97,7 +97,6 @@
         // Вызов родительского метода
         if (parentPrototype && parentPrototype.recalculateContent && parentPrototype.recalculateContent != CPdfDrawingPrototype.prototype.recalculateContent) {
             oRecalcData = parentPrototype.recalculateContent.call(this);
-            this.AddToRedraw();
         }
 
         return oRecalcData;
@@ -227,6 +226,9 @@
 
         AscCommon.History.Add(new CChangesPdfDrawingObjectProperty(this, AscDFH.historyitem_type_Pdf_Drawing_Document, this._doc, oDoc));
         this._doc = oDoc;
+    };
+    CPdfDrawingPrototype.prototype.OnContentChange = function() {
+        this.SetNeedRecalc(true);
     };
     CPdfDrawingPrototype.prototype.GetDocument = function() {
         if (this.group)

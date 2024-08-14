@@ -37,9 +37,10 @@
  * @constructor
  * @extends {AscCommon.CCollaborativeEditingBase}
  */
-function CPDFCollaborativeEditing() {
+function CPDFCollaborativeEditing(oDoc) {
 	AscCommon.CWordCollaborativeEditing.call(this);
     this.m_aSkipContentControlsOnCheckEditingLock = {};
+    this.m_oLogicDocument = oDoc;
 }
 
 CPDFCollaborativeEditing.prototype = Object.create(AscCommon.CWordCollaborativeEditing.prototype);
@@ -211,4 +212,3 @@ CPDFCollaborativeEditing.prototype.Check_MergeData = function() {};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscPDF'] = window['AscPDF'] || {};
 window['AscPDF'].CPDFCollaborativeEditing = CPDFCollaborativeEditing;
-window['AscCommon'].CollaborativeEditing = new CPDFCollaborativeEditing();

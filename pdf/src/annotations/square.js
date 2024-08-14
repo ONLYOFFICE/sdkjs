@@ -184,10 +184,10 @@
             let oGrBounds = this.bounds;
             let oShapeBounds = this.getRectBounds();
 
-            this._origRect[0] = Math.round(oGrBounds.l - 1) * g_dKoef_mm_to_pix / nScaleX;
-            this._origRect[1] = Math.round(oGrBounds.t - 1) * g_dKoef_mm_to_pix / nScaleY;
-            this._origRect[2] = Math.round(oGrBounds.r + 1) * g_dKoef_mm_to_pix / nScaleX;
-            this._origRect[3] = Math.round(oGrBounds.b + 1) * g_dKoef_mm_to_pix / nScaleY;
+            this._origRect[0] = Math.round(oGrBounds.l) * g_dKoef_mm_to_pix / nScaleX;
+            this._origRect[1] = Math.round(oGrBounds.t) * g_dKoef_mm_to_pix / nScaleY;
+            this._origRect[2] = Math.round(oGrBounds.r) * g_dKoef_mm_to_pix / nScaleX;
+            this._origRect[3] = Math.round(oGrBounds.b) * g_dKoef_mm_to_pix / nScaleY;
 
             this._rectDiff = aCurRD;
             this.SetRectangleDiff([

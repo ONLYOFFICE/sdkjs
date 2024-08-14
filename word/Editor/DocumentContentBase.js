@@ -2527,6 +2527,9 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
 	}
+	else if (shape && Asc.editor.isPdfEditor()) {
+		shape.OnContentChange();
+	}
 };
 
 CDocumentContentBase.prototype.GetCalculatedTextPr = function()
