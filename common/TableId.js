@@ -51,14 +51,14 @@
 	{
 		return this.isInit;
 	};
-	CTableId.prototype.init = function()
+	CTableId.prototype.init = function(editor)
 	{
 		this.m_aPairs        = {};
 		this.m_bTurnOff      = false;
 		this.m_oFactoryClass = {};
 		this.Id              = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
-		this.private_InitFactoryClass();
+		this.private_InitFactoryClass(editor);
 		this.isInit = true;
 	};
 	CTableId.prototype.Add = function(Class, Id)
@@ -145,7 +145,7 @@
 			delete this.m_aPairs[sId];
 		}
 	};
-	CTableId.prototype.private_InitFactoryClass = function()
+	CTableId.prototype.private_InitFactoryClass = function(editor)
 	{
 		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscWord.Paragraph;
 		this.m_oFactoryClass[AscDFH.historyitem_type_TextPr]                 = AscCommonWord.ParaTextPr;
@@ -478,7 +478,7 @@
 
 		}
 
-		if (Asc.editor.isPdfEditor())
+		if (editor.isPdfEditor())
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]				= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]		= AscPDF.CPdfGraphicFrame;

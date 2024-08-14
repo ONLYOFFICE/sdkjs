@@ -2821,7 +2821,7 @@
 	};
 	baseEditorsApi.prototype._onEndLoadSdk = function()
 	{
-		AscCommon.g_oTableId.init();
+		AscCommon.g_oTableId.init(this);
 		this.initCollaborativeEditing();
 
 		// init drag&drop
