@@ -63,7 +63,7 @@
         this._width         = undefined;
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
-    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polyline);
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
@@ -79,23 +79,18 @@
         return this._vertices;
     };
 
-    CAnnotationPolyLine.prototype.Recalculate = function() {
-        if (this.IsNeedRecalc() == false)
+    CAnnotationPolyLine.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
+        }
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-        
-        this.handleUpdatePosition();
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationPolyLine.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -146,8 +141,11 @@
         this._origRect[3] = this._rect[3] / nScaleY;
 
         oDoc.StartNoHistoryMode();
-        this.spPr.xfrm.setExtX(this._pagePos.w * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.setExtY(this._pagePos.h * g_dKoef_pix_to_mm);
+        let oXfrm = this.getXfrm();
+        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
+        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
         oDoc.EndNoHistoryMode();
 
         this.AddToRedraw();
@@ -482,10 +480,11 @@
 
         let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
         oParentAnnot.spPr.setGeometry(geometry);
-        oParentAnnot.updatePosition(xMin, yMin);
 
-        oParentAnnot.x = xMin;
-        oParentAnnot.y = yMin;
+        let oXfrm = oParentAnnot.getXfrm();
+        oXfrm.offX = xMin;
+        oXfrm.offY = yMin;
+
         return oParentAnnot;
     }
 
