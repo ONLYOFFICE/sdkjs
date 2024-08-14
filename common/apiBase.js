@@ -2822,6 +2822,7 @@
 	baseEditorsApi.prototype._onEndLoadSdk = function()
 	{
 		AscCommon.g_oTableId.init();
+		this.initCollaborativeEditing();
 
 		// init drag&drop
 		var t = this;
@@ -2855,6 +2856,9 @@
 		this._loadSdkImages();
 
 		this.checkDocumentTitleFonts();
+	};
+	baseEditorsApi.prototype.initCollaborativeEditing = function()
+	{
 	};
 	baseEditorsApi.prototype.checkDocumentTitleFonts = function() {
 		if (!AscFonts.FontPickerByCharacter || !this.documentTitle)

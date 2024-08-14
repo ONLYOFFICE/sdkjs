@@ -689,4 +689,4 @@ CCollaborativeEditing.prototype.private_UpdateForeignCursor = function(CursorInf
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
-window['AscCommon'].CollaborativeEditing = new CCollaborativeEditing();
+window['AscCommon'].SlideCollaborativeEditing = CCollaborativeEditing;

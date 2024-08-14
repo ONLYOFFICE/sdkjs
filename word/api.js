@@ -9843,6 +9843,10 @@ background-repeat: no-repeat;\
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
 	};
+	asc_docs_api.prototype.initCollaborativeEditing = function()
+	{
+		AscCommon.CollaborativeEditing = new AscCommon.CWordCollaborativeEditing();
+	};
 
 	asc_docs_api.prototype.asc_Recalculate = function(bIsUpdateInterface)
 	{

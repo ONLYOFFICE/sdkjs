@@ -105,8 +105,8 @@ var CPresentation = CPresentation || function(){};
         this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx               = -1;
-        this.CollaborativeEditing   = new AscPDF.CPDFCollaborativeEditing(this);
-        AscCommon.CollaborativeEditing = this.CollaborativeEditing;
+        this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
+        this.CollaborativeEditing.SetLogicDocument(this);
 
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
