@@ -872,6 +872,8 @@ function(window, undefined) {
 			cosAlpha = Math.abs(Math.cos(fAngle));
 			rotatedMaxWidth = (cosAlpha + sinAlpha) * oLabelParams.maxHeight;
 			// bDirection indecates whether angle is positive or negative. 
+			// excel incorrectly works with align, is they will fix it uncomment this line, and remove this align from getTranslationX function
+			// bDirection =  this.align ? oLabelParams.rot > 0 : oLabelParams.rot <= 0;
 			bDirection =  oLabelParams.rot > 0;
 		}
 
@@ -902,7 +904,8 @@ function(window, undefined) {
 			}
 		}
 
-		const getTranslationX = function (bDirection, squareWidth, labelWidth) {
+		const getTranslationX = function (align, bDirection, squareWidth, labelWidth) {
+			bDirection = align ? bDirection : !bDirection;
 			return bDirection > 0 ? -squareWidth / 2.0 : (squareWidth / 2.0) - labelWidth;
 		}
 
@@ -918,27 +921,25 @@ function(window, undefined) {
 			oLabel.txBody.content.Recalculate_Page(0, true);
 		}
 
-		const sliceLabel = function (oLabel, maxWidth) {
+		const sliceLabel = function (oLabel, maxWidth, dotWidth) {
 			const paragraph = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0] : null
 			const contents = paragraph ? paragraph.Content : null;
-			let oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
-			if (!paragraph || !contents || !maxWidth) {
+			let oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : null;
+			if (!paragraph || !contents || !maxWidth || !oSize) {
 				return;
 			}
-
 			let runTexts = contents[0].Content;
-			oLabel.txBody.content.RecalculateContent(maxWidth, oSize.h, 2);
-
 			let addDots = false;
 
 			const getCondition = function (multiLine) {
 				// statement1 indicates whether paragraph consist of multiple lines
 				const statement1 = paragraph && Array.isArray(paragraph.Lines) && paragraph.Lines.length > 1;
 				// statement2 indicates label with overfitting
-				const statement2 = oSize.w > maxWidth
+				const statement2 = oSize.w > maxWidth;
 				return multiLine ? statement1 : statement2;
 			}
 
+			// true stands for multiple line problem, false stands for overwidth problem
 			const slice = function (multiLine) {
 				
 				// condition indecates whether multilines or overfitting
@@ -949,6 +950,21 @@ function(window, undefined) {
 					let left = 0;
 					let right = runTexts.length;
 					let mid = null;
+
+					// when dealing width width subtract the width of the dots from max width
+					if (!multiLine) {
+
+						// dot Width is equal across all the axis labels
+						if (dotWidth[0] === null) {
+							contents[0].AddToContent(0,new AscWord.CRunText(46), true);
+							const oDotSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
+							contents[0].Content = [];
+							dotWidth[0] = oDotSize.w;
+						}
+	
+						maxWidth -= (dotWidth[0] * 3);
+					}
+
 					while(right - left > 1) {
 						mid = (right + left) / 2 + 0.5 >> 0;
 						contents[0].Content = runTexts.slice(0, mid - 1);
@@ -960,17 +976,19 @@ function(window, undefined) {
 							left = mid;
 						}
 					}
+					left = (left === 0) ? 1 : left;
 					contents[0].Content = runTexts.slice(0, left);
 					oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
-					if (getCondition(multiLine) && left > 0) {
+					if (getCondition(multiLine) && left > 1) {
 						contents[0].Content = runTexts.slice(0, --left);
 					}
+					
 					addDots = true;
 				}
 
 			}
 
-			// hen rotation is applied then multiline labels should be sliced
+			// when rotation is applied then multiline labels should be sliced
 			slice(true);
 
 			// if overfitting is detected then label should be sliced
@@ -982,19 +1000,21 @@ function(window, undefined) {
 		if (Array.isArray(aLabels) && aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
+			const dotWidth = [null];
 			for (let i = 0; i < aLabels.length; i += jump) {
 				if (aLabels[i]) {
 					var oLabel = aLabels[i];
-					const sliced = sliceLabel(oLabel, rotatedMaxWidth);
+					const sliced = sliceLabel(oLabel, rotatedMaxWidth, dotWidth);
 					var oContent = oLabel.tx.rich.content;
 					oContent.SetApplyToAll(true);
 					oContent.SetParagraphAlign(AscCommon.align_Left);
 					oContent.SetParagraphIndent({FirstLine: 0.0, Left: 0.0});
 					oContent.SetApplyToAll(false);
-					var oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
+					const oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
+					addDots(sliced, oLabel);
+
 					// create a square around which rotation will be made;
 					const squareWidth = getSquareWidth(bDirection, oLabel, oSize.h);
-					addDots(sliced, oLabel);
 					let fBoxW = oLabelParams && oLabelParams.valid ? (cosAlpha * oSize.w) + (sinAlpha * oSize.h) : fMultiplier * (oSize.w + oSize.h);
 					var fBoxH = oLabelParams && oLabelParams.valid ? (sinAlpha * oSize.w) + (cosAlpha * oSize.h) : fBoxW;
 					if (fBoxH > fMaxHeight) {
@@ -1004,17 +1024,17 @@ function(window, undefined) {
 					fY0 = fAxisY + fDistance;
 					if (fDistance >= 0.0) {
 						fXC = oLabelParams && oLabelParams.valid ? fCurX : fCurX - oSize.w * fMultiplier / 2.0;
-						fYC = oLabelParams && oLabelParams.valid ? fY0 + squareWidth / 2.0 : fY0 + fBoxH / 2.0;
+						fYC = oLabelParams && oLabelParams.valid ? fY0 : fY0 + fBoxH / 2.0;
 					} else {
 						//fX1 = fCurX - oSize.h*fMultiplier;
-						fXC = fCurX + oSize.w * fMultiplier / 2.0;
-						fYC = fY0 - fBoxH / 2.0;
+						fXC = oLabelParams && oLabelParams.valid ? fCurX : fCurX + oSize.w * fMultiplier / 2.0;
+						fYC = oLabelParams && oLabelParams.valid ? fY0 : fY0 - fBoxH / 2.0;
 					}
 					var oTransform = oLabel.localTransformText;
 					oTransform.Reset();
 					
-					const translateInX = oLabelParams && oLabelParams.valid ? getTranslationX(bDirection, squareWidth, oSize.w) : -oSize.w / 2.0;
-					global_MatrixTransformer.TranslateAppend(oTransform, translateInX, -oSize.h / 2.0);
+					const translateInX = oLabelParams && oLabelParams.valid ? getTranslationX(this.align, bDirection, squareWidth, oSize.w) : -oSize.w / 2.0;
+					global_MatrixTransformer.TranslateAppend(oTransform, translateInX, - oSize.h / 2.0);
 					global_MatrixTransformer.RotateRadAppend(oTransform, fAngle);
 					global_MatrixTransformer.TranslateAppend(oTransform, fXC, fYC);
 					
@@ -1394,7 +1414,7 @@ function(window, undefined) {
 		return AscFormat.isRealNumber(nLblTickSkip) && nLblTickSkip > 0 ? nLblTickSkip : 1;
 	}
 
-	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex) {
+	function fLayoutHorLabelsBox(oLabelsBox, fY, fXStart, fXEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex, fRectHeight) {
 		if (!oLabelsBox) {
 			return;
 		}
@@ -1449,7 +1469,7 @@ function(window, undefined) {
 
 			// oLabelParams indecates necessary stuff such as label rotation, label skip, label format
 			const oLabelParams = oLabelsBox && oLabelsBox.axis && oLabelsBox.axis.params ? oLabelsBox.axis.params : new CLabelsParameters(nAxisType, sDataType);
-			oLabelParams.calculate(oLabelsBox, fAxisLength, nIndex);
+			oLabelParams.calculate(oLabelsBox, fAxisLength, fRectHeight,  nIndex);
 
 			//check whether rotation is applied or not
 			let statement = oLabelParams.valid ? oLabelParams.isRotated() : fMaxMinWidth > fCheckInterval;
@@ -1667,6 +1687,11 @@ function(window, undefined) {
 		let oPlotArea = this.getPlotArea();
 		if(!oPlotArea) return false;
 		return oPlotArea.isChartEx();
+	};
+	CChartSpace.prototype.isLayout = function () {
+		let oPlotArea = this.getPlotArea();
+		if(!oPlotArea) return false;
+		return !!oPlotArea.layout;
 	};
 	CChartSpace.prototype.fromOther = function(oChartSpace) {
 		if(oChartSpace.nvGraphicFramePr) {
@@ -5045,7 +5070,6 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
 		let oCorrectedRect = null;
-
 		let bWithoutLabels = false;
 		if(this.chart.plotArea.layout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER) {
 			bWithoutLabels = true;
@@ -5054,6 +5078,7 @@ function(window, undefined) {
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
 		const isChartEx = this.isChartEx();
+		const isLayout = this.isLayout();
 		let fHorPadding = 0.0;
 		let fVertPadding = 0.0;
 		let fHorInterval = null;
@@ -5252,7 +5277,7 @@ function(window, undefined) {
 						fForceContentWidth = Math.abs(fHorInterval) + fHorInterval / nTickLblSkip;
 					}
 					fDistance = fDistanceSign * oLabelsBox.getLabelsOffset();
-					fLayoutHorLabelsBox(oLabelsBox, fPos, fPosStart, fPosEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex);
+					fLayoutHorLabelsBox(oLabelsBox, fPos, fPosStart, fPosEnd, bOnTickMark, fDistance, bForceVertical, bNumbers, fForceContentWidth, nIndex, oBaseRect.h);
 					if(bLabelsExtremePosition) {
 						if(fDistance > 0) {
 							fVertPadding = -oLabelsBox.extY;
@@ -5320,7 +5345,7 @@ function(window, undefined) {
 					oCurAxis.nullPos = fBK;
 				}
 			}
-			if(oLabelsBox) {
+			if(oLabelsBox && !isLayout) {
 				if(oLabelsBox.x < fL) {
 					fL = oLabelsBox.x;
 				}
@@ -7390,6 +7415,7 @@ function(window, undefined) {
 		}
 		return oCopy;
 	};
+
 	CChartSpace.prototype.getChartSizes = function (bNotRecalculate) {
 		if (this.plotAreaRect && !this.recalcInfo.recalculateAxisVal) {
 			return {
@@ -11550,7 +11576,7 @@ function(window, undefined) {
 		this.fLabelWidth = null;
 	}
 
-	CLabelsParameters.prototype.calculate = function (oLabelsBox, fAxisLength, nIndex) {
+	CLabelsParameters.prototype.calculate = function (oLabelsBox, fAxisLength, fRectHeight, nIndex) {
 		// get height of label
 		this.bCalculated = !!nIndex;
 
@@ -11566,7 +11592,7 @@ function(window, undefined) {
 			this.calculateLabelsNumber(oLabelsBox);
 
 			// automatically calculate remaining parameters
-			this.calculateParams(oLabelsBox, fAxisLength);
+			this.calculateParams(oLabelsBox, fAxisLength, fRectHeight);
 
 			// save some updated params for future use
 			this.saveParams(oLabelsBox);
@@ -11620,12 +11646,10 @@ function(window, undefined) {
 		this.isUserDefinedRot = !!this.rot;
 	};
 
-	CLabelsParameters.prototype.calculateParams = function (oLabelsBox, fAxisLength) {
+	CLabelsParameters.prototype.calculateParams = function (oLabelsBox, fAxisLength, fRectHeight) {
 		// find max possible space allowed to fill by labels
-		const fTitleHeight = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.title ? oLabelsBox.chartSpace.chart.title.extY : 0;
-		const fDiagramHeight = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.extY : 0;
-		const fChartHeight = oLabelsBox.chartSpace.chart && oLabelsBox.chartSpace.chart.plotArea && oLabelsBox.chartSpace.chart.plotArea.layout ? oLabelsBox.chartSpace.chart.plotArea.layout.h : 0;
-		this.setMaxHeight(fDiagramHeight, fChartHeight, fTitleHeight);
+		const isLayout = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.isLayout() : false;
+		this.setMaxHeight(oLabelsBox, fRectHeight, isLayout ? oLabelsBox.chartSpace.chart.plotArea.layout : false);
 
 		// retrieve startingDate if exist
 		let msg = this.sDataType.split('_');
@@ -11653,11 +11677,32 @@ function(window, undefined) {
 		oLabelsBox.axis.params = this;
 	};
 
-	CLabelsParameters.prototype.setMaxHeight = function (diagramHeight, chartHeight, titleHeight) {
-		// heightMultiplier defines the allowed occupation percentage of axis compared to the graph whole Height. 
-		const heightMultiplier = chartHeight && (this.isUserDefinedLabelFormat || this.sDataType === 'string') ? (this.sDataType === 'string' ? 0.27 : 0.65) : 0.37;
-		const freeSpace = titleHeight ? (diagramHeight - titleHeight) * heightMultiplier : diagramHeight;
-		this.maxHeight = chartHeight && (this.isUserDefinedLabelFormat || this.sDataType === 'string') ? freeSpace * (1 - chartHeight) : heightMultiplier * freeSpace;
+	CLabelsParameters.prototype.setMaxHeight = function (oLabelsBox, fRectHeight, layout) {
+		if (!oLabelsBox) {
+			return;
+		}
+
+		if (layout && AscFormat.isRealNumber(layout.h) && layout.h !== 0) {
+			const fChartHeight = layout.h;
+			const fChartStart = layout.y;
+			// find chart height
+			const fTrueRectHeight = oLabelsBox.chartSpace && AscFormat.isRealNumber(oLabelsBox.chartSpace.extY) ? oLabelsBox.chartSpace.extY : fRectHeight / fChartHeight;
+			const fTrueRectStart = fTrueRectHeight * fChartStart;
+
+			// function to obtains standart margin
+			const margin = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chartObj ? oLabelsBox.chartSpace.chartObj.getStandartMargin() * 2 : 0;
+
+			// check wheter the axis is on top or on bottom, standart is bottom
+			const statement1 = !oLabelsBox.axis || (oLabelsBox.axis.axPos === AscFormat.AX_POS_B && oLabelsBox.axis.tickLblPos !== AscFormat.TICK_LABEL_POSITION_HIGH);
+			const statement2 = !oLabelsBox.axis || (oLabelsBox.axis.axPos === AscFormat.AX_POS_T && oLabelsBox.axis.tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH);
+			const isStandard = statement1 || statement2;
+
+			this.maxHeight = isStandard ? fTrueRectHeight - (fTrueRectStart + fRectHeight + margin) : fTrueRectStart - ((3 * margin) / 4);
+		} else {
+			//height multiplier defines the maximum occupation percentage
+			const heightMultiplier = 0.45;
+			this.maxHeight = fRectHeight * heightMultiplier;
+		}
 	};
 
 	CLabelsParameters.prototype.calculateNLblTickSkip = function (oLabelsBox, fAxisLength) {

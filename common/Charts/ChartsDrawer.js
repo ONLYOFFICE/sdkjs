@@ -206,6 +206,10 @@ CChartsDrawer.prototype =
 		//this._testChartsPaths();
 	},
 
+	getStandartMargin: function () {
+		return this.calcProp && AscFormat.isRealNumber(this.calcProp.pxToMM) ? standartMarginForCharts / this.calcProp.pxToMM : 0;
+	},
+
 	createChartEx: function (seria) {
 		this.charts = {};
 		switch (seria.layoutId) {
@@ -959,6 +963,7 @@ CChartsDrawer.prototype =
 		var axId = chartSpace.chart.plotArea.axId;
 		let isLeftAxis = false;
 		let isRightAxis = false;
+		let isTopExist = chartSpace && chartSpace.chart ? chartSpace.chart.title || (chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -1095,7 +1100,7 @@ CChartsDrawer.prototype =
 		if((null === pieChart) || is3dChart) {
 			left += this._getStandartMargin(isLeftAxis ? 1 : left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
-			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
+			top += this._getStandartMargin(isTopExist ? top : 1, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
 			right += this._getStandartMargin(isRightAxis ? 1 : right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
 		}
 
@@ -1450,8 +1455,16 @@ CChartsDrawer.prototype =
 		//считаем маргины
 		this._calculateMarginsChart(chartSpace);
 
-		this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;
-		this.calcProp.trueHeight = this.calcProp.heightCanvas - this.calcProp.chartGutter._top - this.calcProp.chartGutter._bottom;
+		const isLayout = this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.layout;
+		if (isLayout) {
+			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
+			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
+			this.calcProp.chartGutter._left = this.cChartSpace.chart.plotArea.x * this.calcProp.pxToMM;
+			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
+		} else {
+			this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;
+			this.calcProp.trueHeight = this.calcProp.heightCanvas - this.calcProp.chartGutter._top - this.calcProp.chartGutter._bottom;
+		}
 	},
 	
 	//****new calculate data****
@@ -5131,7 +5144,7 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		let widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
+		let widthLine = this.calcProp.trueWidth;
 		let bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
 		let posX = this.calcProp.chartGutter._left;
 		let posMinorY, posY, crossDiff;
@@ -5283,7 +5296,7 @@ CChartsDrawer.prototype =
 			crossBetween = 0;
 		}
 
-		var heightLine = this.calcProp.heightCanvas - (this.calcProp.chartGutter._bottom + this.calcProp.chartGutter._top);
+		var heightLine = this.calcProp.trueHeight;
 		var rightMargin = this.calcProp.widthCanvas - this.calcProp.chartGutter._right;
 		var posY = this.calcProp.chartGutter._top;
 		var posMinorX;
