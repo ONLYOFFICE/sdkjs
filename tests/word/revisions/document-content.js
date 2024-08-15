@@ -216,14 +216,13 @@ $(function ()
 		);
 		
 		AscTest.AcceptAllRevisionChanges();
-		
-		assert.strictEqual(cc.IsUseInDocument() && p.IsUseInDocument(), true, "Check if content control is still present in the document");
+		assert.strictEqual(cc.IsUseInDocument(), true, "Check if content control is still present in the document");
 		assert.deepEqual(
-			AscTest.GetParagraphReviewText(p),
+			AscTest.GetBlockLevelSdtReviewText(cc),
 			[
 				[reviewtype_Common, "123"]
 			],
-			"Check paragraph text after accepting all changes"
+			"Check content control text after accepting all changes"
 		);
 		
 		AscTest.SetTrackRevisions(false);

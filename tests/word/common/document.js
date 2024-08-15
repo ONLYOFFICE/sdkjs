@@ -181,6 +181,32 @@
 		});
 		return result;
 	}
+	function GetBlockLevelSdtText(cc)
+	{
+		let result = "";
+		cc.CheckRunContent(function(run)
+		{
+			result += run.GetText();
+		});
+		return result;
+	}
+	function GetBlockLevelSdtReviewText(cc)
+	{
+		let result = [];
+		cc.CheckRunContent(function(run)
+		{
+			let text = run.GetText();
+			if (!text || !text.length)
+				return;
+			
+			let reviewType = run.GetReviewType();
+			if (result.length && reviewType === result[result.length - 1][0])
+				result[result.length - 1][1] += text;
+			else
+				result.push([reviewType, text]);
+		});
+		return result;
+	}
 	function RemoveTableBorders(table)
 	{
 		function CreateNoneBorder()
@@ -483,53 +509,55 @@
 	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
-	AscTest.CreateLogicDocument      = CreateLogicDocument;
-	AscTest.GetLogicDocument         = CreateLogicDocument;
-	AscTest.CreateParagraph          = CreateParagraph;
-	AscTest.CreateRun                = CreateRun;
-	AscTest.CreateTable              = CreateTable;
-	AscTest.CreateImage              = CreateImage;
-	AscTest.CreateStyle              = CreateStyle;
-	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
-	AscTest.CreateRunStyle           = CreateRunStyle;
-	AscTest.CreateMath               = CreateMath;
-	AscTest.CreateBlockLvlSdt        = CreateBlockLevelSdt;
-	AscTest.CreateDefaultHeader      = CreateDefaultHeader;
-	AscTest.GetParagraphText         = GetParagraphText;
-	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
-	AscTest.RemoveTableBorders       = RemoveTableBorders;
-	AscTest.SetFillingFormMode       = SetFillingFormMode;
-	AscTest.SetEditingMode           = SetEditingMode;
-	AscTest.SetTrackRevisions        = SetTrackRevisions;
-	AscTest.AcceptAllRevisionChanges = AcceptAllRevisionChanges;
-	AscTest.RejectAllRevisionChanges = RejectAllRevisionChanges;
-	AscTest.PressKey                 = PressKey;
-	AscTest.MoveCursorLeft           = MoveCursorLeft;
-	AscTest.MoveCursorRight          = MoveCursorRight;
-	AscTest.Recalculate              = Recalculate;
-	AscTest.ClickMouseButton         = ClickMouseButton;
-	AscTest.ClearDocument            = ClearDocument;
-	AscTest.ClearParagraph           = ClearParagraph;
-	AscTest.AddTextToParagraph       = AddTextToParagraph;
-	AscTest.EnterText                = EnterText;
-	AscTest.CorrectEnterText         = CorrectEnterText;
-	AscTest.BeginCompositeInput      = BeginCompositeInput;
-	AscTest.ReplaceCompositeInput    = ReplaceCompositeInput;
-	AscTest.EndCompositeInput        = EndCompositeInput;
-	AscTest.EnterTextCompositeInput  = EnterTextCompositeInput;
-	AscTest.Key                      = Key;
-	AscTest.MoveCursorToParagraph    = MoveCursorToParagraph;
-	AscTest.AddNumbering             = AddNumbering;
-	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
-	AscTest.SelectDocumentRange      = SelectDocumentRange;
-	AscTest.GetFinalSection          = GetFinalSection;
-	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
-	AscTest.StartCollaboration       = StartCollaboration;
-	AscTest.SyncCollaboration        = SyncCollaboration;
-	AscTest.EndCollaboration         = EndCollaboration;
-	AscTest.SelectParagraphRange     = SelectParagraphRange;
-	AscTest.StartTextSpeaker         = StartTextSpeaker;
-	AscTest.StopTextSpeaker          = StopTextSpeaker;
+	AscTest.CreateLogicDocument        = CreateLogicDocument;
+	AscTest.GetLogicDocument           = CreateLogicDocument;
+	AscTest.CreateParagraph            = CreateParagraph;
+	AscTest.CreateRun                  = CreateRun;
+	AscTest.CreateTable                = CreateTable;
+	AscTest.CreateImage                = CreateImage;
+	AscTest.CreateStyle                = CreateStyle;
+	AscTest.CreateParagraphStyle       = CreateParagraphStyle;
+	AscTest.CreateRunStyle             = CreateRunStyle;
+	AscTest.CreateMath                 = CreateMath;
+	AscTest.CreateBlockLvlSdt          = CreateBlockLevelSdt;
+	AscTest.CreateDefaultHeader        = CreateDefaultHeader;
+	AscTest.GetParagraphText           = GetParagraphText;
+	AscTest.GetParagraphReviewText     = GetParagraphReviewText;
+	AscTest.GetBlockLevelSdtText       = GetBlockLevelSdtText;
+	AscTest.GetBlockLevelSdtReviewText = GetBlockLevelSdtReviewText;
+	AscTest.RemoveTableBorders         = RemoveTableBorders;
+	AscTest.SetFillingFormMode         = SetFillingFormMode;
+	AscTest.SetEditingMode             = SetEditingMode;
+	AscTest.SetTrackRevisions          = SetTrackRevisions;
+	AscTest.AcceptAllRevisionChanges   = AcceptAllRevisionChanges;
+	AscTest.RejectAllRevisionChanges   = RejectAllRevisionChanges;
+	AscTest.PressKey                   = PressKey;
+	AscTest.MoveCursorLeft             = MoveCursorLeft;
+	AscTest.MoveCursorRight            = MoveCursorRight;
+	AscTest.Recalculate                = Recalculate;
+	AscTest.ClickMouseButton           = ClickMouseButton;
+	AscTest.ClearDocument              = ClearDocument;
+	AscTest.ClearParagraph             = ClearParagraph;
+	AscTest.AddTextToParagraph         = AddTextToParagraph;
+	AscTest.EnterText                  = EnterText;
+	AscTest.CorrectEnterText           = CorrectEnterText;
+	AscTest.BeginCompositeInput        = BeginCompositeInput;
+	AscTest.ReplaceCompositeInput      = ReplaceCompositeInput;
+	AscTest.EndCompositeInput          = EndCompositeInput;
+	AscTest.EnterTextCompositeInput    = EnterTextCompositeInput;
+	AscTest.Key                        = Key;
+	AscTest.MoveCursorToParagraph      = MoveCursorToParagraph;
+	AscTest.AddNumbering               = AddNumbering;
+	AscTest.SetParagraphNumberingLvl   = SetParagraphNumberingLvl;
+	AscTest.SelectDocumentRange        = SelectDocumentRange;
+	AscTest.GetFinalSection            = GetFinalSection;
+	AscTest.SetCompatibilityMode       = SetCompatibilityMode;
+	AscTest.StartCollaboration         = StartCollaboration;
+	AscTest.SyncCollaboration          = SyncCollaboration;
+	AscTest.EndCollaboration           = EndCollaboration;
+	AscTest.SelectParagraphRange       = SelectParagraphRange;
+	AscTest.StartTextSpeaker           = StartTextSpeaker;
+	AscTest.StopTextSpeaker            = StopTextSpeaker;
 
 })(window);
 
