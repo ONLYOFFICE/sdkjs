@@ -2261,12 +2261,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cStrucTable.prototype.constructor = cStrucTable;
 	cStrucTable.prototype.type = cElementType.table;
 	cStrucTable.prototype.createFromVal = function (val, wb, ws, tablesMap) {
-		var res = new cStrucTable(val[0], wb, ws);
+		let res = new cStrucTable(val[0], wb, ws);
 		if (tablesMap && tablesMap[val["tableName"]]) {
 			val["tableName"] = tablesMap[val["tableName"]];
 		}
 		if (res._parseVal(val)) {
 			res._updateArea(null, false);
+		}
+		if (val["isCellInTable"]) {
+			res.isCellInTable = true;
 		}
 		if (val["shortName"]) {
 			// remove tableName in value string 
@@ -2338,13 +2341,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		// 	tblStr = table.name;
 		// }
 
-		if (!this.shortName) {
-			// не используется краткая запись внутри таблицы
+		if (!this.shortName && !(this.isCellInTable && isLocal)) {
+			// short notation is not used or cell is outside the table
 			tblStr = table ? table.name : this.tableName;
 		}
 
-
-		// todo либо изменить valueName или добавить флаг использования сокращенной записи
 		if (this.oneColumnIndex) {
 			// TODO add this.isCrossSign to use?
 			columns_1 = this.oneColumnIndex.name.replace(/([#[\]])/g, "'$1");

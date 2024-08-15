@@ -3743,7 +3743,7 @@
 	};
 	parserHelper.prototype.isTable = function (parserFormula, start_pos, local, callFromDefName)
 	{
-		let shortNameUsed, shortName;
+		let shortNameUsed, shortName, isCellInTable;
 		let formula = parserFormula.Formula,
 			ws = parserFormula.ws,
 			subSTR = formula.substring(start_pos);
@@ -3757,18 +3757,20 @@
 			this._reset();
 		}
 
-		// todo добавить другую регулярку?
-		/* checking a shortened record inside a table "=[Column]" */
-		if (subSTR && subSTR[0] === "[" && ws) {
-			if (parserFormula.parent) {
-				let table = ws.getTableByRowCol(parserFormula.parent.nRow, parserFormula.parent.nCol);
-				if (table) {
-					let shorNameMatch = subSTR.match(/\[[^\[\]]*\]/);
-					if (shorNameMatch && shorNameMatch[0]) {
-						subSTR = table.DisplayName + subSTR;	// add table from cell coords in to the formula string and then call XRegExp.exec
-						shortName = shorNameMatch[0];
-						shortNameUsed = true;
-					}
+
+		/* check if the cell is inside the table and whether short name is used "=[Column]" */
+		if (parserFormula.parent) {
+			let table = ws.getTableByRowCol(parserFormula.parent.nRow, parserFormula.parent.nCol);
+			isCellInTable = table ? true : false;
+			if (isCellInTable && subSTR && subSTR[0] === "[" && ws) {
+				// todo добавить другую регулярку?
+				let shorNameMatch = subSTR.match(/\[[^\[\]]*\]/);
+				
+				if (shorNameMatch && shorNameMatch[0]) {
+					shortName = subSTR;		// set shortName definitely before changing subSTR
+					subSTR = table.DisplayName + subSTR;	// add table from cell coords in to the formula string and then call XRegExp.exec
+					// shortName = shorNameMatch[0];
+					shortNameUsed = true;
 				}
 			}
 		}
@@ -3778,6 +3780,8 @@
 
 		if (match != null && match["tableName"])
 		{
+			match["isCellInTable"] = isCellInTable;
+
 			if (shortName && shortNameUsed) {
 				this.operand_str = shortName;
 				this.pCurrPos += shortName.length;
