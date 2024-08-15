@@ -83,7 +83,7 @@ ParaFieldChar.prototype.Copy = function()
 };
 ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 {
-	if (!this.IsSeparate())
+	if (!this.IsEnd())
 		return;
 	
 	this.textPr = textPr;
@@ -94,7 +94,7 @@ ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 };
 ParaFieldChar.prototype.Draw = function(x, y, context)
 {
-	if (!this.IsSeparate() || null === this.numText)
+	if (!this.IsEnd() || null === this.numText)
 		return;
 	
 	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
@@ -278,7 +278,7 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 };
 ParaFieldChar.prototype.IsNumValue = function()
 {
-	return (this.IsSeparate() && null !== this.numText);
+	return (this.IsEnd() && null !== this.numText);
 };
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
@@ -1497,20 +1497,31 @@ CComplexField.prototype.SelectFieldValue = function()
 	var oDocument = this.GetTopDocumentContent();
 	if (!oDocument)
 		return;
-
-	oDocument.RemoveSelection();
-
-	var oRun = this.SeparateChar.GetRun();
-	oRun.Make_ThisElementCurrent(false);
-	oRun.SetCursorPosition(oRun.GetElementPosition(this.SeparateChar) + 1);
-	var oStartPos = oDocument.GetContentPosition(false);
-
-	oRun = this.EndChar.GetRun();
-	oRun.Make_ThisElementCurrent(false);
-	oRun.SetCursorPosition(oRun.GetElementPosition(this.EndChar));
-	var oEndPos = oDocument.GetContentPosition(false);
-
-	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
+	
+	if (!this.SeparateChar)
+	{
+		let endRun = this.EndChar.GetRun();
+		endRun.Make_ThisElementCurrent(false);
+		endRun.SetCursorPosition(endRun.GetElementPosition(this.EndChar));
+		let endPos = oDocument.GetContentPosition(false);
+		oDocument.SetSelectionByContentPositions(endPos, endPos);
+	}
+	else
+	{
+		oDocument.RemoveSelection();
+		
+		var oRun = this.SeparateChar.GetRun();
+		oRun.Make_ThisElementCurrent(false);
+		oRun.SetCursorPosition(oRun.GetElementPosition(this.SeparateChar) + 1);
+		var oStartPos = oDocument.GetContentPosition(false);
+		
+		oRun = this.EndChar.GetRun();
+		oRun.Make_ThisElementCurrent(false);
+		oRun.SetCursorPosition(oRun.GetElementPosition(this.EndChar));
+		var oEndPos = oDocument.GetContentPosition(false);
+		
+		oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
+	}
 };
 CComplexField.prototype.SelectFieldCode = function()
 {
@@ -1524,10 +1535,11 @@ CComplexField.prototype.SelectFieldCode = function()
 	oRun.Make_ThisElementCurrent(false);
 	oRun.SetCursorPosition(oRun.GetElementPosition(this.BeginChar) + 1);
 	var oStartPos = oDocument.GetContentPosition(false);
-
-	oRun = this.SeparateChar.GetRun();
+	
+	let endChar = this.SeparateChar ? this.SeparateChar : this.EndChar;
+	oRun = endChar.GetRun();
 	oRun.Make_ThisElementCurrent(false);
-	oRun.SetCursorPosition(oRun.GetElementPosition(this.SeparateChar));
+	oRun.SetCursorPosition(oRun.GetElementPosition(endChar));
 	var oEndPos = oDocument.GetContentPosition(false);
 
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
@@ -1557,8 +1569,8 @@ CComplexField.prototype.GetFieldValueText = function()
 {
 	let logicDocument = this.LogicDocument;
 	var oDocument = this.GetTopDocumentContent();
-	if (!oDocument)
-		return;
+	if (!oDocument || !this.SeparateChar)
+		return "";
 	
 	let state = logicDocument ? logicDocument.SaveDocumentState() : null;
 	oDocument.RemoveSelection();
@@ -1583,13 +1595,14 @@ CComplexField.prototype.GetFieldValueText = function()
 };
 CComplexField.prototype.GetFieldValueTextPr = function(isCompiled)
 {
+	let fieldChar = this.SeparateChar ? this.SeparateChar : this.EndChar;
 	if (isCompiled)
 	{
-		let run       = this.SeparateChar.GetRun();
+		let run       = fieldChar.GetRun();
 		let runParent = run.GetParent();
 		let runPos    = run.private_GetPosInParent(runParent);
 		
-		let inRunPos  = run.GetElementPosition(this.SeparateChar);
+		let inRunPos  = run.GetElementPosition(fieldChar);
 		if (inRunPos >= run.GetElementsCount() - 1
 			&& runParent
 			&& runParent.GetElement
@@ -1609,9 +1622,9 @@ CComplexField.prototype.GetFieldValueTextPr = function(isCompiled)
 		
 		let state = logicDocument.SaveDocumentState();
 		
-		let run = this.SeparateChar.GetRun();
+		let run = fieldChar.GetRun();
 		run.Make_ThisElementCurrent(false);
-		run.SetCursorPosition(run.GetElementPosition(this.SeparateChar) + 1);
+		run.SetCursorPosition(run.GetElementPosition(fieldChar) + 1);
 		
 		logicDocument.MoveCursorRight(true, false);
 		let textPr = logicDocument.GetDirectTextPr();
@@ -1621,15 +1634,17 @@ CComplexField.prototype.GetFieldValueTextPr = function(isCompiled)
 };
 CComplexField.prototype.GetTopDocumentContent = function()
 {
-	if (!this.BeginChar || !this.SeparateChar || !this.EndChar)
+	if (!this.BeginChar || !this.EndChar)
 		return null;
-
-	var oTopDocument = this.BeginChar.GetTopDocumentContent();
-
-	if (oTopDocument !== this.EndChar.GetTopDocumentContent() || oTopDocument !== this.SeparateChar.GetTopDocumentContent())
+	
+	let topDocument = this.BeginChar.GetTopDocumentContent();
+	if (topDocument !== this.EndChar.GetTopDocumentContent())
 		return null;
-
-	return oTopDocument;
+	
+	if (this.SeparateChar && topDocument !== this.SeparateChar.GetTopDocumentContent())
+		return null;
+	
+	return topDocument;
 };
 CComplexField.prototype.IsUse = function()
 {

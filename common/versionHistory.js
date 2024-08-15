@@ -59,20 +59,32 @@
     }
   }
 
-  asc_CVersionHistory.prototype.update = function(newObj) {
-    var bUpdate = (this.docId !== newObj.docId || this.url !== newObj.url || this.urlChanges !== newObj.urlChanges || this.currentChangeId > newObj.currentChangeId);
-    if (bUpdate) {
-      this.docId = newObj.docId;
-      this.url = newObj.url;
-      this.urlChanges = newObj.urlChanges;
-      this.currentChangeId = -1;
-      this.changes = null;
-	  this.token = newObj.token;
+  asc_CVersionHistory.prototype.update = function(newObj)
+  {
+    let bUpdate =  this.docId !== newObj.docId
+                            || this.url !== newObj.url
+                            || this.urlChanges !== newObj.urlChanges
+                            || this.currentChangeId > newObj.currentChangeId;
+
+    if (bUpdate)
+    {
+      this.docId            = newObj.docId;
+      this.url              = newObj.url;
+      this.urlChanges       = newObj.urlChanges;
+      this.currentChangeId  = -1;
+      this.changes          = null;
+	  this.token            = newObj.token;
     }
-    this.colors = newObj.colors;
-    this.newChangeId = newObj.currentChangeId;
-	this.isRequested = newObj.isRequested;
-	this.serverVersion = newObj.serverVersion;
+
+    this.colors         = newObj.colors;
+    this.newChangeId    = newObj.currentChangeId;
+	this.isRequested    = newObj.isRequested;
+	this.serverVersion  = newObj.serverVersion;
+    this.userId         = newObj.userId;
+    this.userName       = newObj.userName;
+    this.userColor      = newObj.userColor;
+    this.dateOfRevision = newObj.dateOfRevision;
+
 	this.documentSha256 = newObj.documentSha256;
     return bUpdate;
   };
@@ -83,9 +95,11 @@
     }
     var color;
     this.newChangeId = (null == this.newChangeId) ? (this.changes.length - 1) : this.newChangeId;
-    for (var i = this.currentChangeId + 1; i <= this.newChangeId && i < this.changes.length; ++i) {
+    for (let i = this.currentChangeId + 1; i <= this.newChangeId && i < this.changes.length; ++i)
+    {
       color = this.colors[i];
-      editor._coAuthoringSetChanges(this.changes[i], i !== this.newChangeId ? null : (color ? new CDocumentColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF) : new CDocumentColor(191, 255, 199)));
+      let currentColor = (color ? new CDocumentColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF) : new CDocumentColor(191, 255, 199))
+      editor._coAuthoringSetChanges(this.changes[i], i !== this.newChangeId ? null : currentColor);
     }
     this.currentChangeId = this.newChangeId;
   };

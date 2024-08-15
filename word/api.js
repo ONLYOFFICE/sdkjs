@@ -14010,7 +14010,12 @@ background-repeat: no-repeat;\
 	{
 		return this.isHandMode && this.isRestrictionForms();
 	};
-	
+
+
+	asc_docs_api.prototype.asc_getCoHistory = function()
+	{
+		return AscCommon.CollaborativeEditing.getCoHistory();
+	};
 	asc_docs_api.prototype.asc_putPageColor = function(color)
 	{
 		let logicDocument = this.private_GetLogicDocument();
@@ -14054,6 +14059,28 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_insertTextFromUrl = function (url, token) {
 		const insertDocumentManager = new AscCommonWord.CInsertDocumentManager(this);
 		insertDocumentManager.insertTextFromUrl(url, token);
+	};
+	
+	asc_docs_api.prototype.asc_showDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return false;
+		
+		return AscCommon.CollaborativeEditing.CoHistory.RecoverDeletedText()
+	};
+	asc_docs_api.prototype.asc_isShowedDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return false;
+		
+		return AscCommon.CollaborativeEditing.CoHistory.HaveDeletedTextRecovery()
+	};
+	asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory = function()
+	{
+		if (!this.getVersionHistory())
+			return;
+		
+		AscCommon.CollaborativeEditing.CoHistory.UndoDeletedTextRecovery();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -14869,6 +14896,12 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["asc_insertTextFromFile"] = asc_docs_api.prototype.asc_insertTextFromFile;
 	asc_docs_api.prototype["asc_insertTextFromUrl"] = asc_docs_api.prototype.asc_insertTextFromUrl;
+	
+	asc_docs_api.prototype["asc_showDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_showDeletedTextInVersionHistory;
+	asc_docs_api.prototype["asc_isShowedDeletedTextInVersionHistory"] = asc_docs_api.prototype.asc_isShowedDeletedTextInVersionHistory;
+	asc_docs_api.prototype["asc_hideDeletedTextInVersionHistory"]     = asc_docs_api.prototype.asc_hideDeletedTextInVersionHistory;
+
+	asc_docs_api.prototype["asc_getCoHistory"] = asc_docs_api.prototype.asc_getCoHistory;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

@@ -21363,6 +21363,7 @@
 	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
 	
 	Api.prototype["Px2Emu"]                          = Px2Emu;
+	Api.prototype["Mm2Px"]                           = Mm2Px;
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -22682,6 +22683,10 @@
 	function Px2Emu(px)
 	{
 		return private_MM2EMU(AscCommon.g_dKoef_pix_to_mm * px);
+	}
+	function Mm2Px(mm)
+	{
+		return mm * AscCommon.g_dKoef_mm_to_pix;
 	}
 
 	function private_StartSilentMode()

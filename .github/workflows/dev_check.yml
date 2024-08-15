@@ -47,6 +47,7 @@ jobs:
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/conditionalFormattingTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/ExternalReference.html
           node-qunit-puppeteer tests/word/unit-tests/paragraphContentPos.html
+          node-qunit-puppeteer tests/word/unit-tests/deleted-text-recovery.html
           node-qunit-puppeteer tests/word/content-control/block-level/cursorAndSelection.html
           node-qunit-puppeteer tests/word/content-control/inline-level/checkbox.html
           node-qunit-puppeteer tests/word/content-control/inline-level/cursorAndSelection.html

@@ -431,6 +431,15 @@
 	CPluginWindow.prototype.show = function(settings)
 	{
 		var url = settings.url;
+
+		if ((0 === url.indexOf("http://")) || (0 === url.indexOf("https://")) || (0 === url.indexOf("file://")) || (0 === url.indexOf("www.")))
+		{
+			let location  = window.location;
+			let start = location.pathname.lastIndexOf('/') + 1;
+			let file = location.pathname.substring(start);
+			url = location.href.replace(file, url);
+		}
+
 		if (-1 === url.indexOf(".html?"))
 			url += "?windowID=";
 		else

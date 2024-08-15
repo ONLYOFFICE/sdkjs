@@ -1227,7 +1227,7 @@ CShape.prototype.setStartPage = function(pageIndex, bNoResetSelectPage, bCheckCo
 						{
 							return true;
 						}
-						else if (para_FieldChar === oItem.Type && oItem.IsSeparate())
+						else if (para_FieldChar === oItem.Type && oItem.IsEnd())
 						{
 							var oComplexField = oItem.GetComplexField();
 							if (oComplexField)

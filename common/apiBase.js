@@ -2628,6 +2628,10 @@
 			AscCommon.CollaborativeEditing.Apply_Changes();
 		}
 	};
+	baseEditorsApi.prototype.getVersionHistory = function()
+	{
+		return this.VersionHistory;
+	};
 	baseEditorsApi.prototype.asc_undoAllChanges = function()
 	{
 	};

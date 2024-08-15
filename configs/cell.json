@@ -46,7 +46,9 @@
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",
-
+			
+			"common/collaboration/deleted-text-recovery.js",
+			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
