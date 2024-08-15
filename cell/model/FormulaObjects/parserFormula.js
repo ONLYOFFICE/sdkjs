@@ -7435,6 +7435,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (found_operand.type !== cElementType.error) {
 					parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
 				}
+				t.ca = isRecursiveFormula(found_operand, t);
 			}
 
 			/* Referens to DefinedNames */ else if (parserHelp.isName.call(ph, t.Formula, ph.pCurrPos)) {

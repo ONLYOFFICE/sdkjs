@@ -14796,6 +14796,9 @@
 				}
 			}
 		}, this, oListeners);
+		if (!g_cCalcRecursion.getStartCellIndex() && oCellListeners.bbox && oCellListeners.bbox.contains(this.nCol, this.nRow)) {
+			g_cCalcRecursion.setStartCellIndex({cellId: nCellIndex, wsName: this.ws.getName().toLowerCase()});
+		}
 	};
 	/**
 	 * Function returns an array of reference cells from outStack attribute of parserFormula class.
