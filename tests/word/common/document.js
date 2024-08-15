@@ -219,6 +219,20 @@
 		
 		logicDocument.SetLocalTrackRevisions(turnOn);
 	}
+	function AcceptAllRevisionChanges()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.AcceptAllRevisionChanges();
+	}
+	function RejectAllRevisionChanges()
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.RejectAllRevisionChanges();
+	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
 		if (!logicDocument)
@@ -487,6 +501,8 @@
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
 	AscTest.SetTrackRevisions        = SetTrackRevisions;
+	AscTest.AcceptAllRevisionChanges = AcceptAllRevisionChanges;
+	AscTest.RejectAllRevisionChanges = RejectAllRevisionChanges;
 	AscTest.PressKey                 = PressKey;
 	AscTest.MoveCursorLeft           = MoveCursorLeft;
 	AscTest.MoveCursorRight          = MoveCursorRight;

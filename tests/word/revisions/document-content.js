@@ -41,7 +41,7 @@ $(function ()
 		logicDocument.AddNewParagraph();
 	};
 	
-	QUnit.test("Remove/replace text in a single run", function (assert)
+	QUnit.test("Test adding a new paragraph if track revisions is on", function (assert)
 	{
 		let isTrack = false;
 		
@@ -180,6 +180,50 @@ $(function ()
 				reviewtype_Remove,
 				reviewtype_Common
 			]
+		);
+		
+		AscTest.SetTrackRevisions(false);
+	});
+	
+	
+	QUnit.module("Remove/replace text in a block-level sdt");
+	QUnit.test("Check if all content of the sdt was deleted (bug 67071)", function(assert)
+	{
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		let cc = AscTest.CreateBlockLvlSdt();
+		
+		logicDocument.AddToContent(0, p);
+		logicDocument.AddToContent(0, cc);
+		
+		p = cc.GetElement(0);
+		
+		cc.SelectContentControl();
+		AscTest.EnterText("Text");
+		
+		cc.SelectContentControl();
+		
+		AscTest.SetTrackRevisions(true);
+		
+		AscTest.EnterText("123");
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Remove, "Text"],
+				[reviewtype_Add, "123"],
+			],
+			"Select text. Enter text over selection"
+		);
+		
+		AscTest.AcceptAllRevisionChanges();
+		
+		assert.strictEqual(cc.IsUseInDocument() && p.IsUseInDocument(), true, "Check if content control is still present in the document");
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Common, "123"]
+			],
+			"Check paragraph text after accepting all changes"
 		);
 		
 		AscTest.SetTrackRevisions(false);
