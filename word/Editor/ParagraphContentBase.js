@@ -1275,6 +1275,20 @@ CParagraphContentWithContentBase.prototype.OnContentChange = function()
 			oParagraph.OnContentChange();
 	}
 };
+CParagraphContentWithContentBase.prototype.OnTextPrChange = function()
+{
+	let oParent = this.GetParent();
+	if (oParent && oParent.OnTextPrChange)
+	{
+		oParent.OnTextPrChange();
+	}
+	else
+	{
+		let oParagraph = this.GetParagraph();
+		if (oParagraph)
+			oParagraph.OnTextPrChange();
+	}
+};
 
 /**
  * Это базовый класс для элементов параграфа, которые сами по себе могут содержать элементы параграфа.

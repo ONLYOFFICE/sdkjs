@@ -8308,6 +8308,8 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		if (para_End === this.Content[nPos].Type)
 			return this.Paragraph.TextPr.Apply_TextPr(TextPr);
 	}
+
+	this.OnTextPrChange();
 };
 ParaRun.prototype.ApplyPr = function(oTextPr)
 {
