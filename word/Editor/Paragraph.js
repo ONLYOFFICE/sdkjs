@@ -1856,7 +1856,7 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
 
 	var oNumbering = oParent.GetNumbering();
 	var oNumInfo   = oParent.CalculateNumberingValues(this, oNumPr);
-	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText);
+	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText, this.GetNumberingTextPr().Lang);
 };
 /**
  * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
@@ -14375,12 +14375,12 @@ Paragraph.prototype.GetCommentMark = function(sId, isStart)
 
 	return null;
 };
-Paragraph.prototype.MoveCursorToCommentMark = function(sId)
+Paragraph.prototype.MoveCursorToCommentMark = function(oParaComment)
 {
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
 		var oItem = this.Content[nPos];
-		if (para_Comment === oItem.Type && sId === oItem.CommentId)
+		if (oItem === oParaComment)
 		{
 			if (oItem.IsCommentStart())
 			{

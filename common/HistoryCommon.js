@@ -1210,6 +1210,7 @@
 				break;
 			case AscDFH.historydescription_Document_ConvertTableToText:
 				sString = "Document_ConvertTableToText";
+				break;
 			case AscDFH.historydescription_Document_ResolveAllComments:
 				sString = "Document_ResolveAllComments";
 				break;
@@ -1224,6 +1225,7 @@
 				break;
 			case AscDFH.historydescription_Document_ConvertMathView:
 				sString = "Document_ConvertMathView";
+				break;
 			case AscDFH.historydescription_Document_ConvertMathDisplayMode:
 				sString = "Document_ConvertMathDisplayMode";
 				break;
@@ -1291,13 +1293,37 @@
 				sString = "Document_ComplexField_MergeFormat";
 				break;
 			case AscDFH.historydescription_Presentation_ResetSlideBackground:
-				sString = "historydescription_Presentation_ResetSlideBackground";
+				sString = "Presentation_ResetSlideBackground";
 				break;
 			case AscDFH.historydescription_Presentation_ApplyBackgroundToAll:
-				sString = "historydescription_Presentation_ApplyBackgroundToAll";
+				sString = "Presentation_ApplyBackgroundToAll";
 				break;
 			case AscDFH.historydescription_Presentation_ShowMasterShapes:
-				sString = "historydescription_Presentation_ShowMasterShapes";
+				sString = "Presentation_ShowMasterShapes";
+				break;
+			case AscDFH.historydescription_BuilderScript:
+				sString = "BuilderScript";
+				break;
+			case AscDFH.historydescription_Document_AddRemoveBeforeAfterParagraph:
+				sString = "Document_AddRemoveBeforeAfterParagraph";
+				break;
+			case AscDFH.historydescription_Document_SectionPageNumFormat:
+				sString = "Document_SectionPageNumFormat";
+				break;
+			case AscDFH.historydescription_Document_SetPageColor:
+				sString = "Document_SetPageColor";
+				break;
+			case AscDFH.historydescription_Document_InsertTextFromFile:
+				sString = "Document_InsertTextFromFile";
+				break;
+			case AscDFH.historydescription_Document_AddComplexField:
+				sString = "Document_AddComplexField";
+				break;
+			case AscDFH.historydescription_Document_EditComplexFieldInstruction:
+				sString = "Document_EditComplexFieldInstruction";
+				break;
+			case AscDFH.historydescription_Collaborative_DeletedTextRecovery:
+				sString = "Collaborative_DeletedTextRecovery";
 				break;
 		}
 		return sString;
@@ -1797,7 +1823,7 @@
 	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
 	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
 	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
-	
+
 	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
@@ -1809,7 +1835,7 @@
 	window['AscDFH'].historyitem_Pdf_FreeText				= 2218 << 16;
 	window['AscDFH'].historyitem_Pdf_Drawing				= 2219 << 16;
 
-	
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4313,7 +4339,7 @@
 	
 
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Forms 
+	// Типы изменений в PDF Forms
 	//------------------------------------------------------------------------------------------------------------------
 
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
@@ -4324,9 +4350,9 @@
 
 
 	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
-	
+
 	//------------------------------------------------------------------------------------------------------------------
-	// Типы изменений в PDF Annots 
+	// Типы изменений в PDF Annots
 	//------------------------------------------------------------------------------------------------------------------
 
 	// Common
@@ -4352,7 +4378,7 @@
 
 	// annot line
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
-	
+
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Text Shape 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4819,6 +4845,9 @@
 	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
 	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
 	window['AscDFH'].historydescription_Document_InsertTextFromFile                 = 0x01b3;
+	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
+	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;
+	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01b6;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

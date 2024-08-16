@@ -2710,7 +2710,45 @@ ParaRun.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph
 
 	oNewParagraph.AddToContent(oNewParagraph.Content.length, oNewRun, false);
 };
+ParaRun.prototype.SplitForSpreadCollaborativeMark = function(CurPos) // переносим сами объекты, а не копии
+{
+	AscCommon.History.Add(new CChangesRunOnStartSplit(this, CurPos));
+	AscCommon.CollaborativeEditing.OnStart_SplitRun(this, CurPos);
 
+	let oParent		= this.GetParent();
+
+	var bMathRun = this.Type == para_Math_Run;
+	var NewRun = new ParaRun(this.Paragraph, false);
+	NewRun.SetReviewTypeWithInfo(this.ReviewType, this.ReviewInfo ? this.ReviewInfo.Copy() : undefined);
+	if(bMathRun)
+		NewRun.Set_MathPr(this.MathPrp.Copy());
+
+	// Копируем настройки
+	NewRun.SetPr(this.Pr.Copy(true));
+
+	for (let nIndex = CurPos, nNewIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex, ++nNewIndex)
+	{
+		let oNewItem = this.Content[nIndex];
+		NewRun.AddToContent(nNewIndex, oNewItem, false);
+		if (para_FieldChar === this.Content[nIndex].Type)
+		{
+			let oComplexField = this.Content[nIndex].GetComplexField();
+			if (oComplexField)
+				oComplexField.ReplaceChar(oNewItem);
+		}
+	}
+
+	this.RemoveFromContent(CurPos, this.Content.length - CurPos, true);
+
+	AscCommon.History.Add(new CChangesRunOnEndSplit(this, NewRun));
+	AscCommon.CollaborativeEditing.OnEnd_SplitRun(NewRun);
+
+	return NewRun;
+};
+ParaRun.prototype.GetCollaborativeMarks = function ()
+{
+	return this.CollaborativeMarks.Ranges;
+}
 ParaRun.prototype.Check_NearestPos = function(ParaNearPos, Depth)
 {
     var RunNearPos = new CParagraphElementNearPos();

@@ -17426,20 +17426,21 @@ $(function () {
 		ws.getRange2("A1").setValue("5.6");
 		ws.getRange2("A2").setValue("8.2");
 		ws.getRange2("A3").setValue("9.2");
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 0, 3); // A4
 
-		oParser = new parserFormula("DEVSQ(5.6,8.2,9.2)", "A1", ws);
+		oParser = new parserFormula("DEVSQ(5.6,8.2,9.2)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(difBetween(oParser.calculate().getValue(), 6.906666666666665), true);
 
-		oParser = new parserFormula("DEVSQ({5.6,8.2,9.2})", "A1", ws);
+		oParser = new parserFormula("DEVSQ({5.6,8.2,9.2})", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(difBetween(oParser.calculate().getValue(), 6.906666666666665), true);
 
-		oParser = new parserFormula("DEVSQ(5.6,8.2,\"9.2\")", "A1", ws);
+		oParser = new parserFormula("DEVSQ(5.6,8.2,\"9.2\")", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(difBetween(oParser.calculate().getValue(), 3.379999999999999), true);
 
-		oParser = new parserFormula("DEVSQ(" + ws.getName() + "!A1:A3)", "A1", ws);
+		oParser = new parserFormula("DEVSQ(" + ws.getName() + "!A1:A3)", cellWithFormula, ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(difBetween(oParser.calculate().getValue(), 6.906666666666665), true);
 
@@ -17982,56 +17983,57 @@ $(function () {
 		ws2.getRange2("A2").setValue("2");
 		ws2.getRange2("B1").setValue("3");
 		ws2.getRange2("B2").setValue("4");
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 0, 2);
 
-		oParser = new parserFormula("FORECAST(1,A1:A2,B1:B2)", "A1", ws);
+		oParser = new parserFormula("FORECAST(1,A1:A2,B1:B2)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "FORECAST(1,A1:A2,B1:B2)");
 		assert.strictEqual(oParser.calculate().getValue(), -1, "Result of FORECAST(1,A1:A2,B1:B2)");
 
 		// for bug 65245
-		oParser = new parserFormula("FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2)", "A1", ws);
+		oParser = new parserFormula("FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2). Bug 65245 test");
 		assert.strictEqual(oParser.calculate().getValue(), -1, "Result of FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2)");
 
 		// errors
-		oParser = new parserFormula("FORECAST(#N/A,A1:A2,B1:B2)", "A1", ws);
+		oParser = new parserFormula("FORECAST(#N/A,A1:A2,B1:B2)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "FORECAST(#N/A,A1:A2,B1:B2)");
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST(#N/A,A1:A2,B1:B2)");
 
-		oParser = new parserFormula("FORECAST(1,#NUM!,#N/A)", "A1", ws);
+		oParser = new parserFormula("FORECAST(1,#NUM!,#N/A)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "FORECAST(1,#NUM!,#N/A)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST(1,#NUM!,#N/A)");
 
-		oParser = new parserFormula("FORECAST(1,A1:A2,#NUM!)", "A1", ws);
+		oParser = new parserFormula("FORECAST(1,A1:A2,#NUM!)", cellWithFormula, ws);
 		assert.ok(oParser.parse(), "FORECAST(1,A1:A2,#NUM!)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST(1,A1:A2,#NUM!)");
 
 		// strings
-		oParser = new parserFormula('FORECAST("1",A1:A2,B1:B2)', "A1", ws);
+		oParser = new parserFormula('FORECAST("1",A1:A2,B1:B2)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST("1",A1:A2,B1:B2)');
 		assert.strictEqual(oParser.calculate().getValue(), -1, 'Result of FORECAST("1",A1:A2,B1:B2)');
 
-		oParser = new parserFormula('FORECAST("1s",A1:A2,B1:B2)', "A1", ws);
+		oParser = new parserFormula('FORECAST("1s",A1:A2,B1:B2)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST("1s",A1:A2,B1:B2)');
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST("1s",A1:A2,B1:B2)');
 
-		oParser = new parserFormula('FORECAST(1,{1,"2"},{1,2})', "A1", ws);
+		oParser = new parserFormula('FORECAST(1,{1,"2"},{1,2})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST(1,{1,"2"},{1,2})');
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(1,{1,"2"},{1,2})');
 
-		oParser = new parserFormula('FORECAST(1,{1,2},{"1",2})', "A1", ws);
+		oParser = new parserFormula('FORECAST(1,{1,2},{"1",2})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST(1,{1,2},{"1",2})');
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(1,{1,2},{"1",2})');
 
 		// bools
-		oParser = new parserFormula('FORECAST(FALSE,A1:A2,B1:B2)', "A1", ws);
+		oParser = new parserFormula('FORECAST(FALSE,A1:A2,B1:B2)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST(FALSE,A1:A2,B1:B2)');
 		assert.strictEqual(oParser.calculate().getValue(), -2, 'Result of FORECAST(FALSE,A1:A2,B1:B2)');
 
-		oParser = new parserFormula('FORECAST(TRUE,A1:A2,B1:B2)', "A1", ws);
+		oParser = new parserFormula('FORECAST(TRUE,A1:A2,B1:B2)', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST(TRUE,A1:A2,B1:B2)');
 		assert.strictEqual(oParser.calculate().getValue(), -1, 'Result of FORECAST(TRUE,A1:A2,B1:B2)');
 
-		oParser = new parserFormula('FORECAST(TRUE,{TRUE,2},{TRUE,2})', "A1", ws);
+		oParser = new parserFormula('FORECAST(TRUE,{TRUE,2},{TRUE,2})', cellWithFormula, ws);
 		assert.ok(oParser.parse(), 'FORECAST(TRUE,{TRUE,2},{TRUE,2})');
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(TRUE,{TRUE,2},{TRUE,2})');
 

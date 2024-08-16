@@ -67,6 +67,8 @@
 		this.Ligatures = Asc.LigaturesType.None;
 		this.Spacing   = 0;
 		this.AscFont   = false;
+		
+		this.ClearBuffer();
 	};
 	CParagraphTextShaper.prototype.GetCodePoint = function(oItem)
 	{

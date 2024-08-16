@@ -8123,8 +8123,9 @@ background-repeat: no-repeat;\
 		var _transition = this.WordControl.m_oLogicDocument.Slides[_cur].transition;
 
 		var _tr      = this.WordControl.m_oDrawingDocument.TransitionSlide;
-		_tr.Type     = _transition.TransitionType;
-		_tr.Param    = _transition.TransitionOption;
+		let oTypeAndOption = _transition.getTypeAndOption();
+		_tr.Type     = oTypeAndOption.Type;
+		_tr.Param    = oTypeAndOption.Option;
 		_tr.Duration = _transition.TransitionDuration;
 
 		_tr.Start(true, endCallback);

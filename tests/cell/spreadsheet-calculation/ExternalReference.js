@@ -762,7 +762,9 @@ $(function () {
 		//'[new.xlsx]Sheet1'!A1
 		let tempLink = '[new.xlsx]';
 		let parseResult = new AscCommonExcel.ParseResult([]);
-		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)", 'A2', ws);
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
+
+		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)", cellWithFormula, ws);
 		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
 
@@ -792,7 +794,7 @@ $(function () {
 		// 2.Area
 		//'[new.xlsx]Sheet1'!A1:A2
 		parseResult = new AscCommonExcel.ParseResult([]);
-		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)", 'A2', ws);
+		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)", cellWithFormula, ws);
 		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!A1:A2)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
 
@@ -822,7 +824,7 @@ $(function () {
 
 		// 3. Name
 		//'[new.xlsx]Sheet1'!test
-		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)", 'A2', ws);
+		oParser = new parserFormula("SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)", cellWithFormula, ws);
 		assert.ok(oParser.parse(true, null, parseResult), "SUM(" + "'" + tempLink + "Sheet1" + "'" + "!test)");
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", '#NAME!');
 
@@ -837,7 +839,7 @@ $(function () {
 		//on parse name3d use g_DefNameWorksheet
 		let RealDefNameWorksheet = AscCommonExcel.g_DefNameWorksheet;
 		AscCommonExcel.g_DefNameWorksheet = exWs;
-		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "A1:A2");
+		let oDefName = new Asc.asc_CDefName("test", "Sheet1!" + "$A$1:$A$2");
 		externalWb.editDefinesNames(null, oDefName);
 		AscCommonExcel.g_DefNameWorksheet = RealDefNameWorksheet;
 
@@ -862,7 +864,6 @@ $(function () {
 		//remove external reference
 		wb.removeExternalReferences([wb.externalReferences[0].getAscLink()]);
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
-
 	});
 
 

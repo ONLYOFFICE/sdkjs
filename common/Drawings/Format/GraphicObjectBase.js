@@ -1619,6 +1619,11 @@
 	CGraphicObjectBase.prototype.getWorksheet = function () {
 		return this.worksheet;
 	};
+	CGraphicObjectBase.prototype.getWorksheetView = function () {
+		let oWS = this.getWorksheet();
+		if(!oWS) return null;
+		
+	};
 	CGraphicObjectBase.prototype.getWorkbook = function () {
 		var oWorksheet = this.getWorksheet();
 		if (!oWorksheet) {
@@ -3013,6 +3018,12 @@
 		return this;
 	};
 
+	CGraphicObjectBase.prototype.getDrawingObjectsController = function() {
+		if(AscFormat.CShape.prototype.getDrawingObjectsController) {
+			return AscFormat.CShape.prototype.getDrawingObjectsController.call(this);
+		}
+		return null;
+	};
 
 
 	//TODO: refactor this methods: don't call functions from AscFormat.CShape.prototype

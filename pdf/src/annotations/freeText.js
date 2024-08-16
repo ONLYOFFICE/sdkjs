@@ -1415,10 +1415,6 @@
                 memory.WriteDouble(aFillColor[i]);
         }
 
-        // render
-        memory.annotFlags |= (1 << 22);
-        this.WriteRenderToBinary(memory);
-
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
         memory.WriteLong(memory.annotFlags);

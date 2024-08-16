@@ -1379,7 +1379,7 @@ CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum, oLan
 					nFormat = arrLvls[nNumberingLvl].GetFormat();
 					nNum = arrLvls[nNumberingLvl].GetStart();
 				}
-				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, oLang));
+				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, {lang: oLang}));
 			}
 		}
 	}

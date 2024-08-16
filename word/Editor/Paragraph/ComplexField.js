@@ -158,6 +158,10 @@ ParaFieldChar.prototype.GetRun = function()
 {
 	return this.Run;
 };
+ParaFieldChar.prototype.GetParagraph = function()
+{
+	return this.Run ? this.Run.GetParagraph() : null;
+};
 ParaFieldChar.prototype.SetXY = function(X, Y)
 {
 	this.X = X;
@@ -199,7 +203,7 @@ ParaFieldChar.prototype.SetNumValue = function(value, numFormat)
 		return;
 	}
 	
-	this.numText = AscCommon.IntToNumberFormat(value, numFormat);
+	this.numText = AscCommon.IntToNumberFormat(value, numFormat, {lang: this.textPr && this.textPr.Lang, isFromField: true, isSkipFractPart: true});
 	this.private_UpdateWidth();
 };
 /**
@@ -1854,6 +1858,34 @@ CComplexField.prototype.CheckType = function(type)
 CComplexField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
+};
+/**
+ * Получаем список связанных параграфов с данным полем (параграфы содержащие метки поля, это не обязательно будут
+ * все параграфы между метками начала и конца)
+ * @ returns {Array[AscWord.Paragraph]}
+ */
+CComplexField.prototype.GetRelatedParagraphs = function()
+{
+	if (!this.IsValid())
+		return [];
+	
+	let begPara = this.BeginChar.GetParagraph();
+	if (!begPara)
+		return [];
+	
+	let result = [begPara];
+	if (this.SeparateChar)
+	{
+		let sepPara = this.SeparateChar.GetParagraph();
+		if (sepPara !== begPara)
+			result.push(sepPara);
+	}
+	
+	let endPara = this.EndChar.GetParagraph();
+	if (-1 === result.indexOf(endPara))
+		result.push(endPara);
+	
+	return result;
 };
 
 function getRefInstruction(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)

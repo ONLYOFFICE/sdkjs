@@ -1858,8 +1858,8 @@ const arrAnswers = [
 						}, {start: true, id: 2}],
 						end  : [{
 							id  : 2,
-							data: {text: '1234'}
-						}, {id: 1, data: {text: '123'}}]
+							data: {text: '1234', quoteText: "hello"}
+						}, {id: 1, data: {text: '123', quoteText: "hello"}}]
 					}
 				})
 
@@ -1881,7 +1881,7 @@ const arrAnswers = [
 					start: [{
 						start: false,
 						id   : 0,
-						data : {text: '123'}
+						data : {text: '123', quoteText: "привет"}
 					}]
 				}
 			}), createParagraphInfo('привет', undefined, undefined, undefined, {
@@ -1896,7 +1896,7 @@ const arrAnswers = [
 					start: [{
 						start: false,
 						id   : 1,
-						data : {text: '123'}
+						data : {text: '123', quoteText: "привет"}
 					}]
 				}
 			})]
@@ -2076,7 +2076,7 @@ const arrAnswers = [
 						id   : 0,
 						data : {
 							text: '123',
-							quoteText: 'привет ой'
+							quoteText: 'привет ойпривет'
 						}
 					}]
 				}
@@ -2381,7 +2381,8 @@ const arrAnswers = [
 					end: [
 						{id: 1,
 							data: {
-								text: "comment"
+								text: "comment",
+								quoteText: "，这是一个测试段落"
 							}
 						}
 					]
@@ -2401,7 +2402,8 @@ const arrAnswers = [
 					end: [
 						{id: 1,
 							data: {
-								text: "comment"
+								text: "comment",
+								quoteText: "，这是一个测试段落"
 							}
 						}
 					]

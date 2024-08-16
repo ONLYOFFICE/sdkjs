@@ -959,7 +959,20 @@
 			}
 			return this.compiledStyles[level];
 		} else {
-			return editor.WordControl.m_oLogicDocument.globalTableStyles;
+			let oLogicDoc;
+			if(Asc.editor.private_GetLogicDocument) {
+				oLogicDoc = Asc.editor.private_GetLogicDocument();
+			}
+			if(oLogicDoc) {
+
+				if(oLogicDoc.globalTableStyles) {
+					return oLogicDoc.globalTableStyles;
+				}
+				if(oLogicDoc.Get_Styles) {
+					return oLogicDoc.Get_Styles(level);
+				}
+			}
+			return this.Get_Styles(0);
 		}
 	};
 

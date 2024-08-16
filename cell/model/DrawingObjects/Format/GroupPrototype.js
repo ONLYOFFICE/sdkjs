@@ -113,8 +113,6 @@ CGroupShape.prototype.recalcBounds = function()
     this.recalcInfo.recalculateBounds = true;
 };
 
-CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
-
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;

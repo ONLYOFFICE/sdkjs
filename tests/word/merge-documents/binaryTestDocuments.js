@@ -51,6 +51,8 @@ mockEditor.sync_RemoveComment = function ()
 {
 	
 };
+AscCommonWord.CDocument.prototype.Document_UpdateRulersState = function () {};
+
 let oCurrentTestDocument;
 AscCommonWord.CDocument.prototype.getTestObject = function ()
 {
@@ -555,7 +557,8 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 						oParaComment.SetCommentId(oComment.GetId());
 						const oStartParaComment = mapParaComments[oStartCommentInfo.id];
 						oStartParaComment.SetCommentId(oComment.GetId());
-
+						oComment.SetRangeMark(oParaComment);
+						oComment.SetRangeMark(oStartParaComment);
 					}
 					else
 					{
@@ -612,6 +615,8 @@ function createTestDocument(oDocument, arrParagraphsTextInfo)
 						oParaComment.SetCommentId(oComment.GetId());
 						const oStartParaComment = mapParaComments[oEndCommentInfo.id];
 						oStartParaComment.SetCommentId(oComment.GetId());
+						oComment.SetRangeMark(oParaComment);
+						oComment.SetRangeMark(oStartParaComment);
 
 					}
 					else

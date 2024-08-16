@@ -1003,29 +1003,18 @@
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);
 
-        if (sName != null)
-            Flags |= (1 << 0);
-
-        if (sContents != null)
-            Flags |= (1 << 1);
-        
-        if (BES != null || BEI != null)
-            Flags |= (1 << 2);
-        if (aStrokeColor != null)
-            Flags |= (1 << 3);
-        if (nBorder != null || nBorderW != null)
-            Flags |= (1 << 4);
-        if (sModDate != null)
-            Flags |= (1 << 5);
-        
-        memory.WriteLong(Flags);
+        let nPosForFlags = memory.GetCurPosition();
+        memory.Skip(4);
 
         // name
-        if (sName)
+        if (sName != null) {
+            Flags |= (1 << 0);
             memory.WriteString(sName);
+        }
 
         // contents
         if (sContents != null) {
+            Flags |= (1 << 1);
             if (typeof(sContents) != "string")
                 sContents = sContents.GetContents();
 
@@ -1034,17 +1023,20 @@
 
         // border effect
         if (BES != null || BEI != null) {
+            Flags |= (1 << 2);
             memory.WriteByte(BES);
             memory.WriteDouble(BEI);
         }
 
         if (aStrokeColor != null) {
+            Flags |= (1 << 3);
             memory.WriteLong(aStrokeColor.length);
             for (let i = 0; i < aStrokeColor.length; i++)
                 memory.WriteDouble(aStrokeColor[i]);
         }
 
         if (nBorder != null || nBorderW != null) {
+            Flags |= (1 << 4);
             memory.WriteByte(nBorder);
             memory.WriteDouble(nBorderW);
 
@@ -1058,8 +1050,20 @@
         }
 
         if (sModDate != null) {
+            Flags |= (1 << 5);
             memory.WriteString(sModDate);
         }
+
+        // render
+        let nEndPos = memory.GetCurPosition();
+        this.WriteRenderToBinary(memory);
+        if (nEndPos != memory.GetCurPosition())
+            Flags |= (1 << 6);
+
+        nEndPos = memory.GetCurPosition();
+        memory.Seek(nPosForFlags);
+        memory.WriteLong(Flags);
+        memory.Seek(nEndPos);
     };
     CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
         let nType = this.GetType();

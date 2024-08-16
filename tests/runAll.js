@@ -38,6 +38,7 @@ const allTests = [
 	'cell/spreadsheet-calculation/CopyPasteTests.html',
 	'cell/spreadsheet-calculation/AutoFilterTests.html',
 	'word/unit-tests/paragraphContentPos.html',
+	'word/unit-tests/deleted-text-recovery.html',
 	'word/content-control/block-level/cursorAndSelection.html',
 	'word/content-control/inline-level/checkbox.html',
 	'word/content-control/inline-level/cursorAndSelection.html',

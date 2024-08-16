@@ -3220,8 +3220,9 @@ function CDemonstrationManager(htmlpage)
             this.DemonstrationDiv.appendChild(oThis.Overlay);
         }
 
-        oThis.Transition.Type = _transition.TransitionType;
-        oThis.Transition.Param = _transition.TransitionOption;
+        let oTypeAndOption = _transition.getTypeAndOption();
+        oThis.Transition.Type = oTypeAndOption.Type;
+        oThis.Transition.Param = oTypeAndOption.Option;
         oThis.Transition.Duration = _transition.TransitionDuration;
 
         oThis.PrepareTransition(is_first, is_backward);

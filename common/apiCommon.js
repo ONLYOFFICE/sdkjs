@@ -6865,5 +6865,14 @@ function (window, undefined) {
 	CDocInfoProp.prototype['put_SymbolsCount'] = CDocInfoProp.prototype.put_SymbolsCount;
 	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
 	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
-
+	
+	window["AscCommon"]["pix2mm"] = window["AscCommon"].pix2mm = function(pix)
+	{
+		return pix * AscCommon.g_dKoef_pix_to_mm;
+	};
+	window["AscCommon"]["mm2pix"] = window["AscCommon"].mm2pix = function(mm)
+	{
+		return mm * AscCommon.g_dKoef_mm_to_pix;
+	};
+	
 })(window);

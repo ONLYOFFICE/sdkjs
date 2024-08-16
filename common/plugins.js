@@ -1698,6 +1698,25 @@
 				window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 				break;
 			}
+			case "attachEvent":
+			{
+				let plugin = window.g_asc_plugins.getPluginByGuid(guid);
+				if (plugin && plugin.variations && plugin.variations[runObject.currentVariation])
+				{
+					plugin.variations[runObject.currentVariation].eventsMap[pluginData.getAttribute("name")] = true;
+				}
+				break;
+			}
+			case "detachEvent":
+			{
+				let plugin = window.g_asc_plugins.getPluginByGuid(guid);
+				if (plugin && plugin.variations && plugin.variations[runObject.currentVariation])
+				{
+					if (plugin.variations[runObject.currentVariation].eventsMap[pluginData.getAttribute("name")])
+						delete plugin.variations[runObject.currentVariation].eventsMap[pluginData.getAttribute("name")];
+				}
+				break;
+			}
 			default:
 				break;
 		}

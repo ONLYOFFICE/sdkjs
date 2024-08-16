@@ -603,10 +603,29 @@ CShape.prototype.getIsSingleBody = function(x, y)
     return true;
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex){
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection){
     if(this.parent && this.parent.graphicObjects){
         var drawing_objects = this.parent.graphicObjects;
-        this.SetControllerTextSelection(drawing_objects, 0);
+        
+        if(bNoTextSelection !== true) 
+        {
+            this.SetControllerTextSelection(drawing_objects, 0);
+        }
+        else 
+        {
+            let oSelector;
+            if (this.group)
+            {
+                let main_group = this.group.getMainGroup();
+                oSelector = main_group;
+            }
+            else
+            {
+                oSelector = drawing_objects;
+            }
+            oSelector.resetSelection();
+            oSelector.selectObject(this, 0);
+        }
         var nSlideNum;
         if(this.parent instanceof AscCommonSlide.CNotes){
             editor.WordControl.m_oLogicDocument.FocusOnNotes = true;

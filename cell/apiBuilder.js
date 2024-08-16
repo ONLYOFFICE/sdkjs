@@ -53,7 +53,8 @@
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
 	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 * @property {ReferenceStyle} ReferenceStyle - Returns or sets the reference style.
-	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents a list of functions.
+	 * @property {ApiWorksheetFunction} WorksheetFunction - Returns an object that represents the function list.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -88,6 +89,7 @@
 	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 * @property {ApiProtectedRange[]} AllProtectedRanges - Returns all protected ranges from the current worksheet.
+	 * @property {ApiPivotTable[]} PivotTables - Returns all PivotTables on worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -131,6 +133,7 @@
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 * @property {ApiCharacters} Characters - Returns the ApiCharacters object that represents a range of characters within the object text. Use the ApiCharacters object to format characters within a text string.
+	 * @property {ApiPivotTable | null} PivotTable - Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
 	 */
 	function ApiRange(range, areas) {
 		this.range = range;
@@ -211,7 +214,7 @@
 	 *     "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" |
 	 *     "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" |
 	 *     "yellowGreen")} PresetColor
-	 * * @see office-js-api/Examples/Enumerations/PresetColor.js
+	 * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
 	/**
@@ -221,19 +224,19 @@
 	 * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
 	 * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-	 * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
 	 * The page orientation type.
 	 * @typedef {("xlLandscape" | "xlPortrait")} PageOrientation
-	 * * @see office-js-api/Examples/Enumerations/PageOrientation.js
+	 * @see office-js-api/Examples/Enumerations/PageOrientation.js
 	 */
 
 	/**
 	 * The type of tick mark appearance.
 	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
-	 * * @see office-js-api/Examples/Enumerations/TickMark.js
+	 * @see office-js-api/Examples/Enumerations/TickMark.js
 	 */
 
 	/**
@@ -244,7 +247,7 @@
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
 	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
-	 * * @see office-js-api/Examples/Enumerations/TextTransform.js
+	 * @see office-js-api/Examples/Enumerations/TextTransform.js
 	 */
 
 	/**
@@ -265,7 +268,7 @@
 	/**
 	 * The cell reference type.
 	 * @typedef {('xlA1' | 'xlR1C1')} ReferenceStyle
-	 * * @see office-js-api/Examples/Enumerations/ReferenceStyle.js
+	 * @see office-js-api/Examples/Enumerations/ReferenceStyle.js
 	 */
 
 	//TODO not support "xlPasteAllMergingConditionalFormats" / "xlPasteAllUsingSourceTheme" / "xlPasteValidation"
@@ -275,14 +278,14 @@
 	 * | "xlPasteColumnWidths" | "xlPasteComments"
 	 * | "xlPasteFormats" | "xlPasteFormulas" | "xlPasteFormulasAndNumberFormats"
 	 * | "xlPasteValues" | "xlPasteValuesAndNumberFormats" )} PasteType
-	 * * @see office-js-api/Examples/Enumerations/PasteType.js
+	 * @see office-js-api/Examples/Enumerations/PasteType.js
 	 */
 
 	/**
 	 * The mathematical operation which will be applied to the copied data.
 	 * @typedef {("xlPasteSpecialOperationAdd" | "xlPasteSpecialOperationDivide" | "xlPasteSpecialOperationMultiply"|
 	 * "xlPasteSpecialOperationNone" | "xlPasteSpecialOperationSubtract" )} PasteSpecialOperation
-	 * * @see office-js-api/Examples/Enumerations/PasteSpecialOperation.js
+	 * @see office-js-api/Examples/Enumerations/PasteSpecialOperation.js
 	 */
 
 	/**
@@ -297,7 +300,7 @@
 	 * @memberof ApiColor
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiColor/Methods/GetRGB.js
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetRGB.js
 	 */
 	ApiColor.prototype.GetRGB = function () {
 		if (!this.color) {
@@ -364,6 +367,130 @@
 	}
 
 	/**
+	 * Class representing a PivotTable.
+	 * @constructor
+	 * @property {string} Name - Returns or sets name of the PivotTable.
+	 * @property {boolean} ColumnGrand - Returns or sets PivotTable Grand Totals settings for columns.
+	 * @property {boolean} RowGrand - Returns or sets PivotTable Grand Totals settings for rows.
+	 * @property {boolean} DisplayFieldCaptions  - Returns or set show field headers for rows and columns.
+	 * @property {string} Title - Returns or sets the title of the PivotTable.
+	 * @property {string} Description - Returns or sets the description of the PivotTable.
+	 * @property {string} StyleName - Returns or sets the style name of the PivotTable.
+	 * @property {boolean} ShowTableStyleRowHeaders - Returns or sets the row headers style for PivotTable.
+	 * @property {boolean} ShowTableStyleColumnHeaders - Returns or sets the column headers style for PivotTable.
+	 * @property {boolean} ShowTableStyleRowStripes - Returns or sets the banded rows style for PivotTable.
+	 * @property {boolean} ShowTableStyleColumnStripes - Returns or sets the banded columns style for PivotTable.
+	 * @property {ApiRange} Source - Returns or sets source for the PivotTable.
+	 * @property {ApiRange | null} ColumnRange - Returns a Range object that represents the range that contains the column area in the PivotTable report.
+	 * @property {ApiRange | null} RowRange - Returns a Range object that represents the range that contains the row area in the PivotTable report.
+	 * @property {ApiRange} DataBodyRange - Returns a Range object that represents the range of values in a PivotTable.
+	 * @property {ApiRange | null} TableRange1 - Returns a Range object that represents the range containing the entire PivotTable report, but doesn't include page fields.
+	 * @property {ApiRange | null} TableRange2 - Returns a Range object that represents the range containing the entire PivotTable report, including page fields
+	 * @property {string} GrandTotalName - Sets the text string label that is displayed in the grand total column or row heading in the specified PivotTable report.
+	 * @property {boolean} RepeatAllLabels - Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
+	 * @property {object} RowAxisLayout - Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @property {boolean} LayoutBlankLine - Sets PivotTable setting insert blank rows after each item.
+	 * @property {boolean} LayoutSubtotals - Sets PivotTable setting show subtotals.
+	 * @property {number} SubtotalLocation - Sets PivotTable setting layout subtotal location.
+	 * @property {ApiPivotField[]} PivotFields - Returns all PivotFields in PivotTable.
+	 * @property {ApiPivotField[]} ColumnFields - Returns array that are currently showing as column fields in PivotTable.
+	 * @property {ApiPivotField[]} DataFields - Returns array that are currently showing values fields in PivotTable.
+	 * @property {ApiPivotField[]} HiddenFields - Returns array that represents all not added fields in PivotTable.
+	 * @property {ApiPivotField[]} VisibleFields - Returns array that represents all not added fields in PivotTable.
+	 * @property {ApiPivotField[]} PageFields - Returns array that are currently showing as page fields in PivotTable.
+	 * @property {ApiPivotField[]} RowFields - Returns array that are currently showing as row fields in PivotTable.
+	 */
+	function ApiPivotTable(pivot, api) {
+		/** @type {CT_pivotTableDefinition} */
+		this.pivot = pivot;
+		this.api = api;
+	}
+
+	/**
+	 * Class representing a PivotTable field.
+	 * @constructor
+	 * @property {number} Position - Returns or sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
+	 * @property {number} Orientation - A pivot field orientation value that represents the location of the field in the specified PivotTable report.
+	 * @property {string} Caption - Returns or sets a value that represents the label text for the pivot field.
+	 * @property {string} Name - Returns or sets a value representing the name of the object.
+	 * @property {string} Value - Returns or sets a value representing the name of the object.
+	 * @property {string} SourceName - Returns source name.
+	 * @property {number} Index - Returns index.
+	 * @property {ApiPivotTable} Table - Returns ApiPivotField.
+	 * @property {ApiPivotTable} Parent - Returns parent object to this field.
+	 * @property {boolean} LayoutCompactRow - Returns or sets whether or not a PivotField is compacted.
+	 * @property {number} LayoutForm - Returns or sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @property {boolean} LayoutPageBreak - Returns or set the flag that represents page break is inserted after each field.
+	 * @property {boolean} ShowingInAxis - Returns if the PivotField is currently visible in the PivotTable or not.
+	 * @property {boolean} RepeatLabels - setting repeat items labels at each row.
+	 * @property {boolean} LayoutBlankLine - Returns or sets setting insert blank rows after each item.
+	 * @property {boolean} ShowAllItems - Returns or sets setting show items with no data.
+	 * @property {boolean} LayoutSubtotals - Returns or sets setting show subtotals.
+	 * @property {number} LayoutSubtotalLocation - Returns or sets setting layout subtotal location.
+	 * @property {string} SubtotalName - Returns or sets text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @property {object} Subtotals - Returns or sets subtotals.
+	 * @property {number} Formula - Returns or sets a value that represents the object's formula.
+	 * @property {boolean} DragToColumn - Returns or sets the specified field, can be dragged to the column position or not.
+	 * @property {boolean} DragToRow - Returns or sets the specified field, can be dragged to the row position or not.
+	 * @property {boolean} DragToData - Returns or sets the specified field, can be dragged to the data position or not.
+	 * @property {boolean} DragToPage - Returns or sets the specified field, can be dragged to the page position or not.
+	 * @property {string | null} NumberFormat - Returns or sets a value that represents the format code for the object.
+	 * @property {string | number} CurrentPage - Returns the current page showing for the page field (valid only for page fields).
+	 */
+	function ApiPivotField(table, index, pivotField) {
+		/** @type {ApiPivotTable} */
+		this.table = table;
+		/** @type {number} */
+		this.index = index;
+		/** @type {CT_PivotField} */
+		this.pivotField = pivotField;
+	}
+
+	/**
+	 * Class representing a PivotTable data field.
+	 * @constructor
+	 * @extends ApiPivotField
+	 * @property {DataConsolidateFunctionType} Function - Returns the function performed in the data field.
+	 * @property {number} Position - Returns a value that represents the position of the field in category.
+	 * @property {PivotFieldOrientationType} Orientation - Returns a data field orientation value that represents the location.
+	 * @property {string} Name - Returns a value representing the name of the object.
+	 * @property {string} Value - Returns a value representing the value of the object.
+	 * @property {string} Caption - Returns a value that represents the label text for the data field.
+	 * @property {string | null} NumberFormat - Returns a value that represents the format code for the object.
+	 * @property {number} Index - Returns index of the data field.
+	 * @property {ApiPivotField} PivotField - Returns the pivotField from which the data field was created.
+	 */
+	function ApiPivotDataField(table, dataIndex, dataField) {
+		const pivotIndex = dataField.asc_getIndex();
+		const pivotField = table.pivot.asc_getPivotFields()[pivotIndex];
+		ApiPivotField.call(this, table, pivotIndex, pivotField);
+		/** @type {number} */
+		this.dataIndex = dataIndex;
+		/** @type {CT_DataField} */
+		this.dataField = dataField;
+
+	}
+	ApiPivotDataField.prototype = Object.create(ApiPivotField.prototype);
+	ApiPivotDataField.prototype.constructor = ApiPivotDataField;
+
+	/**
+	 * Class representing a PivotTable field item.
+	 * @constructor
+	 * @property {string} Name - Returns the name of Pivot Item.
+	 * @property {string} Caption - Returns the caption of Pivot Item.
+	 * @property {string} Value - Returns the value of Pivot Item.
+	 * @property {string} Parent - Returns the parent of Pivot Item.
+	 * @property {string} Field - Returns the field of Pivot Item.
+	 */
+	function ApiPivotItem(field, item) {
+		/** @type{ApiPivotField} */
+		this.field = field;
+		/** @type{CT_Item} */
+		this.pivotItem = item;
+	}
+
+
+	/**
 	 * Class representing characters in an object that contains text.
 	 * @constructor
 	 * @property {number} Count - The number of characters in the collection.
@@ -410,7 +537,7 @@
 	 * @param {string} expression - Any valid expression.
 	 * @param {string} [format] - A valid named or user-defined format expression.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/Api/Methods/Format.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Format.js
 	 */
 	Api.prototype.Format = function (expression, format) {
 		format = null == format ? '' : format;
@@ -427,7 +554,6 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCustom - A new function for calculating.
-	 * @see office-js-api/Examples/Cell/Api/Methods/AddCustomFunction.js
 	 */
 	// Example with description:
 	// Calculates the sum of the specified numbers.
@@ -444,7 +570,7 @@
 	Api.prototype.AddCustomFunction = function (fCustom) {
 		// get parsedJSDoc from a macros (we receive it from the Api class)
 		// take the first element and validate it
-		const parsedJSDoc = this.parsedJSDoc.shift();
+		const parsedJSDoc = this.parsedJSDoc && this.parsedJSDoc.shift();
 		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
 		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
 		if (!isValidJsDoc/* && !isValidOptions*/) {
@@ -523,12 +649,27 @@
 	};
 
 	/**
+	 * Register a new custom functions library (see SetCustomFunctions plugin method).
+	 * The description of the function parameters and result is specified using JSDoc. The <em>@customfunction</em> tag is required in JSDoc.
+	 * Parameters and results can be specified as the <em>number / string / bool / any / number[][] / string[][] / bool[][] / any[][]</em> types.
+	 * Parameters can be required or optional. A user can also set a default value.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - A name of library
+	 * @param {Function} Func - A custom functions library code.
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddCustomFunction.js
+	 */
+	Api.prototype.AddCustomFunctionLibrary = function(sName, Func) {
+		this.addCustomFunctionsLibrary(sName, Func);
+	};
+
+	/**
 	 * Removes a custom function.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a custom function.
 	 * @returns {boolean} - returns false if such a function does not exist.
-	 * @see office-js-api/Examples/Cell/Api/Methods/RemoveCustomFunction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RemoveCustomFunction.js
 	 */
 	Api.prototype.RemoveCustomFunction = function (sName) {
 		return this.removeCustomFunction(sName);
@@ -538,7 +679,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - returns false if such functions do not exist.
-	 * @see office-js-api/Examples/Cell/Api/Methods/ClearCustomFunctions.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/ClearCustomFunctions.js
 	 */
 	Api.prototype.ClearCustomFunctions = function () {
 		return this.clearCustomFunctions();
@@ -549,7 +690,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a new worksheet.
-	 * @see office-js-api/Examples/Cell/Api/Methods/AddSheet.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddSheet.js
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
@@ -563,7 +704,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet[]}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetSheets.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSheets.js
 	 */
 	Api.prototype.GetSheets = function () {
 		var result = [];
@@ -583,7 +724,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} LCID - The locale specified.
-	 * @see office-js-api/Examples/Cell/Api/Methods/SetLocale.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetLocale.js
 	 */
 	Api.prototype.SetLocale = function (LCID) {
 		this.asc_setLocale(LCID, null, null);
@@ -594,7 +735,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetLocale.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetLocale.js
 	 */
 	Api.prototype.GetLocale = function () {
 		return this.asc_getLocale();
@@ -605,7 +746,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetActiveSheet.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetActiveSheet.js
 	 */
 	Api.prototype.GetActiveSheet = function () {
 		var index = this.wbModel.getActive();
@@ -623,7 +764,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} nameOrIndex - Sheet name or sheet index.
 	 * @returns {ApiWorksheet | null}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetSheet.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSheet.js
 	 */
 	Api.prototype.GetSheet = function (nameOrIndex) {
 		var ws = ('string' === typeof nameOrIndex) ? this.wbModel.getWorksheetByName(nameOrIndex) :
@@ -636,7 +777,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {string[]}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetThemesColors.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetThemesColors.js
 	 */
 	Api.prototype.GetThemesColors = function () {
 		var result = [];
@@ -653,7 +794,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTheme - The color scheme that will be set to the current spreadsheet.
 	 * @returns {boolean} - returns false if sTheme isn't a string.
-	 * @see office-js-api/Examples/Cell/Api/Methods/SetThemeColors.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetThemeColors.js
 	 */
 	Api.prototype.SetThemeColors = function (sTheme) {
 		if ('string' === typeof sTheme) {
@@ -667,7 +808,7 @@
 	 * Creates a new history point.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/Api/Methods/CreateNewHistoryPoint.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNewHistoryPoint.js
 	 */
 	Api.prototype.CreateNewHistoryPoint = function () {
 		History.Create_NewPoint();
@@ -681,7 +822,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @returns {ApiColor}
-	 * @see office-js-api/Examples/Cell/Api/Methods/CreateColorFromRGB.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorFromRGB.js
 	 */
 	Api.prototype.CreateColorFromRGB = function (r, g, b) {
 		return new ApiColor(AscCommonExcel.createRgbColor(r, g, b));
@@ -693,7 +834,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {PresetColor} sPresetColor - A preset selected from the list of the available color preset names.
 	 * @returns {ApiColor}
-	 * @see office-js-api/Examples/Cell/Api/Methods/CreateColorByName.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateColorByName.js
 	 */
 	Api.prototype.CreateColorByName = function (sPresetColor) {
 		var rgb = AscFormat.mapPrstColor[sPresetColor];
@@ -707,7 +848,7 @@
 	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/Cell/Api/Methods/Intersect.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Intersect.js
 	 */
 	Api.prototype.Intersect = function (Range1, Range2) {
 		let result = null;
@@ -729,7 +870,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetSelection.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetSelection.js
 	 */
 	Api.prototype.GetSelection = function () {
 		return this.GetActiveSheet().GetSelection();
@@ -749,7 +890,7 @@
 	 * Example: "Sheet1!$A$1:$B$2".
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
-	 * @see office-js-api/Examples/Cell/Api/Methods/AddDefName.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddDefName.js
 	 */
 	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
 		return private_AddDefName(this.wbModel, sName, sRef, null, isHidden);
@@ -761,7 +902,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} defName - The range name.
 	 * @returns {ApiName}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetDefName.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetDefName.js
 	 */
 	Api.prototype.GetDefName = function (defName) {
 		if (defName && typeof defName === "string") {
@@ -774,7 +915,7 @@
 	 * Saves changes to the specified document.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/Api/Methods/Save.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
 	Api.prototype.Save = function () {
 		this.SaveAfterMacros = true;
@@ -786,7 +927,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range of cells from the current sheet.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetRange.js
 	 */
 	Api.prototype.GetRange = function (sRange) {
 		var ws;
@@ -805,7 +946,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheetFunction}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetWorksheetFunction.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetWorksheetFunction.js
 	 */
 	Api.prototype.GetWorksheetFunction = function () {
 		if (!this.oWorksheetFunction) {
@@ -1500,7 +1641,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text or a reference to a cell containing the text to change.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ASC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ASC.js
 	 */
 	ApiWorksheetFunction.prototype.ASC = function (arg1) {
 		return this.private_calculateFunction("ASC", arguments);
@@ -1511,7 +1652,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A number between 1 and 255 specifying a character from the computer character set.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHAR.js
 	 */
 	ApiWorksheetFunction.prototype.CHAR = function (arg1) {
 		return this.private_calculateFunction("CHAR", arguments);
@@ -1522,7 +1663,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - A string from which nonprintable characters will be removed.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CLEAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CLEAN.js
 	 */
 	ApiWorksheetFunction.prototype.CLEAN = function (arg1) {
 		return this.private_calculateFunction("CLEAN", arguments);
@@ -1533,7 +1674,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text for which to get the code of the first character.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CODE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CODE.js
 	 */
 	ApiWorksheetFunction.prototype.CODE = function (arg1) {
 		return this.private_calculateFunction("CODE", arguments);
@@ -1544,7 +1685,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg_n - Up to 255 data values that will be combined.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CONCATENATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CONCATENATE.js
 	 */
 	ApiWorksheetFunction.prototype.CONCATENATE = function () {
 		return this.private_calculateFunction("CONCATENATE", arguments);
@@ -1557,7 +1698,7 @@
 	 * @param {?number} arg2 - A number of digits to the right of the decimal point. The number is rounded as necessary.
 	 * If it is omitted, the function will assume it to be 2.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DOLLAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DOLLAR.js
 	 */
 	ApiWorksheetFunction.prototype.DOLLAR = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLAR", arguments);
@@ -1569,7 +1710,7 @@
 	 * @param {string} arg1 - The first text string.
 	 * @param {string} arg2 - The second text string.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EXACT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EXACT.js
 	 */
 	ApiWorksheetFunction.prototype.EXACT = function (arg1, arg2) {
 		return this.private_calculateFunction("EXACT", arguments);
@@ -1584,7 +1725,7 @@
 	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
 	 * If omitted, this parameter is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FIND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FIND.js
 	 */
 	ApiWorksheetFunction.prototype.FIND = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIND", arguments);
@@ -1599,7 +1740,7 @@
 	 * @param {?number} arg3 - Specifies the character at which to start the search. The first character in the search string is character number 1.
 	 * If omitted, this parameter is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FINDB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FINDB.js
 	 */
 	ApiWorksheetFunction.prototype.FINDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FINDB", arguments);
@@ -1612,7 +1753,7 @@
 	 * @param {?number} arg2 - The number of digits to the right of the decimal point. If omitted, the function will assume it to be 2.
 	 * @param {?boolean} arg3 - Specifies whether do display commas in the returned text (<b>false</b> or omitted) or not (<b>true</b>).
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FIXED.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FIXED.js
 	 */
 	ApiWorksheetFunction.prototype.FIXED = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FIXED", arguments);
@@ -1624,7 +1765,7 @@
 	 * @param {string} arg1 - The text string containing the characters to extract.
 	 * @param {?number} arg2 - A number of the substring characters. It must be greater than or equal to 0.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LEFT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LEFT.js
 	 */
 	ApiWorksheetFunction.prototype.LEFT = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFT", arguments);
@@ -1636,7 +1777,7 @@
 	 * @param {string} arg1 - The text string containing the characters to extract.
 	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LEFTB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LEFTB.js
 	 */
 	ApiWorksheetFunction.prototype.LEFTB = function (arg1, arg2) {
 		return this.private_calculateFunction("LEFTB", arguments);
@@ -1647,7 +1788,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LEN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LEN.js
 	 */
 	ApiWorksheetFunction.prototype.LEN = function (arg1) {
 		return this.private_calculateFunction("LEN", arguments);
@@ -1658,7 +1799,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text whose length will be returned. Spaces are considered as characters.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LENB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LENB.js
 	 */
 	ApiWorksheetFunction.prototype.LENB = function (arg1) {
 		return this.private_calculateFunction("LENB", arguments);
@@ -1669,7 +1810,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text to convert to lowercase. The text characters that are not letters are not changed.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOWER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOWER.js
 	 */
 	ApiWorksheetFunction.prototype.LOWER = function (arg1) {
 		return this.private_calculateFunction("LOWER", arguments);
@@ -1682,7 +1823,7 @@
 	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
 	 * @param {number} arg3 - A number of the characters to extract.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MID.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MID.js
 	 */
 	ApiWorksheetFunction.prototype.MID = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MID", arguments);
@@ -1695,7 +1836,7 @@
 	 * @param {number} arg2 - The position of the first character to extract. The first text character is 1.
 	 * @param {number} arg3 - A number of the characters to extract, based on bytes.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MIDB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MIDB.js
 	 */
 	ApiWorksheetFunction.prototype.MIDB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MIDB", arguments);
@@ -1708,7 +1849,7 @@
 	 * @param {?string} arg2 - The character used as the decimal separator in the string.
 	 * @param {?string} arg3 - The character used as the group separator in the string.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NUMBERVALUE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NUMBERVALUE.js
 	 */
 	ApiWorksheetFunction.prototype.NUMBERVALUE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NUMBERVALUE", arguments);
@@ -1719,7 +1860,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text enclosed in quotation marks, a formula that returns text, or a reference to a cell containing text to partially capitalize.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PROPER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PROPER.js
 	 */
 	ApiWorksheetFunction.prototype.PROPER = function (arg1) {
 		return this.private_calculateFunction("PROPER", arguments);
@@ -1733,7 +1874,7 @@
 	 * @param {number} arg3 - The number of characters in the original text that will be replaced.
 	 * @param {string} arg4 - The text that will replace characters in the original text.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/REPLACE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/REPLACE.js
 	 */
 	ApiWorksheetFunction.prototype.REPLACE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACE", arguments);
@@ -1747,7 +1888,7 @@
 	 * @param {number} arg3 - The number of characters in the original text that will be replaced, based on bytes.
 	 * @param {string} arg4 - The text that will replace characters in the original text.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/REPLACEB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/REPLACEB.js
 	 */
 	ApiWorksheetFunction.prototype.REPLACEB = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("REPLACEB", arguments);
@@ -1759,7 +1900,7 @@
 	 * @param {string} arg1 - The text that will be repeated.
 	 * @param {number} arg2 - A positive number specifying the number of times to repeat text.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/REPT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/REPT.js
 	 */
 	ApiWorksheetFunction.prototype.REPT = function (arg1, arg2) {
 		return this.private_calculateFunction("REPT", arguments);
@@ -1771,7 +1912,7 @@
 	 * @param {string} arg1 - The text string that contains the characters to extract.
 	 * @param {?number} arg2 - A number of the substring characters. If it is omitted, the function will assume it to be 1.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RIGHT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RIGHT.js
 	 */
 	ApiWorksheetFunction.prototype.RIGHT = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHT", arguments);
@@ -1783,7 +1924,7 @@
 	 * @param {string} arg1 - The text string that contains the characters to extract.
 	 * @param {?number} arg2 - A number of the substring characters, based on bytes.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RIGHTB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RIGHTB.js
 	 */
 	ApiWorksheetFunction.prototype.RIGHTB = function (arg1, arg2) {
 		return this.private_calculateFunction("RIGHTB", arguments);
@@ -1796,7 +1937,7 @@
 	 * @param {string} arg2 - The text where to search for the specified text.
 	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SEARCH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SEARCH.js
 	 */
 	ApiWorksheetFunction.prototype.SEARCH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCH", arguments);
@@ -1809,7 +1950,7 @@
 	 * @param {string} arg2 - The text where to search for the specified text.
 	 * @param {?number} arg3 - The character number in the search text, counting from the left, at which to start searching. If omitted, 1 is used.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SEARCHB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SEARCHB.js
 	 */
 	ApiWorksheetFunction.prototype.SEARCHB = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SEARCHB", arguments);
@@ -1823,7 +1964,7 @@
 	 * @param {string} arg3 - The text to replace the original text with.
 	 * @param {?string} arg4 - Specifies which occurrence of the original text to replace. If omitted, every instance of the original text will be replaced.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUBSTITUTE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUBSTITUTE.js
 	 */
 	ApiWorksheetFunction.prototype.SUBSTITUTE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SUBSTITUTE", arguments);
@@ -1834,7 +1975,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 - The value to test.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T.js
 	 */
 	ApiWorksheetFunction.prototype.T = function (arg1) {
 		return this.private_calculateFunction("T", arguments);
@@ -1846,7 +1987,7 @@
 	 * @param {number | string} arg1 - A number, a formula that evaluates to a numeric value, or a reference to a cell containing a numeric value.
 	 * @param {string} arg2 - A number format in the text form from the <b>Number format</b> combo box on the <b>Home</b> tab.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TEXT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TEXT.js
 	 */
 	ApiWorksheetFunction.prototype.TEXT = function (arg1, arg2) {
 		return this.private_calculateFunction("TEXT", arguments);
@@ -1857,7 +1998,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text from which the spaces will be removed.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TRIM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRIM.js
 	 */
 	ApiWorksheetFunction.prototype.TRIM = function (arg1) {
 		return this.private_calculateFunction("TRIM", arguments);
@@ -1868,7 +2009,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The Unicode number representing a character.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/UNICHAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/UNICHAR.js
 	 */
 	ApiWorksheetFunction.prototype.UNICHAR = function (arg1) {
 		return this.private_calculateFunction("UNICHAR", arguments);
@@ -1879,7 +2020,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The character for which the Unicode value will be returned.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/UNICODE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/UNICODE.js
 	 */
 	ApiWorksheetFunction.prototype.UNICODE = function (arg1) {
 		return this.private_calculateFunction("UNICODE", arguments);
@@ -1890,7 +2031,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text which will be converted to uppercase, a reference or a text string.
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/UPPER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/UPPER.js
 	 */
 	ApiWorksheetFunction.prototype.UPPER = function (arg1) {
 		return this.private_calculateFunction("UPPER", arguments);
@@ -1901,7 +2042,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text enclosed in quotation marks or a reference to a cell containing the text which will be converted to a number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VALUE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VALUE.js
 	 */
 	ApiWorksheetFunction.prototype.VALUE = function (arg1) {
 		return this.private_calculateFunction("VALUE", arguments);
@@ -1913,7 +2054,7 @@
 	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average of the absolute deviations will be returned. The first argument is required,
 	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AVEDEV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVEDEV.js
 	 */
 	ApiWorksheetFunction.prototype.AVEDEV = function () {
 		return this.private_calculateFunction("AVEDEV", arguments);
@@ -1925,7 +2066,7 @@
 	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
 	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AVERAGE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGE.js
 	 */
 	ApiWorksheetFunction.prototype.AVERAGE = function () {
 		return this.private_calculateFunction("AVERAGE", arguments);
@@ -1938,7 +2079,7 @@
 	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers, text representations of numbers,
 	 * or logical values, such as <b>true</b> and <b>false</b>.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AVERAGEA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGEA.js
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEA = function () {
 		return this.private_calculateFunction("AVERAGEA", arguments);
@@ -1951,7 +2092,7 @@
 	 * @param {number | string} arg2 - The condition or criteria in the form of a number, expression, or text that defines which cells will be used to find the average.
 	 * @param {?ApiRange} arg3 - The actual cells to be used to find the average. If omitted, the cells in the range are used.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AVERAGEIF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGEIF.js
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("AVERAGEIF", arguments);
@@ -1967,7 +2108,7 @@
 	 * These arguments are optional.
 	 * @param {?ApiRange} arg5 - Up to 127 actual ranges to be used to find the average. If omitted, the cells in the range are used. These arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AVERAGEIFS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AVERAGEIFS.js
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEIFS = function () {
 		return this.private_calculateFunction("AVERAGEIFS", arguments);
@@ -1982,7 +2123,7 @@
 	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
 	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BETADIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETADIST.js
 	 */
 	ApiWorksheetFunction.prototype.BETADIST = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETADIST", arguments);
@@ -1998,7 +2139,7 @@
 	 * @param {?number} arg5 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
 	 * @param {?number} arg6 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BETA_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETA_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.BETA_DIST = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("BETA.DIST", arguments);
@@ -2013,7 +2154,7 @@
 	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
 	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BETA_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETA_INV.js
 	 */
 	ApiWorksheetFunction.prototype.BETA_INV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETA.INV", arguments);
@@ -2028,7 +2169,7 @@
 	 * @param {?number} arg4 - An optional lower bound to the interval of x (A). If omitted, it is equal to 0.
 	 * @param {?number} arg5 - An optional upper bound to the interval of x (B). If omitted, it is equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BETAINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BETAINV.js
 	 */
 	ApiWorksheetFunction.prototype.BETAINV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("BETAINV", arguments);
@@ -2042,7 +2183,7 @@
 	 * @param {number} arg3 - The probability of success on each trial.
 	 * @param {boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability mass function (<b>false</b>).
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BINOMDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BINOMDIST.js
 	 */
 	ApiWorksheetFunction.prototype.BINOMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOMDIST", arguments);
@@ -2056,7 +2197,7 @@
 	 * @param {number} arg3 - The probability of success on each trial.
 	 * @param {boolean} arg4 - Specifies if this is the cumulative distribution function (<b>true</b>) or the probability mass function (<b>false</b>).
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BINOM_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BINOM_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOM.DIST", arguments);
@@ -2071,7 +2212,7 @@
 	 * @param {?number} arg4 - The maximum number of successes in the trials to calculate probability for,
 	 * a numeric value greater than the minimum number of successes and less than or equal to trials.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BINOM_DIST_RANGE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BINOM_DIST_RANGE.js
 	 */
 	ApiWorksheetFunction.prototype.BINOM_DIST_RANGE = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("BINOM.DIST.RANGE", arguments);
@@ -2084,7 +2225,7 @@
 	 * @param {number} arg2 - The probability of success on each trial, a number between 0 and 1 inclusive.
 	 * @param {number} arg3 - The criterion value, a number between 0 and 1 inclusive.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BINOM_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BINOM_INV.js
 	 */
 	ApiWorksheetFunction.prototype.BINOM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("BINOM.INV", arguments);
@@ -2096,7 +2237,7 @@
 	 * @param {number} arg1 - The value at which the distribution will be evaluated, a nonnegative number.
 	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHIDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHIDIST.js
 	 */
 	ApiWorksheetFunction.prototype.CHIDIST = function (arg1, arg2) {
 		return this.private_calculateFunction("CHIDIST", arguments);
@@ -2108,7 +2249,7 @@
 	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
 	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHIINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHIINV.js
 	 */
 	ApiWorksheetFunction.prototype.CHIINV = function (arg1, arg2) {
 		return this.private_calculateFunction("CHIINV", arguments);
@@ -2122,7 +2263,7 @@
 	 * @param {boolean} arg3 - A logical value that determines the form of the function. If this argument is equal to <b>true</b>,
 	 * the cumulative distribution function is returned; if  it is equal to <b>false</b>, the probability density function is returned.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHISQ_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CHISQ.DIST", arguments);
@@ -2134,7 +2275,7 @@
 	 * @param {number} arg1 - The value at which the distribution will be evaluated, a nonnegative number.
 	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHISQ_DIST_RT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_DIST_RT.js
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_DIST_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.DIST.RT", arguments);
@@ -2146,7 +2287,7 @@
 	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
 	 * @param {number} arg2- The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHISQ_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_INV.js
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.INV", arguments);
@@ -2158,7 +2299,7 @@
 	 * @param {number} arg1 - A probability associated with the chi-squared distribution, a value between 0 and 1 inclusive.
 	 * @param {number} arg2 - The number of degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHISQ_INV_RT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHISQ_INV_RT.js
 	 */
 	ApiWorksheetFunction.prototype.CHISQ_INV_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("CHISQ.INV.RT", arguments);
@@ -2185,7 +2326,7 @@
 	 * @param {any} arg1 - The range of data that contains observations to test against expected values.
 	 * @param {any} arg2 - The range of data that contains the ratio of the product of row totals and column totals to the grand total.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHITEST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHITEST.js
 	 */
 	ApiWorksheetFunction.prototype.CHITEST = function (arg1, arg2) {
 		return this.private_calculateFunction("CHITEST", arguments);
@@ -2210,7 +2351,7 @@
 	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
 	 * @param {number} arg3 - The sample size.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CONFIDENCE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CONFIDENCE.js
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE", arguments);
@@ -2223,7 +2364,7 @@
 	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
 	 * @param {number} arg3 - The sample size.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CONFIDENCE_NORM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CONFIDENCE_NORM.js
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_NORM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE.NORM", arguments);
@@ -2236,7 +2377,7 @@
 	 * @param {number} arg2 - The population standard deviation for the data range and is assumed to be known. This value must be greater than 0.
 	 * @param {number} arg3 - The sample size.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CONFIDENCE_T.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CONFIDENCE_T.js
 	 */
 	ApiWorksheetFunction.prototype.CONFIDENCE_T = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONFIDENCE.T", arguments);
@@ -2259,7 +2400,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count numbers. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUNT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNT.js
 	 */
 	ApiWorksheetFunction.prototype.COUNT = function () {
 		return this.private_calculateFunction("COUNT", arguments);
@@ -2270,7 +2411,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count values. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUNTA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNTA.js
 	 */
 	ApiWorksheetFunction.prototype.COUNTA = function () {
 		return this.private_calculateFunction("COUNTA", arguments);
@@ -2281,7 +2422,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} arg1 - The range to count the empty cells.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUNTBLANK.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNTBLANK.js
 	 */
 	ApiWorksheetFunction.prototype.COUNTBLANK = function (arg1) {
 		return this.private_calculateFunction("COUNTBLANK", arguments);
@@ -2293,7 +2434,7 @@
 	 * @param {ApiRange} arg1 - The range of cells to count nonblank cells.
 	 * @param {number | string} arg2 - The condition in the form of a number, expression, or text that defines which cells will be counted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUNTIF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNTIF.js
 	 */
 	ApiWorksheetFunction.prototype.COUNTIF = function (arg1, arg2) {
 		return this.private_calculateFunction("COUNTIF", arguments);
@@ -2307,7 +2448,7 @@
 	 * @param {ApiRange} arg3 - Up to 127 additional ranges of cells to count nonblank cells. This argument is optional.
 	 * @param {number | string} arg4 - Up to 127 additional conditions in the form of a number, expression, or text that define which cells will be counted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUNTIFS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUNTIFS.js
 	 */
 	ApiWorksheetFunction.prototype.COUNTIFS = function () {
 		return this.private_calculateFunction("COUNTIFS", arguments);
@@ -2359,7 +2500,7 @@
 	 * @param {number} arg2 - The probability of success on each trial, a number between 0 and 1 inclusive.
 	 * @param {number} arg3 - The criterion value, a number between 0 and 1 inclusive.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CRITBINOM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CRITBINOM.js
 	 */
 	ApiWorksheetFunction.prototype.CRITBINOM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CRITBINOM", arguments);
@@ -2370,7 +2511,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} args - Up to 255 numerical values for which to find the sum of squares of deviations. The first argument is required, subsequent arguments are optional. 
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DEVSQ.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEVSQ.js
 	 */
 	ApiWorksheetFunction.prototype.DEVSQ = function () {
 		return this.private_calculateFunction("DEVSQ", arguments);
@@ -2384,7 +2525,7 @@
 	 * @param {boolean} arg3 - A logical value that determines the function form. If this parameter is <b>true</b>,
 	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EXPON_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EXPON_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.EXPON_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("EXPON.DIST", arguments);
@@ -2398,7 +2539,7 @@
 	 * @param {boolean} arg3 - A logical value that determines the function form. If this parameter is <b>true</b>,
 	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EXPONDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EXPONDIST.js
 	 */
 	ApiWorksheetFunction.prototype.EXPONDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("EXPONDIST", arguments);
@@ -2413,7 +2554,7 @@
 	 * @param {boolean} arg4 - A logical value that determines the function form. If this parameter is <b>true</b>,
 	 * the function will return the cumulative distribution function, if it is <b>false</b>, it will return the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/F_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/F_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.F_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("F.DIST", arguments);
@@ -2426,7 +2567,7 @@
 	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FDIST.js
 	 */
 	ApiWorksheetFunction.prototype.FDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FDIST", arguments);
@@ -2439,7 +2580,7 @@
 	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/F_DIST_RT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/F_DIST_RT.js
 	 */
 	ApiWorksheetFunction.prototype.F_DIST_RT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.DIST.RT", arguments);
@@ -2452,7 +2593,7 @@
 	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/F_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/F_INV.js
 	 */
 	ApiWorksheetFunction.prototype.F_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.INV", arguments);
@@ -2465,7 +2606,7 @@
 	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FINV.js
 	 */
 	ApiWorksheetFunction.prototype.FINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FINV", arguments);
@@ -2478,7 +2619,7 @@
 	 * @param {number} arg2 - The numerator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @param {number} arg3 - The denominator degrees of freedom, a number between 1 and 10^10, excluding 10^10.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/F_INV_RT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/F_INV_RT.js
 	 */
 	ApiWorksheetFunction.prototype.F_INV_RT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("F.INV.RT", arguments);
@@ -2489,7 +2630,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for the transformation, a number between -1 and 1, excluding -1 and 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FISHER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FISHER.js
 	 */
 	ApiWorksheetFunction.prototype.FISHER = function (arg1) {
 		return this.private_calculateFunction("FISHER", arguments);
@@ -2500,7 +2641,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value to perform the inverse of the transformation.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FISHERINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FISHERINV.js
 	 */
 	ApiWorksheetFunction.prototype.FISHERINV = function (arg1) {
 		return this.private_calculateFunction("FISHERINV", arguments);
@@ -2528,7 +2669,7 @@
 	 * * <b>6</b> - MIN.
 	 * * <b>7</b> - SUM.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
-	 * ** @see office-js-api/Examples/Enumerations/Aggregation.js
+	 * @see office-js-api/Examples/Enumerations/Aggregation.js
 	 */
 	
 	/**
@@ -2544,7 +2685,7 @@
 	 * @param {?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
 	 * @param {Aggregation} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FORECAST_ETS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS.js
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("FORECAST.ETS", arguments);
@@ -2563,7 +2704,7 @@
 	 * @param {?number} arg6 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
 	 * @param {Aggregation} arg7 - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FORECAST_ETS_CONFINT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_CONFINT.js
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_CONFINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("FORECAST.ETS.CONFINT", arguments);
@@ -2578,7 +2719,7 @@
 	 * @param {?number} arg3 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
 	 * @param {Aggregation} arg4 - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FORECAST_ETS_SEASONALITY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_SEASONALITY.js
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_SEASONALITY = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("FORECAST.ETS.SEASONALITY", arguments);
@@ -2595,7 +2736,7 @@
 	 * * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
 	 * * <b>8</b> - Step size detected in the timeline.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
-	 * ** @see office-js-api/Examples/Enumerations/StatisticType.js
+	 * @see office-js-api/Examples/Enumerations/StatisticType.js
 	 */
 
 	/**
@@ -2611,7 +2752,7 @@
 	 * @param {?number} arg5 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
 	 * @param {Aggregation} arg6 - An optional numeric value to aggregate multiple values with the same time stamp.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FORECAST_ETS_STAT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FORECAST_ETS_STAT.js
 	 */
 	ApiWorksheetFunction.prototype.FORECAST_ETS_STAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("FORECAST.ETS.STAT", arguments);
@@ -2636,7 +2777,7 @@
 	 * @param {ApiRange | number[]} arg1 - An array of values or the selected range for which the frequencies will be counted (blanks and text are ignored).
 	 * @param {ApiRange | number[]} arg2 - An array of intervals or the selected range into which the values in the first array will be grouped.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FREQUENCY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FREQUENCY.js
 	 */
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
 		return this.private_calculateFunction("FREQUENCY", arguments);
@@ -2671,7 +2812,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for which the gamma function will be calculated.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMA.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMA = function (arg1) {
 		return this.private_calculateFunction("GAMMA", arguments);
@@ -2686,7 +2827,7 @@
 	 * @param {boolean} arg4 - A logical value (<b>true</b>> or <b>false</b>) that determines the function form.
 	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMA_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMA_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GAMMA.DIST", arguments);
@@ -2701,7 +2842,7 @@
 	 * @param {boolean} arg4 - A logical value (<b>true</b>> or <b>false</b>) that determines the function form.
 	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMADIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMADIST.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMADIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GAMMADIST", arguments);
@@ -2714,7 +2855,7 @@
 	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
 	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMA_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMA_INV.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMA_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("GAMMA.INV", arguments);
@@ -2727,7 +2868,7 @@
 	 * @param {number} arg2 - The alpha parameter of the distribution, a positive number.
 	 * @param {number} arg3 - The beta parameter of the distribution, a positive number. If this parameter is equal to 1, the function returns the standard gamma distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMAINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMAINV.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMAINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("GAMMAINV", arguments);
@@ -2738,7 +2879,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for which the natural logarithm of the gamma function will be calculated, a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMALN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMALN.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN = function (arg1) {
 		return this.private_calculateFunction("GAMMALN", arguments);
@@ -2749,7 +2890,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for which the natural logarithm of the gamma function will be calculated, a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAMMALN_PRECISE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAMMALN_PRECISE.js
 	 */
 	ApiWorksheetFunction.prototype.GAMMALN_PRECISE = function (arg1) {
 		return this.private_calculateFunction("GAMMALN.PRECISE", arguments);
@@ -2760,7 +2901,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for which the distribution will be calculated.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GAUSS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GAUSS.js
 	 */
 	ApiWorksheetFunction.prototype.GAUSS = function (arg1) {
 		return this.private_calculateFunction("GAUSS", arguments);
@@ -2771,7 +2912,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the geometric mean will be calculated.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GEOMEAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GEOMEAN.js
 	 */
 	ApiWorksheetFunction.prototype.GEOMEAN = function () {
 		return this.private_calculateFunction("GEOMEAN", arguments);
@@ -2786,7 +2927,7 @@
 	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
 	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GROWTH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GROWTH.js
 	 */
 	ApiWorksheetFunction.prototype.GROWTH = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("GROWTH", arguments);
@@ -2797,7 +2938,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the harmonic mean will be calculated.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HARMEAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HARMEAN.js
 	 */
 	ApiWorksheetFunction.prototype.HARMEAN = function () {
 		return this.private_calculateFunction("HARMEAN", arguments);
@@ -2811,7 +2952,7 @@
 	 * @param {number} arg3 - The number of successes in the population.
 	 * @param {number} arg4 - The population size.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HYPGEOMDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HYPGEOMDIST.js
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("HYPGEOMDIST", arguments);
@@ -2827,7 +2968,7 @@
 	 * @param {boolean} arg5 - A logical value (<b>true</b> or <b>false</b>) that determines the function form.
 	 * If it is <b>true</b>, the function returns the cumulative distribution function. If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HYPGEOM_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HYPGEOM_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.HYPGEOM_DIST = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("HYPGEOM.DIST", arguments);
@@ -2850,7 +2991,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the kurtosis will be calculated.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/KURT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/KURT.js
 	 */
 	ApiWorksheetFunction.prototype.KURT = function () {
 		return this.private_calculateFunction("KURT", arguments);
@@ -2862,7 +3003,7 @@
 	 * @param {ApiRange | number[]} arg1 - The array or range of data for which the k-th largest value will be determined.
 	 * @param {number} arg2 - The position (from the largest) in the array or cell range of data to return.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LARGE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LARGE.js
 	 */
 	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
 		return this.private_calculateFunction("LARGE", arguments);
@@ -2878,7 +3019,7 @@
 	 * @param {?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
 	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LINEST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LINEST.js
 	 */
 	ApiWorksheetFunction.prototype.LINEST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LINEST", arguments);
@@ -2894,7 +3035,7 @@
 	 * @param {?boolean} arg4 - A logical value: return additional regression statistics if this parameter is set to <b>true</b>,
 	 * and return m-coefficients and the constant <em>b</em> if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOGEST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGEST.js
 	 */
 	ApiWorksheetFunction.prototype.LOGEST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LOGEST", arguments);
@@ -2907,7 +3048,7 @@
 	 * @param {number} arg2 - The mean of ln(x).
 	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOGINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGINV.js
 	 */
 	ApiWorksheetFunction.prototype.LOGINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGINV", arguments);
@@ -2923,7 +3064,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOGNORM_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGNORM_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("LOGNORM.DIST", arguments);
@@ -2936,7 +3077,7 @@
 	 * @param {number} arg2 - The mean of ln(x).
 	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOGNORM_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGNORM_INV.js
 	 */
 	ApiWorksheetFunction.prototype.LOGNORM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGNORM.INV", arguments);
@@ -2949,7 +3090,7 @@
 	 * @param {number} arg2 - The mean of ln(x).
 	 * @param {number} arg3 - The standard deviation of ln(x), a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOGNORMDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOGNORMDIST.js
 	 */
 	ApiWorksheetFunction.prototype.LOGNORMDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOGNORMDIST", arguments);
@@ -2961,7 +3102,7 @@
 	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the largest number will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MAX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MAX.js
 	 */
 	ApiWorksheetFunction.prototype.MAX = function () {
 		return this.private_calculateFunction("MAX", arguments);
@@ -2973,7 +3114,7 @@
 	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MAXA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MAXA.js
 	 */
 	ApiWorksheetFunction.prototype.MAXA = function () {
 		return this.private_calculateFunction("MAXA", arguments);
@@ -2985,7 +3126,7 @@
 	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the median will be calculated.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MEDIAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MEDIAN.js
 	 */
 	ApiWorksheetFunction.prototype.MEDIAN = function () {
 		return this.private_calculateFunction("MEDIAN", arguments);
@@ -2997,7 +3138,7 @@
 	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the smallest number will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MIN.js
 	 */
 	ApiWorksheetFunction.prototype.MIN = function () {
 		return this.private_calculateFunction("MIN", arguments);
@@ -3009,7 +3150,7 @@
 	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MINA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MINA.js
 	 */
 	ApiWorksheetFunction.prototype.MINA = function () {
 		return this.private_calculateFunction("MINA", arguments);
@@ -3052,7 +3193,7 @@
 	 * @param {number} arg2 - The threshold number of successes.
 	 * @param {number} arg3 - The probability of a success; a number between 0 and 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NEGBINOMDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NEGBINOMDIST.js
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOMDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NEGBINOMDIST", arguments);
@@ -3068,7 +3209,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NEGBINOM_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NEGBINOM_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.NEGBINOM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NEGBINOM.DIST", arguments);
@@ -3084,7 +3225,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORMDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORMDIST.js
 	 */
 	ApiWorksheetFunction.prototype.NORMDIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NORMDIST", arguments);
@@ -3100,7 +3241,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORM_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORM_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.NORM_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NORM.DIST", arguments);
@@ -3113,7 +3254,7 @@
 	 * @param {number} arg2 - The arithmetic mean of the distribution.
 	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORMINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORMINV.js
 	 */
 	ApiWorksheetFunction.prototype.NORMINV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NORMINV", arguments);
@@ -3126,7 +3267,7 @@
 	 * @param {number} arg2 - The arithmetic mean of the distribution.
 	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORM_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORM_INV.js
 	 */
 	ApiWorksheetFunction.prototype.NORM_INV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NORM.INV", arguments);
@@ -3137,7 +3278,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The value for which the distribution will be returned.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORMSDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORMSDIST.js
 	 */
 	ApiWorksheetFunction.prototype.NORMSDIST = function (arg1) {
 		return this.private_calculateFunction("NORMSDIST", arguments);
@@ -3151,7 +3292,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORM_S_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORM_S_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_DIST = function (arg1, arg2) {
 		return this.private_calculateFunction("NORM.S.DIST", arguments);
@@ -3162,7 +3303,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORMSINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORMSINV.js
 	 */
 	ApiWorksheetFunction.prototype.NORMSINV = function (arg1) {
 		return this.private_calculateFunction("NORMSINV", arguments);
@@ -3173,7 +3314,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A probability corresponding to the normal distribution, a number between 0 and 1 inclusive.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NORM_S_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NORM_S_INV.js
 	 */
 	ApiWorksheetFunction.prototype.NORM_S_INV = function (arg1) {
 		return this.private_calculateFunction("NORM.S.INV", arguments);
@@ -3198,7 +3339,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTILE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTILE.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE", arguments);
@@ -3210,7 +3351,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is greater than 0 but less than 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTILE_EXC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTILE_EXC.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_EXC = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE.EXC", arguments);
@@ -3222,7 +3363,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTILE_INC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTILE_INC.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTILE_INC = function (arg1, arg2) {
 		return this.private_calculateFunction("PERCENTILE.INC", arguments);
@@ -3235,7 +3376,7 @@
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTRANK.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK", arguments);
@@ -3248,7 +3389,7 @@
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTRANK_EXC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK_EXC.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_EXC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK.EXC", arguments);
@@ -3261,7 +3402,7 @@
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERCENTRANK_INC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERCENTRANK_INC.js
 	 */
 	ApiWorksheetFunction.prototype.PERCENTRANK_INC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PERCENTRANK.INC", arguments);
@@ -3273,7 +3414,7 @@
 	 * @param {number} arg1 - The total number of objects.
 	 * @param {number} arg2 - The number of objects in each permutation.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERMUT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERMUT.js
 	 */
 	ApiWorksheetFunction.prototype.PERMUT = function (arg1, arg2) {
 		return this.private_calculateFunction("PERMUT", arguments);
@@ -3285,7 +3426,7 @@
 	 * @param {number} arg1 - The total number of objects.
 	 * @param {number} arg2 - The number of objects in each permutation.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PERMUTATIONA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PERMUTATIONA.js
 	 */
 	ApiWorksheetFunction.prototype.PERMUTATIONA = function (arg1, arg2) {
 		return this.private_calculateFunction("PERMUTATIONA", arguments);
@@ -3296,7 +3437,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The number for which the density of the standard normal distribution will be returned.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PHI.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PHI.js
 	 */
 	ApiWorksheetFunction.prototype.PHI = function (arg1) {
 		return this.private_calculateFunction("PHI", arguments);
@@ -3311,7 +3452,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative Poisson probability.
 	 * If it is <b>false</b>, the function returns the Poisson probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/POISSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/POISSON.js
 	 */
 	ApiWorksheetFunction.prototype.POISSON = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("POISSON", arguments);
@@ -3326,7 +3467,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative Poisson probability.
 	 * If it is <b>false</b>, the function returns the Poisson probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/POISSON_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/POISSON_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.POISSON_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("POISSON.DIST", arguments);
@@ -3352,7 +3493,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/QUARTILE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/QUARTILE.js
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE", arguments);
@@ -3364,7 +3505,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: 1st quartile = 1; median value = 2; 3rd quartile = 3.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/QUARTILE_EXC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/QUARTILE_EXC.js
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_EXC = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE.EXC", arguments);
@@ -3376,7 +3517,7 @@
 	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/QUARTILE_INC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/QUARTILE_INC.js
 	 */
 	ApiWorksheetFunction.prototype.QUARTILE_INC = function (arg1, arg2) {
 		return this.private_calculateFunction("QUARTILE.INC", arguments);
@@ -3390,7 +3531,7 @@
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RANK.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK.js
 	 */
 	ApiWorksheetFunction.prototype.RANK = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK", arguments);
@@ -3404,7 +3545,7 @@
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RANK_AVG.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK_AVG.js
 	 */
 	ApiWorksheetFunction.prototype.RANK_AVG = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK.AVG", arguments);
@@ -3418,7 +3559,7 @@
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RANK_EQ.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANK_EQ.js
 	 */
 	ApiWorksheetFunction.prototype.RANK_EQ = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RANK.EQ", arguments);
@@ -3442,7 +3583,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SKEW.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SKEW.js
 	 */
 	ApiWorksheetFunction.prototype.SKEW = function () {
 		return this.private_calculateFunction("SKEW", arguments);
@@ -3453,7 +3594,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SKEW_P.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SKEW_P.js
 	 */
 	ApiWorksheetFunction.prototype.SKEW_P = function () {
 		return this.private_calculateFunction("SKEW.P", arguments);
@@ -3477,7 +3618,7 @@
 	 * @param {number[] | ApiRange} arg1 - An array or range of numerical data for which the k-th smallest value will be determined.
 	 * @param {number} arg2 - The position (from the smallest) in the array or range of the value to return.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SMALL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SMALL.js
 	 */
 	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
 		return this.private_calculateFunction("SMALL", arguments);
@@ -3490,7 +3631,7 @@
 	 * @param {number} arg2 - The arithmetic mean of the distribution.
 	 * @param {number} arg3 - The standard deviation of the distribution, a positive number.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STANDARDIZE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STANDARDIZE.js
 	 */
 	ApiWorksheetFunction.prototype.STANDARDIZE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("STANDARDIZE", arguments);
@@ -3501,7 +3642,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEV.js
 	 */
 	ApiWorksheetFunction.prototype.STDEV = function () {
 		return this.private_calculateFunction("STDEV", arguments);
@@ -3512,7 +3653,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEV_S.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEV_S.js
 	 */
 	ApiWorksheetFunction.prototype.STDEV_S = function () {
 		return this.private_calculateFunction("STDEV.S", arguments);
@@ -3523,7 +3664,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEVA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEVA.js
 	 */
 	ApiWorksheetFunction.prototype.STDEVA = function () {
 		return this.private_calculateFunction("STDEVA", arguments);
@@ -3534,7 +3675,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEVP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEVP.js
 	 */
 	ApiWorksheetFunction.prototype.STDEVP = function () {
 		return this.private_calculateFunction("STDEVP", arguments);
@@ -3545,7 +3686,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEV_P.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEV_P.js
 	 */
 	ApiWorksheetFunction.prototype.STDEV_P = function () {
 		return this.private_calculateFunction("STDEV.P", arguments);
@@ -3556,7 +3697,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/STDEVPA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/STDEVPA.js
 	 */
 	ApiWorksheetFunction.prototype.STDEVPA = function () {
 		return this.private_calculateFunction("STDEVPA", arguments);
@@ -3581,7 +3722,7 @@
 	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
 	 * @param {number} arg3 - Specifies the number of distribution tails to return: one-tailed distribution = 1; two-tailed distribution = 2.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TDIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TDIST.js
 	 */
 	ApiWorksheetFunction.prototype.TDIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TDIST", arguments);
@@ -3596,7 +3737,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability density function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.T_DIST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("T.DIST", arguments);
@@ -3608,7 +3749,7 @@
 	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
 	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T_DIST_2T.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T_DIST_2T.js
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_2T = function (arg1, arg2) {
 		return this.private_calculateFunction("T.DIST.2T", arguments);
@@ -3620,7 +3761,7 @@
 	 * @param {number} arg1 - The numeric value at which to evaluate the distribution.
 	 * @param {number} arg2 - An integer indicating the number of degrees of freedom that characterize the distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T_DIST_RT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T_DIST_RT.js
 	 */
 	ApiWorksheetFunction.prototype.T_DIST_RT = function (arg1, arg2) {
 		return this.private_calculateFunction("T.DIST.RT", arguments);
@@ -3632,7 +3773,7 @@
 	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
 	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T_INV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T_INV.js
 	 */
 	ApiWorksheetFunction.prototype.T_INV = function (arg1, arg2) {
 		return this.private_calculateFunction("T.INV", arguments);
@@ -3644,7 +3785,7 @@
 	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
 	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/T_INV_2T.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/T_INV_2T.js
 	 */
 	ApiWorksheetFunction.prototype.T_INV_2T = function (arg1, arg2) {
 		return this.private_calculateFunction("T.INV.2T", arguments);
@@ -3656,7 +3797,7 @@
 	 * @param {number} arg1 - The probability associated with the two-tailed Student's t-distribution, a number between 0 and 1 inclusive.
 	 * @param {number} arg2 - A positive integer indicating the number of degrees of freedom to characterize the distribution.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TINV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TINV.js
 	 */
 	ApiWorksheetFunction.prototype.TINV = function (arg1, arg2) {
 		return this.private_calculateFunction("TINV", arguments);
@@ -3671,7 +3812,7 @@
 	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TREND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TREND.js
 	 */
 	ApiWorksheetFunction.prototype.TREND = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("TREND", arguments);
@@ -3683,7 +3824,7 @@
 	 * @param {ApiRange | number[]} arg1 - The range or array of values to trim and average.
 	 * @param {number} arg2 - The fractional number of data points to exclude from the top and bottom of the data set.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TRIMMEAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRIMMEAN.js
 	 */
 	ApiWorksheetFunction.prototype.TRIMMEAN = function (arg1, arg2) {
 		return this.private_calculateFunction("TRIMMEAN", arguments);
@@ -3722,7 +3863,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VAR.js
 	 */
 	ApiWorksheetFunction.prototype.VAR = function () {
 		return this.private_calculateFunction("VAR", arguments);
@@ -3733,7 +3874,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VARA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VARA.js
 	 */
 	ApiWorksheetFunction.prototype.VARA = function () {
 		return this.private_calculateFunction("VARA", arguments);
@@ -3744,7 +3885,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VARP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VARP.js
 	 */
 	ApiWorksheetFunction.prototype.VARP = function () {
 		return this.private_calculateFunction("VARP", arguments);
@@ -3755,7 +3896,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VAR_P.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VAR_P.js
 	 */
 	ApiWorksheetFunction.prototype.VAR_P = function () {
 		return this.private_calculateFunction("VAR.P", arguments);
@@ -3766,7 +3907,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VAR_S.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VAR_S.js
 	 */
 	ApiWorksheetFunction.prototype.VAR_S = function () {
 		return this.private_calculateFunction("VAR.S", arguments);
@@ -3777,7 +3918,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VARPA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VARPA.js
 	 */
 	ApiWorksheetFunction.prototype.VARPA = function () {
 		return this.private_calculateFunction("VARPA", arguments);
@@ -3793,7 +3934,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WEIBULL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEIBULL.js
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WEIBULL", arguments);
@@ -3809,7 +3950,7 @@
 	 * If it is <b>true</b>, the function returns the cumulative distribution function.
 	 * If it is <b>false</b>, the function returns the probability mass function.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WEIBULL_DIST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEIBULL_DIST.js
 	 */
 	ApiWorksheetFunction.prototype.WEIBULL_DIST = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WEIBULL.DIST", arguments);
@@ -3822,7 +3963,7 @@
 	 * @param {number} arg2 - The value to test.
 	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ZTEST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ZTEST.js
 	 */
 	ApiWorksheetFunction.prototype.ZTEST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("ZTEST", arguments);
@@ -3835,7 +3976,7 @@
 	 * @param {number} arg2 - The value to test.
 	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/Z_TEST.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/Z_TEST.js
 	 */
 	ApiWorksheetFunction.prototype.Z_TEST = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("Z.TEST", arguments);
@@ -3848,7 +3989,7 @@
 	 * @param {number} arg2 - A number from 1 to 12 representing the month of the year.
 	 * @param {number} arg3 - A number from 1 to 31 representing the day of the month.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DATE.js
 	 */
 	ApiWorksheetFunction.prototype.DATE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DATE", arguments);
@@ -3859,7 +4000,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 - The text that represents a date, between 1/1/1900 or 1/1/1904 (depending on the workbook's date system) and 12/31/9999.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DATEVALUE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DATEVALUE.js
 	 */
 	ApiWorksheetFunction.prototype.DATEVALUE = function (arg1) {
 		return this.private_calculateFunction("DATEVALUE", arguments);
@@ -3870,7 +4011,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A number in the date-time code.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DAY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DAY.js
 	 */
 	ApiWorksheetFunction.prototype.DAY = function (arg1) {
 		return this.private_calculateFunction("DAY", arguments);
@@ -3882,7 +4023,7 @@
 	 * @param {number} arg1 - Start date from which days will be counted.
 	 * @param {number} arg2 - End date until which days will be counted.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DAYS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DAYS.js
 	 */
 	ApiWorksheetFunction.prototype.DAYS = function (arg1, arg2) {
 		return this.private_calculateFunction("DAYS", arguments);
@@ -3899,7 +4040,7 @@
 	 * If the end date is the last day of a month and the start date is earlier than the 30th of a month, the end date becomes equal to the 1st of the next month.
 	 * Otherwise the end date becomes equal to the 30th of the same month.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DAYS360.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DAYS360.js
 	 */
 	ApiWorksheetFunction.prototype.DAYS360 = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DAYS360", arguments);
@@ -3911,7 +4052,7 @@
 	 * @param {any} arg1 - A serial date number that represents the start date.
 	 * @param {any} arg2 - The number of months before or after the start date.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EDATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EDATE.js
 	 */
 	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
 		return this.private_calculateFunction("EDATE", arguments);
@@ -3923,7 +4064,7 @@
 	 * @param {any} arg1 Is a serial date number that represents the start date.
 	 * @param {any} arg2 Is the number of months before or after the start_date.
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EOMONTH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EOMONTH.js
 	 */
 	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
 		return this.private_calculateFunction("EOMONTH", arguments);
@@ -3934,7 +4075,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel, or text in time format, such as 16:48:00 or 4:48:00 PM.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HOUR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HOUR.js
 	 */
 	ApiWorksheetFunction.prototype.HOUR = function (arg1) {
 		return this.private_calculateFunction("HOUR", arguments);
@@ -3945,7 +4086,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the date-time code used by Microsoft Excel for date and time calculation.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISOWEEKNUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISOWEEKNUM.js
 	 */
 	ApiWorksheetFunction.prototype.ISOWEEKNUM = function (arg1) {
 		return this.private_calculateFunction("ISOWEEKNUM", arguments);
@@ -3956,7 +4097,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel or text in time format, such as 16:48:00 or 4:48:00 PM.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MINUTE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MINUTE.js
 	 */
 	ApiWorksheetFunction.prototype.MINUTE = function (arg1) {
 		return this.private_calculateFunction("MINUTE", arguments);
@@ -3967,7 +4108,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MONTH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MONTH.js
 	 */
 	ApiWorksheetFunction.prototype.MONTH = function (arg1) {
 		return this.private_calculateFunction("MONTH", arguments);
@@ -3980,7 +4121,7 @@
 	 * @param {any} arg2 Is a serial date number that represents the end date.
 	 * @param {?any} arg3 Is an optional set of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NETWORKDAYS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NETWORKDAYS.js
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NETWORKDAYS", arguments);
@@ -3994,7 +4135,7 @@
 	 * @param {?number} arg3 Is a number or string specifying when weekends occur.
 	 * @param {?any} arg4 Is an optional set of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NETWORKDAYS_INTL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NETWORKDAYS_INTL.js
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS_INTL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
@@ -4004,7 +4145,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NOW.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NOW.js
 	 */
 	ApiWorksheetFunction.prototype.NOW = function () {
 		return this.private_calculateFunction("NOW", arguments);
@@ -4015,7 +4156,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel or text in time format, such as 16:48:23 or 4:48:47 PM.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SECOND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SECOND.js
 	 */
 	ApiWorksheetFunction.prototype.SECOND = function (arg1) {
 		return this.private_calculateFunction("SECOND", arguments);
@@ -4028,7 +4169,7 @@
 	 * @param {number} arg2 Is a number from 0 to 59 representing the minute.
 	 * @param {number} arg3 Is a number from 0 to 59 representing the second.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TIME.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TIME.js
 	 */
 	ApiWorksheetFunction.prototype.TIME = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TIME", arguments);
@@ -4039,7 +4180,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a text string that gives a time in any one of the Microsoft Excel time formats (date information in the string is ignored).
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TIMEVALUE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TIMEVALUE.js
 	 */
 	ApiWorksheetFunction.prototype.TIMEVALUE = function (arg1) {
 		return this.private_calculateFunction("TIMEVALUE", arguments);
@@ -4049,7 +4190,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TODAY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TODAY.js
 	 */
 	ApiWorksheetFunction.prototype.TODAY = function () {
 		return this.private_calculateFunction("TODAY", arguments);
@@ -4061,7 +4202,7 @@
 	 * @param {number} arg1 Is a number that represents a date.
 	 * @param {?number} arg2 Is a number: for Sunday=1 through Saturday=7, use 1; for Monday=1 through Sunday=7, use 2; for Monday=0 through Sunday=6, use 3.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WEEKDAY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEEKDAY.js
 	 */
 	ApiWorksheetFunction.prototype.WEEKDAY = function (arg1, arg2) {
 		return this.private_calculateFunction("WEEKDAY", arguments);
@@ -4073,7 +4214,7 @@
 	 * @param {any} arg1 Is the date-time code used by Microsoft Excel for date and time calculation.
 	 * @param {?any} arg2 Is a number (1 or 2) that determines the type of the return value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WEEKNUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WEEKNUM.js
 	 */
 	ApiWorksheetFunction.prototype.WEEKNUM = function (arg1, arg2) {
 		return this.private_calculateFunction("WEEKNUM", arguments);
@@ -4086,7 +4227,7 @@
 	 * @param {any} arg2 Is the number of nonweekend and non-holiday days before or after start_date.
 	 * @param {?any} arg3 Is an optional array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WORKDAY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WORKDAY.js
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("WORKDAY", arguments);
@@ -4100,7 +4241,7 @@
 	 * @param {?number} arg3 Is a number or string specifying when weekends occur.
 	 * @param {?any} arg4 Is an optional array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/WORKDAY_INTL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/WORKDAY_INTL.js
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY_INTL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WORKDAY.INTL", arguments);
@@ -4111,7 +4252,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/YEAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YEAR.js
 	 */
 	ApiWorksheetFunction.prototype.YEAR = function (arg1) {
 		return this.private_calculateFunction("YEAR", arguments);
@@ -4124,7 +4265,7 @@
 	 * @param {any} arg2 Is a serial date number that represents the end date.
 	 * @param {?any} arg3 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/YEARFRAC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YEARFRAC.js
 	 */
 	ApiWorksheetFunction.prototype.YEARFRAC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("YEARFRAC", arguments);
@@ -4136,7 +4277,7 @@
 	 * @param {any} arg1 Is the value at which to evaluate the function.
 	 * @param {any} arg2 Is the order of the Bessel function.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BESSELI.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BESSELI.js
 	 */
 	ApiWorksheetFunction.prototype.BESSELI = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELI", arguments);
@@ -4148,7 +4289,7 @@
 	 * @param {any} arg1 Is the value at which to evaluate the function.
 	 * @param {any} arg2 Is the order of the Bessel function.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BESSELJ.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BESSELJ.js
 	 */
 	ApiWorksheetFunction.prototype.BESSELJ = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELJ", arguments);
@@ -4160,7 +4301,7 @@
 	 * @param {any} arg1 Is the value at which to evaluate the function.
 	 * @param {any} arg2 Is the order of the function.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BESSELK.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BESSELK.js
 	 */
 	ApiWorksheetFunction.prototype.BESSELK = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELK", arguments);
@@ -4172,7 +4313,7 @@
 	 * @param {any} arg1 Is the value at which to evaluate the function.
 	 * @param {any} arg2 Is the order of the function.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BESSELY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BESSELY.js
 	 */
 	ApiWorksheetFunction.prototype.BESSELY = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELY", arguments);
@@ -4183,7 +4324,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the binary number you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BIN2DEC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2DEC.js
 	 */
 	ApiWorksheetFunction.prototype.BIN2DEC = function (arg1) {
 		return this.private_calculateFunction("BIN2DEC", arguments);
@@ -4195,7 +4336,7 @@
 	 * @param {any} arg1 Is the binary number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BIN2HEX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("BIN2HEX", arguments);
@@ -4207,7 +4348,7 @@
 	 * @param {any} arg1 Is the binary number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BIN2OCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BIN2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("BIN2OCT", arguments);
@@ -4219,7 +4360,7 @@
 	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
 	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BITAND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BITAND.js
 	 */
 	ApiWorksheetFunction.prototype.BITAND = function (arg1, arg2) {
 		return this.private_calculateFunction("BITAND", arguments);
@@ -4231,7 +4372,7 @@
 	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
 	 * @param {number} arg2 Is the number of bits that you want to shift Number left by.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BITLSHIFT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BITLSHIFT.js
 	 */
 	ApiWorksheetFunction.prototype.BITLSHIFT = function (arg1, arg2) {
 		return this.private_calculateFunction("BITLSHIFT", arguments);
@@ -4243,7 +4384,7 @@
 	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
 	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BITOR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BITOR.js
 	 */
 	ApiWorksheetFunction.prototype.BITOR = function (arg1, arg2) {
 		return this.private_calculateFunction("BITOR", arguments);
@@ -4255,7 +4396,7 @@
 	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
 	 * @param {number} arg2 Is the number of bits that you want to shift Number right by.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BITRSHIFT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BITRSHIFT.js
 	 */
 	ApiWorksheetFunction.prototype.BITRSHIFT = function (arg1, arg2) {
 		return this.private_calculateFunction("BITRSHIFT", arguments);
@@ -4267,7 +4408,7 @@
 	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
 	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BITXOR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BITXOR.js
 	 */
 	ApiWorksheetFunction.prototype.BITXOR = function (arg1, arg2) {
 		return this.private_calculateFunction("BITXOR", arguments);
@@ -4280,7 +4421,7 @@
 	 * @param {any} arg2 Is the imaginary coefficient of the complex number.
 	 * @param {?any} arg3 Is the suffix for the imaginary component of the complex number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COMPLEX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COMPLEX.js
 	 */
 	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("COMPLEX", arguments);
@@ -4293,7 +4434,7 @@
 	 * @param {any} arg2 Is the units for number.
 	 * @param {any} arg3 Is the units for the result.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CONVERT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CONVERT.js
 	 */
 	ApiWorksheetFunction.prototype.CONVERT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONVERT", arguments);
@@ -4305,7 +4446,7 @@
 	 * @param {any} arg1 Is the decimal integer you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DEC2BIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2BIN", arguments);
@@ -4317,7 +4458,7 @@
 	 * @param {any} arg1 Is the decimal integer you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DEC2HEX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2HEX", arguments);
@@ -4329,7 +4470,7 @@
 	 * @param {any} arg1 Is the decimal integer you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DEC2OCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEC2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2OCT", arguments);
@@ -4341,7 +4482,7 @@
 	 * @param {any} arg1 Is the first number.
 	 * @param {?any} arg2 Is the second number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DELTA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DELTA.js
 	 */
 	ApiWorksheetFunction.prototype.DELTA = function (arg1, arg2) {
 		return this.private_calculateFunction("DELTA", arguments);
@@ -4353,7 +4494,7 @@
 	 * @param {any} arg1 Is the lower bound for integrating ERF.
 	 * @param {?any} arg2 Is the upper bound for integrating ERF.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ERF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERF.js
 	 */
 	ApiWorksheetFunction.prototype.ERF = function (arg1, arg2) {
 		return this.private_calculateFunction("ERF", arguments);
@@ -4364,7 +4505,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the lower bound for integrating ERF.PRECISE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ERF_PRECISE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERF_PRECISE.js
 	 */
 	ApiWorksheetFunction.prototype.ERF_PRECISE = function (arg1) {
 		return this.private_calculateFunction("ERF.PRECISE", arguments);
@@ -4375,7 +4516,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the lower bound for integrating ERF.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ERFC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERFC.js
 	 */
 	ApiWorksheetFunction.prototype.ERFC = function (arg1) {
 		return this.private_calculateFunction("ERFC", arguments);
@@ -4386,7 +4527,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the lower bound for integrating ERFC.PRECISE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ERFC_PRECISE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERFC_PRECISE.js
 	 */
 	ApiWorksheetFunction.prototype.ERFC_PRECISE = function (arg1) {
 		return this.private_calculateFunction("ERFC.PRECISE", arguments);
@@ -4398,7 +4539,7 @@
 	 * @param {any} arg1 Is the value to test against step.
 	 * @param {?any} arg2 Is the threshold value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GESTEP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GESTEP.js
 	 */
 	ApiWorksheetFunction.prototype.GESTEP = function (arg1, arg2) {
 		return this.private_calculateFunction("GESTEP", arguments);
@@ -4410,7 +4551,7 @@
 	 * @param {any} arg1 Is the hexadecimal number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HEX2BIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("HEX2BIN", arguments);
@@ -4421,7 +4562,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the hexadecimal number you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HEX2DEC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2DEC.js
 	 */
 	ApiWorksheetFunction.prototype.HEX2DEC = function (arg1) {
 		return this.private_calculateFunction("HEX2DEC", arguments);
@@ -4433,7 +4574,7 @@
 	 * @param {any} arg1 Is the hexadecimal number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HEX2OCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HEX2OCT.js
 	 */
 	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("HEX2OCT", arguments);
@@ -4444,7 +4585,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the absolute value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMABS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMABS.js
 	 */
 	ApiWorksheetFunction.prototype.IMABS = function (arg1) {
 		return this.private_calculateFunction("IMABS", arguments);
@@ -4455,7 +4596,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the imaginary coefficient.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMAGINARY.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMAGINARY.js
 	 */
 	ApiWorksheetFunction.prototype.IMAGINARY = function (arg1) {
 		return this.private_calculateFunction("IMAGINARY", arguments);
@@ -4466,7 +4607,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the argument.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMARGUMENT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMARGUMENT.js
 	 */
 	ApiWorksheetFunction.prototype.IMARGUMENT = function (arg1) {
 		return this.private_calculateFunction("IMARGUMENT", arguments);
@@ -4477,7 +4618,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the conjugate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCONJUGATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCONJUGATE.js
 	 */
 	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
 		return this.private_calculateFunction("IMCONJUGATE", arguments);
@@ -4488,7 +4629,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the cosine.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCOS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOS.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
 		return this.private_calculateFunction("IMCOS", arguments);
@@ -4499,7 +4640,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the hyperbolic cosine.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCOSH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOSH.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
 		return this.private_calculateFunction("IMCOSH", arguments);
@@ -4510,7 +4651,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the cotangent.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCOT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCOT.js
 	 */
 	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
 		return this.private_calculateFunction("IMCOT", arguments);
@@ -4521,7 +4662,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the cosecant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCSC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSC.js
 	 */
 	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
 		return this.private_calculateFunction("IMCSC", arguments);
@@ -4532,7 +4673,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the hyperbolic cosecant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMCSCH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMCSCH.js
 	 */
 	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
 		return this.private_calculateFunction("IMCSCH", arguments);
@@ -4544,7 +4685,7 @@
 	 * @param {any} arg1 Is the complex numerator or dividend.
 	 * @param {any} arg2 Is the complex denominator or divisor.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMDIV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMDIV.js
 	 */
 	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
 		return this.private_calculateFunction("IMDIV", arguments);
@@ -4555,7 +4696,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the exponential.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMEXP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMEXP.js
 	 */
 	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
 		return this.private_calculateFunction("IMEXP", arguments);
@@ -4566,7 +4707,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the natural logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMLN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLN.js
 	 */
 	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
 		return this.private_calculateFunction("IMLN", arguments);
@@ -4577,7 +4718,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the common logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMLOG10.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG10.js
 	 */
 	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
 		return this.private_calculateFunction("IMLOG10", arguments);
@@ -4588,7 +4729,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the base-2 logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMLOG2.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMLOG2.js
 	 */
 	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
 		return this.private_calculateFunction("IMLOG2", arguments);
@@ -4600,7 +4741,7 @@
 	 * @param {any} arg1 Is a complex number you want to raise to a power.
 	 * @param {any} arg2 Is the power to which you want to raise the complex number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMPOWER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPOWER.js
 	 */
 	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
 		return this.private_calculateFunction("IMPOWER", arguments);
@@ -4610,7 +4751,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMPRODUCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMPRODUCT.js
 	 */
 	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
 		return this.private_calculateFunction("IMPRODUCT", arguments);
@@ -4621,7 +4762,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the real coefficient.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMREAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMREAL.js
 	 */
 	ApiWorksheetFunction.prototype.IMREAL = function (arg1) {
 		return this.private_calculateFunction("IMREAL", arguments);
@@ -4632,7 +4773,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the secant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSEC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSEC.js
 	 */
 	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
 		return this.private_calculateFunction("IMSEC", arguments);
@@ -4643,7 +4784,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the hyperbolic secant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSECH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSECH.js
 	 */
 	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
 		return this.private_calculateFunction("IMSECH", arguments);
@@ -4654,7 +4795,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the sine.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSIN.js
 	 */
 	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
 		return this.private_calculateFunction("IMSIN", arguments);
@@ -4665,7 +4806,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the hyperbolic sine.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSINH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSINH.js
 	 */
 	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
 		return this.private_calculateFunction("IMSINH", arguments);
@@ -4676,7 +4817,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the square root.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSQRT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSQRT.js
 	 */
 	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
 		return this.private_calculateFunction("IMSQRT", arguments);
@@ -4688,7 +4829,7 @@
 	 * @param {any} arg1 Is the complex number from which to subtract inumber2.
 	 * @param {any} arg2 Is the complex number to subtract from inumber1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSUB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUB.js
 	 */
 	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
 		return this.private_calculateFunction("IMSUB", arguments);
@@ -4698,7 +4839,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMSUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMSUM.js
 	 */
 	ApiWorksheetFunction.prototype.IMSUM = function () {
 		return this.private_calculateFunction("IMSUM", arguments);
@@ -4709,7 +4850,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a complex number for which you want the tangent.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IMTAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IMTAN.js
 	 */
 	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
 		return this.private_calculateFunction("IMTAN", arguments);
@@ -4721,7 +4862,7 @@
 	 * @param {any} arg1 Is the octal number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/OCT2BIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2BIN.js
 	 */
 	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("OCT2BIN", arguments);
@@ -4732,7 +4873,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the octal number you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/OCT2DEC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2DEC.js
 	 */
 	ApiWorksheetFunction.prototype.OCT2DEC = function (arg1) {
 		return this.private_calculateFunction("OCT2DEC", arguments);
@@ -4744,7 +4885,7 @@
 	 * @param {any} arg1 Is the octal number you want to convert.
 	 * @param {?any} arg2 Is the number of characters to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/OCT2HEX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OCT2HEX.js
 	 */
 	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("OCT2HEX", arguments);
@@ -4757,7 +4898,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DAVERAGE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DAVERAGE.js
 	 */
 	ApiWorksheetFunction.prototype.DAVERAGE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DAVERAGE", arguments);
@@ -4770,7 +4911,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DCOUNT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DCOUNT.js
 	 */
 	ApiWorksheetFunction.prototype.DCOUNT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DCOUNT", arguments);
@@ -4783,7 +4924,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DCOUNTA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DCOUNTA.js
 	 */
 	ApiWorksheetFunction.prototype.DCOUNTA = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DCOUNTA", arguments);
@@ -4796,7 +4937,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DGET.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DGET.js
 	 */
 	ApiWorksheetFunction.prototype.DGET = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DGET", arguments);
@@ -4809,7 +4950,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DMAX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DMAX.js
 	 */
 	ApiWorksheetFunction.prototype.DMAX = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DMAX", arguments);
@@ -4822,7 +4963,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DMIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DMIN.js
 	 */
 	ApiWorksheetFunction.prototype.DMIN = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DMIN", arguments);
@@ -4835,7 +4976,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DPRODUCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DPRODUCT.js
 	 */
 	ApiWorksheetFunction.prototype.DPRODUCT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DPRODUCT", arguments);
@@ -4848,7 +4989,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DSTDEV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DSTDEV.js
 	 */
 	ApiWorksheetFunction.prototype.DSTDEV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSTDEV", arguments);
@@ -4861,7 +5002,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DSTDEVP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DSTDEVP.js
 	 */
 	ApiWorksheetFunction.prototype.DSTDEVP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSTDEVP", arguments);
@@ -4874,7 +5015,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DSUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DSUM.js
 	 */
 	ApiWorksheetFunction.prototype.DSUM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSUM", arguments);
@@ -4887,7 +5028,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DVAR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DVAR.js
 	 */
 	ApiWorksheetFunction.prototype.DVAR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DVAR", arguments);
@@ -4900,7 +5041,7 @@
 	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
 	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DVARP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DVARP.js
 	 */
 	ApiWorksheetFunction.prototype.DVARP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DVARP", arguments);
@@ -4918,7 +5059,7 @@
 	 * @param {?any} arg7 Is the type of day count basis to use.
 	 * @param {?any} arg8 Is a logical value: to accrued interest from issue date = TRUE or omitted; to calculate from last coupon payment date = FALSE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACCRINT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACCRINT.js
 	 */
 	ApiWorksheetFunction.prototype.ACCRINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ACCRINT", arguments);
@@ -4933,7 +5074,7 @@
 	 * @param {any} arg4 Is the security's par value.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACCRINTM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACCRINTM.js
 	 */
 	ApiWorksheetFunction.prototype.ACCRINTM = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("ACCRINTM", arguments);
@@ -4950,7 +5091,7 @@
 	 * @param {any} arg6.
 	 * @param {?any} arg7.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AMORDEGRC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AMORDEGRC.js
 	 */
 	ApiWorksheetFunction.prototype.AMORDEGRC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("AMORDEGRC", arguments);
@@ -4967,7 +5108,7 @@
 	 * @param {any} arg6 Is the rate of depreciation.
 	 * @param {?any} arg7 Year_basis : 0 for year of 360 days, 1 for actual, 3 for year of 365 days..
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AMORLINC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AMORLINC.js
 	 */
 	ApiWorksheetFunction.prototype.AMORLINC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("AMORLINC", arguments);
@@ -4981,7 +5122,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPDAYBS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYBS.js
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYBS = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYBS", arguments);
@@ -4995,7 +5136,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPDAYS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYS.js
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYS = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYS", arguments);
@@ -5009,7 +5150,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPDAYSNC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPDAYSNC.js
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYSNC = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYSNC", arguments);
@@ -5023,7 +5164,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPNCD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPNCD.js
 	 */
 	ApiWorksheetFunction.prototype.COUPNCD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPNCD", arguments);
@@ -5037,7 +5178,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPNUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPNUM.js
 	 */
 	ApiWorksheetFunction.prototype.COUPNUM = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPNUM", arguments);
@@ -5051,7 +5192,7 @@
 	 * @param {any} arg3 Is the number of coupon payments per year.
 	 * @param {?any} arg4 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COUPPCD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COUPPCD.js
 	 */
 	ApiWorksheetFunction.prototype.COUPPCD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPPCD", arguments);
@@ -5067,7 +5208,7 @@
 	 * @param {any} arg5 Is the last period in the calculation.
 	 * @param {any} arg6 Is the timing of the payment.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CUMIPMT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CUMIPMT.js
 	 */
 	ApiWorksheetFunction.prototype.CUMIPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("CUMIPMT", arguments);
@@ -5083,7 +5224,7 @@
 	 * @param {any} arg5 Is the last period in the calculation.
 	 * @param {any} arg6 Is the timing of the payment.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CUMPRINC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CUMPRINC.js
 	 */
 	ApiWorksheetFunction.prototype.CUMPRINC = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("CUMPRINC", arguments);
@@ -5098,7 +5239,7 @@
 	 * @param {number} arg4 Is the period for which you want to calculate the depreciation. Period must use the same units as Life.
 	 * @param {?number} arg5 Is the number of months in the first year. If month is omitted, it is assumed to be 12.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DB.js
 	 */
 	ApiWorksheetFunction.prototype.DB = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DB", arguments);
@@ -5113,7 +5254,7 @@
 	 * @param {number} arg4 Is the period for which you want to calculate the depreciation. Period must use the same units as Life.
 	 * @param {?number} arg5 Is the rate at which the balance declines. If Factor is omitted, it is assumed to be 2 (the double-declining balance method).
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DDB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DDB.js
 	 */
 	ApiWorksheetFunction.prototype.DDB = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DDB", arguments);
@@ -5128,7 +5269,7 @@
 	 * @param {any} arg4 Is the security's redemption value per $100 face value.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DISC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DISC.js
 	 */
 	ApiWorksheetFunction.prototype.DISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DISC", arguments);
@@ -5140,7 +5281,7 @@
 	 * @param {any} arg1 Is a number expressed as a fraction.
 	 * @param {any} arg2 Is the integer to use in the denominator of the fraction.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DOLLARDE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DOLLARDE.js
 	 */
 	ApiWorksheetFunction.prototype.DOLLARDE = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLARDE", arguments);
@@ -5152,7 +5293,7 @@
 	 * @param {any} arg1 Is a decimal number.
 	 * @param {any} arg2 Is the integer to use in the denominator of a fraction.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DOLLARFR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DOLLARFR.js
 	 */
 	ApiWorksheetFunction.prototype.DOLLARFR = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLARFR", arguments);
@@ -5168,7 +5309,7 @@
 	 * @param {any} arg5 Is the number of coupon payments per year.
 	 * @param {?any} arg6 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DURATION.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DURATION.js
 	 */
 	ApiWorksheetFunction.prototype.DURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("DURATION", arguments);
@@ -5180,7 +5321,7 @@
 	 * @param {any} arg1 Is the nominal interest rate.
 	 * @param {any} arg2 Is the number of compounding periods per year.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EFFECT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EFFECT.js
 	 */
 	ApiWorksheetFunction.prototype.EFFECT = function (arg1, arg2) {
 		return this.private_calculateFunction("EFFECT", arguments);
@@ -5195,7 +5336,7 @@
 	 * @param {?number} arg4 Is the present value, or the lump-sum amount that a series of future payments is worth now. If omitted, Pv = 0.
 	 * @param {?number} arg5 Is a value representing the timing of payment: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FV.js
 	 */
 	ApiWorksheetFunction.prototype.FV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("FV", arguments);
@@ -5207,7 +5348,7 @@
 	 * @param {any} arg1 Is the present value.
 	 * @param {any} arg2 Is an array of interest rates to apply.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FVSCHEDULE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FVSCHEDULE.js
 	 */
 	ApiWorksheetFunction.prototype.FVSCHEDULE = function (arg1, arg2) {
 		return this.private_calculateFunction("FVSCHEDULE", arguments);
@@ -5222,7 +5363,7 @@
 	 * @param {any} arg4 Is the amount to be received at maturity.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/INTRATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/INTRATE.js
 	 */
 	ApiWorksheetFunction.prototype.INTRATE = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("INTRATE", arguments);
@@ -5238,7 +5379,7 @@
 	 * @param {?number} arg5 Is the future value, or a cash balance you want to attain after the last payment is made. If omitted, Fv = 0.
 	 * @param {?number} arg6 Is a logical value representing the timing of payment: at the end of the period = 0 or omitted, at the beginning of the period = 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IPMT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IPMT.js
 	 */
 	ApiWorksheetFunction.prototype.IPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("IPMT", arguments);
@@ -5250,7 +5391,7 @@
 	 * @param {ApiRange} arg1 Is an array or a reference to cells that contain numbers for which you want to calculate the internal rate of return.
 	 * @param {?number} arg2 Is a number that you guess is close to the result of IRR; 0.1 (10 percent) if omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IRR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IRR.js
 	 */
 	ApiWorksheetFunction.prototype.IRR = function (arg1, arg2) {
 		return this.private_calculateFunction("IRR", arguments);
@@ -5264,7 +5405,7 @@
 	 * @param {number} arg3 Number of payment periods in an investment.
 	 * @param {number} arg4 Lump sum amount that a series of future payments is right now.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISPMT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISPMT.js
 	 */
 	ApiWorksheetFunction.prototype.ISPMT = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("ISPMT", arguments);
@@ -5280,7 +5421,7 @@
 	 * @param {any} arg5 Is the number of coupon payments per year.
 	 * @param {?any} arg6 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MDURATION.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MDURATION.js
 	 */
 	ApiWorksheetFunction.prototype.MDURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("MDURATION", arguments);
@@ -5293,7 +5434,7 @@
 	 * @param {number} arg2 Is the interest rate you pay on the money used in the cash flows.
 	 * @param {number} arg3 Is the interest rate you receive on the cash flows as you reinvest them.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MIRR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MIRR.js
 	 */
 	ApiWorksheetFunction.prototype.MIRR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MIRR", arguments);
@@ -5305,7 +5446,7 @@
 	 * @param {any} arg1 Is the effective interest rate.
 	 * @param {any} arg2 Is the number of compounding periods per year.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NOMINAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NOMINAL.js
 	 */
 	ApiWorksheetFunction.prototype.NOMINAL = function (arg1, arg2) {
 		return this.private_calculateFunction("NOMINAL", arguments);
@@ -5320,7 +5461,7 @@
 	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made. If omitted, zero is used.
 	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NPER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NPER.js
 	 */
 	ApiWorksheetFunction.prototype.NPER = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("NPER", arguments);
@@ -5330,7 +5471,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NPV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NPV.js
 	 */
 	ApiWorksheetFunction.prototype.NPV = function () {
 		return this.private_calculateFunction("NPV", arguments);
@@ -5349,7 +5490,7 @@
 	 * @param {any} arg8 Is the number of coupon payments per year.
 	 * @param {?any} arg9 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ODDFPRICE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDFPRICE.js
 	 */
 	ApiWorksheetFunction.prototype.ODDFPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
 		return this.private_calculateFunction("ODDFPRICE", arguments);
@@ -5368,7 +5509,7 @@
 	 * @param {any} arg8 Is the number of coupon payments per year.
 	 * @param {?any} arg9 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ODDFYIELD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDFYIELD.js
 	 */
 	ApiWorksheetFunction.prototype.ODDFYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
 		return this.private_calculateFunction("ODDFYIELD", arguments);
@@ -5386,7 +5527,7 @@
 	 * @param {any} arg7 Is the number of coupon payments per year.
 	 * @param {?any} arg8 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ODDLPRICE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDLPRICE.js
 	 */
 	ApiWorksheetFunction.prototype.ODDLPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ODDLPRICE", arguments);
@@ -5404,7 +5545,7 @@
 	 * @param {any} arg7 Is the number of coupon payments per year.
 	 * @param {?any} arg8 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ODDLYIELD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODDLYIELD.js
 	 */
 	ApiWorksheetFunction.prototype.ODDLYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ODDLYIELD", arguments);
@@ -5417,7 +5558,7 @@
 	 * @param {number} arg2 Is the present value of the investment.
 	 * @param {number} arg3 Is the desired future value of the investment.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PDURATION.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PDURATION.js
 	 */
 	ApiWorksheetFunction.prototype.PDURATION = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PDURATION", arguments);
@@ -5432,7 +5573,7 @@
 	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made, 0 (zero) if omitted.
 	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PMT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PMT.js
 	 */
 	ApiWorksheetFunction.prototype.PMT = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PMT", arguments);
@@ -5448,7 +5589,7 @@
 	 * @param {?number} arg5 Is the future value, or cash balance you want to attain after the last payment is made.
 	 * @param {?number} arg6 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PPMT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PPMT.js
 	 */
 	ApiWorksheetFunction.prototype.PPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("PPMT", arguments);
@@ -5465,7 +5606,7 @@
 	 * @param {any} arg6 Is the number of coupon payments per year.
 	 * @param {?any} arg7 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PRICE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICE.js
 	 */
 	ApiWorksheetFunction.prototype.PRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("PRICE", arguments);
@@ -5480,7 +5621,7 @@
 	 * @param {any} arg4 Is the security's redemption value per $100 face value.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PRICEDISC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICEDISC.js
 	 */
 	ApiWorksheetFunction.prototype.PRICEDISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PRICEDISC", arguments);
@@ -5496,7 +5637,7 @@
 	 * @param {any} arg5 Is the security's annual yield.
 	 * @param {?any} arg6 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PRICEMAT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRICEMAT.js
 	 */
 	ApiWorksheetFunction.prototype.PRICEMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("PRICEMAT", arguments);
@@ -5511,7 +5652,7 @@
 	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made.
 	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PV.js
 	 */
 	ApiWorksheetFunction.prototype.PV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PV", arguments);
@@ -5527,7 +5668,7 @@
 	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
 	 * @param {?number} arg6 Is your guess for what the rate will be; if omitted, Guess = 0.1 (10 percent).
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RATE.js
 	 */
 	ApiWorksheetFunction.prototype.RATE = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("RATE", arguments);
@@ -5542,7 +5683,7 @@
 	 * @param {any} arg4 Is the security's discount rate.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RECEIVED.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RECEIVED.js
 	 */
 	ApiWorksheetFunction.prototype.RECEIVED = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("RECEIVED", arguments);
@@ -5555,7 +5696,7 @@
 	 * @param {number} arg2 Is the present value of the investment.
 	 * @param {number} arg3 Is the future value of the investment.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RRI.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RRI.js
 	 */
 	ApiWorksheetFunction.prototype.RRI = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RRI", arguments);
@@ -5568,7 +5709,7 @@
 	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
 	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SLN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SLN.js
 	 */
 	ApiWorksheetFunction.prototype.SLN = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SLN", arguments);
@@ -5582,7 +5723,7 @@
 	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
 	 * @param {number} arg4 Is the period and must use the same units as Life.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SYD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SYD.js
 	 */
 	ApiWorksheetFunction.prototype.SYD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SYD", arguments);
@@ -5595,7 +5736,7 @@
 	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
 	 * @param {any} arg3 Is the Treasury bill's discount rate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TBILLEQ.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TBILLEQ.js
 	 */
 	ApiWorksheetFunction.prototype.TBILLEQ = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLEQ", arguments);
@@ -5608,7 +5749,7 @@
 	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
 	 * @param {any} arg3 Is the Treasury bill's discount rate.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TBILLPRICE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TBILLPRICE.js
 	 */
 	ApiWorksheetFunction.prototype.TBILLPRICE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLPRICE", arguments);
@@ -5621,7 +5762,7 @@
 	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
 	 * @param {any} arg3 Is the Treasury Bill's price per $100 face value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TBILLYIELD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TBILLYIELD.js
 	 */
 	ApiWorksheetFunction.prototype.TBILLYIELD = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLYIELD", arguments);
@@ -5638,7 +5779,7 @@
 	 * @param {?number} arg6 Is the rate at which the balance declines, 2 (double-declining balance) if omitted.
 	 * @param {?boolean} arg7 Switch to straight-line depreciation when depreciation is greater than the declining balance = FALSE or omitted; do not switch = TRUE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VDB.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VDB.js
 	 */
 	ApiWorksheetFunction.prototype.VDB = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("VDB", arguments);
@@ -5651,7 +5792,7 @@
 	 * @param {any} arg2 Is a schedule of payment dates that corresponds to the cash flow payments.
 	 * @param {?any} arg3 Is a number that you guess is close to the result of XIRR.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/XIRR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/XIRR.js
 	 */
 	ApiWorksheetFunction.prototype.XIRR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("XIRR", arguments);
@@ -5664,7 +5805,7 @@
 	 * @param {any} arg2 Is a series of cash flows that correspond to a schedule of payments in dates.
 	 * @param {any} arg3 Is a schedule of payment dates that corresponds to the cash flow payments.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/XNPV.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/XNPV.js
 	 */
 	ApiWorksheetFunction.prototype.XNPV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("XNPV", arguments);
@@ -5681,7 +5822,7 @@
 	 * @param {any} arg6 Is the number of coupon payments per year.
 	 * @param {?any} arg7 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/YIELD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELD.js
 	 */
 	ApiWorksheetFunction.prototype.YIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("YIELD", arguments);
@@ -5696,7 +5837,7 @@
 	 * @param {any} arg4 Is the security's redemption value per $100 face value.
 	 * @param {?any} arg5 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/YIELDDISC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELDDISC.js
 	 */
 	ApiWorksheetFunction.prototype.YIELDDISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("YIELDDISC", arguments);
@@ -5712,7 +5853,7 @@
 	 * @param {any} arg5 Is the security's price per $100 face value.
 	 * @param {?any} arg6 Is the type of day count basis to use.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/YIELDMAT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/YIELDMAT.js
 	 */
 	ApiWorksheetFunction.prototype.YIELDMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("YIELDMAT", arguments);
@@ -5723,7 +5864,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the real number for which you want the absolute value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ABS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ABS.js
 	 */
 	ApiWorksheetFunction.prototype.ABS = function (arg1) {
 		return this.private_calculateFunction("ABS", arguments);
@@ -5734,7 +5875,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the cosine of the angle you want and must be from -1 to 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACOS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACOS.js
 	 */
 	ApiWorksheetFunction.prototype.ACOS = function (arg1) {
 		return this.private_calculateFunction("ACOS", arguments);
@@ -5745,7 +5886,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number equal to or greater than 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACOSH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACOSH.js
 	 */
 	ApiWorksheetFunction.prototype.ACOSH = function (arg1) {
 		return this.private_calculateFunction("ACOSH", arguments);
@@ -5756,7 +5897,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the cotangent of the angle you want.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACOT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACOT.js
 	 */
 	ApiWorksheetFunction.prototype.ACOT = function (arg1) {
 		return this.private_calculateFunction("ACOT", arguments);
@@ -5767,7 +5908,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the hyperbolic cotangent of the angle that you want.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ACOTH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ACOTH.js
 	 */
 	ApiWorksheetFunction.prototype.ACOTH = function (arg1) {
 		return this.private_calculateFunction("ACOTH", arguments);
@@ -5777,7 +5918,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AGGREGATE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AGGREGATE.js
 	 */
 	ApiWorksheetFunction.prototype.AGGREGATE = function () {
 		return this.private_calculateFunction("AGGREGATE", arguments);
@@ -5788,7 +5929,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} arg1 Is the Roman numeral you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ARABIC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ARABIC.js
 	 */
 	ApiWorksheetFunction.prototype.ARABIC = function (arg1) {
 		return this.private_calculateFunction("ARABIC", arguments);
@@ -5799,7 +5940,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the sine of the angle you want and must be from -1 to 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ASIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ASIN.js
 	 */
 	ApiWorksheetFunction.prototype.ASIN = function (arg1) {
 		return this.private_calculateFunction("ASIN", arguments);
@@ -5810,7 +5951,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number equal to or greater than 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ASINH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ASINH.js
 	 */
 	ApiWorksheetFunction.prototype.ASINH = function (arg1) {
 		return this.private_calculateFunction("ASINH", arguments);
@@ -5821,7 +5962,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the tangent of the angle you want.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ATAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ATAN.js
 	 */
 	ApiWorksheetFunction.prototype.ATAN = function (arg1) {
 		return this.private_calculateFunction("ATAN", arguments);
@@ -5833,7 +5974,7 @@
 	 * @param {number} arg1 Is the x-coordinate of the point.
 	 * @param {number} arg2 Is the y-coordinate of the point.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ATAN2.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ATAN2.js
 	 */
 	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
 		return this.private_calculateFunction("ATAN2", arguments);
@@ -5844,7 +5985,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number between -1 and 1 excluding -1 and 1.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ATANH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ATANH.js
 	 */
 	ApiWorksheetFunction.prototype.ATANH = function (arg1) {
 		return this.private_calculateFunction("ATANH", arguments);
@@ -5857,7 +5998,7 @@
 	 * @param {number} arg2 Is the base Radix that you want to convert the number into.
 	 * @param {?number} arg3 Is the minimum length of the returned string.  If omitted leading zeros are not added.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/BASE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/BASE.js
 	 */
 	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("BASE", arguments);
@@ -5869,7 +6010,7 @@
 	 * @param {number} arg1 Is the value you want to round.
 	 * @param {number} arg2 Is the multiple to which you want to round.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CEILING.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CEILING.js
 	 */
 	ApiWorksheetFunction.prototype.CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("CEILING", arguments);
@@ -5882,7 +6023,7 @@
 	 * @param {?number} arg2 Is the multiple to which you want to round.
 	 * @param {?number} arg3 When given and nonzero this function will round away from zero.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CEILING_MATH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CEILING_MATH.js
 	 */
 	ApiWorksheetFunction.prototype.CEILING_MATH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CEILING.MATH", arguments);
@@ -5894,7 +6035,7 @@
 	 * @param {number} arg1.
 	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CEILING_PRECISE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CEILING_PRECISE.js
 	 */
 	ApiWorksheetFunction.prototype.CEILING_PRECISE = function (arg1, arg2) {
 		return this.private_calculateFunction("CEILING.PRECISE", arguments);
@@ -5906,7 +6047,7 @@
 	 * @param {number} arg1 Is the total number of items.
 	 * @param {number} arg2 Is the number of items in each combination.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COMBIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COMBIN.js
 	 */
 	ApiWorksheetFunction.prototype.COMBIN = function (arg1, arg2) {
 		return this.private_calculateFunction("COMBIN", arguments);
@@ -5918,7 +6059,7 @@
 	 * @param {number} arg1 Is the total number of items.
 	 * @param {number} arg2 Is the number of items in each combination.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COMBINA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COMBINA.js
 	 */
 	ApiWorksheetFunction.prototype.COMBINA = function (arg1, arg2) {
 		return this.private_calculateFunction("COMBINA", arguments);
@@ -5929,7 +6070,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the cosine.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COS.js
 	 */
 	ApiWorksheetFunction.prototype.COS = function (arg1) {
 		return this.private_calculateFunction("COS", arguments);
@@ -5940,7 +6081,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COSH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COSH.js
 	 */
 	ApiWorksheetFunction.prototype.COSH = function (arg1) {
 		return this.private_calculateFunction("COSH", arguments);
@@ -5951,7 +6092,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the cotangent.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COT.js
 	 */
 	ApiWorksheetFunction.prototype.COT = function (arg1) {
 		return this.private_calculateFunction("COT", arguments);
@@ -5962,7 +6103,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic cotangent.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COTH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COTH.js
 	 */
 	ApiWorksheetFunction.prototype.COTH = function (arg1) {
 		return this.private_calculateFunction("COTH", arguments);
@@ -5973,7 +6114,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the cosecant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CSC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CSC.js
 	 */
 	ApiWorksheetFunction.prototype.CSC = function (arg1) {
 		return this.private_calculateFunction("CSC", arguments);
@@ -5984,7 +6125,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic cosecant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CSCH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CSCH.js
 	 */
 	ApiWorksheetFunction.prototype.CSCH = function (arg1) {
 		return this.private_calculateFunction("CSCH", arguments);
@@ -5996,7 +6137,7 @@
 	 * @param {string} arg1 Is the number that you want to convert.
 	 * @param {number} arg2 Is the base Radix of the number you are converting.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DECIMAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DECIMAL.js
 	 */
 	ApiWorksheetFunction.prototype.DECIMAL = function (arg1, arg2) {
 		return this.private_calculateFunction("DECIMAL", arguments);
@@ -6007,7 +6148,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians that you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/DEGREES.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/DEGREES.js
 	 */
 	ApiWorksheetFunction.prototype.DEGREES = function (arg1) {
 		return this.private_calculateFunction("DEGREES", arguments);
@@ -6019,7 +6160,7 @@
 	 * @param {number} arg1.
 	 * @param {number} arg2.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ECMA_CEILING.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ECMA_CEILING.js
 	 */
 	ApiWorksheetFunction.prototype.ECMA_CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("ECMA.CEILING", arguments);
@@ -6030,7 +6171,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the value to round.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EVEN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EVEN.js
 	 */
 	ApiWorksheetFunction.prototype.EVEN = function (arg1) {
 		return this.private_calculateFunction("EVEN", arguments);
@@ -6041,7 +6182,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the exponent applied to the base e. The constant e equals 2.71828182845904, the base of the natural logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/EXP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/EXP.js
 	 */
 	ApiWorksheetFunction.prototype.EXP = function (arg1) {
 		return this.private_calculateFunction("EXP", arguments);
@@ -6052,7 +6193,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the nonnegative number you want the factorial of.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FACT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FACT.js
 	 */
 	ApiWorksheetFunction.prototype.FACT = function (arg1) {
 		return this.private_calculateFunction("FACT", arguments);
@@ -6063,7 +6204,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value for which to return the double factorial.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FACTDOUBLE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FACTDOUBLE.js
 	 */
 	ApiWorksheetFunction.prototype.FACTDOUBLE = function (arg1) {
 		return this.private_calculateFunction("FACTDOUBLE", arguments);
@@ -6075,7 +6216,7 @@
 	 * @param {number} arg1 Is the numeric value you want to round.
 	 * @param {number} arg2 Is the multiple to which you want to round. Number and Significance must either both be positive or both be negative.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FLOOR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FLOOR.js
 	 */
 	ApiWorksheetFunction.prototype.FLOOR = function (arg1, arg2) {
 		return this.private_calculateFunction("FLOOR", arguments);
@@ -6087,7 +6228,7 @@
 	 * @param {number} arg1.
 	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FLOOR_PRECISE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FLOOR_PRECISE.js
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_PRECISE = function (arg1, arg2) {
 		return this.private_calculateFunction("FLOOR.PRECISE", arguments);
@@ -6100,7 +6241,7 @@
 	 * @param {?number} arg2 Is the multiple to which you want to round.
 	 * @param {?number} arg3 When given and nonzero this function will round towards zero.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FLOOR_MATH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FLOOR_MATH.js
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_MATH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FLOOR.MATH", arguments);
@@ -6110,7 +6251,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/GCD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/GCD.js
 	 */
 	ApiWorksheetFunction.prototype.GCD = function () {
 		return this.private_calculateFunction("GCD", arguments);
@@ -6121,7 +6262,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the real number you want to round down to an integer.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/INT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/INT.js
 	 */
 	ApiWorksheetFunction.prototype.INT = function (arg1) {
 		return this.private_calculateFunction("INT", arguments);
@@ -6133,7 +6274,7 @@
 	 * @param {number} arg1.
 	 * @param {?number} arg2.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISO_CEILING.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISO_CEILING.js
 	 */
 	ApiWorksheetFunction.prototype.ISO_CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("ISO.CEILING", arguments);
@@ -6143,7 +6284,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LCM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LCM.js
 	 */
 	ApiWorksheetFunction.prototype.LCM = function () {
 		return this.private_calculateFunction("LCM", arguments);
@@ -6154,7 +6295,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the positive real number for which you want the natural logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LN.js
 	 */
 	ApiWorksheetFunction.prototype.LN = function (arg1) {
 		return this.private_calculateFunction("LN", arguments);
@@ -6166,7 +6307,7 @@
 	 * @param {number} arg1 Is the positive real number for which you want the logarithm.
 	 * @param {?number} arg2 Is the base of the logarithm; 10 if omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOG.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOG.js
 	 */
 	ApiWorksheetFunction.prototype.LOG = function (arg1, arg2) {
 		return this.private_calculateFunction("LOG", arguments);
@@ -6177,7 +6318,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the positive real number for which you want the base-10 logarithm.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOG10.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOG10.js
 	 */
 	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
 		return this.private_calculateFunction("LOG10", arguments);
@@ -6223,7 +6364,7 @@
 	 * @param {number} arg1 Is the number for which you want to find the remainder after the division is performed.
 	 * @param {number} arg2 Is the number by which you want to divide Number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MOD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MOD.js
 	 */
 	ApiWorksheetFunction.prototype.MOD = function (arg1, arg2) {
 		return this.private_calculateFunction("MOD", arguments);
@@ -6235,7 +6376,7 @@
 	 * @param {any} arg1 Is the value to round.
 	 * @param {any} arg2 Is the multiple to which you want to round number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MROUND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MROUND.js
 	 */
 	ApiWorksheetFunction.prototype.MROUND = function (arg1, arg2) {
 		return this.private_calculateFunction("MROUND", arguments);
@@ -6245,7 +6386,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MULTINOMIAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MULTINOMIAL.js
 	 */
 	ApiWorksheetFunction.prototype.MULTINOMIAL = function () {
 		return this.private_calculateFunction("MULTINOMIAL", arguments);
@@ -6256,7 +6397,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is an integer specifying the dimension of the unit matrix that you want to return.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MUNIT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MUNIT.js
 	 */
 	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
 		return this.private_calculateFunction("MUNIT", arguments);
@@ -6267,7 +6408,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the value to round.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ODD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ODD.js
 	 */
 	ApiWorksheetFunction.prototype.ODD = function (arg1) {
 		return this.private_calculateFunction("ODD", arguments);
@@ -6277,7 +6418,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PI.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PI.js
 	 */
 	ApiWorksheetFunction.prototype.PI = function () {
 		return this.private_calculateFunction("PI", arguments);
@@ -6289,7 +6430,7 @@
 	 * @param {number} arg1 Is the base number, any real number.
 	 * @param {number} arg2 Is the exponent, to which the base number is raised.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/POWER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/POWER.js
 	 */
 	ApiWorksheetFunction.prototype.POWER = function (arg1, arg2) {
 		return this.private_calculateFunction("POWER", arguments);
@@ -6299,7 +6440,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/PRODUCT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/PRODUCT.js
 	 */
 	ApiWorksheetFunction.prototype.PRODUCT = function () {
 		return this.private_calculateFunction("PRODUCT", arguments);
@@ -6311,7 +6452,7 @@
 	 * @param {any} arg1 Is the dividend.
 	 * @param {any} arg2 Is the divisor.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/QUOTIENT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/QUOTIENT.js
 	 */
 	ApiWorksheetFunction.prototype.QUOTIENT = function (arg1, arg2) {
 		return this.private_calculateFunction("QUOTIENT", arguments);
@@ -6322,7 +6463,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is an angle in degrees that you want to convert.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RADIANS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RADIANS.js
 	 */
 	ApiWorksheetFunction.prototype.RADIANS = function (arg1) {
 		return this.private_calculateFunction("RADIANS", arguments);
@@ -6332,7 +6473,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RAND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RAND.js
 	 */
 	ApiWorksheetFunction.prototype.RAND = function () {
 		return this.private_calculateFunction("RAND", arguments);
@@ -6344,7 +6485,7 @@
 	 * @param {any} arg1 Is the smallest integer RANDBETWEEN will return.
 	 * @param {any} arg2 Is the largest integer RANDBETWEEN will return.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/RANDBETWEEN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/RANDBETWEEN.js
 	 */
 	ApiWorksheetFunction.prototype.RANDBETWEEN = function (arg1, arg2) {
 		return this.private_calculateFunction("RANDBETWEEN", arguments);
@@ -6356,7 +6497,7 @@
 	 * @param {number} arg1 Is the Arabic numeral you want to convert.
 	 * @param {?number} arg2 Is the number specifying the type of Roman numeral you want..
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ROMAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROMAN.js
 	 */
 	ApiWorksheetFunction.prototype.ROMAN = function (arg1, arg2) {
 		return this.private_calculateFunction("ROMAN", arguments);
@@ -6368,7 +6509,7 @@
 	 * @param {number} arg1 Is the number you want to round.
 	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero to the nearest integer.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ROUND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROUND.js
 	 */
 	ApiWorksheetFunction.prototype.ROUND = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUND", arguments);
@@ -6380,7 +6521,7 @@
 	 * @param {number} arg1 Is any real number that you want rounded down.
 	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero or omitted, to the nearest integer.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ROUNDDOWN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROUNDDOWN.js
 	 */
 	ApiWorksheetFunction.prototype.ROUNDDOWN = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUNDDOWN", arguments);
@@ -6392,7 +6533,7 @@
 	 * @param {number} arg1 Is any real number that you want rounded up.
 	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero or omitted, to the nearest integer.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ROUNDUP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROUNDUP.js
 	 */
 	ApiWorksheetFunction.prototype.ROUNDUP = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUNDUP", arguments);
@@ -6403,7 +6544,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the secant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SEC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SEC.js
 	 */
 	ApiWorksheetFunction.prototype.SEC = function (arg1) {
 		return this.private_calculateFunction("SEC", arguments);
@@ -6414,7 +6555,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic secant.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SECH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SECH.js
 	 */
 	ApiWorksheetFunction.prototype.SECH = function (arg1) {
 		return this.private_calculateFunction("SECH", arguments);
@@ -6428,7 +6569,7 @@
 	 * @param {any} arg3 Is the step by which to increase n for each term in the series.
 	 * @param {any} arg4 Is a set of coefficients by which each successive power of x is multiplied.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SERIESSUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SERIESSUM.js
 	 */
 	ApiWorksheetFunction.prototype.SERIESSUM = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SERIESSUM", arguments);
@@ -6439,7 +6580,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SIGN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SIGN.js
 	 */
 	ApiWorksheetFunction.prototype.SIGN = function (arg1) {
 		return this.private_calculateFunction("SIGN", arguments);
@@ -6450,7 +6591,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the sine. Degrees * PI()/180 = radians.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SIN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SIN.js
 	 */
 	ApiWorksheetFunction.prototype.SIN = function (arg1) {
 		return this.private_calculateFunction("SIN", arguments);
@@ -6461,7 +6602,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SINH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SINH.js
 	 */
 	ApiWorksheetFunction.prototype.SINH = function (arg1) {
 		return this.private_calculateFunction("SINH", arguments);
@@ -6472,7 +6613,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the number for which you want the square root.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SQRT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SQRT.js
 	 */
 	ApiWorksheetFunction.prototype.SQRT = function (arg1) {
 		return this.private_calculateFunction("SQRT", arguments);
@@ -6483,7 +6624,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the number by which p is multiplied.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SQRTPI.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SQRTPI.js
 	 */
 	ApiWorksheetFunction.prototype.SQRTPI = function (arg1) {
 		return this.private_calculateFunction("SQRTPI", arguments);
@@ -6493,7 +6634,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUBTOTAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUBTOTAL.js
 	 */
 	ApiWorksheetFunction.prototype.SUBTOTAL = function () {
 		return this.private_calculateFunction("SUBTOTAL", arguments);
@@ -6503,7 +6644,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUM.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUM.js
 	 */
 	ApiWorksheetFunction.prototype.SUM = function () {
 		return this.private_calculateFunction("SUM", arguments);
@@ -6516,7 +6657,7 @@
 	 * @param {any} arg2 Is the condition or criteria in the form of a number, expression, or text that defines which cells will be added.
 	 * @param {?ApiRange} arg3 Are the actual cells to sum. If omitted, the cells in range are used.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUMIF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUMIF.js
 	 */
 	ApiWorksheetFunction.prototype.SUMIF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SUMIF", arguments);
@@ -6526,7 +6667,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUMIFS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUMIFS.js
 	 */
 	ApiWorksheetFunction.prototype.SUMIFS = function () {
 		return this.private_calculateFunction("SUMIFS", arguments);
@@ -6546,7 +6687,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SUMSQ.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SUMSQ.js
 	 */
 	ApiWorksheetFunction.prototype.SUMSQ = function () {
 		return this.private_calculateFunction("SUMSQ", arguments);
@@ -6593,7 +6734,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is the angle in radians for which you want the tangent. Degrees * PI()/180 = radians.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TAN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TAN.js
 	 */
 	ApiWorksheetFunction.prototype.TAN = function (arg1) {
 		return this.private_calculateFunction("TAN", arguments);
@@ -6604,7 +6745,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 Is any real number.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TANH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TANH.js
 	 */
 	ApiWorksheetFunction.prototype.TANH = function (arg1) {
 		return this.private_calculateFunction("TANH", arguments);
@@ -6616,7 +6757,7 @@
 	 * @param {number} arg1 Is the number you want to truncate.
 	 * @param {?number} arg2 Is a number specifying the precision of the truncation, 0 (zero) if omitted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TRUNC.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRUNC.js
 	 */
 	ApiWorksheetFunction.prototype.TRUNC = function (arg1, arg2) {
 		return this.private_calculateFunction("TRUNC", arguments);
@@ -6626,7 +6767,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/CHOOSE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/CHOOSE.js
 	 */
 	ApiWorksheetFunction.prototype.CHOOSE = function () {
 		return this.private_calculateFunction("CHOOSE", arguments);
@@ -6637,7 +6778,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} arg1 Is an array or array formula, or a reference to a range of cells for which you want the number of columns.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/COLUMNS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/COLUMNS.js
 	 */
 	ApiWorksheetFunction.prototype.COLUMNS = function (arg1) {
 		return this.private_calculateFunction("COLUMNS", arguments);
@@ -6651,7 +6792,7 @@
 	 * @param {number} arg3 Is the row number in table_array from which the matching value should be returned. The first row of values in the table is row 1.
 	 * @param {?boolean} arg4 Is a logical value: to find the closest match in the top row (sorted in ascending order) = TRUE or omitted; find an exact match = FALSE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HLOOKUP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HLOOKUP.js
 	 */
 	ApiWorksheetFunction.prototype.HLOOKUP = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("HLOOKUP", arguments);
@@ -6663,7 +6804,7 @@
 	 * @param {string} arg1 Is the text giving the path and file name to the document to be opened, a hard drive location, UNC address, or URL path.
 	 * @param {?any} arg2 Is text or a number that is displayed in the cell. If omitted, the cell displays the Link_location text.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/HYPERLINK.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/HYPERLINK.js
 	 */
 	ApiWorksheetFunction.prototype.HYPERLINK = function (arg1, arg2) {
 		return this.private_calculateFunction("HYPERLINK", arguments);
@@ -6677,7 +6818,7 @@
 	 * @param {?number} arg3 Selects the column in Array or Reference from which to return a value. If omitted, Row_num is required.
 	 * @param {?any} arg4 Is a reference to one or more cell ranges.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/INDEX.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/INDEX.js
 	 */
 	ApiWorksheetFunction.prototype.INDEX = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("INDEX", arguments);
@@ -6690,7 +6831,7 @@
 	 * @param {ApiRange} arg2 Is a range that contains only one row or one column of text, numbers, or logical values, placed in ascending order.
 	 * @param {?ApiRange} arg3 Is a range that contains only one row or column, the same size as Lookup_vector.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/LOOKUP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/LOOKUP.js
 	 */
 	ApiWorksheetFunction.prototype.LOOKUP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOOKUP", arguments);
@@ -6703,7 +6844,7 @@
 	 * @param {number} arg2 Is a contiguous range of cells containing possible lookup values, an array of values, or a reference to an array.
 	 * @param {?number} arg3 Is a number 1, 0, or -1 indicating which value to return..
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/MATCH.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/MATCH.js
 	 */
 	ApiWorksheetFunction.prototype.MATCH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MATCH", arguments);
@@ -6714,7 +6855,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} arg1 Is an array, an array formula, or a reference to a range of cells for which you want the number of rows.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ROWS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ROWS.js
 	 */
 	ApiWorksheetFunction.prototype.ROWS = function (arg1) {
 		return this.private_calculateFunction("ROWS", arguments);
@@ -6725,7 +6866,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is a range of cells on a worksheet or an array of values that you want to transpose.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TRANSPOSE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRANSPOSE.js
 	 */
 	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
 		return this.private_calculateFunction("TRANSPOSE", arguments);
@@ -6739,7 +6880,7 @@
 	 * @param {number} arg3 Is the column number in table_array from which the matching value should be returned. The first column of values in the table is column 1.
 	 * @param {?boolean} arg4 Is a logical value: to find the closest match in the first column (sorted in ascending order) = TRUE or omitted; find an exact match = FALSE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/VLOOKUP.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/VLOOKUP.js
 	 */
 	ApiWorksheetFunction.prototype.VLOOKUP = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("VLOOKUP", arguments);
@@ -6750,7 +6891,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the error value for which you want the identifying number, and can be an actual error value or a reference to a cell containing an error value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ERROR_TYPE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ERROR_TYPE.js
 	 */
 	ApiWorksheetFunction.prototype.ERROR_TYPE = function (arg1) {
 		return this.private_calculateFunction("ERROR.TYPE", arguments);
@@ -6761,7 +6902,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISERR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISERR.js
 	 */
 	ApiWorksheetFunction.prototype.ISERR = function (arg1) {
 		return this.private_calculateFunction("ISERR", arguments);
@@ -6772,7 +6913,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISERROR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISERROR.js
 	 */
 	ApiWorksheetFunction.prototype.ISERROR = function (arg1) {
 		return this.private_calculateFunction("ISERROR", arguments);
@@ -6783,7 +6924,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value to test.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISEVEN.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISEVEN.js
 	 */
 	ApiWorksheetFunction.prototype.ISEVEN = function (arg1) {
 		return this.private_calculateFunction("ISEVEN", arguments);
@@ -6794,7 +6935,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} arg1 Is a reference to the cell you want to test.  Reference can be a cell reference, a formula, or name that refers to a cell.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISFORMULA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISFORMULA.js
 	 */
 	ApiWorksheetFunction.prototype.ISFORMULA = function (arg1) {
 		return this.private_calculateFunction("ISFORMULA", arguments);
@@ -6805,7 +6946,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISLOGICAL.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISLOGICAL.js
 	 */
 	ApiWorksheetFunction.prototype.ISLOGICAL = function (arg1) {
 		return this.private_calculateFunction("ISLOGICAL", arguments);
@@ -6816,7 +6957,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISNA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISNA.js
 	 */
 	ApiWorksheetFunction.prototype.ISNA = function (arg1) {
 		return this.private_calculateFunction("ISNA", arguments);
@@ -6827,7 +6968,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want tested: a cell; a formula; or a name referring to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISNONTEXT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISNONTEXT.js
 	 */
 	ApiWorksheetFunction.prototype.ISNONTEXT = function (arg1) {
 		return this.private_calculateFunction("ISNONTEXT", arguments);
@@ -6838,7 +6979,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISNUMBER.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISNUMBER.js
 	 */
 	ApiWorksheetFunction.prototype.ISNUMBER = function (arg1) {
 		return this.private_calculateFunction("ISNUMBER", arguments);
@@ -6849,7 +6990,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value to test.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISODD.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISODD.js
 	 */
 	ApiWorksheetFunction.prototype.ISODD = function (arg1) {
 		return this.private_calculateFunction("ISODD", arguments);
@@ -6860,7 +7001,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISREF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISREF.js
 	 */
 	ApiWorksheetFunction.prototype.ISREF = function (arg1) {
 		return this.private_calculateFunction("ISREF", arguments);
@@ -6871,7 +7012,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/ISTEXT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ISTEXT.js
 	 */
 	ApiWorksheetFunction.prototype.ISTEXT = function (arg1) {
 		return this.private_calculateFunction("ISTEXT", arguments);
@@ -6882,7 +7023,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Is the value you want converted.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/N.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/N.js
 	 */
 	ApiWorksheetFunction.prototype.N = function (arg1) {
 		return this.private_calculateFunction("N", arguments);
@@ -6892,7 +7033,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NA.js
 	 */
 	ApiWorksheetFunction.prototype.NA = function () {
 		return this.private_calculateFunction("NA", arguments);
@@ -6903,7 +7044,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?string} arg1 Is the name of a sheet or a reference that you want the sheet number of.  If omitted the number of the sheet containing the function is returned.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SHEET.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SHEET.js
 	 */
 	ApiWorksheetFunction.prototype.SHEET = function (arg1) {
 		return this.private_calculateFunction("SHEET", arguments);
@@ -6914,7 +7055,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiRange} arg1 Is a reference for which you want to know the number of sheets it contains.  If omitted the number of sheets in the workbook containing the function is returned.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/SHEETS.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/SHEETS.js
 	 */
 	ApiWorksheetFunction.prototype.SHEETS = function (arg1) {
 		return this.private_calculateFunction("SHEETS", arguments);
@@ -6925,7 +7066,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {any} arg1 Can be any value.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TYPE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TYPE.js
 	 */
 	ApiWorksheetFunction.prototype.TYPE = function (arg1) {
 		return this.private_calculateFunction("TYPE", arguments);
@@ -6935,7 +7076,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/AND.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/AND.js
 	 */
 	ApiWorksheetFunction.prototype.AND = function () {
 		return this.private_calculateFunction("AND", arguments);
@@ -6945,7 +7086,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/FALSE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/FALSE.js
 	 */
 	ApiWorksheetFunction.prototype.FALSE = function () {
 		return this.private_calculateFunction("FALSE", arguments);
@@ -6958,7 +7099,7 @@
 	 * @param {any} arg2 Is the value that is returned if Logical_test is TRUE. If omitted, TRUE is returned. You can nest up to seven IF functions.
 	 * @param {?any} arg3 Is the value that is returned if Logical_test is FALSE. If omitted, FALSE is returned.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IF.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IF.js
 	 */
 	ApiWorksheetFunction.prototype.IF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("IF", arguments);
@@ -6970,7 +7111,7 @@
 	 * @param {any} arg1 Is any value or expression or reference.
 	 * @param {any} arg2 Is any value or expression or reference.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IFERROR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IFERROR.js
 	 */
 	ApiWorksheetFunction.prototype.IFERROR = function (arg1, arg2) {
 		return this.private_calculateFunction("IFERROR", arguments);
@@ -6982,7 +7123,7 @@
 	 * @param {any} arg1 Is any value or expression or reference.
 	 * @param {any} arg2 Is any value or expression or reference.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/IFNA.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/IFNA.js
 	 */
 	ApiWorksheetFunction.prototype.IFNA = function (arg1, arg2) {
 		return this.private_calculateFunction("IFNA", arguments);
@@ -6993,7 +7134,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} arg1 Is a value or expression that can be evaluated to TRUE or FALSE.
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/NOT.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/NOT.js
 	 */
 	ApiWorksheetFunction.prototype.NOT = function (arg1) {
 		return this.private_calculateFunction("NOT", arguments);
@@ -7003,7 +7144,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/OR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/OR.js
 	 */
 	ApiWorksheetFunction.prototype.OR = function () {
 		return this.private_calculateFunction("OR", arguments);
@@ -7013,7 +7154,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/TRUE.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/TRUE.js
 	 */
 	ApiWorksheetFunction.prototype.TRUE = function () {
 		return this.private_calculateFunction("TRUE", arguments);
@@ -7023,7 +7164,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | string | boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheetFunction/Methods/XOR.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/XOR.js
 	 */
 	ApiWorksheetFunction.prototype.XOR = function () {
 		return this.private_calculateFunction("XOR", arguments);
@@ -7138,7 +7279,7 @@
 	 * @param {number} nSheet - The sheet index.
 	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
 	 * @returns {string[][]}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetMailMergeData.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetMailMergeData.js
 	 */
 	Api.prototype.GetMailMergeData = function (nSheet, bWithFormat) {
 		if (bWithFormat !== true)
@@ -7161,7 +7302,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/Api/Methods/RecalculateAllFormulas.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/RecalculateAllFormulas.js
 	 */
 	Api.prototype.RecalculateAllFormulas = function (fLogger) {
 		var formulas = this.wbModel.getAllFormulas(true);
@@ -7244,6 +7385,122 @@
 	};
 
 	/**
+	 * Inserts PivotTable on existing worksheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} dataRef - Source data range.
+	 * @param {ApiRange} pivotRef - Range in which the table will be located.
+	 * @param {bool} confirmation - Replace the data in pivotRef (if it exists) or create a dialog box for this (if it exists).
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotExistingWorksheet.js
+	 */
+	Api.prototype.InsertPivotExistingWorksheet = function (dataRef, pivotRef, confirmation) {
+		if (dataRef) {
+			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+		} else {
+			var options = this.asc_getAddPivotTableOptions();
+			dataRef = options.range;
+		}
+		if (pivotRef) {
+			pivotRef = pivotRef.GetWorksheet().GetName() + "!" + pivotRef.GetAddress(true, true);
+		} else {
+			private_MakeError('"pivotRef" is undefined.');
+		}
+		var pivot = this.asc_insertPivotExistingWorksheet(dataRef, pivotRef, confirmation);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('Error! Bad pivotRef!');
+	};
+
+	/**
+	 * Inserts PivotTable on new worksheet.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} dataRef - Source data range.
+	 * @param {ApiRange} [newSheetName] - New worksheet name.
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/Cell/Api/Methods/InsertPivotNewWorksheet.js
+	 */
+	Api.prototype.InsertPivotNewWorksheet = function (dataRef, newSheetName) {
+		if (dataRef) {
+			dataRef = dataRef.GetWorksheet().GetName() + "!" + dataRef.GetAddress(true, true);
+		} else {
+			var options = this.asc_getAddPivotTableOptions();
+			dataRef = options.range;
+		}
+		if (!newSheetName) {
+			var items = [], wc = this.asc_getWorksheetsCount();
+			while (wc--) {
+				items.push(this.asc_getWorksheetName(wc).toLowerCase());
+			}
+
+			var index = 0, name;
+			while(++index < 1000) {
+				name = 'Sheet' + index;
+				if (items.indexOf(name.toLowerCase()) < 0) break;
+			}
+
+			newSheetName = name;
+		}
+		var pivot = this.asc_insertPivotNewWorksheet(dataRef, newSheetName);
+		if (pivot) {
+			return new ApiPivotTable(pivot, this);
+		}
+		private_MakeError('An error occurred while creating the pivot table!');
+	};
+
+	/**
+	 * Returns PivotTable by name or null.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name of PivotTable.
+	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetPivotByName.js
+	 */
+	Api.prototype.GetPivotByName = function (name) {
+		var res = null;
+		if (typeof name == "string" && name.trim().length) {
+			var pivot = this.wbModel.getPivotTableByName( name.trim() );
+			if (pivot)
+				res = new ApiPivotTable(pivot, this);
+		}
+		return res;
+	};
+
+	/**
+	 * Refreshs all PivotTables.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/Api/Methods/RefreshAllPivots.js
+	 */
+	Api.prototype.RefreshAllPivots = function () {
+		this.asc_refreshAllPivots();
+	};
+
+	/**
+	 * Returns all PivotTables.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllPivotTables.js
+	 */
+	Api.prototype.GetAllPivotTables = function () {
+		var res = [];
+		var sheets = this.GetSheets();
+		sheets.forEach(function(ws) {
+			res = res.concat( ws.GetAllPivotTables() )
+		});
+		return res;
+	};
+
+	Object.defineProperty(Api.prototype, "PivotTables", {
+		get: function () {
+			return this.GetAllPivotTables();
+		}
+	});
+
+	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
 	 * @function
 	 * @memberof Api
@@ -7251,7 +7508,7 @@
 	 * @param {string} eventName - The event name.
 	 * @param {function} callback - Function to be called when the event fires.
 	 * @fires Api#onWorksheetChange
-	 * @see office-js-api/Examples/Cell/Api/Methods/attachEvent.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
 	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
 
@@ -7262,7 +7519,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} eventName - The event name.
 	 * @fires Api#onWorksheetChange
-	 * @see office-js-api/Examples/Cell/Api/Methods/detachEvent.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
 	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
 
@@ -7274,7 +7531,7 @@
 	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment | null}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/Api/Methods/AddComment.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddComment.js
 	 */
 	Api.prototype.AddComment = function (sText, sAuthor) {
 		let result = null;
@@ -7300,7 +7557,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sId - The comment ID.
 	 * @returns {?ApiComment}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetCommentById.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetCommentById.js
 	 */
 	Api.prototype.GetCommentById = function (sId) {
 		let comment = this.asc_findComment(sId);
@@ -7315,7 +7572,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetComments.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetComments.js
 	 */
 	Api.prototype.GetComments = function () {
 		var comments = [];
@@ -7336,7 +7593,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetAllComments.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetAllComments.js
 	 */
 	Api.prototype.GetAllComments = function () {
 		let aApiComments = this.GetComments();
@@ -7365,7 +7622,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {FreezePaneType} FreezePaneType - The freeze panes type ("null" to unfreeze).
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/Api/Methods/SetFreezePanesType.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetFreezePanesType.js
 	 */
 	Api.prototype.SetFreezePanesType = function (FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
@@ -7401,7 +7658,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {FreezePaneType} FreezePaneType - The freeze panes type ("null" if there are no freeze panes).
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetFreezePanesType.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetFreezePanesType.js
 	 */
 	Api.prototype.GetFreezePanesType = function () {
 		let cell = this.wb.getWorksheet().topLeftFrozenCell;
@@ -7439,7 +7696,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ReferenceStyle} - The cell reference style.
 	 * @since 8.1.0
-	 * * @see office-js-api/Examples/Cell/Api/Methods/GetReferenceStyle.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetReferenceStyle.js
 	 */
 	Api.prototype.GetReferenceStyle = function () {
 		let bReferenceStyle = this.asc_getR1C1Mode();
@@ -7452,7 +7709,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ReferenceStyle} sReferenceStyle - The cell reference style.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/Api/Methods/SetReferenceStyle.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetReferenceStyle.js
 	 */
 	Api.prototype.SetReferenceStyle = function (sReferenceStyle) {
 		let bReferenceMode = null;
@@ -7498,7 +7755,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {object}
-	 * @see office-js-api/Examples/Cell/Api/Methods/GetDocumentInfo.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/GetDocumentInfo.js
 	 */
 	Api.prototype.GetDocumentInfo = function()
 	{
@@ -7567,7 +7824,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetVisible.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetVisible.js
 	 */
 	ApiWorksheet.prototype.GetVisible = function () {
 		return !this.worksheet.getHidden();
@@ -7578,7 +7835,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isVisible - Specifies if the sheet is visible or not.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetVisible.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetVisible.js
 	 */
 	ApiWorksheet.prototype.SetVisible = function (isVisible) {
 		this.worksheet.setHidden(!isVisible);
@@ -7596,7 +7853,7 @@
 	 * Makes the current sheet active.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetActive.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetActive.js
 	 */
 	ApiWorksheet.prototype.SetActive = function () {
 		this.worksheet.workbook.setActive(this.worksheet.index);
@@ -7612,7 +7869,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetActiveCell.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetActiveCell.js
 	 */
 	ApiWorksheet.prototype.GetActiveCell = function () {
 		let cell = this.worksheet.getCell3(this.worksheet.selectionRange.activeCell.row, this.worksheet.selectionRange.activeCell.col);
@@ -7633,7 +7890,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetSelection.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetSelection.js
 	 */
 	ApiWorksheet.prototype.GetSelection = function () {
 		var r = this.worksheet.selectionRange.getLast();
@@ -7657,7 +7914,7 @@
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetCells.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetCells.js
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
 		let result;
@@ -7713,7 +7970,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - Specifies the rows range in the string or number format.
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetRows.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetRows.js
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
 		if (typeof value === "undefined") {
@@ -7753,7 +8010,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - Specifies the columns range in the string format.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetCols.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetCols.js
 	 */
 	ApiWorksheet.prototype.GetCols = function (sRange) {
 		if (sRange.indexOf(':') == -1) {
@@ -7772,7 +8029,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetUsedRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetUsedRange.js
 	 */
 	ApiWorksheet.prototype.GetUsedRange = function () {
 		var rEnd = this.worksheet.getRowsCount() - 1;
@@ -7791,7 +8048,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetName.js
 	 */
 	ApiWorksheet.prototype.GetName = function () {
 		return this.worksheet.getName();
@@ -7802,7 +8059,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name which will be displayed for the current sheet at the sheet tab.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetName.js
 	 */
 	ApiWorksheet.prototype.SetName = function (sName) {
 		let sOldName = this.worksheet.getName();
@@ -7828,7 +8085,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetIndex.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetIndex.js
 	 */
 	ApiWorksheet.prototype.GetIndex = function () {
 		return this.worksheet.getIndex();
@@ -7847,7 +8104,7 @@
 	 * @param {string | ApiRange} Range1 - The range of cells from the current sheet.
 	 * @param {string | ApiRange} Range2 - The range of cells from the current sheet.
 	 * @returns {ApiRange | null} - returns null if such a range does not exist.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetRange.js
 	 */
 	ApiWorksheet.prototype.GetRange = function (Range1, Range2) {
 		var Range, r1, c1, r2, c2;
@@ -7887,7 +8144,7 @@
 	 * @param {number} nRow - The row number.
 	 * @param {number} nCol - The column number.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetRangeByNumber.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetRangeByNumber.js
 	 */
 	ApiWorksheet.prototype.GetRangeByNumber = function (nRow, nCol) {
 		return new ApiRange(this.worksheet.getCell3(nRow, nCol));
@@ -7899,7 +8156,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range of cells from the current sheet which will be formatted as a table.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/FormatAsTable.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/FormatAsTable.js
 	 */
 	ApiWorksheet.prototype.FormatAsTable = function (sRange) {
 		this.worksheet.autoFilters.addAutoFilter('TableStyleLight9', AscCommonExcel.g_oRangeCache.getAscRange(sRange));
@@ -7914,7 +8171,7 @@
 	 * @param {number} nColumn - The number of the column to set the width to.
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
 	 * @param {boolean} [bWithotPaddings=false] - Specifies whether nWidth will be set without standard paddings.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetColumnWidth.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetColumnWidth.js
 	 */
 	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
 		if (bWithotPaddings) {
@@ -7931,7 +8188,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The number of the row to set the height to.
 	 * @param {number} nHeight - The height of the row measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetRowHeight.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRowHeight.js
 	 */
 	ApiWorksheet.prototype.SetRowHeight = function (nRow, nHeight) {
 		this.worksheet.setRowHeight(nHeight, nRow, nRow, true);
@@ -7942,7 +8199,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isDisplayed - Specifies whether the current sheet gridlines must be displayed or not. The default value is <b>true</b>.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetDisplayGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetDisplayGridlines.js
 	 */
 	ApiWorksheet.prototype.SetDisplayGridlines = function (isDisplayed) {
 		this.worksheet.setDisplayGridlines(!!isDisplayed);
@@ -7953,7 +8210,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isDisplayed - Specifies whether the current sheet row/column headers must be displayed or not. The default value is <b>true</b>.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetDisplayHeadings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetDisplayHeadings.js
 	 */
 	ApiWorksheet.prototype.SetDisplayHeadings = function (isDisplayed) {
 		this.worksheet.setDisplayHeadings(!!isDisplayed);
@@ -7964,7 +8221,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The left margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetLeftMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetLeftMargin.js
 	 */
 	ApiWorksheet.prototype.SetLeftMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
@@ -7975,7 +8232,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The left margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetLeftMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetLeftMargin.js
 	 */
 	ApiWorksheet.prototype.GetLeftMargin = function () {
 		return this.worksheet.PagePrintOptions.pageMargins.asc_getLeft();
@@ -7994,7 +8251,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The right margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetRightMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRightMargin.js
 	 */
 	ApiWorksheet.prototype.SetRightMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
@@ -8005,7 +8262,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The right margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetRightMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetRightMargin.js
 	 */
 	ApiWorksheet.prototype.GetRightMargin = function () {
 		return this.worksheet.PagePrintOptions.pageMargins.asc_getRight();
@@ -8024,7 +8281,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The top margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetTopMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetTopMargin.js
 	 */
 	ApiWorksheet.prototype.SetTopMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
@@ -8035,7 +8292,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The top margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetTopMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetTopMargin.js
 	 */
 	ApiWorksheet.prototype.GetTopMargin = function () {
 		return this.worksheet.PagePrintOptions.pageMargins.asc_getTop();
@@ -8054,7 +8311,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The bottom margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetBottomMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetBottomMargin.js
 	 */
 	ApiWorksheet.prototype.SetBottomMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
@@ -8065,7 +8322,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {number} - The bottom margin size measured in points.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetBottomMargin.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetBottomMargin.js
 	 */
 	ApiWorksheet.prototype.GetBottomMargin = function () {
 		return this.worksheet.PagePrintOptions.pageMargins.asc_getBottom();
@@ -8084,7 +8341,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {PageOrientation} sPageOrientation - The page orientation type.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetPageOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPageOrientation.js
 	 */
 	ApiWorksheet.prototype.SetPageOrientation = function (sPageOrientation) {
 		this.worksheet.PagePrintOptions.pageSetup.asc_setOrientation('xlLandscape' === sPageOrientation ? 1 : 0);
@@ -8095,7 +8352,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {PageOrientation}
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPageOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPageOrientation.js
 	 */
 	ApiWorksheet.prototype.GetPageOrientation = function () {
 		var PageOrientation = this.worksheet.PagePrintOptions.pageSetup.asc_getOrientation();
@@ -8117,7 +8374,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - Specifies whether the current sheet row/column headings must be printed or not.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPrintHeadings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintHeadings.js
 	 */
 	ApiWorksheet.prototype.GetPrintHeadings = function () {
 		return this.worksheet.PagePrintOptions.asc_getHeadings();
@@ -8128,7 +8385,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetPrintHeadings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintHeadings.js
 	 */
 	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setHeadings(!!bPrint);
@@ -8148,7 +8405,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - True if cell gridlines are printed on this page.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPrintGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetPrintGridlines.js
 	 */
 	ApiWorksheet.prototype.GetPrintGridlines = function () {
 		return this.worksheet.PagePrintOptions.asc_getGridLines();
@@ -8159,7 +8416,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Defines if cell gridlines are printed on this page or not.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetPrintGridlines.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintGridlines.js
 	 */
 	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setGridLines(!!bPrint);
@@ -8179,7 +8436,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiName[]}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetDefNames.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetDefNames.js
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
 		var res = this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
@@ -8199,7 +8456,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} defName - The worksheet name.
 	 * @returns {ApiName | null} - returns null if definition name doesn't exist.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetDefName.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetDefName.js
 	 */
 	ApiWorksheet.prototype.GetDefName = function (defName) {
 		if (defName && typeof defName === "string") {
@@ -8219,7 +8476,7 @@
 	 * Example: "Sheet1!$A$1:$B$2".
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddDefName.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddDefName.js
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
 		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getIndex(), isHidden);
@@ -8236,7 +8493,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetComments.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetComments.js
 	 */
 	ApiWorksheet.prototype.GetComments = function () {
 		var comments = [];
@@ -8255,7 +8512,7 @@
 	 * Deletes the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/Delete.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Delete.js
 	 */
 	ApiWorksheet.prototype.Delete = function () {
 		this.worksheet.workbook.oApi.asc_deleteWorksheet([this.worksheet.getIndex()]);
@@ -8270,7 +8527,7 @@
 	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/SetHyperlink.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
@@ -8329,7 +8586,7 @@
 	 * @param {number} nFromRow - The number of the row where the beginning of the chart will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the chart measured in English measure units.
 	 * @returns {ApiChart}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddChart.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddChart.js
 	 */
 	ApiWorksheet.prototype.AddChart =
 		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
@@ -8372,7 +8629,7 @@
 	 * @param {number} nFromRow - The number of the row where the beginning of the shape will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
 	 * @returns {ApiShape}
-	 * * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddShape.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
 	 */
 	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
@@ -8393,7 +8650,7 @@
 	 * @param {number} nFromRow - The number of the row where the beginning of the image will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the image measured in English measure units.
 	 * @returns {ApiImage}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddImage.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddImage.js
 	 */
 	ApiWorksheet.prototype.AddImage = function (sImageSrc, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth / 36000, nHeight / 36000);
@@ -8418,7 +8675,7 @@
 	 * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
 	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the Text Art object measured in English measure units.
 	 * @returns {ApiDrawing}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddWordArt.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddWordArt.js
 	 */
 	ApiWorksheet.prototype.AddWordArt = function (oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
 		oTextPr = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
@@ -8454,7 +8711,7 @@
 	 * @param {number} nFromRow - The number of the row where the beginning of the OLE object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the OLE object measured in English measure units.
 	 * @returns {ApiOleObject}
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddOleObject.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddOleObject.js
 	 */
 	ApiWorksheet.prototype.AddOleObject = function (sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset) {
 		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
@@ -8477,7 +8734,7 @@
 	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
 	 * @param {EMU} nWidth - The image width in English measure units.
 	 * @param {EMU} nHeight - The image height in English measure units.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/ReplaceCurrentImage.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/ReplaceCurrentImage.js
 	 */
 	ApiWorksheet.prototype.ReplaceCurrentImage = function (sImageUrl, nWidth, nHeight) {
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
@@ -8493,7 +8750,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiDrawing[]}.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllDrawings.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllDrawings.js
 	 */
 	ApiWorksheet.prototype.GetAllDrawings = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -8512,7 +8769,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiImage[]}.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllImages.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllImages.js
 	 */
 	ApiWorksheet.prototype.GetAllImages = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -8531,7 +8788,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiShape[]}.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllShapes.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllShapes.js
 	 */
 	ApiWorksheet.prototype.GetAllShapes = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -8550,7 +8807,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiChart[]}.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllCharts.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllCharts.js
 	 */
 	ApiWorksheet.prototype.GetAllCharts = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -8569,7 +8826,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiOleObject[]}.
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllOleObjects.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllOleObjects.js
 	 */
 	ApiWorksheet.prototype.GetAllOleObjects = function () {
 		var allDrawings = this.worksheet.Drawings;
@@ -8589,7 +8846,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiWorksheet} before - The sheet before which the current sheet will be placed. You cannot specify "before" if you specify "after".
 	 * @param {ApiWorksheet} after - The sheet after which the current sheet will be placed. You cannot specify "after" if you specify "before".
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/Move.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Move.js
 	 */
 	ApiWorksheet.prototype.Move = function (before, after) {
 		let bb = before instanceof ApiWorksheet;
@@ -8604,12 +8861,65 @@
 	};
 
 	/**
+	 * Return PivotTable by name.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name of PivotTable.
+	 * @returns {ApiPivotTable|null}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetPivotByName.js
+	 */
+	ApiWorksheet.prototype.GetPivotByName = function (name) {
+		var res = null;
+		if (name) {
+			var pivot = this.worksheet.getPivotTableByName(name);
+			if (pivot)
+				res = new ApiPivotTable(pivot, this.worksheet.workbook.oApi);
+		}
+		return res;
+	};
+
+	/**
+	 * Returns all PivotTables on worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable[]}
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllPivotTables.js
+	 */
+	ApiWorksheet.prototype.GetAllPivotTables = function () {
+		var res = [];
+		var ws = this.worksheet;
+		ws.pivotTables.forEach(function(piv) {
+			res.push( new ApiPivotTable(piv, ws.workbook.oApi) );
+		});
+		return res;
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "PivotTables", {
+		get: function () {
+			return this.GetAllPivotTables();
+		}
+	});
+
+	/**
+	 * Refresh all PivotTables on current worksheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/RefreshAllPivots.js
+	 */
+	ApiWorksheet.prototype.RefreshAllPivots = function () {
+		const t = this;
+		this.worksheet.pivotTables.forEach(function(pivot) {
+			pivot.asc_refresh(t.worksheet.workbook.oApi);
+		});
+	};
+
+	/**
 	 * Returns the freeze panes from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFreezePanes}
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetFreezePanes.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetFreezePanes.js
 	 */
 	ApiWorksheet.prototype.GetFreezePanes = function () {
 		return new ApiFreezePanes(this.worksheet);
@@ -8629,7 +8939,7 @@
 	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the protected range.
 	 * @returns {ApiProtectedRange | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/AddProtectedRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddProtectedRange.js
 	 */
 	ApiWorksheet.prototype.AddProtectedRange = function (sTitle, sDataRange) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -8674,7 +8984,7 @@
 	 * @param {string} sTitle - The title of the protected range that will be returned.
 	 * @returns {ApiProtectedRange | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetProtectedRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetProtectedRange.js
 	 */
 	ApiWorksheet.prototype.GetProtectedRange = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -8698,7 +9008,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiProtectedRange[] | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/GetAllProtectedRanges.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetAllProtectedRanges.js
 	 */
 	ApiWorksheet.prototype.GetAllProtectedRanges = function () {
 		let protectedRanges = this.worksheet && this.worksheet.workbook && this.worksheet.workbook.oApi.asc_getUserProtectedRanges(this.worksheet.sName);
@@ -8726,7 +9036,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange?} [destination] - The cell range where the clipboard contents should be pasted. If this argument is omitted, the current selection is used.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiWorksheet/Methods/Paste.js
+	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Paste.js
 	 */
 	ApiWorksheet.prototype.Paste = function (destination) {
 		var oApi = Asc["editor"];
@@ -8767,20 +9077,20 @@
 	/**
 	 * Specifies the sort order.
 	 * @typedef {("xlAscending" | "xlDescending")}  SortOrder
-	 * * @see office-js-api/Examples/Enumerations/SortOrder.js
+	 * @see office-js-api/Examples/Enumerations/SortOrder.js
 	 */
 
 	//TODO xlGuess param
 	/**
 	 * Specifies whether the first row of the sort range contains the header information.
 	 * @typedef {("xlNo" | "xlYes")} SortHeader
-	 * * @see office-js-api/Examples/Enumerations/SortHeader.js
+	 * @see office-js-api/Examples/Enumerations/SortHeader.js
 	 */
 
 	/**
 	 * Specifies if the sort should be by row or column.
 	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
-	 * * @see office-js-api/Examples/Enumerations/SortOrientation.js
+	 * @see office-js-api/Examples/Enumerations/SortOrientation.js
 	 */
 
 	/**
@@ -8800,7 +9110,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {"range"}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetClassType.js
 	 */
 	ApiRange.prototype.GetClassType = function () {
 		return "range";
@@ -8811,7 +9121,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetRow.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRow.js
 	 */
 	ApiRange.prototype.GetRow = function () {
 		return (this.range.bbox.r1 + 1);
@@ -8826,7 +9136,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCol.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCol.js
 	 */
 	ApiRange.prototype.GetCol = function () {
 		return (this.range.bbox.c1 + 1);
@@ -8841,7 +9151,7 @@
 	 * Clears the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Clear.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Clear.js
 	 */
 	ApiRange.prototype.Clear = function () {
 		let range = this.range,
@@ -8862,7 +9172,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetRows.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRows.js
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
 		let result = null;
@@ -8893,7 +9203,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nCol - The column number. *
 	 * @returns {ApiRange | null}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCols.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCols.js
 	 */
 	ApiRange.prototype.GetCols = function (nCol) {
 		let result = null;
@@ -8924,7 +9234,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Direction} direction - The direction of end in the specified range. *
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/End.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/End.js
 	 */
 	ApiRange.prototype.End = function (direction) {
 		let bbox = this.range.bbox;
@@ -8992,7 +9302,7 @@
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCells.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCells.js
 	 */
 	ApiRange.prototype.GetCells = function (row, col) {
 		let bbox = this.range.bbox;
@@ -9037,7 +9347,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number.
 	 * @param {number} nCol - The column number.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetOffset.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetOffset.js
 	 */
 	ApiRange.prototype.SetOffset = function (nRow, nCol) {
 		this.range.setOffset({row: nRow, col: nCol});
@@ -9053,7 +9363,7 @@
 	 * @param {boolean} External - Defines if the range is in the current file or not.
 	 * @param {range} RelativeTo - The range which the current range is relative to.
 	 * @returns {string | null} - returns address of range as string.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetAddress.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAddress.js
 	 */
 	ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
 		// todo поправить, чтобы возвращал адреса всех areas внутри range
@@ -9107,7 +9417,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCount.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCount.js
 	 */
 	ApiRange.prototype.GetCount = function () {
 		var range = this.range.bbox;
@@ -9142,7 +9452,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | string[][]}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetValue.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValue.js
 	 */
 	ApiRange.prototype.GetValue = function () {
 		var bbox = this.range.bbox;
@@ -9170,8 +9480,8 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | bool | number | Array[] | Array[][]} data - The general value for the cell or cell range.
-	 * @return {boolean} - returns false if such a range does not exist.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetValue.js
+	 * @returns {boolean} - returns false if such a range does not exist.
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetValue.js
 	 */
 	ApiRange.prototype.SetValue = function (data) {
 		if (!this.range)
@@ -9245,8 +9555,8 @@
 	 * Returns a formula of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetFormula.js
+	 * @returns {string | string[][]} - return Value2 property (value without format) if formula doesn't exist.
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFormula.js
 	 */
 	ApiRange.prototype.GetFormula = function () {
 		if (this.range.isFormula())
@@ -9268,8 +9578,8 @@
 	 * Returns the Value2 property (value without format) of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetValue2.js
+	 * @returns {string | string[][]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValue2.js
 	 */
 	ApiRange.prototype.GetValue2 = function () {
 		var bbox = this.range.bbox;
@@ -9305,8 +9615,8 @@
 	 * Returns the text of the specified range.
 	 * @typeofeditors ["CSE"]
 	 * @memberof ApiRange
-	 * @return {string | string[][]}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetText.js
+	 * @returns {string | string[][]}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetText.js
 	 */
 	ApiRange.prototype.GetText = function () {
 		var bbox = this.range.bbox;
@@ -9343,7 +9653,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the text in the cell / cell range.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetFontColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontColor.js
 	 */
 	ApiRange.prototype.SetFontColor = function (oColor) {
 		this.range.setFontcolor(oColor.color);
@@ -9359,7 +9669,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - returns true if the values in the range specified are hidden.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetHidden.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetHidden.js
 	 */
 	ApiRange.prototype.GetHidden = function () {
 		var range = this.range;
@@ -9381,7 +9691,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isHidden - Specifies if the values in the current range are hidden or not.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetHidden.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetHidden.js
 	 */
 	ApiRange.prototype.SetHidden = function (isHidden) {
 		var range = this.range;
@@ -9411,7 +9721,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetColumnWidth.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetColumnWidth.js
 	 */
 	ApiRange.prototype.GetColumnWidth = function () {
 		var ws = this.range.worksheet;
@@ -9426,7 +9736,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetColumnWidth.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColumnWidth.js
 	 */
 	ApiRange.prototype.SetColumnWidth = function (nWidth) {
 		this.range.worksheet.setColWidth(nWidth, this.range.bbox.c1, this.range.bbox.c2);
@@ -9459,7 +9769,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {pt} - The row height in the range specified, measured in points.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetRowHeight.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetRowHeight.js
 	 */
 	ApiRange.prototype.GetRowHeight = function () {
 		return this.range.worksheet.getRowHeight(this.range.bbox.r1);
@@ -9470,7 +9780,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {pt} nHeight - The row height in the current range measured in points.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetRowHeight.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetRowHeight.js
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
@@ -9499,7 +9809,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSize - The font size value measured in points.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetFontSize.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
 	ApiRange.prototype.SetFontSize = function (nSize) {
 		this.range.setFontsize(nSize);
@@ -9515,7 +9825,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The font family name used for the current cell range.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetFontName.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontName.js
 	 */
 	ApiRange.prototype.SetFontName = function (sName) {
 		this.range.setFontname(sName);
@@ -9532,7 +9842,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAligment - The vertical alignment that will be applied to the cell contents.
 	 * @returns {boolean} - return false if sAligment doesn't exist.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetAlignVertical.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignVertical.js
 	 */
 	ApiRange.prototype.SetAlignVertical = function (sAligment) {
 		switch (sAligment) {
@@ -9574,7 +9884,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {'left' | 'right' | 'center' | 'justify'} sAlignment - The horizontal alignment that will be applied to the cell contents.
 	 * @returns {boolean} - return false if sAligment doesn't exist.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetAlignHorizontal.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetAlignHorizontal.js
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
 		switch (sAlignment) {
@@ -9611,7 +9921,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the contents of the current cell / cell range are displayed bold.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetBold.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBold.js
 	 */
 	ApiRange.prototype.SetBold = function (isBold) {
 		this.range.setBold(!!isBold);
@@ -9627,7 +9937,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current cell / cell range are displayed italicized.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetItalic.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetItalic.js
 	 */
 	ApiRange.prototype.SetItalic = function (isItalic) {
 		this.range.setItalic(!!isItalic);
@@ -9649,7 +9959,7 @@
 	 * * <b>"singleAccounting"</b> - for a single line underlining the cell contents but not protruding beyond the cell borders;
 	 * * <b>"double"</b> - for a double line underlining the cell contents;
 	 * * <b>"doubleAccounting"</b> - for a double line underlining the cell contents but not protruding beyond the cell borders.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetUnderline.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetUnderline.js
 	 */
 	ApiRange.prototype.SetUnderline = function (undelineType) {
 		var val;
@@ -9684,7 +9994,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikeout - Specifies if the contents of the current cell / cell range are displayed struck through.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetStrikeout.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStrikeout.js
 	 */
 	ApiRange.prototype.SetStrikeout = function (isStrikeout) {
 		this.range.setStrikeout(!!isStrikeout);
@@ -9700,7 +10010,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isWrap - Specifies if the words in the cell will be wrapped to fit the cell size.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetWrap.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetWrap.js
 	 */
 	ApiRange.prototype.SetWrap = function (isWrap) {
 		this.range.setWrap(!!isWrap);
@@ -9711,7 +10021,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetWrapText.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetWrapText.js
 	 */
 	ApiRange.prototype.GetWrapText = function () {
 		return this.range.getAlign().getWrap();
@@ -9731,7 +10041,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the background in the cell / cell range.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetFillColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
 	ApiRange.prototype.SetFillColor = function (oColor) {
 		this.range.setFillColor('No Fill' === oColor ? null : oColor.color);
@@ -9741,7 +10051,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor|'No Fill'} - return 'No Fill' when the color to the background in the cell / cell range is null.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetFillColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetFillColor.js
 	 */
 	ApiRange.prototype.GetFillColor = function () {
 		var oColor = this.range.getFillColor();
@@ -9761,7 +10071,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null} This property returns null if all cells in the specified range don't have the same number format.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetNumberFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetNumberFormat.js
 	 */
 	ApiRange.prototype.GetNumberFormat = function () {
 		var bbox = this.range.bbox;
@@ -9784,7 +10094,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sFormat - Specifies the mask applied to the number in the cell.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetNumberFormat.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetNumberFormat.js
 	 */
 	ApiRange.prototype.SetNumberFormat = function (sFormat) {
 		this.range.setNumFormat(sFormat);
@@ -9805,7 +10115,7 @@
 	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
 	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetBorders.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBorders.js
 	 */
 	ApiRange.prototype.SetBorders = function (bordersIndex, lineStyle, oColor) {
 		var borders = new AscCommonExcel.Border();
@@ -9847,7 +10157,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isAcross - When set to <b>true</b>, the cells within the selected range will be merged along the rows,
 	 * but remain split in the columns. When set to <b>false</b>, the whole selected range of cells will be merged into a single cell.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Merge.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Merge.js
 	 */
 	ApiRange.prototype.Merge = function (isAcross) {
 		if (isAcross) {
@@ -9865,7 +10175,7 @@
 	 * Splits the selected merged cell range into the single cells.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/UnMerge.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/UnMerge.js
 	 */
 	ApiRange.prototype.UnMerge = function () {
 		this.range.unmerge();
@@ -9895,7 +10205,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCallback - A function which will be executed for each cell.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/ForEach.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ForEach.js
 	 */
 	ApiRange.prototype.ForEach = function (fCallback) {
 		if (fCallback instanceof Function) {
@@ -9913,7 +10223,7 @@
 	 * @param {string} sText - The comment text.
 	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment | null} - returns false if comment can't be added.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/AddComment.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AddComment.js
 	 */
 	ApiRange.prototype.AddComment = function (sText, sAuthor) {
 		let result = null;
@@ -9942,7 +10252,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiWorksheet}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetWorksheet.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetWorksheet.js
 	 */
 	ApiRange.prototype.GetWorksheet = function () {
 		return new ApiWorksheet(this.range.worksheet);
@@ -9958,7 +10268,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiName}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetDefName.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetDefName.js
 	 */
 	ApiRange.prototype.GetDefName = function () {
 		var defName = this.range.worksheet.getName() + "!" + this.range.bbox.getAbsName();
@@ -9980,7 +10290,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment | null} - returns null if range does not consist of one cell.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetComment.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetComment.js
 	 */
 	ApiRange.prototype.GetComment = function () {
 		if (!this.range.isOneCell()) {
@@ -10001,7 +10311,7 @@
 	 * Selects the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Select.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */
 	ApiRange.prototype.Select = function () {
 		if (this.range.worksheet.getId() === this.range.worksheet.workbook.getActiveWs().getId()) {
@@ -10022,8 +10332,8 @@
 	 * Returns the current range angle.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @return {Angle}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetOrientation.js
+	 * @returns {Angle}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetOrientation.js
 	 */
 	ApiRange.prototype.GetOrientation = function () {
 		return this.range.getAngle();
@@ -10034,7 +10344,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {Angle} angle - Specifies the range angle.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetOrientation.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetOrientation.js
 	 */
 	ApiRange.prototype.SetOrientation = function (angle) {
 		switch (angle) {
@@ -10075,7 +10385,7 @@
 	 * @param {SortOrder} sSortOrder3 - The sort order for the values specified in Key3.
 	 * @param {SortHeader} sHeader - Specifies whether the first row contains header information.
 	 * @param {SortOrientation} sOrientation - Specifies if the sort should be by row (default) or column.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/SetSort.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetSort.js
 	 */
 	ApiRange.prototype.SetSort = function (key1, sSortOrder1, key2, /*Type,*/ sSortOrder2, key3, sSortOrder3, sHeader, /*OrderCustom, MatchCase,*/ sOrientation/*, SortMethod, DataOption1, DataOption2, DataOption3*/) {
 		var ws = this.range.worksheet;
@@ -10160,7 +10470,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Delete.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
 		let preDeleteAction = function() {
@@ -10170,7 +10480,7 @@
 			wsView._cleanCache(lockRange);
 		};
 		let val;
-		let ws = this.Worksheet.worksheet;
+		let ws = this.GetWorksheet().worksheet;
 		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
 		let cellCommentator = wsView.cellCommentator;
 		let bbox = this.range.bbox;
@@ -10183,7 +10493,7 @@
 			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up") {
+		if (shift === "up") {
 			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
 			this.range.deleteCellsShiftUp(preDeleteAction);
@@ -10199,7 +10509,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {?string} shift - Specifies which way to shift the cells ("right", "down").
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Insert.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Insert.js
 	 */
 	ApiRange.prototype.Insert = function (shift) {
 		if (shift && shift.toLocaleLowerCase) {
@@ -10222,7 +10532,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?bool} bRows - Specifies if the width of the columns will be autofit.
 	 * @param {?bool} bCols - Specifies if the height of the rows will be autofit.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/AutoFit.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/AutoFit.js
 	 */
 	ApiRange.prototype.AutoFit = function (bRows, bCols) {
 		var index = this.range.worksheet.getIndex();
@@ -10237,8 +10547,8 @@
 	 * Returns a collection of the ranges.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @return {ApiAreas}
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetAreas.js
+	 * @returns {ApiAreas}
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAreas.js
 	 */
 	ApiRange.prototype.GetAreas = function () {
 		return new ApiAreas(this.areas || [this.range], this);
@@ -10254,7 +10564,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange?} [destination] - Specifies the new range to which the specified range will be copied. If this argument is omitted, the range will be copied to the clipboard.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Copy.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Copy.js
 	 */
 	ApiRange.prototype.Copy = function (destination) {
 		var oApi = Asc["editor"];
@@ -10266,7 +10576,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, true, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
@@ -10285,7 +10595,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange?} [destination] - Specifies the new range to which the cut range will be pasted. If this argument is omitted, the range will be copied to the clipboard.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Cut.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Cut.js
 	 */
 	ApiRange.prototype.Cut = function (destination) {
 		var oApi = Asc["editor"];
@@ -10297,7 +10607,7 @@
 				let bbox = destination.range.bbox;
 				let range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 				this.range.move(range.bbox, false, destination.range.worksheet);
-				AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
+				//AscCommon.g_clipboardBase && AscCommon.g_clipboardBase.ClearBuffer();
 			} else {
 				logError(new Error('Invalid destination'));
 			}
@@ -10317,7 +10627,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} rangeFrom - Specifies the range to be pasted to the current range
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Paste.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Paste.js
 	 */
 	ApiRange.prototype.Paste = function (rangeFrom) {
 		if (rangeFrom && rangeFrom instanceof ApiRange) {
@@ -10341,7 +10651,7 @@
 	 * @param {boolean} bSkipBlanks [bSkipBlanks=false] - Specifies whether to avoid replacing values in the paste area when blank cells occur in the copy area.
 	 * @param {boolean} bTranspose [bTranspose=false] - Specifies whether the pasted data will be transposed from rows to columns.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/PasteSpecial.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/PasteSpecial.js
 	 */
 	ApiRange.prototype.PasteSpecial = function (sPasteType, sPasteSpecialOperation, bSkipBlanks, bTranspose) {
 		if (sPasteType && typeof sPasteType !== 'string') {
@@ -10437,6 +10747,35 @@
 	};
 
 	/**
+	 * Returns a PivotTable object that represents the PivotTable report containing the upper-left corner of the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable | null}
+	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetPivotTable.js
+	 */
+	ApiRange.prototype.GetPivotTable = function() {
+		var bbox = this.range.isOneCell() ?  this.range.bbox : this.range.worksheet.getRange3(this.range.bbox.r1, this.range.bbox.c1, this.range.bbox.r1, this.range.bbox.c1).bbox;
+		var pivotTables = this.range.worksheet.pivotTables;
+		var foundTable = null;
+		for (var i = 0; i < pivotTables.length; i++) {
+			var table = pivotTables[i];
+			if (table.intersection(bbox)) {
+				foundTable = new ApiPivotTable(table, this.range.worksheet.workbook.oApi);
+				break;
+			}
+		}
+		return foundTable;
+	};
+
+	Object.defineProperty(ApiRange.prototype, "PivotTable", {
+		get: function () {
+			return this.GetPivotTable();
+		}
+	});
+
+
+
+	/**
 	 * Search data type (formulas or values).
 	 * @typedef {("xlFormulas" | "xlValues")} XlFindLookIn
 	 * @see office-js-api/Examples/Enumerations/XlFindLookIn.js
@@ -10504,7 +10843,7 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Find.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Find.js
 	 */
 	ApiRange.prototype.Find = function (oSearchData) {
 		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
@@ -10571,7 +10910,7 @@
 	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
 	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
 	 *
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/FindNext.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/FindNext.js
 	 */
 	ApiRange.prototype.FindNext = function (After) {
 		if (this._searchOptions) {
@@ -10612,7 +10951,7 @@
 	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
 	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
 	 *
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/FindPrevious.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/FindPrevious.js
 	 */
 	ApiRange.prototype.FindPrevious = function (Before) {
 		if (this._searchOptions) {
@@ -10663,7 +11002,7 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/Replace.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Replace.js
 	 */
 	ApiRange.prototype.Replace = function (oReplaceData) {
 		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
@@ -10730,9 +11069,9 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Start - The first character to be returned. If this argument is either 1 or omitted, this property returns a range of characters starting with the first character.
 	 * @param {number} Length - The number of characters to be returned. If this argument is omitted, this property returns the remainder of the string (everything after the Start character).
-	 * @return {ApiCharacters}
+	 * @returns {ApiCharacters}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiRange/Methods/GetCharacters.js
+	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetCharacters.js
 	 */
 	ApiRange.prototype.GetCharacters = function (Start, Length) {
 		let options = {
@@ -10774,7 +11113,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @returns {"drawing"}
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetClassType.js
 	 */
 	ApiDrawing.prototype.GetClassType = function () {
 		return "drawing";
@@ -10786,7 +11125,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {EMU} nWidth - The object width measured in English measure units.
 	 * @param {EMU} nHeight - The object height measured in English measure units.
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/SetSize.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetSize.js
 	 */
 	ApiDrawing.prototype.SetSize = function (nWidth, nHeight) {
 		var fWidth = nWidth / 36000.0;
@@ -10809,7 +11148,7 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the drawing object measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the drawing object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the drawing object measured in English measure units.
-	 * * @see office-js-api/Examples/Cell/ApiDrawing/Methods/SetPosition.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosition.js
 	 */
 	ApiDrawing.prototype.SetPosition = function (nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var extX = null, extY = null;
@@ -10838,7 +11177,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/GetWidth.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetWidth.js
 	 */
 	ApiDrawing.prototype.GetWidth = function () {
 		return private_MM2EMU(this.Drawing.GetWidth());
@@ -10848,7 +11187,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/GetHeight.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHeight.js
 	 */
 	ApiDrawing.prototype.GetHeight = function () {
 		return private_MM2EMU(this.Drawing.GetHeight());
@@ -10858,7 +11197,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @returns {bool}
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/GetLockValue.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
 	 */
 	ApiDrawing.prototype.GetLockValue = function (sType) {
 		var nLockType = private_GetDrawingLockType(sType);
@@ -10878,7 +11217,7 @@
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
-	 * @see office-js-api/Examples/Cell/ApiDrawing/Methods/SetLockValue.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
 	 */
 	ApiDrawing.prototype.SetLockValue = function (sType, bValue) {
 		var nLockType = private_GetDrawingLockType(sType);
@@ -10907,7 +11246,7 @@
 	 * @memberof ApiImage
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @returns {"image"}
-	 * @see office-js-api/Examples/Cell/ApiImage/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/GetClassType.js
 	 */
 	ApiImage.prototype.GetClassType = function () {
 		return "image";
@@ -10924,7 +11263,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @returns {"shape"}
-	 * @see office-js-api/Examples/Cell/ApiShape/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetClassType.js
 	 */
 	ApiShape.prototype.GetClassType = function () {
 		return "shape";
@@ -10935,7 +11274,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @returns {?ApiDocumentContent}
-	 * @see office-js-api/Examples/Cell/ApiShape/Methods/GetContent.js
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
 	 */
 	ApiShape.prototype.GetContent = function () {
 		var oApi = Asc["editor"];
@@ -10950,7 +11289,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @returns {?ApiDocumentContent}
-	 * @see office-js-api/Examples/Cell/ApiShape/Methods/GetDocContent.js
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
 	ApiShape.prototype.GetDocContent = function () {
 		var oApi = Asc["editor"];
@@ -10966,7 +11305,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {"top" | "center" | "bottom" } sVerticalAlign - The vertical alignment type for the shape inner contents.
 	 * @returns {boolean} - returns false if shape or aligment doesn't exist.
-	 * @see office-js-api/Examples/Cell/ApiShape/Methods/SetVerticalTextAlign.js
+	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
 	 */
 	ApiShape.prototype.SetVerticalTextAlign = function (sVerticalAlign) {
 		if (this.Shape) {
@@ -11023,7 +11362,7 @@
 	 * * "Example series".
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiChart/Methods/SetSeriaValues.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetSeriaValues.js
 	 */
 	ApiChart.prototype.SetSeriaValues = function (sRange, nSeria) {
 		return this.Chart.SetSeriaValues(sRange, nSeria);
@@ -11039,7 +11378,7 @@
 	 * * "Example series".
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiChart/Methods/SetSeriaXValues.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetSeriaXValues.js
 	 */
 	ApiChart.prototype.SetSeriaXValues = function (sRange, nSeria) {
 		return this.Chart.SetSeriaXValues(sRange, nSeria);
@@ -11055,7 +11394,7 @@
 	 * * "Example series".
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiChart/Methods/SetSeriaName.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetSeriaName.js
 	 */
 	ApiChart.prototype.SetSeriaName = function (sNameRange, nSeria) {
 		return this.Chart.SetSeriaName(sNameRange, nSeria);
@@ -11068,7 +11407,7 @@
 	 * @param {string} sRange - A range of cells from the sheet with the category names. For example:
 	 * * "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column,
 	 * * "A1:A5" - must be a single cell, row or column.
-	 * @see office-js-api/Examples/Cell/ApiChart/Methods/SetCatFormula.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/SetCatFormula.js
 	 */
 	ApiChart.prototype.SetCatFormula = function (sRange) {
 		return this.Chart.SetCatFormula(sRange);
@@ -11088,7 +11427,7 @@
 	 * @param {string} [sXValuesRange=undefined] - A range of cells from the sheet with series x-axis values. It is used with the scatter charts only. For example:
 	 * * "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column,
 	 * * "A1:A5" - must be a single cell, row or column.
-	 * @see office-js-api/Examples/Cell/ApiChart/Methods/AddSeria.js
+	 * @see office-js-api/Examples/{Editor}/ApiChart/Methods/AddSeria.js
 	 */
 	ApiChart.prototype.AddSeria = function (sNameRange, sValuesRange, sXValuesRange) {
 		if (this.Chart.isScatterChartType() && typeof (sXValuesRange) === "string" && sXValuesRange !== "") {
@@ -11113,7 +11452,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {"oleObject"}
-	 * @see office-js-api/Examples/Cell/ApiOleObject/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetClassType.js
 	 */
 	ApiOleObject.prototype.GetClassType = function () {
 		return "oleObject";
@@ -11125,7 +11464,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiOleObject/Methods/SetData.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetData.js
 	 */
 	ApiOleObject.prototype.SetData = function (sData) {
 		if (typeof (sData) !== "string" || sData === "")
@@ -11140,7 +11479,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiOleObject/Methods/GetData.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetData.js
 	 */
 	ApiOleObject.prototype.GetData = function () {
 		if (typeof (this.Drawing.m_sData) === "string")
@@ -11155,7 +11494,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Cell/ApiOleObject/Methods/SetApplicationId.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetApplicationId.js
 	 */
 	ApiOleObject.prototype.SetApplicationId = function (sAppId) {
 		if (typeof (sAppId) !== "string" || sAppId === "")
@@ -11170,7 +11509,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiOleObject/Methods/GetApplicationId.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetApplicationId.js
 	 */
 	ApiOleObject.prototype.GetApplicationId = function () {
 		if (typeof (this.Drawing.m_sApplicationId) === "string")
@@ -11190,7 +11529,7 @@
 	 * @memberof ApiColor
 	 * @typeofeditors ["CSE"]
 	 * @returns {"color"}
-	 * @see office-js-api/Examples/Cell/ApiColor/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiColor/Methods/GetClassType.js
 	 */
 	ApiColor.prototype.GetClassType = function () {
 		return "color";
@@ -11207,7 +11546,7 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/GetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/GetName.js
 	 */
 	ApiName.prototype.GetName = function () {
 		if (this.DefName) {
@@ -11223,7 +11562,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - New name for the range.
 	 * @returns {boolean} - returns false if sName is invalid.
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/SetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/SetName.js
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
@@ -11256,7 +11595,7 @@
 	 * Deletes the DefName object.
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/Delete.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/Delete.js
 	 */
 	ApiName.prototype.Delete = function () {
 		this.DefName.wb.delDefinesNames(this.DefName.getAscCDefName(false));
@@ -11268,7 +11607,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRef    - The range reference which must contain the sheet name, followed by sign ! and a range of cells.
 	 * Example: "Sheet1!$A$1:$B$2".
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/SetRefersTo.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/SetRefersTo.js
 	 */
 	ApiName.prototype.SetRefersTo = function (sRef) {
 		this.DefName.setRef(sRef);
@@ -11279,7 +11618,7 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/GetRefersTo.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/GetRefersTo.js
 	 */
 	ApiName.prototype.GetRefersTo = function () {
 		return (this.DefName) ? this.DefName.ref : this.DefName;
@@ -11299,7 +11638,7 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiName/Methods/GetRefersToRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/GetRefersToRange.js
 	 */
 	ApiName.prototype.GetRefersToRange = function () {
 		var range;
@@ -11326,7 +11665,7 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 * @returns {"comment"}
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetClassType.js
 	 */
 	ApiComment.prototype.GetClassType = function () {
 		return "comment";
@@ -11337,7 +11676,7 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetText.js
 	 */
 	ApiComment.prototype.GetText = function () {
 		return this.Comment.asc_getText();
@@ -11349,7 +11688,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} text - New text for comment.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetText.js
 	 */
 	ApiComment.prototype.SetText = function (text) {
 		if (typeof text === 'string' && text.trim() !== '') {
@@ -11373,7 +11712,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetId.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetId.js
 	 */
 	ApiComment.prototype.GetId = function () {
 		return this.Comment.asc_getId();
@@ -11391,7 +11730,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetAuthorName.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetAuthorName.js
 	 */
 	ApiComment.prototype.GetAuthorName = function () {
 		return this.Comment.asc_getUserName();
@@ -11403,7 +11742,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sAuthorName - The comment author's name.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetAuthorName.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetAuthorName.js
 	 */
 	ApiComment.prototype.SetAuthorName = function (sAuthorName) {
 		this.Comment.asc_putUserName(sAuthorName);
@@ -11425,7 +11764,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetUserId.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetUserId.js
 	 */
 	ApiComment.prototype.GetUserId = function () {
 		return this.Comment.asc_getUserId();
@@ -11437,7 +11776,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sUserId - The user ID of the comment author.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetUserId.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetUserId.js
 	 */
 	ApiComment.prototype.SetUserId = function (sUserId) {
 		this.Comment.asc_putUserId(sUserId);
@@ -11459,7 +11798,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/IsSolved.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/IsSolved.js
 	 */
 	ApiComment.prototype.IsSolved = function () {
 		return this.Comment.getSolved();
@@ -11471,7 +11810,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetSolved.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetSolved.js
 	 */
 	ApiComment.prototype.SetSolved = function (bSolved) {
 		this.Comment.setSolved(bSolved);
@@ -11493,7 +11832,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {Number}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetTimeUTC.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetTimeUTC.js
 	 */
 	ApiComment.prototype.GetTimeUTC = function () {
 		let nTime = parseInt(this.Comment.asc_getOnlyOfficeTime());
@@ -11508,7 +11847,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetTimeUTC.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetTimeUTC.js
 	 */
 	ApiComment.prototype.SetTimeUTC = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -11535,7 +11874,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {Number}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetTime.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetTime.js
 	 */
 	ApiComment.prototype.GetTime = function () {
 		let nTime = parseInt(this.Comment.asc_getTime());
@@ -11550,7 +11889,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/SetTime.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/SetTime.js
 	 */
 	ApiComment.prototype.SetTime = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -11577,7 +11916,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {String | null}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetQuoteText.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetQuoteText.js
 	 */
 	ApiComment.prototype.GetQuoteText = function () {
 		let text = null;
@@ -11600,7 +11939,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {Number?}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetRepliesCount.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetRepliesCount.js
 	 */
 	ApiComment.prototype.GetRepliesCount = function () {
 		return this.Comment.asc_getRepliesCount()
@@ -11619,7 +11958,7 @@
 	 * @param {Number} [nIndex = 0] - The comment reply index.
 	 * @returns {ApiCommentReply?}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/GetReply.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/GetReply.js
 	 */
 	ApiComment.prototype.GetReply = function (nIndex) {
 		if (typeof (nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
@@ -11641,7 +11980,7 @@
 	 * @param {String} sUserId - The user ID of the comment reply author (optional).
 	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/AddReply.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/AddReply.js
 	 */
 	ApiComment.prototype.AddReply = function (sText, sAuthorName, sUserId, nPos) {
 		if (typeof (sText) !== "string" || sText.trim() === "")
@@ -11671,7 +12010,7 @@
 	 * @param {Number} [nCount = 1] - A number of comment replies to remove.
 	 * @param {boolean} [bRemoveAll = false] - Specifies whether to remove all comment replies or not.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/RemoveReplies.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/RemoveReplies.js
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
 		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
@@ -11696,7 +12035,7 @@
 	 * Deletes the ApiComment object.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
-	 * @see office-js-api/Examples/Cell/ApiComment/Methods/Delete.js
+	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/Delete.js
 	 */
 	ApiComment.prototype.Delete = function () {
 		this.WB.Api.asc_removeComment(this.Comment.asc_getId());
@@ -11719,7 +12058,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {"commentReply"}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetClassType.js
 	 */
 	ApiCommentReply.prototype.GetClassType = function () {
 		return "commentReply";
@@ -11731,7 +12070,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetText.js
 	 */
 	ApiCommentReply.prototype.GetText = function () {
 		return this.Data.asc_getText();
@@ -11743,7 +12082,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment reply text.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/SetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetText.js
 	 */
 	ApiCommentReply.prototype.SetText = function (sText) {
 		this.Data.asc_putText(sText);
@@ -11765,7 +12104,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetAuthorName.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetAuthorName.js
 	 */
 	ApiCommentReply.prototype.GetAuthorName = function () {
 		return this.Data.asc_getUserName();
@@ -11777,7 +12116,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sAuthorName - The comment reply author's name.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/SetAuthorName.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetAuthorName.js
 	 */
 	ApiCommentReply.prototype.SetAuthorName = function (sAuthorName) {
 		this.Data.asc_putUserName(sAuthorName);
@@ -11799,7 +12138,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetUserId.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetUserId.js
 	 */
 	ApiCommentReply.prototype.GetUserId = function () {
 		return this.Data.asc_getUserId();
@@ -11811,7 +12150,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sUserId - The user ID of the comment reply author.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/SetUserId.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetUserId.js
 	 */
 	ApiCommentReply.prototype.SetUserId = function (sUserId) {
 		this.Data.asc_putUserId(sUserId);
@@ -11833,7 +12172,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {Number}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetTimeUTC.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetTimeUTC.js
 	 */
 	ApiCommentReply.prototype.GetTimeUTC = function () {
 		let nTime = parseInt(this.Data.asc_getOnlyOfficeTime());
@@ -11848,7 +12187,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in UTC format.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/SetTimeUTC.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetTimeUTC.js
 	 */
 	ApiCommentReply.prototype.SetTimeUTC = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -11875,7 +12214,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {Number}
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/GetTime.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/GetTime.js
 	 */
 	ApiCommentReply.prototype.GetTime = function () {
 		let nTime = parseInt(this.Data.asc_getTime());
@@ -11890,7 +12229,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in the current time zone format.
 	 * @since 7.5.0
-	 * @see office-js-api/Examples/Cell/ApiCommentReply/Methods/SetTime.js
+	 * @see office-js-api/Examples/{Editor}/ApiCommentReply/Methods/SetTime.js
 	 */
 	ApiCommentReply.prototype.SetTime = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
@@ -11926,7 +12265,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiAreas/Methods/GetCount.js
+	 * @see office-js-api/Examples/{Editor}/ApiAreas/Methods/GetCount.js
 	 */
 	ApiAreas.prototype.GetCount = function () {
 		return this.Items.length;
@@ -11944,7 +12283,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} ind - The index number of the object.
 	 * @returns {ApiRange}
-	 * @see office-js-api/Examples/Cell/ApiAreas/Methods/GetItem.js
+	 * @see office-js-api/Examples/{Editor}/ApiAreas/Methods/GetItem.js
 	 */
 	ApiAreas.prototype.GetItem = function (ind) {
 		return this.Items[ind - 1] || null;
@@ -11955,7 +12294,7 @@
 	 * @memberof ApiAreas
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
-	 * @see office-js-api/Examples/Cell/ApiAreas/Methods/GetParent.js
+	 * @see office-js-api/Examples/{Editor}/ApiAreas/Methods/GetParent.js
 	 */
 	ApiAreas.prototype.GetParent = function () {
 		return this._parent;
@@ -11979,7 +12318,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/GetCount.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/GetCount.js
 	 */
 	ApiCharacters.prototype.GetCount = function () {
 		return this._options.length < 0 ? 0 : this._options.length;
@@ -11997,7 +12336,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/GetParent.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/GetParent.js
 	 */
 	ApiCharacters.prototype.GetParent = function () {
 		return this._parent;
@@ -12014,7 +12353,7 @@
 	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/Delete.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/Delete.js
 	 */
 	ApiCharacters.prototype.Delete = function () {
 		if (this._options.start <= this._options.len) {
@@ -12052,7 +12391,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} String - The string to insert.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/Insert.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/Insert.js
 	 */
 	ApiCharacters.prototype.Insert = function (String) {
 		this.Delete();
@@ -12115,7 +12454,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Caption - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/SetCaption.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/SetCaption.js
 	 */
 	ApiCharacters.prototype.SetCaption = function (Caption) {
 		this.Insert(Caption);
@@ -12127,7 +12466,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/GetCaption.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/GetCaption.js
 	 */
 	ApiCharacters.prototype.GetCaption = function () {
 		let value = this._parent.range.getValue();
@@ -12152,7 +12491,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Text - The text to be set.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/SetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/SetText.js
 	 */
 	ApiCharacters.prototype.SetText = function (Text) {
 		this.Insert(Text)
@@ -12164,7 +12503,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The text of the specified range of characters.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/GetText.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/GetText.js
 	 */
 	ApiCharacters.prototype.GetText = function () {
 		return this.GetCaption();
@@ -12185,7 +12524,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiCharacters/Methods/GetFont.js
+	 * @see office-js-api/Examples/{Editor}/ApiCharacters/Methods/GetFont.js
 	 */
 	ApiCharacters.prototype.GetFont = function () {
 		return new ApiFont(this);
@@ -12210,7 +12549,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiCharacters} - The parent ApiCharacters object.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetParent.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetParent.js
 	 */
 	ApiFont.prototype.GetParent = function () {
 		return this._object;
@@ -12228,7 +12567,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetBold.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetBold.js
 	 */
 	ApiFont.prototype.GetBold = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12262,7 +12601,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the text characters are displayed bold.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetBold.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetBold.js
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
@@ -12311,7 +12650,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetItalic.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetItalic.js
 	 */
 	ApiFont.prototype.GetItalic = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12345,7 +12684,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the text characters are displayed italic.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetItalic.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetItalic.js
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
@@ -12394,7 +12733,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {number | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetSize.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetSize.js
 	 */
 	ApiFont.prototype.GetSize = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12428,7 +12767,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} Size - Font size.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetSize.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSize.js
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
@@ -12477,7 +12816,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetStrikethrough.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetStrikethrough.js
 	 */
 	ApiFont.prototype.GetStrikethrough = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12511,7 +12850,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikethrough - Specifies that the text characters are displayed strikethrough.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetStrikethrough.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetStrikethrough.js
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
@@ -12566,7 +12905,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {XlUnderlineStyle | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetUnderline.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetUnderline.js
 	 */
 	ApiFont.prototype.GetUnderline = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12626,7 +12965,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {XlUnderlineStyle} Underline - Underline type.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetUnderline.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetUnderline.js
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
@@ -12700,7 +13039,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetSubscript.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetSubscript.js
 	 */
 	ApiFont.prototype.GetSubscript = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12734,7 +13073,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSubscript - Specifies that the text characters are displayed subscript.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetSubscript.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSubscript.js
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
@@ -12783,7 +13122,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetSuperscript.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetSuperscript.js
 	 */
 	ApiFont.prototype.GetSuperscript = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12817,7 +13156,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isSuperscript - Specifies that the text characters are displayed superscript.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetSuperscript.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetSuperscript.js
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
@@ -12866,7 +13205,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetName.js
 	 */
 	ApiFont.prototype.GetName = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12900,7 +13239,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} FontName - Font name.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetName.js
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
@@ -12950,7 +13289,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiColor | null}
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/GetColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/GetColor.js
 	 */
 	ApiFont.prototype.GetColor = function () {
 		if (this._object instanceof ApiCharacters) {
@@ -12984,7 +13323,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} Color - Font color.
 	 * @since 7.4.0
-	 * @see office-js-api/Examples/Cell/ApiFont/Methods/SetColor.js
+	 * @see office-js-api/Examples/{Editor}/ApiFont/Methods/SetColor.js
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
@@ -13041,7 +13380,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen.
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiFreezePanes/Methods/FreezeAt.js
+	 * @see office-js-api/Examples/{Editor}/ApiFreezePanes/Methods/FreezeAt.js
 	 */
 	ApiFreezePanes.prototype.FreezeAt = function (frozenRange) {
 		let api = this.ws.workbook.oApi;
@@ -13063,7 +13402,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiFreezePanes/Methods/FreezeColumns.js
+	 * @see office-js-api/Examples/{Editor}/ApiFreezePanes/Methods/FreezeColumns.js
 	 */
 	ApiFreezePanes.prototype.FreezeColumns = function (count) {
 		let api = this.ws.workbook.oApi;
@@ -13083,7 +13422,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiFreezePanes/Methods/FreezeRows.js
+	 * @see office-js-api/Examples/{Editor}/ApiFreezePanes/Methods/FreezeRows.js
 	 */
 	ApiFreezePanes.prototype.FreezeRows = function (count) {
 		let api = this.ws.workbook.oApi;
@@ -13103,7 +13442,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiFreezePanes/Methods/GetLocation.js
+	 * @see office-js-api/Examples/{Editor}/ApiFreezePanes/Methods/GetLocation.js
 	 */
 	ApiFreezePanes.prototype.GetLocation = function () {
 		let result = null;
@@ -13135,7 +13474,7 @@
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @since 8.0.0
-	 * @see office-js-api/Examples/Cell/ApiFreezePanes/Methods/Unfreeze.js
+	 * @see office-js-api/Examples/{Editor}/ApiFreezePanes/Methods/Unfreeze.js
 	 */
 	ApiFreezePanes.prototype.Unfreeze = function () {
 		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
@@ -13155,9 +13494,9 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTitle - The title which will be displayed for the current protected range.
-	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @returns {boolean} - Returns false if a user doesn't have permission to modify the protected range.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/SetTitle.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetTitle.js
 	 */
 	ApiProtectedRange.prototype.SetTitle = function (sTitle) {
 		let isValidTitle = typeof (sTitle) === 'string' && sTitle.trim() !== '';
@@ -13180,9 +13519,9 @@
 	 * @memberof ApiProtectedRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The cell range which will be set for the current protected range.
-	 * @return {boolean} - Returns false if a user doesn't have permission to modify the protected range.
+	 * @returns {boolean} - Returns false if a user doesn't have permission to modify the protected range.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/SetRange.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetRange.js
 	 */
 	ApiProtectedRange.prototype.SetRange = function (sRange) {
 		let isValidRange = typeof (sRange) === 'string' && sRange.trim() !== '';
@@ -13216,7 +13555,7 @@
 	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
 	 * @returns {ApiProtectedRangeUserInfo | null} - Returns null if a user doesn't have permission to modify the protected range.
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/AddUser.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/AddUser.js
 	 */
 	ApiProtectedRange.prototype.AddUser = function (sId, sName, protectedRangeUserType) {
 		let isValidIdTitle = typeof (sId) === 'string' && sId.trim() !== '';
@@ -13239,10 +13578,13 @@
 				newUser.asc_setType(nType);
 
 				let users = this.protectedRange.asc_getUsers();
+				if (!users) {
+					users = [];
+				}
 				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
 				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
-				result = new ApiProtectedRangeUserInfo(result, this.protectedRange);
+				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
 			}
 		}
 		return result;
@@ -13255,7 +13597,7 @@
 	 * @param {string} sId - The user ID.
 	 * @returns {bool}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/DeleteUser.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/DeleteUser.js
 	 */
 	ApiProtectedRange.prototype.DeleteUser = function (sId) {
 		let isValidId = typeof (sId) === 'string' && sId.trim() !== '';
@@ -13292,7 +13634,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiProtectedRangeUserInfo[] | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/GetAllUsers.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/GetAllUsers.js
 	 */
 	ApiProtectedRange.prototype.GetAllUsers = function () {
 		let worksheet = this.protectedRange._ws;
@@ -13318,7 +13660,7 @@
 	 * @param {ProtectedRangeUserType} protectedRangeUserType - The user type of the protected range.
 	 * @returns {bool}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/SetAnyoneType.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/SetAnyoneType.js
 	 */
 	ApiProtectedRange.prototype.SetAnyoneType = function (protectedRangeUserType) {
 		let nType = Asc.c_oSerUserProtectedRangeType.edit;
@@ -13348,7 +13690,7 @@
 	 * @param {string} sId - The user ID.
 	 * @returns {ApiProtectedRangeUserInfo | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRange/Methods/GetUser.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRange/Methods/GetUser.js
 	 */
 	ApiProtectedRange.prototype.GetUser = function (sId) {
 		let isValidRange = typeof (sId) === 'string' && sId.trim() !== '';
@@ -13380,7 +13722,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRangeUserInfo/Methods/GetName.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRangeUserInfo/Methods/GetName.js
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetName = function () {
 		//the sets methods are available from the parent
@@ -13394,7 +13736,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {ProtectedRangeUserType}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRangeUserInfo/Methods/GetType.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRangeUserInfo/Methods/GetType.js
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetType = function () {
 		let nType = this.userInfo.asc_getType();
@@ -13414,12 +13756,2896 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null}
 	 * @since 8.1.0
-	 * @see office-js-api/Examples/Cell/ApiProtectedRangeUserInfo/Methods/GetId.js
+	 * @see office-js-api/Examples/{Editor}/ApiProtectedRangeUserInfo/Methods/GetId.js
 	 */
 	ApiProtectedRangeUserInfo.prototype.GetId = function () {
 		return this.userInfo.asc_getId();
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotTable
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/* Methods */
+
+	/**
+	 * Adds a data field to a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} field - The index number or name of the field.
+	 * @returns {ApiPivotDataField}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddDataField.js
+	 */
+	ApiPivotTable.prototype.AddDataField = function (field) {
+		let pivotIndex = -1;
+		const pivotFields = this.pivot.asc_getPivotFields();
+		if (typeof field === 'string') {
+			pivotIndex = this.pivot.getFieldIndexByValue(field);
+		} else if (typeof field === 'number') {
+			pivotIndex = field - 1;
+		} else {
+			private_MakeError('Bad field indentifier type.')
+			return null;
+		}
+		if (pivotFields[pivotIndex]) {
+			this.pivot.asc_addDataField(this.api, pivotIndex);
+			const dataFields = this.pivot.asc_getDataFields();
+			return new ApiPivotDataField(this, dataFields.length - 1, dataFields[dataFields.length - 1]);
+		}
+		private_MakeError("Field with such an identifier does not exist.");
+		return null;
+	};
+	/**
+	 * Adds row, column, and page fields to a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {Object} options
+	 * @param {number | string | number[] | string[]} [options.rows] - Specifies an array of field names or ids to be added as rows or added to the category axis.
+	 * @param {number | string | number[] | string[]} [options.columns] - Specifies an array of field names or ids to be added as columns or added to the series axis.
+	 * @param {number | string | number[] | string[]} [options.pages] - Specifies an array of field names or ids to be added as pages or added to the page area.
+	 * @param {boolean} [options.addToTable] - Applies only to PivotTable reports. True to add the specified fields to the report (none of the existing fields are replaced).
+	 * False to replace existing fields with the new fields. The default value is False.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/AddFields.js
+	 */
+	ApiPivotTable.prototype.AddFields = function (options) {
+		options['rows'] = options['rows'] != null ? options['rows'] : [];
+		options['columns'] = options['columns'] != null ? options['columns'] : [];
+		options['pages'] = options['pages'] != null ? options['pages'] : [];
+
+		const rows = Array.isArray(options['rows']) ? options['rows'] : [options['rows']];
+		const cols = Array.isArray(options['columns']) ? options['columns'] : [options['columns']];
+		const pages = Array.isArray(options['pages']) ? options['pages'] : [options['pages']];
+		const cacheFields = this.pivot.asc_getCacheFields();
+		const t = this;
+
+		function processField(field, callback) {
+			let index = null;
+			if (typeof field == "number" && field > 0 && field - 1 < cacheFields.length) {
+				index = field - 1;
+			} else if (typeof field == "string") {
+				index = t.pivot.getFieldIndexByValue(field.trim());
+				if (index < 0) {
+					index = null;
+				}
+			}
+			if (index !== null) {
+				callback(index);
+			} else {
+				private_MakeError("There is no field with such an identifier.");
+			}
+		}
+
+		if (!options.addToTable) {
+			const pivotFields = this.GetPivotFields()
+			pivotFields.forEach(function (pivotField) {
+				pivotField.Remove()
+			})
+
+		}
+		rows.forEach(function(row) {
+			processField(row, function(index) {
+				t.pivot.asc_addRowField(t.api, index);
+			});
+		});
+		cols.forEach(function(col) {
+			processField(col, function(index) {
+				t.pivot.asc_addColField(t.api, index);
+			});
+		});
+		pages.forEach(function(page) {
+			processField(page, function(index) {
+				t.pivot.asc_addPageField(t.api, index);
+			});
+		});
+	};
+	/**
+	 * Deletes all filters currently applied to the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearAllFilters.js
+	 */
+	ApiPivotTable.prototype.ClearAllFilters = function () {
+		this.pivot.asc_removeFilters(this.api);
+	};
+	/**
+	 * Clears the Pivot Table.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ClearTable.js
+	 */
+	ApiPivotTable.prototype.ClearTable = function () {
+		const ws = this.pivot.worksheet;
+		const name = this.pivot.asc_getName();
+		const range = this.pivot.getRange();
+		const bbox = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+		const dataRef = this.pivot.cacheDefinition.cacheSource.worksheetSource.getDataRef();
+		let index = -1;
+		for (let i = 0; i < ws.pivotTables.length; i += 1) {
+			if (ws.pivotTables[i].Get_Id() === this.pivot.Get_Id()) {
+				index = i;
+				break;
+			}
+		}
+		if (index !== -1) {
+			ws._deletePivotTable(ws.pivotTables, this.pivot, index);
+			this.pivot = this.api._asc_insertPivot(ws.workbook, dataRef, ws, bbox, false);
+			this.pivot.asc_setName(name);
+			return;
+		}
+		private_MakeError("Unknown error!");
+	};
+	/**
+	 * Returns the value for the data filed in a PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string[]} items - Describes a single cell in the PivotTable report.
+	 * @returns {number | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetData.js
+	 */
+	ApiPivotTable.prototype.GetData = function (items) {
+		const params = this.pivot.asc_getDataToGetPivotData(items);
+		const cell = this.pivot.getCellByGetPivotDataParams(params);
+		if (cell) {
+			return this.pivot.worksheet.getCell3(cell.row, cell.col).getValue();
+		}
+		private_MakeError('There is no data with that params.');
+		return null;
+	};
+	/**
+	 * Returns a Range object with information about a data item in a PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} [dataField]
+	 * @param {string[]} [fieldItemsArray]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotData.js
+	 */
+	ApiPivotTable.prototype.GetPivotData = function (dataField, fieldItemsArray) {
+		const cell = this.pivot.getCellByGetPivotDataParams({
+			dataFieldName: dataField,
+			optParams: fieldItemsArray
+		});
+		if (cell) {
+			return new ApiRange(this.pivot.worksheet.getCell3(cell.row, cell.col));
+		}
+		return null;
+	};
+	/**
+	 * Returns an collection that represents either a single PivotTable field
+	 * or a collection of both the visible and hidden fields in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string | number} [field] - The name or index of the field to be returned.
+	 * @returns {ApiPivotField[] | ApiPivotField | ApiPivotDataField | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPivotFields.js
+	 */
+	ApiPivotTable.prototype.GetPivotFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		if (field != null) {
+			let pivotIndex = -1;
+			if (typeof field === 'number') {
+				pivotIndex = field - 1;
+				if (pivotFields[pivotIndex]) {
+					return new ApiPivotField(this, pivotIndex, pivotFields[pivotIndex]);
+				}
+			} else if (typeof field === 'string') {
+				pivotIndex = this.pivot.getFieldIndexByValue(field.trim());
+				if (pivotIndex !== -1) {
+					return new ApiPivotField(this, pivotIndex, pivotFields[pivotIndex]);
+				}
+				return this.GetDataFields(field);
+			}
+		}
+		const t = this;
+		return pivotFields.map(function(pivotField, i) {
+			return new ApiPivotField(t, i, pivotField);
+		});
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "PivotFields", {
+		get: function (field) {
+			this.GetPivotFields(field);
+		}
+	});
+	/**
+	 * Returns the value of a pivot table cell.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowLine
+	 * @param {number} colLine
+	 * @returns {number | string | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/PivotValueCell.js
+	 */
+	ApiPivotTable.prototype.PivotValueCell = function (rowLine, colLine) {
+		if (rowLine > 0 && colLine > 0) {
+			const pivotRange = this.pivot.getRange();
+			const location = this.pivot.location;
+			const baseCol = pivotRange.c1 + location.firstDataCol;
+			const baseRow = pivotRange.r1 + location.firstDataRow;
+			const curRow = rowLine + baseRow - 1;
+			const curCol = colLine + baseCol - 1;
+			if (curRow <= pivotRange.r2 && curCol <= pivotRange.c2) {
+				return this.pivot.worksheet.getCell3(curRow, curCol).getValue();
+			}
+		}
+		private_MakeError('Cell is out of range');
+		return null;
+	};
+	/**
+	 * Show details of pivot cell.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number} rowLine - report area row
+	 * @param {number} colLine - report area column
+	 * @returns {boolean} success
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/ShowDetails.js
+	 */
+	ApiPivotTable.prototype.ShowDetails = function (rowLine, colLine) {
+		if (rowLine > 0 && colLine > 0) {
+			const pivotRange = this.pivot.getRange();
+			const location = this.pivot.location;
+			const baseCol = pivotRange.c1 + location.firstDataCol;
+			const baseRow = pivotRange.r1 + location.firstDataRow;
+			const curRow = rowLine + baseRow - 1;
+			const curCol = colLine + baseCol - 1;
+			if (curRow <= pivotRange.r2 && curCol <= pivotRange.c2) {
+				return this.api.asc_pivotShowDetails(this.pivot, {row: curRow, col: curCol});
+			}
+		}
+		private_MakeError('Cell is out of range');
+		return false;
+	};
+	/**
+	 * Refreshes the PivotTable report from the source data.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/RefreshTable.js
+	 */
+	ApiPivotTable.prototype.RefreshTable = function () {
+		this.pivot.asc_refresh(this.api);
+	};
+	/**
+	 * Updates the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/Update.js
+	 */
+	ApiPivotTable.prototype.Update = function () {
+		this.pivot.asc_refresh(this.api);
+	};
+	/**
+	 * Specifies whether to repeat item labels for all PivotFields in the specified PivotTable.
+	 * @memberof ApiPivotTable
+	 * @param {boolean} repeat - Specifies whether to repeat all field item labels in a PivotTable report.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRepeatAllLabels.js
+	 */
+	ApiPivotTable.prototype.SetRepeatAllLabels = function (repeat) {
+		if (typeof repeat == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setFillDownLabelsDefault(repeat);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "repeat".');
+		}
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "RepeatAllLabels", {
+		set: function (repeat) {
+			this.SetRepeatAllLabels(repeat);
+		}
+	});
+	/**
+	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotTable
+	 * @param {PivotLayoutType} type - Type of layot report form.
+	 * @param {boolean} compact - Use compact form or not.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowAxisLayout.js
+	 */
+	ApiPivotTable.prototype.SetRowAxisLayout = function (type, compact) {
+		let props = null;
+		if (typeof type === "string" && (type === "Tabular" || type === "Outline")) {
+			props = new Asc.CT_pivotTableDefinition();
+			props.asc_setOutline((type == "Outline"));
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.');
+		}
+		if (compact != null) {
+			if (typeof compact === "boolean") {
+				if (!props) {
+					props = new Asc.CT_pivotTableDefinition();
+				}
+				props.asc_setCompact(compact);
+			} else {
+				private_MakeError('Invalid type of "compact".');
+			}
+		}
+		if (props) {
+			this.pivot.asc_set(this.api, props);
+		}
+	};
+	Object.defineProperty(ApiPivotTable.prototype, "RowAxisLayout", {
+		set: function (type, compact) {
+			this.SetRowAxisLayout(type, compact);
+		}
+	});
+	/**
+	 * @typedef { "Hidden" | "Top" | "Bottom" } PivotSubtotalLayoutType
+	 */
+	/**
+	 * Sets PivotTable setting layout subtotal location.
+	 * @memberof ApiPivotTable
+	 * @param {PivotSubtotalLayoutType} type - Type of subtotal layout
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSubtotalLocation.js
+	 */
+	ApiPivotTable.prototype.SetSubtotalLocation = function (type) {
+		if ( typeof type == "string" && (type === "Hidden" || type === "Bottom" || type === "Top") ) {
+			const props = new Asc.CT_pivotTableDefinition();
+			if (type == "Hidden") {
+				props.asc_setDefaultSubtotal(false);
+			} else {
+				props.asc_setDefaultSubtotal(true);
+				props.asc_setSubtotalTop( (type == "Top") );
+			}
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "SubtotalLocation", {
+		set: function (type) {
+			this.SetSubtotalLocation(type);
+		}
+	});
+	/**
+	 * Removes field from all PivotTable categories.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} identifier - The index number or name of the field.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/RemoveField.js
+	 */
+	ApiPivotTable.prototype.RemoveField = function (identifier) {
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			this.pivot.asc_removeField(this.api, pivotField.index);
+		}
+	};
+
+	/**
+	 * @typedef { "Up" | "Down" | "Begin" | "End" } PivotMoveFieldType
+	 */
+	/**
+	 * @typedef {"Rows" | "Columns" | "Filters" | "Values" | "Hidden" } PivotFieldOrientationType
+	 */
+
+	/**
+	 * Moves field from one category to another.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string} identifier - The index number or name of the field.
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number} [index] - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/MoveField.js
+	 */
+	ApiPivotTable.prototype.MoveField = function (identifier, type, index) {
+		const pivotField = this.GetPivotFields(identifier);
+		if (pivotField) {
+			pivotField.Move(type, index)
+		}
+	};
+	/**
+	 * Selects the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/Select.js
+	 */
+	ApiPivotTable.prototype.Select = function () {
+		this.pivot.asc_select(this.api);
+	};
+
+	/* Attributes */
+
+	/**
+	 * Returns an collection that represents a collection of all column fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnFields.js
+	 */
+	ApiPivotTable.prototype.GetColumnFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const colFields = this.pivot.asc_getColumnFields();
+		const t = this;
+		return colFields.map(function(colField, i) {
+			const index = colField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnFields", {
+		get: function (field) {
+			return this.GetColumnFields(field);
+		}
+	});
+	/**
+	 * Returns an collection that represents either a single PivotTable data field
+	 * or a collection of all visible data fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {number | string |undefined} field - The name or index of the field to be returned.
+	 * @returns {ApiPivotDataField[] | ApiPivotDataField | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataFields.js
+	 */
+	ApiPivotTable.prototype.GetDataFields = function (field) {
+		const dataFields = this.pivot.asc_getDataFields();
+		if (field != null) {
+			let dataIndex = -1;
+			if (typeof field === 'number') {
+				dataIndex = field - 1;
+				const dataField = dataFields[dataIndex];
+				if (dataField) {
+					return new ApiPivotDataField(this, dataIndex, dataField)
+				}
+			} else if (typeof field === 'string') {
+				const dataIndex = this.pivot.dataFields.getIndexByName(field.trim())
+				if (dataIndex !== -1) {
+					return  new ApiPivotDataField(this, dataIndex, dataFields[dataIndex]);
+				}
+			}
+			private_MakeError("A field with such an identifier does not exist.");
+			return null;
+		}
+		const t = this;
+		return dataFields.map(function(dataField, i) {
+			return new ApiPivotDataField(t, i, dataField);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DataFields", {
+		get: function (field) {
+			return this.GetDataFields(field);
+		}
+	});
+
+	/**
+	 * Returns array that represents all not added fields in PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetHiddenFields.js
+	 */
+	ApiPivotTable.prototype.GetHiddenFields = function () {
+		var fields = this.pivot.asc_getPivotFields();
+		var hidden = [];
+		for (var i = 0; i < fields.length; i++)
+			if (fields[i].axis === null && !fields[i].dataField)
+				hidden.push( new ApiPivotField(this, i, fields[i]));
+
+		return hidden;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "HiddenFields", {
+		get: function () {
+			return this.GetHiddenFields();
+		}
+	});
+
+	/**
+	 * Returns array that represents all added fields in PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetVisibleFields.js
+	 */
+	ApiPivotTable.prototype.GetVisibleFields = function () {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const visible = [];
+		for (var i = 0; i < pivotFields.length; i++) {
+			if (pivotFields[i].axis !== null && !pivotFields[i].dataField) {
+				visible.push( new ApiPivotField(this, i, pivotFields[i]) );
+			}
+		}
+		return visible.concat(this.GetDataFields());
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "VisibleFields", {
+		get: function () {
+			return this.GetVisibleFields();
+		}
+	});
+
+	/**
+	 * Returns an collection that represents either a single PivotTable page field
+	 * or a collection of all visible page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetPageFields.js
+	 */
+	ApiPivotTable.prototype.GetPageFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const pageFields = this.pivot.asc_getPageFields();
+		const t = this;
+		return pageFields.map(function(pageField, i) {
+			const index = pageField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "PageFields", {
+		get: function (field) {
+			return this.GetPageFields(field);
+		}
+	});
+	/**
+	 * Returns an collection that represents a collection of all row fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField[]}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowFields.js
+	 */
+	ApiPivotTable.prototype.GetRowFields = function (field) {
+		const pivotFields = this.pivot.asc_getPivotFields();
+		const rowFields = this.pivot.asc_getRowFields();
+		const t = this;
+		return rowFields.map(function(rowField, i) {
+			const index = rowField.asc_getIndex();
+			return new ApiPivotField(t, index, pivotFields[index]);
+		});
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowFields", {
+		get: function () {
+			return this.GetRowFields();
+		}
+	});
+	/**
+	 * Returns name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetName.js
+	 */
+	ApiPivotTable.prototype.GetName = function () {
+		return this.pivot.asc_getName();
+	};
+
+	/**
+	 * Sets name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @param {string} name - Name for PivotTable.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetName.js
+	 */
+	ApiPivotTable.prototype.SetName = function (name) {
+		if (typeof name == "string" && name.trim().length) {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setName(name.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "name" or "name" is empty.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+
+	/**
+	 * Returns PivotTable Grand Totals settings for columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnGrand.js
+	 */
+	ApiPivotTable.prototype.GetColumnGrand = function () {
+		return this.pivot.asc_getColGrandTotals();
+	};
+
+	/**
+	 * Sets PivotTable Grand Totals settings for columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Shows grand totals for columns or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetColumnGrand.js
+	 */
+	ApiPivotTable.prototype.SetColumnGrand = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setColGrandTotals(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnGrand", {
+		get: function () {
+			return this.GetColumnGrand();
+		},
+		set: function (show) {
+			this.SetColumnGrand(show);
+		}
+	});
+
+	/**
+	 * Returns PivotTable Grand Totals settings for rows.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowGrand.js
+	 */
+	ApiPivotTable.prototype.GetRowGrand = function () {
+		return this.pivot.asc_getRowGrandTotals();
+	};
+
+	/**
+	 * Sets PivotTable Grand Totals settings for rows.
+	 * @memberof ApiPivotTable
+	 * @param {boolean} show - Shows grand totals for rows or not.
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetRowGrand.js
+	 */
+	ApiPivotTable.prototype.SetRowGrand = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setRowGrandTotals(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowGrand", {
+		get: function () {
+			return this.GetRowGrand();
+		},
+		set: function (show) {
+			this.SetRowGrand(show);
+		}
+	});
+
+	/** @typedef {"OverThenDown" | "DownThenOver"} FieldsInReportFilterType */
+
+	/**
+	 * Returns PivotTable display fields in report filter area settings.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {{Type: FieldsInReportFilterType, ReportFilterFields: number}}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldsInReportFilterArea.js
+	 */
+	ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea = function () {
+		return {
+			"Type": (this.pivot.asc_getPageOverThenDown() ? "OverThenDown" : "DownThenOver"),
+			"ReportFilterFields": this.pivot.asc_getPageWrap()
+		};
+	};
+
+	/**
+	 * Returns PivotTable display fields in report filter area settings.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {FieldsInReportFilterType} type
+	 * @param {number} fields - Count of report filter fields.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldsInReportFilterArea.js
+	 */
+	ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea = function (type, fields) {
+		var props = null;
+		if (type != undefined) {
+			if ( typeof type == "string" && (type == 'OverThenDown' || type == 'DownThenOver') ) {
+				props = new Asc.CT_pivotTableDefinition();
+				props.asc_setPageOverThenDown( (type == 'OverThenDown') );
+			} else {
+				private_MakeError('Invalid type of "type".');
+			}
+		}
+
+		if (fields != undefined) {
+			if (typeof fields == "number" && fields >= 0 && fields <= 255) {
+				if (!props)
+					props = new Asc.CT_pivotTableDefinition();
+
+				props.asc_setPageWrap(fields);
+			} else {
+				private_MakeError('Invalid type of "fields" or invalid value.');
+			}
+		}
+
+		if (props)
+			this.pivot.asc_set(this.api, props);
+	};
+
+	/**
+	 * Returns PivotTable setting show field headers for rows and columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDisplayFieldCaptions.js
+	 */
+	ApiPivotTable.prototype.GetDisplayFieldCaptions = function () {
+		return this.pivot.asc_getShowHeaders();
+	};
+
+	/**
+	 * Sets show field headers for rows and columns.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not field headers for rows and columns.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDisplayFieldCaptions.js
+	 */
+	ApiPivotTable.prototype.SetDisplayFieldCaptions = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setShowHeaders(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DisplayFieldCaptions", {
+		get: function () {
+			return this.GetDisplayFieldCaptions ();
+		},
+		set: function (show) {
+			this.SetDisplayFieldCaptions (show);
+		}
+	});
+
+	/**
+	 * Returns the title of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTitle.js
+	 */
+	ApiPivotTable.prototype.GetTitle = function () {
+		return this.pivot.asc_getTitle() || "";
+	};
+
+	/**
+	 * Sets the title of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} title - Title for PivotTable.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTitle.js
+	 */
+	ApiPivotTable.prototype.SetTitle = function (title) {
+		if (typeof title == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setTitle(title.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "title".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Title", {
+		get: function () {
+			return this.GetTitle();
+		},
+		set: function (title) {
+			this.SetTitle(title);
+		}
+	});
+
+	/**
+	 * Returns the description of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDescription.js
+	 */
+	ApiPivotTable.prototype.GetDescription = function () {
+		return this.pivot.asc_getDescription() || "";
+	};
+
+	/**
+	 * Sets the description of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} description - Description for PivotTable.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetDescription.js
+	 */
+	ApiPivotTable.prototype.SetDescription = function (description) {
+		if (typeof description == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDescription(description.trim());
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "description".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Description", {
+		get: function () {
+			return this.GetDescription();
+		},
+		set: function (description) {
+			this.SetDescription(description);
+		}
+	});
+
+	/**
+	 * Returns the style name of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetStyleName.js
+	 */
+	ApiPivotTable.prototype.GetStyleName = function () {
+		return this.pivot.asc_getStyleInfo().asc_getName();
+	};
+
+	/**
+	 * Sets the style of the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Style name.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetStyleName.js
+	 */
+	ApiPivotTable.prototype.SetStyleName = function (name) {
+		if (typeof name == "string" && name.trim().length) {
+			this.pivot.asc_getStyleInfo().asc_setName(this.api, this.pivot, name.trim());
+		} else {
+			private_MakeError('Invalid type of "name" or "name" is empty.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "StyleName", {
+		get: function () {
+			return this.GetStyleName();
+		},
+		set: function (name) {
+			this.SetStyleName(name);
+		}
+	});
+
+	/**
+	 * Returns the row headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowHeaders.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleRowHeaders = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowRowHeaders();
+	};
+
+	/**
+	 * Sets the row headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not row headers.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowHeaders.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleRowHeaders = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowRowHeaders(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleRowHeaders", {
+		get: function () {
+			return this.GetTableStyleRowHeaders();
+		},
+		set: function (show) {
+			this.SetTableStyleRowHeaders(show);
+		}
+	});
+
+	/**
+	 * Returns the column headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnHeaders.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleColumnHeaders = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowColHeaders();
+	};
+
+	/**
+	 * Sets the column headers style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not column headers.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnHeaders.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleColumnHeaders = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowColHeaders(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleColumnHeaders", {
+		get: function () {
+			return this.GetTableStyleColumnHeaders();
+		},
+		set: function (show) {
+			this.SetTableStyleColumnHeaders(show);
+		}
+	});
+
+	/**
+	 * Returns the banded rows style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleRowStripes.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleRowStripes = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowRowStripes();
+	};
+
+	/**
+	 * Sets the banded rows style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not banded rows.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleRowStripes.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleRowStripes = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowRowStripes(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleRowStripes", {
+		get: function () {
+			return this.GetTableStyleRowStripes();
+		},
+		set: function (show) {
+			this.SetTableStyleRowStripes(show);
+		}
+	});
+
+	/**
+	 * Returns the banded columns style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableStyleColumnStripes.js
+	 */
+	ApiPivotTable.prototype.GetTableStyleColumnStripes = function () {
+		return this.pivot.asc_getStyleInfo().asc_getShowColStripes();
+	};
+
+	/**
+	 * Sets the banded columns style for PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show or not banded columns.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetTableStyleColumnStripes.js
+	 */
+	ApiPivotTable.prototype.SetTableStyleColumnStripes = function (show) {
+		if (typeof show == "boolean") {
+			this.pivot.asc_getStyleInfo().asc_setShowColStripes(this.api, this.pivot, show);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ShowTableStyleColumnStripes", {
+		get: function () {
+			return this.GetTableStyleColumnStripes();
+		},
+		set: function (show) {
+			this.SetTableStyleColumnStripes(show);
+		}
+	});
+
+	/**
+	 * Returns source for the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetSource.js
+	 */
+	ApiPivotTable.prototype.GetSource = function () {
+		var location = this.pivot.getDataLocation();
+		return new ApiRange( location.ws.getRange3(location.bbox.r1, location.bbox.c1, location.bbox.r2, location.bbox.c2) );
+	};
+
+	/**
+	 * Sets source for the PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} source - Range where pivot table will be located.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetSource.js
+	 */
+	ApiPivotTable.prototype.SetSource = function (source) {
+		if (source instanceof ApiRange) {
+			var ref = source.GetWorksheet().GetName() + "!" + source.GetAddress(true, true);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDataRef(ref);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Source must be instance of ApiRange.');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Source", {
+		get: function () {
+			return this.GetSource();
+		},
+		set: function (source) {
+			this.SetSource(source);
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range that contains the column area in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetColumnRange.js
+	 */
+	ApiPivotTable.prototype.GetColumnRange = function () {
+		const res = this.pivot.asc_getColumnRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "ColumnRange", {
+		get: function () {
+			return this.GetColumnRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range that contains the row area in the PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetRowRange.js
+	 */
+	ApiPivotTable.prototype.GetRowRange = function () {
+		const res = this.pivot.asc_getRowRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "RowRange", {
+		get: function () {
+			return this.GetRowRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range of values in a PivotTable.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetDataBodyRange.js
+	 */
+	ApiPivotTable.prototype.GetDataBodyRange = function () {
+		const res = this.pivot.asc_getDataBodyRange();
+		if (res) {
+			return new ApiRange(res);
+		}
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "DataBodyRange", {
+		get: function () {
+			return this.GetDataBodyRange();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range containing the entire PivotTable report,
+	 * but doesn't include page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange1.js
+	 */
+	ApiPivotTable.prototype.GetTableRange1 = function () {
+		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
+		return (ref ? new ApiRange( this.pivot.worksheet.getRange3(ref.r1, ref.c1, ref.r2, ref.c2) ) : null);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "TableRange1", {
+		get: function () {
+			return this.GetTableRange1();
+		}
+	});
+
+	/**
+	 * Returns a Range object that represents the range containing the entire PivotTable report,
+	 * including page fields.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetTableRange2.js
+	 */
+	ApiPivotTable.prototype.GetTableRange2 = function () {
+		var ref =  (this.pivot.location ? this.pivot.location.ref : null);
+		var firsPFP, lastPFP;
+		if (this.pivot.pageFieldsPositions.length) {
+			firsPFP = this.pivot.pageFieldsPositions[0];
+			lastPFP = this.pivot.pageFieldsPositions[ (this.pivot.pageFieldsPositions.length - 1) ];
+		}
+		var r1, c1, r2, c2;
+		if (ref) {
+			r1 = (firsPFP ? Math.min(firsPFP.row, ref.r1) : ref.r1);
+			c1 = (firsPFP ? Math.min(firsPFP.col, ref.c1) : ref.c1);
+			r2 = (lastPFP ? Math.max(lastPFP.row, ref.r2) : ref.r2);
+			c2 = (lastPFP ? Math.max( (lastPFP.col + 1), ref.c2 ) : ref.c2);
+		}
+		return (ref ? new ApiRange( this.pivot.worksheet.getRange3(r1, c1, r2, c2) ) : null);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "TableRange2", {
+		get: function () {
+			return this.GetTableRange2();
+		}
+	});
+
+	/**
+	 * Returns the text string label that is displayed in the grand total column
+	 * or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetGrandTotalName.js
+	 */
+	ApiPivotTable.prototype.GetGrandTotalName = function () {
+		return ( this.pivot.asc_getGrandTotalCaption() || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION) );
+	};
+
+	/**
+	 * Sets the text string label that is displayed in the grand total column
+	 * or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Grand total name.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetGrandTotalName.js
+	 */
+	ApiPivotTable.prototype.SetGrandTotalName = function (name) {
+		if (typeof name == "string") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setGrandTotalCaption( name.trim() );
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "name".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "GrandTotalName", {
+		get: function () {
+			return this.GetGrandTotalName();
+		},
+		set: function (name) {
+			this.SetGrandTotalName(name);
+		}
+	});
+	/**
+	 * Sets PivotTable setting insert blank rows after each item.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert blank row after each item or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutBlankLine.js
+	 */
+	ApiPivotTable.prototype.SetLayoutBlankLine = function (insert) {
+		if (typeof insert == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setInsertBlankRow(insert);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "insert".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "LayoutBlankLine", {
+		set: function (insert) {
+			this.SetLayoutBlankLine(insert);
+		}
+	});
+
+	/**
+	 * Sets PivotTable setting show subtotals.
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show subtotals or not.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/SetLayoutSubtotals.js
+	 */
+	ApiPivotTable.prototype.SetLayoutSubtotals = function (show) {
+		if (typeof show == "boolean") {
+			var props = new Asc.CT_pivotTableDefinition();
+			props.asc_setDefaultSubtotal(show);
+			this.pivot.asc_set(this.api, props);
+		} else {
+			private_MakeError('Invalid type of "show".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "LayoutSubtotals", {
+		set: function (show) {
+			this.SetLayoutSubtotals(show);
+		}
+	});
+
+	/**
+	 * Returns Pivot Table parent
+	 * @memberof ApiPivotTable
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiWorksheet} - Pivot Table parent.
+	 * @see office-js-api/Examples/ApiPivotTable/Methods/GetParent.js
+	 */
+	ApiPivotTable.prototype.GetParent = function () {
+		return new ApiWorksheet(this.pivot.worksheet);
+	};
+
+	Object.defineProperty(ApiPivotTable.prototype, "Parent", {
+		set: function () {
+			this.GetParent();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotDataField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/** Methods */
+
+	/**
+	 * Removes data field from category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Remove.js
+	 */
+	ApiPivotDataField.prototype.Remove = function () {
+		this.table.pivot.asc_removeDataField(this.table.api, this.index, this.dataIndex);
+	};
+	/**
+	 * Moves field inside category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number} [index] - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/Move.js
+	 */
+	ApiPivotDataField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		switch (type) {
+			case "Rows":
+				this.table.pivot.asc_moveToRowField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Columns":
+				this.table.pivot.asc_moveToColField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Filters":
+				this.table.pivot.asc_moveToPageField(this.table.api, this.index, this.dataIndex, index);
+				break;
+			case "Values":
+				this.SetPosition(index);
+				break;
+			default:
+				const fields = this.table.pivot.asc_getDataFields();
+				let indexFrom = this.dataIndex;
+				let indexTo = getIndexTo(type, indexFrom, fields);
+				if (indexTo != null) {
+					this.SetPosition(indexTo + 1);
+				} else {
+					private_MakeError("Bad move type.");
+				}
+				break;
+		}
+	}
+
+	/** Attributes */
+
+	/**
+	 * Type of calculation to perform on the data field items.
+	 * @typedef {"Average" | "CountNumbers" | "Count" | "Max" | "Min" | "Product" |
+	 * "StdDev" | "StdDevP" | "Sum" | "Var" | "VarP"} DataConsolidateFunctionType
+	 */
+
+	/**
+	 * Sets the function performed in the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetFunction.js
+	 */
+	ApiPivotDataField.prototype.SetFunction = function (func) {
+		const field = new Asc.CT_DataField();
+		switch (func) {
+			case "Average":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Average);
+				break;
+			case "Count":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Count);
+				break;
+			case "CountNumbers":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.CountNums);
+				break;
+			case "Max":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Max);
+				break;
+			case "Min":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Min);
+				break;
+			case "Product":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Product);
+				break;
+			case "StdDev":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDev);
+				break;
+			case "StdDevP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDevp);
+				break;
+			case "Sum":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Sum);
+				break;
+			case "Var":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Var);
+				break;
+			case "VarP":
+				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Varp);
+				break;
+			default:
+				private_MakeError('Invalid function type.');
+				return;
+		}
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, field);
+	};
+	/**
+	 * Returns the function performed in the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {DataConsolidateFunctionType} func - The function performed in the added data field.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetFunction.js
+	 */
+	ApiPivotDataField.prototype.GetFunction = function () {
+		const subtotal = this.dataField.asc_getSubtotal();
+		switch (subtotal) {
+			case Asc.c_oAscDataConsolidateFunction.Average:
+				return "Average";
+			case Asc.c_oAscDataConsolidateFunction.Count:
+				return "Count";
+			case Asc.c_oAscDataConsolidateFunction.CountNums:
+				return "CountNumbers";
+			case Asc.c_oAscDataConsolidateFunction.Max:
+				return "Max";
+			case Asc.c_oAscDataConsolidateFunction.Min:
+				return "Min";
+			case Asc.c_oAscDataConsolidateFunction.Product:
+				return "Product";
+			case Asc.c_oAscDataConsolidateFunction.StdDev:
+				return "StdDev";
+			case Asc.c_oAscDataConsolidateFunction.StdDevP:
+				return "StdDevP";
+			case Asc.c_oAscDataConsolidateFunction.Sum:
+				return "Sum";
+			case Asc.c_oAscDataConsolidateFunction.Var:
+				return "Var";
+			case Asc.c_oAscDataConsolidateFunction.VarP:
+				return "VarP";
+		}
+	};
+
+	/**
+	 * Returns a value that represents the position of the field in category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPosition.js
+	 */
+	ApiPivotDataField.prototype.GetPosition = function () {
+		return this.dataIndex + 1;
+	};
+
+	/**
+	 * Sets a value that represents the position of the field in dataField category.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} position - Position.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetPosition.js
+	 */
+	ApiPivotDataField.prototype.SetPosition = function (position) {
+		const dataFields = this.table.pivot.asc_getDataFields();
+		if (typeof position === "number") {
+			if (dataFields[position] && this.index !== position - 1) {
+				this.table.pivot.asc_moveDataField(this.table.api, this.dataIndex, position - 1);
+				this.dataIndex = position - 1;
+			} else {
+				private_MakeError('Invalid position (out of range or the same).');
+			}
+		} else {
+			private_MakeError('Invalid type of "position".');
+		}
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Position", {
+		get: function () {
+			return this.GetPosition();
+		},
+		set: function (position) {
+			this.SetPosition(position);
+		}
+	});
+	/**
+	 * Returns a data field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldOrientationType}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetOrientation.js
+	 */
+	ApiPivotDataField.prototype.GetOrientation = function () {
+		if (this.dataField) {
+			return "Values";
+		}
+		return null;
+	};
+	Object.defineProperty(ApiPivotDataField.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+	});
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetValue.js
+	 */
+	ApiPivotDataField.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetValue.js
+	 */
+	ApiPivotDataField.prototype.SetValue = function (name) {
+		this.SetName(name);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		},
+		set: function (name) {
+			this.SetValue(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the label text for the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetCaption.js
+	 */
+	ApiPivotDataField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetCaption.js
+	 */
+	ApiPivotDataField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetName.js
+	 */
+	ApiPivotDataField.prototype.GetName = function () {
+		return this.dataField.asc_getName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetName.js
+	 */
+	ApiPivotDataField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			const field = new Asc.CT_DataField();
+			field.asc_setName(name);
+			this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, field);
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetNumberFormat.js
+	 */
+	ApiPivotDataField.prototype.GetNumberFormat = function () {
+		return this.dataField.asc_getNumFormat();
+	};
+	/**
+	 * Sets value that represents the format code for the object.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} format
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/SetNumberFormat.js
+	 */
+	ApiPivotDataField.prototype.SetNumberFormat = function (format) {
+		const newField = new Asc.CT_DataField();
+		newField.asc_setNumFormat(format);
+		this.dataField.asc_set(this.table.api, this.table.pivot, this.dataIndex, newField);
+	};
+	Object.defineProperty(ApiPivotDataField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function (format) {
+			return this.SetNumberFormat(format);
+		}
+	});
+	/**
+	 * Returns index of the data field.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetIndex.js
+	 */
+	ApiPivotDataField.prototype.GetIndex = function () {
+		return this.dataIndex + 1;
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		}
+	});
+	/**
+	 * Returns the pivotField from which the data field was created.
+	 * @memberof ApiPivotDataField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 * @see office-js-api/Examples/ApiPivotDataField/Methods/GetPivotField.js
+	 */
+	ApiPivotDataField.prototype.GetPivotField = function () {
+		return new ApiPivotField(this.table, this.index, this.pivotField);
+	};
+
+	Object.defineProperty(ApiPivotDataField.prototype, "PivotField", {
+		get: function () {
+			return this.GetPivotField();
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotField
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/** Methods */
+
+	/**
+	 * Calling this method deletes all filters currently applied to the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearAllFilters.js
+	 */
+	ApiPivotField.prototype.ClearAllFilters  = function () {
+		this.table.pivot.removeFiltersWithLock(this.table.api, [this.index], false);
+	};
+	/**
+	 * This method deletes all label filters or all date filters in the PivotFilters collection.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearLabelFilters.js
+	 */
+	ApiPivotField.prototype.ClearLabelFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, true, false);
+	};
+	/**
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearManualFilters.js
+	 */
+	ApiPivotField.prototype.ClearManualFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, true, false, false);
+	};
+	/**
+	 * Calling this method deletes all value filters in the PivotFilters collection of the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/ClearValueFilters.js
+	 */
+	ApiPivotField.prototype.ClearValueFilters  = function () {
+		this.table.pivot.asc_removePivotFilter(this.table.api, this.index, false, false, true);
+	};
+	/**
+	 * Returns an object that represents either a single PivotTable item (a PivotItem object)
+	 * or a collection of all the visible and hidden items (a PivotItems object) in the specified field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} [index]
+	 * @returns {ApiPivotItem[] | ApiPivotItem | null}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPivotItems.js
+	 */
+	ApiPivotField.prototype.GetPivotItems = function (index) {
+		const pivotFields = this.table.pivot.asc_getPivotFields();
+		const pivotField = pivotFields[this.index];
+		if (index != null) {
+			const item = pivotField[index];
+			if (item && item.t === Asc.c_oAscItemType.Data) {
+				return new ApiPivotItem(this, item);
+			}
+			private_MakeError('Invalid item index.');
+			return null;
+		}
+		const items = pivotField.getItems();
+		const t = this;
+		return items.filter(function (item) {
+			return Asc.c_oAscItemType.Data === item.t;
+		}).map(function (item, index) {
+			return new ApiPivotItem(t, item);
+		})
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "PivotItems", {
+		get: function (index) {
+			return this.GetPivotItems(index);
+		}
+	});
+	/**
+	 * Moves field inside category.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotMoveFieldType | PivotFieldOrientationType} type - The type of the field to move.
+	 * @param {number | undefined} index - The index of the field in new category.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/Move.js
+	 */
+	ApiPivotField.prototype.Move = function (type, index) {
+		function getIndexTo(type, indexFrom, fields) {
+			switch (type) {
+				case "Up":
+					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "Down":
+					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "Begin":
+					return 0;
+				case "End":
+					return fields.length - 1;
+				default:
+					return null;
+			}
+		}
+		if (index == null) {
+			index = 0;
+		}
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index, undefined, index - 1);
+				} else {
+					this.SetPosition(index)
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index, undefined, index - 1);
+				break;
+			case "Hidden":
+				this.Remove();
+				break;
+			default:
+				const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+				if (fields) {
+					let indexFrom = null;
+					for (let i = 0; i < fields.length; i += 1) {
+						if (fields[i].asc_getIndex() === this.index) {
+							indexFrom = i;
+							break;
+						}
+					}
+					let indexTo = getIndexTo(type, indexFrom, fields);
+					if (indexTo != null) {
+						this.SetPosition(indexTo + 1);
+					} else {
+						private_MakeError("Bad move type.");
+					}
+				} else {
+					private_MakeError("Field is hidden.");
+				}
+				break;
+		}
+	};
+	/**
+	 * Removes field from PivotTable.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @see office-js-api/Examples/ApiPivotField/Methods/Remove.js
+	 */
+	ApiPivotField.prototype.Remove = function () {
+		this.table.pivot.asc_removeNoDataField(this.table.api, this.index);
+	};
+
+	/** Attributes */
+
+	/**
+	 * Returns a value that represents the position of the field in category.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetPosition.js
+	 */
+	ApiPivotField.prototype.GetPosition = function () {
+		const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+		if (fields) {
+			for (let i = 0; i < fields.length; i += 1) {
+				if (fields[i].asc_getIndex() === this.index) {
+					return i + 1;
+				}
+			}
+		}
+		private_MakeError('The field is hidden.\n' +
+		'If you need to get the position of the data field then use ApiPivotDataField.GetPosition.\n' +
+		'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+		'ApiPivotDataField object');
+	};
+
+	/**
+	 * Sets a value that represents the position of the field
+	 * among all the fields in its orientation (Rows, Columns, Pages).
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {number} position - Position.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetPosition.js
+	 */
+	ApiPivotField.prototype.SetPosition = function (position) {
+		if (typeof position == "number") {
+			if (this.pivotField.axis === null) {
+				private_MakeError('The field is hidden.\n' +
+					'If you need to set the position of the data field then use ApiPivotDataField.SetPosition.\n' +
+					'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
+					'ApiPivotDataField object');
+				return;
+			}
+			if (!this.table.pivot.moveFieldInAxis(this.table.api, this.index, this.pivotField.axis, position - 1)) {
+				private_MakeError('Invalid position (out of range or the same).')
+			}
+		} else {
+			private_MakeError('Invalid type of "position".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Position", {
+		get: function () {
+			return this.GetPosition();
+		},
+		set: function (position) {
+			this.SetPosition(position);
+		}
+	});
+
+	/**
+	 * Returns a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldOrientationType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetOrientation.js
+	 */
+	ApiPivotField.prototype.GetOrientation = function () {
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisRow) {
+			return "Rows";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisCol) {
+			return "Columns";
+		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			return "Filters"
+		} else {
+			return "Hidden"
+		}
+	};
+
+	/**
+	 * Sets a pivot field orientation value that represents the location
+	 * of the field in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotFieldOrientationType} type - Field orientation type.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetOrientation.js
+	 */
+	ApiPivotField.prototype.SetOrientation = function (type) {
+		switch (type) {
+			case "Rows":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Columns":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+					this.table.pivot.asc_moveToColField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Filters":
+				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
+				} else {
+					private_MakeError('The field already has that orientation.')
+				}
+				break;
+			case "Values":
+				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
+				break;
+			case "Hidden":
+				this.Remove();
+				break;
+			default:
+				private_MakeError('Invalid "type" value.');
+				break;
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Orientation", {
+		get: function () {
+			return this.GetOrientation();
+		},
+		set: function (type) {
+			this.SetOrientation(type);
+		}
+	});
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetValue.js
+	 */
+	ApiPivotField.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetValue.js
+	 */
+	ApiPivotField.prototype.SetValue = function (name) {
+		this.SetName(name)
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		},
+		set: function (name) {
+			this.SetValue(name);
+		}
+	});
+	/**
+	 * Returns a value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCaption.js
+	 */
+	ApiPivotField.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+	/**
+	 * Set value that represents the label text for the pivot field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetCaption.js
+	 */
+	ApiPivotField.prototype.SetCaption = function (caption) {
+		return this.SetName(caption);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		},
+		set: function(caption) {
+			this.SetCaption(caption);
+		}
+	});
+
+	/**
+	 * Returns a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetName.js
+	 */
+	ApiPivotField.prototype.GetName = function () {
+		return this.pivotField.asc_getName() || this.GetSourceName();
+	};
+
+	/**
+	 * Sets a value representing the name of the object.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} name - Name.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetName.js
+	 */
+	ApiPivotField.prototype.SetName = function (name) {
+		if (typeof name === 'string' && name.length > 0) {
+			const field = new Asc.CT_PivotField();
+			field.asc_setName(name);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Bad name type or empty.');
+		}
+
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		},
+		set: function (name) {
+			this.SetName(name);
+		}
+	});
+	/**
+	 * Returns source name
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSourceName.js
+	 */
+	ApiPivotField.prototype.GetSourceName = function () {
+		return this.table.pivot.getCacheFieldName(this.index);
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "SourceName", {
+		get: function () {
+			return this.GetSourceName();
+		}
+	});
+
+	/**
+	 * Returns index of the PivotField.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetIndex.js
+	 */
+	ApiPivotField.prototype.GetIndex = function () {
+		return this.index + 1;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		}
+	});
+
+	/**
+	 * Returns ApiPivotTable.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetTable.js
+	 */
+	ApiPivotField.prototype.GetTable = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Table", {
+		get: function () {
+			return this.GetTable();
+		}
+	});
+
+	/**
+	 * Returns parent object to this field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotTable}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetParent.js
+	 */
+	ApiPivotField.prototype.GetParent = function () {
+		return this.table;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns whether or not a PivotField is compacted.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutCompactRow.js
+	 */
+	ApiPivotField.prototype.GetLayoutCompactRow = function () {
+		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+		return (pivField.asc_getOutline() && pivField.asc_getCompact());
+	};
+
+	/**
+	 * Sets whether or not a PivotField is compacted.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} compact - Use compact form or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutCompactRow.js
+	 */
+	ApiPivotField.prototype.SetLayoutCompactRow = function (compact) {
+		if (typeof compact == "boolean") {
+			const field = new Asc.CT_PivotField();
+			const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+			field.asc_setCompact( (pivField.asc_getOutline() && compact) );
+			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "compact".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutCompactRow", {
+		get: function () {
+			return this.GetLayoutCompactRow();
+		},
+		set: function (compact) {
+			this.SetLayoutCompactRow(compact);
+		}
+	});
+
+	/**
+	 * @typedef {"Tabular" | "Outline"} PivotLayoutType
+	 */
+
+	/**
+	 * Returns the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotLayoutType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutForm.js
+	 */
+	ApiPivotField.prototype.GetLayoutForm = function () {
+		return this.pivotField.asc_getOutline() ? "Outline" : "Tabular";
+	};
+
+	/**
+	 * Sets the way the specified PivotTable items appear—in table format or in outline format.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotLayoutType} type - Type of layot report form.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutForm.js
+	 */
+	ApiPivotField.prototype.SetLayoutForm = function (type) {
+		if (type === "Tabular" || type === "Outline") {
+			const newField = new Asc.CT_PivotField();
+			newField.asc_setOutline(type === "Outline");
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, newField);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutForm", {
+		get: function () {
+			return this.GetLayoutForm();
+		},
+		set: function (type) {
+			this.SetLayoutForm(type);
+		}
+	});
+
+	/**
+	 * Returns the flag that represents page break is inserted after each field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutPageBreak.js
+	 */
+	ApiPivotField.prototype.GetLayoutPageBreak = function () {
+		return this.pivotField.insertPageBreak;
+	};
+
+	/**
+	 * Sets the flag that represents page break is inserted after each field.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert or not page break after each field.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutPageBreak.js
+	 */
+	ApiPivotField.prototype.SetLayoutPageBreak = function (insert) {
+		if ( typeof insert == "boolean") {
+			this.pivotField.insertPageBreak = insert;
+		} else {
+			private_MakeError('Invalid type of "insert".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutPageBreak", {
+		get: function () {
+			return this.GetLayoutPageBreak();
+		},
+		set: function (type) {
+			this.SetLayoutPageBreak(type);
+		}
+	});
+
+	/**
+	 * Returns if the PivotField is currently visible in the PivotTable or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowingInAxis.js
+	 */
+	ApiPivotField.prototype.GetShowingInAxis = function () {
+		return this.pivotField.axis !== null || this.pivotField.dataField;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "ShowingInAxis", {
+		get: function () {
+			return this.GetShowingInAxis();
+		}
+	});
+
+	/**
+	 * Returns setting repeat items labels at each row.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetRepeatLabels.js
+	 */
+	ApiPivotField.prototype.GetRepeatLabels = function () {
+		return this.pivotField.asc_getFillDownLabelsDefault();
+	};
+
+	/**
+	 * Sets setting repeat items labels at each row.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} repeat - Flag repeat items labels at each row or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetRepeatLabels.js
+	 */
+	ApiPivotField.prototype.SetRepeatLabels = function (repeat) {
+		if (typeof repeat == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setFillDownLabelsDefault(repeat);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "repeat".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "RepeatLabels", {
+		get: function () {
+			return this.GetRepeatLabels();
+		},
+		set: function (repeat) {
+			this.SetRepeatLabels(repeat);
+		}
+	});
+
+	/**
+	 * Returns setting insert blank rows after each item.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutBlankLine.js
+	 */
+	ApiPivotField.prototype.GetLayoutBlankLine = function () {
+		return this.pivotField.asc_getInsertBlankRow();
+	};
+
+	/**
+	 * Sets setting insert blank rows after each item.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} insert - Flag insert blank rows after each item or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutBlankLine.js
+	 */
+	ApiPivotField.prototype.SetLayoutBlankLine = function (insert) {
+		if (typeof insert == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setInsertBlankRow(insert);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "insert".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutBlankLine", {
+		get: function () {
+			return this.GetLayoutBlankLine();
+		},
+		set: function (insert) {
+			this.SetLayoutBlankLine(insert);
+		}
+	});
+
+	/**
+	 * Returns setting show items with no data.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetShowAllItems.js
+	 */
+	ApiPivotField.prototype.GetShowAllItems = function () {
+		return this.pivotField.asc_getShowAll();
+	};
+
+	/**
+	 * Sets setting show items with no data.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show items with no data or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetShowAllItems.js
+	 */
+	ApiPivotField.prototype.SetShowAllItems = function (show) {
+		if (typeof show == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setShowAll(show);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "show".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "ShowAllItems", {
+		get: function () {
+			return this.GetShowAllItems();
+		},
+		set: function (show) {
+			this.SetShowAllItems(show);
+		}
+	});
+
+	/**
+	 * Returns setting show subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotals.js
+	 */
+	ApiPivotField.prototype.GetLayoutSubtotals = function () {
+		return this.pivotField.asc_getDefaultSubtotal();
+	};
+
+	/**
+	 * Set setting show subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} show - Flag show subtotals or not.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotals.js
+	 */
+	ApiPivotField.prototype.SetLayoutSubtotals = function (show) {
+		if (typeof show == "boolean") {
+			const field = new Asc.CT_PivotField();
+			field.asc_setDefaultSubtotal(show);
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "show".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutSubtotals", {
+		get: function () {
+			return this.GetLayoutSubtotals();
+		},
+		set: function (show) {
+			this.SetLayoutSubtotals(show);
+		}
+	});
+
+	/** @typedef { "Top" | "Bottom" } LayoutSubtotalLocationType */
+
+	/**
+	 * Returns setting layout subtotal location.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {LayoutSubtotalLocationType}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetLayoutSubtotalLocation.js
+	 */
+	ApiPivotField.prototype.GetLayoutSubtotalLocation = function () {
+		return ( this.pivotField.asc_getSubtotalTop() ? "Top" : "Bottom" );
+	};
+
+	/**
+	 * Sets setting layout subtotal location.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {LayoutSubtotalLocationType} type - Type of layot subtotal location
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetLayoutSubtotalLocation.js
+	 */
+	ApiPivotField.prototype.SetLayoutSubtotalLocation = function (type) {
+		if (typeof type == "string" && ( type == "Top" || type == "Bottom")) {
+			const field = new Asc.CT_PivotField();
+			field.asc_setSubtotalTop( (type == "Top") );
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "type" or invalid value.')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "LayoutSubtotalLocation", {
+		get: function () {
+			return this.GetLayoutSubtotalLocation();
+		},
+		set: function (type) {
+			this.SetLayoutSubtotalLocation(type);
+		}
+	});
+
+	/**
+	 * Returns the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotalName.js
+	 */
+	ApiPivotField.prototype.GetSubtotalName = function () {
+		return (this.pivotField.subtotalCaption);
+	};
+
+	/**
+	 * Sets the text string label displayed in the subtotal column or row heading in the specified PivotTable report.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {string} caption - Caption.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotalName.js
+	 */
+	ApiPivotField.prototype.SetSubtotalName = function (caption) {
+		if ( typeof caption == "string") {
+			const field = new Asc.CT_PivotField();
+			field.subtotalCaption = caption.trim();
+			this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+		} else {
+			private_MakeError('Invalid type of "caption".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "SubtotalName", {
+		get: function () {
+			return this.GetSubtotalName();
+		},
+		set: function (caption) {
+			this.SetSubtotalName(caption);
+		}
+	});
+
+	/**
+	 * Subtotal pivot field types
+	 * @typedef {Object} PivotFieldSubtotals
+	 * @property {boolean} Sum
+	 * @property {boolean} Count
+	 * @property {boolean} Average
+	 * @property {boolean} Max
+	 * @property {boolean} Min
+	 * @property {boolean} Product
+	 * @property {boolean} CountNumbers
+	 * @property {boolean} StdDev
+	 * @property {boolean} StdDevP
+	 * @property {boolean} Var
+	 * @property {boolean} VarP
+	 */
+
+	/**
+	 * Returns object that represent all subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {PivotFieldSubtotals}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetSubtotals.js
+	 */
+	ApiPivotField.prototype.GetSubtotals = function () {
+		const res = {
+			'Sum': false,
+			'Count': false,
+			'Average': false,
+			'Max': false,
+			'Min': false,
+			'Product': false,
+			'CountNumbers': false,
+			'StdDev': false,
+			'StdDevP': false,
+			'Var': false,
+			'VarP': false
+		};
+		if (this.pivotField.asc_getDefaultSubtotal()) {
+			const subtotals = this.pivotField.asc_getSubtotals();
+			for (var i = 0; i < subtotals.length; i++) {
+				switch (subtotals[i]) {
+					case Asc.c_oAscItemType.Sum:
+						res['Sum'] = true;
+						break;
+					case Asc.c_oAscItemType.CountA:
+						res['Count'] = true;
+						break;
+					case Asc.c_oAscItemType.Avg:
+						res['Average'] = true;
+						break;
+					case Asc.c_oAscItemType.Max:
+						res['Max'] = true;
+						break;
+					case Asc.c_oAscItemType.Min:
+						res['Min'] = true;
+						break;
+					case Asc.c_oAscItemType.Product:
+						res['Product'] = true;
+						break;
+					case Asc.c_oAscItemType.Count:
+						res['CountNumbers'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDev:
+						res['StdDev'] = true;
+						break;
+					case Asc.c_oAscItemType.StdDevP:
+						res['StdDevP'] = true;
+						break;
+					case Asc.c_oAscItemType.Var:
+						res['Var'] = true;
+						break;
+					case Asc.c_oAscItemType.VarP:
+						res['VarP'] = true;
+						break;
+				}
+			}
+		}
+		return res;
+	};
+
+	/**
+	 * Sets Subtotals.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {PivotFieldSubtotals} subtotals - Object that represent all subtotals or some of them.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetSubtotals.js
+	 */
+	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
+			if (typeof subtotals == "object") {
+				const field = new Asc.CT_PivotField();
+				const arr = [];
+				if (this.pivotField.asc_getDefaultSubtotal()) {
+					if (subtotals.hasOwnProperty('Sum') && subtotals['Sum']) {
+						arr.push(Asc.c_oAscItemType.Sum);
+					}
+					if (subtotals.hasOwnProperty('Count') && subtotals['Count']) {
+						arr.push(Asc.c_oAscItemType.CountA);
+					}
+					if (subtotals.hasOwnProperty('Average') && subtotals['Average']) {
+						arr.push(Asc.c_oAscItemType.Avg);
+					}
+					if (subtotals.hasOwnProperty('Max') && subtotals['Max']) {
+						arr.push(Asc.c_oAscItemType.Max);
+					}
+					if (subtotals.hasOwnProperty('Min') && subtotals['Min']) {
+						arr.push(Asc.c_oAscItemType.Min);
+					}
+					if (subtotals.hasOwnProperty('Product') && subtotals['Product']) {
+						arr.push(Asc.c_oAscItemType.Product);
+					}
+					if (subtotals.hasOwnProperty('CountNumbers') && subtotals['CountNumbers']) {
+						arr.push(Asc.c_oAscItemType.Count);
+					}
+					if (subtotals.hasOwnProperty('StdDev') && subtotals['StdDev']) {
+						arr.push(Asc.c_oAscItemType.StdDev);
+					}
+					if (subtotals.hasOwnProperty('StdDevP') && subtotals['StdDevP']) {
+						arr.push(Asc.c_oAscItemType.StdDevP);
+					}
+					if (subtotals.hasOwnProperty('Var') && subtotals['Var']) {
+						arr.push(Asc.c_oAscItemType.Var);
+					}
+					if (subtotals.hasOwnProperty('VarP') && subtotals['VarP']) {
+						arr.push(Asc.c_oAscItemType.VarP);
+					}
+				}
+				if (arr.length) {
+					field.asc_setSubtotals(arr);
+					this.pivotField.asc_set(this.table.api, this.table.pivot, this.index, field);
+				}
+			} else {
+				private_MakeError('Invalid type of "subtotals".')
+			}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Subtotals", {
+		get: function () {
+			return this.GetSubtotals();
+		},
+		set: function (subtotals) {
+			this.SetSubtotals(subtotals);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the column position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToColumn.js
+	 */
+	ApiPivotField.prototype.GetDragToColumn = function () {
+		return this.pivotField.dragToCol;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the column position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to columns.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToColumn.js
+	 */
+	ApiPivotField.prototype.SetDragToColumn = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToCol = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToColumn", {
+		get: function () {
+			return this.GetDragToColumn();
+		},
+		set: function (flag) {
+			this.SetDragToColumn(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the row position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToRow.js
+	 */
+	ApiPivotField.prototype.GetDragToRow = function () {
+		return this.pivotField.dragToRow;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the row position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to rows.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToRow.js
+	 */
+	ApiPivotField.prototype.SetDragToRow = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToRow = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToRow", {
+		get: function () {
+			return this.GetDragToRow();
+		},
+		set: function (flag) {
+			this.SetDragToRow(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the data position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToData.js
+	 */
+	ApiPivotField.prototype.GetDragToData = function () {
+		return this.pivotField.dragToData;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the data position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to data.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToData.js
+	 */
+	ApiPivotField.prototype.SetDragToData = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToData = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToData", {
+		get: function () {
+			return this.GetDragToData();
+		},
+		set: function (flag) {
+			this.SetDragToData(flag);
+		}
+	});
+
+	/**
+	 * Returns the specified field, can be dragged to the page position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetDragToPage.js
+	 */
+	ApiPivotField.prototype.GetDragToPage = function () {
+		return this.pivotField.dragToPage;
+	};
+
+	/**
+	 * Sets the specified field, can be dragged to the page position or not.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} flag - Flag whether this field can be moved to page.
+	 * @see office-js-api/Examples/ApiPivotField/Methods/SetDragToPage.js
+	 */
+	ApiPivotField.prototype.SetDragToPage = function (flag) {
+		if (typeof flag == "boolean") {
+			this.pivotField.dragToPage = flag;
+		} else {
+			private_MakeError('Invalid type of "flag".')
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "DragToPage", {
+		get: function () {
+			return this.GetDragToPage();
+		},
+		set: function (flag) {
+			this.SetDragToPage(flag);
+		}
+	});
+
+	/**
+	 * Returns the current page showing for the page field (valid only for page fields).
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | number}
+	 * @see office-js-api/Examples/ApiPivotField/Methods/GetCurrentPage.js
+	 */
+	ApiPivotField.prototype.GetCurrentPage = function () {
+		const pageFields = this.table.pivot.asc_getPageFields();
+		const t = this;
+		const pageIndex = pageFields.findIndex(function(pageField) {
+			return pageField.asc_getIndex() === t.index;
+		});
+		if (this.pivotField.axis === Asc.c_oAscAxis.AxisPage) {
+			const val = this.table.pivot.getPageFieldCellValue(pageIndex);
+			return val.text || val.number || val.multiText;
+		} else {
+			private_MakeError("It is not possible from this field.");
+		}
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "CurrentPage", {
+		get: function () {
+			return this.GetCurrentPage();
+		}
+	});
+
+	ApiPivotField.prototype.GetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetFunction = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "Function", {
+		get: function () {
+			return this.GetFunction();
+		},
+		set: function () {
+			this.SetFunction()
+		}
+	});
+
+	ApiPivotField.prototype.GetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+	ApiPivotField.prototype.SetNumberFormat = function () {
+		private_MakeError('This method can only be called on a data field.\n' +
+			'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ApiPivotDataField object');
+		return null;
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
+		set: function () {
+			this.SetNumberFormat()
+		}
+	});
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotItem
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/* Attributes */
+
+	/**
+	 * Returns a String value representing the name of the object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetName.js
+	 */
+	ApiPivotItem.prototype.GetName = function () {
+		if (this.pivotItem.n) {
+			return this.pivotItem.n;
+		}
+		const pivot = this.field.table.pivot;
+		const cacheField = pivot.asc_getCacheFields()[this.field.index];
+		const sharedItem = cacheField.getGroupOrSharedItem(this.pivotItem.x);
+		if (sharedItem) {
+			return sharedItem.getCellValue().getTextValue();
+		}
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the label text for the pivot item.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetCaption.js
+	 */
+	ApiPivotItem.prototype.GetCaption = function () {
+		return this.GetName();
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the name of the specified item in the PivotTable field.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetValue.js
+	 */
+	ApiPivotItem.prototype.GetValue = function () {
+		return this.GetName();
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		}
+	});
+
+	/**
+	 * Returns the parent object for the specified object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 * @see office-js-api/Examples/ApiPivotItem/Methods/GetParent.js
+	 */
+	ApiPivotItem.prototype.GetParent = function () {
+		return this.field;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
 
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
@@ -13453,12 +16679,18 @@
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
+	Api.prototype["AddCustomFunctionLibrary"] = Api.prototype.AddCustomFunctionLibrary;
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
 	Api.prototype["SetReferenceStyle"] = Api.prototype.SetReferenceStyle;
 
 	Api.prototype["GetWorksheetFunction"] = Api.prototype.GetWorksheetFunction;
-	
+	Api.prototype["InsertPivotExistingWorksheet"] = Api.prototype.InsertPivotExistingWorksheet;
+	Api.prototype["InsertPivotNewWorksheet"] = Api.prototype.InsertPivotNewWorksheet;
+	Api.prototype["GetPivotByName"] = Api.prototype.GetPivotByName;
+	Api.prototype["RefreshAllPivots"] = Api.prototype.RefreshAllPivots;
+	Api.prototype["GetAllPivotTables"] = Api.prototype.GetAllPivotTables;
+
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
 	ApiWorksheet.prototype["SetActive"] = ApiWorksheet.prototype.SetActive;		
@@ -13515,6 +16747,9 @@
 	ApiWorksheet.prototype["GetProtectedRange"] = ApiWorksheet.prototype.GetProtectedRange;
 	ApiWorksheet.prototype["GetAllProtectedRanges"] = ApiWorksheet.prototype.GetAllProtectedRanges;
 	ApiWorksheet.prototype["Paste"] = ApiWorksheet.prototype.Paste;
+	ApiWorksheet.prototype["GetPivotByName"] = ApiWorksheet.prototype.GetPivotByName;
+	ApiWorksheet.prototype["GetAllPivotTables"] = ApiWorksheet.prototype.GetAllPivotTables;
+	ApiWorksheet.prototype["RefreshAllPivots"] = ApiWorksheet.prototype.RefreshAllPivots;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -13579,6 +16814,7 @@
 	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 	ApiRange.prototype["GetCharacters"] = ApiRange.prototype.GetCharacters;
 	ApiRange.prototype["PasteSpecial"] = ApiRange.prototype.PasteSpecial;
+	ApiRange.prototype["GetPivotTable"] = ApiRange.prototype.GetPivotTable;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -13711,6 +16947,7 @@
 	ApiProtectedRange.prototype["AddUser"]       = ApiProtectedRange.prototype.AddUser;
 	ApiProtectedRange.prototype["DeleteUser"]    = ApiProtectedRange.prototype.DeleteUser;
 	ApiProtectedRange.prototype["GetAllUsers"]   = ApiProtectedRange.prototype.GetAllUsers;
+	ApiProtectedRange.prototype["SetAnyoneType"] = ApiProtectedRange.prototype.SetAnyoneType;
 	ApiProtectedRange.prototype["GetUser"]       = ApiProtectedRange.prototype.GetUser;
 
 	ApiProtectedRangeUserInfo.prototype["GetName"]  = ApiProtectedRangeUserInfo.prototype.GetName;
@@ -14121,6 +17358,145 @@
 	ApiWorksheetFunction.prototype["ERROR_TYPE"]      =  ApiWorksheetFunction.prototype.ERROR_TYPE;
 
 
+	ApiPivotTable.prototype["AddDataField"]                       = ApiPivotTable.prototype.AddDataField;
+	ApiPivotTable.prototype["AddFields"]                          = ApiPivotTable.prototype.AddFields;
+	ApiPivotTable.prototype["ClearAllFilters"]                    = ApiPivotTable.prototype.ClearAllFilters;
+	ApiPivotTable.prototype["ClearTable"]                         = ApiPivotTable.prototype.ClearTable
+	ApiPivotTable.prototype["GetData"]                            = ApiPivotTable.prototype.GetData;
+	ApiPivotTable.prototype["GetPivotData"]                       = ApiPivotTable.prototype.GetPivotData;
+	ApiPivotTable.prototype["GetPivotFields"]                     = ApiPivotTable.prototype.GetPivotFields;
+	ApiPivotTable.prototype["PivotValueCell"]                     = ApiPivotTable.prototype.PivotValueCell;
+	ApiPivotTable.prototype["ShowDetails"]                        = ApiPivotTable.prototype.ShowDetails;
+	ApiPivotTable.prototype["RefreshTable"]                       = ApiPivotTable.prototype.RefreshTable;
+	ApiPivotTable.prototype["Update"]                             = ApiPivotTable.prototype.Update;
+	ApiPivotTable.prototype["SetRepeatAllLabels"]                 = ApiPivotTable.prototype.SetRepeatAllLabels;
+	ApiPivotTable.prototype["SetRowAxisLayout"]                   = ApiPivotTable.prototype.SetRowAxisLayout;
+	ApiPivotTable.prototype["SetSubtotalLocation"]                = ApiPivotTable.prototype.SetSubtotalLocation;
+	ApiPivotTable.prototype["RemoveField"]                        = ApiPivotTable.prototype.RemoveField;
+	ApiPivotTable.prototype["MoveField"]                          = ApiPivotTable.prototype.MoveField;
+	ApiPivotTable.prototype["Select"]                             = ApiPivotTable.prototype.Select;
+	ApiPivotTable.prototype["GetColumnFields"]                    = ApiPivotTable.prototype.GetColumnFields;
+	ApiPivotTable.prototype["GetDataFields"]                      = ApiPivotTable.prototype.GetDataFields;
+	ApiPivotTable.prototype["GetHiddenFields"]                    = ApiPivotTable.prototype.GetHiddenFields;
+	ApiPivotTable.prototype["GetVisibleFields"]                   = ApiPivotTable.prototype.GetVisibleFields;
+	ApiPivotTable.prototype["GetPageFields"]                      = ApiPivotTable.prototype.GetPageFields;
+	ApiPivotTable.prototype["GetRowFields"]                       = ApiPivotTable.prototype.GetRowFields;
+	ApiPivotTable.prototype["GetName"]                            = ApiPivotTable.prototype.GetName;
+	ApiPivotTable.prototype["SetName"]                            = ApiPivotTable.prototype.SetName;
+	ApiPivotTable.prototype["GetColumnGrand"]                     = ApiPivotTable.prototype.GetColumnGrand;
+	ApiPivotTable.prototype["SetColumnGrand"]                     = ApiPivotTable.prototype.SetColumnGrand;
+	ApiPivotTable.prototype["GetRowGrand"]                        = ApiPivotTable.prototype.GetRowGrand;
+	ApiPivotTable.prototype["SetRowGrand"]                        = ApiPivotTable.prototype.SetRowGrand;
+	ApiPivotTable.prototype["GetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.GetDisplayFieldsInReportFilterArea;
+	ApiPivotTable.prototype["SetDisplayFieldsInReportFilterArea"] = ApiPivotTable.prototype.SetDisplayFieldsInReportFilterArea;
+	ApiPivotTable.prototype["GetDisplayFieldCaptions"]            = ApiPivotTable.prototype.GetDisplayFieldCaptions;
+	ApiPivotTable.prototype["SetDisplayFieldCaptions"]            = ApiPivotTable.prototype.SetDisplayFieldCaptions;
+	ApiPivotTable.prototype["GetTitle"]                           = ApiPivotTable.prototype.GetTitle;
+	ApiPivotTable.prototype["SetTitle"]                           = ApiPivotTable.prototype.SetTitle;
+	ApiPivotTable.prototype["GetDescription"]                    = ApiPivotTable.prototype.GetDescription;
+	ApiPivotTable.prototype["SetDescription"]                     = ApiPivotTable.prototype.SetDescription;
+	ApiPivotTable.prototype["GetStyleName"]                       = ApiPivotTable.prototype.GetStyleName;
+	ApiPivotTable.prototype["SetStyleName"]                       = ApiPivotTable.prototype.SetStyleName;
+	ApiPivotTable.prototype["GetTableStyleRowHeaders"]            = ApiPivotTable.prototype.GetTableStyleRowHeaders;
+	ApiPivotTable.prototype["SetTableStyleRowHeaders"]            = ApiPivotTable.prototype.SetTableStyleRowHeaders;
+	ApiPivotTable.prototype["GetTableStyleColumnHeaders"]         = ApiPivotTable.prototype.GetTableStyleColumnHeaders;
+	ApiPivotTable.prototype["SetTableStyleColumnHeaders"]         = ApiPivotTable.prototype.SetTableStyleColumnHeaders;
+	ApiPivotTable.prototype["GetTableStyleRowStripes"]            = ApiPivotTable.prototype.GetTableStyleRowStripes;
+	ApiPivotTable.prototype["SetTableStyleRowStripes"]            = ApiPivotTable.prototype.SetTableStyleRowStripes;
+	ApiPivotTable.prototype["GetTableStyleColumnStripes"]         = ApiPivotTable.prototype.GetTableStyleColumnStripes;
+	ApiPivotTable.prototype["SetTableStyleColumnStripes"]         = ApiPivotTable.prototype.SetTableStyleColumnStripes;
+	ApiPivotTable.prototype["GetSource"]                          = ApiPivotTable.prototype.GetSource;
+	ApiPivotTable.prototype["SetSource"]                          = ApiPivotTable.prototype.SetSource;
+	ApiPivotTable.prototype["GetColumnRange"]                     = ApiPivotTable.prototype.GetColumnRange;
+	ApiPivotTable.prototype["GetRowRange"]                        = ApiPivotTable.prototype.GetRowRange;
+	ApiPivotTable.prototype["GetDataBodyRange"]                   = ApiPivotTable.prototype.GetDataBodyRange;
+	ApiPivotTable.prototype["GetTableRange1"]                     = ApiPivotTable.prototype.GetTableRange1;
+	ApiPivotTable.prototype["GetTableRange2"]                     = ApiPivotTable.prototype.GetTableRange2;
+	ApiPivotTable.prototype["GetGrandTotalName"]                  = ApiPivotTable.prototype.GetGrandTotalName;
+	ApiPivotTable.prototype["SetGrandTotalName"]                  = ApiPivotTable.prototype.SetGrandTotalName;
+	ApiPivotTable.prototype["SetLayoutBlankLine"]                 = ApiPivotTable.prototype.SetLayoutBlankLine;
+	ApiPivotTable.prototype["SetLayoutSubtotals"]                 = ApiPivotTable.prototype.SetLayoutSubtotals;
+	ApiPivotTable.prototype["GetParent"]                          = ApiPivotTable.prototype.GetParent;
+
+	ApiPivotDataField.prototype["Remove"]               = ApiPivotDataField.prototype.Remove;
+	ApiPivotDataField.prototype["Move"]                 = ApiPivotDataField.prototype.Move;
+	ApiPivotDataField.prototype["SetFunction"]          = ApiPivotDataField.prototype.SetFunction;
+	ApiPivotDataField.prototype["GetFunction"]          = ApiPivotDataField.prototype.GetFunction;
+	ApiPivotDataField.prototype["GetPosition"]          = ApiPivotDataField.prototype.GetPosition;
+	ApiPivotDataField.prototype["SetPosition"]          = ApiPivotDataField.prototype.SetPosition;
+	ApiPivotDataField.prototype["GetOrientation"]       = ApiPivotDataField.prototype.GetOrientation;
+	ApiPivotDataField.prototype["GetValue"]             = ApiPivotDataField.prototype.GetValue;
+	ApiPivotDataField.prototype["SetValue"]             = ApiPivotDataField.prototype.SetValue;
+	ApiPivotDataField.prototype["GetCaption"]           = ApiPivotDataField.prototype.GetCaption;
+	ApiPivotDataField.prototype["SetCaption"]           = ApiPivotDataField.prototype.SetCaption;
+	ApiPivotDataField.prototype["GetName"]              = ApiPivotDataField.prototype.GetName;
+	ApiPivotDataField.prototype["SetName"]              = ApiPivotDataField.prototype.SetName;
+	ApiPivotDataField.prototype["GetNumberFormat"]      = ApiPivotDataField.prototype.GetNumberFormat;
+	ApiPivotDataField.prototype["SetNumberFormat"]      = ApiPivotDataField.prototype.SetNumberFormat;
+	ApiPivotDataField.prototype["GetIndex"]             = ApiPivotDataField.prototype.GetIndex;
+	ApiPivotDataField.prototype["GetPivotField"]        = ApiPivotDataField.prototype.GetPivotField;
+
+	ApiPivotField.prototype["ClearAllFilters"]           = ApiPivotField.prototype.ClearAllFilters;
+	ApiPivotField.prototype["ClearLabelFilters"]         = ApiPivotField.prototype.ClearLabelFilters;
+	ApiPivotField.prototype["ClearManualFilters"]        = ApiPivotField.prototype.ClearManualFilters;
+	ApiPivotField.prototype["ClearValueFilters"]         = ApiPivotField.prototype.ClearValueFilters;
+	ApiPivotField.prototype["GetPivotItems"]             = ApiPivotField.prototype.GetPivotItems;
+	ApiPivotField.prototype["Move"]                      = ApiPivotField.prototype.Move;
+	ApiPivotField.prototype["Remove"]                    = ApiPivotField.prototype.Remove;
+	ApiPivotField.prototype["GetPosition"]               = ApiPivotField.prototype.GetPosition;
+	ApiPivotField.prototype["SetPosition"]               = ApiPivotField.prototype.SetPosition;
+	ApiPivotField.prototype["GetOrientation"]            = ApiPivotField.prototype.GetOrientation;
+	ApiPivotField.prototype["SetOrientation"]            = ApiPivotField.prototype.SetOrientation;
+	ApiPivotField.prototype["GetValue"]                  = ApiPivotField.prototype.GetValue;
+	ApiPivotField.prototype["SetValue"]                  = ApiPivotField.prototype.SetValue;
+	ApiPivotField.prototype["GetCaption"]                = ApiPivotField.prototype.GetCaption;
+	ApiPivotField.prototype["SetCaption"]                = ApiPivotField.prototype.SetCaption;
+	ApiPivotField.prototype["GetName"]                   = ApiPivotField.prototype.GetName;
+	ApiPivotField.prototype["SetName"]                   = ApiPivotField.prototype.SetName;
+	ApiPivotField.prototype["GetSourceName"]             = ApiPivotField.prototype.GetSourceName;
+	ApiPivotField.prototype["GetIndex"]                  = ApiPivotField.prototype.GetIndex;
+	ApiPivotField.prototype["GetTable"]                  = ApiPivotField.prototype.GetTable;
+	ApiPivotField.prototype["GetParent"]                 = ApiPivotField.prototype.GetParent;
+	ApiPivotField.prototype["GetLayoutCompactRow"]       = ApiPivotField.prototype.GetLayoutCompactRow;
+	ApiPivotField.prototype["SetLayoutCompactRow"]       = ApiPivotField.prototype.SetLayoutCompactRow;
+	ApiPivotField.prototype["GetLayoutForm"]             = ApiPivotField.prototype.GetLayoutForm;
+	ApiPivotField.prototype["SetLayoutForm"]             = ApiPivotField.prototype.SetLayoutForm;
+	ApiPivotField.prototype["GetLayoutPageBreak"]        = ApiPivotField.prototype.GetLayoutPageBreak;
+	ApiPivotField.prototype["SetLayoutPageBreak"]        = ApiPivotField.prototype.SetLayoutPageBreak;
+	ApiPivotField.prototype["GetShowingInAxis"]          = ApiPivotField.prototype.GetShowingInAxis;
+	ApiPivotField.prototype["GetRepeatLabels"]           = ApiPivotField.prototype.GetRepeatLabels;
+	ApiPivotField.prototype["SetRepeatLabels"]           = ApiPivotField.prototype.SetRepeatLabels;
+	ApiPivotField.prototype["GetLayoutBlankLine"]        = ApiPivotField.prototype.GetLayoutBlankLine;
+	ApiPivotField.prototype["SetLayoutBlankLine"]        = ApiPivotField.prototype.SetLayoutBlankLine;
+	ApiPivotField.prototype["GetShowAllItems"]           = ApiPivotField.prototype.GetShowAllItems;
+	ApiPivotField.prototype["SetShowAllItems"]           = ApiPivotField.prototype.SetShowAllItems;
+	ApiPivotField.prototype["GetLayoutSubtotals"]        = ApiPivotField.prototype.GetLayoutSubtotals;
+	ApiPivotField.prototype["SetLayoutSubtotals"]        = ApiPivotField.prototype.SetLayoutSubtotals;
+	ApiPivotField.prototype["GetLayoutSubtotalLocation"] = ApiPivotField.prototype.GetLayoutSubtotalLocation;
+	ApiPivotField.prototype["SetLayoutSubtotalLocation"] = ApiPivotField.prototype.SetLayoutSubtotalLocation;
+	ApiPivotField.prototype["GetSubtotalName"]           = ApiPivotField.prototype.GetSubtotalName;
+	ApiPivotField.prototype["SetSubtotalName"]           = ApiPivotField.prototype.SetSubtotalName;
+	ApiPivotField.prototype["GetSubtotals"]              = ApiPivotField.prototype.GetSubtotals;
+	ApiPivotField.prototype["SetSubtotals"]              = ApiPivotField.prototype.SetSubtotals;
+	ApiPivotField.prototype["GetDragToColumn"]           = ApiPivotField.prototype.GetDragToColumn;
+	ApiPivotField.prototype["SetDragToColumn"]           = ApiPivotField.prototype.SetDragToColumn;
+	ApiPivotField.prototype["GetDragToRow"]              = ApiPivotField.prototype.GetDragToRow;
+	ApiPivotField.prototype["SetDragToRow"]              = ApiPivotField.prototype.SetDragToRow;
+	ApiPivotField.prototype["GetDragToData"]             = ApiPivotField.prototype.GetDragToData;
+	ApiPivotField.prototype["SetDragToData"]             = ApiPivotField.prototype.SetDragToData;
+	ApiPivotField.prototype["GetDragToPage"]             = ApiPivotField.prototype.GetDragToPage;
+	ApiPivotField.prototype["SetDragToPage"]             = ApiPivotField.prototype.SetDragToPage;
+	ApiPivotField.prototype["GetCurrentPage"]            = ApiPivotField.prototype.GetCurrentPage;
+	ApiPivotField.prototype["GetNumberFormat"]           = ApiPivotField.prototype.GetNumberFormat;
+	ApiPivotField.prototype["SetNumberFormat"]           = ApiPivotField.prototype.SetNumberFormat;
+	ApiPivotField.prototype["SetFunction"]               = ApiPivotField.prototype.SetFunction;
+	ApiPivotField.prototype["GetFunction"]               = ApiPivotField.prototype.GetFunction;
+
+	ApiPivotItem.prototype["GetName"]    = ApiPivotItem.prototype.GetName;
+	ApiPivotItem.prototype["GetCaption"] = ApiPivotItem.prototype.GetCaption;
+	ApiPivotItem.prototype["GetValue"]   = ApiPivotItem.prototype.GetValue;
+	ApiPivotItem.prototype["GetParent"]  = ApiPivotItem.prototype.GetParent;
+
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
 		oDrawing.y = 0;
@@ -14340,4 +17716,9 @@
 		oldSelection && oldSelection.Select(true);
 	}
 
+	function private_MakeError(message) {
+		console.error(new Error(message) );
+	};
+
 }(window, null));
+

@@ -1063,6 +1063,7 @@
 	    {
 		    oOriginalDocument.UpdateBookmarks();
 	    }
+	      this.comparison.updateCommentsQuoteText();
         oOriginalDocument.Recalculate();
         oOriginalDocument.UpdateInterface();
         oOriginalDocument.FinalizeAction();

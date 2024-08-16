@@ -362,6 +362,7 @@
 	prot['PivotOverlap']                     = prot.PivotOverlap;
 	prot['PivotGroup']                       = prot.PivotGroup;
 	prot['PivotWithoutUnderlyingData']       = prot.PivotWithoutUnderlyingData;
+	prot['CircularReference']                = prot.CircularReference;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
 	prot['Submit']                           = prot.Submit;

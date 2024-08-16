@@ -460,26 +460,10 @@ function (window, undefined) {
 	};
 
 
-	// ChartEx
-	drawingsChangesMap[AscDFH.historyitem_Chart_SetTitle] = function (oClass, value) {
-		oClass.title = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_Chart_SetPlotArea] = function (oClass, value) {
-		oClass.plotArea = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_Chart_SetLegend] = function (oClass, value) {
-		oClass.legend = value;
-	};
-	AscDFH.changesFactory[AscDFH.historyitem_Chart_SetTitle] = window['AscDFH'].CChangesDrawingsObjectNoId;
-	AscDFH.changesFactory[AscDFH.historyitem_Chart_SetPlotArea] = window['AscDFH'].CChangesDrawingsObjectNoId;
-	AscDFH.changesFactory[AscDFH.historyitem_Chart_SetLegend] = window['AscDFH'].CChangesDrawingsObjectNoId;
 
 	// ChartData
 	drawingsChangesMap[AscDFH.historyitem_ChartData_SetExternalData] = function (oClass, value) {
 		oClass.externalData = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_ChartData_SetData] = function (oClass, value) {
-		oClass.data = value;
 	};
 
 	drawingContentChanges[AscDFH.historyitem_ChartData_AddData] =
@@ -487,7 +471,6 @@ function (window, undefined) {
 			return oClass.data;
 		};
 	AscDFH.changesFactory[AscDFH.historyitem_ChartData_SetExternalData] = window['AscDFH'].CChangesDrawingsObjectNoId;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartData_SetData] = window['AscDFH'].CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartData_AddData] = window['AscDFH'].CChangesDrawingsContent;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartData_RemoveData] = window['AscDFH'].CChangesDrawingsContent;
 

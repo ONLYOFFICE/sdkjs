@@ -2078,6 +2078,13 @@ CPresentation.prototype.GetSlideIndex = function (oSlide) {
 	}
 	return -1;
 };
+CPresentation.prototype.GetThumbnailsCount = function() {
+	
+	if (this.Api.WordControl.Thumbnails) {
+		return this.Api.WordControl.Thumbnails.m_arrPages.length;
+	}
+	return this.GetSlidesCount();
+};
 CPresentation.prototype.GetSlideNumber = function (nIdx) {
 	if(!this.IsMasterMode()) {
 		return nIdx + this.getFirstSlideNumber();
@@ -2968,7 +2975,8 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 				this.DrawingDocument.Notes_OnRecalculate(this.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
 			}
 		}
-		if (bEndRecalc || this.GetSlidesCount() === 0) {
+		let nSlidesCount = this.GetSlidesCount();
+		if (bEndRecalc || nSlidesCount === 0 || nSlidesCount !== this.GetThumbnailsCount()) {
 			this.DrawingDocument.OnEndRecalculate();
 		}
 	}

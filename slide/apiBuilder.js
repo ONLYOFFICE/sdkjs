@@ -228,7 +228,7 @@
     /**
      * 60000th of a degree (5400000 = 90 degrees).
      * @typedef {number} PositiveFixedAngle
-     * * @see office-js-api/Examples/Enumerations/PositiveFixedAngle.js
+     * @see office-js-api/Examples/Enumerations/PositiveFixedAngle.js
 	 */
 
     /**
@@ -278,19 +278,19 @@
     /**
      * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
      * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
-     * * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
+     * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
 	 */
 
     /**
      * The available color scheme identifiers.
      * @typedef {("accent1" | "accent2" | "accent3" | "accent4" | "accent5" | "accent6" | "bg1" | "bg2" | "dk1" | "dk2" | "lt1" | "lt2" | "tx1" | "tx2")} SchemeColorId
-     * * @see office-js-api/Examples/Enumerations/SchemeColorId.js
+     * @see office-js-api/Examples/Enumerations/SchemeColorId.js
 	 */
 
     /**
      * The available preset color names.
      * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" | "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate" | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" | "darkGray" | "darkGreen" | "darkGrey" | "darkKhaki" | "darkMagenta" | "darkOliveGreen" | "darkOrange" | "darkOrchid" | "darkRed" | "darkSalmon" | "darkSeaGreen" | "darkSlateBlue" | "darkSlateGray" | "darkSlateGrey" | "darkTurquoise" | "darkViolet" | "deepPink" | "deepSkyBlue" | "dimGray" | "dimGrey" | "dkBlue" | "dkCyan" | "dkGoldenrod" | "dkGray" | "dkGreen" | "dkGrey" | "dkKhaki" | "dkMagenta" | "dkOliveGreen" | "dkOrange" | "dkOrchid" | "dkRed" | "dkSalmon" | "dkSeaGreen" | "dkSlateBlue" | "dkSlateGray" | "dkSlateGrey" | "dkTurquoise" | "dkViolet" | "dodgerBlue" | "firebrick" | "floralWhite" | "forestGreen" | "fuchsia" | "gainsboro" | "ghostWhite" | "gold" | "goldenrod" | "gray" | "green" | "greenYellow" | "grey" | "honeydew" | "hotPink" | "indianRed" | "indigo" | "ivory" | "khaki" | "lavender" | "lavenderBlush" | "lawnGreen" | "lemonChiffon" | "lightBlue" | "lightCoral" | "lightCyan" | "lightGoldenrodYellow" | "lightGray" | "lightGreen" | "lightGrey" | "lightPink" | "lightSalmon" | "lightSeaGreen" | "lightSkyBlue" | "lightSlateGray" | "lightSlateGrey" | "lightSteelBlue" | "lightYellow" | "lime" | "limeGreen" | "linen" | "ltBlue" | "ltCoral" | "ltCyan" | "ltGoldenrodYellow" | "ltGray" | "ltGreen" | "ltGrey" | "ltPink" | "ltSalmon" | "ltSeaGreen" | "ltSkyBlue" | "ltSlateGray" | "ltSlateGrey" | "ltSteelBlue" | "ltYellow" | "magenta" | "maroon" | "medAquamarine" | "medBlue" | "mediumAquamarine" | "mediumBlue" | "mediumOrchid" | "mediumPurple" | "mediumSeaGreen" | "mediumSlateBlue" | "mediumSpringGreen" | "mediumTurquoise" | "mediumVioletRed" | "medOrchid" | "medPurple" | "medSeaGreen" | "medSlateBlue" | "medSpringGreen" | "medTurquoise" | "medVioletRed" | "midnightBlue" | "mintCream" | "mistyRose" | "moccasin" | "navajoWhite" | "navy" | "oldLace" | "olive" | "oliveDrab" | "orange" | "orangeRed" | "orchid" | "paleGoldenrod" | "paleGreen" | "paleTurquoise" | "paleVioletRed" | "papayaWhip" | "peachPuff" | "peru" | "pink" | "plum" | "powderBlue" | "purple" | "red" | "rosyBrown" | "royalBlue" | "saddleBrown" | "salmon" | "sandyBrown" | "seaGreen" | "seaShell" | "sienna" | "silver" | "skyBlue" | "slateBlue" | "slateGray" | "slateGrey" | "snow" | "springGreen" | "steelBlue" | "tan" | "teal" | "thistle" | "tomato" | "turquoise" | "violet" | "wheat" | "white" | "whiteSmoke" | "yellow" | "yellowGreen")} PresetColor
-     * * @see office-js-api/Examples/Enumerations/PresetColor.js
+     * @see office-js-api/Examples/Enumerations/PresetColor.js
 	 */
 
 
@@ -301,7 +301,7 @@
      * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
      * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
-     * ** @see office-js-api/Examples/Enumerations/TickLabelPosition.js
+     * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
@@ -309,13 +309,13 @@
      * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
      * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
-     * * @see office-js-api/Examples/Enumerations/BlipFillType.js
+     * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
 
     /**
      * The available preset patterns which can be used for the fill.
      * @typedef {"cross" | "dashDnDiag" | "dashHorz" | "dashUpDiag" | "dashVert" | "diagBrick" | "diagCross" | "divot" | "dkDnDiag" | "dkHorz" | "dkUpDiag" | "dkVert" | "dnDiag" | "dotDmnd" | "dotGrid" | "horz" | "horzBrick" | "lgCheck" | "lgConfetti" | "lgGrid" | "ltDnDiag" | "ltHorz" | "ltUpDiag" | "ltVert" | "narHorz" | "narVert" | "openDmnd" | "pct10" | "pct20" | "pct25" | "pct30" | "pct40" | "pct5" | "pct50" | "pct60" | "pct70" | "pct75" | "pct80" | "pct90" | "plaid" | "shingle" | "smCheck" | "smConfetti" | "smGrid" | "solidDmnd" | "sphere" | "trellis" | "upDiag" | "vert" | "wave" | "wdDnDiag" | "wdUpDiag" | "weave" | "zigZag"} PatternType
-     * * @see office-js-api/Examples/Enumerations/PatternType.js
+     * @see office-js-api/Examples/Enumerations/PatternType.js
 	 */
 
 
@@ -323,7 +323,7 @@
     /**
      * The available types of tick mark appearance.
      * @typedef {("cross" | "in" | "none" | "out")} TickMark
-     * * @see office-js-api/Examples/Enumerations/TickMark.js
+     * @see office-js-api/Examples/Enumerations/TickMark.js
 	 */
 
     /**
@@ -334,7 +334,7 @@
 	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
 	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
 	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransform
-	 * * @see office-js-api/Examples/Enumerations/TextTransform.js
+	 * @see office-js-api/Examples/Enumerations/TextTransform.js
 	 */
 
     /**
@@ -361,7 +361,7 @@
     /**
      * The 1000th of a percent (100000 = 100%).
      * @typedef {number} PositivePercentage
-     * * @see office-js-api/Examples/Enumerations/PositivePercentage.js
+     * @see office-js-api/Examples/Enumerations/PositivePercentage.js
 	 */
 
     /**
@@ -369,7 +369,7 @@
      * @typeofeditors ["CPE"]
      * @memberof Api
      * @returns {ApiPresentation}
-     * @see office-js-api/Examples/Slide/Api/Methods/GetPresentation.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/GetPresentation.js
 	 */
     Api.prototype.GetPresentation = function(){
         if(this.WordControl && this.WordControl.m_oLogicDocument){
@@ -384,7 +384,7 @@
      * @memberof Api
      * @param {ApiTheme} [oTheme = ApiPresentation.GetMaster(0).GetTheme()] - The presentation theme object.
      * @returns {?ApiMaster} - returns null if presentation theme doesn't exist.
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateMaster.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateMaster.js
 	 */
     Api.prototype.CreateMaster = function(oTheme){
         if (!oTheme || !oTheme.GetClassType || oTheme.GetClassType() !== "theme")
@@ -409,7 +409,7 @@
      * @memberof Api
      * @param {ApiMaster} [oMaster = null] - Parent slide master.
      * @returns {ApiLayout}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateLayout.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateLayout.js
 	 */
     Api.prototype.CreateLayout = function(oMaster){
         var oLayout = new ApiLayout(new AscCommonSlide.SlideLayout());
@@ -426,7 +426,7 @@
      * @memberof Api
      * @param {string} sType - The placeholder type ("body", "chart", "clipArt", "ctrTitle", "diagram", "date", "footer", "header", "media", "object", "picture", "sldImage", "sldNumber", "subTitle", "table", "title").
      * @returns {ApiPlaceholder}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreatePlaceholder.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreatePlaceholder.js
 	 */
     Api.prototype.CreatePlaceholder = function(sType){
         
@@ -449,7 +449,7 @@
      * @param {ApiThemeFormatScheme} oFormatScheme - Theme format scheme. Required parameter.
      * @param {ApiThemeFontScheme} oFontScheme - Theme font scheme. Required parameter.
      * @returns {ApiTheme | null} 
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateTheme.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTheme.js
 	 */
     Api.prototype.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
         if (typeof(sName) !== "string")
@@ -496,7 +496,7 @@
      * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
      * @param {string} sName - Theme color scheme name.
      * @returns {?ApiThemeColorScheme}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateThemeColorScheme.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeColorScheme.js
 	 */
     Api.prototype.CreateThemeColorScheme = function(arrColors, sName){
         if (typeof(sName) !== "string")
@@ -531,7 +531,7 @@
      * @param {ApiStroke[]} arrLine - This array contains the line styles. It should be consist of subtle, moderate and intense lines.
      * @param {string} sName - Theme format scheme name.
      * @returns {?ApiThemeFormatScheme} 
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateThemeFormatScheme.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeFormatScheme.js
 	 */
     Api.prototype.CreateThemeFormatScheme = function(arrFill, arrBgFill, arrLine, sName){
         
@@ -568,7 +568,7 @@
      * @param {string} mnCs - The minor theme font applied to the complex script text.
      * @param {string} sName - Theme font scheme name.
      * @returns {ApiThemeFontScheme}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateThemeFontScheme.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateThemeFontScheme.js
 	 */
     Api.prototype.CreateThemeFontScheme = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs, sName){
         
@@ -600,7 +600,7 @@
      * @typeofeditors ["CPE"]
      * @memberof Api
      * @returns {ApiSlide}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateSlide.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateSlide.js
 	 */
     Api.prototype.CreateSlide = function(){
         var oPresentation = private_GetPresentation();
@@ -620,7 +620,7 @@
      * @param {EMU} nWidth - The image width in English measure units.
      * @param {EMU} nHeight - The image height in English measure units.
      * @returns {ApiImage}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateImage.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateImage.js
 	 */
     Api.prototype.CreateImage = function(sImageSrc, nWidth, nHeight){
         var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth/36000, nHeight/36000);
@@ -638,7 +638,7 @@
 	 * @param {string} sData - The OLE object string data.
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {ApiOleObject}
-	 * @see office-js-api/Examples/Slide/Api/Methods/CreateOleObject.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateOleObject.js
 	 */
 	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
 	{
@@ -665,7 +665,7 @@
 	 * @param {ApiFill} [oFill    = Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke    = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
      * @returns {ApiShape}
-     * * @see office-js-api/Examples/Slide/Api/Methods/CreateShape.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateShape.js
 	 */
     Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
         var oCurrentSlide = private_GetCurrentSlide();
@@ -693,7 +693,7 @@
      * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
      * The default numeric format is "General".
      * @returns {ApiChart}
-     * * @see office-js-api/Examples/Slide/Api/Methods/CreateChart.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateChart.js
 	 */
     Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
     {
@@ -709,7 +709,7 @@
      * @typeofeditors ["CPE"]
      * @param {Array} aDrawings - The array of drawings.
      * @returns {ApiGroup}
-     * * @see office-js-api/Examples/Slide/Api/Methods/CreateGroup.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateGroup.js
 	 */
     Api.prototype.CreateGroup = function(aDrawings){
         var oSlide = private_GetCurrentSlide();
@@ -730,7 +730,7 @@
      * @param nCols - Number of columns.
      * @param nRows - Number of rows.
      * @returns {?ApiTable}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateTable.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateTable.js
 	 */
     Api.prototype.CreateTable = function(nCols, nRows){
         var oPresentation = private_GetPresentation();
@@ -752,7 +752,7 @@
      * @memberof Api
      * @typeofeditors ["CPE"]
      * @returns {ApiParagraph}
-     * @see office-js-api/Examples/Slide/Api/Methods/CreateParagraph.js
+     * @see office-js-api/Examples/{Editor}/Api/Methods/CreateParagraph.js
 	 */
     Api.prototype.CreateParagraph = function()
     {
@@ -763,7 +763,7 @@
 	 * Saves changes to the specified document.
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
-	 * @see office-js-api/Examples/Slide/Api/Methods/Save.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
 	Api.prototype.Save = function () {
 		this.SaveAfterMacros = true;
@@ -827,7 +827,7 @@
      * @param {EMU} [nIndLeft=ApiPresentation.GetWidth() / 2] - The Text Art left side indentation value measured in English measure units.
 	 * @param {EMU} [nIndTop=ApiPresentation.GetHeight() / 2] - The Text Art top side indentation value measured in English measure units.
 	 * @returns {ApiDrawing}
-	 * @see office-js-api/Examples/Slide/Api/Methods/CreateWordArt.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateWordArt.js
 	 */
     Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
         var oPres = private_GetPresentation();
@@ -855,7 +855,7 @@
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
 	 * @typeofeditors ["CPE"]
-	 * @see office-js-api/Examples/Slide/Api/Methods/FromJSON.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/FromJSON.js
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
@@ -1009,7 +1009,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
 	 * @param {function} callback - Function to be called when the event fires.
-	 * @see office-js-api/Examples/Slide/Api/Methods/attachEvent.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/attachEvent.js
 	 */
 	Api.prototype["attachEvent"] = Api.prototype.attachEvent;
 
@@ -1019,7 +1019,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
-	 * @see office-js-api/Examples/Slide/Api/Methods/detachEvent.js
+	 * @see office-js-api/Examples/{Editor}/Api/Methods/detachEvent.js
 	 */
 	Api.prototype["detachEvent"] = Api.prototype.detachEvent;
 
@@ -1033,7 +1033,7 @@
      * Returns a type of the ApiPresentation class.
      * @typeofeditors ["CPE"]
      * @returns {"presentation"}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetClassType.js
 	 */
     ApiPresentation.prototype.GetClassType = function()
     {
@@ -1045,7 +1045,7 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
      * @returns {number}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetCurSlideIndex.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurSlideIndex.js
 	 */
     ApiPresentation.prototype.GetCurSlideIndex = function(){
         if(this.Presentation){
@@ -1061,7 +1061,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nIndex - The slide number (position) in the presentation.
      * @returns {?ApiSlide}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetSlideByIndex.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetSlideByIndex.js
 	 */
     ApiPresentation.prototype.GetSlideByIndex = function(nIndex){
         if(this.Presentation && this.Presentation.Slides[nIndex]){
@@ -1075,7 +1075,7 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
      * @returns {?ApiSlide}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetCurrentSlide.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetCurrentSlide.js
 	 */
     ApiPresentation.prototype.GetCurrentSlide = function () {
         return this.GetSlideByIndex(this.GetCurSlideIndex());
@@ -1087,7 +1087,7 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
      * @param {ApiSlide} oSlide - The slide created using the {@link Api#CreateSlide} method.
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/AddSlide.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddSlide.js
 	 */
     ApiPresentation.prototype.AddSlide = function(oSlide) {
         if(this.Presentation){
@@ -1104,7 +1104,7 @@
      * @memberof ApiPresentation
      * @param {EMU} nWidth - The presentation width in English measure units.
      * @param {EMU} nHeight - The presentation height in English measure units.
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/SetSizes.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SetSizes.js
 	 */
     ApiPresentation.prototype.SetSizes = function(nWidth, nHeight) {
         if(this.Presentation){
@@ -1116,7 +1116,7 @@
      * Creates a new history point.
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/CreateNewHistoryPoint.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/CreateNewHistoryPoint.js
 	 */
     ApiPresentation.prototype.CreateNewHistoryPoint = function()
     {
@@ -1131,7 +1131,7 @@
      * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently, only internet URL or Base64 encoded images are supported).
      * @param {EMU} Width - The image width in English measure units.
      * @param {EMU} Height - The image height in English measure units.
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/ReplaceCurrentImage.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ReplaceCurrentImage.js
 	 */
     ApiPresentation.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height)
     {
@@ -1151,7 +1151,7 @@
 	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
 	 * RFC 4646/BCP 47. Example: "en-CA".
      * @returns {boolean}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/SetLanguage.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SetLanguage.js
 	 */
     ApiPresentation.prototype.SetLanguage = function(sLangId)
     {
@@ -1166,7 +1166,7 @@
      * Returns a number of slides.
      * @typeofeditors ["CPE"]
      * @returns {number}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetSlidesCount.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetSlidesCount.js
 	 */
     ApiPresentation.prototype.GetSlidesCount = function()
     {
@@ -1177,7 +1177,7 @@
      * Returns a number of slide masters.
      * @typeofeditors ["CPE"]
      * @returns {number}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetMastersCount.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetMastersCount.js
 	 */
     ApiPresentation.prototype.GetMastersCount = function()
     {
@@ -1189,7 +1189,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - Slide master position in the presentation
      * @returns {ApiMaster | null} - returns null if position is invalid.
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetMaster.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetMaster.js
 	 */
     ApiPresentation.prototype.GetMaster = function(nPos)
     {
@@ -1205,7 +1205,7 @@
      * @param {number} [nPos    = ApiPresentation.GetMastersCount()]
      * @param {ApiMaster} oApiMaster - The slide master to be added.
      * @returns {boolean} - return false if position is invalid or oApiMaster doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/AddMaster.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/AddMaster.js
 	 */
     ApiPresentation.prototype.AddMaster = function(nPos, oApiMaster)
     {
@@ -1227,7 +1227,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTheme} oApiTheme - The presentation theme.
      * @returns {boolean} - returns false if param isn't theme or presentation doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiPresentation/Methods/ApplyTheme.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ApplyTheme.js
 	 */
     ApiPresentation.prototype.ApplyTheme = function(oApiTheme){
        if (this.Presentation && oApiTheme.GetClassType && oApiTheme.GetClassType() === "theme")
@@ -1246,7 +1246,7 @@
      * @param {Number} [nCount=ApiPresentation.GetSlidesCount()] - The number of slides to delete.
 	 * @typeofeditors ["CPE"]
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/RemoveSlides.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/RemoveSlides.js
 	 */
     ApiPresentation.prototype.RemoveSlides = function(nStart, nCount)
 	{
@@ -1272,7 +1272,7 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
      * @returns {EMU}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetWidth.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetWidth.js
 	 */
      ApiPresentation.prototype.GetWidth = function() {
         if(this.Presentation){
@@ -1285,7 +1285,7 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiPresentation
      * @returns {EMU}
-     * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetHeight.js
+     * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetHeight.js
 	 */
     ApiPresentation.prototype.GetHeight = function() {
         if(this.Presentation){
@@ -1299,7 +1299,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/ToJSON.js
 	 */
     ApiPresentation.prototype.ToJSON = function(bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -1319,7 +1319,7 @@
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON[]}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/SlidesToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/SlidesToJSON.js
 	 */
     ApiPresentation.prototype.SlidesToJSON = function(nStart, nEnd, bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -1343,7 +1343,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiComment[]}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetAllComments.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetAllComments.js
 	 */
 	ApiPresentation.prototype.GetAllComments = function()
 	{
@@ -1371,7 +1371,7 @@
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
-	 * @see office-js-api/Examples/Slide/ApiPresentation/Methods/GetDocumentInfo.js
+	 * @see office-js-api/Examples/{Editor}/ApiPresentation/Methods/GetDocumentInfo.js
 	 */
 	ApiPresentation.prototype.GetDocumentInfo = function()
 	{
@@ -1396,7 +1396,9 @@
 		let langCode = 1033; // en-US
 		let langName = 'en-us';
 		if (api.asc_getLocale) {
-			langName = api.asc_getLocale().replace('_', '-').toLowerCase();
+			let locale = api.asc_getLocale();
+			if (locale)
+				langName = locale.replace('_', '-').toLowerCase();
 		} else if (this.Presentation.GetDefaultLanguage && window['Common']) {
 			langCode = this.Presentation.GetDefaultLanguage();
 			langName = window['Common']['util']['LanguageInfo']['getLocalLanguageName'](langCode)[0].toLowerCase();
@@ -1447,7 +1449,7 @@
      * Returns the type of the ApiMaster class.
      * @typeofeditors ["CPE"]
      * @returns {"master"}
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetClassType.js
 	 */
     ApiMaster.prototype.GetClassType = function()
     {
@@ -1459,7 +1461,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - Layout position.
      * @returns {ApiLayout | null} - returns null if position is invalid.
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetLayout.js
 	 */
     ApiMaster.prototype.GetLayout = function(nPos)
     {
@@ -1475,7 +1477,7 @@
      * @param {number} [nPos = ApiMaster.GetLayoutsCount()] - Position where a layout will be added.
      * @param {ApiLayout} oLayout - A layout to be added.
      * @returns {boolean} - returns false if oLayout isn't a layout.
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/AddLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/AddLayout.js
 	 */
     ApiMaster.prototype.AddLayout = function(nPos, oLayout)
     {
@@ -1496,7 +1498,7 @@
      * @param {number} nPos - Position from which a layout will be deleted.
      * @param {number} [nCount = 1] - Number of layouts to delete.
      * @returns {boolean} - return false if position is invalid.
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/RemoveLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/RemoveLayout.js
 	 */
     ApiMaster.prototype.RemoveLayout = function(nPos, nCount)
     {
@@ -1519,7 +1521,7 @@
      * Returns a number of layout objects.
      * @typeofeditors ["CPE"]
      * @returns {number}
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetLayoutsCount.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetLayoutsCount.js
 	 */
     ApiMaster.prototype.GetLayoutsCount = function()
     {
@@ -1532,7 +1534,7 @@
      * @memberof ApiMaster
      * @param {ApiDrawing} oDrawing - The object which will be added to the current slide master.
      * @returns {boolean} - returns false if slide master doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/AddObject.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/AddObject.js
 	 */
     ApiMaster.prototype.AddObject = function(oDrawing)
     {
@@ -1555,7 +1557,7 @@
      * @param {number} nPos - Position from which the object will be deleted.
      * @param {number} [nCount = 1] - Number of objects to delete.
      * @returns {boolean} - returns false if master doesn't exist or position is invalid or master hasn't objects.
-     * @see office-js-api/Examples/Slide/ApiMaster/Methods/RemoveObject.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/RemoveObject.js
 	 */
     ApiMaster.prototype.RemoveObject = function(nPos, nCount)
     {
@@ -1581,7 +1583,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
      * @returns {boolean}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/SetBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/SetBackground.js
 	 */
     ApiMaster.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Master){
@@ -1598,7 +1600,7 @@
      * Clears the slide master background.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - return false if slide master doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/ClearBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/ClearBackground.js
 	 */
     ApiMaster.prototype.ClearBackground = function(){
         if (!this.Master)
@@ -1618,7 +1620,7 @@
      * @typeofeditors ["CPE"]
      * @returns {ApiMaster | null} - returns new ApiMaster object that represents the copy of slide master. 
      * Returns null if slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Copy.js
 	 */
     ApiMaster.prototype.Copy = function(){
         if (!this.Master)
@@ -1634,7 +1636,7 @@
      * @param {number} [nPos    = ApiPresentation.GetMastersCount()] - Position where the new slide master will be added.
      * @returns {ApiMaster | null} - returns new ApiMaster object that represents the copy of slide master. 
      * Returns null if slide master doesn't exist or is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/Duplicate.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Duplicate.js
 	 */
     ApiMaster.prototype.Duplicate = function(nPos){
         if (!this.Master)
@@ -1655,7 +1657,7 @@
      * Deletes the specified object from the parent if it exists.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - return false if master doesn't exist or is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/Delete.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/Delete.js
 	 */
     ApiMaster.prototype.Delete = function(){
         if (this.Master && this.Master.presentation)
@@ -1677,7 +1679,7 @@
      * Returns a theme of the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiTheme | null} - returns null if theme doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetTheme.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetTheme.js
 	 */
     ApiMaster.prototype.GetTheme = function(){
         if (this.Master && this.Master.Theme)
@@ -1699,7 +1701,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTheme} oTheme - Presentation theme.
      * @returns {boolean} - return false if oTheme isn't a theme or slide master doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/SetTheme.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/SetTheme.js
 	 */
     ApiMaster.prototype.SetTheme = function(oTheme){
         if (this.Master && oTheme && oTheme.GetClassType && oTheme.GetClassType() === "theme")
@@ -1716,7 +1718,7 @@
      * Returns an array with all the drawing objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiDrawing[]}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetAllDrawings.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllDrawings.js
 	 */
     ApiMaster.prototype.GetAllDrawings = function(){
         var apiDrawingObjects = [];
@@ -1734,7 +1736,7 @@
      * Returns an array with all the shape objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiShape[]}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetAllShapes.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllShapes.js
 	 */
     ApiMaster.prototype.GetAllShapes = function(){
         if(!this.Master) {
@@ -1749,7 +1751,7 @@
      * Returns an array with all the image objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiImage[]}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetAllImages.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllImages.js
 	 */
     ApiMaster.prototype.GetAllImages = function(){
 		if(!this.Master) return [];
@@ -1761,7 +1763,7 @@
      * Returns an array with all the chart objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiChart[]}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetAllCharts.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllCharts.js
 	 */
     ApiMaster.prototype.GetAllCharts = function() {
 		if(!this.Master) return [];
@@ -1773,7 +1775,7 @@
      * Returns an array with all the OLE objects from the slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]}
-     * * @see office-js-api/Examples/Slide/ApiMaster/Methods/GetAllOleObjects.js
+     * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllOleObjects.js
 	 */
     ApiMaster.prototype.GetAllOleObjects = function() {
 		if(!this.Master) return [];
@@ -1786,7 +1788,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiMaster/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/ToJSON.js
 	 */
     ApiMaster.prototype.ToJSON = function(bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -1806,7 +1808,7 @@
      * Returns the type of the ApiLayout class.
      * @typeofeditors ["CPE"]
      * @returns {"layout"}
-     * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetClassType.js
 	 */
     ApiLayout.prototype.GetClassType = function()
     {
@@ -1818,7 +1820,7 @@
      * @typeofeditors ["CPE"]
      * @param {string} sName - Layout name to be set.
      * @returns {boolean}
-     * @see office-js-api/Examples/Slide/ApiLayout/Methods/SetName.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/SetName.js
 	 */
     ApiLayout.prototype.SetName = function(sName)
     {
@@ -1836,7 +1838,7 @@
      * @memberof ApiLayout
      * @param {ApiDrawing} oDrawing - The object which will be added to the current slide layout.
      * @returns {boolean} - returns false if slide layout doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiLayout/Methods/AddObject.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/AddObject.js
 	 */
     ApiLayout.prototype.AddObject = function(oDrawing)
     {
@@ -1859,7 +1861,7 @@
      * @param {number} nPos - Position from which the object will be deleted.
      * @param {number} [nCount = 1] - The number of elements to delete.
      * @returns {boolean} - returns false if layout doesn't exist or position is invalid or layout hasn't objects.
-     * @see office-js-api/Examples/Slide/ApiLayout/Methods/RemoveObject.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/RemoveObject.js
 	 */
     ApiLayout.prototype.RemoveObject = function(nPos, nCount)
     {
@@ -1884,7 +1886,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.\
      * @returns {boolean}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/SetBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/SetBackground.js
 	 */
     ApiLayout.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Layout){
@@ -1901,7 +1903,7 @@
      * Clears the slide layout background.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - return false if slide layout doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/ClearBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/ClearBackground.js
 	 */
     ApiLayout.prototype.ClearBackground = function(){
         if (!this.Layout)
@@ -1920,7 +1922,7 @@
      * Sets the master background as the background of the layout.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - returns false if master is null or master hasn't background.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/FollowMasterBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/FollowMasterBackground.js
 	 */
     ApiLayout.prototype.FollowMasterBackground = function(){
         if (!this.Layout)
@@ -1943,7 +1945,7 @@
      * @typeofeditors ["CPE"]
      * @returns {ApiLayout | null} - returns new ApiLayout object that represents the copy of slide layout. 
      * Returns null if slide layout doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Copy.js
 	 */
     ApiLayout.prototype.Copy = function(){
         if (!this.Layout)
@@ -1957,7 +1959,7 @@
      * Deletes the specified object from the parent slide master if it exists.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - return false if parent slide master doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/Delete.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Delete.js
 	 */
     ApiLayout.prototype.Delete = function(){
         if (this.Layout && this.Layout.Master)
@@ -1980,7 +1982,7 @@
      * @param {number} [nPos = ApiMaster.GetLayoutsCount()] - Position where the new slide layout will be added.
      * @returns {ApiLayout | null} - returns new ApiLayout object that represents the copy of slide layout. 
      * Returns null if slide layout doesn't exist or is not in the slide master.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/Duplicate.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/Duplicate.js
 	 */
     ApiLayout.prototype.Duplicate = function(nPos){
         if (this.Layout && this.Layout.Master)
@@ -2003,7 +2005,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - Position where the specified slide layout will be moved to.
      * @returns {boolean} - returns false if layout or parent slide master doesn't exist or position is invalid.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/MoveTo.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/MoveTo.js
 	 */
     ApiLayout.prototype.MoveTo = function(nPos){
         if (!this.Layout || !this.Layout.Master)
@@ -2025,7 +2027,7 @@
      * Returns an array with all the drawing objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiDrawing[]}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetAllDrawings.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllDrawings.js
 	 */
     ApiLayout.prototype.GetAllDrawings = function(){
         var apiDrawingObjects = [];
@@ -2043,7 +2045,7 @@
      * Returns an array with all the shape objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiShape[]}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetAllShapes.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllShapes.js
 	 */
     ApiLayout.prototype.GetAllShapes = function(){
 		if(!this.Layout) {
@@ -2057,7 +2059,7 @@
      * Returns an array with all the image objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiImage[]}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetAllImages.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllImages.js
 	 */
     ApiLayout.prototype.GetAllImages = function(){
 		if(!this.Layout) {
@@ -2071,7 +2073,7 @@
      * Returns an array with all the chart objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiChart[]}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetAllCharts.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllCharts.js
 	 */
     ApiLayout.prototype.GetAllCharts = function() {
 		if(!this.Layout) {
@@ -2085,7 +2087,7 @@
      * Returns an array with all the OLE objects from the slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]}
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetAllOleObjects.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllOleObjects.js
 	 */
     ApiLayout.prototype.GetAllOleObjects = function(){
 		if(!this.Layout) return [];
@@ -2097,7 +2099,7 @@
      * Returns the parent slide master of the current layout.
      * @typeofeditors ["CPE"]
      * @returns {?ApiMaster} - returns null if parent slide master doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiLayout/Methods/GetMaster.js
+     * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetMaster.js
 	 */
     ApiLayout.prototype.GetMaster = function(){
         if (this.Layout && this.Layout.Master)
@@ -2112,7 +2114,7 @@
      * @param {bool} [bWriteMaster=false] - Specifies if the slide master will be written to the JSON object or not.
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiLayout/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/ToJSON.js
 	 */
     ApiLayout.prototype.ToJSON = function(bWriteMaster, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -2132,7 +2134,7 @@
      * Returns the type of the ApiPlaceholder class.
      * @typeofeditors ["CPE"]
      * @returns {"placeholder"}
-     * @see office-js-api/Examples/Slide/ApiPlaceholder/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetClassType.js
 	 */
     ApiPlaceholder.prototype.GetClassType = function()
     {
@@ -2143,7 +2145,7 @@
      * @typeofeditors ["CPE"]
      * @param {string} sType - Placeholder type ("body", "chart", "clipArt", "ctrTitle", "diagram", "date", "footer", "header", "media", "object", "picture", "sldImage", "sldNumber", "subTitle", "table", "title").
      * @returns {boolean} - returns false if placeholder type doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiPlaceholder/Methods/SetType.js
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetType.js
 	 */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
@@ -2215,7 +2217,7 @@
      * Returns the type of the ApiTheme class.
      * @typeofeditors ["CPE"]
      * @returns {"theme"}
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetClassType.js
 	 */
     ApiTheme.prototype.GetClassType = function()
     {
@@ -2226,7 +2228,7 @@
      * Returns the slide master of the current theme.
      * @typeofeditors ["CPE"]
      * @returns {ApiMaster | null} - returns null if slide master doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/GetMaster.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetMaster.js
 	 */
     ApiTheme.prototype.GetMaster = function()
     {
@@ -2241,7 +2243,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiThemeColorScheme} oApiColorScheme - Theme color scheme.
      * @returns {boolean} - return false if color scheme doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/SetColorScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/SetColorScheme.js
 	 */
     ApiTheme.prototype.SetColorScheme = function(oApiColorScheme)
     {
@@ -2258,7 +2260,7 @@
      * Returns the color scheme of the current theme.
      * @typeofeditors ["CPE"]
      * @returns {?ApiThemeColorScheme}
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/GetColorScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetColorScheme.js
 	 */
     ApiTheme.prototype.GetColorScheme = function()
     {
@@ -2275,7 +2277,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiThemeFormatScheme} oApiFormatScheme - Theme format scheme.
      * @returns {boolean} - return false if format scheme doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/SetFormatScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/SetFormatScheme.js
 	 */
     ApiTheme.prototype.SetFormatScheme = function(oApiFormatScheme)
     {
@@ -2292,7 +2294,7 @@
      * Returns the format scheme of the current theme.
      * @typeofeditors ["CPE"]
      * @returns {?ApiThemeFormatScheme}
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/GetFormatScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetFormatScheme.js
 	 */
     ApiTheme.prototype.GetFormatScheme = function()
     {
@@ -2309,7 +2311,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiThemeFontScheme} oApiFontScheme - Theme font scheme.
      * @returns {boolean} - return false if font scheme doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/SetFontScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/SetFontScheme.js
 	 */
     ApiTheme.prototype.SetFontScheme = function(oApiFontScheme)
     {
@@ -2326,7 +2328,7 @@
      * Returns the font scheme of the current theme.
      * @typeofeditors ["CPE"]
      * @returns {?ApiThemeFontScheme}
-     * @see office-js-api/Examples/Slide/ApiTheme/Methods/GetFontScheme.js
+     * @see office-js-api/Examples/{Editor}/ApiTheme/Methods/GetFontScheme.js
 	 */
     ApiTheme.prototype.GetFontScheme = function()
     {
@@ -2348,7 +2350,7 @@
      * Returns the type of the ApiThemeColorScheme class.
      * @typeofeditors ["CPE"]
      * @returns {"themeColorScheme"}
-     * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/GetClassType.js
 	 */
     ApiThemeColorScheme.prototype.GetClassType = function()
     {
@@ -2360,7 +2362,7 @@
      * @typeofeditors ["CPE"]
      * @param {string} sName - Theme color scheme name.
      * @returns {boolean}
-     * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/SetSchemeName.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/SetSchemeName.js
 	 */
     ApiThemeColorScheme.prototype.SetSchemeName = function(sName)
     {
@@ -2376,7 +2378,7 @@
      * @param {number} nPos - Color position in the color scheme which will be changed.
      * @param {ApiUniColor | ApiRGBColor} oColor - New color of the theme color scheme.
      * @returns {boolean}
-     * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/ChangeColor.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/ChangeColor.js
 	 */
     ApiThemeColorScheme.prototype.ChangeColor = function(nPos, oColor)
     {
@@ -2395,7 +2397,7 @@
      * Creates a copy of the current theme color scheme.
      * @typeofeditors ["CPE"]
      * @returns {ApiThemeColorScheme}
-     * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/Copy.js
 	 */
     ApiThemeColorScheme.prototype.Copy = function()
     {
@@ -2407,7 +2409,7 @@
 	 * @memberof ApiThemeColorScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiThemeColorScheme/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiThemeColorScheme/Methods/ToJSON.js
 	 */
     ApiThemeColorScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -2424,7 +2426,7 @@
      * Returns the type of the ApiThemeFormatScheme class.
      * @typeofeditors ["CPE"]
      * @returns {"themeFormatScheme"}
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/GetClassType.js
 	 */
     ApiThemeFormatScheme.prototype.GetClassType = function()
     {
@@ -2436,7 +2438,7 @@
      * @typeofeditors ["CPE"]
      * @param {string} sName - Theme format scheme name.
      * @returns {boolean}
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/SetSchemeName.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/SetSchemeName.js
 	 */
     ApiThemeFormatScheme.prototype.SetSchemeName = function(sName)
     {
@@ -2451,7 +2453,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiFill[]} arrFill - The array of fill styles must contain 3 elements - subtle, moderate and intense fills.
      * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateNoFill() elements.
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ChangeFillStyles.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeFillStyles.js
 	 */
     ApiThemeFormatScheme.prototype.ChangeFillStyles = function(arrFill)
     {
@@ -2474,7 +2476,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiFill[]} arrBgFill - The array of background fill styles must contains 3 elements - subtle, moderate and intense fills.
      * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateNoFill() elements.
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ChangeBgFillStyles.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeBgFillStyles.js
 	 */
     ApiThemeFormatScheme.prototype.ChangeBgFillStyles = function(arrBgFill)
     {
@@ -2497,7 +2499,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiStroke[]} arrLine - The array of line styles must contain 3 elements - subtle, moderate and intense fills.
      * If an array is empty or ApiStroke elements are with no fill, it will be filled with the Api.CreateStroke(0, Api.CreateNoFill()) elements.
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ChangeLineStyles.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeLineStyles.js
 	 */
     ApiThemeFormatScheme.prototype.ChangeLineStyles = function(arrLine)
     {
@@ -2522,7 +2524,7 @@
      * @param {?Array} arrEffect - The array of effect styles must contain 3 elements - subtle, moderate and intense fills.
      * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateStroke(0, Api.CreateNoFill()) elements.
      * @returns {boolean}
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ChangeEffectStyles.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeEffectStyles.js
 	 */
     ApiThemeFormatScheme.prototype.ChangeEffectStyles = function(arrEffect)
     {
@@ -2546,7 +2548,7 @@
      * Creates a copy of the current theme format scheme.
      * @typeofeditors ["CPE"]
      * @returns {ApiThemeFormatScheme}
-     * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/Copy.js
 	 */
     ApiThemeFormatScheme.prototype.Copy = function()
     {
@@ -2558,7 +2560,7 @@
 	 * @memberof ApiThemeFormatScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiThemeFormatScheme/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ToJSON.js
 	 */
     ApiThemeFormatScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -2575,7 +2577,7 @@
      * Returns the type of the ApiThemeFontScheme class.
      * @typeofeditors ["CPE"]
      * @returns {"themeFontScheme"}
-     * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/GetClassType.js
 	 */
     ApiThemeFontScheme.prototype.GetClassType = function()
     {
@@ -2587,7 +2589,7 @@
      * @typeofeditors ["CPE"]
      * @param {string} sName - Theme font scheme name.
      * @returns {boolean} - returns false if font scheme doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/SetSchemeName.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/SetSchemeName.js
 	 */
     ApiThemeFontScheme.prototype.SetSchemeName = function(sName)
     {
@@ -2613,7 +2615,7 @@
      * @param {string} mnLatin - The minor theme font applied to the latin text.
      * @param {string} mnEa - The minor theme font applied to the east asian text.
      * @param {string} mnCs - The minor theme font applied to the complex script text.
-     * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/SetFonts.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/SetFonts.js
 	 */
     ApiThemeFontScheme.prototype.SetFonts = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs){
         
@@ -2639,7 +2641,7 @@
      * Creates a copy of the current theme font scheme.
      * @typeofeditors ["CPE"]
      * @returns {ApiThemeFontScheme}
-     * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/Copy.js
 	 */
     ApiThemeFontScheme.prototype.Copy = function()
     {
@@ -2651,7 +2653,7 @@
 	 * @memberof ApiThemeFontScheme
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiThemeFontScheme/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiThemeFontScheme/Methods/ToJSON.js
 	 */
     ApiThemeFontScheme.prototype.ToJSON = function(){
         var oWriter = new AscJsonConverter.WriterToJSON();
@@ -2668,7 +2670,7 @@
      * Returns the type of the ApiSlide class.
      * @typeofeditors ["CPE"]
      * @returns {"slide"}
-     * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetClassType.js
 	 */
     ApiSlide.prototype.GetClassType = function()
     {
@@ -2679,7 +2681,7 @@
      * Removes all the objects from the current slide.
      * @typeofeditors ["CPE"]
      * @memberof ApiSlide
-     * @see office-js-api/Examples/Slide/ApiSlide/Methods/RemoveAllObjects.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/RemoveAllObjects.js
 	 */
     ApiSlide.prototype.RemoveAllObjects =  function(){
         if(this.Slide){
@@ -2696,7 +2698,7 @@
      * @memberof ApiSlide
      * @param {ApiDrawing} oDrawing - The object which will be added to the current presentation slide.
      * @returns {boolean} - returns false if slide doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiSlide/Methods/AddObject.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/AddObject.js
 	 */
     ApiSlide.prototype.AddObject = function(oDrawing){
         if(this.Slide){
@@ -2717,7 +2719,7 @@
      * @param {number} nPos - Position from which the object will be deleted.
      * @param {number} [nCount = 1] - The number of elements to delete.
      * @returns {boolean} - returns false if slide doesn't exist or position is invalid or slide hasn't objects.
-     * @see office-js-api/Examples/Slide/ApiSlide/Methods/RemoveObject.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/RemoveObject.js
 	 */
     ApiSlide.prototype.RemoveObject = function(nPos, nCount)
     {
@@ -2742,7 +2744,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
      * @returns {boolean}
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/SetBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/SetBackground.js
 	 */
     ApiSlide.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Slide){
@@ -2762,7 +2764,7 @@
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetVisible.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetVisible.js
 	 */
     ApiSlide.prototype.GetVisible = function(){
         if(this.Slide){
@@ -2777,7 +2779,7 @@
      * @typeofeditors ["CPE"]
      * @param {boolean} value - Slide visibility.
      * @returns {boolean}
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/SetVisible.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/SetVisible.js
 	 */
     ApiSlide.prototype.SetVisible = function(value){
         if(this.Slide){
@@ -2791,7 +2793,7 @@
      * Returns the slide width in English measure units.
      * @typeofeditors ["CPE"]
      * @returns {EMU}
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetWidth.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetWidth.js
 	 */
     ApiSlide.prototype.GetWidth = function(){
         if(this.Slide){
@@ -2804,7 +2806,7 @@
      * Returns the slide height in English measure units.
      * @typeofeditors ["CPE"]
      * @returns {EMU}
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetHeight.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetHeight.js
 	 */
     ApiSlide.prototype.GetHeight = function(){
         if(this.Slide){
@@ -2819,7 +2821,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiLayout} oLayout - Layout to be applied.
      * @returns {boolean} - returns false if slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/ApplyLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/ApplyLayout.js
 	 */
     ApiSlide.prototype.ApplyLayout = function(oLayout){
         if (!this.Slide || !oLayout || !oLayout.Layout.Master)
@@ -2833,7 +2835,7 @@
      * Deletes the current slide from the presentation.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - returns false if slide doesn't exist or is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/Delete.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Delete.js
 	 */
     ApiSlide.prototype.Delete = function(){
         if (!this.Slide)
@@ -2856,7 +2858,7 @@
      * @typeofeditors ["CPE"]
      * @returns {ApiSlide | null} - returns new ApiSlide object that represents the duplicate slide. 
      * Returns null if slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Copy.js
 	 */
     ApiSlide.prototype.Copy = function(){
         if (!this.Slide)
@@ -2872,7 +2874,7 @@
      * @param {number} [nPos    = ApiPresentation.GetSlidesCount()] - Position where the new slide will be added.
      * @returns {ApiSlide | null} - returns new ApiSlide object that represents the duplicate slide. 
      * Returns null if slide doesn't exist or is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/Duplicate.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/Duplicate.js
 	 */
     ApiSlide.prototype.Duplicate = function(nPos){
         if (!this.Slide)
@@ -2894,7 +2896,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - Position where the current slide will be moved to.
      * @returns {boolean} - returns false if slide doesn't exist or position is invalid or slide is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/MoveTo.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/MoveTo.js
 	 */
     ApiSlide.prototype.MoveTo = function(nPos){
         var oPresentation = editor.GetPresentation().Presentation;
@@ -2918,7 +2920,7 @@
      * Returns a position of the current slide in the presentation.
      * @typeofeditors ["CPE"]
      * @returns {number} - returns -1 if slide doesn't exist or is not in the presentation.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetSlideIndex.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetSlideIndex.js
 	 */
     ApiSlide.prototype.GetSlideIndex = function (){
         if (!this.Slide)
@@ -2941,7 +2943,7 @@
      * Clears the slide background.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - return false if slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/ClearBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/ClearBackground.js
 	 */
     ApiSlide.prototype.ClearBackground = function(){
         if (!this.Slide)
@@ -2961,7 +2963,7 @@
      * Sets the layout background as the background of the slide.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - returns false if layout is null or layout hasn't background or slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/FollowLayoutBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/FollowLayoutBackground.js
 	 */
     ApiSlide.prototype.FollowLayoutBackground = function(){
         if (!this.Slide)
@@ -2983,7 +2985,7 @@
      * Sets the master background as the background of the slide.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - returns false if master is null or master hasn't background or slide doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/FollowMasterBackground.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/FollowMasterBackground.js
 	 */
     ApiSlide.prototype.FollowMasterBackground = function(){
         if (!this.Slide)
@@ -3005,7 +3007,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTheme} oApiTheme - Presentation theme.
      * @returns {boolean} - returns false if master is null or master hasn't background.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/ApplyTheme.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/ApplyTheme.js
 	 */
     ApiSlide.prototype.ApplyTheme = function(oApiTheme){
         if (!this.Slide || !oApiTheme || !oApiTheme.GetClassType || oApiTheme.GetClassType() !== "theme")
@@ -3114,7 +3116,7 @@
      * Returns a layout of the current slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiLayout | null} - returns null if slide or layout doesn't exist. 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetLayout.js
 	 */
     ApiSlide.prototype.GetLayout = function(){
         if (this.Slide && this.Slide.Layout)
@@ -3127,7 +3129,7 @@
      * Returns a theme of the current slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiTheme} - returns null if slide or layout or master or theme doesn't exist.
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetTheme.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetTheme.js
 	 */
     ApiSlide.prototype.GetTheme = function(){
         if (this.Slide && this.Slide.Layout && this.Slide.Layout.Master && this.Slide.Layout.Master.Theme)
@@ -3147,7 +3149,7 @@
      * Returns an array with all the drawing objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiDrawing[]} 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetAllDrawings.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllDrawings.js
 	 */
     ApiSlide.prototype.GetAllDrawings = function(){
         var apiDrawingObjects = [];
@@ -3165,7 +3167,7 @@
      * Returns an array with all the shape objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiShape[]} 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetAllShapes.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllShapes.js
 	 */
     ApiSlide.prototype.GetAllShapes = function(){
 
@@ -3180,7 +3182,7 @@
      * Returns an array with all the image objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiImage[]} 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetAllImages.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllImages.js
 	 */
     ApiSlide.prototype.GetAllImages = function() {
 		if(!this.Slide) {
@@ -3194,7 +3196,7 @@
      * Returns an array with all the chart objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiChart[]} 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetAllCharts.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllCharts.js
 	 */
     ApiSlide.prototype.GetAllCharts = function() {
 		if(!this.Slide) {
@@ -3208,7 +3210,7 @@
      * Returns an array with all the OLE objects from the slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiOleObject[]} 
-     * * @see office-js-api/Examples/Slide/ApiSlide/Methods/GetAllOleObjects.js
+     * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllOleObjects.js
 	 */
     ApiSlide.prototype.GetAllOleObjects = function() {
 		if(!this.Slide) return [];
@@ -3225,7 +3227,7 @@
      * @param {bool} [bWriteAllMasLayouts=false] - Specifies if all child layouts from the slide master will be written to the JSON object or not.
 	 * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiSlide/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/ToJSON.js
 	 */
     ApiSlide.prototype.ToJSON = function(bWriteLayout, bWriteMaster, bWriteAllMasLayouts, bWriteTableStyles){
         let oWriter = new AscJsonConverter.WriterToJSON();
@@ -3245,7 +3247,7 @@
      * Returns the type of the ApiDrawing class.
      * @typeofeditors ["CPE"]
      * @returns {"drawing"}
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetClassType.js
 	 */
     ApiDrawing.prototype.GetClassType = function()
     {
@@ -3256,7 +3258,7 @@
      * @typeofeditors ["CPE"]
      * @param {EMU} nWidth - The object width measured in English measure units.
      * @param {EMU} nHeight - The object height measured in English measure units.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/SetSize.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetSize.js
 	 */
     ApiDrawing.prototype.SetSize = function(nWidth, nHeight)
     {
@@ -3274,7 +3276,7 @@
      * @typeofeditors ["CPE"]
      * @param {EMU} nPosX - The distance from the left side of the slide to the left side of the drawing measured in English measure units.
      * @param {EMU} nPosY - The distance from the top side of the slide to the upper side of the drawing measured in English measure units.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/SetPosition.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPosition.js
 	 */
     ApiDrawing.prototype.SetPosition = function(nPosX, nPosY)
     {
@@ -3291,7 +3293,7 @@
      * Returns the drawing parent object.
      * @typeofeditors ["CPE"]
      * @returns {ApiSlide | ApiLayout | ApiMaster | null}
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetParent.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParent.js
 	 */
     ApiDrawing.prototype.GetParent = function()
     {
@@ -3315,7 +3317,7 @@
      * Returns the drawing parent slide.
      * @typeofeditors ["CPE"]
      * @returns {ApiSlide | null} - return null if parent ins't a slide.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetParentSlide.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParentSlide.js
 	 */
     ApiDrawing.prototype.GetParentSlide = function()
     {
@@ -3331,7 +3333,7 @@
      * Returns the drawing parent slide layout.
      * @typeofeditors ["CPE"]
      * @returns {ApiLayout | null} - return null if parent ins't a slide layout.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetParentLayout.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParentLayout.js
 	 */
     ApiDrawing.prototype.GetParentLayout = function()
     {
@@ -3347,7 +3349,7 @@
      * Returns the drawing parent slide master.
      * @typeofeditors ["CPE"]
      * @returns {ApiMaster | null} - return null if parent ins't a slide master.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetParentMaster.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetParentMaster.js
 	 */
     ApiDrawing.prototype.GetParentMaster = function()
     {
@@ -3363,7 +3365,7 @@
      * Creates a copy of the specified drawing object.
      * @typeofeditors ["CPE"]
      * @returns {ApiDrawing} - return null if drawing doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/Copy.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Copy.js
 	 */
     ApiDrawing.prototype.Copy = function()
     {
@@ -3377,7 +3379,7 @@
      * Deletes the specified drawing object from the parent.
      * @typeofeditors ["CPE"]
      * @returns {boolean} - false if drawing doesn't exist or drawing hasn't a parent.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/Delete.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Delete.js
 	 */
     ApiDrawing.prototype.Delete = function()
     {
@@ -3403,7 +3405,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiPlaceholder} oPlaceholder - Placeholder object.
      * @returns {boolean} - returns false if parameter isn't a placeholder.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/SetPlaceholder.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetPlaceholder.js
 	 */
     ApiDrawing.prototype.SetPlaceholder = function(oPlaceholder)
     {
@@ -3461,7 +3463,7 @@
      * Returns a placeholder from the current drawing object.
      * @typeofeditors ["CPE"]
      * @returns {ApiPlaceholder | null} - returns null if placeholder doesn't exist.
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetPlaceholder.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetPlaceholder.js
 	 */
     ApiDrawing.prototype.GetPlaceholder = function()
     {
@@ -3501,7 +3503,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
-	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetWidth.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetWidth.js
 	 */
 	ApiDrawing.prototype.GetWidth = function()
 	{
@@ -3512,7 +3514,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
-	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetHeight.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHeight.js
 	 */
 	ApiDrawing.prototype.GetHeight = function()
 	{
@@ -3524,7 +3526,7 @@
      * @typeofeditors ["CPE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @returns {bool}
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/GetLockValue.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetLockValue.js
 	 */
 	ApiDrawing.prototype.GetLockValue = function(sType)
 	{
@@ -3545,7 +3547,7 @@
 	 * @param {DrawingLockType} sType - Lock type in the string format.
      * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
-     * @see office-js-api/Examples/Slide/ApiDrawing/Methods/SetLockValue.js
+     * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/SetLockValue.js
 	 */
 	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
 	{
@@ -3568,12 +3570,27 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CPE"]
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiDrawing/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/ToJSON.js
 	 */
 	ApiDrawing.prototype.ToJSON = function()
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
 		return JSON.stringify(oWriter.SerGraphicObject(this.Drawing));
+	};
+
+	/**
+	 * Selects the current graphic object.
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CPE"]
+	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/Select.js
+	 */	
+	ApiDrawing.prototype.Select = function() {
+		let oDrawing = this.Drawing;
+		if(!oDrawing) return;
+        oDrawing.Set_CurrentElement(true, 0, true);
+        let oController = oDrawing.getDrawingObjectsController();
+        oController.updateSelectionState();
+        oController.updateOverlay();
 	};
 
     //------------------------------------------------------------------------------------------------------------------
@@ -3586,7 +3603,7 @@
      * Returns the type of the ApiImage class.
      * @typeofeditors ["CPE"]
      * @returns {"image"}
-     * @see office-js-api/Examples/Slide/ApiImage/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiImage/Methods/GetClassType.js
 	 */
     ApiImage.prototype.GetClassType = function()
     {
@@ -3603,7 +3620,7 @@
      * Returns the type of the ApiShape class.
      * @typeofeditors ["CPE"]
      * @returns {"shape"}
-     * @see office-js-api/Examples/Slide/ApiShape/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetClassType.js
 	 */
     ApiShape.prototype.GetClassType = function()
     {
@@ -3616,7 +3633,7 @@
      * Returns the shape inner contents where a paragraph or text runs can be inserted.
      * @typeofeditors ["CPE"]
      * @returns {?ApiDocumentContent}
-     * @see office-js-api/Examples/Slide/ApiShape/Methods/GetDocContent.js
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetDocContent.js
 	 */
     ApiShape.prototype.GetDocContent = function()
     {
@@ -3632,7 +3649,7 @@
      * Returns the shape inner contents where a paragraph or text runs can be inserted.
      * @typeofeditors ["CPE"]
      * @returns {?ApiDocumentContent}
-     * @see office-js-api/Examples/Slide/ApiShape/Methods/GetContent.js
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/GetContent.js
 	 */
     ApiShape.prototype.GetContent = function()
     {
@@ -3648,7 +3665,7 @@
      * Sets the vertical alignment to the shape content where a paragraph or text runs can be inserted.
      * @typeofeditors ["CPE"]
      * @param {VerticalTextAlign} VerticalAlign - The type of the vertical alignment for the shape inner contents.
-     * @see office-js-api/Examples/Slide/ApiShape/Methods/SetVerticalTextAlign.js
+     * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
 	 */
     ApiShape.prototype.SetVerticalTextAlign = function(VerticalAlign)
     {
@@ -3694,7 +3711,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {"oleObject"}
-	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetClassType.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetClassType.js
 	 */
 	ApiOleObject.prototype.GetClassType = function()
 	{
@@ -3707,7 +3724,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/SetData.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetData.js
 	 */
 	ApiOleObject.prototype.SetData = function(sData)
 	{
@@ -3723,7 +3740,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetData.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetData.js
 	 */
 	ApiOleObject.prototype.GetData = function()
 	{
@@ -3739,7 +3756,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
-	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/SetApplicationId.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetApplicationId.js
 	 */
 	ApiOleObject.prototype.SetApplicationId = function(sAppId)
 	{
@@ -3755,7 +3772,7 @@
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
-	 * @see office-js-api/Examples/Slide/ApiOleObject/Methods/GetApplicationId.js
+	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetApplicationId.js
 	 */
 	ApiOleObject.prototype.GetApplicationId = function()
 	{
@@ -3774,7 +3791,7 @@
      * Returns the type of the ApiTable object.
      * @typeofeditors ["CPE"]
      * @returns {"table"}
-     * * @see office-js-api/Examples/Slide/ApiTable/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetClassType.js
 	 */
     ApiTable.prototype.GetClassType = function(){
         return "table";
@@ -3786,7 +3803,7 @@
      * @typeofeditors ["CPE"]
      * @param nIndex {number} - The row index (position) in the table.
      * @returns {?ApiTableRow}
-     * * @see office-js-api/Examples/Slide/ApiTable/Methods/GetRow.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/GetRow.js
 	 */
     ApiTable.prototype.GetRow = function(nIndex){
         if(!this.Drawing){
@@ -3805,7 +3822,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell[]} aCells - The array of cells.
      * @returns {?ApiTableCell}
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/MergeCells.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/MergeCells.js
 	 */
     ApiTable.prototype.MergeCells = function(aCells)
     {
@@ -3884,7 +3901,7 @@
      *     to the table.
      * @param {boolean} isVerBand - Specifies that the vertical banding conditional formatting shall not be applied to
      *     the table.
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/SetTableLook.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetTableLook.js
 	 */
     ApiTable.prototype.SetTableLook = function(isFirstColumn, isFirstRow, isLastColumn, isLastRow, isHorBand, isVerBand)
     {
@@ -3903,7 +3920,7 @@
      * @param {boolean} [isBefore=false] - Adds a new row before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
      * @returns {ApiTableRow}
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/AddRow.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddRow.js
 	 */
     ApiTable.prototype.AddRow = function(oCell, isBefore)
     {
@@ -3934,7 +3951,7 @@
      * @param {ApiTableCell} [oCell] - If not specified, a new column will be added to the end of the table.
      * @param {boolean} [isBefore=false] - Add a new column before or after the specified cell. If no cell is specified,
      * then this parameter will be ignored.
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/AddColumn.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/AddColumn.js
 	 */
     ApiTable.prototype.AddColumn = function(oCell, isBefore)
     {
@@ -3960,7 +3977,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the row which will be removed.
      * @returns {boolean} - defines if the table is empty after removing or not.
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/RemoveRow.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveRow.js
 	 */
     ApiTable.prototype.RemoveRow = function(oCell)
     {
@@ -3976,7 +3993,7 @@
      * @typeofeditors ["CPE"]
      * @param {ApiTableCell} oCell - The table cell from the column which will be removed.
      * @returns {boolean} - defines if the table is empty after removing or not.
-     * @see office-js-api/Examples/Slide/ApiTable/Methods/RemoveColumn.js
+     * @see office-js-api/Examples/{Editor}/ApiTable/Methods/RemoveColumn.js
 	 */
     ApiTable.prototype.RemoveColumn = function(oCell)
     {
@@ -3995,7 +4012,7 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @see office-js-api/Examples/Slide/ApiTable/Methods/SetShd.js
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/SetShd.js
 	 */
     ApiTable.prototype.SetShd = function(sType, r, g, b)
     {
@@ -4044,7 +4061,7 @@
 	 * @typeofeditors ["CPE"]
      * @param {bool} [bWriteTableStyles=false] - Specifies whether to write used table styles to the JSON object (true) or not (false).
 	 * @returns {JSON}
-	 * @see office-js-api/Examples/Slide/ApiTable/Methods/ToJSON.js
+	 * @see office-js-api/Examples/{Editor}/ApiTable/Methods/ToJSON.js
 	 */
 	ApiTable.prototype.ToJSON = function(bWriteTableStyles)
 	{
@@ -4064,7 +4081,7 @@
      * Returns the type of the ApiTableRow class.
      * @typeofeditors ["CPE"]
      * @returns {"tableRow"}
-     * @see office-js-api/Examples/Slide/ApiTableRow/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetClassType.js
 	 */
     ApiTableRow.prototype.GetClassType = function()
     {
@@ -4074,7 +4091,7 @@
      * Returns a number of cells in the current row.
      * @typeofeditors ["CPE"]
      * @returns {number}
-     * @see office-js-api/Examples/Slide/ApiTableRow/Methods/GetCellsCount.js
+     * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetCellsCount.js
 	 */
     ApiTableRow.prototype.GetCellsCount = function()
     {
@@ -4085,7 +4102,7 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - The cell position in the table row.
      * @returns {ApiTableCell}
-     * @see office-js-api/Examples/Slide/ApiTableRow/Methods/GetCell.js
+     * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/GetCell.js
 	 */
     ApiTableRow.prototype.GetCell = function(nPos)
     {
@@ -4100,7 +4117,7 @@
      * Sets the height to the current table row.
      * @typeofeditors ["CPE"]
      * @param {EMU} [nValue] - The row height in English measure units.
-     * @see office-js-api/Examples/Slide/ApiTableRow/Methods/SetHeight.js
+     * @see office-js-api/Examples/{Editor}/ApiTableRow/Methods/SetHeight.js
 	 */
     ApiTableRow.prototype.SetHeight = function(nValue)
     {
@@ -4138,7 +4155,7 @@
      * Returns the type of the ApiTableCell class.
      * @typeofeditors ["CPE"]
      * @returns {"tableCell"}
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/GetClassType.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetClassType.js
 	 */
     ApiTableCell.prototype.GetClassType = function()
     {
@@ -4149,7 +4166,7 @@
      * Returns the current cell content.
      * @typeofeditors ["CPE"]
      * @returns {ApiDocumentContent}
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/GetContent.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/GetContent.js
 	 */
     ApiTableCell.prototype.GetContent = function(){
         var oApi = private_GetApi();
@@ -4165,7 +4182,7 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetShd.js
+	 * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetShd.js
 	 */
     ApiTableCell.prototype.SetShd = function(sType, r, g, b)
     {
@@ -4215,7 +4232,7 @@
      * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell bottom margin shall be used,
      * otherwise override the table cell bottom margin with specified value for the current cell.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellMarginBottom.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginBottom.js
 	 */
     ApiTableCell.prototype.SetCellMarginBottom = function(nValue)
     {
@@ -4243,7 +4260,7 @@
      * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell left margin shall be used,
      * otherwise override the table cell left margin with specified value for the current cell.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellMarginLeft.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginLeft.js
 	 */
     ApiTableCell.prototype.SetCellMarginLeft = function(nValue)
     {
@@ -4271,7 +4288,7 @@
      * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell right margin shall be used,
      * otherwise override the table cell right margin with specified value for the current cell.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellMarginRight.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginRight.js
 	 */
     ApiTableCell.prototype.SetCellMarginRight = function(nValue)
     {
@@ -4299,7 +4316,7 @@
      * @typeofeditors ["CPE"]
      * @param {?twips} nValue - If this value is <code>null</code>, then default table cell top margin shall be used,
      * otherwise override the table cell top margin with specified value for the current cell.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellMarginTop.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellMarginTop.js
 	 */
     ApiTableCell.prototype.SetCellMarginTop = function(nValue)
     {
@@ -4326,7 +4343,7 @@
      * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellBorderBottom.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderBottom.js
 	 */
     ApiTableCell.prototype.SetCellBorderBottom = function(fSize, oApiFill)
     {
@@ -4345,7 +4362,7 @@
      * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellBorderLeft.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderLeft.js
 	 */
     ApiTableCell.prototype.SetCellBorderLeft = function(fSize, oApiFill)
     {
@@ -4364,7 +4381,7 @@
      * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellBorderRight.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderRight.js
 	 */
     ApiTableCell.prototype.SetCellBorderRight = function(fSize, oApiFill)
     {
@@ -4383,7 +4400,7 @@
      * @typeofeditors ["CPE"]
      * @param {mm} fSize - The width of the current border.
      * @param {ApiFill} oApiFill - The color or pattern used to fill the current border.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetCellBorderTop.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetCellBorderTop.js
 	 */
     ApiTableCell.prototype.SetCellBorderTop = function(fSize, oApiFill)
     {
@@ -4401,7 +4418,7 @@
      * Specifies the vertical alignment for text within the current table cell.
      * @typeofeditors ["CPE"]
      * @param {("top" | "center" | "bottom")} sType - The type of the vertical alignment.
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetVerticalAlign.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetVerticalAlign.js
 	 */
     ApiTableCell.prototype.SetVerticalAlign = function(sType)
     {
@@ -4418,7 +4435,7 @@
      * Specifies the direction of the text flow for the current table cell.
      * @typeofeditors ["CPE"]
      * @param {("lrtb" | "tbrl" | "btlr")} sType - The type of the text flow direction. 
-     * @see office-js-api/Examples/Slide/ApiTableCell/Methods/SetTextDirection.js
+     * @see office-js-api/Examples/{Editor}/ApiTableCell/Methods/SetTextDirection.js
 	 */
     ApiTableCell.prototype.SetTextDirection = function(sType)
     {
@@ -4598,7 +4615,7 @@
 	ApiDrawing.prototype["GetHeight"]                     = ApiDrawing.prototype.GetHeight;
     ApiDrawing.prototype["GetLockValue"]                  = ApiDrawing.prototype.GetLockValue;
     ApiDrawing.prototype["SetLockValue"]                  = ApiDrawing.prototype.SetLockValue;
-
+    ApiDrawing.prototype["Select"]                        = ApiDrawing.prototype.Select;
 
 
     ApiDrawing.prototype["ToJSON"]                        = ApiDrawing.prototype.ToJSON;
@@ -4830,5 +4847,6 @@
 	}
 
 })(window, null);
+
 
 

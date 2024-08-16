@@ -13717,9 +13717,9 @@ BinaryChartReader.prototype.ReadCT_DataLabels = function (type, length, val) {
         val.setSeparator(this.stream.GetString2LE(length));
     }
     else if (c_oserct_chartExDataLabelsDATALABEL === type) {
-        var oNewVal = new AscFormat.CDatalabel();
+        var oNewVal = new AscFormat.CDataLabel();
         res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_Datalabel(t, l, oNewVal);
+            return oThis.ReadCT_DataLabel(t, l, oNewVal);
         });
         val.addDataLabel(oNewVal);
     }
