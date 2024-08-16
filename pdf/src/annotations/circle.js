@@ -55,7 +55,7 @@
         this._width         = undefined;
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
-    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Circle);
+    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationCircle.prototype.IsCircle = function() {

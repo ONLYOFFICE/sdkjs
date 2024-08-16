@@ -62,7 +62,7 @@
         
         this._popupOpen     = false;
         this._popupRect     = undefined;
-        this._richContents  = undefined;
+        this._richContents  = [];
         this._rotate        = 0;
         this._state         = undefined;
         this._stateModel    = undefined;
@@ -70,7 +70,8 @@
         this._points        = undefined;
         this._intent        = undefined;
         this._lineEnd       = undefined;
-        this._callout       = undefined;
+        this._callout       = [];
+        this._rectDiff      = [0, 0, 0, 0];
         this._alignment     = undefined;
         this._defaultStyle  = undefined;
 
@@ -79,12 +80,12 @@
         this.defaultPerpLength              = 12; // длина выступающего перпендикуляра callout по умолчанию
     };
     CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
-    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_GroupShape);
+    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationFreeText.prototype.GetCalloutExitPos = function(aTxBoxRect) {
         let aCallout = this.GetCallout();
-        if (!aCallout)
+        if (aCallout.length == 0)
             return CALLOUT_EXIT_POS.none;
         
         let aTextBoxRect = aTxBoxRect || this.GetTextBoxRect();
@@ -237,6 +238,7 @@
         return this._defaultStyle;
     };
     CAnnotationFreeText.prototype.SetAlign = function(nType) {
+        AscCommon.History.Add(new CChangesPDFFreeTextAlign(this, this._alignment, nType));
         this._alignment = nType;
     };
     CAnnotationFreeText.prototype.GetAlign = function() {
@@ -350,6 +352,8 @@
         });
     };
     CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
+        AscCommon.History.Add(new CChangesPDFAnnotStrokeWidth(this, this.GetWidth(), nWidthPt));
+
         this._width = nWidthPt; 
 
         for (let i = 1; i < this.spTree.length; i++) {
@@ -358,6 +362,8 @@
         }
     };
     CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetStrokeColor() || [], aColor));
+        
         this._strokeColor = aColor;
 
         let oRGB    = this.GetRGBColor(aColor);
@@ -394,6 +400,8 @@
         }
     };
     CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
+
         this._fillColor = aColor;
 
         let oRGB    = this.GetRGBColor(aColor);
@@ -430,8 +438,8 @@
 
         this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
         this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.offX = aRect[0] * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.offY = aRect[1] * g_dKoef_pix_to_mm;
         this.updateTransformMatrix();
 
         oDoc.EndNoHistoryMode();
@@ -503,16 +511,12 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        let aRect = this.GetRect();
-        this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
-        this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
-        
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
-        this.recalculate();
         this.recalculateTransform();
         this.updateTransformMatrix();
+        this.recalculate();
         this.spTree.forEach(function(sp, idx) {
             idx == 0 && sp.recalculateContent();
             sp.recalculateTransform();
@@ -721,40 +725,38 @@
             for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
                 let oRun = oPara.GetElement(j);
                 let sText = oRun.GetText();
-                if (sText) {
-                    let oUniColor   = oRun.Pr.Unifill;
-                    let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
-                    let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : [0, 0, 0];
+                let oUniColor   = oRun.Pr.Unifill;
+                let oRGBA       = oUniColor ? oUniColor.fill.color.color.RGBA : null;
+                let aPdfColor   = oRGBA ? [oRGBA.R / 255, oRGBA.G / 255, oRGBA.B / 255] : [0, 0, 0];
 
-                    let sFont   = oRun.Get_RFonts().Ascii.Name;
-                    let isEmbed = false;
-                    let prefix  = AscFonts.getEmbeddedFontPrefix();
+                let sFont   = oRun.Get_RFonts().Ascii.Name;
+                let isEmbed = false;
+                let prefix  = AscFonts.getEmbeddedFontPrefix();
 
-                    if (sFont.startsWith(prefix)) {
-                        sFont = sFont.substr(prefix.length);
-                        isEmbed = true;
-                    }
-                        
-                    let oRCInfo = {
-                        "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
-                        "bold":             oRun.Get_Bold(),
-                        "italic":           oRun.Get_Italic(),
-                        "strikethrough":    oRun.Get_Strikeout(),
-                        "underlined":       oRun.Get_Underline(),
-                        "size":             oRun.Get_FontSize(),
-                        "color":            aPdfColor,
-                        "text":             sText
-                    };
-
-                    if (isEmbed) {
-                        oRCInfo["name"] = sFont;
-                    }
-                    else {
-                        oRCInfo["actual"] = sFont;
-                    }
-
-                    aRCInfo.push(oRCInfo);
+                if (sFont.startsWith(prefix)) {
+                    sFont = sFont.substr(prefix.length);
+                    isEmbed = true;
                 }
+                    
+                let oRCInfo = {
+                    "alignment":        AscPDF.getPdfTypeAlignByInternal(oRun.Paragraph.GetParagraphAlign()),
+                    "bold":             oRun.Get_Bold(),
+                    "italic":           oRun.Get_Italic(),
+                    "strikethrough":    oRun.Get_Strikeout(),
+                    "underlined":       oRun.Get_Underline(),
+                    "size":             oRun.Get_FontSize(),
+                    "color":            aPdfColor,
+                    "text":             sText
+                };
+
+                if (isEmbed) {
+                    oRCInfo["name"] = sFont;
+                }
+                else {
+                    oRCInfo["actual"] = sFont;
+                }
+
+                aRCInfo.push(oRCInfo);
             }
 
             if (aRCInfo[aRCInfo.length - 1])
@@ -1602,6 +1604,8 @@
     }
 
     function initGroupShape(oParentFreeText) {
+        AscCommon.History.StartNoHistoryMode();
+
         let aShapeRectInMM = oParentFreeText.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
@@ -1615,10 +1619,10 @@
         oParentFreeText.spPr.setXfrm(new AscFormat.CXfrm());
         oParentFreeText.spPr.xfrm.setParent(oParentFreeText.spPr);
         
-        oParentFreeText.spPr.xfrm.setOffX(xMin);
-        oParentFreeText.spPr.xfrm.setOffY(yMin);
-        oParentFreeText.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
-        oParentFreeText.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
+        oParentFreeText.spPr.xfrm.offX = xMin;
+        oParentFreeText.spPr.xfrm.offY = yMin;
+        oParentFreeText.spPr.xfrm.extX = Math.abs(xMax - xMin);
+        oParentFreeText.spPr.xfrm.extY = Math.abs(yMax - yMin);
         oParentFreeText.setBDeleted(false);
         oParentFreeText.recalculate();
         oParentFreeText.updateTransformMatrix();
@@ -1635,6 +1639,8 @@
         oTxBoxShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
         oParentFreeText.addToSpTree(0, oTxBoxShape);
+
+        AscCommon.History.EndNoHistoryMode();
     }
 
     function createInnerShape(aPoints, oExistShape, oParentAnnot) {
@@ -1672,10 +1678,10 @@
             return measure * g_dKoef_pix_to_mm;
         });
         oShape.setGroup(oParentAnnot);
-        oShape.spPr.xfrm.setOffX(Math.abs(xMin - aAnnotRect[0]));
-        oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
-        oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
-        oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
+        oShape.spPr.xfrm.offX = Math.abs(xMin - aAnnotRect[0]);
+        oShape.spPr.xfrm.offY = Math.abs(yMin - aAnnotRect[1]);
+        oShape.spPr.xfrm.extX = Math.abs(xMax - xMin);
+        oShape.spPr.xfrm.extY = Math.abs(yMax - yMin);
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
         oShape.spPr.setLn(new AscFormat.CLn());
@@ -1726,10 +1732,10 @@
         });
         
         oShape.setGroup(oParentAnnot);
-        oShape.spPr.xfrm.setOffX(Math.abs(xMin - aAnnotRect[0]));
-        oShape.spPr.xfrm.setOffY(Math.abs(yMin - aAnnotRect[1]));
-        oShape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
-        oShape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
+        oShape.spPr.xfrm.offX = Math.abs(xMin - aAnnotRect[0]);
+        oShape.spPr.xfrm.offY = Math.abs(yMin - aAnnotRect[1]);
+        oShape.spPr.xfrm.extX = Math.abs(xMax - xMin);
+        oShape.spPr.xfrm.extY = Math.abs(yMax - yMin);
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
         oShape.spPr.setLn(new AscFormat.CLn());

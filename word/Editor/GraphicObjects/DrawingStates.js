@@ -1778,13 +1778,13 @@ MoveInGroupState.prototype =
                 let oFreeTextRect   = oFreeText.GetRect();
                 let aTextBoxRect    = oFreeText.GetTextBoxRect();
                 let aCallout        = oFreeText.GetCallout();
-                let aNewCallout     = aCallout ? aCallout.slice() : null;
+                let aNewCallout     = aCallout.slice();
                 let aCurRD          = oFreeText.GetRectangleDiff();
                 let aNewRD          = [];
                 let aNewRect        = [];
 
                 function findBoundingRectangle(points) {
-                    if (!points) {
+                    if (!points || points.length == 0) {
                         return null;
                     }
                     
@@ -1957,7 +1957,7 @@ MoveInGroupState.prototype =
                     }
 
                     // находим рект стрелки, учитывая окончание линии
-                    let aArrowRect = aNewCallout ? oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
+                    let aArrowRect = aNewCallout.length ? oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
 
                     // находим результирующий rect аннотации
                     aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
@@ -1974,7 +1974,10 @@ MoveInGroupState.prototype =
                 }
 
                 oDoc.DoAction(function() {
-                    oFreeText.SetCallout(aNewCallout);
+                    if (aNewCallout.length != 0) {
+                        oFreeText.SetCallout(aNewCallout);
+                    }
+                    
                     oFreeText.SetRectangleDiff(aNewRD);
                     oFreeText.SetRect(aNewRect);
                     oFreeText.onAfterMove();

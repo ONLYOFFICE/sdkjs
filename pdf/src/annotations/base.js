@@ -149,6 +149,8 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor() || [], aColor));
+
         this._fillColor = aColor;
 
         if (this.IsShapeBased()) {
@@ -182,6 +184,8 @@
         return this._richContents;
     };
     CAnnotationBase.prototype.SetIntent = function(nType) {
+        AscCommon.History.Add(new CChangesPDFAnnotIntent(this, this._intent, nType));
+
         this._intent = nType;
     };
     CAnnotationBase.prototype.GetIntent = function() {

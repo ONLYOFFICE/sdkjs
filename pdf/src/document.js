@@ -2318,7 +2318,7 @@ var CPresentation = CPresentation || function(){};
         this.annots.push(oAnnot);
         oPagesInfo.pages[nPageNum].annots.push(oAnnot);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
+        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPageNum].annots.length - 1, [oAnnot]));
         
         oAnnot.SetApIdx(oProps.apIdx == null ? this.GetMaxApIdx() + 2 : oProps.apIdx);
         oAnnot.AddToRedraw();
@@ -2763,7 +2763,7 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownAnnot == oAnnot)
             this.mouseDownAnnot = null;
 
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oAnnot]));
+        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oAnnot]));
         
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
@@ -2791,7 +2791,7 @@ var CPresentation = CPresentation || function(){};
         this.drawings.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].drawings.splice(nPosInPage, 1);
         
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oDrawing]));
+        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oDrawing]));
 
         oController.resetSelection(true);
         oController.resetTrackState();
@@ -2823,7 +2823,7 @@ var CPresentation = CPresentation || function(){};
         this.widgets.splice(nPos, 1);
         oViewer.pagesInfo.pages[nPage].fields.splice(nPosInPage, 1);
 
-        this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oForm]));
+        this.History.Add(new CChangesPDFDocumentRemoveItem(this, nPosInPage, [oForm]));
 
         // удаляем из родителя
         let oParent = oForm.GetParent();
@@ -2861,7 +2861,7 @@ var CPresentation = CPresentation || function(){};
             let nIdx = this.widgetsParents.indexOf(oForm);
             if (nIdx != -1) {
                 this.widgetsParents.splice(nIdx, oForm);
-                this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nIdx, -1], [oForm]))
+                this.History.Add(new CChangesPDFDocumentRemoveItem(this, -1, [oForm]))
             }
 
             // проверяем родителя этого родителя
@@ -4379,7 +4379,7 @@ var CPresentation = CPresentation || function(){};
         oDrawing.SetPage(nPage);
         oDrawing.setParent(this);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oDrawing]));
+        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPage].drawings.length - 1, [oDrawing]));
 
         oDrawing.AddToRedraw();
         this.ClearSearch();
@@ -4416,7 +4416,7 @@ var CPresentation = CPresentation || function(){};
         }
         oPagesInfo.pages[nPage].drawings.push(oTextArt);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.drawings.length - 1, [oTextArt]));
+        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPage].drawings.length - 1, [oTextArt]));
 
         oTextArt.SetNeedRecalc(true);
         
@@ -4683,87 +4683,86 @@ var CPresentation = CPresentation || function(){};
         let oFreeText = this.AddAnnot(oProps);
         oFreeText.SetRotate(nRotAngle);
         
-        AscFormat.ExecuteNoHistory(function () {
-            oFreeText.SetFillColor([1, 1, 1]);
-            oFreeText.SetStrokeColor([0, 0, 0]);
-            oFreeText.SetWidth(1);
-            oFreeText.SetAlign(AscPDF.ALIGN_TYPE.left);
-            oFreeText.SetIntent(nType);
-            
-            this.SetMouseDownObject(oFreeText);
-            oController.selection.groupSelection = oFreeText;
-            oFreeText.SetInTextBox(true);
-            oFreeText.selectStartPage = nPage;
-            oFreeText.spTree.forEach(function(sp) {
-                sp.selectStartPage = nPage;
-            });
+        oFreeText.SetFillColor([1, 1, 1]);
+        oFreeText.SetStrokeColor([0, 0, 0]);
+        oFreeText.SetWidth(1);
+        oFreeText.SetAlign(AscPDF.ALIGN_TYPE.left);
+        oFreeText.SetIntent(nType);
+        
+        this.SetMouseDownObject(oFreeText);
+        oController.selection.groupSelection = oFreeText;
+        oFreeText.selectStartPage = nPage;
+        oFreeText.spTree.forEach(function(sp) {
+            sp.selectStartPage = nPage;
+        });
 
-            switch (nType) {
-                case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
-                    oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeText);
-                    oFreeText.SetSubject('Text box');
-                    return;
-                }
-                // прописываем RD и Callout
-                case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
-                    oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout);
-                    oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
-                    oFreeText.SetSubject('Text callout');
-                    
-                    let oTxBoxRect;
-                    let x1, y1, x2, y2, x3, y3;
-                    switch (nRotAngle) {
-                        case 0:
-                            oFreeText.SetRectangleDiff([nExtX / 2, 3 / 4 * nExtY, 0.5, 0.5]);
-                            oTxBoxRect = oFreeText.GetTextBoxRect();
-                            
-                            x1 = X1;
-                            y1 = Y1;
-                            x2 = oTxBoxRect[0] - oFreeText.defaultPerpLength;
-                            y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
-                            x3 = oTxBoxRect[0];
-                            y3 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
-                            break;
-                        case 90:
-                            oFreeText.SetRectangleDiff([3 / 4 * nExtY, 0.5, 0.5, nExtX / 2]);
-                            oTxBoxRect = oFreeText.GetTextBoxRect();
-
-                            x1 = X1;
-                            y1 = Y2;
-                            x2 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
-                            y2 = oTxBoxRect[3] + oFreeText.defaultPerpLength;
-                            x3 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
-                            y3 = oTxBoxRect[3]
-                            break;
-                        case 180:
-                            oFreeText.SetRectangleDiff([0.5, 0.5, nExtX / 2, 3 / 4 * nExtY]);
-                            oTxBoxRect = oFreeText.GetTextBoxRect();
-                            
-                            x1 = X2;
-                            y1 = Y2;
-                            x2 = oTxBoxRect[2] + oFreeText.defaultPerpLength;
-                            y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
-                            x3 = oTxBoxRect[2];
-                            y3 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
-                            break;
-                        case 270:
-                            oFreeText.SetRectangleDiff([0.5, nExtX / 2, 3 / 4 * nExtY, 0.5]);
-                            oTxBoxRect = oFreeText.GetTextBoxRect();
-                            
-                            x1 = X2;
-                            y1 = Y1;
-                            x2 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
-                            y2 = oTxBoxRect[1] - oFreeText.defaultPerpLength;
-                            x3 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
-                            y3 = oTxBoxRect[1];
-                            break;
-                    }
-
-                    oFreeText.SetCallout([x1, y1, x2, y2, x3, y3]);
-                    return;
-                }
+        switch (nType) {
+            case AscPDF.FREE_TEXT_INTENT_TYPE.FreeText: {
+                oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeText);
+                oFreeText.SetSubject('Text box');
+                return;
             }
-        }, this);
+            // прописываем RD и Callout
+            case AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout: {
+                oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.FreeTextCallout);
+                oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.OpenArrow);
+                oFreeText.SetSubject('Text callout');
+                
+                let oTxBoxRect;
+                let x1, y1, x2, y2, x3, y3;
+                switch (nRotAngle) {
+                    case 0:
+                        oFreeText.SetRectangleDiff([nExtX / 2, 3 / 4 * nExtY, 0.5, 0.5]);
+                        oTxBoxRect = oFreeText.GetTextBoxRect();
+                        
+                        x1 = X1;
+                        y1 = Y1;
+                        x2 = oTxBoxRect[0] - oFreeText.defaultPerpLength;
+                        y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                        x3 = oTxBoxRect[0];
+                        y3 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                        break;
+                    case 90:
+                        oFreeText.SetRectangleDiff([3 / 4 * nExtY, 0.5, 0.5, nExtX / 2]);
+                        oTxBoxRect = oFreeText.GetTextBoxRect();
+
+                        x1 = X1;
+                        y1 = Y2;
+                        x2 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
+                        y2 = oTxBoxRect[3] + oFreeText.defaultPerpLength;
+                        x3 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
+                        y3 = oTxBoxRect[3]
+                        break;
+                    case 180:
+                        oFreeText.SetRectangleDiff([0.5, 0.5, nExtX / 2, 3 / 4 * nExtY]);
+                        oTxBoxRect = oFreeText.GetTextBoxRect();
+                        
+                        x1 = X2;
+                        y1 = Y2;
+                        x2 = oTxBoxRect[2] + oFreeText.defaultPerpLength;
+                        y2 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                        x3 = oTxBoxRect[2];
+                        y3 = oTxBoxRect[1] + (oTxBoxRect[3] - oTxBoxRect[1]) / 2;
+                        break;
+                    case 270:
+                        oFreeText.SetRectangleDiff([0.5, nExtX / 2, 3 / 4 * nExtY, 0.5]);
+                        oTxBoxRect = oFreeText.GetTextBoxRect();
+                        
+                        x1 = X2;
+                        y1 = Y1;
+                        x2 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
+                        y2 = oTxBoxRect[1] - oFreeText.defaultPerpLength;
+                        x3 = oTxBoxRect[0] + (oTxBoxRect[2] - oTxBoxRect[0]) / 2;
+                        y3 = oTxBoxRect[1];
+                        break;
+                }
+
+                oFreeText.SetCallout([x1, y1, x2, y2, x3, y3]);
+                return;
+            }
+        }
+
+        oFreeText.SetInTextBox(true);
     };
 
     CPDFDoc.prototype.AddImages = function(arrImages) {

@@ -2531,6 +2531,22 @@ CDocumentContentBase.prototype.OnContentChange = function()
 		shape.OnContentChange();
 	}
 };
+CDocumentContentBase.prototype.OnTextPrChange = function()
+{
+	if (this.Parent && this.Parent.OnTextPrChange)
+		this.Parent.OnTextPrChange();
+	
+	let shape = this.Is_DrawingShape(true);
+	if (shape
+		&& this.GetLogicDocument()
+		&& this.GetLogicDocument().IsDocumentEditor())
+	{
+		this.GetLogicDocument().CheckShapeAutoFit(shape);
+	}
+	else if (shape && Asc.editor.isPdfEditor()) {
+		shape.OnTextPrChange();
+	}
+};
 
 CDocumentContentBase.prototype.GetCalculatedTextPr = function()
 {

@@ -1187,7 +1187,7 @@
 	};
 	CGraphicObjectBase.prototype.isGroupObject = function () {
 		var nType = this.getObjectType();
-		return nType === AscDFH.historyitem_type_GroupShape || nType === AscDFH.historyitem_type_LockedCanvas || this.isSmartArtObject();
+		return nType === AscDFH.historyitem_type_GroupShape || nType === AscDFH.historyitem_type_LockedCanvas || this.isSmartArtObject() || nType === AscDFH.historyitem_type_Pdf_Annot_FreeText;
 	};
 	CGraphicObjectBase.prototype.isSmartArtObject = function () {
 		var nType = this.getObjectType();

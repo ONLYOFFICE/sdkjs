@@ -356,6 +356,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             }
             case AscDFH.historyitem_type_GroupShape:
             case AscDFH.historyitem_type_SmartArt:
+            case AscDFH.historyitem_type_Pdf_Annot_FreeText:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;

@@ -4382,8 +4382,10 @@
 	AscDFH.historyitem_Pdf_Annot_Document			= AscDFH.historyitem_type_Pdf_Annot | 14;
 	AscDFH.historyitem_Pdf_Annot_Stroke				= AscDFH.historyitem_type_Pdf_Annot | 15;
 	AscDFH.historyitem_Pdf_Annot_StrokeWidth		= AscDFH.historyitem_type_Pdf_Annot | 16;
-	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 17;
-	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 18;
+	AscDFH.historyitem_Pdf_Annot_Fill				= AscDFH.historyitem_type_Pdf_Annot | 17;
+	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 18;
+	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 19;
+	AscDFH.historyitem_Pdf_Annot_Intent				= AscDFH.historyitem_type_Pdf_Annot | 20;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4396,6 +4398,7 @@
 	// FreeText
 	AscDFH.historyitem_type_Pdf_Annot_FreeText_CL			= AscDFH.historyitem_type_Pdf_Annot_FreeText | 1;
 	AscDFH.historyitem_type_Pdf_Annot_FreeText_RC			= AscDFH.historyitem_type_Pdf_Annot_FreeText | 2;
+	AscDFH.historyitem_type_Pdf_Annot_FreeText_Align		= AscDFH.historyitem_type_Pdf_Annot_FreeText | 3;
 
 	// annot line
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Annot_Line | 1;

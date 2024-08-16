@@ -43,10 +43,12 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Creation_Date]	= CChangesPDFA
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Mod_Date]		= CChangesPDFAnnotModDate;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Author]			= CChangesPDFAnnotAuthor;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Display]			= CChangesPDFAnnotDisplay;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Intent]			= CChangesPDFAnnotIntent;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Name]			= CChangesPDFAnnotName;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_File_Idx]		= CChangesPDFAnnotApIdx;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Document]		= CChangesAnnotObjectProperty;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Stroke]			= CChangesPDFAnnotStroke;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Fill]			= CChangesPDFAnnotFill;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_StrokeWidth]		= CChangesPDFAnnotStrokeWidth;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Opacity]			= CChangesPDFAnnotOpacity;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]			= CChangesPDFCommentData;
@@ -57,6 +59,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipH]				= CChangesPDFInkFlipH
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Points]			= CChangesPDFLinePoints;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_CL]			= CChangesFreeTextCallout;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChangesPDFFreeTextRC;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
 
 
 let annotChangesMap = {};
@@ -501,6 +504,23 @@ CChangesPDFAnnotStroke.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
+ */
+function CChangesPDFAnnotFill(Class, Old, New, Color)
+{
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotFill.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
+CChangesPDFAnnotFill.prototype.constructor = CChangesPDFAnnotFill;
+CChangesPDFAnnotFill.prototype.Type = AscDFH.historyitem_Pdf_Annot_Fill;
+CChangesPDFAnnotFill.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetFillColor(Value);
+};
+
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBaseDoubleProperty}
  */
 function CChangesPDFAnnotStrokeWidth(Class, Old, New, Color)
@@ -552,13 +572,13 @@ CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesAnnotArrayOfDoubleProperty}
  */
 function CChangesFreeTextCallout(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesAnnotArrayOfDoubleProperty.call(this, Class, Old, New, Color);
 }
-CChangesFreeTextCallout.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesFreeTextCallout.prototype = Object.create(AscDFH.CChangesAnnotArrayOfDoubleProperty.prototype);
 CChangesFreeTextCallout.prototype.constructor = CChangesFreeTextCallout;
 CChangesFreeTextCallout.prototype.Type = AscDFH.historyitem_type_Pdf_Annot_FreeText_CL;
 CChangesFreeTextCallout.prototype.private_SetValue = function(Value)
@@ -582,6 +602,115 @@ CChangesPDFFreeTextRC.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetRichContents(Value);
+};
+
+CChangesPDFFreeTextRC.prototype.WriteToBinary = function(Writer)
+{
+	let aRCNew = this.New;
+	let aRCOld = this.Old;
+
+	function writeRC(aRC) {
+		Writer.WriteLong(aRC.length);
+		for (let i = 0; i < aRC.length; i++) {
+			Writer.WriteByte(aRC[i]["alignment"]);
+			let nFontStylePos = Writer.GetCurPosition();
+			Writer.Skip(4);
+
+			// font style
+			let nStyle = 0;
+			if (aRC[i]["bold"]) {
+				nStyle |= (1 << 0);
+			}
+			if (aRC[i]["italic"]) {
+				nStyle |= (1 << 1);
+			}
+			if (aRC[i]["strikethrough"]) {
+				nStyle |= (1 << 3);
+			}
+			if (aRC[i]["underlined"]) {
+				nStyle |= (1 << 4);
+			}
+			if (aRC[i]["vertical"]) {
+				nStyle |= (1 << 5);
+				Writer.WriteDouble(aRC[i]["vertical"]);
+			}
+			if (aRC[i]["actual"]) {
+				nStyle |= (1 << 6);
+				Writer.WriteString2(aRC[i]["actual"]);
+			}
+			// запись флагов настроек шрифта
+			let nEndPos = Writer.GetCurPosition();
+			Writer.Seek(nFontStylePos);
+			Writer.WriteLong(nStyle);
+			Writer.Seek(nEndPos);
+
+			Writer.WriteDouble(aRC[i]["size"]);
+			aRC[i]["color"].forEach(function(component) {
+				Writer.WriteDouble(component);
+			});
+
+			Writer.WriteString2(aRC[i]["name"]);
+			Writer.WriteString2(aRC[i]["text"]);
+		}
+	}
+	
+	writeRC(aRCNew);
+	writeRC(aRCOld);
+};
+CChangesPDFFreeTextRC.prototype.ReadFromBinary = function(Reader) {
+    function readRC() {
+        let aRC = [];
+        let length = Reader.GetLong();
+
+        for (let i = 0; i < length; i++) {
+            let rcItem = {};
+
+            rcItem["alignment"] = Reader.GetByte();
+            let nStyle = Reader.GetLong();
+
+            // обработка флагов стиля шрифта
+            rcItem["bold"] = !!(nStyle & (1 << 0));
+            rcItem["italic"] = !!(nStyle & (1 << 1));
+            rcItem["strikethrough"] = !!(nStyle & (1 << 3));
+            rcItem["underlined"] = !!(nStyle & (1 << 4));
+            rcItem["vertical"] = (nStyle & (1 << 5)) ? Reader.GetDouble() : null;
+            rcItem["actual"] = (nStyle & (1 << 6)) ? Reader.GetString2() : null;
+
+            rcItem["size"] = Reader.GetDouble();
+
+            rcItem["color"] = [];
+            for (let j = 0; j < 3; j++) {  // Предполагается, что цвет состоит из 3 компонентов (например, RGB)
+                rcItem["color"].push(Reader.GetDouble());
+            }
+
+            rcItem["name"] = Reader.GetString2();
+            rcItem["text"] = Reader.GetString2();
+
+            aRC.push(rcItem);
+        }
+
+        return aRC;
+    }
+
+    this.New = readRC();
+    this.Old = readRC();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFreeTextAlign(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFreeTextAlign.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFreeTextAlign.prototype.constructor = CChangesPDFFreeTextAlign;
+CChangesPDFFreeTextAlign.prototype.Type = AscDFH.historyitem_type_Pdf_Annot_FreeText_Align;
+CChangesPDFFreeTextAlign.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetDisplay(Value);
 };
 
 /**
@@ -718,6 +847,23 @@ CChangesPDFAnnotDisplay.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetDisplay(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFAnnotIntent(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotIntent.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFAnnotIntent.prototype.constructor = CChangesPDFAnnotIntent;
+CChangesPDFAnnotIntent.prototype.Type = AscDFH.historyitem_Pdf_Annot_Intent;
+CChangesPDFAnnotIntent.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetIntent(Value);
 };
 
 /**

@@ -228,7 +228,26 @@
         this._doc = oDoc;
     };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
-        this.SetNeedRecalc(true);
+        if (this.group) {
+            if (this.group.IsAnnot() && this.group.IsFreeText()) {
+                this.group.SetNeedUpdateRC(true);
+            }
+            this.group.SetNeedRecalc(true);
+        }
+        else {
+            this.SetNeedRecalc(true);
+        }
+    };
+    CPdfDrawingPrototype.prototype.OnTextPrChange = function() {
+        if (this.group) {
+            if (this.group.IsAnnot() && this.group.IsFreeText()) {
+                this.group.SetNeedUpdateRC(true);
+            }
+            this.group.SetNeedRecalc(true);
+        }
+        else {
+            this.SetNeedRecalc(true);
+        }
     };
     CPdfDrawingPrototype.prototype.GetDocument = function() {
         if (this.group)

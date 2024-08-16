@@ -953,7 +953,7 @@
         if (this.selection.groupSelection) {
             let oGroup = this.selection.groupSelection;
             if (oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.IsFreeText() && oGroup.selection.textSelection) {
-                return oGroup;
+                return [oGroup];
             }
 
             return this.selection.groupSelection.selectedObjects;
