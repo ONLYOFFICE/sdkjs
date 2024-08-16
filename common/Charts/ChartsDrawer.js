@@ -963,7 +963,9 @@ CChartsDrawer.prototype =
 		var axId = chartSpace.chart.plotArea.axId;
 		let isLeftAxis = false;
 		let isRightAxis = false;
-		let isTopExist = chartSpace && chartSpace.chart ? chartSpace.chart.title || (chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
+		let isTopExist = chartSpace && chartSpace.chart ? !!chartSpace.chart.title || (!!chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
+		console.log(isTopExist);
+		let isVertAxisExist = false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -1002,9 +1004,15 @@ CChartsDrawer.prototype =
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 					}
 				}
+				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (axId[i].axPos === AscFormat.AX_POS_T || axId[i].axPos === AscFormat.AX_POS_B && !isVertAxisExist)) {
+					isVertAxisExist = true;
+				}
 			}
 		}
 
+		// if no vetical axis when top is not exist, then should work as if top exist
+		isTopExist = !isTopExist && !isVertAxisExist ? true : isTopExist;
+		console.log(isTopExist)
 
 		//TITLE
 		var topMainTitle = 0;
@@ -1459,7 +1467,6 @@ CChartsDrawer.prototype =
 		if (isLayout) {
 			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
 			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
-			this.calcProp.chartGutter._left = this.cChartSpace.chart.plotArea.x * this.calcProp.pxToMM;
 			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
 		} else {
 			this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;

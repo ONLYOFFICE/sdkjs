@@ -871,6 +871,7 @@ function(window, undefined) {
 			sinAlpha = Math.abs(Math.sin(fAngle));
 			cosAlpha = Math.abs(Math.cos(fAngle));
 			rotatedMaxWidth = (cosAlpha + sinAlpha) * oLabelParams.maxHeight;
+			console.log(rotatedMaxWidth);
 			// bDirection indecates whether angle is positive or negative. 
 			// excel incorrectly works with align, is they will fix it uncomment this line, and remove this align from getTranslationX function
 			// bDirection =  this.align ? oLabelParams.rot > 0 : oLabelParams.rot <= 0;
@@ -1275,7 +1276,11 @@ function(window, undefined) {
 		let oSeries = this.chartSpace.chart.plotArea.getSeriesWithSmallestIndexForAxis(this.axis);
 		// check if axis has user typed labels
 		const mainAxis = oSeries ? oSeries.cat : null // && oSeries.cat.getLit();
-		return !!mainAxis; 
+
+		//statement2 checks if non general
+		const sFormatCode = this.axis.getFormatCode();
+		const statement2 = sFormatCode !== 'General';
+		return !!mainAxis || statement2; 
 	}
 
 	CLabelsBox.prototype.getLabelsDataType = function () {
@@ -1295,20 +1300,19 @@ function(window, undefined) {
 
 		//statement2 checks if date
 		const sFormatCode = this.axis.getFormatCode();
-		const statement2 = this.axis && sFormatCode !== 'General';
+		const statement2 = sFormatCode !== 'General';
 		const oNumFormat = oNumFormatCache.get(sFormatCode);
 
-		//retrieve date
-		const isDate = oNumFormat ? oNumFormat.isDateTimeFormat() : false;
-		let msg = 'date_'
-		if (isDate && mainAxis) {
+		let msg = 'date_';
+		const isDateAx = this.axis.getObjectType() === AscDFH.historyitem_type_DateAx;
+		if (isDateAx && mainAxis) {
 			const numCache = mainAxis.getNumCache();
 			if (numCache) {
 				const val = Array.isArray(numCache.pts) && numCache.pts.length > 0 ? numCache.pts[0].val : null;
 				msg = AscFormat.isRealNumber(val) ? msg + val : msg;
 			}
 		}
-		return statement2 ? (isDate ? msg : 'string') : 'number'; 
+		return statement2 ? (isDateAx ? msg : 'string') : 'number'; 
 	}
 
 	function fCreateLabel(sText, idx, oParent, oChart, oTxPr, oSpPr, oDrawingDocument) {
@@ -5069,6 +5073,7 @@ function(window, undefined) {
 		return dDepth;
 	};
 	CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
+		console.log(oRect, oBaseRect);
 		let oCorrectedRect = null;
 		let bWithoutLabels = false;
 		if(this.chart.plotArea.layout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER) {
@@ -5345,17 +5350,17 @@ function(window, undefined) {
 					oCurAxis.nullPos = fBK;
 				}
 			}
-			if(oLabelsBox && !isLayout) {
+			if(oLabelsBox) {
 				if(oLabelsBox.x < fL) {
 					fL = oLabelsBox.x;
 				}
 				if(oLabelsBox.x + oLabelsBox.extX > fR) {
 					fR = oLabelsBox.x + oLabelsBox.extX;
 				}
-				if(oLabelsBox.y < fT) {
+				if(!isLayout && oLabelsBox.y < fT) {
 					fT = oLabelsBox.y;
 				}
-				if(oLabelsBox.y + oLabelsBox.extY > fB) {
+				if(!isLayout && oLabelsBox.y + oLabelsBox.extY > fB) {
 					fB = oLabelsBox.y + oLabelsBox.extY;
 				}
 			}
@@ -5847,9 +5852,9 @@ function(window, undefined) {
 											w: oLabel.tx.rich.getContentWidth(),
 											h: oLabel.tx.rich.content.GetSummaryHeight()
 										}, w2, h2, x1, y0, xc, yc;
-										w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
-										h2 = wh.w * Math.sin(Math.PI / 4) + wh.h * Math.cos(Math.PI / 4);
-										x1 = oCatAx.xPoints[i].pos + wh.h * Math.sin(Math.PI / 4);
+										w2 = wh.w * Math.cos(fAngle) + wh.h * Math.sin(fAngle);
+										h2 = wh.w * Math.sin(fAngle) + wh.h * Math.cos(fAngle);
+										x1 = oCatAx.xPoints[i].pos + wh.h * Math.sin(fAngle);
 										y0 = oAxisLabels.y + labels_offset;
 										var x1t, y0t;
 										var oRes = oProcessor3D.convertAndTurnPoint(x1 * this.chartObj.calcProp.pxToMM, y0 * this.chartObj.calcProp.pxToMM, dZPositionCatAxis);
@@ -11690,7 +11695,9 @@ function(window, undefined) {
 			const fTrueRectStart = fTrueRectHeight * fChartStart;
 
 			// function to obtains standart margin
-			const margin = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chartObj ? oLabelsBox.chartSpace.chartObj.getStandartMargin() * 2 : 0;
+			let margin = oLabelsBox.chartSpace && oLabelsBox.chartSpace.chartObj ? oLabelsBox.chartSpace.chartObj.getStandartMargin() : 0;
+			const is3dChart = oLabelsBox.chartSpace ? oLabelsBox.chartSpace.is3dChart() : false;
+			margin = !is3dChart ? margin * 2 : margin;
 
 			// check wheter the axis is on top or on bottom, standart is bottom
 			const statement1 = !oLabelsBox.axis || (oLabelsBox.axis.axPos === AscFormat.AX_POS_B && oLabelsBox.axis.tickLblPos !== AscFormat.TICK_LABEL_POSITION_HIGH);
@@ -11703,6 +11710,7 @@ function(window, undefined) {
 			const heightMultiplier = 0.45;
 			this.maxHeight = fRectHeight * heightMultiplier;
 		}
+		console.log(this.maxHeight);
 	};
 
 	CLabelsParameters.prototype.calculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
