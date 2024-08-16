@@ -187,7 +187,7 @@ $(function ()
 	
 	
 	QUnit.module("Remove/replace text in a block-level sdt");
-	QUnit.test("Check if all content of the sdt was deleted (bug 67071)", function(assert)
+	QUnit.test("Check replacing text in a block-level content control (bug 67071)", function(assert)
 	{
 		AscTest.ClearDocument();
 		let p = AscTest.CreateParagraph();
@@ -225,6 +225,40 @@ $(function ()
 			"Check content control text after accepting all changes"
 		);
 		
+		AscTest.SetTrackRevisions(false);
+	});
+	
+	QUnit.test("Check accepting all changes when entire content of a block-level sdt was deleted", function(assert)
+	{
+		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
+		let cc = AscTest.CreateBlockLvlSdt();
+
+		logicDocument.AddToContent(0, p);
+		logicDocument.AddToContent(0, cc);
+
+		p = cc.GetElement(0);
+
+		cc.SelectContentControl();
+		AscTest.EnterText("Text");
+		
+		AscTest.SetTrackRevisions(true);
+
+		cc.SelectContentControl();
+		logicDocument.Remove(-1);
+
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Remove, "Text"],
+			],
+			"Select text. Enter text over selection"
+		);
+
+		AscTest.AcceptAllRevisionChanges();
+		assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is still present in the document");
+		assert.strictEqual(logicDocument.GetElementsCount(), 1, "Check the number of elements in the document");
+
 		AscTest.SetTrackRevisions(false);
 	});
 	
