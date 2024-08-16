@@ -259,33 +259,93 @@ $(function ()
 		assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is still present in the document");
 		assert.strictEqual(logicDocument.GetElementsCount(), 1, "Check the number of elements in the document");
 	});
-	QUnit.test("Check accepting all changes in the special case when entire document was deleted (including a block-level sdt) (bug 69615)", function(assert)
+	QUnit.test("Check accepting changes in the special case when entire document was deleted (including a block-level sdt) (bug 69615)", function(assert)
 	{
-		let pAfter  = AscTest.CreateParagraph();
-		let pBefore = AscTest.CreateParagraph();
-		let cc      = AscTest.CreateBlockLvlSdt();
+		function test(bySelection)
+		{
+			AscTest.ClearDocument();
+			AscTest.SetTrackRevisions(false);
+			
+			let pAfter  = AscTest.CreateParagraph();
+			let pBefore = AscTest.CreateParagraph();
+			let cc      = AscTest.CreateBlockLvlSdt();
+			
+			logicDocument.AddToContent(0, pAfter);
+			logicDocument.AddToContent(0, cc);
+			logicDocument.AddToContent(0, pBefore);
+			
+			AscTest.AddTextToParagraph(pAfter, "After");
+			AscTest.AddTextToParagraph(pBefore, "Before");
+			
+			p = cc.GetElement(0);
+			
+			cc.SelectContentControl();
+			AscTest.EnterText("Inside content control");
+			
+			AscTest.SetTrackRevisions(true);
+			
+			logicDocument.SelectAll();
+			logicDocument.Remove(-1);
+			
+			if (bySelection)
+			{
+				logicDocument.SelectAll();
+				AscTest.AcceptRevisionChangesBySelection();
+			}
+			else
+			{
+				AscTest.AcceptAllRevisionChanges();
+			}
+			
+			assert.true(true, bySelection ? "BySelection" : "All");
+			
+			assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is still present in the document");
+			assert.strictEqual(logicDocument.GetElementsCount(), 1, "Check the number of elements in the document");
+			assert.strictEqual(logicDocument.GetElement(0).IsParagraph() && logicDocument.GetElement(0).IsEmpty(), true, "Check if the last element in the document is an empty paragraph");
+		}
 		
-		logicDocument.AddToContent(0, pAfter);
-		logicDocument.AddToContent(0, cc);
-		logicDocument.AddToContent(0, pBefore);
+		test(false);
+		test(true);
+	});
+	QUnit.test("Check rejecting changes in the special case when entire document was added (including a block-level sdt)", function(assert)
+	{
+		function test(bySelection)
+		{
+			AscTest.ClearDocument();
+			AscTest.SetTrackRevisions(true);
+			
+			let pAfter  = AscTest.CreateParagraph();
+			let pBefore = AscTest.CreateParagraph();
+			let cc      = AscTest.CreateBlockLvlSdt();
+			
+			logicDocument.AddToContent(0, pAfter);
+			logicDocument.AddToContent(0, cc);
+			logicDocument.AddToContent(0, pBefore);
+			
+			AscTest.AddTextToParagraph(pAfter, "After");
+			AscTest.AddTextToParagraph(pBefore, "Before");
+			
+			p = cc.GetElement(0);
+			
+			cc.SelectContentControl();
+			AscTest.EnterText("Inside content control");
+			
+			logicDocument.SelectAll();
+			
+			if (bySelection)
+				AscTest.RejectRevisionChangesBySelection();
+			else
+				AscTest.RejectAllRevisionChanges();
+			
+			assert.true(true, bySelection ? "BySelection" : "All");
+			
+			assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is still present in the document");
+			assert.strictEqual(logicDocument.GetElementsCount(), 1, "Check the number of elements in the document");
+			assert.strictEqual(logicDocument.GetElement(0).IsParagraph() && logicDocument.GetElement(0).IsEmpty(), true, "Check if the last element in the document is an empty paragraph");
+		}
 		
-		AscTest.AddTextToParagraph(pAfter, "After");
-		AscTest.AddTextToParagraph(pBefore, "Before");
-		
-		p = cc.GetElement(0);
-		
-		cc.SelectContentControl();
-		AscTest.EnterText("Inside content control");
-		
-		AscTest.SetTrackRevisions(true);
-		
-		logicDocument.SelectAll();
-		logicDocument.Remove(-1);
-		
-		AscTest.AcceptAllRevisionChanges();
-		assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is still present in the document");
-		assert.strictEqual(logicDocument.GetElementsCount(), 1, "Check the number of elements in the document");
-		assert.strictEqual(logicDocument.GetElement(0).IsParagraph() && logicDocument.GetElement(0).IsEmpty(), true, "Check if the last element in the document is an empty paragraph");
+		test(false);
+		test(true);
 	});
 	
 });
