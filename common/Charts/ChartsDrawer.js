@@ -1463,9 +1463,20 @@ CChartsDrawer.prototype =
 		//считаем маргины
 		this._calculateMarginsChart(chartSpace);
 
-		const isLayout = this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.layout;
-		if (isLayout) {
+		const isLayout = this.cChartSpace.isLayout();
+		// layour should not affect for circular charts
+		let isCircular = false;
+		if (chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
+			const charts = chartSpace.chart.plotArea.charts;
+			for (let i = 0; i < charts.length; i++) {
+				const typeChart = charts[0].getObjectType();
+				isCircular = !isCircular ? (typeChart === AscDFH.historyitem_type_PieChart || typeChart === AscDFH.historyitem_type_DoughnutChart) : isCircular;
+			}
+		}
+		
+		if (isLayout && !isCircular) {
 			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
+			console.log(this.calcProp.trueWidth)
 			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
 			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
 		} else {
@@ -10213,6 +10224,7 @@ drawAreaChart.prototype = {
 		var pen;
 		var seria, dataSeries, numCache;
 
+		console.log(this.chartProp.trueWidth);
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(
 			this.chartProp.chartGutter._left / this.chartProp.pxToMM,

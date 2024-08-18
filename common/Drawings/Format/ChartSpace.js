@@ -1025,7 +1025,7 @@ function(window, undefined) {
 					fY0 = fAxisY + fDistance;
 					if (fDistance >= 0.0) {
 						fXC = oLabelParams && oLabelParams.valid ? fCurX : fCurX - oSize.w * fMultiplier / 2.0;
-						fYC = oLabelParams && oLabelParams.valid ? fY0 : fY0 + fBoxH / 2.0;
+						fYC = oLabelParams && oLabelParams.valid ? fY0 + squareWidth / 2.0 : fY0 + fBoxH / 2.0;
 					} else {
 						//fX1 = fCurX - oSize.h*fMultiplier;
 						fXC = oLabelParams && oLabelParams.valid ? fCurX : fCurX + oSize.w * fMultiplier / 2.0;
@@ -5075,15 +5075,17 @@ function(window, undefined) {
 	CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
 		console.log(oRect, oBaseRect);
 		let oCorrectedRect = null;
-		let bWithoutLabels = false;
-		if(this.chart.plotArea.layout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER) {
-			bWithoutLabels = true;
+		const isLayout = this.isLayout();
+		const oPlotArea = this.getPlotArea();
+		const bWithoutLabels = isLayout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER;
+		if (isLayout && oPlotArea) {
+			oPlotArea.extX = oRect.w;
+			oPlotArea.rectWidthChanged = true;
 		}
 		
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
 		const isChartEx = this.isChartEx();
-		const isLayout = this.isLayout();
 		let fHorPadding = 0.0;
 		let fVertPadding = 0.0;
 		let fHorInterval = null;
@@ -5360,7 +5362,7 @@ function(window, undefined) {
 				if(!isLayout && oLabelsBox.y < fT) {
 					fT = oLabelsBox.y;
 				}
-				if(!isLayout && oLabelsBox.y + oLabelsBox.extY > fB) {
+				if(oLabelsBox.y + oLabelsBox.extY > fB) {
 					fB = oLabelsBox.y + oLabelsBox.extY;
 				}
 			}
@@ -5755,7 +5757,7 @@ function(window, undefined) {
 			let oChartSize = this.getChartSizes(true);
 			this.chart.plotArea.x = oChartSize.startX;
 			this.chart.plotArea.y = oChartSize.startY;
-			this.chart.plotArea.extX = oChartSize.w;
+			this.chart.plotArea.extX = this.chart.plotArea.rectWidthChanged ? this.chart.plotArea.extX : oChartSize.w;
 			this.chart.plotArea.extY = oChartSize.h;
 			this.chart.plotArea.localTransform.Reset();
 			AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
