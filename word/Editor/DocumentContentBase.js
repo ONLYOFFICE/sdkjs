@@ -2527,7 +2527,7 @@ CDocumentContentBase.prototype.OnContentChange = function()
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
 	}
-	else if (shape && Asc.editor.isPdfEditor()) {
+	else if (shape && shape.OnContentChange) {
 		shape.OnContentChange();
 	}
 };
@@ -2543,7 +2543,7 @@ CDocumentContentBase.prototype.OnTextPrChange = function()
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
 	}
-	else if (shape && Asc.editor.isPdfEditor()) {
+	else if (shape && shape.OnTextPrChange()) {
 		shape.OnTextPrChange();
 	}
 };

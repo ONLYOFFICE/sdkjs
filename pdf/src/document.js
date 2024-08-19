@@ -2493,6 +2493,7 @@ var CPresentation = CPresentation || function(){};
 
         switch (nDescription) {
             case AscDFH.historydescription_Pdf_FieldCommit:
+            case AscDFH.historydescription_Pdf_UpdateAnnotRC:
                 this.SetGlobalHistory();
                 break;
         }

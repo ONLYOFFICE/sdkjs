@@ -967,10 +967,16 @@
         let oDoc = this.GetDocument();
         if (isIn) {
             this.selection.textSelection = this.GetTextBoxShape();
+            this._prevRect = this.GetRect().slice();
+            this._prevRectDiff = (this.GetRectangleDiff() || [0, 0, 0, 0]).slice();
+            this._prevCallout = this.GetCallout().slice();
             oDoc.SetLocalHistory();
         }
         else {
             oDoc.SetGlobalHistory();
+            this._prevRect = undefined;
+            this._prevRectDiff = undefined;
+            this._prevCallout = undefined;
         }
 
         if (false == this.IsChanged()) {
@@ -1060,8 +1066,6 @@
 		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true, ParaSeparator: '\r'}).replace('\r', '');
 		oContent.SetApplyToAll(false);
 
-        this.SetInTextBox(false);
-
         if (this.GetContents() != sText || this.IsNeedUpdateRC()) {
             oDoc.DoAction(function() {
                 this.GetContents() != sText && this.SetContents(sText);
@@ -1071,12 +1075,17 @@
                     let aNewRc = this.GetRichContents(true);
                     
                     this._richContents = aNewRc;
+
+                    oDoc.History.Add(new CChangesFreeTextCallout(this, this._prevCallout, this.GetCallout()));
+                    oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
+                    oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
                     oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
                     this.SetNeedUpdateRC(false);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
         }
         
+        this.SetInTextBox(false);
         this.resetSelection();
         oDoc.GetDrawingDocument().TargetEnd();
     };
@@ -1263,7 +1272,12 @@
                     oDrDoc.TargetStart();
                     oDrDoc.showTarget(true);
                     this.SetInTextBox(true);
-                    this.FitTextBox();
+
+                    oDoc.SetGlobalHistory();
+                    oDoc.DoAction(function() {
+                        this.FitTextBox();
+                    }, AscDFH.historydescription_Pdf_FreeTextFitTextBox, this);
+                    oDoc.SetLocalHistory();
                 }
                 else {
                     oContent.SelectAll();
@@ -1639,7 +1653,7 @@
         oTxBoxShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
         oParentFreeText.addToSpTree(0, oTxBoxShape);
-
+        oParentFreeText.SetNeedUpdateRC(false);
         AscCommon.History.EndNoHistoryMode();
     }
 

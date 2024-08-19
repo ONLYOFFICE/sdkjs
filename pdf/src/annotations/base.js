@@ -424,90 +424,6 @@
         let nOldX = this._rect[0];
         let nOldY = this._rect[1];
 
-        let nDeltaX = x - nOldX;
-        let nDeltaY = y - nOldY;
-
-        if (0 == nDeltaX && 0 == nDeltaY) {
-            return;
-        }
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        if (this.IsInk()) {
-            let aPath;
-            for (let i = 0; i < this._gestures.length; i++) {
-                aPath = this._gestures[i];
-                for (let j = 0; j < aPath.length; j++) {
-                    aPath[j].x += nDeltaX / nScaleX;
-                    aPath[j].y += nDeltaY / nScaleY;
-                }
-            }
-        }
-        else if (this.IsLine()) {
-            for (let i = 0; i < this._points.length; i+=2) {
-                this._points[i] += nDeltaX / nScaleX;
-                this._points[i+1] += nDeltaY / nScaleY;
-            }
-        }
-        else if (this.IsPolygon() || this.IsPolyLine()) {
-            for (let i = 0; i < this._vertices.length; i+=2) {
-                this._vertices[i] += nDeltaX / nScaleX;
-                this._vertices[i+1] += nDeltaY / nScaleY;
-            }
-        }
-        else if (this.IsFreeText()) {
-            let aCallout = this.GetCallout();
-            if (aCallout) {
-                for (let i = 0; i < aCallout.length; i+=2) {
-                    aCallout[i] += nDeltaX / nScaleX;
-                    aCallout[i+1] += nDeltaY / nScaleY;
-                }
-            }
-        }
-
-        oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
-
-        let nWidth  = this._pagePos.w;
-        let nHeight = this._pagePos.h;
-
-        this._rect[0] = x;
-        this._rect[1] = y;
-        this._rect[2] = x + nWidth;
-        this._rect[3] = y + nHeight;
-        
-        let aRD = this.GetRectangleDiff() || [0, 0, 0, 0];
-
-        this._origRect[0] = this._rect[0] / nScaleX - aRD[0];
-        this._origRect[1] = this._rect[1] / nScaleY - aRD[1];
-        this._origRect[2] = this._rect[2] / nScaleX + aRD[2];
-        this._origRect[3] = this._rect[3] / nScaleY + aRD[3];
-
-        this._pagePos = {
-            x: this._rect[0],
-            y: this._rect[1],
-            w: (this._rect[2] - this._rect[0]),
-            h: (this._rect[3] - this._rect[1])
-        };
-
-        AscCommon.History.StartNoHistoryMode();
-        let aOrigRect = this.GetOrigRect();
-        let oXfrm = this.getXfrm();
-        oXfrm.setOffX(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX + aRD[0] * g_dKoef_pix_to_mm * nScaleX);
-        oXfrm.setOffY(aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY + aRD[1] * g_dKoef_pix_to_mm * nScaleX);
-        AscCommon.History.EndNoHistoryMode();
-
-        this.SetNeedRecalc(true);
-        this.SetWasChanged(true);
-    };
-    CAnnotationBase.prototype.SetPosition = function(x, y) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let nPage   = this.GetPage();
-
-        let nOldX = this._rect[0];
-        let nOldY = this._rect[1];
-
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
@@ -569,11 +485,14 @@
             h: (this._rect[3] - this._rect[1])
         };
 
-        AscCommon.History.StartNoHistoryMode();
-        let oXfrm = this.getXfrm();
-        oXfrm.setOffX(oXfrm.offX + nDeltaX * nScaleX * g_dKoef_pix_to_mm);
-        oXfrm.setOffY(oXfrm.offY + nDeltaY * nScaleY * g_dKoef_pix_to_mm);
-        AscCommon.History.EndNoHistoryMode();
+        let aOrigRect = this.GetOrigRect();
+        if (this.IsShapeBased()) {
+            let oXfrm = this.getXfrm();
+            AscCommon.History.StartNoHistoryMode();
+            oXfrm.setOffX(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX + aRD[0] * g_dKoef_pix_to_mm * nScaleX);
+            oXfrm.setOffY(aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY + aRD[1] * g_dKoef_pix_to_mm * nScaleX);
+            AscCommon.History.EndNoHistoryMode();
+        }
 
         this.SetNeedRecalc(true);
         this.SetWasChanged(true);
