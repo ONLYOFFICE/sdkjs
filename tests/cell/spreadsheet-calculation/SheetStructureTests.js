@@ -3021,6 +3021,173 @@ $(function () {
 		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Data],[#Headers]]", "Value for edit in cell after Table[[#Data],[#Headers]] is typed");
 		assert.strictEqual(resCell.getFormula(), tableName + "[[#Data],[#Headers]]", "Formula in cell after Table[[#Data],[#Headers]] is typed");
 
+
+		// for bug 46174 - short entry inside a table
+		// =[Column1]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[Column1]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of short entry [Column1][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of short entry [Column1][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), 1, 'Result of short entry [Column1][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=[Column1]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=[Column1]", "Value for edit in cell after short entry [Column1] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[Column1]", "Formula in cell after short entry [Column1] is typed");
+
+		// =Table[Column1]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[Column1]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result of short entry [Column1][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result of short entry [Column1][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), 1, 'Result of short entry [Column1][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=" + tableName + "[Column1]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=[Column1]", "Value for edit in cell after Table[Column1] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[Column1]", "Formula in cell after [Column1] is typed");
+
+		// [#Headers]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[#Headers]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "Column1", 'Result of short entry [#Headers][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "Column2", 'Result of short entry [#Headers][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), "Column3", 'Result of short entry [#Headers][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=[#Headers]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#Headers]", "Value for edit in cell after short entry [#Headers] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#Headers]", "Formula in cell after short entry [#Headers] is typed");
+
+		// Table[#Headers]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[#Headers]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "Column1", 'Result Table[#Headers][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "Column2", 'Result Table[#Headers][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), "Column3", 'Result Table[#Headers][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=" + tableName + "[#Headers]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[#Headers]", "Value for edit in cell after Table[#Headers] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#Headers]", "Formula in cell after Table[#Headers] is typed");
+
+		// [[Column]:[Column]]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[[Column1]:[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result [[Column1]:[Column1]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result [[Column1]:[Column1]][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), 1, 'Result [[Column1]:[Column1]][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=[[Column1]:[Column1]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column1]]", "Value for edit in cell after short entry [[Column1]:[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column1]]", "Formula in cell after short entry [[Column1]:[Column1]] is typed");
+
+		// Table[[Column]:[Column]]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula(tableName +"[[Column1]:[Column1]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), 1, 'Result Table[[Column1]:[Column1]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), 1, 'Result Table[[Column1]:[Column1]][0,1]');
+		assert.strictEqual(array.getValueByRowCol(0, 2).getValue(), 1, 'Result Table[[Column1]:[Column1]][0,2]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=" + tableName + "[[Column1]:[Column1]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[Column1]:[Column1]]", "Value for edit in cell after Table[[Column1]:[Column1]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[Column1]:[Column1]]", "Formula in cell after Table[[Column1]:[Column1]] is typed");
+
+		// [[#Headers],[Column]:[Column]]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[[#Headers],[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "Column1", 'Result [[#Headers],[Column1]:[Column2]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "Column2", 'Result [[#Headers],[Column1]:[Column2]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=[[#Headers],[Column1]:[Column2]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Headers],[Column1]:[Column2]]", "Value for edit in cell after short entry [[#Headers],[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#Headers],[Column1]:[Column2]]", "Formula in cell after short entry [[#Headers],[Column1]:[Column2]] is typed");
+
+		// Table[[#Headers],[Column]:[Column]]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[[#Headers],[Column1]:[Column2]]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValueByRowCol(0, 0).getValue(), "Column1", 'Result Table[[#Headers],[Column1]:[Column2]][0,0]');
+		assert.strictEqual(array.getValueByRowCol(0, 1).getValue(), "Column2", 'Result Table[[#Headers],[Column1]:[Column2]][0,1]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=" + tableName + "[[#Headers],[Column1]:[Column2]]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[[#Headers],[Column1]:[Column2]]", "Value for edit in cell after Table[[#Headers],[Column1]:[Column2]] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[[#Headers],[Column1]:[Column2]]", "Formula in cell after Table[[#Headers],[Column1]:[Column2]] is typed");
+
+		// [@]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula("[@]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of [@]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=[@]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@]", "Value for edit in cell after short entry [@] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#This Row]", "Formula in cell after short entry [@] is typed");
+
+		// Table[@]
+		// calc res check
+		cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 104, 0);
+		oParser = new AscCommonExcel.parserFormula(tableName + "[@]", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of Table[@]');
+
+		// value for edit and formula in cell check
+		resCell = ws.getRange4(104, 0);
+		resCell.setValue("=" + tableName +"[@]");
+		
+		assert.strictEqual(resCell.getValueForEdit(), "=" + tableName + "[@]", "Value for edit in cell after Table[@] is typed");
+		assert.strictEqual(resCell.getFormula(), tableName + "[#This Row]", "Formula in cell after Table[@] is typed");
+
+
 		clearData(0, 99, 0, 105);
 	});
 

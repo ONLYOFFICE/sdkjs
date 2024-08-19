@@ -2335,14 +2335,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		// isLocal - change "#This Row", to "@"
 		const table = this.wb.getDefinesNames(this.tableName, null);
 		let tblStr = "", columns_1, columns_2;
-		// if (!table) {
-		// 	tblStr = this.tableName;
-		// } else {
-		// 	tblStr = table.name;
-		// }
 
-		if (!this.shortName && !(this.isCellInTable && isLocal)) {
-			// short notation is not used or cell is outside the table
+		if (!(this.isCellInTable && this.oneColumnIndex && isLocal)) {
+			// only for oneColumn we use shorthand notation inside the table (as in ms)
+			// It's also important to remember that the full entry is always written into the cell, not a short one
 			tblStr = table ? table.name : this.tableName;
 		}
 
