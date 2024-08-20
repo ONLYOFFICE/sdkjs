@@ -311,6 +311,22 @@ CChangesPDFDocumentAddPage.prototype.Redo = function()
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
+CChangesPDFDocumentAddPage.prototype.private_WriteItem = function(Writer, oPage)
+{
+	Writer.WriteLong(oPage.Rotate);
+	Writer.WriteLong(oPage.Dpi);
+	Writer.WriteLong(oPage.W);
+	Writer.WriteLong(oPage.H);
+};
+CChangesPDFDocumentAddPage.prototype.private_ReadItem = function(Reader)
+{
+	return {
+		Rotate: Reader.GetLong(),
+		Dpi: Reader.GetLong(),
+		W: Reader.GetLong(),
+		H: Reader.GetLong()
+	};
+};
 
 /**
  * @constructor
@@ -353,22 +369,90 @@ CChangesPDFDocumentRemovePage.prototype.Redo = function()
 	oDocument.SetMouseDownObject(null);
 	oDrDoc.TargetEnd();
 };
+CChangesPDFDocumentRemovePage.prototype.private_WriteItem = function(Writer, oPage)
+{
+	Writer.WriteLong(oPage.Rotate);
+	Writer.WriteLong(oPage.Dpi);
+	Writer.WriteLong(oPage.W);
+	Writer.WriteLong(oPage.H);
+};
+CChangesPDFDocumentRemovePage.prototype.private_ReadItem = function(Reader)
+{
+	return {
+		Rotate: Reader.GetLong(),
+		Dpi: Reader.GetLong(),
+		W: Reader.GetLong(),
+		H: Reader.GetLong()
+	};
+};
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
-function CChangesPDFDocumentRotatePage(Class, Old, New, Color)
+function CChangesPDFDocumentRotatePage(Class, nPage, Old, New)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New);
+	this.Page = nPage;
 }
-CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDocumentRotatePage.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDocumentRotatePage.prototype.constructor = CChangesPDFDocumentRotatePage;
 CChangesPDFDocumentRotatePage.prototype.Type = AscDFH.historyitem_PDF_Document_RotatePage;
 CChangesPDFDocumentRotatePage.prototype.private_SetValue = function(Value)
 {
 	let oDoc = this.Class;
-	oDoc.SetPageRotate(Value[0], Value[1]);
+	oDoc.SetPageRotate(this.Page, Value);
+};
+CChangesPDFDocumentRotatePage.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (undefined === this.Page)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 3;
+
+	Writer.WriteLong(nFlags);
+
+	if (undefined !== this.Page)
+		Writer.WriteLong(this.Page);
+
+	if (undefined !== this.New)
+		Writer.WriteLong(this.New);
+
+	if (undefined !== this.Old)
+		Writer.WriteLong(this.Old);
+};
+CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : IsUndefined New
+	// 3-bit : IsUndefined Old
+	// long : New
+	// long : Old
+
+
+	var nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Page = undefined;
+	else
+		this.Page = Reader.GetLong();
+
+	if (nFlags & 2)
+		this.New = undefined;
+	else
+		this.New = Reader.GetLong();
+
+	if (nFlags & 3)
+		this.Old = undefined;
+	else
+		this.Old = Reader.GetLong();
 };
 
 /**

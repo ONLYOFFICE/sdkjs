@@ -2211,7 +2211,7 @@ var CPresentation = CPresentation || function(){};
 		let oViewer     = this.Viewer;
 		let oFile       = oViewer.file;
 
-        this.History.Add(new CChangesPDFDocumentRotatePage(this, [nPage, oFile.pages[nPage].Rotate], [nPage, nAngle]));
+        this.History.Add(new CChangesPDFDocumentRotatePage(this, nPage, oFile.pages[nPage].Rotate, nAngle));
 		oFile.pages[nPage].Rotate = nAngle;
 
         // sticky note всегда неповернуты
