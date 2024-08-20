@@ -667,7 +667,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.toArray = function (putValue, checkOnError, fPrepareElem) {
 		let arr = [];
 		if (this.getMatrix) {
-			arr = this.getMatrix();
+			arr = this.type === cElementType.cellsRange3D ? this.getMatrix()[0] : this.getMatrix();
 			arr = getArrayCopy(arr);
 
 			if (putValue || checkOnError) {
