@@ -14655,7 +14655,7 @@
 			});
 			if (oOutStackElem && (oOutStackElem.type === cElementType.cellsRange || oOutStackElem.type === cElementType.cellsRange3D)) {
 				let oElemRange = oOutStackElem.getRange();
-				if (oElemRange.containCell2(this)) {
+				if (oElemRange  && oElemRange.containCell2(this)) {
 					sAreaIndex = oOutStackElem.value.replace(/\$/g, "");
 				}
 			} else if (oOutStackElem && (oOutStackElem.type === cElementType.name || oOutStackElem.type === cElementType.name3D)) {
