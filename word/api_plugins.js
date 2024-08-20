@@ -54,20 +54,20 @@
     /**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
      * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * * <b>0</b> - only deleting
-	 * * <b>1</b> - disable deleting or editing
-	 * * <b>2</b> - only editing
-	 * * <b>3</b> - full access
+	 * <b>0</b> - only deleting
+	 * <b>1</b> - disable deleting or editing
+	 * <b>2</b> - only editing
+	 * <b>3</b> - full access
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
 	 */
 
     /**
      * @typedef {(1 | 2 | 3 | 4)} ContentControlType
      * A numeric value that specifies the content control type:
-	 * * <b>1</b> - block content control
-	 * * <b>2</b> - inline content control
-	 * * <b>3</b> - row content control
-	 * * <b>4</b> - cell content control
+	 * <b>1</b> - block content control
+	 * <b>2</b> - inline content control
+	 * <b>3</b> - row content control
+	 * <b>4</b> - cell content control
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlType.js
 	 */
 
@@ -100,19 +100,19 @@
 	/**
 	 * @typedef {('none' | 'comments' | 'forms' | 'readOnly')} DocumentEditingRestrictions
 	 * The document editing restrictions:
-	 * * <b>none</b> - no editing restrictions,
-	 * * <b>comments</b> - allows editing comments,
-	 * * <b>forms</b> - allows editing form fields,
-	 * * <b>readOnly</b> - does not allow editing.
+	 * <b>none</b> - no editing restrictions,
+	 * <b>comments</b> - allows editing comments,
+	 * <b>forms</b> - allows editing form fields,
+	 * <b>readOnly</b> - does not allow editing.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/DocumentEditingRestrictions.js
 	 */
 	
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
-	 * * <b>entirely</b> - replaces/returns the whole text,
-	 * * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
-	 * * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
+	 * <b>entirely</b> - replaces/returns the whole text,
+	 * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
+	 * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/TextPartType.js
 	 */
 
@@ -590,10 +590,10 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias SetDisplayModeInReview
 	 * @param {string} [sMode="edit"] - The display mode:
-	 * * <b>edit</b> - all changes are displayed,
-	 * * <b>simple</b> - all changes are displayed but the balloons are turned off,
-	 * * <b>final</b> - all accepted changes are displayed,
-	 * * <b>original</b> - all rejected changes are displayed.
+	 * <b>edit</b> - all changes are displayed,
+	 * <b>simple</b> - all changes are displayed but the balloons are turned off,
+	 * <b>final</b> - all accepted changes are displayed,
+	 * <b>original</b> - all rejected changes are displayed.
 	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/SetDisplayModeInReview.js
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)

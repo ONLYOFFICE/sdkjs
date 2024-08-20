@@ -47,23 +47,23 @@ window.startPluginApi = function() {
 
 	/**
 	 * The editors which the plugin is available for:
-	 * * <b>word</b> - text document editor,
-	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor,
-	 * * <b>pdf</b> - pdf editor.
+	 * <b>word</b> - text document editor,
+	 * <b>cell</b> - spreadsheet editor,
+	 * <b>slide</b> - presentation editor,
+	 * <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
 	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
 	/**
 	 * The data type selected in the editor and sent to the plugin:
-     * * <b>text</b> - the text data,
-	 * * <b>html</b> - HTML formatted code,
-	 * * <b>ole</b> - OLE object data,
-     * * <b>desktop</b> - the desktop editor data,
-     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
-     * * <b>none</b> - no data will be send to the plugin from the editor,
-	 * * <b>sign</b> - the sign for the keychain plugin.
+     * <b>text</b> - the text data,
+	 * <b>html</b> - HTML formatted code,
+	 * <b>ole</b> - OLE object data,
+     * <b>desktop</b> - the desktop editor data,
+     * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * <b>none</b> - no data will be send to the plugin from the editor,
+	 * <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
@@ -91,10 +91,10 @@ window.startPluginApi = function() {
 	/**
      * @typedef {(0 | 1 | 2 | 3)} ContentControlLock
      * A value that defines if it is possible to delete and/or edit the content control or not:
-	 * * <b>0</b> - only deleting,
-	 * * <b>1</b> - disable deleting or editing,
-	 * * <b>2</b> - only editing,
-	 * * <b>3</b> - full access.
+	 * <b>0</b> - only deleting,
+	 * <b>1</b> - disable deleting or editing,
+	 * <b>2</b> - only editing,
+	 * <b>3</b> - full access.
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/ContentControlLock.js
 	 */
 
@@ -122,9 +122,9 @@ window.startPluginApi = function() {
 	 * Plugin variations, or subplugins, that are created inside the origin plugin.
 	 * @typed { Object } variation
 	 * @descr Plugin variations can be created for the following purposes:
-	 * * to perform the main plugin actions,
-	 * * to contain plugin settings,
-	 * * to display an About window, etc.
+	 * to perform the main plugin actions,
+	 * to contain plugin settings,
+	 * to display an About window, etc.
 	 * For example, the Translation plugin: the plugin itself does not need a visual window for translation as it can be done just pressing a single button, but its settings (the translation direction) and an 'About' window must be visual. So we will need to have at least two plugin variations (translation itself and settings), or three, in case we want to add an 'About' window with the information about the plugin and its authors or the software used for the plugin creation.
 	 *
 	 * @pr {string} description - The description, i.e. what describes your plugin the best way.
@@ -240,10 +240,10 @@ window.startPluginApi = function() {
 	 * @alias inputHelper_onSelectItem
 	 * @description The function called when the user is trying to select an item from the input helper.
 	 * @param {object} item - Defines the selected item:
-	 * * <b>text</b> - the item text,  
+	 * <b>text</b> - the item text,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "name";
-	 * * <b>id</b> - the item index,  
+	 * <b>id</b> - the item index,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "1".
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/inputHelper_onSelectItem.js
@@ -265,10 +265,10 @@ window.startPluginApi = function() {
 	 * @alias onInputHelperInput
 	 * @description The function called when the user is trying to input the text and the input helper appears.
 	 * @param {object} data - Defines the text which the user inputs:
-	 * * <b>add</b> - defines if the text is added to the current text (**true**) or this is the beginning of the text (**false**),  
+	 * <b>add</b> - defines if the text is added to the current text (**true**) or this is the beginning of the text (**false**),  
 	 * <b>type</b>: boolean,  
 	 * <b>example</b>: true;
-	 * * <b>text</b> - the text which the user inputs,  
+	 * <b>text</b> - the text which the user inputs,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "text".
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onInputHelperInput.js
@@ -309,10 +309,10 @@ window.startPluginApi = function() {
      * @alias onExternalPluginMessage
      * @description The function called to show the editor integrator message.
      * @param {Object} data - Defines the editor integrator message:
-	 * * <b>type</b> - the message type,  
+	 * <b>type</b> - the message type,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "close";
-	 * * <b>text</b> - the message text,  
+	 * <b>text</b> - the message text,  
 	 * <b>type</b>: string,  
 	 * <b>example</b>: "text".
      * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onExternalPluginMessage.js
@@ -353,14 +353,14 @@ window.startPluginApi = function() {
 
 	/**
 	 * The context menu type:
-	 * * <b>None</b> - not used,
-	 * * <b>Target</b> - nothing is selected,
-	 * * <b>Selection</b> - text is selected,
-	 * * <b>Image</b> - image is selected,
-	 * * <b>Shape</b> - shape is selected,
-	 * * <b>OleObject</b> - OLE object is selected.
+	 * <b>None</b> - not used,
+	 * <b>Target</b> - nothing is selected,
+	 * <b>Selection</b> - text is selected,
+	 * <b>Image</b> - image is selected,
+	 * <b>Shape</b> - shape is selected,
+	 * <b>OleObject</b> - OLE object is selected.
 	 * @typedef {("None" | "Target" | "Selection" | "Image" | "Shape" | "OleObject")} ContextMenuType
-	 * */
+	 */
 
 	/**
 	 * @typedef {Object} ContextMenuOptions
@@ -526,8 +526,8 @@ window.startPluginApi = function() {
 	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.</note>
 	 * 
 	 * When creating/editing OLE objects, two extensions are used to work with them:
-	 * * *Api.asc_addOleObject (window.Asc.plugin.info)* - used to create an OLE object in the document;
-	 * * *Api.asc_editOleObject (window.Asc.plugin.info)* - used to edit the created OLE object.
+	 * Api.asc_addOleObject (window.Asc.plugin.info)* - used to create an OLE object in the document;
+	 * Api.asc_editOleObject (window.Asc.plugin.info)* - used to edit the created OLE object.
 	 * 
 	 * When creating/editing the objects, their properties can be passed to the window.Asc.plugin.info object that defines how the object should look.
 	 * @param {string} type - Defines the type of the command. The *close* is used to close the plugin window after executing the function in the *data* parameter.

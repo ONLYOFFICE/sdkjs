@@ -168,7 +168,7 @@
      * Class representing a table.
      * @param oGraphicFrame
      * @constructor
-     * */
+     */
 	function ApiTable(oGraphicFrame){
 	    this.Table = oGraphicFrame.graphicObject;
 	    ApiDrawing.call(this, oGraphicFrame);
@@ -296,18 +296,18 @@
 
     /**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * <b>"none"</b> - not display the selected tick labels.
-     * * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
-     * * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
-     * * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
+     * <b>"none"</b> - not display the selected tick labels.
+     * <b>"nextTo"</b> - set the position of the selected tick labels next to the main label.
+     * <b>"low"</b> - set the position of the selected tick labels in the part of the chart with lower values.
+     * <b>"high"</b> - set the position of the selected tick labels in the part of the chart with higher values.
      * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
      * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
     /**
      * The type of a fill which uses an image as a background.
-     * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
      * @typedef {"tile" | "stretch"} BlipFillType
      * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -1357,17 +1357,17 @@
 
 	/**
 	 * Returns the document information:
-	 * * <b>Application</b> - the application the document has been created with.
-	 * * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * * <b>Created</b> - the parsed date and time when the file was created.
-	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * * <b>Autrors</b> - the persons who has created the file.
-	 * * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * <b>Application</b> - the application the document has been created with.
+	 * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * <b>Created</b> - the parsed date and time when the file was created.
+	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * <b>Autrors</b> - the persons who has created the file.
+	 * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {object}
@@ -2517,32 +2517,32 @@
         }
     };
 
-    /**
-     * **Need to do**
-     * Sets the effect styles to the current theme format scheme.
-     * @typeofeditors ["CPE"]
-     * @param {?Array} arrEffect - The array of effect styles must contain 3 elements - subtle, moderate and intense fills.
-     * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateStroke(0, Api.CreateNoFill()) elements.
-     * @returns {boolean}
-     * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeEffectStyles.js
-	 */
-    ApiThemeFormatScheme.prototype.ChangeEffectStyles = function(arrEffect)
-    {
-        // if (!arrEffect)
-            // arrEffect = [];
+    // /**
+    //  * **Need to do**
+    //  * Sets the effect styles to the current theme format scheme.
+    //  * @typeofeditors ["CPE"]
+    //  * @param {?Array} arrEffect - The array of effect styles must contain 3 elements - subtle, moderate and intense fills.
+    //  * If an array is empty or NoFill elements are in the array, it will be filled with the Api.CreateStroke(0, Api.CreateNoFill()) elements.
+    //  * @returns {boolean}
+    //  * @see office-js-api/Examples/{Editor}/ApiThemeFormatScheme/Methods/ChangeEffectStyles.js
+	//  */
+    // ApiThemeFormatScheme.prototype.ChangeEffectStyles = function(arrEffect)
+    // {
+    //     // if (!arrEffect)
+    //         // arrEffect = [];
 
-        // this.FormatScheme.effectStyleLst = [];
+    //     // this.FormatScheme.effectStyleLst = [];
 
-        // for (var nFill = 0; nFill < 3; nFill++)
-        // {
-        //     if (arrEffect[nFill] && arrEffect[nFill].GetClassType() === "stroke")
-        //         this.FormatScheme.addEffectToStyleLst(arrEffect[nFill].UniFill);
-        //     else 
-        //         this.FormatScheme.addEffectToStyleLst(editor.CreateNoFill().UniFill);
-        // }
+    //     // for (var nFill = 0; nFill < 3; nFill++)
+    //     // {
+    //     //     if (arrEffect[nFill] && arrEffect[nFill].GetClassType() === "stroke")
+    //     //         this.FormatScheme.addEffectToStyleLst(arrEffect[nFill].UniFill);
+    //     //     else 
+    //     //         this.FormatScheme.addEffectToStyleLst(editor.CreateNoFill().UniFill);
+    //     // }
 
-        // return true;
-    };
+    //     // return true;
+    // };
 
     /**
      * Creates a copy of the current theme format scheme.

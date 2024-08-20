@@ -432,7 +432,10 @@
 	{
 		var url = settings.url;
 
-		if ((0 === url.indexOf("http://")) || (0 === url.indexOf("https://")) || (0 === url.indexOf("file://")) || (0 === url.indexOf("www.")))
+		if ((0 !== url.indexOf("http://")) &&
+			(0 !== url.indexOf("https://")) &&
+			(0 !== url.indexOf("file://")) &&
+			(0 !== url.indexOf("www.")))
 		{
 			let location  = window.location;
 			let start = location.pathname.lastIndexOf('/') + 1;

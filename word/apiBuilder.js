@@ -2477,9 +2477,9 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the Range contents in relation to the default appearance of the Range text:
-	 * * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
-	 * * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
-	 * * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
+	 * <b>"baseline"</b> - the characters in the current text Range will be aligned by the default text baseline.
+	 * <b>"subscript"</b> - the characters in the current text Range will be aligned below the default text baseline.
+	 * <b>"superscript"</b> - the characters in the current text Range will be aligned above the default text baseline.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
@@ -3674,7 +3674,7 @@
 	/**
 	 * Class representing a shape.
 	 * @constructor
-	 * */
+	 */
 	function ApiShape(Shape)
 	{
 		ApiDrawing.call(this, Shape);
@@ -3760,7 +3760,7 @@
 	/**
 	 * Class representing a Preset Color.
 	 * @constructor
-	 * */
+	 */
 	function ApiPresetColor(sPresetColor)
 	{
 		var oUniColor = new AscFormat.CUniColor();
@@ -3774,7 +3774,7 @@
 	/**
 	 * Class representing a base class for fill.
 	 * @constructor
-	 * */
+	 */
 	function ApiFill(UniFill)
 	{
 		this.UniFill = UniFill;
@@ -3794,7 +3794,7 @@
 	/**
 	 * Class representing gradient stop.
 	 * @constructor
-	 * */
+	 */
 	function ApiGradientStop(oApiUniColor, pos)
 	{
 		this.Gs = new AscFormat.CGs();
@@ -3896,8 +3896,8 @@
 
 	/**
 	 * A border type which will be added to the document element.
-     * * <b>"none"</b> - no border will be added to the created element or the selected element side.
-     * * <b>"single"</b> - a single border will be added to the created element or the selected element side.
+     * <b>"none"</b> - no border will be added to the created element or the selected element side.
+     * <b>"single"</b> - a single border will be added to the created element or the selected element side.
 	 * @typedef {("none" | "single")} BorderType
 	 * @see office-js-api/Examples/Enumerations/BorderType.js
 	 */
@@ -3928,38 +3928,38 @@
 
 	/**
 	 * Header and footer types which can be applied to the document sections.
-     * * <b>"default"</b> - a header or footer which can be applied to any default page.
-     * * <b>"title"</b> - a header or footer which is applied to the title page.
-     * * <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
+     * <b>"default"</b> - a header or footer which can be applied to any default page.
+     * <b>"title"</b> - a header or footer which is applied to the title page.
+     * <b>"even"</b> - a header or footer which can be applied to even pages to distinguish them from the odd ones (which will be considered default).
 	 * @typedef {("default" | "title" | "even")} HdrFtrType
 	 * @see office-js-api/Examples/Enumerations/HdrFtrType.js
 	 */
 
 	/**
 	 * The possible values for the units of the width property are defined by a specific table or table cell width property.
-     * * <b>"auto"</b> - sets the table or table cell width to auto width.
-     * * <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
-     * * <b>"nul"</b> - sets the table or table cell width to be of a zero value.
-     * * <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
+     * <b>"auto"</b> - sets the table or table cell width to auto width.
+     * <b>"twips"</b> - sets the table or table cell width to be measured in twentieths of a point.
+     * <b>"nul"</b> - sets the table or table cell width to be of a zero value.
+     * <b>"percent"</b> - sets the table or table cell width to be measured in percent to the parent container.
 	 * @typedef {("auto" | "twips" | "nul" | "percent")} TableWidth
 	 * @see office-js-api/Examples/Enumerations/TableWidth.js
 	 */
 
 	/**
 	 * This simple type specifies possible values for the table sections to which the current conditional formatting properties will be applied when this selected table style is used.
-	 * * <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
-	 * * <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
-	 * * <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
-	 * * <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
-	 * * <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
-	 * * <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
-	 * * <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
-	 * * <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
-	 * * <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
-	 * * <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
-	 * * <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
-	 * * <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
-	 * * <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
+	 * <b>"topLeftCell"</b> - specifies that the table formatting is applied to the top left cell.
+	 * <b>"topRightCell"</b> - specifies that the table formatting is applied to the top right cell.
+	 * <b>"bottomLeftCell"</b> - specifies that the table formatting is applied to the bottom left cell.
+	 * <b>"bottomRightCell"</b> - specifies that the table formatting is applied to the bottom right cell.
+	 * <b>"firstRow"</b> - specifies that the table formatting is applied to the first row.
+	 * <b>"lastRow"</b> - specifies that the table formatting is applied to the last row.
+	 * <b>"firstColumn"</b> - specifies that the table formatting is applied to the first column. Any subsequent row which is in *table header* ({@link ApiTableRowPr#SetTableHeader}) will also use this conditional format.
+	 * <b>"lastColumn"</b> - specifies that the table formatting is applied to the last column.
+	 * <b>"bandedColumn"</b> - specifies that the table formatting is applied to odd numbered groupings of rows.
+	 * <b>"bandedColumnEven"</b> - specifies that the table formatting is applied to even numbered groupings of rows.
+	 * <b>"bandedRow"</b> - specifies that the table formatting is applied to odd numbered groupings of columns.
+	 * <b>"bandedRowEven"</b> - specifies that the table formatting is applied to even numbered groupings of columns.
+	 * <b>"wholeTable"</b> - specifies that the conditional formatting is applied to the whole table.
 	 * @typedef {("topLeftCell" | "topRightCell" | "bottomLeftCell" | "bottomRightCell" | "firstRow" | "lastRow" |
 	 *     "firstColumn" | "lastColumn" | "bandedColumn" | "bandedColumnEven" | "bandedRow" | "bandedRowEven" |
 	 *     "wholeTable")} TableStyleOverrideType
@@ -4057,18 +4057,18 @@
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * <b>"none"</b> - not display the selected tick labels.
-     * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-     * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-     * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+     * <b>"none"</b> - not display the selected tick labels.
+     * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * @see office-js-api/Examples/Enumerations/TickLabelPosition.js
 	 */
 
 	/**
      * The type of a fill which uses an image as a background.
-     * * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
-     * * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
+     * <b>"tile"</b> - if the image is smaller than the shape which is filled, the image will be tiled all over the created shape surface.
+     * <b>"stretch"</b> - if the image is smaller than the shape which is filled, the image will be stretched to fit the created shape surface.
 	 * @typedef {"tile" | "stretch"} BlipFillType
 	 * @see office-js-api/Examples/Enumerations/BlipFillType.js
 	 */
@@ -4143,67 +4143,67 @@
 
 	/**
 	 * Available values of the "numbered" reference type:
-	 * * <b>"pageNum"</b> - the numbered item page number;
-     * * <b>"paraNum"</b> - the numbered item paragraph number;
-	 * * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * * <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
-	 * * <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
-     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 * <b>"pageNum"</b> - the numbered item page number;
+     * <b>"paraNum"</b> - the numbered item paragraph number;
+	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * <b>"fullCtxParaNum"</b> - the full paragraph number, e.g. "4.1.1";
+	 * <b>"text"</b> - the paragraph text value, e.g. if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only;
+     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 * @see office-js-api/Examples/Enumerations/numberedRefTo.js
 	 */
 
 	/**
 	 * Available values of the "heading" reference type:
-	 * * <b>"text"</b> - the entire heading text;
-	 * * <b>"pageNum"</b> - the heading page number;
-     * * <b>"headingNum"</b> - the heading sequence number;
-	 * * <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
-     * * <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
-     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 * <b>"text"</b> - the entire heading text;
+	 * <b>"pageNum"</b> - the heading page number;
+     * <b>"headingNum"</b> - the heading sequence number;
+	 * <b>"noCtxHeadingNum"</b> - the abbreviated heading number. Make sure the cursor pointer is in the section you are referencing to, e.g. you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only;
+     * <b>"fullCtxHeadingNum"</b> - the full heading number even if the cursor pointer is in the same section;
+     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 * @see office-js-api/Examples/Enumerations/headingRefTo.js
 	 */
 
 	/**
 	 * Available values of the "bookmark" reference type:
-	 * * <b>"text"</b> - the entire bookmark text;
-	 * * <b>"pageNum"</b> - the bookmark page number;
-     * * <b>"paraNum"</b> - the bookmark paragraph number;
-	 * * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
-     * * <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
-     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 * <b>"text"</b> - the entire bookmark text;
+	 * <b>"pageNum"</b> - the bookmark page number;
+     * <b>"paraNum"</b> - the bookmark paragraph number;
+	 * <b>"noCtxParaNum"</b> - the abbreviated paragraph number (the specific item only, e.g. instead of "4.1.1" you refer to "1" only);
+     * <b>"fullCtxParaNum</b> - the full paragraph number, e.g. "4.1.1";
+     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 * @see office-js-api/Examples/Enumerations/bookmarkRefTo.js
 	 */
 
 	/**
 	 * Available values of the "footnote" reference type:
-	 * * <b>"footnoteNum"</b> - the footnote number;
-	 * * <b>"pageNum"</b> - the page number of the footnote;
-     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
-	 * * <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
+	 * <b>"footnoteNum"</b> - the footnote number;
+	 * <b>"pageNum"</b> - the page number of the footnote;
+     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the position of the item;
+	 * <b>"formFootnoteNum"</b> - the form number formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/footnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "endnote" reference type:
-	 * * <b>"endnoteNum"</b> - the endnote number;
-	 * * <b>"pageNum"</b> - the endnote page number;
-     * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
-	 * * <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
+	 * <b>"endnoteNum"</b> - the endnote number;
+	 * <b>"pageNum"</b> - the endnote page number;
+     * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position;
+	 * <b>"formEndnoteNum"</b> - the form number formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 * @see office-js-api/Examples/Enumerations/endnoteRefTo.js
 	 */
 
 	/**
 	 * Available values of the "equation"/"figure"/"table" reference type:
-	 * * <b>"entireCaption"</b>- the entire caption text;
-	 * * <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
-     * * <b>"captionText"</b> - the caption text only;
-	 * * <b>"pageNum"</b> - the page number containing the referenced object;
-	 * * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
+	 * <b>"entireCaption"</b>- the entire caption text;
+	 * <b>"labelNumber"</b> - the label and object number only, e.g. "Table 1.1";
+     * <b>"captionText"</b> - the caption text only;
+	 * <b>"pageNum"</b> - the page number containing the referenced object;
+	 * <b>"aboveBelow"</b> - the words "above" or "below" depending on the item position.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 * @see office-js-api/Examples/Enumerations/captionRefTo.js
 	 */
@@ -4233,22 +4233,22 @@
 
 	/**
      * Possible values for the caption numbering format.
-     * * <b>"ALPHABETIC"</b> - upper letter.
-     * * <b>"alphabetic"</b> - lower letter.
-     * * <b>"Roman"</b> - upper Roman.
-     * * <b>"roman"</b> - lower Roman.
-	 * * <b>"Arabic"</b> - arabic.
+     * <b>"ALPHABETIC"</b> - upper letter.
+     * <b>"alphabetic"</b> - lower letter.
+     * <b>"Roman"</b> - upper Roman.
+     * <b>"roman"</b> - lower Roman.
+	 * <b>"Arabic"</b> - arabic.
 	 * @typedef {("ALPHABETIC" | "alphabetic" | "Roman" | "roman" | "Arabic")} CaptionNumberingFormat
 	 * @see office-js-api/Examples/Enumerations/CaptionNumberingFormat.js
 	 */
 
 	/**
      * Possible values for the caption separator.
-     * * <b>"hyphen"</b> - the "-" punctuation mark.
-     * * <b>"period"</b> - the "." punctuation mark.
-     * * <b>"colon"</b> - the ":" punctuation mark.
-     * * <b>"longDash"</b> - the "—" punctuation mark.
-	 * * <b>"dash"</b> - the "-" punctuation mark.
+     * <b>"hyphen"</b> - the "-" punctuation mark.
+     * <b>"period"</b> - the "." punctuation mark.
+     * <b>"colon"</b> - the ":" punctuation mark.
+     * <b>"longDash"</b> - the "—" punctuation mark.
+	 * <b>"dash"</b> - the "-" punctuation mark.
 	 * @typedef {("hyphen" | "period" | "colon" | "longDash" | "dash")} CaptionSep
 	 * @see office-js-api/Examples/Enumerations/CaptionSep.js
 	 */
@@ -4303,9 +4303,9 @@
 
 	/**
 	 * Possible values for the table of contents leader:
-	 * * <b>"dot"</b> - "......."
-	 * * <b>"dash"</b> - "-------"
-	 * * <b>"underline"</b> - "_______"
+	 * <b>"dot"</b> - "......."
+	 * <b>"dash"</b> - "-------"
+	 * <b>"underline"</b> - "_______"
      * @typedef {("dot" | "dash" | "underline" | "none")} TocLeader
 	 * @see office-js-api/Examples/Enumerations/TocLeader.js
 	 */
@@ -7523,11 +7523,11 @@
 
 	/**
 	 * Returns the document statistics represented as an object with the following parameters:
-	 * * <b>PageCount</b> - number of pages;
-	 * * <b>WordsCount</b> - number of words;
-	 * * <b>ParagraphCount</b> - number of paragraphs;
-	 * * <b>SymbolsCount</b> - number of symbols;
-	 * * <b>SymbolsWSCount</b> - number of symbols with spaces.
+	 * <b>PageCount</b> - number of pages;
+	 * <b>WordsCount</b> - number of words;
+	 * <b>ParagraphCount</b> - number of paragraphs;
+	 * <b>SymbolsCount</b> - number of symbols;
+	 * <b>SymbolsWSCount</b> - number of symbols with spaces.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -7601,17 +7601,17 @@
 	};
 	/**
 	 * Returns the document information:
-	 * * <b>Application</b> - the application the document has been created with.
-	 * * <b>CreatedRaw</b> - the date and time when the file was created.
-	 * * <b>Created</b> - the parsed date and time when the file was created.
-	 * * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
-	 * * <b>LastModified</b> - the parsed date and time when the file was last modified.
-	 * * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
-	 * * <b>Authors</b> - the persons who has created the file.
-	 * * <b>Title</b> - this property allows you to simplify your documents classification.
-	 * * <b>Tags</b> - this property allows you to simplify your documents classification.
-	 * * <b>Subject</b> - this property allows you to simplify your documents classification.
-	 * * <b>Comment</b> - this property allows you to simplify your documents classification.
+	 * <b>Application</b> - the application the document has been created with.
+	 * <b>CreatedRaw</b> - the date and time when the file was created.
+	 * <b>Created</b> - the parsed date and time when the file was created.
+	 * <b>LastModifiedRaw</b> - the date and time when the file was last modified.
+	 * <b>LastModified</b> - the parsed date and time when the file was last modified.
+	 * <b>LastModifiedBy</b> - the name of the user who has made the latest change to the document.
+	 * <b>Authors</b> - the persons who has created the file.
+	 * <b>Title</b> - this property allows you to simplify your documents classification.
+	 * <b>Tags</b> - this property allows you to simplify your documents classification.
+	 * <b>Subject</b> - this property allows you to simplify your documents classification.
+	 * <b>Comment</b> - this property allows you to simplify your documents classification.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {object}
@@ -8548,9 +8548,9 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of this paragraph in relation to the default appearance of the paragraph text:
-	 * * <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
-	 * * <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
-	 * * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
+	 * <b>"baseline"</b> - the characters in the current paragraph will be aligned by the default text baseline.
+	 * <b>"subscript"</b> - the characters in the current paragraph will be aligned below the default text baseline.
+	 * <b>"superscript"</b> - the characters in the current paragraph will be aligned above the default text baseline.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
@@ -10224,9 +10224,9 @@
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of the current run in relation to the default appearance of the text run:
-	 * * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
+	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
+	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
+	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
@@ -12905,9 +12905,9 @@
 
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
-	 * * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
-	 * * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
-	 * * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
+	 * <b>"baseline"</b> - the characters in the current text run will be aligned by the default text baseline.
+	 * <b>"subscript"</b> - the characters in the current text run will be aligned below the default text baseline.
+	 * <b>"superscript"</b> - the characters in the current text run will be aligned above the default text baseline.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
@@ -15146,14 +15146,14 @@
 	};
 	/**
 	 * Sets the wrapping type of the current object (image, shape, chart). One of the following wrapping style types can be set:
-	 * * <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
+	 * <b>"inline"</b> - the object is considered to be a part of the text, like a character, so when the text moves, the object moves as well. In this case the positioning options are inaccessible.
 	 * If one of the following styles is selected, the object can be moved independently of the text and positioned on the page exactly:
-	 * * <b>"square"</b> - the text wraps the rectangular box that bounds the object.
-	 * * <b>"tight"</b> - the text wraps the actual object edges.
-	 * * <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
-	 * * <b>"topAndBottom"</b> - the text is only above and below the object.
-	 * * <b>"behind"</b> - the text overlaps the object.
-	 * * <b>"inFront"</b> - the object overlaps the text.
+	 * <b>"square"</b> - the text wraps the rectangular box that bounds the object.
+	 * <b>"tight"</b> - the text wraps the actual object edges.
+	 * <b>"through"</b> - the text wraps around the object edges and fills in the open white space within the object.
+	 * <b>"topAndBottom"</b> - the text is only above and below the object.
+	 * <b>"behind"</b> - the text overlaps the object.
+	 * <b>"inFront"</b> - the object overlaps the text.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {"inline" | "square" | "tight" | "through" | "topAndBottom" | "behind" | "inFront"} sType - The wrapping style type available for the object.
@@ -17688,7 +17688,7 @@
 
 	/**
 	 * Sets the placeholder text to the current inline content control.
-	 * *Can't be set to checkbox or radio button*
+	 *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
@@ -19076,7 +19076,7 @@
 	};
 	/**
 	 * Converts the current form to an inline form.
-	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
+	 *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
@@ -19172,7 +19172,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
-	 * *Returns the value as a string if possible for the given form type*
+	 *Returns the value as a string if possible for the given form type*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
@@ -19213,7 +19213,7 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
-	 * *Can't be set to checkbox or radio button.*
+	 *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE", "CFE"]
@@ -19234,7 +19234,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
-	 * *Used if possible for this type of form*
+	 *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -19253,7 +19253,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
-	 * *Used if possible for this type of form*
+	 *Used if possible for this type of form*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
@@ -19636,9 +19636,9 @@
 	};
 	/**
 	 * Sets the picture position inside the current form:
-	 * * <b>0</b> - the picture is placed on the left/top;
-	 * * <b>50</b> - the picture is placed in the center;
-	 * * <b>100</b> - the picture is placed on the right/bottom.
+	 * <b>0</b> - the picture is placed on the left/top;
+	 * <b>50</b> - the picture is placed in the center;
+	 * <b>100</b> - the picture is placed on the right/bottom.
 	 * @memberof ApiPictureForm
 	 * @param {percentage} nShiftX - Horizontal position measured in percent.
 	 * @param {percentage} nShiftY - Vertical position measured in percent.
@@ -19886,7 +19886,7 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
-	 * *Available only for editable combo box forms.*
+	 *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE", "CFE"]

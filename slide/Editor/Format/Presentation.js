@@ -2490,12 +2490,14 @@ CPresentation.prototype.AddNewMasterSlide = function () {
 };
 CPresentation.prototype.AddNewLayout = function () {
 	if(!this.IsMasterMode) return;
+	this.StartAction(0);
 	let oMaster = this.GetCurrentMaster();
 	if(oMaster) {
 		let oLayout = oMaster.addNewLayout();
 		this.Recalculate();
 		this.DrawingDocument.m_oWordControl.GoToPage(this.GetSlideIndex(oLayout));
 	}
+	this.FinalizeAction(true);
 };
 
 CPresentation.prototype.LoadEmptyDocument = function () {
@@ -2795,6 +2797,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							b_check_layout = true;
 							bAttack = true;
 							isUpdateThemes = true;
+							bRedrawAllSlides = true;
 							if(oDrawingObject.needRecalc()) {
 								for (let nIdx = 0; nIdx < this.Slides.length; ++nIdx) {
 									let oCalcSlide = this.Slides[nIdx];

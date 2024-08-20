@@ -323,7 +323,7 @@
         let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
 
         let ctx             = canvas.getContext("2d");
-        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, nRetValue, 4 * nWidth * nHeight);
+        let mappedBuffer    = oFile.getUint8ClampedArray(nRetValue, 4 * nWidth * nHeight);
         let imageData       = null;
 
         if (supportImageDataConstructor)

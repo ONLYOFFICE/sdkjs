@@ -183,11 +183,15 @@
     };
     CFile.prototype.getFileBinary = function()
     {
-        return this.nativeFile ? this.nativeFile["getFileAsBase64"]() : null;
+        return this.nativeFile ? this.nativeFile["getFileBinary"]() : null;
     };
-    CFile.prototype.memory = function()
+    CFile.prototype.getUint8Array = function(ptr, len)
     {
-        return this.nativeFile ? this.nativeFile["memory"]() : null;
+        return this.nativeFile ? this.nativeFile["getUint8Array"](ptr, len) : null;
+    };
+    CFile.prototype.getUint8ClampedArray = function(ptr, len)
+    {
+        return this.nativeFile ? this.nativeFile["getUint8ClampedArray"](ptr, len) : null;
     };
     CFile.prototype.free = function(pointer)
     {
@@ -320,7 +324,7 @@
         }
         
         var ctx = canvas.getContext("2d");
-        var mappedBuffer = new Uint8ClampedArray(this.memory().buffer, pixels, 4 * width * height);
+        var mappedBuffer = this.getUint8ClampedArray(pixels, 4 * width * height);
         var imageData = null;
         if (supportImageDataConstructor)
         {
@@ -405,7 +409,7 @@ void main() {\n\
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(this.memory().buffer, pixels, 4 * width * height));
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.getUint8Array(pixels, 4 * width * height));
 
         if (gl.getError() != gl.NONE)
             throw new Error('FAIL: creating webgl image texture failed');

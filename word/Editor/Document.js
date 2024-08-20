@@ -18013,13 +18013,20 @@ CDocument.prototype.AcceptAllRevisionChanges = function(isSkipCheckLock, isCheck
 		if (false !== isTrackRevision)
 			this.SetLocalTrackRevisions(false);
 
-		var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
-		for (var LogicDocId in LogicDocuments)
+		let docContentArray = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
+		for (let docContentId in docContentArray)
 		{
-			var LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
-			if (LogicDoc)
+			let docContent = AscCommon.g_oTableId.Get_ById(docContentId);
+			if (!docContent)
+				continue;
+			
+			docContent.AcceptRevisionChanges(undefined, true);
+			if (docContent.GetElementsCount() <= 0)
 			{
-				LogicDoc.AcceptRevisionChanges(undefined, true);
+				if (docContent.IsBlockLevelSdtContent())
+					docContent.GetParent().RemoveThisFromParent();
+				else
+					docContent.ClearContent(true);
 			}
 		}
 
@@ -18078,13 +18085,20 @@ CDocument.prototype.RejectAllRevisionChanges = function(isSkipCheckLock, isCheck
 };
 CDocument.prototype.private_RejectAllRevisionChanges = function()
 {
-	var LogicDocuments = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
-	for (var LogicDocId in LogicDocuments)
+	let docContentArray = this.TrackRevisionsManager.Get_AllChangesLogicDocuments();
+	for (let docContentId in docContentArray)
 	{
-		var LogicDoc = this.TableId.Get_ById(LogicDocId);
-		if (LogicDoc)
+		let docContent = AscCommon.g_oTableId.Get_ById(docContentId);
+		if (!docContent)
+			continue;
+		
+		docContent.RejectRevisionChanges(undefined, true);
+		if (docContent.GetElementsCount() <= 0)
 		{
-			LogicDoc.RejectRevisionChanges(undefined, true);
+			if (docContent.IsBlockLevelSdtContent())
+				docContent.GetParent().RemoveThisFromParent();
+			else
+				docContent.ClearContent(true);
 		}
 	}
 };

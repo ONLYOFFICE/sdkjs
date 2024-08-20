@@ -734,6 +734,9 @@ MasterSlide.prototype.copySelectedObjects = function () {
 MasterSlide.prototype.getPlaceholdersControls = function () {
     return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
 };
+MasterSlide.prototype.getDrawingObjects = function() {
+    return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+};
 MasterSlide.prototype.getParentObjects = function () {
     return {
         presentation: Asc.editor.private_GetLogicDocument(),

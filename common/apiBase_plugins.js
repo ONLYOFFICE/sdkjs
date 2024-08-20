@@ -56,23 +56,23 @@
 
     /**
      * The editors which the plugin is available for:
-	 * * <b>word</b> - text document editor,
-	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor,
-	 * * <b>pdf</b> - pdf editor.
+	 * <b>word</b> - text document editor,
+	 * <b>cell</b> - spreadsheet editor,
+	 * <b>slide</b> - presentation editor,
+	 * <b>pdf</b> - pdf editor.
 	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/editorType.js
 	 */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * * <b>text</b> - the text data,
-	 * * <b>html</b> - HTML formatted code,
-	 * * <b>ole</b> - OLE object data,
-     * * <b>desktop</b> - the desktop editor data,
-     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
-     * * <b>none</b> - no data will be send to the plugin from the editor,
-	 * * <b>sign</b> - the sign for the keychain plugin.
+     * <b>text</b> - the text data,
+	 * <b>html</b> - HTML formatted code,
+	 * <b>ole</b> - OLE object data,
+     * <b>desktop</b> - the desktop editor data,
+     * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * <b>none</b> - no data will be send to the plugin from the editor,
+	 * <b>sign</b> - the sign for the keychain plugin.
 	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/initDataType.js
 	 */
@@ -509,10 +509,10 @@
      * @alias OnEncryption
      * @param {object} obj - The encryption properties.
      * @param {string} obj.type - The type of encrypting operation:
-     * * <b>generatePassword</b> - generates a password for the document,
-     * * <b>getPasswordByFile</b> - sends the password when opening the document,
-     * * <b>encryptData</b> - encrypts changes when co-editing,
-     * * <b>decryptData</b> - decrypts changes when co-editing.
+     * <b>generatePassword</b> - generates a password for the document,
+     * <b>getPasswordByFile</b> - sends the password when opening the document,
+     * <b>encryptData</b> - encrypts changes when co-editing,
+     * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
      * @param {string} obj.data - Encrypted/decrypted changes.
      * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
@@ -1737,8 +1737,8 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {object} obj The drag&drop emulation properties.
      * @param {string} obj.type - The drag&drop event type:
-     * * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
-     * * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
+     * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
+     * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
      * @param {number} obj.x - The horizontal coordinate (in pixels) at which the mouse was clicked, relative to the left edge of the entire document.
      * @param {number} obj.y - The vertical coordinate (in pixels) at which the mouse was clicked, relative to the top edge of the entire document.
      * @param {string} obj.html - The dragged HTML element.

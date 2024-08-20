@@ -1267,6 +1267,11 @@ Paragraph.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+Paragraph.prototype.OnTextPrChange = function()
+{
+	if (this.Parent && this.Parent.OnTextPrChange)
+		this.Parent.OnTextPrChange();
+};
 Paragraph.prototype.NeedHyphenateText = function()
 {
 	this.RecalcInfo.NeedHyphenateText();
