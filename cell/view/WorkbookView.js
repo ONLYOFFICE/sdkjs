@@ -3001,8 +3001,14 @@
 				if (type === c_oAscPopUpSelectorType.TableThisRow) {
 					this.skipHelpSelector = false;
 				}
+				let newText = name;
+				if (type === c_oAscPopUpSelectorType.TableThisRow) {
+					newText = "@"
+				} else if (type === c_oAscPopUpSelectorType.TableColumnName) {
+					newText = name && name[0] === "#" ? ("'" + name) : name;
+				}
 
-                this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
+				this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, newText);
                 this.cellEditor.skipTLUpdate = tmp;
             } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
                 // Не смогли вставить формулу, закроем редактор, с сохранением текста
