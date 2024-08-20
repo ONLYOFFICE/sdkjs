@@ -964,7 +964,7 @@ CChartsDrawer.prototype =
 		let isLeftAxis = false;
 		let isRightAxis = false;
 		let isTopExist = chartSpace && chartSpace.chart ? !!chartSpace.chart.title || (!!chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
-		let isVertAxis = false;
+		let isVertAxisExist = false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -1005,14 +1005,14 @@ CChartsDrawer.prototype =
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 					}
 				}
-				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (bLeftVert || bRigthVert) && !isVertAxis) {
-					isVertAxis = true;
+				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (bLeftVert || bRigthVert) && !isVertAxisExist) {
+					isVertAxisExist = true;
 				}
 			}
 		}
 
 		// if no vetical axis when top is not exist, then should work as if top exist
-		isTopExist = !isTopExist && !isVertAxis ? true : isTopExist;
+		isTopExist = !isTopExist && !isVertAxisExist ? true : isTopExist;
 
 		//TITLE
 		var topMainTitle = 0;
