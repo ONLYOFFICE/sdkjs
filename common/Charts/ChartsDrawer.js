@@ -964,8 +964,7 @@ CChartsDrawer.prototype =
 		let isLeftAxis = false;
 		let isRightAxis = false;
 		let isTopExist = chartSpace && chartSpace.chart ? !!chartSpace.chart.title || (!!chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
-		console.log(isTopExist);
-		let isVertAxisExist = false;
+		let isVertAxis = false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -994,25 +993,26 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
+				const bLeftVert = axId[i].axPos === AscFormat.AX_POS_L;
+				const bRigthVert = axId[i].axPos === AscFormat.AX_POS_R;
 				if (!axId[i].bDelete) {
-					if (axId[i].axPos === AscFormat.AX_POS_L) {
+					if (bLeftVert) {
 						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
 					}
-					if (axId[i].axPos === AscFormat.AX_POS_R ) {
+					if (bRigthVert) {
 						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 					}
 				}
-				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (axId[i].axPos === AscFormat.AX_POS_T || axId[i].axPos === AscFormat.AX_POS_B && !isVertAxisExist)) {
-					isVertAxisExist = true;
+				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (bLeftVert || bRigthVert) && !isVertAxis) {
+					isVertAxis = true;
 				}
 			}
 		}
 
 		// if no vetical axis when top is not exist, then should work as if top exist
-		isTopExist = !isTopExist && !isVertAxisExist ? true : isTopExist;
-		console.log(isTopExist)
+		isTopExist = !isTopExist && !isVertAxis ? true : isTopExist;
 
 		//TITLE
 		var topMainTitle = 0;
@@ -1476,7 +1476,6 @@ CChartsDrawer.prototype =
 		
 		if (isLayout && !isCircular) {
 			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
-			console.log(this.calcProp.trueWidth)
 			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
 			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
 		} else {
@@ -10224,7 +10223,6 @@ drawAreaChart.prototype = {
 		var pen;
 		var seria, dataSeries, numCache;
 
-		console.log(this.chartProp.trueWidth);
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(
 			this.chartProp.chartGutter._left / this.chartProp.pxToMM,

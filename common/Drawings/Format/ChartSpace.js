@@ -871,7 +871,6 @@ function(window, undefined) {
 			sinAlpha = Math.abs(Math.sin(fAngle));
 			cosAlpha = Math.abs(Math.cos(fAngle));
 			rotatedMaxWidth = (cosAlpha + sinAlpha) * oLabelParams.maxHeight;
-			console.log(rotatedMaxWidth);
 			// bDirection indecates whether angle is positive or negative. 
 			// excel incorrectly works with align, is they will fix it uncomment this line, and remove this align from getTranslationX function
 			// bDirection =  this.align ? oLabelParams.rot > 0 : oLabelParams.rot <= 0;
@@ -5073,14 +5072,16 @@ function(window, undefined) {
 		return dDepth;
 	};
 	CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
-		console.log(oRect, oBaseRect);
 		let oCorrectedRect = null;
 		const isLayout = this.isLayout();
 		const oPlotArea = this.getPlotArea();
 		const bWithoutLabels = isLayout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER;
 		if (isLayout && oPlotArea) {
 			oPlotArea.extX = oRect.w;
-			oPlotArea.rectWidthChanged = true;
+			oPlotArea.extY = oRect.h;
+			oPlotArea.x = oRect.x;
+			oPlotArea.y = oRect.y;
+			oPlotArea.rectChanged = true;
 		}
 		
 		let bCorrected = false;
@@ -5359,7 +5360,7 @@ function(window, undefined) {
 				if(oLabelsBox.x + oLabelsBox.extX > fR) {
 					fR = oLabelsBox.x + oLabelsBox.extX;
 				}
-				if(!isLayout && oLabelsBox.y < fT) {
+				if(oLabelsBox.y < fT) {
 					fT = oLabelsBox.y;
 				}
 				if(oLabelsBox.y + oLabelsBox.extY > fB) {
@@ -5757,7 +5758,7 @@ function(window, undefined) {
 			let oChartSize = this.getChartSizes(true);
 			this.chart.plotArea.x = oChartSize.startX;
 			this.chart.plotArea.y = oChartSize.startY;
-			this.chart.plotArea.extX = this.chart.plotArea.rectWidthChanged ? this.chart.plotArea.extX : oChartSize.w;
+			this.chart.plotArea.extX = oChartSize.w;
 			this.chart.plotArea.extY = oChartSize.h;
 			this.chart.plotArea.localTransform.Reset();
 			AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
@@ -7437,7 +7438,14 @@ function(window, undefined) {
 		var oChartSize = this.chartObj.calculateSizePlotArea(this, bNotRecalculate);
 		var oLayout = this.chart.plotArea.layout;
 		if (oLayout) {
-
+			if (this.chart.plotArea.rectChanged) {
+				return {
+					startX: this.chart.plotArea.x,
+					startY: this.chart.plotArea.y,
+					w: this.chart.plotArea.extX,
+					h: this.chart.plotArea.extY
+				}
+			}
 			oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
 			oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
 			var fSize = this.calculateSizeByLayout(oChartSize.startX, this.extX, oLayout.w, oLayout.wMode);
@@ -11706,13 +11714,18 @@ function(window, undefined) {
 			const statement2 = !oLabelsBox.axis || (oLabelsBox.axis.axPos === AscFormat.AX_POS_T && oLabelsBox.axis.tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH);
 			const isStandard = statement1 || statement2;
 
-			this.maxHeight = isStandard ? fTrueRectHeight - (fTrueRectStart + fRectHeight + margin) : fTrueRectStart - ((3 * margin) / 4);
+			if (isStandard) {
+				const labelMaxHeight = fTrueRectHeight - (fTrueRectStart + fRectHeight);
+				this.maxHeight = labelMaxHeight > margin ? labelMaxHeight - margin : labelMaxHeight;
+			} else {
+				const labelMaxHeight = fTrueRectStart;
+				this.maxHeight = labelMaxHeight > ((3 * margin) / 4) ? labelMaxHeight - ((3 * margin) / 4) : labelMaxHeight;
+			}
 		} else {
 			//height multiplier defines the maximum occupation percentage
 			const heightMultiplier = 0.45;
 			this.maxHeight = fRectHeight * heightMultiplier;
 		}
-		console.log(this.maxHeight);
 	};
 
 	CLabelsParameters.prototype.calculateNLblTickSkip = function (oLabelsBox, fAxisLength) {
