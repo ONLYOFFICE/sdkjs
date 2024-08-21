@@ -2907,8 +2907,12 @@
 
         var isNotFunction = c_oAscPopUpSelectorType.Func !== type;
 
-        // Проверяем, открыт ли редактор
-        if (this.getCellEditMode()) {
+		let isCellEditMode =  this.getCellEditMode();	// is the editor open
+
+		if (isCellEditMode && autoComplete) {
+			/* if cell editor is open and we call autocomplete function - we should close the editor */
+			this.cellEditor.close(true);
+		} else if (isCellEditMode) {
             if (isNotFunction) {
                 this.skipHelpSelector = true;
             }
