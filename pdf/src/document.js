@@ -4365,22 +4365,23 @@ var CPresentation = CPresentation || function(){};
 
         return oShape;
     };
-    CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage) {
+    CPDFDoc.prototype.AddDrawing = function(oDrawing, nPage, nPosInTree) {
         let oPagesInfo = this.Viewer.pagesInfo;
         if (!oPagesInfo.pages[nPage])
             return;
 
         this.drawings.push(oDrawing);
-        if (oPagesInfo.pages[nPage].drawings == null) {
-            oPagesInfo.pages[nPage].drawings = [];
+        if (nPosInTree == undefined) {
+            nPosInTree = oPagesInfo.pages[nPage].drawings.length;
         }
-        oPagesInfo.pages[nPage].drawings.push(oDrawing);
+
+        oPagesInfo.pages[nPage].drawings.splice(nPosInTree, 0, oDrawing);
 
         oDrawing.SetDocument(this);
         oDrawing.SetPage(nPage);
         oDrawing.setParent(this);
 
-        this.History.Add(new CChangesPDFDocumentAddItem(this, oPagesInfo.pages[nPage].drawings.length - 1, [oDrawing]));
+        this.History.Add(new CChangesPDFDocumentAddItem(this, nPosInTree, [oDrawing]));
 
         oDrawing.AddToRedraw();
         this.ClearSearch();
@@ -4906,21 +4907,22 @@ var CPresentation = CPresentation || function(){};
             }
         }, AscDFH.historydescription_Document_GrObjectsBringForwardGroup, this);
     };
-    CPDFDoc.prototype.ChangeDrawingPosInPageTree = function(oObject, nNewPos) {
+    CPDFDoc.prototype.ChangeDrawingPosInPageTree = function(oDrawing, nNewPos) {
         let oController = this.GetController();
 
-        let oDrawings   = oController.getDrawingObjects(oObject.GetPage());
-        let nOldPos     = oDrawings.indexOf(oObject);
+        let aDrawings   = oController.getDrawingObjects(oDrawing.GetPage());
+        let nPage       = oDrawing.GetPage();
+        let nOldPos     = aDrawings.indexOf(oDrawing);
 
-        if (nNewPos >= oDrawings.length || nNewPos < 0 || nOldPos == nNewPos) {
+        if (nNewPos >= aDrawings.length || nNewPos < 0 || nOldPos == nNewPos) {
             return;
         }
 
-        oDrawings.splice(nOldPos, 1);
-        oDrawings.splice(nNewPos, 0, oObject);
-
-        AscCommon.History.Add(new CChangesPDFDrawingPosInTree(this, [nOldPos, nNewPos], [oObject]));
-        oObject.AddToRedraw();
+        this.RemoveDrawing(oDrawing.GetId());
+        this.AddDrawing(oDrawing, nPage, nNewPos);
+        oDrawing.select(oController, nPage);
+        this.SetMouseDownObject(oDrawing);
+        oDrawing.AddToRedraw();
     };
     CPDFDoc.prototype.PutShapesAlign = function(nType, nAlignToType) {
         let oController = this.GetController();
