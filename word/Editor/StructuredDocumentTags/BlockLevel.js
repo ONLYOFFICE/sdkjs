@@ -2429,8 +2429,9 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 	{
 		return AscCommon.CollaborativeEditing.Add_CheckLock(false);
 	}
-
-	var isCheckContentControlLock = this.LogicDocument ? this.LogicDocument.IsCheckContentControlsLock() : true;
+	
+	let logicDocument = this.GetLogicDocument();
+	var isCheckContentControlLock = logicDocument ? logicDocument.IsCheckContentControlsLock() : true;
 
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
 		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
@@ -2471,9 +2472,9 @@ CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bChec
 		var bSelectedOnlyThis = false;
 		// Если это происходит на добавлении текста, тогда проверяем, что выделен только данный элемент
 
-		if (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
+		if (logicDocument && AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
 		{
-			var oInfo = this.LogicDocument.GetSelectedElementsInfo();
+			var oInfo = logicDocument.GetSelectedElementsInfo();
 			bSelectedOnlyThis = oInfo.GetBlockLevelSdt() === this ? true : false;
 		}
 

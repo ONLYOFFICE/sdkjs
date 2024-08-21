@@ -2796,7 +2796,7 @@ background-repeat: no-repeat;\
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
-		} else if((this.documentIsWopi && options.isSaveAs) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
+		} else if((this.documentIsWopi && (options.isSaveAs && options.wopiSaveAsPath)) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
 			//todo add new server request wopi_putRelativeOrigin
 			options.asc_setFileType(AscCommon.getFormatByExtention(this.documentFormat));
 			this.asc_DownloadAs(options);
@@ -6785,48 +6785,51 @@ background-repeat: no-repeat;\
 			this.private_ChangeHyperlink(oHyperProps, sBookmarkName);
 		}
 	};
-	asc_docs_api.prototype.private_ChangeHyperlink = function(oHyperProps, sBookmarkName)
+	asc_docs_api.prototype.private_ChangeHyperlink = function(hyperProps, bookmarkName)
 	{
-		var isLocked = false;
-		if (sBookmarkName)
-		{
-			isLocked = this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content, {
-				Type      : AscCommon.changestype_2_Element_and_Type,
-				Element   : oHyperProps.get_Heading(),
-				CheckType : changestype_Paragraph_Content
-			});
-		}
-		else
-		{
-			isLocked = this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content);
-		}
-
-		if (!isLocked)
-		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ChangeHyperlink);
-
-			if (sBookmarkName && oHyperProps.get_Heading())
-				oHyperProps.get_Heading().AddBookmarkAtBegin(sBookmarkName);
-
-			this.WordControl.m_oLogicDocument.ModifyHyperlink(oHyperProps);
-			this.WordControl.m_oLogicDocument.FinalizeAction();
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument
+			|| !hyperProps
+			|| !hyperProps.get_InternalHyperlink()
+			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
+			return;
+		
+		let additionalCheck = bookmarkName ? {
+			Type      : AscCommon.changestype_2_Element_and_Type,
+			Element   : hyperProps.get_Heading(),
+			CheckType : changestype_Paragraph_Content
+		} : undefined;
+		
+		if (logicDocument.IsSelectionLocked(changestype_Paragraph_Content, additionalCheck))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_ChangeHyperlink);
+		
+		if (bookmarkName && hyperProps.get_Heading())
+			hyperProps.get_Heading().AddBookmarkAtBegin(bookmarkName);
+		
+		logicDocument.ModifyHyperlink(hyperProps);
+		logicDocument.FinalizeAction();
 	};
 	/**
 	 * Удаляем гиперссылку
-	 * @param {CHyperlinkProperty} oHyperProps
+	 * @param {CHyperlinkProperty} hyperProps
 	 */
-	asc_docs_api.prototype.remove_Hyperlink = function(oHyperProps)
+	asc_docs_api.prototype.remove_Hyperlink = function(hyperProps)
 	{
-		if (!oHyperProps || !oHyperProps.get_InternalHyperlink())
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument
+			|| !hyperProps
+			|| !hyperProps.get_InternalHyperlink()
+			|| !hyperProps.get_InternalHyperlink().IsUseInDocument())
 			return;
-
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
-		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_RemoveHyperlink);
-			this.WordControl.m_oLogicDocument.RemoveHyperlink(oHyperProps);
-			this.WordControl.m_oLogicDocument.FinalizeAction();
-		}
+		
+		if (logicDocument.IsSelectionLocked(changestype_Paragraph_Content))
+			return;
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_RemoveHyperlink);
+		logicDocument.RemoveHyperlink(hyperProps);
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.asc_GetHyperlinkAnchors = function()
 	{

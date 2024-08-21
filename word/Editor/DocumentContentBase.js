@@ -1941,9 +1941,10 @@ CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
 			if (parent && parent instanceof AscWord.CBlockLevelSdt)
 			{
 				// Если после принятия других изменений контент не пустой, то не удаляем ничего,
-				// но если он пустой и нужно было удалить последний параграф в нем, то удаляем его целиком
+				// но если он пустой и нужно было удалить последний параграф в нем, то удаляем его,
+				// чтобы при проверке выше удалялись блочные контролы с пустым содержимым
 				if (parent.IsEmpty())
-					parent.RemoveThisFromParent();
+					this.RemoveFromContent(0, 1, false);
 			}
 			else
 				this.RemoveFromContent(0, 1, true);
@@ -2101,6 +2102,11 @@ CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, b
 						this.RemoveFromContent(nCurPos, 1, false);
 					}
 				}
+				else if (oElement.IsBlockLevelSdt())
+				{
+					if (oElement.GetElementsCount() <= 0)
+						this.RemoveFromContent(nCurPos, 1, false);
+				}
 			}
 		}
 	}
@@ -2210,6 +2216,11 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 					{
 						this.RemoveFromContent(nCurPos, 1, false);
 					}
+				}
+				else if (oElement.IsBlockLevelSdt())
+				{
+					if (oElement.GetElementsCount() <= 0)
+						this.RemoveFromContent(nCurPos, 1, false);
 				}
 			}
 		}

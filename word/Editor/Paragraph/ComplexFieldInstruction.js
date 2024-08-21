@@ -618,6 +618,10 @@ CFieldInstructionHYPERLINK.prototype.IsTopOfDocument = function()
 {
 	return (this.GetBookmarkName() === "_top");
 };
+CFieldInstructionHYPERLINK.prototype.IsUseInDocument = function()
+{
+	return !!(this.ComplexField && this.ComplexField.IsValid());
+};
 
 /**
  * TIME field

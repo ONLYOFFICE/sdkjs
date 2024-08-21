@@ -43,6 +43,7 @@
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
 			this.isSaveAs = false;
+			this.wopiSaveAsPath = null;
 			this.advancedOptions = null;
 			this.compatible = true;
 
@@ -62,6 +63,7 @@
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
 		asc_CDownloadOptions.prototype.asc_setIsSaveAs = function (isSaveAs) {this.isSaveAs = isSaveAs;};
+		asc_CDownloadOptions.prototype.asc_setWopiSaveAsPath = function (wopiSaveAsPath) {this.wopiSaveAsPath = wopiSaveAsPath;};
 		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
 		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
 		asc_CDownloadOptions.prototype.asc_setTextParams = function (textParams) {this.textParams = textParams;};
@@ -212,6 +214,7 @@
 		prot["asc_setFileType"] = prot.asc_setFileType;
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
 		prot["asc_setIsSaveAs"] = prot.asc_setIsSaveAs;
+		prot["asc_setWopiSaveAsPath"] = prot.asc_setWopiSaveAsPath;
 		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
 		prot["asc_setCompatible"] = prot.asc_setCompatible;
 		prot["asc_setTextParams"] = prot.asc_setTextParams;

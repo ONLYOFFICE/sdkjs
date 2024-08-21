@@ -872,20 +872,44 @@
 
 			let isSystem = this.pluginsMap[guid].isSystem();
 			let isBackground = this.pluginsMap[guid].isBackground();
-			let isRunned = (this.runnedPluginsMap[guid] !== undefined) ? true : false;
+			let runObject = this.runnedPluginsMap[guid];
+			let isRunned = runObject ? true : false;
 
 			if (isRunned)
 			{
 				// запуск запущенного => закрытие (только для видимых, так как в интерфейсе "отжим" кнопки плагина - приходит run)
 				if (isSystem || isBackground)
+				{
+					if ((plugin.variations[runObject.currentVariation].initDataType === Asc.EPluginDataType.ole) &&
+						data && data.getAttribute && data.getAttribute("objectId"))
+					{
+						let sendedData = (data == null || data === "") ? new CPluginData() : data;
+						this.correctData(sendedData);
+						let frame = document.getElementById(runObject.frameId);
+						if (frame)
+						{
+							sendedData.setAttribute("type", "init");
+							sendedData.setAttribute("options", this.getPluginOptions(guid));
+							frame.contentWindow.postMessage(sendedData.serialize(), "*");
+						}
+					}
 					return false;
+				}
 
 				this.close(guid);
 				return false;
 			}
 
 			if (isBackground)
+			{
+				if ((plugin.variations[0].initDataType === Asc.EPluginDataType.ole) &&
+					data && data.getAttribute && data.getAttribute("objectId"))
+				{
+					// не запускаем сервис, если он отключен.
+					return false;
+				}
 				this.addUsedBackgroundPlugins(guid);
+			}
 
 			if (!isSystem && !this.isSupportManyPlugins && !isOnlyResize)
 			{
