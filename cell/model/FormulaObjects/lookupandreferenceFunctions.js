@@ -4548,7 +4548,12 @@ function (window, undefined) {
 		if (arg1.type === arg1.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		arg1 = arg1.toArray();
+
+		if (arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.toArray()[0];
+		} else {
+			arg1 = arg1.toArray();
+		}
 
 		//Excel returns a #NUM when array is too large.
 		let elemCount = arg1.length * arg1[0].length;

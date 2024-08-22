@@ -10874,6 +10874,41 @@ $(function () {
 		oParser = new parserFormula("TOROW(1,A1:A3,A1:A3)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		// for bug 69719
+		let sheetName = ws.getName();
+
+		ws.getRange2("C1").setValue("test3");
+		ws.getRange2("D1").setValue("test4");
+		ws.getRange2("E1").setValue("test5");
+
+		oParser = new parserFormula("TOROW("+sheetName+"!A1:A3)", "A1", ws);
+		assert.ok(oParser.parse(), "TOROW("+sheetName+"!A1:A3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOROW("+sheetName+"!A1:A3)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of TOROW("+sheetName+"!A1:A3)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "test", "Result of TOROW("+sheetName+"!A1:A3)[0,2]");
+
+		oParser = new parserFormula("TOROW("+sheetName+"!A1:E1)", "A1", ws);
+		assert.ok(oParser.parse(), "TOROW("+sheetName+"!A1:E1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOROW("+sheetName+"!A1:E1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Result of TOROW("+sheetName+"!A1:E1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "test3", "Result of TOROW("+sheetName+"!A1:E1)[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "test4", "Result of TOROW("+sheetName+"!A1:E1)[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "test5", "Result of TOROW("+sheetName+"!A1:E1)[0,4]");
+
+		oParser = new parserFormula("TOROW("+sheetName+"!A1:B3)", "A1", ws);
+		assert.ok(oParser.parse(), "TOROW("+sheetName+"!A1:B3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOROW("+sheetName+"!A1:B3)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Result of TOROW("+sheetName+"!A1:B3)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "", "Result of TOROW("+sheetName+"!A1:B3)[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#N/A", "Result of TOROW("+sheetName+"!A1:B3)[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "test", "Result of TOROW("+sheetName+"!A1:B3)[0,4]");
+		assert.strictEqual(array.getElementRowCol(0, 5).getValue(), "", "Result of TOROW("+sheetName+"!A1:B3)[0,5]");
+		
+
 	});
 
 	QUnit.test("Test: \"TOCOL\"", function (assert) {
@@ -10978,6 +11013,41 @@ $(function () {
 		oParser = new parserFormula("TOCOL(1,A1:A3,A1:A3)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		// for bug 69719
+		let sheetName = ws.getName();
+
+		ws.getRange2("C1").setValue("test3");
+		ws.getRange2("D1").setValue("test4");
+		ws.getRange2("E1").setValue("test5");
+
+		oParser = new parserFormula("TOCOL("+sheetName+"!A1:A3)", "A1", ws);
+		assert.ok(oParser.parse(), "TOCOL("+sheetName+"!A1:A3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOCOL("+sheetName+"!A1:A3)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of TOCOL("+sheetName+"!A1:A3)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "test", "Result of TOCOL("+sheetName+"!A1:A3)[2,0]");
+
+		oParser = new parserFormula("TOCOL("+sheetName+"!A1:E1)", "A1", ws);
+		assert.ok(oParser.parse(), "TOCOL("+sheetName+"!A1:E1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOCOL("+sheetName+"!A1:E1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "test2", "Result of TOCOL("+sheetName+"!A1:E1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "test3", "Result of TOCOL("+sheetName+"!A1:E1)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "test4", "Result of TOCOL("+sheetName+"!A1:E1)[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "test5", "Result of TOCOL("+sheetName+"!A1:E1)[4,0]");
+
+		oParser = new parserFormula("TOCOL("+sheetName+"!A1:B3)", "A1", ws);
+		assert.ok(oParser.parse(), "TOCOL("+sheetName+"!A1:E1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of TOCOL("+sheetName+"!A1:B3)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "test2", "Result of TOCOL("+sheetName+"!A1:B3)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", "Result of TOCOL("+sheetName+"!A1:B3)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", "Result of TOCOL("+sheetName+"!A1:B3)[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "test", "Result of TOCOL("+sheetName+"!A1:B3)[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "", "Result of TOCOL("+sheetName+"!A1:B3)[5,0]");
+
+		// assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 	});
 
 	QUnit.test("Test: \"WRAPROWS\"", function (assert) {

@@ -3064,11 +3064,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.array;
 	};
 	cArray.prototype.fillFromArray = function (arr) {
-		this.array = arr;
-		this.rowCount = arr.length;
-		for (var i = 0; i < arr.length; i++) {
-			this.countElementInRow[i] = arr[i].length;
-			this.countElement += arr[i].length;
+		if (arr && arr.length !== undefined) {
+			this.array = arr;
+			this.rowCount = arr.length;
+			for (var i = 0; i < arr.length; i++) {
+				this.countElementInRow[i] = arr[i].length;
+				this.countElement += arr[i].length;
+			}
 		}
 	};
 	cArray.prototype.fillEmptyFromRange = function (range) {
