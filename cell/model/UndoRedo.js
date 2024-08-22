@@ -3167,7 +3167,7 @@ function (window, undefined) {
 			return;
 		}
 		if (AscCH.historyitem_Cell_ChangeArrayValueFormat === Type || AscCH.historyitem_Cell_ChangeValue === Type ||
-			AscCH.historyitem_Cell_ChangeValueUndo === Type || historyitem_Cell_RemoveSharedFormula === Type) {
+			AscCH.historyitem_Cell_ChangeValueUndo === Type || AscCH.historyitem_Cell_RemoveSharedFormula === Type) {
 			var nRow = Data.nRow;
 			var nCol = Data.nCol;
 			if (this.wb.bCollaborativeChanges) {
@@ -3216,30 +3216,6 @@ function (window, undefined) {
 			var Val = bUndo ? Data.oOldVal : Data.oNewVal;
 			var range = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 			range._applyCellStyle(false, Val, Type);
-			//todo
-			// } else if (AscCH.historyitem_Cell_Border == Type) {
-			// 	if (null != Val) {
-			// 		cell.setBorder(Val.clone());
-			// 	} else {
-			// 		cell.setBorder(null);
-			// 	}
-			// } else if (AscCH.historyitem_Cell_SetStyle == Type) {
-			// 	if (null != Val) {
-			// 		cell.setStyle(Val);
-			// 	} else {
-			// 		cell.setStyle(null);
-			// 	}
-			// } else if (AscCH.historyitem_Cell_RemoveSharedFormula == Type) {
-			// 	if (null !== Val && bUndo) {
-			// 		var parsed = ws.workbook.workbookFormulas.get(Val);
-			// 		if (parsed) {
-			// 			cell.setFormulaParsed(parsed);
-			// 		}
-			// 	}
-			// } else if (AscCH.historyitem_Cell_SetHidden == Type) {
-			// 	//todo
-			// 	//cell.setHiddenFormulas(Val);
-			// }
 		}
 	};
 	UndoRedoCell.prototype.forwardTransformationGet = function (Type, Data, nSheetId) {

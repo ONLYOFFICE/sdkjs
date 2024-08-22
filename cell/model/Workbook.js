@@ -7407,10 +7407,6 @@
 		{
 			this.rowsData.setAreaByRow((index - 1), index, count);
 			this.nRowsCount = Math.max(this.nRowsCount, this.rowsData.getMaxIndex() + 1);
-			// this._forEachColData(function(sheetMemory) {
-			// 	sheetMemory.setAreaByRow((index - 1), 1, index, count);
-			// 	t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, sheetMemory.getMaxIndex() + 1);
-			// });
 			this._forEachColXf(function(attrArray) {
 				attrArray.setAreaByRow((index - 1), index, count);
 			});
@@ -7421,7 +7417,7 @@
 			});
 			for (let id in borders) {
 				let nCol = parseInt(id);
-				this.getRange3(index, nCol, index + count - 1, nCol).setBorder(borders[nCol]);
+				this.getRange3(index, nCol, index + count - 1, nCol).setBorderSrc(borders[nCol]);
 			}
 		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
@@ -7601,7 +7597,7 @@
 				//show rows and remain only cell xf property
 				for (let id in borders) {
 					let nRow = parseInt(id);
-					this.getRange3(nRow, index, nRow, index + count - 1).setBorder(borders[nRow]);
+					this.getRange3(nRow, index, nRow, index + count - 1).setBorderSrc(borders[nRow]);
 				}
 			}
 		}
@@ -9022,7 +9018,7 @@
 				//show rows and remain only cell xf property
 				for (let id in borders) {
 					let nRow = parseInt(id);
-					this.getRange3(nRow, oBBox.c1, nRow, oBBox.c2).setBorder(borders[nRow]);
+					this.getRange3(nRow, oBBox.c1, nRow, oBBox.c2).setBorderSrc(borders[nRow]);
 				}
 			}
 		}
@@ -9102,7 +9098,7 @@
 			//show rows and remain only cell xf property
 			for (let id in borders) {
 				let nCol = parseInt(id);
-				this.getRange3(oBBox.r1, nCol, oBBox.r2, nCol).setBorder(borders[nCol]);
+				this.getRange3(oBBox.r1, nCol, oBBox.r2, nCol).setBorderSrc(borders[nCol]);
 			}
 		}
 		//notifyChanged after move cells to get new locations(for intersect ranges)
@@ -10268,7 +10264,6 @@
 					cells.setAlignHorizontal(AscCommon.align_Left);
 				}
 				if (outline > 0) {
-					//todo
 					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
@@ -12700,13 +12695,13 @@
 				bordersArr[row][col] = style.border;
 			}
 		});
-		range.setBorder(null);
+		range.setBorderSrc(null);
 		res = range.sort(nOption, nStartRowCol, sortColor, opt_guessHeader, opt_by_row, opt_custom_sort);
 		for(var i = 0; i < bordersArr.length; i++) {
 			if(bordersArr[i]) {
 				for(var j = 0; j < bordersArr[i].length; j++) {
 					if(bordersArr[i][j]) {
-						this.getCell3(i, j).setBorder(bordersArr[i][j]);
+						this.getCell3(i, j).setBorderSrc(bordersArr[i][j]);
 					}
 				}
 			}
@@ -14953,24 +14948,26 @@
 		}
 		return newNumFormat;
 	};
+	Cell.prototype.convertMultiText=function(){
+		//убираем комплексные строки
+		if(null != this.multiText && false == this.ws.workbook.bUndoChanges && false == this.ws.workbook.bRedoChanges)
+		{
+			var oldVal = null;
+			if(AscCommon.History.Is_On())
+				oldVal = this.getValueData();
+			this.setValueTextInternal(AscCommonExcel.getStringFromMultiText(this.multiText));
+			if(AscCommon.History.Is_On())
+			{
+				var newVal = this.getValueData();
+				AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oldVal, newVal));
+			}
+		}
+	}
 	Cell.prototype.setFont=function(val, bModifyValue){
-		//todo
 		throw new Error('deprecated');
 		if(false != bModifyValue)
 		{
-			//убираем комплексные строки
-			if(null != this.multiText && false == this.ws.workbook.bUndoChanges && false == this.ws.workbook.bRedoChanges)
-			{
-				var oldVal = null;
-				if(AscCommon.History.Is_On())
-					oldVal = this.getValueData();
-				this.setValueTextInternal(AscCommonExcel.getStringFromMultiText(this.multiText));
-				if(AscCommon.History.Is_On())
-				{
-					var newVal = this.getValueData();
-					AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_ChangeValue, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oldVal, newVal));
-				}
-			}
+			this.convertMultiText();
 		}
 		var oRes = this.ws.workbook.oStyleManager.setFont(this, val);
 		if(AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal)
@@ -15056,7 +15053,6 @@
 		return this.setFill(fill);
 	};
 	Cell.prototype.setBorder=function(val){
-		//todo
 		throw new Error('deprecated');
 		var oRes = this.ws.workbook.oStyleManager.setBorder(this, val);
 		if(AscCommon.History.Is_On() && oRes.oldVal != oRes.newVal){
@@ -15124,7 +15120,7 @@
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetPivotButton, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
 	Cell.prototype.setStyle=function(xfs){
-		//todo
+		//todo clone?
 		// throw new Error('deprecated');
 		var oldVal = this.xfs;
 		this.setStyleInternal(xfs);
@@ -16089,7 +16085,7 @@
 				oHyperlinkFont.setUnderline(Asc.EUnderline.underlineSingle);
 				oHyperlinkFont.setColor(AscCommonExcel.g_oColorManager.getThemeColor(AscCommonExcel.g_nColorHyperlink));
 				AscFormat.ExecuteNoHistory(function () {
-					this.setFont(oHyperlinkFont);
+					this.ws.getCell3(this.nRow, this.nCol).setFont(oHyperlinkFont);
 				}, this, []);
 			}
 
@@ -16621,11 +16617,11 @@
 
 			if(bSetCellFont)
 			{
-				//todo
-				if (oIntersectFont.isEqual(g_oDefaultFormat.Font))
-					this.setFont(null, false);
-				else
-					this.setFont(oIntersectFont, false);
+				if (oIntersectFont.isEqual(g_oDefaultFormat.Font)) {
+					this.ws.getCell3(this.nRow, this.nCol).setFont(null, true);
+				} else {
+					this.ws.getCell3(this.nRow, this.nCol).setFont(oIntersectFont, true);
+				}
 			}
 			//если у всех элементов один формат, то сохраняем только текст
 			var bIsEqual = true;
@@ -17900,7 +17896,7 @@
 		});
 		return newNumFormat;
 	};
-	Range.prototype.setFont=function(val){
+	Range.prototype.setFont=function(val, bKeepMultiText){
 		AscCommon.History.Create_NewPoint();
 		this.createCellOnRowColCross();
 		var fSetProperty = this._setProperty;
@@ -17919,6 +17915,9 @@
 							  col.setFont(val);
 						  });
 		this._applyCellStyle(c_oRangeType.All === nRangeType, val, AscCH.historyitem_Cell_SetFont);
+		if (!bKeepMultiText) {
+			this.convertMultiText();
+		}
 	};
 	Range.prototype.setFontname=function(val){
 		AscCommon.History.Create_NewPoint();
@@ -18304,12 +18303,11 @@
 			rowcol.setBorder(oNewBorder);
 		}
 	};
-	Range.prototype._setBorderEdge=function(bbox, isRowCol, oItemWithXfs, nRow, nCol, oNewBorder){
-		var oCurBorder = null;
-		if(null != oItemWithXfs.xfs && null != oItemWithXfs.xfs.border)
-			oCurBorder = oItemWithXfs.xfs.border;
-		if(null != oCurBorder)
+	Range.prototype._getBorderEdge=function(bbox, xfs, nRow, nCol, oNewBorder){
+		let res = null;
+		if (xfs && xfs.border)
 		{
+			var oCurBorder = xfs.border;
 			var oCurBorderProp = null;
 			if(nCol == bbox.c1 - 1)
 				oCurBorderProp = oCurBorder.r;
@@ -18345,11 +18343,106 @@
 					oTargetBorder.l = new AscCommonExcel.BorderProp();
 				else if(nRow == bbox.r2 + 1)
 					oTargetBorder.t = new AscCommonExcel.BorderProp();
-				if (isRowCol) {
-					oItemWithXfs.setBorder(oTargetBorder);
-				} else {
-					this.worksheet.getCell3(nRow, nCol).setBorderSrc(oTargetBorder);
+				res = oTargetBorder;
+			}
+		}
+		return res;
+	};
+	Range.prototype._setCellBorderIterCell = function (border, r1, c1, r2) {
+		if (border) {
+			let colXf = this.worksheet.getColXf(c1);
+			let colXfIter = new AscCommonExcel.CAttrArrayIterator(colXf, r1, r2, false, true);
+			while (colXfIter.prev()) {
+				let xf = colXfIter.getCurXf();
+				let oCurBorder = null;
+				if (xf && xf.border) {
+					oCurBorder = xf.border.clone();
 				}
+				let oNewBorder = this._setBorderMerge(c1 === this.bbox.c1, r1 === this.bbox.r1, c1 === this.bbox.c2, r2 === this.bbox.r2, border, oCurBorder)
+				this._applyCellStyleIter(colXf, colXfIter, oNewBorder, AscCH.historyitem_Cell_Border);
+			}
+		} else {
+			let colXf = this.worksheet.getColXfNoEmpty(c1);
+			if (colXf) {
+				let colXfIter = new AscCommonExcel.CAttrArrayIterator(colXf, r1, r2, true, true);
+				while (colXfIter.prevNoEmpty()) {
+					let xf = colXfIter.getCurXf();
+					this._applyCellStyleIter(colXf, colXfIter, null, AscCH.historyitem_Cell_Border);
+				}
+			}
+		}
+	}
+	Range.prototype._setCellBorderIterEdge = function (border, r1, c1, r2) {
+		let colXf = this.worksheet.getColXfNoEmpty(c1);
+		if (colXf) {
+			let colXfIter = new AscCommonExcel.CAttrArrayIterator(colXf, r1, r2, true, true);
+			while (colXfIter.prevNoEmpty()) {
+				let xf = colXfIter.getCurXf();
+				let newBorder = this._getBorderEdge(this.bbox, xf, r1, c1, border);
+				this._applyCellStyleIter(colXf, colXfIter, newBorder, AscCH.historyitem_Cell_Border);
+			}
+		}
+	}
+	Range.prototype._setCellBorderIter = function (border) {
+		var oBBox = this.bbox;
+		let isInner =  null == border || (border.ih && !border.ih.isEmpty()) || (border.iv && !border.iv.isEmpty());
+		let isLT = isInner || (border.l && !border.l.isEmpty()) || (border.t && !border.t.isEmpty());
+		if (isLT) {
+			this._setCellBorderIterCell(border, oBBox.r1, oBBox.c1, oBBox.r1);
+		}
+		let isRT = isInner || (border.r && !border.r.isEmpty()) || (border.t && !border.t.isEmpty());
+		if (isRT) {
+			this._setCellBorderIterCell(border, oBBox.r1, oBBox.c2, oBBox.r1);
+		}
+		let isRB = isInner || (border.r && !border.r.isEmpty()) || (border.b && !border.b.isEmpty());
+		if (isRB) {
+			this._setCellBorderIterCell(border, oBBox.r2, oBBox.c2, oBBox.r2);
+		}
+		let isLB = isInner || (border.l && !border.l.isEmpty()) || (border.b && !border.b.isEmpty());
+		if (isLB) {
+			this._setCellBorderIterCell(border, oBBox.r2, oBBox.c1, oBBox.r2);
+		}
+		let isL = isInner || (border.l && !border.l.isEmpty());
+		if (isL) {
+			this._setCellBorderIterCell(border, oBBox.r1 + 1, oBBox.c1, oBBox.r2 - 1);
+		}
+		let isT = isInner || (border.t && !border.t.isEmpty());
+		if (isT) {
+			for (let i = oBBox.c1 + 1; i <= oBBox.c2 - 1; ++i) {
+				this._setCellBorderIterCell(border, oBBox.r1, i, oBBox.r1);
+			}
+		}
+		let isR = isInner || (border.r && !border.r.isEmpty());
+		if (isR) {
+			this._setCellBorderIterCell(border, oBBox.r1 + 1, oBBox.c2, oBBox.r2 - 1);
+		}
+		let isB = isInner || (border.b && !border.b.isEmpty());
+		if (isB) {
+			for (let i = oBBox.c1 + 1; i <= oBBox.c2 - 1; ++i) {
+				this._setCellBorderIterCell(border, oBBox.r2, i, oBBox.r2);
+			}
+		}
+		if (isInner) {
+			for (let i = oBBox.c1 + 1; i <= oBBox.c2 - 1; ++i) {
+				this._setCellBorderIterCell(border, oBBox.r1 + 1, i, oBBox.r2 - 1);
+			}
+		}
+
+		//убираем граничные border соседних ячеек
+		if (oBBox.c1 > 0 && (null == border || (border.l && !border.l.isEmpty()))) {
+			this._setCellBorderIterEdge(border, oBBox.r1, oBBox.c1 - 1, oBBox.r2);
+		}
+		if (oBBox.c2 < gc_nMaxCol0 && (null == border || (border.r && !border.r.isEmpty()))) {
+			this._setCellBorderIterEdge(border, oBBox.r1, oBBox.c2 + 1, oBBox.r2);
+		}
+		if (oBBox.r1 > 0 && (null == border || (border.t && !border.t.isEmpty()))) {
+			for (let i = oBBox.c1; i <= oBBox.c2; ++i) {
+				this._setCellBorderIterEdge(border, oBBox.r1 - 1, i, oBBox.r1 - 1);
+			}
+		}
+		if (oBBox.r2 < gc_nMaxRow0 && (null == border || (border.b && !border.b.isEmpty()))) {
+			for (let i = oBBox.c1; i <= oBBox.c2; ++i) {
+				this._setCellBorderIterEdge(border, oBBox.r2 + 1, i, oBBox.r2 + 1);
 			}
 		}
 	};
@@ -18375,11 +18468,8 @@
 						  },
 						  function(col){
 							  _this._setRowColBorder(oBBox, col, false, border);
-						  },
-						  function(cell){
-							  _this._setCellBorder(oBBox, cell, border);
 						  });
-		//убираем граничные border
+		//убираем граничные border соседних ячеек
 		var aEdgeBorders = [];
 		if(oBBox.c1 > 0 && (null == border || (border.l && !border.l.isEmpty())))
 			aEdgeBorders.push(this.worksheet.getRange3(oBBox.r1, oBBox.c1 - 1, oBBox.r2, oBBox.c1 - 1));
@@ -18395,15 +18485,15 @@
 			range._setPropertyNoEmpty(function(row){
 										  if(c_oRangeType.All == nRangeType && null == row.xfs)
 											  return;
-										  _this._setBorderEdge(oBBox, true, row, row.index, 0, border);
+										  let newBorder = _this._getBorderEdge(oBBox, row.xfs, row.index, 0, border);
+										  row.setBorder(newBorder);
 									  },
 									  function(col){
-										  _this._setBorderEdge(oBBox, true, col, 0, col.index, border);
-									  },
-									  function(cell){
-										  _this._setBorderEdge(oBBox, false, cell, cell.nRow, cell.nCol, border);
+										  let newBorder = _this._getBorderEdge(oBBox, col.xfs, 0, col.index, border);
+										  col.setBorder(newBorder);
 									  });
 		}
+		this._setCellBorderIter(border);
 	};
 	Range.prototype.setShrinkToFit=function(val){
 		AscCommon.History.Create_NewPoint();

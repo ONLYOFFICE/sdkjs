@@ -5646,7 +5646,7 @@ StyleManager.prototype =
 		switch (historyType) {
 			case AscCH.historyitem_Cell_Num:
 				return this.setNum(oItemWithXfs, val);
-			case AscCH.historyitem_Cell_Font://todo
+			case AscCH.historyitem_Cell_SetFont:
 				return this.setFont(oItemWithXfs, val);
 			case AscCH.historyitem_Cell_Fontname:
 				return this.setFontname(oItemWithXfs, val);
@@ -19043,7 +19043,6 @@ function RangeDataManagerElem(bbox, data)
 		let combine = false;
 		let split = false;
 		if (from > 0) {
-			//todo comparison and copy
 			if (!fromElem.isEqualVal(val)) {
 				if (!preFromElem || preFromElem.endRow < from - 1) {
 					if (fromElem.endRow > to) {
@@ -19115,7 +19114,6 @@ function RangeDataManagerElem(bbox, data)
 				if (!split) {
 					this.data.splice(insertIndex, 0, newElem);
 				} else {
-					//todo copy
 					let newElemSplit = preFromElem.clone();
 					this.data.splice(insertIndex, 0, newElem, newElemSplit);
 				}
