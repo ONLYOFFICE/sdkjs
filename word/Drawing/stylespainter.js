@@ -57,6 +57,8 @@ function CStylesPainter()
 	this.STYLE_THUMBNAIL_HEIGHT = GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
 
 	this.CurrentTranslate = null;
+	
+	this.previewGenerator = new AscCommon.StylePreviewGenerator(this);
 }
 
 CStylesPainter.prototype.CheckStylesNames = function(_api, ds)
@@ -91,17 +93,13 @@ CStylesPainter.prototype.CheckStylesNames = function(_api, ds)
 
 CStylesPainter.prototype.GenerateStyles = function (_api, ds)
 {
-	var _oldX = this.STYLE_THUMBNAIL_WIDTH;
-	var _oldY = this.STYLE_THUMBNAIL_HEIGHT;
-
-	this.STYLE_THUMBNAIL_WIDTH 	= AscCommon.AscBrowser.convertToRetinaValue(this.STYLE_THUMBNAIL_WIDTH, true);
-	this.STYLE_THUMBNAIL_HEIGHT = AscCommon.AscBrowser.convertToRetinaValue(this.STYLE_THUMBNAIL_HEIGHT, true);
-
 	this.CurrentTranslate = _api.CurrentTranslate;
-
+	
 	this.GenerateDefaultStyles(_api, ds);
 	this.GenerateDocumentStyles(_api);
-
+};
+CStylesPainter.prototype.OnEndGenerate = function(_api)
+{
 	// стили сформированы. осталось просто сформировать единый список
 	var _count_default = this.defaultStyles.length;
 	var _count_doc = 0;
@@ -156,10 +154,7 @@ CStylesPainter.prototype.GenerateStyles = function (_api, ds)
 			this.mergedStyles.push(aSubArray[i]);
 		}
 	}
-
-	this.STYLE_THUMBNAIL_WIDTH = _oldX;
-	this.STYLE_THUMBNAIL_HEIGHT = _oldY;
-
+	
 	// export
 	this["STYLE_THUMBNAIL_WIDTH"] = this.STYLE_THUMBNAIL_WIDTH;
 	this["STYLE_THUMBNAIL_HEIGHT"] = this.STYLE_THUMBNAIL_HEIGHT;
@@ -203,6 +198,8 @@ CStylesPainter.prototype.GenerateDefaultStyles = function (_api, ds)
 
 CStylesPainter.prototype.GenerateDocumentStyles = function(_api)
 {
+	this.previewGenerator.Begin(_api);
+	return;
 	if (!_api.WordControl.m_oLogicDocument)
 		return;
 
@@ -211,6 +208,8 @@ CStylesPainter.prototype.GenerateDocumentStyles = function(_api)
 
 	if (!styles)
 		return;
+	
+	this.privewGenerator.Begin();
 
 	var cur_index = 0;
 
@@ -279,214 +278,347 @@ CStylesPainter.prototype.GenerateDocumentStyles = function(_api)
 	}
 };
 
-CStylesPainter.prototype.drawStyle = function(_api, graphics, style, styleName)
-{
-	var ctx = graphics.m_oContext;
-	ctx.fillStyle = "#FFFFFF";
-	ctx.fillRect(0, 0, this.STYLE_THUMBNAIL_WIDTH, this.STYLE_THUMBNAIL_HEIGHT);
-
-	var font = {
-		FontFamily: {Name: "Times New Roman", Index: -1},
-		Color: {r: 0, g: 0, b: 0},
-		Bold: false,
-		Italic: false,
-		FontSize: 10
-	};
-
-	var textPr = style.TextPr;
-	if (textPr.FontFamily !== undefined)
-	{
-		font.FontFamily.Name = textPr.FontFamily.Name;
-		font.FontFamily.Index = textPr.FontFamily.Index;
-	}
-
-	if (textPr.Bold !== undefined)
-		font.Bold = textPr.Bold;
-	if (textPr.Italic !== undefined)
-		font.Italic = textPr.Italic;
-
-	if (textPr.FontSize !== undefined)
-		font.FontSize = textPr.FontSize;
-
-	graphics.SetFont(font);
-
-	if (textPr.Color === undefined)
-		graphics.b_color1(0, 0, 0, 255);
-	else
-		graphics.b_color1(textPr.Color.r, textPr.Color.g, textPr.Color.b, 255);
-
-	var dKoefToMM = AscCommon.g_dKoef_pix_to_mm;
-	dKoefToMM /= AscCommon.AscBrowser.retinaPixelRatio;
-
-	if (window["flat_desine"] !== true)
-	{
-		var y = 0;
-		var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
-		var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
-
-		graphics.transform(1, 0, 0, 1, 0, 0);
-		graphics.save();
-		graphics._s();
-		graphics._m(-0.5, y);
-		graphics._l(w, y);
-		graphics._l(w, b);
-		graphics._l(0, b);
-		graphics._z();
-		graphics.clip();
-
-		graphics.t(this.CurrentTranslate.StylesText, 0.5, (y + b) / 2);
-
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-		ctx.fillStyle = "#E8E8E8";
-
-		var _b = this.STYLE_THUMBNAIL_HEIGHT - 1.5;
-		var _x = 2;
-		var _w = this.STYLE_THUMBNAIL_WIDTH - 4;
-		var _h = (this.STYLE_THUMBNAIL_HEIGHT / 3) >> 0;
-		ctx.beginPath();
-		ctx.moveTo(_x, _b - _h);
-		ctx.lineTo(_x + _w, _b - _h);
-		ctx.lineTo(_x + _w, _b);
-		ctx.lineTo(_x, _b);
-		ctx.closePath();
-		ctx.fill();
-
-		ctx.lineWidth = 1;
-		ctx.strokeStyle = "#D8D8D8";
-		ctx.beginPath();
-		ctx.rect(0.5, 0.5, this.STYLE_THUMBNAIL_WIDTH - 1, this.STYLE_THUMBNAIL_HEIGHT - 1);
-
-		ctx.stroke();
-
-		graphics.restore();
-	}
-	else
-	{
-		g_oTableId.m_bTurnOff = true;
-		History.TurnOff();
-
-		var oldDefTabStop = AscCommonWord.Default_Tab_Stop;
-		AscCommonWord.Default_Tab_Stop = 1;
-		var isShowParaMarks = false;
-		if (_api)
-		{
-			isShowParaMarks = _api.get_ShowParaMarks();
-			_api.put_ShowParaMarks(false);
-		}
-
-		var hdr = new CHeaderFooter(editor.WordControl.m_oLogicDocument.HdrFtr, editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, AscCommon.hdrftr_Header);
-		var _dc = hdr.Content;//new CDocumentContent(editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, true, false);
-
-		var par = new AscWord.Paragraph(_dc, false);
-		var run = new ParaRun(par, false);
-		run.AddText(styleName);
-
-		_dc.Internal_Content_Add(0, par, false);
-		par.Add_ToContent(0, run);
-		par.Style_Add(style.Id, false);
-		par.Set_Align(AscCommon.align_Left);
-		par.Set_Tabs(new CParaTabs());
-
-		if (!textPr.Color || (255 === textPr.Color.r && 255 === textPr.Color.g && 255 === textPr.Color.b))
-			run.Set_Color(new CDocumentColor(0, 0, 0, false));
-
-		var _brdL = style.ParaPr.Brd.Left;
-		if (undefined !== _brdL && null !== _brdL)
-		{
-			var brdL = new CDocumentBorder();
-			brdL.Set_FromObject(_brdL);
-			brdL.Space = 0;
-			par.Set_Border(brdL, AscDFH.historyitem_Paragraph_Borders_Left);
-		}
-
-		var _brdT = style.ParaPr.Brd.Top;
-		if (undefined !== _brdT && null !== _brdT)
-		{
-			var brd = new CDocumentBorder();
-			brd.Set_FromObject(_brdT);
-			brd.Space = 0;
-			par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Top);
-		}
-
-		var _brdB = style.ParaPr.Brd.Bottom;
-		if (undefined !== _brdB && null !== _brdB)
-		{
-			var brd = new CDocumentBorder();
-			brd.Set_FromObject(_brdB);
-			brd.Space = 0;
-			par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Bottom);
-		}
-
-		var _brdR = style.ParaPr.Brd.Right;
-		if (undefined !== _brdR && null !== _brdR)
-		{
-			var brd = new CDocumentBorder();
-			brd.Set_FromObject(_brdR);
-			brd.Space = 0;
-			par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Right);
-		}
-
-		var _ind = new CParaInd();
-		_ind.FirstLine = 0;
-		_ind.Left = 0;
-		_ind.Right = 0;
-		par.Set_Ind(_ind, false);
-
-		var _sp = new CParaSpacing();
-		_sp.Line = 1;
-		_sp.LineRule = Asc.linerule_Auto;
-		_sp.Before = 0;
-		_sp.BeforeAutoSpacing = false;
-		_sp.After = 0;
-		_sp.AfterAutoSpacing = false;
-		par.Set_Spacing(_sp, false);
-
-		_dc.Reset(0, 0, 10000, 10000);
-		_dc.Recalculate_Page(0, true);
-
-		_dc.Reset(0, 0, par.Lines[0].Ranges[0].W + 0.001, 10000);
-		_dc.Recalculate_Page(0, true);
-		//par.Reset(0, 0, 10000, 10000, 0);
-		//par.Recalculate_Page(0);
-
-		var y = 0;
-		var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
-		var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
-		var off = 10 * dKoefToMM;
-		var off2 = 5 * dKoefToMM;
-		var off3 = 1 * dKoefToMM;
-
-		graphics.transform(1, 0, 0, 1, 0, 0);
-		graphics.save();
-		graphics._s();
-		graphics._m(off2, y + off3);
-		graphics._l(w - off, y + off3);
-		graphics._l(w - off, b - off3);
-		graphics._l(off2, b - off3);
-		graphics._z();
-		graphics.clip();
-
-		//graphics.t(style.Name, off + 0.5, y + 0.75 * (b - y));
-		var baseline = par.Lines[0].Y;
-		par.Shift(0, off + 0.5, y + 0.75 * (b - y) - baseline);
-		par.Draw(0, graphics);
-
-		graphics.restore();
-
-		if (_api)
-			_api.put_ShowParaMarks(isShowParaMarks);
-
-		AscCommonWord.Default_Tab_Stop = oldDefTabStop;
-
-		g_oTableId.m_bTurnOff = false;
-		History.TurnOn();
-	}
-};
-
 CStylesPainter.prototype.get_MergedStyles = function ()
 {
 	return this.mergedStyles;
 };
+
+(function(window)
+{
+	/**
+	 * @param stylePainter {AscCommonWord.CStylesPainter}
+	 * @constructor
+	 * @extends AscCommon.CActionOnTimerBase
+	 */
+	function StylePreviewGenerator(stylePainter)
+	{
+		AscCommon.CActionOnTimerBase.call(this);
+		
+		this.stylePainter = stylePainter;
+		this.api          = null;
+		this.styleManager = null;
+		
+		this.canvas   = null;
+		this.graphics = null;
+		
+		this.STYLE_THUMBNAIL_WIDTH  = GlobalSkin.STYLE_THUMBNAIL_WIDTH;
+		this.STYLE_THUMBNAIL_HEIGHT = GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
+		
+	}
+	StylePreviewGenerator.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
+	StylePreviewGenerator.prototype.OnBegin = function(_api)
+	{
+		this.api = _api;
+		if (!_api.WordControl.m_oLogicDocument)
+			return;
+		
+		this.styleManager = _api.WordControl.m_oLogicDocument.Get_Styles();
+		if (!this.styleManager.Style)
+			return;
+		
+		this.styles = [];
+		for (let i in this.styleManager.Style)
+		{
+			this.styles.push(this.styleManager.Style[i]);
+		}
+		
+		this.stylePainter.docStyles = [];
+		this.index  = 0;
+		
+		this.STYLE_THUMBNAIL_WIDTH 	= AscCommon.AscBrowser.convertToRetinaValue(this.stylePainter.STYLE_THUMBNAIL_WIDTH, true);
+		this.STYLE_THUMBNAIL_HEIGHT = AscCommon.AscBrowser.convertToRetinaValue(this.stylePainter.STYLE_THUMBNAIL_HEIGHT, true);
+		
+		this.InitCanvas();
+	};
+	StylePreviewGenerator.prototype.OnEnd = function()
+	{
+		this.stylePainter.OnEndGenerate(this.api);
+	};
+	StylePreviewGenerator.prototype.IsContinue = function()
+	{
+		return (this.index < this.styles.length);
+	};
+	StylePreviewGenerator.prototype.DoAction = function()
+	{
+		let style = this.styles[this.index++];
+		if (!style)
+			return;
+		
+		this.stylePainter.docStyles.push(this.GeneratePreview(style));
+	};
+	StylePreviewGenerator.prototype.OnEndTimer = function()
+	{
+		// TODO: Добавить обработку, если сделаем постепенное заполнение
+	};
+	StylePreviewGenerator.prototype.InitCanvas = function()
+	{
+		var _canvas = document.createElement('canvas');
+		_canvas.width  = this.STYLE_THUMBNAIL_WIDTH;
+		_canvas.height = this.STYLE_THUMBNAIL_HEIGHT;
+		var ctx = _canvas.getContext('2d');
+		
+		if (window["flat_desine"] !== true)
+		{
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, _canvas.width, _canvas.height);
+		}
+		
+		var graphics = new AscCommon.CGraphics();
+		var koef = AscCommon.g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+		graphics.init(ctx, _canvas.width, _canvas.height, _canvas.width * koef, _canvas.height * koef);
+		graphics.m_oFontManager = AscCommon.g_fontManager;
+		
+		this.canvas   = _canvas;
+		this.graphics = graphics;
+	};
+	StylePreviewGenerator.prototype.GeneratePreview = function(style)
+	{
+		let uiPriority = style.GetUiPriority();
+		let styleId    = style.GetId();
+		let styleName  = style.GetName();
+		
+		// как только меняется сериалайзер - меняется и код здесь. Да, не очень удобно,
+		// зато быстро делается
+		var formalStyle = styleId.toLowerCase().replace(/\s/g, "");
+		var res = formalStyle.match(/^heading([1-9][0-9]*)$/);
+		var index = (res) ? res[1] - 1 : -1;
+		
+		if (style.Default)
+		{
+			switch (style.Default)
+			{
+				case 1:
+					break;
+				case 2:
+					styleName = "No List";
+					break;
+				case 3:
+					styleName = "Normal";
+					break;
+				case 4:
+					styleName = "Normal Table";
+					break;
+			}
+		}
+		else if (-1 !== index)
+		{
+			styleName = "Heading ".concat(index + 1);
+		}
+		
+		var _dr_style  = this.styleManager.Get_Pr(styleId, AscWord.styletype_Paragraph);
+		_dr_style.Name = styleName;
+		_dr_style.Id   = styleId;
+		
+		this.drawStyle(this.api, this.graphics, _dr_style, this.styleManager.IsStyleDefaultByName(styleName) ? AscCommon.translateManager.getValue(styleName) : styleName);
+		return new AscCommon.CStyleImage(styleName, AscCommon.c_oAscStyleImage.Document, this.canvas.toDataURL("image/png"), uiPriority);
+	};
+	StylePreviewGenerator.prototype.drawStyle = function(_api, graphics, style, styleName)
+	{
+		var ctx = graphics.m_oContext;
+		ctx.fillStyle = "#FFFFFF";
+		ctx.fillRect(0, 0, this.STYLE_THUMBNAIL_WIDTH, this.STYLE_THUMBNAIL_HEIGHT);
+		
+		var font = {
+			FontFamily: {Name: "Times New Roman", Index: -1},
+			Color: {r: 0, g: 0, b: 0},
+			Bold: false,
+			Italic: false,
+			FontSize: 10
+		};
+		
+		var textPr = style.TextPr;
+		if (textPr.FontFamily !== undefined)
+		{
+			font.FontFamily.Name = textPr.FontFamily.Name;
+			font.FontFamily.Index = textPr.FontFamily.Index;
+		}
+		
+		if (textPr.Bold !== undefined)
+			font.Bold = textPr.Bold;
+		if (textPr.Italic !== undefined)
+			font.Italic = textPr.Italic;
+		
+		if (textPr.FontSize !== undefined)
+			font.FontSize = textPr.FontSize;
+		
+		graphics.SetFont(font);
+		
+		if (textPr.Color === undefined)
+			graphics.b_color1(0, 0, 0, 255);
+		else
+			graphics.b_color1(textPr.Color.r, textPr.Color.g, textPr.Color.b, 255);
+		
+		var dKoefToMM = AscCommon.g_dKoef_pix_to_mm;
+		dKoefToMM /= AscCommon.AscBrowser.retinaPixelRatio;
+		
+		if (window["flat_desine"] !== true)
+		{
+			var y = 0;
+			var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
+			var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
+			
+			graphics.transform(1, 0, 0, 1, 0, 0);
+			graphics.save();
+			graphics._s();
+			graphics._m(-0.5, y);
+			graphics._l(w, y);
+			graphics._l(w, b);
+			graphics._l(0, b);
+			graphics._z();
+			graphics.clip();
+			
+			graphics.t(this.CurrentTranslate.StylesText, 0.5, (y + b) / 2);
+			
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.fillStyle = "#E8E8E8";
+			
+			var _b = this.STYLE_THUMBNAIL_HEIGHT - 1.5;
+			var _x = 2;
+			var _w = this.STYLE_THUMBNAIL_WIDTH - 4;
+			var _h = (this.STYLE_THUMBNAIL_HEIGHT / 3) >> 0;
+			ctx.beginPath();
+			ctx.moveTo(_x, _b - _h);
+			ctx.lineTo(_x + _w, _b - _h);
+			ctx.lineTo(_x + _w, _b);
+			ctx.lineTo(_x, _b);
+			ctx.closePath();
+			ctx.fill();
+			
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = "#D8D8D8";
+			ctx.beginPath();
+			ctx.rect(0.5, 0.5, this.STYLE_THUMBNAIL_WIDTH - 1, this.STYLE_THUMBNAIL_HEIGHT - 1);
+			
+			ctx.stroke();
+			
+			graphics.restore();
+		}
+		else
+		{
+			g_oTableId.m_bTurnOff = true;
+			History.TurnOff();
+			
+			var oldDefTabStop = AscCommonWord.Default_Tab_Stop;
+			AscCommonWord.Default_Tab_Stop = 1;
+			var isShowParaMarks = false;
+			if (_api)
+			{
+				isShowParaMarks = _api.get_ShowParaMarks();
+				_api.put_ShowParaMarks(false);
+			}
+			
+			var hdr = new CHeaderFooter(editor.WordControl.m_oLogicDocument.HdrFtr, editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, AscCommon.hdrftr_Header);
+			var _dc = hdr.Content;//new CDocumentContent(editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, true, false);
+			
+			var par = new AscWord.Paragraph(_dc, false);
+			var run = new ParaRun(par, false);
+			run.AddText(styleName);
+			
+			_dc.Internal_Content_Add(0, par, false);
+			par.Add_ToContent(0, run);
+			par.Style_Add(style.Id, false);
+			par.Set_Align(AscCommon.align_Left);
+			par.Set_Tabs(new CParaTabs());
+			
+			if (!textPr.Color || (255 === textPr.Color.r && 255 === textPr.Color.g && 255 === textPr.Color.b))
+				run.Set_Color(new CDocumentColor(0, 0, 0, false));
+			
+			var _brdL = style.ParaPr.Brd.Left;
+			if (undefined !== _brdL && null !== _brdL)
+			{
+				var brdL = new CDocumentBorder();
+				brdL.Set_FromObject(_brdL);
+				brdL.Space = 0;
+				par.Set_Border(brdL, AscDFH.historyitem_Paragraph_Borders_Left);
+			}
+			
+			var _brdT = style.ParaPr.Brd.Top;
+			if (undefined !== _brdT && null !== _brdT)
+			{
+				var brd = new CDocumentBorder();
+				brd.Set_FromObject(_brdT);
+				brd.Space = 0;
+				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Top);
+			}
+			
+			var _brdB = style.ParaPr.Brd.Bottom;
+			if (undefined !== _brdB && null !== _brdB)
+			{
+				var brd = new CDocumentBorder();
+				brd.Set_FromObject(_brdB);
+				brd.Space = 0;
+				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Bottom);
+			}
+			
+			var _brdR = style.ParaPr.Brd.Right;
+			if (undefined !== _brdR && null !== _brdR)
+			{
+				var brd = new CDocumentBorder();
+				brd.Set_FromObject(_brdR);
+				brd.Space = 0;
+				par.Set_Border(brd, AscDFH.historyitem_Paragraph_Borders_Right);
+			}
+			
+			var _ind = new CParaInd();
+			_ind.FirstLine = 0;
+			_ind.Left = 0;
+			_ind.Right = 0;
+			par.Set_Ind(_ind, false);
+			
+			var _sp = new CParaSpacing();
+			_sp.Line = 1;
+			_sp.LineRule = Asc.linerule_Auto;
+			_sp.Before = 0;
+			_sp.BeforeAutoSpacing = false;
+			_sp.After = 0;
+			_sp.AfterAutoSpacing = false;
+			par.Set_Spacing(_sp, false);
+			
+			_dc.Reset(0, 0, 10000, 10000);
+			_dc.Recalculate_Page(0, true);
+			
+			_dc.Reset(0, 0, par.Lines[0].Ranges[0].W + 0.001, 10000);
+			_dc.Recalculate_Page(0, true);
+			//par.Reset(0, 0, 10000, 10000, 0);
+			//par.Recalculate_Page(0);
+			
+			var y = 0;
+			var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;
+			var w = dKoefToMM * this.STYLE_THUMBNAIL_WIDTH;
+			var off = 10 * dKoefToMM;
+			var off2 = 5 * dKoefToMM;
+			var off3 = 1 * dKoefToMM;
+			
+			graphics.transform(1, 0, 0, 1, 0, 0);
+			graphics.save();
+			graphics._s();
+			graphics._m(off2, y + off3);
+			graphics._l(w - off, y + off3);
+			graphics._l(w - off, b - off3);
+			graphics._l(off2, b - off3);
+			graphics._z();
+			graphics.clip();
+			
+			//graphics.t(style.Name, off + 0.5, y + 0.75 * (b - y));
+			var baseline = par.Lines[0].Y;
+			par.Shift(0, off + 0.5, y + 0.75 * (b - y) - baseline);
+			par.Draw(0, graphics);
+			
+			graphics.restore();
+			
+			if (_api)
+				_api.put_ShowParaMarks(isShowParaMarks);
+			
+			AscCommonWord.Default_Tab_Stop = oldDefTabStop;
+			
+			g_oTableId.m_bTurnOff = false;
+			History.TurnOn();
+		}
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon'].StylePreviewGenerator = StylePreviewGenerator;
+})(window);
 
 window['AscCommonWord'].CStylesPainter = CStylesPainter;
 CStylesPainter.prototype['get_MergedStyles'] = CStylesPainter.prototype.get_MergedStyles;
