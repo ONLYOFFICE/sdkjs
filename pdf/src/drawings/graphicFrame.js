@@ -82,6 +82,9 @@
         ret._page = this._page; 
         return ret;
     };
+    CPdfGraphicFrame.prototype.handleUpdateRot = function() {
+        this.SetNeedRecalc(true);
+    };
     CPdfGraphicFrame.prototype.Get_PageContentStartPos = function(nPage) {
         return this.GetDocument().Get_PageLimits(nPage);
     };
