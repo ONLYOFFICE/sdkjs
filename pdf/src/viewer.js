@@ -2767,17 +2767,13 @@
 
 				let pageColor = this.Api.getPageBackgroundColor();
 				let oImageToDraw = null;
+				let bRedrawAnnotsOnMainLayer = false;
 				if (!this.file.pages[i].isConvertedToShapes) {
 					if (!page.Image && !isStretchPaint)
 					{
 						page.Image = this.file.getPage(i, w, h, undefined, (pageColor.R << 16) | (pageColor.G << 8) | pageColor.B);
-						
 						if (this.bCachedMarkupAnnnots) {
-							let ctx = page.Image.getContext("2d");
-							
-							this._drawDrawingsOnCtx(i, ctx);
-							this._drawMarkupAnnotsOnCtx(i, ctx);
-							oImageToDraw = page.Image;
+							bRedrawAnnotsOnMainLayer = true;
 						}
 
 						// нельзя кэшировать с вотермарком - так как есть поворот
@@ -2785,10 +2781,25 @@
 						//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
 					}
 				}
-				else {
-					page.Image = null;
+				
+				if (null == page.Image) {
+					page.Image = document.createElement('canvas');
+					page.Image.width = w;
+					page.Image.height = h;
+					page.Image.requestWidth = w;
+					page.Image.requestHeight = h;
+					let tmpPageCtx = page.Image.getContext('2d');
+					tmpPageCtx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
+					tmpPageCtx.fillRect(0, 0, w, h);
 				}
 
+				if (bRedrawAnnotsOnMainLayer) {
+					let ctx = page.Image.getContext("2d");
+					this._drawDrawingsOnCtx(i, ctx);
+					this._drawMarkupAnnotsOnCtx(i, ctx);
+					oImageToDraw = page.Image;
+				}
+				
 				if (!this.bCachedMarkupAnnnots) {
 					let pageInfo = this.pagesInfo.pages[i];
 					let aMarkups = pageInfo.annots.filter(function(annot) {
@@ -2819,13 +2830,7 @@
 								tmpPageImage.height = h;
 							}
 		
-							if (page.Image) {
-								tmpPageCtx.drawImage(page.Image, 0, 0);
-							}
-							else {
-								tmpPageCtx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
-								tmpPageCtx.fillRect(0, 0, w, h);
-							}
+							tmpPageCtx.drawImage(page.Image, 0, 0);
 		
 							this._drawDrawingsOnCtx(i, tmpPageCtx);
 							this._drawMarkupAnnotsOnCtx(i, tmpPageCtx);
@@ -2838,17 +2843,8 @@
 					}
 				}
 
-				if (oImageToDraw)
-				{
-					this.blitPageToCtx(ctx, oImageToDraw, i);
-					this.pagesInfo.setPainted(i);
-				}
-				else
-				{
-					let pageColor = this.Api.getPageBackgroundColor();
-					ctx.fillStyle = "rgba(" + pageColor.R + "," + pageColor.G + "," + pageColor.B + ",1)";
-					ctx.fillRect(x, y, w, h);
-				}
+				this.blitPageToCtx(ctx, oImageToDraw, i);
+				this.pagesInfo.setPainted(i);
 				
 				if (this.Api.watermarkDraw)
 					this.Api.watermarkDraw.Draw(ctx, x, y, w, h);
