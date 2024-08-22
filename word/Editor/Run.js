@@ -7520,6 +7520,7 @@ ParaRun.prototype.Recalc_CompiledPr = function(RecalcMeasure)
 
     // Если мы в формуле, тогда ее надо пересчитывать
     this.private_RecalcCtrPrp();
+	this.OnTextPrChange();
 };
 ParaRun.prototype.RecalcMeasure = function()
 {
