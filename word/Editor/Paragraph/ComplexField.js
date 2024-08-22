@@ -1726,11 +1726,19 @@ CComplexField.prototype.private_CheckNestedComplexFields = function()
 };
 CComplexField.prototype.IsHidden = function()
 {
+	var oInstruction = this.GetInstruction();
+	if (!oInstruction)
+		return false;
+	
+	if (this.EndChar
+		&& this.EndChar.IsNumValue()
+		&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))
+		return true;
+	
 	if (!this.BeginChar || !this.SeparateChar)
 		return false;
-
-	var oInstruction = this.GetInstruction();
-	return (oInstruction && (AscWord.fieldtype_ASK === oInstruction.GetType() || (this.SeparateChar.IsNumValue() && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))));
+	
+	return (AscWord.fieldtype_ASK === oInstruction.GetType());
 };
 CComplexField.prototype.RemoveFieldWrap = function()
 {
