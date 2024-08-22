@@ -2230,7 +2230,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			if (manualMax <= 0) {
+			if (AscFormat.isRealNumber(manualMax) && manualMax <= 0) {
 				arrayValues = [-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0];
 			} else {
 				arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -2319,7 +2319,8 @@ CChartsDrawer.prototype =
 				var limit = limitArr[res.length - 1];
 				const num = (trueHeight / (res.length - 1));
 				var heightGrid = Math.round(num);
-				while (heightGrid <= limit) {
+				let i = 0;
+				while (heightGrid <= limit && i < 20) {
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
 					newStep = tempStep * firstDegreeStep.numPow;
@@ -2331,6 +2332,7 @@ CChartsDrawer.prototype =
 
 					limit = limitArr[res.length - 1];
 					heightGrid = Math.round((trueHeight / (res.length - 1)));
+					i++;
 				}
 			}
 		}
