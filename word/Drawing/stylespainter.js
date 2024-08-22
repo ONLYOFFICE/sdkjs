@@ -319,8 +319,21 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		this.styles = [];
 		for (let i in this.styleManager.Style)
 		{
-			this.styles.push(this.styleManager.Style[i]);
+			let style = this.styleManager.Style[i];
+			if (style.IsExpressStyle(this.styleManager))
+				this.styles.push(this.styleManager.Style[i]);
 		}
+		
+		this.styles.sort(function(st1, st2){
+			let p1 = st1.GetUiPriority();
+			let p2 = st2.GetUiPriority();
+			if (!p2)
+				return -1;
+			if (!p1)
+				return 1;
+			
+			return p1 - p2;
+		});
 		
 		this.stylePainter.docStyles = [];
 		this.index  = 0;
