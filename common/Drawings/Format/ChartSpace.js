@@ -921,7 +921,7 @@ function(window, undefined) {
 			oLabel.txBody.content.Recalculate_Page(0, true);
 		}
 
-		const sliceLabel = function (oLabel, maxWidth, dotWidth) {
+		const sliceLabel = function (oLabel, maxWidth, aDotWidth) {
 			const paragraph = oLabel && oLabel.txBody && oLabel.txBody.content && oLabel.txBody.content.Content && Array.isArray(oLabel.txBody.content.Content) ? oLabel.txBody.content.Content[0] : null
 			const contents = paragraph ? paragraph.Content : null;
 			let oSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : null;
@@ -954,15 +954,19 @@ function(window, undefined) {
 					// when dealing width width subtract the width of the dots from max width
 					if (!multiLine) {
 
-						// dot Width is equal across all the axis labels
-						if (dotWidth[0] === null) {
-							contents[0].AddToContent(0,new AscWord.CRunText(46), true);
+						// add dot to empty string and find its width
+						if (aDotWidth[0] === null) {
+							const oDot = new AscWord.CRunText(46);
+							contents[0].AddToContent(0, oDot, true);
 							const oDotSize = oLabel && oLabel.tx &&  oLabel.tx.rich ? oLabel.tx.rich.getContentOneStringSizes() : {w: 0, h: 0};
 							contents[0].Content = [];
-							dotWidth[0] = oDotSize.w;
+							aDotWidth[0] = oDotSize.w;
 						}
-	
-						maxWidth -= (dotWidth[0] * 3);
+						
+						// indicate number of dots
+						const dotCount = 3;
+						// aDotWidth is equal across all the axis labels
+						maxWidth -= (aDotWidth[0] * dotCount);
 					}
 
 					while(right - left > 1) {
@@ -1000,11 +1004,11 @@ function(window, undefined) {
 		if (Array.isArray(aLabels) && aLabels.length > 0) {
 			let loopsCount = 0;
 			let jump = 0;
-			const dotWidth = [null];
+			const aDotWidth = [null];
 			for (let i = 0; i < aLabels.length; i += jump) {
 				if (aLabels[i]) {
 					var oLabel = aLabels[i];
-					const sliced = sliceLabel(oLabel, rotatedMaxWidth, dotWidth);
+					const sliced = sliceLabel(oLabel, rotatedMaxWidth, aDotWidth);
 					var oContent = oLabel.tx.rich.content;
 					oContent.SetApplyToAll(true);
 					oContent.SetParagraphAlign(AscCommon.align_Left);
