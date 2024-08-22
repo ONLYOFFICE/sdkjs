@@ -458,22 +458,56 @@ CChangesPDFDocumentRotatePage.prototype.ReadFromBinary = function(Reader)
  * @constructor
  * @extends {AscDFH.CChangesBaseProperty}
  */
-function CChangesPDFDocumentRecognizePage(Class, Old, New, Color)
+function CChangesPDFDocumentRecognizePage(Class, nPage, Old, New)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New);
+	this.Page = nPage;
 }
 CChangesPDFDocumentRecognizePage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFDocumentRecognizePage.prototype.constructor = CChangesPDFDocumentRecognizePage;
 CChangesPDFDocumentRecognizePage.prototype.Type = AscDFH.historyitem_PDF_Document_RecognizePage;
-CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(Value)
+CChangesPDFDocumentRecognizePage.prototype.WriteToBinary = function(Writer)
+{
+	let nFlags = 0;
+
+	if (undefined === this.Page)
+		nFlags |= 1;
+	if (undefined === this.New)
+		nFlags |= 2;
+	if (undefined === this.Old)
+		nFlags |= 3;
+
+	
+	Writer.WriteLong(nFlags);
+	if (undefined !== this.Page)
+		Writer.WriteLong(this.Page);
+};
+CChangesPDFDocumentRecognizePage.prototype.ReadFromBinary = function(Reader)
+{
+	let nFlags = Reader.GetLong();
+
+	if (nFlags & 1)
+		this.Page = undefined;
+	else
+		this.Page = Reader.GetLong();
+
+	if (nFlags & 2)
+		this.New = false;
+	else
+		this.New = true;
+
+	if (nFlags & 3)
+		this.Old = false;
+	else
+		this.Old = true;
+};
+CChangesPDFDocumentRecognizePage.prototype.private_SetValue = function(bRecognize)
 {
 	let oDoc = this.Class;
 	let oFile = oDoc.Viewer.file;
+	let nPage = this.Page;
 
-	let nPage = Value[0];
-	let isConverted = Value[1];
-
-	oFile.pages[nPage].isConvertedToShapes = isConverted;
+	oFile.pages[nPage].isConvertedToShapes = bRecognize;
 	oDoc.Viewer.paint(function() {
 		oDoc.Viewer.thumbnails._repaintPage(nPage);
 	});

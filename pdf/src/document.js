@@ -4145,7 +4145,7 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc = this.GetDrawingDocument();
 
         oFile.pages[nPage].isConvertedToShapes = true;
-        this.History.Add(new CChangesPDFDocumentRecognizePage(this, [nPage, false], [nPage, true]));
+        this.History.Add(new CChangesPDFDocumentRecognizePage(this, nPage, false, true));
 
         let aSpsXmls        = oFile.nativeFile["scanPage"](nOriginIndex, 1);
         let oParserContext  = new AscCommon.XmlParserContext();
@@ -4158,56 +4158,53 @@ var CPresentation = CPresentation || function(){};
         
         oParserContext.DrawingDocument = oDrDoc;
 
-        AscFormat.ExecuteNoHistory(function () {
-            for (let i = 0; i < aSpsXmls.length; i++) {
-                oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
-                oXmlReader.parseNode(0);
+        for (let i = 0; i < aSpsXmls.length; i++) {
+            oXmlReader = new AscCommon.StaxParser(aSpsXmls[i], undefined, oParserContext);
+            oXmlReader.parseNode(0);
 
-                let _t = this;
-                let oDrawing;
-                oXmlReader.rels = {
-                    getRelationship : function(rId) {
-                        let url =  _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)));
-                        if ("data:" === url.substring(0, 5)) {
-                            return {
-                                targetMode : "InternalBase64",
-                                base64 : url,
-                                drawing: oDrawing
-                            }
-                        } else {
-                            return {
-                                targetMode: "InternalLoaded",
-                                targetFullName: url,
-                                drawing: oDrawing
-                            }
+            let _t = this;
+            let oDrawing;
+            oXmlReader.rels = {
+                getRelationship : function(rId) {
+                    let url =  _t.Viewer.file.nativeFile["getImageBase64"](parseInt(rId.substring(3)));
+                    if ("data:" === url.substring(0, 5)) {
+                        return {
+                            targetMode : "InternalBase64",
+                            base64 : url,
+                            drawing: oDrawing
+                        }
+                    } else {
+                        return {
+                            targetMode: "InternalLoaded",
+                            targetFullName: url,
+                            drawing: oDrawing
                         }
                     }
-                };
+                }
+            };
 
-                switch (oXmlReader.GetName()) {
-                    case 'p:sp': {
-                        oDrawing = new AscPDF.CPdfShape();
-                        break;
-                    }
-                    case 'p:graphicFrame': {
-                        oDrawing = new AscPDF.CPdfGraphicFrame();
-                        break;
-                    }
-                    case 'p:pic': {
-                        oDrawing = new AscPDF.CPdfImage();
-                        break;
-                    }
+            switch (oXmlReader.GetName()) {
+                case 'p:sp': {
+                    oDrawing = new AscPDF.CPdfShape();
+                    break;
                 }
-                
-                if (oDrawing) {
-                    oDrawing.fromXml(oXmlReader);
-                    oDrawing.setBDeleted(false);
-                    aPageDrawings.push(oDrawing);
-                    oDrawing.CheckTextOnOpen();
+                case 'p:graphicFrame': {
+                    oDrawing = new AscPDF.CPdfGraphicFrame();
+                    break;
                 }
-                
+                case 'p:pic': {
+                    oDrawing = new AscPDF.CPdfImage();
+                    break;
+                }
             }
-        }, this, this);
+            
+            if (oDrawing) {
+                oDrawing.fromXml(oXmlReader);
+                oDrawing.setBDeleted(false);
+                aPageDrawings.push(oDrawing);
+                oDrawing.CheckTextOnOpen();
+            }
+        }
 
         let _t = this;
         let oImageMap = oParserContext.imageMap;
