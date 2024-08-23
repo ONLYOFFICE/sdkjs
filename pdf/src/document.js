@@ -3864,7 +3864,6 @@ var CPresentation = CPresentation || function(){};
         oController.checkSelectedObjectsAndCallback(oController.addNewParagraph, [], false, AscDFH.historydescription_Presentation_AddNewParagraph);
 
         if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
-            oActiveObj.SetNeedUpdateRC(true);
             oActiveObj.FitTextBox();
         }
 
@@ -4090,12 +4089,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         let oController = this.GetController();
-        let oActiveObj  = this.GetActiveObject();
         
-        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
-            oActiveObj.SetNeedUpdateRC(true);
-        }
-
         oController.checkSelectedObjectsAndCallback(function () {
             oController.paragraphIncDecFontSize(bIncrease);
         }, [], false, AscDFH.historydescription_Presentation_ParagraphIncDecFontSize);
@@ -4104,10 +4098,6 @@ var CPresentation = CPresentation || function(){};
         let oController = this.GetController();
         let oActiveObj  = this.GetActiveObject();
         
-        if (oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) {
-            oActiveObj.SetNeedUpdateRC(true);
-        }
-
         oController.changeTextCase(nType);
     };
     CPDFDoc.prototype.SetParagraphAlign = function(Align) {
@@ -5210,6 +5200,45 @@ var CPresentation = CPresentation || function(){};
                 this.LastUpdateTargetTime = CurTime;
             }
         }
+    };
+    CPDFDoc.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, UserShortId) {
+        if (!this.Api.User)
+            return;
+
+        if (UserId === this.Api.CoAuthoringApi.getUserConnectionId())
+            return;
+
+        var sUserName = this.Api.CoAuthoringApi.getParticipantName(UserId);
+
+        // "" - это означает, что курсор нужно удалить
+        if (!CursorInfo || "" === CursorInfo || !AscCommon.UserInfoParser.isUserVisible(sUserName))
+        {
+            this.Remove_ForeignCursor(UserId);
+            return;
+        }
+
+        var Changes = new AscCommon.CCollaborativeChanges();
+        var Reader  = Changes.GetStream(CursorInfo);
+
+        var RunId    = Reader.GetString2();
+        var InRunPos = Reader.GetLong();
+
+        var Run = this.TableId.Get_ById(RunId);
+        if (!Run)
+        {
+            this.Remove_ForeignCursor(UserId);
+            return;
+        }
+
+        var CursorPos = [{Class : Run, Position : InRunPos}];
+        Run.GetDocumentPositionFromObject(CursorPos);
+        this.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
+
+        if (true === Show)
+            this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, Run, InRunPos, true);
+    };
+    CPDFDoc.prototype.Remove_ForeignCursor = function(UserId) {
+        this.CollaborativeEditing.Remove_ForeignCursor(UserId);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

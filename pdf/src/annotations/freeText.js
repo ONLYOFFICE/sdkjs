@@ -630,11 +630,34 @@
 
         this.SetWasChanged(true);
     };
-    CAnnotationFreeText.prototype.SetNeedUpdateRC = function(bUpdate) {
-        this._needUpdateRC = bUpdate;
-    };
     CAnnotationFreeText.prototype.IsNeedUpdateRC = function() {
-        return this._needUpdateRC;
+        let aCurRC = this.GetRichContents();
+        let aCalcedRC = this.GetRichContents(true);
+
+        // compare rich contents
+        if (aCurRC.length !== aCalcedRC.length) {
+            return true;
+        }
+
+        for (let i = 0; i < aCurRC.length; i++) {
+            let curRC = aCurRC[i];
+            let calcedRC = aCalcedRC[i];
+
+            let curKeys = Object.keys(curRC);
+            let calcedKeys = Object.keys(calcedRC);
+
+            if (curKeys.length !== calcedKeys.length) {
+                return true;
+            }
+
+            for (let key of curKeys) {
+                if (curRC[key] !== calcedRC[key]) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     };
     CAnnotationFreeText.prototype.SetRichContents = function(aRCInfo) {
         let oDoc            = this.GetDocument();
@@ -644,23 +667,18 @@
         let oLastUsedPara   = oContent.GetElement(0);
         oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
 
-        this._richContents = aRCInfo;
         oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
+        this._richContents = aRCInfo;
 
         if (!aRCInfo) {
             this.SetNeedRecalc(true);
-            this.SetNeedUpdateRC(false);
             return;
         }
 
-        for (let i = 0; i < aRCInfo.length; i++) {
-            let oRCInfo = aRCInfo[i];
-
-            let oRun = new ParaRun(oLastUsedPara, false);
-
-            let oRGB    = AscPDF.CBaseField.prototype.GetRGBColor(oRCInfo["color"]);
+        function setRunPr(oRun, oRCInfo) {
             let oRFonts = new CRFonts();
-
+            let oRGB = AscPDF.CBaseField.prototype.GetRGBColor(oRCInfo["color"]);
+            
             if (oRCInfo["actual"]) {
                 oRFonts.SetAll(oRCInfo["actual"], -1);
             }
@@ -678,22 +696,34 @@
             oRun.SetUnderline(Boolean(oRCInfo["underlined"]));
             oRun.SetFontSize(oRCInfo["size"]);
             oRun.Set_RFonts2(oRFonts);
+        }
+        
+        for (let i = 0; i < aRCInfo.length; i++) {
+            let oRCInfo = aRCInfo[i];
 
-            let oIterator = oRCInfo["text"].replace('\r', '').getUnicodeIterator();
+            let oRun = new ParaRun(oLastUsedPara, false);
 
+            setRunPr(oRun, oRCInfo);
             oLastUsedPara.AddToContentToEnd(oRun);
-            oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
+            for (let nChar = 0; nChar < oRCInfo["text"].length; nChar++) {
+                let nCharCode = oRCInfo["text"][nChar].charCodeAt(0);
+                
+                if (nCharCode == 13) {
+                    oLastUsedPara.Correct_Content();
+                    oLastUsedPara.AddToParagraph(new AscWord.ParaTextPr(oRun.GetTextPr()));
 
-            if (oRCInfo["text"].indexOf('\r') != -1) {
-                oLastUsedPara = new AscWord.Paragraph(oContent, true);
-                oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
+                    oLastUsedPara = new AscWord.Paragraph(oContent, true);
+                    oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
+
+                    oRun = new ParaRun(oLastUsedPara, false);
+                    setRunPr(oRun, oRCInfo);
+                    oLastUsedPara.AddToContentToEnd(oRun);
+                    oLastUsedPara.Set_Align(AscPDF.getInternalAlignByPdfType(oRCInfo["alignment"]));
+                }
+                else {
+                    oRun.Add(AscPDF.codePointToRunElement(nCharCode));
+                }
             }
-
-            while (oIterator.check()) {
-                let runElement = AscPDF.codePointToRunElement(oIterator.value());
-                oRun.Add(runElement);
-                oIterator.next();
-            }            
         }
 
         let _t = this;
@@ -704,12 +734,10 @@
                 }, ""), _t, resolve);
             }).then(function() {
                 _t.SetNeedRecalc(true);
-                _t.SetNeedUpdateRC(false);
             })
         }
         else {
             _t.SetNeedRecalc(true);
-            _t.SetNeedUpdateRC(false);
         }
     };
     CAnnotationFreeText.prototype.GetRichContents = function(bCalced) {
@@ -718,6 +746,27 @@
 
         let oContent = this.GetDocContent();
         let aRCInfo = [];
+
+        function compareRCInfo(obj1, obj2) {
+            if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+                return false;
+            }
+        
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
+        
+            if (keys1.length !== keys2.length) {
+                return false;
+            }
+        
+            for (let key of keys1) {
+                if (obj1[key] !== obj2[key]) {
+                    return false;
+                }
+            }
+        
+            return true;
+        }
 
         for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
             let oPara = oContent.GetElement(i);
@@ -998,7 +1047,6 @@
 	CAnnotationFreeText.prototype.OnChangeTextContent = function() {
 		this.FitTextBox();
 		this.SetNeedRecalc(true);
-		this.SetNeedUpdateRC(true);
 		
 		let docContent = this.GetDocContent();
 		docContent.RecalculateCurPos();
@@ -1047,7 +1095,6 @@
         }
         else {
             this.SetNeedRecalc(true);
-            this.SetNeedUpdateRC(true);
         }
     };
     CAnnotationFreeText.prototype.SelectAllText = function() {
@@ -1066,11 +1113,12 @@
 		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true, ParaSeparator: '\r'}).replace('\r', '');
 		oContent.SetApplyToAll(false);
 
-        if (this.GetContents() != sText || this.IsNeedUpdateRC()) {
+        let isNeedUpdateRC = this.IsNeedUpdateRC();
+        if ((this.GetContents() != sText || isNeedUpdateRC) && this.IsInTextBox()) {
             oDoc.DoAction(function() {
                 this.GetContents() != sText && this.SetContents(sText);
             
-                if (this.IsNeedUpdateRC()) {
+                if (isNeedUpdateRC) {
                     let aCurRc = this.GetRichContents();
                     let aNewRc = this.GetRichContents(true);
                     
@@ -1080,7 +1128,6 @@
                     oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
                     oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
-                    this.SetNeedUpdateRC(false);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
         }
@@ -1653,7 +1700,6 @@
         oTxBoxShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
 
         oParentFreeText.addToSpTree(0, oTxBoxShape);
-        oParentFreeText.SetNeedUpdateRC(false);
         AscCommon.History.EndNoHistoryMode();
     }
 

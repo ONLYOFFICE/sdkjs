@@ -60,6 +60,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Points]			= CChangesPDFLinePoi
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_CL]			= CChangesFreeTextCallout;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_RC]			= CChangesPDFFreeTextRC;
 AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Align]			= CChangesPDFFreeTextAlign;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Annot_FreeText_Rotate]		= CChangesPDFFreeTextRotate;
 
 
 let annotChangesMap = {};
@@ -711,6 +712,23 @@ CChangesPDFFreeTextAlign.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetDisplay(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesPDFFreeTextRotate(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFFreeTextRotate.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesPDFFreeTextRotate.prototype.constructor = CChangesPDFFreeTextRotate;
+CChangesPDFFreeTextRotate.prototype.Type = AscDFH.historyitem_type_Pdf_Annot_FreeText_Rotate;
+CChangesPDFFreeTextRotate.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetRotate(Value);
 };
 
 /**

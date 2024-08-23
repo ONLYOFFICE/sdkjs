@@ -229,9 +229,6 @@
     };
     CPdfDrawingPrototype.prototype.OnContentChange = function() {
         if (this.group) {
-            if (this.group.IsAnnot() && this.group.IsFreeText()) {
-                this.group.SetNeedUpdateRC(true);
-            }
             this.group.SetNeedRecalc(true);
         }
         else {
@@ -240,9 +237,6 @@
     };
     CPdfDrawingPrototype.prototype.OnTextPrChange = function() {
         if (this.group) {
-            if (this.group.IsAnnot() && this.group.IsFreeText()) {
-                this.group.SetNeedUpdateRC(true);
-            }
             this.group.SetNeedRecalc(true);
         }
         else {

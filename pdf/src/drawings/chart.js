@@ -128,7 +128,6 @@
         false == this.IsInTextBox() && oContent.SetApplyToAll(false);
 
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfChart.prototype.SetAlign = function(nType) {
         let oContent = this.GetDocContent();
@@ -183,7 +182,6 @@
     CPdfChart.prototype.IncreaseDecreaseFontSize = function(bIncrease) {
         this.GetDocContent().IncreaseDecreaseFontSize(bIncrease);
         this.SetNeedRecalc(true);
-        this.SetNeedUpdateRC(true);
     };
     CPdfChart.prototype.SetSpacing = function(nSpacing) {
         this.SetParaTextPr(new AscCommonWord.ParaTextPr({Spacing : nSpacing}));
