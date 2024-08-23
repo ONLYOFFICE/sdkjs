@@ -48,19 +48,13 @@ var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
 function CStylesPainter()
 {
-	this.defaultStyles = null;
-	this.docStyles = null;
-
 	this.mergedStyles = null;
 
 	this.STYLE_THUMBNAIL_WIDTH = GlobalSkin.STYLE_THUMBNAIL_WIDTH;
 	this.STYLE_THUMBNAIL_HEIGHT = GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
 
-	this.CurrentTranslate = null;
-	
 	this.previewGenerator = new AscCommon.StylePreviewGenerator(this);
 }
-
 CStylesPainter.prototype.CheckStylesNames = function(_api, ds)
 {
 	var DocumentStyles = _api.WordControl.m_oLogicDocument.Get_Styles();
@@ -90,70 +84,13 @@ CStylesPainter.prototype.CheckStylesNames = function(_api, ds)
 		}
 	}
 };
-
-CStylesPainter.prototype.GenerateStyles = function (_api, ds)
+CStylesPainter.prototype.GenerateStyles = function (_api)
 {
-	this.CurrentTranslate = _api.CurrentTranslate;
-	
-	this.GenerateDefaultStyles(_api, ds);
-	this.GenerateDocumentStyles(_api);
+	this.previewGenerator.Begin(_api);
 };
-CStylesPainter.prototype.OnEndGenerate = function(_api)
+CStylesPainter.prototype.OnEndGenerate = function(styles, _api)
 {
-	// стили сформированы. осталось просто сформировать единый список
-	var _count_default = this.defaultStyles.length;
-	var _count_doc = 0;
-	if (null != this.docStyles)
-		_count_doc = this.docStyles.length;
-
-	var aPriorityStyles = [];
-	var fAddToPriorityStyles = function (style)
-	{
-		var index = style.uiPriority;
-		if (null == index)
-			index = 0;
-		var aSubArray = aPriorityStyles[index];
-		if (null == aSubArray)
-		{
-			aSubArray = [];
-			aPriorityStyles[index] = aSubArray;
-		}
-		aSubArray.push(style);
-	};
-	var _map_document = {};
-
-	for (var i = 0; i < _count_doc; i++)
-	{
-		var style = this.docStyles[i];
-		_map_document[style.Name] = 1;
-		fAddToPriorityStyles(style);
-	}
-
-	for (var i = 0; i < _count_default; i++)
-	{
-		var style = this.defaultStyles[i];
-		if (null == _map_document[style.Name])
-			fAddToPriorityStyles(style);
-	}
-
-	this.mergedStyles = [];
-	for (var index in aPriorityStyles)
-	{
-		var aSubArray = aPriorityStyles[index];
-		aSubArray.sort(function (a, b)
-		{
-			if (a.Name < b.Name)
-				return -1;
-			else if (a.Name > b.Name)
-				return 1;
-			else
-				return 0;
-		});
-		for (var i = 0, length = aSubArray.length; i < length; ++i)
-		{
-			this.mergedStyles.push(aSubArray[i]);
-		}
-	}
+	this.mergedStyles = styles;
 	
 	// export
 	this["STYLE_THUMBNAIL_WIDTH"] = this.STYLE_THUMBNAIL_WIDTH;
@@ -162,122 +99,6 @@ CStylesPainter.prototype.OnEndGenerate = function(_api)
 	// теперь просто отдаем евент наверх
 	_api.sync_InitEditorStyles(this);
 };
-
-CStylesPainter.prototype.GenerateDefaultStyles = function (_api, ds)
-{
-	var styles = ds;
-
-	// добавили переводы => нельзя кэшировать
-	var _canvas = document.createElement('canvas');
-	_canvas.width = this.STYLE_THUMBNAIL_WIDTH;
-	_canvas.height = this.STYLE_THUMBNAIL_HEIGHT;
-	var ctx = _canvas.getContext('2d');
-
-	ctx.fillStyle = "#FFFFFF";
-	ctx.fillRect(0, 0, _canvas.width, _canvas.height);
-
-	var koef = AscCommon.g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-
-	var graphics = new AscCommon.CGraphics();
-	graphics.init(ctx, _canvas.width, _canvas.height, _canvas.width * koef, _canvas.height * koef);
-	graphics.m_oFontManager = AscCommon.g_fontManager;
-
-	var DocumentStyles = _api.WordControl.m_oLogicDocument.Get_Styles();
-	this.defaultStyles = [];
-	for (var i in styles)
-	{
-		var style = styles[i];
-		if (style.IsExpressStyle(DocumentStyles) && null === DocumentStyles.GetStyleIdByName(style.Name))
-		{
-			this.drawStyle(_api, graphics, style, AscCommon.translateManager.getValue(style.Name));
-			this.defaultStyles.push(new AscCommon.CStyleImage(style.Name, AscCommon.c_oAscStyleImage.Default,
-				_canvas.toDataURL("image/png"), style.uiPriority));
-		}
-	}
-};
-
-CStylesPainter.prototype.GenerateDocumentStyles = function(_api)
-{
-	this.previewGenerator.Begin(_api);
-	return;
-	if (!_api.WordControl.m_oLogicDocument)
-		return;
-
-	var DocumentStyles = _api.WordControl.m_oLogicDocument.Get_Styles();
-	var styles = DocumentStyles.Style;
-
-	if (!styles)
-		return;
-	
-	this.privewGenerator.Begin();
-
-	var cur_index = 0;
-
-	var _canvas = document.createElement('canvas');
-	_canvas.width = this.STYLE_THUMBNAIL_WIDTH;
-	_canvas.height = this.STYLE_THUMBNAIL_HEIGHT;
-	var ctx = _canvas.getContext('2d');
-
-	if (window["flat_desine"] !== true)
-	{
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, _canvas.width, _canvas.height);
-	}
-
-	var graphics = new AscCommon.CGraphics();
-	var koef = AscCommon.g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
-	graphics.init(ctx, _canvas.width, _canvas.height, _canvas.width * koef, _canvas.height * koef);
-	graphics.m_oFontManager = AscCommon.g_fontManager;
-
-	this.docStyles = [];
-	for (var i in styles)
-	{
-		var style = styles[i];
-		if (style.IsExpressStyle(DocumentStyles))
-		{
-			// как только меняется сериалайзер - меняется и код здесь. Да, не очень удобно,
-			// зато быстро делается
-			var formalStyle = i.toLowerCase().replace(/\s/g, "");
-			var res = formalStyle.match(/^heading([1-9][0-9]*)$/);
-			var index = (res) ? res[1] - 1 : -1;
-
-			var _dr_style = DocumentStyles.Get_Pr(i, styletype_Paragraph);
-			_dr_style.Name = style.Name;
-			_dr_style.Id = i;
-
-			this.drawStyle(_api, graphics, _dr_style,
-				DocumentStyles.IsStyleDefaultByName(style.Name) ? AscCommon.translateManager.getValue(style.Name) : style.Name);
-			this.docStyles[cur_index] = new AscCommon.CStyleImage(style.Name, AscCommon.c_oAscStyleImage.Document,
-				_canvas.toDataURL("image/png"), style.uiPriority);
-
-			// алгоритм смены имени
-			if (style.Default)
-			{
-				switch (style.Default)
-				{
-					case 1:
-						break;
-					case 2:
-						this.docStyles[cur_index].Name = "No List";
-						break;
-					case 3:
-						this.docStyles[cur_index].Name = "Normal";
-						break;
-					case 4:
-						this.docStyles[cur_index].Name = "Normal Table";
-						break;
-				}
-			}
-			else if (index != -1)
-			{
-				this.docStyles[cur_index].Name = "Heading ".concat(index + 1);
-			}
-
-			cur_index++;
-		}
-	}
-};
-
 CStylesPainter.prototype.get_MergedStyles = function ()
 {
 	return this.mergedStyles;
@@ -304,6 +125,10 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		this.STYLE_THUMBNAIL_WIDTH  = GlobalSkin.STYLE_THUMBNAIL_WIDTH;
 		this.STYLE_THUMBNAIL_HEIGHT = GlobalSkin.STYLE_THUMBNAIL_HEIGHT;
 		
+		this.defaultStyles = [];
+		this.docStyles     = [];
+		
+		this.CurrentTranslate = null;
 	}
 	StylePreviewGenerator.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
 	StylePreviewGenerator.prototype.OnBegin = function(_api)
@@ -327,12 +152,12 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		this.styles.sort(function(st1, st2){
 			let p1 = st1.GetUiPriority();
 			let p2 = st2.GetUiPriority();
-			if (!p2)
+			if (null === p1 || undefined === p1)
 				return -1;
-			if (!p1)
+			if (null === p2 || undefined === p2)
 				return 1;
 			
-			return p1 - p2;
+			return p1 === p2 ? 0 : p1 < p2 ? 1 : -1;
 		});
 		
 		this.stylePainter.docStyles = [];
@@ -341,11 +166,72 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		this.STYLE_THUMBNAIL_WIDTH 	= AscCommon.AscBrowser.convertToRetinaValue(this.stylePainter.STYLE_THUMBNAIL_WIDTH, true);
 		this.STYLE_THUMBNAIL_HEIGHT = AscCommon.AscBrowser.convertToRetinaValue(this.stylePainter.STYLE_THUMBNAIL_HEIGHT, true);
 		
+		this.CurrentTranslate = _api.CurrentTranslate;
+		
 		this.InitCanvas();
+		
+		this.defaultStyles = [];
+		this.docStyles     = [];
+		
+		this.GenerateDefaultStyles();
 	};
 	StylePreviewGenerator.prototype.OnEnd = function()
 	{
-		this.stylePainter.OnEndGenerate(this.api);
+		var _count_default = this.defaultStyles.length;
+		var _count_doc = 0;
+		if (null != this.docStyles)
+			_count_doc = this.docStyles.length;
+		
+		var aPriorityStyles = [];
+		var fAddToPriorityStyles = function (style)
+		{
+			var index = style.uiPriority;
+			if (null == index)
+				index = 0;
+			var aSubArray = aPriorityStyles[index];
+			if (null == aSubArray)
+			{
+				aSubArray = [];
+				aPriorityStyles[index] = aSubArray;
+			}
+			aSubArray.push(style);
+		};
+		var _map_document = {};
+		
+		for (var i = 0; i < _count_doc; i++)
+		{
+			var style = this.docStyles[i];
+			_map_document[style.Name] = 1;
+			fAddToPriorityStyles(style);
+		}
+		
+		for (var i = 0; i < _count_default; i++)
+		{
+			var style = this.defaultStyles[i];
+			if (null == _map_document[style.Name])
+				fAddToPriorityStyles(style);
+		}
+		
+		let mergedStyles = [];
+		for (var index in aPriorityStyles)
+		{
+			var aSubArray = aPriorityStyles[index];
+			aSubArray.sort(function (a, b)
+			{
+				if (a.Name < b.Name)
+					return -1;
+				else if (a.Name > b.Name)
+					return 1;
+				else
+					return 0;
+			});
+			for (var i = 0, length = aSubArray.length; i < length; ++i)
+			{
+				mergedStyles.push(aSubArray[i]);
+			}
+		}
+		
+		this.stylePainter.OnEndGenerate(mergedStyles, this.api);
 	};
 	StylePreviewGenerator.prototype.IsContinue = function()
 	{
@@ -357,7 +243,7 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		if (!style)
 			return;
 		
-		this.stylePainter.docStyles.push(this.GeneratePreview(style));
+		this.docStyles.push(this.GeneratePreview(style));
 	};
 	StylePreviewGenerator.prototype.OnEndTimer = function()
 	{
@@ -626,6 +512,19 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			
 			g_oTableId.m_bTurnOff = false;
 			History.TurnOn();
+		}
+	};
+	StylePreviewGenerator.prototype.GenerateDefaultStyles = function ()
+	{
+		for (let i = 0; i < this.styles.length; ++i)
+		{
+			let style = this.styles[i];
+			let styleName = style.GetName();
+			if (null === this.styleManager.GetStyleIdByName(styleName))
+			{
+				this.drawStyle(this.api, this.graphics, style, AscCommon.translateManager.getValue(styleName));
+				this.defaultStyles.push(new AscCommon.CStyleImage(styleName, AscCommon.c_oAscStyleImage.Default, this.canvas.toDataURL("image/png"), style.uiPriority));
+			}
 		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------
