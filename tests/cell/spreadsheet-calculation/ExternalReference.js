@@ -866,6 +866,16 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 0, 'external_name_length_after_delete');
 	});
 
+	QUnit.test("Test: \"parse external reference tests\"", function (assert) {
+		let cellWithFormula = new AscCommonExcel.CCellWithFormula(ws, 1, 0);
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		oParser = new parserFormula("'[book.xlsx]Sheet 1'!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet 1'!A1");
+
+		oParser = new parserFormula("'[book.xlsx]Sheet1'!A1", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet 1'!A1");
+	});
+
 
 	// Mocks for API Testing
 	Asc.spreadsheet_api.prototype._init = function () {
