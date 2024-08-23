@@ -3728,6 +3728,103 @@ $(function () {
 		ws.getRange2("A1:Z100").cleanAll();
 	});
 
+	/* for bug 69708 */
+	QUnit.test('Array formula ', function (assert) {
+		let array, cellWithFormula, fillRange;
+
+		ws.getRange2("A11").setNumFormat("@");
+		ws.getRange2("B12").setNumFormat("@");
+
+		ws.getRange2("A2").setValue("Jeans");
+		ws.getRange2("A3").setValue("Sweater");
+		ws.getRange2("A4").setValue("Shirt");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(9, 0);
+		flags.ctrlKey = true;
+		flags.shiftKey = true;
+
+		// set selection A10:B13
+		fillRange = ws.getRange2("A10:B12");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		
+
+		let fragment = ws.getRange2("A10").getValueForEdit2();
+		fragment[0].setFragmentText("=SIN({1,2})");
+
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);		// calculate
+		resCell = ws.getRange2("A10");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A10:B12", "Selection after =SIN({1,2}) cse formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "A10 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("A11");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "@", "A11 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("A12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "A12 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "B10 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B11");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "B11 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "@", "B12 cellFormat after =SIN({1,2}) calculate");
+
+
+		fragment[0].setFragmentText('=HSTACK({"Red";"Blue";"Green"},A2:A4)');
+
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);		// calculate
+		resCell = ws.getRange2("A10");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A10:B12", 'Selection after =HSTACK({"Red";"Blue";"Green"},A2:A4) cse formula call');
+		assert.strictEqual(resCell.getValueWithFormat(), "Red", 'Value in A10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'A10 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("A11");
+		assert.strictEqual(resCell.getValueWithFormat(), "Blue", 'Value in A11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "@", 'A11 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("A12");
+		assert.strictEqual(resCell.getValueWithFormat(), "Green", 'Value in A12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'A12 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Jeans", 'Value in B10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'B10 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B11");
+		assert.strictEqual(resCell.getValueWithFormat(), "Sweater", 'Value in B11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'B11 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B12");
+		assert.strictEqual(resCell.getValueWithFormat(), "Shirt", 'Value in B12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "@", 'B12 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+
+		ws.getRange2("A1:Z100").cleanAll();
+	});
+
 	QUnit.test('sortRangeTest', function (assert) {
 		let range, expectedRes;
 
