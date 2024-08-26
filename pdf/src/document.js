@@ -2846,7 +2846,7 @@ var CPresentation = CPresentation || function(){};
         if (true /* тут проверяем локи */) {
             this.StartAction(nDescription);
             let result = fAction.call(oThis);
-            this.FinalizeAction();
+            this.FinalizeAction(true);
             return result;
         }
     };
@@ -5188,24 +5188,27 @@ var CPresentation = CPresentation || function(){};
         }
 
         let CurTime = new Date().getTime();
-        if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000)) {
-            this.NeedUpdateTargetForCollaboration = false;
-
-            if (true !== HaveChanges) {
+        if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000) || this.NeedUpdateTargetForCollaborationForce) {
+            
+            if (true !== HaveChanges || this.NeedUpdateTargetForCollaborationForce) {
                 
                 let CursorInfo = this.History.Get_DocumentPositionBinary();
-                if (null !== CursorInfo) {
-                    this.Api.CoAuthoringApi.sendCursor(CursorInfo);
-                    this.LastUpdateTargetTime = CurTime;
-                }
+                this.Api.CoAuthoringApi.sendCursor(CursorInfo);
+                this.LastUpdateTargetTime = CurTime;
             }
             else {
                 this.LastUpdateTargetTime = CurTime;
             }
+
+            this.NeedUpdateTargetForCollaboration = false;
+            this.NeedUpdateTargetForCollaborationForce = false;
         }
     };
-    CPDFDoc.prototype.private_UpdateTargetForCollaboration = function() {
+    CPDFDoc.prototype.private_UpdateTargetForCollaboration = function(bForce) {
         this.NeedUpdateTargetForCollaboration = true;
+        if (bForce) {
+            this.NeedUpdateTargetForCollaborationForce = bForce;
+        }
     };
     CPDFDoc.prototype.Get_DocumentPositionInfoForCollaborative = function() {
         let oActiveObj = this.GetActiveObject();
@@ -5221,7 +5224,7 @@ var CPresentation = CPresentation || function(){};
                 return aDocPos[aDocPos.length - 1];
             }
         }
-        else if ((oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) || oActiveObj.IsForm()) {
+        else if ((oActiveObj.IsAnnot() && oActiveObj.IsFreeText() && oActiveObj.IsInTextBox()) || oActiveObj.IsForm()) {
             return {Class: oActiveObj, Position: 0};
         }
     };
@@ -5238,6 +5241,7 @@ var CPresentation = CPresentation || function(){};
         if (!CursorInfo || "" === CursorInfo || !AscCommon.UserInfoParser.isUserVisible(sUserName))
         {
             this.Remove_ForeignCursor(UserId);
+            this.Viewer.onUpdateOverlay();
             return;
         }
     
@@ -5251,6 +5255,7 @@ var CPresentation = CPresentation || function(){};
         if (!oTargetObj)
         {
             this.Remove_ForeignCursor(UserId);
+            this.Viewer.onUpdateOverlay();
             return;
         }
     
@@ -5263,11 +5268,11 @@ var CPresentation = CPresentation || function(){};
                 this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, oTargetObj, InRunPos, true);
         }
         else {
+            this.Remove_ForeignCursor(UserId);
             this.CollaborativeEditing.Add_ForeignSelectedObject(UserId, oTargetObj, UserShortId);
-            this.Draw_ForeingSelection();
-
             let color = AscCommon.getUserColorById(UserShortId, null, true);
-            this.Show_ForeignSelectedObjectLabel(UserShortId, oTargetObj, color);
+            this.Show_ForeignSelectedObjectLabel(UserId, oTargetObj, color);
+            this.Viewer.onUpdateOverlay();
         }
     };
     CPDFDoc.prototype.Draw_ForeingSelection = function() {
@@ -5303,16 +5308,16 @@ var CPresentation = CPresentation || function(){};
                 if (true == oViewer.isLandscapePage(nPage))
                     indLeft = indLeft + (w - h) / 2;
 
-                let X = aRect[0] * nScaleX;
-                let Y = aRect[1] * nScaleY;
-                let W = (aRect[2] - aRect[0]) * nScaleX;
-                let H = (aRect[3] - aRect[1]) * nScaleY;
+                let X = aRect[0] * nScaleX - 0.5 >> 0;
+                let Y = aRect[1] * nScaleY - 0.5 >> 0;
+                let W = (aRect[2] - aRect[0]) * nScaleX + 0.5 >> 0;
+                let H = (aRect[3] - aRect[1]) * nScaleY + 0.5 >> 0;
 
                 oCtx.strokeStyle = "rgb(" + oColor.r + "," + oColor.g + "," + oColor.b + ")";
                 oOverlay.CheckPoint(indLeft + X, indTop + Y);
                 oOverlay.CheckPoint(indLeft + X + W, indTop + Y + H);
                 oCtx.lineWidth = 2;
-                oCtx.rect(indLeft + X, indTop + Y, W - 2, H - 2);
+                oCtx.rect(indLeft + X, indTop + Y, W, H);
                 oCtx.stroke();
             }
         }
@@ -5338,9 +5343,9 @@ var CPresentation = CPresentation || function(){};
 		
 		oApi.sync_ShowForeignCursorLabel(userId, oPoint.x, oPoint.y, color);
 	};
-    CPDFDoc.prototype.Remove_ForeignCursor = function(UserId) {
+    CPDFDoc.prototype.Remove_ForeignCursor = function(UserId, oObject) {
         this.CollaborativeEditing.Remove_ForeignCursor(UserId);
-        this.CollaborativeEditing
+        this.CollaborativeEditing.Remove_FiregnSelectedObject(UserId, oObject);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -270,7 +270,7 @@
         this._rectDiff = aDiff;
         this.recalcGeometry();
         this.SetWasChanged(true);
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
     };
     /**
 	 * Выставлят настройки ширины линии, цвета и тд для внутренних фигур.
@@ -336,7 +336,7 @@
         this._callout = aCallout;
         this.recalcGeometry();
         this.SetWasChanged(true);
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
     };
     CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
         if (bScaled != true || !this._callout)
@@ -1128,6 +1128,7 @@
                     oDoc.History.Add(new CChangesPDFAnnotRD(this, this._prevRectDiff, this.GetRectangleDiff()));
                     oDoc.History.Add(new CChangesPDFAnnotRect(this, this._prevRect, this.GetRect()));
                     oDoc.History.Add(new CChangesPDFFreeTextRC(this, aCurRc, aNewRc));
+                    oDoc.private_UpdateTargetForCollaboration(true);
                 }
             }, AscDFH.historydescription_Pdf_UpdateAnnotRC, this);
         }
@@ -1235,7 +1236,7 @@
             }
     
             function findBoundingRectangle(points) {
-                if (!points) {
+                if (!points || points.length == 0) {
                     return null;
                 }
     
@@ -1255,7 +1256,7 @@
             }
     
             // находим рект стрелки, учитывая окончание линии
-            let aArrowRect = aNewCallout ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
+            let aArrowRect = aNewCallout.length != 0 ? this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]) : null;
     
             // находим результирующий rect аннотации
             let aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {

@@ -55,6 +55,23 @@ CPDFCollaborativeEditing.prototype.Add_ForeignSelectedObject = function(UserId, 
     this.m_aForeignCursorsId[UserId] = UserShortId;
     this.m_oSelectedObjects[UserId].push(oObject);
 };
+CPDFCollaborativeEditing.prototype.Remove_FiregnSelectedObject = function(UserId, oObject) {
+    if (!oObject) {
+        this.m_oSelectedObjects[UserId] = [];
+    }
+    else {
+        this.m_oSelectedObjects[UserId].splice(this.m_oSelectedObjects[UserId].indexOf(oObject), 1);
+    }
+};
+CPDFCollaborativeEditing.prototype.GetDocumentPositionBinary = function(oWriter, PosInfo) {
+    if (!PosInfo)
+        return '';
+    var BinaryPos = oWriter.GetCurPosition();
+    oWriter.WriteString2(PosInfo.Class.Get_Id());
+    oWriter.WriteLong(PosInfo.Position);
+    var BinaryLen = oWriter.GetCurPosition() - BinaryPos;
+    return  (BinaryLen + ";" + oWriter.GetBase64Memory2(BinaryPos, BinaryLen));
+};
 CPDFCollaborativeEditing.prototype.GetDocument = function() {
     return this.m_oLogicDocument;
 };
