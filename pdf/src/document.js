@@ -107,6 +107,8 @@ var CPresentation = CPresentation || function(){};
         this.maxApIdx               = -1;
         this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
         this.CollaborativeEditing.SetLogicDocument(this);
+        this.NeedUpdateTargetForCollaboration = true;
+        this.LastUpdateTargetTime = 0;
 
         this.MathTrackHandler       = new AscWord.CMathTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotTextPrTrackHandler= new AscPDF.CAnnotTextPrTrackHandler(this.GetDrawingDocument(), Asc.editor);
@@ -1043,6 +1045,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         this.UpdateInterface();
+        this.private_UpdateTargetForCollaboration();
     };
     CPDFDoc.prototype.BlurActiveObject = function() {
         let oActiveObj = this.GetActiveObject();
@@ -5201,44 +5204,143 @@ var CPresentation = CPresentation || function(){};
             }
         }
     };
+    CPDFDoc.prototype.private_UpdateTargetForCollaboration = function() {
+        this.NeedUpdateTargetForCollaboration = true;
+    };
+    CPDFDoc.prototype.Get_DocumentPositionInfoForCollaborative = function() {
+        let oActiveObj = this.GetActiveObject();
+        
+        if (!oActiveObj) {
+            return;
+        }
+
+        if (oActiveObj.IsDrawing()) {
+            let oContent = oActiveObj.GetDocContent();
+            if (oContent) {
+                let aDocPos = oContent.getDocumentContentPosition();
+                return aDocPos[aDocPos.length - 1];
+            }
+        }
+        else if ((oActiveObj.IsAnnot() && oActiveObj.IsFreeText()) || oActiveObj.IsForm()) {
+            return {Class: oActiveObj, Position: 0};
+        }
+    };
     CPDFDoc.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, UserShortId) {
         if (!this.Api.User)
             return;
-
+    
         if (UserId === this.Api.CoAuthoringApi.getUserConnectionId())
             return;
-
-        var sUserName = this.Api.CoAuthoringApi.getParticipantName(UserId);
-
+    
+        let sUserName = this.Api.CoAuthoringApi.getParticipantName(UserId);
+    
         // "" - это означает, что курсор нужно удалить
         if (!CursorInfo || "" === CursorInfo || !AscCommon.UserInfoParser.isUserVisible(sUserName))
         {
             this.Remove_ForeignCursor(UserId);
             return;
         }
-
-        var Changes = new AscCommon.CCollaborativeChanges();
-        var Reader  = Changes.GetStream(CursorInfo);
-
-        var RunId    = Reader.GetString2();
-        var InRunPos = Reader.GetLong();
-
-        var Run = this.TableId.Get_ById(RunId);
-        if (!Run)
+    
+        let Changes = new AscCommon.CCollaborativeChanges();
+        let Reader  = Changes.GetStream(CursorInfo);
+    
+        let oObjId   = Reader.GetString2();
+        let InRunPos = Reader.GetLong();
+    
+        let oTargetObj = AscCommon.g_oTableId.Get_ById(oObjId);
+        if (!oTargetObj)
         {
             this.Remove_ForeignCursor(UserId);
             return;
         }
+    
+        if (oTargetObj instanceof AscWord.Run) {
+            let CursorPos = [{Class : oTargetObj, Position : InRunPos}];
+            oTargetObj.GetDocumentPositionFromObject(CursorPos);
+            this.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
+        
+            if (true === Show)
+                this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, oTargetObj, InRunPos, true);
+        }
+        else {
+            this.CollaborativeEditing.Add_ForeignSelectedObject(UserId, oTargetObj, UserShortId);
+            this.Draw_ForeingSelection();
 
-        var CursorPos = [{Class : Run, Position : InRunPos}];
-        Run.GetDocumentPositionFromObject(CursorPos);
-        this.CollaborativeEditing.Add_ForeignCursor(UserId, CursorPos, UserShortId);
-
-        if (true === Show)
-            this.CollaborativeEditing.Update_ForeignCursorPosition(UserId, Run, InRunPos, true);
+            let color = AscCommon.getUserColorById(UserShortId, null, true);
+            this.Show_ForeignSelectedObjectLabel(UserShortId, oTargetObj, color);
+        }
     };
+    CPDFDoc.prototype.Draw_ForeingSelection = function() {
+        let oViewer             = this.Viewer;
+        let oOverlay            = this.Viewer.overlay;
+        let oCtx                = this.Viewer.overlay.m_oContext;
+        let oSelectedObjects    = this.CollaborativeEditing.m_oSelectedObjects;
+
+        for (userId in oSelectedObjects) {
+            let aObjects = oSelectedObjects[userId];
+
+            let oColor = AscCommon.getUserColorById(this.CollaborativeEditing.m_aForeignCursorsId[userId], null, true);
+
+            for (let i = 0; i < aObjects.length; i++) {
+                let aRect = aObjects[i].GetOrigRect();
+                let nPage = aObjects[i].GetPage();
+
+                let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio;
+                let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio;
+
+                let xCenter = oViewer.width >> 1;
+                if (oViewer.documentWidth > oViewer.width)
+                {
+                    xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+                }
+                let yPos    = oViewer.scrollY >> 0;
+                let page    = oViewer.drawingPages[nPage];
+                let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+                let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+                let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+                let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+                if (true == oViewer.isLandscapePage(nPage))
+                    indLeft = indLeft + (w - h) / 2;
+
+                let X = aRect[0] * nScaleX;
+                let Y = aRect[1] * nScaleY;
+                let W = (aRect[2] - aRect[0]) * nScaleX;
+                let H = (aRect[3] - aRect[1]) * nScaleY;
+
+                oCtx.strokeStyle = "rgb(" + oColor.r + "," + oColor.g + "," + oColor.b + ")";
+                oOverlay.CheckPoint(indLeft + X, indTop + Y);
+                oOverlay.CheckPoint(indLeft + X + W, indTop + Y + H);
+                oCtx.lineWidth = 2;
+                oCtx.rect(indLeft + X, indTop + Y, W - 2, H - 2);
+                oCtx.stroke();
+            }
+        }
+
+    };
+    CPDFDoc.prototype.Show_ForeignSelectedObjectLabel = function(userId, foreignSelectObj, color) {
+		let oApi = Asc.editor;
+
+		if (foreignSelectObj.LabelTimer)
+			clearTimeout(foreignSelectObj.LabelTimer);
+
+		foreignSelectObj.LabelTimer = setTimeout(function()
+		{
+			foreignSelectObj.LabelTimer = null;
+			oApi.sync_HideForeignCursorLabel(userId);
+		}, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
+
+        let oOrigRect = foreignSelectObj.GetOrigRect();
+        let nPage = foreignSelectObj.GetPage();
+		let oTr = this.pagesTransform[nPage].invert;
+
+		let oPoint = oTr.TransformPoint(oOrigRect[0], oOrigRect[1]);
+		
+		oApi.sync_ShowForeignCursorLabel(userId, oPoint.x, oPoint.y, color);
+	};
     CPDFDoc.prototype.Remove_ForeignCursor = function(UserId) {
         this.CollaborativeEditing.Remove_ForeignCursor(UserId);
+        this.CollaborativeEditing
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5313,7 +5415,6 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Document_UpdateUndoRedoState = function() {
         this.UpdateUndoRedo();
     };
-    CPDFDoc.prototype.private_UpdateTargetForCollaboration = function() {};
     CPDFDoc.prototype.RecalculateCurPos = function() {};
     CPDFDoc.prototype.HaveRevisionChanges = function() {};
     CPDFDoc.prototype.ContinueSpellCheck = function() {};

@@ -2633,6 +2633,8 @@
 			}
 			
 			ctx.globalAlpha = 1.0;
+
+			oDoc.Draw_ForeingSelection();
 		};
 
 		this.checkVisiblePages = function()
@@ -2894,6 +2896,7 @@
 			pdfDocument.CheckTargetUpdate(drawingDocument.UpdateTargetCheck);
 			drawingDocument.UpdateTargetCheck = false;
 			drawingDocument.UpdateTargetFromPaint = false;
+			drawingDocument.Collaborative_TargetsUpdate(true);
 			drawingDocument.CheckTargetShow();
 			drawingDocument.CheckTrackTable();
 		};
@@ -4170,6 +4173,7 @@
 		this.canvasForms = document.getElementById("id_forms");
 		
 		this.Api.WordControl.m_oDrawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
+		this.Api.WordControl.m_oDrawingDocument.m_oWordControl.m_oMainView = oControl;
 		
 		this.overlay = new AscCommon.COverlay();
 		this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };

@@ -70,7 +70,6 @@
         if (this.IsOn() == false)
             this.TurnOn();
     };
-    History.prototype.Get_DocumentPositionBinary = function() {};
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())
 			return;

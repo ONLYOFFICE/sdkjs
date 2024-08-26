@@ -41,11 +41,20 @@ function CPDFCollaborativeEditing(oDoc) {
 	AscCommon.CWordCollaborativeEditing.call(this);
     this.m_aSkipContentControlsOnCheckEditingLock = {};
     this.m_oLogicDocument = oDoc;
+    this.m_oSelectedObjects = {};
 }
 
 CPDFCollaborativeEditing.prototype = Object.create(AscCommon.CWordCollaborativeEditing.prototype);
 CPDFCollaborativeEditing.prototype.constructor = CPDFCollaborativeEditing;
 
+CPDFCollaborativeEditing.prototype.Add_ForeignSelectedObject = function(UserId, oObject, UserShortId) {
+    if (!this.m_oSelectedObjects[UserId]) {
+        this.m_oSelectedObjects[UserId] = [];
+    }
+
+    this.m_aForeignCursorsId[UserId] = UserShortId;
+    this.m_oSelectedObjects[UserId].push(oObject);
+};
 CPDFCollaborativeEditing.prototype.GetDocument = function() {
     return this.m_oLogicDocument;
 };

@@ -820,7 +820,7 @@
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
         
-        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
+        let nLineWidth = this.GetBorderWidth() != undefined ? this.GetBorderWidth() : 1;
 
         if (nLineWidth == 0) {
             return;

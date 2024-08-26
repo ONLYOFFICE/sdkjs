@@ -2554,7 +2554,7 @@ CDocumentContentBase.prototype.OnTextPrChange = function()
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
 	}
-	else if (shape && shape.OnTextPrChange()) {
+	else if (shape && shape.OnTextPrChange) {
 		shape.OnTextPrChange();
 	}
 };
