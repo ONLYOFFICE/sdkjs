@@ -10469,7 +10469,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
+	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells. Can be one of the following values: "left" or "up".
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
