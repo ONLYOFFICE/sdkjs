@@ -82,8 +82,11 @@ CStylesPainter.prototype.CheckStylesNames = function(_api, ds)
 		}
 	}
 };
-CStylesPainter.prototype.GenerateStyles = function (_api)
+CStylesPainter.prototype.GenerateStyles = function(_api)
 {
+	if (this.previewGenerator.IsInProgress())
+		this.previewGenerator.Stop();
+	
 	this.previewGenerator.Begin(_api);
 };
 CStylesPainter.prototype.OnEndGenerate = function(styles, _api)
@@ -491,8 +494,6 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			
 			_dc.Reset(0, 0, par.Lines[0].Ranges[0].W + 0.001, 10000);
 			_dc.Recalculate_Page(0, true);
-			//par.Reset(0, 0, 10000, 10000, 0);
-			//par.Recalculate_Page(0);
 			
 			var y = 0;
 			var b = dKoefToMM * this.STYLE_THUMBNAIL_HEIGHT;

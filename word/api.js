@@ -923,6 +923,8 @@
 		this.CurrentTranslate = null;
 
 		this.CollaborativeMarksShowType = c_oAscCollaborativeMarksShowType.All;
+		
+		this.stylePainter = null;
 
 		// объекты, нужные для отправки в тулбар (шрифты, стили)
 		this._gui_control_colors = null;
@@ -7750,8 +7752,10 @@ background-repeat: no-repeat;\
 				return;
 		}
 		
-		var StylesPainter = new AscCommonWord.CStylesPainter();
-		StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
+		if (!this.stylePainter)
+			this.stylePainter = new AscCommonWord.CStylesPainter();
+		
+		this.stylePainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
