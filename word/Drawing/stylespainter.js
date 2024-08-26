@@ -38,10 +38,8 @@ var g_fontApplication = AscFonts.g_fontApplication;
 
 var CColor = AscCommon.CColor;
 var CAscMathCategory = AscCommon.CAscMathCategory;
-var g_oTableId = AscCommon.g_oTableId;
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var global_mouseEvent = AscCommon.global_mouseEvent;
-var History = AscCommon.History;
 var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 var g_dKoef_pix_to_mm = AscCommon.g_dKoef_pix_to_mm;
 var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
@@ -313,6 +311,33 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 	};
 	StylePreviewGenerator.prototype.drawStyle = function(_api, graphics, style, styleName)
 	{
+		let logicDocument = _api.getLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		let isShowParaMarks = _api.get_ShowParaMarks();
+		if (isShowParaMarks)
+			_api.put_ShowParaMarks(false);
+		
+		let oldTabStop = AscCommonWord.Default_Tab_Stop;
+		AscCommonWord.Default_Tab_Stop = 1;
+		
+		let _t = this;
+		AscCommon.executeNoRevisions(function()
+		{
+			AscCommon.ExecuteNoHistory(function()
+			{
+				_t._drawStyle(_api, graphics, style, styleName);
+			}, logicDocument);
+		}, logicDocument);
+		
+		AscCommonWord.Default_Tab_Stop = oldTabStop;
+		
+		if (isShowParaMarks)
+			_api.put_ShowParaMarks(isShowParaMarks);
+	};
+	StylePreviewGenerator.prototype._drawStyle = function(_api, graphics, style, styleName)
+	{
 		var ctx = graphics.m_oContext;
 		ctx.fillStyle = "#FFFFFF";
 		ctx.fillRect(0, 0, this.STYLE_THUMBNAIL_WIDTH, this.STYLE_THUMBNAIL_HEIGHT);
@@ -394,18 +419,6 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 		}
 		else
 		{
-			g_oTableId.m_bTurnOff = true;
-			History.TurnOff();
-			
-			var oldDefTabStop = AscCommonWord.Default_Tab_Stop;
-			AscCommonWord.Default_Tab_Stop = 1;
-			var isShowParaMarks = false;
-			if (_api)
-			{
-				isShowParaMarks = _api.get_ShowParaMarks();
-				_api.put_ShowParaMarks(false);
-			}
-			
 			var hdr = new CHeaderFooter(editor.WordControl.m_oLogicDocument.HdrFtr, editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, AscCommon.hdrftr_Header);
 			var _dc = hdr.Content;//new CDocumentContent(editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, true, false);
 			
@@ -504,14 +517,6 @@ CStylesPainter.prototype.get_MergedStyles = function ()
 			par.Draw(0, graphics);
 			
 			graphics.restore();
-			
-			if (_api)
-				_api.put_ShowParaMarks(isShowParaMarks);
-			
-			AscCommonWord.Default_Tab_Stop = oldDefTabStop;
-			
-			g_oTableId.m_bTurnOff = false;
-			History.TurnOn();
 		}
 	};
 	StylePreviewGenerator.prototype.GenerateDefaultStyles = function ()

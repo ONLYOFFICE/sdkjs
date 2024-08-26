@@ -7749,31 +7749,9 @@ background-repeat: no-repeat;\
 			if (!this.asc_checkNeedCallback("asc_onInitEditorStyles"))
 				return;
 		}
-
+		
 		var StylesPainter = new AscCommonWord.CStylesPainter();
-		var LogicDocument = this.WordControl.m_oLogicDocument;
-		if (LogicDocument)
-		{
-			var isShowParaMarks = LogicDocument.Is_ShowParagraphMarks();
-
-			var isLocalTrackRevisions = false;
-			if (LogicDocument.IsTrackRevisions())
-			{
-				isLocalTrackRevisions = LogicDocument.GetLocalTrackRevisions();
-				LogicDocument.SetLocalTrackRevisions(false);
-			}
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(false, false);
-
-			StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
-
-			if (false !== isLocalTrackRevisions)
-				LogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(true, false);
-		}
+		StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
