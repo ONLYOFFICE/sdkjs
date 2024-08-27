@@ -1746,6 +1746,18 @@
 			}
 		}
 	};
+	PDFEditorApi.prototype._coAuthoringInitEnd = function() {
+		AscCommon.DocumentEditorApi.prototype._coAuthoringInitEnd.call(this);
+
+		let t = this;
+		this.CoAuthoringApi.onConnectionStateChanged = function(e) {
+			if (true === AscCommon.CollaborativeEditing.Is_Fast() && false === e['state']) {
+				t.WordControl.m_oLogicDocument.Remove_ForeignCursor(e['id']);
+				t.DocumentRenderer.onUpdateOverlay();
+			}
+			t.sendEvent("asc_onConnectionStateChanged", e);
+		}
+	};
 	PDFEditorApi.prototype._autoSave = function () {
 		// this.canUnlockDocument = true;
 		this.isCanSendChanges = true;
