@@ -289,7 +289,7 @@
 	 */
 
 	/**
-    * Specifies how to shift cells to replace deleted cells.
+	* Specifies how to shift cells to replace deleted cells.
 	* @typedef {("up" | "left")} DeleteShiftDirection
 	* @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
 	*/
