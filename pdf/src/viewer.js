@@ -2634,7 +2634,13 @@
 			
 			ctx.globalAlpha = 1.0;
 
-			oDoc.Draw_ForeingSelection();
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			{
+				oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
+				ctx.globalAlpha = 1.0;
+				oDoc.Draw_ForeingSelection(i);
+			}
+			
 		};
 
 		this.checkVisiblePages = function()

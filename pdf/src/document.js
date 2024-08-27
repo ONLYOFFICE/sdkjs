@@ -5275,7 +5275,7 @@ var CPresentation = CPresentation || function(){};
             this.Viewer.onUpdateOverlay();
         }
     };
-    CPDFDoc.prototype.Draw_ForeingSelection = function() {
+    CPDFDoc.prototype.Draw_ForeingSelection = function(nDrawPage) {
         let oViewer             = this.Viewer;
         let oOverlay            = this.Viewer.overlay;
         let oCtx                = this.Viewer.overlay.m_oContext;
@@ -5289,6 +5289,10 @@ var CPresentation = CPresentation || function(){};
             for (let i = 0; i < aObjects.length; i++) {
                 let aRect = aObjects[i].GetOrigRect();
                 let nPage = aObjects[i].GetPage();
+
+                if (nDrawPage != nPage) {
+                    continue;
+                }
 
                 let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio;
                 let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio;
