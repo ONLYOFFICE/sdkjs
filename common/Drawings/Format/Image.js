@@ -288,6 +288,41 @@
 			return ret;
 		};
 
+		CImageShape.prototype.convertToPdf = function () {
+			let copy = new AscPDF.CPdfImage();
+			
+			copy.setParent(null);
+			copy.setBDeleted(false);
+
+			if (this.nvPicPr) {
+				copy.setNvPicPr(this.nvPicPr.createDuplicate());
+			}
+			if (this.spPr) {
+				copy.setSpPr(this.spPr.createDuplicate());
+				copy.spPr.setParent(copy);
+			}
+			if (this.blipFill) {
+				copy.setBlipFill(this.blipFill.createDuplicate());
+			}
+			if (this.style) {
+				copy.setStyle(this.style.createDuplicate());
+			}
+			if (this.macro !== null) {
+				copy.setMacro(this.macro);
+			}
+			if (this.textLink !== null) {
+				copy.setTextLink(this.textLink);
+			}
+			if (this.clientData) {
+				copy.setClientData(this.clientData.createDuplicate());
+			}
+			if (this.fLocksText !== null) {
+				copy.setFLocksText(this.fLocksText);
+			}
+			copy.setLocks(this.locks);
+			return copy;
+		};
+
 		CImageShape.prototype.recalculateBrush = CShape.prototype.recalculateBrush;
 
 		CImageShape.prototype.recalculatePen = function () {
