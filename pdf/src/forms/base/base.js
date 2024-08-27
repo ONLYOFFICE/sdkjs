@@ -1993,6 +1993,9 @@
     // common triggers
     CBaseField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+
+        let oDoc = this.GetDocument();
+        
     };
     CBaseField.prototype.onMouseExit = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);

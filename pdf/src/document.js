@@ -1571,12 +1571,18 @@ var CPresentation = CPresentation || function(){};
         let oMouseMoveDrawing       = oViewer.getPageDrawingByMouse();
 
         // координаты клика на странице в MM
-        var pageObject = oViewer.getPageByCoords2(x, y);
+        let pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
+            return false;
+        let pageObjectOrig = oViewer.getPageByCoords(x, y);
+        if (!pageObjectOrig)
             return false;
 
         let X = pageObject.x;
         let Y = pageObject.y;
+
+        this.CollaborativeEditing.Check_ForeignCursorsLabels(X, Y, pageObject.index);
+        this.CollaborativeEditing.Check_ForeignSelectedObjectsLabels(pageObjectOrig.x, pageObjectOrig.y, pageObject.index);
 
         // при зажатой мышке
         if (oViewer.isMouseDown)

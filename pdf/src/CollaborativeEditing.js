@@ -63,6 +63,24 @@ CPDFCollaborativeEditing.prototype.Remove_FiregnSelectedObject = function(UserId
         this.m_oSelectedObjects[UserId].splice(this.m_oSelectedObjects[UserId].indexOf(oObject), 1);
     }
 };
+CPDFCollaborativeEditing.prototype.Check_ForeignSelectedObjectsLabels = function(X, Y, PageIndex) {
+    let oDoc = this.GetLogicDocument();
+
+    for (let UserId in this.m_oSelectedObjects) {
+        let aObjects = this.m_oSelectedObjects[UserId];
+        for (let i = 0; i < aObjects.length; i++) {
+            if (aObjects[i].GetPage() !== PageIndex) {
+                continue;
+            }
+
+            let aOrigRect = aObjects[i].GetOrigRect();
+            if (X >= aOrigRect[0] && X < aOrigRect[2] && Y > aOrigRect[1] && Y < aOrigRect[3]) {
+                let color = AscCommon.getUserColorById(this.m_aForeignCursorsId[UserId], null, true);
+                oDoc.Show_ForeignSelectedObjectLabel(UserId, aObjects[i], color);
+            }
+        }
+    }
+};
 CPDFCollaborativeEditing.prototype.GetDocumentPositionBinary = function(oWriter, PosInfo) {
     if (!PosInfo)
         return '';
