@@ -1376,6 +1376,11 @@
             }, 1000);
         }
 
+        if (this.isFormulaEditMode && this.isCellEditMode && this.cellEditor) {
+            /* set focus to the top formula entry line */
+            this.input.focus();
+        }
+
         asc_applyFunction(callback, d);
     };
 
