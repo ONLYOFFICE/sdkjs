@@ -4969,6 +4969,20 @@
 		else
 			return oCurrent;
 	};
+	MathTextAndStyles.prototype.SetExact = function (oPos, oContent)
+	{
+		this.arr[oPos.pos - 1] = oContent;
+	}
+	MathTextAndStyles.prototype.ConvertTextToMathTextAndStyles = function (oPos)
+	{
+		let oText		= this.GetExact(oPos);
+		let oContent	= new MathTextAndStyles(this.LaTeX);
+
+		oContent.AddText(oText, false);
+		this.SetExact(oPos, oContent);
+
+		return oContent;
+	}
 	MathTextAndStyles.prototype.GetArrPos = function(oPos, isBefore)
 	{
 		let arrAfterPos = [];
@@ -5050,6 +5064,11 @@
 			oToken = oPos;
 		else
 			oToken = this.GetExact(oPos);
+
+		// при получении линейного математического текста можно получить не MathTextAndStyles, а MathText
+		// что бы иметь возможность обрамления создаем MathTextAndStyles с MathText внутри
+		if (oToken instanceof MathText)
+			oToken = this.ConvertTextToMathTextAndStyles(oPos);
 
 		if (strOne && strTwo)
 		{

@@ -3390,10 +3390,12 @@
 			if (external) {
 				externalLength = external.fullname.length;
 				subSTR = formula.substring(start_pos + externalLength);
-				if (-1 !== subSTR.indexOf("'")) {
-					externalLength += 1;
+				const posQuote =  subSTR.indexOf("'");
+				if (-1 !== posQuote) {
+					externalLength -= 1;
+					subSTR = "'" + subSTR;
 				}
-				subSTR = subSTR.replace("'", "");
+
 				external = external.path + external.name;
 			}
 		}

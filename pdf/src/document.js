@@ -4303,7 +4303,7 @@ var CPresentation = CPresentation || function(){};
 
                 bResult = true;
             }
-            else if (oSelContent.DocContent) {
+            if (oSelContent.DocContent) {
 				oSelContent.DocContent.EndCollect(this);
 				if (oSelContent.DocContent.Elements.length > 0) {
                     let oTargetTextObject = AscFormat.getTargetTextObject(oController);

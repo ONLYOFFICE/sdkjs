@@ -289,6 +289,12 @@
 	 */
 
 	/**
+	* Specifies how to shift cells to replace deleted cells.
+	* @typedef {("up" | "left")} DeleteShiftDirection
+	* @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
+	*/
+
+	/**
 	 * Class representing a base class for the color types.
 	 * @constructor
 	 */
@@ -10469,7 +10475,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
+	 * @param {?DeleteShiftDirection} shift - Specifies how to shift cells to replace the deleted cells.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {

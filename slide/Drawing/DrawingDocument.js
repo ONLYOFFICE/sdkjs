@@ -6202,9 +6202,11 @@ function CThumbnailsManager()
 	{
 		let sSelectedIdx = this.GetSelectedArray();
 		let oMenuPos;
+		let bIsSlideSelect = false;
 		if(bPosBySelect)
 		{
 			oMenuPos = this.GetThumbnailPagePosition(Math.min.apply(Math, sSelectedIdx));
+			bIsSlideSelect = sSelectedIdx.length > 0;
 		}
 		else
 		{
@@ -6214,6 +6216,9 @@ function CThumbnailsManager()
 				X: global_mouseEvent.X - ((oThCtrlPos.L * g_dKoef_mm_to_pix) >> 0) - oEditorCtrl.X,
 				Y: global_mouseEvent.Y - ((oThCtrlPos.T * g_dKoef_mm_to_pix) >> 0) - oEditorCtrl.Y
 			};
+			
+			let pos = this.ConvertCoords(global_mouseEvent.X, global_mouseEvent.Y);
+			bIsSlideSelect = pos.Page !== -1;
 		}
 		if (oMenuPos)
 		{
@@ -6235,7 +6240,7 @@ function CThumbnailsManager()
 					Type: nType,
 					X_abs: oMenuPos.X,
 					Y_abs: oMenuPos.Y,
-					IsSlideSelect: true,
+					IsSlideSelect: bIsSlideSelect,
 					IsSlideHidden: this.IsSlideHidden(sSelectedIdx)
 				};
 			editor.sync_ContextMenuCallback(new AscCommonSlide.CContextMenuData(oData));

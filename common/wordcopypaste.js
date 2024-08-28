@@ -5101,41 +5101,44 @@ PasteProcessor.prototype =
 		for (var i in font_map)
 			fonts.push(new CFont(i));
 
+		function correctDrawingsForPdf(drawings, document) {
+			for (var i = 0; i < drawings.length; i++) {
+				var drawing = drawings[i].Drawing;
+		
+				if (!(drawing instanceof AscFormat.CGraphicFrame)) {
+					AscFormat.ExecuteNoHistory(function () {
+						if (drawing.setBDeleted2) {
+							drawing.setBDeleted2(true);
+						} else {
+							drawing.setBDeleted(true);
+						}
+					}, this, []);
+				}
+		
+				if (drawing.convertToPdf) {
+					drawings[i].Drawing = drawing.convertToPdf(document, undefined, true);
+					AscFormat.checkBlipFillRasterImages(drawings[i].Drawing);
+				}
+		
+				if (!drawings[i].Drawing.IsPdfDrawing) {
+					drawings.splice(i, 1);
+					i--;
+				}
+			}
+		}
+		
 		var oObjectsForDownload = GetObjectsForImageDownload(aContent.aPastedImages);
+		
 		if (oObjectsForDownload.aUrls.length > 0) {
 			AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 				var oImageMap = {};
 				ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-				//ковертим изображения в презентационный формат
-				for (var i = 0; i < oPDFSelContent.Drawings.length; i++) {
-					if (!(oPDFSelContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
-						AscFormat.ExecuteNoHistory(function () {
-							if (oPDFSelContent.Drawings[i].Drawing.setBDeleted2) {
-								oPDFSelContent.Drawings[i].Drawing.setBDeleted2(true);
-							} else {
-								oPDFSelContent.Drawings[i].Drawing.setBDeleted(true);
-							}
-						}, this, []);
-						oPDFSelContent.Drawings[i].Drawing = oPDFSelContent.Drawings[i].Drawing.convertToPPTX(oThis.oDocument.DrawingDocument, undefined, true);
-						AscFormat.checkBlipFillRasterImages(oPDFSelContent.Drawings[i].Drawing);
-					}
-				}
+				correctDrawingsForPdf(oPDFSelContent.Drawings, oThis.oDocument.DrawingDocument);
 				addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContent.aPastedImages);
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}, true);
 		} else {
-			//ковертим изображения в презентационный формат
-			for (var i = 0; i < oPDFSelContent.Drawings.length; i++) {
-				if (oPDFSelContent.Drawings[i].Drawing.convertToPdf) {
-					oPDFSelContent.Drawings[i].Drawing = oPDFSelContent.Drawings[i].Drawing.convertToPdf(oThis.oDocument.DrawingDocument, undefined, true);
-					AscFormat.checkBlipFillRasterImages(oPDFSelContent.Drawings[i].Drawing);
-				}
-				if (!oPDFSelContent.Drawings[i].Drawing.IsPdfDrawing) {
-					oPDFSelContent.Drawings.splice(i, 1);
-					i--;
-				}
-			}
-
+			correctDrawingsForPdf(oPDFSelContent.Drawings, oThis.oDocument.DrawingDocument);
 			oThis.api.pre_Paste(aContent.fonts, aContent.images, paste_callback);
 		}
 	},

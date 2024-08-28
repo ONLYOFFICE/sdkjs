@@ -206,6 +206,10 @@ CChartsDrawer.prototype =
 		//this._testChartsPaths();
 	},
 
+	getStandartMargin: function () {
+		return this.calcProp && AscFormat.isRealNumber(this.calcProp.pxToMM) ? standartMarginForCharts / this.calcProp.pxToMM : 0;
+	},
+
 	createChartEx: function (seria) {
 		this.charts = {};
 		switch (seria.layoutId) {
@@ -959,6 +963,8 @@ CChartsDrawer.prototype =
 		var axId = chartSpace.chart.plotArea.axId;
 		let isLeftAxis = false;
 		let isRightAxis = false;
+		let isTopExist = chartSpace && chartSpace.chart ? !!chartSpace.chart.title || (!!chartSpace.chart.legend && chartSpace.chart.legend.legendPos === Asc.c_oAscChartLegendShowSettings.top) : false;
+		let isVertAxisExist = false;
 		if(axId) {
 			for(var i = 0; i < axId.length; i++) {
 				switch (axId[i].axPos) {
@@ -987,19 +993,26 @@ CChartsDrawer.prototype =
 						break;
 					}
 				}
+				const bLeftVert = axId[i].axPos === AscFormat.AX_POS_L;
+				const bRigthVert = axId[i].axPos === AscFormat.AX_POS_R;
 				if (!axId[i].bDelete) {
-					if (axId[i].axPos === AscFormat.AX_POS_L) {
+					if (bLeftVert) {
 						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
 					}
-					if (axId[i].axPos === AscFormat.AX_POS_R ) {
+					if (bRigthVert) {
 						isLeftAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_HIGH;
 						isRightAxis = axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_NEXT_TO || axId[i].tickLblPos === AscFormat.TICK_LABEL_POSITION_LOW;
 					}
 				}
+				if (!axId[i].bDelete && axId[i].tickLblPos !== Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE && (bLeftVert || bRigthVert) && !isVertAxisExist) {
+					isVertAxisExist = true;
+				}
 			}
 		}
 
+		// if no vetical axis when top is not exist, then should work as if top exist
+		isTopExist = !isTopExist && !isVertAxisExist ? true : isTopExist;
 
 		//TITLE
 		var topMainTitle = 0;
@@ -1095,7 +1108,7 @@ CChartsDrawer.prototype =
 		if((null === pieChart) || is3dChart) {
 			left += this._getStandartMargin(isLeftAxis ? 1 : left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
 			bottom += this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
-			top += this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
+			top += this._getStandartMargin(isTopExist ? top : 1, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
 			right += this._getStandartMargin(isRightAxis ? 1 : right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
 		}
 
@@ -1450,8 +1463,26 @@ CChartsDrawer.prototype =
 		//считаем маргины
 		this._calculateMarginsChart(chartSpace);
 
-		this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;
-		this.calcProp.trueHeight = this.calcProp.heightCanvas - this.calcProp.chartGutter._top - this.calcProp.chartGutter._bottom;
+		const isLayout = this.cChartSpace.isLayout();
+		// layour should not affect for circular charts
+
+		let isCircular = false;
+		if (isLayout && chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
+			const charts = chartSpace.chart.plotArea.charts;
+			for (let i = 0; i < charts.length; i++) {
+				const typeChart = charts[0].getObjectType();
+				isCircular = !isCircular ? (typeChart === AscDFH.historyitem_type_PieChart || typeChart === AscDFH.historyitem_type_DoughnutChart) : isCircular;
+			}
+		}
+		
+		if (isLayout && !isCircular) {
+			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
+			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
+			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
+		} else {
+			this.calcProp.trueWidth = this.calcProp.widthCanvas - this.calcProp.chartGutter._left - this.calcProp.chartGutter._right;
+			this.calcProp.trueHeight = this.calcProp.heightCanvas - this.calcProp.chartGutter._top - this.calcProp.chartGutter._bottom;
+		}
 	},
 	
 	//****new calculate data****
@@ -2199,7 +2230,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			if (manualMax <= 0) {
+			if (AscFormat.isRealNumber(manualMax) && manualMax <= 0) {
 				arrayValues = [-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0];
 			} else {
 				arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -2292,8 +2323,15 @@ CChartsDrawer.prototype =
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
 					newStep = tempStep * firstDegreeStep.numPow;
-					res = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
+					const newRes = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
 
+					//new array cannot be generated from broken data, example: step is NaN
+					if (!newRes) {
+						break;
+					}
+
+					//after we checked that newRes is working array substitute res
+					res = newRes;
 					if (res.length <= 2) {
 						break;
 					}
@@ -2322,7 +2360,7 @@ CChartsDrawer.prototype =
 
 	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax, isRadarChart) {
 		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || !AscFormat.isRealNumber(step)) {
-			return [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+			return null;
 		}
 
 		var arrayValues;
@@ -5131,7 +5169,7 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		let widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
+		let widthLine = this.calcProp.trueWidth;
 		let bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
 		let posX = this.calcProp.chartGutter._left;
 		let posMinorY, posY, crossDiff;
@@ -5283,7 +5321,7 @@ CChartsDrawer.prototype =
 			crossBetween = 0;
 		}
 
-		var heightLine = this.calcProp.heightCanvas - (this.calcProp.chartGutter._bottom + this.calcProp.chartGutter._top);
+		var heightLine = this.calcProp.trueHeight;
 		var rightMargin = this.calcProp.widthCanvas - this.calcProp.chartGutter._right;
 		var posY = this.calcProp.chartGutter._top;
 		var posMinorX;
