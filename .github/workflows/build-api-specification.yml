@@ -1,0 +1,39 @@
+
+name: Build API Specification
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  build-api-spec:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v3
+
+      - name: Checkout build_tools repository
+        uses: actions/checkout@v3
+        with:
+          repository: ONLYOFFICE/build_tools
+          path: build_tools  # Directory where the other repo will be checked out
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Specify the Node.js version you need
+
+      - name: Install Node.js dependencies
+        run: |
+          cd build_tools/scripts/sdkjs_common/jsdoc  # Navigate to the specific folder
+          npm install  # Install Node.js dependencies
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'  # Specify the Python version you need
+
+      - name: Run Python script to generate docs
+        run: |
+          cd build_tools/scripts/sdkjs_common/jsdoc  # Navigate to the directory where the Python script is located
+          python generate_docs_md.py  # Run the Python script
