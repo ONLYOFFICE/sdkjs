@@ -2429,7 +2429,7 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
 
     this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
 
-    if(pGraphics.Start_Command)
+    if(pGraphics.isSupportTextOutline())
     {
         for(var i = 0; i < CircleLng; i++)
         {
