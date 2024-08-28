@@ -4401,18 +4401,17 @@
 
 		if (oContent.IsHasContent())
 		{
-			let nSecond = oContent.Next(true);
-			let nFirst = oContent.Next(true);
-			if (nSecond && nFirst)
-			{
-				let strSecondLetter = String.fromCharCode(nSecond);
-				let strFirstLetter = String.fromCharCode(nFirst);
+			let strSecond = oContent.Next(true);
+			let strFirst = oContent.Next(true);
 
-				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oCMathContent, strFirstLetter, strSecondLetter))
-				{
-					oContent._paraRun.MoveCursorToEndPos();
-					return true;
-				}
+			if (strSecond
+				&& strFirst
+				&& strFirst !== "\\"
+				&& strSecond !== "\\"
+				&& CorrectSpecial(oCMathContent, strFirst, strSecond))
+			{
+				oContent._paraRun.MoveCursorToEndPos();
+				return true;
 			}
 		}
 	}
