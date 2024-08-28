@@ -3338,7 +3338,7 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle, oAddition
 		oMathRun = this.Content[this.Content.length - 1];
 	}
 
-	if (!oMathRun || !(oMathRun instanceof ParaRun) || (oMathRun && oMathRun instanceof ParaRun && !oAdditionalData.IsStyleEqual(oMathRun instanceof ParaRun ? oMathRun.Pr : oMathRun.CtrPrp)))
+	if (!oMathRun || !(oMathRun instanceof ParaRun) || (oMathRun && oMathRun instanceof ParaRun && !oAdditionalData.IsStyleEqual(oMathRun)))
 		oMathRun = new AscWord.CRun(undefined, true);
 
 	AscWord.TextToMathRunElements(text, function(item)

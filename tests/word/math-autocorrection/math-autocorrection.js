@@ -1029,6 +1029,44 @@ $(function () {
 		QUnit.module( "Bugs", function ()
 		{
 			Test("(1/2)/", [["ParaRun", ""], ["CDelimiter", "(1/2)"], ["ParaRun", "/"]], false, "Check devide");
+
+			QUnit.test('Check review info convert math; bug #67505', function (assert)
+			{
+				Clear();
+				logicDocument.SetMathInputType(0);
+				AddText('(1+2)');
+				assert.ok(true, "Add text '(1+2)'");
+
+				let r = MathContent.Root.Content[0];						//	(1
+				let r2 = r.Split2(2, MathContent.Root, 0);					//	+
+				let r3 = r2.Split2(1, MathContent.Root, 1);					//	2)
+
+				let reviewInfo = r2.ReviewInfo;
+
+				reviewInfo.UserId   = "this.UserId";
+				reviewInfo.UserName = "this.UserName";
+				reviewInfo.DateTime = new Date().toDateString();
+				r2.SetReviewType(reviewtype_Add);
+
+				assert.ok(true, "Split run and set ReviewType for '+' === reviewtype_Add");
+
+				MathContent.ConvertView(false, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to professional view");
+
+				let rOne = MathContent.Root.Content[1].Content[0].Content[0];
+				assert.strictEqual(rOne.ReviewType, 0, 'Is "1" is reviewtype_Common');
+
+				let rPlus = MathContent.Root.Content[1].Content[0].Content[1];
+				assert.strictEqual(rPlus.ReviewType, 2, 'Is "+" is reviewtype_Add');
+				assert.strictEqual(rPlus.ReviewInfo, reviewInfo, 'reviewInfo');
+
+				MathContent.ConvertView(true, Asc.c_oAscMathInputType.Unicode);
+				assert.ok(true, "Convert to linear view");
+
+				let nRPlus = MathContent.Root.Content[1];
+				assert.strictEqual(nRPlus.ReviewType, 2, 'Is "+" is reviewtype_Add');
+				assert.strictEqual(nRPlus.ReviewInfo, reviewInfo, 'Check reviewInfo');
+			})
 		})
 
 	})
