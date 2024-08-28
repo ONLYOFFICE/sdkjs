@@ -588,7 +588,7 @@
 			{
 				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
 				{
-					delete this.pagesInfo.pages[pages[i]].Image;
+					delete this.drawingPages[pages[i]].Image;
 					break;
 				}
 			}
@@ -2743,7 +2743,7 @@
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-				let needNewPage = this.isClearPages || (page.Image && ((page.Image.requestWidth !== w) || (page.Image.requestHeight !== h)));
+				let needNewPage = this.isClearPages || !page.Image || (page.Image && ((page.Image.requestWidth !== w) || (page.Image.requestHeight !== h)));
 
 				if (!isStretchPaint)
 				{
