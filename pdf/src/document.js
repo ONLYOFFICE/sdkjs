@@ -5289,7 +5289,7 @@ var CPresentation = CPresentation || function(){};
         let oCtx                = this.Viewer.overlay.m_oContext;
         let oSelectedObjects    = this.CollaborativeEditing.m_oSelectedObjects;
 
-        for (userId in oSelectedObjects) {
+        for (let userId in oSelectedObjects) {
             let aObjects = oSelectedObjects[userId];
 
             let oColor = AscCommon.getUserColorById(this.CollaborativeEditing.m_aForeignCursorsId[userId], null, true);
