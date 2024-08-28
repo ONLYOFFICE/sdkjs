@@ -4144,6 +4144,8 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc = this.GetDrawingDocument();
 
         oFile.pages[nPage].isConvertedToShapes = true;
+        delete this.Viewer.drawingPages[nPage].Image;
+
         this.History.Add(new CChangesPDFDocumentRecognizePage(this, nPage, false, true));
 
         let aSpsXmls        = oFile.nativeFile["scanPage"](nOriginIndex, 1);
