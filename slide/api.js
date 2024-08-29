@@ -6052,6 +6052,23 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.IsAsyncOpenDocumentImages     = function()
+	{
+		return true;
+	};
+	asc_docs_api.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
+	{
+		let oDrawingDocument = this.WordControl.m_oDrawingDocument;
+		if(oDrawingDocument && oDrawingDocument.OnStartImagesLoading)
+		{
+			oDrawingDocument.OnStartImagesLoading(aImages);
+		}
+	};
+	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
+	{
+		this.WordControl.m_oDrawingDocument.CheckRasterImageOnScreen(_image.src);
+	};
+
 	asc_docs_api.prototype._openDocumentEndCallback = function()
 	{
 		if (this.isDocumentLoadComplete || !this.ServerImagesWaitComplete || !this.ServerIdWaitComplete ||

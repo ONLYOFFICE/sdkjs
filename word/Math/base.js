@@ -732,6 +732,13 @@ CMathBase.prototype.recalculateSize = function(oMeasure, RPI)
     this.size.height = height;
     this.size.ascent = ascent;
 };
+CMathBase.prototype.ProcessingOldEquationConvert = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		this.Content[i].ProcessingOldEquationConvert();
+	}
+}
 CMathBase.prototype.recalculateAllSize = function(textMeasurer)
 {
 	this.setDistance();

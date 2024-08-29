@@ -381,6 +381,8 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.Reassign_ImageUrls = Slide.prototype.Reassign_ImageUrls;
     SlideLayout.prototype.checkDrawingUniNvPr = Slide.prototype.checkDrawingUniNvPr;
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
+    SlideLayout.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
+    SlideLayout.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 
     SlideLayout.prototype.recalculateBackground = function()
     {

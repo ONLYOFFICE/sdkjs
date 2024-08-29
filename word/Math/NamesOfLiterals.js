@@ -4401,18 +4401,17 @@
 
 		if (oContent.IsHasContent())
 		{
-			let nSecond = oContent.Next(true);
-			let nFirst = oContent.Next(true);
-			if (nSecond && nFirst)
-			{
-				let strSecondLetter = String.fromCharCode(nSecond);
-				let strFirstLetter = String.fromCharCode(nFirst);
+			let strSecond = oContent.Next(true);
+			let strFirst = oContent.Next(true);
 
-				if (strFirstLetter !== "\\" && strSecondLetter !== "\\" && CorrectSpecial(oCMathContent, strFirstLetter, strSecondLetter))
-				{
-					oContent._paraRun.MoveCursorToEndPos();
-					return true;
-				}
+			if (strSecond
+				&& strFirst
+				&& strFirst !== "\\"
+				&& strSecond !== "\\"
+				&& CorrectSpecial(oCMathContent, strFirst, strSecond))
+			{
+				oContent._paraRun.MoveCursorToEndPos();
+				return true;
 			}
 		}
 	}
@@ -4708,7 +4707,6 @@
 		this.oContent			= undefined;
 
 		this.nPos				= 0;
-		this.reviewInfo			= undefined;
 		this.IsBracket			= false;
 
 		this.globalStyle		= undefined;
@@ -4876,15 +4874,12 @@
 					this.WrapExactElement(oPos, "(", ")", oContent);
 			}
 
-			this.ClearReviewInfo();
 			return oPos;
 		}
 		else
 		{
 			this.SetContent(oContent);
 			oContent.GetTextOfElement(this, isSelectedText);
-
-			this.ClearReviewInfo();
 
 			if (this.nPos === nPosCopy)
 				return this.Get_Position();
@@ -4900,9 +4895,10 @@
 	{
 		let nPosCopy = this.nPos;
 
-		if (this.arr.length > 0 && (this.arr[this.arr.length - 1] instanceof MathTextAndStyles ||
-			!this.arr[this.arr.length - 1].IsAdditionalDataEqual(oContent.additionalMathData)
-		)) {
+		if (this.arr.length > 0
+			&& (this.arr[this.arr.length - 1] instanceof MathTextAndStyles ||
+				oContent instanceof MathTextAndStyles ||
+				!this.arr[this.arr.length - 1].IsAdditionalDataEqual(oContent.additionalMathData))) {
 			isNew = true;
 		}
 
@@ -4956,10 +4952,6 @@
 
 		return oPos;
 	};
-	MathTextAndStyles.prototype.ClearReviewInfo = function ()
-	{
-		this.reviewInfo = undefined;
-	}
 	MathTextAndStyles.prototype.GetExact = function(oPos, isText)
 	{
 		let oCurrent = this.arr[oPos.pos - 1];
@@ -5264,16 +5256,36 @@
 	{
 		this.reviewData.reviewInfo = oReviewInfo;
 	};
-	MathTextAdditionalData.prototype.IsStyleEqual = function (oStyle)
+	MathTextAdditionalData.prototype.IsStyleEqual = function (oStyleParent)
 	{
 		if (this.style === undefined)
 			return false;
 
-		if (oStyle instanceof MathTextAdditionalData)
-			return this.style.IsEqual(oStyle.GetAdditionalStyleData());
-		else
-			return this.style.IsEqual(oStyle);
+		if (oStyleParent instanceof MathTextAdditionalData)
+			return this.style.IsEqual(oStyleParent.GetAdditionalStyleData()) && this.IsReviewDataEqual(oStyleParent);
+
+		let oStyle = oStyleParent instanceof ParaRun
+			? oStyleParent.Pr
+			: oStyleParent.CtrPrp;
+
+		return this.style.IsEqual(oStyle) && this.IsReviewDataEqual(oStyleParent);
 	};
+	MathTextAdditionalData.prototype.IsReviewDataEqual = function (oContent)
+	{
+		if (oContent instanceof MathTextAdditionalData)
+		{
+			return this.reviewData.reviewType === oContent.reviewData.reviewType
+				&& this.reviewData.reviewInfo.IsEqual(oContent.reviewData.reviewInfo)
+		}
+		else
+		{
+			if (oContent.ReviewInfo === undefined)
+				return false;
+
+			return this.reviewData.reviewType === oContent.ReviewType
+				&& this.reviewData.reviewInfo.IsEqual(oContent.ReviewInfo)
+		}
+	}
 	MathTextAdditionalData.prototype.SetAdditionalDataFromContent = function (oContent, isCtrPrp)
 	{
 		let oPr;

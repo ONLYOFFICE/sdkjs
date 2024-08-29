@@ -775,7 +775,10 @@ function onLoadFontsModule(window, undefined)
 	if (AscCommon["CZLibEngineJS"])
 		AscCommon["CZLibEngineJS"].prototype["isModuleInit"] = true;
 
-	window.nativeZlibEngine = new ZLib();
+	if (window["NATIVE_EDITOR_ENJINE"])
+		window["InitNativeZLib"] = function() { window.nativeZlibEngine = new ZLib(); };
+	else
+		window.nativeZlibEngine = new ZLib();
 
 	function Hyphenation()
 	{

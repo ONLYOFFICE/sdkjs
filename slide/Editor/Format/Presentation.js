@@ -3353,7 +3353,6 @@ CPresentation.prototype.GetTargetPosition = function () {
 	return oPosition;
 };
 
-
 // Отрисовка содержимого Документа
 CPresentation.prototype.Draw = function (nPageIndex, pGraphics) {
 	if (!pGraphics.isBoundsChecker()) {

@@ -4253,10 +4253,15 @@
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
+		
+		this.m_nTurnOffCounter = 0;
 	}
 
 	CIdCounter.prototype.Get_NewId = function ()
 	{
+		if (!AscCommon.g_oTableId.IsOn())
+			return ("off_" + (++this.m_nTurnOffCounter));
+		
 		if (true === this.m_bLoad || null === this.m_sUserId)
 		{
 			this.m_nIdCounterLoad++;

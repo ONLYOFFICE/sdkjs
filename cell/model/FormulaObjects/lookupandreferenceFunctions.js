@@ -1254,7 +1254,7 @@ function (window, undefined) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
 				return refError;
 			}
-			let worksheet = pivot_table_ref.ws;
+			let worksheet = pivot_table_ref.getWS();
 			let bbox = pivot_table_ref.getBBox0();
 
 			let pivotTables = worksheet.getPivotTablesIntersectingRange(bbox);

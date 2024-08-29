@@ -1644,7 +1644,7 @@
 				let oTr		= this.getPDFDoc().pagesTransform[nPage].invert;
 				let oPos	= oTr.TransformPoint(0, link["dest"]);
 
-				this.navigateToPage(nPage, this.scrollY + oPos.y, this.scrollX + oPos.x);
+				this.navigateToPage(this.currentPage, this.scrollY + oPos.y, this.scrollX + oPos.x);
 			}
 			else
 			{

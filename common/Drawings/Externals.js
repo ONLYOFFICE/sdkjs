@@ -630,15 +630,15 @@
 
 	function checkAllFonts()
     {
+        if (undefined === window["__fonts_files"] && window["native"] && window["native"]["GenerateAllFonts"])
+            window["native"]["GenerateAllFonts"]();
+
+        if (undefined === window["__fonts_files"])
+            return;
+
         let g_font_files, g_font_infos;
 
         var files = window["__fonts_files"];
-		if (!files && window["native"] && window["native"]["GenerateAllFonts"])
-		{
-			// тогда должны быть глобальные переменные такие, без window
-			window["native"]["GenerateAllFonts"]();
-            files = window["__fonts_files"];
-		}
 
 		let count_files = files ? files.length : 0;
 		g_font_files = new Array(count_files);

@@ -3311,7 +3311,10 @@ ParaMath.prototype.IsContentControlEquation = function()
 		&& parent.IsContentControlEquation()
 		&& parent.IsPlaceHolder());
 };
-
+ParaMath.prototype.ProcessingOldEquationConvert = function()
+{
+	this.Root.ProcessingOldEquationConvert();
+};
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

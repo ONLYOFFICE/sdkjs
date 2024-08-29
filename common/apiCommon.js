@@ -4651,6 +4651,7 @@ function (window, undefined) {
 		this.IsWebOpening = false;
 		this.SupportsOnSaveDocument = false;
 		this.Wopi = null;
+		this.shardkey = null;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4815,6 +4816,12 @@ function (window, undefined) {
 	};
 	prot.get_Wopi = prot.asc_getWopi = function () {
 		return this.Wopi;
+	};
+	prot.put_Shardkey = prot.asc_putShardkey = function (v) {
+		this.shardkey = v;
+	};
+	prot.get_Shardkey = prot.asc_getShardkey = function () {
+		return this.shardkey;
 	};
 
 	function COpenProgress() {
@@ -6804,6 +6811,8 @@ function (window, undefined) {
 	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
 	prot["put_Wopi"] = prot["asc_putWopi"] = prot.asc_putWopi;
 	prot["get_Wopi"] = prot["asc_getWopi"] = prot.asc_getWopi;
+	prot["put_Shardkey"] = prot["asc_putShardkey"] = prot.asc_putShardkey;
+	prot["get_Shardkey"] = prot["asc_getShardkey"] = prot.asc_getShardkey;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

@@ -382,6 +382,8 @@ MasterSlide.prototype.getMatchingLayout = function (type, matchingName, cSldName
     return this.sldLayoutLst[0];
 };
 MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
+MasterSlide.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
+MasterSlide.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 MasterSlide.prototype.recalculate = function () {
     if (!this.Theme) return;

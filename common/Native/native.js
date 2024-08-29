@@ -241,13 +241,21 @@ document.documentElement = _null_object;
 document.body = _null_object;
 
 // NATIVE OBJECT
-window.native = native;
 function GetNativeEngine() { return window.native; }
 
 var Api = null; // main builder object
 window.devicePixelRatio = 1;
-if (window.native && window.native.GetDevicePixelRatio)
-	window.devicePixelRatio = window.native.GetDevicePixelRatio();
+
+window.InitNativeObject = function()
+{
+	window.native = native;
+	window.devicePixelRatio = 1;
+	if (window.native && window.native.GetDevicePixelRatio)
+		window.devicePixelRatio = window.native.GetDevicePixelRatio();
+};
+
+if (undefined !== native)
+	window.InitNativeObject();
 
 // OPEN
 function NativeCreateApi(options)

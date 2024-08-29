@@ -488,7 +488,7 @@
 
 			if (this.DocInfo.get_Wopi())
 			{
-				this.documentShardKey = this.DocInfo.get_Wopi()["WOPISrc"];
+				this.documentWopiSrc = this.DocInfo.get_Wopi()["WOPISrc"];
 				this.documentUserSessionId = this.DocInfo.get_Wopi()["UserSessionId"];
 				this.documentIsWopi = true;
 			}
@@ -508,7 +508,7 @@
 			}
 			if (!this.documentWopiSrc) {
 				//todo add tenant in origin?
-				this.documentShardKey = this.documentId;
+				this.documentShardKey = this.DocInfo.get_Shardkey() || this.documentId;
 			}
 		}
 
@@ -1184,7 +1184,7 @@
 	{
 		// здесь прокинуть евент о заморозке меню
 	};
-	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function()
+	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
 	{
 		// евент о заморозке не нужен... оно и так заморожено
 		// просто нужно вывести информацию в статус бар (что началась загрузка картинок)
@@ -5173,5 +5173,20 @@
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
 	prot["asc_resetPassword"] = prot.asc_resetPassword;
+
+	// NATIVE INITIALIZER (need be in min version)
+	window["InitNativeEditors"] = function()
+	{
+		AscFonts.checkAllFonts();
+
+		let loader = AscCommon.g_font_loader;
+		loader.fontFiles = AscFonts.g_font_files;
+		loader.fontInfos = AscFonts.g_font_infos;
+		loader.map_font_index = AscFonts.g_map_font_index;
+
+		window["InitNativeObject"]();
+		window["InitNativeTextMeasurer"]();
+		window["InitNativeZLib"]();
+	};
 
 })(window);
