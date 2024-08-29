@@ -3311,9 +3311,9 @@ ParaMath.prototype.IsContentControlEquation = function()
 		&& parent.IsContentControlEquation()
 		&& parent.IsPlaceHolder());
 };
-ParaMath.prototype.ConvertSpacesAfterConvertOldEquation = function ()
+ParaMath.prototype.ProcessingOldEquationConvert = function()
 {
-	this.Root.ConvertSpacesAfterConvertOldEquation();
+	this.Root.ProcessingOldEquationConvert();
 };
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

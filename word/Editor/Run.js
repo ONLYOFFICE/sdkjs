@@ -10279,6 +10279,27 @@ ParaRun.prototype.RemoveMathPlaceholder = function()
 	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
 	this.Recalc_CompiledPr();
 };
+ParaRun.prototype.ProcessingOldEquationConvert = function()
+{
+	for (let nPos = 0; nPos < this.Content.length; nPos++)
+	{
+		let oCurrentCMathText = this.Content[nPos];
+
+		if (oCurrentCMathText.value === 8202 || oCurrentCMathText.value === 8201)
+		{
+			this.Remove_FromContent(nPos, 1);
+			nPos--;
+		}
+		else if (oCurrentCMathText.value === 8203)
+		{
+			oCurrentCMathText.add("⥂".charCodeAt(0));
+		}
+		else if (oCurrentCMathText.value === 8197)
+		{
+			oCurrentCMathText.add(" ".charCodeAt(0)); //3/MSP
+		}
+	}
+}
 ParaRun.prototype.Set_MathPr = function(MPrp)
 {
     var OldValue = this.MathPrp;
