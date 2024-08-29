@@ -486,33 +486,15 @@
 			// 	}
 			// }
 			else if (this.IsOperandLiteral())
-			{
 				oDown = this.GetOperandLiteral("custom");
-
-				return {
-					type: Struc.group_character,
-					hBrack: strHBracket,
-					value: oBase,
-					up: oUp,
-					down: oDown,
-					style: oPr,
-				}
-			}
-
-			return {
-				type: Struc.group_character,
-				hBrack: strHBracket,
-				value: oBase,
-				up: oUp,
-				down: oDown,
-				style: oPr,
-			};
 		}
 
 		return {
 			type: Struc.group_character,
 			hBrack: strHBracket,
 			value: oBase,
+			up: oUp,
+			down: oDown,
 			style: oPr,
 		};
 	};
@@ -653,27 +635,35 @@
 			oFunctionContent = this.GetBoxLiteral();
         else if (this.isRectLiteral())
 			oFunctionContent = this.GetRectLiteral();
+		else if (this.IsBarLiteral())
+			oFunctionContent = this.GetBarLiteral();
 		else if (this.IsHBracketLiteral())
 			oFunctionContent = this.GetHBracketLiteral();
 		else if (this.IsStretchArrow())
-			oFunctionContent = this.GetStretchArrow()
-		else if (this.oLookahead.data === "▁" || this.oLookahead.data === "¯")
-		{
-			if (this.IsOperandLiteral()) {
-				let strUnderOverLine = this.EatToken(this.oLookahead.class).data;
-				let oOperand = this.GetOperandLiteral("custom");
-				oFunctionContent = {
-					type: Struc.bar,
-					overUnder: strUnderOverLine,
-					value: oOperand,
-				};
-			}
-		}
-		else if (this.IsGetNameOfFunction()) {
-			oFunctionContent = this.GetNameOfFunction()
-		}
+			oFunctionContent = this.GetStretchArrow();
+		else if (this.IsGetNameOfFunction())
+			oFunctionContent = this.GetNameOfFunction();
+
 		return oFunctionContent;
 	};
+	CUnicodeParser.prototype.IsBarLiteral = function ()
+	{
+		return this.oLookahead.data === "▁" || this.oLookahead.data === "¯";
+	}
+	CUnicodeParser.prototype.GetBarLiteral = function ()
+	{
+		let oStyle				= this.oLookahead.style;
+		let strUnderOverLine	= this.EatToken(this.oLookahead.class);
+		strUnderOverLine.class	= Struc.char;
+		let oOperand			= this.GetOperandLiteral("custom");
+
+		return {
+			type: Struc.bar,
+			bar: strUnderOverLine,
+			value: oOperand,
+			style: oStyle,
+		};
+	}
 	CUnicodeParser.prototype.IsStretchArrow = function ()
 	{
 		return this.oLookahead.class === Literals.horizontal.id;
@@ -1381,23 +1371,18 @@
 		this.EatToken(this.oLookahead.class);
 		oBelowAbove = this.GetElementLiteral();
 
-		if (base.type === Struc.horizontal)
+		if (Literals.horizontal.SearchU(base.value))
 		{
-			if (strType === "┬")
-				type = VJUST_TOP;
-			else if (strType === "┴")
-				type = VJUST_BOT;
-
 			return {
-				type: Struc.group_character,
+				type: Struc.horizontal,
 				hBrack: base,
 				value: oBelowAbove,
-				isBelow: type,
+				VJUSTType: type,
 				style: oStyle,
 			}
 		}
-
-		if (this.IsApplicationFunction())
+		else if (this.IsApplicationFunction())
+		{
 			return this.GetFunctionApplication({
 				type: Struc.limit,
 				base: base,
@@ -1405,6 +1390,7 @@
 				isBelow: type,
 				style: oStyle,
 			})
+		}
 
 		return {
 			type: Struc.limit,

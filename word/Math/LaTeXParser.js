@@ -97,6 +97,9 @@
 			}
 		}
 
+		if (styles.length === 1)
+			styles = styles[0];
+
 		arrLiterals.push({type: isSymbol ? Struc.other : type, value: strLiteral, style: styles});
 
 		if (arrLiterals.length === 1)
@@ -175,7 +178,7 @@
 		const strToken = this.EatToken(Literals.operand.id);
 		return {
 			type: Struc.char,
-			value: Literals.operand.LaTeX[strToken.data],
+			value: strToken.data,
 			style: oPr
 		};
 	}
@@ -614,13 +617,18 @@
 			}
 		}
 
+		let strNewBaseValue = AscMath.ConvertWord(base.value, true);
+		if (strNewBaseValue)
+			base.value = strNewBaseValue;
+
 		return {
-			type: Struc.limit,
-			base: base,
+			type: Struc.horizontal,
+			hBrack: base,
 			value: oContent,
-			isBelow: isBelow,
-			style: oStyle
-		};
+			VJUSTType: (isBelow === false) ? VJUST_TOP :  VJUST_BOT,
+			style: oStyle,
+		}
+
 	}
 	CLaTeXParser.prototype.IsTextLiteral = function ()
 	{
@@ -725,16 +733,23 @@
 	};
 	CLaTeXParser.prototype.IsOverUnderBarLiteral = function ()
 	{
-		return this.oLookahead.data === "▁" || this.oLookahead.data === "¯"
+		return this.oLookahead.data === "\\underline" || this.oLookahead.data === "\\overline"
 	};
 	CLaTeXParser.prototype.GetUnderOverBarLiteral = function ()
 	{
-		let strUnderOverLine = this.EatToken(this.oLookahead.class).data;
-		let oOperand = this.GetArguments(1);
+		let oStyle				= this.oLookahead.style;
+		let strUnderOverLine 	= this.EatToken(this.oLookahead.class);
+		let oOperand			= this.GetArguments(1);
+
+		strUnderOverLine.data = (strUnderOverLine.data === "\\underline")
+			? "▁"
+			: "¯";
+
 		return {
-			type: Struc.group_character,
-			overUnder: strUnderOverLine,
+			type: Struc.bar,
+			bar: strUnderOverLine,
 			value: oOperand,
+			style: oStyle,
 		};
 	};
 	CLaTeXParser.prototype.IsBoxLiteral = function ()
@@ -970,15 +985,15 @@
 		let oBaseContent;
 		let oOutput;
 
-		if (this.oLookahead.class === "_") {
+		if (this.oLookahead.data === "_") {
 			oDownContent = this.GetPartOfSupSup();
-			if (this.oLookahead.class === "^") {
+			if (this.oLookahead.data === "^") {
 				oUpContent = this.GetPartOfSupSup();
 			}
 		}
-		else if (this.oLookahead.class === "^") {
+		else if (this.oLookahead.data === "^") {
 			oUpContent = this.GetPartOfSupSup();
-			if (this.oLookahead.class === "_") {
+			if (this.oLookahead.data === "_") {
 				oDownContent = this.GetPartOfSupSup();
 			}
 		}
@@ -990,18 +1005,17 @@
 		this.SkipFreeSpace();
 		oBaseContent = this.GetElementLiteral();
 
-		oOutput = { //precstript!
-			type: Struc.sub_sub,
-		};
-		if (oUpContent) {
+		oOutput = { type: Struc.pre_script };
+
+		if (oUpContent)
 			oOutput.up = oUpContent;
-		}
-		if (oDownContent) {
+
+		if (oDownContent)
 			oOutput.down = oDownContent;
-		}
-		if (oBaseContent) {
+
+		if (oBaseContent)
 			oOutput.value = oBaseContent;
-		}
+
 		return oOutput;
 	};
 	CLaTeXParser.prototype.IsSqrtLiteral = function ()

@@ -859,7 +859,7 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 		{
 			oMathText.SetGlobalStyle(oLower);
 			let oLowerPos	= oMathText.Add(oLower, true,  2);
-			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oMathText.GetStyleFromFirst()));
+			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oBase));
 			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
 		}
 

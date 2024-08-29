@@ -1073,6 +1073,13 @@ $(function () {
 
 	QUnit.module( "LaTeX", function ()
 	{
+		Test("\\theta", [["ParaRun", "\\theta"]], true, "Check LaTeX words");
+		Test("\\theta", [["ParaRun", "θ"]], true, "Check LaTeX words", undefined, true);
+		Test("\\pm", [["ParaRun", "\\pm"]], true, "Check LaTeX words");
+		Test("\\pm", [["ParaRun", "±"]], true, "Check LaTeX words", undefined, true);
+		Test("\\infty", [["ParaRun", "∞"]], true, "Check LaTeX words", undefined, true);
+		Test("\\infty", [["ParaRun", "\\infty"]], true, "Check LaTeX words");
+
 		QUnit.module( "accent", function ()
 		{
 			Test("\\dot{a}", [["ParaRun", ""], ["CAccent", "\\dot{a}"],["ParaRun", ""]], true, "Check LaTeX words");
@@ -1088,8 +1095,16 @@ $(function () {
 			Test("\\widehat{j}", [["ParaRun", ""], ["CAccent", "\\hat{j}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\vec{k}", [["ParaRun", ""], ["CAccent", "\\vec{k}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\vec{\\frac{k}{2}}", [["ParaRun", ""], ["CAccent", "\\vec{\\frac{k}{2}}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\overbrace{cpppppppp}", [["ParaRun", ""], ["CGroupCharacter", "\\overbrace{cpppppppp}"],["ParaRun", ""]], true, "Check LaTeX words");
 			// Test("5''", [["ParaRun", ""], ["ParaRun", ""],["CAccent", ""]], true, "Check LaTeX words");
 			// Test("\\frac{4}{5}''", [["ParaRun", ""], ["CAccent", ""],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\overleftrightarrow{1+2}", [["ParaRun", ""], ["CAccent", "\\overleftrightarrow{1+2}"],["ParaRun", ""]], true, "Check LaTeX words");
+		})
+
+		QUnit.module( "bar", function ()
+		{
+			Test("\\overbrace{cpppppppp}", [["ParaRun", ""], ["CGroupCharacter", "\\overbrace{cpppppppp}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\underline{1+2}", [["ParaRun", ""], ["CBar", "\\underline{1+2}"],["ParaRun", ""]], true, "Check LaTeX words");
 		})
 
 		QUnit.module( "brackets", function ()
@@ -1137,6 +1152,11 @@ $(function () {
 			Test("n^(2) ", [["ParaRun", ""], ["CDegree", "n^{\\left(2\\right)}"], ["ParaRun", ""]], true, "Check LaTeX degree");
 		})
 
+		QUnit.module( "prescript", function ()
+		{
+			Test("{_1^n}Y", [["ParaRun", ""], ["CDegreeSubSup", "{_1^n}Y"], ["ParaRun", ""]], true, "Check LaTeX prescript");
+		})
+
 		QUnit.module( "frac", function ()
 		{
 			Test(`\\frac{1}{2}^{2}`, [["ParaRun", ""], ["CDegree", "{\\frac{1}{2}}^2"],["ParaRun", ""]], true, "Check LaTeX words");
@@ -1150,6 +1170,7 @@ $(function () {
 			Test("\\frac{1+\\frac{x}{y}}{2}", [["ParaRun", ""], ["CFraction", "\\frac{1+\\frac{x}{y}}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\frac{1^x}{2_y}", [["ParaRun", ""], ["CFraction", "\\frac{1^x}{2_y}"],["ParaRun", ""]], true, "Check LaTeX words");
 			Test("\\binom{1}{2}", [["ParaRun", ""], ["CFraction", "\\binom{1}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
+			Test("\\sfrac{1}{2}", [["ParaRun", ""], ["CFraction", "\\sfrac{1}{2}"],["ParaRun", ""]], true, "Check LaTeX words");
 		})
 
 		QUnit.module( "nary", function ()

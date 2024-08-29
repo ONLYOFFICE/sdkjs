@@ -388,6 +388,7 @@
 		}
 		else
 		{
+			let strTemp;
 			let isSlashes = false;
 			for (let index = 0; arrStr[index] && /[a-zA-Z\\]/.test(arrStr[index]); index++)
 			{
@@ -402,8 +403,10 @@
 				strFunc += arrStr[index]
 
 				if (this.LaTeX && this.LaTeX[strFunc])
-					return strFunc;
+					strTemp = strFunc;
 			}
+
+			return strTemp = strFunc;
 		}
 
 		return strFunc;
@@ -548,6 +551,7 @@
 			"\\gg" : "≫",
 			"\\heartsuit" : "♡",
 			"\\in" : "∈",
+			"\\infty" : "∞",
 			"\\ldots" : "…",
 			"\\le" : "≤",
 			"\\leq" : "≤",
@@ -570,6 +574,7 @@
 			//"\\oslash" : "⊘", // todo
 			"\\otimes" : "⊗",
 			"\\parallel" : "∥",
+			"\\pm": "±",
 			"\\prcue" : "≼",
 			"\\prec" : "≺",
 			"\\preceq" : "⪯",
@@ -658,6 +663,7 @@
 	}
 	TokenOperators.prototype = Object.create(LexerLiterals.prototype);
 	TokenOperators.prototype.constructor = TokenOperators;
+	TokenOperators.prototype.IsNeedReturnCorrected_Unicode = true;
 
 	function TokenOperand()
 	{
@@ -690,7 +696,6 @@
 			"\\Im" : "ℑ",
 			"\\imath" : "ı",
 			"\\inc" : "∆",
-			"\\infty" : "∞",
 			"\\iota" : "ι",
 			"\\jj" : "ⅉ",
 			"\\jmath" : "ȷ",
@@ -749,6 +754,7 @@
 	}
 	TokenOperand.prototype = Object.create(LexerLiterals.prototype);
 	TokenOperand.prototype.constructor = TokenOperand;
+	TokenOperand.prototype.IsNeedReturnCorrected_Unicode = true;
 
 	function TokenOpenBrackets()
 	{
@@ -1077,6 +1083,7 @@
 			"\\bar": "̅",
 			"\\Bar": "̿",
 			"\\vec": "⃗",
+			"\\overleftrightarrow" : "⃡",
 			"\\lhvec" : "⃐",
 			"\\hvec" : "⃑",
 			"\\tvec" : "⃡",
@@ -1310,7 +1317,8 @@
 			"\\undershell": "⏡",
 			"\\overbracket": "⎴",
 			"\\underbracket": "⎵",
-		};
+			"\\underline" : "▁",
+	};
 		this.Unicode = {};
 		this.Init();
 	}
@@ -1493,21 +1501,22 @@
 		MathLiterals.char,
 		MathLiterals.func,
 		MathLiterals.LaTeX,
+		MathLiterals.font,
 		MathLiterals.delimiter,
 		MathLiterals.special,
 		MathLiterals.of,
 		MathLiterals.number,
+		MathLiterals.operator,
 		MathLiterals.operand,
+		MathLiterals.divide,
 		MathLiterals.accent,
 		MathLiterals.space,
-		MathLiterals.operator,
 		MathLiterals.rect,
 		MathLiterals.lBrackets,
 		MathLiterals.rBrackets,
 		MathLiterals.lrBrackets,
 		MathLiterals.specialBrac,
 		MathLiterals.hbrack,
-		MathLiterals.divide,
 		MathLiterals.invisible,
 		MathLiterals.horizontal,
 		MathLiterals.matrix,
@@ -1519,7 +1528,6 @@
 		MathLiterals.arrayMatrix,
 		MathLiterals.eqArray,
 		MathLiterals.punct,
-		MathLiterals.font,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2067,7 +2075,7 @@
 
 		this._cursor += this.GetStringLength(oMatched);
 
-		if (fMathCheck.IsNeedReturnCorrected_Unicode === true && !this.isLaTeX)
+		if (fMathCheck.IsNeedReturnCorrected_Unicode === true && this.isLaTeX)
 			oMatched = fMathCheck.LaTeX[oMatched];
 
 		return oMatched;
@@ -2175,7 +2183,6 @@
 	// Find token in all types for convert
 	function SelectObject (oTokens, oContext)
 	{
-		let num = 1; // needs for debugging
 		if (oTokens)
 		{
 			if (oTokens instanceof MathText)
@@ -2194,10 +2201,9 @@
 					}
 					break;
 				case MathStructures.other:
-					for (const oUnicodeIterator =  oTokens.value.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+					for (const oUnicodeIterator = oTokens.value.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
 					{
 						oContext.Add_Text(AscCommon.encodeSurrogateChar(oUnicodeIterator.value()), undefined, undefined, oTokens.style[oUnicodeIterator.position()]);
-						//oContext.Add_Text(oTokens.value[nTokenStyle], undefined, undefined, oTokens.style[nTokenStyle]
 					}
 					break;
 				case MathStructures.char:
@@ -2563,10 +2569,67 @@
 					}
 
 					break;
+				case MathStructures.horizontal:
+					if (type === 1)
+					{
+						let hBrack = oTokens.hBrack,
+							nCodeOfHorizontal = hBrack.value.charCodeAt(0),
+							BoxPr = {ctrPrp : hBrack.style.style, opEmu : 1},
+							Box = oContext.Add_Box(BoxPr, null),
+							MathContent = Box.getBase(),
+							oGroup = null;
+
+						let oPrGroup = (oTokens.VJUSTType === VJUST_TOP)
+							? {ctrPrp : BoxPr.ctrPrp, pos : oTokens.VJUSTType, chr : nCodeOfHorizontal}
+							: {ctrPrp : BoxPr.ctrPrp, vertJc : oTokens.VJUSTType, chr : nCodeOfHorizontal};
+
+						let Group = new CGroupCharacter(oPrGroup);
+						MathContent.Add_Element(Group);
+
+						UnicodeArgument(
+							oTokens.value,
+							MathStructures.bracket_block,
+							Group.getBase(),
+						);
+					}
+					else
+					{
+						let hBrack = oTokens.hBrack,
+							nCodeOfHorizontal = hBrack.value.charCodeAt(0),
+							BoxPr = {ctrPrp : hBrack.style.style, opEmu : 1},
+							oGroup = null;
+
+						let oPrGroup = (oTokens.VJUSTType === VJUST_TOP)
+							? {ctrPrp : BoxPr.ctrPrp, pos : oTokens.VJUSTType, chr : nCodeOfHorizontal}
+							: {ctrPrp : BoxPr.ctrPrp, vertJc : oTokens.VJUSTType, chr : nCodeOfHorizontal};
+
+						let Group = new CGroupCharacter(oPrGroup);
+						oContext.Add_Element(Group);
+
+						UnicodeArgument(
+							oTokens.value,
+							MathStructures.bracket_block,
+							Group.getBase(),
+						);
+					}
+					break;
+				case MathStructures.bar:
+					let oBar = (oTokens.bar.data === "¯")
+						? oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_TOP}, null)
+						: oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_BOT}, null);
+
+					UnicodeArgument(
+						oTokens.value,
+						MathStructures.bracket_block,
+						oBar.getBase()
+					);
+				break;
 				case MathStructures.group_character:
+
 					let intBracketPos = !isNaN(oTokens.isBelow)
 						? oTokens.isBelow
 						: MathLiterals.hbrack.GetPos(oTokens.hBrack.data);
+
 					if (oTokens.up || oTokens.down)
 					{
 						let Limit = oContext.Add_Limit({ctrPrp : oTokens.hBrack.style.style, type : oTokens.up ? LIMIT_UP : LIMIT_LOW}, null, null);
@@ -2586,41 +2649,6 @@
 							Limit.getIterator(),
 						);
 					}
-					else if (oTokens.hBrack.data === "¯" || oTokens.hBrack.data === "▁")
-					{
-						let oBar = (oTokens.hBrack.data === "¯")
-							? oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_TOP}, null)
-							: oContext.Add_Bar({ctrPrp : oTokens.style.style, pos : LOCATION_BOT}, null);
-
-						UnicodeArgument(
-							oTokens.value,
-							MathStructures.bracket_block,
-							oBar.getBase()
-						);
-					}
-					else
-					{
-						let Pr = (intBracketPos === VJUST_TOP)
-							? {ctrPrp : oTokens.hBrack.style.style, pos : VJUST_TOP, vertJc : VJUST_BOT, chr: oTokens.hBrack.data.charCodeAt(0)}
-							: {
-								ctrPrp : typeof oTokens.hBrack.data === "object" ? oTokens.hBrack.data.style.style : oTokens.hBrack.style.style,
-								vertJc : VJUST_TOP,
-								chr : typeof oTokens.hBrack.data === "object" ?  oTokens.hBrack.data.data.charCodeAt(0) :  oTokens.hBrack.data.charCodeAt(0)
-							};
-
-						let Group = new CGroupCharacter(Pr);
-						oContext.Add_Element(Group);
-
-						UnicodeArgument(
-							oTokens.value,
-							MathStructures.bracket_block,
-							Group.getBase(),
-						);
-
-						let oBase = Group.getBase();
-						oBase.setCtrPrp(oTokens.style.style);
-					}
-
 					break;
 				case MathStructures.bracket_block:
 					let arr = [null]
@@ -3207,10 +3235,10 @@
 		"\\iint": "∬",
 		"\\Im": "ℑ",
 		"\\imath": "ı",
-		"\\in": "∈",
 		"\\inc": "∆",
-		"\\infty": "∞",
 		"\\int": "∫",
+		"\\infty": "∞",
+		"\\in": "∈",
 		"\\integral": "1/2π ∫_0^2π ▒ⅆθ/(a+b sin θ)=1/√(a^2-b^2)",
 		"\\iota": "ι",
 		"\\Iota": "Ι",
@@ -5274,6 +5302,8 @@
 	{
 		if (oContent instanceof MathTextAdditionalData)
 		{
+			if (this.reviewData.reviewType === undefined || oContent.reviewData.reviewInfo === undefined)
+				return true;
 			return this.reviewData.reviewType === oContent.reviewData.reviewType
 				&& this.reviewData.reviewInfo.IsEqual(oContent.reviewData.reviewInfo)
 		}
@@ -7142,4 +7172,5 @@
 	window["AscMath"].GetNamesTypeFontLaTeX			= GetNamesTypeFontLaTeX;
 	window["AscMath"].oStandardFont					= oStandardFont;
 	window["AscMath"].GetTypeFont					= GetTypeFont;
+	window["AscMath"].ConvertWord					= ConvertWord;
 })(window);

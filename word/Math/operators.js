@@ -4654,19 +4654,15 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		if (nStartCode === 9182 || nStartCode === 9183)
+		if (AscMath.MathLiterals.hbrack.SearchU(strStart))
 		{
-			oPos = oMathText.Add(oBase, true, 1);
-
-			if (nStartCode === 9182)
-				strStart = '\\overbrace';
-			else if (nStartCode === 9183)
-				strStart = '\\underbrace';
-
+			strStart = AscMath.SymbolsToLaTeX[strStart];
+			oPos = oMathText.Add(oBase, true, 2);
 			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
 		}
 		else
 		{
+			strStart = AscMath.SymbolsToLaTeX[strStart];
 			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
 			oPos = oMathText.Add(oBase, true, 1);
 			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
