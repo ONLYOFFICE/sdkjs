@@ -2334,6 +2334,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			// TODO add this.isCrossSign to use?
 			columns_1 = this.oneColumnIndex.name.replace(/([#[\]])/g, "'$1");
 
+			// replace all single quotes with double-single quote
+			columns_1 = columns_1.replace(/'/g, "''");
+
 			if (this.isDynamic && isLocal) {
 				columns_1 = "@" + columns_1;
 			} else if (this.isDynamic) {
@@ -2345,6 +2348,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (this.colStartIndex && this.colEndIndex) {
 			columns_1 = this.colStartIndex.name.replace(/([#[\]])/g, "'$1");
 			columns_2 = this.colEndIndex.name.replace(/([#[\]])/g, "'$1");
+
+			// replace all single quotes with double-single quote
+			columns_1 = columns_1.replace(/'/g, "''");
+
+			// replace all single quotes with double-single quote
+			columns_2 = columns_2.replace(/'/g, "''");
+
 			tblStr += "[[" + columns_1 + "]:[" + columns_2 + "]]";
 		} else if (null != this.reservedColumnIndex) {
 			if (this.isDynamic && isLocal && this.reservedColumnIndex === AscCommon.FormulaTablePartInfo.thisRow) {
@@ -2359,7 +2369,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (this.hdtIndexes.length > 0 && this.isDynamic && isLocal && this.hdtIndexes[0] === AscCommon.FormulaTablePartInfo.thisRow) {
 				let hdtcstart = this.hdtcstartIndex ? this.hdtcstartIndex.name.replace(/([#[\]])/g, "'$1") : null;
 				let hdtcend = this.hdtcendIndex ? this.hdtcendIndex.name.replace(/([#[\]])/g, "'$1") : null;
+				// TODO вместо replace, попоробовать изменять строку ТОЛЬКО при получении столбца при первом парсинге 
+				// replace all single quotes with double-single quote
+				hdtcstart = hdtcstart ? hdtcstart.replace(/'/g, "''") : hdtcstart;
 				
+				// replace all single quotes with double-single quote
+				hdtcend = hdtcend ? hdtcend.replace(/'/g, "''") : hdtcend;
+
 				tblStr += "@";
 				if (hdtcstart && !hdtcend) {
 					// if one column is selected
@@ -2416,6 +2432,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.tableName = val['tableName'];
 		if (val['oneColumn']) {
 			startCol = val['oneColumn'].replace(/'([#[\]])/g, '$1');
+
+			// replace all double-single quotes with single quote
+			startCol = startCol.replace(/''/g, "'");
+
 			if (startCol[0] === "@") {
 				this.isDynamic = true;
 			}
@@ -2425,6 +2445,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (val['columnRange']) {
 			startCol = val['colStart'].replace(/'([#[\]])/g, '$1');
 			endCol = val['colEnd'].replace(/'([#[\]])/g, '$1');
+
+			// replace all double-single quotes with single quote
+			startCol = startCol.replace(/''/g, "'");
+
+			// replace all double-single quotes with single quote
+			endCol = endCol ? endCol.replace(/''/g, "'") : startCol;
+
 			if (!endCol) {
 				endCol = startCol;
 			}
@@ -2460,10 +2487,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 			if (hdtcstart) {
 				startCol = hdtcstart.replace(/'([#[\]])/g, '$1');
+
+				// replace all double-single quotes with single quote
+				startCol = startCol.replace(/''/g, "'");
+
 				this.hdtcstartIndex = this.wb.getTableIndexColumnByName(this.tableName, startCol);
 				bRes = !!this.hdtcstartIndex;
 				if (bRes && hdtcend) {
 					endCol = hdtcend.replace(/'([#[\]])/g, '$1');
+
+					// replace all double-single quotes with single quote
+					startCol = startCol.replace(/''/g, "'");
+
 					this.hdtcendIndex = this.wb.getTableIndexColumnByName(this.tableName, endCol);
 					bRes = !!this.hdtcendIndex;
 				}
