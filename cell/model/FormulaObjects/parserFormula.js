@@ -2369,11 +2369,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			if (this.hdtIndexes.length > 0 && this.isDynamic && isLocal && this.hdtIndexes[0] === AscCommon.FormulaTablePartInfo.thisRow) {
 				let hdtcstart = this.hdtcstartIndex ? this.hdtcstartIndex.name.replace(/([#[\]])/g, "'$1") : null;
 				let hdtcend = this.hdtcendIndex ? this.hdtcendIndex.name.replace(/([#[\]])/g, "'$1") : null;
-				// TODO вместо replace, попоробовать изменять строку ТОЛЬКО при получении столбца при первом парсинге 
+
 				// replace all single quotes with double-single quote
 				hdtcstart = hdtcstart ? hdtcstart.replace(/'/g, "''") : hdtcstart;
-				
-				// replace all single quotes with double-single quote
 				hdtcend = hdtcend ? hdtcend.replace(/'/g, "''") : hdtcend;
 
 				tblStr += "@";
@@ -2434,7 +2432,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			startCol = val['oneColumn'].replace(/'([#[\]])/g, '$1');
 
 			// replace all double-single quotes with single quote
-			startCol = startCol.replace(/''/g, "'");
+			// startCol = startCol.replace(/''/g, "'");
 
 			if (startCol[0] === "@") {
 				this.isDynamic = true;
@@ -2447,10 +2445,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			endCol = val['colEnd'].replace(/'([#[\]])/g, '$1');
 
 			// replace all double-single quotes with single quote
-			startCol = startCol.replace(/''/g, "'");
-
-			// replace all double-single quotes with single quote
-			endCol = endCol ? endCol.replace(/''/g, "'") : startCol;
+			// startCol = startCol.replace(/''/g, "'");
+			// endCol = endCol ? endCol.replace(/''/g, "'") : startCol;
 
 			if (!endCol) {
 				endCol = startCol;
@@ -2489,7 +2485,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				startCol = hdtcstart.replace(/'([#[\]])/g, '$1');
 
 				// replace all double-single quotes with single quote
-				startCol = startCol.replace(/''/g, "'");
+				// startCol = startCol.replace(/''/g, "'");
 
 				this.hdtcstartIndex = this.wb.getTableIndexColumnByName(this.tableName, startCol);
 				bRes = !!this.hdtcstartIndex;
@@ -2497,7 +2493,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 					endCol = hdtcend.replace(/'([#[\]])/g, '$1');
 
 					// replace all double-single quotes with single quote
-					startCol = startCol.replace(/''/g, "'");
+					// endCol = endCol.replace(/''/g, "'");
 
 					this.hdtcendIndex = this.wb.getTableIndexColumnByName(this.tableName, endCol);
 					bRes = !!this.hdtcendIndex;

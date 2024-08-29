@@ -8492,9 +8492,8 @@
 		{
 			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
 			{
-				// todo при открытии файла можно использовать этот вариант вместо нескольких .replace в _parseVal
 				// replace all double-single quotes with single quotes
-				// columnName = columnName.replace(/''/g, "'"); 	
+				columnName = columnName.replace(/''/g, "'");
 
 				res = this.TableParts[i].getTableIndexColumnByName(columnName);
 				break;
