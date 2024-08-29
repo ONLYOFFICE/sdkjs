@@ -95,6 +95,9 @@
         oAnnotTextPrTrackHandler.SetTrackObject(IsShowAnnotTrack && bShowTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
     };
 
+    CGraphicObjects.prototype.paragraphIncDecIndent = function(bIncrease) {
+        this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Increase_ParagraphLevel, [bIncrease], AscWord.CTable.prototype.Increase_ParagraphLevel);
+    };
     CGraphicObjects.prototype.canIncreaseParagraphLevel = function(bIncrease)
     {
         let oDocContent = this.getTargetDocContent();
