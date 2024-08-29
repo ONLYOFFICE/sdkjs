@@ -1184,7 +1184,7 @@
 	{
 		// здесь прокинуть евент о заморозке меню
 	};
-	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function()
+	baseEditorsApi.prototype.asyncImagesDocumentStartLoaded      = function(aImages)
 	{
 		// евент о заморозке не нужен... оно и так заморожено
 		// просто нужно вывести информацию в статус бар (что началась загрузка картинок)

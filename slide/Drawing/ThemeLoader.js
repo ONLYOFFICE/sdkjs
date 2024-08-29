@@ -255,7 +255,7 @@ function CThemeLoader()
         this.Api.ImageLoader.LoadDocumentImages(this.themes_info_editor[this.CurrentLoadThemeIndex].ImageMap);
     };
 
-    this.asyncImagesStartLoaded = function()
+    this.asyncImagesStartLoaded = function(aImages)
     {
         // началась загрузка картинок
     };
