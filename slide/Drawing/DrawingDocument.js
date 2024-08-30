@@ -2075,9 +2075,12 @@ function CDrawingDocument()
 
 		this.LastDrawingUrl = url;
 		this.DrawGuiImage(this.GuiCanvasFillTexture, this.GuiCanvasFillTextureCtx, url, this.LastDrawingUrl);
-		let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
-		if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
-			this.LastDrawingUrl = null;
+		if(url)
+		{
+			let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
+			if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
+				this.LastDrawingUrl = "";
+		}
 	};
 
 	this.DrawImageTextureFillSlide = function(url)
@@ -2092,9 +2095,12 @@ function CDrawingDocument()
 
 		this.LastDrawingUrlSlide = url;
 		this.DrawGuiImage(this.GuiCanvasFillTextureSlide, this.GuiCanvasFillTextureCtxSlide, url, this.LastDrawingUrlSlide);
-		let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
-		if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
-			this.LastDrawingUrlSlide = null;
+		if(url)
+		{
+			let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
+			if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
+				this.LastDrawingUrlSlide = "";
+		}
 	};
 
 	this.DrawImageTextureFillTextArt = function(url)
@@ -2110,9 +2116,12 @@ function CDrawingDocument()
 		this.LastDrawingUrlTextArt = url;
 
 		this.DrawGuiImage(this.GuiCanvasFillTextureTextArt, this.GuiCanvasFillTextureCtxTextArt, url, this.LastDrawingUrlTextArt);
-		let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
-		if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
-			this.LastDrawingUrlTextArt = null;
+		if(url)
+		{
+			let _img = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
+			if (!(_img && _img.Image && _img.Status !== ImageLoadStatus.Loading))
+				this.LastDrawingUrlTextArt = "";
+		}
 	};
 
 	this.InitGuiCanvasShape = function(div_id)
