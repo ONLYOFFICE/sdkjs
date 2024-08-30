@@ -1198,6 +1198,36 @@ var CPresentation = CPresentation || function(){};
         CONTENT:    2
     };
 
+    PDFSelectedContent.prototype.copy = function() {
+        let oCopy = new PDFSelectedContent();
+
+        for (let i = 0; i < this.Drawings.length; i++) {
+            oCopy.Drawings.push({
+                Drawing: this.Drawings[i].Drawing.copy(),
+                ExtX: this.Drawings[i].ExtX,
+                X: this.Drawings[i].X,
+                Y: this.Drawings[i].Y,
+                base64: this.Drawings[i].base64
+            });
+        }
+
+        if (this.DocContent) {
+            //TODO: перенести копирование в CSelectedContent;
+            oCopy.DocContent = new AscCommonWord.CSelectedContent();
+            let aElements = this.DocContent.Elements;
+            for (i = 0; i < aElements.length; ++i) {
+                let oSelectedElement = new AscCommonWord.CSelectedElement();
+                oElement = aElements[i];
+                oParagraph = aElements[i].Element;
+                oSelectedElement.SelectedAll = oElement.SelectedAll;
+    
+                oSelectedElement.Element = oParagraph.Copy(oParagraph.Parent, oParagraph.DrawingDocument, {});
+                oCopy.DocContent.Elements[i] = oSelectedElement;
+            }
+        }
+        
+        return oCopy;
+    };
     PDFSelectedContent.prototype.getContentType = function () {
         if (this.Drawings.length > 0) {
             return PDF_SEL_CONTENT_TYPES.DRAWINGS;
@@ -4258,7 +4288,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.InsertContent2 = function(aSelContent, nIndex) {
         let oThis = this;
-        return oThis.InsertContent(aSelContent[nIndex]);
+        return oThis.InsertContent(aSelContent[nIndex].copy());
     };
     CPDFDoc.prototype.InsertContent = function(oSelContent) {
         let oThis       = this;

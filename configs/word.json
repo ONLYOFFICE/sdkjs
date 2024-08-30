@@ -349,6 +349,7 @@
 			"pdf/src/forms/textBoxContent.js",
 			"pdf/src/drawings/drawingPrototype.js",
 			"pdf/src/drawings/shape.js",
+			"pdf/src/drawings/cnxShape.js",
 			"pdf/src/drawings/image.js",
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",

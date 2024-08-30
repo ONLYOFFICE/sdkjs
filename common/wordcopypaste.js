@@ -5548,6 +5548,14 @@ PasteProcessor.prototype =
 
 			let paste_callback = function () {
 				if (false === oThis.bNested) {
+					for (let i = 0; i < aContents.length; i++) {
+						let oPDFSelContent = new AscPDF.PDFSelectedContent();
+						oPDFSelContent.Drawings = aContents[i].Drawings;
+						oPDFSelContent.DocContent = aContents[i].DocContent;
+						
+						aContents[i] = oPDFSelContent;
+					}
+
 					let bPaste = oDoc.InsertContent2(aContents, nIndex);
 
 					if (specialOptionsArr.length >= 1 && bPaste) {
