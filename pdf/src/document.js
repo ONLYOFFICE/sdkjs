@@ -5663,10 +5663,7 @@ var CPresentation = CPresentation || function(){};
 		return false;
 	};
 	CPDFDoc.prototype.getDrawingObjects = function() {
-		if (!this.Viewer)
-			return null;
-		
-		return this.Viewer.DrawingObjects;
+		return null;
 	};
 	CPDFDoc.prototype.checkDefaultFieldFonts = function(callback) {
 		
