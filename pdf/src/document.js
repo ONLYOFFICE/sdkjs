@@ -3734,16 +3734,14 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             if (!this.Viewer.isFullTextMessage) {
-                if (!this.Viewer.isFullText)
-                {
+                if (!this.Viewer.isFullText) {
                     this.Viewer.fullTextMessageCallbackArgs = [];
                     this.Viewer.fullTextMessageCallback = function() {
                         this.selectAll();
                     };
                     this.Viewer.showTextMessage();
                 }
-                else
-                {
+                else {
                     this.Viewer.file.selectAll();
                 }
             }

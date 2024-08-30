@@ -3013,9 +3013,11 @@
 			var isCommands = false;
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
-				if (null == this.file.pages[i].text)
+				if (null === this.file.pages[i].text)
 				{
-					this.file.pages[i].text = this.file.getText(i);
+					let text = this.file.getText(i);
+					this.file.pages[i].text = null === text ? undefined : text;
+
 					isCommands = true;
 				}
 			}
@@ -3031,8 +3033,10 @@
 						continue;
 					}
 
-					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.pagesInfo.countTextPages);
-					if (null != this.file.pages[this.pagesInfo.countTextPages].text)
+					let text = this.file.getText(this.pagesInfo.countTextPages);
+
+					this.file.pages[this.pagesInfo.countTextPages].text = null === text ? undefined : text;
+					if (null !== this.file.pages[this.pagesInfo.countTextPages].text)
 					{
 						this.pagesInfo.countTextPages++;
 						isCommands = true;
