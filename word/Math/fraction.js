@@ -652,17 +652,35 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPosNumerator	= oMathText.Add(oNumerator, true, 2);
-		let oPosDenominator	= oMathText.Add(oDenominator, true, 2);
-		switch (this.Pr.type)
-		{
-			case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;
-			case BAR_FRACTION:		strFracSymbol = '\\frac';	break;
-			default:				strFracSymbol = '\\sfrac';	break;
-		}
+		let isOnlyFrac = this.Parent.Content.length === 3
+			&& this.Parent.Content[0].Is_Empty()
+			&& this.Parent.Content[2].Is_Empty()
+			&& this.Parent.Parent instanceof CDelimiter;
 
-		oFracContent	= new AscMath.MathText(strFracSymbol, oMathText.GetStyleFromFirst());
-		oMathText.AddBefore(oPosNumerator, oFracContent);
+		if (this.Pr.type === NO_BAR_FRACTION && !isOnlyFrac)
+		{
+			let oPosNumerator	= oMathText.Add(oNumerator, true, 1);
+			let oAtopPos 		= oMathText.AddText(new AscMath.MathText('\\atop', oMathText.GetStyleFromFirst()));
+			let oPosDenominator = oMathText.Add(oDenominator, true, 1);
+
+			oMathText.AddBefore(oPosNumerator, new AscMath.MathText("{", oMathText.GetStyleFromFirst()));
+			oMathText.AddAfter(oPosDenominator, new AscMath.MathText("}", oMathText.GetStyleFromFirst()));
+		}
+		else
+		{
+			let oPosNumerator = oMathText.Add(oNumerator, true, 2);
+			let oPosDenominator = oMathText.Add(oDenominator, true, 2);
+
+			switch (this.Pr.type)
+			{
+				case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;
+				case BAR_FRACTION:		strFracSymbol = '\\frac';	break;
+				default:				strFracSymbol = '\\sfrac';	break;
+			}
+
+			oFracContent	= new AscMath.MathText(strFracSymbol, oMathText.GetStyleFromFirst());
+			oMathText.AddBefore(oPosNumerator, oFracContent);
+		}
 	}
 	else
 	{

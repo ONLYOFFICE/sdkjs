@@ -1273,12 +1273,12 @@ CDegreeSubSup.prototype.GetTextOfElement = function(oMathText)
 		oMathText.AddText(new AscMath.MathText("_", oLowerIterator));
 
 		oMathText.SetGlobalStyle(oLowerIterator);
-		oMathText.Add(oLowerIterator, true);
+		oMathText.Add(oLowerIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
 
 		oMathText.AddText(new AscMath.MathText("^", oUpperIterator));
 
 		oMathText.SetGlobalStyle(oUpperIterator);
-		oMathText.Add(oUpperIterator, true);
+		oMathText.Add(oUpperIterator, true, oMathText.IsLaTeX() ? 1 : undefined);
 	}
 
 	return oMathText;

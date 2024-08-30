@@ -553,6 +553,13 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		if (this.Content.length === 1 && oCurrentElement.value === 11034)
 			return oMathText;
 
+		// for LaTeX space processing
+		if (oMathText.IsDefaultText)
+		{
+			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			continue;
+		}
+
 		let arrFontContent = oMathText.IsLaTeX() ? AscMath.GetLaTeXFont[strCurrentElement] : undefined;
 		let strMathFontName = arrFontContent ? AscMath.oStandardFont[arrFontContent[0]] : undefined;
 
@@ -578,7 +585,26 @@ ParaRun.prototype.GetTextOfElement = function(oMathText, isSelectedText)
 		}
 		else
 		{
-			oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			if (oMathText.IsLaTeX())
+			{
+				if (strCurrentElement === " ") //normal space
+					oMathText.AddText(new AscMath.MathText('\\ ', this))
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\quad", this));
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\:", this));
+				// else if (strCurrentElement === " ")
+				// 	oMathText.AddText(new AscMath.MathText("\\;", this));
+				else
+				{
+					oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+				}
+			}
+			else
+			{
+				oMathText.AddText(new AscMath.MathText(strCurrentElement, this));
+			}
+
 		}
 	}
 

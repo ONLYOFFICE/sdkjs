@@ -1305,9 +1305,9 @@ ParaMath.prototype.GetText = function(isLaTeX)
     return oMathText.GetText();
 };
 
-ParaMath.prototype.GetTextOfElement = function (isLaTeX)
+ParaMath.prototype.GetTextOfElement = function (isLaTeX, isDefaultText)
 {
-    return this.Root.GetTextOfElement(isLaTeX);
+    return this.Root.GetTextOfElement(isLaTeX, isDefaultText);
 };
 
 ParaMath.prototype.GetSelectDirection = function()
@@ -3180,34 +3180,32 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
-	var oLaTeX = this.GetTextOfElement(true);
-    this.Root.Remove_Content(0, this.Root.Content.length);
-    this.Root.CurPos = 0;
-    AscMath.ConvertLaTeXToTokensList(oLaTeX, this.Root);
-    // this.Root.CorrectAllMathWords(true);
-    // this.Root.ConvertAllSpecialWords(true);
+	let oLaTeX = this.GetTextOfElement(true, true);
+	this.Root.Remove_Content(0, this.Root.Content.length);
+	this.Root.CurPos = 0;
+	AscMath.ConvertLaTeXToTokensList(oLaTeX, this.Root);
 	this.Root.Correct_Content(true);
     this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToLaTeX = function()
 {
 	let oLaTeXContent = this.GetTextOfElement(true);
-    oLaTeXContent.Flat(this.Root);
+	oLaTeXContent.Flat(this.Root);
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
 	let oUnicode = this.GetTextOfElement(false);
 	this.Root.Remove_Content(0,this.Root.Content.length);
-    this.Root.CurPos = 0;
+	this.Root.CurPos = 0;
 	AscMath.CUnicodeConverter(oUnicode, this.Root);
 	this.Root.Correct_Content(true);
-    this.Root.CurPos++;
+	this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
 	let oUnicodeContent = this.GetTextOfElement(false);
-    oUnicodeContent.Flat(this.Root);
-    this.Paragraph.updateTrackRevisions();
+	oUnicodeContent.Flat(this.Root);
+	this.Paragraph.updateTrackRevisions();
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {

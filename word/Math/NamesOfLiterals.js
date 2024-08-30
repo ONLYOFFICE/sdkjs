@@ -390,23 +390,20 @@
 		{
 			let strTemp;
 			let isSlashes = false;
-			for (let index = 0; arrStr[index] && /[a-zA-Z\\]/.test(arrStr[index]); index++)
+			for (let index = 0; arrStr[index] && /[a-zA-Z\\ ]/.test(arrStr[index]); index++)
 			{
-				if (arrStr[index] === "\\")
-				{
-					if (!isSlashes)
-						isSlashes = true;
-					else
-						return strFunc;
-				}
-
 				strFunc += arrStr[index]
 
 				if (this.LaTeX && this.LaTeX[strFunc])
 					strTemp = strFunc;
+				else if (this instanceof TokenFunctionLiteral && this.IsLaTeXInclude(strFunc))
+					strTemp = strFunc;
 			}
 
-			return strTemp = strFunc;
+			if (!strTemp)
+				return strFunc
+
+			return strTemp;
 		}
 
 		return strFunc;
@@ -424,7 +421,8 @@
 	};
 	LexerLiterals.prototype.SetUnicodeFromLaTeX= function (name, data)
 	{
-		this.Unicode[name] = data;
+		if (!this.Unicode[name])
+			this.Unicode[name] = data;
 	};
 	LexerLiterals.prototype.SetLaTeXFromUnicode = function (name, data)
 	{
@@ -914,7 +912,9 @@
 			//"\\to" : "→",
 			"\\vdash" : "⊢",
 		};
-		this.Unicode = {};
+		this.Unicode = {
+			"←" : "\\gets",
+			};
 		this.Init();
 	}
 	TokenHorizontalStretch.prototype = Object.create(LexerLiterals.prototype);
@@ -928,6 +928,7 @@
 			"\\sfrac": "\\sfrac",
 			"\\frac": "\\frac",
 			"\\cfrac": "\\cfrac",
+			"\\over" : "\\over",
 		};
 		this.LaTeX = {
 			"\\atop" : "¦",
@@ -1077,13 +1078,12 @@
 			"\\grave": "̀",
 			"\\dot": "̇",
 			"\\ddddot" : "⃜",
-			"\\ddot": "̈",
+			"\\ddot": '̈',
 			"\\dddot": "⃛",
 			"\\breve": "̆",
 			"\\bar": "̅",
 			"\\Bar": "̿",
 			"\\vec": "⃗",
-			"\\overleftrightarrow" : "⃡",
 			"\\lhvec" : "⃐",
 			"\\hvec" : "⃑",
 			"\\tvec" : "⃡",
@@ -1199,6 +1199,14 @@
 			"\\zwsp"	: 	"​",
 			"\\zwnj"	: 	"‌",
 			" "			:	" ",
+
+			"\\ "		:	" ",
+			// "\\quad"	:	" ",
+			// "\\qquad"	:	"  ",
+			// "\:"		:	" ",
+			// "\;"		:	" ",
+			//"\!"		:	"",
+
 		};
 		this.Init();
 	}
@@ -1225,7 +1233,7 @@
 	TokenFunctionLiteral.prototype.constructor = TokenFunctionLiteral;
 	TokenFunctionLiteral.prototype.IsLaTeXInclude = function (str)
 	{
-		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || limitFunctions.includes(str.slice(1)) || (str.length > 1 && str[0] === "\\"))
+		if (MathAutoCorrectionFuncNames.includes(str.slice(1)) || limitFunctions.includes(str.slice(1)))
 			return str;
 	};
 	TokenFunctionLiteral.prototype.IsLaTeXIncludeNormal = function (str)
@@ -1337,6 +1345,19 @@
 			case "⎵": return VJUST_TOP;
 			case "▁": return VJUST_BOT;
 			case "¯": return VJUST_TOP;
+
+			case "\\overparen": return  VJUST_TOP;
+			case "\\underparen": return VJUST_BOT;
+			case "\\overbrace": return  VJUST_TOP;
+			case "\\overline": return VJUST_TOP;
+			case "\\underbar" : return VJUST_BOT;
+			case "\\overbar" : return VJUST_TOP;
+			case "\\underbrace": return VJUST_BOT;
+			case "\\overshell": return VJUST_TOP;
+			case "\\undershell": return VJUST_BOT;
+			case "\\overbracket": return VJUST_TOP;
+			case "\\underbracket": return VJUST_BOT;
+			case "\\underline" : return VJUST_BOT;
 		}
 	}
 
@@ -1506,11 +1527,10 @@
 		MathLiterals.special,
 		MathLiterals.of,
 		MathLiterals.number,
-		MathLiterals.operator,
 		MathLiterals.operand,
-		MathLiterals.divide,
 		MathLiterals.accent,
-		MathLiterals.space,
+		MathLiterals.operator,
+		MathLiterals.divide,
 		MathLiterals.rect,
 		MathLiterals.lBrackets,
 		MathLiterals.rBrackets,
@@ -1528,6 +1548,7 @@
 		MathLiterals.arrayMatrix,
 		MathLiterals.eqArray,
 		MathLiterals.punct,
+		MathLiterals.space,
 	];
 
 	//-------------------------------------Generating AutoCorrection Rules----------------------------------------------
@@ -2626,10 +2647,6 @@
 				break;
 				case MathStructures.group_character:
 
-					let intBracketPos = !isNaN(oTokens.isBelow)
-						? oTokens.isBelow
-						: MathLiterals.hbrack.GetPos(oTokens.hBrack.data);
-
 					if (oTokens.up || oTokens.down)
 					{
 						let Limit = oContext.Add_Limit({ctrPrp : oTokens.hBrack.style.style, type : oTokens.up ? LIMIT_UP : LIMIT_LOW}, null, null);
@@ -2647,6 +2664,29 @@
 							oTokens.up ? oTokens.up : oTokens.down,
 							MathStructures.bracket_block,
 							Limit.getIterator(),
+						);
+					}
+					else
+					{
+						let oGroup;
+						if (oTokens.isBelow === VJUST_TOP)
+						{
+							oGroup = oContext.Add_GroupCharacter({
+								ctrPrp: oTokens.hBrack.style.style,
+								chr: oTokens.hBrack.data.charCodeAt(0),
+								pos: VJUST_TOP,
+								vertJc: VJUST_BOT
+							}, null);
+						}
+						else
+						{
+							oGroup = oContext.Add_GroupCharacter({ctrPrp : oTokens.hBrack.style.style, chr: oTokens.hBrack.data.charCodeAt(0)});
+						}
+
+						UnicodeArgument(
+							oTokens.value,
+							MathStructures.bracket_block,
+							oGroup.getBase(),
 						);
 					}
 					break;
@@ -4721,7 +4761,7 @@
 	 * @param {boolean|undefined|MathTextAndStyles} [isLaTeX]
 	 * @constructor
 	 */
-	function MathTextAndStyles (isLaTeX)
+	function MathTextAndStyles (isLaTeX, isDefaultText)
 	{
 		if (isLaTeX instanceof MathTextAndStyles)
 			return isLaTeX;
@@ -4741,6 +4781,7 @@
 		this.IsGetStyleFromFirst = true;
 
 		this.IsNotWrap 			= false;
+		this.IsDefaultText		= isDefaultText;
 	}
 	MathTextAndStyles.prototype.IsEmpty = function ()
 	{
@@ -4798,7 +4839,7 @@
 	};
 	MathTextAndStyles.prototype.CreateInnerCopy = function()
 	{
-		return new MathTextAndStyles(this.LaTeX);
+		return new MathTextAndStyles(this.LaTeX, this.IsDefaultText);
 	};
 	MathTextAndStyles.prototype.AddContainer = function()
 	{
@@ -4833,6 +4874,13 @@
 	{
 		if (this.Positions.length > 0)
 			return this.Positions[this.Positions.length - 1];
+		else
+			return false;
+	};
+	MathTextAndStyles.prototype.GetFirstPos = function ()
+	{
+		if (this.Positions.length > 0)
+			return this.Positions[0];
 		else
 			return false;
 	};
@@ -4919,25 +4967,30 @@
 	{
 		this.IsNotWrap = true;
 	}
+	MathTextAndStyles.prototype.GetLastContentInLayer = function ()
+	{
+		if (this.arr.length > 0)
+			return this.arr[this.arr.length - 1];
+	}
 	MathTextAndStyles.prototype.AddText = function(oContent, isNew)
 	{
 		let nPosCopy = this.nPos;
 
-		if (this.arr.length > 0
-			&& (this.arr[this.arr.length - 1] instanceof MathTextAndStyles ||
-				oContent instanceof MathTextAndStyles ||
-				!this.arr[this.arr.length - 1].IsAdditionalDataEqual(oContent.additionalMathData))) {
-			isNew = true;
+		if (!isNew)
+		{
+			let oLast = this.GetLastContentInLayer();
+
+			if (oLast && oLast instanceof MathText
+				&& oContent instanceof MathText
+				&& oLast.IsAdditionalDataEqual(oContent.additionalMathData))
+			{
+				oLast.text += oContent.text;
+				return this.AddPosition(this.nPos - nPosCopy);
+			}
 		}
 
-		if (this.arr[this.arr.length - 1] && this.arr[this.arr.length - 1] instanceof MathText && !isNew) {
-			this.arr[this.arr.length - 1].text += oContent.text;
-		}
-		else
-		{
-			this.arr.push(oContent);
-			this.Increase();
-		}
+		this.arr.push(oContent);
+		this.Increase();
 
 		return this.AddPosition(this.nPos - nPosCopy);
 	};
@@ -4996,7 +5049,7 @@
 	MathTextAndStyles.prototype.ConvertTextToMathTextAndStyles = function (oPos)
 	{
 		let oText		= this.GetExact(oPos);
-		let oContent	= new MathTextAndStyles(this.LaTeX);
+		let oContent	= new MathTextAndStyles(this.LaTeX, this.IsDefaultText);
 
 		oContent.AddText(oText, false);
 		this.SetExact(oPos, oContent);
@@ -5063,6 +5116,17 @@
 		this.ChangePositions(arrPositions, function(oPos) {oPos.pos++});
 		return this.AddPosition(oContent.length, nPos);
 	};
+	MathTextAndStyles.prototype.RemoveByPos = function (oPos)
+	{
+		let arrPositions = this.GetArrPos(oPos, true);
+		let oCurrentContainer = this.GetExact(oPos);
+
+		this.arr.splice(oPos.pos - 1, 1);
+		this.Positions.splice(oPos.pos - 1, 1);
+
+		this.nPos--;
+		this.ChangePositions(arrPositions, function(oPos) {oPos.pos--});
+	}
 	MathTextAndStyles.prototype.Wrap = function(strStart, strEnd)
 	{
 		this.AddBefore(this.Positions[0], strStart);
@@ -5199,27 +5263,34 @@
 			oCMathContent.Add_Text(newArr[i].text, undefined, undefined, newArr[i].additionalMathData);
 		}
 	};
+	MathTextAndStyles.prototype.GetLastContent = function ()
+	{
+		if (this.arr.length > 0)
+		{
+			let oLast = this.arr[this.arr.length - 1];
+			if (oLast instanceof MathTextAndStyles)
+				return oLast.GetLastContent();
+			else
+				return oLast;
+		}
+	}
+	MathTextAndStyles.prototype.GetFirstContent = function ()
+	{
+		if (this.arr.length > 0)
+		{
+			let oLast = this.arr[0];
+			if (oLast instanceof MathTextAndStyles)
+				return oLast.GetFirstContent();
+			else
+				return oLast;
+		}
+	}
 	MathTextAndStyles.prototype.DelLastSpace = function ()
 	{
-		let GetLast = function (arr)
-		{
-			if (arr.length === 0)
-				return;
+		let oLastContent = this.GetLastContent();
 
-			let oLast = arr[arr.length - 1];
-
-			if (oLast instanceof MathTextAndStyles)
-			{
-				return GetLast(oLast.arr);
-			}
-			else
-			{
-				if (oLast.text[oLast.text.length - 1] === " ")
-					oLast.text = oLast.text.slice(0, -1);
-			}
-
-		}
-		GetLast(this.arr);
+		if (oLastContent.text[oLastContent.text.length - 1] === " ")
+			oLastContent.text = oLastContent.text.slice(0, -1);
 
 		return this
 	};
@@ -6575,7 +6646,7 @@
 
 		let intMathContent		= oDelMark.GetMathPos();
 		let intRunContent		= oDelMark.GetPosition();
-		let oMathTextAndStyles	= new MathTextAndStyles(false, isWrapFirstContent);
+		let oMathTextAndStyles	= new MathTextAndStyles(false);
 
 		for (let nPosCMathContent = intMathContent; nPosCMathContent < oContent.Content.length; nPosCMathContent++)
 		{

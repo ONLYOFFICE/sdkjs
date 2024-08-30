@@ -188,12 +188,41 @@
 	};
 	CLaTeXParser.prototype.GetSpaceLiteral = function ()
 	{
+		// LaTex skip all normal spaces
 		while (this.oLookahead.data === " ")
 		{
 			this.EatToken(this.oLookahead.class);
 		}
-		//todo LaTex skip all normal spaces
-		this.ReadTokensWhileEnd(Literals.space, Struc.space);
+
+		let oStyle = this.oLookahead.style;
+
+		if (this.oLookahead.data === "\\ "
+			// || this.oLookahead.data === "\\quad"
+			// || this.oLookahead.data === "\\:"
+			// || this.oLookahead.data === "\\;"
+		)
+		{
+			let strSpace = "";
+
+			if (this.oLookahead.data === "\\ ")
+				strSpace = " ";
+			// else if (this.oLookahead.data === "\\quad")
+			// 	strSpace = " ";
+			// else if (this.oLookahead.data === "\\:")
+			// 	strSpace = " ";
+			// else if (this.oLookahead.data === "\\;")
+			// 	strSpace = " ";
+
+			this.EatToken(this.oLookahead.class)
+
+			return {
+				type: Struc.char,
+				value: strSpace,
+				style: oStyle
+			}
+		}
+
+		//this.ReadTokensWhileEnd(Literals.space, Struc.space);
 	};
 	CLaTeXParser.prototype.GetNumberLiteral = function ()
 	{
@@ -256,18 +285,23 @@
 		switch (str)
 		{
 			case "\\frac"	:	return BAR_FRACTION;    break;
+			case "\\over"	:	return BAR_FRACTION;    break;
 			case "\\binom"	:	return NO_BAR_FRACTION; break;
+			case "\\atop"	:	return NO_BAR_FRACTION; break;
 			default         :   return SKEWED_FRACTION; break;
 		}
 	}
 	CLaTeXParser.prototype.GetFractionLiteral = function ()
 	{
-		let oFracStyle = this.oLookahead.style;
-		let type = this.GetFractionType(this.oLookahead.data);
-		this.EatToken(this.oLookahead.class);
-		const oResult = this.GetArguments(2);
+		let strName		= this.oLookahead.data;
+		let oFracStyle	= this.oLookahead.style;
+		let type		= this.GetFractionType(this.oLookahead.data);
 
-		return {
+		this.EatToken(this.oLookahead.class);
+
+		let oResult		= this.GetArguments(2);
+
+		let oFrac = {
 			type: Struc.frac,
 			up: oResult[0] || {},
 			down: oResult[1] || {},
@@ -275,7 +309,46 @@
 			style: oFracStyle,
 		};
 
+		if (strName === '\\binom')
+		{
+			return {
+				type: Struc.bracket_block,
+				left: "(",
+				right: ")",
+				value: [oFrac],
+				style: {
+					startStyle : oFracStyle,
+					endStyle : oFracStyle,
+					middle: oFracStyle,
+				},
+			};
+		}
+
+		return oFrac
 	};
+	CLaTeXParser.prototype.IsOverLikeLiteral = function ()
+	{
+		return this.oLookahead.data === "\\over"
+			|| this.oLookahead.data === "\\atop"
+	}
+	CLaTeXParser.prototype.GetOverLikeLiteral = function (oNum)
+	{
+		if (!oNum)
+			oNum		= this.GetArguments(1);
+
+		let oFracStyle	= this.oLookahead.style;
+		let type		= this.GetFractionType(this.oLookahead.data);
+		this.EatToken(this.oLookahead.class);
+		let oDen		= this.GetArguments(1);
+
+		return {
+			type: Struc.frac,
+			up: oNum || {},
+			down: oDen || {},
+			fracType: type,
+			style: oFracStyle,
+		};
+	}
 	CLaTeXParser.prototype.IsExpBracket = function ()
 	{
 		return this.oLookahead.class === Literals.lrBrackets.id
@@ -450,7 +523,7 @@
 			this.IsSpecialSymbol() ||
 			this.oLookahead.class === Literals.other.id ||
 			this.oLookahead.class === Literals.operand.id ||
-			this.oLookahead.class === Literals.horizontal.id ||
+			this.IsHorizontalArrowLiteral() ||
 			this.oLookahead.class === Literals.punct.id
 		);
 	};
@@ -496,9 +569,9 @@
 		{
 			return this.ReadTokensWhileEnd(Literals.punct, Struc.char);
 		}
-		else if (this.oLookahead.class === Literals.horizontal.id)
+		else if (this.IsHorizontalArrowLiteral())
 		{
-			return this.ReadTokensWhileEnd(Literals.horizontal, Struc.char);
+			return this.GetHorizontalArrowLiteral();
 		}
 		else if (this.oLookahead.class === Literals.char.id)
 		{
@@ -589,6 +662,39 @@
 			}
 		}
 	};
+	CLaTeXParser.prototype.IsHorizontalArrowLiteral = function()
+	{
+		return this.oLookahead.class === Literals.horizontal.id;
+	}
+	CLaTeXParser.prototype.GetHorizontalArrowLiteral = function ()
+	{
+		let oStyle = this.oLookahead.style;
+		let oData = this.EatToken(this.oLookahead.class);
+		oData.data = Literals.horizontal.LaTeX[oData.data];
+
+		if (this.IsGetBelowAboveLiteral())
+		{
+			let isBelow = this.oLookahead.data === "\\below" ? VJUST_TOP :  VJUST_BOT;
+			this.EatToken(this.oLookahead.class);
+			let oContent = this.GetArguments(1);
+
+			return {
+				type: Struc.group_character,
+				value: oContent,
+				hBrack: oData,
+				down: undefined,
+				up: undefined,
+				style: oStyle,
+				isBelow: isBelow,
+			}
+		}
+
+		return {
+			type: Struc.char,
+			value: oData.data,
+			style: oStyle,
+		}
+	}
 	CLaTeXParser.prototype.IsGetBelowAboveLiteral = function()
 	{
 		return this.oLookahead.data === "\\below" || this.oLookahead.data === "\\above";
@@ -622,13 +728,12 @@
 			base.value = strNewBaseValue;
 
 		return {
-			type: Struc.horizontal,
-			hBrack: base,
+			type: Struc.limit,
+			base: base,
 			value: oContent,
-			VJUSTType: (isBelow === false) ? VJUST_TOP :  VJUST_BOT,
+			isBelow: (isBelow === false) ? VJUST_TOP :  VJUST_BOT,
 			style: oStyle,
 		}
-
 	}
 	CLaTeXParser.prototype.IsTextLiteral = function ()
 	{
@@ -788,7 +893,9 @@
 			oPr = this.oLookahead.style,
 			oDown,
 			oUp;
-		oHBracket.data = Literals.hbrack.LaTeX[oHBracket.data]
+		oHBracket.data = Literals.hbrack.LaTeX[oHBracket.data];
+
+		let isBelow = Literals.hbrack.GetPos(oHBracket.data);
 
 		this.EatToken(this.oLookahead.class);
 
@@ -816,6 +923,7 @@
 			down: oDown,
 			up: oUp,
 			style: oPr,
+			isBelow: isBelow,
 		}
 	};
 	CLaTeXParser.prototype.GetWrapperElementLiteral = function ()
@@ -840,10 +948,10 @@
 			{
 				return this.GetBelowAboveLiteral(oWrapperContent)
 			}
-
-			// else if (this.oLookahead.class === "\\over") {
-			// 	//TODO
-			// }
+			else if (this.IsOverLikeLiteral())
+			{
+				return this.GetOverLikeLiteral(oWrapperContent);
+			}
 
 			return oWrapperContent;
 		}
@@ -1355,7 +1463,7 @@
 	};
 	CLaTeXParser.prototype.SkipFreeSpace = function ()
 	{
-		while (this.oLookahead.class === Literals.space.id) {
+		while (this.oLookahead.data === " ") {
 			this.oLookahead = this.oTokenizer.GetNextToken();
 		}
 	};

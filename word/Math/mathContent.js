@@ -5845,8 +5845,6 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
 	if (arrNextContent === false)
 		return;
 
-		debugger
-
 	if (nInputType === 0)
 		new AscMath.ProceedTokens(this);
 
@@ -5941,9 +5939,9 @@ CMathContent.prototype.haveMixedContent = function(isLaTeX)
 
 	return false;
 };
-CMathContent.prototype.GetTextOfElement = function(oMathText)
+CMathContent.prototype.GetTextOfElement = function(oMathText, isDefaultText)
 {
-	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText = new AscMath.MathTextAndStyles(oMathText, isDefaultText);
 
 	for (let i = 0; i < this.Content.length; i++)
 	{

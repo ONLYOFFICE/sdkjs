@@ -443,21 +443,23 @@
 			value: oBase,
 			up: oUp,
 			down: oDown,
+			isBelow: oPos,
 		};
 	};
 	CUnicodeParser.prototype.GetHBracketLiteral = function (oBase)
 	{
-		let strHBracket = this.oLookahead,
-			oUp, oDown;
-		let oPr = this.oLookahead.style;
+		let strHBracket		= this.oLookahead,
+			nPos			= Literals.hbrack.GetPos(strHBracket.data),
+			oPr				= this.oLookahead.style,
+			oUp,
+			oDown;
+
 		this.EatToken(this.oLookahead.class);
 
 		if (this.IsOperandLiteral())
 		{
 			if (!oBase)
-			{
 				oBase = this.GetOperandLiteral("custom");
-			}
 
 			if (this.IsScriptStandardContentLiteral())
 			{
@@ -496,6 +498,7 @@
 			up: oUp,
 			down: oDown,
 			style: oPr,
+			isBelow : nPos,
 		};
 	};
 	CUnicodeParser.prototype.IsHBracketLiteral = function ()

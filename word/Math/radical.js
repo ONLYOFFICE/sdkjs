@@ -787,18 +787,13 @@ CRadical.prototype.GetTextOfElement = function(oMathText)
 
 		if (!oDegreeText.IsEmpty())
 		{
-			let oIterator = oMathText.Add(oDegree, true);
-			oStart = oMathText.AddBefore(oIterator, new AscMath.MathText("[", this));
+			let oIterator	= oMathText.Add(oDegree, true);
+			oStart			= oMathText.AddBefore(oIterator, new AscMath.MathText("[", this));
 			oMathText.AddAfter(oIterator, new AscMath.MathText("]", this));
+		}
 
-			let oPosBase		= oMathText.Add(oBase, true, 1);
-			oMathText.AddBefore(oStart, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst(this)));
-		}
-		else
-		{
-			let oPosBase		= oMathText.Add(oBase, true, 1);
-			oMathText.AddBefore(oPosBase, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst(this)));
-		}
+		let oPosBase		= oMathText.Add(oBase, true, 1);
+		oMathText.AddBefore(oStart ? oStart : oPosBase, new AscMath.MathText("\\sqrt", oMathText.GetStyleFromFirst(this)));
 	}
 	else
 	{
