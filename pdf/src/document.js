@@ -1215,10 +1215,10 @@ var CPresentation = CPresentation || function(){};
             //TODO: перенести копирование в CSelectedContent;
             oCopy.DocContent = new AscCommonWord.CSelectedContent();
             let aElements = this.DocContent.Elements;
-            for (i = 0; i < aElements.length; ++i) {
+            for (let i = 0; i < aElements.length; ++i) {
                 let oSelectedElement = new AscCommonWord.CSelectedElement();
-                oElement = aElements[i];
-                oParagraph = aElements[i].Element;
+                let oElement = aElements[i];
+                let oParagraph = aElements[i].Element;
                 oSelectedElement.SelectedAll = oElement.SelectedAll;
     
                 oSelectedElement.Element = oParagraph.Copy(oParagraph.Parent, oParagraph.DrawingDocument, {});
@@ -1291,7 +1291,7 @@ var CPresentation = CPresentation || function(){};
                 var oPr = new AscFormat.CCopyObjectProperties();
                 oPr.idMap = oIdMap;
                 oPr.bSaveSourceFormatting = bSourceFormatting;
-                for (var i = 0; i < aSpTree.length; ++i) {
+                for (let i = 0; i < aSpTree.length; ++i) {
                     oSp = aSpTree[i];
                     // if(oSp.isEmptyPlaceholder())
                     // {
@@ -1370,7 +1370,7 @@ var CPresentation = CPresentation || function(){};
                         oSelectedContent = oDocContent.GetSelectedContent();
                         oEndFormattingContent.DocContent = oSelectedContent;
                         
-                        for (i = 0; i < oSelectedContent.Elements.length; ++i) {
+                        for (let i = 0; i < oSelectedContent.Elements.length; ++i) {
                             var oElem = oSelectedContent.Elements[i].Element;
                             if (oElem.GetType() === AscCommonWord.type_Paragraph) {
                                 if (oElem.Pr && oElem.Pr.DefaultRunPr && AscFormat.isRealNumber(oElem.Pr.DefaultRunPr.FontSize)) {
@@ -1384,7 +1384,7 @@ var CPresentation = CPresentation || function(){};
 
                         oSelectedContent = oDocContent.GetSelectedContent();
                         var aContent = [];
-                        for (i = 0; i < oSelectedContent.Elements.length; ++i) {
+                        for (let i = 0; i < oSelectedContent.Elements.length; ++i) {
                             oParagraph = oSelectedContent.Elements[i].Element;
                             oParagraph.Parent = oDocContent;
                             oParagraph.private_CompileParaPr();
@@ -1396,7 +1396,7 @@ var CPresentation = CPresentation || function(){};
 
                         var oSelectedContent2 = oDocContent.GetSelectedContent();
                         aContent = [];
-                        for (i = 0; i < oSelectedContent2.Elements.length; ++i) {
+                        for (let i = 0; i < oSelectedContent2.Elements.length; ++i) {
                             oParagraph = oSelectedContent2.Elements[i].Element;
                             oParagraph.Parent = oDocContent;
                             oParagraph.private_CompileParaPr();
@@ -1445,7 +1445,7 @@ var CPresentation = CPresentation || function(){};
                                     break;
                                 }
                             }
-                            for (i = 0; i < oDocContentForDraw.Content.length; ++i) {
+                            for (let i = 0; i < oDocContentForDraw.Content.length; ++i) {
                                 oCheckParagraph = oDocContentForDraw.Content[i];
                                 if (!oCheckParagraph.IsEmpty()) {
                                     aRuns = oCheckParagraph.Content;
@@ -1485,7 +1485,7 @@ var CPresentation = CPresentation || function(){};
                                 oDocContentForDraw.Recalculate_Page(0, true);
                                 aParagraphs = oDocContentForDraw.Content;
                                 dMaxWidth = 0;
-                                for (i = 0; i < aParagraphs.length; ++i) {
+                                for (let i = 0; i < aParagraphs.length; ++i) {
                                     oParagraph = aParagraphs[i];
                                     for (j = 0; j < oParagraph.Lines.length; ++j) {
                                         if (oParagraph.Lines[j].Ranges[0].W > dMaxWidth) {
