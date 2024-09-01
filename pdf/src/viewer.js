@@ -4208,7 +4208,7 @@
 		oEditorPage.checkBodySize();
 		oEditorPage.m_oBody.Resize(oEditorPage.Width * g_dKoef_pix_to_mm, oEditorPage.Height * g_dKoef_pix_to_mm, this);
 
-		var rect = this.canvas.getBoundingClientRect();
+		var rect = AscCommon.UI.getBoundingClientRect(this.canvas);
 		this.x = rect.left;
 		this.y = rect.top;
 		

@@ -6243,8 +6243,11 @@ function (window, undefined) {
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 
-
+		//TODO arg[0] can be any type!
 		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
 
 		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
@@ -6322,7 +6325,11 @@ function (window, undefined) {
 		argClone[6] = argClone[6] ? argClone[6].tocNumber() : new cNumber(1);
 
 
-		argClone[0] = argClone[0].getMatrix();
+		//TODO arg[0] can be any type!
+		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
 
 		var argError;
 		if (argError = this._checkErrorArg(argClone)) {

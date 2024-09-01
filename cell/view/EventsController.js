@@ -2158,7 +2158,7 @@
 				return event.coord;
 			}
 
-			var offs = this.element.getBoundingClientRect();
+			var offs = AscCommon.UI.getBoundingClientRect(this.element);
 			var x = ((event.pageX * AscBrowser.zoom) >> 0) - offs.left;
 			var y = ((event.pageY * AscBrowser.zoom) >> 0) - offs.top;
 

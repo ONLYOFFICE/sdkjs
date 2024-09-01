@@ -1050,7 +1050,7 @@
 
 		if (AscCommon.AscBrowser.isChrome)
 		{
-			var rectObject = _elemSrc.getBoundingClientRect();
+			var rectObject = AscCommon.UI.getBoundingClientRect(_elemSrc);
 			this.FixedPosCheckElementX = rectObject.left;
 			this.FixedPosCheckElementY = rectObject.top;
 		}

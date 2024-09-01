@@ -83,7 +83,8 @@ var c_oSerBorderType = {
     Value: 3,
 	ColorTheme: 4,
 	SpacePoint: 5,
-	Size8Point: 6
+	Size8Point: 6,
+	ValueType: 7
 };
 var c_oSerBordersType = {
     left: 0,
@@ -239,6 +240,10 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
         this.memory.WriteByte(c_oSerBorderType.Value);
         this.memory.WriteByte(c_oSerPropLenType.Byte);
         this.memory.WriteByte(border.Value);
+		
+		this.memory.WriteByte(c_oSerBorderType.ValueType);
+		this.memory.WriteByte(c_oSerPropLenType.Long);
+		this.memory.WriteByte(border.getValue());
     }
 };
 BinaryCommonWriter.prototype.WriteBorders = function(Borders)

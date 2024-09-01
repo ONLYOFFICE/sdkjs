@@ -221,6 +221,12 @@ function CEditorPage(api)
 		{
 			this.X = off.left;
 			this.Y = off.top;
+
+			if (AscCommon.AscBrowser.isOffsetUsedZoom())
+			{
+				this.X *= AscCommon.AscBrowser.zoom;
+				this.Y *= AscCommon.AscBrowser.zoom;
+			}
 		}
 	};
 
