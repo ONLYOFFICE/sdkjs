@@ -2572,18 +2572,15 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.FinalizeAction = function(checkEmptyAction) {
-        let arrChanges = AscCommon.History.Points[AscCommon.History.Index];
-
+		
         if (checkEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
-            arrChanges = null;
+            return;
         }
 
-        if (arrChanges) {
-            AscCommon.History.Get_RecalcData(arrChanges);
-		    AscCommon.History.Reset_RecalcIndex();
-        }
-		
+		AscCommon.History.Get_RecalcData(arrChanges);
+		AscCommon.History.Reset_RecalcIndex();
+
         if (false /* тут проверяем локи */) {
             AscCommon.History.Undo();
             AscCommon.History.Clear_Redo();
