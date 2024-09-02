@@ -61,12 +61,9 @@
         this._lineEnd       = undefined;
         this._vertices      = undefined;
         this._width         = undefined;
-
-        // internal
-        TurnOffHistory();
     }
     CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
-    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolyLine, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polyline);
     Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
@@ -82,23 +79,18 @@
         return this._vertices;
     };
 
-    CAnnotationPolyLine.prototype.Recalculate = function() {
-        if (this.IsNeedRecalc() == false)
+    CAnnotationPolyLine.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
+        }
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-        
-        this.handleUpdatePosition();
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationPolyLine.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -120,8 +112,9 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         fillShapeByPoints([aPolygonPoints], aShapeRectInMM, this);
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationPolyLine.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -147,17 +140,20 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
+        let oXfrm = this.getXfrm();
+        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
+        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
+        oDoc.EndNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationPolyLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oPolyline = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -182,16 +178,19 @@
         oPolyline.SetAuthor(this.GetAuthor());
         oPolyline.SetModDate(this.GetModDate());
         oPolyline.SetCreationDate(this.GetCreationDate());
-        oPolyline.SetWidth(this.GetWidth());
         oPolyline.SetContents(this.GetContents());
-        oPolyline.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oPolyline.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oPolyline.SetStrokeColor(aStrokeColor.slice());
+        oPolyline.SetFillColor(aFillColor.slice());
+        oPolyline.SetWidth(this.GetWidth());
         oPolyline.SetLineStart(this.GetLineStart());
         oPolyline.SetLineEnd(this.GetLineEnd());
         oPolyline.SetOpacity(this.GetOpacity());
-        oPolyline.recalcInfo.recalculateGeometry = true;
-        oPolyline._vertices = this._vertices.slice();
+        oPolyline.SetVertices(this.GetVertices().slice());
         oPolyline.SetWasChanged(oPolyline.IsChanged());
+        oPolyline.recalcInfo.recalculateGeometry = true;
+        
+        oDoc.EndNoHistoryMode();
+
         return oPolyline;
     };
     CAnnotationPolyLine.prototype.onMouseDown = function(x, y, e) {
@@ -472,11 +471,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         let xMax = aShapeRect[2];
         let xMin = aShapeRect[0];
@@ -485,10 +480,11 @@
 
         let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
         oParentAnnot.spPr.setGeometry(geometry);
-        oParentAnnot.updatePosition(xMin, yMin);
 
-        oParentAnnot.x = xMin;
-        oParentAnnot.y = yMin;
+        let oXfrm = oParentAnnot.getXfrm();
+        oXfrm.offX = xMin;
+        oXfrm.offY = yMin;
+
         return oParentAnnot;
     }
 

@@ -7546,6 +7546,7 @@ ParaRun.prototype.Recalc_CompiledPr = function(RecalcMeasure)
 
     // Если мы в формуле, тогда ее надо пересчитывать
     this.private_RecalcCtrPrp();
+	this.OnTextPrChange();
 };
 ParaRun.prototype.RecalcMeasure = function()
 {
@@ -7860,6 +7861,8 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
 				this.Paragraph.TextPr.IncreaseDecreaseFontSize(IncFontSize);
 			}
 		}
+
+		this.OnTextPrChange();
     }
     else
     {
@@ -8023,6 +8026,7 @@ ParaRun.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
         Result.push( CRun );
         Result.push( RRun );
 
+		this.OnTextPrChange();
         return Result;
     }
 };
@@ -8334,8 +8338,6 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		if (para_End === this.Content[nPos].Type)
 			return this.Paragraph.TextPr.Apply_TextPr(TextPr);
 	}
-
-	this.OnTextPrChange();
 };
 ParaRun.prototype.ApplyPr = function(oTextPr)
 {

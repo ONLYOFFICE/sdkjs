@@ -57,12 +57,12 @@
 		this._useDisplayValue   = true;
 
         // internal
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 		this.content = new AscPDF.CTextBoxContent(this, oDoc);
-
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
+        oDoc.EndNoHistoryMode();
 
         this._scrollInfo = null;
         this._markRect = {};
@@ -204,6 +204,8 @@
         let oDoc        = this.GetDocument();
         let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
 
+        oDoc.StartNoHistoryMode();
+
         if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text) {
             let nCharLimit = this.GetCharLimit();
             if (nCharLimit !== 0)
@@ -235,6 +237,7 @@
             _t.content.MoveCursorToStartPos();
         }
 		
+        oDoc.EndNoHistoryMode();
 	};
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.GetDocument().GetCalculateInfo().ids.indexOf(this.GetApIdx());
@@ -297,6 +300,7 @@
 	};
 	CTextField.prototype.OnContentChange = function() {
 		this._useDisplayValue = false;
+        this.SetNeedRecalc(true);
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
@@ -959,8 +963,6 @@
 		if (0 === aChars.length)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects: [this]});
-		
 		if (!this.content.EnterText(aChars))
 			return false;
 		
@@ -990,8 +992,6 @@
 		
 		let doc = this.GetDocument();
 		newValue = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
-		
-		doc.CreateNewHistoryPoint({objects: [this]});
 		
 		if (!this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;}))
 			return false;
@@ -1093,24 +1093,24 @@
         let oDoc        = this.GetDocument();
         let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        oDoc.SetGlobalHistory();
+        oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
+            oDoc.EndNoHistoryMode();
             return;
         }
+        oDoc.EndNoHistoryMode();
         
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
-            
             this.SetApiValue(this.GetValue());
         }
 
-        TurnOffHistory();
-        
+        oDoc.StartNoHistoryMode();
+
         if (aFields.length == 1)
             this.SetNeedCommit(false);
 
@@ -1159,6 +1159,8 @@
 
         this.SetNeedCommit(false);
         this.needValidate = true;
+
+        oDoc.EndNoHistoryMode();
     };
 	CTextField.prototype.SetAlign = function(nAlignType) {
         this._alignment = nAlignType;
@@ -1322,8 +1324,6 @@
 			return false;
 		
 		let oDoc = this.GetDocument();
-		oDoc.CreateNewHistoryPoint({objects : [this]});
-		
 		this.UpdateSelectionByEvent();
 		
 		if (this.content.IsSelectionUse())
@@ -1332,9 +1332,7 @@
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
 
-        if (AscCommon.History.Is_LastPointEmpty())
-            AscCommon.History.Remove_LastPoint();
-        else {
+        if (false == AscCommon.History.Is_LastPointEmpty()) {
             this._bAutoShiftContentView = true && this.IsDoNotScroll() == false;
             this.SetNeedRecalc(true);
             this.SetNeedCommit(true);
@@ -1360,7 +1358,8 @@
     CTextField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -1677,11 +1676,6 @@
 		return element;
 	}
 	
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

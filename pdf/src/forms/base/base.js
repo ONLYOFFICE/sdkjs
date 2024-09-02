@@ -133,7 +133,7 @@
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
-        this._lineWidth     = undefined;  // In older versions of this specification, this property was borderWidth
+        this._lineWidth     = undefined;        // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
         this._name          = sName;         // partial field name
         this._page          = nPage;        // integer | array
@@ -162,7 +162,8 @@
 
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
-        
+        AscCommon.g_oTableId.Add(this, this._id);
+
         this._isWidget = aRect && aRect.length == 4 ? true : false;
 
         this.contentRect = {
@@ -205,9 +206,6 @@
             mouseDown:  null,
             rollover:   null
         }
-
-        editor.getDocumentRenderer().ImageMap = {};
-        editor.getDocumentRenderer().InitDocument = function() {return};
 
         this._partialName = sName;
         this.api = this.GetFormApi();
@@ -723,7 +721,7 @@
         let oActionsQueue   = oDoc.GetActionsQueue();
         let oTrigger        = this.GetTrigger(nType);
         
-        if (oTrigger && oTrigger.Actions.length > 0) {
+        if (oTrigger && oTrigger.Actions.length > 0 && false == AscCommon.History.UndoRedoInProgress) {
             oActionsQueue.AddActions(oTrigger.Actions);
             oActionsQueue.Start();
         }
@@ -822,7 +820,7 @@
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
         
-        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
+        let nLineWidth = this.GetBorderWidth() != undefined ? this.GetBorderWidth() : 1;
 
         if (nLineWidth == 0) {
             return;
@@ -1263,6 +1261,7 @@
     CBaseField.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
     };
+    CBaseField.prototype.Refresh_RecalcData = function(){};
     CBaseField.prototype.SetWasChanged = function(isChanged) {
         let oViewer = editor.getDocumentRenderer();
 
@@ -1405,7 +1404,10 @@
         return false;
     };
     CBaseField.prototype.SetDisplay = function(nType) {
+        AscCommon.History.Add(new CChangesPDFFormDisplay(this, this._display, nType));
+
         this._display = nType;
+
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
@@ -1439,7 +1441,6 @@
         let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             this.SetValue(defValue);
-            this.SetApiValue(defValue);
             this.SetWasChanged(true);
             this.SetNeedRecalc(true);
         }
@@ -1992,6 +1993,9 @@
     // common triggers
     CBaseField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+
+        let oDoc = this.GetDocument();
+        
     };
     CBaseField.prototype.onMouseExit = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);

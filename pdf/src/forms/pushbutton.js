@@ -83,10 +83,10 @@
         this._pressed = false;
         this._hovered = false;
 
-        // internal
-        TurnOffHistory();
-		this.content = new AscPDF.CTextBoxContent(this, oDoc);
+        oDoc.StartNoHistoryMode();
+        this.content = new AscPDF.CTextBoxContent(this, oDoc);
 		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
+        oDoc.EndNoHistoryMode();
 
         this._imgData           = {
             normal:     null,
@@ -129,37 +129,37 @@
             return;
         }
 
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
-        aFields.forEach(function(field) {
-            if (field.GetHeaderPosition() == position["textOnly"])
-                return;
-
-            field.SetWasChanged(true);
-            field.DoInitialRecalc();
-            field.SetNeedRecalc(true);
-            field.SetImageData(oImgData, nAPType);
-
-            let sTargetSrc;
-            if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
-                sTargetSrc = oImgData.src;
-            }
-
-            field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
-        });
-        
-        if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
+        oDoc.DoAction(function() {
             aFields.forEach(function(field) {
                 if (field.GetHeaderPosition() == position["textOnly"])
                     return;
-
+    
+                field.SetWasChanged(true);
+                field.DoInitialRecalc();
                 field.SetNeedRecalc(true);
+                field.SetImageData(oImgData, nAPType);
+    
+                let sTargetSrc;
+                if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
+                    sTargetSrc = oImgData.src;
+                }
+    
+                field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
             });
             
-            let oDoc            = this.GetDocument();
-            let oActionsQueue   = oDoc.GetActionsQueue();
-            oActionsQueue.Continue();   
-        }
+            if (oViewer.IsOpenFormsInProgress == false) {
+                aFields.forEach(function(field) {
+                    if (field.GetHeaderPosition() == position["textOnly"])
+                        return;
+    
+                    field.SetNeedRecalc(true);
+                });
+                
+                let oDoc            = this.GetDocument();
+                let oActionsQueue   = oDoc.GetActionsQueue();
+                oActionsQueue.Continue();   
+            }
+        }, AscDFH.historydescription_Pdf_FieldImportImage, this);
     };
     CPushButtonField.prototype.IsImageChanged = function(nAPType) {
         switch (nAPType) {
@@ -207,6 +207,8 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SetImage = function(oImgData) {
+        let oDoc = this.GetDocument();
+
         if (!oImgData) {
             return;
         }
@@ -215,6 +217,7 @@
             return;
         }
 
+        oDoc.StartNoHistoryMode();
         this.RemoveImage();
         
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
@@ -366,6 +369,8 @@
         
         let oIconPos = this.GetIconPosition();
         this.SetIconPosition(oIconPos.X, oIconPos.Y);
+
+        oDoc.EndNoHistoryMode();
     };
     CPushButtonField.prototype.RemoveImage = function() {
         let oExistDrawing = this.GetDrawing();
@@ -711,9 +716,7 @@
         }
 
         if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.History.TurnOn();
             oDoc.History.Add(new CChangesPDFPushbuttonImage(this, [oPrevImgData, nAPType], [oImgData, nAPType]));
-            oDoc.TurnOffHistory();
         }
     };
     CPushButtonField.prototype.DrawPressed = function() {
@@ -1765,7 +1768,8 @@
     CPushButtonField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -1801,6 +1805,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
     /**
      * Applies value of this field to all field with the same name.
@@ -1808,10 +1814,11 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Commit = function() {
+        let oDoc = this.GetDocument();
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
@@ -1834,6 +1841,8 @@
 
             aFields[i].SetNeedRecalc(true);
         }
+
+        oDoc.EndNoHistoryMode();
     };
 
     CPushButtonField.prototype.Reset = function() {
@@ -1967,11 +1976,6 @@
             g: grayG,
             b: grayB
         };
-    }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
     }
 
     if (!window["AscPDF"])

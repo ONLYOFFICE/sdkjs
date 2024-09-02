@@ -88,11 +88,9 @@
         this._width         = undefined;
         this._fillColor     = [1, 0.82, 0];
 
-        // internal
-        TurnOffHistory();
         this._replies = [];
     }
-    CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
+    AscFormat.InitClass(CAnnotationText, AscPDF.CAnnotationBase, AscDFH.historyitem_type_Pdf_Annot_Text);
 	CAnnotationText.prototype.constructor = CAnnotationText;
     
     CAnnotationText.prototype.SetState = function(nType) {
@@ -195,7 +193,7 @@
     };
     CAnnotationText.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -218,12 +216,14 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oNewAnnot.SetFillColor(aFillColor.slice());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
         oNewAnnot.SetCreationDate(this.GetCreationDate());
         oNewAnnot.SetContents(this.GetContents());
+
+        oDoc.EndNoHistoryMode();
 
         return oNewAnnot;
     };
@@ -329,9 +329,6 @@
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
-    CAnnotationText.prototype.getObjectType = function() {
-        return -1;
-    };
     
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -371,12 +368,7 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-    // CAnnotationText.prototype.ClearCache = function() {};
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     window["AscPDF"].CAnnotationText            = CAnnotationText;
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
     window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;

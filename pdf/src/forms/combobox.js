@@ -295,9 +295,6 @@
         if (this.GetCurIdxs() == nIdx)
             return;
 
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
         let oPara = this.content.GetElement(0);
         let oRun = oPara.GetElement(0);
 
@@ -380,7 +377,8 @@
     CComboBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -402,6 +400,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
 		if (!this.DoKeystrokeAction(aChars))
@@ -413,7 +413,6 @@
 			return false;
 		
 		this.UpdateSelectionByEvent();
-		doc.CreateNewHistoryPoint({objects : [this]});
 		
 		this.content.EnterText(aChars);
 		
@@ -431,8 +430,6 @@
 		if (!newValue.length && !oldValue.length)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects : [this]});
-		
 		let result = this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
 		
 		this.SetNeedRecalc(true);
@@ -449,23 +446,24 @@
         let oDoc        = this.GetDocument();
         let aFields     = oDoc.GetAllWidgets(this.GetFullName());
 
-        oDoc.SetGlobalHistory();
+        oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
+            oDoc.EndNoHistoryMode();
             return;
         }
-
+        oDoc.EndNoHistoryMode();
+        
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
@@ -510,6 +508,8 @@
 
         this.SetNeedCommit(false);
         this.needValidate = true;
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
@@ -744,12 +744,6 @@
 	CComboBoxField.prototype.IsDoNotScroll = function() {
 		return true;
 	};
-	
-	
-	function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 	
 	if (!window["AscPDF"])
 		window["AscPDF"] = {};

@@ -5548,6 +5548,14 @@ PasteProcessor.prototype =
 
 			let paste_callback = function () {
 				if (false === oThis.bNested) {
+					for (let i = 0; i < aContents.length; i++) {
+						let oPDFSelContent = new AscPDF.PDFSelectedContent();
+						oPDFSelContent.Drawings = aContents[i].Drawings;
+						oPDFSelContent.DocContent = aContents[i].DocContent;
+						
+						aContents[i] = oPDFSelContent;
+					}
+
 					let bPaste = oDoc.InsertContent2(aContents, nIndex);
 
 					if (specialOptionsArr.length >= 1 && bPaste) {
@@ -5615,87 +5623,85 @@ PasteProcessor.prototype =
 	},
 
 	_readPDFSelectedContent: function (stream, bDuplicate) {
-		return AscFormat.ExecuteNoHistory(function () {
-			let oPDFSelContent	= null;
-			let fonts		= [];
-			let arr_Images	= [];
-			let oThis		= this;
-			let oFontMap	= {};
+		let oPDFSelContent	= null;
+		let fonts		= [];
+		let arr_Images	= [];
+		let oThis		= this;
+		let oFontMap	= {};
 
-			let readContent = function () {
-				let docContent = oThis.ReadPresentationText(stream);
-				if (docContent.length === 0) {
-					return;
+		let readContent = function () {
+			let docContent = oThis.ReadPresentationText(stream);
+			if (docContent.length === 0) {
+				return;
+			}
+			oPDFSelContent.DocContent = new AscCommonWord.CSelectedContent();
+			oPDFSelContent.DocContent.Elements = docContent;
+
+			//перебираем шрифты
+			for (let i in oThis.oFonts) {
+				oFontMap[i] = 1;
+			}
+
+			bIsEmptyContent = false;
+		};
+
+		let readDrawings = function () {
+
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOff();
+			}
+			// шейпы из презентаций, поэтому чтение то же самое
+			let objects = oThis.ReadPresentationShapes(stream);
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				History.TurnOn();
+			}
+
+			oPDFSelContent.Drawings = objects.arrShapes;
+
+			let arr_shapes = objects.arrShapes;
+			for (let i = 0; i < arr_shapes.length; ++i) {
+				if (arr_shapes[i].Drawing.getAllFonts) {
+					arr_shapes[i].Drawing.getAllFonts(oFontMap);
 				}
-				oPDFSelContent.DocContent = new AscCommonWord.CSelectedContent();
-				oPDFSelContent.DocContent.Elements = docContent;
+			}
+			arr_Images = arr_Images.concat(objects.arrImages);
+		};
 
-				//перебираем шрифты
-				for (let i in oThis.oFonts) {
-					oFontMap[i] = 1;
+		var bIsEmptyContent = true;
+		var first_content = stream.GetString2();
+		if (first_content === "SelectedContent") {
+			var countContent = stream.GetULong();
+			for (var i = 0; i < countContent; i++) {
+				if (null === oPDFSelContent) {
+					oPDFSelContent = window["AscPDF"] && window["AscPDF"].PDFSelectedContent ? new window["AscPDF"].PDFSelectedContent() : {};
+				}
+				var first_string = stream.GetString2();
+				if ("DocContent" !== first_string) {
+					bIsEmptyContent = false;
 				}
 
-				bIsEmptyContent = false;
-			};
-
-			let readDrawings = function () {
-
-				if (PasteElementsId.g_bIsDocumentCopyPaste) {
-					History.TurnOff();
-				}
-				// шейпы из презентаций, поэтому чтение то же самое
-				let objects = oThis.ReadPresentationShapes(stream);
-				if (PasteElementsId.g_bIsDocumentCopyPaste) {
-					History.TurnOn();
-				}
-
-				oPDFSelContent.Drawings = objects.arrShapes;
-
-				let arr_shapes = objects.arrShapes;
-				for (let i = 0; i < arr_shapes.length; ++i) {
-					if (arr_shapes[i].Drawing.getAllFonts) {
-						arr_shapes[i].Drawing.getAllFonts(oFontMap);
+				switch (first_string) {
+					case "DocContent": {
+						readContent();
+						break;
 					}
-				}
-				arr_Images = arr_Images.concat(objects.arrImages);
-			};
-
-			var bIsEmptyContent = true;
-			var first_content = stream.GetString2();
-			if (first_content === "SelectedContent") {
-				var countContent = stream.GetULong();
-				for (var i = 0; i < countContent; i++) {
-					if (null === oPDFSelContent) {
-						oPDFSelContent = window["AscPDF"] && window["AscPDF"].PDFSelectedContent ? new window["AscPDF"].PDFSelectedContent() : {};
-					}
-					var first_string = stream.GetString2();
-					if ("DocContent" !== first_string) {
-						bIsEmptyContent = false;
-					}
-
-					switch (first_string) {
-						case "DocContent": {
-							readContent();
-							break;
-						}
-						case "Drawings": {
-							readDrawings();
-							break;
-						}
+					case "Drawings": {
+						readDrawings();
+						break;
 					}
 				}
 			}
+		}
 
-			if (bIsEmptyContent) {
-				oPDFSelContent = null;
-			}
+		if (bIsEmptyContent) {
+			oPDFSelContent = null;
+		}
 
-			for (var key in oFontMap) {
-				fonts.push(new CFont(key));
-			}
+		for (var key in oFontMap) {
+			fonts.push(new CFont(key));
+		}
 
-			return {content: oPDFSelContent, fonts: fonts, images: arr_Images};
-		}, this, []);
+		return {content: oPDFSelContent, fonts: fonts, images: arr_Images};
 	},
 
 	//from PRESENTATION to PRESENTATION

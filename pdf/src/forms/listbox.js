@@ -144,7 +144,8 @@
     CListBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -166,6 +167,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
     /**
 	 * Applies value of this field to all field with the same name.
@@ -181,7 +184,6 @@
         let aCurIdxs    = this.GetCurIdxs();
 
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
 
@@ -197,7 +199,7 @@
             this.SetApiCurIdxs(aCurIdxs);
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         aFields.forEach(function(field) {
             field.SetWasChanged(true);
@@ -226,6 +228,8 @@
                 field._originShiftView.y = oThis._originShiftView.y;
             }
         });
+
+        oDoc.EndNoHistoryMode();
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
@@ -937,11 +941,6 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 
     function getPdfAlignType(nPdfAlign) {
         switch (nPdfAlign) {

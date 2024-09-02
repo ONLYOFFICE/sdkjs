@@ -524,6 +524,11 @@
         this.fillObject(copy, oPr);
         return copy;
     };
+    CConnectionShape.prototype.convertToPdf = function(oPr) {
+        let copy = new AscPDF.CPdfConnectionShape();
+        this.fillObject(copy, oPr);
+        return copy;
+    };
 
     CConnectionShape.prototype.resetShape = function (oShape) {
 		if (!this.nvSpPr)

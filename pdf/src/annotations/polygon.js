@@ -59,12 +59,9 @@
         this._width         = undefined;
         this._vertices      = undefined;
         this._intent        = undefined;
-
-        // internal
-        TurnOffHistory();
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
-    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationPolygon, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Polygon);
     Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
@@ -80,23 +77,18 @@
         return this._vertices;
     };
 
-    CAnnotationPolygon.prototype.Recalculate = function() {
-        if (this.IsNeedRecalc() == false)
+    CAnnotationPolygon.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
             return;
+        }
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-        
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
-        this.handleUpdatePosition();
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.SetNeedRecalc(false);
     };
     CAnnotationPolygon.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -118,7 +110,7 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let geometry;
         if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
@@ -130,6 +122,8 @@
 
         if (this.spPr.geometry == null)
             this.spPr.setGeometry(geometry);
+
+        oDoc.EndNoHistoryMode();
     };
     CAnnotationPolygon.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -155,17 +149,20 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
+        let oXfrm = this.getXfrm();
+        oXfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        oXfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        oXfrm.setExtX((aRect[2] - aRect[0]) * g_dKoef_pix_to_mm);
+        oXfrm.setExtY((aRect[3] - aRect[1]) * g_dKoef_pix_to_mm);
+        oDoc.EndNoHistoryMode();
 
-        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
-        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
     CAnnotationPolygon.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
@@ -190,15 +187,17 @@
         oPolygon.SetAuthor(this.GetAuthor());
         oPolygon.SetModDate(this.GetModDate());
         oPolygon.SetCreationDate(this.GetCreationDate());
-        oPolygon.SetWidth(this.GetWidth());
         oPolygon.SetContents(this.GetContents());
-        oPolygon.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oPolygon.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oPolygon.SetStrokeColor(aStrokeColor.slice());
+        oPolygon.SetFillColor(aFillColor.slice());
+        oPolygon.SetWidth(this.GetWidth());
         oPolygon.SetOpacity(this.GetOpacity());
-        oPolygon.recalcInfo.recalculateGeometry = true;
-        oPolygon._vertices = this._vertices.slice();
+        oPolygon.SetVertices(this.GetVertices().slice());
         oPolygon.SetWasChanged(oPolygon.IsChanged());
+        oPolygon.recalcInfo.recalculateGeometry = true;
         oPolygon.recalculate();
+
+        oDoc.EndNoHistoryMode();
 
         return oPolygon;
     };
@@ -241,11 +240,11 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
-        oDoc.TurnOffHistory();
-
+        oDoc.StartNoHistoryMode();
         this._internalGeomForEdit = generateGeometry(aPolygonPoints, aShapeRectInMM, this._internalGeomForEdit);
         this._internalGeomForEdit.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
-        
+        oDoc.EndNoHistoryMode();
+
         return this._internalGeomForEdit;
     };
     CAnnotationPolygon.prototype.IsPolygon = function() {
@@ -368,12 +367,7 @@
         geometry.rectS = null;
         return geometry;
     }
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-
+    
     window["AscPDF"].CAnnotationPolygon = CAnnotationPolygon;
 })();
 

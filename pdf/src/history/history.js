@@ -59,16 +59,17 @@
 			this.Points[this.Index].Additional.Pdf = aObj;
 		}
 	};
-	History.prototype.GetPdfConvertTextPoint = function() {
-		if (this.Index !== -1) {
-			return !!this.Points[this.Index].Additional.PdfConvertText;
-		}
-	};
-	History.prototype.SetPdfConvertTextPoint = function(oConvertInfo) {
-		if (this.Index !== -1) {
-			this.Points[this.Index].Additional.PdfConvertText = oConvertInfo;
-		}
-	};
+    History.prototype.CanAddChanges = function() {
+        return !this.UndoRedoInProgress && AscCommon.CHistory.prototype.CanAddChanges.call(this);
+    };
+    History.prototype.StartNoHistoryMode = function() {
+        if (this.IsOn() == true)
+            this.TurnOff();
+    };
+    History.prototype.EndNoHistoryMode = function() {
+        if (this.IsOn() == false)
+            this.TurnOn();
+    };
 	History.prototype.Add = function(_Class, Data) {
 		if (!this.CanAddChanges())
 			return;
@@ -103,6 +104,11 @@
 
         var Point1 = this.Points[this.Points.length - 2];
         var Point2 = this.Points[this.Points.length - 1];
+
+        // запрет на объединение
+        if (Point1.forbitUnion || Point2.forbitUnion) {
+            return false;
+        }
 
         // Не объединяем слова больше 63 элементов
         if (Point1.Items.length > 63 && AscDFH.historydescription_Document_AddLetterUnion === Point1.Description)

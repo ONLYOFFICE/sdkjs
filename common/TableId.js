@@ -51,14 +51,14 @@
 	{
 		return this.isInit;
 	};
-	CTableId.prototype.init = function()
+	CTableId.prototype.init = function(editor)
 	{
 		this.m_aPairs        = {};
 		this.m_bTurnOff      = false;
 		this.m_oFactoryClass = {};
 		this.Id              = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
-		this.private_InitFactoryClass();
+		this.private_InitFactoryClass(editor);
 		this.isInit = true;
 	};
 	CTableId.prototype.Add = function(Class, Id)
@@ -145,7 +145,7 @@
 			delete this.m_aPairs[sId];
 		}
 	};
-	CTableId.prototype.private_InitFactoryClass = function()
+	CTableId.prototype.private_InitFactoryClass = function(editor)
 	{
 		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscWord.Paragraph;
 		this.m_oFactoryClass[AscDFH.historyitem_type_TextPr]                 = AscCommonWord.ParaTextPr;
@@ -476,6 +476,20 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrScale]          = AscFormat.CViewPrScale;
 			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrGuide]          = AscFormat.CViewPrGuide;
 
+		}
+
+		if (editor && editor.isPdfEditor())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

@@ -9233,6 +9233,10 @@ function Binary_pPrReader(doc, oReadResult, stream)
         {
             Border.Value = this.stream.GetUChar();
         }
+		else if ( c_oSerBorderType.ValueType === type )
+		{
+			Border.setValue(this.stream.GetULongLE());
+		}
 		else if( c_oSerBorderType.ColorTheme === type )
         {
 			var themeColor = {Auto: null, Color: null, Tint: null, Shade: null};

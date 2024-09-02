@@ -308,7 +308,7 @@ function CEditorPage(api)
 		if (!element)
 			return;
 
-		var pos = element.getBoundingClientRect();
+		var pos = AscCommon.UI.getBoundingClientRect(element);
 		if (pos)
 		{
 			if (undefined !== pos.x)

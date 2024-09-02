@@ -26694,6 +26694,94 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.ok(difBetween(oParser.calculate().getValue(), 0.0024114950175866895));
 
+		ws.getRange2("A200").setValue("-10000");
+		ws.getRange2("A201").setValue("2750");
+		ws.getRange2("A202").setValue("4250");
+		ws.getRange2("A203").setValue("3250");
+		ws.getRange2("A204").setValue("2750");
+		ws.getRange2("B200").setValue("1111");
+		ws.getRange2("B201").setValue("1113");
+		ws.getRange2("B202").setValue("1213");
+		ws.getRange2("B203").setValue("1313");
+		ws.getRange2("B204").setValue("1399");
+
+		ws.getRange2("A100:A104").setValue("");
+		ws.getRange2("B100:B104").setValue("");
+
+		oParser = new parserFormula("XIRR(A100:A104,B100:B104)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(A100:A104,B100:B104)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of XIRR(A100:A104,B100:B104) - empty cellRanges check");
+
+		oParser = new parserFormula("XIRR(A100:A104,B200:B204)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(A100:A104,B200:B204)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of XIRR(A100:A104,B200:B204) - first argument is empty cellRange");
+
+		oParser = new parserFormula("XIRR(A200:A204,B100:B104)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(A200:A204,B100:B104)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of XIRR(A200:A204,B100:B104) - second argument is empty cellRange");
+
+		oParser = new parserFormula("XIRR(A200:A204,B200:B204)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(A200:A204,B200:B204)");
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.03", "Result of XIRR(A200:A204,B200:B204)");
+
+		oParser = new parserFormula("XIRR(,)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(,)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(,)");
+
+		oParser = new parserFormula("XIRR(12,)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(12,)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(12,)");
+
+		oParser = new parserFormula("XIRR(,12)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(,12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(,12)");
+
+		oParser = new parserFormula("XIRR(,,)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(,,)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(,,)");
+
+		oParser = new parserFormula("XIRR(12,,)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(12,,)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(12,,)");
+
+		oParser = new parserFormula("XIRR(,,12)", "A2", ws);
+		assert.ok(oParser.parse(), "XIRR(,,12)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of XIRR(,,12)");
+
+		oParser = new parserFormula('XIRR("str",12)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR("str",12)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of XIRR("str",12)');
+
+		oParser = new parserFormula('XIRR(12,"str")', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(12,"str")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of XIRR(12,"str")');
+
+		oParser = new parserFormula('XIRR(#DIV/0!,)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(#DIV/0!,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of XIRR(#DIV/0!,)');
+
+		oParser = new parserFormula('XIRR(A200:A204,#DIV/0!)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(A200:A204,#DIV/0!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of XIRR(A200:A204,#DIV/0!)');
+
+		oParser = new parserFormula('XIRR(A200:A204,A200:A204,#DIV/0!)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(A200:A204,A200:A204,#DIV/0!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of XIRR(A200:A204,A200:A204,#DIV/0!)');
+
+		let wsName = ws.getName();
+		oParser = new parserFormula('XIRR('+ wsName + '!A200:A204,'+ wsName + '!B200:B204)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(SheetName!A200:A204,SheetName!B200:B204)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.03", 'Result of XIRR(SheetName!A200:A204,SheetName!B200:B204)');
+
+		oParser = new parserFormula('XIRR(A200:A204,'+ wsName + '!B200:B204)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(A200:A204,SheetName!B200:B204)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.03", 'Result of XIRR(A200:A204,SheetName!B200:B204)');
+
+		oParser = new parserFormula('XIRR('+ wsName + '!A200:A204,B200:B204)', "A2", ws);
+		assert.ok(oParser.parse(), 'XIRR(SheetName!A200:A204,B200:B204)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "1.03", 'Result of XIRR(SheetName!A200:A204,B200:B204)');
+
+		ws.getRange2("A200:B204").cleanAll();
 	});
 
 	QUnit.test("Test: \"VDB\"", function (assert) {

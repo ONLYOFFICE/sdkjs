@@ -153,6 +153,7 @@
                 oTable.graphicObject.Set_Props(props);
                 oTable.graphicObject.RemoveSelection();
             }
+            oTable.SetNeedRecalc(true);
             props.TableCaption = sCaption;
             props.TableDescription = sDescription;
             props.RowHeight = dRowHeight;
@@ -955,7 +956,7 @@
         if (this.selection.groupSelection) {
             let oGroup = this.selection.groupSelection;
             if (oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.IsFreeText() && oGroup.selection.textSelection) {
-                return oGroup;
+                return [oGroup];
             }
 
             return this.selection.groupSelection.selectedObjects;
