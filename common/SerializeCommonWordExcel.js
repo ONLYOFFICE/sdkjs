@@ -243,7 +243,7 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
 		
 		this.memory.WriteByte(c_oSerBorderType.ValueType);
 		this.memory.WriteByte(c_oSerPropLenType.Long);
-		this.memory.WriteByte(border.getValue());
+		this.memory.WriteLong(border.getValue());
     }
 };
 BinaryCommonWriter.prototype.WriteBorders = function(Borders)
