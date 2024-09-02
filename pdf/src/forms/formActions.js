@@ -297,7 +297,7 @@
             let oPos = oTr.TransformPoint(xOffset, yOffset);
 
             oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            oViewer.navigateToPage(this.page, oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
+            oViewer.scrollToXY(oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
             oViewer.disabledPaintOnScroll = false;
             oViewer.needRedraw = true; // в конце Actions выполним отрисовку
         }

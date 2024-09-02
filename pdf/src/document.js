@@ -842,7 +842,7 @@ var CPresentation = CPresentation || function(){};
         let oTr = this.pagesTransform[nPage].invert;
         let oPos = oTr.TransformPoint(xOffset, yOffset);
 
-        this.Viewer.navigateToPage(nPage, this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
+        this.Viewer.scrollToXY(this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
     };
     CPDFDoc.prototype.CommitField = function(oField) {
         return this.DoAction(function() {
@@ -2973,7 +2973,7 @@ var CPresentation = CPresentation || function(){};
 
         if (yOffset != undefined && xOffset != undefined || this.Viewer.currentPage != nPage) {
             this.Viewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            this.Viewer.navigateToPage(nPage, this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
+            this.Viewer.scrollToXY(this.Viewer.scrollY + oPos.y, this.Viewer.scrollX + oPos.x);
             this.Viewer.disabledPaintOnScroll = false;
             this.Viewer.paint();
         }
