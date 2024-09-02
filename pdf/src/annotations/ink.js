@@ -355,8 +355,8 @@
         oNewInk.SetAuthor(this.GetAuthor());
         oNewInk.SetModDate(this.GetModDate());
         oNewInk.SetCreationDate(this.GetCreationDate());
+        oNewInk.SetStrokeColor(aStrokeColor.slice());
         oNewInk.SetWidth(this.GetWidth());
-        oNewInk.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
         oNewInk.SetOpacity(this.GetOpacity());
         oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();

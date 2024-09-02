@@ -221,15 +221,15 @@
         oLine.SetAuthor(this.GetAuthor());
         oLine.SetModDate(this.GetModDate());
         oLine.SetCreationDate(this.GetCreationDate());
-        oLine.SetWidth(this.GetWidth());
         oLine.SetStrokeColor(this.GetStrokeColor().slice());
+        oLine.SetWidth(this.GetWidth());
         oLine.SetLineStart(this.GetLineStart());
         oLine.SetLineEnd(this.GetLineEnd());
         oLine.SetContents(this.GetContents());
-        oLine.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oLine.SetFillColor(aFillColor.slice());
         oLine.SetOpacity(this.GetOpacity());
+        oLine.SetLinePoints(this.GetLinePoints().slice());
         oLine.recalcInfo.recalculateGeometry = true;
-        oLine._points = this._points.slice();
         oLine.recalculate();
 
         oDoc.EndNoHistoryMode();

@@ -67,7 +67,7 @@
         this._origRect              = [];
         this._refType               = undefined;
         this._seqNum                = undefined;
-        this._strokeColor           = undefined;
+        this._strokeColor           = [];
         this._style                 = undefined;
         this._subject               = undefined;
         this._toggleNoView          = undefined;
@@ -75,7 +75,7 @@
         this._display               = undefined;
         this._noRotate              = undefined;
         this._noZoom                = undefined;
-        this._fillColor             = undefined;
+        this._fillColor             = [];
         this._dash                  = undefined;
         this._rectDiff              = undefined;
         this._popupIdx              = undefined;
@@ -168,9 +168,18 @@
         this._width = nWidthPt;
 
         if (this.IsShapeBased()) {
-            nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
             let oLine = this.spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+
+            if (nWidthPt == 0) {
+                oLine.setFill(AscFormat.CreateNoFillUniFill());
+            }
+            else {
+                AscCommon.History.StartNoHistoryMode();
+                this.SetStrokeColor(this.GetStrokeColor());
+                AscCommon.History.EndNoHistoryMode();
+            }
+
             this.handleUpdateLn();
         }
     };
@@ -293,23 +302,23 @@
             AscPDF.endMultiplyMode(oGraphicsPDF.GetContext());
         }
 
-        oGraphicsPDF.SetLineWidth(1);
-        let aOringRect  = this.GetOrigRect();
-        let X       = aOringRect[0];
-        let Y       = aOringRect[1];
-        let nWidth  = aOringRect[2] - aOringRect[0];
-        let nHeight = aOringRect[3] - aOringRect[1];
+        // oGraphicsPDF.SetLineWidth(1);
+        // let aOringRect  = this.GetOrigRect();
+        // let X       = aOringRect[0];
+        // let Y       = aOringRect[1];
+        // let nWidth  = aOringRect[2] - aOringRect[0];
+        // let nHeight = aOringRect[3] - aOringRect[1];
 
-        Y += 1 / 2;
-        X += 1 / 2;
-        nWidth  -= 1;
-        nHeight -= 1;
+        // Y += 1 / 2;
+        // X += 1 / 2;
+        // nWidth  -= 1;
+        // nHeight -= 1;
 
-        oGraphicsPDF.SetStrokeStyle(0, 255, 255);
-        oGraphicsPDF.SetLineDash([]);
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
-        oGraphicsPDF.Stroke();
+        // oGraphicsPDF.SetStrokeStyle(0, 255, 255);
+        // oGraphicsPDF.SetLineDash([]);
+        // oGraphicsPDF.BeginPath();
+        // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
         this._subject = sSubject;
@@ -757,11 +766,11 @@
         nWidth  -= 1;
         nHeight -= 1;
 
-        oGraphicsPDF.SetStrokeStyle(0, 255, 255);
-        oGraphicsPDF.SetLineDash([]);
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
-        oGraphicsPDF.Stroke();
+        // oGraphicsPDF.SetStrokeStyle(0, 255, 255);
+        // oGraphicsPDF.SetLineDash([]);
+        // oGraphicsPDF.BeginPath();
+        // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+        // oGraphicsPDF.Stroke();
     };
     CAnnotationBase.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();

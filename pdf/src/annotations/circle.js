@@ -53,9 +53,10 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
+        this._rectDiff      = [0, 0, 0, 0];
     }
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
-    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_FreeText);
+    AscFormat.InitClass(CAnnotationCircle, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Circle);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationCircle.prototype.IsCircle = function() {
@@ -90,12 +91,12 @@
         oCircle.SetAuthor(this.GetAuthor());
         oCircle.SetModDate(this.GetModDate());
         oCircle.SetCreationDate(this.GetCreationDate());
+        oCircle.SetStrokeColor(aStrokeColor.slice());
+        oCircle.SetFillColor(aFillColor.slice());
         oCircle.SetWidth(this.GetWidth());
-        oCircle.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oCircle.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oCircle.SetOpacity(this.GetOpacity());
         oCircle.recalcGeometry()
-        this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice(), true);
+        oCircle.SetRectangleDiff(this.GetRectangleDiff().slice(), true);
         oCircle.SetDash(this.GetDash());
         oCircle.Recalculate(true);
 

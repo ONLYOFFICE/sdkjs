@@ -216,7 +216,7 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oNewAnnot.SetFillColor(aFillColor.slice());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());

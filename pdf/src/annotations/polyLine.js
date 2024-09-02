@@ -178,17 +178,17 @@
         oPolyline.SetAuthor(this.GetAuthor());
         oPolyline.SetModDate(this.GetModDate());
         oPolyline.SetCreationDate(this.GetCreationDate());
-        oPolyline.SetWidth(this.GetWidth());
         oPolyline.SetContents(this.GetContents());
-        oPolyline.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oPolyline.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oPolyline.SetStrokeColor(aStrokeColor.slice());
+        oPolyline.SetFillColor(aFillColor.slice());
+        oPolyline.SetWidth(this.GetWidth());
         oPolyline.SetLineStart(this.GetLineStart());
         oPolyline.SetLineEnd(this.GetLineEnd());
         oPolyline.SetOpacity(this.GetOpacity());
-        oPolyline.recalcInfo.recalculateGeometry = true;
-        oPolyline._vertices = this._vertices.slice();
+        oPolyline.SetVertices(this.GetVertices().slice());
         oPolyline.SetWasChanged(oPolyline.IsChanged());
-
+        oPolyline.recalcInfo.recalculateGeometry = true;
+        
         oDoc.EndNoHistoryMode();
 
         return oPolyline;

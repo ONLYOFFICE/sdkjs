@@ -52,7 +52,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._rectDiff      = undefined;
+        this._rectDiff      = [0, 0, 0, 0];
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
     AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Square);
@@ -87,12 +87,12 @@
         oSquare.SetAuthor(this.GetAuthor());
         oSquare.SetModDate(this.GetModDate());
         oSquare.SetCreationDate(this.GetCreationDate());
+        oSquare.SetStrokeColor(aStrokeColor.slice());
+        oSquare.SetFillColor(aFillColor.slice());
         oSquare.SetWidth(this.GetWidth());
-        oSquare.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oSquare.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oSquare.SetOpacity(this.GetOpacity());
         oSquare.recalcGeometry()
-        this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice(), true);
+        oSquare.SetRectangleDiff(this.GetRectangleDiff().slice(), true);
         oSquare.Recalculate(true);
 
         oDoc.EndNoHistoryMode();

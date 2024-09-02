@@ -187,14 +187,14 @@
         oPolygon.SetAuthor(this.GetAuthor());
         oPolygon.SetModDate(this.GetModDate());
         oPolygon.SetCreationDate(this.GetCreationDate());
-        oPolygon.SetWidth(this.GetWidth());
         oPolygon.SetContents(this.GetContents());
-        oPolygon.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oPolygon.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
+        oPolygon.SetStrokeColor(aStrokeColor.slice());
+        oPolygon.SetFillColor(aFillColor.slice());
+        oPolygon.SetWidth(this.GetWidth());
         oPolygon.SetOpacity(this.GetOpacity());
-        oPolygon.recalcInfo.recalculateGeometry = true;
-        oPolygon._vertices = this._vertices.slice();
+        oPolygon.SetVertices(this.GetVertices().slice());
         oPolygon.SetWasChanged(oPolygon.IsChanged());
+        oPolygon.recalcInfo.recalculateGeometry = true;
         oPolygon.recalculate();
 
         oDoc.EndNoHistoryMode();
