@@ -2575,13 +2575,11 @@ var CPresentation = CPresentation || function(){};
         if (checkEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
             AscCommon.History.Remove_LastPoint();
         }
-
-        AscCommon.History.Reset_RecalcIndex();
-        
-        if (true /* тут проверяем локи */) {
-            AscCommon.History.Get_RecalcData();
-        }
-        else {
+		
+		AscCommon.History.Get_RecalcData();
+		AscCommon.History.Reset_RecalcIndex();
+		
+        if (false /* тут проверяем локи */) {
             AscCommon.History.Undo();
             AscCommon.History.Clear_Redo();
         }
