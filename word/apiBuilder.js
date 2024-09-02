@@ -2902,17 +2902,38 @@
 		if (typeof(sAuthor) !== "string")
 			sAuthor = "";
 		
+		private_RefreshRangesPosition();
+		private_RemoveEmptyRanges();
+
 		let CommentData = private_CreateCommentData({
 			text: sText,
 			author: sAuthor,
 			userId: sUserId
 		});
 
-		var documentState = oDocument.SaveDocumentState();
-		this.Select();
+		let oldDocumentState = oDocument.SaveDocumentState();
+		
+		this.Select(false);
+		if (this.isEmpty || this.isEmpty === undefined)
+		{
+			oDocument.LoadDocumentState(oldDocumentState);
+			return null;
+		}
+
+		private_TrackRangesPositions();
+
+		let SelectedContent = oDocument.GetSelectedElementsInfo({CheckAllSelection : true});
+		if (!SelectedContent.CanEditBlockSdts() || !SelectedContent.CanDeleteInlineSdts())
+		{
+			oDocument.LoadDocumentState(oldDocumentState);
+			oDocument.UpdateSelection();
+
+			return null;
+		}
 
 		let comment = AddCommentToDocument(oDocument, CommentData);
-		oDocument.LoadDocumentState(documentState);
+
+		oDocument.LoadDocumentState(oldDocumentState);
 		oDocument.UpdateSelection();
 		return comment;
 	};
