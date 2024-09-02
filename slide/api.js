@@ -10026,4 +10026,6 @@ background-repeat: no-repeat;\
 	CSearchResult.prototype['get_Navigator']     = CSearchResult.prototype.get_Navigator;
 	CSearchResult.prototype['put_Navigator']     = CSearchResult.prototype.put_Navigator;
 	CSearchResult.prototype['put_Text']          = CSearchResult.prototype.put_Text;
+	
+	AscCommon['SlideEditorApi'] = AscCommon.SlideEditorApi = asc_docs_api;
 })(window, window.document);
