@@ -1632,6 +1632,20 @@
 			this.m_oScrollVerApi.scrollToY(posY);
 			this.m_oScrollHorApi.scrollToX(posX);
 		};
+		this.scrollToXY = function(posY, posX) {
+			let oDoc		= this.getPDFDoc();
+			let oActiveObj	= oDoc.GetActiveObject();
+
+			// выход из активного объекта если сместились на другую страницу
+			if (this.disabledPaintOnScroll == false && oActiveObj && this.pageDetector.pages.map(function(item) {
+				return item.num;
+			}).includes(oActiveObj.GetPage()) == false) {
+				oDoc.BlurActiveObject();
+			}
+
+			this.m_oScrollVerApi.scrollToY(posY);
+			this.m_oScrollVerApi.scrollToX(posX);
+		};
 
 		this.navigateToLink = function(link)
 		{
@@ -1644,7 +1658,7 @@
 				let oTr		= this.getPDFDoc().pagesTransform[nPage].invert;
 				let oPos	= oTr.TransformPoint(0, link["dest"]);
 
-				this.navigateToPage(this.currentPage, this.scrollY + oPos.y, this.scrollX + oPos.x);
+				this.scrollToXY(this.scrollY + oPos.y, this.scrollX + oPos.x);
 			}
 			else
 			{
