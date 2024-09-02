@@ -478,7 +478,7 @@
 
 		}
 
-		if (editor.isPdfEditor())
+		if (editor && editor.isPdfEditor())
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
 			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
