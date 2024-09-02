@@ -2578,7 +2578,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-		AscCommon.History.Get_RecalcData(arrChanges);
+		AscCommon.History.Get_RecalcData();
 		AscCommon.History.Reset_RecalcIndex();
 
         if (false /* тут проверяем локи */) {
