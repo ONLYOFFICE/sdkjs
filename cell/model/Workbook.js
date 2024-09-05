@@ -13365,6 +13365,12 @@
 
 				let formulaResult = formula.calculate(null, null, null, null, calculateResult);
 				let arraySize = formulaResult.getDimensions(true);
+
+				// некоторые формулы могут возвращать пустой массив, или массив с одной пустой строкой
+				// в таком случае нормализуем значения до единицы
+				arraySize.row = arraySize.row ? arraySize.row : 1;
+				arraySize.col = arraySize.col ? arraySize.col : 1;
+
 				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
 				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
 

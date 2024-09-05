@@ -15741,6 +15741,7 @@ function RangeDataManagerElem(bbox, data)
 		this.Ref = null;//храним в строке, в будущем перевести в row/col
 		this.CellType = null;
 		this.CellValue = null;
+		this.HyperlinkInfo = null;
 	}
 
 	ExternalCell.prototype.Read_FromBinary2 = function(r) {
@@ -15817,6 +15818,14 @@ function RangeDataManagerElem(bbox, data)
 			if (this.CellType !== cellValueType) {
 				this.CellType = cellValueType;
 				isChanged = true;
+			}
+			if (cell.ws /*&& isChanged*/) {
+				// todo добавить сравнение предыдущей ссылки с текущей?
+				let hyperlinkObj = cell.ws.getHyperlinkByCell(cell.nRow, cell.nCol);
+				if (hyperlinkObj) {
+					t.HyperlinkInfo = hyperlinkObj;
+					isChanged = true;
+				}
 			}
 		}
 		return isChanged;

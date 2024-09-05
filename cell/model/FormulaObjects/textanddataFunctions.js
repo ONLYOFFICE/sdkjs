@@ -1252,6 +1252,8 @@ function (window, undefined) {
 				is3DRef.sheet = eR.SheetNames[0];
 			}
 			let externalWs = wb.getExternalWorksheetByName(eR.Id, is3DRef.sheet);
+			let currentWs = arguments[3] ? arguments[3] : wb.getActiveWs();
+			let currentCellRange = arguments[1];
 			if (externalWs) {
 				let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
@@ -1271,6 +1273,11 @@ function (window, undefined) {
 								let externalCell = row.getCell(j);
 								if (externalCell) {
 									let cellValue = externalCell.getFormulaValue();
+									if (externalCell.HyperlinkInfo) {
+										// let range = currentWs.getRange3(currentCellRange.r1,currentCellRange.c1,currentCellRange.r2,currentCellRange.c2);
+										// range.setHyperlink(externalCell.Hyperlink);
+										cellValue.hyperlink = externalCell.HyperlinkInfo.Hyperlink;
+									}
 									ret.addElement(cellValue);
 								}
 							}
