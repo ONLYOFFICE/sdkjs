@@ -153,20 +153,22 @@
         return oAscCommData;
     };
 
+    CAnnotationText.prototype.SetIconType = function(nType) {
+        this._noteIcon = nType;
+    };
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
     };
-    CAnnotationText.prototype.GetIconImg = function() {
+    CAnnotationText.prototype.GetIconDrawFunc = function() {
         let nType = this.GetIconType();
         switch (nType) {
             case NOTE_ICONS_TYPES.Check1:
-                return NOTE_ICONS_IMAGES.Check1;
             case NOTE_ICONS_TYPES.Check2:
-                return NOTE_ICONS_IMAGES.Check2;
+                return drawIconCheck;
             case NOTE_ICONS_TYPES.Circle:
-                return NOTE_ICONS_IMAGES.Circle;
+                return drawIconCircle;
             case NOTE_ICONS_TYPES.Comment:
-                return NOTE_ICONS_IMAGES.Comment;
+                return drawIconComment;
             case NOTE_ICONS_TYPES.Cross:
                 return NOTE_ICONS_IMAGES.Cross;
             case NOTE_ICONS_TYPES.CrossH:
@@ -228,78 +230,43 @@
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        let oRGB            = this.GetRGBColor(this.GetFillColor());
-        let ICON_TO_DRAW    = this.GetIconImg();
+        let oRGB = this.GetRGBColor(this.GetFillColor());
 
         let oDoc        = this.GetDocument();
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
         let nRotAngle   = oDoc.Viewer.getPageRotate(nPage);
-
-        let nWidth  = (aOrigRect[2] - aOrigRect[0]) * oDoc.Viewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
-        let nHeight = (aOrigRect[3] - aOrigRect[1]) * oDoc.Viewer.getDrawingPageScale(nPage) * AscCommon.AscBrowser.retinaPixelRatio;
         
-        let imgW = ICON_TO_DRAW.width;
-        let imgH = ICON_TO_DRAW.height;
-
-        let nScaleX = nWidth / imgW;
-        let nScaleY = nHeight / imgH;
-        let wScaled = Math.max(imgW * nScaleX + 0.5 >> 0, 40);
-        let hScaled = Math.max(imgH * nScaleY + 0.5 >> 0, 40);
-
-        let canvas = document.createElement('canvas');
-        let context = canvas.getContext('2d');
-
-        if (oGraphics.isThumbnails) {
-            let oTr = oGraphics.GetTransform();
-            wScaled = wScaled * oTr.sy + 0.5 >> 0;
-            hScaled = hScaled * oTr.sy + 0.5 >> 0;
-        }
+        let nX          = aOrigRect[0];
+        let nY          = aOrigRect[1];
+        let nWidthPx    = (aOrigRect[2] - aOrigRect[0]);
+        let nHeightPx   = (aOrigRect[3] - aOrigRect[1]);
         
-        // Set the canvas dimensions to match the image
-        canvas.width = wScaled;
-        canvas.height = hScaled;
+        let oCtx = oGraphics.GetContext();
+        oGraphics.EnableTransform();
+        oCtx.iconFill = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
 
-        // Draw the image onto the canvas
-        let nOpacity = this.GetOpacity();
-        context.save();
-        context.globalAlpha = nOpacity;
-        context.translate(wScaled >> 1, hScaled >> 1);
-        context.rotate(-nRotAngle * Math.PI / 180);
-        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, -wScaled / 2, -hScaled / 2, wScaled, hScaled);
-        context.restore();
+        let drawFunc = this.GetIconDrawFunc();
+        drawFunc(oCtx, nX, nY, nWidthPx / 20, nHeightPx / 20);
 
-        if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
-            if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
-                // Get the pixel data of the canvas
-                let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imageData.data;
-    
-                // Loop through each pixel
-                for (let i = 0; i < data.length; i += 4) {
-                    const red = data[i];
-                    const green = data[i + 1];
-                    const blue = data[i + 2];
-    
-                    // Check if the pixel is black (R = 0, G = 0, B = 0)
-                    if (red === 255 && green === 209 && blue === 0) {
-                        // Change the pixel color to red (R = 255, G = 0, B = 0)
-                        data[i] = oRGB.r; // Red
-                        data[i + 1] = oRGB.g; // Green
-                        data[i + 2] = oRGB.b; // Blue
-                        // Note: The alpha channel (transparency) remains unchanged
-                    }
-                }
-    
-                // Put the modified pixel data back onto the canvas
-                context.putImageData(imageData, 0, 0);
-            }
-        }
+        //////
+        oGraphics.SetLineWidth(1);
+        let aOringRect  = this.GetOrigRect();
+        let X       = aOringRect[0];
+        let Y       = aOringRect[1];
+        let nWidth  = aOringRect[2] - aOringRect[0];
+        let nHeight = aOringRect[3] - aOringRect[1];
 
-        // Draw the comment note
-        oGraphics.SetIntegerGrid(true);
-        oGraphics.DrawImageXY(canvas, aOrigRect[0], aOrigRect[1]);
-        oGraphics.SetIntegerGrid(false);
+        Y += 1 / 2;
+        X += 1 / 2;
+        nWidth  -= 1;
+        nHeight -= 1;
+
+        oGraphics.SetStrokeStyle(0, 255, 255);
+        oGraphics.SetLineDash([]);
+        oGraphics.BeginPath();
+        oGraphics.Rect(X, Y, nWidth, nHeight);
+        oGraphics.Stroke();
     };
     CAnnotationText.prototype.IsNeedDrawFromStream = function() {
         return false;
@@ -366,115 +333,212 @@
     window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
     window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;
 	
-	function toBase64(str) {
-		return window.btoa(unescape(encodeURIComponent(str)));
-	}
-	
-	function getSvgImage(svg) {
-		let image = new Image();
-		if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
-			image.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
-		}
-		else {
-			image.src = "data:image/svg+xml;base64," + toBase64(svg);
-			image.onload = function() {
-				// Почему-то IE не определяет размеры сам
-				this.width = 20;
-				this.height = 20;
-			};
-		}
-		
-		return image;
-	}
+    function drawIconCheck(ctx, x, y, xScale, yScale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(xScale, yScale);
 
-    let SVG_ICON_CHECK = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z' fill='black'/>\
-    </svg>";
-    
-    let SVG_ICON_CIRCLE = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M10 17C13.866 17 17 13.866 17 10C17 6.13401 13.866 3 10 3C6.13401 3 3 6.13401 3 10C3 13.866 6.13401 17 10 17ZM10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z' fill='black'/>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M10 14C12.2091 14 14 12.2091 14 10C14 7.79086 12.2091 6 10 6C7.79086 6 6 7.79086 6 10C6 12.2091 7.79086 14 10 14ZM10 15C12.7614 15 15 12.7614 15 10C15 7.23858 12.7614 5 10 5C7.23858 5 5 7.23858 5 10C5 12.7614 7.23858 15 10 15Z' fill='black'/>\
-    </svg>";
-    
+        // Первый путь
+        ctx.beginPath();
+        ctx.moveTo(5.238, 8.8);
+        ctx.lineTo(4, 11.8);
+        ctx.lineTo(7.714, 16);
+        ctx.bezierCurveTo(12.048, 9.4, 13.286, 8.2, 17, 4);
+        ctx.bezierCurveTo(14.524, 4, 9.778, 8.8, 7.714, 11.8);
+        ctx.closePath();
+        ctx.fillStyle = ctx.iconFill;
+        ctx.fill();
+
+        // Второй путь
+        ctx.beginPath();
+        ctx.moveTo(12.536, 7.147);
+        ctx.bezierCurveTo(10.809, 8.698, 9.134, 10.619, 8.126, 12.083);
+        ctx.lineTo(7.75, 12.63);
+        ctx.lineTo(5.382, 9.76);
+        ctx.lineTo(4.582, 11.702);
+        ctx.lineTo(7.656, 15.179);
+        ctx.bezierCurveTo(11.244, 9.748, 12.669, 8.122, 15.439, 5.005);
+        ctx.quadraticCurveTo(15.252, 5.105, 15.052, 5.225);
+        ctx.bezierCurveTo(14.263, 5.7, 13.399, 6.372, 12.536, 7.147);
+
+        ctx.moveTo(14.536, 4.369);
+        ctx.bezierCurveTo(15.383, 3.859, 16.241, 3.5, 17, 3.5);
+        ctx.lineTo(18.11, 3.5);
+        ctx.lineTo(17.374, 4.331);
+        ctx.bezierCurveTo(17, 4.755, 16.651, 5.147, 16.321, 5.518);
+        ctx.bezierCurveTo(13.388, 8.818, 12.011, 10.368, 8.132, 16.274);
+        ctx.lineTo(7.773, 16.821);
+        ctx.lineTo(3.419, 11.898);
+        ctx.lineTo(5.093, 7.839);
+        ctx.lineTo(7.686, 10.979);
+        ctx.bezierCurveTo(8.75, 9.539, 10.289, 7.821, 11.868, 6.403);
+        ctx.bezierCurveTo(12.759, 5.603, 13.675, 4.887, 14.537, 4.369);
+        ctx.fillStyle = '#000';
+        ctx.fill();
+
+        ctx.restore();
+    }
+    function drawIconCircle(ctx, x, y, xScale, yScale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(xScale, yScale);
+
+        // Рисуем внешнюю окружность
+        ctx.beginPath();
+        ctx.arc(10, 10, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+
+        // Рисуем следующую окружность
+        ctx.beginPath();
+        ctx.arc(10, 10, 7, 0, 2 * Math.PI);
+        ctx.fillStyle = ctx.iconFill;
+        ctx.fill();
+
+        // Рисуем среднюю окружность
+        ctx.beginPath();
+        ctx.arc(10, 10, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+
+        // Рисуем внутреннюю окружность
+        ctx.beginPath();
+        ctx.arc(10, 10, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "white";
+        ctx.fill();
+
+        ctx.restore();
+    }
+    function drawIconComment(ctx, x, y, xScale, yScale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(xScale, yScale);
+
+        // Основная фигура прямоугольника с вырезом
+        ctx.fillStyle = ctx.iconFill;
+        ctx.beginPath();
+        ctx.moveTo(3, 3);
+        ctx.lineTo(17, 3);
+        ctx.quadraticCurveTo(18, 3, 18, 4);
+        ctx.lineTo(18, 14);
+        ctx.quadraticCurveTo(18, 15, 17, 15);
+        ctx.lineTo(10, 15);
+        ctx.lineTo(7.5, 17.5);
+        ctx.lineTo(5, 15);
+        ctx.lineTo(3, 15);
+        ctx.quadraticCurveTo(2, 15, 2, 14);
+        ctx.lineTo(2, 4);
+        ctx.quadraticCurveTo(2, 3, 3, 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // Обводка темно-серым цветом с дополнительными деталями
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(10, 15);
+        ctx.lineTo(8.207, 16.793);
+        ctx.lineTo(7.5, 17.5);
+        ctx.lineTo(6.793, 16.793);
+        ctx.lineTo(5, 15);
+        ctx.lineTo(3, 15);
+        ctx.quadraticCurveTo(2, 15, 2, 14);
+        ctx.lineTo(2, 4);
+        ctx.quadraticCurveTo(2, 3, 3, 3);
+        ctx.lineTo(17, 3);
+        ctx.quadraticCurveTo(18, 3, 18, 4);
+        ctx.lineTo(18, 14);
+        ctx.quadraticCurveTo(18, 15, 17, 15);
+        ctx.lineTo(10, 15);
+        ctx.lineTo(9.586, 15);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Линии для текста
+        ctx.fillStyle = '#333333';
+        ctx.beginPath();
+        ctx.rect(5, 6, 10, 1); // Первая линия
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.rect(5, 8, 10, 1); // Вторая линия
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.rect(5, 10, 7, 1); // Третья линия
+        ctx.fill();
+
+        ctx.restore();
+    }
+
     let SVG_ICON_COMMENT = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M2 4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V14C18 14.5523 17.5523 15 17 15H10L7.5 17.5L5 15H3C2.44772 15 2 14.5523 2 14V4Z' fill='#FFD100'/>\
+    <path d='M2 4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V14C18 14.5523 17.5523 15 17 15H10L7.5 17.5L5 15H3C2.44772 15 2 14.5523 2 14V4Z' fill='white'/>\
     <path fill-rule='evenodd' clip-rule='evenodd' d='M17 15H10L8.20711 16.7929L7.5 17.5L6.79289 16.7929L5 15H3C2.44772 15 2 14.5523 2 14V4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V14C18 14.5523 17.5523 15 17 15ZM9.29289 14.2929L7.5 16.0858L5.70711 14.2929L5.41421 14H5H3V4H17V14H10H9.58579L9.29289 14.2929ZM15 6H5V7H15V6ZM5 8H15V9H5V8ZM12 10H5V11H12V10Z' fill='#333333'/>\
     </svg>";
     
     let SVG_ICON_CROSS = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M4.81055 5.70711L5.4718 6.36836L6.7943 7.69087L9.29585 10.1924L7.00452 12.4838L5.57703 13.9113L4.86328 14.625L5.57039 15.3321L6.28413 14.6184L7.71162 13.1909L10.003 10.8995L12.2943 13.1909L13.7218 14.6184L14.4355 15.3321L15.1427 14.625L14.4289 13.9113L13.0014 12.4838L10.7101 10.1924L13.2116 7.69087L14.5341 6.36836L15.1954 5.70711L14.4883 5L13.827 5.66125L12.5045 6.98377L10.003 9.48533L7.50141 6.98377L6.17891 5.66126L5.51766 5L4.81055 5.70711Z' fill='black'/>\
+    <path d='m5.404 4.697-.707.707L9.293 10l-4.596 4.596.707.707L10 10.707l4.596 4.596.707-.707L10.707 10l4.596-4.596-.707-.707L10 9.293z' fill='white'/>\
+    <path d='m3.282 5.404 2.122-2.122L10 7.88l4.596-4.597 2.122 2.122L12.12 10l4.597 4.596-2.122 2.122L10 12.12l-4.596 4.597-2.122-2.122L7.88 10zm1.415 0L9.293 10l-4.596 4.596.707.707L10 10.707l4.596 4.596.707-.707L10.707 10l4.596-4.596-.707-.707L10 9.293 5.404 4.697z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_HELP = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M17 10.5C17 14.0899 14.0899 17 10.5 17C6.91015 17 4 14.0899 4 10.5C4 6.91015 6.91015 4 10.5 4C14.0899 4 17 6.91015 17 10.5ZM18 10.5C18 14.6421 14.6421 18 10.5 18C6.35786 18 3 14.6421 3 10.5C3 6.35786 6.35786 3 10.5 3C14.6421 3 18 6.35786 18 10.5ZM11 14V13H10V14H11Z' fill='black'/>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M10.2071 7C9.88696 7 9.57993 7.12718 9.35355 7.35355C9.12718 7.57993 9 7.88696 9 8.20711V8.5H8V8.20711C8 7.62175 8.23253 7.06036 8.64645 6.64645C9.06036 6.23253 9.62175 6 10.2071 6H10.7929C11.3783 6 11.9396 6.23253 12.3536 6.64645C12.7675 7.06036 13 7.62175 13 8.20711V8.5C13 9.28689 12.6295 10.0279 12 10.5L11.6 10.8C11.2223 11.0833 11 11.5279 11 12H10C10 11.2131 10.3705 10.4721 11 10L11.4 9.7C11.7777 9.41672 12 8.97214 12 8.5V8.20711C12 7.88696 11.8728 7.57993 11.6464 7.35355C11.4201 7.12718 11.113 7 10.7929 7H10.2071Z' fill='black'/>\
+    <path d='M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0' fill='white'/>\
+    <path d='M11 14v-1h-1v1z' fill='#000'/>\
+    <path d='M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0m-1 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 0 0 13 0' fill='#000'/>\
+    <path d='M10.207 7A1.207 1.207 0 0 0 9 8.207V8.5H8v-.293A2.207 2.207 0 0 1 10.207 6h.586A2.207 2.207 0 0 1 13 8.207V8.5a2.5 2.5 0 0 1-1 2l-.4.3A1.5 1.5 0 0 0 11 12h-1a2.5 2.5 0 0 1 1-2l.4-.3a1.5 1.5 0 0 0 .6-1.2v-.293A1.207 1.207 0 0 0 10.793 7z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_INSERT = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M10 5L16.1867 15H3.81333L10 5ZM10 3L2 16H18L10 3Z' fill='black'/>\
+    <path d='M10 3 2 16h16z' fill='white'/>\
+    <path d='m10 5 6.187 10H3.813zm0-2L2 16h16z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_KEY = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <mask id='path-1-inside-1_9139_69160' fill='white'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M12 13C14.7614 13 17 10.7614 17 8C17 5.23858 14.7614 3 12 3C9.23858 3 7 5.23858 7 8C7 8.59785 7.10493 9.1712 7.29737 9.70263L2.5 14.5L5.5 17.5L6 17L6 16H7V15H8L8 14H9L10.2974 12.7026C10.8288 12.8951 11.4021 13 12 13Z'/>\
-    </mask>\
-    <path d='M7.29737 9.70263L8.00448 10.4097L8.45415 9.96006L8.23762 9.36213L7.29737 9.70263ZM2.5 14.5L1.79289 13.7929L1.08579 14.5L1.79289 15.2071L2.5 14.5ZM5.5 17.5L4.79289 18.2071L5.5 18.9142L6.20711 18.2071L5.5 17.5ZM6 17L6.70711 17.7071L7 17.4142L7 17L6 17ZM6 16V15H5L5 16L6 16ZM7 16V17H8V16H7ZM7 15V14H6V15H7ZM8 15V16H9L9 15L8 15ZM8 14V13H7L7 14L8 14ZM9 14V15H9.41421L9.70711 14.7071L9 14ZM10.2974 12.7026L10.6379 11.7624L10.0399 11.5458L9.59027 11.9955L10.2974 12.7026ZM16 8C16 10.2091 14.2091 12 12 12V14C15.3137 14 18 11.3137 18 8H16ZM12 4C14.2091 4 16 5.79086 16 8H18C18 4.68629 15.3137 2 12 2V4ZM8 8C8 5.79086 9.79086 4 12 4V2C8.68629 2 6 4.68629 6 8H8ZM8.23762 9.36213C8.08414 8.9383 8 8.48008 8 8H6C6 8.71562 6.12572 9.4041 6.35713 10.0431L8.23762 9.36213ZM3.20711 15.2071L8.00448 10.4097L6.59027 8.99552L1.79289 13.7929L3.20711 15.2071ZM6.20711 16.7929L3.20711 13.7929L1.79289 15.2071L4.79289 18.2071L6.20711 16.7929ZM5.29289 16.2929L4.79289 16.7929L6.20711 18.2071L6.70711 17.7071L5.29289 16.2929ZM5 16L5 17L7 17L7 16L5 16ZM7 15H6V17H7V15ZM6 15V16H8V15H6ZM8 14H7V16H8V14ZM7 14L7 15L9 15L9 14L7 14ZM9 13H8V15H9V13ZM9.59027 11.9955L8.29289 13.2929L9.70711 14.7071L11.0045 13.4097L9.59027 11.9955ZM12 12C11.5199 12 11.0617 11.9159 10.6379 11.7624L9.95688 13.6429C10.5959 13.8743 11.2844 14 12 14V12Z' fill='black' mask='url(#path-1-inside-1_9139_69160)'/>\
-    <circle cx='13' cy='7' r='1' fill='black'/>\
+    <path d='M12 13a5 5 0 1 0-4.703-3.297L2.5 14.5l3 3L6 17v-1h1v-1h1v-1h1l1.297-1.297A5 5 0 0 0 12 13' fill='white'/>\
+    <path d='m8.454 9.96-4.54 4.54L5 15.586V15h1v-1h1v-1h1.586l1.454-1.454.598.216a4 4 0 1 0-2.4-2.4zM9 14H8v1H7v1H6v1l-.5.5-3-3 4.797-4.797a5 5 0 1 1 3 3z' fill='#000'/>\
+    <path d='M14 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_NEW_PARAGRAPH = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <mask id='path-1-inside-1_9139_69160' fill='white'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M12 13C14.7614 13 17 10.7614 17 8C17 5.23858 14.7614 3 12 3C9.23858 3 7 5.23858 7 8C7 8.59785 7.10493 9.1712 7.29737 9.70263L2.5 14.5L5.5 17.5L6 17L6 16H7V15H8L8 14H9L10.2974 12.7026C10.8288 12.8951 11.4021 13 12 13Z'/>\
-    </mask>\
-    <path d='M7.29737 9.70263L8.00448 10.4097L8.45415 9.96006L8.23762 9.36213L7.29737 9.70263ZM2.5 14.5L1.79289 13.7929L1.08579 14.5L1.79289 15.2071L2.5 14.5ZM5.5 17.5L4.79289 18.2071L5.5 18.9142L6.20711 18.2071L5.5 17.5ZM6 17L6.70711 17.7071L7 17.4142L7 17L6 17ZM6 16V15H5L5 16L6 16ZM7 16V17H8V16H7ZM7 15V14H6V15H7ZM8 15V16H9L9 15L8 15ZM8 14V13H7L7 14L8 14ZM9 14V15H9.41421L9.70711 14.7071L9 14ZM10.2974 12.7026L10.6379 11.7624L10.0399 11.5458L9.59027 11.9955L10.2974 12.7026ZM16 8C16 10.2091 14.2091 12 12 12V14C15.3137 14 18 11.3137 18 8H16ZM12 4C14.2091 4 16 5.79086 16 8H18C18 4.68629 15.3137 2 12 2V4ZM8 8C8 5.79086 9.79086 4 12 4V2C8.68629 2 6 4.68629 6 8H8ZM8.23762 9.36213C8.08414 8.9383 8 8.48008 8 8H6C6 8.71562 6.12572 9.4041 6.35713 10.0431L8.23762 9.36213ZM3.20711 15.2071L8.00448 10.4097L6.59027 8.99552L1.79289 13.7929L3.20711 15.2071ZM6.20711 16.7929L3.20711 13.7929L1.79289 15.2071L4.79289 18.2071L6.20711 16.7929ZM5.29289 16.2929L4.79289 16.7929L6.20711 18.2071L6.70711 17.7071L5.29289 16.2929ZM5 16L5 17L7 17L7 16L5 16ZM7 15H6V17H7V15ZM6 15V16H8V15H6ZM8 14H7V16H8V14ZM7 14L7 15L9 15L9 14L7 14ZM9 13H8V15H9V13ZM9.59027 11.9955L8.29289 13.2929L9.70711 14.7071L11.0045 13.4097L9.59027 11.9955ZM12 12C11.5199 12 11.0617 11.9159 10.6379 11.7624L9.95688 13.6429C10.5959 13.8743 11.2844 14 12 14V12Z' fill='black' mask='url(#path-1-inside-1_9139_69160)'/>\
-    <circle cx='13' cy='7' r='1' fill='black'/>\
+    <path d='M4 7.464a1 1 0 0 1 .354-.763l5.5-4.654a1 1 0 0 1 1.292 0l5.5 4.654a1 1 0 0 1 .354.763V18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z' fill='white'/>\
+    <path d='m5 7.464 5.5-4.654L16 7.464V18H5zM4.354 6.7A1 1 0 0 0 4 7.464V18a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V7.464a1 1 0 0 0-.354-.763l-5.5-4.654a1 1 0 0 0-1.292 0z' fill='#000'/>\
+    <path d='M9.5 8a2.5 2.5 0 1 0 0 5h.5v4h1V9h1v8h1V9h1V8z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_PARAGRAPH = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M8.5 11C8.66976 11 8.8367 10.9879 9 10.9646V16H10V5H12V16H13V5H14V4C12.165 4 10.2782 4 8.5 4C6.567 4 5 5.567 5 7.5C5 9.433 6.567 11 8.5 11Z' fill='black'/>\
+    <path d='M14 4h-4v1c-1.5 0-3 .691-3 2.5 0 2 1.62 2.5 3 2.5v6h4z' fill='white'/>\
+    <path d='M9.5 11q.255 0 .5-.035V16h4V5h1V4H9.5a3.5 3.5 0 1 0 0 7m3.5 4h-2V5h2zm-3-5c-1.38 0-3-.5-3-2.5C7 5.691 8.5 5 10 5z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_RIGHT_ARROW = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M9 13V16L16.3333 10.5L9 5V8H3V13H9ZM8 3L18 10.5L8 18V14H2V7H8V3Z' fill='black'/>\
+    <path d='M8 14H2V7h6V3l10 7.5L8 18z' fill='white'/>\
+    <path d='M9 13v3l7.333-5.5L9 5v3H3v5zM8 3l10 7.5L8 18v-4H2V7h6z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_RIGHT_POINTER = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M2.62769 3.34302L18.7311 10.5001L2.62769 17.6572L7.39907 10.5001L2.62769 3.34302ZM5.3723 5.65716L8.60092 10.5001L5.3723 15.343L16.2689 10.5001L5.3723 5.65716Z' fill='black'/>\
+    <path d='M2.628 3.343 18.73 10.5 2.628 17.657 7.399 10.5z' fill='white'/>\
+    <path d='M2.628 3.343 18.73 10.5 2.628 17.657 7.399 10.5zm2.744 2.314L8.601 10.5l-3.229 4.843L16.27 10.5z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_STAR = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M11.8885 8.11146L10 2L8.11146 8.11146H2L6.94427 11.8885L5.05573 18L10 14.2229L14.9443 18L13.0557 11.8885L18 8.11146H11.8885ZM15.0437 9.11146H11.1509L10 5.38705L8.8491 9.11146H4.9563L8.10564 11.5173L6.93486 15.3061L10 12.9645L13.0651 15.3061L11.8944 11.5173L15.0437 9.11146Z' fill='black'/>\
+    <path d='M11.889 8.111 10 2 8.111 8.111H2l4.944 3.778L5.056 18 10 14.223 14.944 18l-1.888-6.111L18 8.11z' fill='white'/>\
+    <path fill-rule='evenodd' clip-rule='evenodd' d='M11.889 8.111 10 2 8.111 8.111H2l4.944 3.778L5.056 18 10 14.223 14.944 18l-1.888-6.111L18 8.11zm3.155 1H11.15L10 5.387 8.85 9.111H4.955l3.15 2.406-1.171 3.79L10 12.963l3.065 2.342-1.17-3.789z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_NOTE = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M15 5H5L5 15H12V13C12 12.4477 12.4477 12 13 12H15V5ZM14.5858 13L13 14.5858V13H14.5858ZM4 15C4 15.5523 4.44772 16 5 16H12.5858C12.851 16 13.1054 15.8946 13.2929 15.7071L15.7071 13.2929C15.8946 13.1054 16 12.851 16 12.5858V5C16 4.44771 15.5523 4 15 4H5C4.44772 4 4 4.44772 4 5V15Z' fill='black'/>\
+    <path d='M4 5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7.086a1 1 0 0 1-.293.707l-2.914 2.914a1 1 0 0 1-.707.293H5a1 1 0 0 1-1-1z' fill='white'/>\
+    <path d='M15 5v7h-2a1 1 0 0 0-1 1v2H5V5zm-.414 8L13 14.586V13zM4 15a1 1 0 0 0 1 1h7.586a1 1 0 0 0 .707-.293l2.414-2.414a1 1 0 0 0 .293-.707V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_UP_ARROW = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path fill-rule='evenodd' clip-rule='evenodd' d='M13 11L16 11L10.5 3.66667L5 11L8 11L8 17L13 17L13 11ZM3 12L10.5 2L18 12L14 12L14 18L7 18L7 12L3 12Z' fill='black'/>\
+    <path d='m3 12 7.5-10L18 12h-4v6H7v-6z' fill='white'/>\
+    <path d='M13 11h3l-5.5-7.333L5 11h3v6h5zM3 12l7.5-10L18 12h-4v6H7v-6z' fill='#000'/>\
     </svg>";
     
     let SVG_ICON_UP_LEFT_ARROW = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M14.5 4.5H4.5V14.5L7.5 11.5L12.5 16.5L16.5 12.5L11.5 7.5L14.5 4.5Z' stroke='black'/>\
+    <path d='M14.5 4.5h-10v10l3-3 5 5 4-4-5-5z' fill='white'/>\
+    <path d='M4 4h11.707l-3.5 3.5 5 5-4.707 4.707-5-5-3.5 3.5zm1 1v8.293l2.5-2.5 5 5 3.293-3.293-5-5 2.5-2.5z' fill='#000'/>\
     </svg>";
 	
-	let NOTE_ICONS_IMAGES = {
-		Check:          getSvgImage(SVG_ICON_CHECK),
-		Circle:         getSvgImage(SVG_ICON_CIRCLE),
-		Comment:        getSvgImage(SVG_ICON_COMMENT),
-		Cross:          getSvgImage(SVG_ICON_CROSS),
-		Help:           getSvgImage(SVG_ICON_HELP),
-		Insert:         getSvgImage(SVG_ICON_INSERT),
-		Key:            getSvgImage(SVG_ICON_KEY),
-		NewParagraph:   getSvgImage(SVG_ICON_NEW_PARAGRAPH),
-		Note:           getSvgImage(SVG_ICON_NOTE),
-		Paragraph:      getSvgImage(SVG_ICON_PARAGRAPH),
-		RightArrow:     getSvgImage(SVG_ICON_RIGHT_ARROW),
-		RightPointer:   getSvgImage(SVG_ICON_RIGHT_POINTER),
-		Star:           getSvgImage(SVG_ICON_STAR),
-		UpArrow:        getSvgImage(SVG_ICON_UP_ARROW),
-		UpLeftArrow:    getSvgImage(SVG_ICON_UP_LEFT_ARROW)
-	}
-    
 })();
 

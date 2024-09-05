@@ -1366,6 +1366,8 @@
 							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
 					}
 
+					if (oAnnotInfo["Icon"] != null)
+                        oAnnot.SetIconType(oAnnotInfo["Icon"]);
 					if (oAnnotInfo["RefToReason"] != null)
 						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
 					if (oAnnotInfo["Popup"] != null)
