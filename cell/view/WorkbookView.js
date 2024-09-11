@@ -1984,10 +1984,26 @@
 
   // Double click
   WorkbookView.prototype._onMouseDblClick = function(x, y, event, callback) {
-    var ws = this.getWorksheet();
-    var ct = ws.getCursorTypeFromXY(x, y);
+    const ws = this.getWorksheet();
+    const ct = ws.getCursorTypeFromXY(x, y, true);
 
-    if (ct.target === c_oTargetType.FillHandle) {
+	if (ct.target === c_oTargetType.TraceDependents && ct.coordLineInfo) {
+		// todo добавить обработку single клика(ничего не делать при нажатии на стрелку)
+		// todo менять курсор при наведении
+		// todo если selection на одной из связанных ячеек - ставим на противоположную
+		let fromCell = ct.coordLineInfo.from;
+		let toCell = ct.coordLineInfo.to;
+
+		// let fromRange = ws.model.getRange4(fromCell.rc.row, fromCell.rc.col);
+		let fromRange = new Asc.Range(fromCell.rc.col, fromCell.rc.row, fromCell.rc.col, fromCell.rc.row);
+		
+		// let toRange = ws.model.getRange4(toCell.rc.row, toCell.rc.col);
+		let toRange = new Asc.Range(toCell.rc.col, toCell.rc.row, toCell.rc.col, toCell.rc.row);
+
+		// change selection to another cell depending on the line
+		ws.setSelection(fromRange);
+		return
+	} else if (ct.target === c_oTargetType.FillHandle) {
         ws.applyFillHandleDoubleClick();
         asc_applyFunction(callback);
     } else if (ct.target === c_oTargetType.ColumnResize || ct.target === c_oTargetType.RowResize) {

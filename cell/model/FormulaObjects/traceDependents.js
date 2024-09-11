@@ -76,8 +76,28 @@ function (window, undefined) {
 		this.aPassedDependents = null;
 
 		this._lockChangeDocument = null;
+
+		this.tracesCoords = [
+			/* an array with the coordinates of the start and end of all drawn lines */
+		];
 	}
 
+	TraceDependentsManager.prototype.addLineCoordinates = function (from, to, x1, y1, x2, y2) {
+		if (typeof x1 !== "number" || typeof y1 !== "number" || typeof x2 !== "number" || typeof y2 !== "number") {
+			return
+		}
+		// TODO добавить информацию об областях и внешних данных
+		let arrowInfo = {from : {x: x1, y: y1, rc: from}, to: {x: x2, y: y2, rc: to}};
+
+		if (!this.tracesCoords) {
+			this.tracesCoords = [];
+		}
+		this.tracesCoords.push(arrowInfo);
+	};
+	// clearCoordsData
+	TraceDependentsManager.prototype.clearCoordsData = function () {
+		this.tracesCoords = null;
+	};
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
 		this.isPrecedentsCall = true;
 		this.isDependetsCall = false;

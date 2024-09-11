@@ -6068,6 +6068,11 @@
 					ctx.stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
+
+					// let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col),
+					// 	toCellIndex = AscCommonExcel.getCellIndex(to.row, to.col);
+					// write the coordinates of line to traceManager
+					traceManager.addLineCoordinates(from, to, x1, y1, newX2, newY2);
 				}
 			}
 		};
@@ -6128,6 +6133,9 @@
 			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
 			drawDot(x1, y1, externalLineColor);
 			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+
+			// write the coordinates of line to traceManager
+			traceManager.addLineCoordinates(x1, y1, newX2, newY2);
 		};
 
 		const drawDottedLine = function (x1, y1, x2, y2) {
@@ -7972,6 +7980,9 @@
 		let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.isSpecificRange();
 		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || searchSpecificRange || isTraceDependents) {
 			this.overlayCtx.clear();
+			if (isTraceDependents) {
+				this.traceDependentsManager.clearCoordsData();
+			}
 		}
 
 		let retinaСoef = isRetinaWidth ? 2 : 1;
@@ -10471,7 +10482,7 @@
 		} : null;
 	};
 
-	WorksheetView.prototype.getCursorTypeFromXY = function (x, y) {
+	WorksheetView.prototype.getCursorTypeFromXY = function (x, y, fromDoubleClick) {
 		var canEdit = this.workbook.canEdit();
 		var viewMode = this.handlers.trigger('getViewMode');
 		this.handlers.trigger("checkLastWork");
@@ -10956,6 +10967,43 @@
 				shortIdForeignSelect: shortIdForeignSelect
 			};
 			if(!oHyperlink) {
+				if (/*fromDoubleClick &&*/ t.traceDependentsManager && t.traceDependentsManager.isHaveData) {
+					// получаем координаты всех линий зависимости и проверяем попадание курсора
+					// let ws = t.model;
+					// let depFormulas = ws && ws.workbook.dependencyFormulas;
+					// let sheetListeners = depFormulas.sheetListeners;
+
+					let coordsArray = t.traceDependentsManager.tracesCoords;
+					if (coordsArray) {
+						function isClickOnLine(x, y, lineCoords, tolerance = 2) {
+							const x1 = lineCoords.from.x;
+							const y1 = lineCoords.from.y;
+							const x2 = lineCoords.to.x;
+							const y2 = lineCoords.to.y;
+							let distToLine = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.hypot(y2 - y1, x2 - x1);
+							return distToLine <= tolerance;
+						}
+
+						for (let i = 0; i < coordsArray.length; i++) {
+							let coordLineInfo = coordsArray[i];
+							
+							if (isClickOnLine(x, y, coordLineInfo)) {
+								if (fromDoubleClick) {
+									return {
+										cursor: kCurDefault,
+										target: c_oTargetType.TraceDependents,
+										cellCursor: cellCursor,
+										coordLineInfo: coordLineInfo
+									};
+								}
+								// set cursor to default
+								break
+							}
+						}
+					}
+				}
+
+
 				this.model.getCell3(r.row, c.col)._foreachNoEmpty(function (cell) {
 					if (cell.isFormula()) {
 						cell.processFormula(function(formulaParsed) {
