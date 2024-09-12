@@ -82,20 +82,8 @@ function (window, undefined) {
 		];
 	}
 
-	TraceDependentsManager.prototype.addLineCoordinates = function (from, to, x1, y1, x2, y2) {
-		if (typeof x1 !== "number" || typeof y1 !== "number" || typeof x2 !== "number" || typeof y2 !== "number") {
-			return
-		}
-		// TODO добавить информацию об областях и внешних данных
-		let arrowInfo = {from : {x: x1, y: y1, rc: from}, to: {x: x2, y: y2, rc: to}};
-
-		if (!this.tracesCoords) {
-			this.tracesCoords = [];
-		}
-		this.tracesCoords.push(arrowInfo);
-	};
-	// clearCoordsData
 	TraceDependentsManager.prototype.clearCoordsData = function () {
+		/* clear coordinatess data */
 		this.tracesCoords = null;
 	};
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -1063,7 +1051,9 @@ function (window, undefined) {
 						}
 
 						// cross check for element:
-						// if element isArea and does not reference to another sheet and element not in the function and formula is not CSE - do cross check
+						// if the element is Area and it doesn't have reference to another sheet, 
+						// and the element is not in the function, 
+						// and the formula is not CSE - we are checking for cross
 						if (isArea && !ref && !is3D && !newOutStack[index].inFormulaRef) {
 							if (elemRange.getWidth() > 1 && elemRange.getHeight() <= 1) {
 								// check cols
@@ -1113,7 +1103,7 @@ function (window, undefined) {
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
 						} else {
-							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
+							this._setPrecedents(currentCellIndex, elemCellIndex, false, areaName ? areaName : false);
 							this._setDependents(elemCellIndex, currentCellIndex);
 							if (areaName) {
 								this._setPrecedentsAreaHeader(elemCellIndex, areaName);
@@ -1151,6 +1141,47 @@ function (window, undefined) {
 		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
+	};
+	TraceDependentsManager.prototype.addLineCoordinates = function (from, to, /*fromXY, toXY*/x1, y1, x2, y2) {
+		// TODO добавить информацию о внешних данных
+		/*	
+			from - cellIndex
+			to - cellIndex
+			fromXY - from coordinates
+			toXY - to coordinates
+
+			работаем с объектом precedents, где [from] - это позиция линии со стрелкой указывающей на ячейку, а [to] - это позиция линии с точкой в начале
+		*/
+
+		if (from === undefined || to === undefined) {
+			return
+		}
+
+		let traceLineInfo = {from : {x: x1, y: y1, cellRange: null, areaRange: null}, to: {x: x2, y: y2, cellRange: null, areaRange: null}};
+
+		let fromRowCol = AscCommonExcel.getFromCellIndex(from, true);
+		let toRowCol = AscCommonExcel.getFromCellIndex(to, true);
+
+		let toAreInfo = this.precedents[from] && this.precedents[from][to];
+		let fromAreaInfo = this.precedents[to] && this.precedents[to][from];
+
+		traceLineInfo.from.cellRange = new Asc.Range(fromRowCol.col, fromRowCol.row, fromRowCol.col, fromRowCol.row);
+		traceLineInfo.to.cellRange = new Asc.Range(toRowCol.col, toRowCol.row, toRowCol.col, toRowCol.row);
+
+		// areaCheck
+		if (this.precedentsAreas) {
+			if (toAreInfo && toAreInfo !== 1 && this.precedentsAreas[toAreInfo]) {
+				traceLineInfo.to.areaRange = this.precedentsAreas[toAreInfo].range;
+			}
+			if (fromAreaInfo && fromAreaInfo !== 1 && this.precedentsAreas[fromAreaInfo]) {
+				traceLineInfo.from.areaRange = this.precedentsAreas[fromAreaInfo].range;
+			}
+		}
+
+		if (!this.tracesCoords) {
+			this.tracesCoords = [];
+		}
+		this.tracesCoords.push(traceLineInfo);
 	};
 	TraceDependentsManager.prototype.checkUnrecordedAndFormNewStack = function (cellIndex, formulaParsed) {
 		let newOutStack = [], isHaveUnrecorded;

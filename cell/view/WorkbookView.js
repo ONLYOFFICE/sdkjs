@@ -1994,13 +1994,10 @@
 		let fromCell = ct.coordLineInfo.from;
 		let toCell = ct.coordLineInfo.to;
 
-		// let fromRange = ws.model.getRange4(fromCell.rc.row, fromCell.rc.col);
-		let fromRange = new Asc.Range(fromCell.rc.col, fromCell.rc.row, fromCell.rc.col, fromCell.rc.row);
-		
-		// let toRange = ws.model.getRange4(toCell.rc.row, toCell.rc.col);
-		let toRange = new Asc.Range(toCell.rc.col, toCell.rc.row, toCell.rc.col, toCell.rc.row);
+		let fromRange = fromCell.areaRange ? fromCell.areaRange : fromCell.cellRange; 
+		let toRange = toCell.areaRange ? toCell.areaRange : toCell.cellRange;
 
-		// change selection to another cell depending on the line
+		// change selection to another cell or range depending on the trace connection
 		ws.setSelection(fromRange);
 		return
 	} else if (ct.target === c_oTargetType.FillHandle) {

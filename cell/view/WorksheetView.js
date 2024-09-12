@@ -6069,10 +6069,11 @@
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
 
-					// let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col),
-					// 	toCellIndex = AscCommonExcel.getCellIndex(to.row, to.col);
+					let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col),
+						toCellIndex = AscCommonExcel.getCellIndex(to.row, to.col);
+						
 					// write the coordinates of line to traceManager
-					traceManager.addLineCoordinates(from, to, x1, y1, newX2, newY2);
+					traceManager.addLineCoordinates(fromCellIndex, toCellIndex, /*{x: x1, y: y1}, {x: newX2, y: newY2}*/x1, y1, newX2, newY2);
 				}
 			}
 		};
@@ -10482,7 +10483,7 @@
 		} : null;
 	};
 
-	WorksheetView.prototype.getCursorTypeFromXY = function (x, y, fromDoubleClick) {
+	WorksheetView.prototype.getCursorTypeFromXY = function (x, y, fromDoubleClickCall) {
 		var canEdit = this.workbook.canEdit();
 		var viewMode = this.handlers.trigger('getViewMode');
 		this.handlers.trigger("checkLastWork");
@@ -10967,15 +10968,11 @@
 				shortIdForeignSelect: shortIdForeignSelect
 			};
 			if(!oHyperlink) {
-				if (/*fromDoubleClick &&*/ t.traceDependentsManager && t.traceDependentsManager.isHaveData) {
-					// получаем координаты всех линий зависимости и проверяем попадание курсора
-					// let ws = t.model;
-					// let depFormulas = ws && ws.workbook.dependencyFormulas;
-					// let sheetListeners = depFormulas.sheetListeners;
-
+				if (fromDoubleClickCall && t.traceDependentsManager && t.traceDependentsManager.isHaveData) {
+					/* we get the coordinates of all dependence lines and check whether the cursor hits */
 					let coordsArray = t.traceDependentsManager.tracesCoords;
 					if (coordsArray) {
-						function isClickOnLine(x, y, lineCoords, tolerance = 2) {
+						function isClickOnLine(x, y, lineCoords, tolerance = 3) {
 							const x1 = lineCoords.from.x;
 							const y1 = lineCoords.from.y;
 							const x2 = lineCoords.to.x;
@@ -10988,7 +10985,7 @@
 							let coordLineInfo = coordsArray[i];
 							
 							if (isClickOnLine(x, y, coordLineInfo)) {
-								if (fromDoubleClick) {
+								if (fromDoubleClickCall) {
 									return {
 										cursor: kCurDefault,
 										target: c_oTargetType.TraceDependents,
