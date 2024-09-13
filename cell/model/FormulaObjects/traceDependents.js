@@ -77,15 +77,10 @@ function (window, undefined) {
 
 		this._lockChangeDocument = null;
 
-		this.tracesCoords = [
-			/* an array with the coordinates of the start and end of all drawn lines */
-		];
+		/* an array with the coordinates of the start and end of all drawn lines */
+		this.tracesCoords = null;
 	}
 
-	TraceDependentsManager.prototype.clearCoordsData = function () {
-		/* clear coordinatess data */
-		this.tracesCoords = null;
-	};
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
 		this.isPrecedentsCall = true;
 		this.isDependetsCall = false;
@@ -94,17 +89,31 @@ function (window, undefined) {
 		this.isDependetsCall = true;
 		this.isPrecedentsCall = false;
 	};
-	TraceDependentsManager.prototype.setPrecedentExternal = function (cellIndex) {
+	TraceDependentsManager.prototype.setPrecedentExternal = function (from, to, elemRange, elemWs) {
 		if (!this.precedentsExternal) {
-			this.precedentsExternal = new Set();
+			this.precedentsExternal = {};
 		}
-		this.precedentsExternal.add(cellIndex);
+
+		if (!this.precedentsExternal[from]) {
+			this.precedentsExternal[from] = {};
+		}
+
+		let externalInfo = {range: elemRange, fullPath: null};
+
+		let rangeName = elemRange.getName();
+		let wsName = elemWs.getName();
+		let bookName = "";	// todo получить полное название книги
+		// в fullPath записать строку с полной информацией о названии книги, листа и диапазона
+		let fullPath = wsName + "!" + rangeName;
+		externalInfo.fullPath = fullPath;
+
+		this.precedentsExternal[from][to] = externalInfo;
 	};
 	TraceDependentsManager.prototype.checkPrecedentExternal = function (cellIndex) {
 		if (!this.precedentsExternal) {
 			return false;
 		}
-		return this.precedentsExternal.has(cellIndex);
+		return this.precedentsExternal[cellIndex];
 	};
 	TraceDependentsManager.prototype.checkCircularReference = function (cellIndex, isDependentCall) {
 		if (this.dependents && this.dependents[cellIndex] && this.precedents && this.precedents[cellIndex]) {
@@ -1094,11 +1103,13 @@ function (window, undefined) {
 						}
 
 						if (is3D) {
-							// TODO другой механизм отрисовки для внешних precedents
+							// external dependencies are stored in a separate object and rendered in a separate loop 
 							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;
 							if (currentWsIndex !== elemIndex) {
 								elemCellIndex += ";" + elemIndex;
-								this.setPrecedentExternal(currentCellIndex);
+								this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs);
+								continue
 							}
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
@@ -1138,19 +1149,20 @@ function (window, undefined) {
 				this.clearPassedPrecedents();
 			}
 		}
-		if (Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
+		if (this.precedents && this.precedents[currentCellIndex] && Object.keys(this.precedents[currentCellIndex]).length === 0 && bCellHasNotTrace) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype.addLineCoordinates = function (from, to, /*fromXY, toXY*/x1, y1, x2, y2) {
-		// TODO добавить информацию о внешних данных
 		/*	
 			from - cellIndex
 			to - cellIndex
 			fromXY - from coordinates
 			toXY - to coordinates
 
-			работаем с объектом precedents, где [from] - это позиция линии со стрелкой указывающей на ячейку, а [to] - это позиция линии с точкой в начале
+			we are working with the precedents object, where
+			[from] - this is the position of the line with the arrow pointing to the cell,
+			[to] - this is the position of the line with a dot at the beginning
 		*/
 
 		if (from === undefined || to === undefined) {
@@ -1175,6 +1187,38 @@ function (window, undefined) {
 			}
 			if (fromAreaInfo && fromAreaInfo !== 1 && this.precedentsAreas[fromAreaInfo]) {
 				traceLineInfo.from.areaRange = this.precedentsAreas[fromAreaInfo].range;
+			}
+		}
+
+		if (!this.tracesCoords) {
+			this.tracesCoords = [];
+		}
+		this.tracesCoords.push(traceLineInfo);
+	};
+	TraceDependentsManager.prototype.addExternalLineCoordinates = function (from, x1, y1, x2, y2) {
+		/*	
+			from - cellIndex
+			we are working with the precedentsExternal object, where
+			[from] - this is the position of the line with an arrow indicating external dependencies
+		*/
+
+		if (from === undefined) {
+			return
+		}
+
+		// in external we pass an array of strings like "[BookName.xlsx]SheetName!$A$1:$A$3" which we should pass to the goto window
+		let traceLineInfo = {from : {x: x1, y: y1}, to: {x: x2, y: y2}, external: null};
+
+		if (this.precedentsExternal && this.precedentsExternal[from]) {
+			// go through all externals and fill in the coords info and array of external dependencies
+			for (let i in this.precedentsExternal[from]) {
+				let externalInfo = this.precedentsExternal[from][i];
+
+				if (!traceLineInfo.external) {
+					traceLineInfo.external = [];
+				}
+
+				traceLineInfo.external.push(externalInfo.fullPath)
 			}
 		}
 
@@ -1391,13 +1435,16 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.isHavePrecedents = function () {
 		return !!this.precedents;
 	};
+	TraceDependentsManager.prototype.isHaveExternalPrecedents = function () {
+		return !!this.precedentsExternal;
+	};
 	TraceDependentsManager.prototype.forEachDependents = function (callback) {
 		for (let i in this.dependents) {
 			callback(i, this.dependents[i], this.isPrecedentsCall);
 		}
 	};
 	TraceDependentsManager.prototype.forEachExternalPrecedent = function (callback) {
-		for (let i in this.precedents) {
+		for (let i in this.precedentsExternal) {
 			callback(i);
 		}
 	};
@@ -1427,6 +1474,7 @@ function (window, undefined) {
 		this.currentCalculatedPrecedentAreas = null;
 		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
+		this.clearCoordsData();
 
 		if (needDraw) {
 			if (this.ws && this.ws.overlayCtx) {
@@ -1508,6 +1556,10 @@ function (window, undefined) {
 				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
+	};
+	TraceDependentsManager.prototype.clearCoordsData = function () {
+		/* clear coordinatess data */
+		this.tracesCoords = null;
 	};
 	/**
 	 * Sets passed precedents cells index for recursive calls

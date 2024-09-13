@@ -5959,7 +5959,7 @@
 
 	WorksheetView.prototype.drawTraceDependents = function () {
 		let traceManager = this.traceDependentsManager;
-		if(traceManager && (traceManager.isHaveDependents() || traceManager.isHavePrecedents())) {
+		if(traceManager && (traceManager.isHaveDependents() || traceManager.isHavePrecedents() || traceManager.isHaveExternalPrecedents())) {
 			this._drawElements(this.drawTraceArrows);
 		}
 	};
@@ -6071,7 +6071,7 @@
 
 					let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col),
 						toCellIndex = AscCommonExcel.getCellIndex(to.row, to.col);
-						
+
 					// write the coordinates of line to traceManager
 					traceManager.addLineCoordinates(fromCellIndex, toCellIndex, /*{x: x1, y: y1}, {x: newX2, y: newY2}*/x1, y1, newX2, newY2);
 				}
@@ -6082,6 +6082,7 @@
 			let x1 = t._getColLeft(from.col) - offsetX + t._getColumnWidth(from.col) / 4;
 			let y1 = t._getRowTop(from.row) - offsetY + t._getRowHeight(from.row) / 2;
 			let arrowSize = 7 * zoom * customScale;
+			let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col);
 
 			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop;
 			// reverse the line
@@ -6135,8 +6136,8 @@
 			drawDot(x1, y1, externalLineColor);
 			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 
-			// write the coordinates of line to traceManager
-			traceManager.addLineCoordinates(x1, y1, newX2, newY2);
+
+			traceManager.addExternalLineCoordinates(fromCellIndex, x1, y1, newX2, newY2)
 		};
 
 		const drawDottedLine = function (x1, y1, x2, y2) {
@@ -10972,7 +10973,7 @@
 					/* we get the coordinates of all dependence lines and check whether the cursor hits */
 					let coordsArray = t.traceDependentsManager.tracesCoords;
 					if (coordsArray) {
-						function isClickOnLine(x, y, lineCoords, tolerance = 3) {
+						function isClickOnLine(x, y, lineCoords, tolerance = 4) {
 							const x1 = lineCoords.from.x;
 							const y1 = lineCoords.from.y;
 							const x2 = lineCoords.to.x;

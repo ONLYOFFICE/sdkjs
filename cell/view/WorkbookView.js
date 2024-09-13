@@ -1994,6 +1994,12 @@
 		let fromCell = ct.coordLineInfo.from;
 		let toCell = ct.coordLineInfo.to;
 
+		/* external ref, open goto window */
+		if (ct.coordLineInfo.external) {
+			// console.log(ct.coordLineInfo.external);
+			return
+		}
+
 		let fromRange = fromCell.areaRange ? fromCell.areaRange : fromCell.cellRange; 
 		let toRange = toCell.areaRange ? toCell.areaRange : toCell.cellRange;
 
