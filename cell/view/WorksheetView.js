@@ -5996,6 +5996,9 @@
 		};
 
 		const drawDependentLine = function (from, to, external) {
+			let fromCellIndex = from ? AscCommonExcel.getCellIndex(from.row, from.col) : null,
+				toCellIndex = to ? AscCommonExcel.getCellIndex(to.row, to.col) : null;
+
 			let x1 = t._getColLeft(from.col) - offsetX + t._getColumnWidth(from.col) / 4;
 			let y1 = t._getRowTop(from.row) - offsetY + t._getRowHeight(from.row) / 2;
 			let arrowSize = 7 * zoom * customScale;
@@ -6060,6 +6063,8 @@
 					drawArrowHead(x2, y2, arrowSize, angle, externalLineColor);
 					drawDot(x1, y1, externalLineColor);
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+
+					traceManager.addExternalLineCoordinates(fromCellIndex, x1, y1, newX2, newY2);
 				} else {
 					ctx.beginPath();
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
@@ -6068,9 +6073,6 @@
 					ctx.stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
-
-					let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col),
-						toCellIndex = AscCommonExcel.getCellIndex(to.row, to.col);
 
 					// write the coordinates of line to traceManager
 					traceManager.addLineCoordinates(fromCellIndex, toCellIndex, /*{x: x1, y: y1}, {x: newX2, y: newY2}*/x1, y1, newX2, newY2);
@@ -6137,7 +6139,7 @@
 			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 
 
-			traceManager.addExternalLineCoordinates(fromCellIndex, x1, y1, newX2, newY2)
+			traceManager.addExternalLineCoordinates(fromCellIndex, x1, y1, newX2, newY2);
 		};
 
 		const drawDottedLine = function (x1, y1, x2, y2) {

@@ -50,6 +50,7 @@ function (window, undefined) {
 		this.ws = ws;
 		this.precedents = null;
 		this.precedentsExternal = null;
+		this.dependentsExternal = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
@@ -115,6 +116,34 @@ function (window, undefined) {
 		}
 		return this.precedentsExternal[cellIndex];
 	};
+	// dependentsExternal
+	TraceDependentsManager.prototype.setDependentsExternal = function (from, to, elemRange, elemWs) {
+		if (!this.dependentsExternal) {
+			this.dependentsExternal = {};
+		}
+
+		if (!this.dependentsExternal[from]) {
+			this.dependentsExternal[from] = {};
+		}
+
+		let externalInfo = {range: elemRange, fullPath: null};
+
+		let rangeName = elemRange.getName();
+		let wsName = elemWs.getName();
+		let bookName = "";
+		let fullPath = wsName + "!" + rangeName;
+
+		externalInfo.fullPath = fullPath;
+
+		this.dependentsExternal[from][to] = externalInfo;
+	};
+	TraceDependentsManager.prototype.checkDependentExternal = function (cellIndex) {
+		if (!this.dependentsExternal) {
+			return false;
+		}
+		return this.dependentsExternal[cellIndex];
+	};
+
 	TraceDependentsManager.prototype.checkCircularReference = function (cellIndex, isDependentCall) {
 		if (this.dependents && this.dependents[cellIndex] && this.precedents && this.precedents[cellIndex]) {
 			if (isDependentCall) {
@@ -590,6 +619,13 @@ function (window, undefined) {
 						if (parentCellIndex === null) {
 							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
+						}
+
+						if (is3D && typeof parentCellIndex === "string") {
+							// the object dependentsExternal is only needed to handle a double click on an arrow, and is not used in drawing
+							let elemRange = cellListeners[i].ref ? cellListeners[i].ref : new Asc.Range(parent.col, parent.row, parent.col, parent.row);
+							let elemWs = parent.ws;
+							this.setDependentsExternal(cellIndex, parentCellIndex, elemRange, elemWs);
 						}
 						this._setDependents(cellIndex, parentCellIndex);
 						this._setPrecedents(parentCellIndex, cellIndex, true);
@@ -1198,7 +1234,7 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.addExternalLineCoordinates = function (from, x1, y1, x2, y2) {
 		/*	
 			from - cellIndex
-			we are working with the precedentsExternal object, where
+			we are working with the precedentsExternal and dependentsExternal object, where
 			[from] - this is the position of the line with an arrow indicating external dependencies
 		*/
 
@@ -1209,10 +1245,21 @@ function (window, undefined) {
 		// in external we pass an array of strings like "[BookName.xlsx]SheetName!$A$1:$A$3" which we should pass to the goto window
 		let traceLineInfo = {from : {x: x1, y: y1}, to: {x: x2, y: y2}, external: null};
 
+		// we go through all external dependencies and fill array of external dependencies for chosen line
 		if (this.precedentsExternal && this.precedentsExternal[from]) {
-			// go through all externals and fill in the coords info and array of external dependencies
 			for (let i in this.precedentsExternal[from]) {
 				let externalInfo = this.precedentsExternal[from][i];
+
+				if (!traceLineInfo.external) {
+					traceLineInfo.external = [];
+				}
+
+				traceLineInfo.external.push(externalInfo.fullPath)
+			}
+		}
+		if (this.dependentsExternal && this.dependentsExternal[from]) {
+			for (let i in this.dependentsExternal[from]) {
+				let externalInfo = this.dependentsExternal[from][i];
 
 				if (!traceLineInfo.external) {
 					traceLineInfo.external = [];
@@ -1438,6 +1485,9 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.isHaveExternalPrecedents = function () {
 		return !!this.precedentsExternal;
 	};
+	TraceDependentsManager.prototype.isHaveExternalDependents = function () {
+		return !!this.dependentsExternal;
+	};
 	TraceDependentsManager.prototype.forEachDependents = function (callback) {
 		for (let i in this.dependents) {
 			callback(i, this.dependents[i], this.isPrecedentsCall);
@@ -1466,6 +1516,7 @@ function (window, undefined) {
 		}
 		this.precedents = null;
 		this.precedentsExternal = null;
+		this.dependentsExternal = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
