@@ -1391,7 +1391,19 @@ function (window, undefined) {
 					}
 
 					if (is3D) {
-						elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+						// elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+
+						let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+						let elemWs = elem.wsFrom ? elem.wsTo : elem.ws;
+						if (currentWsIndex !== elemIndex) {
+							let hasExternalPrecedent = this.checkPrecedentExternal(cellIndex);
+							elemCellIndex += ";" + elemIndex;
+							if (!hasExternalPrecedent || (hasExternalPrecedent && !this.precedentsExternal[cellIndex][elemCellIndex])) {
+								isHaveUnrecorded = true;
+							}
+							// this.setPrecedentExternal(currentCellIndex, elemCellIndex, elemRange, elemWs);
+							continue
+						}
 					}
 					if (!this._getPrecedents(cellIndex, elemCellIndex)) {
 						isHaveUnrecorded = true;
