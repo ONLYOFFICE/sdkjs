@@ -99,13 +99,15 @@ function (window, undefined) {
 			this.precedentsExternal[from] = {};
 		}
 
+		let docInfo = window["Asc"]["editor"].DocInfo;
 		let externalInfo = {range: elemRange, fullPath: null};
 
 		let rangeName = elemRange.getName();
 		let wsName = elemWs.getName();
-		let bookName = "";	// todo получить полное название книги
-		// в fullPath записать строку с полной информацией о названии книги, листа и диапазона
-		let fullPath = wsName + "!" + rangeName;
+		let fileName = docInfo ? docInfo.get_Title() : "";
+		// in fullPath we write a line with complete information about the name of the book, sheet and range
+		let fullPath = "[" + fileName + "]" + wsName + "!" + rangeName;
+
 		externalInfo.fullPath = fullPath;
 
 		this.precedentsExternal[from][to] = externalInfo;
@@ -126,12 +128,14 @@ function (window, undefined) {
 			this.dependentsExternal[from] = {};
 		}
 
+		let docInfo = window["Asc"]["editor"].DocInfo;
 		let externalInfo = {range: elemRange, fullPath: null};
 
 		let rangeName = elemRange.getName();
 		let wsName = elemWs.getName();
-		let bookName = "";
-		let fullPath = wsName + "!" + rangeName;
+		let fileName = docInfo ? docInfo.get_Title() : "";
+		// in fullPath we write a line with complete information about the name of the book, sheet and range
+		let fullPath = "[" + fileName + "]" + wsName + "!" + rangeName;
 
 		externalInfo.fullPath = fullPath;
 
