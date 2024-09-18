@@ -1712,7 +1712,7 @@ function (window, undefined) {
 				found_operand = new cRef(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), ws);
 			} else if (parserHelp.isName.call(o, o.Formula, o.pCurrPos)) {
 				found_operand = new cName(o.operand_str, ws);
-			} else if (_tableTMP = parserHelp.isTable.call(o, o.Formula, o.pCurrPos)) {
+			} else if (_tableTMP = parserHelp.isTable.call(o, o, o.pCurrPos)) {
 				found_operand = AscCommonExcel.cStrucTable.prototype.createFromVal(_tableTMP, wb, ws);
 
 				if (found_operand.type === cElementType.error) {

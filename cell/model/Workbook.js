@@ -958,6 +958,11 @@
 						var sheetDefName = defNameParseRef[0];
 						var sRefDefName = defNameParseRef[1];
 
+						if (sheetDefName) {
+							// remove inner quotes from string
+							sheetDefName = sheetDefName.replace(/['"]+/g, '');
+						}
+
 						if (cellSheet && cellSheet.sName === sheetDefName) {
 							var refDefName = AscCommonExcel.g_oRangeCache.getAscRange(sRefDefName);
 							if (refDefName && refDefName.contains(col, row)) {
@@ -8522,6 +8527,19 @@
 		{
 			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
 			{
+				res = this.TableParts[i];
+				break;
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getTableByRowCol = function(row, col){
+		let res = null;
+		if (!this.TableParts || typeof(row) !== 'number' || typeof(col) !== 'number')
+			return res;
+
+		for (let i = 0; i < this.TableParts.length; i++) {
+			if (this.TableParts[i].Ref && this.TableParts[i].Ref.contains(col, row)) {
 				res = this.TableParts[i];
 				break;
 			}

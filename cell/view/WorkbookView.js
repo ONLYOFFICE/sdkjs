@@ -2817,6 +2817,7 @@
 		};
 
 		let defNamesList, defName, defNameStr, _lastFNameLength, _type;
+		let currentCell = oThis.cellEditor.options.bbox;
 		fName = fName.toUpperCase();
 		for (let i = 0; i < this.formulasList.length; ++i) {
 			if (0 === this.formulasList[i].indexOf(fName)) {
@@ -2827,13 +2828,85 @@
 		defNamesList = this.getDefinedNames(Asc.c_oAscGetDefinedNamesList.WorksheetWorkbook);
 		fName = fName.toLowerCase();
 		for (let i = 0; i < defNamesList.length; ++i) {
+			let activeWS = this.getActiveWS();
+			let isCurrentCellInTable, shortNameUsed;
+
 			defName = defNamesList[i];
 			defNameStr = defName.Name;
+
+			let tablePart = activeWS.getTableByName(defNameStr), tableRef = tablePart.Ref;
+
+			if (tableRef && tableRef.contains(currentCell.c1, currentCell.r1)) {
+				isCurrentCellInTable = true;
+			}
+
 			if (null !== defName.LocalSheetId && defNameStr.toLowerCase() === "print_area") {
 				defNameStr = AscCommon.translateManager.getValue("Print_Area");
 			}
 
-			if (0 === defNameStr.toLowerCase().indexOf(fName)) {
+			if (defName.type === Asc.c_oAscDefNameType.table && fName[0] === "[" && isCurrentCellInTable) {
+				// '=[Column1]' === '=Table[Column1]'
+				shortNameUsed = true;
+
+				// add only columns to the dropdown menu if @ the last element
+				// looking for matches by column names
+				let table = tablePart ? tablePart : this.model.getTableByName(defNameStr);
+				if (table) {
+					let tempfName = defNameStr.toLowerCase() + fName;
+					let sTableInner = _getInnerTable(tempfName, defNameStr.toLowerCase());	// значение внутри скобок
+					if (null !== sTableInner) {
+						let _str;
+						for (let j = 0; j < table.TableColumns.length; j++) {
+							_str = table.TableColumns[j].Name;
+							_type = c_oAscPopUpSelectorType.TableColumnName;
+
+							let newStr;
+							if (sTableInner[0] === "@") {
+								newStr = sTableInner.slice(1);
+								if (newStr === "" || 0 === _str.toLowerCase().indexOf(newStr)) {
+									arrResult.push(getCompleteMenu(_str, _type));
+								}
+							} 
+							else if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
+								arrResult.push(getCompleteMenu(_str, _type));
+							}
+						}
+
+						// TODO в ms подсказка не отображается, но можно написать вручную и будет выполняться
+						// if (AscCommon.cStrucTableLocalColumns) {
+						// 	for (let j in AscCommon.cStrucTableLocalColumns) {
+						// 		_str = AscCommon.cStrucTableLocalColumns[j];
+						// 		if (j === "h") {
+						// 			_str = "#" + _str;
+						// 			_type = c_oAscPopUpSelectorType.TableHeaders;
+						// 		} else if (j === "d") {
+						// 			_str = "#" + _str;
+						// 			_type = c_oAscPopUpSelectorType.TableData;
+						// 		} else if (j === "a") {
+						// 			_str = "#" + _str;
+						// 			_type = c_oAscPopUpSelectorType.TableAll;
+						// 		} else if (j === "tr") {
+						// 			_str = "@" + " - " + _str;
+						// 			_type = c_oAscPopUpSelectorType.TableThisRow;
+						// 		} else if (j === "t") {
+						// 			_str = "#" + _str;
+						// 			_type = c_oAscPopUpSelectorType.TableTotals;
+						// 		}
+						// 		if (sTableInner === "" || (0 === _str.toLocaleLowerCase().indexOf(sTableInner) && _type !== c_oAscPopUpSelectorType.TableThisRow)) {
+						// 			arrResult.push(getCompleteMenu(_str, _type));
+						// 		}
+						// 	}
+						// }
+						fPos += defNameStr.length + (fName.length - defNameStr.length - sTableInner.length);
+						_lastFNameLength = sTableInner.length;
+						// shift for fPos for correct work when we use result from dropdown menu
+						if (sTableInner[0] === "@") {
+							fPos++
+						}
+					}
+				}
+			} 
+			else if (0 === defNameStr.toLowerCase().indexOf(fName)) {
 				_type = c_oAscPopUpSelectorType.Range;
 				if (defName.type === Asc.c_oAscDefNameType.slicer) {
 					_type = c_oAscPopUpSelectorType.Slicer;
@@ -2940,8 +3013,14 @@
 				if (type === c_oAscPopUpSelectorType.TableThisRow) {
 					this.skipHelpSelector = false;
 				}
+				let newText = name;
+				if (type === c_oAscPopUpSelectorType.TableThisRow) {
+					newText = "@"
+				} else if (type === c_oAscPopUpSelectorType.TableColumnName) {
+					newText = name && name[0] === "#" ? ("'" + name) : name;
+				}
 
-                this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
+				this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, newText);
                 this.cellEditor.skipTLUpdate = tmp;
             } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
                 // Не смогли вставить формулу, закроем редактор, с сохранением текста

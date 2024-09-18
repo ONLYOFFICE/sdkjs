@@ -3741,20 +3741,57 @@
 			return true;
 		}
 	};
-	parserHelper.prototype.isTable = function (formula, start_pos, local)
+	parserHelper.prototype.isTable = function (parserFormula, start_pos, local, callFromDefName)
 	{
+		let shortNameUsed, shortName, isCellInTable;
+		let formula = parserFormula.Formula,
+			ws = parserFormula.ws,
+			subSTR = formula.substring(start_pos);
+
+		if (callFromDefName) {
+			formula += "[]";
+		}
+
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
 
-		let subSTR = formula.substring(start_pos),
-		match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
+
+		/* check if the cell is inside the table and whether short name is used "=[Column]" */
+		if (parserFormula.parent) {
+			let table = ws.getTableByRowCol(parserFormula.parent.nRow, parserFormula.parent.nCol);
+			isCellInTable = table ? true : false;
+			if (isCellInTable && subSTR && subSTR[0] === "[" && ws) {
+				// todo добавить другую регулярку?
+				let shorNameMatch = subSTR.match(/\[[^\[\]]*\]/);
+				
+				if (shorNameMatch && shorNameMatch[0]) {
+					shortName = subSTR;		// set shortName definitely before changing subSTR
+					subSTR = table.DisplayName + subSTR;	// add table from cell coords in to the formula string and then call XRegExp.exec
+					// shortName = shorNameMatch[0];
+					shortNameUsed = true;
+				}
+			}
+		}
+
+		// let subSTR = formula.substring(start_pos),
+		let match = XRegExp.exec(subSTR, local ? rx_table_local : rx_table);
 
 		if (match != null && match["tableName"])
 		{
-			this.operand_str = match[0];
-			this.pCurrPos += match[0].length;
+			match["isCellInTable"] = isCellInTable;
+
+			if (shortName && shortNameUsed) {
+				this.operand_str = shortName;
+				this.pCurrPos += shortName.length;
+
+				match["shortName"] = shortName;
+			} else {
+				this.operand_str = match[0];
+				this.pCurrPos += match[0].length;
+			}
+
 			return match;
 		}
 

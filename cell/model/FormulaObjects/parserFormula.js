@@ -2253,19 +2253,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.isDynamic = false;//#This row
 		this.area = null;
+
+		this.shortName = null;// Short name can only be used inside the table cell: "=Table[Column]" === "=[Column]"
 	}
 
 	cStrucTable.prototype = Object.create(cBaseType.prototype);
 	cStrucTable.prototype.constructor = cStrucTable;
 	cStrucTable.prototype.type = cElementType.table;
 	cStrucTable.prototype.createFromVal = function (val, wb, ws, tablesMap) {
-		var res = new cStrucTable(val[0], wb, ws);
+		let res = new cStrucTable(val[0], wb, ws);
 		if (tablesMap && tablesMap[val["tableName"]]) {
 			val["tableName"] = tablesMap[val["tableName"]];
 		}
 		if (res._parseVal(val)) {
 			res._updateArea(null, false);
 		}
+		if (val["isCellInTable"]) {
+			res.isCellInTable = true;
+		}
+		if (val["shortName"]) {
+			// remove tableName in value string 
+			res.value = val["shortName"];
+			res.shortName = val["shortName"];
+		}
+
 		return (res.area && res.area.type != cElementType.error) ? res : new cError(cErrorType.bad_reference);
 	};
 	cStrucTable.prototype.clone = function (opt_ws) {
@@ -2323,11 +2334,12 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		// file works with "#This Row" - user with "@"
 		// isLocal - change "#This Row", to "@"
 		const table = this.wb.getDefinesNames(this.tableName, null);
-		let tblStr, columns_1, columns_2;
-		if (!table) {
-			tblStr = this.tableName;
-		} else {
-			tblStr = table.name;
+		let tblStr = "", columns_1, columns_2;
+
+		if (!(this.isCellInTable && this.oneColumnIndex && isLocal)) {
+			// only for oneColumn we use shorthand notation inside the table (as in ms)
+			// It's also important to remember that the full entry is always written into the cell, not a short one
+			tblStr = table ? table.name : this.tableName;
 		}
 
 		if (this.oneColumnIndex) {
@@ -7393,7 +7405,7 @@ function parserFormula( formula, parent, _ws ) {
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 
 				t.ca = isRecursiveFormula(found_operand, t);
-			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
+			} else if (_tableTMP = parserHelp.isTable.call(ph, t, ph.pCurrPos)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
 				//todo undo delete column
@@ -7444,7 +7456,7 @@ function parserFormula( formula, parent, _ws ) {
 					defName = found_operand.getDefName();
 				}
 
-				if (defName && defName.type === Asc.c_oAscDefNameType.table && (_tableTMP = parserHelp.isTable(sDefNameOperand + "[]", 0))) {
+				if (defName && defName.type === Asc.c_oAscDefNameType.table && (_tableTMP = parserHelp.isTable(t, 0,/*isLocal */ null,/*callFfromDefName*/ true))) {
 					found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws);
 					//need assemble becase source formula wrong
 					needAssemble = true;
