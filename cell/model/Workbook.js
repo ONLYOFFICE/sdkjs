@@ -654,7 +654,7 @@
 				if (!areaSheetElem) {
 					//todo clone inside or outside startListeningRange?
 					bbox = bbox.clone();
-					areaSheetElem = {bbox: bbox, count: 0, listeners: {}, isActive: true};
+					areaSheetElem = {id: vertexIndex, bbox: bbox, count: 0, listeners: {}, isActive: true};
 					if (true) {
 						areaSheetElem.sharedBroadcast = {changedBBox: null, prevChangedBBox: null, recursion: 0};
 					}
@@ -2201,12 +2201,9 @@
 			var indexTop = 0;
 			var indexBottom = 0;
 			var indexCell = 0;
-			var tree = new AscCommon.DataIntervalTree();
+			let helper = new BroadcastHelper();
 			var affected = [];
-			var curY, elem;
-			if (indexCell < cells.length) {
-				getFromCellIndex(cells[indexCell]);
-			}
+			var curY, curYCell = -1, elem;
 			//scanline by Y
 			while (indexBottom < rangesBottom.length && indexCell < cells.length) {
 				//next curY
@@ -2215,35 +2212,67 @@
 				} else {
 					curY = rangesBottom[indexBottom].bbox.r2;
 				}
+				function process_cells_before_curY() {
+					if (g_FCI.row > curYCell) {
+						helper.reset();
+						curYCell = g_FCI.row;
+					}
+					if (g_FCI.col < helper.from) {
+						indexCell++;
+					} else if (helper.from <= g_FCI.col && g_FCI.col <= helper.to) {
+						helper.curElems.forEach(function(elem) {
+							elem.isActive = false;
+							helper.addDelete(elem);
+							affected.push(elem);
+						});
+						indexCell++;
+					} else {
+						//todo bin search?
+						if (!helper.next()) {
+							return false;
+						}
+					}
+					return true;
+				}
 				//process cells before curY
-				while (indexCell < cells.length && g_FCI.row < curY) {
-					this._broadcastRangesByCellsIntersect(tree, g_FCI.row, g_FCI.col, affected);
-					indexCell++;
-					if (indexCell < cells.length) {
-						getFromCellIndex(cells[indexCell]);
+				while (indexCell < cells.length) {
+					getFromCellIndex(cells[indexCell]);
+					if (g_FCI.row < curY) {
+						if(!process_cells_before_curY()) {
+							break;
+						}
+					} else {
+						break;
 					}
 				}
+				helper.finishDelete();
+				//insert new ranges
 				while (indexTop < rangesTop.length && curY === rangesTop[indexTop].bbox.r1) {
 					elem = rangesTop[indexTop];
 					if (elem.isActive) {
-						tree.insert(elem.bbox.c1, elem.bbox.c2, elem);
+						helper.addInsert(elem);
 					}
 					indexTop++;
 				}
-				while (indexCell < cells.length && g_FCI.row <= curY) {
-					this._broadcastRangesByCellsIntersect(tree, g_FCI.row, g_FCI.col, affected);
-					indexCell++;
-					if (indexCell < cells.length) {
-						getFromCellIndex(cells[indexCell]);
+				helper.finishInsert();
+				while (indexCell < cells.length) {
+					getFromCellIndex(cells[indexCell]);
+					if (g_FCI.row <= curY) {
+						if(!process_cells_before_curY()) {
+							break;
+						}
+					} else {
+						break;
 					}
 				}
 				while (indexBottom < rangesBottom.length && curY === rangesBottom[indexBottom].bbox.r2) {
 					elem = rangesBottom[indexBottom];
 					if (elem.isActive) {
-						tree.remove(elem.bbox.c1, elem.bbox.c2, elem);
+						helper.addDelete(elem);
 					}
 					indexBottom++;
 				}
+				helper.finishDelete();
 			}
 			this._broadcastNotifyRanges(affected, notifyData);
 		},
@@ -2453,6 +2482,187 @@
 				listeners[listenerId].notify(notifyData);
 			}
 		}
+	};
+
+	function BroadcastHelper() {
+		this.curElems = new Map();
+		this.from = -1;
+		this.to = -1;
+
+		//many arrays to avoid temp objects
+		this.eventsFrom = [];
+		this.eventsFromIndex = 0;
+		this.eventsFromLen = 0;
+		this.eventsTo = [];
+		this.eventsToIndex = 0;
+		this.eventsToLen = 0;
+
+		this.insertFrom = [];
+		this.insertFromLen = 0;
+		this.insertTo = [];
+		this.insertToLen = 0;
+
+		this.deleteFrom = [];
+		this.deleteFromLen = 0;
+		this.deleteTo = [];
+		this.deleteToLen = 0;
+	}
+	BroadcastHelper.prototype.reset = function () {
+		this.curElems.clear();
+		this.from = -1;
+		this.to = -1;
+		this.eventsFromIndex = 0;
+		this.eventsToIndex = 0;
+	};
+	BroadcastHelper.prototype._getNextTo = function () {
+		if (this.eventsToIndex < this.eventsToLen) {
+			let elem = this.eventsTo[this.eventsToIndex];
+			if (this.eventsFromIndex < this.eventsFromLen && this.eventsFrom[this.eventsFromIndex].bbox.c1 <= elem.bbox.c2) {
+				elem = this.eventsFrom[this.eventsFromIndex];
+				return elem.bbox.c1;
+			} else {
+				return elem.bbox.c2;
+			}
+		}
+		return -1;
+	}
+	BroadcastHelper.prototype.next = function (elem) {
+		if (this.eventsToIndex < this.eventsToLen) {
+			let elem = this.eventsTo[this.eventsToIndex];
+			if (this.eventsFromIndex < this.eventsFromLen && this.eventsFrom[this.eventsFromIndex].bbox.c1 <= elem.bbox.c2) {
+				elem = this.eventsFrom[this.eventsFromIndex];
+				this.from = elem.bbox.c1;
+				while (this.eventsFromIndex < this.eventsFromLen && this.eventsFrom[this.eventsFromIndex].bbox.c1 === elem.bbox.c1) {
+					elem = this.eventsFrom[this.eventsFromIndex];
+					this.curElems.set(elem.id, elem);
+					this.eventsFromIndex++;
+				}
+			} else {
+				this.from = elem.bbox.c2;
+				while (this.eventsToIndex < this.eventsToLen && this.eventsTo[this.eventsToIndex].bbox.c2 === elem.bbox.c2) {
+					elem = this.eventsTo[this.eventsToIndex];
+					this.curElems.delete(elem.id);
+					this.eventsToIndex++;
+				}
+			}
+			this.to = this._getNextTo();
+			return true;
+		}
+		return false;
+	};
+	BroadcastHelper.prototype.addInsert = function (elem) {
+		//elem.bbox & elem.id
+		this.insertFrom[this.insertFromLen] = elem;
+		this.insertFromLen++;
+		this.insertTo[this.insertToLen] = elem;
+		this.insertToLen++;
+	};
+	BroadcastHelper.prototype.finishInsert = function () {
+		if (0 === this.insertFromLen && 0 === this.insertToLen) {
+			return
+		}
+		//insertFrom - presorted; need sort insertTo;
+		//do you sort a subset of an array?
+		this.insertTo.sort(function(a, b) {
+			if (a && b) {
+				return a.bbox.c2 - b.bbox.c2;
+			} else if (a) {
+				return 1;
+			}
+			return -1;
+		});
+		let i = 0, insertFromIndex = 0;
+		while (insertFromIndex < this.insertFromLen && i < this.eventsFromLen) {
+			if (this.eventsFrom[i].bbox.c1 < this.insertFrom[insertFromIndex].bbox.c1) {
+
+			} else {
+				let temp = this.insertFrom[insertFromIndex];
+				this.insertFrom[insertFromIndex] = this.eventsFrom[i];
+				this.eventsFrom[i] = temp;
+			}
+			++i;
+		}
+		for (i = insertFromIndex; i < this.insertFromLen; ++i) {
+			this.eventsFrom[this.eventsFromLen] = this.insertFrom[i];
+			this.eventsFromLen++;
+		}
+		this.insertFromLen = 0;
+
+		//todo code duplicate
+		let insertToIndex = 0
+		while (insertToIndex < this.insertToLen && i < this.eventsToLen) {
+			if (this.eventsTo[i].bbox.c2 < this.insertTo[insertToIndex].bbox.c2) {
+
+			} else {
+				let temp = this.insertTo[insertToIndex];
+				this.insertTo[insertToIndex] = this.eventsTo[i];
+				this.eventsTo[i] = temp;
+			}
+			++i;
+		}
+		for (i = insertToIndex; i < this.insertToLen; ++i) {
+			this.eventsTo[this.eventsToLen] = this.insertTo[i];
+			this.eventsToLen++;
+		}
+		this.insertToLen = 0;
+		this.insertTo.fill(undefined);
+	};
+	BroadcastHelper.prototype.addDelete = function (elem) {
+		//elem.bbox & elem.id
+		this.deleteFrom[this.deleteFromLen] = elem;
+		this.deleteFromLen++;
+		this.deleteTo[this.deleteToLen] = elem;
+		this.deleteToLen++;
+	};
+	BroadcastHelper.prototype.finishDelete = function () {
+		if (0 === this.deleteFromLen && 0 === this.deleteToLen) {
+			return
+		}
+		//deleteFrom - presorted; need sort deleteTo;
+		//do you sort a subset of an array?
+		this.deleteTo.sort(function(a, b) {
+			if (a && b) {
+				return a.bbox.c2 - b.bbox.c2;
+			} else if (a) {
+				return 1;
+			}
+			return -1;
+		});
+		let i = 0, deleteFromIndex = 0;
+		while (deleteFromIndex < this.deleteFromLen && i < this.eventsFromLen) {
+			if (this.eventsFrom[i].bbox.c1 < this.deleteFrom[deleteFromIndex].bbox.c1) {
+
+			} else {
+				let temp = this.deleteFrom[deleteFromIndex];
+				this.deleteFrom[deleteFromIndex] = this.eventsFrom[i];
+				this.eventsFrom[i] = temp;
+			}
+			++i;
+		}
+		for (i = deleteFromIndex; i < this.deleteFromLen; ++i) {
+			this.eventsFrom[this.eventsFromLen] = this.deleteFrom[i];
+			this.eventsFromLen++;
+		}
+		this.deleteFromLen = 0;
+
+		//todo code duplicate
+		let deleteToIndex = 0
+		while (deleteToIndex < this.deleteToLen && i < this.eventsToLen) {
+			if (this.eventsTo[i].bbox.c2 < this.deleteTo[deleteToIndex].bbox.c2) {
+
+			} else {
+				let temp = this.deleteTo[deleteToIndex];
+				this.deleteTo[deleteToIndex] = this.eventsTo[i];
+				this.eventsTo[i] = temp;
+			}
+			++i;
+		}
+		for (i = deleteToIndex; i < this.deleteToLen; ++i) {
+			this.eventsTo[this.eventsToLen] = this.deleteTo[i];
+			this.eventsToLen++;
+		}
+		this.deleteToLen = 0;
+		this.deleteTo.fill(undefined);
 	};
 
 	function ForwardTransformationFormula(elem, formula, parsed) {
