@@ -422,6 +422,9 @@ CShape.prototype.recalcText = function()
     this.recalcInfo.recalculateTransformText = true;
 };
 
+/**
+ * @memberof CShape
+ */
 CShape.prototype.recalculate = function ()
 {
     if(this.bDeleted || !this.parent)

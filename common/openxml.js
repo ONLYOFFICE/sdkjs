@@ -792,7 +792,24 @@
 		oformUserMaster: {dir: "oform/userMasters", filename: "userMaster[N].xml", contentType: "application/vnd.openxmlformats-package.onlyf-userMaster+xml", relationType: "https://schemas.onlyoffice.com/relationships/oform-userMaster"},
 		oformUser: {dir: "oform/users", filename: "user[N].xml", /*contentType: "application/vnd.openxmlformats-package.onlyf-user+xml",*/ relationType: "https://schemas.onlyoffice.com/relationships/oform-user"},
 		oformField: {dir: "oform/fields", filename: "field[N].xml", /*contentType: "application/vnd.openxmlformats-package.onlyf-field+xml",*/ relationType: "https://schemas.onlyoffice.com/relationships/oform-field"},
-		oformFieldMaster: {dir: "oform/fieldMasters", filename: "fieldMaster[N].xml", contentType: "application/vnd.openxmlformats-package.onlyf-fieldMaster+xml", relationType: "https://schemas.onlyoffice.com/relationships/oform-fieldMaster"}
+		oformFieldMaster: {dir: "oform/fieldMasters", filename: "fieldMaster[N].xml", contentType: "application/vnd.openxmlformats-package.onlyf-fieldMaster+xml", relationType: "https://schemas.onlyoffice.com/relationships/oform-fieldMaster"},
+
+		//visio
+		visioDocument: {dir: "visio", filename: "document.xml", contentType: "application/vnd.ms-visio.drawing.main+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/document"},
+		visioDocumentWindows: {dir: "", filename: "windows.xml", contentType: "application/vnd.ms-visio.windows+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/windows"},
+		pages: {dir: "pages", filename: "pages.xml", contentType: "application/vnd.ms-visio.pages+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/pages"},
+		page: {dir: "", filename: "page[N].xml", contentType: "application/vnd.ms-visio.page+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/page"},
+		masters: {dir: "masters", filename: "masters.xml", contentType: "application/vnd.ms-visio.masters+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/masters"},
+		master: {dir: "", filename: "master[N].xml", contentType: "application/vnd.ms-visio.master+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/master"},
+		masterFromPage: {dir: "../masters", filename: "master[N].xml", contentType: "application/vnd.ms-visio.master+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/master"},
+		thumbnail: {dir: "docProps", filename: "thumbnail.emf", contentType: "image/x-emf", relationType: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"},
+		visioComments: {dir: "", filename: "comments.xml", contentType: "application/vnd.ms-visio.comments+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/comments"},
+		visioExtensions: {dir: "", filename: "extensions.xml", contentType: "application/vnd.ms-visio.extensions+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/extensions"},
+		visioDataConnections: {dir: "data", filename: "connections.xml", contentType: "application/vnd.ms-visio.connections+xml", relationType : "http://schemas.microsoft.com/visio/2010/relationships/connections"},
+		visioDataRecordSets : {dir: "data", filename: "recordsets.xml", contentType: "application/vnd.ms-visio.recordsets+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/recordsets"},
+		solutions: {dir: "solutions", filename: "solutions.xml", contentType: "application/vnd.ms-visio.solutions+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/solutions"},
+		solution: {dir: "", filename: "solution[N].xml", contentType: "application/vnd.ms-visio.solution+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/solution"},
+		validation : {dir: "", filename: "validation.xml", contentType: "application/vnd.ms-visio.validation+xml", relationType: "http://schemas.microsoft.com/visio/2010/relationships/validation"}
 	};
 	openXml.TargetMode = {
 		internal: "Internal",
