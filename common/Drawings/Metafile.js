@@ -837,6 +837,17 @@
 				this.data[this.pos++] = (c >>> 8) & 0xFF;
 			}
 		}
+		this.WriteCustomStringA = function(text)
+		{
+			var encoder = new TextEncoder('utf-8');
+			var encodedText = encoder.encode(text);
+
+			this.WriteULong(encodedText.length);
+
+			for (let i = 0; i < encodedText.length; i++) {
+				this.data[this.pos++] = encodedText[i];
+			}
+		}
 		this.WriteStringA = function(text)
 		{
 			var count = text.length;

@@ -2354,7 +2354,8 @@
 	window['AscDFH'].historyitem_SdtPr_FormPr           = window['AscDFH'].historyitem_type_SdtPr | 22;
 	window['AscDFH'].historyitem_SdtPr_PictureFormPr    = window['AscDFH'].historyitem_type_SdtPr | 23;
 	window['AscDFH'].historyitem_SdtPr_ComplexFormPr    = window['AscDFH'].historyitem_type_SdtPr | 24;
-	window['AscDFH'].historyitem_SdtPr_OForm    = window['AscDFH'].historyitem_type_SdtPr | 24;
+	window['AscDFH'].historyitem_SdtPr_OForm            = window['AscDFH'].historyitem_type_SdtPr | 25;
+	window['AscDFH'].historyitem_SdtPr_DataBinding      = window['AscDFH'].historyitem_type_SdtPr | 26;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------

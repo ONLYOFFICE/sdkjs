@@ -562,6 +562,8 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 		return true;
 	}
 
+	this.SetContentByDataBinding(this);
+
 	return bResult;
 };
 CBlockLevelSdt.prototype.Is_Empty = function()
@@ -592,6 +594,17 @@ CBlockLevelSdt.prototype.Add = function(oParaItem)
 	else
 	{
 		this.Content.AddToParagraph(oParaItem);
+	}
+
+	if (this.Pr.DataBinding)
+	{
+		var nContentPos = this.Content.CurPos.ContentPos;
+		var Item     = this.Content.Content[nContentPos];
+
+		if (this.Pr.Text)
+			this.SetContentByDataBinding(Item.GetText());
+		else
+			this.SetContentByDataBinding(this)
 	}
 
 	if (isRemoveWrapper)
@@ -1462,6 +1475,9 @@ CBlockLevelSdt.prototype.SetPr = function(oPr)
 
 	if (undefined !== oPr.Color)
 		this.SetColor(oPr.Color);
+
+	if (undefined !== oPr.DataBinding)
+		this.setDataBinding(oPr.DataBinding);
 };
 /**
  * Выставляем настройки текста по умолчанию для данного контрола
@@ -1558,6 +1574,60 @@ CBlockLevelSdt.prototype.SetColor = function(oColor)
 		History.Add(new CChangesSdtPrColor(this, this.Pr.Color, oColor));
 		this.Pr.Color = oColor;
 	}
+};
+CBlockLevelSdt.prototype.fillContentWithDataBinding = function(content)
+{
+	let logicDocument = this.GetLogicDocument();
+
+	if (this.IsCheckBox())
+	{
+		let checkBoxPr = new AscWord.CSdtCheckBoxPr();
+
+		if (content === "true" || content === "1")
+			checkBoxPr.SetChecked(true);
+		else if (content === "false" || content === "0")
+			checkBoxPr.SetChecked(false);
+
+		this.SetCheckBoxPr(checkBoxPr)
+	}
+	else if (this.IsDatePicker())
+	{
+		let datePr = new AscWord.CSdtDatePickerPr();
+		datePr.SetFullDate(content);
+		this.SetDatePickerPr(datePr);
+		this.private_UpdateDatePickerContent();
+	}
+	else if (this.IsDropDownList() || this.IsComboBox() || this.Pr.Text === true)
+	{
+		let oRun = new ParaRun();
+		oRun.AddText(content);
+
+		// now style reset todo
+		this.Content.Remove_FromContent(0, this.Content.Content.length);
+		this.AddNewParagraph();
+		this.Content.AddText(content);
+	}
+	else
+	{
+		let oParent = this.Parent;
+		if (oParent instanceof CDocumentContent)
+		 oParent = oParent.Parent
+
+		// if parent element is rich text content control - skip
+		if (oParent instanceof CBlockLevelSdt && oParent.GetSpecificType() === Asc.c_oAscContentControlSpecificType.None)
+			return;
+
+		let customXmlManager	= logicDocument.getCustomXmlManager();
+		let arrContent			= customXmlManager.proceedLinearXMl(content);
+
+		this.Content.RemoveFromContent(0, this.Content.Content.length);
+		this.Content.AddContent(arrContent);
+		this.Content.Recalculate(true);
+	}
+};
+CBlockLevelSdt.prototype.GetDataBinding = function ()
+{
+	return this.Pr.DataBinding;
 };
 CBlockLevelSdt.prototype.GetColor = function()
 {
@@ -2011,6 +2081,8 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
 		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
 	}
+
+	this.SetContentByDataBinding(isChecked ? "true" : "false");
 };
 /**
  * Проверяем, является ли данный класс специальным контейнером для картинки
@@ -2276,6 +2348,8 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 				oRun.AddText(sText);
 		}
 	}
+
+	this.SetContentByDataBinding(sText);
 };
 CBlockLevelSdt.prototype.private_UpdateListContent = function()
 {
@@ -2420,6 +2494,16 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 
 	if (oRun)
 		oRun.AddText(sText);
+
+	this.SetContentByDataBinding(sText);
+};
+CBlockLevelSdt.prototype.SetContentByDataBinding = function (inputData)
+{
+	if (this.Pr.DataBinding)
+	{
+		let CustomManager = this.LogicDocument.getCustomXmlManager();
+		CustomManager.setContentByDataBinding(this.Pr.DataBinding, inputData);
+	}
 };
 CBlockLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 {

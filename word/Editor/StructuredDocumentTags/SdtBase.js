@@ -1124,6 +1124,54 @@ CSdtBase.prototype.IsHideContentControlTrack = function()
 	
 	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
 };
+CSdtBase.prototype.setDataBinding = function(dataBinding)
+{
+	AscCommon.History.Add(new CChangesSdtPrDataBinding(this, this.Pr.DataBinding, dataBinding));
+	this.Pr.DataBinding = dataBinding;
+};
+CSdtBase.prototype.getDataBinding = function()
+{
+	return this.Pr.DataBinding;
+};
+/**
+ * Проверяем, есть ли привязанные данные, и если есть заполняем ими содержимое контрола
+ */
+CSdtBase.prototype.checkDataBinding = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !this.Pr.DataBinding)
+		return;
+	
+	let content = logicDocument.getCustomXmlManager().getContentByDataBinding(this.Pr.DataBinding, this);
+	if (!content)
+		return;
+	
+	if (this.IsPicture())
+	{
+		let allDrawings = this.GetAllDrawingObjects();
+		if (!allDrawings.length)
+			return;
+
+		let drawing = allDrawings[0];
+		let imageData = "data:image/jpeg;base64," + content;
+		let editor = logicDocument.GetApi();
+		editor.ImageLoader.LoadImagesWithCallback([imageData], function(){}, 0, true);
+		
+		let w = drawing.getXfrmExtX();
+		let h = drawing.getXfrmExtY();
+		
+		let imageShape = logicDocument.DrawingObjects.createImage(imageData, 0, 0, w, h);
+		imageShape.setParent(drawing);
+		drawing.Set_GraphicObject(imageShape);
+	}
+	else
+	{
+		this.fillContentWithDataBinding(content);
+	}
+};
+CSdtBase.prototype.fillContentWithDataBinding = function(content)
+{
+};
 
 // TODO: Temporary for building purpose. Remove when actual class is added
 (function()
