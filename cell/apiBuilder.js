@@ -1841,8 +1841,8 @@
 	 * Returns the average of the absolute deviations of data points from their mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average of the absolute deviations will be returned. The first argument is required,
-	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * @param {number} args - Up to 255 numeric values for which the average of the absolute deviations will be returned. The first argument is required,
+	 * subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVEDEV = function () {
@@ -1852,8 +1852,8 @@
 	 * Returns the average (arithmetic mean) of the specified arguments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
-	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers.
+	 * @param {number} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGE = function () {
@@ -1863,9 +1863,8 @@
 	 * Returns the average (arithmetic mean) of the specified arguments, evaluating text and <b>false</b> in arguments as 0; <b>true</b> evaluates as 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[]} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
-	 * subsequent arguments are optional. Arguments can be numbers or names, arrays or references that contain numbers, text representations of numbers,
-	 * or logical values, such as <b>true</b> and <b>false</b>.
+	 * @param {number | string} args - Up to 255 numeric values for which the average value will be returned. The first argument is required,
+	 * subsequent arguments are optional. Arguments can be numbers, text, or logical values, such as <b>true</b> and <b>false</b>.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AVERAGEA = function () {
@@ -2165,7 +2164,7 @@
 	 * Counts a number of cells in a range that contains numbers ignoring empty cells or those contaning text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count numbers. The first argument is required, subsequent arguments are optional.
+	 * @param {string | number | boolean | ApiRange} args - Up to 255 items, or ranges to count numbers. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNT = function () {
@@ -2175,7 +2174,7 @@
 	 * Counts a number of cells in a range that are not empty.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string | array | ApiRange} args - Up to 255 items, cell references, or ranges to count values. The first argument is required, subsequent arguments are optional.
+	 * @param {string | number | boolean | ApiRange} args - Up to 255 items, or ranges to count values. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUNTA = function () {
@@ -2419,14 +2418,14 @@
 	 * * <b>6</b> - MIN.
 	 * * <b>7</b> - SUM.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7)} Aggregation
-	 * **/
+	 * */
 	
 	/**
 	 * Сalculates or predicts a future value based on existing (historical) values by using the AAA version of the Exponential Smoothing (ETS) algorithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A date for which a new value will be predicted. Must be after the last date in the timeline.
-	 * @param {ApiRange | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg2 - A range of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange} arg3 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
 	 * @param {?number} arg4 - An optional numeric value that specifies the length of the seasonal pattern. The default value of 1 indicates seasonality is detected automatically.
@@ -2443,7 +2442,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - A date for which a new value will be predicted. Must be after the last date in the timeline.
-	 * @param {ApiRange | number[]} arg2 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg2 - A range of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange} arg3 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
 	 * @param {?number} arg4 - A number between 0 and 1 that shows the confidence level for the calculated confidence interval. The default value is .95.
@@ -2460,7 +2459,7 @@
 	 * Returns the length of the repetitive pattern an application detects for the specified time series.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg1 - A range of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange} arg2 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
 	 * @param {?number} arg3 - An optional numeric value to handle missing values. The default value of 1 replaces missing values by interpolation, and 0 replaces them with zeros.
@@ -2482,13 +2481,13 @@
 	 * * <b>7</b> - RMSE (root mean squared error) metric - a measure of the differences between predicted and observed values.
 	 * * <b>8</b> - Step size detected in the timeline.
 	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)} StatisticType
-	 * **/
+	 * */
 
 	/**
 	 * Returns the requested statistic for the forecast.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - A range or an array of numeric data that determines the historical values for which a new point will be predicted.
+	 * @param {ApiRange} arg1 - A range of numeric data that determines the historical values for which a new point will be predicted.
 	 * @param {ApiRange} arg2 - A range of date/time values that correspond to the historical values.
 	 * The timeline range must be of the same size as the second argument. Date/time values must have a constant step between them and can't be zero.
 	 * @param {StatisticType} arg3 - A number between 1 and 8, indicating which statistic will be returned for the calculated forecast.
@@ -2518,8 +2517,8 @@
 	 * Calculates how often values occur within a range of values and then returns the first value of the returned vertical array of numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - An array of values or the selected range for which the frequencies will be counted (blanks and text are ignored).
-	 * @param {ApiRange | number[]} arg2 - An array of intervals or the selected range into which the values in the first array will be grouped.
+	 * @param {ApiRange} arg1 - The selected range for which the frequencies will be counted (blanks and text are ignored).
+	 * @param {ApiRange} arg2 - The selected range into which the values in the first range will be grouped.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FREQUENCY = function (arg1, arg2) {
@@ -2642,10 +2641,10 @@
 		return this.private_calculateFunction("GAUSS", arguments);
 	};
 	/**
-	 * Returns the geometric mean of an array or range of positive numeric data.
+	 * Returns the geometric mean of positive numeric data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the geometric mean will be calculated.
+	 * @param {number} args - Up to 255 numeric values for which the geometric mean will be calculated.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GEOMEAN = function () {
@@ -2655,9 +2654,9 @@
 	 * Calculates predicted exponential growth by using existing data.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers.
-	 * @param {?ApiRange | number[]} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation, an array or range of positive numbers that has the same size as the set of y-values.
-	 * @param {?ApiRange | number[]} arg3 - New x-values for which the function will return the corresponding y-values.
+	 * @param {ApiRange} arg1 - The set of y-values from the <em>y = b*m^x</em> equation, a range of positive numbers.
+	 * @param {?ApiRange} arg2 - An optional set of x-values from the <em>y = b*m^x</em> equation, a range of positive numbers that has the same size as the set of y-values.
+	 * @param {?ApiRange} arg3 - New x-values for which the function will return the corresponding y-values.
 	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b>,
 	 * and <em>b</em> is set equal to 1 if the parameter is <b>false</b> or omitted.
 	 * @returns {number}
@@ -2669,7 +2668,7 @@
 	 * Returns the harmonic mean of a data set of positive numbers: the reciprocal of the arithmetic mean of reciprocals.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the harmonic mean will be calculated.
+	 * @param {ApiRange} args - Up to 255 numeric values for which the harmonic mean will be calculated.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HARMEAN = function () {
@@ -2719,7 +2718,7 @@
 	 * Returns the kurtosis of a data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} args - Up to 255 numeric values for which the kurtosis will be calculated.
+	 * @param {ApiRange} args - Up to 255 numeric values for which the kurtosis will be calculated.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.KURT = function () {
@@ -2729,8 +2728,8 @@
 	 * Returns the k-th largest value in a data set. For example, the fifth largest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - The array or range of data for which the k-th largest value will be determined.
-	 * @param {number} arg2 - The position (from the largest) in the array or cell range of data to return.
+	 * @param {ApiRange} arg1 - The range of data for which the k-th largest value will be determined.
+	 * @param {number} arg2 - The position (from the largest) in the cell range of data to return.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LARGE = function (arg1, arg2) {
@@ -2821,7 +2820,7 @@
 	 * Returns the largest value in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the largest number will be returned.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the largest number will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
@@ -2832,7 +2831,7 @@
 	 * Returns the largest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values (number, text, logical value) for which the largest value will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
@@ -2843,7 +2842,7 @@
 	 * Returns the median, or the number in the middle of the set of given numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the median will be calculated.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the median will be calculated.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
@@ -2854,7 +2853,7 @@
 	 * Returns the smallest number in a set of values. Ignores logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | array | ApiRange} args - Up to 255 numeric values for which the smallest number will be returned.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the smallest number will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
@@ -2865,7 +2864,7 @@
 	 * Returns the smallest value in a set of values. Does not ignore logical values and text.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | array | ApiRange} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values (number, text, logical value) for which the smallest value will be returned.
 	 * The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
@@ -3043,7 +3042,7 @@
 	 * Returns the k-th percentile of values in a range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
 	 * @returns {number}
 	 */
@@ -3054,7 +3053,7 @@
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, exclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is greater than 0 but less than 1.
 	 * @returns {number}
 	 */
@@ -3065,7 +3064,7 @@
 	 * Returns the k-th percentile of values in a range, where k is in the range 0..1, inclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data that defines relative standing.
 	 * @param {number} arg2 - The percentile value that is equal to 0 but less than or equal to 1.
 	 * @returns {number}
 	 */
@@ -3076,7 +3075,7 @@
 	 * Returns the rank of a value in a data set as a percentage of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data with numeric values that defines relative standing.
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
@@ -3088,7 +3087,7 @@
 	 * Returns the rank of a value in a data set as a percentage (0..1, exclusive) of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data with numeric values that defines relative standing.
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
@@ -3100,7 +3099,7 @@
 	 * Returns the rank of a value in a data set as a percentage (0..1, inclusive) of the data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data with numeric values that defines relative standing.
+	 * @param {ApiRange} arg1 - The range of data with numeric values that defines relative standing.
 	 * @param {number} arg2 - The value for which the rank will be returned.
 	 * @param {?number} arg3 - An optional value that identifies the number of significant digits for the returned percentage, three digits if omitted (0.xxx%).
 	 * @returns {number}
@@ -3186,7 +3185,7 @@
 	 * Returns the quartile of a data set.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {ApiRange} arg1 - The cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
 	 * @returns {number}
 	 */
@@ -3197,7 +3196,7 @@
 	 * Returns the quartile of a data set, based on percentile values from 0..1, exclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {ApiRange} arg1 - The cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: 1st quartile = 1; median value = 2; 3rd quartile = 3.
 	 * @returns {number}
 	 */
@@ -3208,7 +3207,7 @@
 	 * Returns the quartile of a data set, based on percentile values from 0..1, inclusive.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or cell range of numeric values for which the quartile value will be returned.
+	 * @param {ApiRange} arg1 - The cell range of numeric values for which the quartile value will be returned.
 	 * @param {number} arg2 - The quartile value to return: minimum value = 0; 1st quartile = 1; median value = 2; 3rd quartile = 3; maximum value = 4.
 	 * @returns {number}
 	 */
@@ -3220,7 +3219,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The number for which the rank will be returned.
-	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {ApiRange} arg2 - A range of numbers. Nonnumeric values are ignored.
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
@@ -3233,7 +3232,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The number for which the rank will be returned.
-	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {ApiRange} arg2 - A range of numbers. Nonnumeric values are ignored.
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
@@ -3246,7 +3245,7 @@
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {number} arg1 - The number for which the rank will be returned.
-	 * @param {number[] | ApiRange} arg2 - An array of numbers or a reference to a list of numbers. Nonnumeric values are ignored.
+	 * @param {ApiRange} arg2 - A range of numbers. Nonnumeric values are ignored.
 	 * @param {?boolean} arg3 - The numeric value that specifyes how to order the numbers. If it is 0 or omitted, the rank in the list will be sorted in descending order.
 	 * Any other numeric value means that the rank in the list will be sorted in ascending order.
 	 * @returns {number}
@@ -3271,7 +3270,7 @@
 	 * Returns the skewness of a distribution: a characterization of the degree of asymmetry of a distribution around its mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SKEW = function () {
@@ -3281,7 +3280,7 @@
 	 * Returns the skewness of a distribution based on a population: a characterization of the degree of asymmetry of a distribution around its mean.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the skewness of a distribution will be returned. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SKEW_P = function () {
@@ -3303,8 +3302,8 @@
 	 * Returns the k-th smallest value in a data set. For example, the fifth smallest number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - An array or range of numerical data for which the k-th smallest value will be determined.
-	 * @param {number} arg2 - The position (from the smallest) in the array or range of the value to return.
+	 * @param {ApiRange} arg1 - A range of numerical data for which the k-th smallest value will be determined.
+	 * @param {number} arg2 - The position (from the smallest) in the range of the value to return.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SMALL = function (arg1, arg2) {
@@ -3326,7 +3325,7 @@
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV = function () {
@@ -3336,7 +3335,7 @@
 	 * Estimates standard deviation based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_S = function () {
@@ -3346,7 +3345,7 @@
 	 * Estimates standard deviation based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEVA = function () {
@@ -3356,7 +3355,7 @@
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEVP = function () {
@@ -3366,7 +3365,7 @@
 	 * Calculates standard deviation based on the entire population given as arguments (ignores logical values and text).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | number[] | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.STDEV_P = function () {
@@ -3376,7 +3375,7 @@
 	 * Calculates standard deviation based on an entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | number[] | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values for which the standard deviation will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.STDEVPA = function () {
@@ -3479,9 +3478,9 @@
 	 * Returns numbers in a linear trend matching known data points, using the least squares method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - A range or array of y-values from the <em>y = mx + b</em> equation.
-	 * @param {?ApiRange | number[]} arg2 - An optional range or array of x-values from the <em>y = mx + b</em> equation, an array of the same size as an array of y-values.
-	 * @param {?ApiRange | number[]} arg3 - A range or array of new x-values for which this function will return corresponding y-values.
+	 * @param {ApiRange} arg1 - A range of y-values from the <em>y = mx + b</em> equation.
+	 * @param {?ApiRange} arg2 - An optional range of x-values from the <em>y = mx + b</em> equation, a range of the same size as a range of y-values.
+	 * @param {?ApiRange} arg3 - A range of new x-values for which this function will return corresponding y-values.
 	 * @param {?boolean} arg4 - A logical value: the constant <em>b</em> is calculated normally if this parameter is set to <b>true</b> or omitted,
 	 * and <em>b</em> is set equal to 0 if the parameter is <b>false</b>.
 	 * @returns {number}
@@ -3493,7 +3492,7 @@
 	 * Returns the mean of the interior portion of a set of data values.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | number[]} arg1 - The range or array of values to trim and average.
+	 * @param {ApiRange} arg1 - The range of values to trim and average.
 	 * @param {number} arg2 - The fractional number of data points to exclude from the top and bottom of the data set.
 	 * @returns {number}
 	 */
@@ -3532,7 +3531,7 @@
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR = function () {
@@ -3542,7 +3541,7 @@
 	 * Estimates variance based on a sample, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARA = function () {
@@ -3552,7 +3551,7 @@
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARP = function () {
@@ -3562,7 +3561,7 @@
 	 * Calculates variance based on the entire population (ignores logical values and text in the population).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR_P = function () {
@@ -3572,7 +3571,7 @@
 	 * Estimates variance based on a sample (ignores logical values and text in the sample).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | ApiRange | number[]} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | ApiRange} args - Up to 255 numeric values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VAR_S = function () {
@@ -3582,7 +3581,7 @@
 	 * Calculates variance based on the entire population, including logical values and text. Text and the <b>false</b> logical value have the value 0; the <b>true</b> logical value has the value 1.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string | boolean | ApiRange | number[]} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
+	 * @param {number | string | boolean | ApiRange} args - Up to 255 values for which the variance will be calculated. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VARPA = function () {
@@ -3622,7 +3621,7 @@
 	 * Returns the one-tailed P-value of a z-test.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data against which to test X.
+	 * @param {ApiRange} arg1 - The range of data against which to test X.
 	 * @param {number} arg2 - The value to test.
 	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
@@ -3634,7 +3633,7 @@
 	 * Returns the one-tailed P-value of a z-test.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number[] | ApiRange} arg1 - The array or range of data against which to test X.
+	 * @param {ApiRange} arg1 - The range of data against which to test X.
 	 * @param {number} arg2 - The value to test.
 	 * @param {?number} arg3 - The population (known) standard deviation. If omitted, the sample standard deviation is used.
 	 * @returns {number}
@@ -3705,30 +3704,30 @@
 	 * Returns the serial number of the date which comes the indicated number of months before or after the start date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 - A serial date number that represents the start date.
-	 * @param {any} arg2 - The number of months before or after the start date.
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - The number of months before or after the start date.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EDATE = function (arg1, arg2) {
 		return this.private_calculateFunction("EDATE", arguments);
 	};
 	/**
-	 * Returns the serial number of the last day of the month before or after a specified number of months.
+	 * Returns the serial number of the last day of the month before or after the specified number of months.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is the number of months before or after the start_date.
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - The number of months before or after the start date.
 	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EOMONTH = function (arg1, arg2) {
 		return this.private_calculateFunction("EOMONTH", arguments);
 	};
 	/**
-	 * Returns the hour as a number from 0 (12:00 A.M.) to 23 (11:00 P.M.)..
+	 * Returns the hour as a number from 0 (12:00 A.M.) to 23 (11:00 P.M.).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel, or text in time format, such as 16:48:00 or 4:48:00 PM.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number in the date-time code, or text in the time format, such as "16:48:00" or "4:48:00 PM", or a result of other formulas or functions.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HOUR = function (arg1) {
 		return this.private_calculateFunction("HOUR", arguments);
@@ -3737,28 +3736,28 @@
 	 * Returns the ISO week number in the year for a given date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the date-time code used by Microsoft Excel for date and time calculation.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The date-time code used for date and time calculation.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ISOWEEKNUM = function (arg1) {
 		return this.private_calculateFunction("ISOWEEKNUM", arguments);
 	};
 	/**
-	 * Returns the minute, a number from 0 to 59..
+	 * Returns the minute, a number from 0 to 59.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel or text in time format, such as 16:48:00 or 4:48:00 PM.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number in the date-time code, or text in the time format, such as "16:48:00" or "4:48:00 PM", or a result of other formulas or functions.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MINUTE = function (arg1) {
 		return this.private_calculateFunction("MINUTE", arguments);
 	};
 	/**
-	 * Returns the month, a number from 1 (January) to 12 (December)..
+	 * Returns the month, a number from 1 (January) to 12 (December).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1- A number in the date-time code.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MONTH = function (arg1) {
 		return this.private_calculateFunction("MONTH", arguments);
@@ -3767,10 +3766,10 @@
 	 * Returns the number of whole workdays between two dates.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is a serial date number that represents the end date.
-	 * @param {?any} arg3 Is an optional set of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - A serial date number that represents the end date.
+	 * @param {?ApiRange} arg3 - An optional range of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("NETWORKDAYS", arguments);
@@ -3779,42 +3778,42 @@
 	 * Returns the number of whole workdays between two dates with custom weekend parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is a serial date number that represents the end date.
-	 * @param {?number} arg3 Is a number or string specifying when weekends occur.
-	 * @param {?any} arg4 Is an optional set of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - A serial date number that represents the end date.
+	 * @param {?number | ?string} arg3 - A number or string specifying when weekends occur.
+	 * @param {?ApiRange} arg4 - An optional range of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NETWORKDAYS_INTL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("NETWORKDAYS.INTL", arguments);
 	};
 	/**
-	 * Returns the current date and time formatted as a date and time..
+	 * Returns the current date and time in the <em>MM/dd/yy hh:mm</em> format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NOW = function () {
 		return this.private_calculateFunction("NOW", arguments);
 	};
 	/**
-	 * Returns the second, a number from 0 to 59..
+	 * Returns the second, a number from 0 to 59.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel or text in time format, such as 16:48:23 or 4:48:47 PM.
-	 * @returns {number | string | boolean}
+	 * @param {number | string} arg1 - A number in the date-time code, or text in the time format, such as "16:48:00" or "4:48:00 PM", or a result of other formulas or functions.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SECOND = function (arg1) {
 		return this.private_calculateFunction("SECOND", arguments);
 	};
 	/**
-	 * Converts hours, minutes and seconds given as numbers to a serial number, formatted with a time format.
+	 * Converts hours, minutes and seconds given as numbers to a serial number, formatted with the time format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number from 0 to 23 representing the hour.
-	 * @param {number} arg2 Is a number from 0 to 59 representing the minute.
-	 * @param {number} arg3 Is a number from 0 to 59 representing the second.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number from 0 to 23 representing the hour.
+	 * @param {number} arg2 - A number from 0 to 59 representing the minute.
+	 * @param {number} arg3 - A number from 0 to 59 representing the second.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TIME = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TIME", arguments);
@@ -3823,28 +3822,29 @@
 	 * Converts a text time to a serial number for a time, a number from 0 (12:00:00 AM) to 0.999988426 (11:59:59 PM). Format the number with a time format after entering the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a text string that gives a time in any one of the Microsoft Excel time formats (date information in the string is ignored).
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - A text string that represents a time in one of the time formats (date information in the string is ignored).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TIMEVALUE = function (arg1) {
 		return this.private_calculateFunction("TIMEVALUE", arguments);
 	};
 	/**
-	 * Returns the current date formatted as a date..
+	 * Returns the current date in the <em>MM/dd/yy</em> format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TODAY = function () {
 		return this.private_calculateFunction("TODAY", arguments);
 	};
 	/**
-	 * Returns a number from 1 to 7 identifying the day of the week of a date..
+	 * Returns a number from 1 to 7 identifying the day of the week of the specified date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number that represents a date.
-	 * @param {?number} arg2 Is a number: for Sunday=1 through Saturday=7, use 1; for Monday=1 through Sunday=7, use 2; for Monday=0 through Sunday=6, use 3.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number that represents a date, or a result of other formulas or functions.
+	 * @param {?number} arg2 - A number that determines the type of return value: <b>1</b> - returns a number from 1 (Sunday) to 7 (Saturday);
+	 * <b>2</b> - returns a number from 1 (Monday) to 7 (Sunday); <b>3</b> - returns a number from 0 (Monday) to 6 (Sunday).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WEEKDAY = function (arg1, arg2) {
 		return this.private_calculateFunction("WEEKDAY", arguments);
@@ -3853,9 +3853,9 @@
 	 * Returns the week number in the year.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the date-time code used by Microsoft Excel for date and time calculation.
-	 * @param {?any} arg2 Is a number (1 or 2) that determines the type of the return value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The date-time code used for date and time calculation.
+	 * @param {?number} arg2 - A number (1 or 2) that determines the type of the return value: Sunday (1) or Monday (2).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WEEKNUM = function (arg1, arg2) {
 		return this.private_calculateFunction("WEEKNUM", arguments);
@@ -3864,10 +3864,10 @@
 	 * Returns the serial number of the date before or after a specified number of workdays.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is the number of nonweekend and non-holiday days before or after start_date.
-	 * @param {?any} arg3 Is an optional array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - The number of nonweekend and non-holiday days before or after the start date. A positive value for days yields a future date; a negative value yields a past date.
+	 * @param {?ApiRange} arg3 - An optional range of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("WORKDAY", arguments);
@@ -3876,33 +3876,33 @@
 	 * Returns the serial number of the date before or after a specified number of workdays with custom weekend parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is the number of nonweekend and non-holiday days before or after start_date.
-	 * @param {?number} arg3 Is a number or string specifying when weekends occur.
-	 * @param {?any} arg4 Is an optional array of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - The number of nonweekend and non-holiday days before or after the start date. A positive value for days yields a future date; a negative value yields a past date.
+	 * @param {?number | ?string} arg3 - A number or string specifying when weekends occur.
+	 * @param {?ApiRange} arg4 - An optional range of one or more serial date numbers to exclude from the working calendar, such as state and federal holidays and floating holidays.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.WORKDAY_INTL = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("WORKDAY.INTL", arguments);
 	};
 	/**
-	 * Returns the year of a date, an integer in the range 1900-9999..
+	 * Returns the year of a date, an integer in the range 1900-9999.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is a number in the date-time code used by Microsoft Excel.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number in the date-time code, or a result of other formulas or functions.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.YEAR = function (arg1) {
 		return this.private_calculateFunction("YEAR", arguments);
 	};
 	/**
-	 * Returns the year fraction representing the number of whole days between start_date and end_date.
+	 * Returns the year fraction representing the number of whole days between the start date and end date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a serial date number that represents the start date.
-	 * @param {any} arg2 Is a serial date number that represents the end date.
-	 * @param {?any} arg3 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A serial date number that represents the start date.
+	 * @param {number} arg2 - A serial date number that represents the end date.
+	 * @param {?number} arg3 - The type of day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.YEARFRAC = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("YEARFRAC", arguments);
@@ -3911,9 +3911,9 @@
 	 * Returns the modified Bessel function In(x).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value at which to evaluate the function.
-	 * @param {any} arg2 Is the order of the Bessel function.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function.
+	 * @param {number} arg2 - The order of the Bessel function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BESSELI = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELI", arguments);
@@ -3922,9 +3922,9 @@
 	 * Returns the Bessel function Jn(x).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value at which to evaluate the function.
-	 * @param {any} arg2 Is the order of the Bessel function.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function.
+	 * @param {number} arg2 - The order of the Bessel function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BESSELJ = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELJ", arguments);
@@ -3933,9 +3933,9 @@
 	 * Returns the modified Bessel function Kn(x).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value at which to evaluate the function.
-	 * @param {any} arg2 Is the order of the function.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function.
+	 * @param {number} arg2 - The order of the function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BESSELK = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELK", arguments);
@@ -3944,9 +3944,9 @@
 	 * Returns the Bessel function Yn(x).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value at which to evaluate the function.
-	 * @param {any} arg2 Is the order of the function.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value at which to evaluate the function.
+	 * @param {number} arg2 - The order of the function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BESSELY = function (arg1, arg2) {
 		return this.private_calculateFunction("BESSELY", arguments);
@@ -3955,8 +3955,8 @@
 	 * Converts a binary number to decimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the binary number you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The binary number which will be convertrd.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BIN2DEC = function (arg1) {
 		return this.private_calculateFunction("BIN2DEC", arguments);
@@ -3965,9 +3965,9 @@
 	 * Converts a binary number to hexadecimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the binary number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The binary number which will be convertrd.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BIN2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("BIN2HEX", arguments);
@@ -3976,64 +3976,64 @@
 	 * Converts a binary number to octal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the binary number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The binary number which will be convertrd.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BIN2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("BIN2OCT", arguments);
 	};
 	/**
-	 * Returns a bitwise 'And' of two numbers.
+	 * Returns a bitwise "AND" of two numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
-	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The first decimal representation of the binary number to evaluate.
+	 * @param {number} arg2 - The second decimal representation of the binary number to evaluate.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BITAND = function (arg1, arg2) {
 		return this.private_calculateFunction("BITAND", arguments);
 	};
 	/**
-	 * Returns a number shifted left by shift_amount bits.
+	 * Returns a number shifted left by the specified number of bits.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
-	 * @param {number} arg2 Is the number of bits that you want to shift Number left by.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The decimal representation of the binary number to evaluate.
+	 * @param {number} arg2 - The number of bits by which the number will be shifted left.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BITLSHIFT = function (arg1, arg2) {
 		return this.private_calculateFunction("BITLSHIFT", arguments);
 	};
 	/**
-	 * Returns a bitwise 'Or' of two numbers.
+	 * Returns a bitwise "OR" of two numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
-	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The first decimal representation of the binary number to evaluate.
+	 * @param {number} arg2 - The second decimal representation of the binary number to evaluate.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BITOR = function (arg1, arg2) {
 		return this.private_calculateFunction("BITOR", arguments);
 	};
 	/**
-	 * Returns a number shifted right by shift_amount bits.
+	 * Returns a number shifted right by the specified number of bits.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
-	 * @param {number} arg2 Is the number of bits that you want to shift Number right by.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The decimal representation of the binary number to evaluate.
+	 * @param {number} arg2 - The number of bits by which the number will be shifted right.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BITRSHIFT = function (arg1, arg2) {
 		return this.private_calculateFunction("BITRSHIFT", arguments);
 	};
 	/**
-	 * Returns a bitwise 'Exclusive Or' of two numbers.
+	 * Returns a bitwise "XOR" (Exclusive Or) of two numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the decimal representation of the binary number you want to evaluate.
-	 * @param {number} arg2 Is the decimal representation of the binary number you want to evaluate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The first decimal representation of the binary number to evaluate.
+	 * @param {number} arg2 - The second decimal representation of the binary number to evaluate.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BITXOR = function (arg1, arg2) {
 		return this.private_calculateFunction("BITXOR", arguments);
@@ -4042,10 +4042,11 @@
 	 * Converts real and imaginary coefficients into a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the real coefficient of the complex number.
-	 * @param {any} arg2 Is the imaginary coefficient of the complex number.
-	 * @param {?any} arg3 Is the suffix for the imaginary component of the complex number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The real coefficient of the complex number.
+	 * @param {number} arg2 - The imaginary coefficient of the complex number.
+	 * @param {?string} arg3 - The suffix for the imaginary component of the complex number. It can be either "i" or "j" in lowercase.
+	 * If it is omitted, the function will assume suffix to be "i".
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COMPLEX = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("COMPLEX", arguments);
@@ -4054,10 +4055,10 @@
 	 * Converts a number from one measurement system to another.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value in from_units to convert.
-	 * @param {any} arg2 Is the units for number.
-	 * @param {any} arg3 Is the units for the result.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value in the specified units to be converted.
+	 * @param {string} arg2 - The original measurement unit.
+	 * @param {string} arg3 - The units for the result.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CONVERT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CONVERT", arguments);
@@ -4066,9 +4067,9 @@
 	 * Converts a decimal number to binary.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the decimal integer you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The decimal integer to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DEC2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2BIN", arguments);
@@ -4077,9 +4078,9 @@
 	 * Converts a decimal number to hexadecimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the decimal integer you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The decimal integer to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DEC2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2HEX", arguments);
@@ -4088,83 +4089,83 @@
 	 * Converts a decimal number to octal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the decimal integer you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Te decimal integer to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DEC2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("DEC2OCT", arguments);
 	};
 	/**
-	 * Tests whether two numbers are equal.
+	 * Tests whether two numbers are equal. The function returns 1 if the numbers are equal and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the first number.
-	 * @param {?any} arg2 Is the second number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The first number.
+	 * @param {?number} arg2 - The second number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DELTA = function (arg1, arg2) {
 		return this.private_calculateFunction("DELTA", arguments);
 	};
 	/**
-	 * Returns the error function.
+	 * Returns the error function integrated between the specified lower and upper limits.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the lower bound for integrating ERF.
-	 * @param {?any} arg2 Is the upper bound for integrating ERF.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The lower bound for integrating the error function.
+	 * @param {?number} arg2 - The upper bound for integrating the error function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ERF = function (arg1, arg2) {
 		return this.private_calculateFunction("ERF", arguments);
 	};
 	/**
-	 * Returns the error function.
+	 * Returns the error function integrated between 0 and the specified lower limit.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the lower bound for integrating ERF.PRECISE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The lower bound for integrating the error function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ERF_PRECISE = function (arg1) {
 		return this.private_calculateFunction("ERF.PRECISE", arguments);
 	};
 	/**
-	 * Returns the complementary error function.
+	 * Returns the complementary error function integrated between the specified lower limit and infinity.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the lower bound for integrating ERF.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The lower bound for integrating the complementary error function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ERFC = function (arg1) {
 		return this.private_calculateFunction("ERFC", arguments);
 	};
 	/**
-	 * Returns the complementary error function.
+	 * Returns the complementary error function integrated between the specified lower limit and infinity.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the lower bound for integrating ERFC.PRECISE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The lower bound for integrating the complementary error function.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ERFC_PRECISE = function (arg1) {
 		return this.private_calculateFunction("ERFC.PRECISE", arguments);
 	};
 	/**
-	 * Tests whether a number is greater than a threshold value.
+	 * Tests whether a number is greater than a threshold value. The function returns 1 if the number is greater than or equal to the threshold value and 0 otherwise.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to test against step.
-	 * @param {?any} arg2 Is the threshold value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to test against step.
+	 * @param {?number} arg2 - The threshold value.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GESTEP = function (arg1, arg2) {
 		return this.private_calculateFunction("GESTEP", arguments);
 	};
 	/**
-	 * Converts a Hexadecimal number to binary.
+	 * Converts a hexadecimal number to binary.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the hexadecimal number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The hexadecimal number to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HEX2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("HEX2BIN", arguments);
@@ -4173,8 +4174,8 @@
 	 * Converts a hexadecimal number to decimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the hexadecimal number you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The hexadecimal number to convert.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HEX2DEC = function (arg1) {
 		return this.private_calculateFunction("HEX2DEC", arguments);
@@ -4183,9 +4184,9 @@
 	 * Converts a hexadecimal number to octal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the hexadecimal number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The hexadecimal number to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.HEX2OCT = function (arg1, arg2) {
 		return this.private_calculateFunction("HEX2OCT", arguments);
@@ -4194,8 +4195,8 @@
 	 * Returns the absolute value (modulus) of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the absolute value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMABS = function (arg1) {
 		return this.private_calculateFunction("IMABS", arguments);
@@ -4204,18 +4205,18 @@
 	 * Returns the imaginary coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the imaginary coefficient.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMAGINARY = function (arg1) {
 		return this.private_calculateFunction("IMAGINARY", arguments);
 	};
 	/**
-	 * Returns the argument q, an angle expressed in radians.
+	 * Returns the argument Theta, an angle expressed in radians.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the argument.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMARGUMENT = function (arg1) {
 		return this.private_calculateFunction("IMARGUMENT", arguments);
@@ -4224,8 +4225,8 @@
 	 * Returns the complex conjugate of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the conjugate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCONJUGATE = function (arg1) {
 		return this.private_calculateFunction("IMCONJUGATE", arguments);
@@ -4234,8 +4235,8 @@
 	 * Returns the cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the cosine.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCOS = function (arg1) {
 		return this.private_calculateFunction("IMCOS", arguments);
@@ -4244,8 +4245,8 @@
 	 * Returns the hyperbolic cosine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the hyperbolic cosine.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCOSH = function (arg1) {
 		return this.private_calculateFunction("IMCOSH", arguments);
@@ -4254,8 +4255,8 @@
 	 * Returns the cotangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the cotangent.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCOT = function (arg1) {
 		return this.private_calculateFunction("IMCOT", arguments);
@@ -4264,8 +4265,8 @@
 	 * Returns the cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the cosecant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCSC = function (arg1) {
 		return this.private_calculateFunction("IMCSC", arguments);
@@ -4274,8 +4275,8 @@
 	 * Returns the hyperbolic cosecant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the hyperbolic cosecant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMCSCH = function (arg1) {
 		return this.private_calculateFunction("IMCSCH", arguments);
@@ -4284,9 +4285,9 @@
 	 * Returns the quotient of two complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the complex numerator or dividend.
-	 * @param {any} arg2 Is the complex denominator or divisor.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The complex numerator or dividend in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {number} arg2 - The complex denominator or divisor in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMDIV = function (arg1, arg2) {
 		return this.private_calculateFunction("IMDIV", arguments);
@@ -4295,8 +4296,8 @@
 	 * Returns the exponential of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the exponential.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMEXP = function (arg1) {
 		return this.private_calculateFunction("IMEXP", arguments);
@@ -4305,8 +4306,8 @@
 	 * Returns the natural logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the natural logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMLN = function (arg1) {
 		return this.private_calculateFunction("IMLN", arguments);
@@ -4315,8 +4316,8 @@
 	 * Returns the base-10 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the common logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMLOG10 = function (arg1) {
 		return this.private_calculateFunction("IMLOG10", arguments);
@@ -4325,8 +4326,8 @@
 	 * Returns the base-2 logarithm of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the base-2 logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMLOG2 = function (arg1) {
 		return this.private_calculateFunction("IMLOG2", arguments);
@@ -4335,18 +4336,19 @@
 	 * Returns a complex number raised to an integer power.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number you want to raise to a power.
-	 * @param {any} arg2 Is the power to which you want to raise the complex number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @param {number} arg2 - The power to which the complex number will be raised.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMPOWER = function (arg1, arg2) {
 		return this.private_calculateFunction("IMPOWER", arguments);
 	};
 	/**
-	 * Returns the product of 1 to 255 complex numbers.
+	 * Returns the product of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMPRODUCT = function () {
 		return this.private_calculateFunction("IMPRODUCT", arguments);
@@ -4355,8 +4357,8 @@
 	 * Returns the real coefficient of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the real coefficient.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMREAL = function (arg1) {
 		return this.private_calculateFunction("IMREAL", arguments);
@@ -4365,8 +4367,8 @@
 	 * Returns the secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the secant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSEC = function (arg1) {
 		return this.private_calculateFunction("IMSEC", arguments);
@@ -4375,8 +4377,8 @@
 	 * Returns the hyperbolic secant of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the hyperbolic secant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSECH = function (arg1) {
 		return this.private_calculateFunction("IMSECH", arguments);
@@ -4385,8 +4387,8 @@
 	 * Returns the sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the sine.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSIN = function (arg1) {
 		return this.private_calculateFunction("IMSIN", arguments);
@@ -4395,8 +4397,8 @@
 	 * Returns the hyperbolic sine of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the hyperbolic sine.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSINH = function (arg1) {
 		return this.private_calculateFunction("IMSINH", arguments);
@@ -4405,28 +4407,29 @@
 	 * Returns the square root of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the square root.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSQRT = function (arg1) {
 		return this.private_calculateFunction("IMSQRT", arguments);
 	};
 	/**
-	 * Returns the difference of two complex numbers.
+	 * Returns the difference of two complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the complex number from which to subtract inumber2.
-	 * @param {any} arg2 Is the complex number to subtract from inumber1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The complex number from which to subtract the second number.
+	 * @param {number} arg2 - The complex number to subtract from the first number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSUB = function (arg1, arg2) {
 		return this.private_calculateFunction("IMSUB", arguments);
 	};
 	/**
-	 * Returns the sum of complex numbers.
+	 * Returns the sum of the specified complex numbers.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 complex numbers expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMSUM = function () {
 		return this.private_calculateFunction("IMSUM", arguments);
@@ -4435,8 +4438,8 @@
 	 * Returns the tangent of a complex number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a complex number for which you want the tangent.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A complex number expressed in the <em>x + yi</em> or <em>x + yj</em> form.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IMTAN = function (arg1) {
 		return this.private_calculateFunction("IMTAN", arguments);
@@ -4445,9 +4448,9 @@
 	 * Converts an octal number to binary.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the octal number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The octal number to convert.
+	 * @param {?number} arg2 - The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.OCT2BIN = function (arg1, arg2) {
 		return this.private_calculateFunction("OCT2BIN", arguments);
@@ -4456,8 +4459,8 @@
 	 * Converts an octal number to decimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the octal number you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The octal number to convert.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.OCT2DEC = function (arg1) {
 		return this.private_calculateFunction("OCT2DEC", arguments);
@@ -4466,21 +4469,21 @@
 	 * Converts an octal number to hexadecimal.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the octal number you want to convert.
-	 * @param {?any} arg2 Is the number of characters to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The octal number to convert.
+	 * @param {?number} arg2 -The number of characters to use.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.OCT2HEX = function (arg1, arg2) {
 		return this.private_calculateFunction("OCT2HEX", arguments);
 	};
 	/**
-	 * Averages the values in a column in a list or database that match conditions you specify.
+	 * Averages the values in a field (column) of records in a list or database that match conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DAVERAGE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DAVERAGE", arguments);
@@ -4489,10 +4492,10 @@
 	 * Counts the cells containing numbers in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DCOUNT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DCOUNT", arguments);
@@ -4501,10 +4504,10 @@
 	 * Counts nonblank cells in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1- The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DCOUNTA = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DCOUNTA", arguments);
@@ -4513,10 +4516,10 @@
 	 * Extracts from a database a single record that matches the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DGET = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DGET", arguments);
@@ -4525,10 +4528,10 @@
 	 * Returns the largest number in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DMAX = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DMAX", arguments);
@@ -4537,10 +4540,10 @@
 	 * Returns the smallest number in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DMIN = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DMIN", arguments);
@@ -4549,34 +4552,34 @@
 	 * Multiplies the values in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DPRODUCT = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DPRODUCT", arguments);
 	};
 	/**
-	 * Estimates the standard deviation based on a sample from selected database entries.
+	 * Estimates the standard deviation based on a sample from the selected database entries.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DSTDEV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSTDEV", arguments);
 	};
 	/**
-	 * Calculates the standard deviation based on the entire population of selected database entries.
+	 * Calculates the standard deviation based on the entire population of the selected database entries.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DSTDEVP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSTDEVP", arguments);
@@ -4585,51 +4588,52 @@
 	 * Adds the numbers in the field (column) of records in the database that match the conditions you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DSUM = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DSUM", arguments);
 	};
 	/**
-	 * Estimates variance based on a sample from selected database entries.
+	 * Estimates variance based on a sample from the selected database entries.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DVAR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DVAR", arguments);
 	};
 	/**
-	 * Calculates variance based on the entire population of selected database entries.
+	 * Calculates variance based on the entire population of the selected database entries.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells that makes up the list or database. A database is a list of related data.
-	 * @param {number} arg2 Is either the label of the column in double quotation marks or a number that represents the column's position in the list.
-	 * @param {string} arg3 Is the range of cells that contains the conditions you specify. The range includes a column label and one cell below the label for a condition.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells that makes up the list or database. A database is a list of related data.
+	 * @param {number | string} arg2 - The column which is used in the function. Either the label of the column in double quotation marks or a number that represents the column's position in the list.
+	 * @param {ApiRange} arg3 - The range of cells that contains the conditions you specify. The range includes at least one column label and at least one cell below the column label for a condition.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DVARP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("DVARP", arguments);
 	};
 	/**
-	 * Returns the accrued interest for a security that pays periodic interest..
+	 * Returns the accrued interest for a security that pays periodic interest.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's first interest date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's annual coupon rate.
-	 * @param {any} arg5 Is the security's par value.
-	 * @param {any} arg6 Is the number of coupon payments per year.
-	 * @param {?any} arg7 Is the type of day count basis to use.
-	 * @param {?any} arg8 Is a logical value: to accrued interest from issue date = TRUE or omitted; to calculate from last coupon payment date = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg2 - The date when the first interest is paid, expressed as a serial date number.
+	 * @param {number} arg3 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg4 - The annual coupon rate of the security.
+	 * @param {number} arg5 - The par value of the security.
+	 * @param {number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @param {?number} arg8 - A logical value: <b>true</b> (1) or omitted returns the accrued interest from the issue date to the settlement date.
+	 * <b>false</b> (0) returns the accrued interest from the first interest date to the settlement date.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACCRINT = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ACCRINT", arguments);
@@ -4638,44 +4642,44 @@
 	 * Returns the accrued interest for a security that pays interest at maturity.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's annual coupon rate.
-	 * @param {any} arg4 Is the security's par value.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The annual coupon rate of the security.
+	 * @param {number} arg4 - The par value of the security.
+	 * @param {?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACCRINTM = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("ACCRINTM", arguments);
 	};
 	/**
-	 * Returns the prorated linear depreciation of an asset for each accounting period..
+	 * Returns the prorated linear depreciation of an asset for each accounting period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1.
-	 * @param {any} arg2.
-	 * @param {any} arg3.
-	 * @param {any} arg4.
-	 * @param {any} arg5.
-	 * @param {any} arg6.
-	 * @param {?any} arg7.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The cost of the asset.
+	 * @param {number} arg2 - The date when asset is purchased.
+	 * @param {number} arg3 - The date when the first period ends.
+	 * @param {number} arg4 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg5 - The period for which the depreciation will be calculated.
+	 * @param {number} arg6 - The rate of depreciation.
+	 * @param {?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AMORDEGRC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("AMORDEGRC", arguments);
 	};
 	/**
-	 * Returns the prorated linear depreciation of an asset for each accounting period..
+	 * Returns the prorated linear depreciation of an asset for each accounting period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the cost of the asset.
-	 * @param {any} arg2 Is the date the asset is purchased.
-	 * @param {any} arg3 Is the date of the end of the first period.
-	 * @param {any} arg4 Is the salvage value at the end of life of the asset..
-	 * @param {any} arg5 Is the period.
-	 * @param {any} arg6 Is the rate of depreciation.
-	 * @param {?any} arg7 Year_basis : 0 for year of 360 days, 1 for actual, 3 for year of 365 days..
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The cost of the asset.
+	 * @param {number} arg2 - The date when asset is purchased.
+	 * @param {number} arg3 - The date when the first period ends.
+	 * @param {number} arg4 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg5 - The period for which the depreciation will be calculated.
+	 * @param {number} arg6 - The rate of depreciation.
+	 * @param {?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AMORLINC = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("AMORLINC", arguments);
@@ -4684,11 +4688,11 @@
 	 * Returns the number of days from the beginning of the coupon period to the settlement date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYBS = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYBS", arguments);
@@ -4697,11 +4701,11 @@
 	 * Returns the number of days in the coupon period that contains the settlement date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYS = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYS", arguments);
@@ -4710,11 +4714,11 @@
 	 * Returns the number of days from the settlement date to the next coupon date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPDAYSNC = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPDAYSNC", arguments);
@@ -4723,11 +4727,11 @@
 	 * Returns the next coupon date after the settlement date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPNCD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPNCD", arguments);
@@ -4736,11 +4740,11 @@
 	 * Returns the number of coupons payable between the settlement date and maturity date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPNUM = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPNUM", arguments);
@@ -4749,11 +4753,11 @@
 	 * Returns the previous coupon date before the settlement date.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the number of coupon payments per year.
-	 * @param {?any} arg4 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg4 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COUPPCD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("COUPPCD", arguments);
@@ -4762,13 +4766,13 @@
 	 * Returns the cumulative interest paid between two periods.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the interest rate.
-	 * @param {any} arg2 Is the total number of payment periods.
-	 * @param {any} arg3 Is the present value.
-	 * @param {any} arg4 Is the first period in the calculation.
-	 * @param {any} arg5 Is the last period in the calculation.
-	 * @param {any} arg6 Is the timing of the payment.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate for the investment.
+	 * @param {number} arg2 - The total number of payment periods.
+	 * @param {number} arg3 - A present value of the payments.
+	 * @param {number} arg4 - The first period included into the calculation.
+	 * @param {number} arg5 - The last period included into the calculation.
+	 * @param {number} arg6 - The timing of the payment.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CUMIPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("CUMIPMT", arguments);
@@ -4777,13 +4781,13 @@
 	 * Returns the cumulative principal paid on a loan between two periods.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the interest rate.
-	 * @param {any} arg2 Is the total number of payment periods.
-	 * @param {any} arg3 Is the present value.
-	 * @param {any} arg4 Is the first period in the calculation.
-	 * @param {any} arg5 Is the last period in the calculation.
-	 * @param {any} arg6 Is the timing of the payment.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate for the investment.
+	 * @param {number} arg2 - The total number of payment periods.
+	 * @param {number} arg3 - A present value of the payments.
+	 * @param {number} arg4 - The first period included into the calculation.
+	 * @param {number} arg5 - The last period included into the calculation.
+	 * @param {number} arg6 - The timing of the payment.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CUMPRINC = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("CUMPRINC", arguments);
@@ -4792,12 +4796,12 @@
 	 * Returns the depreciation of an asset for a specified period using the fixed-declining balance method.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the initial cost of the asset.
-	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
-	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
-	 * @param {number} arg4 Is the period for which you want to calculate the depreciation. Period must use the same units as Life.
-	 * @param {?number} arg5 Is the number of months in the first year. If month is omitted, it is assumed to be 12.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The initial cost of the asset.
+	 * @param {number} arg2 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
+	 * @param {number} arg4 - The period for which the depreciation will be calculated. Period must use the same units as the useful life of the asset.
+	 * @param {?number} arg5 - The number of months in the first year. If this parameter is omitted, it is assumed to be 12.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DB = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DB", arguments);
@@ -4806,12 +4810,12 @@
 	 * Returns the depreciation of an asset for a specified period using the double-declining balance method or some other method you specify.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the initial cost of the asset.
-	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
-	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
-	 * @param {number} arg4 Is the period for which you want to calculate the depreciation. Period must use the same units as Life.
-	 * @param {?number} arg5 Is the rate at which the balance declines. If Factor is omitted, it is assumed to be 2 (the double-declining balance method).
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The initial cost of the asset.
+	 * @param {number} arg2 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
+	 * @param {number} arg4 - The period for which the depreciation will be calculated. Period must use the same units as the useful life of the asset.
+	 * @param {?number} arg5 - The rate at which the balance declines. If this parameter is omitted, it is assumed to be 2 (the double-declining balance method).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DDB = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DDB", arguments);
@@ -4820,12 +4824,12 @@
 	 * Returns the discount rate for a security.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's price per $100 face value.
-	 * @param {any} arg4 Is the security's redemption value per $100 face value.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The purchase price of the security, per $100 par value.
+	 * @param {number} arg4 - The redemption value of the security, per $100 par value.
+	 * @param {?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("DISC", arguments);
@@ -4834,9 +4838,9 @@
 	 * Converts a dollar price, expressed as a fraction, into a dollar price, expressed as a decimal number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a number expressed as a fraction.
-	 * @param {any} arg2 Is the integer to use in the denominator of the fraction.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A number expressed as a fraction.
+	 * @param {number} arg2 - The integer to use in the denominator of the fraction.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DOLLARDE = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLARDE", arguments);
@@ -4845,9 +4849,9 @@
 	 * Converts a dollar price, expressed as a decimal number, into a dollar price, expressed as a fraction.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a decimal number.
-	 * @param {any} arg2 Is the integer to use in the denominator of a fraction.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A decimal number.
+	 * @param {number} arg2 - The integer to use in the denominator of a fraction.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DOLLARFR = function (arg1, arg2) {
 		return this.private_calculateFunction("DOLLARFR", arguments);
@@ -4856,13 +4860,13 @@
 	 * Returns the annual duration of a security with periodic interest payments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's annual coupon rate.
-	 * @param {any} arg4 Is the security's annual yield.
-	 * @param {any} arg5 Is the number of coupon payments per year.
-	 * @param {?any} arg6 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The annual coupon rate of the security.
+	 * @param {number} arg4 - The annual yield of the security.
+	 * @param {number} arg5 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("DURATION", arguments);
@@ -4871,9 +4875,9 @@
 	 * Returns the effective annual interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the nominal interest rate.
-	 * @param {any} arg2 Is the number of compounding periods per year.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The nominal interest rate.
+	 * @param {number} arg2 - The number of compounding periods per year.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EFFECT = function (arg1, arg2) {
 		return this.private_calculateFunction("EFFECT", arguments);
@@ -4882,12 +4886,12 @@
 	 * Returns the future value of an investment based on periodic, constant payments and a constant interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Is the total number of payment periods in the investment.
-	 * @param {number} arg3 Is the payment made each period; it cannot change over the life of the investment.
-	 * @param {?number} arg4 Is the present value, or the lump-sum amount that a series of future payments is worth now. If omitted, Pv = 0.
-	 * @param {?number} arg5 Is a value representing the timing of payment: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The total number of payment periods in the investment.
+	 * @param {number} arg3 - The payment made each period; it cannot change over the life of the investment.
+	 * @param {?number} arg4 - The present value, or the lump-sum amount that a series of future payments is worth now. If omitted, it is equal to 0.
+	 * @param {?number} arg5 - A value representing the timing of payment: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("FV", arguments);
@@ -4896,9 +4900,9 @@
 	 * Returns the future value of an initial principal after applying a series of compound interest rates.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the present value.
-	 * @param {any} arg2 Is an array of interest rates to apply.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The present value of an investment.
+	 * @param {ApiRange} arg2 - A range of interest rates to apply.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FVSCHEDULE = function (arg1, arg2) {
 		return this.private_calculateFunction("FVSCHEDULE", arguments);
@@ -4907,12 +4911,12 @@
 	 * Returns the interest rate for a fully invested security.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the amount invested in the security.
-	 * @param {any} arg4 Is the amount to be received at maturity.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The amount invested in the security.
+	 * @param {number} arg4 - The amount to be received at maturity.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.INTRATE = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("INTRATE", arguments);
@@ -4921,13 +4925,13 @@
 	 * Returns the interest payment for a given period for an investment, based on periodic, constant payments and a constant interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Is the period for which you want to find the interest and must be in the range 1 to Nper.
-	 * @param {number} arg3 Is the total number of payment periods in an investment.
-	 * @param {number} arg4 Is the present value, or the lump-sum amount that a series of future payments is worth now.
-	 * @param {?number} arg5 Is the future value, or a cash balance you want to attain after the last payment is made. If omitted, Fv = 0.
-	 * @param {?number} arg6 Is a logical value representing the timing of payment: at the end of the period = 0 or omitted, at the beginning of the period = 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The period for which the interest will be returned. It must be in the range from 1 to the total number of payments.
+	 * @param {number} arg3 - The total number of payment periods in an investment.
+	 * @param {number} arg4 - The present value, or the lump-sum amount that a series of future payments is worth now.
+	 * @param {?number} arg5 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {?number} arg6 - A logical value representing the timing of payment: at the end of the period = 0 or omitted, at the beginning of the period = 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("IPMT", arguments);
@@ -4936,9 +4940,9 @@
 	 * Returns the internal rate of return for a series of cash flows.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is an array or a reference to cells that contain numbers for which you want to calculate the internal rate of return.
-	 * @param {?number} arg2 Is a number that you guess is close to the result of IRR; 0.1 (10 percent) if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells that contain numbers for which the internal rate of return will be calculated.
+	 * @param {?number} arg2 - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.IRR = function (arg1, arg2) {
 		return this.private_calculateFunction("IRR", arguments);
@@ -4947,26 +4951,26 @@
 	 * Returns the interest paid during a specific period of an investment.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Period for which you want to find the interest.
-	 * @param {number} arg3 Number of payment periods in an investment.
-	 * @param {number} arg4 Lump sum amount that a series of future payments is right now.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The period for which the interest will be retuned. It must be in the range from 1 to the total number of payments.
+	 * @param {number} arg3 - The total number of payment periods in an investment.
+	 * @param {number} arg4 - The present value, or the lump-sum amount that a series of future payments is worth now.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ISPMT = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("ISPMT", arguments);
 	};
 	/**
-	 * Returns the Macauley modified duration for a security with an assumed par value of $100.
+	 * Returns the modified Macauley duration of a security with an assumed par value of $100.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's annual coupon rate.
-	 * @param {any} arg4 Is the security's annual yield.
-	 * @param {any} arg5 Is the number of coupon payments per year.
-	 * @param {?any} arg6 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The annual coupon rate of the security.
+	 * @param {number} arg4 - The annual yield of the security.
+	 * @param {number} arg5 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MDURATION = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("MDURATION", arguments);
@@ -4975,10 +4979,10 @@
 	 * Returns the internal rate of return for a series of periodic cash flows, considering both cost of investment and interest on reinvestment of cash.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is an array or a reference to cells that contain numbers that represent a series of payments (negative) and income (positive) at regular periods.
-	 * @param {number} arg2 Is the interest rate you pay on the money used in the cash flows.
-	 * @param {number} arg3 Is the interest rate you receive on the cash flows as you reinvest them.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells that contain numbers that represent a series of payments (negative) and income (positive) at regular periods.
+	 * @param {number} arg2 - The interest rate paid on the money used in the cash flows.
+	 * @param {number} arg3 - The interest rate received on the cash reinvestment.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MIRR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MIRR", arguments);
@@ -4987,9 +4991,9 @@
 	 * Returns the annual nominal interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the effective interest rate.
-	 * @param {any} arg2 Is the number of compounding periods per year.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The effective interest rate of the security.
+	 * @param {number} arg2 - The number of compounding periods per year.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NOMINAL = function (arg1, arg2) {
 		return this.private_calculateFunction("NOMINAL", arguments);
@@ -4998,12 +5002,12 @@
 	 * Returns the number of periods for an investment based on periodic, constant payments and a constant interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Is the payment made each period; it cannot change over the life of the investment.
-	 * @param {number} arg3 Is the present value, or the lump-sum amount that a series of future payments is worth now.
-	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made. If omitted, zero is used.
-	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The payment made each period; it cannot change over the life of the investment.
+	 * @param {number} arg3 - Te present value, or the lump-sum amount that a series of future payments is worth now.
+	 * @param {?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, zero is used.
+	 * @param {?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NPER = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("NPER", arguments);
@@ -5012,7 +5016,10 @@
 	 * Returns the net present value of an investment based on a discount rate and a series of future payments (negative values) and income (positive values).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The discount rate.
+	 * @param {number | ApiRange} args - Up to 255 arguments representing future payments (negative values) and income (positive values).
+	 * The first argument is required, the subsequent values are optional. 
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.NPV = function () {
 		return this.private_calculateFunction("NPV", arguments);
@@ -5021,16 +5028,16 @@
 	 * Returns the price per $100 face value of a security with an odd first period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's first coupon date, expressed as a serial date number.
-	 * @param {any} arg5 Is the security's interest rate.
-	 * @param {any} arg6 Is the security's annual yield.
-	 * @param {any} arg7 Is the security's redemption value per $100 face value.
-	 * @param {any} arg8 Is the number of coupon payments per year.
-	 * @param {?any} arg9 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg4 - The first coupon date of the security, expressed as a serial date number.
+	 * @param {number} arg5 - The interest rate of the security.
+	 * @param {number} arg6 - The annual yield of the security.
+	 * @param {anumberny} arg7 - The redemption value of the security, per $100 face value.
+	 * @param {number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ODDFPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
 		return this.private_calculateFunction("ODDFPRICE", arguments);
@@ -5039,16 +5046,16 @@
 	 * Returns the yield of a security with an odd first period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's first coupon date, expressed as a serial date number.
-	 * @param {any} arg5 Is the security's interest rate.
-	 * @param {any} arg6 Is the security's price.
-	 * @param {any} arg7 Is the security's redemption value per $100 face value.
-	 * @param {any} arg8 Is the number of coupon payments per year.
-	 * @param {?any} arg9 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg4 - The first coupon date of the security, expressed as a serial date number.
+	 * @param {number} arg5 - The interest rate of the security.
+	 * @param {number} arg6 - The purchase price of the security, per $100 par value.
+	 * @param {number} arg7 - The redemption value of the security, per $100 par value.
+	 * @param {number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ODDFYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
 		return this.private_calculateFunction("ODDFYIELD", arguments);
@@ -5057,15 +5064,15 @@
 	 * Returns the price per $100 face value of a security with an odd last period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's last coupon date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's interest rate.
-	 * @param {any} arg5 Is the security's annual yield.
-	 * @param {any} arg6 Is the security's redemption value per $100 face value.
-	 * @param {any} arg7 Is the number of coupon payments per year.
-	 * @param {?any} arg8 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The last coupon date of the security, expressed as a serial date number.
+	 * @param {number} arg5 - The interest rate of the security.
+	 * @param {number} arg5 - The annual yield of the security.
+	 * @param {number} arg6 - The redemption value of the security, per $100 par value.
+	 * @param {number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ODDLPRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ODDLPRICE", arguments);
@@ -5074,15 +5081,15 @@
 	 * Returns the yield of a security with an odd last period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's last coupon date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's interest rate.
-	 * @param {any} arg5 Is the security's price.
-	 * @param {any} arg6 Is the security's redemption value per $100 face value.
-	 * @param {any} arg7 Is the number of coupon payments per year.
-	 * @param {?any} arg8 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The last coupon date of the security, expressed as a serial date number.
+	 * @param {number} arg5 - The interest rate of the security.
+	 * @param {number} arg6 - The purchase price of the security, per $100 par value.
+	 * @param {number} arg6 - The redemption value of the security, per $100 par value.
+	 * @param {number} arg8 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg9 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ODDLYIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
 		return this.private_calculateFunction("ODDLYIELD", arguments);
@@ -5091,10 +5098,10 @@
 	 * Returns the number of periods required by an investment to reach a specified value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period..
-	 * @param {number} arg2 Is the present value of the investment.
-	 * @param {number} arg3 Is the desired future value of the investment.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period.
+	 * @param {number} arg2 - The present value of the investment.
+	 * @param {number} arg3 - The desired future value of the investment.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PDURATION = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("PDURATION", arguments);
@@ -5103,12 +5110,12 @@
 	 * Calculates the payment for a loan based on constant payments and a constant interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period for the loan. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Is the total number of payments for the loan.
-	 * @param {number} arg3 Is the present value: the total amount that a series of future payments is worth now.
-	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made, 0 (zero) if omitted.
-	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period for the loan. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The total number of payments for the loan.
+	 * @param {number} arg3 - The present value: the total amount that a series of future payments is worth now.
+	 * @param {?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PMT = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PMT", arguments);
@@ -5117,58 +5124,58 @@
 	 * Returns the payment on the principal for a given investment based on periodic, constant payments and a constant interest rate.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Specifies the period and must be in the range 1 to nper.
-	 * @param {number} arg3 Is the total number of payment periods in an investment.
-	 * @param {number} arg4 Is the present value: the total amount that a series of future payments is worth now.
-	 * @param {?number} arg5 Is the future value, or cash balance you want to attain after the last payment is made.
-	 * @param {?number} arg6 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The period for which the principal payment will be returned. It must be in the range from 1 to to the total number of payment periods.
+	 * @param {number} arg3 - The total number of payment periods in an investment.
+	 * @param {number} arg4 - The present value: the total amount that a series of future payments is worth now.
+	 * @param {?number} arg5 - The future value, or cash balance which will be attained after the last payment is made.
+	 * @param {?number} arg6 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PPMT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("PPMT", arguments);
 	};
 	/**
-	 * Returns the price per $100 face value of a security that pays periodic interest.
+	 * Returns the price per $100 face value for a security that pays periodic interest.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's annual coupon rate.
-	 * @param {any} arg4 Is the security's annual yield.
-	 * @param {any} arg5 Is the security's redemption value per $100 face value.
-	 * @param {any} arg6 Is the number of coupon payments per year.
-	 * @param {?any} arg7 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The annual coupon rate of the security.
+	 * @param {number} arg4 - The annual yield of the security.
+	 * @param {number} arg5 - The redemption value of the security, per $100 par value.
+	 * @param {number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PRICE = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("PRICE", arguments);
 	};
 	/**
-	 * Returns the price per $100 face value of a discounted security.
+	 * Returns the price per $100 face value for a discounted security.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's discount rate.
-	 * @param {any} arg4 Is the security's redemption value per $100 face value.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The discount rate of the security.
+	 * @param {number} arg4 - The redemption value of the security, per $100 par value.
+	 * @param {?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PRICEDISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PRICEDISC", arguments);
 	};
 	/**
-	 * Returns the price per $100 face value of a security that pays interest at maturity.
+	 * Returns the price per $100 face value for a security that pays interest at maturity.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's interest rate at date of issue.
-	 * @param {any} arg5 Is the security's annual yield.
-	 * @param {?any} arg6 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg4 - The security interest rate at the issue date.
+	 * @param {number} arg5 - The annual yield of the security.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PRICEMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("PRICEMAT", arguments);
@@ -5177,27 +5184,27 @@
 	 * Returns the present value of an investment: the total amount that a series of future payments is worth now.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
-	 * @param {number} arg2 Is the total number of payment periods in an investment.
-	 * @param {number} arg3 Is the payment made each period and cannot change over the life of the investment.
-	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made.
-	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * @param {number} arg2 - The total number of payment periods in an investment.
+	 * @param {number} arg3 - The payment made each period and cannot change over the life of the investment.
+	 * @param {?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PV = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("PV", arguments);
 	};
 	/**
-	 * Returns the interest rate per period of a loan or an investment. For example, use 6%/4 for quarterly payments at 6% APR.
+	 * Returns the interest rate per period for a loan or an investment. For example, use 6%/4 for quarterly payments at 6% APR.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the total number of payment periods for the loan or investment.
-	 * @param {number} arg2 Is the payment made each period and cannot change over the life of the loan or investment.
-	 * @param {number} arg3 Is the present value: the total amount that a series of future payments is worth now.
-	 * @param {?number} arg4 Is the future value, or a cash balance you want to attain after the last payment is made. If omitted, uses Fv = 0.
-	 * @param {?number} arg5 Is a logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
-	 * @param {?number} arg6 Is your guess for what the rate will be; if omitted, Guess = 0.1 (10 percent).
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The total number of payment periods for the loan or investment.
+	 * @param {number} arg2 - The payment made each period and cannot change over the life of the loan or investment.
+	 * @param {number} arg3 - The present value: the total amount that a series of future payments is worth now.
+	 * @param {?number} arg4 - The future value, or a cash balance which will be attained after the last payment is made. If omitted, it is equal to 0.
+	 * @param {?number} arg5 - A logical value: payment at the beginning of the period = 1; payment at the end of the period = 0 or omitted.
+	 * @param {?number} arg6 - An estimate at what the rate will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RATE = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("RATE", arguments);
@@ -5206,12 +5213,12 @@
 	 * Returns the amount received at maturity for a fully invested security.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the amount invested in the security.
-	 * @param {any} arg4 Is the security's discount rate.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The security settlement date, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the security, expressed as a serial date number.
+	 * @param {number} arg3 - The amount invested in the security.
+	 * @param {number} arg4 - 	The security discount rate.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RECEIVED = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("RECEIVED", arguments);
@@ -5220,10 +5227,10 @@
 	 * Returns an equivalent interest rate for the growth of an investment.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number of periods for the investment.
-	 * @param {number} arg2 Is the present value of the investment.
-	 * @param {number} arg3 Is the future value of the investment.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number of periods for the investment.
+	 * @param {number} arg2 - The present value of the investment.
+	 * @param {number} arg3 - The future value of the investment.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RRI = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("RRI", arguments);
@@ -5232,10 +5239,10 @@
 	 * Returns the straight-line depreciation of an asset for one period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the initial cost of the asset.
-	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
-	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The initial cost of the asset.
+	 * @param {number} arg2 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SLN = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SLN", arguments);
@@ -5244,11 +5251,11 @@
 	 * Returns the sum-of-years' digits depreciation of an asset for a specified period.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the initial cost of the asset.
-	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
-	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
-	 * @param {number} arg4 Is the period and must use the same units as Life.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The initial cost of the asset.
+	 * @param {number} arg2 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
+	 * @param {number} arg4 - The period for which the depreciation will be calculated. It must use the same units as the useful life of the asset.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SYD = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SYD", arguments);
@@ -5257,50 +5264,51 @@
 	 * Returns the bond-equivalent yield for a treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the Treasury bill's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the Treasury bill's discount rate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The discount rate of the Treasury bill.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TBILLEQ = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLEQ", arguments);
 	};
 	/**
-	 * Returns the price per $100 face value for a treasury bill.
+	 * Returns the price per $100 face value for a Treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the Treasury bill's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the Treasury bill's discount rate.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The discount rate of the Treasury bill.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TBILLPRICE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLPRICE", arguments);
 	};
 	/**
-	 * Returns the yield for a treasury bill.
+	 * Returns the yield for a Treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the Treasury bill's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the Treasury bill's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the Treasury Bill's price per $100 face value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The purchase price of the Treasury bill, per $100 par value.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TBILLYIELD = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("TBILLYIELD", arguments);
 	};
 	/**
-	 * Returns the depreciation of an asset for any period you specify, including partial periods, using the double-declining balance method or some other method you specify.
+	 * Returns the depreciation of an asset for any specified period, including partial periods, using the double-declining balance method or some other method specified.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the initial cost of the asset.
-	 * @param {number} arg2 Is the salvage value at the end of the life of the asset.
-	 * @param {number} arg3 Is the number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
-	 * @param {number} arg4 Is the starting period for which you want to calculate the depreciation, in the same units as Life.
-	 * @param {number} arg5 Is the ending period for which you want to calculate the depreciation, in the same units as Life.
-	 * @param {?number} arg6 Is the rate at which the balance declines, 2 (double-declining balance) if omitted.
-	 * @param {?boolean} arg7 Switch to straight-line depreciation when depreciation is greater than the declining balance = FALSE or omitted; do not switch = TRUE.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The initial cost of the asset.
+	 * @param {number} arg2 - The salvage value of the asset at the end of its lifetime.
+	 * @param {number} arg3 - The number of periods over which the asset is being depreciated (sometimes called the useful life of the asset).
+	 * @param {number} arg4 - The starting period for which the depreciation will be calculated, in the same units as the useful life of the asset.
+	 * @param {number} arg5 - The ending period for which the depreciation will be calculated, in the same units as the useful life of the asset.
+	 * @param {?number} arg6 - The rate at which the balance declines. If it is omitted, the function will assume it to be 2
+	 * @param {?boolean} arg7 - Specifies whether to use straight-line depreciation when depreciation is greater than the declining balance calculation (<b>false</b> or omitted).
+	 * If it is set to <b>true</b>, the function uses the declining balance method.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.VDB = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("VDB", arguments);
@@ -5309,10 +5317,10 @@
 	 * Returns the internal rate of return for a schedule of cash flows.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a series of cash flows that correspond to a schedule of payments in dates.
-	 * @param {any} arg2 Is a schedule of payment dates that corresponds to the cash flow payments.
-	 * @param {?any} arg3 Is a number that you guess is close to the result of XIRR.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range that contains the series of cash flows that corresponds to a schedule of payments in dates.
+	 * @param {ApiRange} arg2 - A range that contains the schedule of payment dates that corresponds to the cash flow payments.
+	 * @param {?number} arg3 - An estimate at what the internal rate of return will be. If it is omitted, the function will assume guess to be 0.1 (10 percent).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.XIRR = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("XIRR", arguments);
@@ -5321,10 +5329,10 @@
 	 * Returns the net present value for a schedule of cash flows.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the discount rate to apply to the cash flows.
-	 * @param {any} arg2 Is a series of cash flows that correspond to a schedule of payments in dates.
-	 * @param {any} arg3 Is a schedule of payment dates that corresponds to the cash flow payments.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The discount rate to apply to the cash flows.
+	 * @param {ApiRange} arg2 - A range that contains the series of cash flows that corresponds to a schedule of payments in dates.
+	 * @param {ApiRange} arg3 - A range that contains the schedule of payment dates that corresponds to the cash flow payments.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.XNPV = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("XNPV", arguments);
@@ -5333,28 +5341,28 @@
 	 * Returns the yield on a security that pays periodic interest.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's annual coupon rate.
-	 * @param {any} arg4 Is the security's price per $100 face value.
-	 * @param {any} arg5 Is the security's redemption value per $100 face value.
-	 * @param {any} arg6 Is the number of coupon payments per year.
-	 * @param {?any} arg7 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The annual coupon rate of the security.
+	 * @param {number} arg4 - The purchase price of the security, per $100 par value.
+	 * @param {number} arg5 - The redemption value of the security, per $100 par value.
+	 * @param {number} arg6 - The number of interest payments per year. The possible values are: 1 for annual payments, 2 for semiannual payments, 4 for quarterly payments.
+	 * @param {?number} arg7 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.YIELD = function (arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 		return this.private_calculateFunction("YIELD", arguments);
 	};
 	/**
-	 * Returns the annual yield for a discounted security. For example, a treasury bill.
+	 * Returns the annual yield for a discounted security. For example, a Treasury bill.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's price per $100 face value.
-	 * @param {any} arg4 Is the security's redemption value per $100 face value.
-	 * @param {?any} arg5 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The purchase price of the security, per $100 par value.
+	 * @param {number} arg4 - The redemption value of the security, per $100 par value.
+	 * @param {?number} arg5 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.YIELDDISC = function (arg1, arg2, arg3, arg4, arg5) {
 		return this.private_calculateFunction("YIELDDISC", arguments);
@@ -5363,13 +5371,13 @@
 	 * Returns the annual yield of a security that pays interest at maturity.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the security's settlement date, expressed as a serial date number.
-	 * @param {any} arg2 Is the security's maturity date, expressed as a serial date number.
-	 * @param {any} arg3 Is the security's issue date, expressed as a serial date number.
-	 * @param {any} arg4 Is the security's interest rate at date of issue.
-	 * @param {any} arg5 Is the security's price per $100 face value.
-	 * @param {?any} arg6 Is the type of day count basis to use.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The settlement date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg2 - The maturity date of the Treasury bill, expressed as a serial date number.
+	 * @param {number} arg3 - The issue date of the security, expressed as a serial date number.
+	 * @param {number} arg4 - The interest rate of the security at the issue date.
+	 * @param {number} arg5 - The purchase price of the security, per $100 par value.
+	 * @param {?number} arg6 - The day count basis to use: <b>0</b> or omitted - US (NASD) 30/360; <b>1</b> - Actual/actual; <b>2</b> - Actual/360; <b>3</b> - Actual/365; <b>4</b> - European 30/360.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.YIELDMAT = function (arg1, arg2, arg3, arg4, arg5, arg6) {
 		return this.private_calculateFunction("YIELDMAT", arguments);
@@ -5378,18 +5386,18 @@
 	 * Returns the absolute value of a number, a number without its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the real number for which you want the absolute value.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The real number for which the absolute value will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ABS = function (arg1) {
 		return this.private_calculateFunction("ABS", arguments);
 	};
 	/**
-	 * Returns the arccosine of a number, in radians in the range 0 to Pi. The arccosine is the angle whose cosine is Number.
+	 * Returns the arccosine of a number, in radians in the range from 0 to Pi. The arccosine is the angle whose cosine is a number specified in the parameters.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the cosine of the angle you want and must be from -1 to 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle cosine. It must be from -1 to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACOS = function (arg1) {
 		return this.private_calculateFunction("ACOS", arguments);
@@ -5398,18 +5406,18 @@
 	 * Returns the inverse hyperbolic cosine of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number equal to or greater than 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number equal to or greater than 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACOSH = function (arg1) {
 		return this.private_calculateFunction("ACOSH", arguments);
 	};
 	/**
-	 * Returns the arccotangent of a number, in radians in the range 0 to Pi..
+	 * Returns the arccotangent of a number, in radians in the range from 0 to Pi.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the cotangent of the angle you want.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle cotangent.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACOT = function (arg1) {
 		return this.private_calculateFunction("ACOT", arguments);
@@ -5418,8 +5426,8 @@
 	 * Returns the inverse hyperbolic cotangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the hyperbolic cotangent of the angle that you want.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle hyperbolic cotangent. It must be less than -1 or greater than 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ACOTH = function (arg1) {
 		return this.private_calculateFunction("ACOTH", arguments);
@@ -5428,7 +5436,15 @@
 	 * Returns an aggregate in a list or database.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A numeric value that specifies which function to use: <b>1</b> - AVERAGE, <b>2</b> - COUNT, <b>3</b> - COUNTA, <b>4</b> - MAX, <b>5</b> - MIN,
+	 * <b>6</b> - PRODUCT, <b>7</b> - STDEV.S, <b>8</b> - STDEV.P, <b>9</b> - SUM, <b>10</b> - VAR.S, <b>11</b> - VAR.P, <b>12</b> - MEDIAN, <b>13</b> - MODE.SNGL, <b>14</b> - LARGE,
+	 * <b>15</b> - SMALL, <b>16</b> - PERCENTILE.INC, <b>17</b> - QUARTILE.INC, <b>18</b> - PERCENTILE.EXC, <b>19</b> - QUARTILE.EXC.
+	 * @param {number} arg2 - A numeric value that specifies which values should be ignored: <b>0</b> or omitted - nested SUBTOTAL and AGGREGATE functions,
+	 * <b>1</b> - hidden rows, nested SUBTOTAL and AGGREGATE functions, <b>2</b> - error values, nested SUBTOTAL and AGGREGATE functions,
+	 * <b>3</b> - hidden rows, error values, nested SUBTOTAL and AGGREGATE functions, <b>4</b> - nothing, <b>5</b> - hidden rows, <b>6</b> - error values, <b>7</b> - hidden rows and error values.
+	 * @param {number | ApiRange} arg3 - The first numeric value for which the aggregate value will be returned.
+	 * @param {number | ApiRange} args - Up to 253 numeric values or a range of cells containing the values for which the aggregate value will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.AGGREGATE = function () {
 		return this.private_calculateFunction("AGGREGATE", arguments);
@@ -5437,18 +5453,18 @@
 	 * Converts a Roman numeral to Arabic.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the Roman numeral you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The Roman numeral to convert.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ARABIC = function (arg1) {
 		return this.private_calculateFunction("ARABIC", arguments);
 	};
 	/**
-	 * Returns the arcsine of a number in radians, in the range -Pi/2 to Pi/2.
+	 * Returns the arcsine of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the sine of the angle you want and must be from -1 to 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle sine. It must be from -1 to 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ASIN = function (arg1) {
 		return this.private_calculateFunction("ASIN", arguments);
@@ -5457,18 +5473,18 @@
 	 * Returns the inverse hyperbolic sine of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number equal to or greater than 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number equal to or greater than 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ASINH = function (arg1) {
 		return this.private_calculateFunction("ASINH", arguments);
 	};
 	/**
-	 * Returns the arctangent of a number in radians, in the range -Pi/2 to Pi/2.
+	 * Returns the arctangent of a number in radians, in the range from <em>-Pi/2</em> to <em>Pi/2</em>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the tangent of the angle you want.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle tangent.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ATAN = function (arg1) {
 		return this.private_calculateFunction("ATAN", arguments);
@@ -5477,9 +5493,9 @@
 	 * Returns the arctangent of the specified x and y coordinates, in radians between -Pi and Pi, excluding -Pi.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the x-coordinate of the point.
-	 * @param {number} arg2 Is the y-coordinate of the point.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The x coordinate of the point.
+	 * @param {number} arg2 - The y coordinate of the point.
+	 * @returns {numbern}
 	 */
 	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
 		return this.private_calculateFunction("ATAN2", arguments);
@@ -5488,8 +5504,8 @@
 	 * Returns the inverse hyperbolic tangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number between -1 and 1 excluding -1 and 1.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number between -1 and 1 excluding -1 and 1.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ATANH = function (arg1) {
 		return this.private_calculateFunction("ATANH", arguments);
@@ -5498,10 +5514,10 @@
 	 * Converts a number into a text representation with the given radix (base).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number that you want to convert.
-	 * @param {number} arg2 Is the base Radix that you want to convert the number into.
-	 * @param {?number} arg3 Is the minimum length of the returned string.  If omitted leading zeros are not added.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number to convert.
+	 * @param {number} arg2 - The base radix into which the number will be converted. An integer greater than or equal to 2 and less than or equal to 36.
+	 * @param {?number} arg3 - The minimum length of the returned string. An integer greater than or equal to 0 and less than 256. If omitted, leading zeros are not added to the result.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.BASE = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("BASE", arguments);
@@ -5510,9 +5526,9 @@
 	 * Rounds a number up, to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value you want to round.
-	 * @param {number} arg2 Is the multiple to which you want to round.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round up.
+	 * @param {number} arg2 - The multiple of significance to round up to.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("CEILING", arguments);
@@ -5521,21 +5537,22 @@
 	 * Rounds a number up, to the nearest integer or to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value you want to round.
-	 * @param {?number} arg2 Is the multiple to which you want to round.
-	 * @param {?number} arg3 When given and nonzero this function will round away from zero.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round up.
+	 * @param {?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used.
+	 * @param {?number} arg3 - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded towards zero.
+	 * If any other numeric value is specified, negative numbers are rounded away from zero.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CEILING_MATH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("CEILING.MATH", arguments);
 	};
 	/**
-	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance.
+	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance. The number is always rounded up regardless of its sing.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round up.
+	 * @param {?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CEILING_PRECISE = function (arg1, arg2) {
 		return this.private_calculateFunction("CEILING.PRECISE", arguments);
@@ -5544,9 +5561,9 @@
 	 * Returns the number of combinations for a given number of items.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the total number of items.
-	 * @param {number} arg2 Is the number of items in each combination.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The total number of items, a numeric value greater than or equal to 0.
+	 * @param {number} arg2 - The number of items in each combination, a numeric value greater than or equal to 0 but less than the total number of items.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COMBIN = function (arg1, arg2) {
 		return this.private_calculateFunction("COMBIN", arguments);
@@ -5555,9 +5572,9 @@
 	 * Returns the number of combinations with repetitions for a given number of items.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the total number of items.
-	 * @param {number} arg2 Is the number of items in each combination.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The total number of items, a numeric value greater than or equal to 0.
+	 * @param {number} arg2 - The number of items in each combination, a numeric value greater than or equal to 0 but less than the total number of items.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COMBINA = function (arg1, arg2) {
 		return this.private_calculateFunction("COMBINA", arguments);
@@ -5566,8 +5583,8 @@
 	 * Returns the cosine of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the cosine.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the cosine will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COS = function (arg1) {
 		return this.private_calculateFunction("COS", arguments);
@@ -5576,8 +5593,8 @@
 	 * Returns the hyperbolic cosine of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number for which the hyperbolic cosine will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COSH = function (arg1) {
 		return this.private_calculateFunction("COSH", arguments);
@@ -5586,8 +5603,8 @@
 	 * Returns the cotangent of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the cotangent.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the cotangent will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COT = function (arg1) {
 		return this.private_calculateFunction("COT", arguments);
@@ -5596,8 +5613,8 @@
 	 * Returns the hyperbolic cotangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic cotangent.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the hyperbolic cotangent will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COTH = function (arg1) {
 		return this.private_calculateFunction("COTH", arguments);
@@ -5606,8 +5623,8 @@
 	 * Returns the cosecant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the cosecant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the cosecant will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CSC = function (arg1) {
 		return this.private_calculateFunction("CSC", arguments);
@@ -5616,8 +5633,8 @@
 	 * Returns the hyperbolic cosecant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic cosecant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the hyperbolic cosecant will be calculated. Its absolute value must be less than <em>2^27</em>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CSCH = function (arg1) {
 		return this.private_calculateFunction("CSCH", arguments);
@@ -5626,9 +5643,9 @@
 	 * Converts a text representation of a number in a given base into a decimal number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the number that you want to convert.
-	 * @param {number} arg2 Is the base Radix of the number you are converting.
-	 * @returns {number | string | boolean}
+	 * @param {string} arg1 - The number to convert. The string lenght must be less than or equal to 255 characters.
+	 * @param {number} arg2 - The base Radix of the number that is converting. An integer greater than or equal to 2 and less than or equal to 36.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DECIMAL = function (arg1, arg2) {
 		return this.private_calculateFunction("DECIMAL", arguments);
@@ -5637,19 +5654,19 @@
 	 * Converts radians to degrees.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians that you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians to convert.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.DEGREES = function (arg1) {
 		return this.private_calculateFunction("DEGREES", arguments);
 	};
 	/**
-	 * Rounds the number up to the nearest multiple of significance.
+	 * Rounds the number up to the nearest multiple of significance. Negative numbers are rounded towards zero.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1.
-	 * @param {number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round up.
+	 * @param {number} arg2 - The multiple of significance to round up to.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ECMA_CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("ECMA.CEILING", arguments);
@@ -5658,28 +5675,28 @@
 	 * Rounds a positive number up and negative number down to the nearest even integer.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value to round.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round up.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EVEN = function (arg1) {
 		return this.private_calculateFunction("EVEN", arguments);
 	};
 	/**
-	 * Returns e raised to the power of a given number.
+	 * Returns the <b>e</b> constant raised to the power of a given number. The <b>e</b> constant is equal to <b>2.71828182845904</b>, the base of the natural logarithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the exponent applied to the base e. The constant e equals 2.71828182845904, the base of the natural logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The exponent applied to the base <b>e</b>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.EXP = function (arg1) {
 		return this.private_calculateFunction("EXP", arguments);
 	};
 	/**
-	 * Returns the factorial of a number, equal to 1*2*3*...* Number.
+	 * Returns the factorial of a number, which is equal to <em>1*2*3*...*</em> number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the nonnegative number you want the factorial of.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The nonnegative number for which the factorial will be calculated.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FACT = function (arg1) {
 		return this.private_calculateFunction("FACT", arguments);
@@ -5688,8 +5705,8 @@
 	 * Returns the double factorial of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value for which to return the double factorial.
-	 * @returns {number | string | boolean}
+	 * @param {any} arg1 - The value for which to return the double factorial.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FACTDOUBLE = function (arg1) {
 		return this.private_calculateFunction("FACTDOUBLE", arguments);
@@ -5698,20 +5715,20 @@
 	 * Rounds a number down to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the numeric value you want to round.
-	 * @param {number} arg2 Is the multiple to which you want to round. Number and Significance must either both be positive or both be negative.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value to round down.
+	 * @param {number} arg2 - The multiple of significance to round down to. The number to round down and the multiple of significance must have the same sign.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR = function (arg1, arg2) {
 		return this.private_calculateFunction("FLOOR", arguments);
 	};
 	/**
-	 * Returns a number that is rounded down to the nearest integer or to the nearest multiple of significance.
+	 * Returns a number that is rounded down to the nearest integer or to the nearest multiple of significance. The number is always rounded down regardless of its sign.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value to round down.
+	 * @param {?number} arg2 - The multiple of significance to round down to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_PRECISE = function (arg1, arg2) {
 		return this.private_calculateFunction("FLOOR.PRECISE", arguments);
@@ -5720,10 +5737,11 @@
 	 * Rounds a number down, to the nearest integer or to the nearest multiple of significance.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value you want to round.
-	 * @param {?number} arg2 Is the multiple to which you want to round.
-	 * @param {?number} arg3 When given and nonzero this function will round towards zero.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value to round down.
+	 * @param {?number} arg2 - The multiple of significance to round down to. If it is omitted, the default value of 1 is used.
+	 * @param {?number} arg3 - Specifies if negative numbers are rounded towards or away from zero. If it is omitted or set to 0, negative numbers are rounded away from zero.
+	 * If any other numeric value is specified, negative numbers are rounded towards zero.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.FLOOR_MATH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("FLOOR.MATH", arguments);
@@ -5732,7 +5750,8 @@
 	 * Returns the greatest common divisor.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 numeric values for which the greatest common divisor will be returned. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.GCD = function () {
 		return this.private_calculateFunction("GCD", arguments);
@@ -5741,19 +5760,20 @@
 	 * Rounds a number down to the nearest integer.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the real number you want to round down to an integer.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The real number to round down to an integer.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.INT = function (arg1) {
 		return this.private_calculateFunction("INT", arguments);
 	};
 	/**
-	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number. However, if the number or the significance is zero, zero is returned..
+	 * Returns a number that is rounded up to the nearest integer or to the nearest multiple of significance regardless of the sign of the number.
+	 * The number is always rounded up regardless of its sing.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1.
-	 * @param {?number} arg2.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The numeric value to round up.
+	 * @param {?number} arg2 - The multiple of significance to round up to. If it is omitted, the default value of 1 is used. If it is set to zero, the function returns 0.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ISO_CEILING = function (arg1, arg2) {
 		return this.private_calculateFunction("ISO.CEILING", arguments);
@@ -5762,7 +5782,8 @@
 	 * Returns the least common multiple.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 numeric values for which the least common multiple will be returned. The first argument is required, subsequent arguments are optional. 
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LCM = function () {
 		return this.private_calculateFunction("LCM", arguments);
@@ -5771,19 +5792,19 @@
 	 * Returns the natural logarithm of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the positive real number for which you want the natural logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The positive real number for which the natural logarithm will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LN = function (arg1) {
 		return this.private_calculateFunction("LN", arguments);
 	};
 	/**
-	 * Returns the logarithm of a number to the base you specify.
+	 * Returns the logarithm of a number to the specified base.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the positive real number for which you want the logarithm.
-	 * @param {?number} arg2 Is the base of the logarithm; 10 if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The positive real number for which the logarithm will be returned.
+	 * @param {?number} arg2 - The logarithm base. If omitted, it is equal to 10.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOG = function (arg1, arg2) {
 		return this.private_calculateFunction("LOG", arguments);
@@ -5792,8 +5813,8 @@
 	 * Returns the base-10 logarithm of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the positive real number for which you want the base-10 logarithm.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The positive real number for which the base-10 logarithm will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.LOG10 = function (arg1) {
 		return this.private_calculateFunction("LOG10", arguments);
@@ -5836,9 +5857,9 @@
 	 * Returns the remainder after a number is divided by a divisor.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want to find the remainder after the division is performed.
-	 * @param {number} arg2 Is the number by which you want to divide Number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number to divide and find the remainder.
+	 * @param {number} arg2 - The number to divide by.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MOD = function (arg1, arg2) {
 		return this.private_calculateFunction("MOD", arguments);
@@ -5847,18 +5868,19 @@
 	 * Returns a number rounded to the desired multiple.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to round.
-	 * @param {any} arg2 Is the multiple to which you want to round number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round.
+	 * @param {number} arg2 - The multiple to round the number to.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MROUND = function (arg1, arg2) {
 		return this.private_calculateFunction("MROUND", arguments);
 	};
 	/**
-	 * Returns the multinomial of a set of numbers.
+	 * Returns the ratio of the factorial of a sum of numbers to the product of factorials.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} args - Up to 255 numeric values for which the multinomial will be returned. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MULTINOMIAL = function () {
 		return this.private_calculateFunction("MULTINOMIAL", arguments);
@@ -5867,8 +5889,8 @@
 	 * Returns the unit matrix for the specified dimension.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is an integer specifying the dimension of the unit matrix that you want to return.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - An integer specifying the dimension of the unit matrix to be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MUNIT = function (arg1) {
 		return this.private_calculateFunction("MUNIT", arguments);
@@ -5877,17 +5899,17 @@
 	 * Rounds a positive number up and negative number down to the nearest odd integer.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the value to round.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to round.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ODD = function (arg1) {
 		return this.private_calculateFunction("ODD", arguments);
 	};
 	/**
-	 * Returns the value of Pi, 3.14159265358979, accurate to 15 digits.
+	 * Returns the mathematical constant <b>pi</b>, equal to <b>3.14159265358979</b>, accurate to 15 digits.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PI = function () {
 		return this.private_calculateFunction("PI", arguments);
@@ -5896,9 +5918,9 @@
 	 * Returns the result of a number raised to a power.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the base number, any real number.
-	 * @param {number} arg2 Is the exponent, to which the base number is raised.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The base number. It can be any real number.
+	 * @param {number} arg2 - The exponent to which the base number is raised.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.POWER = function (arg1, arg2) {
 		return this.private_calculateFunction("POWER", arguments);
@@ -5907,7 +5929,8 @@
 	 * Multiplies all the numbers given as arguments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | ApiRange} args - Up to 255 numeric values that will be multiplied. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.PRODUCT = function () {
 		return this.private_calculateFunction("PRODUCT", arguments);
@@ -5916,9 +5939,9 @@
 	 * Returns the integer portion of a division.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the dividend.
-	 * @param {any} arg2 Is the divisor.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The dividend, a numeric value.
+	 * @param {number} arg2 - The divisor, a numeric value.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.QUOTIENT = function (arg1, arg2) {
 		return this.private_calculateFunction("QUOTIENT", arguments);
@@ -5927,8 +5950,8 @@
 	 * Converts degrees to radians.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is an angle in degrees that you want to convert.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - An angle in degrees to convert.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RADIANS = function (arg1) {
 		return this.private_calculateFunction("RADIANS", arguments);
@@ -5937,29 +5960,29 @@
 	 * Returns a random number greater than or equal to 0 and less than 1, evenly distributed (changes on recalculation).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RAND = function () {
 		return this.private_calculateFunction("RAND", arguments);
 	};
 	/**
-	 * Returns a random number between the numbers you specify.
+	 * Returns a random number between the numbers specified.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the smallest integer RANDBETWEEN will return.
-	 * @param {any} arg2 Is the largest integer RANDBETWEEN will return.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The smallest integer value.
+	 * @param {number} arg2 - The largest integer value.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.RANDBETWEEN = function (arg1, arg2) {
 		return this.private_calculateFunction("RANDBETWEEN", arguments);
 	};
 	/**
-	 * Converts an Arabic numeral to Roman, as text.
+	 * Converts an arabic numeral to a roman numeral in the string format.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the Arabic numeral you want to convert.
-	 * @param {?number} arg2 Is the number specifying the type of Roman numeral you want..
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - A numeric value greater than or equal to 1 and less than 3999.
+	 * @param {?number} arg2 - A roman numeral type: <b>0</b> - classic, <b>1</b> - more concise, <b>2</b> - more concise, <b>3</b> - more concise, <b>4</b> - simplified.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.ROMAN = function (arg1, arg2) {
 		return this.private_calculateFunction("ROMAN", arguments);
@@ -5968,20 +5991,22 @@
 	 * Rounds a number to a specified number of digits.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number you want to round.
-	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero to the nearest integer.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number to round.
+	 * @param {number} arg2 - The number of digits to round to. If this argument is negative, the number will be rounded to the left of the decimal point.
+	 * If it is equal to zero, the number will be rounded to the nearest integer.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ROUND = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUND", arguments);
 	};
 	/**
-	 * Rounds a number down, towards zero.
+	 * Rounds a number down, toward zero.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number that you want rounded down.
-	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero or omitted, to the nearest integer.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number that will be rounded down.
+	 * @param {number} arg2 - The number of digits to round to. If this argument is negative, the number will be rounded to the left of the decimal point.
+	 * If it is equal to zero, the number will be rounded to the nearest integer.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ROUNDDOWN = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUNDDOWN", arguments);
@@ -5990,9 +6015,10 @@
 	 * Rounds a number up, away from zero.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number that you want rounded up.
-	 * @param {number} arg2 Is the number of digits to which you want to round. Negative rounds to the left of the decimal point; zero or omitted, to the nearest integer.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number that will be rounded up.
+	 * @param {number} arg2 - The number of digits to round to. If this argument is negative, the number will be rounded to the left of the decimal point.
+	 * If it is equal to zero, the number will be rounded to the nearest integer.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ROUNDUP = function (arg1, arg2) {
 		return this.private_calculateFunction("ROUNDUP", arguments);
@@ -6001,8 +6027,8 @@
 	 * Returns the secant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the secant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the secant will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SEC = function (arg1) {
 		return this.private_calculateFunction("SEC", arguments);
@@ -6011,8 +6037,8 @@
 	 * Returns the hyperbolic secant of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the hyperbolic secant.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the hyperbolic secant will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SECH = function (arg1) {
 		return this.private_calculateFunction("SECH", arguments);
@@ -6021,21 +6047,21 @@
 	 * Returns the sum of a power series based on the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the input value to the power series.
-	 * @param {any} arg2 Is the initial power to which you want to raise x.
-	 * @param {any} arg3 Is the step by which to increase n for each term in the series.
-	 * @param {any} arg4 Is a set of coefficients by which each successive power of x is multiplied.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The input value to the power series.
+	 * @param {number} arg2 - The initial power to which x will be raised.
+	 * @param {number} arg3 - The step by which to increase n for each term in the series.
+	 * @param {number} arg4 - A set of coefficients by which each successive power of x is multiplied.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SERIESSUM = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("SERIESSUM", arguments);
 	};
 	/**
-	 * Returns the sign of a number: 1 if the number is positive, zero if the number is zero, or -1 if the number is negative.
+	 * Returns the sign of a number: <b>1</b> if the number is positive, <b>0</b> if the number is zero, or <b>-1</b> if the number is negative.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SIGN = function (arg1) {
 		return this.private_calculateFunction("SIGN", arguments);
@@ -6044,8 +6070,8 @@
 	 * Returns the sine of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the sine. Degrees * PI()/180 = radians.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the sine will be returned. If your argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SIN = function (arg1) {
 		return this.private_calculateFunction("SIN", arguments);
@@ -6054,8 +6080,8 @@
 	 * Returns the hyperbolic sine of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number for which the hyperbolic sine will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SINH = function (arg1) {
 		return this.private_calculateFunction("SINH", arguments);
@@ -6064,27 +6090,47 @@
 	 * Returns the square root of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number for which you want the square root.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number for which the square root will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SQRT = function (arg1) {
 		return this.private_calculateFunction("SQRT", arguments);
 	};
 	/**
-	 * Returns the square root of (number * Pi).
+	 * Returns the square root of (number * pi).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the number by which p is multiplied.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number by which pi is multiplied.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SQRTPI = function (arg1) {
 		return this.private_calculateFunction("SQRTPI", arguments);
 	};
+
+	/**
+	 * The number 1-11 or 101-111 that specifies the function to use for the subtotal. 1-11 includes manually-hidden rows, while 101-111 excludes them; filtered-out cells are always excluded.
+	 * * <b>1 (101)</b> - AVERAGE.
+	 * * <b>2 (102)</b> - COUNT.
+	 * * <b>3 (103)</b> - COUNTA.
+	 * * <b>4 (104)</b> - MAX.
+	 * * <b>5 (105)</b> - MIN.
+	 * * <b>6 (106)</b> - PRODUCT.
+	 * * <b>7 (107)</b> - STDEV.
+	 * * <b>8 (108)</b> - STDEVP.
+	 * * <b>9 (109)</b> - SUM.
+	 * * <b>10 (110)</b> - VAR.
+	 * * <b>11 (111)</b> - VARP.
+	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111)} FunctionNumber
+	 * */
+
 	/**
 	 * Returns a subtotal in a list or database.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {FunctionNumber} arg1 - The number 1-11 or 101-111 that specifies the function to use for the subtotal. 1-11 includes manually-hidden rows, while 101-111 excludes them;
+	 * filtered-out cells are always excluded.
+	 * @param {ApiRange} args - Up to 255 ranges containing the values for which the subtotal will be returned. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SUBTOTAL = function () {
 		return this.private_calculateFunction("SUBTOTAL", arguments);
@@ -6093,7 +6139,8 @@
 	 * Adds all the numbers in a range of cells.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string | number | boolean} args - Up to 255 numeric values to add. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SUM = function () {
 		return this.private_calculateFunction("SUM", arguments);
@@ -6102,10 +6149,10 @@
 	 * Adds the cells specified by a given condition or criteria.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is the range of cells you want evaluated.
-	 * @param {any} arg2 Is the condition or criteria in the form of a number, expression, or text that defines which cells will be added.
-	 * @param {?ApiRange} arg3 Are the actual cells to sum. If omitted, the cells in range are used.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells to be evaluated.
+	 * @param {number | string} arg2 - The condition or criteria in the form of a number, expression, or text that defines which cells will be added.
+	 * @param {?ApiRange} arg3 - The range to sum. If omitted, the cells in range are used.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SUMIF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("SUMIF", arguments);
@@ -6114,7 +6161,13 @@
 	 * Adds the cells specified by a given set of conditions or criteria.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - The range of cells to be evaluated.
+	 * @param {number | string} arg2 - The first condition or criteria in the form of a number, expression, or text that defines which cells will be added.
+	 * @param {?ApiRange} arg3 - The first range to sum. If omitted, the cells in range are used.
+	 * @param {number | string} arg4 - Up to 127 additional conditions or criteria in the form of a number, expression, or text that defines which cells will be added.
+	 * These arguments are optional.
+	 * @param {?ApiRange} arg5 - Up to 127 actual ranges to be used to be added. If omitted, the cells in the range are used. These arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SUMIFS = function () {
 		return this.private_calculateFunction("SUMIFS", arguments);
@@ -6130,10 +6183,12 @@
 	// 	return this.private_calculateFunction("SUMPRODUCT", arguments);
 	// };
 	/**
-	 * Returns the sum of the squares of the arguments. The arguments can be numbers, arrays, names or references to cells that contain numbers.
+	 * Returns the sum of the squares of the arguments.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number | string} args - Up to 255 numeric values for which the sum of the squares will be calculated. The first argument is required, subsequent arguments are optional.
+	 * The arguments can be numbers, names, or ranges of cells that contain numbers.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SUMSQ = function () {
 		return this.private_calculateFunction("SUMSQ", arguments);
@@ -6178,8 +6233,8 @@
 	 * Returns the tangent of an angle.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the angle in radians for which you want the tangent. Degrees * PI()/180 = radians.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The angle in radians for which the tangent will be returned. If the argument is in degrees, multiply it by <em>PI()/180</em>.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TAN = function (arg1) {
 		return this.private_calculateFunction("TAN", arguments);
@@ -6188,8 +6243,8 @@
 	 * Returns the hyperbolic tangent of a number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is any real number.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - Any real number for which the hyperbolic tangent will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TANH = function (arg1) {
 		return this.private_calculateFunction("TANH", arguments);
@@ -6198,9 +6253,9 @@
 	 * Truncates a number to an integer by removing the decimal, or fractional, part of the number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {number} arg1 Is the number you want to truncate.
-	 * @param {?number} arg2 Is a number specifying the precision of the truncation, 0 (zero) if omitted.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The number which will be truncated.
+	 * @param {?number} arg2 - A number specifying the precision of the truncation. If this argument is omitted, it is equal to 0 (zero).
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TRUNC = function (arg1, arg2) {
 		return this.private_calculateFunction("TRUNC", arguments);
@@ -6209,41 +6264,45 @@
 	 * Chooses a value or action to perform from a list of values, based on an index number.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The position of the value in the list of values, a numeric value greater than or equal to 1 but less than the number of values in the list of values.
+	 * @param {number | string | ApiRange} args - Up to 254 values or the selected range of cells to analyze. The first argument is required, subsequent arguments are optional.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.CHOOSE = function () {
 		return this.private_calculateFunction("CHOOSE", arguments);
 	};
 	/**
-	 * Returns the number of columns in an array or reference.
+	 * Returns the number of columns in the cell range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is an array or array formula, or a reference to a range of cells for which you want the number of columns.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells for which the number of columns will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.COLUMNS = function (arg1) {
 		return this.private_calculateFunction("COLUMNS", arguments);
 	};
 	/**
-	 * Looks for a value in the top row of a table or array of values and returns the value in the same column from a row you specify.
+	 * Looks for a value in the top row of a table or array of values and returns the value in the same column from the specified row.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to be found in the first row of the table and can be a value, a reference, or a text string.
-	 * @param {number} arg2 Is a table of text, numbers, or logical values in which data is looked up. Table_array can be a reference to a range or a range name.
-	 * @param {number} arg3 Is the row number in table_array from which the matching value should be returned. The first row of values in the table is row 1.
-	 * @param {?boolean} arg4 Is a logical value: to find the closest match in the top row (sorted in ascending order) = TRUE or omitted; find an exact match = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange} arg1 - The value to be found in the first row of the table and can be a value, a reference, or a text string.
+	 * @param {ApiRange} arg2 - A table of text, numbers, or logical values in which data is looked up. The data is sorted in ascending order.
+	 * This argument can be a range of cells.
+	 * @param {number} arg3 - The row number in data table from which the matching value should be returned. The first row of values in the table is row 1.
+	 * @param {?boolean} arg4 - A logical value which specifies whether to find the closest match in the top row (sorted in ascending order) (<b>true</b> or omitted)
+	 * or find an exact match (<b>false</b>).
+	 * @returns {number | string}
 	 */
 	ApiWorksheetFunction.prototype.HLOOKUP = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("HLOOKUP", arguments);
 	};
 	/**
-	 * Creates a shortcut or jump that opens a document stored on your hard drive, a network server, or on the Internet.
+	 * Creates a shortcut that jumps to another location in the current workbook, or opens a document stored on your hard drive, a network server, or on the Internet.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {string} arg1 Is the text giving the path and file name to the document to be opened, a hard drive location, UNC address, or URL path.
-	 * @param {?any} arg2 Is text or a number that is displayed in the cell. If omitted, the cell displays the Link_location text.
-	 * @returns {number | string | boolean}
+	 * @param {string | ApiRange} arg1 - The text giving the path and file name to the document to be opened, a hard drive location, UNC address, or URL path.
+	 * @param {?string | ?ApiRange | ?number} arg2 - Text or a number that is displayed in the cell. If omitted, the cell displays the link location text.
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.HYPERLINK = function (arg1, arg2) {
 		return this.private_calculateFunction("HYPERLINK", arguments);
@@ -6252,45 +6311,54 @@
 	 * Returns a value or reference of the cell at the intersection of a particular row and column, in a given range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is a range of cells or an array constant..
-	 * @param {number} arg2 Selects the row in Array or Reference from which to return a value. If omitted, Column_num is required.
-	 * @param {?number} arg3 Selects the column in Array or Reference from which to return a value. If omitted, Row_num is required.
-	 * @param {?any} arg4 Is a reference to one or more cell ranges.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells constant.
+	 * @param {number} arg2 - The row in the range from which to return a value. If omitted, the column number is required.
+	 * @param {?number} arg3 - The column in the range from which to return a value. If omitted, the row number is required.
+	 * @param {?number} arg4 - An area to use in case the range contains several ranges. If it is omitted, the function will assume argument to be 1.
+	 * @returns {number | string}
 	 */
 	ApiWorksheetFunction.prototype.INDEX = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("INDEX", arguments);
 	};
 	/**
-	 * Looks up a value either from a one-row or one-column range or from an array. Provided for backwards compatibility.
+	 * Looks up a value either from a one-row or one-column range. Provided for backwards compatibility.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a value that LOOKUP searches for in Lookup_vector and can be a number, text, a logical value, or a name or reference to a value.
-	 * @param {ApiRange} arg2 Is a range that contains only one row or one column of text, numbers, or logical values, placed in ascending order.
-	 * @param {?ApiRange} arg3 Is a range that contains only one row or column, the same size as Lookup_vector.
+	 * @param {number | string | boolean | ApiRange} arg1 - A value that is searched for in the first vector. It can be a number, text, a logical value, or a name or reference to a value.
+	 * @param {ApiRange} arg2 - A range that contains only one row or one column of text, numbers, or logical values, placed in ascending order.
+	 * @param {?ApiRange} arg3 - A range that contains only one row or column. It must be the same size as the first vector.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.LOOKUP = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("LOOKUP", arguments);
 	};
+
 	/**
-	 * Returns the relative position of an item in an array that matches a specified value in a specified order.
+	 * The match type.
+	 * * <b>-1</b> - The values must be sorted in descending order. If the exact match is not found, the function will return the smallest value that is greater than the searched value.
+	 * * <b>0</b> - The values can be sorted in any order. If the exact match is not found, the function will return the <em>#N/A</em> error.
+	 * * <b>1</b> (or omitted) - The values must be sorted in ascending order. If the exact match is not found, the function will return the largest value that is less than the searched value.
+	 * @typedef {(-1 | 0 | 1)} MatchType
+	 * */
+
+	/**
+	 * Returns the relative position of an item in a range that matches the specified value in the specified order.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you use to find the value you want in the array, a number, text, or logical value, or a reference to one of these.
-	 * @param {number} arg2 Is a contiguous range of cells containing possible lookup values, an array of values, or a reference to an array.
-	 * @param {?number} arg3 Is a number 1, 0, or -1 indicating which value to return..
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | ApiRange} arg1 - The value to be matched in the range. It can be a number, text, or logical value, or a reference to one of these.
+	 * @param {ApiRange} arg2 - A contiguous range of cells containing possible lookup values.
+	 * @param {?MatchType} arg3 - A number 1, 0, or -1 indicating which value to return.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.MATCH = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("MATCH", arguments);
 	};
 	/**
-	 * Returns the number of rows in a reference or array.
+	 * Returns the number of rows in a range.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is an array, an array formula, or a reference to a range of cells for which you want the number of rows.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells for which the number of rows will be returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ROWS = function (arg1) {
 		return this.private_calculateFunction("ROWS", arguments);
@@ -6299,170 +6367,186 @@
 	 * Converts a vertical range of cells to a horizontal range, or vice versa.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is a range of cells on a worksheet or an array of values that you want to transpose.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange} arg1 - A range of cells on a worksheet that will be transposed.
+	 * @returns {ApiRange}
 	 */
 	ApiWorksheetFunction.prototype.TRANSPOSE = function (arg1) {
 		return this.private_calculateFunction("TRANSPOSE", arguments);
 	};
 	/**
-	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from a column that you specify. By default, the table must be sorted in an ascending order.
+	 * Looks for a value in the leftmost column of a table and then returns a value in the same row from the specified column. By default, the table must be sorted in an ascending order.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to be found in the first column of the table, and can be a value, a reference, or a text string.
-	 * @param {number} arg2 Is a table of text, numbers, or logical values, in which data is retrieved. Table_array can be a reference to a range or a range name.
-	 * @param {number} arg3 Is the column number in table_array from which the matching value should be returned. The first column of values in the table is column 1.
-	 * @param {?boolean} arg4 Is a logical value: to find the closest match in the first column (sorted in ascending order) = TRUE or omitted; find an exact match = FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange} arg1 - The value to be found in the first column of the table. It can be a value, a reference, or a text string.
+	 * @param {ApiRange} arg2 - A table of text, numbers, or logical values, in which data is retrieved. It can be a range of cells.
+	 * @param {number} arg3 - The column number in the data table from which the matching value should be returned. The first column of values in the table is column 1.
+	 * @param {?boolean} arg4 - A logical value that specifies whether to find the closest match in the first column (sorted in ascending order) (<b>true</b> or omitted)
+	 * or find an exact match (<b>false</b>).
+	 * @returns {number | string}
 	 */
 	ApiWorksheetFunction.prototype.VLOOKUP = function (arg1, arg2, arg3, arg4) {
 		return this.private_calculateFunction("VLOOKUP", arguments);
 	};
+
 	/**
-	 * Returns a number matching an error value..
+	 * The error value.
+	 * * <b>"#NULL!"</b> - 1
+	 * * <b>"#DIV/0!"</b> - 2
+	 * * <b>"#VALUE!"</b> - 3
+	 * * <b>"#REF!"</b> - 4
+	 * * <b>"#NAME?"</b> - 5
+	 * * <b>"#NUM!"</b> - 6
+	 * * <b>"#N/A"</b> - 7
+	 * * <b>"#GETTING_DATA"</b> - 8
+	 * * <b>"Other"</b> - "#N/A"
+	 * @typedef {("#NULL!" | "#DIV/0!" | "#VALUE!" | "#REF!" | "#NAME?" | "#NUM!" | "#N/A" | "#GETTING_DATA")} ErrorValue
+	 * */
+
+	/**
+	 * Returns a number matching an error value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the error value for which you want the identifying number, and can be an actual error value or a reference to a cell containing an error value.
-	 * @returns {number | string | boolean}
+	 * @param {ErrorValue | ApiRange} arg1 - The error value for which the identifying number will be returned. It can be an actual error value or a reference to a cell containing an error value.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.ERROR_TYPE = function (arg1) {
 		return this.private_calculateFunction("ERROR.TYPE", arguments);
 	};
 	/**
-	 * Checks whether a value is an error other than #N/A, and returns TRUE or FALSE.
+	 * Checks whether a value is an error other than <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | ApiRange} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISERR = function (arg1) {
 		return this.private_calculateFunction("ISERR", arguments);
 	};
 	/**
-	 * Checks whether a value is an error, and returns TRUE or FALSE.
+	 * Checks whether a value is an error, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | ApiRange} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISERROR = function (arg1) {
 		return this.private_calculateFunction("ISERROR", arguments);
 	};
 	/**
-	 * Returns TRUE if the number is even.
+	 * Returns <b>true</b> if a number is even.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to test.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to test.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISEVEN = function (arg1) {
 		return this.private_calculateFunction("ISEVEN", arguments);
 	};
 	/**
-	 * Checks whether a reference is to a cell containing a formula, and returns TRUE or FALSE.
+	 * Checks whether a reference to a cell contains a formula, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange} arg1 Is a reference to the cell you want to test.  Reference can be a cell reference, a formula, or name that refers to a cell.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - A reference to the cell to test. Reference can be a cell reference, a formula, or name that refers to a cell.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISFORMULA = function (arg1) {
 		return this.private_calculateFunction("ISFORMULA", arguments);
 	};
 	/**
-	 * Checks whether a value is a logical value (TRUE or FALSE), and returns TRUE or FALSE.
+	 * Checks whether a value is a logical value (<b>true</b> or <b>false</b>), and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISLOGICAL = function (arg1) {
 		return this.private_calculateFunction("ISLOGICAL", arguments);
 	};
 	/**
-	 * Checks whether a value is #N/A, and returns TRUE or FALSE.
+	 * Checks whether a value is <em>#N/A</em>, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNA = function (arg1) {
 		return this.private_calculateFunction("ISNA", arguments);
 	};
 	/**
-	 * Checks whether a value is not text (blank cells are not text), and returns TRUE or FALSE.
+	 * Checks whether a value is not text (blank cells are not text), and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want tested: a cell; a formula; or a name referring to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNONTEXT = function (arg1) {
 		return this.private_calculateFunction("ISNONTEXT", arguments);
 	};
 	/**
-	 * Checks whether a value is a number, and returns TRUE or FALSE.
+	 * Checks whether a value is a number, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISNUMBER = function (arg1) {
 		return this.private_calculateFunction("ISNUMBER", arguments);
 	};
 	/**
-	 * Returns TRUE if the number is odd.
+	 * Returns <b>true</b> if a number is odd.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value to test.
-	 * @returns {number | string | boolean}
+	 * @param {number} arg1 - The value to test.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISODD = function (arg1) {
 		return this.private_calculateFunction("ISODD", arguments);
 	};
 	/**
-	 * Checks whether a value is a reference, and returns TRUE or FALSE.
+	 * Checks whether a value is a reference, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISREF = function (arg1) {
 		return this.private_calculateFunction("ISREF", arguments);
 	};
 	/**
-	 * Checks whether a value is text, and returns TRUE or FALSE.
+	 * Checks whether a value is text, and returns <b>true</b> or <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | string} arg1 - The value to test. Value can refer to a cell, a formula, or a name that refers to a cell, formula, or value.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.ISTEXT = function (arg1) {
 		return this.private_calculateFunction("ISTEXT", arguments);
 	};
 	/**
-	 * Converts non-number value to a number, dates to serial numbers, TRUE to 1, anything else to 0 (zero).
+	 * Converts a value to a number, dates to serial numbers, <b>true</b> to 1, error to {@link global#ErrorValue ErrorValue}, anything else to 0 (zero).
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is the value you want converted.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean} arg1 - The value to be converted.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.N = function (arg1) {
 		return this.private_calculateFunction("N", arguments);
 	};
 	/**
-	 * Returns the error value #N/A (value not available).
+	 * Returns the <em>#N/A</em> error value which means "no value is available".
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {string}
 	 */
 	ApiWorksheetFunction.prototype.NA = function () {
 		return this.private_calculateFunction("NA", arguments);
 	};
 	/**
-	 * Returns the sheet number of the referenced sheet.
+	 * Returns the sheet number of the reference sheet.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {?string} arg1 Is the name of a sheet or a reference that you want the sheet number of.  If omitted the number of the sheet containing the function is returned.
-	 * @returns {number | string | boolean}
+	 * @param {?string | ?ApiRange} arg1 - The name of a sheet or a reference for which the sheet number will be returned. If omitted the number of the sheet containing the function is returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SHEET = function (arg1) {
 		return this.private_calculateFunction("SHEET", arguments);
@@ -6471,8 +6555,8 @@
 	 * Returns the number of sheets in a reference.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {?ApiRange} arg1 Is a reference for which you want to know the number of sheets it contains.  If omitted the number of sheets in the workbook containing the function is returned.
-	 * @returns {number | string | boolean}
+	 * @param {?ApiRange} arg1 - A reference for which the number of sheets will be returned. If omitted the number of sheets in the workbook containing the function is returned.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.SHEETS = function (arg1) {
 		return this.private_calculateFunction("SHEETS", arguments);
@@ -6481,97 +6565,100 @@
 	 * Returns an integer representing the data type of a value: number = 1; text = 2; logical value = 4; error value = 16; array = 64; compound data = 128.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Can be any value.
-	 * @returns {number | string | boolean}
+	 * @param {number | string | boolean | array} arg1 - A value to test.
+	 * @returns {number}
 	 */
 	ApiWorksheetFunction.prototype.TYPE = function (arg1) {
 		return this.private_calculateFunction("TYPE", arguments);
 	};
 	/**
-	 * Checks whether all arguments are TRUE, and returns TRUE if all arguments are TRUE.
+	 * Checks whether all conditions in a test are <b>true</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | boolean} args - A condition to check.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.AND = function () {
 		return this.private_calculateFunction("AND", arguments);
 	};
 	/**
-	 * Returns the logical value FALSE.
+	 * Returns the <b>false</b> logical value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.FALSE = function () {
 		return this.private_calculateFunction("FALSE", arguments);
 	};
 	/**
-	 * Checks whether a condition is met, and returns one value if TRUE, and another value if FALSE.
+	 * Checks whether a condition is met, and returns one value if <b>true</b>, and another value if <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} arg1 Is any value or expression that can be evaluated to TRUE or FALSE.
-	 * @param {any} arg2 Is the value that is returned if Logical_test is TRUE. If omitted, TRUE is returned. You can nest up to seven IF functions.
-	 * @param {?any} arg3 Is the value that is returned if Logical_test is FALSE. If omitted, FALSE is returned.
+	 * @param {number | string | ApiRange | boolean} arg1 - Any value or expression that can be evaluated to <b>true</b> or <b>false</b>.
+	 * @param {any} arg2 - The value that is returned if the condition is <b>true</b>. If omitted, <b>true</b> is returned. You can nest up to seven IF functions.
+	 * @param {?any} arg3 - The value that is returned if the condition is <b>false</b>. If omitted, <b>false</b> is returned.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IF = function (arg1, arg2, arg3) {
 		return this.private_calculateFunction("IF", arguments);
 	};
 	/**
-	 * Returns value_if_error if expression is an error and the value of the expression itself otherwise.
+	 * Checks if there is an error in the formula in the first argument. The function returns the result of the formula if there is no error, or the value specified in the second argument if there is one.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is any value or expression or reference.
-	 * @param {any} arg2 Is any value or expression or reference.
+	 * @param {ApiRange | number | string | boolean} arg1 - The value, expression, or reference that is checked for an error.
+	 * @param {number | string | boolean} arg2 - The value to be returned if the formula evaluates to an error. The following errors are evaluated: <b>#N/A</b>, <b>#VALUE!</b>, <b>#REF!</b>, <b>#DIV/0!</b>, <b>#NUM!</b>, <b>#NAME?</b>, <b>#NULL!</b>.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IFERROR = function (arg1, arg2) {
 		return this.private_calculateFunction("IFERROR", arguments);
 	};
 	/**
-	 * Returns the value you specify if the expression resolves to #N/A, otherwise returns the result of the expression.
+	 * Checks if there is an error in the formula in the first argument. The function returns the specified value if the formula returns the <em>#N/A</em> error value, otherwise returns the result of the formula.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {any} arg1 Is any value or expression or reference.
-	 * @param {any} arg2 Is any value or expression or reference.
+	 * @param {ApiRange | number | string | boolean} arg1 - The value, expression, or reference that is checked for an error.
+	 * @param {number | string | boolean} arg2 - The value to return if the formula evaluates to the <em>#N/A</em> error value.
 	 * @returns {number | string | boolean}
 	 */
 	ApiWorksheetFunction.prototype.IFNA = function (arg1, arg2) {
 		return this.private_calculateFunction("IFNA", arguments);
 	};
 	/**
-	 * Changes FALSE to TRUE, or TRUE to FALSE.
+	 * Checks if the specified logical value is <b>true</b> or <b>false</b>. The function returns <b>true</b> if the argument is <b>false</b> and <b>false</b> if the argument is <b>true</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {boolean} arg1 Is a value or expression that can be evaluated to TRUE or FALSE.
-	 * @returns {number | string | boolean}
+	 * @param {ApiRange | number | string | boolean} arg1 - A value or expression that can be evaluated to <b>true</b> or <b>false</b>.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.NOT = function (arg1) {
 		return this.private_calculateFunction("NOT", arguments);
 	};
 	/**
-	 * Checks whether any of the arguments are TRUE, and returns TRUE or FALSE. Returns FALSE only if all arguments are FALSE.
+	 * Checks whether any of the arguments are <b>true</b>. Returns <b>false</b> only if all arguments are <b>false</b>.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | boolean} args - A condition to check.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.OR = function () {
 		return this.private_calculateFunction("OR", arguments);
 	};
 	/**
-	 * Returns the logical value TRUE.
+	 * Returns the <b>true</b> logical value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.TRUE = function () {
 		return this.private_calculateFunction("TRUE", arguments);
 	};
 	/**
-	 * Returns a logical 'Exclusive Or' of all arguments.
+	 * Returns the logical <b>Exclusive Or</b> value of all arguments. The function returns <b>true</b> when the number of <b>true</b> inputs is odd and <b>false</b> when the number of <b>true</b> inputs is even.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @returns {number | string | boolean}
+	 * @param {number | string | ApiRange | boolean} args - A condition to check.
+	 * @returns {boolean}
 	 */
 	ApiWorksheetFunction.prototype.XOR = function () {
 		return this.private_calculateFunction("XOR", arguments);
