@@ -17900,6 +17900,13 @@ function RangeDataManagerElem(bbox, data)
 
 				//prepare result
 				let returnInfo = options.returnInfo;
+
+				if (res instanceof Promise) {
+					res.then(function (val) {
+						return oThis.prepareResult(val, returnInfo.type);
+					})
+					return res;
+				}
 				return oThis.prepareResult(res, returnInfo.type);
 			} catch (e) {
 				console.log("ERROR CUSTOM FUNCTION CALCULATE");
