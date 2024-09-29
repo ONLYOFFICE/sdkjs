@@ -4588,7 +4588,14 @@ function (window, undefined) {
 	CHyperlinkProperty.prototype['get_Heading'] = CHyperlinkProperty.prototype.get_Heading;
 
 
-	/** @constructor */
+	/**
+	 * @property {string|null} Id
+	 * @property {string|null} FullName
+	 * @property {string|null} FirstName
+	 * @property {string|null} LastName
+	 * @property {boolean|null} IsAnonymousUser
+	 * @constructor
+	 *  */
 	function asc_CUserInfo() {
 		this.Id = null;
 		this.FullName = null;
@@ -4596,7 +4603,15 @@ function (window, undefined) {
 		this.LastName = null;
 		this.IsAnonymousUser = false;
 	}
-
+	asc_CUserInfo.prototype.clone = function () {
+		let res = new asc_CUserInfo();
+		res.Id = this.Id;
+		res.FullName = this.FullName;
+		res.FirstName = this.FirstName;
+		res.LastName = this.LastName;
+		res.IsAnonymousUser = this.IsAnonymousUser;
+		return res;
+	};
 	asc_CUserInfo.prototype.asc_putId = asc_CUserInfo.prototype.put_Id = function (v) {
 		this.Id = v;
 	};
@@ -4628,7 +4643,32 @@ function (window, undefined) {
 		this.IsAnonymousUser = v;
 	};
 
-	/** @constructor */
+	/**
+	 * @property {string|null} Id
+	 * @property {string|null} Url
+	 * @property {string|null} Title
+	 * @property {string|null} Format
+	 * @property {string|null} VKey
+	 * @property {string|null} Token
+	 * @property {asc_CUserInfo|null} UserInfo
+	 * @property {object|null} Options
+	 * @property {string|null} CallbackUrl
+	 * @property {object|null} TemplateReplacement
+	 * @property {string|null} Mode
+	 * @property {object|null} Permissions
+	 * @property {string|null} Lang
+	 * @property {boolean|null} OfflineApp
+	 * @property {boolean|undefined} Encrypted
+	 * @property {object|undefined} EncryptedInfo
+	 * @property {boolean|null} IsEnabledPlugins
+	 * @property {boolean|null} IsEnabledMacroses
+	 * @property {boolean|null} IsWebOpening
+	 * @property {boolean|null} SupportsOnSaveDocument
+	 * @property {object|null} Wopi
+	 * @property {string|null} shardkey
+	 * @property {object|null} ReferenceData
+	 * @constructor
+	 * */
 	function asc_CDocInfo() {
 		this.Id = null;
 		this.Url = null;
@@ -4658,6 +4698,63 @@ function (window, undefined) {
 	}
 
 	prot = asc_CDocInfo.prototype;
+	prot.clone = function () {
+		let res = new asc_CDocInfo();
+		res.Id = this.Id;
+		res.Url = this.Url;
+		res.Title = this.Title;
+		res.Format = this.Format;
+		res.VKey = this.VKey;
+		res.Token = this.Token;
+		res.UserInfo = this.UserInfo ? this.UserInfo.clone() : null;
+		res.Options = this.Options ? JSON.parse(JSON.stringify(this.Options)) : null;
+		res.CallbackUrl = this.CallbackUrl;
+		res.TemplateReplacement = this.TemplateReplacement ? JSON.parse(JSON.stringify(this.TemplateReplacement)) : null;
+		res.Mode = this.Mode;
+		res.Permissions = this.Permissions ? JSON.parse(JSON.stringify(this.Permissions)) : null;
+		res.Lang = this.Lang;
+		res.OfflineApp = this.OfflineApp;
+		res.Encrypted = this.Encrypted;
+		res.EncryptedInfo = this.EncryptedInfo ? JSON.parse(JSON.stringify(this.EncryptedInfo)) : undefined;
+		res.IsEnabledPlugins = this.IsEnabledPlugins;
+		res.IsEnabledMacroses = this.IsEnabledMacroses;
+		res.IsWebOpening = this.IsWebOpening;
+		res.SupportsOnSaveDocument = this.SupportsOnSaveDocument;
+		res.Wopi = this.Wopi ? JSON.parse(JSON.stringify(this.Wopi)) : null;
+		res.shardkey = this.shardkey;
+		res.ReferenceData = this.ReferenceData ? JSON.parse(JSON.stringify(this.ReferenceData)) : null;
+		return res;
+	};
+	prot.extendWithWopiParams = function(data) {
+		let docInfo = this.clone();
+		//like in web-apps/apps/api/wopi/editor-wopi.ejs and onRefreshFile(web-apps/apps/documenteditor/main/app/controller/Main.js)
+		let key = data["key"];
+		let userAuth = data["userAuth"];
+		let fileInfo = data["fileInfo"];
+		let token = data["token"];
+
+		docInfo.put_Id(key);
+		if (fileInfo["FileUrl"]) {
+			docInfo.put_Url(fileInfo["FileUrl"]);
+		} else if (fileInfo["TemplateSource"]) {
+			docInfo.put_Url(fileInfo["TemplateSource"]);
+		} else if (userAuth) {
+			docInfo.put_Url(userAuth["wopiSrc"] + "/contents?access_token=" + userAuth["access_token"]);
+		}
+		docInfo.put_Title(fileInfo["BreadcrumbDocName"] || fileInfo["BaseFileName"]);
+		docInfo.put_CallbackUrl(JSON.stringify(userAuth),);
+		docInfo.put_Token(token);
+		//todo does userInfo can change? (IsAnonymousUser)
+
+		let fileType = fileInfo["BaseFileName"] ? fileInfo["BaseFileName"].substr(fileInfo["BaseFileName"].lastIndexOf('.') + 1) : "";
+		fileType = fileInfo["FileExtension"] ? fileInfo["FileExtension"].substr(1) : fileType;
+		fileType = fileType.toLowerCase();
+		docInfo.put_Format(fileType);
+		docInfo.put_Mode(userAuth["mode"]);
+		//todo does permissions can change? (formsubmit, dchat)
+		docInfo.put_CoEditingMode(userAuth["mode"] !== "view" ? "fast" : "strict");
+		return docInfo;
+	};
 	prot.isFormatWithForms = function () {
 		return this.Format === "oform" || this.Format === "docxf" || this.Format === "pdf";
 	};

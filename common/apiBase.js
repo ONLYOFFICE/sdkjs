@@ -2670,8 +2670,7 @@
 		if (this.documentIsWopi) {
 			let callback = function(isTimeout, response) {
 				if (response) {
-					//todo
-					t.asc_refreshFile(new Asc.asc_CDocInfo(response['DocInfo']));
+					t.asc_refreshFile(t.DocInfo.extendWithWopiParams(response));
 				} else {
 					t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
 				}
