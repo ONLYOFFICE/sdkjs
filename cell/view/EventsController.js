@@ -434,7 +434,7 @@
 				settings.isVerticalScroll = true;
 				settings.isHorizontalScroll = false;
 				this.vsbApi.canvasH = null;
-				this.reinitScrollY(settings, ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
+				this.reinitScrollY(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleRowSmoothScroll(true) : ws.getFirstVisibleRow(true), ws.getVerticalScrollRange(), ws.getVerticalScrollMax());
 				this.vsbApi.settings = settings;
 			}
 			if (this.hsbApi) {
@@ -444,7 +444,7 @@
 				settings.isVerticalScroll = false;
 				settings.isHorizontalScroll = true;
 				this.hsbApi.canvasW = null;
-				this.reinitScrollX(settings, ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
+				this.reinitScrollX(settings, ws.workbook.getSmoothScrolling() ? ws.getFirstVisibleColSmoothScroll(true) : ws.getFirstVisibleCol(true), ws.getHorizontalScrollRange(), ws.getHorizontalScrollMax());
 				this.hsbApi.settings = settings;
 			}
 		};
@@ -2161,7 +2161,7 @@
 				return event.coord;
 			}
 
-			var offs = this.element.getBoundingClientRect();
+			var offs = AscCommon.UI.getBoundingClientRect(this.element);
 			var x = ((event.pageX * AscBrowser.zoom) >> 0) - offs.left;
 			var y = ((event.pageY * AscBrowser.zoom) >> 0) - offs.top;
 

@@ -95,6 +95,9 @@
         oAnnotTextPrTrackHandler.SetTrackObject(IsShowAnnotTrack && bShowTrack ? oAnnot : null, 0, false === bSelection || true === bEmptySelection);
     };
 
+    CGraphicObjects.prototype.paragraphIncDecIndent = function(bIncrease) {
+        this.applyDocContentFunction(AscWord.CDocumentContent.prototype.Increase_ParagraphLevel, [bIncrease], AscWord.CTable.prototype.Increase_ParagraphLevel);
+    };
     CGraphicObjects.prototype.canIncreaseParagraphLevel = function(bIncrease)
     {
         let oDocContent = this.getTargetDocContent();
@@ -150,6 +153,7 @@
                 oTable.graphicObject.Set_Props(props);
                 oTable.graphicObject.RemoveSelection();
             }
+            oTable.SetNeedRecalc(true);
             props.TableCaption = sCaption;
             props.TableDescription = sDescription;
             props.RowHeight = dRowHeight;
@@ -193,8 +197,8 @@
                         sImageId = AscCommon.getFullImageSrc2(sImageId);
                         let _image = oApi.ImageLoader.map_image_index[sImageId];
                         if (_image && _image.Image) {
-                            let __w     = Math.max((_image.Image.width * AscCommon.g_dKoef_pix_to_mm), 1);
-                            let __h     = Math.max((_image.Image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+                            let __w     = Math.max((_image.Image.width * g_dKoef_pix_to_mm), 1);
+                            let __h     = Math.max((_image.Image.height * g_dKoef_pix_to_mm), 1);
                             let fKoeff  = 1.0/Math.max(__w/dWidth, __h/dHeight);
                             let _w      = Math.max(5, __w*fKoeff);
                             let _h      = Math.max(5, __h*fKoeff);
@@ -952,7 +956,7 @@
         if (this.selection.groupSelection) {
             let oGroup = this.selection.groupSelection;
             if (oGroup.IsAnnot && oGroup.IsAnnot() && oGroup.IsFreeText() && oGroup.selection.textSelection) {
-                return oGroup;
+                return [oGroup];
             }
 
             return this.selection.groupSelection.selectedObjects;
@@ -971,9 +975,10 @@
             if(ret.cursorType !== "text")
             {
                 let oApi = Asc.editor || editor;
+                let oDoc = this.document;
                 let isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-                let oObject     = AscCommon.g_oTableId.Get_ById(ret.objectId);
+                let oObject = AscCommon.g_oTableId.Get_ById(ret.objectId) || oDoc.GetShapeBasedAnnotById(ret.objectId);
                 let isViewerObj = this.document.IsViewerObject(oObject);
 
                 if (!isDrawHandles && isViewerObj) {
@@ -1298,6 +1303,7 @@
     CGraphicObjects.prototype.getDrawingsPasteShift     = AscFormat.DrawingObjectsController.prototype.getDrawingsPasteShift;
     CGraphicObjects.prototype.endTrackNewShape          = AscFormat.DrawingObjectsController.prototype.endTrackNewShape;
     CGraphicObjects.prototype.removeCallback            = AscFormat.DrawingObjectsController.prototype.removeCallback;
+    CGraphicObjects.prototype.getAllSingularDrawings    = AscFormat.DrawingObjectsController.prototype.getAllSingularDrawings;
 
     CGraphicObjects.prototype.startRecalculate = function() {};
 

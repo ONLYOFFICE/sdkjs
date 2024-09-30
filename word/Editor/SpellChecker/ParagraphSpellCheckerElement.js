@@ -38,18 +38,19 @@
 	 * Отдельный элемент проверки орфографии внутри параграфа
 	 * @constructor
 	 */
-	function CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos,  Word, Lang, Prefix, Ending)
+	function CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos,  Word, Lang, Prefix, Ending, apostrophe)
 	{
 		this.startRun      = startRun;
 		this.startInRunPos = startInRunPos;
 		this.endRun        = endRun;
 		this.endInRunPos   = endInRunPos;
 		
-		this.Word     = Word;
-		this.Lang     = Lang;
-		this.Checked  = null; // null - неизвестно, true - правильное слово, false - неправильное слово
-		this.CurPos   = false;
-		this.Variants = null;
+		this.Word       = Word;
+		this.Lang       = Lang;
+		this.Checked    = null; // null - неизвестно, true - правильное слово, false - неправильное слово
+		this.CurPos     = false;
+		this.Variants   = null;
+		this.apostrophe = apostrophe; // апостроф, который реально шел в слове (в this.Word мы все апострофы заменили на 0x0027)
 
 		// В некоторых языках слова идут вместе со знаками пунктуации до или после, например,
 		// -abwicklung и bwz. (в немецком языке)
@@ -116,9 +117,26 @@
 	{
 		return this.Variants;
 	};
-	CParagraphSpellCheckerElement.prototype.SetVariants = function(arrVariants)
+	CParagraphSpellCheckerElement.prototype.SetVariants = function(variants)
 	{
-		this.Variants = arrVariants ? arrVariants : null;
+		if (!variants)
+		{
+			this.Variants = null;
+			return;
+		}
+		
+		if (!this.apostrophe)
+		{
+			this.Variants = variants;
+			return;
+		}
+		
+		let apostrophe = String.fromCodePoint(this.apostrophe);
+		this.Variants = [];
+		for (let i = 0; i < variants.length; ++i)
+		{
+			this.Variants.push(variants[i].replaceAll('\u0027', apostrophe));
+		}
 	};
 	CParagraphSpellCheckerElement.prototype.SetCorrect = function()
 	{
@@ -208,7 +226,6 @@
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CParagraphSpellCheckerElement = CParagraphSpellCheckerElement;
+	AscWord.CParagraphSpellCheckerElement = CParagraphSpellCheckerElement;
 
 })(window);

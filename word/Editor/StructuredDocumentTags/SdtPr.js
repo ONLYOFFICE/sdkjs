@@ -917,6 +917,11 @@ CContentControlPr.prototype.GetNewKey = function()
 
 	return keyGenerator.GetNewKey(this.CC);
 };
+CContentControlPr.prototype.IsSignature = function()
+{
+	let pictPr = this.GetPictureFormPr();
+	return (pictPr && pictPr.IsSignature());
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
@@ -963,3 +968,4 @@ CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.protot
 CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
 CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;
 CContentControlPr.prototype['get_NewKey']             = CContentControlPr.prototype.GetNewKey;
+CContentControlPr.prototype['is_Signature']           = CContentControlPr.prototype.IsSignature;

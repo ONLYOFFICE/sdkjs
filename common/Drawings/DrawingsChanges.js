@@ -158,8 +158,8 @@
 
     function CChangesDrawingsDouble2(Class, Type, OldPr, NewPr) {
         this.Type = Type;
-        var _OldPr = (AscFormat.isRealNumber(OldPr) || isNaN(OldPr)) ? OldPr : undefined;
-        var _NewPr = (AscFormat.isRealNumber(NewPr) || isNaN(NewPr)) ? NewPr : undefined;
+        var _OldPr = typeof OldPr === "number" ? OldPr : undefined;
+        var _NewPr = typeof NewPr === "number" ? NewPr : undefined;
 		AscDFH.CChangesBaseDoubleProperty.call(this, Class, _OldPr, _NewPr);
     }
 

@@ -248,7 +248,9 @@
 			TraceDependentsNoFormulas: 1060,
 			TracePrecedentsNoValidReference: 1061,
 
-			MustIntegerOrDecimalNumber: 1070
+			MustIntegerOrDecimalNumber: 1070,
+
+			DocumentAndChangeMismatch: 1080
 		}
 	};
 
@@ -360,6 +362,7 @@
 	prot['PivotOverlap']                     = prot.PivotOverlap;
 	prot['PivotGroup']                       = prot.PivotGroup;
 	prot['PivotWithoutUnderlyingData']       = prot.PivotWithoutUnderlyingData;
+	prot['CircularReference']                = prot.CircularReference;
 	prot['ForceSaveButton']                  = prot.ForceSaveButton;
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
 	prot['Submit']                           = prot.Submit;
@@ -415,6 +418,7 @@
 	prot['TraceDependentsNoFormulas']        = prot.TraceDependentsNoFormulas;
 	prot['TracePrecedentsNoValidReference']  = prot.TracePrecedentsNoValidReference;
 	prot['MustIntegerOrDecimalNumber']       = prot.MustIntegerOrDecimalNumber;
+	prot['DocumentAndChangeMismatch']        = prot.DocumentAndChangeMismatch;
 
 
 

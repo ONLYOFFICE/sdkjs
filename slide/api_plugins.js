@@ -52,6 +52,7 @@
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
 	 * @property {CommentData[]} Replies - An array containing the comment replies represented as the *CommentData* object.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Enumeration/CommentData.js
 	 */
 
 	/**
@@ -62,6 +63,7 @@
 	 * @param {CommentData}  oCommentData - An object which contains the comment data.
 	 * @return {string | null} - The comment ID in the string format or null if the comment cannot be added.
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/AddComment.js
 	 */
 	Api.prototype["pluginMethod_AddComment"] = function(oCommentData)
 	{
@@ -88,6 +90,7 @@
 	 * @param {CommentData} oCommentData - An object which contains the new comment data.
 	 * @return {boolean}
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ChangeComment.js
 	 */
 	Api.prototype["pluginMethod_ChangeComment"] = function(sId, oCommentData)
 	{
@@ -111,6 +114,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias RemoveComments
 	 * @since 7.3.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/RemoveComments.js
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
@@ -130,6 +134,7 @@
 	 * @alias GetAllComments
 	 * @returns {comment[]} - An array of comment objects containing the comment data.
 	 * @since 8.1.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GetAllComments.js
 	 */
 	Api.prototype["pluginMethod_GetAllComments"] = function()
 	{
@@ -155,6 +160,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias StartSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/StartSlideShow.js
 	 */
 	Api.prototype["pluginMethod_StartSlideShow"] = function()
 	{
@@ -167,6 +173,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias PauseSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/PauseSlideShow.js
 	 */
 	Api.prototype["pluginMethod_PauseSlideShow"] = function()
 	{
@@ -179,6 +186,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias ResumeSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/ResumeSlideShow.js
 	 */
 	Api.prototype["pluginMethod_ResumeSlideShow"] = function()
 	{
@@ -193,6 +201,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias EndSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/EndSlideShow.js
 	 */
 	Api.prototype["pluginMethod_EndSlideShow"] = function()
 	{
@@ -205,6 +214,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias GoToNextSlideInSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GoToNextSlideInSlideShow.js
 	 */
 	Api.prototype["pluginMethod_GoToNextSlideInSlideShow"] = function()
 	{
@@ -217,6 +227,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @alias GoToPreviousSlideInSlideShow
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GoToPreviousSlideInSlideShow.js
 	 */
 	Api.prototype["pluginMethod_GoToPreviousSlideInSlideShow"] = function()
 	{
@@ -230,6 +241,7 @@
 	 * @alias GoToSlideInSlideShow
 	 * @param {number} nSlideIndex - The slide index.
 	 * @since 8.0.0
+	 * @see office-js-api/Examples/Plugins/{Editor}/Api/Methods/GoToSlideInSlideShow.js
 	 */
 	Api.prototype["pluginMethod_GoToSlideInSlideShow"] = function(nSlideIndex)
 	{
@@ -237,3 +249,5 @@
 	};
 
 })(window);
+
+

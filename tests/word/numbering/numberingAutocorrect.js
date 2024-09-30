@@ -130,7 +130,7 @@ $(function ()
 		{
 			AscTest.ClearDocument();
 			let num = CreateNum(subtype);
-			let numPr = new AscWord.CNumPr(num.GetId(), 0);
+			let numPr = new AscWord.NumPr(num.GetId(), 0);
 			for (let i = 0; i < 4; i += 1)
 			{
 				const p = AscTest.CreateParagraph();

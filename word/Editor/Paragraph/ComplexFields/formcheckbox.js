@@ -29,23 +29,36 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-import "./node.js";
-import "../NamesOfLiterals.js";
-import "../UnicodeParser.js";
-import { createRequire } from "module";
-const parser = window.AscMath.CUnicodeConverter;
 
-const require = createRequire(import.meta.url);
-const fs = require("fs");
+"use strict";
 
-const storeData = (data, path) => {
-	try {
-		fs.writeFileSync(path, JSON.stringify(data, ",", 1));
-	} catch (err) {
-		console.error(err);
+(function(window)
+{
+	/**
+	 * @constructor
+	 * @extends AscWord.FieldInstructionBase
+	 */
+	function CFieldInstructionFORMCHECKBOX()
+	{
+		AscWord.FieldInstructionBase.call(this);
 	}
-};
-//todo _n C_k
-const ast = parser(`\\sqrt(6&1+s)^2`, undefined, true);
-console.log(JSON.stringify(ast, ",", 1));
-storeData(ast, "./output.json");
+	CFieldInstructionFORMCHECKBOX.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
+	CFieldInstructionFORMCHECKBOX.prototype.constructor = CFieldInstructionFORMCHECKBOX;
+	CFieldInstructionFORMCHECKBOX.prototype.Type = AscWord.fieldtype_FORMCHECKBOX;
+	
+	CFieldInstructionFORMCHECKBOX.prototype.IsEnabled = function()
+	{
+		return true;
+	};
+	CFieldInstructionFORMCHECKBOX.prototype.IsChecked = function()
+	{
+		return false;
+	};
+	CFieldInstructionFORMCHECKBOX.prototype.ToString = function()
+	{
+		return " FORMCHECKBOX ";
+	};
+	//--------------------------------------------------------export----------------------------------------------------
+	AscWord.CFieldInstructionFORMCHECKBOX = CFieldInstructionFORMCHECKBOX;
+	
+})(window);

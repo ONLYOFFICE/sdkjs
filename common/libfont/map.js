@@ -3121,7 +3121,7 @@
 		if (true === s.asc_marker)
 		{
 			return {
-				"data" : AscFonts.GetUint8ArrayFromPointer(s.data),
+				"data" : AscFonts.GetUint8ArrayFromPointer(s.data, s.len),
 				"size" : s.len
 			};
 		}

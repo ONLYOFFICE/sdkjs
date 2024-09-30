@@ -528,4 +528,3 @@ CWordCollaborativeEditing.prototype.private_UpdateForeignCursor = function(Curso
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommon'].CWordCollaborativeEditing = CWordCollaborativeEditing;
-window['AscCommon'].CollaborativeEditing = new CWordCollaborativeEditing();

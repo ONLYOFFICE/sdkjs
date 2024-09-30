@@ -3449,7 +3449,8 @@ function (window, undefined) {
 		if (fTarget <= this.maRange[this.mnCount - 1].X) {
 			var n = (fTarget - this.maRange[0].X) / this.mfStepSize;
 			var fInterpolate = Math.fmod(fTarget - this.maRange[0].X, this.mfStepSize);
-			rForecast = this.maRange[n].Y;
+			// rForecast = this.maRange[n].Y;
+			rForecast = this.maRange[n] ? this.maRange[n].Y : 0;
 
 			if (fInterpolate >= this.cfMinABCResolution) {
 				var fInterpolateFactor = fInterpolate / this.mfStepSize;
@@ -4028,13 +4029,14 @@ function (window, undefined) {
 	cAVERAGEIF.prototype.argumentsMin = 2;
 	cAVERAGEIF.prototype.argumentsMax = 3;
 	cAVERAGEIF.prototype.arrayIndexes = {0: 1, 2: 1};
+	cAVERAGEIF.prototype.exactTypes = {0: 1, 2: 1};
 	cAVERAGEIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
 	cAVERAGEIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
 		if ((cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !==
-			arg0.type) ||
+			arg0.type && cElementType.cellsRange3D !== arg0.type) ||
 			(cElementType.cell !== arg2.type && cElementType.cell3D !== arg2.type && cElementType.cellsRange !==
-				arg2.type)) {
+				arg2.type && cElementType.cellsRange3D !== arg2.type)) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -4050,17 +4052,17 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		var r = arg0.getRange();
-		var r2 = arg2.getRange();
+		let r = arg0.getRange(), r2 = arg2.getRange();
+
 		ws = arg0.getWS();
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type) {
-			arg0.foreach2(function (v, cell) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0.foreach2(function (v, cell, row, col) {
 				if (matching(v, matchingInfo)) {
-					var offset = cell.getOffset3(r.bbox.c1 + 1, r.bbox.r1 + 1);
+					let offset = new AscCommon.CellBase(row - r.bbox.r1, col - r.bbox.c1);
 					r2.setOffset(offset);
 
-					var val;
+					let val;
 					ws._getCellNoEmpty(r2.bbox.r1, r2.bbox.c1, function (cell) {
 						val = checkTypeCell(cell);
 					});
@@ -4077,10 +4079,7 @@ function (window, undefined) {
 			})
 		} else {
 			if (matching(arg0.getValue(), matchingInfo)) {
-				var val;
-				ws._getCellNoEmpty(r.bbox.r1, r2.bbox.c1, function (cell) {
-					val = checkTypeCell(cell);
-				});
+				let val = arg2.getFirstElement ? arg2.getFirstElement() : arg2.getValue();
 				if (cElementType.number === val.type) {
 					_sum += val.getValue();
 					_count++;
@@ -5196,9 +5195,12 @@ function (window, undefined) {
 				arg1 = arg1.getElementRowCol(0, 0);
 			}
 
-			arg1 = arg1.tocString();
-			if (cElementType.string !== arg1.type) {
-				return new cError(cErrorType.wrong_value_type);
+			if (arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				arg1 = arg1.tocNumber();
 			}
 
 			argNextDimension = arg0.getDimensions();
@@ -6227,6 +6229,7 @@ function (window, undefined) {
 	cFORECAST_ETS.prototype.name = 'FORECAST.ETS';
 	cFORECAST_ETS.prototype.argumentsMin = 3;
 	cFORECAST_ETS.prototype.argumentsMax = 6;
+	cFORECAST_ETS.prototype.arrayIndexes = {1: 1, 2: 1};
 	cFORECAST_ETS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number, argType.number];
 	cFORECAST_ETS.prototype.Calculate = function (arg) {
@@ -6236,17 +6239,25 @@ function (window, undefined) {
 			[null, cElementType.array, cElementType.array]);
 		let argClone = oArguments.args;
 
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		if (argClone[0].type && argClone[0].type !== cElementType.number) {
+			argClone[0] = argClone[0].tocNumber();
+		}
+
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(1);
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
-
-
-		argClone[0] = argClone[0].getMatrix && argClone[0].getMatrix();
 
 		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
+
+		/* if the first argument is not an array or range, then convert it to a standard two-dimensional array with one value */ 
+		argClone[0] = argClone[0].getMatrix ? argClone[0].getMatrix() : argClone[0].toArray();
 
 		let pTMat = argClone[0],
 			pMatY = argClone[1],
@@ -6255,6 +6266,9 @@ function (window, undefined) {
 			bDataCompletion = argClone[4].getValue(),
 			nAggregation = argClone[5].getValue();
 
+		if (pMatY.length === 0 || pMatX.length === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
 		if (nAggregation < 1 || nAggregation > 7) {
 			return new cError(cErrorType.not_numeric);
 		}
@@ -6303,36 +6317,49 @@ function (window, undefined) {
 	cFORECAST_ETS_CONFINT.prototype.name = 'FORECAST.ETS.CONFINT';
 	cFORECAST_ETS_CONFINT.prototype.argumentsMin = 3;
 	cFORECAST_ETS_CONFINT.prototype.argumentsMax = 7;
+	cFORECAST_ETS_CONFINT.prototype.arrayIndexes = {1: 1, 2: 1};
 	cFORECAST_ETS_CONFINT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_CONFINT.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
 	cFORECAST_ETS_CONFINT.prototype.Calculate = function (arg) {
-
 		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
-		var oArguments = this._prepareArguments(arg, arguments[1], true,
+
+		let oArguments = this._prepareArguments(arg, arguments[1], true,
 			[null, cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let argClone = oArguments.args;
+
+		if (!argClone[0]) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		if (argClone[0].type && argClone[0].type !== cElementType.number) {
+			argClone[0] = argClone[0].tocNumber();
+		}
 
 		argClone[3] = argClone[3] ? argClone[3].tocNumber() : new cNumber(0.95);
 		argClone[4] = argClone[4] ? argClone[4].tocNumber() : new cNumber(1);
 		argClone[5] = argClone[5] ? argClone[5].tocNumber() : new cNumber(1);
 		argClone[6] = argClone[6] ? argClone[6].tocNumber() : new cNumber(1);
 
-
-		argClone[0] = argClone[0].getMatrix();
-
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pTMat = argClone[0];
-		var pMatY = argClone[1];
-		var pMatX = argClone[2];
-		var fPILevel = argClone[3].getValue();
-		var nSmplInPrd = argClone[4].getValue();
-		var bDataCompletion = argClone[5].getValue();
-		var nAggregation = argClone[6].getValue();
+		/* if the first argument is not an array or range, then convert it to a standard two-dimensional array with one value */ 
+		argClone[0] = argClone[0].getMatrix ? argClone[0].getMatrix() : argClone[0].toArray();
+
+		let pTMat = argClone[0],
+			pMatY = argClone[1],
+			pMatX = argClone[2],
+			fPILevel = argClone[3].getValue(),
+			nSmplInPrd = argClone[4].getValue(),
+			bDataCompletion = argClone[5].getValue(),
+			nAggregation = argClone[6].getValue();
+
+		if (pMatY.length === 0 || pMatX.length === 0) {
+			return new cError(cErrorType.division_by_zero);
+		}
 
 		if (fPILevel < 0 || fPILevel > 1) {
 			return new cError(cErrorType.not_numeric);
@@ -6344,8 +6371,8 @@ function (window, undefined) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var aETSCalc = new ScETSForecastCalculation(pMatX.length);
-		var isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
+		let aETSCalc = new ScETSForecastCalculation(pMatX.length);
+		let isError = aETSCalc.PreprocessDataRange(pMatX, pMatY, nSmplInPrd, bDataCompletion, nAggregation, pTMat);
 		if (!isError) {
 			///*,( eETSType != etsStatAdd && eETSType != etsStatMult ? pTMat : nullptr ),eETSType )
 			return new cError(cErrorType.wrong_value_type);
@@ -6356,7 +6383,7 @@ function (window, undefined) {
 		/*SCSIZE nC, nR;
 		 pTMat->GetDimensions( nC, nR );
 		 ScMatrixRef pPIMat = GetNewMat( nC, nR );*/
-		var pPIMat = null;
+		let pPIMat = null;
 		if (nSmplInPrd === 0) {
 			pPIMat = aETSCalc.GetEDSPredictionIntervals(pTMat, fPILevel);
 		} else {

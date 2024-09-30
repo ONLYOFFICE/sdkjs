@@ -50,12 +50,12 @@ $(function () {
 
         window["Asc"]["editor"] = api;
 
+        AscCommon.g_oTableId.init();
         wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
         AscCommon.History.init(wb);
         wb.maxDigitWidth = 7;
         wb.paddingPlusBorder = 5;
 
-        AscCommon.g_oTableId.init();
         if (this.User) {
             g_oIdCounter.Set_UserId(this.User.asc_getId());
         }

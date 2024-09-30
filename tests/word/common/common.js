@@ -71,7 +71,11 @@ var AscTest = AscTest || {};
 			return this.Get_ById(id);
 		},
 		TurnOff : function(){},
-		TurnOn : function(){}
+		TurnOn : function(){},
+		IsOn : function()
+		{
+			return true
+		}
 	};
 
 	AscCommon.g_oIdCounter.m_bLoad = false;

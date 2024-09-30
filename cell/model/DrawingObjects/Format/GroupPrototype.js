@@ -113,8 +113,6 @@ CGroupShape.prototype.recalcBounds = function()
     this.recalcInfo.recalculateBounds = true;
 };
 
-CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
-
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;
@@ -252,4 +250,18 @@ CGroupShape.prototype.recalculate = function()
             this.worksheet.contentChanges.Refresh();
         }
     };
+	CGroupShape.prototype.checkDrawingPartWithHistory = function() {
+		for (let i = 0; i < this.spTree.length; i++) {
+			if (this.spTree[i].checkDrawingPartWithHistory) {
+				this.spTree[i].checkDrawingPartWithHistory();
+			}
+		}
+	};
+	CGroupShape.prototype.generateLocalDrawingPart = function() {
+		for (let i = 0; i < this.spTree.length; i++) {
+			if (this.spTree[i].generateLocalDrawingPart) {
+				this.spTree[i].generateLocalDrawingPart();
+			}
+		}
+	};
 })(window);

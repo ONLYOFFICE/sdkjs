@@ -157,7 +157,7 @@
 			}
 		}
 	};
-	CParagraphSpellChecker.prototype.Add = function(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending)
+	CParagraphSpellChecker.prototype.Add = function(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending, apostrophe)
 	{
 		if (Word.length > 0)
 		{
@@ -170,7 +170,7 @@
 		if (!this.HaveDictionary(Lang) || !this.IsNeedCheckWord(Word))
 			return;
 		
-		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending);
+		let oElement = new AscWord.CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending, apostrophe);
 		startRun.AddSpellCheckerElement(new AscWord.SpellMarkStart(oElement));
 		endRun.AddSpellCheckerElement(new AscWord.SpellMarkEnd(oElement));
 		this.Elements.push(oElement);
@@ -339,7 +339,7 @@
 	/**
 	 * Получаем элемент проверки орфографии по номеру
 	 * @param nIndex
-	 * @returns {AscCommonWord.CParagraphSpellCheckerElement}
+	 * @returns {AscWord.CParagraphSpellCheckerElement}
 	 */
 	CParagraphSpellChecker.prototype.GetElement = function(nIndex)
 	{
@@ -347,7 +347,7 @@
 	};
 	/**
 	 * Приостанавливаем проверку орфографии, если параграф слишком большой
-	 * @param {CParagraphSpellCheckerCollector} oCollector
+	 * @param {AscWord.CParagraphSpellCheckerCollector} oCollector
 	 */
 	CParagraphSpellChecker.prototype.Pause = function(oCollector)
 	{
@@ -432,7 +432,7 @@
 		}
 		else
 		{
-			oCollector = new AscCommonWord.CParagraphSpellCheckerCollector(this, isForceFullCheck);
+			oCollector = new AscWord.CParagraphSpellCheckerCollector(this, isForceFullCheck);
 			this.Elements = [];
 		}
 
@@ -548,7 +548,6 @@
 
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CParagraphSpellChecker= CParagraphSpellChecker;
+	AscWord.CParagraphSpellChecker = CParagraphSpellChecker;
 
 })(window);

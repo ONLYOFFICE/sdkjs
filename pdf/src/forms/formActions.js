@@ -276,9 +276,11 @@
         oActionsQueue.SetCurAction(this);
         
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
-
+            return;
+        }
+            
         if (this.page >= oViewer.pagesInfo.countTextPages) {
             oActionsQueue.Continue();
             return;
@@ -297,7 +299,7 @@
             let oPos = oTr.TransformPoint(xOffset, yOffset);
 
             oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
-            oViewer.navigateToPage(this.page, oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
+            oViewer.scrollToXY(oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
             oViewer.disabledPaintOnScroll = false;
             oViewer.needRedraw = true; // в конце Actions выполним отрисовку
         }
@@ -400,8 +402,10 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
+            return;
+        }
 
         switch (this.nameType) {
             case ACTION_NAMED_TYPES.FirstPage:
@@ -444,8 +448,10 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
+            return;
+        }
 
         editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
     };
@@ -473,15 +479,16 @@
 	CActionHideShow.prototype.constructor = CActionHideShow;
 
     CActionHideShow.prototype.Do = function() {
-        let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.field.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
+            return;
+        }
 
         oDoc.HideShowForms(this.hidden, this.names);
     };
@@ -516,8 +523,10 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
+            return;
+        }
             
         oDoc.ResetForms(this.names, this.bAllExcept);
     };

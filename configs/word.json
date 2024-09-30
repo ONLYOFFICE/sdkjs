@@ -47,7 +47,9 @@
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",
-
+			
+			"common/collaboration/deleted-text-recovery.js",
+			
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
@@ -101,6 +103,8 @@
 			"common/Drawings/Format/Image.js",
 			"common/Drawings/Format/GroupShape.js",
 			"common/Drawings/Format/Data.js",
+			"common/SmartArts/DefaultStructures.js",
+			"common/SmartArts/SmartArtTree.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
 			"common/Drawings/Format/ChartEx.js",
@@ -208,6 +212,8 @@
 			"word/Editor/Paragraph/ComplexFieldInstruction.js",
 			"word/Editor/Paragraph/ComplexFields/Addin.js",
 			"word/Editor/Paragraph/ComplexFields/AddinData.js",
+			"word/Editor/Paragraph/ComplexFields/ffdata.js",
+			"word/Editor/Paragraph/ComplexFields/formcheckbox.js",
 			"word/Editor/Paragraph/ComplexFields/FormText.js",
 			"word/Editor/Paragraph/ComplexFields/MergeField.js",
 			"word/Editor/Paragraph/ComplexFields/ref.js",
@@ -311,6 +317,7 @@
 			"word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
+			"word/Editor/InsertDocumentFile.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 			"word/Editor/Merge.js",
 
@@ -346,6 +353,7 @@
 			"pdf/src/forms/textBoxContent.js",
 			"pdf/src/drawings/drawingPrototype.js",
 			"pdf/src/drawings/shape.js",
+			"pdf/src/drawings/cnxShape.js",
 			"pdf/src/drawings/image.js",
 			"pdf/src/drawings/chart.js",
 			"pdf/src/drawings/graphicFrame.js",
@@ -372,6 +380,7 @@
 			"pdf/src/history/formsChanges.js",
 			"pdf/src/history/drawingsChanges.js",
 			"pdf/src/apiPDF.js",
+			"pdf/src/CollaborativeEditing.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
 			"word/Math/NamesOfLiterals.js",

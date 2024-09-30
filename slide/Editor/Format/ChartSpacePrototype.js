@@ -37,7 +37,6 @@ var CShape = AscFormat.CShape;
 var CChartSpace = AscFormat.CChartSpace;
 var CreateUnifillSolidFillSchemeColor = AscFormat.CreateUnifillSolidFillSchemeColor;
 
-CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;
 CChartSpace.prototype.getIsSingleBody = CShape.prototype.getIsSingleBody;
 CChartSpace.prototype.getSlideIndex = CShape.prototype.getSlideIndex;
@@ -50,42 +49,6 @@ CChartSpace.prototype.recalculateTransform = function()
 {
     CShape.prototype.recalculateTransform.call(this);
     this.localTransform.Reset();
-};
-
-
-CChartSpace.prototype.recalculatePlotAreaChartBrush = function()
-{
-    if(this.chart && this.chart.plotArea)
-    {
-        var plot_area = this.chart.plotArea;
-        var default_brush;
-        var tint = 0.20000;
-        if(this.style >=1 && this.style <=32)
-        {
-            if(this.bPreview)
-            {
-                default_brush = CreateUnifillSolidFillSchemeColor(6, tint);
-            }
-            else
-            {
-                default_brush = AscFormat.CreateNoFillUniFill();
-            }
-        }
-        else if(this.style >=33 && this.style <= 34)
-            default_brush = CreateUnifillSolidFillSchemeColor(8, 0.20000);
-        else if(this.style >=35 && this.style <=40)
-            default_brush = CreateUnifillSolidFillSchemeColor(this.style - 35, 0 + tint);
-        else
-            default_brush = CreateUnifillSolidFillSchemeColor(8, 0.95000);
-
-        if(plot_area.spPr && plot_area.spPr.Fill)
-        {
-            default_brush.merge(plot_area.spPr.Fill);
-        }
-        var parents = this.getParentObjects();
-        default_brush.calculate(parents.theme, parents.slide, parents.layout, parents.master, {R: 0, G: 0, B: 0, A: 255}, this.clrMapOvr);
-        plot_area.brush = default_brush;
-    }
 };
 
 

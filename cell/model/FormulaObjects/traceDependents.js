@@ -298,11 +298,13 @@ function (window, undefined) {
 			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
 					for (let listener in allDefNamesListeners[i].listeners) {
-						// TODO возможно стоить добавить все слушатели сразу в curListener
+						// TODO maybe add all listeners in 'curListener' at once
+						// listener can be: cell, range, table, named range - there will be unique processing for each case
 						let elem = allDefNamesListeners[i].listeners[listener];
 						let isArea = elem.ref ? true : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
 						let isIntersect;
+
 						if (isArea && !is3D && !isCurrentCellHeader) {
 							if (defNameRange) {
 								let defBBox = defNameRange.getBBox0();
@@ -313,6 +315,7 @@ function (window, undefined) {
 
 								isIntersect = elem.ref.contains(cellAddress.col - colShift, cellAddress.row - rowShift);
 							}
+
 							if (isIntersect) {
 								// decompose all elements into dependencies
 								let areaIndexes = getAllAreaIndexes(elem);
@@ -323,9 +326,9 @@ function (window, undefined) {
 											t._setPrecedents(areaIndexes[index], cellIndex);
 										}
 									}
-									continue;
 								}
 							}
+							continue;
 						}
 
 						let parentCellIndex = getParentIndex(elem.parent);
@@ -344,7 +347,6 @@ function (window, undefined) {
 								} else {
 									continue;
 								}
-								// continue;
 							} else if (!elem.Formula.includes("Headers") && isCurrentCellHeader) {
 								continue;
 							}
@@ -374,9 +376,9 @@ function (window, undefined) {
 								setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, elem.shared);
 								continue;
 							}
-							t._setDependents(cellIndex, parentCellIndex);
-							t._setPrecedents(parentCellIndex, cellIndex);
 						}
+						t._setDependents(cellIndex, parentCellIndex);
+						t._setPrecedents(parentCellIndex, cellIndex);
 					}
 				}
 			}
@@ -386,9 +388,9 @@ function (window, undefined) {
 			if (!range) {
 				return;
 			}
-			for (let i = range.c1; i <= range.c2; i++) {
-				for (let j = range.r1; j <= range.r2; j++) {
-					let index = AscCommonExcel.getCellIndex(j, i);
+			for (let c = range.c1; c <= range.c2; c++) {
+				for (let r = range.r1; r <= range.r2; r++) {
+					let index = AscCommonExcel.getCellIndex(r, c);
 					indexes.push(index);
 				}
 			}
@@ -721,9 +723,9 @@ function (window, undefined) {
 			}
 
 			let area = areas[areaName];
-			for (let i = area.range.r1; i <= area.range.r2; i++) {
-				for (let j = area.range.c1; j <= area.range.c2; j++) {
-					let index = AscCommonExcel.getCellIndex(i, j);
+			for (let r = area.range.r1; r <= area.range.r2; r++) {
+				for (let c = area.range.c1; c <= area.range.c2; c++) {
+					let index = AscCommonExcel.getCellIndex(r, c);
 					indexes.push(index);
 				}
 			}

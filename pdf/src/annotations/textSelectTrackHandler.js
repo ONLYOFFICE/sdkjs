@@ -50,7 +50,7 @@
 	};
 	CTextSelectTrackHandler.prototype.OnChangePosition = function() {
 		let oFile = Asc.editor.getDocumentRenderer().file;
-		if (oFile.Selection.IsSelection) {
+		if (oFile.Selection.IsSelection || false === Asc.editor.NeedShowTextSelectPanel()) {
 			this.OnHide();
 			return;
 		}

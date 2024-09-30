@@ -1792,7 +1792,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrLit] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartFormatSetChart] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetRich] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbls_SetLeaderLines] = window['AscDFH'].CChangesDrawingsObject;
@@ -2137,6 +2137,7 @@
     }
 
     InitClass(CBaseChartObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+	CBaseChartObject.prototype.generateSmartArtDrawingPart = function () {};
     CBaseChartObject.prototype.notAllowedWithoutId = function() {
         return true;
     };
@@ -2212,7 +2213,7 @@
         if(oSpPr && oSpPr.Fill) {
             oFill = oSpPr.Fill.createDuplicate();
             var bIsSpecialStyle = oStyleEntry.isSpecialStyle();
-            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx], bIsSpecialStyle);
+            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx]);
             if(bIsSpecialStyle) {
                 if(AscFormat.isRealNumber(nIdx)) {
                     var nPatternType = oStyleEntry.getSpecialPatternType(nIdx);
@@ -2227,7 +2228,7 @@
         oLn = oTheme.getLnStyle(oLineRef.idx, oLineRefUnicolor);
         if(oSpPr && oSpPr.ln) {
             oLn = oSpPr.ln.createDuplicate();
-            oLn.Fill.checkPhColor(oLineRefUnicolor, false);
+            oLn.Fill.checkPhColor(oLineRefUnicolor);
         }
         if(AscFormat.isRealNumber(oLn.w) && AscFormat.isRealNumber(oStyleEntry.lineWidthScale)) {
             oLn.w *= oStyleEntry.lineWidthScale;
@@ -2252,7 +2253,7 @@
         if(oStyleEntry.defRPr) {
             oTextPr.Merge(oStyleEntry.defRPr);
             if(oTextPr.Unifill) {
-                oTextPr.Unifill.checkPhColor(oFontUnicolor, false);
+                oTextPr.Unifill.checkPhColor(oFontUnicolor);
             }
         }
         oParaPr.DefaultRunPr = oTextPr;
@@ -7669,6 +7670,24 @@
     CAxisBase.prototype.onUpdate = function() {
         this.onChartInternalUpdate();
     };
+    CAxisBase.prototype.getFormatCode = function() {
+        let oNumFmt = this.numFmt;
+        let sFormatCode = null;
+
+        if(oNumFmt) {
+            if(oNumFmt.sourceLinked) {
+                return this.getSourceFormatCode ? this.getSourceFormatCode() : "General";
+            }
+            sFormatCode = oNumFmt.formatCode;
+            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
+                return sFormatCode;
+            }
+            return "General";
+        }
+        else {
+            return this.getSourceFormatCode ? this.getSourceFormatCode() : "General";
+        }
+    };
     CAxisBase.prototype.Refresh_RecalcData = function() {
         this.onUpdate();
     };
@@ -7846,7 +7865,11 @@
     CAxisBase.prototype.getSourceFormatCode = function() {
         return "General";
     };
+    CAxisBase.prototype.isChartExCat = function() {
+        return false;
+    };
     CAxisBase.prototype.updateNumFormat = function() {
+        if(this.isChartExCat()) return;
         var oNumFmt = this.numFmt;
         if(!oNumFmt) {
             oNumFmt = new CNumFmt();
@@ -8972,24 +8995,6 @@
             }
         }
     };
-    CValAx.prototype.getFormatCode = function() {
-        let oNumFmt = this.numFmt;
-        let sFormatCode = null;
-
-        if(oNumFmt) {
-            if(oNumFmt.sourceLinked) {
-                return this.getSourceFormatCode();
-            }
-            sFormatCode = oNumFmt.formatCode;
-            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
-                return sFormatCode;
-            }
-            return "General";
-        }
-        else {
-            return this.getSourceFormatCode();
-        }
-    };
     CValAx.prototype.getSourceFormatCode = function() {
         var oPlotArea = this.getPlotArea();
         var sDefault = "General";
@@ -9376,8 +9381,9 @@
         }
     };
     CChartText.prototype.setTxData = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
         this.txData = pr;
+        this.setParentToChild(pr);
     };
     CChartText.prototype.setRich = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetRich, this.rich, pr));
@@ -14075,8 +14081,16 @@
     };
     CTitle.prototype.getDefaultTextForTxBody = function() {
         var sText;
-        if(this.tx && this.tx.strRef) {
-            sText = this.tx.strRef.getText(false);
+        if(this.tx) {
+            let oTx = this.tx;
+            if(oTx.strRef) {
+                sText = oTx.strRef.getText(false);
+            }
+            if(!sText) {
+                if(oTx.txData) {
+                    sText = oTx.txData.v;
+                }
+            }
             if(typeof sText === "string" && sText.length > 0) {
                 return sText;
             }
@@ -18968,6 +18982,13 @@
     };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartSpace_ChartColors] = CChartColors;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryLnRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryFillRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryEffectRef] = AscFormat.StyleRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryFontRef] = AscFormat.FontRef;
+    AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryBodyPr] = AscFormat.CBodyPr;
+
+
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

@@ -177,7 +177,7 @@ $(function ()
 		p2.SetParagraphStyle(style.GetName());
 		
 		let num = CreateNum();
-		let numPr = new AscWord.CNumPr(num.GetId(), 0);
+		let numPr = new AscWord.NumPr(num.GetId(), 0);
 		let collection = logicDocument.GetNumberingCollection();
 		let paraArray = collection.GetAllParagraphsByNumbering(numPr);
 		

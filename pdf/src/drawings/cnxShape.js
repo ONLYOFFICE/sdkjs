@@ -29,5 +29,24 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-import "./RunLaTeXTest.js"
-import "./RunUnicodeTests.js"
+
+"use strict";
+
+(function(undefined){
+
+
+    function CPdfConnectionShape() {
+        AscPDF.CPdfShape.call(this);
+    }
+    CPdfConnectionShape.prototype = Object.create(AscPDF.CPdfShape.prototype);
+    CPdfConnectionShape.prototype.constructor = CPdfConnectionShape;
+    Object.assign(CPdfConnectionShape.prototype, AscFormat.CConnectionShape.prototype);
+
+    CPdfConnectionShape.prototype.copy = function (oPr) {
+        let copy = new CPdfConnectionShape();
+        this.fillObject(copy, oPr);
+        return copy;
+    };
+
+    window['AscPDF'].CPdfConnectionShape = CPdfConnectionShape;
+})();

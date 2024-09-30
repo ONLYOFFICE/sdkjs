@@ -729,7 +729,7 @@
 
 		for (var ParaId in this.Changes)
 		{
-			var Para = g_oTableId.Get_ById(ParaId);
+			var Para = AscCommon.g_oTableId.Get_ById(ParaId);
 			if (Para && Para.Get_Parent())
 			{
 				LogicDocuments[Para.Get_Parent().Get_Id()] = true;
@@ -789,7 +789,7 @@
 		var ParagraphsArray = [];
 		for (var ParaId in ParagraphsObject)
 		{
-			var Para = g_oTableId.Get_ById(ParaId);
+			var Para = AscCommon.g_oTableId.Get_ById(ParaId);
 			if (null !== Para)
 			{
 				ParagraphsArray.push(Para);

@@ -2087,7 +2087,7 @@
 		function getFragmentsCharCodes(f) {
 			return f.reduce(function (pv, cv) {
 				return pv.concat(cv.getCharCodes());
-			}, "");
+			}, []);
 		}
 
 		function getFragmentsCharCodesLength(f) {

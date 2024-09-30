@@ -32,41 +32,60 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Drawing_Page]	= CChangesPDFDrawingPage;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Drawing_Rot]	= CChangesPDFDrawingRot;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Page]	= CChangesPDFDrawingPage;
+AscDFH.changesFactory[AscDFH.historyitem_type_Pdf_Drawing_Document]	= CChangesPdfDrawingObjectProperty;
 
+let pdfDrawingsChangesMap = {};
+window['AscDFH'].pdfDrawingsChangesMap = pdfDrawingsChangesMap;
+
+function CChangesPdfDrawingObjectProperty(Class, Type, OldPr, NewPr) {
+	this.Type = Type;
+	var _OldPr = OldPr && OldPr.Get_Id ? OldPr.Get_Id() : undefined;
+	var _NewPr = NewPr && NewPr.Get_Id ? NewPr.Get_Id() : undefined;
+	AscDFH.CChangesBaseStringProperty.call(this, Class, _OldPr, _NewPr);
+}
+CChangesPdfDrawingObjectProperty.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPdfDrawingObjectProperty.prototype.constructor = CChangesPdfDrawingObjectProperty;
+
+CChangesPdfDrawingObjectProperty.prototype.ReadFromBinary = function (reader) {
+	reader.Seek2(reader.GetCurPos() - 4);
+	this.Type = reader.GetLong();
+	AscDFH.CChangesBaseStringProperty.prototype.ReadFromBinary.call(this, reader);
+};
+CChangesPdfDrawingObjectProperty.prototype.private_SetValue = function (Value) {
+	var oObject = null;
+	if (typeof Value === "string") {
+		oObject = AscCommon.g_oTableId.Get_ById(Value);
+		if (!oObject) {
+			oObject = null;
+		}
+	}
+	if (AscDFH.pdfDrawingsChangesMap[this.Type]) {
+		AscDFH.pdfDrawingsChangesMap[this.Type](this.Class, oObject);
+	}
+};
+CChangesPdfDrawingObjectProperty.prototype.Load = function(){
+	this.Redo();
+	this.RefreshRecalcData();
+};
+
+pdfDrawingsChangesMap[AscDFH.historyitem_type_Pdf_Drawing_Document] = function (oDrawing, value) {
+	oDrawing.SetDocument(value);
+};
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
+ * @extends {AscDFH.CChangesBaseLongProperty}
  */
 function CChangesPDFDrawingPage(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFDrawingPage.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFDrawingPage.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
 CChangesPDFDrawingPage.prototype.constructor = CChangesPDFDrawingPage;
-CChangesPDFDrawingPage.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Page;
+CChangesPDFDrawingPage.prototype.Type = AscDFH.historyitem_type_Pdf_Drawing_Page;
 CChangesPDFDrawingPage.prototype.private_SetValue = function(Value)
 {
 	let oDrawing = this.Class;
 	oDrawing.SetPage(Value, true);
 };
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseProperty}
- */
-function CChangesPDFDrawingRot(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFDrawingRot.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
-CChangesPDFDrawingRot.prototype.constructor = CChangesPDFDrawingRot;
-CChangesPDFDrawingRot.prototype.Type = AscDFH.historyitem_Pdf_Drawing_Rot;
-CChangesPDFDrawingRot.prototype.private_SetValue = function(Value)
-{
-	let oDrawing = this.Class;
-	oDrawing.SetRot(Value);
-};
-

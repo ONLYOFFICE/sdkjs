@@ -359,6 +359,13 @@
                 return this.isHideTargetBeforeFirstClick;
             return false;
         };
+        this.TargetStart = function (bShowHide) {
+            if (this.m_lTimerTargetId != -1)
+                clearInterval(this.m_lTimerTargetId);
+            this.m_lTimerTargetId = setInterval(oThis.DrawTarget, 500);
+
+            this.showTarget(bShowHide);
+        };
         this.OnRecalculatePage = function() {};
         this.OnEndRecalculate = function() {};
         this.ConvertCoordsToAnotherPage = function (x, y, pageCoord, pageNeed) {

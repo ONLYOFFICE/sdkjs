@@ -129,11 +129,13 @@
 		if(!oPresentation) return 0;
 		return oPresentation.GetSlidesCount();
 	};
+	editor.initCollaborativeEditing = AscCommon.SlideEditorApi.prototype.initCollaborativeEditing.bind(editor);
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;
 
 	window.editor = editor;
 	Asc.editor = editor;
+	editor.initCollaborativeEditing();
 
 })(window);

@@ -510,6 +510,14 @@ function RotateTrackShapeImage(originalObject)
         boundsChecker.Bounds.extY = this.originalObject.extY;
         return boundsChecker.Bounds;
     }
+	this.checkDrawingPartWithHistory = function () {
+			if (this.originalObject.checkDrawingPartWithHistory) {
+				const newObject = this.originalObject.checkDrawingPartWithHistory();
+				if (newObject) {
+					this.originalObject = newObject;
+				}
+			}
+	};
 }
 
 function RotateTrackGroup(originalObject)
@@ -654,6 +662,11 @@ function RotateTrackGroup(originalObject)
         }
         this.originalObject.spPr.xfrm.setRot(this.angle);
     }
+	this.checkDrawingPartWithHistory = function () {
+		if (this.originalObject.checkDrawingPartWithHistory) {
+			this.originalObject.checkDrawingPartWithHistory()
+		}
+	};
 }
 
 function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
@@ -935,6 +948,7 @@ function Chart3dAdjustTrack(oChartSpace, numHandle, startX, startY)
         }
         oChartSpace.changeView3d(this.view3D.createDuplicate());
     }
+	this.checkDrawingPartWithHistory = function () {};
 }
 
     //--------------------------------------------------------export----------------------------------------------------

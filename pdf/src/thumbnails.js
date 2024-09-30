@@ -478,6 +478,11 @@
     // очередь задач - нужно ли перерисоваться и/или перерисовать страницу
     CDocument.prototype.checkTasks = function(isViewerTask)
     {
+		let pdfDoc = this.viewer.getPDFDoc();
+	
+		if (pdfDoc.fontLoader.isWorking())
+			return true;
+		
         var isNeedTasks = false;
         if (!this.isEnabled)
             return isNeedTasks;
@@ -506,6 +511,9 @@
 
             if (needPage)
             {
+				if (!this.viewer._checkFontsOnPages(needPage.num, needPage.num))
+					return true;
+				
                 isNeedTasks = true;
                 let isLandscape = this.viewer.isLandscapePage(needPage.num);
                 let angle       = this.viewer.getPageRotate(needPage.num);

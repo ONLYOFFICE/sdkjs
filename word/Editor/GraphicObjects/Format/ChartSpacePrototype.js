@@ -522,7 +522,6 @@ CChartSpace.prototype.updateTransformMatrix  = function()
     this.checkShapeChildTransform(oParentTransform);
 };
 CChartSpace.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
-CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 //CChartSpace.prototype.Refresh_RecalcData = function(data)
 //{
 //    this.addToRecalculate();

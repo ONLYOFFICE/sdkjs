@@ -728,15 +728,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 } else {
                     if (bNeedResetTransform) {
                         if (shape.spPr && shape.spPr.xfrm && shape.spPr.xfrm.isNotNull()) {
-                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame) {
+                            if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame
+                                && shape.getObjectType() !== AscDFH.historyitem_type_SmartArt
+                                && shape.getObjectType() !== AscDFH.historyitem_type_ChartSpace) {
                                 shape.spPr.setXfrm(null);
                             } else {
-                                if (oNotNullPH) {
-                                    if (!shape.spPr && oNotNullPH.spPr) {
+                                if (oNotNullPH && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    if (!shape.spPr) {
                                         shape.setSpPr(oNotNullPH.spPr.createDuplicate());
                                         shape.spPr.setParent(shape);
                                     }
-                                    if (!shape.spPr.xfrm && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
+                                    else {
                                         shape.spPr.setXfrm(oNotNullPH.spPr.xfrm.createDuplicate());
                                     }
                                 }
@@ -933,8 +935,39 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     Slide.prototype.removeFromSpTreeByPos = function(pos){
         if(pos > -1 && pos < this.cSld.spTree.length){
             var oSp = this.cSld.spTree[pos];
-            History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, [oSp], false));
-            this.cSld.spTree.splice(pos, 1);
+            if(oSp.isPlaceholder() || this.isMaster() || this.isLayout()) {
+                let oMap = {};
+                oMap[oSp.Id] = oSp;
+                let oPres = Asc.editor.private_GetLogicDocument();
+                let aSlides = oPres.Slides;
+                if(this.isMaster()) {
+                    for(let nLt = 0; nLt < this.sldLayoutLst.length; ++nLt) {
+                        let oLt = this.sldLayoutLst[nLt];
+                        oLt.cSld.forEachSp(function (oSp) {
+                            oSp.checkOnDeletePlaceholder(oMap);
+                        });
+                    }
+                    for(let nSld = 0; nSld < aSlides.length; ++nSld) {
+                        let oSld = aSlides[nSld];
+                        if(oSld.getMaster() === this) {
+                            oSld.cSld.forEachSp(function (oSp) {
+                                oSp.checkOnDeletePlaceholder(oMap);
+                            });
+                        }
+                    }
+                }
+                if(this.isLayout()) {
+                    for(let nSld = 0; nSld < aSlides.length; ++nSld) {
+                        let oSld = aSlides[nSld];
+                        if(oSld.Layout === this) {
+                            oSld.cSld.forEachSp(function (oSp) {
+                                oSp.checkOnDeletePlaceholder(oMap);
+                            });
+                        }
+                    }
+                }
+            }
+            this.shapeRemove(pos, 1);
             if(this.timing && !AscCommon.IsChangingDrawingZIndex) {
                 this.checkNeedCopyTimingBeforeEdit();
                 this.timing.onRemoveObject(oSp.Get_Id());
@@ -942,7 +975,10 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             if(this.collaborativeMarks) {
                 this.collaborativeMarks.Update_OnRemove(pos, 1);
             }
+
+            return oSp;
         }
+        return null;
     };
 
     Slide.prototype.removeFromSpTreeById = function(id)
@@ -1065,6 +1101,45 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		this.cSld.forEachSp(function(oSp) {
 			oSp.getAllRasterImages(images);
 		});
+    };
+
+
+    Slide.prototype.getAllRasterImagesForDraw = function(images) {
+        let aImages = images;
+        if(!aImages) {
+            aImages = [];
+        }
+        this.recalculate();
+        if(this.backgroundFill) {
+            let sImageId = this.backgroundFill.checkRasterImageId();
+            if(sImageId) {
+                aImages.push(sImageId);
+            }
+        }
+        this.cSld.forEachSp(function(oSp) {
+            oSp.getAllRasterImages(aImages);
+        });
+        if(this.Layout) {
+            if(this.needLayoutSpDraw()) {
+                this.Layout.getAllRasterImagesForDraw(aImages);
+            }
+            if(this.Layout.Master) {
+                if(this.needMasterSpDraw()) {
+                    this.Layout.Master.getAllRasterImagesForDraw(aImages);
+                }
+            }
+        }
+        return aImages;
+    };
+    Slide.prototype.checkImageDraw = function(sImageSrc) {
+        const aImages = this.getAllRasterImagesForDraw();
+        for(let nIdx = 0; nIdx < aImages.length; ++nIdx) {
+            let sImage = aImages[nIdx];
+            if(AscCommon.getFullImageSrc2(sImage) === sImageSrc) {
+                return true;
+            }
+        }
+        return false;
     };
 
     Slide.prototype.changeSize = function(width, height)
@@ -1643,7 +1718,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 		return false;
 	};
     Slide.prototype.getTheme = function(){
-        return this.Layout && this.Layout.Master && this.Layout.Master.Theme || null;
+        return this.Layout && this.Layout.getTheme() || null;
     };
     Slide.prototype.getMaster = function(){
         return this.getParentObjects().master;

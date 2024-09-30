@@ -232,6 +232,11 @@
             if(Data.Type === AscDFH.historyitem_TextBodySetBodyPr) {
                 this.recalcInfo.recalculateBodyPr = true;
             }
+            if(Data.Type === AscDFH.historyitem_TextBodySetLstStyle) {
+                if(this.content) {
+                    this.content.Recalc_AllParagraphs_CompiledPr();
+                }
+            }
         }
     };
     CTextBody.prototype.isEmpty = function() {
@@ -247,7 +252,7 @@
     };
     CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
         if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage();
+            return this.parent.Get_AbsolutePage(CurPage);
         }
         return 0;//TODO;
     };
@@ -317,7 +322,7 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+            if(/*AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN || */graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
                 if(!graphics.isSupportTextDraw()) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();
@@ -541,7 +546,7 @@
         return max_width;
     };
     CTextBody.prototype.getMaxContentWidth = function(maxWidth, bLeft) {
-        this.content.Reset(0, 0, maxWidth - 0.01, 20000);
+        this.content.Reset(0, 0, maxWidth, 20000);
         if(bLeft) {
             this.content.SetApplyToAll(true);
             this.content.SetParagraphAlign(AscCommon.align_Left);
@@ -556,7 +561,7 @@
                     max_width = paragraph_lines[j].Ranges[0].W;
             }
         }
-        return max_width + 0.01;
+        return Math.max(max_width, 0.01);
     };
     CTextBody.prototype.GetPrevElementEndInfo = function(CurElement) {
         return null;

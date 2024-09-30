@@ -1163,7 +1163,7 @@ CDocumentContentElementBase.prototype.GetOutlineParagraphs = function(arrOutline
 /**
  * Вплоть до заданного параграфа ищем последнюю похожую нумерацию
  * @param oContinueEngine {CDocumentNumberingContinueEngine}
- * @returns {CNumPr | null}
+ * @returns {AscWord.NumPr | null}
  */
 CDocumentContentElementBase.prototype.GetSimilarNumbering = function(oContinueEngine)
 {
@@ -1332,7 +1332,7 @@ CDocumentContentElementBase.prototype.getDrawingDocument = function()
 	return Asc.editor.getDrawingDocument();
 };
 /**
- * @returns {?CDocumentSpellChecker}
+ * @returns {?AscWord.CDocumentSpellChecker}
  */
 CDocumentContentElementBase.prototype.getSpelling = function()
 {

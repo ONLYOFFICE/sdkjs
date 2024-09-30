@@ -646,5 +646,28 @@ $(function() {
 				});
 			}
 		});
+		QUnit.test('Test: Api pivot builder', function (assert) {
+			const file = Asc.pivotBuilder;
+			const wb = openDocument(file);
+			ws = wb.getWorksheetByName('Test');
+			const pivot = wb.getWorksheetByName('Test').getPivotTable(2, 3);
+
+			let range = pivot.asc_getColumnRange();
+			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1, range.bbox.c2], [2, 3, 1, 3], 'column range');
+
+			range = pivot.asc_getRowRange();
+			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1, range.bbox.c2], [3, 12, 0, 0], 'row range');
+
+			range = pivot.asc_getDataBodyRange();
+			assert.deepEqual([range.bbox.r1, range.bbox.r2, range.bbox.c1,range.bbox.c2], [4, 12, 1, 3], 'data range');
+
+			let getDataToGetPivotData = pivot.asc_getDataToGetPivotData(['East', 'Boy', 'Fancy']);
+			let params = pivot.getGetPivotParamsByActiveCell({row: 5, col: 1})
+			assert.deepEqual(getDataToGetPivotData, {
+				dataFieldName: 'Sum of Price',
+				optParams: params.optParams
+			}, 'getGetPivotParamsByActiveCell');
+
+		});
 	}
 });

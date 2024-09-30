@@ -82,6 +82,15 @@
         ret._page = this._page; 
         return ret;
     };
+    CPdfGraphicFrame.prototype.handleUpdateRot = function() {
+        this.SetNeedRecalc(true);
+    };
+    CPdfGraphicFrame.prototype.Get_PageContentStartPos = function(nPage) {
+        return this.GetDocument().Get_PageLimits(nPage);
+    };
+    CPdfGraphicFrame.prototype.Get_PageContentStartPos2 = function(nPage) {
+        return this.Get_PageContentStartPos(nPage);
+    };
     CPdfGraphicFrame.prototype.GetDocContent = function() {
         return this.getDocContent();
     };
@@ -96,10 +105,8 @@
      * @typeofeditors ["PDF"]
      */
     CPdfGraphicFrame.prototype.Remove = function(nDirection, isCtrlKey) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
-
         let oContent = this.GetDocContent();
+
         if (oContent) {
             oContent.Remove(nDirection, true, false, false, isCtrlKey);
         }
@@ -158,7 +165,7 @@
             this._needRecalc = false;
         }
         else {
-            this.GetDocument().SetNeedUpdateTarget(true);
+            // this.GetDocument().SetNeedUpdateTarget(true);
             this._needRecalc = true;
             this.recalcInfo.recalculateTable = true;
            
@@ -372,7 +379,7 @@
 			} else {
 				graphicObject.RecalculateCurPos();
 				oDrDoc.UpdateTargetTransform(this.transform);
-				oDrDoc.TargetShow();
+				oDrDoc.TargetStart(true);
 			}
 		} else {
 			oDrDoc.UpdateTargetTransform(null);

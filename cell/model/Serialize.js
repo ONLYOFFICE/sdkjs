@@ -4076,12 +4076,12 @@
 			var oThis = this;
 			if (null != definedName.Name) {
                 this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameName, function() {
-                    oThis.memory.WriteString2(definedName.Name);
+                    oThis.memory.WriteString3(definedName.Name);
                 });
 			}
 			if (null != definedName.RefersTo) {
                 this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameRefersTo, function() {
-                    oThis.memory.WriteString2(definedName.RefersTo);
+                    oThis.memory.WriteString3(definedName.RefersTo);
                 });
 			}
 			if (null != definedName.SheetId) {
@@ -6991,7 +6991,7 @@
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                 }});
             }
-            if (this.wb.CustomProperties) {
+            if (this.wb.CustomProperties && this.wb.CustomProperties.hasProperties()) {
                 this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
                     var old = new AscCommon.CMemory(true);
                     pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
@@ -12462,7 +12462,6 @@
                         case c_oSerTableTypes.CustomProperties:
                             this.stream.Seek2(mtiOffBits);
                             fileStream = this.stream.ToFileStream();
-                            wb.CustomProperties = new AscCommon.CCustomProperties();
                             wb.CustomProperties.fromStream(fileStream);
                             this.stream.FromFileStream(fileStream);
                             break;
@@ -14379,7 +14378,7 @@
         this.newDefinedNames = [];
     }
 
-    CT_Workbook.prototype.fromXml = function (reader) {
+    CT_Workbook.prototype.fromXmlSimple = function (reader) {
         if (!reader.ReadNextNode()) {
             return;
         }

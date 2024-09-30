@@ -123,9 +123,9 @@
     };
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
-        var Writer = AscCommon.History.BinaryWriter;
-        var Pos    = Binary.Pos;
-        var Len    = Binary.Len;
+        let Writer = AscCommon.History.BinaryWriter;
+        let Pos    = Binary.Pos;
+        let Len    = Binary.Len;
         if ((Asc.editor || editor).binaryChanges) {
             return Writer.GetDataUint8(Pos, Len);
         } else {
@@ -249,7 +249,14 @@
 	{
 		return this.m_oLogicDocument;
 	};
-    CCollaborativeEditingBase.prototype.Clear = function()
+		CCollaborativeEditingBase.prototype.getCoHistory = function()
+	{
+		return this.CoHistory;
+	};
+	CCollaborativeEditingBase.prototype.SetLogicDocument = function(doc)
+	{
+		this.m_oLogicDocument = doc;
+	};    CCollaborativeEditingBase.prototype.Clear = function()
     {
         this.m_nUseType = 1;
 
@@ -264,6 +271,8 @@
         this.m_aCheckLocksInstance = [];
         this.m_aNewObjects = [];
         this.m_aNewImages = [];
+
+		this.CoHistory.clear();
     };
     CCollaborativeEditingBase.prototype.Set_Fast = function(bFast)
     {
@@ -372,6 +381,8 @@
 			if (fEndCallBack)
 				fEndCallBack();
 		}
+
+		AscCommon.CollaborativeEditing.CoHistory.InitTextRecover();
     };
     CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     {
@@ -901,6 +912,10 @@
             }
         }
     };
+    CCollaborativeEditingBase.prototype.Get_CollaborativeMarks = function ()
+	{
+		return this.m_aChangedClasses;
+	}
     //----------------------------------------------------------------------------------------------------------------------
     // Функции для работы с обновлением курсоров после принятия изменений
     //----------------------------------------------------------------------------------------------------------------------

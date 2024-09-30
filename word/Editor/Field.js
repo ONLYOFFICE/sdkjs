@@ -331,12 +331,13 @@ ParaField.prototype.GetAllFields = function(isUseSelection, arrFields)
 };
 ParaField.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 {
-	if(this.FieldType === AscWord.fieldtype_SEQ)
+	if (this.FieldType === AscWord.fieldtype_SEQ
+		&& this.Arguments.length
+		&& this.Arguments[0].toLowerCase
+		&& sType.toLowerCase
+		&& this.Arguments[0].toLowerCase() === sType.toLowerCase())
 	{
-		if(this.Arguments[0] === sType)
-		{
-			aFields.push(this);
-		}
+		aFields.push(this);
 	}
 };
 //----------------------------------------------------------------------------------------------------------------------

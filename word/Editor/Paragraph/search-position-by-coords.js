@@ -65,6 +65,8 @@
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		
+		this.checkEmptyRun = true;
+		
 		// TODO: Unite with CRunWithPosition class
 		this.pos     = null;
 		this.posInfo = {
@@ -87,6 +89,11 @@
 		this.centerMode = undefined !== centerMode ? centerMode : true;
 		
 		this.bidiFlow.begin(paragraph.isRtlDirection());
+	};
+	ParagraphSearchPositionXY.prototype.reset = function()
+	{
+		this.bidiFlow.end();
+		this.checkEmptyRun = true;
 	};
 	ParagraphSearchPositionXY.prototype.setDiff = function(diff)
 	{
@@ -150,30 +157,29 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleRun = function(run)
 	{
-		// For the case when we didn't find any run with content
-		if (this.diffX > MAX_DIFF - 1 && !this.posInfo.run)
+		if (!this.checkEmptyRun)
+			return;
+		
+		if (!run.IsEmpty())
 		{
+			this.checkEmptyRun = false;
+			return;
+		}
+		
+		let curX = this.curX;
+		if (run.IsMathRun())
+		{
+			let mathPos = run.ParaMath.GetLinePosition(this.line, this.range);
+			curX        = mathPos.x + run.pos.x;
+		}
+		
+		let diff = this.x - curX;
+		if (this.checkPosition(diff))
+		{
+			this.setDiff(diff);
 			this.posInfo.run = run;
 			this.posInfo.pos = run.GetElementsCount();
 		}
-
-		if (run.IsMathRun())
-		{
-			if (run.IsEmpty())
-			{
-				let mathPos = run.ParaMath.GetLinePosition(this.line, this.range);
-				this.curX   = mathPos.x + run.pos.x;
-			}
-			
-			let diff = this.x - this.curX;
-			if (!this.inTextX && (Math.abs(diff) < this.diffAbs + EPSILON && (this.centerMode || this.x > this.curX)))
-			{
-				this.setDiff(diff);
-				this.posInfo.run = run;
-				this.posInfo.pos = run.GetElementsCount();
-			}
-		}
-		
 	};
 	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
 	{
@@ -208,6 +214,8 @@
 		}
 		
 		this.curX = curX + mathW;
+		
+		this.reset();
 	};
 	ParagraphSearchPositionXY.prototype.handleMathBase = function(base)
 	{
@@ -268,6 +276,7 @@
 		this.curY = targetBounds.Y;
 		
 		base.Content[targetPos].getParagraphContentPosByXY(this);
+		this.reset();
 	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{

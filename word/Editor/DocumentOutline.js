@@ -471,12 +471,27 @@ CDocumentOutline.prototype.IsEmptyItem = function(nIndex)
 {
 	if (nIndex < 0 || nIndex >= this.Elements.length || !this.Elements[nIndex].Paragraph)
 		return true;
-
+	
+	let paragraph= this.Elements[nIndex].Paragraph;
+	if (paragraph.IsNumberedNumbering() && "" !== paragraph.GetNumberingText())
+		return false;
+	
 	return this.Elements[nIndex].Paragraph.IsEmpty();
 };
 CDocumentOutline.prototype.GetCurrentPosition = function()
 {
 	return this.CurPos;
+};
+CDocumentOutline.prototype.GetDestinationXY = function(nIndex)
+{
+	if (nIndex < 0 || nIndex >= this.Elements.length)
+		return null;
+
+	let paragraph = this.Elements[nIndex].Paragraph;
+	if (!paragraph)
+		return null;
+	
+	return paragraph.GetStartPosXY();
 };
 
 //-------------------------------------------------------------export---------------------------------------------------

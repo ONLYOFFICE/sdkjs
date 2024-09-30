@@ -618,6 +618,10 @@ CFieldInstructionHYPERLINK.prototype.IsTopOfDocument = function()
 {
 	return (this.GetBookmarkName() === "_top");
 };
+CFieldInstructionHYPERLINK.prototype.IsUseInDocument = function()
+{
+	return !!(this.ComplexField && this.ComplexField.IsValid());
+};
 
 /**
  * TIME field
@@ -1434,6 +1438,10 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	{
 		this.private_ReadFORMTEXT();
 	}
+	else if ("FORMCHECKBOX" === sBuffer)
+	{
+		this.private_ReadFORMCHECKBOX();
+	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
 		this.private_ReadFORMULA();
@@ -1445,8 +1453,8 @@ CFieldInstructionParser.prototype.private_Parse = function()
 };
 CFieldInstructionParser.prototype.private_ReadNext = function()
 {
-	var nLen  = this.Line.length,
-		bWord = false;
+	let nLen  = this.Line.length;
+	let bWord = false;
 
 	this.Buffer = "";
 
@@ -1462,6 +1470,7 @@ CFieldInstructionParser.prototype.private_ReadNext = function()
 		{
 			// Кавычки
 			this.Pos++;
+			bWord = true;
 			while (this.Pos < nLen)
 			{
 				nCharCode = this.Line.charCodeAt(this.Pos);
@@ -1470,9 +1479,7 @@ CFieldInstructionParser.prototype.private_ReadNext = function()
 					this.Pos++;
 					break;
 				}
-
-				bWord = true;
-
+				
 				if (34 === nCharCode && 92 === this.Line.charCodeAt(this.Pos - 1) && this.Buffer.length > 0)
 					this.Buffer = this.Buffer.substring(0, this.Buffer.length - 1);
 
@@ -1492,10 +1499,7 @@ CFieldInstructionParser.prototype.private_ReadNext = function()
 		this.Pos++;
 	}
 
-	if (bWord)
-		return true;
-
-	return false;
+	return bWord;
 };
 CFieldInstructionParser.prototype.private_ReadTillEnd = function()
 {
@@ -1719,45 +1723,17 @@ CFieldInstructionParser.prototype.private_ReadTOC = function()
 					this.Result.SetPageRefSkippedLvls(true, -1, -1);
 				}
 			}
-			else if('c' === sType)
+			else if ('c' === sType)
 			{
 				arrArguments = this.private_ReadArguments();
-				if(arrArguments.length > 0)
-				{
-					var sCaption = arrArguments[0];
-					if(typeof sCaption === "string" && sCaption.length > 0)
-					{
-						this.Result.SetCaption(sCaption);
-					}
-					else
-					{
-						this.Result.SetCaption(null);
-					}
-				}
-				else
-				{
-					this.Result.SetCaption(null);
-				}
+				if (arrArguments.length > 0 && (typeof arrArguments[0] === "string"))
+					this.Result.SetCaption(arrArguments[0]);
 			}
-			else if('a' === sType)
+			else if ('a' === sType)
 			{
 				arrArguments = this.private_ReadArguments();
-				if(arrArguments.length > 0)
-				{
-					var sCaptionOnlyText = arrArguments[0];
-					if(typeof sCaptionOnlyText === "string" && sCaptionOnlyText.length > 0)
-					{
-						this.Result.SetCaptionOnlyText(sCaptionOnlyText);
-					}
-					else
-					{
-						this.Result.SetCaptionOnlyText(null);
-					}
-				}
-				else
-				{
-					this.Result.SetCaptionOnlyText(null);
-				}
+				if (arrArguments.length > 0 && (typeof arrArguments[0] === "string"))
+					this.Result.SetCaptionOnlyText(arrArguments[0]);
 			}
 		}
 	}
@@ -2091,4 +2067,8 @@ CFieldInstructionParser.prototype.private_ReadMERGEFIELD = function()
 CFieldInstructionParser.prototype.private_ReadFORMTEXT = function()
 {
 	this.Result = new AscWord.CFieldInstructionFORMTEXT();
+};
+CFieldInstructionParser.prototype.private_ReadFORMCHECKBOX = function()
+{
+	this.Result = new AscWord.CFieldInstructionFORMCHECKBOX();
 };

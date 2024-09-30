@@ -693,8 +693,7 @@ ParaMath.prototype.GetDirectTextPr = function()
  */
 ParaMath.prototype.Add = function(Item)
 {
-    var LogicDocument  = (this.Paragraph ? this.Paragraph.LogicDocument : undefined);
-    var TrackRevisions = (LogicDocument && true === LogicDocument.IsTrackRevisions() ? true : false);
+	let logicDocument = this.GetLogicDocument();
 
     var Type = Item.Type;
     var oSelectedContent = this.GetSelectContent();
@@ -715,19 +714,11 @@ ParaMath.prototype.Add = function(Item)
 
         if(oContent.bRoot == false && Run.IsPlaceholder())
         {
-            var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
-
-			var isLocalTrack = false;
-            if (TrackRevisions)
+			AscCommon.executeNoRevisions(function()
 			{
-				isLocalTrack = LogicDocument.GetLocalTrackRevisions();
-				LogicDocument.SetLocalTrackRevisions(false);
-			}
-
-            Run.Apply_TextPr(CtrRunPr, undefined, true);
-
-            if (false !== isLocalTrack)
-                LogicDocument.SetLocalTrackRevisions(isLocalTrack);
+				var CtrRunPr = oContent.Get_ParentCtrRunPr(false); // ctrPrp (не копия)
+				Run.Apply_TextPr(CtrRunPr, undefined, true);
+			}, logicDocument, this);
         }
 
         if(Item.Value == 38)
@@ -770,29 +761,22 @@ ParaMath.prototype.Add = function(Item)
         // Выставляем позицию в начало этого рана
         oContent.CurPos = StartPos + 1;
         RightRun.MoveCursorToStartPos();
-
-        var lng = oContent.Content.length;
-        oContent.Load_FromMenu(Item.Menu, this.Paragraph, null, Item.GetText());
-        oContent.Correct_ContentCurPos();
-
-        var lng2 = oContent.Content.length;
-
-        TextPr.RFonts.SetAll("Cambria Math", -1);
-
-		var isLocalTrack = false;
-		if (TrackRevisions)
+		
+		// TODO: Need to refactor this code. Applying TextPr should be done in LoadFromMenu method
+		// or LoadFromMenu should return an array of added objects
+		let lng = oContent.Content.length;
+		oContent.Load_FromMenu(Item.Menu, this.Paragraph, TextPr, Item.GetText());
+		oContent.Correct_ContentCurPos();
+		
+		AscCommon.executeNoRevisions(function()
 		{
-			isLocalTrack = LogicDocument.GetLocalTrackRevisions();
-			LogicDocument.SetLocalTrackRevisions(false);
-		}
-
-        if(bPlh)
-            oContent.Apply_TextPr(TextPr, undefined, true);
-        else
-            oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
-
-		if (false !== isLocalTrack)
-			LogicDocument.SetLocalTrackRevisions(isLocalTrack);
+			let lng2 = oContent.Content.length;
+			TextPr.RFonts.SetAll("Cambria Math", -1);
+			if (bPlh)
+				oContent.Apply_TextPr(TextPr, undefined, true);
+			else if (lng2 > lng)
+				oContent.Apply_TextPr(TextPr, undefined, false, StartPos + 1, StartPos + lng2 - lng);
+		}, logicDocument, this);
     }
 	
 	if ((para_Text === Type || para_Space === Type) && null !== NewElement)
@@ -952,7 +936,7 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                 this.Root.Remove_FromContent(0, 1);
                 return true;
             }
-            else if ((true === oElement.IsPlaceholder() && !bOnAddText) || (false === oElement.Remove(Direction) && true !== this.bSelectionUse))
+            else if ((true === oElement.IsPlaceholder() && !bOnAddText) || (false === oElement.IsPlaceholder() && false === oElement.Remove(Direction) && true !== this.bSelectionUse))
             {
                 if ((Direction > 0 && oContent.Content.length - 1 === nStartPos) || (Direction < 0 && 0 === nStartPos))
                 {
@@ -1141,6 +1125,13 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
         }
         oContent.Correct_Content();
         oContent.Correct_ContentPos(Direction);
+
+		// если в контенте остался только плейсхолдер, то нам нужно выделить его
+		if (oContent.IsPlaceholder())
+		{
+			oContent.SelectThisElement(1);
+			oContent.SelectAll(1);
+		}
     }
 };
 
@@ -1301,14 +1292,13 @@ ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 
 ParaMath.prototype.GetText = function(isLaTeX)
 {
-    var res = "";
-    if (this.Root && this.Root.GetTextContent) {
-        var textContent = this.Root.GetTextContent(false, isLaTeX);
-        if (textContent && textContent.str) {
-            res = textContent.str;
-        }
-    }
-    return res;
+    let oMathText = this.GetTextOfElement(isLaTeX);
+    return oMathText.GetText();
+};
+
+ParaMath.prototype.GetTextOfElement = function (isLaTeX, isDefaultText)
+{
+    return this.Root.GetTextOfElement(isLaTeX, isDefaultText);
 };
 
 ParaMath.prototype.GetSelectDirection = function()
@@ -3181,47 +3171,34 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
-	AscMath.SetIsLaTeXGetParaRun(false);
-	var strLaTeX = this.GetText(true);
-	AscMath.SetIsLaTeXGetParaRun(true);
-
-    this.Root.Remove_Content(0, this.Root.Content.length);
-    this.Root.Correct_Content(true);
-    AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
-    this.Root.CorrectAllMathWords(true);
-    this.Root.ConvertAllSpecialWords(true);
+	let oLaTeX = this.GetTextOfElement(true, true);
+	this.Root.Remove_Content(0, this.Root.Content.length);
+	this.Root.CurPos = 0;
+	AscMath.ConvertLaTeXToTokensList(oLaTeX, this.Root);
 	this.Root.Correct_Content(true);
+    this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToLaTeX = function()
 {
-	var strLatex = this.GetText(true);
+	let oLaTeXContent = this.GetTextOfElement(true);
 	this.Root.Remove_Content(0,this.Root.Content.length);
-	this.Root.Add_Text(strLatex, this.Paragraph);
-    this.Root.CurPos = this.Root.Content.length - 1;
+	this.Root.AddDataFromFlatMathTextAndStyles(oLaTeXContent.Flat());
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
-    this.Root.CorrectAllMathWords(false);
-    this.Root.ConvertAllSpecialWords(false);
-	var strUnicode = this.GetText();
-	if (strUnicode[strUnicode.length - 1] === " ")
-	{
-		strUnicode = strUnicode.slice(0, -1)
-	}
-	this.Root.Remove_Content(0,this.Root.Content.length);
-    this.Root.Correct_Content(true);
-	AscMath.CUnicodeConverter(strUnicode, this.Root);
+	let oUnicode = this.GetTextOfElement(false);
+	this.Root.Remove_Content(0, this.Root.Content.length);
+	this.Root.CurPos = 0;
+	AscMath.CUnicodeConverter(oUnicode, this.Root);
 	this.Root.Correct_Content(true);
+	this.Root.CurPos++;
 };
 ParaMath.prototype.ConvertToUnicodeMath = function()
 {
-	var strUnicode = this.GetText();
-    if (strUnicode[strUnicode.length - 1] === " ")
-    {
-        strUnicode = strUnicode.slice(0, -1)
-    }
+	let oUnicodeContent = this.GetTextOfElement(false);
 	this.Root.Remove_Content(0,this.Root.Content.length);
-	this.Root.Add_Text(strUnicode, this.Paragraph);
+	this.Root.AddDataFromFlatMathTextAndStyles(oUnicodeContent.Flat());
+	this.Paragraph.updateTrackRevisions();
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
@@ -3280,12 +3257,6 @@ ParaMath.prototype._convertViewBySelection = function(isToLinear, nInputType)
         isToLinear
     );
 };
-ParaMath.prototype.SplitSelectedContent = function()
-{
-    var oSelection = this.GetSelectContent();
-    var oContent = oSelection.Content;
-    oContent.SplitSelectedContent();
-};
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {
 	if (oCollector.IsExceedLimit())
@@ -3325,7 +3296,10 @@ ParaMath.prototype.IsContentControlEquation = function()
 		&& parent.IsContentControlEquation()
 		&& parent.IsPlaceHolder());
 };
-
+ParaMath.prototype.ProcessingOldEquationConvert = function()
+{
+	this.Root.ProcessingOldEquationConvert();
+};
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

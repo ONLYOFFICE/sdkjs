@@ -1044,6 +1044,9 @@
 
 		Button_Copy : function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return false;
+			
 			if (this.isUseNewCopy())
 			{
 				if (this.Button_Copy_New())
@@ -1080,6 +1083,9 @@
 
 		Button_Cut : function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return false;
+			
 			if (this.isUseNewCopy())
 			{
 				if (this.Button_Copy_New(true))
@@ -1120,6 +1126,9 @@
 
 		Button_Paste : function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return false;
+			
 			if (this.isUseNewPaste())
 			{
 				if (this.Button_Paste_New())

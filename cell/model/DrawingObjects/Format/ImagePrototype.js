@@ -45,7 +45,6 @@ CImageShape.prototype.getParentObjects = CShape.prototype.getParentObjects;
 CImageShape.prototype.recalculateTransform = CShape.prototype.recalculateTransform;
 CImageShape.prototype.recalculateBounds = CShape.prototype.recalculateBounds;
 CImageShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
-CImageShape.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
     CImageShape.prototype.getEditorType = function()
     {
         return 0;

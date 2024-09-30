@@ -248,7 +248,7 @@ CParagraphContentBase.prototype.UpdateBookmarks = function(oManager)
 {
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
+ * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentBase.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
@@ -1273,6 +1273,20 @@ CParagraphContentWithContentBase.prototype.OnContentChange = function()
 		let oParagraph = this.GetParagraph();
 		if (oParagraph)
 			oParagraph.OnContentChange();
+	}
+};
+CParagraphContentWithContentBase.prototype.OnTextPrChange = function()
+{
+	let oParent = this.GetParent();
+	if (oParent && oParent.OnTextPrChange)
+	{
+		oParent.OnTextPrChange();
+	}
+	else
+	{
+		let oParagraph = this.GetParagraph();
+		if (oParagraph)
+			oParagraph.OnTextPrChange();
 	}
 };
 
@@ -3999,7 +4013,7 @@ CParagraphContentWithParagraphLikeContent.prototype.RestartSpellCheck = function
     }
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
+ * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)

@@ -340,7 +340,7 @@ CAbstractNum.prototype.Refresh_RecalcData = function(Data)
 		var oNum = oNumbering.Num[sId];
 		if (this.Id === oNum.GetAbstractNumId())
 		{
-			arrNumPr.push(new CNumPr(oNum.GetId(), Data.Index));
+			arrNumPr.push(new AscWord.NumPr(oNum.GetId(), Data.Index));
 		}
 	}
 

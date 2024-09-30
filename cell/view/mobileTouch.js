@@ -161,7 +161,7 @@ function (window, undefined)
 	};
 	CMobileDelegateEditorCell.prototype.GetSelectionRectsBounds = function()
 	{
-		var _selection = this.WB.GetSelectionRectsBounds();
+		var _selection = this.WB.GetSelectionRectsBounds(true);
 
 		if (_selection)
 		{

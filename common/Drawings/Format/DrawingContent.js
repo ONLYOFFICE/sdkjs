@@ -789,7 +789,8 @@
                 var oShape = this.Parent.parent;
                 var contentPoints = oShape.getSmartArtPointContent();
                 if (contentPoints && contentPoints.length !== 0) {
-                    var isPhldr = contentPoints.every(function (point) {
+                    var isPhldr = contentPoints.every(function (node) {
+												const point = node.point;
                         return point && point.prSet && point.prSet.phldr;
                     });
                     if (isPhldr) {

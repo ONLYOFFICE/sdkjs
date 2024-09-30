@@ -525,7 +525,7 @@
 			}
 			case para_FieldChar:
 			{
-				if (element.IsNumValue())
+				if (element.IsVisual())
 				{
 					if (this.DrawComments && this.comments.length > 0)
 						flags |= FLAG_COMMENT;
@@ -536,6 +536,9 @@
 						flags |= FLAG_SEARCH;
 					else if (this.DrawColl && isCollaboration)
 						flags |= FLAG_COLLABORATION;
+					
+					if (element.IsFormField())
+						flags |= FLAG_COMPLEX_FIELD;
 				}
 				break;
 			}

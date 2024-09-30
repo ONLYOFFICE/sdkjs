@@ -308,6 +308,7 @@ XYAdjustmentTrack.prototype.trackEnd = function()
 
     }
 };
+XYAdjustmentTrack.prototype.checkDrawingPartWithHistory = function () {};
 
 function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
 {
@@ -527,6 +528,7 @@ function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
 
         }
     };
+	this.checkDrawingPartWithHistory = function () {};
 }
 PolarAdjustmentTrack.prototype.getBounds = XYAdjustmentTrack.prototype.getBounds;
 

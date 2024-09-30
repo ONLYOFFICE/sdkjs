@@ -10419,7 +10419,7 @@
 		{
 			if (oParsedNumPr["numId"] === oPrevNumIdInfo.nNumId && oPrevNumIdInfo.sPrevCreatedNumId)
 			{
-				return new CNumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr["ilvl"]);
+				return new AscWord.NumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr["ilvl"]);
 			}
 		}
 		
@@ -10435,12 +10435,11 @@
 			oPrevNumIdInfo.sPrevCreatedNumId = sNumId;
 			oPrevNumIdInfo.nNumId = oParsedNumPr["numId"];
 		}
-
-		var oNumPr = new CNumPr(sNumId, nNumLvl);
+		
 		if (nNumLvl == null)
-			oNumPr.Lvl = undefined;
+			nNumLvl = undefined;
 
-		return oNumPr;
+		return new AscWord.NumPr(sNumId, nNumLvl);
 	};
 	ReaderFromJSON.prototype.ParaSpacingFromJSON = function(oParsedSpacing)
 	{
@@ -12725,13 +12724,7 @@
 				oData = new AscFormat.DiagramData();
 				break;
 			case "styleData":
-				oData = new AscFormat.StyleData();
-				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
-				break;
 			case "clrData":
-				oData = new AscFormat.ClrData();
-				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
-				break;
 			case "sampData":
 				oData = new AscFormat.SampData();
 				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
@@ -13193,22 +13186,12 @@
 		switch (oParsedClrLst["type"])
 		{
 			case "effectClrLst":
-				oClrLst = new AscFormat.EffectClrLst();
-				break;
 			case "fillClrLst":
-				oClrLst = new AscFormat.FillClrLst();
-				break;
 			case "linClrLst":
-				oClrLst = new AscFormat.LinClrLst();
-				break;
 			case "txEffectClrLst":
-				oClrLst = new AscFormat.TxEffectClrLst();
-				break;
 			case "txFillClrLst":
-				oClrLst = new AscFormat.TxFillClrLst();
-				break;
 			case "txLinClrLst":
-				oClrLst = new AscFormat.TxLinClrLst();
+				oClrLst = new AscFormat.ClrLst();
 				break;
 		}
 
@@ -13226,9 +13209,7 @@
 	ReaderFromJSON.prototype.DescFromJSON = function(oParsedDesc)
 	{
 		var oDesc = null;
-		if (oParsedDesc["type"] === "desc")
-			oDesc = new AscFormat.Desc();
-		else if (oParsedDesc["type"] === "diagramTitle")
+		if (oParsedDesc["type"] === "desc" || oParsedDesc["type"] === "diagramTitle")
 			oDesc = new AscFormat.DiagramTitle();
 
 		if (oDesc)
@@ -21131,6 +21112,12 @@
 			case Asc.c_oAscNumberingFormat.CustomGreece:
 				sVal = "customGreece";
 				break;
+			case Asc.c_oAscNumberingFormat.CustomUpperTurkish:
+				sVal = "customUpperTurkish";
+				break;
+			case Asc.c_oAscNumberingFormat.CustomLowerTurkish:
+				sVal = "customLowerTurkish";
+				break;
 			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
 				sVal = "customDecimalFourZero";
 				break;
@@ -21340,6 +21327,12 @@
 				break;
 			case "customGreece":
 				nVal = Asc.c_oAscNumberingFormat.CustomGreece;
+				break;
+			case "customUpperTurkish":
+				nVal = Asc.c_oAscNumberingFormat.CustomUpperTurkish;
+				break;
+			case "customLowerTurkish":
+				nVal = Asc.c_oAscNumberingFormat.CustomLowerTurkish;
 				break;
 			case "customDecimalFourZero":
 				nVal = Asc.c_oAscNumberingFormat.CustomDecimalFourZero;
@@ -22047,7 +22040,10 @@
 	window['AscJsonConverter'] = window.AscJsonConverter = window['AscJsonConverter'] || {};
 	window['AscJsonConverter'].WriterToJSON   = WriterToJSON;
 	window['AscJsonConverter'].ReaderFromJSON = ReaderFromJSON;
-	
+
+	window['AscCommon'].To_XML_ST_LayoutShapeType = To_XML_ST_LayoutShapeType;
+	window['AscCommon'].From_XML_ST_LayoutShapeType = From_XML_ST_LayoutShapeType;
+
 })(window);
 
 

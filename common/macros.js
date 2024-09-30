@@ -441,11 +441,18 @@ function (window, undefined)
 	window['AscCommon'].safePluginEval = function(value) {
 		let protoFunc = Object.getPrototypeOf(function(){});
 		// for minimization we use eval!!!
-		let protoFuncGen = eval("Object.getPrototypeOf(function*(){})");
+		let protoFuncGen = null;
+		try {
+			protoFuncGen = eval("Object.getPrototypeOf(function*(){})");
+		} catch (err) {
+			protoFuncGen = null;
+		}
 		const normalConstructor = protoFunc.constructor;
-		const generatorNext = protoFuncGen.prototype.next;
+		const generatorNext = protoFuncGen ? protoFuncGen.prototype.next : null;
 		protoFunc.constructor = function(){};
-		protoFuncGen.prototype.next = function(){};
+		if (protoFuncGen)
+			protoFuncGen.prototype.next = function(){};
+
 		const timeout = function(cb, delay) {
 			var args = Array.prototype.slice.call(arguments, 2);
 			return setTimeout(function() {
@@ -473,7 +480,8 @@ function (window, undefined)
 		}
 		const result = _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, timeout, interval, value);
 		protoFunc.constructor = normalConstructor;
-		protoFuncGen.prototype.next = generatorNext;
+		if (protoFuncGen)
+			protoFuncGen.prototype.next = generatorNext;
 		return result;
 	};
 

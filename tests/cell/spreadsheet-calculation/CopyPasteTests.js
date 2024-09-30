@@ -59,6 +59,10 @@ $(function () {
 	};
 	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
 	};
+	AscCommonExcel.WorksheetView.prototype._getPPIY = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIX = function () {
+	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
 	Asc.ReadDefTableStyles = function(){};

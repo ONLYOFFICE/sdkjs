@@ -1125,3 +1125,11 @@ CSdtBase.prototype.IsHideContentControlTrack = function()
 	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
 };
 
+// TODO: Temporary for building purpose. Remove when actual class is added
+(function()
+{
+	function DataBinding()
+	{
+	}
+	AscWord.DataBinding = DataBinding;
+})();

@@ -72,6 +72,7 @@
 		NotesEnd     : false,
 		NotesEndPage : 0,
 		LineNumbers  : false,
+		ResetCache   : false,
 		Update       : true
 	};
 
@@ -607,6 +608,20 @@ CHistory.prototype =
 				this.RecalculateData.NotesEndPage = Data.PageNum;
 				break;
 			}
+			case AscDFH.historyitem_recalctype_FromStart:
+			{
+				this.RecalculateData.Inline.Pos     = 0;
+				this.RecalculateData.Inline.PageNum = 0;
+				this.RecalculateData.Flow           = [];
+				this.RecalculateData.HdrFtr         = [];
+				this.RecalculateData.Drawings.All   = true;
+				this.RecalculateData.Drawings.Map   = {};
+				this.RecalculateData.Tables         = [];
+				this.RecalculateData.NumPr          = [];
+				this.RecalculateData.NotesEnd       = false;
+				this.RecalculateData.NotesEndPage   = 0;
+				this.RecalculateData.ResetCache     = true;
+			}
         }
     },
 
@@ -680,7 +695,7 @@ CHistory.prototype =
         this.RecalculateData.Update = false;
         for (var NumId in this.RecalculateData.NumPr)
         {
-            var NumPr = new CNumPr();
+            var NumPr = new AscWord.NumPr();
             NumPr.NumId = NumId;
             for (var Lvl = 0; Lvl < 9; ++Lvl)
             {
@@ -1324,6 +1339,7 @@ CHistory.prototype.private_ClearRecalcData = function()
 		ChangedStyles     : {},
 		ChangedNums       : {},
 		LineNumbers       : false,
+		ResetCache        : false,
 		AllParagraphs     : null
 	};
 };
@@ -1353,6 +1369,7 @@ CHistory.prototype.private_ClearRecalcData = function()
 			ChangedStyles     : {},
 			ChangedNums       : {},
 			LineNumbers       : false,
+			ResetCache        : false,
 			AllParagraphs     : null
 		};
 		
@@ -1512,15 +1529,47 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description
 			|| AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description
 			|| AscDFH.historydescription_Document_SpaceButton === oPoint.Description
-			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description)
+			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description
+			|| AscDFH.historydescription_Document_PasteHotKey === oPoint.Description)
 			&& nItemsCount > 0)
 		{
-			var oChange = oPoint.Items[nItemsCount - 1].Data;
-			if (!oChange || !oChange.IsContentChange())
-				return false;
-
-			var nChangeItemsCount = oChange.GetItemsCount();
-			return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+			if (AscDFH.historydescription_Document_PasteHotKey === oPoint.Description)
+			{
+				// Последний добавленный элемент во время вставки был до AscDFH.historyitem_ParaRun_OnStartSplit
+				let splitCounter = 0;
+				for (let changeIndex = oPoint.Items.length - 1; changeIndex >= 0; --changeIndex)
+				{
+					let change = oPoint.Items[changeIndex].Data;
+					if (!change)
+						continue;
+					
+					if (AscDFH.historyitem_ParaRun_OnEndSplit === change.GetType())
+					{
+						++splitCounter;
+						continue;
+					}
+					else if (AscDFH.historyitem_ParaRun_OnStartSplit === change.GetType())
+					{
+						--splitCounter;
+						continue;
+					}
+					
+					if (splitCounter > 0 || !change.IsContentChange() || AscDFH.historyitem_ParaRun_AddItem !== change.GetType())
+						continue;
+					
+					let nChangeItemsCount = change.GetItemsCount();
+					return (nChangeItemsCount > 0 && change.GetItem(nChangeItemsCount - 1) === oLastElement);
+				}
+			}
+			else
+			{
+				var oChange = oPoint.Items[nItemsCount - 1].Data;
+				if (!oChange || !oChange.IsContentChange())
+					return false;
+				
+				let nChangeItemsCount = oChange.GetItemsCount();
+				return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+			}
 		}
 
 		return false;

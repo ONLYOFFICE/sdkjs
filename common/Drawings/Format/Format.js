@@ -70,6 +70,7 @@
 		var CChangesDrawingsContentLong = AscDFH.CChangesDrawingsContentLong;
 		var CChangesDrawingsContentLongMap = AscDFH.CChangesDrawingsContentLongMap;
 		var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
+		var CChangesDrawingsDouble2 = AscDFH.CChangesDrawingsDouble2;
 
 
 
@@ -714,6 +715,9 @@
 		drawingContentChanges[AscDFH.historyitem_ThemeRemoveExtraClrScheme] = function (oClass) {
 			return oClass.extraClrSchemeLst;
 		};
+		drawingContentChanges[AscDFH.historyitem_CustomPropertiesAddProperty] = function (oClass) {
+			return oClass.properties;
+		};
 
 
 		drawingConstructorsMap[AscDFH.historyitem_ClrMap_SetClr] = CUniColor;
@@ -733,7 +737,7 @@
 
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkClick] = CT_Hyperlink;
 		drawingConstructorsMap[AscDFH.historyitem_CNvPr_SetHlinkHover] = CT_Hyperlink;
-
+		drawingConstructorsMap[AscDFH.historyitem_CustomPropertiesAddProperty] = CCustomProperty;
 
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetSpPr] = CChangesDrawingsObject;
 		AscDFH.changesFactory[AscDFH.historyitem_DefaultShapeDefinition_SetBodyPr] = CChangesDrawingsObjectNoId;
@@ -800,6 +804,10 @@
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetFtr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetHdr] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_HF_SetSldNum] = CChangesDrawingsBool;
+		AscDFH.changesFactory[AscDFH.historyitem_CustomPropertiesAddProperty] = CChangesDrawingsContentNoId;
+
+
+
 
 // COLOR -----------------------
 		/*
@@ -2420,7 +2428,7 @@
 		}
 
 		InitClass(CUniColor, CBaseNoIdObject, 0);
-		CUniColor.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniColor.prototype.checkPhColor = function (unicolor) {
 			if (this.color && this.color.type === c_oAscColor.COLOR_TYPE_SCHEME && this.color.id === 14) {
 				if (unicolor) {
 					if (unicolor.color) {
@@ -2430,9 +2438,7 @@
 						if (!this.Mods || this.Mods.Mods.length === 0) {
 							this.Mods = unicolor.Mods.createDuplicate();
 						} else {
-							if (bMergeMods) {
-								this.Mods.Merge(unicolor.Mods);
-							}
+							this.Mods.Merge(unicolor.Mods);
 						}
 					}
 				}
@@ -2466,6 +2472,13 @@
 				return this.Mods.getModValue(sModName);
 			}
 			return null;
+		};
+		CUniColor.prototype.getTransparency = function () {
+			let nAlphaVal = this.getModValue("alpha");
+			if(nAlphaVal === null) {
+				return 0;
+			}
+			return (100000 - nAlphaVal) / 1000;
 		};
 		CUniColor.prototype.checkWordMods = function () {
 			return this.Mods && this.Mods.Mods.length === 1
@@ -4086,11 +4099,7 @@
 			if(!this.color) {
 				return 0;
 			}
-			let nAlphaVal = this.color.getModValue("alpha");
-			if(nAlphaVal === null) {
-				return 0;
-			}
-			return (100000 - nAlphaVal) / 1000;
+			return this.color.getTransparency();
 		};
 		asc_CShadowProperty.prototype.putTransparency = function(nVal) {
 			if(!this.color) {
@@ -5090,7 +5099,7 @@
 				}
 			}
 		};
-		CUniFill.prototype.checkPhColor = function (unicolor, bMergeMods) {
+		CUniFill.prototype.checkPhColor = function (unicolor) {
 			if (this.fill) {
 				switch (this.fill.type) {
 					case c_oAscFill.FILL_TYPE_BLIP:
@@ -5100,24 +5109,24 @@
 					}
 					case c_oAscFill.FILL_TYPE_SOLID: {
 						if (this.fill.color && this.fill.color) {
-							this.fill.color.checkPhColor(unicolor, bMergeMods);
+							this.fill.color.checkPhColor(unicolor);
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_GRAD: {
 						for (var i = 0; i < this.fill.colors.length; ++i) {
 							if (this.fill.colors[i] && this.fill.colors[i].color) {
-								this.fill.colors[i].color.checkPhColor(unicolor, bMergeMods);
+								this.fill.colors[i].color.checkPhColor(unicolor);
 							}
 						}
 						break;
 					}
 					case c_oAscFill.FILL_TYPE_PATT: {
 						if (this.fill.bgClr) {
-							this.fill.bgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.bgClr.checkPhColor(unicolor);
 						}
 						if (this.fill.fgClr) {
-							this.fill.fgClr.checkPhColor(unicolor, bMergeMods);
+							this.fill.fgClr.checkPhColor(unicolor);
 						}
 						break;
 					}
@@ -6237,39 +6246,39 @@
 				return;
 			}
 			if (ln.Fill != null && ln.Fill.fill != null) {
-				this.Fill = ln.Fill.createDuplicate();
+				this.setFill(ln.Fill.createDuplicate());
 			}
 
 			if (ln.prstDash != null) {
-				this.prstDash = ln.prstDash;
+				this.setPrstDash(ln.prstDash);
 			}
 
 			if (ln.Join != null) {
-				this.Join = ln.Join.createDuplicate();
+				this.setJoin(ln.Join.createDuplicate());
 			}
 
 			if (ln.headEnd != null) {
-				this.headEnd = ln.headEnd.createDuplicate();
+				this.setHeadEnd(ln.headEnd.createDuplicate());
 			}
 
 			if (ln.tailEnd != null) {
-				this.tailEnd = ln.tailEnd.createDuplicate();
+				this.setTailEnd(ln.tailEnd.createDuplicate());
 			}
 
 			if (ln.algn != null) {
-				this.algn = ln.algn;
+				this.setAlgn(ln.algn);
 			}
 
 			if (ln.cap != null) {
-				this.cap = ln.cap;
+				this.setCap(ln.cap);
 			}
 
 			if (ln.cmpd != null) {
-				this.cmpd = ln.cmpd;
+				this.setCmpd(ln.cmpd);
 			}
 
 			if (ln.w != null) {
-				this.w = ln.w;
+				this.setW(ln.w);
 			}
 		};
 		CLn.prototype.calculate = function (theme, slide, layout, master, RGBA, colorMap) {
@@ -6844,6 +6853,9 @@
 			AscCommon.History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Ph_SetIdx, this.idx, idx));
 			this.idx = idx;
 		};
+		Ph.prototype.getIdx = function() {
+			return this.idx;
+		}
 		Ph.prototype.setOrient = function (orient) {
 			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Ph_SetOrient, this.orient, orient));
 			this.orient = orient;
@@ -6855,6 +6867,9 @@
 		Ph.prototype.setType = function (type) {
 			AscCommon.History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Ph_SetType, this.type, type));
 			this.type = type;
+		};
+		Ph.prototype.getType = function() {
+			return this.type;
 		};
 
 		function fUpdateLocksValue(nLocks, nMask, bValue) {
@@ -7152,19 +7167,19 @@
 		CShapeStyle.prototype.merge = function (style) {
 			if (style != null) {
 				if (style.lnRef != null) {
-					this.lnRef = style.lnRef.createDuplicate();
+					this.setLnRef(style.lnRef.createDuplicate());
 				}
 
 				if (style.fillRef != null) {
-					this.fillRef = style.fillRef.createDuplicate();
+					this.setFillRef(style.fillRef.createDuplicate());
 				}
 
 				if (style.effectRef != null) {
-					this.effectRef = style.effectRef.createDuplicate();
+					this.setEffectRef(style.effectRef.createDuplicate());
 				}
 
 				if (style.fontRef != null) {
-					this.fontRef = style.fontRef.createDuplicate();
+					this.setFontRef(style.fontRef.createDuplicate());
 				}
 			}
 		};
@@ -7331,46 +7346,46 @@
 				return;
 			}
 			if (xfrm.offX != null) {
-				this.offX = xfrm.offX;
+				this.setOffX(xfrm.offX);
 			}
 			if (xfrm.offY != null) {
-				this.offY = xfrm.offY;
+				this.setOffY(xfrm.offY);
 			}
 
 
 			if (xfrm.extX != null) {
-				this.extX = xfrm.extX;
+				this.setExtX(xfrm.extX);
 			}
 			if (xfrm.extY != null) {
-				this.extY = xfrm.extY;
+				this.setExtY(xfrm.extY);
 			}
 
 
 			if (xfrm.chOffX != null) {
-				this.chOffX = xfrm.chOffX;
+				this.setChOffX(xfrm.chOffX);
 			}
 			if (xfrm.chOffY != null) {
-				this.chOffY = xfrm.chOffY;
+				this.setChOffY(xfrm.chOffY);
 			}
 
 
 			if (xfrm.chExtX != null) {
-				this.chExtX = xfrm.chExtX;
+				this.setChExtX(xfrm.chExtX);
 			}
 			if (xfrm.chExtY != null) {
-				this.chExtY = xfrm.chExtY;
+				this.setChExtY(xfrm.chExtY);
 			}
 
 
 			if (xfrm.flipH != null) {
-				this.flipH = xfrm.flipH;
+				this.setFlipH(xfrm.flipH);
 			}
 			if (xfrm.flipV != null) {
-				this.flipV = xfrm.flipV;
+				this.setFlipV(xfrm.flipV);
 			}
 
 			if (xfrm.rot != null) {
-				this.rot = xfrm.rot;
+				this.setRot(xfrm.rot);
 			}
 		};
 		CXfrm.prototype.createDuplicate = function () {
@@ -7872,6 +7887,25 @@
          this.ln = new CLn();
          this.ln.merge(spPr.ln);
          }  */
+		};
+		CSpPr.prototype.fullMerge = function (spPr) {
+			if (spPr.xfrm != null) {
+				this.xfrm.merge(spPr.xfrm);
+			}
+			if (spPr.geometry !== null) {
+				this.setGeometry(spPr.geometry.createDuplicate());
+			}
+
+			if (spPr.Fill !== null && spPr.Fill.fill !== null) {
+				this.setFill(spPr.Fill.createDuplicate());
+			}
+
+			if (spPr.ln != null) {
+				if (this.ln == null)
+					this.setLn(new CLn());
+
+				this.ln.merge(spPr.ln);
+			}
 		};
 		CSpPr.prototype.setParent = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_SpPr_SetParent, this.parent, pr));
@@ -8561,14 +8595,14 @@
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			} else if (number >= 1001) {
 				var ret = this.bgFillStyleLst[number - 1001];
 				if (!ret)
 					return null;
 				var ret2 = ret.createDuplicate();
-				ret2.checkPhColor(unicolor, false);
+				ret2.checkPhColor(unicolor);
 				return ret2;
 			}
 			return null;
@@ -8750,7 +8784,7 @@
 				if (this.themeElements.fmtScheme.fillStyleLst[idx - 1]) {
 					ret = this.themeElements.fmtScheme.fillStyleLst[idx - 1].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8758,7 +8792,7 @@
 				if (this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001]) {
 					ret = this.themeElements.fmtScheme.bgFillStyleLst[idx - 1001].createDuplicate();
 					if (ret) {
-						ret.checkPhColor(unicolor, false);
+						ret.checkPhColor(unicolor);
 						return ret;
 					}
 				}
@@ -8772,7 +8806,7 @@
 			if (this.themeElements.fmtScheme.lnStyleLst[idx - 1]) {
 				var ret = this.themeElements.fmtScheme.lnStyleLst[idx - 1].createDuplicate();
 				if (ret.Fill) {
-					ret.Fill.checkPhColor(unicolor, false);
+					ret.Fill.checkPhColor(unicolor);
 				}
 				return ret;
 			}
@@ -9043,6 +9077,52 @@
 			AscCommon.History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_HF_SetSldNum, this.sldNum, pr));
 			this.sldNum = pr;
 		};
+		HF.prototype.applySettings = function (oSettings) {
+			if(!oSettings) return;
+			if (oSettings.get_ShowSlideNum()) {
+				if (this.sldNum !== null) {
+					this.setSldNum(null);
+				}
+			}
+			else {
+				if (this.sldNum !== false) {
+					this.setSldNum(false);
+				}
+			}
+
+			if (oSettings.get_ShowFooter()) {
+				if (this.ftr !== null) {
+					this.setFtr(null);
+				}
+			}
+			else {
+				if (this.ftr !== false) {
+					this.setFtr(false);
+				}
+			}
+
+			if (oSettings.get_ShowHeader()) {
+				if (this.hdr !== null) {
+					this.setHdr(null);
+				}
+			}
+			else {
+				if (this.hdr !== false) {
+					this.setHdr(false);
+				}
+			}
+
+			if (oSettings.get_ShowDateTime()) {
+				if (this.dt !== null) {
+					this.setDt(null);
+				}
+			}
+			else {
+				if (this.dt !== false) {
+					this.setDt(false);
+				}
+			}
+		};
 
 		function CBgPr() {
 			CBaseNoIdObject.call(this)
@@ -9204,8 +9284,15 @@
 				}
 			});
 		};
-		CSld.prototype.refreshAllContentsFields = function() {
+		CSld.prototype.refreshAllContentsFields = function(bNoHistory) {
+			let bOldUpdate = AscCommon.History.RecalculateData.Update;
+			if(bNoHistory) {
+				AscCommon.History.RecalculateData.Update = false;
+			}
 			this.handleAllContents(RefreshContentAllFields);
+			if(bNoHistory) {
+				AscCommon.History.RecalculateData.Update = bOldUpdate;
+			}
 		};
 
 		function RefreshContentAllFields(oContent) {
@@ -10800,12 +10887,12 @@
 				return;
 			}
 			var _this = this;
-			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, files) {
+			AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, files) {
 					if (Asc.c_oAscError.ID.No !== error) {
 						Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 					} else {
 						Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, function (error, urls) {
+						AscCommon.UploadImageFiles(files, Api.documentId, Api.documentUserId, Api.CoAuthoringApi.get_jwt(), Api.documentShardKey, Api.documentWopiSrc, Api.documentUserSessionId, function (error, urls) {
 							if (Asc.c_oAscError.ID.No !== error) {
 								Api.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
 								Api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
@@ -11469,7 +11556,78 @@
 				}
 			}
 		};
+		TextListStyle.prototype.applyParaPr = function (nLvl, ParaPr, bIncreaseFontSize, oSp) {
 
+			let iN = AscFormat.isRealNumber;
+			if(bIncreaseFontSize === true || bIncreaseFontSize === false) {
+				if(!this.levels[nLvl]) {
+					this.levels[nLvl] = new AscWord.CParaPr();
+				}
+				let oLvl = this.levels[nLvl];
+				if(oLvl) {
+					if(!oLvl.DefaultRunPr) {
+						oLvl.DefaultRunPr = new AscWord.CTextPr();
+					}
+					let TextPr = oLvl.DefaultRunPr;
+					let Pr;
+					if(iN(TextPr.FontSize)) {
+						TextPr.FontSize = TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					else {
+						let oSpStyles = oSp.Get_Styles(nLvl);
+						let Styles      = oSpStyles.styles;
+						Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+					if(iN(TextPr.FontSizeCS)) {
+						TextPr.FontSizeCS = TextPr.GetIncDecFontSizeCS(bIncreaseFontSize)
+					}
+
+					else {
+						if(!Pr) {
+							let oSpStyles = oSp.Get_Styles(nLvl);
+							let Styles      = oSpStyles.styles;
+							Pr = Styles.Get_Pr(oSpStyles.lastId, styletype_Paragraph, null);
+						}
+						TextPr.FontSize = Pr.TextPr.GetIncDecFontSize(bIncreaseFontSize)
+					}
+				}
+				return;
+			}
+			if(!ParaPr) {
+				this.levels[nLvl] = null;
+				return;
+			}
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			oLvl.Merge(ParaPr);
+			if(!oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+			if(ParaPr.DefaultRunPr) {
+				let TextPr = ParaPr.DefaultRunPr;
+				if (TextPr.FontFamily) {
+					let FName = TextPr.FontFamily.Name;
+					let FIndex = TextPr.FontFamily.Index;
+					TextPr.RFonts = new CRFonts();
+					TextPr.RFonts.SetAll(FName, FIndex);
+				}
+				oLvl.DefaultRunPr.Apply(ParaPr.DefaultRunPr);
+			}
+		};
+		TextListStyle.prototype.changeFontSize = function (nLvl, bIncrease) {
+			if(!this.levels[nLvl]) {
+				this.levels[nLvl] = new AscWord.CParaPr();
+			}
+			let oLvl = this.levels[nLvl];
+			if(oLvl.DefaultRunPr) {
+				oLvl.DefaultRunPr = new AscWord.CTextPr();
+			}
+
+		};
 
 		function CBaseAttrObject() {
 			CBaseNoIdObject.call(this);
@@ -12710,11 +12868,12 @@
 		prot["asc_getPages"] = prot.asc_getPages;
 
 		function CCustomProperties() {
-			CBaseNoIdObject.call(this);
+			CBaseObject.call(this);
 			this.properties = [];
+			this.Lock = new AscCommon.CLock();
 		}
 
-		InitClass(CCustomProperties, CBaseNoIdObject, 0);
+		InitClass(CCustomProperties, CBaseObject, AscDFH.historyitem_type_CustomProperties);
 		CCustomProperties.prototype.fromStream = function (s) {
 			var _type = s.GetUChar();
 			var _len = s.GetULong();
@@ -12772,18 +12931,67 @@
 			});
 		};
 		CCustomProperties.prototype.add = function (name, variant, opt_linkTarget) {
+			this.addProperty(this.properties.length, this.createPropertyWithVariant(name, variant, opt_linkTarget));
+		};
+		CCustomProperties.prototype.createPropertyWithVariant = function (name, variant, opt_linkTarget) {
 			var newProperty = new CCustomProperty();
 			newProperty.fmtid = "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}";
 			newProperty.pid = null;
 			newProperty.name = name;
 			newProperty.linkTarget = opt_linkTarget || null;
 			newProperty.content = variant;
-			this.properties.push(newProperty);
+			return newProperty;
+		};
+		CCustomProperties.prototype.createProperty = function (name, type, value, opt_linkTarget) {
+			let oVariant = new CVariant();
+			oVariant.setType(type);
+			oVariant.setValue(value);
+			return this.createPropertyWithVariant(name, oVariant, opt_linkTarget);
+		};
+		CCustomProperties.prototype.getAllProperties = function () {
+			return [].concat(this.properties);
+		};
+		CCustomProperties.prototype.addProperty = function (idx, pr) {
+			let nInsertIdx = Math.min(this.properties.length, Math.max(0, idx));
+			AscCommon.History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_CustomPropertiesAddProperty, nInsertIdx, [pr], true));
+			this.properties.splice(nInsertIdx, 0, pr);
+		};
+		CCustomProperties.prototype.removeProperty = function (idx) {
+			if(idx < 0 || idx >= this.properties.length)
+				return;
+			let aDeleteElems = this.properties.splice(idx, 1);
+			AscCommon.History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_CustomPropertiesAddProperty, idx, aDeleteElems, false));
+		};
+		CCustomProperties.prototype.modifyProperty = function (idx, pr) {
+			if(idx < 0 || idx >= this.properties.length)
+				return;
+			this.removeProperty(idx);
+			this.addProperty(idx, pr);
+		};
+		CCustomProperties.prototype.AddProperty = function (name, type, value) {
+			for(let nIdx = 0; nIdx < this.properties.length; ++nIdx) {
+				let oPr = this.properties[nIdx];
+				if(oPr.name === name) {
+					this.ModifyProperty(nIdx, name, type, value);
+					return;
+				}
+			}
+			this.addProperty(this.properties.length, this.createProperty(name, type, value, null));
+		};
+		CCustomProperties.prototype.ModifyProperty = function (idx, name, type, value) {
+			this.modifyProperty(idx, this.createProperty(name, type, value, null));
+		};
+		CCustomProperties.prototype.RemoveProperty = function (idx) {
+			return this.removeProperty(idx);
+		};
+		CCustomProperties.prototype.hasProperties = function () {
+			return this.properties.length > 0;
 		};
 
 		window['AscCommon'].CCustomProperties = CCustomProperties;
 		prot = CCustomProperties.prototype;
 		prot["add"] = prot.add;
+
 
 		function CCustomProperty() {
 			CBaseNoIdObject.call(this);
@@ -12862,7 +13070,43 @@
 
 			s.WriteRecord4(0, this.content);
 		};
-
+		CCustomProperty.prototype.setContent = function (v) {
+			this.content = v;
+		};
+		CCustomProperty.prototype.asc_getName = function() {
+			return this.name;
+		};
+		CCustomProperty.prototype.asc_getType = function() {
+			if(this.content) {
+				return this.content.getVariantType();
+			}
+			return c_oVariantTypes.vtEmpty;
+		};
+		CCustomProperty.prototype.asc_getValue = function() {
+			if(this.content) {
+				return this.content.getValue();
+			}
+			return null;
+		};
+		CCustomProperty.prototype.Write_ToBinary = function(w) {
+			let oStream = AscCommon.pptx_content_writer.BinaryFileWriter;
+			var old = new AscCommon.CMemory(true);
+            oStream.ExportToMemory(old);
+            oStream.ImportFromMemory(w);
+            oStream.WriteRecord4(0, this);
+            oStream.ExportToMemory(w);
+            oStream.ImportFromMemory(old);
+		};
+		CCustomProperty.prototype.Read_FromBinary = function(r) {
+			let fileStream = r.ToFileStream();
+			fileStream.GetUChar();
+			this.fromStream(fileStream);
+			r.FromFileStream(fileStream);
+		};
+		
+		CCustomProperty.prototype["asc_getName"] = CCustomProperty.prototype.asc_getName;
+		CCustomProperty.prototype["asc_getType"] = CCustomProperty.prototype.asc_getType;
+		CCustomProperty.prototype["asc_getValue"] = CCustomProperty.prototype.asc_getValue;
 
 		function CVariantVector() {
 			CBaseNoIdObject.call(this);
@@ -13081,7 +13325,6 @@
 		};
 
 		function CVariant(parent) {
-			CBaseNoIdObject.call(this);
 			this.type = null;
 			this.strContent = null;
 			this.iContent = null;
@@ -13092,11 +13335,8 @@
 			this.vector = null;
 			this.array = null;
 			this.vStream = null;
-
 			this.parent = parent;
 		}
-
-		InitClass(CVariant, CBaseNoIdObject, 0);
 		CVariant.prototype.fromStream = function (s) {
 			var _type;
 			var _len = s.GetULong();
@@ -13191,21 +13431,54 @@
 			s.WriteRecord4(7, this.array);
 			s.WriteRecord4(8, this.vStream);
 		};
+		CVariant.prototype.setParent = function(pr) {
+			this.parent = pr;
+		};
+		CVariant.prototype.setType = function(pr) {
+			this.type = pr;
+		};
+		CVariant.prototype.setStrContent = function(pr) {
+			this.strContent = pr;
+		};
+		CVariant.prototype.setIContent = function(pr) {
+			this.iContent = pr;
+		};
+		CVariant.prototype.setUContent = function(pr) {
+			this.uContent = pr;
+		};
+		CVariant.prototype.setDContent = function(pr) {
+			this.dContent = pr;
+		};
+		CVariant.prototype.setBContent = function(pr) {
+			this.bContent = pr;
+		};
+		CVariant.prototype.setVariant = function(pr) {
+			this.variant = pr;
+		};
+		CVariant.prototype.setVector = function(pr) {
+			this.vector = pr;
+		};
+		CVariant.prototype.setArray = function(pr) {
+			this.array = pr;
+		};
+		CVariant.prototype.setVStream = function(pr) {
+			this.vStream = pr;
+		};
 		CVariant.prototype.setText = function (val) {
-			this.type = c_oVariantTypes.vtLpwstr;
-			this.strContent = val;
+			this.setType(c_oVariantTypes.vtLpwstr);
+			this.setStrContent(val);
 		};
 		CVariant.prototype.setNumber = function (val) {
-			this.type = c_oVariantTypes.vtI4;
-			this.iContent = val;
+			this.setType(c_oVariantTypes.vtI4);
+			this.setIContent(val);
 		};
 		CVariant.prototype.setDate = function (val) {
-			this.type = c_oVariantTypes.vtFiletime;
-			this.strContent = val.toISOString().slice(0, 19) + 'Z';
+			this.setDate(c_oVariantTypes.vtFiletime);
+			this.setStrContent(val.toISOString().slice(0, 19) + 'Z');
 		};
 		CVariant.prototype.setBool = function (val) {
-			this.type = c_oVariantTypes.vtBool;
-			this.bContent = val;
+			this.setType(c_oVariantTypes.vtBool);
+			this.setBContent(val);
 		};
 		CVariant.prototype.typeStrToEnum = function (name) {
 			switch (name) {
@@ -13418,6 +13691,116 @@
 		CVariant.prototype.getVariantType = function () {
 			return AscFormat.isRealNumber(this.type) ? this.type : c_oVariantTypes.vtEmpty;
 		};
+		CVariant.prototype.getValue = function () {
+			switch (this.type) {
+				case c_oVariantTypes.vtClsid:
+				case c_oVariantTypes.vtOStorage:
+				case c_oVariantTypes.vtStorage:
+				case c_oVariantTypes.vtOStream:
+				case c_oVariantTypes.vtStream:
+				case c_oVariantTypes.vtError:
+				case c_oVariantTypes.vtCy:
+				case c_oVariantTypes.vtBstr:
+				case c_oVariantTypes.vtDecimal:
+				case c_oVariantTypes.vtEmpty:
+				case c_oVariantTypes.vtVariant:
+				case c_oVariantTypes.vtVector:
+				case c_oVariantTypes.vtArray:
+				case c_oVariantTypes.vtVStream:
+				case c_oVariantTypes.vtBlob:
+				case c_oVariantTypes.vtOBlob:
+				case c_oVariantTypes.vtNull: {
+					return null;
+				}
+				case c_oVariantTypes.vtI2:
+				case c_oVariantTypes.vtI4:
+				case c_oVariantTypes.vtI8:
+				case c_oVariantTypes.vtInt:
+				case c_oVariantTypes.vtI1: {
+					return this.iContent;
+				}
+				case c_oVariantTypes.vtUint:
+				case c_oVariantTypes.vtUi8:
+				case c_oVariantTypes.vtUi4:
+				case c_oVariantTypes.vtUi2:
+				case c_oVariantTypes.vtUi1: {
+					return this.uContent;
+				}
+				case c_oVariantTypes.vtR8:
+				case c_oVariantTypes.vtR4: {
+					return this.dContent;
+				}
+				case c_oVariantTypes.vtLpwstr:
+				case c_oVariantTypes.vtLpstr: {
+					return this.strContent;
+				}
+				case c_oVariantTypes.vtDate:
+				case c_oVariantTypes.vtFiletime: {
+					return new Date(this.strContent);
+				}
+				case c_oVariantTypes.vtBool: {
+					return this.bContent;
+				}
+			}
+		};
+		CVariant.prototype.setValue = function(v) {
+			switch (this.type) {
+				case c_oVariantTypes.vtClsid:
+				case c_oVariantTypes.vtOStorage:
+				case c_oVariantTypes.vtStorage:
+				case c_oVariantTypes.vtOStream:
+				case c_oVariantTypes.vtStream:
+				case c_oVariantTypes.vtError:
+				case c_oVariantTypes.vtCy:
+				case c_oVariantTypes.vtBstr:
+				case c_oVariantTypes.vtDecimal:
+				case c_oVariantTypes.vtEmpty:
+				case c_oVariantTypes.vtVariant:
+				case c_oVariantTypes.vtVector:
+				case c_oVariantTypes.vtArray:
+				case c_oVariantTypes.vtVStream:
+				case c_oVariantTypes.vtBlob:
+				case c_oVariantTypes.vtOBlob:
+				case c_oVariantTypes.vtNull: {
+					break;
+				}
+				case c_oVariantTypes.vtI2:
+				case c_oVariantTypes.vtI4:
+				case c_oVariantTypes.vtI8:
+				case c_oVariantTypes.vtInt:
+				case c_oVariantTypes.vtI1: {
+					this.setIContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtUint:
+				case c_oVariantTypes.vtUi8:
+				case c_oVariantTypes.vtUi4:
+				case c_oVariantTypes.vtUi2:
+				case c_oVariantTypes.vtUi1: {
+					this.setUContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtR8:
+				case c_oVariantTypes.vtR4: {
+					this.setDContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtLpwstr:
+				case c_oVariantTypes.vtLpstr: {
+					this.setStrContent(v);
+					break;
+				}
+				case c_oVariantTypes.vtDate:
+				case c_oVariantTypes.vtFiletime: {
+					this.setStrContent(v.toISOString().slice(0, 19) + 'Z');
+					break;
+				}
+				case c_oVariantTypes.vtBool: {
+					this.setBContent(v);
+					break;
+				}
+			}
+		};
 		window['AscCommon'].CVariant = CVariant;
 
 		prot = CVariant.prototype;
@@ -13465,7 +13848,41 @@
 		};
 
 		window['AscCommon'].c_oVariantTypes = c_oVariantTypes;
-
+		window['AscCommon']["c_oVariantTypes"] = c_oVariantTypes;
+		c_oVariantTypes["vtEmpty"] = c_oVariantTypes.vtEmpty;
+		c_oVariantTypes["vtNull"] = c_oVariantTypes.vtNull;
+		c_oVariantTypes["vtVariant"] = c_oVariantTypes.vtVariant;
+		c_oVariantTypes["vtVector"] = c_oVariantTypes.vtVector;
+		c_oVariantTypes["vtArray"] = c_oVariantTypes.vtArray;
+		c_oVariantTypes["vtVStream"] = c_oVariantTypes.vtVStream;
+		c_oVariantTypes["vtBlob"] = c_oVariantTypes.vtBlob;
+		c_oVariantTypes["vtOBlob"] = c_oVariantTypes.vtOBlob;
+		c_oVariantTypes["vtI1"] = c_oVariantTypes.vtI1;
+		c_oVariantTypes["vtI2"] = c_oVariantTypes.vtI2;
+		c_oVariantTypes["vtI4"] = c_oVariantTypes.vtI4;
+		c_oVariantTypes["vtI8"] = c_oVariantTypes.vtI8;
+		c_oVariantTypes["vtInt"] = c_oVariantTypes.vtInt;
+		c_oVariantTypes["vtUi1"] = c_oVariantTypes.vtUi1;
+		c_oVariantTypes["vtUi2"] = c_oVariantTypes.vtUi2;
+		c_oVariantTypes["vtUi4"] = c_oVariantTypes.vtUi4;
+		c_oVariantTypes["vtUi8"] = c_oVariantTypes.vtUi8;
+		c_oVariantTypes["vtUint"] = c_oVariantTypes.vtUint;
+		c_oVariantTypes["vtR4"] = c_oVariantTypes.vtR4;
+		c_oVariantTypes["vtR8"] = c_oVariantTypes.vtR8;
+		c_oVariantTypes["vtDecimal"] = c_oVariantTypes.vtDecimal;
+		c_oVariantTypes["vtLpstr"] = c_oVariantTypes.vtLpstr;
+		c_oVariantTypes["vtLpwstr"] = c_oVariantTypes.vtLpwstr;
+		c_oVariantTypes["vtBstr"] = c_oVariantTypes.vtBstr;
+		c_oVariantTypes["vtDate"] = c_oVariantTypes.vtDate;
+		c_oVariantTypes["vtFiletime"] = c_oVariantTypes.vtFiletime;
+		c_oVariantTypes["vtBool"] = c_oVariantTypes.vtBool;
+		c_oVariantTypes["vtCy"] = c_oVariantTypes.vtCy;
+		c_oVariantTypes["vtError"] = c_oVariantTypes.vtError;
+		c_oVariantTypes["vtStream"] = c_oVariantTypes.vtStream;
+		c_oVariantTypes["vtOStream"] = c_oVariantTypes.vtOStream;
+		c_oVariantTypes["vtStorage"] = c_oVariantTypes.vtStorage;
+		c_oVariantTypes["vtOStorage"] = c_oVariantTypes.vtOStorage;
+		c_oVariantTypes["vtClsid"] = c_oVariantTypes.vtClsid;
 
 		function CPres() {
 			CBaseNoIdObject.call(this);
@@ -13769,10 +14186,12 @@
 			let oColor = new CUniColor();
 			oColor.color = new CSchemeColor();
 			oColor.color.id = id;
-			for(let nMod = 0; nMod < aMods.length; ++nMod) {
-				let oModObject = aMods[nMod];
-				let oMod = new CColorMod(oModObject.name, oModObject.val);
-				oColor.addColorMod(oMod);
+			if (aMods) {
+				for(let nMod = 0; nMod < aMods.length; ++nMod) {
+					let oModObject = aMods[nMod];
+					let oMod = new CColorMod(oModObject.name, oModObject.val);
+					oColor.addColorMod(oMod);
+				}
 			}
 			return oColor;
 		}
@@ -14831,18 +15250,29 @@
 				case "areaStackedPercent": {
 					return Asc.c_oAscChartTypeSettings.areaStackedPer;
 				}
+				case "comboBarLine": {
+					return Asc.c_oAscChartTypeSettings.comboBarLine;
+				}
+				case "comboBarLineSecondary": {
+					return Asc.c_oAscChartTypeSettings.comboBarLineSecondary;
+				}
+				case "comboCustom": {
+					return Asc.c_oAscChartTypeSettings.comboCustom;
+				}
 			}
 			return null;
 		}
 
+
+
 		function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats) {
-			var settings = new Asc.asc_ChartSettings();
+			let settings = new Asc.asc_ChartSettings();
 			settings.type = ChartBuilderTypeToInternal(sType);
-			var aAscSeries = [];
-			var aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-			var oCat, i;
+			let aAscSeries = [];
+			let aAlphaBet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+			let oCat, i;
 			if (aCatNames.length > 0) {
-				var aNumCache = [];
+				let aNumCache = [];
 				for (i = 0; i < aCatNames.length; ++i) {
 					aNumCache.push({val: aCatNames[i] + ""});
 				}
@@ -14852,10 +15282,10 @@
 				};
 			}
 			for (i = 0; i < aSeries.length; ++i) {
-				var oAscSeries = new AscFormat.asc_CChartSeria();
+				let oAscSeries = new AscFormat.asc_CChartSeria();
 				oAscSeries.Val.NumCache = [];
-				var aData = aSeries[i];
-				var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
+				let aData = aSeries[i];
+				let sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
 				oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
 				if (aSeriesNames[i]) {
 					oAscSeries.TxCache.Formula = 'Sheet1!' + '$A$' + (i + 2);
@@ -14873,7 +15303,7 @@
 				if (Array.isArray(aNumFormats) && typeof (aNumFormats[i]) === "string")
 					oAscSeries.FormatCode = aNumFormats[i];
 
-				for (var j = 0; j < aData.length; ++j) {
+				for (let j = 0; j < aData.length; ++j) {
 					oAscSeries.Val.NumCache.push({
 						numFormatStr: oAscSeries.FormatCode !== "" ? null : "General",
 						isDateTimeFormat: false,
@@ -14884,7 +15314,7 @@
 				aAscSeries.push(oAscSeries);
 			}
 
-			var oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
+			let oChartSpace = AscFormat.DrawingObjectsController.prototype._getChartSpace(aAscSeries, settings, true);
 			if (!oChartSpace) {
 				return null;
 			}
@@ -18230,6 +18660,7 @@
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
 		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
 		window['AscFormat'].IsEqualObjects = IsEqualObjects;
+		window['AscFormat'].CreateSchemeUnicolorWithMods = CreateSchemeUnicolorWithMods;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;

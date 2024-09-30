@@ -949,7 +949,7 @@
 				nYPos = e.clientY;
 			}
 			nYPos = (nYPos * AscCommon.AscBrowser.zoom);
-			const oClientRect = this.getBoundingClientRect();
+			const oClientRect = AscCommon.UI.getBoundingClientRect(this);
 
 			if (AscFormat.isRealNumber(oClientRect.y))
 			{

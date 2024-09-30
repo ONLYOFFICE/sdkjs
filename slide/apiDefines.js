@@ -113,7 +113,8 @@ var c_oAscSlideTransitionTypes = {
 	Cover   : 6,
 	Clock   : 7,
 	Zoom    : 8,
-	Morph   : 9
+	Morph   : 9,
+	Random  : 10
 };
 
 /** @enum {number} */
@@ -560,6 +561,7 @@ prot['Cover']   = c_oAscSlideTransitionTypes.Cover;
 prot['Clock']   = c_oAscSlideTransitionTypes.Clock;
 prot['Zoom']    = c_oAscSlideTransitionTypes.Zoom;
 prot['Morph']   = c_oAscSlideTransitionTypes.Morph;
+prot['Random']   = c_oAscSlideTransitionTypes.Random;
 
 prot = window['Asc']['c_oAscSlideTransitionParams'] = c_oAscSlideTransitionParams;
 prot['Fade_Smoothly']          = c_oAscSlideTransitionParams.Fade_Smoothly;
