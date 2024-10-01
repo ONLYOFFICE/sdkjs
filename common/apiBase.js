@@ -2656,6 +2656,9 @@
 		//todo get rid of isRefreshFile
 		this.isRefreshFile = true;
 		this.isOnLoadLicense = false;
+		this.ServerIdWaitComplete = false;
+		this.ServerImagesWaitComplete = false;
+		this.FontLoadWaitComplete = false;
 
 		//create new connection because new docId can be on different shard
 		this.CoAuthoringApi = new AscCommon.CDocsCoApi();
@@ -2670,6 +2673,7 @@
 		if (this.documentIsWopi) {
 			let callback = function(isTimeout, response) {
 				if (response) {
+					t.sendEvent("asc_onRequestRefreshFile");
 					t.asc_refreshFile(t.DocInfo.extendWithWopiParams(response));
 				} else {
 					t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
