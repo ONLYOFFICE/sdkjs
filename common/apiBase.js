@@ -1205,10 +1205,6 @@
 		if (window.g_asc_plugins)
             window.g_asc_plugins.onPluginEvent("onDocumentContentReady");
 
-        if (c_oEditorId.Spreadsheet === this.editorId) {
-			this.onUpdateDocumentModified(this.isDocumentModified());
-		}
-
 		if (this.DocInfo)
 			this["pluginMethod_SetProperties"](this.DocInfo.asc_getOptions());
 
@@ -2673,8 +2669,10 @@
 		if (this.documentIsWopi) {
 			let callback = function(isTimeout, response) {
 				if (response) {
-					t.sendEvent("asc_onRequestRefreshFile");
-					t.asc_refreshFile(t.DocInfo.extendWithWopiParams(response));
+					//todo event to simulate 'refreshFile' integrator method
+					let newDocIndo = t.DocInfo.extendWithWopiParams(response);
+					t.CoAuthoringApi.onMeta({'title': newDocIndo.get_Title()});
+					t.asc_refreshFile(newDocIndo);
 				} else {
 					t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.NoCritical);
 				}

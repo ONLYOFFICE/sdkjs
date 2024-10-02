@@ -100,6 +100,7 @@ var editor;
 
     this.asyncMethodCallback = undefined;
 
+	this.IsInitControl = false;//single canvas creation
     // Переменная отвечает, загрузились ли фонты
     this.FontLoadWaitComplete = false;
     //текущий обьект куда записываются информация для update, когда принимаются изменения в native редакторе
@@ -3239,6 +3240,27 @@ var editor;
 			previousVersionZoom = this.wb && this.wb.getZoom();
 		}
 
+		if (!this.IsInitControl) {
+			// todo Create HtmlPage like other editors
+			// add style
+			let _head = document.getElementsByTagName('head')[0];
+			let style0 = document.createElement('style');
+			style0.type = 'text/css';
+			style0.innerHTML = ".block_elem { position:absolute;padding:0;margin:0; }";
+			_head.appendChild(style0);
+
+			this.HtmlElement.innerHTML = '<div id="ws-canvas-outer">\
+											<canvas id="ws-canvas"></canvas>\
+											<canvas id="ws-canvas-overlay"></canvas>\
+											<canvas id="ws-canvas-graphic"></canvas>\
+											<canvas id="ws-canvas-graphic-overlay"></canvas>\
+											<div id="id_target_cursor" class="block_elem" width="1" height="1"\
+												style="width:2px;height:13px;display:none;z-index:9;"></div>\
+										</div>';
+
+			this.IsInitControl = true;
+		}
+
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
@@ -3302,13 +3324,15 @@ var editor;
 			if (previousVersionZoom) {
 				this.asc_setZoom(previousVersionZoom);
 			}
-			this.asc_Resize();
 		}
 		
 		if (this.canEdit() && this.asc_getExternalReferences()) {
 			this.handlers.trigger("asc_onNeedUpdateExternalReferenceOnOpen");
 		}
-		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
+		this.onUpdateDocumentModified(this.isDocumentModified());//line moved from onDocumentContentReady
+		//раньше вызов был закомментирован, потому при при открытии вызывается в Viewport.js(asc_Resize) и Main.js(asc_showComments)
+		//но рассчитывать на внешние вызовы ненадежно и вызовов нет при VersionHistory и refreshFile
+		this.asc_Resize();
 
 		this.initBroadcastChannel();
 		this.initBroadcastChannelListeners();

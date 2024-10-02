@@ -343,26 +343,8 @@
     // Изначально мы инициализируем c_oAscFontRenderingModeType.hintingAndSubpixeling
     this.setFontRenderingMode(fontRenderingMode, /*isInit*/true);
 
-    // add style
-    var _head = document.getElementsByTagName('head')[0];
-    var style0 = document.createElement('style');
-    style0.type = 'text/css';
-    style0.innerHTML = ".block_elem { position:absolute;padding:0;margin:0; }";
-    _head.appendChild(style0);
-
     // create canvas
     if (null != this.element) {
-		if (!this.Api.VersionHistory && !this.Api.isEditOleMode) {
-			this.element.innerHTML = '<div id="ws-canvas-outer">\
-											<canvas id="ws-canvas"></canvas>\
-											<canvas id="ws-canvas-overlay"></canvas>\
-											<canvas id="ws-canvas-graphic"></canvas>\
-											<canvas id="ws-canvas-graphic-overlay"></canvas>\
-											<div id="id_target_cursor" class="block_elem" width="1" height="1"\
-												style="width:2px;height:13px;display:none;z-index:9;"></div>\
-										</div>';
-		}
-
       this.canvas = document.getElementById("ws-canvas");
       this.canvasOverlay = document.getElementById("ws-canvas-overlay");
       this.canvasGraphic = document.getElementById("ws-canvas-graphic");
@@ -5017,6 +4999,9 @@
 	WorkbookView.prototype.getCursorInfoBinary = function () {
 
 		var oWs = this.getActiveWS();
+		if (!oWs) {
+			return "";
+		}
 		var id = oWs.getId();
 		var selection = oWs.getSelection();
 		var isEdit = this.getCellEditMode();
