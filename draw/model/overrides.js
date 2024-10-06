@@ -40,6 +40,7 @@ var CreateSolidFillRGBA = AscFormat.CreateSolidFillRGBA;
 var CShapeDrawer = AscCommon.CShapeDrawer;
 var DrawLineEnd = AscCommon.DrawLineEnd;
 // var builder_CreateLine = AscFormat.builder_CreateLine;
+var Paragraph = AscWord.Paragraph;
 
 /**
  * @memberOf CShape
@@ -396,3 +397,34 @@ CShapeDrawer.prototype.ds = function()
 		this.CheckDash();
 	}
 }
+
+Paragraph.prototype.private_RecalculatePage = function(CurPage, isFast)
+{
+	let wrapState = AscWord.ParagraphStatePool.getWrapState();
+	wrapState.SetFast(isFast);
+	let result = this.private_RecalculatePageInternal(wrapState, CurPage, true);
+
+	// Reverse all except last element bcs it is empty line. Let's leave it above all lines like it was before.
+	for (let i = 0; i < (this.Lines.length - 1) / 2; i++) {
+		let tmp = this.Lines[i];
+		this.Lines[i] = this.Lines[this.Lines.length - 2 - i];
+		this.Lines[this.Lines.length - 2 - i] = tmp;
+	}
+
+	// return metrix order
+	for (let i = 0; i < (this.Lines.length - 1) / 2; i++) {
+		let tmp = this.Lines[i].Metrics;
+		this.Lines[i].Metrics = this.Lines[this.Lines.length - 2 - i].Metrics;
+		this.Lines[this.Lines.length - 2 - i].Metrics = tmp;
+	}
+
+	// return ranges order
+	for (let i = 0; i < (this.Lines.length - 1) / 2; i++) {
+		let tmp = this.Lines[i].Ranges;
+		this.Lines[i].Ranges = this.Lines[this.Lines.length - 2 - i].Ranges;
+		this.Lines[this.Lines.length -2 - i].Ranges = tmp;
+	}
+
+	AscWord.ParagraphStatePool.release(wrapState);
+	return result;
+};

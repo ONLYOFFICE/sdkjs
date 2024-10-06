@@ -603,18 +603,43 @@
 				graphics = new AscCommon.CGraphics();
 				graphics.init(ctx, w_px, h_px, w_mm, h_mm);
 				graphics.m_oFontManager = AscCommon.g_fontManager;
+
+				// //visio y coordinate goes up while
+				// //ECMA-376-11_5th_edition and Geometry.js y coordinate goes down
+				if (!graphics.m_oCoordTransform && graphics.SetBaseTransform) {
+					let m_oCoordTransform = new AscCommon.CMatrix();
+					//so without mirror we get page upside down
+					global_MatrixTransformer.Reflect(m_oCoordTransform, false, true);
+					global_MatrixTransformer.TranslateAppend(m_oCoordTransform, 0, logic_h_mm);
+					// consider scale for zoom
+					global_MatrixTransformer.ScaleAppend(m_oCoordTransform, pageScale, pageScale);
+					graphics.SetBaseTransform(m_oCoordTransform);
+				} else {
+					//so without mirror we get page upside down
+					global_MatrixTransformer.Reflect(graphics.m_oCoordTransform, false, true);
+					global_MatrixTransformer.TranslateAppend(graphics.m_oCoordTransform, 0, h_px);
+					// consider scale for zoom
+					//global_MatrixTransformer.ScaleAppend(graphics.m_oCoordTransform, pageScale, pageScale);
+
+					let ctx = graphics.m_oContext;
+					ctx.clearRect(0, 0, api.canvas.width, api.canvas.height);
+				}
 			}
 
-			if (graphics.m_oContext) {
-				graphics.m_oContext.clearRect(0, 0, canvas.width, canvas.height);
-			}
+			// CODE ABOVE: if (!graphics.m_oCoordTransform && graphics.SetBaseTransform) {...
+			// REPLACES graphics.SetBaseTransform for text fix
+			// NOW BASEMATRIX is not used in fact
 
-			//visio y coordinate goes up while
-			//ECMA-376-11_5th_edition and Geometry.js y coordinate goes down
+			// if (graphics.m_oContext) {
+			// 	graphics.m_oContext.clearRect(0, 0, canvas.width, canvas.height);
+			// }
+
+			// //visio y coordinate goes up while
+			// //ECMA-376-11_5th_edition and Geometry.js y coordinate goes down
 			let baseMatrix = new AscCommon.CMatrix();
 			// baseMatrix.SetValues(1, 0, 0, 1, 0, 0);
 			baseMatrix.SetValues(1, 0, 0, -1, 0, logic_h_mm);
-			graphics.SetBaseTransform(baseMatrix);
+			// graphics.SetBaseTransform(baseMatrix);
 
 			let baseTextMatrix = new AscCommon.CMatrix();
 			baseTextMatrix.SetValues(1, 0, 0, 1, 0, 0);
@@ -623,7 +648,7 @@
 			/**
 			 * @type {boolean}
 			 */
-			let changeTextDirection = true;
+			let changeTextDirection = false;
 
 
 			graphics.SaveGrState();
