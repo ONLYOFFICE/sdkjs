@@ -152,7 +152,6 @@
 		this.licenseResult       = null;
 		// Получили ли лицензию
 		this.isOnLoadLicense     = false;
-		this.isRefreshFile     = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
 		this.isDocumentLoadComplete = false;
 		// Переменная, которая отвечает, послали ли мы окончание открытия документа
@@ -1586,7 +1585,6 @@
 			}
 
 			t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
-
 		};
 		this.CoAuthoringApi.onAuthParticipantsChanged = function(users, userId)
 		{
@@ -1801,7 +1799,7 @@
 					t.asc_setRestriction(t.disconnectRestrictions);
 					t.disconnectRestrictions = null;
 				}
-				let allowRefresh = [c_oCloseCode.updateVersion, c_oCloseCode.noCache, c_oCloseCode.restore,c_oCloseCode.quiet];
+				let allowRefresh = [c_oCloseCode.updateVersion, c_oCloseCode.noCache, c_oCloseCode.restore, c_oCloseCode.quiet];
 				if (-1 !== allowRefresh.indexOf(opt_closeCode) && !t.isDocumentModified() && t.canRefreshFile())  {
 					t.onRefreshFile();
 				} else {
@@ -2641,7 +2639,7 @@
 	{
 		return this.VersionHistory;
 	};
-	baseEditorsApi.prototype.asc_refreshFile   = function(docInfo) {
+	baseEditorsApi.prototype.asc_refreshFile = function(docInfo) {
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.RefreshFile);
 		if (this.isDocumentLoadComplete) {
 			this.asc_CloseFile();
@@ -2649,8 +2647,6 @@
 
 		this.asc_setDocInfo(docInfo);
 		this.CoAuthoringApi.disconnect(AscCommon.c_oCloseCode.quiet);
-		//todo get rid of isRefreshFile
-		this.isRefreshFile = true;
 		this.isOnLoadLicense = false;
 		this.ServerIdWaitComplete = false;
 		this.ServerImagesWaitComplete = false;
@@ -2671,6 +2667,7 @@
 				if (response) {
 					//todo event to simulate 'refreshFile' integrator method
 					let newDocIndo = t.DocInfo.extendWithWopiParams(response);
+					//send rename event
 					t.CoAuthoringApi.onMeta({'title': newDocIndo.get_Title()});
 					t.asc_refreshFile(newDocIndo);
 				} else {
