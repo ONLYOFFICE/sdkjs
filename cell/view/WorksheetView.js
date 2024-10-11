@@ -17959,6 +17959,22 @@
 				}
 			} else {
 
+				if (!isNotHistory) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+				}
+
+				// we check for new links to external data
+				if (parseResult.externalReferenesNeedAdd) {
+					t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+					// then we parse the formula again to obtain the correct outStack and external link indexes
+					newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
+					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+						this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+						return;
+					}
+				}
+
 				if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
 					/* if we write not through cse, then check the formula for the presence of ref */
 					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
@@ -18011,11 +18027,6 @@
 			}
 		}
 
-		if (!isNotHistory) {
-			History.Create_NewPoint();
-			History.StartTransaction();
-		}
-
 		// if there is a formula use setValue, otherwise setValue2
 		if (isFormula) {
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
@@ -18027,11 +18038,6 @@
 			let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
-			}
-
-			//проверим, нет ли новых ссылок на внешние данные
-			if (parseResult.externalReferenesNeedAdd) {
-				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 			}
 
 			// before putting a value in the selected cell, need to check whether the given range concerns any of the arrays (daf) on the page

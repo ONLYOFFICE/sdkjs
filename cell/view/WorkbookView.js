@@ -5388,14 +5388,17 @@
 
 										//add to history after updated formula
 										for (let listenerId in prepared.listeners) {
-											let f = prepared.listeners[listenerId];
-											let parent = f.parent;
+											let formula = prepared.listeners[listenerId];
+											let parent = formula.parent;
 											if (parent instanceof AscCommonExcel.CCellWithFormula) {
-												let cell = parent.ws && parent.ws.getCell3(parent.nRow, parent.nCol);
-												if (cell) {
+												let range = formula.ref 
+													? parent.ws.getRange3(formula.ref.r1, formula.ref.c1, formula.ref.r2, formula.ref.c2) 
+													: (parent.ws && parent.ws.getCell3(parent.nRow, parent.nCol));
+
+												if (range) {
 													let sF = prepared.listeners[listenerId].assemble();
 													if (sF) {
-														cell.setValue("=" + sF);
+														range.setValue("=" + sF, null, null, formula.ref);
 													}
 												}
 											}
