@@ -8525,6 +8525,9 @@
 		{
 			if(this.TableParts[i].DisplayName.toLowerCase() === tableName.toLowerCase())
 			{
+				// replace all double-single quotes with single quotes
+				columnName = columnName.replace(/''/g, "'");
+
 				res = this.TableParts[i].getTableIndexColumnByName(columnName);
 				break;
 			}
