@@ -14069,6 +14069,7 @@ drawScatterChart.prototype = {
 	_recalculateScatter: function () {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
 		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
+		let isLog;
 
 		let t = this;
 		let _initObjs = function (_index) {
@@ -14089,6 +14090,7 @@ drawScatterChart.prototype = {
 		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
+			isLog = this.valAx && this.valAx.scaling ? this.valAx.scaling.logBase : false;
 
 			if (!yNumCache) {
 				continue;
@@ -14127,7 +14129,7 @@ drawScatterChart.prototype = {
 
 					_initObjs(i);
 
-					if (yVal != null) {
+					if (yVal != null && (isLog && yVal !== 0 || !isLog)) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx, true);
 						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));
