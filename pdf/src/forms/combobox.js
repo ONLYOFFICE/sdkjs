@@ -701,14 +701,11 @@
             }
         }
 
-        // форматируемое значение
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript) {
-            memory.widgetFlags |= (1 << 12);
-            let sFormatValue = this.contentFormat.getAllText();
-            memory.WriteString(sFormatValue);
-        }
+        // nGIDs для записи 
+        memory.fieldDataFlags |= (1 << 12);
+        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        let oContext = new AscPDF.CGIDWriter(memory);
+        oContentToDraw.Draw(0, oContext);
         
         if (value != null && Array.isArray(value) == true) {
             // флаг что значение - это массив

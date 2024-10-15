@@ -203,13 +203,26 @@
 	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
         let oDoc        = this.GetDocument();
         let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+        let _t          = this;
 
         oDoc.StartNoHistoryMode();
 
+        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
+        if (!oDoc.checkFieldFont(this, function() {
+            _t.UpdateDisplayValue(displayValue);
+        })) {
+            return;
+        }
+
         if (isOnOpen == false && this.GetType() == AscPDF.FIELD_TYPES.text) {
-            let nCharLimit = this.GetCharLimit();
-            if (nCharLimit !== 0)
-                displayValue = displayValue.slice(0, nCharLimit);
+            let aChars      = displayValue.codePointsArray();
+            let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
+            let nCharLimit  = this.GetCharLimit();
+
+            if (0 !== nCharLimit && nCharsCount > nCharLimit)
+                aChars.length = nCharLimit;
+            
+            displayValue = String.fromCharCode.apply(null, aChars);
         }
 
         if (displayValue === this._displayValue && this._useDisplayValue == true)
@@ -217,10 +230,7 @@
 		
 		this._displayValue      = displayValue;
 		this._useDisplayValue   = true;
-		let _t                  = this;
-
-        AscFonts.FontPickerByCharacter.getFontsByString(displayValue);
-
+		
         if (isOnOpen == true) {
             if (_t._displayValue !== displayValue)
 				return;
@@ -958,7 +968,8 @@
 		let selectedCount = this.content.GetSelectedText(true, {NewLine: true}).length;
 		let maxToAdd      = this.getRemainCharCount(selectedCount);
 		
-		if (-1 !== maxToAdd && aChars.length > maxToAdd)
+        let nCharsCount = AscWord.GraphemesCounter.GetCount(aChars, this.content.GetCalculatedTextPr());
+		if (-1 !== maxToAdd && nCharsCount > maxToAdd)
 			aChars.length = maxToAdd;
 		
 		if (!this.DoKeystrokeAction(aChars))
@@ -966,7 +977,7 @@
 		
 		let doc = this.GetDocument();
 		aChars = AscWord.CTextFormFormat.prototype.GetBuffer(doc.event["change"]);
-		if (0 === aChars.length)
+		if (0 === nCharsCount)
 			return false;
 		
 		if (!this.content.EnterText(aChars))
@@ -991,7 +1002,8 @@
 	CTextField.prototype.CorrectEnterText = function(oldValue, newValue) {
 		let maxToAdd = this.getRemainCharCount(oldValue.length);
 		
-		if (-1 !== maxToAdd && newValue.length > maxToAdd)
+        let nCharsCount = AscWord.GraphemesCounter.GetCount(newValue, this.content.GetCalculatedTextPr());
+		if (-1 !== maxToAdd && nCharsCount > maxToAdd)
 			newValue.length = maxToAdd;
 		
 		if (!this.DoKeystrokeAction(newValue))
@@ -1600,14 +1612,11 @@
             memory.WriteLong(nCharLimit);
         }
 
-        // форматируемое значение
-        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
-        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
-        if (oActionRunScript) {
-            memory.fieldDataFlags |= (1 << 12);
-            let sFormatValue = this.contentFormat.getAllText();
-            memory.WriteString(sFormatValue);
-        }
+        // nGIDs для записи 
+        memory.fieldDataFlags |= (1 << 12);
+        let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) ? this.contentFormat : this.content;
+        let oContext = new AscPDF.CGIDWriter(memory);
+        oContentToDraw.Draw(0, oContext);
 
         //
         // rich value
@@ -1688,11 +1697,28 @@
 		return element;
 	}
 	
+    function CGIDWriter(memory) {
+        AscCommon.CGraphicsBase.call(this, AscCommon.RendererType.PDF, true);
+        this.m_oTransform = new AscCommon.CMatrix();
+        this.Memory = memory;
+    }
+    CGIDWriter.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
+	CGIDWriter.prototype.constructor = CGIDWriter;
+
+    CGIDWriter.prototype.tg = function(gid, x, y, codePoints) {
+        this.Memory.WriteLong(gid);
+        let count = codePoints ? codePoints.length : 0;
+        this.Memory.WriteLong(count);
+        for (var i = 0; i < count; i++)
+            this.Memory.WriteLong(codePoints[i]);
+	};
+
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         
 	window["AscPDF"].CTextField                             = CTextField;
 	window["AscPDF"].CTextField.prototype["asc_GetValue"]   = CTextField.prototype.GetValue;
 	window["AscPDF"].codePointToRunElement                  = codePointToRunElement;
+	window["AscPDF"].CGIDWriter                            = CGIDWriter;
 })();
 

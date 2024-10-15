@@ -145,8 +145,17 @@
 		run.ClearContent();
 		
 		if (codePoints) {
-			if (this.ParentPDF && this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
-				codePoints.length = this.ParentPDF.GetCharLimit();
+			if (this.ParentPDF && this.ParentPDF.GetCharLimit && 0 !== this.ParentPDF.GetCharLimit()) {
+				let oDoc        = this.ParentPDF.GetDocument();
+				let isOnOpen    = oDoc.Viewer.IsOpenFormsInProgress;
+				let nCharLimit	= this.ParentPDF.GetCharLimit();
+				
+				if (false == isOnOpen) {
+					let nCharsCount = AscWord.GraphemesCounter.GetCount(codePoints, this.GetCalculatedTextPr());
+					
+					if (nCharsCount > nCharLimit)
+						codePoints.length = nCharLimit;
+				}
 			}
 
 			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {

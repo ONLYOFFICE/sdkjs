@@ -4134,7 +4134,7 @@
         oGraphicsPDF.SetCurPage(nPage);
 
         let oGraphicsWord = new AscCommon.CGraphics();
-        oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage) , oDoc.GetPageHeightMM(nPage));
+        oGraphicsWord.init(ctx, widthPx, heightPx, oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
         oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
         oGraphicsWord.setEndGlobalAlphaColor(255, 255, 255);
         oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
