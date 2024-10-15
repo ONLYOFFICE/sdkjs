@@ -3385,7 +3385,7 @@
 				let oActiveObj = oDoc.GetActiveObject();
 				if (oActiveObj && oActiveObj.IsDrawing()) {
 					if (oActiveObj.IsGraphicFrame()) {
-						oActiveObj.graphicObject.MoveCursorToCell(e.ShiftKey ? false : true);
+						oActiveObj.MoveCursorToCell(e.ShiftKey ? false : true);
 						if (false == AscCommon.History.Is_LastPointEmpty()) {
 							oActiveObj.SetNeedRecalc(true);
 						}
