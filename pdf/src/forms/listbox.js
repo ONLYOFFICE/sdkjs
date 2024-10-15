@@ -77,7 +77,7 @@
             this.content.ShiftView(this._curShiftView.x, this._curShiftView.y);
         }
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveLastClip();
 
@@ -87,47 +87,7 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        let aRect = this.GetRect();
-
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
-
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
-
-        let oMargins = this.GetMarginsFromBorders(false, false);
-
-        let contentX        = (X + oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm;
-        
-        this._formRect.X = X * g_dKoef_pix_to_mm;
-        this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-
-        this.content.Content.forEach(function(para) {
-            para.Pr.Ind.FirstLine   = oMargins.left * g_dKoef_pix_to_mm;
-            para.RecalcCompiledPr(true);
-        });
-
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-        contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.CalculateContentRect();
-            this.content.Recalculate_Page(0, true);
-        }
-        else if (this.IsNeedRecalc()) {
+        if (!this.RecalculateContentRect()) {
             this.content.Content.forEach(function(element) {
                 element.Recalculate_Page(0);
             });
@@ -135,7 +95,61 @@
 
         this.SetNeedRecalc(false);
     };
+    CListBoxField.prototype.RecalculateContentRect = function() {
+        let aOrigRect = this.GetOrigRect();
 
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]);
+
+        let oMargins = this.GetMarginsFromBorders();
+
+        let contentX        = (X + oMargins.left) * g_dKoef_pt_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pt_to_mm;
+        let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pt_to_mm;
+
+        if (contentX != this.content.X || contentY != this.content.Y ||
+        contentXLimit != this.content.XLimit) {
+            this.content.X      = contentX;
+            this.content.Y      = contentY;
+            this.content.XLimit = contentXLimit;
+            this.content.YLimit = 20000;
+
+            this.content.Content.forEach(function(para) {
+                para.Pr.Ind.FirstLine = oMargins.left * g_dKoef_pt_to_mm;
+                para.RecalcCompiledPr(true);
+            });
+
+            this.CalculateContentClipRect();
+            this.content.Recalculate_Page(0, true);
+
+            return true;
+        }
+
+        return false;
+    };
+    CListBoxField.prototype.CalculateContentClipRect = function() {
+        if (!this.content)
+            return;
+
+        let aRect       = this.GetOrigRect();
+        let X           = aRect[0];
+        let Y           = aRect[1];
+        let nWidth      = aRect[2] - aRect[0];
+        let nHeight     = aRect[3] - aRect[1];
+        let oMargins    = this.GetMarginsFromBorders();
+
+        let contentX        = (X + oMargins.left) * g_dKoef_pt_to_mm;
+        let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pt_to_mm;
+
+        this.contentClipRect = {
+            X: contentX,
+            Y: (Y + oMargins.top) * g_dKoef_pt_to_mm,
+            W: contentXLimit - contentX,
+            H: (nHeight - oMargins.top - oMargins.bottom) * g_dKoef_pt_to_mm,
+            Page: this.GetPage()
+        }
+    };
     /**
 	 * Synchronizes this field with fields with the same name.
 	 * @memberof CListBoxField
@@ -144,7 +158,8 @@
     CListBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -166,6 +181,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
     /**
 	 * Applies value of this field to all field with the same name.
@@ -181,7 +198,6 @@
         let aCurIdxs    = this.GetCurIdxs();
 
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
 
@@ -197,7 +213,7 @@
             this.SetApiCurIdxs(aCurIdxs);
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         aFields.forEach(function(field) {
             field.SetWasChanged(true);
@@ -216,7 +232,7 @@
             field.SetCurIdxs(aCurIdxs);
 
             let oFieldBounds = field.getFormRelRect();
-            if (Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
+            if (oFieldBounds && Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
                 field._bAutoShiftContentView = true;
             }
             else {
@@ -226,6 +242,8 @@
                 field._originShiftView.y = oThis._originShiftView.y;
             }
         });
+
+        oDoc.EndNoHistoryMode();
     };
     
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
@@ -441,7 +459,7 @@
             }
 
             if (this.IsMultipleSelection() == true) {
-                if (e.ctrlKey == true) {
+                if (e.CtrlKey == true) {
                     if (oShd && oShd.IsNil() == false) {
                         this.UnselectOption(nPos);
                     }
@@ -472,9 +490,11 @@
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (false == isInFocus) {
-            this.onFocus();
+        if (isInFocus) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        }
+        else {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         }
     };
     CListBoxField.prototype.MoveSelectDown = function() {
@@ -828,7 +848,7 @@
      * @returns {boolean}
 	 */
     CListBoxField.prototype.IsParaOutOfForm = function(oPara) {
-        if (!this._pagePos)
+        if (null == this.getFormRelRect())
             this.Recalculate();
         else
             oPara.Recalculate_Page(0);
@@ -937,11 +957,6 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 
     function getPdfAlignType(nPdfAlign) {
         switch (nPdfAlign) {

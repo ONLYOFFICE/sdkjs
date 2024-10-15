@@ -582,7 +582,7 @@ function CBinaryFileWriter()
 			this.WriteCore(presentation.Core, presentation.Api);
 
 		// Core
-		if (presentation.CustomProperties)
+		if (presentation.CustomProperties && presentation.CustomProperties.hasProperties())
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
@@ -2971,8 +2971,10 @@ function CBinaryFileWriter()
         {
             oThis.WriteRecord2(1, txBody.lstStyle, oThis.WriteTextListStyle);
         }
-        var _content = txBody.content.Content;
-        oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+        var _content = txBody.content && txBody.content.Content;
+				if (_content) {
+					oThis.WriteRecordArray(2, 0, _content, oThis.WriteParagraph);
+				}
     };
 
     this.WriteParagraph = function(paragraph, startPos, endPos)
@@ -3329,7 +3331,7 @@ function CBinaryFileWriter()
         else{
             oThis.StartRecord(1);
             oThis.WriteUChar(g_nodeAttributeStart);
-            oThis._WriteBool2(0, shape.attrUseBgFill);
+            oThis._WriteBool2(0, shape.useBgFill);
             oThis.WriteUChar(g_nodeAttributeEnd);
         }
 
@@ -5237,7 +5239,7 @@ function CBinaryFileWriter()
             else{
                 _writer.StartRecord(1);
                 _writer.WriteUChar(g_nodeAttributeStart);
-                _writer._WriteBool2(0, shape.attrUseBgFill);
+                _writer._WriteBool2(0, shape.useBgFill);
                 _writer.WriteUChar(g_nodeAttributeEnd);
             }
 

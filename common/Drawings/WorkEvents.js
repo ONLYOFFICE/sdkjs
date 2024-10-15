@@ -104,6 +104,7 @@
 		this.Y = 0;                            // позиция курсора Y
 
 		this.Button = g_mouse_button_left;          // кнопка мыши
+		this.ButtonOverride = -1;
 		this.Type   = g_mouse_event_type_move;      // тип евента
 
 		this.AltKey   = false;                        // нажата ли кнопка alt
@@ -333,6 +334,8 @@
 
 	function getMouseButton(e)
 	{
+		if (-1 !== global_mouseEvent.ButtonOverride)
+			return global_mouseEvent.ButtonOverride;
 		var res = e.button;
 		return (res && -1 !== res) ? res : 0;
 	}

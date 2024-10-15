@@ -83,7 +83,8 @@ var c_oSerBorderType = {
     Value: 3,
 	ColorTheme: 4,
 	SpacePoint: 5,
-	Size8Point: 6
+	Size8Point: 6,
+	ValueType: 7
 };
 var c_oSerBordersType = {
     left: 0,
@@ -239,6 +240,10 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
         this.memory.WriteByte(c_oSerBorderType.Value);
         this.memory.WriteByte(c_oSerPropLenType.Byte);
         this.memory.WriteByte(border.Value);
+		
+		this.memory.WriteByte(c_oSerBorderType.ValueType);
+		this.memory.WriteByte(c_oSerPropLenType.Long);
+		this.memory.WriteLong(border.getValue());
     }
 };
 BinaryCommonWriter.prototype.WriteBorders = function(Borders)
@@ -1283,6 +1288,13 @@ function isRealObject(obj)
         return 0;
       return this.data[this.cur++];
     }
+	  this.GetUChar_TypeNode = function()
+	  {
+		  if (this.cur >= this.size)
+			  return c_nodeAttribute.nodeAttributeEnd;
+		  return this.data[this.cur++];
+	  }
+
     this.GetBool = function()
     {
       if (this.cur >= this.size)
@@ -1332,12 +1344,12 @@ function isRealObject(obj)
     
     this.ReadByteFromPPTY = function ()
     {
-      var value = 0;
+      var value = null;
       var end = this.cur + this.GetULong() + 4;
       this.Skip2(1);
       while (true)
       {
-        var _at = this.GetUChar();
+        var _at = this.GetUChar_TypeNode();
         if (_at === c_nodeAttribute.nodeAttributeEnd)
         {
           break;

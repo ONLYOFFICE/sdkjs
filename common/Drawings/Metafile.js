@@ -1205,6 +1205,16 @@
 				this.WriteXmlAttributeDouble(name, val)
 			}
 		};
+		this.WriteXmlNullableAttributeAnyNumber = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				if (val === Infinity) {
+					this.WriteXmlAttributeString(name, "INF");
+				} else {
+					this.WriteXmlAttributeDouble(name, val);
+				}
+			}
+		};
 		this.WriteXmlNullableAttributeNumber = function(name, val)
 		{
 			if (null !== val && undefined !== val) {

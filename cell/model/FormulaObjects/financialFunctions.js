@@ -5529,7 +5529,7 @@ function (window, undefined) {
 	cXIRR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cXIRR.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cXIRR.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(0.1);
 
 		function xirrFunction(values, dates, rate) {
 			var D_0 = dates[0], r = rate + 1, res = values[0];
@@ -5550,8 +5550,13 @@ function (window, undefined) {
 
 		function xirr2(_values, _dates, _rate) {
 
-			var arr0 = _values[0], arr1 = _dates[0];
-
+			
+			if (_values.length === 0 || _dates.length === 0) {
+				return new cError(cErrorType.not_numeric); 
+			}
+			
+			let arr0 = _values[0], arr1 = _dates[0];
+			
 			if (arr0 instanceof cError) {
 				return arr0;
 			}
@@ -5664,9 +5669,26 @@ function (window, undefined) {
 
 		}
 
-		var _dates = [], _values = [];
+		if (arg0.type === cElementType.error) {
+			return arg0;
+		}
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
 
-		if (arg0 instanceof cArea) {
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
+		}
+
+		let _dates = [], _values = [];
+
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg0.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5675,8 +5697,8 @@ function (window, undefined) {
 				} else {
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg0 instanceof cArray) {
+			})
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_values.push(c);
@@ -5686,21 +5708,17 @@ function (window, undefined) {
 					_values.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg0 instanceof cArea3D) {
-			if (arg0.isSingleSheet()) {
-				_values = arg0.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg0 instanceof cNumber)) {
+			if (!(arg0.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_values[0] = arg0;
 			}
+			_values[0] = arg0;
 		}
 
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			if (arg1.type === cElementType.cellsRange3D && !arg1.isSingleSheet()) {
+				return new cError(cErrorType.wrong_value_type);
+			}
 			arg1.foreach2(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5709,8 +5727,8 @@ function (window, undefined) {
 				} else {
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
-			});
-		} else if (arg1 instanceof cArray) {
+			})
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (c) {
 				if (c instanceof cNumber) {
 					_dates.push(c);
@@ -5720,18 +5738,11 @@ function (window, undefined) {
 					_dates.push(new cError(cErrorType.wrong_value_type));
 				}
 			})
-		} else if (arg1 instanceof cArea3D) {
-			if (arg1.isSingleSheet()) {
-				_dates = arg1.getMatrix()[0];
-			} else {
-				return new cError(cErrorType.wrong_value_type);
-			}
 		} else {
-			if (!(arg1 instanceof cNumber)) {
+			if (!(arg1.type === cElementType.number)) {
 				return new cError(cErrorType.wrong_value_type)
-			} else {
-				_dates[0] = arg1;
 			}
+			_dates[0] = arg1;
 		}
 
 		if (arg2 instanceof AscCommonExcel.cRef || arg2 instanceof AscCommonExcel.cRef3D) {
@@ -5757,7 +5768,7 @@ function (window, undefined) {
 			return arg2;
 		}
 
-		var res = xirr2(_values, _dates, arg2);
+		let res = xirr2(_values, _dates, arg2);
 		res.numFormat = 9;
 		return res;
 

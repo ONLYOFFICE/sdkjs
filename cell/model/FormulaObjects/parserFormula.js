@@ -75,6 +75,7 @@ function (window, undefined) {
 	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "SUM": 1, "LOOKUP": 1, "AGGREGATE": 1};
 
 	var importRangeLinksState = {importRangeLinks: null, startBuildImportRangeLinks: null};
+	const aExcludeRecursiveFomulas = ['ISFORMULA', 'SHEETS', 'AREAS', 'COLUMN', 'COLUMNS', 'ROW', 'ROWS'];
 
 	function getArrayCopy(arr) {
 		var newArray = [];
@@ -6297,6 +6298,19 @@ function parserFormula( formula, parent, _ws ) {
 		}
 	};
 	parserFormula.prototype._changeExternalLink = function(data) {
+		let existedWs = data.existedWs;
+		for (let i = 0; i < this.outStack.length; i++) {
+			let elem = this.outStack[i];
+			if (elem.type === cElementType.cell3D) {
+				this.outStack[i] = new AscCommonExcel.cRef3D(elem.value, existedWs ? existedWs : elem.ws, data.data.to);
+			} else if (elem.type === cElementType.cellsRange3D) {
+				this.outStack[i] = new AscCommonExcel.cArea3D(elem.value, existedWs ? existedWs : elem.wsFrom, existedWs ? existedWs : elem.wsTo, data.data.to);
+			} else if (elem.type === cElementType.name3D) {
+				this.outStack[i] = new AscCommonExcel.cName3D(elem.value, existedWs ? existedWs : elem.ws, data.data.to);
+			}
+		}
+	};
+	parserFormula.prototype._changeExternalLinkOld = function(data) {
 		for (var i = 0; i < this.outStack.length; i++) {
 			if (this.outStack[i].type === cElementType.cell3D || this.outStack[i].type === cElementType.cellsRange3D || this.outStack[i].type === cElementType.name3D) {
 				if (this.outStack[i].externalLink == data.data.from) {
@@ -6381,6 +6395,7 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		oRes.isParsed = this.isParsed;
 		oRes.ref = this.ref;
+		oRes.ca = this.ca;
 		return oRes;
 	};
 	parserFormula.prototype.getParent = function() {
@@ -7198,6 +7213,9 @@ function parserFormula( formula, parent, _ws ) {
 			if (parserFormula.ca) {
 				return bRecursiveCell;
 			}
+			if (levelFuncMap.length && levelFuncMap[currentFuncLevel] && aExcludeRecursiveFomulas.includes(levelFuncMap[currentFuncLevel].func.name)) {
+				return bRecursiveCell;
+			}
 			if (nOperandType === cElementType.cellsRange) {
 				oRange = found_operand.getRange();
 				return oRange.containCell2(parserFormula.getParent());
@@ -7307,7 +7325,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				var wsF, wsT;
-				var externalLink = _3DRefTmp[3];
+				let sheetName = _3DRefTmp[1];
+				let externalLink = _3DRefTmp[3];
+				let isExternalRefExist;
 				//check on add to this document
 				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
 				if (thisTitle === externalLink) {
@@ -7324,18 +7344,23 @@ function parserFormula( formula, parent, _ws ) {
 							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
-							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: _3DRefTmp[1]});
+							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: sheetName /*_3DRefTmp[1]*/});
+						} else {
+							isExternalRefExist = true;
 						}
 					}
 
-					wsF = t.wb.getExternalWorksheet(externalLink, _3DRefTmp[1]);
+					wsF = t.wb.getExternalWorksheet(externalLink, sheetName /*_3DRefTmp[1]*/);
 					wsT = wsF;
 				} else {
-					wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
+					wsF = t.wb.getWorksheetByName(sheetName/*_3DRefTmp[1]*/);
 					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				}
 
-				if (!(wsF && wsT) && !externalLink) {
+				// if it's impossible to get a sheet from an external file, but the file itself is exist, then we return an error about incorrectly entering the formula
+				let wsNotExist = externalLink && isExternalRefExist && !wsF;
+
+				if ((!(wsF && wsT) && !externalLink) || wsNotExist) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
 					if (!ignoreErrors) {
 						t.outStack = [];
@@ -7356,7 +7381,9 @@ function parserFormula( formula, parent, _ws ) {
 						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				} else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
 					if (!(wsF && wsT)) {
 						//for edit formula mode
@@ -7368,12 +7395,16 @@ function parserFormula( formula, parent, _ws ) {
 						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				} else {
 					parserHelp.isName.call(ph, t.Formula, ph.pCurrPos);
 					found_operand = new cName3D(ph.operand_str, wsF, externalLink);
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
-					t.ca = isRecursiveFormula(found_operand, t);
+					if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+						t.ca = isRecursiveFormula(found_operand, t);
+					}
 				}
 			}
 
@@ -7383,7 +7414,9 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				found_operand = new cArea(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 			}
 			/* Referens to cell A4 */ else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
 				if (!_checkReferenceCount(1)) {
@@ -7392,7 +7425,9 @@ function parserFormula( formula, parent, _ws ) {
 				found_operand = new cRef(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
 
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
@@ -7450,7 +7485,9 @@ function parserFormula( formula, parent, _ws ) {
 					needAssemble = true;
 				}
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand, true);
-				t.ca = isRecursiveFormula(found_operand, t);
+				if (local || (local === false && digitDelim === false)) { // local and digitDelim with value false using only for copypaste mode.
+					t.ca = isRecursiveFormula(found_operand, t);
+				}
 				if (t.ca && defName && defName.parsedRef) {
 					defName.parsedRef.ca = t.ca;
 				}
@@ -8769,6 +8806,21 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		}
+
+		if (this.importFunctionsRangeLinks) {
+			for (let i in this.importFunctionsRangeLinks) {
+				let externalLink = this.wb.getExternalLinkByName(i);
+				if (externalLink) {
+					for (let j in this.importFunctionsRangeLinks[i]) {
+						let _rangeInfo = this.importFunctionsRangeLinks[i][j];
+						let _ws = externalLink.worksheets[_rangeInfo.sheet];
+						if (_ws) {
+							this._buildDependenciesRef(_ws.getId(), AscCommonExcel.g_oRangeCache.getRangesFromSqRef(_rangeInfo.range)[0], null, false);
+						}
+					}
+				}
+			}
+		}
 	};
 	parserFormula.prototype._buildDependenciesRef = function(wsId, bbox, isDefName, isStart) {
 		if (this.isTable) {
@@ -9172,6 +9224,8 @@ function parserFormula( formula, parent, _ws ) {
 		this.oPrevIterResult = null;
 		this.oDiffBetweenIter = null;
 		this.bShowCycleWarn = true;
+		this.oRecursionCells = null;
+		this.nCellPasteValue = null; // for paste recursive cell
 
 		this.bIsEnabledRecursion = null;
 		this.nMaxIterations = null; // Max iterations of recursion calculations. Default value: 100.
@@ -9640,8 +9694,11 @@ function parserFormula( formula, parent, _ws ) {
 	 * @returns {boolean}
 	 */
 	CalcRecursion.prototype.needRecursiveCall = function () {
+		if (!this.getIsEnabledRecursion()) {
+			return false;
+		}
 		const oGroupChangedCells = this.getGroupChangedCells();
-		const bMaxStepNotExceeded = this.getIterStep() < this.getMaxIterations() && this.getIterStep() <= this.getMaxRecursion();
+		const bMaxStepNotExceeded = this.getIterStep() <= this.getMaxIterations();
 		let bHasRecursiveCell = false;
 
 		for (let sSheetName in oGroupChangedCells) {
@@ -9658,7 +9715,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 
-		return this.getIsEnabledRecursion() && bHasRecursiveCell && bMaxStepNotExceeded;
+		return bHasRecursiveCell && bMaxStepNotExceeded;
 	};
 	/**
 	 * Method initializes calculation properties.
@@ -9680,6 +9737,7 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method returns a flag who recognizes show warn about cycle reference error or not.
+	 * @memberof CalcRecursion
 	 * @returns {boolean}
 	 */
 	CalcRecursion.prototype.getShowCycleWarn = function () {
@@ -9687,11 +9745,78 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	/**
 	 * Method sets a flag who recognizes show warn about cycle reference error or not.
+	 * @memberof CalcRecursion
 	 * @param {boolean} bShowCycleWarn
 	 */
 	CalcRecursion.prototype.setShowCycleWarn = function (bShowCycleWarn) {
 		this.bShowCycleWarn = bShowCycleWarn;
-	}
+	};
+	/**
+	 * Method adds an index of a recursive cell to the list of recursive cells.
+	 * @memberof CalcRecursion
+	 * @param {number} nCellIndex
+	 */
+	CalcRecursion.prototype.addRecursiveCell = function (nCellIndex) {
+		if (!this.oRecursionCells) {
+			this.oRecursionCells = {};
+		}
+
+		this.oRecursionCells[nCellIndex] = true;
+	};
+	/**
+	 * Method checks a cell is recursive or not by index of cell.
+	 * @memberof CalcRecursion
+	 * @param {number} nCellId
+	 * @returns {boolean}
+	 */
+	CalcRecursion.prototype.isRecursiveCell = function (nCellId) {
+		return !!(this.oRecursionCells && this.oRecursionCells[nCellId]);
+	};
+	/**
+	 * Method clears a list of recursive cells.
+	 * @memberof CalcRecursion
+	 */
+	CalcRecursion.prototype.clearRecursionCells = function () {
+		this.oRecursionCells = null;
+	};
+	/**
+	 * Method finds recursive cell by parserFormula.
+	 * @memberof CalcRecursion
+	 * @param {parserFormula} oParserFormula
+	 */
+	CalcRecursion.prototype.findRecursionCell = function (oParserFormula) {
+		const oThis = this;
+		const oParentCell = oParserFormula.getParent();
+
+		if (!(oParentCell instanceof AscCommonExcel.CCellWithFormula)) {
+			return;
+		}
+		oParserFormula.ws._getCell(oParentCell.nRow, oParentCell.nCol, function (oCell) {
+			if (oCell.isFormula()) {
+				oCell.initStartCellForIterCalc(); // check cell has recursion formula
+				if (oThis.getStartCellIndex()) {
+					oThis.addRecursiveCell(AscCommonExcel.getCellIndex(oCell.nRow, oCell.nCol));
+					oThis.setStartCellIndex(null);
+				}
+			}
+		});
+	};
+	/**
+	 * Method sets a value from a copying cell for a paste cell.
+	 * @memberof CalcRecursion
+	 * @param {number|null} nCellPasteValue
+	 */
+	CalcRecursion.prototype.setCellPasteValue = function (nCellPasteValue) {
+		this.nCellPasteValue = nCellPasteValue;
+	};
+	/**
+	 * Method gets a value from a copying cell for a paste cell.
+	 * @memberof CalcRecursion
+	 * @returns {number|null}
+	 */
+	CalcRecursion.prototype.getCellPasteValue = function () {
+		return this.nCellPasteValue;
+	};
 
 	const g_cCalcRecursion = new CalcRecursion();
 
@@ -10190,9 +10315,16 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (area && area.length < 1) {
 				// let emptyElem = new cEmpty();
-				// empty array, fill with empty elements or return empty array
+				// if array is empty - add info about range size and set missedValue
 				retArr.setRealArraySize(dimension.row, dimension.col);
 				retArr.missedValue = new cEmpty();
+
+				/* we add one element to the array so as not to return a completely empty array to the formula */
+				if (!retArr.countElement) {
+					retArr.addRow();
+					retArr.addElement(retArr.missedValue);
+				}
+
 			} else {
 				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
 					for ( let iCol = 0; iCol < colCount; iCol++ ) {
@@ -10407,6 +10539,8 @@ function parserFormula( formula, parent, _ws ) {
 
 	window['AscCommonExcel'].bIsSupportArrayFormula = bIsSupportArrayFormula;
 	window['AscCommonExcel'].bIsSupportDynamicArrays = bIsSupportDynamicArrays;
+
+	window['AscCommonExcel'].aExcludeRecursiveFomulas = aExcludeRecursiveFomulas;
 
 	window['AscCommonExcel'].cNumber = cNumber;
 	window['AscCommonExcel'].cString = cString;

@@ -1718,7 +1718,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetTx] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetParent] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetDTable] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
@@ -1792,7 +1792,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrLit] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Cat_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartFormatSetChart] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetTxData] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetRich] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartText_SetStrRef] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbls_SetLeaderLines] = window['AscDFH'].CChangesDrawingsObject;
@@ -1812,7 +1812,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_ErrBars_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_Legend_SetAlign] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_Legend_SetAlign] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_LegendEntry_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_LineChart_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
@@ -1877,8 +1877,8 @@
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetTx] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_Title_SetAlign] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Title_SetPos] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_Title_SetAlign] = window['AscDFH'].CChangesDrawingsLong;
+    AscDFH.changesFactory[AscDFH.historyitem_Title_SetPos] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetTrendlineLbl] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_UpDownBars_SetDownBars] = window['AscDFH'].CChangesDrawingsObject;
@@ -2137,6 +2137,7 @@
     }
 
     InitClass(CBaseChartObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+	CBaseChartObject.prototype.generateSmartArtDrawingPart = function () {};
     CBaseChartObject.prototype.notAllowedWithoutId = function() {
         return true;
     };
@@ -2212,7 +2213,7 @@
         if(oSpPr && oSpPr.Fill) {
             oFill = oSpPr.Fill.createDuplicate();
             var bIsSpecialStyle = oStyleEntry.isSpecialStyle();
-            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx], bIsSpecialStyle);
+            oFill.checkPhColor(oFillRefUnicolor || aColors[nIdx]);
             if(bIsSpecialStyle) {
                 if(AscFormat.isRealNumber(nIdx)) {
                     var nPatternType = oStyleEntry.getSpecialPatternType(nIdx);
@@ -2227,7 +2228,7 @@
         oLn = oTheme.getLnStyle(oLineRef.idx, oLineRefUnicolor);
         if(oSpPr && oSpPr.ln) {
             oLn = oSpPr.ln.createDuplicate();
-            oLn.Fill.checkPhColor(oLineRefUnicolor, false);
+            oLn.Fill.checkPhColor(oLineRefUnicolor);
         }
         if(AscFormat.isRealNumber(oLn.w) && AscFormat.isRealNumber(oStyleEntry.lineWidthScale)) {
             oLn.w *= oStyleEntry.lineWidthScale;
@@ -2252,7 +2253,7 @@
         if(oStyleEntry.defRPr) {
             oTextPr.Merge(oStyleEntry.defRPr);
             if(oTextPr.Unifill) {
-                oTextPr.Unifill.checkPhColor(oFontUnicolor, false);
+                oTextPr.Unifill.checkPhColor(oFontUnicolor);
             }
         }
         oParaPr.DefaultRunPr = oTextPr;
@@ -4987,6 +4988,9 @@
         if(this.spPr) {
             oCopy.setSpPr(this.spPr.createDuplicate());
         }
+        if(this.plotAreaRegion) {
+            oCopy.setPlotAreaRegion(this.plotAreaRegion.createDuplicate());
+        }
 
         var len = this.axId.length;
         for(i = 0; i < len; i++) {
@@ -5203,7 +5207,7 @@
         }
     };
     CPlotArea.prototype.setPlotAreaRegion = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
         this.plotAreaRegion = pr;
         this.setParentToChild(pr);
     };
@@ -5327,6 +5331,9 @@
         return false;
     };
     CPlotArea.prototype.canMove = function() {
+        return true;
+    };
+    CPlotArea.prototype.canResize = function() {
         return true;
     };
     CPlotArea.prototype.reindexSeries = function() {
@@ -7864,7 +7871,11 @@
     CAxisBase.prototype.getSourceFormatCode = function() {
         return "General";
     };
+    CAxisBase.prototype.isChartExCat = function() {
+        return false;
+    };
     CAxisBase.prototype.updateNumFormat = function() {
+        if(this.isChartEx()) return;
         var oNumFmt = this.numFmt;
         if(!oNumFmt) {
             oNumFmt = new CNumFmt();
@@ -9352,6 +9363,9 @@
         if(this.strRef) {
             oCopy.setStrRef(this.strRef.createDuplicate());
         }
+        if(this.txData) {
+            oCopy.setTxData(this.txData.createDuplicate());
+        }
     };
     CChartText.prototype.getStyles = CDLbl.prototype.getStyles;
     CChartText.prototype.Get_Theme = CDLbl.prototype.Get_Theme;
@@ -9376,8 +9390,9 @@
         }
     };
     CChartText.prototype.setTxData = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetTxData, this.txData, pr));
         this.txData = pr;
+        this.setParentToChild(pr);
     };
     CChartText.prototype.setRich = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartText_SetRich, this.rich, pr));
@@ -10300,6 +10315,9 @@
         if(this.txPr) {
             oCopy.setTxPr(this.txPr.createDuplicate());
         }
+        if(this.align !== null) {
+            oCopy.setAlign(this.align);
+        }
     };
     CLegend.prototype.getCalcEntryByIdx = function(idx, drawingDocument) {
         for(var i = 0; i < this.calcEntryes.length; ++i) {
@@ -10351,6 +10369,9 @@
         return false;
     };
     CLegend.prototype.canMove = function() {
+        return true;
+    };
+    CLegend.prototype.canResize = function() {
         return true;
     };
     CLegend.prototype.selectObject = function() {
@@ -10504,7 +10525,7 @@
         this.setParentToChild(spPr);
     };
     CLegend.prototype.setAlign = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Legend_SetAlign, this.align, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Legend_SetAlign, this.align, pr));
         this.align = pr;
     };
     CLegend.prototype.setTxPr = function(txPr) {
@@ -13924,6 +13945,8 @@
         if(this.txPr) {
             oCopy.setTxPr(this.txPr.createDuplicate());
         }
+        oCopy.setPos(this.pos);
+        oCopy.setAlign(this.align);
     };
     CTitle.prototype.paragraphAdd = function(paraItem, bRecalculate) {
         var content = this.getDocContent();
@@ -14040,11 +14063,11 @@
 
     };
     CTitle.prototype.setAlign = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Title_SetAlign, this.align, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Title_SetAlign, this.align, pr));
         this.align = pr;
     };
     CTitle.prototype.setPos = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Title_SetPos, this.pos, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Title_SetPos, this.pos, pr));
         this.pos = pr;
     };
     CTitle.prototype.getParentObjects = function() {
@@ -14075,8 +14098,16 @@
     };
     CTitle.prototype.getDefaultTextForTxBody = function() {
         var sText;
-        if(this.tx && this.tx.strRef) {
-            sText = this.tx.strRef.getText(false);
+        if(this.tx) {
+            let oTx = this.tx;
+            if(oTx.strRef) {
+                sText = oTx.strRef.getText(false);
+            }
+            if(!sText) {
+                if(oTx.txData) {
+                    sText = oTx.txData.v;
+                }
+            }
             if(typeof sText === "string" && sText.length > 0) {
                 return sText;
             }
@@ -14292,6 +14323,9 @@
         if(AscFormat.isRealNumber(this.trendlineType)) {
             oCopy.setTrendlineType(this.trendlineType);
         }
+        if(this.trendlineLbl) {
+            oCopy.setTrendlineLbl(this.trendlineLbl.createDuplicate());
+        }
     };
     CTrendLine.prototype.applyChartStyle = function(oChartStyle, oColors, oAdditionalData, bReset) {
         if(!this.parent) {
@@ -14435,6 +14469,35 @@
     };
     CTrendLine.prototype.Refresh_RecalcData2 = function(pageIndex, object) {
         this.onChartInternalUpdate();
+    };
+    CTrendLine.prototype.createLabel = function() {
+        let oLabel = new AscFormat.CDLbl();
+        let oChartSpace = this.getChartSpace();
+        if(!oChartSpace)
+            return oLabel;
+        let oChartStyle = oChartSpace.chartStyle;
+        let oChartColors = oChartSpace.chartColors;
+        if(!oChartStyle || !oChartColors)
+            return oLabel;
+        let oTrendlineLabelStyle = oChartStyle.trendlineLabel;
+        if(!oTrendlineLabelStyle)
+            return oLabel;
+        oLabel.setParent(this);
+        oLabel.applyStyleEntry(oTrendlineLabelStyle, oChartColors.generateColors(1), 0, true);
+        return oLabel;
+    };
+
+    CTrendLine.prototype.setShowLabel = function(bShow) {
+        if(bShow) {
+            if(!this.trendlineLbl) {
+                this.setTrendlineLbl(this.createLabel());
+            }
+        }
+        else {
+            if(this.trendlineLbl) {
+                this.setTrendlineLbl(null);
+            }
+        }
     };
 
     function CUpDownBars() {

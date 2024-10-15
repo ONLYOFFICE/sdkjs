@@ -670,5 +670,7 @@
 	window['AscWord'].CFormsManager  = CFormsManager;
 	window['AscWord'].registerForm   = registerForm;
 	window['AscWord'].unregisterForm = unregisterForm;
+	
+	
 
 })(window);

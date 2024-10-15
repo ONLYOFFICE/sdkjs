@@ -190,11 +190,70 @@ SlideLayout.prototype.sendGraphicObjectProps = function()
 SlideLayout.prototype.getDrawingsForController = function(){
     return this.cSld.spTree;
 };
-
 SlideLayout.prototype.getTheme = function(){
     return this.Master && this.Master.getTheme();
 };
 
+SlideLayout.prototype.getName = function () {
+	if (isNotEmptyString(this.cSld.Name))
+		return this.cSld.Name;
+
+	function isNotEmptyString(str) {
+		return typeof str === 'string' && str.length > 0;
+	}
+
+	const typeNamesMap = {
+		0: 'Blank', // blank
+		1: 'Chart', // chart
+		2: 'Chart and Text', // chartAndTx
+		3: 'Clip Art and Text', // clipArtAndTx
+		4: 'Clip Art and Vertical Text', // clipArtAndVertTx
+		5: 'Custom', // cust
+		6: 'Diagram', // dgm
+		7: 'Four Objects', // fourObj
+		8: 'Media and Text', // mediaAndTx
+		9: 'Title and Object', // obj
+		10: 'Object and Two Object', // objAndTwoObj
+		11: 'Object and Text', // objAndTx
+		12: 'Object', // objOnly
+		13: 'Object over Tex', // objOverTx
+		14: 'Title, Object, and Caption', // objTx
+		15: 'Picture and Caption', // picTx
+		16: 'Section Header', // secHead
+		17: 'Table', // tbl
+		18: 'Title', // title
+		19: 'Title Only', // titleOnly
+		20: 'Two Column Text', // twoColTx
+		21: 'Two Objects', // twoObj
+		22: 'Two Objects and Object', // twoObjAndObj
+		23: 'Two Objects and Text', // twoObjAndTx
+		24: 'Two Objects over Text', // twoObjOverTx
+		25: 'Two Text and Two Objects', // twoTxTwoObj
+		26: 'Text', // tx
+		27: 'Text and Chart', // txAndChart
+		28: 'Text and Clip Art', // txAndClipArt
+		29: 'Text and Media', // txAndMedia
+		30: 'Text and Object', // txAndObj
+		31: 'Text and Two Objects', // txAndTwoObj
+		32: 'Text over Object', // txOverObj
+		33: 'Vertical Title and Text', // vertTitleAndTx
+		34: 'Vertical Title and Text Over Chart', // vertTitleAndTxOverChart
+		35: 'Vertical Text', // vertTx
+	};
+
+	const type = this.getType();
+	for (let key in c_oAscSlideLayoutType) {
+		if (c_oAscSlideLayoutType[key] === type) {
+			return typeNamesMap[type];
+		}
+	}
+	return 'Text';
+};
+SlideLayout.prototype.getType = function () {
+	return AscFormat.isRealNumber(this.type)
+		? this.type
+		: (this.calculateType(), this.calculatedType);
+}
 SlideLayout.prototype.getColorMap = function() {
     if(this.Master) {
         if(this.Master.clrMap) {
@@ -381,6 +440,8 @@ SlideLayout.prototype.getMaster = function(){
     SlideLayout.prototype.Reassign_ImageUrls = Slide.prototype.Reassign_ImageUrls;
     SlideLayout.prototype.checkDrawingUniNvPr = Slide.prototype.checkDrawingUniNvPr;
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
+    SlideLayout.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
+    SlideLayout.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 
     SlideLayout.prototype.recalculateBackground = function()
     {
@@ -451,13 +512,13 @@ SlideLayout.prototype.getMaster = function(){
         if(slide) {
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
@@ -477,13 +538,13 @@ SlideLayout.prototype.getMaster = function(){
         if(slide) {
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
@@ -499,14 +560,14 @@ SlideLayout.prototype.getMaster = function(){
         if(slide){
             if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = slide.num;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
         else {
             if(-1 !== this.lastRecalcSlideIndex){
                 this.lastRecalcSlideIndex = -1;
-                this.cSld.refreshAllContentsFields();
+                this.cSld.refreshAllContentsFields(true);
 
             }
         }
@@ -832,7 +893,7 @@ SlideLayout.prototype.getMaster = function(){
         return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
     };
     SlideLayout.prototype.getDrawingObjects = function() {
-        return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+        return AscCommonSlide.Slide.prototype.getDrawingObjects.call(this);
     };
     SlideLayout.prototype.showChartSettings = function () {
         return AscCommonSlide.Slide.prototype.showChartSettings.call(this);

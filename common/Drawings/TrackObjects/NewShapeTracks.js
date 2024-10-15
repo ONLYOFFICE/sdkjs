@@ -109,7 +109,7 @@
     SHAPE_ASPECTS["accentBorderCallout2"] = 914400/612648;
     SHAPE_ASPECTS["accentBorderCallout3"] = 914400/612648;
 
-function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController, nPlaceholderType, bVertical)
+function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide, pageIndex, drawingsController, nPlaceholderType, bVertical, bSkipCheckConnector)
 {
     this.presetGeom = presetGeom;
     this.startX = startX;
@@ -141,7 +141,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
 
     AscFormat.ExecuteNoHistory(function(){
 
-        if(this.drawingsController && !this.drawingsController.document){
+        if(!bSkipCheckConnector && this.drawingsController && !this.drawingsController.document){
             this.bConnector = AscFormat.isConnectorPreset(presetGeom);
             if(this.bConnector){
 
@@ -688,10 +688,18 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         {
             if(this.presetGeom && this.presetGeom.indexOf("textRect") === 0)
             {
+                let isPdf = Asc.editor.isPdfEditor();
+
                 shape.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
                 shape.setTxBox(true);
                 var fill, ln;
-                if(!drawingObjects || !drawingObjects.cSld)
+                if((drawingObjects && drawingObjects.cSld) || isPdf)
+                {
+                    fill = new AscFormat.CUniFill();
+                    fill.setFill(new AscFormat.CNoFill());
+                    shape.spPr.setFill(fill);
+                }
+                else
                 {
                     if(!bFromWord)
                     {
@@ -712,13 +720,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
                     ln.Fill.fill.setColor(new AscFormat.CUniColor());
                     ln.Fill.fill.color.setColor(new AscFormat.CPrstColor());
                     ln.Fill.fill.color.color.setId("black");
-                    shape.spPr.setLn(ln);
-                }
-                else
-                {
-                    fill = new AscFormat.CUniFill();
-                    fill.setFill(new AscFormat.CNoFill());
-                    shape.spPr.setFill(fill);
+                    shape.spPr.setLn(ln);    
                 }
                 var body_pr = new AscFormat.CBodyPr();
                 body_pr.setDefault();

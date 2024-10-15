@@ -252,7 +252,7 @@
     };
     CTextBody.prototype.Get_AbsolutePage = function(CurPage) {
         if(this.parent && this.parent.Get_AbsolutePage) {
-            return this.parent.Get_AbsolutePage();
+            return this.parent.Get_AbsolutePage(CurPage);
         }
         return 0;//TODO;
     };
@@ -322,7 +322,7 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
+            if(/*AscCommon.IS_GENERATE_SMARTART_AND_TEXT_ON_OPEN || */graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.isPdf()) {
                 if(!graphics.isSupportTextDraw()) {
                     let _w2 = this.content2.XLimit;
                     let _h2 = this.content2.GetSummaryHeight();

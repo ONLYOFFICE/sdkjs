@@ -545,7 +545,7 @@ function CPresentation(DrawingDocument) {
 			this.History.Set_LogicDocument(this);
 
 		if (this.CollaborativeEditing)
-			this.CollaborativeEditing.m_oLogicDocument = this;
+			this.CollaborativeEditing.SetLogicDocument(this);
 	}
 
 	//------------------------------------------------------------------------
@@ -557,7 +557,7 @@ function CPresentation(DrawingDocument) {
 	//Props
 	this.App = null;
 	this.Core = null;
-	this.CustomProperties = null;
+	this.CustomProperties = new AscCommon.CCustomProperties();;
 
 	this.StartPage = 0; // Для совместимости с CDocumentContent
 	this.CurPage = 0;
@@ -639,7 +639,7 @@ function CPresentation(DrawingDocument) {
 	this.CompositeInput = null;
 
 
-	this.Spelling = new AscCommonWord.CDocumentSpellChecker();
+	this.Spelling = new AscWord.CDocumentSpellChecker();
 
 	this.Sections = [];//array of CPrSection
 
@@ -3352,7 +3352,6 @@ CPresentation.prototype.GetTargetPosition = function () {
 	}
 	return oPosition;
 };
-
 
 // Отрисовка содержимого Документа
 CPresentation.prototype.Draw = function (nPageIndex, pGraphics) {
@@ -8353,6 +8352,7 @@ CPresentation.prototype.InsertContent = function (Content) {
 							let oSlidePh, oLayoutPlaceholder;
 
 							let nType, nIdx;
+							oSp.generateSmartArtDrawingPart();
 							if (oSp.isPlaceholder() && !this.IsMasterMode()) {
 								let oInfo = {};
 								nType = oSp.getPlaceholderType();
@@ -10000,6 +10000,17 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 				});
 		}
 	}
+	if (CheckType === AscCommon.changestype_CustomPr) {
+		if (this.CustomProperties) {
+			this.CustomProperties.Lock.Check(
+				{
+					"type": c_oAscLockTypeElemPresentation.Object,
+					"val": this.CustomProperties.Get_Id(),
+					"guid": this.CustomProperties.Get_Id(),
+					"objId": this.CustomProperties.Get_Id()
+				});
+		}
+	}
 
 	if (CheckType === AscCommon.changestype_SlideTransition) {
 
@@ -11234,6 +11245,30 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 		}
 	}
 	return false;
+};
+
+CPresentation.prototype.AddCustomProperty = function(name, type, value) {
+	if(this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+	this.StartAction(AscDFH.historydescription_CustomProperties_Add);
+	this.CustomProperties.AddProperty(name, type, value);
+	this.FinalizeAction(true);
+};
+
+CPresentation.prototype.ModifyCustomProperty = function(idx, name, type, value) {
+	if(this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+	this.StartAction(AscDFH.historydescription_CustomProperties_Modify);
+	this.CustomProperties.ModifyProperty(idx, name, type, value);
+	this.FinalizeAction(true);
+};
+
+CPresentation.prototype.RemoveCustomProperty = function(idx) {
+	if(this.Document_Is_SelectionLocked(AscCommon.changestype_CustomPr, null))
+		return;
+	this.StartAction(AscDFH.historydescription_CustomProperties_Remove);
+	this.CustomProperties.RemoveProperty(idx);
+	this.FinalizeAction(true);
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {

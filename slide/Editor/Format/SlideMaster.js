@@ -248,13 +248,13 @@ MasterSlide.prototype.drawNoPlaceholders = function(graphics, slide) {
     if(slide) {
         if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
         }
     }
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }
@@ -271,13 +271,13 @@ MasterSlide.prototype.drawNoPlaceholdersShapesOnly = function(graphics, slide) {
     if(slide) {
         if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
             this.lastRecalcSlideIndex = slide.num;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
         }
     }
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }
@@ -293,13 +293,13 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 	if(slide) {
 		if(AscFormat.isRealNumber(slide.num) && slide.num !== this.lastRecalcSlideIndex) {
 			this.lastRecalcSlideIndex = slide.num;
-			this.cSld.refreshAllContentsFields();
+			this.cSld.refreshAllContentsFields(true);
 		}
 	}
     else {
         if(-1 !== this.lastRecalcSlideIndex){
             this.lastRecalcSlideIndex = -1;
-            this.cSld.refreshAllContentsFields();
+            this.cSld.refreshAllContentsFields(true);
 
         }
     }
@@ -382,6 +382,8 @@ MasterSlide.prototype.getMatchingLayout = function (type, matchingName, cSldName
     return this.sldLayoutLst[0];
 };
 MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
+MasterSlide.prototype.getAllRasterImagesForDraw = Slide.prototype.getAllRasterImagesForDraw;
+MasterSlide.prototype.checkImageDraw = Slide.prototype.checkImageDraw;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 MasterSlide.prototype.recalculate = function () {
     if (!this.Theme) return;
@@ -735,7 +737,7 @@ MasterSlide.prototype.getPlaceholdersControls = function () {
     return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
 };
 MasterSlide.prototype.getDrawingObjects = function() {
-    return AscCommonSlide.Slide.prototype.getPlaceholdersControls.call(this);
+    return AscCommonSlide.Slide.prototype.getDrawingObjects.call(this);
 };
 MasterSlide.prototype.getParentObjects = function () {
     return {

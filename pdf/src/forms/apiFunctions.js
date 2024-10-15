@@ -156,7 +156,7 @@
         let nSelEnd = oDoc.event["selEnd"];
 
         function isValidNumber(str) {
-            return !isNaN(str) && isFinite(str);
+            return !isNaN(str) && isFinite(str) && false == /\s/.test(str);
         }
 
         let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);

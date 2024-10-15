@@ -1332,7 +1332,7 @@ CDocumentContentElementBase.prototype.getDrawingDocument = function()
 	return Asc.editor.getDrawingDocument();
 };
 /**
- * @returns {?CDocumentSpellChecker}
+ * @returns {?AscWord.CDocumentSpellChecker}
  */
 CDocumentContentElementBase.prototype.getSpelling = function()
 {

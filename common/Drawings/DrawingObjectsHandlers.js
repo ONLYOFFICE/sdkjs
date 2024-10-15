@@ -338,6 +338,13 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             case AscDFH.historyitem_type_OleObject:
             case AscDFH.historyitem_type_Cnx:
             case AscDFH.historyitem_type_LockedCanvas:
+                // annnots
+            case AscDFH.historyitem_type_Pdf_Annot_Ink:
+            case AscDFH.historyitem_type_Pdf_Annot_Circle:
+            case AscDFH.historyitem_type_Pdf_Annot_Square:
+            case AscDFH.historyitem_type_Pdf_Annot_Line:
+            case AscDFH.historyitem_type_Pdf_Annot_Polygon:
+            case AscDFH.historyitem_type_Pdf_Annot_Polyline:
             {
                 ret = handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
@@ -349,6 +356,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             }
             case AscDFH.historyitem_type_GroupShape:
             case AscDFH.historyitem_type_SmartArt:
+            case AscDFH.historyitem_type_Pdf_Annot_FreeText:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;

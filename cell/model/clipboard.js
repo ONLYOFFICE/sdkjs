@@ -2732,6 +2732,7 @@
 						}
 						oDrawing.addToDrawingObjects();
 						oDrawing.checkDrawingBaseCoords();
+						oDrawing.generateSmartArtDrawingPart();
 						oDrawing.recalculate();
 						oDrawing.select(ws.objectRender.controller, 0);
 					}
@@ -2905,6 +2906,7 @@
 					graphicObject.setDrawingBaseType(nAnchorType);
 					if (graphicObject.checkExtentsByDocContent) {
 						graphicObject.checkDrawingBaseCoords();
+						graphicObject.generateSmartArtDrawingPart();
 						graphicObject.checkExtentsByDocContent();
 					}
 					aDrawings.push(graphicObject);

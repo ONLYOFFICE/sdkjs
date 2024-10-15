@@ -209,7 +209,7 @@
 		this.Value = v;
 	};
 
-	window['Asc']['CTablePositionH'] = CTablePositionH;
+	window['Asc']['CTablePositionH'] = window['Asc'].CTablePositionH = CTablePositionH;
 	CTablePositionH.prototype['get_RelativeFrom'] = CTablePositionH.prototype.get_RelativeFrom;
 	CTablePositionH.prototype['put_RelativeFrom'] = CTablePositionH.prototype.put_RelativeFrom;
 	CTablePositionH.prototype['get_UseAlign'] = CTablePositionH.prototype.get_UseAlign;
@@ -218,7 +218,7 @@
 	CTablePositionH.prototype['put_Align'] = CTablePositionH.prototype.put_Align;
 	CTablePositionH.prototype['get_Value'] = CTablePositionH.prototype.get_Value;
 	CTablePositionH.prototype['put_Value'] = CTablePositionH.prototype.put_Value;
-	window['Asc']['CTablePositionV'] = CTablePositionV;
+	window['Asc']['CTablePositionV'] = window['Asc'].CTablePositionV = CTablePositionV;
 	CTablePositionV.prototype['get_RelativeFrom'] = CTablePositionV.prototype.get_RelativeFrom;
 	CTablePositionV.prototype['put_RelativeFrom'] = CTablePositionV.prototype.put_RelativeFrom;
 	CTablePositionV.prototype['get_UseAlign'] = CTablePositionV.prototype.get_UseAlign;

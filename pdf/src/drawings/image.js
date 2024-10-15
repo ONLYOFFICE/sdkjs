@@ -48,7 +48,9 @@
     CPdfImage.prototype.IsImage = function() {
         return true;
     };
-    
+    CPdfImage.prototype.copy = function () {
+        return this.convertToPdf();
+    };
     CPdfImage.prototype.IsInTextBox = function() {
         return false;
     };

@@ -14585,16 +14585,21 @@ function RangeDataManagerElem(bbox, data)
 		var trueZoom = kF * AscCommon.AscBrowser.retinaPixelRatio;
 		var _height = Math.floor(height * kF);
 		var _width = Math.floor(width * kF);
+		var borderWidth = 1;
 		if (trueZoom !== this.pageZoom) {
 			this.pageZoom = trueZoom;
-			this.ctx.canvas.style.height = _height + 2 + "px";
-			this.ctx.canvas.style.width = _width + 2 + "px";
+			this.ctx.canvas.style.height = _height + "px";
+			this.ctx.canvas.style.width = _width + borderWidth * 2 + "px";
 			this.ctx.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 			this.ctx.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
 			isChangeForZoom = true;
 		}
-		this.ctx.canvas.style.marginLeft = canvasWidth/2 - _width / 2 + "px";
-		this.ctx.canvas.style.marginTop = canvasHeight/2 - _height / 2 + canvasTopPadding * kF + "px";
+		this.ctx.canvas.style.marginLeft = Math.floor(canvasWidth/2 - _width / 2) + "px";
+		let topMargin = Math.floor(canvasHeight/2 - _height / 2 + canvasTopPadding * kF);
+		if (topMargin + _height > canvasHeight) {
+			topMargin = canvasHeight - _height;
+		}
+		this.ctx.canvas.style.marginTop = topMargin + "px";
 
 
 		kF = trueZoom;
@@ -15451,6 +15456,27 @@ function RangeDataManagerElem(bbox, data)
 		return sPath;
 	};
 
+	ExternalReference.prototype.addDataSetFrom = function (eR) {
+		if (!eR.SheetDataSet) {
+			return;
+		}
+		for (let i = 0; i < eR.SheetDataSet.length; i++) {
+			let _sheetId = eR.SheetDataSet[i].SheetId;
+			let sheetName = eR.SheetNames[_sheetId];
+			if (sheetName) {
+				let sheetDataSet = this.getSheetDataSetByName(sheetName);
+				if (sheetDataSet) {
+					//add new from eR to this
+					sheetDataSet.addFrom(eR.SheetDataSet[i])
+				} else {
+					//add new structure
+
+				}
+			}
+		}
+	};
+
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -15657,6 +15683,18 @@ function RangeDataManagerElem(bbox, data)
 			row = new ExternalRow();
 			row.R = index;
 			this.Row.push(row);
+		}
+
+		return row;
+	};
+
+	ExternalSheetDataSet.prototype.addFrom = function(oSheetDataSet) {
+		var row = null;
+
+		for (var i = 0; i < oSheetDataSet.Row.length; i++) {
+			if (!this.Row[i]) {
+				this.Row[i] = oSheetDataSet.Row[i].clone();
+			}
 		}
 
 		return row;

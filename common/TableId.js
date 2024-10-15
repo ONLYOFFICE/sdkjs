@@ -51,14 +51,14 @@
 	{
 		return this.isInit;
 	};
-	CTableId.prototype.init = function()
+	CTableId.prototype.init = function(editor)
 	{
 		this.m_aPairs        = {};
 		this.m_bTurnOff      = false;
 		this.m_oFactoryClass = {};
 		this.Id              = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
-		this.private_InitFactoryClass();
+		this.private_InitFactoryClass(editor);
 		this.isInit = true;
 	};
 	CTableId.prototype.Add = function(Class, Id)
@@ -145,7 +145,7 @@
 			delete this.m_aPairs[sId];
 		}
 	};
-	CTableId.prototype.private_InitFactoryClass = function()
+	CTableId.prototype.private_InitFactoryClass = function(editor)
 	{
 		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscWord.Paragraph;
 		this.m_oFactoryClass[AscDFH.historyitem_type_TextPr]                 = AscCommonWord.ParaTextPr;
@@ -308,8 +308,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_LayoutDef         ]     = AscFormat.LayoutDef;
 		this.m_oFactoryClass[AscDFH.historyitem_type_CatLst            ]     = AscFormat.CatLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SCat              ]     = AscFormat.SCat;
-		this.m_oFactoryClass[AscDFH.historyitem_type_ClrData           ]     = AscFormat.ClrData;
-		this.m_oFactoryClass[AscDFH.historyitem_type_Desc              ]     = AscFormat.Desc;
 		this.m_oFactoryClass[AscDFH.historyitem_type_LayoutNode        ]     = AscFormat.LayoutNode;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Alg               ]     = AscFormat.Alg;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Param             ]     = AscFormat.Param;
@@ -341,12 +339,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDef         ]     = AscFormat.ColorsDef;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorDefStyleLbl  ]     = AscFormat.ColorDefStyleLbl;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ClrLst            ]     = AscFormat.ClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_EffectClrLst      ]     = AscFormat.EffectClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FillClrLst        ]     = AscFormat.FillClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_LinClrLst         ]     = AscFormat.LinClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxEffectClrLst    ]     = AscFormat.TxEffectClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxFillClrLst      ]     = AscFormat.TxFillClrLst;
-		this.m_oFactoryClass[AscDFH.historyitem_type_TxLinClrLst       ]     = AscFormat.TxLinClrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDefHdr      ]     = AscFormat.ColorsDefHdr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ColorsDefHdrLst   ]     = AscFormat.ColorsDefHdrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDef          ]     = AscFormat.StyleDef;
@@ -368,7 +360,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDefHdrLst    ]     = AscFormat.StyleDefHdrLst;
 		this.m_oFactoryClass[AscDFH.historyitem_type_StyleDefHdr       ]     = AscFormat.StyleDefHdr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BackdropAnchor    ]     = AscFormat.BackdropAnchor;
-		this.m_oFactoryClass[AscDFH.historyitem_type_StyleData         ]     = AscFormat.StyleData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SampData          ]     = AscFormat.SampData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ForEach           ]     = AscFormat.ForEach;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ResizeHandles     ]     = AscFormat.ResizeHandles;
@@ -379,15 +370,10 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_ExtrusionClr      ]     = AscFormat.ExtrusionClr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ContourClr        ]     = AscFormat.ContourClr;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArt          ]     = AscFormat.SmartArt;
-		this.m_oFactoryClass[AscDFH.historyitem_type_CCommonDataClrList]     = AscFormat.CCommonDataClrList;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuNone            ]     = AscFormat.BuNone;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtDrawing   ]     = AscFormat.Drawing;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DiagramData       ]     = AscFormat.DiagramData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FunctionValue     ]     = AscFormat.FunctionValue;
-		this.m_oFactoryClass[AscDFH.historyitem_type_ShapeSmartArtInfo ]     = AscFormat.ShapeSmartArtInfo;
-		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtTree      ]     = AscFormat.SmartArtTree;
-		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNode      ]     = AscFormat.SmartArtNode;
-		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
 		if (window['AscCommonSlide'])
@@ -461,6 +447,10 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_Theme]                  = AscFormat.CTheme;
 		this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]           = AscFormat.CGraphicFrame;
 
+
+		this.m_oFactoryClass[AscDFH.historyitem_type_CustomProperties]              = AscCommon.CCustomProperties;
+
+
 		if (window['AscCommonExcel'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline]            = AscCommonExcel.sparklineGroup;
@@ -478,7 +468,84 @@
 
 		}
 
+		if (editor && editor.isPdfEditor())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_Shape]					= AscPDF.CPdfShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_GraphicFrame]			= AscPDF.CPdfGraphicFrame;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]			= AscPDF.CPdfImage;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Cnx]					= AscPDF.CPdfConnectionShape;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Text]		= AscPDF.CAnnotationText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Ink]			= AscPDF.CAnnotationInk;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Highlight]	= AscPDF.CAnnotationHighlight;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Underline]	= AscPDF.CAnnotationUnderline;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_Strikeout]	= AscPDF.CAnnotationStrikeout;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Annot_FreeText]	= AscPDF.CAnnotationFreeText;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Pdf_Page]				= AscPDF.CPageInfo;
+		}
+
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+
+
+		this.m_oFactoryClass[AscDFH.historyitem_type_Address] = AscFormat.CAddress;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Axis] = AscFormat.CAxis;
+		this.m_oFactoryClass[AscDFH.historyitem_type_AxisUnits] = AscFormat.CAxisUnits;
+		this.m_oFactoryClass[AscDFH.historyitem_type_AxisUnitsLabel] = AscFormat.CAxisUnitsLabel;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Binning] = AscFormat.CBinning;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CategoryAxisScaling] = AscFormat.CCategoryAxisScaling;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ChartData] = AscFormat.CChartData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Clear] = AscFormat.CClear;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Copyrights] = AscFormat.CCopyrights;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Data] = AscFormat.CData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabel] = AscFormat.CDataLabel;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabelHidden] = AscFormat.CDataLabelHidden;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabels] = AscFormat.CDataLabels;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataLabelVisibilities] = AscFormat.CDataLabelVisibilities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_DataPoint] = AscFormat.CDataPoint;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormatOverride] = AscFormat.CFormatOverride;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormatOverrides] = AscFormat.CFormatOverrides;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Formula] = AscFormat.CFormula;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoCache] = AscFormat.CGeoCache;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntities] = AscFormat.CGeoChildEntities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQuery] = AscFormat.CGeoChildEntitiesQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQueryResult] = AscFormat.CGeoChildEntitiesQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildEntitiesQueryResults] = AscFormat.CGeoChildEntitiesQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoChildTypes] = AscFormat.CGeoChildTypes;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoData] = AscFormat.CGeoData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQuery] = AscFormat.CGeoDataEntityQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQueryResult] = AscFormat.CGeoDataEntityQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataEntityQueryResults] = AscFormat.CGeoDataEntityQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointQuery] = AscFormat.CGeoDataPointQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQuery] = AscFormat.CGeoDataPointToEntityQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQueryResult] = AscFormat.CGeoDataPointToEntityQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoDataPointToEntityQueryResults] = AscFormat.CGeoDataPointToEntityQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Geography] = AscFormat.CGeography;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoHierarchyEntity] = AscFormat.CGeoHierarchyEntity;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocation] = AscFormat.CGeoLocation;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQuery] = AscFormat.CGeoLocationQuery;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQueryResult] = AscFormat.CGeoLocationQueryResult;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocationQueryResults] = AscFormat.CGeoLocationQueryResults;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoLocations] = AscFormat.CGeoLocations;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygon] = AscFormat.CGeoPolygon;
+		this.m_oFactoryClass[AscDFH.historyitem_type_GeoPolygons] = AscFormat.CGeoPolygons;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Gridlines] = AscFormat.CGridlines;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Dimension] = AscFormat.CDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_NumericDimension] = AscFormat.CNumericDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PercentageColorPosition] = AscFormat.CPercentageColorPosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PlotAreaRegion] = AscFormat.CPlotAreaRegion;
+		this.m_oFactoryClass[AscDFH.historyitem_type_PlotSurface] = AscFormat.CPlotSurface;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Series] = AscFormat.CSeries;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SeriesElementVisibilities] = AscFormat.CSeriesElementVisibilities;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SeriesLayoutProperties] = AscFormat.CSeriesLayoutProperties;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Statistics] = AscFormat.CStatistics;
+		this.m_oFactoryClass[AscDFH.historyitem_type_StringDimension] = AscFormat.CStringDimension;
+		this.m_oFactoryClass[AscDFH.historyitem_type_Subtotals] = AscFormat.CSubtotals;
+		this.m_oFactoryClass[AscDFH.historyitem_type_TextData] = AscFormat.CTextData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_TickMarks] = AscFormat.CTickMarks;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueAxisScaling] = AscFormat.CValueAxisScaling;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorEndPosition] = AscFormat.CValueColorEndPosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorMiddlePosition] = AscFormat.CValueColorMiddlePosition;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColorPositions] = AscFormat.CValueColorPositions;
+		this.m_oFactoryClass[AscDFH.historyitem_type_ValueColors] = AscFormat.CValueColors;
 		
 		this.InitOFormClasses();
 	};

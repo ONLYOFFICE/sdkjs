@@ -375,7 +375,7 @@
 	 */
 	ParagraphContentDrawState.prototype.handleFieldChar = function(fieldChar)
 	{
-		if (!fieldChar.IsNumValue())
+		if (!fieldChar.IsVisual())
 			return;
 		
 		// Draw the auto-calculated pageNum in the header/footer

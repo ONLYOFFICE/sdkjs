@@ -923,6 +923,8 @@
 		this.CurrentTranslate = null;
 
 		this.CollaborativeMarksShowType = c_oAscCollaborativeMarksShowType.All;
+		
+		this.stylePainter = null;
 
 		// объекты, нужные для отправки в тулбар (шрифты, стили)
 		this._gui_control_colors = null;
@@ -1899,10 +1901,8 @@ background-repeat: no-repeat;\
 			var oColor       = false === bUseColor ? null : oCommonColor;
 			t._coAuthoringSetChange(e, oColor);
 			// т.е. если bSendEvent не задан, то посылаем  сообщение + когда загрузился документ
-			if (!bFirstLoad && t.bInit_word_control)
-			{
+			if (t._canSyncCollaborativeChanges(bFirstLoad))
 				t.sync_CollaborativeChanges();
-			}
 		};
 		this.CoAuthoringApi.onChangesIndex = function(changesIndex)
 		{
@@ -1918,6 +1918,11 @@ background-repeat: no-repeat;\
 				AscCommon.CollaborativeEditing.UpdateForeignCursorByAdditionalInfo(JSON.parse(e));
 			}
 		};
+	};
+	
+	asc_docs_api.prototype._canSyncCollaborativeChanges = function(isFirstLoad)
+	{
+		return (!isFirstLoad && this.bInit_word_control);
 	};
 
 	asc_docs_api.prototype.startCollaborationEditing = function()
@@ -2443,7 +2448,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks)
+	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks, rejectCallback)
 	{
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return;
@@ -2469,14 +2474,18 @@ background-repeat: no-repeat;\
 				isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing());
 		}
 
-		if (!isLocked)
+		if (isLocked)
+		{
+			rejectCallback && rejectCallback();
+		}
+		else
 		{
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
 
 			if (!useCurrentPoint)
 				_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
 
-			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
+			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback, rejectCallback);
 		}
 	};
 
@@ -2689,10 +2698,6 @@ background-repeat: no-repeat;\
 			if (undefined !== window["AscDesktopEditor"])
 			{
 				window["AscDesktopEditor"]["OnSave"]();
-			}
-			if (t.disconnectOnSave) {
-				t.CoAuthoringApi.disconnect(t.disconnectOnSave.code, t.disconnectOnSave.reason);
-				t.disconnectOnSave = null;
 			}
 			if(AscCommon.g_specialPasteHelper && !AscCommon.CollaborativeEditing.Is_SingleUser()){
 				AscCommon.g_specialPasteHelper.SpecialPasteButton_Hide();
@@ -7749,31 +7754,11 @@ background-repeat: no-repeat;\
 			if (!this.asc_checkNeedCallback("asc_onInitEditorStyles"))
 				return;
 		}
-
-		var StylesPainter = new AscCommonWord.CStylesPainter();
-		var LogicDocument = this.WordControl.m_oLogicDocument;
-		if (LogicDocument)
-		{
-			var isShowParaMarks = LogicDocument.Is_ShowParagraphMarks();
-
-			var isLocalTrackRevisions = false;
-			if (LogicDocument.IsTrackRevisions())
-			{
-				isLocalTrackRevisions = LogicDocument.GetLocalTrackRevisions();
-				LogicDocument.SetLocalTrackRevisions(false);
-			}
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(false, false);
-
-			StylesPainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
-
-			if (false !== isLocalTrackRevisions)
-				LogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
-
-			if (true === isShowParaMarks)
-				LogicDocument.Set_ShowParagraphMarks(true, false);
-		}
+		
+		if (!this.stylePainter)
+			this.stylePainter = new AscCommonWord.CStylesPainter();
+		
+		this.stylePainter.GenerateStyles(this, (null == this.LoadedObject) ? this.WordControl.m_oLogicDocument.Get_Styles().Style : this.LoadedObjectDS);
 	};
 	asc_docs_api.prototype.asyncFontsDocumentEndLoaded   = function(blockType)
 	{
@@ -8694,6 +8679,11 @@ background-repeat: no-repeat;\
 			}
 			t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Submit);
 		});
+
+		this.sendEvent("onSubmitForm");
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onSubmitForm");
 	};
 
     asc_docs_api.prototype.SetTableDrawMode = function(value)
@@ -9003,7 +8993,7 @@ background-repeat: no-repeat;\
 			}
 		} else {
 			if (this.asc_checkNeedCallback("asc_onAdvancedOptions")) {
-				var cp = {'codepage': AscCommon.c_oAscCodePageUtf8, 'encodings': AscCommon.getEncodingParams()};
+				var cp = {'codepage': AscCommon.c_oAscCodePageNone, 'encodings': AscCommon.getEncodingParams()};
 				if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
 					AscCommon.loadFileContent(data, function(httpRequest) {
 						if (httpRequest && httpRequest.response) {
@@ -9049,12 +9039,6 @@ background-repeat: no-repeat;\
 		else if (this.isUseNativeViewer && this.isDocumentRenderer())
 		{
 			oAdditionalData["c"] = 'savefromorigin';
-			if (this.currentPassword) {
-				oAdditionalData["password"] = this.currentPassword;
-				if (DownloadType.Print !== downloadType) {
-					oAdditionalData["savepassword"] = this.currentPassword;
-				}
-			}
 		}
 
 		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData
@@ -9846,6 +9830,10 @@ background-repeat: no-repeat;\
             this.openFileCryptCallback(this.openFileCryptBinary);
         }
 	};
+	asc_docs_api.prototype.initCollaborativeEditing = function()
+	{
+		AscCommon.CollaborativeEditing = new AscCommon.CWordCollaborativeEditing();
+	};
 
 	asc_docs_api.prototype.asc_Recalculate = function(bIsUpdateInterface)
 	{
@@ -9874,16 +9862,20 @@ background-repeat: no-repeat;\
 		// Разрешаем всегда выполнять скрипт билдера, даже если это вьювер, а скрипт меняет содержимое
 		// В конце действия по выполненным изменениям проверяем можно ли оставлять данные изменения
 		logicDocument.StartAction(AscDFH.historydescription_BuilderScript);
+		logicDocument.CheckActionLock();
 		return true;
 	};
-	asc_docs_api.prototype.onEndBuilderScript = function()
+	asc_docs_api.prototype._onEndBuilderScript = function(callback)
 	{
 		let logicDocument = this.getLogicDocument();
 		logicDocument.Recalculate();
-		logicDocument.CheckActionLock();
 		logicDocument.UpdateSelection();
 		logicDocument.UpdateInterface();
-		return logicDocument.FinalizeAction();
+		let result = logicDocument.FinalizeAction();
+		if (callback)
+			callback(result);
+		
+		return result;
 	};
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с полями
@@ -12238,7 +12230,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
-		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
+		bClearText = (bClearText === true);
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
@@ -12571,9 +12563,8 @@ background-repeat: no-repeat;\
 				const oSmartArt = new AscFormat.SmartArt();
 				oSmartArt.fillByPreset(nSmartArtType);
 				oSmartArt.fitToPageSize();
-				oSmartArt.fitFontSize();
-				oSmartArt.recalculateBounds();
 				oThis.WordControl.m_oLogicDocument.AddInlineImage(null, null, null, oSmartArt);
+				oSmartArt.generateDrawingPart();
 				AscFonts.IsCheckSymbols = false;
 
 				AscFonts.FontPickerByCharacter.checkText("", oThis, function() {
@@ -12680,7 +12671,6 @@ background-repeat: no-repeat;\
 		fEndCallback = fEndCallback || function (api) {};
 		this.insertDocumentUrlsData = {
 			imageMap: null, documents: documents, convertCallback: function (_api, url) {
-				_api.insertDocumentUrlsData.imageMap = url;
 				if (!url['output.bin']) {
 					_api.endInsertDocumentUrls();
 					_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
@@ -12690,7 +12680,7 @@ background-repeat: no-repeat;\
 				AscCommon.loadFileContent(url['output.bin'], function (httpRequest) {
 					const stream = httpRequest && AscCommon.initStreamFromResponse(httpRequest);
 					if (stream) {
-						fForEachCallback(stream);
+						fForEachCallback(stream, url);
 					} else {
 						_api.sendEvent("asc_onError", Asc.c_oAscError.ID.DirectUrl,
 							Asc.c_oAscError.Level.NoCritical);
@@ -12722,14 +12712,16 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocuments([document], !!document.url, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
+			oThis.insertDocumentUrlsData.imageMap = imageMap;
 			AscCommonWord.CompareBinary(oThis, stream, oOptions);
 		});
 	};
 
 	asc_docs_api.prototype._MergeDocument = function (document, oOptions) {
 		const oThis = this;
-		this._ConvertDocuments([document], !!document.url, function (stream) {
+		this._ConvertDocuments([document], !!document.url, function (stream, imageMap) {
+			oThis.insertDocumentUrlsData.imageMap = imageMap;
 			AscCommonWord.mergeBinary(oThis, stream, oOptions);
 		});
 	};
@@ -14084,6 +14076,37 @@ background-repeat: no-repeat;\
 			return;
 		
 		AscCommon.CollaborativeEditing.CoHistory.UndoDeletedTextRecovery();
+	};
+	asc_docs_api.prototype.getCustomProperties = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return null;
+		return oLogicDocument.CustomProperties;
+	};
+
+	asc_docs_api.prototype.addCustomProperty = function(name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.AddCustomProperty(name, type, value);
+	};
+
+	asc_docs_api.prototype.modifyCustomProperty = function(idx, name, type, value)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.ModifyCustomProperty(idx, name, type, value);
+	};
+
+	asc_docs_api.prototype.removeCustomProperty = function(idx)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return;
+		oLogicDocument.RemoveCustomProperty(idx);
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------

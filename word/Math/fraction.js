@@ -35,10 +35,10 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 
-function CMathFractionPr()
+function CMathFractionPr(ctrPr)
 {
-	this.type = BAR_FRACTION;
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= BAR_FRACTION;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathFractionPr.prototype.GetRPr = function ()
 {
@@ -53,9 +53,9 @@ CMathFractionPr.prototype.Set_FromObject = function(Obj)
 };
 CMathFractionPr.prototype.Copy = function()
 {
-	var NewPr = new CMathFractionPr();
-	NewPr.type = this.type;
-	NewPr.ctrPr   = this.ctrPr;
+	var NewPr	= new CMathFractionPr();
+	NewPr.type	= this.type;
+	NewPr.ctrPr	= this.ctrPr;
 	return NewPr;
 };
 CMathFractionPr.prototype.Write_ToBinary = function(Writer)
@@ -89,17 +89,13 @@ function CFraction(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Numerator   = null;
-    this.Denominator = null;
+	this.Numerator   = null;
+	this.Denominator = null;
 
-    this.Pr = new CMathFractionPr();
+	this.Pr = new CMathFractionPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
-
-	// согласно формату CtrPrp должен находится в FractionPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
 	AscCommon.g_oTableId.Add( this, this.Id );
 }
@@ -652,17 +648,38 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPosNumerator	= oMathText.Add(oNumerator, true, 2);
-		let oPosDenominator	= oMathText.Add(oDenominator, true, 2);
-		switch (this.Pr.type)
-		{
-			case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;
-			case BAR_FRACTION:		strFracSymbol = '\\frac';	break;
-			default:				strFracSymbol = '\\sfrac';	break;
-		}
+		oMathText.SetGlobalStyle(oNumerator);
 
-		oFracContent	= new AscMath.MathText(strFracSymbol, oMathText.GetStyleFromFirst());
-		oMathText.AddBefore(oPosNumerator, oFracContent);
+		let isOnlyFrac = this.Parent.Content.length === 3
+			&& this.Parent.Content[0].Is_Empty()
+			&& this.Parent.Content[2].Is_Empty()
+			&& this.Parent.Parent instanceof CDelimiter;
+
+		if (this.Pr.type === NO_BAR_FRACTION && !isOnlyFrac)
+		{
+			let oPosNumerator	= oMathText.Add(oNumerator, true, 1);
+			let oAtopPos 		= oMathText.AddText(new AscMath.MathText('\\atop', oMathText.GetStyleFromFirst()));
+			let oPosDenominator = oMathText.Add(oDenominator, true, 1);
+
+			oMathText.AddBefore(oPosNumerator, new AscMath.MathText("{", oMathText.GetStyleFromFirst()));
+			oMathText.AddAfter(oPosDenominator, new AscMath.MathText("}", oMathText.GetStyleFromFirst()));
+		}
+		else
+		{
+			let oPosNumerator = oMathText.Add(oNumerator, true, 2);
+			let oPosDenominator = oMathText.Add(oDenominator, true, 2);
+
+			switch (this.Pr.type)
+			{
+				case NO_BAR_FRACTION:	strFracSymbol = '\\binom';	break;
+				case BAR_FRACTION:		strFracSymbol = '\\frac';	break;
+				default:				strFracSymbol = '\\sfrac';	break;
+			}
+
+			// get style from numerator
+			oFracContent	= new AscMath.MathText(strFracSymbol, oNumerator);
+			oMathText.AddBefore(oPosNumerator, oFracContent);
+		}
 	}
 	else
 	{
@@ -677,6 +694,14 @@ CFraction.prototype.GetTextOfElement = function(oMathText)
 			default:				strFracSymbol = '/';	break;
 		}
 		oFracContent	= new AscMath.MathText(strFracSymbol, this);
+
+		if (this.Pr.type === LINEAR_FRACTION)
+		{
+			let oAddData	= oFracContent.GetAdditionalData();
+			let oMetaData	= oAddData.GetMathMetaData();
+			oMetaData.setIsLinearFraction(true);
+		}
+
 		oMathText.AddAfter(oPosNumerator, oFracContent);
 	}
 
@@ -882,3 +907,5 @@ CDenominator.prototype.setPosition = function(pos, PosInfo)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CFraction = CFraction;
+
+AscMath.Fraction = CFraction;

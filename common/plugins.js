@@ -1407,6 +1407,8 @@
 
 		getCurrentPluginGuid : function()
 		{
+			if (this.queueCommands.length === 0)
+				return "";
 			return this.queueCommands[0].guid;
 		},
 
@@ -1452,22 +1454,24 @@
 
 					AscFonts.IsCheckSymbols = false;
 					
-					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+					let _t = this;
+					function onEndScript()
 					{
-						let _t = this;
-						this.api._afterEvalCommand(function() {
-							if (!_t.api.onEndBuilderScript())
+						_t.api.onEndBuilderScript(function(result)
+						{
+							if (!result)
 								commandReturnValue = undefined;
 							
 							_t.shiftCommand(commandReturnValue);
 						});
-						return;
 					}
+					
+					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
+						this.api._afterEvalCommand(onEndScript);
 					else
-					{
-						if (!this.api.onEndBuilderScript())
-							commandReturnValue = undefined;
-					}
+						onEndScript();
+					
+					return;
 				}
 			}
 			catch (err)
@@ -1480,6 +1484,8 @@
 		setPluginMethodReturnAsync : function()
 		{
 			let currentPlugin = this.getCurrentPluginGuid();
+			if (currentPlugin === "")
+				return;
 			if (this.runnedPluginsMap[currentPlugin])
 				this.runnedPluginsMap[currentPlugin].methodReturnAsync = true;
 		},

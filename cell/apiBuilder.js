@@ -289,6 +289,12 @@
 	 */
 
 	/**
+	* Specifies how to shift cells to replace deleted cells.
+	* @typedef {("up" | "left")} DeleteShiftDirection
+	* @see office-js-api/Examples/Enumerations/DeleteShiftDirection.js
+	*/
+
+	/**
 	 * Class representing a base class for the color types.
 	 * @constructor
 	 */
@@ -7363,8 +7369,10 @@
 			if (formula.parent && nRow !== undefined && nCol !== undefined) {
 				var cell = formula.ws.getCell3(nRow, nCol);
 				var oldValue = cell.getValue();
+				let caTemp = formula.ca;
 				formula.setFormula(formula.getFormula());
 				formula.parse();
+				formula.ca = caTemp;
 				var formulaRes = formula.calculate();
 				var newValue = formula.simplifyRefType(formulaRes, formula.ws, nRow, nCol);
 				if (fLogger) {
@@ -8964,8 +8972,9 @@
 					settings.asc_setUsers(users);
 				}
 			}
-			if (this.worksheet.editUserProtectedRanges(null, settings, true)) {
-				result = new ApiProtectedRange(settings);
+			let editRes = this.worksheet.editUserProtectedRanges(null, settings, true);
+			if (typeof editRes === "object") {
+				result = new ApiProtectedRange(editRes);
 			} else {
 				logError(new Error('Protected range cannot be added.'));
 			}
@@ -10469,7 +10478,7 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
+	 * @param {?DeleteShiftDirection} shift - Specifies how to shift cells to replace the deleted cells.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Delete.js
 	 */
 	ApiRange.prototype.Delete = function (shift) {
@@ -13506,7 +13515,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setName(sTitle);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -13531,7 +13544,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setRef(sRange);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -13583,7 +13600,10 @@
 				}
 				users.push(newUser);
 				newProtectedRange.asc_setUsers(users);
-				worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
 				result = new ApiProtectedRangeUserInfo(newUser, this.protectedRange);
 			}
 		}
@@ -13675,7 +13695,11 @@
 			if (worksheet) {
 				let newProtectedRange = this.protectedRange.clone(this.protectedRange._ws, true);
 				newProtectedRange.asc_setType(nType);
-				if (worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true)) {
+				let editRes = worksheet.editUserProtectedRanges(this.protectedRange, newProtectedRange, true);
+				if (typeof editRes === "object") {
+					this.protectedRange = editRes;
+				}
+				if (editRes) {
 					result = true;
 				}
 			}
@@ -16679,6 +16703,7 @@
 
 	Api.prototype["AddCustomFunction"] = Api.prototype.AddCustomFunction;
 	Api.prototype["RemoveCustomFunction"] = Api.prototype.RemoveCustomFunction;
+	Api.prototype["ClearCustomFunctions"] = Api.prototype.ClearCustomFunctions;
 	Api.prototype["AddCustomFunctionLibrary"] = Api.prototype.AddCustomFunctionLibrary;
 
 	Api.prototype["GetReferenceStyle"] = Api.prototype.GetReferenceStyle;
@@ -16999,6 +17024,7 @@
 	ApiWorksheetFunction.prototype["CHIDIST"]         =  ApiWorksheetFunction.prototype.CHIDIST;
 	ApiWorksheetFunction.prototype["CHIINV"]          =  ApiWorksheetFunction.prototype.CHIINV;
 	ApiWorksheetFunction.prototype["CONFIDENCE"]      =  ApiWorksheetFunction.prototype.CONFIDENCE;
+	ApiWorksheetFunction.prototype["CHITEST"]         =  ApiWorksheetFunction.prototype.CHITEST;
 	ApiWorksheetFunction.prototype["COUNT"]           =  ApiWorksheetFunction.prototype.COUNT;
 	ApiWorksheetFunction.prototype["COUNTA"]          =  ApiWorksheetFunction.prototype.COUNTA;
 	ApiWorksheetFunction.prototype["COUNTBLANK"]      =  ApiWorksheetFunction.prototype.COUNTBLANK;
@@ -17309,7 +17335,10 @@
 	ApiWorksheetFunction.prototype["BETA_DIST"]       =  ApiWorksheetFunction.prototype.BETA_DIST;
 	ApiWorksheetFunction.prototype["BETA_INV"]        =  ApiWorksheetFunction.prototype.BETA_INV;
 	ApiWorksheetFunction.prototype["BINOM_DIST"]      =  ApiWorksheetFunction.prototype.BINOM_DIST;
+	ApiWorksheetFunction.prototype["BINOM_DIST_RANGE"]=  ApiWorksheetFunction.prototype.BINOM_DIST_RANGE;
 	ApiWorksheetFunction.prototype["BINOM_INV"]       =  ApiWorksheetFunction.prototype.BINOM_INV;
+	ApiWorksheetFunction.prototype["CHISQ_DIST"]      =  ApiWorksheetFunction.prototype.CHISQ_DIST;
+	ApiWorksheetFunction.prototype["CHISQ_DIST_RT"]   =  ApiWorksheetFunction.prototype.CHISQ_DIST_RT;
 	ApiWorksheetFunction.prototype["CHISQ_INV"]       =  ApiWorksheetFunction.prototype.CHISQ_INV;
 	ApiWorksheetFunction.prototype["CHISQ_INV_RT"]    =  ApiWorksheetFunction.prototype.CHISQ_INV_RT;
 	ApiWorksheetFunction.prototype["CONFIDENCE_NORM"] =  ApiWorksheetFunction.prototype.CONFIDENCE_NORM;
@@ -17356,6 +17385,16 @@
 	ApiWorksheetFunction.prototype["FLOOR_MATH"]      =  ApiWorksheetFunction.prototype.FLOOR_MATH;
 	ApiWorksheetFunction.prototype["ISO_CEILING"]     =  ApiWorksheetFunction.prototype.ISO_CEILING;
 	ApiWorksheetFunction.prototype["ERROR_TYPE"]      =  ApiWorksheetFunction.prototype.ERROR_TYPE;
+	ApiWorksheetFunction.prototype["FORECAST_ETS_CONFINT"] =  ApiWorksheetFunction.prototype.FORECAST_ETS_CONFINT;
+	ApiWorksheetFunction.prototype["FORECAST_ETS_SEASONALITY"] =  ApiWorksheetFunction.prototype.FORECAST_ETS_SEASONALITY;
+	ApiWorksheetFunction.prototype["FORECAST_ETS_STAT"] =  ApiWorksheetFunction.prototype.FORECAST_ETS_STAT;
+	ApiWorksheetFunction.prototype["F_DIST_RT"]      =  ApiWorksheetFunction.prototype.F_DIST_RT;
+	ApiWorksheetFunction.prototype["F_INV_RT"]       =  ApiWorksheetFunction.prototype.F_INV_RT;
+	ApiWorksheetFunction.prototype["NORM_S_DIST"]    =  ApiWorksheetFunction.prototype.NORM_S_DIST;
+	ApiWorksheetFunction.prototype["NORM_S_INV"]     =  ApiWorksheetFunction.prototype.NORM_S_INV;
+	ApiWorksheetFunction.prototype["T_DIST_2T"]      =  ApiWorksheetFunction.prototype.T_DIST_2T;
+	ApiWorksheetFunction.prototype["T_DIST_RT"]      =  ApiWorksheetFunction.prototype.T_DIST_RT;
+	ApiWorksheetFunction.prototype["T_INV_2T"]       =  ApiWorksheetFunction.prototype.T_INV_2T;
 
 
 	ApiPivotTable.prototype["AddDataField"]                       = ApiPivotTable.prototype.AddDataField;

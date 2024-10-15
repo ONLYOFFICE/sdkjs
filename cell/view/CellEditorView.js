@@ -3050,7 +3050,7 @@ function (window, undefined) {
 			return {x: event.pageX, y: event.pageY};
 		}
 
-		var offs = this.canvasOverlay.getBoundingClientRect();
+		var offs = AscCommon.UI.getBoundingClientRect(this.canvasOverlay);
 		var x = (((event.pageX * AscBrowser.zoom) >> 0) - offs.left) / this.kx;
 		var y = (((event.pageY * AscBrowser.zoom) >> 0) - offs.top) / this.ky;
 

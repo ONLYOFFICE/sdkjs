@@ -265,6 +265,12 @@
         image.requestHeight = requestH;
         return image;
     };
+    CFile.prototype.addPage = function(pageIndex, pageObj) {
+        return this.nativeFile["addPage"](pageIndex, pageObj);
+    };
+    CFile.prototype.removePage = function(pageIndex) {
+        return this.nativeFile["removePage"](pageIndex);
+    };
     CFile.prototype.getPageWidth = function(nPage) {
         return this.pages[nPage].W;
     };
@@ -278,7 +284,7 @@
 
     CFile.prototype.getText = function(pageIndex)
     {
-        return this.nativeFile ? this.nativeFile["getGlyphs"](pageIndex) : [];
+        return this.nativeFile && undefined != pageIndex ? this.nativeFile["getGlyphs"](pageIndex) : [];
     };
 
     CFile.prototype.destroyText = function()
@@ -620,31 +626,30 @@ void main() {\n\
         this.onUpdateOverlay();
 
         if (this.viewer.Api.isMarkerFormat) {
-            let oDoc = this.viewer.getPDFDoc();
-            let oColor = oDoc.GetMarkerColor(this.viewer.Api.curMarkerType);
-            oDoc.CreateNewHistoryPoint();
-            switch (this.viewer.Api.curMarkerType) {
-				case AscPDF.ANNOTATIONS_TYPES.Highlight:
-					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Underline:
-					this.viewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
-					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
-					break;
-			}
+            let oDoc    = this.viewer.getPDFDoc();
+            let oViewer = this.viewer;
+            let oColor  = oDoc.GetMarkerColor(oViewer.Api.curMarkerType);
 
-            if (AscCommon.History.Is_LastPointEmpty())
-                AscCommon.History.Remove_LastPoint();
-            oDoc.TurnOffHistory();
+            oDoc.DoAction(function() {
+                switch (oViewer.Api.curMarkerType) {
+                    case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                        oViewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Underline:
+                        oViewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                    case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                        oViewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+                        break;
+                }
+            }, AscDFH.historydescription_Pdf_AddHighlightAnnot);
         }
     };
 
     CFile.prototype.getPageTextStream = function(pageIndex)
     {
         var textCommands = this.pages[pageIndex].text;
-        if (!textCommands)
+        if (!textCommands || 0 === textCommands.length)
             return null;
 
         return new TextStreamReader(textCommands, textCommands.length);
@@ -1757,7 +1762,7 @@ void main() {\n\
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
-            return;
+            return "";
 
         var ret = "";
 

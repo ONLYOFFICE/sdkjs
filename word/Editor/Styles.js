@@ -81,9 +81,6 @@ var tblwidth_Pct  = 0x03;
 var tbllayout_Fixed   = 0x00;
 var tbllayout_AutoFit = 0x01;
 
-var border_None   = 0x0000;
-var border_Single = 0x0001;
-
 var vertalignjc_Top    = 0x00;
 var vertalignjc_Center = 0x01;
 var vertalignjc_Bottom = 0x02;
@@ -9990,6 +9987,211 @@ CDocumentShd.prototype.ReadFromBinary = function(oReader)
 	return this.Read_FromBinary(oReader);
 };
 
+AscWord.BorderType = {
+	// No Border
+	none : -1,
+	nil  : 0,
+	
+	// Line Border
+	single                 : 1,
+	thick                  : 2,
+	double                 : 3,
+	dotted                 : 4,
+	dashed                 : 5,
+	dotDash                : 6,
+	dotDotDash             : 7,
+	triple                 : 8,
+	thinThickSmallGap      : 9,
+	thickThinSmallGap      : 10,
+	thinThickThinSmallGap  : 11,
+	thinThickMediumGap     : 12,
+	thickThinMediumGap     : 13,
+	thinThickThinMediumGap : 14,
+	thinThickLargeGap      : 15,
+	thickThinLargeGap      : 16,
+	thinThickThinLargeGap  : 17,
+	wave                   : 18,
+	doubleWave             : 19,
+	dashSmallGap           : 20,
+	dashDotStroked         : 21,
+	threeDEmboss           : 22,
+	threeDEngrave          : 23,
+	outset                 : 24,
+	inset                  : 25,
+	
+	// ArtBorder
+	apples             : 101,
+	archedScallops     : 102,
+	babyPacifier       : 103,
+	babyRattle         : 104,
+	balloons3Colors    : 105,
+	balloonsHotAir     : 106,
+	basicBlackDashes   : 107,
+	basicBlackDots     : 108,
+	basicBlackSquares  : 109,
+	basicThinLines     : 110,
+	basicWhiteDashes   : 111,
+	basicWhiteDots     : 112,
+	basicWhiteSquares  : 113,
+	basicWideInline    : 114,
+	basicWideMidline   : 115,
+	basicWideOutline   : 116,
+	bats               : 117,
+	birds              : 118,
+	birdsFlight        : 119,
+	cabins             : 120,
+	cakeSlice          : 121,
+	candyCorn          : 122,
+	celticKnotwork     : 123,
+	certificateBanner  : 124,
+	chainLink          : 125,
+	champagneBottle    : 126,
+	checkedBarBlack    : 127,
+	checkedBarColor    : 128,
+	checkered          : 129,
+	christmasTree      : 130,
+	circlesLines       : 131,
+	circlesRectangles  : 132,
+	classicalWave      : 133,
+	clocks             : 134,
+	compass            : 135,
+	confetti           : 136,
+	confettiGrays      : 137,
+	confettiOutline    : 138,
+	confettiStreamers  : 139,
+	confettiWhite      : 140,
+	cornerTriangles    : 141,
+	couponCutoutDashes : 142,
+	couponCutoutDots   : 143,
+	crazyMaze          : 144,
+	creaturesButterfly : 145,
+	creaturesFish      : 146,
+	creaturesInsects   : 147,
+	creaturesLadyBug   : 148,
+	crossStitch        : 149,
+	cup                : 150,
+	custom             : 151,
+	decoArch           : 152,
+	decoArchColor      : 153,
+	decoBlocks         : 154,
+	diamondsGray       : 155,
+	doubleD            : 156,
+	doubleDiamonds     : 157,
+	earth1             : 158,
+	earth2             : 159,
+	earth3             : 160,
+	eclipsingSquares1  : 161,
+	eclipsingSquares2  : 162,
+	eggsBlack          : 163,
+	fans               : 164,
+	film               : 165,
+	firecrackers       : 166,
+	flowersBlockPrint  : 167,
+	flowersDaisies     : 168,
+	flowersModern1     : 169,
+	flowersModern2     : 170,
+	flowersPansy       : 171,
+	flowersRedRose     : 172,
+	flowersRoses       : 173,
+	flowersTeacup      : 174,
+	flowersTiny        : 175,
+	gems               : 176,
+	gingerbreadMan     : 177,
+	gradient           : 178,
+	handmade1          : 179,
+	handmade2          : 180,
+	heartBalloon       : 181,
+	heartGray          : 182,
+	hearts             : 183,
+	heebieJeebies      : 184,
+	holly              : 185,
+	houseFunky         : 186,
+	hypnotic           : 187,
+	iceCreamCones      : 188,
+	lightBulb          : 189,
+	lightning1         : 190,
+	lightning2         : 191,
+	mapleLeaf          : 192,
+	mapleMuffins       : 193,
+	mapPins            : 194,
+	marquee            : 195,
+	marqueeToothed     : 196,
+	moons              : 197,
+	mosaic             : 198,
+	musicNotes         : 199,
+	northwest          : 200,
+	ovals              : 201,
+	packages           : 202,
+	palmsBlack         : 203,
+	palmsColor         : 204,
+	paperClips         : 205,
+	papyrus            : 206,
+	partyFavor         : 207,
+	partyGlass         : 208,
+	pencils            : 209,
+	people             : 210,
+	peopleHats         : 211,
+	peopleWaving       : 212,
+	poinsettias        : 213,
+	postageStamp       : 214,
+	pumpkin1           : 215,
+	pushPinNote1       : 216,
+	pushPinNote2       : 217,
+	pyramids           : 218,
+	pyramidsAbove      : 219,
+	quadrants          : 220,
+	rings              : 221,
+	safari             : 222,
+	sawtooth           : 223,
+	sawtoothGray       : 224,
+	scaredCat          : 225,
+	seattle            : 226,
+	sharksTeeth        : 227,
+	shadowedSquares    : 228,
+	shapes1            : 229,
+	shapes2            : 230,
+	shorebirdTracks    : 231,
+	skyrocket          : 232,
+	snowflakeFancy     : 233,
+	snowflakes         : 234,
+	sombrero           : 235,
+	southwest          : 236,
+	stars              : 237,
+	stars3d            : 238,
+	starsBlack         : 239,
+	starsShadowed      : 240,
+	starsTop           : 241,
+	sun                : 242,
+	swirligig          : 243,
+	tornPaper          : 244,
+	tornPaperBlack     : 245,
+	trees              : 246,
+	triangle1          : 247,
+	triangle2          : 248,
+	triangleCircle1    : 249,
+	triangleCircle2    : 250,
+	triangleParty      : 251,
+	triangles          : 252,
+	twistedLines1      : 253,
+	twistedLines2      : 254,
+	vine               : 255,
+	waveline           : 256,
+	weavingAngles      : 257,
+	weavingBraid       : 258,
+	weavingRibbon      : 259,
+	weavingStrips      : 260,
+	whiteFlowers       : 261,
+	woodwork           : 262,
+	xIllusions         : 263,
+	zanyTriangles      : 264,
+	zigZag             : 265,
+	zigZagStitch       : 266
+};
+
+// For compatibility
+var border_None   = AscWord.BorderType.none;
+var border_Single = AscWord.BorderType.single;
+
 function CDocumentBorder()
 {
 	this.Color   = new CDocumentColor(0, 0, 0);
@@ -9997,7 +10199,7 @@ function CDocumentBorder()
 	this.LineRef = undefined;
 	this.Space   = 0;                      // Это значение учитывается всегда, даже когда Value = none (поэтому важно, что по умолчанию 0)
 	this.Size    = 0.5 * g_dKoef_pt_to_mm; // Размер учитываем в зависимости от Value
-	this.Value   = border_None;
+	this.Value   = AscWord.BorderType.none;
 }
 CDocumentBorder.FromObject = function(obj)
 {
@@ -10236,6 +10438,18 @@ CDocumentBorder.prototype.setSpaceInPoint = function(val)
 CDocumentBorder.prototype.getSpaceInPoint = function(val)
 {
 	return undefined !== this.Space ? Math.round(this.Space * g_dKoef_mm_to_pt) : undefined;
+};
+CDocumentBorder.prototype.setValue = function(value)
+{
+	// Пока мы работаем только с такими типами
+	if (value === AscWord.BorderType.nil || value === AscWord.BorderType.none)
+		this.Value = AscWord.BorderType.none;
+	else
+		this.Value = AscWord.BorderType.single;
+};
+CDocumentBorder.prototype.getValue = function()
+{
+	return this.Value;
 };
 /**
  * Получаем рассчитанную толщину линии в зависимости от типа.
@@ -16064,8 +16278,8 @@ CParaPr.prototype.createDuplicateForSmartArt = function (bCopyPrChange, oPr) {
 	if (undefined != this.Spacing)
 		ParaPr.Spacing = this.Spacing.Copy();
 
-	if (undefined != this.Ind) // TODO: apply only changed ind
-		ParaPr.Ind = this.Ind.Copy();
+	// if (undefined != this.Ind) // TODO: apply only changed ind
+	// 	ParaPr.Ind = this.Ind.Copy();
 
 	if (undefined != this.Tabs)
 		ParaPr.Tabs = this.Tabs.Copy();

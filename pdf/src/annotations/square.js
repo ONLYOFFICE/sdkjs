@@ -52,30 +52,19 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._rectDiff      = undefined;
-
-        // internal
-        TurnOffHistory();
+        this._rectDiff      = [0, 0, 0, 0];
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
-    AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Shape);
+    AscFormat.InitClass(CAnnotationSquare, AscPDF.CPdfShape, AscDFH.historyitem_type_Pdf_Annot_Square);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationSquare.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oSquare.lazyCopy = true;
-
-        oSquare._pagePos = {
-            x: this._pagePos.x,
-            y: this._pagePos.y,
-            w: this._pagePos.w,
-            h: this._pagePos.h
-        }
-        oSquare._origRect = this._origRect.slice();
 
         this.fillObject(oSquare);
 
@@ -88,13 +77,15 @@
         oSquare.SetAuthor(this.GetAuthor());
         oSquare.SetModDate(this.GetModDate());
         oSquare.SetCreationDate(this.GetCreationDate());
+        oSquare.SetStrokeColor(aStrokeColor.slice());
+        oSquare.SetFillColor(aFillColor.slice());
         oSquare.SetWidth(this.GetWidth());
-        oSquare.SetStrokeColor(aStrokeColor ? aStrokeColor.slice() : undefined);
-        oSquare.SetFillColor(aFillColor ? aFillColor.slice() : undefined);
         oSquare.SetOpacity(this.GetOpacity());
-        oSquare.recalcInfo.recalculateGeometry = true;
-        this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());
-        oSquare.recalculate();
+        oSquare.recalcGeometry()
+        oSquare.SetRectangleDiff(this.GetRectangleDiff().slice(), true);
+        oSquare.Recalculate(true);
+
+        oDoc.EndNoHistoryMode();
 
         return oSquare;
     };
@@ -102,13 +93,7 @@
         if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
             return;
 
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
         let oDoc        = this.GetDocument();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-
         let aOrigRect   = this.GetOrigRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
 
@@ -117,15 +102,15 @@
             oGeometry = this.spPr.geometry;
         if (!aShapeRectInMM) {
             aShapeRectInMM = [
-                (aOrigRect[0] + aRD[0]) * nScaleX, (aOrigRect[1] + aRD[1]) * nScaleY,
-                (aOrigRect[2] - aRD[2]) * nScaleX, (aOrigRect[3] - aRD[3]) * nScaleY
+                (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm, (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm,
+                (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm, (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm
             ];
 
             aPoints = [
-                {x: (aOrigRect[0] + aRD[0]) * nScaleX, y: (aOrigRect[1] + aRD[1]) * nScaleY},
-                {x: (aOrigRect[2] - aRD[2]) * nScaleX, y: (aOrigRect[1] + aRD[1]) * nScaleY},
-                {x: (aOrigRect[2] - aRD[2]) * nScaleX, y: (aOrigRect[3] - aRD[3]) * nScaleY},
-                {x: (aOrigRect[0] + aRD[0]) * nScaleX, y: (aOrigRect[3] - aRD[3]) * nScaleY}
+                {x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm, y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm},
+                {x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm, y: (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm},
+                {x: (aOrigRect[2] - aRD[2]) * g_dKoef_pt_to_mm, y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm},
+                {x: (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm, y: (aOrigRect[3] - aRD[3]) * g_dKoef_pt_to_mm}
             ]
         }
         else {
@@ -137,97 +122,103 @@
             ]
         }
 
-        oDoc.TurnOffHistory();
+        oDoc.StartNoHistoryMode();
         AscPDF.generateCloudyGeometry(aPoints, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
+        oDoc.EndNoHistoryMode();
+
         oGeometry.preset = undefined;
     };
-    CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
-        this._rectDiff = aDiff;
-
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-
-        let aOrigRect = this.GetOrigRect();
-
-        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
-        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
-        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
-        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
-
-        this.spPr.xfrm.setExtX(extX);
-        this.spPr.xfrm.setExtY(extY);
-    };
-    CAnnotationSquare.prototype.SetRect = function(aRect) {
+    CAnnotationSquare.prototype.SetRect = function(aOrigRect) {
         let oViewer     = editor.getDocumentRenderer();
         let oDoc        = oViewer.getPDFDoc();
-        let nPage       = this.GetPage();
-        let aCurRect    = this.GetRect();
+        let aCurRect    = this.GetOrigRect();
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        let bCalcRDandRect = this._origRect.length != 0 && false == AscCommon.History.UndoRedoInProgress;
 
-        this._rect = aRect;
-        this._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
+        this._origRect = aOrigRect;
 
-        this._origRect[0] = this._rect[0] / nScaleX;
-        this._origRect[1] = this._rect[1] / nScaleY;
-        this._origRect[2] = this._rect[2] / nScaleX;
-        this._origRect[3] = this._rect[3] / nScaleY;
+        if (bCalcRDandRect) {
+            AscCommon.History.StartNoHistoryMode();
 
-        this.SetRectangleDiff([0, 0, 0, 0]);
-        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+            let aCurRD = this._rectDiff;
+            let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+            this.SetRectangleDiff([0, 0, 0, 0]);
+            this.recalcBounds();
+            this.recalcGeometry();
+            this.Recalculate(true);
+            
+            AscCommon.History.EndNoHistoryMode();
+            
+            let oGrBounds = this.bounds;
+            let oShapeBounds = this.getRectBounds();
 
-        oDoc.TurnOffHistory();
+            this._origRect[0] = Math.round(oGrBounds.l - nLineW) * g_dKoef_mm_to_pt;
+            this._origRect[1] = Math.round(oGrBounds.t - nLineW) * g_dKoef_mm_to_pt;
+            this._origRect[2] = Math.round(oGrBounds.r + nLineW) * g_dKoef_mm_to_pt;
+            this._origRect[3] = Math.round(oGrBounds.b + nLineW) * g_dKoef_mm_to_pt;
 
-        this.recalcGeometry();
-        this.AddToRedraw();
+            oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aOrigRect));
+
+            this._rectDiff = aCurRD;
+            this.SetRectangleDiff([
+                Math.round(oShapeBounds.l - oGrBounds.l + nLineW) * g_dKoef_mm_to_pt,
+                Math.round(oShapeBounds.t - oGrBounds.t + nLineW) * g_dKoef_mm_to_pt,
+                Math.round(oGrBounds.r - oShapeBounds.r + nLineW) * g_dKoef_mm_to_pt,
+                Math.round(oGrBounds.b - oShapeBounds.b + nLineW) * g_dKoef_mm_to_pt
+            ]);
+        }
+
         this.SetWasChanged(true);
+        this.SetNeedRecalcSizes(true);
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
         let oDoc = this.GetDocument();
         oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
 
-        this._rectDiff  = aDiff;
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
+        this._rectDiff = aDiff;
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-
-        let aOrigRect = this.GetOrigRect();
-
-        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
-        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
-        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
-        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
-
-        this.spPr.xfrm.setExtX(extX);
-        this.spPr.xfrm.setExtY(extY);
+        this.SetWasChanged(true);
+        this.SetNeedRecalcSizes(true);
+        this.SetNeedRecalc(true);
+    };
+    CAnnotationSquare.prototype.SetNeedRecalcSizes = function(bRecalc) {
+        this._needRecalcSizes = bRecalc;
+        this.recalcGeometry();
+    };
+    CAnnotationSquare.prototype.IsNeedRecalcSizes = function() {
+        return this._needRecalcSizes;
     };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
     };
-    CAnnotationSquare.prototype.Recalculate = function() {
-        let oViewer     = editor.getDocumentRenderer();
-        let nPage       = this.GetPage();
-        let aOrigRect   = this.GetOrigRect();
+    CAnnotationSquare.prototype.Recalculate = function(bForce) {
+        if (true !== bForce && false == this.IsNeedRecalc()) {
+            return;
+        }
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-        
-        if (this.recalcInfo.recalculateGeometry)
+        if (this.IsNeedRecalcSizes()) {
+            let aOrigRect = this.GetOrigRect();
+            let aRD = this.GetRectangleDiff();
+            
+            let extX = ((aOrigRect[2] - aOrigRect[0]) - aRD[0] - aRD[2]) * g_dKoef_pt_to_mm;
+            let extY = ((aOrigRect[3] - aOrigRect[1]) - aRD[1] - aRD[3]) * g_dKoef_pt_to_mm;
+
+            this.spPr.xfrm.offX = (aOrigRect[0] + aRD[0]) * g_dKoef_pt_to_mm;
+            this.spPr.xfrm.offY = (aOrigRect[1] + aRD[1]) * g_dKoef_pt_to_mm;
+
+            this.spPr.xfrm.extX = extX;
+            this.spPr.xfrm.extY = extY;
+
+            this.SetNeedRecalcSizes(false);
+        }
+        if (this.recalcInfo.recalculateGeometry) {
             this.RefillGeometry();
-        this.handleUpdatePosition();
+        }
+
+        this.recalculateTransform();
+        this.updateTransformMatrix();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY);
+        this.SetNeedRecalc(false);
     };
     
     CAnnotationSquare.prototype.WriteToBinary = function(memory) {
@@ -265,11 +256,6 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
     };
-
-    function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
 
     window["AscPDF"].CAnnotationSquare = CAnnotationSquare;
 })();

@@ -59,6 +59,21 @@
 	{
 		return this.DrawingDocument.ConvertCoordsFromCursor2(x, y);
 	};
+	CMobileDelegateEditorPresentation.prototype.GetElementOffset = function()
+	{
+		var _xOffset = this.HtmlPage.X;
+		var _yOffset = this.HtmlPage.Y;
+
+		if (true === this.HtmlPage.m_bIsRuler)
+		{
+			_xOffset += (5 * AscCommon.g_dKoef_mm_to_pix);
+			_yOffset += (7 * AscCommon.g_dKoef_mm_to_pix);
+		}
+
+		let mainViewOffset = parseInt(this.HtmlPage.m_oMainParent.HtmlElement.style.left);
+
+		return { X : _xOffset + mainViewOffset, Y : _yOffset };
+	};
 	CMobileDelegateEditorPresentation.prototype.GetZoomFit = function()
 	{
 		var HtmlPage = this.HtmlPage;
@@ -372,7 +387,7 @@
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
@@ -381,7 +396,8 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true
+			useLongTap : true,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -803,10 +819,13 @@
 			{
 				if (!this.MoveAfterDown)
 				{
-					global_mouseEvent.Button = 0;
-					this.delegate.Drawing_OnMouseDown(_e);
-					this.delegate.Drawing_OnMouseUp(_e);
-					this.Api.sendEvent("asc_onTapEvent", e);
+					if (!this.checkDesktopModeContextMenuEnd())
+					{
+						global_mouseEvent.Button = 0;
+						this.delegate.Drawing_OnMouseDown(_e);
+						this.delegate.Drawing_OnMouseUp(_e);
+						this.Api.sendEvent("asc_onTapEvent", e);
+					}
 
 					var typeMenu = this.delegate.GetContextMenuType();
 					if (typeMenu == AscCommon.MobileTouchContextMenuType.Target ||
@@ -1009,8 +1028,14 @@
 		oWordControl.IsUpdateOverlayOnlyEndReturn = true;
 		oWordControl.StartUpdateOverlay();
 		var ret = this.onTouchEnd(e);
+
+		if (this.isGlassDrawed)
+			oWordControl.OnUpdateOverlay();
+
 		oWordControl.IsUpdateOverlayOnlyEndReturn = false;
 		oWordControl.EndUpdateOverlay();
+
+		this.checkDesktopModeContextMenuEnd(e);
 		return ret;
 	};
 
@@ -1165,14 +1190,15 @@
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
 			scrollX : true,
 			scroller_id : this.iScrollElement,
 			eventsElement : this.eventsElement,
-			bounce : true
+			bounce : true,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();

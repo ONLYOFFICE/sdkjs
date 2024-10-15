@@ -575,6 +575,7 @@ CBookmarksManager.prototype.SelectBookmark = function(sName)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CParagraphBookmark = CParagraphBookmark;
+window['AscWord'].CParagraphBookmark = CParagraphBookmark;
 CBookmarksManager.prototype['asc_GetCount']              = CBookmarksManager.prototype.GetCount;
 CBookmarksManager.prototype['asc_GetName']               = CBookmarksManager.prototype.GetName;
 CBookmarksManager.prototype['asc_GetId']                 = CBookmarksManager.prototype.GetId;

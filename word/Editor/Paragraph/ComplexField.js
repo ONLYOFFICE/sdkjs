@@ -39,19 +39,21 @@ var fldchartype_End      = 2;
 function ParaFieldChar(Type, LogicDocument)
 {
 	AscWord.CRunElementBase.call(this);
-
+	
 	this.LogicDocument = LogicDocument;
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
-	this.fldData   = null;
+	this.fldData       = null;
+	this.ffData        = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
 	this.PageAbs       = 0;
 
-	this.numText = null;
-	this.textPr  = null;
+	this.numText  = null;
+	this.textPr   = null;
+	this.checkBox = null;
 }
 ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
@@ -69,7 +71,7 @@ ParaFieldChar.prototype.Init = function(Type, LogicDocument)
 };
 ParaFieldChar.prototype.Copy = function()
 {
-	let oChar = new ParaFieldChar(this.CharType, this.LogicDocument)
+	let oChar = new ParaFieldChar(this.CharType, this.LogicDocument);
 
 	let oComplexField = this.GetComplexField();
 	if (oComplexField && oComplexField.IsUpdate())
@@ -78,6 +80,7 @@ ParaFieldChar.prototype.Copy = function()
 		oComplexField.ReplaceChar(oChar);
 	}
 	//todo fldData
+	oChar.ffData = this.ffData ? this.ffData.Copy() : null;
 
 	return oChar;
 };
@@ -94,14 +97,48 @@ ParaFieldChar.prototype.Measure = function(Context, textPr, sectPr)
 };
 ParaFieldChar.prototype.Draw = function(x, y, context)
 {
-	if (!this.IsEnd() || null === this.numText)
+	if (!this.IsVisual())
 		return;
 	
-	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-	for (let index = 0; index < this.graphemes.length; ++index)
+	if (this.numText)
 	{
-		AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
-		x += this.widths[index] * fontSize;
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		for (let index = 0; index < this.graphemes.length; ++index)
+		{
+			AscFonts.DrawGrapheme(this.graphemes[index], context, x, y, fontSize);
+			x += this.widths[index] * fontSize;
+		}
+	}
+	else if (this.checkBox)
+	{
+		let shift = 0.75 * g_dKoef_pt_to_mm;
+		let penW  = 0.75 * g_dKoef_pt_to_mm;
+		
+		let w = this.GetWidth();
+		
+		let y0 = y - 0.815 * w + shift;
+		let y1 = y + 0.185 * w - shift;
+		let x0 = x + shift;
+		let x1 = x + w - shift;
+		
+		context.drawHorLineExt(c_oAscLineDrawingRule.Top, y0, x0, x1, penW, 0, 0);
+		context.drawHorLineExt(c_oAscLineDrawingRule.Bottom, y1, x0, x1, penW, 0, 0);
+		context.drawVerLine(c_oAscLineDrawingRule.Left, x0, y0, y1, penW);
+		context.drawVerLine(c_oAscLineDrawingRule.Right, x1, y0, y1, penW);
+		
+		let ffData  = this.ComplexField.GetBeginChar().GetFFData();
+		if (ffData && ffData.isCheckBoxChecked())
+		{
+			context.p_width(0.5 * g_dKoef_pt_to_mm * 1000);
+			let penW_2 = penW / 2;
+			context._m(x0 + penW_2, y0 + penW_2);
+			context._l(x1 - penW_2, y1 - penW_2);
+			context.ds();
+			
+			context._m(x1 - penW_2, y0 + penW_2);
+			context._l(x0 + penW_2, y1 - penW_2);
+			context.ds();
+		}
 	}
 };
 ParaFieldChar.prototype.IsBegin = function()
@@ -132,18 +169,36 @@ ParaFieldChar.prototype.SetComplexField = function(oComplexField)
 {
 	this.ComplexField = oComplexField;
 };
-ParaFieldChar.prototype.Write_ToBinary = function(Writer)
+ParaFieldChar.prototype.Write_ToBinary = function(writer)
 {
 	// Long : Type
 	// Long : CharType
-	Writer.WriteLong(this.Type);
-	Writer.WriteLong(this.CharType);
+	writer.WriteLong(this.Type);
+	writer.WriteLong(this.CharType);
+	
+	if (this.ffData)
+	{
+		writer.WriteBool(true);
+		this.ffData.toBinary(writer);
+	}
+	else
+	{
+		writer.WriteBool(false);
+	}
+	
 	//todo fldData
 };
-ParaFieldChar.prototype.Read_FromBinary = function(Reader)
+ParaFieldChar.prototype.Read_FromBinary = function(reader)
 {
 	// Long : CharType
-	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	
+	let charType = reader.GetLong();
+	
+	this.Init(charType, editor.WordControl.m_oLogicDocument);
+	
+	if (reader.GetBool())
+		this.ffData = AscWord.FFData.fromBinary(reader);
+	
 	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
@@ -221,6 +276,15 @@ ParaFieldChar.prototype.SetFormulaValue = function(value)
 	this.numText = "" + value;
 	this.private_UpdateWidth();
 };
+ParaFieldChar.prototype.GetFFData = function()
+{
+	return this.ffData;
+};
+ParaFieldChar.prototype.SetFormCheckBox = function()
+{
+	this.checkBox = true;
+	this.private_UpdateWidth();
+};
 ParaFieldChar.prototype.GetNumFormat = function()
 {
 	let numFormat = Asc.c_oAscNumberingFormat.Decimal;
@@ -257,22 +321,36 @@ ParaFieldChar.prototype.UpdatePageCount = function(pageCount)
 };
 ParaFieldChar.prototype.private_UpdateWidth = function()
 {
-	if (null === this.numText)
-		return;
-	
-	AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
-	
-	this.graphemes = AscWord.stringShaper.GetGraphemes();
-	this.widths    = AscWord.stringShaper.GetWidths();
-	
 	let totalWidth = 0;
-	for (let index = 0; index < this.widths.length; ++index)
+	
+	if (this.numText)
 	{
-		totalWidth += this.widths[index];
+		AscWord.stringShaper.Shape(this.numText.codePointsArray(), this.textPr);
+		
+		this.graphemes = AscWord.stringShaper.GetGraphemes();
+		this.widths    = AscWord.stringShaper.GetWidths();
+		
+		for (let index = 0; index < this.widths.length; ++index)
+		{
+			totalWidth += this.widths[index];
+		}
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		totalWidth   = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	}
-	let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
-	totalWidth = (totalWidth * fontSize * AscWord.TEXTWIDTH_DIVIDER) | 0;
-
+	else if (this.checkBox)
+	{
+		let fontSize = this.textPr.FontSize * this.textPr.getFontCoef();
+		let ffData = this.ComplexField.GetBeginChar().GetFFData();
+		if (ffData && !ffData.isCheckBoxAutoSize())
+			fontSize = ffData.getCheckBoxSize();
+		
+		totalWidth = (1.15 * fontSize * g_dKoef_pt_to_mm * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		
+		// Для совместимости при работе с RecalcObject
+		this.graphemes = [];
+		this.widths    = [];
+	}
+	
 	this.Width        = totalWidth;
 	this.WidthVisible = totalWidth;
 };
@@ -280,9 +358,17 @@ ParaFieldChar.prototype.IsNumValue = function()
 {
 	return (this.IsEnd() && null !== this.numText);
 };
+ParaFieldChar.prototype.IsVisual = function()
+{
+	return (this.IsEnd() && (null !== this.numText || null !== this.checkBox));
+};
+ParaFieldChar.prototype.IsFormField = function()
+{
+	return !!(this.checkBox);
+};
 ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 {
-	return this.IsNumValue();
+	return this.IsVisual();
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(isCopy)
 {
@@ -506,6 +592,10 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 
 	if (!this.Instruction || !this.IsValid())
 		return false;
+	
+	// TODO: Нужно добавить разделитель, если его нет. Пока не обновляем такие поля
+	if (!this.HaveValuePart())
+		return false;
 
 	this.SelectFieldValue();
 
@@ -553,6 +643,8 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case AscWord.fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case AscWord.fieldtype_FORMCHECKBOX:
+		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
 			break;
 	}
@@ -612,10 +704,11 @@ CComplexField.prototype.CalculateValue = function()
 		case AscWord.fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
 			break;
+		case AscWord.fieldtype_FORMCHECKBOX:
+		case AscWord.fieldtype_FORMTEXT:
 		case AscWord.fieldtype_ADDIN:
 			sResult = "";
 			break;
-
 	}
 
 	return sResult;
@@ -762,14 +855,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 	var oStyles          = this.LogicDocument.Get_Styles();
 	var arrOutline;
-	var sCaption = this.Instruction.GetCaption(); //flag c
+	var sCaption         = this.Instruction.GetCaption(); //flag c
 	var sCaptionOnlyText = this.Instruction.GetCaptionOnlyText();//flag a
-	var sResultCaption = sCaption;
+	
 	var oBookmarksManager = this.LogicDocument.GetBookmarksManager();
-	if(typeof sCaptionOnlyText === "string" && sCaptionOnlyText.length > 0)
-	{
-		sResultCaption = sCaptionOnlyText;
-	}
+	if (undefined === sCaption && undefined !== sCaptionOnlyText)
+		sCaption = sCaptionOnlyText;
+	
 	var oOutlinePr = {
 		OutlineStart : this.Instruction.GetHeadingRangeStart(),
 		OutlineEnd   : this.Instruction.GetHeadingRangeEnd(),
@@ -777,7 +869,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 	};
 	var bTOF = false;
 	var bSkipCaptionLbl = false;
-	if(sCaption !== undefined || sCaptionOnlyText !== undefined)
+	if (undefined !== sCaption)
 	{
 		bTOF = true;
 		var aStyles = this.Instruction.GetStylesArray();
@@ -788,22 +880,16 @@ CComplexField.prototype.private_UpdateTOC = function()
 		else
 		{
 			arrOutline = [];
-			if(sCaptionOnlyText !== undefined)
-			{
+			if (sCaptionOnlyText !== undefined)
 				bSkipCaptionLbl = true;
-			}
-			if(typeof sResultCaption === "string" && sResultCaption.length > 0)
+			
+			var aParagraphs = this.LogicDocument.GetAllCaptionParagraphs(sCaption);
+			var oCurPara;
+			for (var nParagraph = 0; nParagraph < aParagraphs.length; ++nParagraph)
 			{
-				var aParagraphs = this.LogicDocument.GetAllCaptionParagraphs(sResultCaption);
-				var oCurPara;
-				for(var nParagraph = 0; nParagraph < aParagraphs.length; ++nParagraph)
-				{
-					oCurPara = aParagraphs[nParagraph];
-					if(!bSkipCaptionLbl || oCurPara.CanAddRefAfterSEQ(sResultCaption))
-					{
-						arrOutline.push({Paragraph: oCurPara, Lvl: 0});
-					}
-				}
+				oCurPara = aParagraphs[nParagraph];
+				if (!bSkipCaptionLbl || oCurPara.CanAddRefAfterSEQ(sCaption))
+					arrOutline.push({Paragraph : oCurPara, Lvl : 0});
 			}
 		}
 	}
@@ -846,7 +932,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 			var oParaForCopy = oSrcParagraph;
 			if(bSkipCaptionLbl)
 			{
-				sBookmarkName = oSrcParagraph.AddBookmarkForCaption(sResultCaption, true, true);
+				sBookmarkName = oSrcParagraph.AddBookmarkForCaption(sCaption, true, true);
 				if(!sBookmarkName)
 				{
 					sBookmarkName = oSrcParagraph.AddBookmarkForTOC();
@@ -1691,8 +1777,11 @@ CComplexField.prototype.IsValid = function()
 {
 	return (this.IsUse()
 		&& this.BeginChar && this.BeginChar.IsValid()
-		&& this.SeparateChar && this.SeparateChar.IsValid()
 		&& this.EndChar && this.EndChar.IsValid());
+};
+CComplexField.prototype.HaveValuePart = function()
+{
+	return (this.SeparateChar && this.SeparateChar.IsValid());
 };
 CComplexField.prototype.GetInstruction = function()
 {
@@ -1731,8 +1820,11 @@ CComplexField.prototype.IsHidden = function()
 		return false;
 	
 	if (this.EndChar
-		&& this.EndChar.IsNumValue()
-		&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))
+		&& this.EndChar.IsVisual()
+		&& (AscWord.fieldtype_NUMPAGES === oInstruction.GetType()
+			|| AscWord.fieldtype_PAGE === oInstruction.GetType()
+			|| AscWord.fieldtype_FORMULA === oInstruction.GetType()
+			|| AscWord.fieldtype_FORMCHECKBOX === oInstruction.GetType()))
 		return true;
 	
 	if (!this.BeginChar || !this.SeparateChar)
@@ -1744,6 +1836,9 @@ CComplexField.prototype.RemoveFieldWrap = function()
 {
 	if (!this.IsValid())
 		return;
+	
+	if (!this.HaveValuePart())
+		return this.RemoveField();
 
 	this.EndChar.RemoveThisFromDocument();
 
@@ -1876,11 +1971,70 @@ CComplexField.prototype.CheckType = function(type)
 	if (!instruction)
 		return false;
 	
+	// TODO: По-хорошему надо сделать мап типов, которые могут идти без разделителя, и какие не могут
 	return instruction.GetType() === type;
 };
 CComplexField.prototype.IsAddin = function()
 {
 	return this.CheckType(AscWord.fieldtype_ADDIN);
+};
+CComplexField.prototype.IsFormField = function()
+{
+	if (!this.IsValid())
+		return false;
+	
+	let instruction = this.GetInstruction();
+	if (!instruction)
+		return false;
+	
+	let type = instruction.GetType();
+	return (AscWord.fieldtype_FORMCHECKBOX === type
+		|| AscWord.fieldtype_FORMTEXT === type
+		|| AscWord.fieldtype_FORMDROPDOWN === type);
+};
+CComplexField.prototype.IsFormFieldEnabled = function()
+{
+	if (!this.IsFormField())
+		return false;
+	
+	let ffData = this.BeginChar.GetFFData();
+	return (!ffData || ffData.isEnabled());
+};
+CComplexField.prototype.IsFormCheckBox = function()
+{
+	return this.CheckType(AscWord.fieldtype_FORMCHECKBOX);
+};
+CComplexField.prototype.ToggleFormCheckBox = function()
+{
+	if (!this.IsFormCheckBox())
+		return;
+	
+	let beginChar = this.GetBeginChar();
+	let run     = beginChar.GetRun();
+	if (!run)
+		return;
+	
+	let inRunPos= run.GetElementPosition(beginChar);
+	if (-1 === inRunPos)
+		return;
+	
+	let newChar = beginChar.Copy();
+	let ffData  = newChar.GetFFData();
+	if (!ffData)
+	{
+		ffData = new AscWord.FFData();
+		newChar.ffData = ffData;
+	}
+	
+	if (!ffData.checkBox)
+		ffData.initCheckBox();
+	
+	ffData.checkBox.checked = !ffData.isCheckBoxChecked();
+	
+	run.RemoveFromContent(inRunPos, 1);
+	run.AddToContent(inRunPos, newChar);
+	
+	this.ReplaceChar(newChar);
 };
 /**
  * Получаем список связанных параграфов с данным полем (параграфы содержащие метки поля, это не обязательно будут

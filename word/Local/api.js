@@ -151,6 +151,7 @@ AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditor
 	return this.asc_setCurrentPasswordBase(password);
 };
 
+var isSupportSaveInPDF = true; // Since 8.2.0
 Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
 	if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
@@ -168,8 +169,13 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 	{
 		var _isNaturalSave = this.IsUserSave;
 		this.canSave = false;
+
+		let isSupportBuild = true;
+
+		if (this.isPdfEditor())
+			isSupportBuild = isSupportSaveInPDF;
 		
-		if (!this.isPdfEditor())
+		if (isSupportBuild)
 		{
 			var t = this;
 			this.CoAuthoringApi.askSaveChanges(function(e) {
@@ -236,7 +242,7 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
  		}
 	}
 
-	if (editor.isUseNativeViewer && editor.isDocumentRenderer())
+	if (!isSupportSaveInPDF && editor.isUseNativeViewer && editor.isDocumentRenderer())
 	{
 		let changes = editor.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 		if (changes)

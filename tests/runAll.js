@@ -62,6 +62,7 @@ const allTests = [
 	'word/styles/displayStyle.html',
 	'word/styles/paraPr.html',
 	'word/styles/styleApplicator.html',
+	'word/text-autocorrection/as-you-type.html',
 	'word/plugins/pluginsApi.html',
 	'word/revisions/document-content.html',
 	'word/revisions/paragraph.html',

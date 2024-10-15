@@ -69,7 +69,7 @@
         if (oDoc.activeForm == this)
             this.CheckFormViewWindow();
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        oGraphicsWord.AddClipRect(this.contentClipRect.X, this.contentClipRect.Y, this.contentClipRect.W, this.contentClipRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
@@ -82,63 +82,19 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        let oViewer = editor.getDocumentRenderer();
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let aRect   = this.GetRect();
-
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
-
-        let oMargins = this.GetMarginsFromBorders(false, false);
-
-        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-        let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-
-        let bNewRecalc = false;  // будет использовано только один раз при первом пересчете и случае autofit
+        if (this.IsNeedCheckAlign()) {
+            this.CheckAlignInternal();
+        }
+        
         if (this.GetTextSize() == 0) {
-            if (!this._pagePos) {
-                bNewRecalc = true;
+            if (null == this.getFormRelRect()) {
+                this.CalculateContentClipRect();
             }
             this.ProcessAutoFitContent(this.content);
             this.ProcessAutoFitContent(this.contentFormat);
         }
 
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
-
-        let nContentH       = this.GetTextHeight(this.content);
-        let nContentHFormat = this.GetTextHeight(this.contentFormat);
-
-        contentY            = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
-        let contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
-
-        this._formRect.X = X * g_dKoef_pix_to_mm;
-        this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-        contentXLimit != this._oldContentPos.XLimit || contentYFormat != this._oldContentPos.YFormat) {
-            this.content.X      = this.contentFormat.X          = this._oldContentPos.X = contentX;
-            this.content.Y      = this._oldContentPos.Y         = contentY;
-            this.contentFormat.Y= this._oldContentPos.YFormat   = contentYFormat;
-            this.content.XLimit = this.contentFormat.XLimit     = this._oldContentPos.XLimit = contentXLimit;
-            this.content.YLimit = this.contentFormat.YLimit     = this._oldContentPos.YLimit = 20000;
-            
-            this.CalculateContentRect();
-            this.content.Recalculate_Page(0, true);
-            this.contentFormat.Recalculate_Page(0, true);
-        }
-        else if (this.IsNeedRecalc()) {
+        if (false == this.RecalculateContentRect()) {
             this.contentFormat.Content.forEach(function(element) {
                 element.Recalculate_Page(0);
             });
@@ -147,16 +103,74 @@
             });
         }
         
-        bNewRecalc && this.Recalculate();
         this.SetNeedRecalc(false);
     };
+    CComboBoxField.prototype.RecalculateContentRect = function() {
+        let aOrigRect = this.GetOrigRect();
 
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]);
+        let nHeight = (aOrigRect[3] - aOrigRect[1]);
+
+        let oMargins = this.GetMarginsFromBorders();
+
+        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pt_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pt_to_mm;
+        let contentXLimit   = (X + nWidth - 2 * oMargins.left) * g_dKoef_pt_to_mm;
+
+        let nContentH       = this.GetTextHeight(this.content);
+        let nContentHFormat = this.GetTextHeight(this.contentFormat);
+
+        contentY            = Y * g_dKoef_pt_to_mm + (nHeight * g_dKoef_pt_to_mm - nContentH) / 2;
+        let contentYFormat  = Y * g_dKoef_pt_to_mm + (nHeight * g_dKoef_pt_to_mm - nContentHFormat) / 2;
+
+        if (contentX != this.content.X || contentY != this.content.Y ||
+        contentXLimit != this.content.XLimit || contentYFormat != this.contentFormat.YFormat) {
+            this.content.X      = this.contentFormat.X = contentX;
+            this.content.Y      = contentY;
+            this.contentFormat.Y= contentYFormat;
+            this.content.XLimit = this.contentFormat.XLimit = contentXLimit;
+            this.content.YLimit = this.contentFormat.YLimit = 20000;
+            
+            this.CalculateContentClipRect();
+            this.content.Recalculate_Page(0, true);
+            this.contentFormat.Recalculate_Page(0, true);
+
+            return true;
+        }
+
+        return false;
+    };
+    CComboBoxField.prototype.CalculateContentClipRect = function() {
+        if (!this.content)
+            return;
+
+        let aRect       = this.GetOrigRect();
+        let X           = aRect[0];
+        let Y           = aRect[1];
+        let nWidth      = aRect[2] - aRect[0];
+        let nHeight     = aRect[3] - aRect[1];
+        let oMargins    = this.GetMarginsFromBorders();
+
+        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pt_to_mm;
+        let contentXLimit   = (X + nWidth - 2 * oMargins.left) * g_dKoef_pt_to_mm;
+
+        this.contentClipRect = {
+            X: contentX,
+            Y: (Y + oMargins.top) * g_dKoef_pt_to_mm,
+            W: contentXLimit - contentX,
+            H: (nHeight - oMargins.top - oMargins.bottom) * g_dKoef_pt_to_mm,
+            Page: this.GetPage()
+        }
+    };
     CComboBoxField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden())
             return;
 
         let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let nPage       = this.GetPage();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * oViewer.getDrawingPageScale(nPage);
         let aOrigRect   = this.GetOrigRect();
 
         let xCenter = oViewer.width >> 1;
@@ -165,13 +179,13 @@
 			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
 		}
 		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
+        let page    = oViewer.drawingPages[nPage];
         let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        let isLandscape = oViewer.isLandscapePage(this.GetPage());
+        let isLandscape = oViewer.isLandscapePage(nPage);
         if (isLandscape) {
             indLeft = indLeft + (w - h) / 2;
         }
@@ -181,12 +195,12 @@
         let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
         let nHeight = (aOrigRect[3] - aOrigRect[1]) * nScale;
         
-        let oMargins = this.GetBordersWidth(true);
+        let oMargins = this.GetBordersWidth();
         
         let nMarkWidth  = 18;
-        let nMarkX      = (X + nWidth) - oMargins.left - nMarkWidth;
-        let nMarkHeight = nHeight - 2 * oMargins.top - 2;
-        let nMarkY      = Y + oMargins.top + 1;
+        let nMarkX      = (X + nWidth) - oMargins.left * nScale - nMarkWidth;
+        let nMarkHeight = nHeight - 2 * oMargins.top * nScale;
+        let nMarkY      = Y + oMargins.top * nScale;
 
         // marker rect
         oCtx.setLineDash([]);
@@ -280,9 +294,11 @@
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (false == isInFocus) {
-            this.onFocus();
+        if (isInFocus) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        }
+        else {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         }
     };
     
@@ -294,9 +310,6 @@
     CComboBoxField.prototype.SelectOption = function(nIdx) {
         if (this.GetCurIdxs() == nIdx)
             return;
-
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint({objects: [this]});
 
         let oPara = this.content.GetElement(0);
         let oRun = oPara.GetElement(0);
@@ -315,7 +328,7 @@
 
         this.content.MoveCursorToStartPos();
         if (!Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
-            this.CheckAlignInternal();
+            this.SetNeedCheckAlign(true);
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
@@ -380,7 +393,8 @@
     CComboBoxField.prototype.SyncField = function() {
         let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
-        TurnOffHistory();
+        let oDoc = this.GetDocument();
+        oDoc.StartNoHistoryMode();
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
@@ -402,6 +416,8 @@
                 break;
             }
         }
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.EnterText = function(aChars) {
 		if (!this.DoKeystrokeAction(aChars))
@@ -413,7 +429,6 @@
 			return false;
 		
 		this.UpdateSelectionByEvent();
-		doc.CreateNewHistoryPoint({objects : [this]});
 		
 		this.content.EnterText(aChars);
 		
@@ -431,8 +446,6 @@
 		if (!newValue.length && !oldValue.length)
 			return false;
 		
-		doc.CreateNewHistoryPoint({objects : [this]});
-		
 		let result = this.content.CorrectEnterText(oldValue, newValue, function(run, inRunPos, codePoint){return true;});
 		
 		this.SetNeedRecalc(true);
@@ -449,29 +462,30 @@
         let oDoc        = this.GetDocument();
         let aFields     = oDoc.GetAllWidgets(this.GetFullName());
 
-        oDoc.SetGlobalHistory();
+        oDoc.StartNoHistoryMode();
         if (this.DoFormatAction() == false) {
             this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
+            oDoc.EndNoHistoryMode();
             return;
         }
-
+        oDoc.EndNoHistoryMode();
+        
         if (this.GetApiValue() != this.GetValue()) {
-            oDoc.CreateNewHistoryPoint({objects: [this]});
             AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             this.SetApiValue(this.GetValue());
             this.SetApiCurIdxs(this.GetCurIdxs());
         }
         
-        TurnOffHistory();
+        oDoc.StartNoHistoryMode();
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);
 
-        let sValue = this.GetValue();
-        this.UpdateDisplayValue(sValue);
+        let sDisplayValue = this.content.getAllText();
+        this.UpdateDisplayValue(sDisplayValue);
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
@@ -489,7 +503,7 @@
             if (aFields[i] == this)
                 continue;
 
-            aFields[i].UpdateDisplayValue(sValue);
+            aFields[i].UpdateDisplayValue(sDisplayValue);
             aFields[i].SetNeedRecalc(true);
         }
 
@@ -505,11 +519,13 @@
         // когда выравнивание посередине или справа, то после того
         // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
         aFields.forEach(function(field) {
-            field.CheckAlignInternal();
+            field.SetNeedCheckAlign(true);
         });
 
         this.SetNeedCommit(false);
         this.needValidate = true;
+
+        oDoc.EndNoHistoryMode();
     };
 	CComboBoxField.prototype.InsertChars = function(aChars) {
 		this.content.EnterText(aChars);
@@ -745,12 +761,6 @@
 		return true;
 	};
 	
-	
-	function TurnOffHistory() {
-        if (AscCommon.History.IsOn() == true)
-            AscCommon.History.TurnOff();
-    }
-	
 	if (!window["AscPDF"])
 		window["AscPDF"] = {};
 	
@@ -778,6 +788,8 @@
 	CComboBoxField.prototype.onMouseUp              = AscPDF.CTextField.prototype.onMouseUp;
 	CComboBoxField.prototype.OnContentChange        = AscPDF.CTextField.prototype.OnContentChange;
 	CComboBoxField.prototype.UpdateSelectionByEvent = AscPDF.CTextField.prototype.UpdateSelectionByEvent;
+	CComboBoxField.prototype.SetNeedCheckAlign      = AscPDF.CTextField.prototype.SetNeedCheckAlign;
+	CComboBoxField.prototype.IsNeedCheckAlign       = AscPDF.CTextField.prototype.IsNeedCheckAlign;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

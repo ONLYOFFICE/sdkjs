@@ -504,7 +504,15 @@
         return {OffX: dOffX, OffY: dOffY};
 
     };
-
+		EditShapeGeometryTrack.prototype.checkDrawingPartWithHistory = function () {
+			if (this.originalObject.checkDrawingPartWithHistory) {
+				const newObject = this.originalObject.checkDrawingPartWithHistory();
+				if (newObject) {
+					this.originalObject = newObject;
+					this.originalShape = newObject;
+				}
+			}
+		};
     EditShapeGeometryTrack.prototype.trackEnd = function(bWord) {
         this.addCommandsInPathInfo();
         //set new extents

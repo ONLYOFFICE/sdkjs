@@ -241,13 +241,21 @@ document.documentElement = _null_object;
 document.body = _null_object;
 
 // NATIVE OBJECT
-window.native = native;
 function GetNativeEngine() { return window.native; }
 
 var Api = null; // main builder object
 window.devicePixelRatio = 1;
-if (window.native && window.native.GetDevicePixelRatio)
-	window.devicePixelRatio = window.native.GetDevicePixelRatio();
+
+window.InitNativeObject = function()
+{
+	window.native = native;
+	window.devicePixelRatio = 1;
+	if (window.native && window.native.GetDevicePixelRatio)
+		window.devicePixelRatio = window.native.GetDevicePixelRatio();
+};
+
+if (undefined !== native)
+	window.InitNativeObject();
 
 // OPEN
 function NativeCreateApi(options)
@@ -259,15 +267,28 @@ function NativeCreateApi(options)
 	if (options && undefined !== options["translate"])
 		configApi["translate"] = options["translate"];
 
-	if (window.NATIVE_DOCUMENT_TYPE === "presentation" || window.NATIVE_DOCUMENT_TYPE === "document")
+	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		Api = new window["Asc"]["asc_docs_api"](configApi);
-		if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
-			Api.setOpenedAt(options["documentLayout"]["openedAt"]);
-	}
-	else
-	{
-		Api = new window["Asc"]["spreadsheet_api"](configApi);
+		case "document":
+		case "presentation":
+		{
+			Api = new window["Asc"]["asc_docs_api"](configApi);
+			if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
+				Api.setOpenedAt(options["documentLayout"]["openedAt"]);
+			break;
+		}
+		case "spreadsheet":
+		{
+			Api = new window["Asc"]["spreadsheet_api"](configApi);
+			break;
+		}
+		case "pdf":
+		{
+			Api = new window["Asc"]["PDFEditorApi"](configApi);
+			break;
+		}
+		default:
+			break;
 	}
 
 	if (options && undefined !== options["locale"])
@@ -278,14 +299,26 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
 {
     NativeCreateApi(options);
 
-	if (window.NATIVE_DOCUMENT_TYPE === "presentation" ||
-		window.NATIVE_DOCUMENT_TYPE === "document")
+	switch (window.NATIVE_DOCUMENT_TYPE)
 	{
-		Api.asc_nativeOpenFile(data, version);
-	}
-	else
-	{
-		Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
+		case "document":
+		case "presentation":
+		{
+			Api.asc_nativeOpenFile(data, version);
+			break;
+		}
+		case "spreadsheet":
+		{
+			Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
+			break;
+		}
+		case "pdf":
+		{
+			Api.asc_nativeOpenFile(data, version);
+			break;
+		}
+		default:
+			break;
 	}
 }
 

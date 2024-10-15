@@ -81,21 +81,21 @@ CMathMatrixColumnPr.fromObject = function(obj)
 	return pr;
 };
 
-function CMathMatrixPr() {
-	this.row = 1;
+function CMathMatrixPr(ctrPr) {
+	this.row		= 1;
 
-	this.cGp = 0;
-	this.cGpRule = 0;
-	this.cSp = 0;
+	this.cGp		= 0;
+	this.cGpRule	= 0;
+	this.cSp		= 0;
 
-	this.rSp = 0;
-	this.rSpRule = 0;
+	this.rSp		= 0;
+	this.rSpRule	= 0;
 
-	this.mcs = [];
-	this.baseJc = BASEJC_CENTER;
-	this.plcHide = false;
+	this.mcs		= [];
+	this.baseJc		= BASEJC_CENTER;
+	this.plcHide	= false;
 
-	this.ctrPr   = new CMathCtrlPr();
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathMatrixPr.prototype.GetRPr = function ()
 {
@@ -612,16 +612,12 @@ function CMathMatrix(props) {
 	CMatrixBase.call(this);
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
-	this.Pr = new CMathMatrixPr();
+	this.Pr = new CMathMatrixPr(this.CtrPrp);
 
 	this.column = 0;
 
 	if (props !== null && props !== undefined)
 		this.init(props);
-
-	// согласно формату CtrPrp должен находится в MatrixPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
 
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
@@ -1256,16 +1252,14 @@ function CMathPoint() {
 	this.odd = -1;
 }
 
-function CMathEqArrPr() {
-	this.maxDist = 0;
-	this.objDist = 0;
-	this.rSp = 0;
-	this.rSpRule = 0;
-	this.baseJc = BASEJC_CENTER;
-
-	this.row = 1;
-
-	this.ctrPr   = new CMathCtrlPr();
+function CMathEqArrPr(ctrPr) {
+	this.maxDist	= 0;
+	this.objDist	= 0;
+	this.rSp		= 0;
+	this.rSpRule	= 0;
+	this.baseJc		= BASEJC_CENTER;
+	this.row		= 1;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathEqArrPr.prototype.GetRPr = function ()
 {
@@ -1364,7 +1358,7 @@ function CEqArray(props) {
 	CMatrixBase.call(this);
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
-	this.Pr = new CMathEqArrPr();
+	this.Pr = new CMathEqArrPr(this.CtrPrp);
 
 	// for ampersand in Run
 	this.WidthsPoints = [];
@@ -1374,10 +1368,6 @@ function CEqArray(props) {
 
 	if (props !== null && props !== undefined)
 		this.init(props);
-
-	// согласно формату CtrPrp должен находится в EqArrPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
 
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
@@ -1773,3 +1763,6 @@ CMathMenuEqArray.prototype["get_LineRule"] = CMathMenuEqArray.prototype.get_Line
 CMathMenuEqArray.prototype["put_LineRule"] = CMathMenuEqArray.prototype.put_LineRule;
 CMathMenuEqArray.prototype["get_LineGap"] = CMathMenuEqArray.prototype.get_LineGap;
 CMathMenuEqArray.prototype["put_LineGap"] = CMathMenuEqArray.prototype.put_LineGap;
+
+AscMath.EqArray = CEqArray;
+AscMath.Matrix  = CMathMatrix;

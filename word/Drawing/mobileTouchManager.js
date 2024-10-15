@@ -62,7 +62,7 @@
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
@@ -71,7 +71,8 @@
 			bounce : false,
 			eventsElement : this.eventsElement,
 			click : false,
-			useLongTap : true
+			useLongTap : true,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -529,10 +530,13 @@
 			{
 				if (!this.MoveAfterDown)
 				{
-					global_mouseEvent.Button = 0;
-					this.delegate.Drawing_OnMouseDown(_e);
-					this.delegate.Drawing_OnMouseUp(_e);
-					this.Api.sendEvent("asc_onTapEvent", e);
+					if (!this.checkDesktopModeContextMenuEnd())
+					{
+						global_mouseEvent.Button = 0;
+						this.delegate.Drawing_OnMouseDown(_e);
+						this.delegate.Drawing_OnMouseUp(_e);
+						this.Api.sendEvent("asc_onTapEvent", e);
+					}
 
 					var typeMenu = this.delegate.GetContextMenuType();
 					if (typeMenu == AscCommon.MobileTouchContextMenuType.Target ||
@@ -738,8 +742,15 @@
 		oWordControl.IsUpdateOverlayOnlyEndReturn = true;
 		oWordControl.StartUpdateOverlay();
 		var ret = this.onTouchEnd(e);
+
+		if (this.isGlassDrawed)
+			oWordControl.OnUpdateOverlay();
+
 		oWordControl.IsUpdateOverlayOnlyEndReturn = false;
 		oWordControl.EndUpdateOverlay();
+
+		this.checkDesktopModeContextMenuEnd(e);
+
 		return ret;
 	};
 
@@ -795,7 +806,7 @@
 
 		this.iScroll = new window.IScrollMobile(this.delegate.GetScrollerParent(), {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,

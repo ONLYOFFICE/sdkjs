@@ -732,6 +732,13 @@ CMathBase.prototype.recalculateSize = function(oMeasure, RPI)
     this.size.height = height;
     this.size.ascent = ascent;
 };
+CMathBase.prototype.ProcessingOldEquationConvert = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		this.Content[i].ProcessingOldEquationConvert();
+	}
+}
 CMathBase.prototype.recalculateAllSize = function(textMeasurer)
 {
 	this.setDistance();
@@ -1067,7 +1074,18 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 		}
 
 		if (undefined !== TextPr.Color)
+		{
 			this.Set_Color(TextPr.Color);
+
+			if(null !== TextPr.Color)
+			{
+				if (this.CtrPrp.Unifill)
+					this.Set_Unifill(undefined);
+
+				if (this.CtrPrp.TextFill)
+					this.Set_TextFill(undefined);
+			}
+		}
 
 		if (undefined !== TextPr.TextOutline)
 			this.Set_TextOutline(null === TextPr.TextOutline ? undefined : TextPr.TextOutline);
@@ -2815,18 +2833,12 @@ CMathBase.prototype.GetTextOfElement = function(oMathText)
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 	return oMathText;
 };
-
-CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
-	if (isLaTeX) 
-		return '{';
-	else
-		return '(';
-};
-CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
-	if (isLaTeX) 
-		return '}';
-	else
-		return ')';
+CMathBase.prototype.Set_RFont_ForMath = function()
+{
+	this.SetRFontsAscii({Name : "Cambria Math", Index : -1});
+	this.SetRFontsCS({Name : "Cambria Math", Index : -1});
+	this.SetRFontsEastAsia({Name : "Cambria Math", Index : -1});
+	this.SetRFontsHAnsi({Name : "Cambria Math", Index : -1});
 };
 
 function CMathBasePr()
@@ -3250,9 +3262,9 @@ CMathMenuBase.prototype.Set_DeleteForcedBreak = function()
  * ctrlPr - Control Properties
  * @constructor
  */
-function CMathCtrlPr(oParagraph)
+function CMathCtrlPr(ctrPr)
 {
-	this.rPr = new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
+	this.rPr = ctrPr || new CTextPr(); //по умолчанию должен наследоваться от текущего абзаца
 	this.del = new CTextPr();
 	this.ins = new CTextPr();
 }

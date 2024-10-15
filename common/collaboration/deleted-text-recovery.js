@@ -607,7 +607,7 @@
 				}
 				this.data[strCurrentKey] = newArrCurrentRunData;
 			}
-			const transformedObject = CollapsePositions(this.data);
+			let transformedObject = CollapsePositions(this.data);
 			return transformedObject
 		}
 		this.ResetData = function ()
@@ -617,20 +617,20 @@
 	}
 	function CollapsePositions (oInput)
 	{
-		const transformedObject = {};
-		for (const key in oInput)
+		let transformedObject = {};
+		for (let key in oInput)
 		{
 			if (oInput.hasOwnProperty(key))
 			{
-				const values = oInput[key];
-				const pairs = [];
+				let values = oInput[key];
+				let pairs = [];
 				let nStart = null;
 				let nEnd = null;
 				let decreasingSequence = false;
 
 				for (let i = 0; i < values.length; i++)
 				{
-					const value = values[i];
+					let value = values[i];
 
 					if (nStart === null)
 					{
@@ -649,7 +649,7 @@
 					}
 					else
 					{
-						pairs.push({ nStart, nEnd });
+						pairs.push({ nStart : nStart, nEnd: nEnd });
 						nStart = value;
 						nEnd = value;
 						decreasingSequence = false;
@@ -657,7 +657,7 @@
 				}
 
 				if (nStart !== null && nEnd !== null)
-					pairs.push({ nStart, nEnd });
+					pairs.push({ nStart : nStart, nEnd: nEnd });
 
 				transformedObject[key] = pairs;
 			}

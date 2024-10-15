@@ -3100,19 +3100,19 @@ COperator.prototype.IsArrow = function()
     return bArrow || bDoubleArrow;
 };
 
-function CMathDelimiterPr()
+function CMathDelimiterPr(ctrPr)
 {
-    this.begChr     = undefined;
-    this.begChrType = undefined;
-    this.endChr     = undefined;
-    this.endChrType = undefined;
-    this.sepChr     = undefined;
-    this.sepChrType = undefined;
-    this.shp        = DELIMITER_SHAPE_CENTERED;
-    this.grow       = true;
+	this.begChr		= undefined;
+	this.begChrType	= undefined;
+	this.endChr		= undefined;
+	this.endChrType	= undefined;
+	this.sepChr		= undefined;
+	this.sepChrType	= undefined;
+	this.shp		= DELIMITER_SHAPE_CENTERED;
+	this.grow		= true;
 
-    this.column     = 0;
-	this.ctrPr   = new CMathCtrlPr();
+	this.column		= 0;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathDelimiterPr.prototype.GetRPr = function ()
 {
@@ -3307,23 +3307,19 @@ function CDelimiter(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.GeneralMetrics = new CMathSize();
+	this.GeneralMetrics = new CMathSize();
 
-    this.begOper = new COperator (OPER_DELIMITER);
-    this.endOper = new COperator (OPER_DELIMITER);
-    this.sepOper = new COperator (OPER_SEPARATOR);
+	this.begOper = new COperator (OPER_DELIMITER);
+	this.endOper = new COperator (OPER_DELIMITER);
+	this.sepOper = new COperator (OPER_SEPARATOR);
 
-    this.Pr = new CMathDelimiterPr();
-    this.TextInContent = true;
+	this.Pr = new CMathDelimiterPr(this.CtrPrp);
+	this.TextInContent = true;
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в DelimiterPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CDelimiter.prototype = Object.create(CMathBase.prototype);
 CDelimiter.prototype.constructor = CDelimiter;
@@ -4067,7 +4063,6 @@ CDelimiter.prototype.private_GetRightOperator = function(bHide)
 CDelimiter.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	oMathText.IsBracket = true;
 
 	let strSeparatorSymbol	= oMathText.IsLaTeX() ? "\\mid" : "∣";
 	let strStartSymbol;
@@ -4117,6 +4112,23 @@ CDelimiter.prototype.GetTextOfElement = function(oMathText)
 
 		let oOpenText = new AscMath.MathText(strStartText, this);
 		oMathText.AddText(oOpenText);
+	}
+
+	// check for binom
+	if (oMathText.IsLaTeX()
+		&& strStartSymbol === "("
+		&& strEndSymbol === ")"
+		&& this.getColumnsCount() === 1
+		&& this.Content[0].Content.length === 3
+		&& this.Content[0].Content[0].Is_Empty()
+		&& this.Content[0].Content[2].Is_Empty()
+		&& this.Content[0].Content[1] instanceof CFraction
+		&& this.Content[0].Content[1].Pr.type === NO_BAR_FRACTION)
+	{
+		let oFirstPos = oMathText.GetFirstPos();
+		oMathText.RemoveByPos(oFirstPos);
+		oMathText.Add(this.Content[0], !oMathText.LaTeX);
+		return oMathText;
 	}
 
 	for (let intCount = 0; intCount < this.getColumnsCount(); intCount++)
@@ -4331,13 +4343,13 @@ CCharacter.prototype.getBase = function()
     return this.elements[0][0];
 };
 
-function CMathGroupChrPr()
+function CMathGroupChrPr(ctrPr)
 {
-    this.chr     = undefined;
-    this.chrType = undefined;
-    this.pos     = LOCATION_BOT;
-    this.vertJc  = VJUST_TOP;
-	this.ctrPr   = new CMathCtrlPr();
+	this.chr		= undefined;
+	this.chrType	= undefined;
+	this.pos		= LOCATION_BOT;
+	this.vertJc		= VJUST_TOP;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathGroupChrPr.prototype.GetRPr = function ()
 {
@@ -4454,19 +4466,15 @@ function CGroupCharacter(props)
 {
 	CCharacter.call(this);
 
-	this.Id   = AscCommon.g_oIdCounter.Get_NewId();
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathGroupChrPr();
+	this.Pr = new CMathGroupChrPr(this.CtrPrp);
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в GroupChrPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    /// вызов этой функции обязательно в конце
-    AscCommon.g_oTableId.Add( this, this.Id );
+	/// вызов этой функции обязательно в конце
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CGroupCharacter.prototype = Object.create(CCharacter.prototype);
 CGroupCharacter.prototype.constructor = CGroupCharacter;
@@ -4654,21 +4662,26 @@ CGroupCharacter.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		if (nStartCode === 9182 || nStartCode === 9183)
+		if (AscMath.MathLiterals.hbrack.SearchU(strStart))
 		{
-			oPos = oMathText.Add(oBase, true, 1);
-
-			if (nStartCode === 9182)
-				strStart = '\\overbrace';
-			else if (nStartCode === 9183)
-				strStart = '\\underbrace';
-
+			strStart	= AscMath.SymbolsToLaTeX[strStart];
+			oPos		= oMathText.Add(oBase, true, 2);
 			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
+		}
+		else if (AscMath.MathLiterals.horizontal.SearchU(strStart))
+		{
+			oMathText.AddText(new AscMath.MathText("{", oMathText.GetStyleFromFirst()));
+			strStart	= AscMath.MathLiterals.horizontal.Unicode[strStart]
+			strStart	+= this.Pr.pos === 1 ? "\\above" : "\\below";
+			oPos		= oMathText.Add(oBase, true, 1);
+			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
+			oMathText.AddText(new AscMath.MathText("}", oMathText.GetStyleFromFirst()));
 		}
 		else
 		{
-			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
-			oPos = oMathText.Add(oBase, true, 1);
+			strStart	= AscMath.SymbolsToLaTeX[strStart];
+			strStart	+= this.Pr.pos === 1 ? "\\above" : "\\below";
+			oPos		= oMathText.Add(oBase, true, 1);
 			oMathText.AddBefore(oPos, new AscMath.MathText(strStart, oMathText.GetStyleFromFirst()));
 		}
 	}
@@ -4733,3 +4746,6 @@ window["CMathMenuGroupCharacter"] = CMathMenuGroupCharacter;
 CMathMenuGroupCharacter.prototype["get_Pos"]         = CMathMenuGroupCharacter.prototype.get_Pos;
 CMathMenuGroupCharacter.prototype["put_Pos"]         = CMathMenuGroupCharacter.prototype.put_Pos;
 CMathMenuGroupCharacter.prototype["can_ChangePos"]   = CMathMenuGroupCharacter.prototype.can_ChangePos;
+
+AscMath.Delimiter = CDelimiter;
+AscMath.GroupCharacter = CGroupCharacter;

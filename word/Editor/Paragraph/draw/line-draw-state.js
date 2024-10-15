@@ -239,7 +239,7 @@
 				this.addLines(startX, endX);
 				break;
 			case para_FieldChar:
-				if (element.IsNumValue())
+				if (element.IsVisual())
 					this.addLines(startX, endX);
 				break;
 		}

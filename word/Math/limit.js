@@ -32,10 +32,10 @@
 
 "use strict";
 
-function CMathLimitPr()
+function CMathLimitPr(ctrPr)
 {
-	this.type = LIMIT_LOW;
-	this.ctrPr   = new CMathCtrlPr();
+	this.type	= LIMIT_LOW;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 
 CMathLimitPr.prototype.GetRPr = function ()
@@ -225,16 +225,12 @@ function CLimit(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathLimitPr();
+	this.Pr = new CMathLimitPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в LimitPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CLimit.prototype = Object.create(CMathBase.prototype);
 CLimit.prototype.constructor = CLimit;
@@ -343,9 +339,9 @@ CLimit.prototype.GetTextOfElement = function(oMathText)
 {
 	oMathText = new AscMath.MathTextAndStyles(oMathText);
 
-	let strLimitSymbol  = "";
-	let oFuncName       = this.getFName();
-	let oArgument       = this.getIterator();
+	let strLimitSymbol	= "";
+	let oFuncName		= this.getFName();
+	let oArgument		= this.getIterator();
 
 	if (oMathText.IsLaTeX())
 	{
@@ -353,7 +349,8 @@ CLimit.prototype.GetTextOfElement = function(oMathText)
 		oMathText.Add(oFuncName, false);
 		oMathText.AddText(new AscMath.MathText((this.Pr.type == 1) ? "\\above" : "\\below", oMathText.GetStyleFromFirst()));
 		oMathText.SetNotGetStyleFromFirst();
-		oMathText.Add(oArgument, true, 1);
+		// check when word fix bug, for now always wrap
+		oMathText.Add(oArgument, true, 2);
 	}
 	else
 	{
@@ -406,9 +403,9 @@ window["CMathMenuLimit"] = CMathMenuLimit;
 CMathMenuLimit.prototype["get_Pos"] = CMathMenuLimit.prototype.get_Pos;
 CMathMenuLimit.prototype["put_Pos"] = CMathMenuLimit.prototype.put_Pos;
 
-function CMathFuncPr()
+function CMathFuncPr(ctrPr)
 {
-	this.ctrPr   = new CMathCtrlPr();
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathFuncPr.prototype.GetRPr = function ()
 {
@@ -449,16 +446,12 @@ function CMathFunc(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathFuncPr();
+	this.Pr = new CMathFuncPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в FuncPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CMathFunc.prototype = Object.create(CMathBase.prototype);
 CMathFunc.prototype.constructor = CMathFunc;
@@ -512,30 +505,36 @@ CMathFunc.prototype.fillContent = function()
 };
 CMathFunc.prototype.GetTextOfElement = function(oMathText)
 {
-	oMathText = new AscMath.MathTextAndStyles(oMathText);
-	let oFuncName = this.getFName();
-	let oArgument = this.getArgument();
+	oMathText		= new AscMath.MathTextAndStyles(oMathText);
+	let oFuncName	= this.getFName();
+	let oArgument	= this.getArgument();
 	oMathText.SetGlobalStyle(this);
 
 	if (oMathText.IsLaTeX())
 	{
-		let oArgPos = oMathText.Add(oArgument, true, 2);
-		let oNamePos = oMathText.AddBefore(oArgPos, oFuncName.GetTextOfElement(true));
-		oMathText.AddBefore(oNamePos, new AscMath.MathText("\\", oMathText.GetStyleFromFirst()));
+		let oArgPos					= oMathText.Add(oArgument, true, 2);
+
+		let oFuncNameContent		= oFuncName.GetTextOfElement(true);
+		let strFunc					= oFuncNameContent.GetText();
+
+		//find content before "_", "^", "below" and "above";
+		strFunc = strFunc.split("_")[0].split('^')[0].split('\\below')[0].split('\\above')[0];
+
+		let oSlashesTextForName		= new AscMath.MathText("\\", oMathText.GetStyleFromFirst());
+		let oFirstPosInNameContent	= oFuncNameContent.GetFirstPos();
+
+		if (AscMath.functionNames.includes(strFunc) || AscMath.LimitFunctions.includes(strFunc))
+			oFuncNameContent.AddBefore(oFirstPosInNameContent, oSlashesTextForName);
+
+		oMathText.AddBefore(oArgPos, oFuncNameContent);
 	}
 	else
 	{
 		let oNamePos		= oMathText.Add(oFuncName, true, 0);
-		let oArgumentPos	= oMathText.Add(oArgument, true, 0);
+		let oArgumentPos	= oMathText.Add(oArgument, true, 1);
 		let oArgumentToken	= oMathText.GetExact(oArgumentPos);
 
 		oMathText.AddAfter(oNamePos, new AscMath.MathText("⁡", this.Pr.GetRPr()));
-
-		if (oArgument.haveMixedContent() && !oArgumentToken.IsBracket)
-		{
-			oMathText.SetGlobalStyle(this.Pr.GetRPr());
-			oMathText.WrapExactElement(oArgumentPos, "〖", "〗");
-		}
 	}
 
 	return oMathText;
@@ -545,3 +544,6 @@ CMathFunc.prototype.GetTextOfElement = function(oMathText)
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CMathFunc = CMathFunc;
 window['AscCommonWord'].CLimit = CLimit;
+
+AscMath.Limit = CLimit;
+AscMath.Func  = CMathFunc;

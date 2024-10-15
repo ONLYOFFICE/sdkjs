@@ -352,6 +352,15 @@
 	 * @see office-js-api/Examples/Enumerations/NumFormat.js
 	 */
 
+    /**
+     * @typedef {("body" | "chart" | "clipArt" | "ctrTitle" | "diagram" | "date" | "footer" | "header" | "media" | "object" | "picture" | "sldImage" | "sldNumber" | "subTitle" | "table" | "title")} PlaceholderType - Available placeholder types.
+     */
+
+    /**
+     * Any valid drawing element
+     * @typedef {(ApiShape | ApiImage | ApiGroup | ApiOleObject | ApiTable )} Drawing
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -1717,19 +1726,16 @@
     /**
      * Returns an array with all the drawing objects from the slide master.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetAllDrawings.js
 	 */
     ApiMaster.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Master)
-        {
-            var drawingObjects = this.Master.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Master) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Master.cSld.spTree;
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -1796,6 +1802,23 @@
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
 		return JSON.stringify(oResult);
+    };
+
+    /**
+	 * Gets drawings by placeholder type.
+	 * @memberof ApiMaster
+     * @typeofeditors ["CPE"]
+     * @param {PlaceholderType} sType - placeholders type
+	 * @returns {Drawing[]}
+	 * @see office-js-api/Examples/{Editor}/ApiMaster/Methods/GetDrawingsByPlaceholderType.js
+	 */
+    ApiMaster.prototype.GetDrawingsByPlaceholderType = function(sType) {
+        let aDrawings = this.GetAllDrawings();
+
+        let nType = private_GetPlaceholderInnerType(sType);
+        return aDrawings.filter(function(drawing) {
+            return drawing.Drawing.getPlaceholderType() == nType;
+        });
     };
 
     //------------------------------------------------------------------------------------------------------------------
@@ -2026,19 +2049,16 @@
     /**
      * Returns an array with all the drawing objects from the slide layout.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]}
+     * @returns {Drawing[]}
      * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetAllDrawings.js
 	 */
     ApiLayout.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Layout)
-        {
-            var drawingObjects = this.Layout.cSld.spTree;
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Layout) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Layout.cSld.spTree;
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -2124,6 +2144,23 @@
 		return JSON.stringify(oResult);
     };
 
+    /**
+	 * Gets drawings by placeholder type.
+	 * @memberof ApiLayout
+     * @typeofeditors ["CPE"]
+     * @param {PlaceholderType} sType - placeholders type
+	 * @returns {Drawing[]}
+	 * @see office-js-api/Examples/{Editor}/ApiLayout/Methods/GetDrawingsByPlaceholderType.js
+	 */
+    ApiLayout.prototype.GetDrawingsByPlaceholderType = function(sType) {
+        let aDrawings = this.GetAllDrawings();
+
+        let nType = private_GetPlaceholderInnerType(sType);
+        return aDrawings.filter(function(drawing) {
+            return drawing.Drawing.getPlaceholderType() == nType;
+        });
+    };
+
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiPlaceholder
@@ -2140,72 +2177,75 @@
     {
         return "placeholder";
     };
+
     /**
      * Sets the placeholder type.
      * @typeofeditors ["CPE"]
-     * @param {string} sType - Placeholder type ("body", "chart", "clipArt", "ctrTitle", "diagram", "date", "footer", "header", "media", "object", "picture", "sldImage", "sldNumber", "subTitle", "table", "title").
+     * @param {PlaceholderType} sType - Placeholder type
      * @returns {boolean} - returns false if placeholder type doesn't exist.
      * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetType.js
 	 */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
-        var nType;
-        switch (sType)
-        {
-            case "body":
-                nType = 0;
-                break;
-            case "chart":
-                nType = 1;
-                break;
-            case "clipArt":
-                nType = 2;
-                break;
-            case "ctrTitle":
-                nType = 3;
-                break;
-            case "diagram":
-                nType = 4;
-                break;
-            case "date":
-                nType = 5;
-                break;
-            case "footer":
-                nType = 6;
-                break;
-            case "header":
-                nType = 7;
-                break;
-            case "media":
-                nType = 8;
-                break;
-            case "object":
-                nType = 9;
-                break;
-            case "picture":
-                nType = 10;
-                break;
-            case "sldImage":
-                nType = 11;
-                break;
-            case "sldNumber":
-                nType = 12;
-                break;
-            case "subTitle":
-                nType = 13;
-                break;
-            case "table":
-                nType = 14;
-                break;
-            case "title":
-                nType = 15;
-                break;
-            default:
-                nType = 0;
+        this.Placeholder.setType(private_GetPlaceholderInnerType(sType));
+    };
+
+    /**
+     * Gets the placeholder type.
+     * @typeofeditors ["CPE"]
+     * @returns {PlaceholderType} - returns placeholder type
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetType.js
+	 */
+    ApiPlaceholder.prototype.GetType = function()
+    {
+        return private_GetPlaceholderStrType(this.Placeholder.getType());
+    };
+
+    Object.defineProperty(ApiPlaceholder.prototype, "Type", {
+		get: function () {
+			return this.GetType();
+		},
+		set: function (sType) {
+			this.SetType(sType);
+		}
+	});
+
+    /**
+     * Sets the placeholder index.
+     * @typeofeditors ["CPE"]
+     * @param {number} nIdx - placeholder index
+     * @returns {boolean} - returns false if placeholder index wasn't set.
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/SetIndex.js
+	 */
+    ApiPlaceholder.prototype.SetIndex = function(nIdx)
+    {
+        if (typeof(nIdx) != 'number' || nIdx < 0) {
+            return false;
         }
 
-        this.Placeholder.setType(nType);
+        nIdx >>= 0;
+        this.Placeholder.setIdx(nIdx);
     };
+
+    /**
+     * Gets the placeholder index.
+     * @typeofeditors ["CPE"]
+     * @returns {number | undefined} - returns placeholder index
+     * @see office-js-api/Examples/{Editor}/ApiPlaceholder/Methods/GetIndex.js
+	 */
+    ApiPlaceholder.prototype.GetIndex = function()
+    {
+        return this.Placeholder.getIdx();
+    };
+
+    Object.defineProperty(ApiPlaceholder.prototype, "Index", {
+		get: function () {
+			return this.GetIndex();
+		},
+		set: function (nIndex) {
+			this.SetIndex(nIndex);
+		}
+	});
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -3148,19 +3188,16 @@
     /**
      * Returns an array with all the drawing objects from the slide.
      * @typeofeditors ["CPE"]
-     * @returns {ApiDrawing[]} 
+     * @returns {Drawing[]} 
      * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetAllDrawings.js
 	 */
     ApiSlide.prototype.GetAllDrawings = function(){
-        var apiDrawingObjects = [];
-        if (this.Slide)
-        {
-            var drawingObjects = this.Slide.getDrawingObjects();
-            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
-                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        if (!this.Slide) {
+            return [];
         }
-           
-        return apiDrawingObjects;
+
+        let drawingObjects = this.Slide.getDrawingObjects();
+        return private_GetApiDrawings(drawingObjects);
     };
 
     /**
@@ -3235,6 +3272,23 @@
         if (bWriteTableStyles)
             oResult["tblStyleLst"] = oWriter.SerTableStylesForWrite();
 		return JSON.stringify(oResult);
+    };
+
+    /**
+	 * Gets drawings by placeholder type.
+	 * @memberof ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {PlaceholderType} sType - placeholders type
+	 * @returns {Drawing[]}
+	 * @see office-js-api/Examples/{Editor}/ApiSlide/Methods/GetDrawingsByPlaceholderType.js
+	 */
+    ApiSlide.prototype.GetDrawingsByPlaceholderType = function(sType) {
+        let aDrawings = this.GetAllDrawings();
+
+        let nType = private_GetPlaceholderInnerType(sType);
+        return aDrawings.filter(function(drawing) {
+            return drawing.Drawing.getPlaceholderType() == nType;
+        });
     };
 
     //------------------------------------------------------------------------------------------------------------------
@@ -4518,6 +4572,7 @@
     ApiMaster.prototype["GetAllCharts"]                   = ApiMaster.prototype.GetAllCharts;
     ApiMaster.prototype["GetAllOleObjects"]               = ApiMaster.prototype.GetAllOleObjects;
     ApiMaster.prototype["ToJSON"]                         = ApiMaster.prototype.ToJSON;
+    ApiMaster.prototype["GetDrawingsByPlaceholderType"]   = ApiMaster.prototype.GetDrawingsByPlaceholderType;
 
     
     ApiLayout.prototype["GetClassType"]                   = ApiLayout.prototype.GetClassType;
@@ -4538,9 +4593,13 @@
     ApiLayout.prototype["GetAllOleObjects"]               = ApiLayout.prototype.GetAllOleObjects;
     ApiLayout.prototype["GetMaster"]                      = ApiLayout.prototype.GetMaster;
     ApiLayout.prototype["ToJSON"]                         = ApiLayout.prototype.ToJSON;
+    ApiLayout.prototype["GetDrawingsByPlaceholderType"]   = ApiLayout.prototype.GetDrawingsByPlaceholderType;
 
     ApiPlaceholder.prototype["GetClassType"]              = ApiPlaceholder.prototype.GetClassType;
     ApiPlaceholder.prototype["SetType"]                   = ApiPlaceholder.prototype.SetType;
+    ApiPlaceholder.prototype["GetType"]                   = ApiPlaceholder.prototype.GetType;
+    ApiPlaceholder.prototype["SetIndex"]                  = ApiPlaceholder.prototype.SetIndex;
+    ApiPlaceholder.prototype["GetIndex"]                  = ApiPlaceholder.prototype.GetIndex;
 
     ApiTheme.prototype["GetClassType"]                    = ApiTheme.prototype.GetClassType;
     ApiTheme.prototype["GetMaster"]                       = ApiTheme.prototype.GetMaster;
@@ -4598,6 +4657,7 @@
     ApiSlide.prototype["GetAllCharts"]                    = ApiSlide.prototype.GetAllCharts;
     ApiSlide.prototype["GetAllOleObjects"]                = ApiSlide.prototype.GetAllOleObjects;
     ApiSlide.prototype["ToJSON"]                          = ApiSlide.prototype.ToJSON;
+    ApiSlide.prototype["GetDrawingsByPlaceholderType"]    = ApiSlide.prototype.GetDrawingsByPlaceholderType;
 
 
     ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
@@ -4835,6 +4895,151 @@
 		return nLockType;
 	}
 
+    function private_GetPlaceholderInnerType(sType) {
+        let nType;
+        switch (sType)
+        {
+            case "body":
+                nType = 0;
+                break;
+            case "chart":
+                nType = 1;
+                break;
+            case "clipArt":
+                nType = 2;
+                break;
+            case "ctrTitle":
+                nType = 3;
+                break;
+            case "diagram":
+                nType = 4;
+                break;
+            case "date":
+                nType = 5;
+                break;
+            case "footer":
+                nType = 6;
+                break;
+            case "header":
+                nType = 7;
+                break;
+            case "media":
+                nType = 8;
+                break;
+            case "object":
+                nType = 9;
+                break;
+            case "picture":
+                nType = 10;
+                break;
+            case "sldImage":
+                nType = 11;
+                break;
+            case "sldNumber":
+                nType = 12;
+                break;
+            case "subTitle":
+                nType = 13;
+                break;
+            case "table":
+                nType = 14;
+                break;
+            case "title":
+                nType = 15;
+                break;
+            default:
+                nType = 0;
+        }
+
+        return nType;
+    }
+
+    function private_GetPlaceholderStrType(nType) {
+        let sType;
+
+        switch (nType)
+        {
+            case 0:
+                sType = "body";
+                break;
+            case 1:
+                sType = "chart";
+                break;
+            case 2:
+                sType = "clipArt";
+                break;
+            case 3:
+                sType = "ctrTitle";
+                break;
+            case 4:
+                sType = "diagram";
+                break;
+            case 5:
+                sType = "date";
+                break;
+            case 6:
+                sType = "footer";
+                break;
+            case 7:
+                sType = "header";
+                break;
+            case 8:
+                sType = "media";
+                break;
+            case 9:
+                sType = "object";
+                break;
+            case 10:
+                sType = "picture";
+                break;
+            case 11:
+                sType = "sldImage";
+                break;
+            case 12:
+                sType = "sldNumber";
+                break;
+            case 13:
+                sType = "subTitle";
+                break;
+            case 14:
+                sType = "table";
+                break;
+            case 15:
+                sType = "title";
+                break;
+            default:
+                sType = "unknown";
+        }
+
+        return sType;
+    }
+
+    function private_GetApiDrawing(drawing) {
+        switch (drawing.getObjectType()) {
+            case AscDFH.historyitem_type_Shape:
+                return new ApiShape(drawing);
+            case AscDFH.historyitem_type_ImageShape:
+                return new ApiImage(drawing);
+            case AscDFH.historyitem_type_GroupShape:
+                return new ApiGroup(drawing);
+            case AscDFH.historyitem_type_OleObject:
+                return new ApiOleObject(drawing);
+            case AscDFH.historyitem_type_GraphicFrame:
+                return new ApiTable(drawing);
+			case AscDFH.historyitem_type_ChartSpace:
+				return new ApiChart(drawing);
+        }
+        return null;
+    }
+	
+	function private_GetApiDrawings(drawingObjects) {
+		return drawingObjects.map(function(drawing) {
+			return private_GetApiDrawing(drawing);
+		}).filter(function(apiDrawing) {
+			return !!apiDrawing;
+		});
+	}
+	
 	function private_GetAllDrawingsWithType(aDrawings, nObjectType, fCreateBuilderWrapper) {
 		let aWrappers = [];
 		for(let nIdx = 0; nIdx < aDrawings.length; ++nIdx) {

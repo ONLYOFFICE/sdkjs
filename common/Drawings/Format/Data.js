@@ -88,7 +88,11 @@ Because of this, the display is sometimes not correct.
     // consts
     const GRAYSCALE_TRESHHOLD = 150;
 
-    const Point_type_asst = 1;
+	  const smartArtContentFillingType_parentWithChildren = 0x0011;
+	  const smartArtContentFillingType_onlyChildren = 0x0001;
+	  const smartArtContentFillingType_onlyParent = 0x0010;
+
+	  const Point_type_asst = 1;
     const Point_type_doc = 2;
     const Point_type_node = 0;
     const Point_type_parTrans = 4;
@@ -203,11 +207,6 @@ Because of this, the display is sometimes not correct.
     const If_op_gte = 4;
     const If_op_lte = 5;
 
-    const boolOperator_none = 0;
-    const boolOperator_equ = 1;
-    const boolOperator_gte = 2;
-    const boolOperator_lte = 3;
-
     const If_func_cnt = 0;
     const If_func_depth = 6;
     const If_func_maxDepth = 7;
@@ -254,7 +253,7 @@ Because of this, the display is sometimes not correct.
     const Constr_type_endPad = 15;
     const Constr_type_h = 16;
     const Constr_type_hArH = 17;
-    const Constr_type_hOff = 63; // TODO: add to constr type in x2t
+    const Constr_type_hOff = 63;
     const Constr_type_l = 18;
     const Constr_type_lMarg = 19;
     const Constr_type_lOff = 20;
@@ -690,10 +689,10 @@ Because of this, the display is sometimes not correct.
     const ParameterVal_connectorRouting_stra = 3;
     const ParameterVal_continueDirection_revDir = 0;
     const ParameterVal_continueDirection_sameDir = 1;
-    const ParameterVal_diagramHorizontalAlignment_ctr = 0;
-    const ParameterVal_diagramHorizontalAlignment_l = 1;
-    const ParameterVal_diagramHorizontalAlignment_none = 2;
-    const ParameterVal_diagramHorizontalAlignment_r = 3;
+    const ParameterVal_horizontalAlignment_ctr = 0;
+    const ParameterVal_horizontalAlignment_l = 1;
+    const ParameterVal_horizontalAlignment_none = 2;
+    const ParameterVal_horizontalAlignment_r = 3;
     const ParameterVal_diagramTextAlignment_ctr = 0;
     const ParameterVal_diagramTextAlignment_l = 1;
     const ParameterVal_diagramTextAlignment_r = 2;
@@ -755,7 +754,7 @@ Because of this, the display is sometimes not correct.
     const ParameterVal_textAnchorHorizontal_none = 1;
     const ParameterVal_textAnchorVertical_b = 0;
     const ParameterVal_textAnchorVertical_mid = 1;
-    const ParameterVal_textAnchorVertical_top = 2;
+    const ParameterVal_textAnchorVertical_t = 2;
     const ParameterVal_textBlockDirection_horz = 0;
     const ParameterVal_textBlockDirection_vert = 1;
     const ParameterVal_textDirection_fromB = 0;
@@ -981,6 +980,20 @@ Because of this, the display is sometimes not correct.
       return [this.ptLst, this.cxnLst, this.whole, this.bg];
     };
 
+	  DataModel.prototype.getMainPoint = function () {
+		  const ptLst = this.getPtLst();
+
+			if (ptLst) {
+				const arrPoints = ptLst.list;
+				for (let i  = 0; i < arrPoints.length; i += 1) {
+					const oPoint = arrPoints[i];
+					if (oPoint.getType() === Point_type_doc) {
+						return oPoint;
+					}
+				}
+			}
+	  }
+
 
     changesFactory[AscDFH.historyitem_CCommonDataListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CCommonDataListRemove] = CChangeContent;
@@ -1090,7 +1103,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_CxnSibTransId] = CChangeString;
     changesFactory[AscDFH.historyitem_CxnSrcId] = CChangeString;
     changesFactory[AscDFH.historyitem_CxnSrcOrd] = CChangeString;
-    changesFactory[AscDFH.historyitem_CxnType] = CChangeString;
+    changesFactory[AscDFH.historyitem_CxnType] = CChangeLong;
     changesFactory[AscDFH.historyitem_CxnExtLst] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_CxnDestId] = function (oClass, value) {
       oClass.destId = value;
@@ -1133,13 +1146,37 @@ Because of this, the display is sometimes not correct.
       this.sibTransId = null;
       this.srcId = null;
       this.srcOrd = null;
-      this.type = null;
+      this.type = Cxn_type_parOf;
 
       this.extLst = null;
     }
 
     InitClass(Cxn, CBaseFormatObject, AscDFH.historyitem_type_Cxn);
 
+		Cxn.getTypeEnum = function (sType) {
+			switch (sType) {
+				case 'presOf':
+					return Cxn_type_presOf;
+				case 'parOf':
+					return Cxn_type_parOf;
+				case 'presParOf':
+					return Cxn_type_presParOf;
+				default:
+					return;
+			}
+		};
+	  Cxn.getTypeString = function (sType) {
+		  switch (sType) {
+			  case Cxn_type_presOf:
+				  return 'presOf';
+			  case Cxn_type_parOf:
+				  return 'parOf';
+			  case Cxn_type_presParOf:
+				  return 'presParOf';
+			  default:
+				  return '';
+		  }
+	  };
     Cxn.prototype.setDestId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
       this.destId = pr;
@@ -1181,7 +1218,7 @@ Because of this, the display is sometimes not correct.
     }
 
     Cxn.prototype.setType = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CxnType, this.getType(), pr));
       this.type = pr;
     }
 
@@ -1248,7 +1285,7 @@ Because of this, the display is sometimes not correct.
 
     Cxn.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteString2(0, this.modelId);
-      pWriter._WriteString2(1, this.type);
+      pWriter._WriteString2(1, Cxn.getTypeString(this.type));
       pWriter._WriteString2(2, this.destId);
       pWriter._WriteString2(3, this.destOrd);
       pWriter._WriteString2(4, this.srcId);
@@ -1262,7 +1299,7 @@ Because of this, the display is sometimes not correct.
     Cxn.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
       if (0 === nType) this.setModelId(oStream.GetString2());
-      else if (1 === nType) this.setType(oStream.GetString2());
+      else if (1 === nType) this.setType(Cxn.getTypeEnum(oStream.GetString2()));
       else if (2 === nType) this.setDestId(oStream.GetString2());
       else if (3 === nType) this.setDestOrd(oStream.GetString2());
       else if (4 === nType) this.setSrcId(oStream.GetString2());
@@ -1615,7 +1652,7 @@ Because of this, the display is sometimes not correct.
       CBaseFormatObject.call(this);
       this.cxnId = null;
       this.modelId = null;
-      this.type = null;
+      this.type = Point_type_node;
 
       this.extLst = null;
       this.prSet = null;
@@ -1625,6 +1662,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(Point, CBaseFormatObject, AscDFH.historyitem_type_Point);
 
+	  Point.prototype.getHierBranchValue = function () {
+		  return this.prSet && this.prSet.getHierBranchValue();
+	  };
     Point.prototype.getDrawingDocument = function () {
     }
 
@@ -1887,6 +1927,14 @@ Because of this, the display is sometimes not correct.
       return this.prSet && this.prSet.presStyleLbl;
     };
 
+	  Point.prototype.getPresName = function () {
+		  return this.prSet && this.prSet.presName;
+	  };
+
+	  Point.prototype.getPresAssocID = function () {
+		  return this.prSet && this.prSet.presAssocID;
+	  };
+
     Point.prototype.getCustAng = function () {
       var prSet = this.getPrSet();
       if (prSet) {
@@ -2054,7 +2102,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(PrSet, CBaseFormatObject, AscDFH.historyitem_type_PrSet);
 
-
+	  PrSet.prototype.getHierBranchValue = function () {
+		  return this.presLayoutVars && this.presLayoutVars.getHierBranchValue();
+	  };
     PrSet.prototype.setCoherent3DOff = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
       this.coherent3DOff = pr;
@@ -2374,8 +2424,8 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteInt2(8, this.custLinFactNeighborY ? Math.floor(this.custLinFactNeighborY * 100000) : null);
       pWriter._WriteInt2(9, this.custLinFactX ? Math.floor(this.custLinFactX * 100000) : null);
       pWriter._WriteInt2(10, this.custLinFactY ? Math.floor(this.custLinFactY * 100000) : null);
-      pWriter._WriteInt2(11, this.custRadScaleInc);
-      pWriter._WriteInt2(12, this.custRadScaleRad);
+      pWriter._WriteInt2(11, this.custRadScaleInc ? Math.floor(this.custRadScaleInc * 100000) : null);
+      pWriter._WriteInt2(12, this.custRadScaleRad ? Math.floor(this.custRadScaleRad * 100000) : null);
       pWriter._WriteInt2(13, this.custScaleX ? Math.floor(this.custScaleX * 100000) : null);
       pWriter._WriteInt2(14, this.custScaleY ? Math.floor(this.custScaleY * 100000) : null);
       pWriter._WriteInt2(15, this.custSzX);
@@ -2409,8 +2459,8 @@ Because of this, the display is sometimes not correct.
       else if (8 === nType) this.setCustLinFactNeighborY(oStream.GetLong() / 100000);
       else if (9 === nType) this.setCustLinFactX(oStream.GetLong() / 100000);
       else if (10 === nType) this.setCustLinFactY(oStream.GetLong() / 100000);
-      else if (11 === nType) this.setCustRadScaleInc(oStream.GetLong());
-      else if (12 === nType) this.setCustRadScaleRad(oStream.GetLong());
+      else if (11 === nType) this.setCustRadScaleInc(oStream.GetLong() / 100000);
+      else if (12 === nType) this.setCustRadScaleRad(oStream.GetLong() / 100000);
       else if (13 === nType) this.setCustScaleX(oStream.GetLong() / 100000);
       else if (14 === nType) this.setCustScaleY(oStream.GetLong() / 100000);
       else if (15 === nType) this.setCustSzX(oStream.GetLong());
@@ -2681,7 +2731,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -2696,12 +2746,12 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 4: {
-          this.setStyleData(new StyleData());
+          this.setStyleData(new SampData());
           this.styleData.fromPPTY(pReader);
           break;
         }
         case 5: {
-          this.setClrData(new ClrData());
+          this.setClrData(new SampData());
           this.clrData.fromPPTY(pReader);
           break;
         }
@@ -2718,12 +2768,6 @@ Because of this, the display is sometimes not correct.
     };
     LayoutDef.prototype.getChildren = function() {
       return [this.title, this.desc, this.catLst, this.sampData, this.styleData, this.clrData, this.layoutNode];
-    };
-    LayoutDef.prototype.startAlgorithm = function (pointTree) {
-      var entry = this.getLayoutNode();
-      if (entry) {
-        entry.startAlgorithm(pointTree);
-      }
     };
 
 
@@ -2801,131 +2845,6 @@ Because of this, the display is sometimes not correct.
       else if (1 === nType) this.setPri(oStream.GetULong());
     };
     SCat.prototype.readChild = function(nType, pReader) {
-    };
-
-
-    changesFactory[AscDFH.historyitem_ClrDataUseDef] = CChangeBool;
-    changesFactory[AscDFH.historyitem_ClrDataDataModel] = CChangeObject;
-    drawingsChangesMap[AscDFH.historyitem_ClrDataUseDef] = function (oClass, value) {
-      oClass.useDef = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ClrDataDataModel] = function (oClass, value) {
-      oClass.dataModel = value;
-    };
-
-    function ClrData() {
-      CBaseFormatObject.call(this);
-      this.useDef = null;
-      this.dataModel = null;
-    }
-
-    InitClass(ClrData, CBaseFormatObject, AscDFH.historyitem_type_ClrData);
-
-    ClrData.prototype.setUseDef = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
-      this.useDef = pr;
-    }
-
-    ClrData.prototype.setDataModel = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
-      this.dataModel = oPr;
-      this.setParentToChild(oPr);
-    }
-
-    ClrData.prototype.getUseDef = function () {
-      return this.useDef;
-    }
-
-    ClrData.prototype.getDataModel = function () {
-      return this.dataModel;
-    }
-
-    ClrData.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setUseDef(this.getUseDef());
-      if (this.getDataModel()) {
-        oCopy.setDataModel(this.getDataModel().createDuplicate(oIdMap));
-      }
-    }
-
-    ClrData.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteBool2(0, this.useDef);
-    };
-    ClrData.prototype.writeChildren = function(pWriter) {
-      this.writeRecord2(pWriter, 0, this.dataModel); // TODO: add record number
-    };
-    ClrData.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setUseDef(oStream.GetBool());
-    };
-    ClrData.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0: {
-          this.setDataModel(new DataModel());
-          this.dataModel.fromPPTY(pReader);
-          break;
-        }
-        default: {
-          s.SkipRecord();
-          break;
-        }
-      }
-    };
-    ClrData.prototype.getChildren = function() {
-      return [this.dataModel];
-    };
-
-
-    changesFactory[AscDFH.historyitem_DescLang] = CChangeString;
-    changesFactory[AscDFH.historyitem_DescVal] = CChangeString;
-    drawingsChangesMap[AscDFH.historyitem_DescLang] = function (oClass, value) {
-      oClass.lang = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_DescVal] = function (oClass, value) {
-      oClass.val = value;
-    };
-
-    function Desc() {
-      CBaseFormatObject.call(this);
-      this.lang = null;
-      this.val = null;
-    }
-    InitClass(Desc, CBaseFormatObject, AscDFH.historyitem_type_Desc);
-    Desc.prototype.setLang = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
-      this.lang = pr;
-    }
-
-    Desc.prototype.setVal = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
-      this.val = pr;
-    }
-
-    Desc.prototype.getLang = function () {
-      return this.lang;
-    }
-
-    Desc.prototype.getVal = function () {
-      return this.val;
-    }
-
-    Desc.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setLang(this.getLang());
-      oCopy.setVal(this.getVal());
-    }
-
-    Desc.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteString2(0, this.lang);
-      pWriter._WriteString2(1, this.val);
-    };
-    Desc.prototype.writeChildren = function(pWriter) {
-    };
-    Desc.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setLang(oStream.GetString2());
-      else if (1 === nType) this.setVal(oStream.GetString2());
-    };
-    Desc.prototype.readChild = function(nType, pReader) {
     };
 
 
@@ -3071,35 +2990,6 @@ Because of this, the display is sometimes not correct.
       }, undefined);
     };
 
-    LayoutNode.prototype.startAlgorithm = function (pointTree) {
-      if (pointTree) {
-        var nodes = pointTree.findNodeByNameAndStyleLbl.call(pointTree, this.name, this.styleLbl);
-        if (nodes) {
-          var that = this;
-          nodes.forEach(function (node) {
-            var transfer = {node: node, name: that.name, styleLbl: that.styleLbl};
-            var constrLst = that.list.reduce(function (acc, current) {
-              return current instanceof ConstrLst ? current : acc;
-            }, null);
-            if (constrLst) {
-              constrLst.startSetConstr(pointTree, transfer);
-            }
-            if (that.list) {
-              that.list.forEach(function (element) {
-                if (element instanceof AscFormat.ForEach || element instanceof AscFormat.LayoutNode || element instanceof AscFormat.Choose) {
-                  element.startAlgorithm(pointTree, transfer);
-                }
-              });
-            }
-          });
-        }
-      }
-    };
-
-    LayoutNode.prototype.findPoint = function (pointInfo) {
-
-    };
-
 
     changesFactory[AscDFH.historyitem_AlgRev] = CChangeLong;
     changesFactory[AscDFH.historyitem_AlgType] = CChangeLong;
@@ -3226,7 +3116,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_ParameterValConnectorPoint] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValConnectorRouting] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValContinueDirection] = CChangeLong;
-    changesFactory[AscDFH.historyitem_ParameterValDiagramHorizontalAlignment] = CChangeLong;
+    changesFactory[AscDFH.historyitem_ParameterValHorizontalAlignment] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValDiagramTextAlignment] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValFallbackDimension] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValFlowDirection] = CChangeLong;
@@ -3284,8 +3174,8 @@ Because of this, the display is sometimes not correct.
     drawingsChangesMap[AscDFH.historyitem_ParameterValContinueDirection] = function (oClass, value) {
       oClass.continueDirection = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_ParameterValDiagramHorizontalAlignment] = function (oClass, value) {
-      oClass.diagramHorizontalAlignment = value;
+    drawingsChangesMap[AscDFH.historyitem_ParameterValHorizontalAlignment] = function (oClass, value) {
+      oClass.horizontalAlignment = value;
     };
     drawingsChangesMap[AscDFH.historyitem_ParameterValDiagramTextAlignment] = function (oClass, value) {
       oClass.diagramTextAlignment = value;
@@ -3373,7 +3263,7 @@ Because of this, the display is sometimes not correct.
       this.connectorPoint = null;
       this.connectorRouting = null;
       this.continueDirection = null;
-      this.diagramHorizontalAlignment = null;
+      this.horizontalAlignment = null;
       this.diagramTextAlignment = null;
       this.fallbackDimension = null;
       this.flowDirection = null;
@@ -3457,9 +3347,9 @@ Because of this, the display is sometimes not correct.
       this.continueDirection = pr;
     };
 
-    ParameterVal.prototype.setDiagramHorizontalAlignment = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
-      this.diagramHorizontalAlignment = pr;
+    ParameterVal.prototype.setHorizontalAlignment = function (pr) {
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHorizontalAlignment, this.getHorizontalAlignment(), pr));
+      this.horizontalAlignment = pr;
     };
 
     ParameterVal.prototype.setDiagramTextAlignment = function (pr) {
@@ -3626,8 +3516,8 @@ Because of this, the display is sometimes not correct.
       return this.continueDirection;
     };
 
-    ParameterVal.prototype.getDiagramHorizontalAlignment = function () {
-      return this.diagramHorizontalAlignment;
+    ParameterVal.prototype.getHorizontalAlignment = function () {
+      return this.horizontalAlignment;
     };
 
     ParameterVal.prototype.getDiagramTextAlignment = function () {
@@ -3738,7 +3628,7 @@ Because of this, the display is sometimes not correct.
       oCopy.setConnectorPoint(this.getConnectorPoint());
       oCopy.setConnectorRouting(this.getConnectorRouting());
       oCopy.setContinueDirection(this.getContinueDirection());
-      oCopy.setDiagramHorizontalAlignment(this.getDiagramHorizontalAlignment());
+      oCopy.setHorizontalAlignment(this.getHorizontalAlignment());
       oCopy.setDiagramTextAlignment(this.getDiagramTextAlignment());
       oCopy.setFallbackDimension(this.getFallbackDimension());
       oCopy.setFlowDirection(this.getFlowDirection());
@@ -3783,6 +3673,376 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
+		Param.prototype.getValEnum = function () {
+			switch (this.type) {
+				case Param_type_ctrShpMap: {
+					switch (this.val) {
+						case 'fNode':
+							return ParameterVal_centerShapeMapping_fNode;
+						case 'none':
+							return ParameterVal_centerShapeMapping_none;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_autoTxRot: {
+					switch (this.val) {
+						case 'upr':
+							return ParameterVal_autoTextRotation_upr;
+						case 'grav':
+							return ParameterVal_autoTextRotation_grav;
+						case 'none':
+							return ParameterVal_autoTextRotation_none;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_rotPath: {
+					switch (this.val) {
+						case 'alongPath':
+							return ParameterVal_rotationPath_alongPath;
+						case 'none':
+							return ParameterVal_rotationPath_none;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_fallback: {
+					switch (this.val) {
+						case '1D':
+							return ParameterVal_fallbackDimension_1D;
+						case '2D':
+							return ParameterVal_fallbackDimension_2D;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_bendPt: {
+					switch (this.val) {
+						case 'end':
+							return ParameterVal_bendPoint_end;
+						case 'beg':
+							return ParameterVal_bendPoint_beg;
+						case 'def':
+							return ParameterVal_bendPoint_def;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_pyraAcctPos: {
+					switch (this.val) {
+						case 'bef':
+							return ParameterVal_pyramidAccentPosition_bef;
+						case 'aft':
+							return ParameterVal_pyramidAccentPosition_aft;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_nodeHorzAlign: {
+					switch (this.val) {
+						case 'l':
+							return ParameterVal_nodeHorizontalAlignment_l;
+						case 'ctr':
+							return ParameterVal_nodeHorizontalAlignment_ctr;
+						case 'r':
+							return ParameterVal_nodeHorizontalAlignment_r;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_nodeVertAlign: {
+					switch (this.val) {
+						case 'b':
+							return ParameterVal_nodeVerticalAlignment_b;
+						case 'mid':
+							return ParameterVal_nodeVerticalAlignment_mid;
+						case 't':
+							return ParameterVal_nodeVerticalAlignment_t;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_connRout: {
+					switch (this.val) {
+						case 'longCurve':
+							return ParameterVal_connectorRouting_longCurve;
+						case 'curve':
+							return ParameterVal_connectorRouting_curve;
+						case 'stra':
+							return ParameterVal_connectorRouting_stra;
+						case 'bend':
+							return ParameterVal_connectorRouting_bend;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_dim: {
+					switch (this.val) {
+						case '2D':
+							return ParameterVal_connectorDimension_2D;
+						case '1D':
+							return ParameterVal_connectorDimension_1D;
+						case 'cust':
+							return ParameterVal_connectorDimension_cust;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_begSty:
+				case Param_type_endSty: {
+					switch (this.val) {
+						case 'arr':
+							return ParameterVal_arrowheadStyle_arr;
+						case 'noArr':
+							return ParameterVal_arrowheadStyle_noArr;
+						case 'auto':
+							return ParameterVal_arrowheadStyle_auto;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_grDir: {
+					switch (this.val) {
+						case 'bL':
+							return ParameterVal_growDirection_bL;
+						case 'bR':
+							return ParameterVal_growDirection_bR;
+						case 'tL':
+							return ParameterVal_growDirection_tL;
+						case 'tR':
+							return ParameterVal_growDirection_tR;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_contDir: {
+					switch (this.val) {
+						case 'sameDir':
+							return ParameterVal_continueDirection_sameDir;
+						case 'revDir':
+							return ParameterVal_continueDirection_revDir;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_secLinDir:
+				case Param_type_linDir: {
+					switch (this.val) {
+						case 'fromL':
+							return ParameterVal_linearDirection_fromL;
+						case 'fromT':
+							return ParameterVal_linearDirection_fromT;
+						case 'fromR':
+							return ParameterVal_linearDirection_fromR;
+						case 'fromB':
+							return ParameterVal_linearDirection_fromB;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_hierAlign:
+				{
+					switch (this.val) {
+						case 'bCtrCh':
+							return ParameterVal_hierarchyAlignment_bCtrCh;
+						case 'bCtrDes':
+							return ParameterVal_hierarchyAlignment_bCtrDes;
+						case 'bL':
+							return ParameterVal_hierarchyAlignment_bL;
+						case 'bR':
+							return ParameterVal_hierarchyAlignment_bR;
+						case 'lB':
+							return ParameterVal_hierarchyAlignment_lB;
+						case 'lCtrCh':
+							return ParameterVal_hierarchyAlignment_lCtrCh;
+						case 'lCtrDes':
+							return ParameterVal_hierarchyAlignment_lCtrDes;
+						case 'lT':
+							return ParameterVal_hierarchyAlignment_lT;
+						case 'rB':
+							return ParameterVal_hierarchyAlignment_rB;
+						case 'rCtrCh':
+							return ParameterVal_hierarchyAlignment_rCtrCh;
+						case 'rCtrDes':
+							return ParameterVal_hierarchyAlignment_rCtrDes;
+						case 'rT':
+							return ParameterVal_hierarchyAlignment_rT;
+						case 'tCtrCh':
+							return ParameterVal_hierarchyAlignment_tCtrCh;
+						case 'tCtrDes':
+							return ParameterVal_hierarchyAlignment_tCtrDes;
+						case 'tL':
+							return ParameterVal_hierarchyAlignment_tL;
+						case 'tR':
+							return ParameterVal_hierarchyAlignment_tR;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_secChAlign:
+				case Param_type_chAlign: {
+					switch (this.val) {
+						case 'l':
+							return ParameterVal_childAlignment_l;
+						case 't':
+							return ParameterVal_childAlignment_t;
+						case 'r':
+							return ParameterVal_childAlignment_r;
+						case 'b':
+							return ParameterVal_childAlignment_b;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_flowDir: {
+					switch (this.val) {
+						case 'col':
+							return ParameterVal_flowDirection_col;
+						case 'row':
+							return ParameterVal_flowDirection_row;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_off:
+					switch (this.val) {
+						case 'ctr':
+							return ParameterVal_offset_ctr;
+						case 'off':
+							return ParameterVal_offset_off;
+						default:
+							return this.val;
+					}
+				case Param_type_bkpt:
+					switch (this.val) {
+						case 'fixed':
+							return ParameterVal_breakpoint_fixed;
+						case 'endCnv':
+							return ParameterVal_breakpoint_endCnv;
+						case 'bal':
+							return ParameterVal_breakpoint_bal;
+						default:
+							return this.val;
+					}
+				case Param_type_vertAlign:
+					switch (this.val) {
+						case 'mid':
+							return ParameterVal_verticalAlignment_mid;
+						case 'b':
+							return ParameterVal_verticalAlignment_b;
+						case 't':
+							return ParameterVal_verticalAlignment_t;
+						case 'none':
+							return ParameterVal_verticalAlignment_none;
+						default:
+							return this.val;
+					}
+				case Param_type_horzAlign:
+					switch (this.val) {
+						case 'r':
+							return ParameterVal_horizontalAlignment_r;
+						case 'l':
+							return ParameterVal_horizontalAlignment_l;
+						case 'ctr':
+							return ParameterVal_horizontalAlignment_ctr;
+						case 'none':
+							return ParameterVal_horizontalAlignment_none;
+						default:
+							return this.val;
+					}
+				case Param_type_begPts:
+				case Param_type_endPts:
+					const arrVal = this.val.split(' ');
+					const arrResult = [];
+					for (let i = 0; i < arrVal.length; i++) {
+						const val = arrVal[i];
+						switch (val) {
+							case "auto":
+								arrResult.push(ParameterVal_connectorPoint_auto);
+								break;
+							case "bCtr":
+								arrResult.push(ParameterVal_connectorPoint_bCtr);
+								break;
+							case "bL":
+								arrResult.push(ParameterVal_connectorPoint_bL);
+								break;
+							case "bR":
+								arrResult.push(ParameterVal_connectorPoint_bR);
+								break;
+							case "ctr":
+								arrResult.push(ParameterVal_connectorPoint_ctr);
+								break;
+							case "midL":
+								arrResult.push(ParameterVal_connectorPoint_midL);
+								break;
+							case "midR":
+								arrResult.push(ParameterVal_connectorPoint_midR);
+								break;
+							case "radial":
+								arrResult.push(ParameterVal_connectorPoint_radial);
+								break;
+							case "tCtr":
+								arrResult.push(ParameterVal_connectorPoint_tCtr);
+								break;
+							case "tL":
+								arrResult.push(ParameterVal_connectorPoint_tL);
+								break;
+							case "tR":
+								arrResult.push(ParameterVal_connectorPoint_tR);
+								break;
+							default:
+								break;
+						}
+					}
+					return arrResult;
+				case Param_type_parTxLTRAlign:
+				case Param_type_parTxRTLAlign:
+				case Param_type_shpTxLTRAlignCh:
+				case Param_type_shpTxRTLAlignCh:
+					switch (this.val) {
+						case "r":
+							return ParameterVal_horizontalAlignment_r;
+						case "l":
+							return ParameterVal_horizontalAlignment_l;
+						case "ctr":
+							return ParameterVal_horizontalAlignment_ctr;
+						default:
+							return this.val;
+					}
+				case Param_type_txAnchorVert:
+				case Param_type_txAnchorVertCh:
+					switch (this.val) {
+						case "b":
+							return ParameterVal_textAnchorVertical_b;
+						case "t":
+							return ParameterVal_textAnchorVertical_t;
+						case "mid":
+							return ParameterVal_textAnchorVertical_mid;
+						default:
+							return this.val;
+					}
+				case Param_type_txAnchorHorz:
+				case Param_type_txAnchorHorzCh:
+					switch (this.val) {
+						case "ctr":
+							return true;
+						default:
+							return false;
+					}
+				case Param_type_lnSpAfParP:
+				case Param_type_lnSpAfChP:
+					return parseFloat(this.val) / 100 * 1.2 * g_dKoef_pt_to_mm;
+				case Param_type_ar:
+				case Param_type_spanAng:
+				case Param_type_stAng:
+				case Param_type_bkPtFixedVal:
+				case Param_type_stBulletLvl:
+					return parseFloat(this.val);
+				default:
+					return this.val;
+			}
+		};
 
     Param.prototype.setType = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
@@ -3934,22 +4194,6 @@ Because of this, the display is sometimes not correct.
       return [this.if, this.else];
     };
 
-    Choose.prototype.startAlgorithm = function (pointTree, node) {
-      var check;
-      for (var i = 0; i < this.if.length; i += 1) {
-        if (!check) {
-          check = this.if[i].startAlgorithm(pointTree, node);
-        } else {
-          this.if[i].startAlgorithm(pointTree, node);
-        }
-      }
-      if (!check) {
-        if (this.else) {
-          this.else.startAlgorithm(pointTree, node);
-        }
-      }
-    };
-
 
 
     changesFactory[AscDFH.historyitem_ElseName] = CChangeString;
@@ -4036,20 +4280,6 @@ Because of this, the display is sometimes not correct.
       return [].concat(this.list);
     };
 
-    Else.prototype.startAlgorithm = function (pointTree, node) {
-      var constrLst = this.list.reduce(function (acc, current) {
-        return current instanceof ConstrLst ? current : acc;
-      }, null);
-      if (constrLst) {
-        constrLst.startSetConstr(pointTree, node);
-      }
-      this.list.forEach(function (element) {
-        if (element instanceof AscFormat.ForEach || element instanceof AscFormat.LayoutNode || element instanceof AscFormat.Choose) {
-          element.startAlgorithm(pointTree, node);
-        }
-      });
-    };
-
     changesFactory[AscDFH.historyitem_IteratorAttributesAddAxis] = CChangeContent;
     changesFactory[AscDFH.historyitem_IteratorAttributesRemoveAxis] = CChangeContent;
     changesFactory[AscDFH.historyitem_IteratorAttributesAddCnt] = AscDFH.CChangesDrawingsContentLong;
@@ -4111,6 +4341,74 @@ Because of this, the display is sometimes not correct.
 
     InitClass(IteratorAttributes, CBaseFormatObject, AscDFH.historyitem_type_IteratorAttributes);
 
+
+	  IteratorAttributes.prototype.getNodesArray = function (smartartAlgorithm) {
+		  if (!this.axis.length) {
+			  return [];
+		  }
+		  const currentNode = smartartAlgorithm.getCurrentNode();
+		  let currentNodes = [currentNode];
+		  for (let i = 0; i < this.axis.length; i += 1) {
+			  const newCurrentNodes = [];
+			  for (let j = 0; j < currentNodes.length; j += 1) {
+				  const node = currentNodes[j];
+				  const tempNodes = [];
+				  node.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i));
+				  const step = this.getStep(i);
+					let count = this.getCount(i) || tempNodes.length;
+				  for (let k = this.getStart(i, tempNodes.length); k < tempNodes.length; k += step) {
+					  if (!count) {
+						  break;
+					  }
+					  newCurrentNodes.push(tempNodes[k]);
+						count -= 1;
+				  }
+			  }
+			  currentNodes = newCurrentNodes;
+		  }
+			const lastNode = currentNodes[currentNodes.length - 1];
+			if (lastNode && lastNode.isHideLastTrans) {
+				currentNodes.pop();
+			}
+		  return currentNodes;
+	  };
+	  IteratorAttributes.prototype.getPtType = function (index) {
+		  if (this.ptType[index]) {
+				return this.ptType[index].getVal();
+		  }
+			return ElementType_value_all;
+	  };
+	  IteratorAttributes.prototype.getCount = function (index) {
+			return this.cnt[index] || 0;
+	  };
+	  IteratorAttributes.prototype.getAxis = function (index) {
+			if (this.axis[index]) {
+			return this.axis[index].getVal();
+			}
+			return AxisType_value_none;
+	  };
+	  IteratorAttributes.prototype.getStart = function (index, nodesLength) {
+		  if (AscFormat.isRealNumber(this.st[index])) {
+				const start = this.st[index];
+				if (start <= 0) {
+					return Math.max(nodesLength + start, 0);
+				}
+			  return start - 1;
+		  }
+		  return 0;
+	  };
+	  IteratorAttributes.prototype.getStep = function (index) {
+		  if (AscFormat.isRealNumber(this.step[index])) {
+			  return this.st[index];
+		  }
+		  return 1;
+	  };
+	  IteratorAttributes.prototype.getHideLastTrans = function (index) {
+		  if (this.hideLastTrans[index] !== undefined) {
+			  return this.hideLastTrans[index];
+		  }
+		  return true;
+	  };
     IteratorAttributes.prototype.addToLstAxis = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.axis.length, Math.max(0, nIdx));
       oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
@@ -4347,7 +4645,7 @@ Because of this, the display is sometimes not correct.
 
     function ElementType() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = ElementType_value_all;
     }
 
     InitClass(ElementType, CBaseFormatObject, AscDFH.historyitem_type_ElementType);
@@ -4566,7 +4864,7 @@ Because of this, the display is sometimes not correct.
       oCopy.setInt(this.getInt());
     };
 
-    changesFactory[AscDFH.historyitem_IfArg] = CChangeString;
+    changesFactory[AscDFH.historyitem_IfArg] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfRef] = CChangeString;
     changesFactory[AscDFH.historyitem_IfFunc] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfName] = CChangeString;
@@ -4602,7 +4900,7 @@ Because of this, the display is sometimes not correct.
 
     function If() {
       IteratorAttributes.call(this);
-      this.arg = null;
+      this.arg = If_arg_none;
       this.func = null;
       this.name = null;
       this.op = null;
@@ -4612,9 +4910,58 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(If, IteratorAttributes, AscDFH.historyitem_type_If);
+		If.getArgEnum = function (arg) {
+			switch (arg) {
+				case 'animLvl':
+					return If_arg_animLvl;
+				case 'animOne':
+					return If_arg_animOne;
+				case 'bulEnabled':
+					return If_arg_bulEnabled;
+				case 'chMax':
+					return If_arg_chMax;
+				case 'chPref':
+					return If_arg_chPref;
+				case 'dir':
+					return If_arg_dir;
+				case 'hierBranch':
+					return If_arg_hierBranch;
+				case 'orgChart':
+					return If_arg_orgChart;
+				case 'resizeHandles':
+					return If_arg_resizeHandles;
+				case 'none':
+				default:
+					return If_arg_none;
+			}
+		};
+		If.getArgString = function (arg) {
+			switch (arg) {
+				case If_arg_animLvl:
+					return 'animLvl';
+				case If_arg_animOne:
+					return 'animOne';
+				case If_arg_bulEnabled:
+					return 'bulEnabled';
+				case If_arg_chMax:
+					return 'chMax';
+				case If_arg_chPref:
+					return 'chPref';
+				case If_arg_dir:
+					return 'dir';
+				case If_arg_hierBranch:
+					return 'hierBranch';
+				case If_arg_none:
+					return 'none';
+				case If_arg_orgChart:
+					return 'orgChart';
+				case If_arg_resizeHandles:
+					return 'resizeHandles';
 
+			}
+		}
     If.prototype.setArg = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
       this.arg = pr;
     };
 
@@ -4758,7 +5105,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteUChar2(8, this.op);
       pWriter._WriteUChar2(9, this.func);
       pWriter._WriteString2(10, this.val);
-      pWriter._WriteString2(11, this.arg);
+      pWriter._WriteString2(11, If.getArgString(this.arg));
     };
     If.prototype.writeChildren = function(pWriter) {
       for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
@@ -4798,7 +5145,7 @@ Because of this, the display is sometimes not correct.
       else if (8 === nType) this.setOp(oStream.GetUChar());
       else if (9 === nType) this.setFunc(oStream.GetUChar());
       else if (10 === nType) this.setVal(oStream.GetString2());
-      else if (11 === nType) this.setArg(oStream.GetString2());
+      else if (11 === nType) this.setArg(If.getArgEnum(oStream.GetString2()));
     };
 
     If.prototype.readChild = function(nType, pReader) {
@@ -4806,191 +5153,6 @@ Because of this, the display is sometimes not correct.
     };
     If.prototype.getChildren = function() {
       return [].concat(this.list);
-    };
-
-    If.prototype.startAlgorithm = function (pointTree, node) {
-      var check = this.checkCondition(pointTree, node);
-      if (check) {
-        var constrLst = this.list.reduce(function (acc, current) {
-          return current instanceof ConstrLst ? current : acc;
-        }, null);
-        if (constrLst) {
-          constrLst.startSetConstr(pointTree, node);
-        }
-        this.list.forEach(function (element) {
-          if (element instanceof AscFormat.ForEach || element instanceof AscFormat.LayoutNode || element instanceof AscFormat.Choose) {
-            element.startAlgorithm(pointTree, node);
-          }
-        });
-      }
-      return check;
-    };
-
-
-    If.prototype.checkCondition = function (pointTree, nodeData) {
-      if (nodeData.node) {
-        var nodes = [];
-        var smartArtNode = nodeData.node.parent;
-        this.axis.forEach(function (type) {
-          nodes = nodes.concat(smartArtNode.getAxis(type.getVal()));
-        });
-      }
-
-      switch (this.func) {
-        case If_func_cnt:
-          return this.funcCnt(nodes);
-        case If_func_depth:
-          return this.funcDepth(nodes);
-        case If_func_maxDepth:
-          return this.funcMaxDepth(nodes);
-        case If_func_pos:
-          return this.funcPos(nodes);
-        case If_func_posEven:
-          return this.funcPosEven(nodes);
-        case If_func_posOdd:
-          return this.funcPosOdd(nodes);
-        case If_func_revPos:
-          return this.funcRevPos(nodes);
-        case If_func_var:
-          return this.funcVar(nodeData);
-        default:
-          return false;
-      }
-    };
-
-    If.prototype.funcVar = function (nodeData) {
-      if (nodeData && nodeData.node) {
-        var nodeElement = nodeData.node.parent;
-        var rootOfTree = nodeElement.getRoot()[0];
-        var rootPres = rootOfTree.data.getPresWithVarLst();
-        var currentPres = nodeData.node.getPresByNameAndStyleLbl(nodeData.name, nodeData.styleLbl);
-        switch (this.arg) {
-          case 'animLvl':
-          case 'hierBranch':
-          case 'bulletEnabled':
-            if (currentPres && currentPres.prSet && currentPres.prSet.presLayoutVars) {
-              return this.compare(currentPres.prSet.presLayoutVars.getVal(this.arg));
-            }
-            break;
-
-          case 'animOne':
-          case 'dir':
-          case 'chPref':
-          case 'chMax':
-          case 'orgChart':
-          case 'resizeHandles':
-            if (rootPres && rootPres.prSet && rootPres.prSet.presLayoutVars && rootPres.prSet.presLayoutVars[this.arg]) {
-              return this.compare(rootPres.prSet.presLayoutVars.getVal(this.arg));
-            }
-            break;
-          default:
-            return false;
-        }
-      }
-      return false;
-    };
-
-    If.prototype.funcCnt = function (axis) {
-      var count = 0;
-      this.ptType.forEach(function (Type) {
-        var typeOfPoint = Type.getVal();
-        axis.forEach(function (node) {
-          count += node.getPoints(typeOfPoint).length;
-        });
-      });
-      return this.compare(count);
-    };
-
-    If.prototype.funcDepth = function (axis) {
-      return this.compare(axis[0].data.depth);
-    };
-
-    If.prototype.funcMaxDepth = function (axis) {
-      var maxDepth = axis.reduce(function (acc, b) {
-        if (b.data.depth > acc) {
-          return b.data.depth;
-        }
-        return acc;
-      }, 0);
-      return this.compare(maxDepth);
-    };
-
-    If.prototype.funcPos = function () {
-
-    };
-
-    If.prototype.funcPosEven = function (axis) {
-      return this.funcPos(axis) % 2 === 0;
-    };
-
-    If.prototype.funcPosOdd = function (axis) {
-      return this.funcPos(axis) % 2 === 1;
-    };
-
-    If.prototype.funcRevPos = function () {
-
-    };
-
-    If.prototype.compare = function (comparingArg) {
-      var val = this.valAdapter(this.val);
-      var adaptComparingArg = this.valAdapter(comparingArg);
-      switch (this.op) {
-        case If_op_equ:
-          return adaptComparingArg === val;
-        case If_op_gt:
-          return adaptComparingArg > val;
-        case If_op_gte:
-          return adaptComparingArg >= val;
-        case If_op_lt:
-          return adaptComparingArg < val;
-        case If_op_lte:
-          return adaptComparingArg <= val;
-        case If_op_neq:
-          return adaptComparingArg !== val;
-        default:
-          return false;
-      }
-    };
-
-    If.prototype.valAdapter = function (value) {
-      var adaptVal;
-      if (!(parseFloat(value) !== parseFloat(value))) {
-        adaptVal = parseFloat(value);
-      } else {
-        switch (value) {
-          case 'norm':
-          case 'none':
-          case 'hang':
-          case 'exact':
-          case false:
-          case 'false':
-            adaptVal = 0;
-            break;
-          case 'rev':
-          case 'ctr':
-          case 'branch':
-          case 'init':
-          case 'rel':
-          case true:
-          case 'true':
-            adaptVal = 1;
-            break;
-          case 'lvl':
-          case 'one':
-          case 'l':
-            adaptVal = 2;
-            break;
-          case 'r':
-            adaptVal = 3;
-            break;
-          case 'std':
-            adaptVal = 4;
-            break;
-          default:
-            return;
-        }
-      }
-      return adaptVal;
     };
 
     function ConstrLst() {
@@ -5014,34 +5176,6 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
-
-    ConstrLst.prototype.startSetConstr = function (pointTree, node) {
-      var constrWithPrimFont = [];
-      var constrWithSecFont = [];
-      this.list.forEach(function (constr) {
-        if (constr.type === Constr_type_primFontSz) {
-          constrWithPrimFont.push({
-            constr: constr,
-            node: node,
-          });
-        } else if (constr.type === Constr_type_secFontSz) {
-          constrWithSecFont.push({
-            constr: constr,
-            node: node,
-          });
-        } else {
-          constr.setConstr(pointTree, [{node: node, constr: constr}]);
-        }
-      });
-      if (constrWithPrimFont.length !== 0) {
-        constrWithPrimFont[0].constr.setConstr(pointTree, constrWithPrimFont);
-      }
-      if (constrWithSecFont.length !== 0) {
-        constrWithSecFont[0].constr.setConstr(pointTree, constrWithSecFont);
-      }
-    };
-
-
 
     changesFactory[AscDFH.historyitem_ConstrFact] = CChangeDouble2;
     changesFactory[AscDFH.historyitem_ConstrFor] = CChangeLong;
@@ -5095,17 +5229,17 @@ Because of this, the display is sometimes not correct.
 
     function Constr() {
       CBaseFormatObject.call(this);
-      this.fact = null;
-      this.for = null;
+      this.fact = 1;
+      this.for = Constr_for_self;
       this.forName = null;
-      this.op = null;
+      this.op = Constr_op_none;
       this.setPtType(new ElementType());
-      this.refFor = null;
+      this.refFor = Constr_for_self;
       this.refForName = null;
       this.setRefPtType(new ElementType());
-      this.refType = null;
+      this.refType = Constr_type_none;
       this.type = null;
-      this.val = null;
+      this.val = 0;
       this.extLst = null;
     }
 
@@ -5283,534 +5417,6 @@ Because of this, the display is sometimes not correct.
     Constr.prototype.readChild = function(nType, pReader) {
     };
 
-    Constr.prototype.getFieldScale = function (type) {
-      if (type) {
-        switch (type) {
-          case Constr_type_alignOff:
-            return 1;
-          case Constr_type_b:
-            return 1;
-          case Constr_type_begMarg:
-            return 1;
-          case Constr_type_begPad:
-            return 1;
-          case Constr_type_bendDist:
-            return 1;
-          case Constr_type_bMarg:
-            return 1;
-          case Constr_type_bOff:
-            return 1;
-          case Constr_type_connDist:
-            return 1;
-          case Constr_type_ctrX:
-            return 1;
-          case Constr_type_ctrXOff:
-            return 1;
-          case Constr_type_ctrY:
-            return 1;
-          case Constr_type_ctrYOff:
-            return 1;
-          case Constr_type_diam:
-            return 1;
-          case Constr_type_endMarg:
-            return 1;
-          case Constr_type_endPad:
-            return 1;
-          case Constr_type_h:
-          case Constr_type_w:
-            return 36000;
-          case Constr_type_hArH:
-            return 1;
-          case Constr_type_hOff: // TODO: add to constr type in x2t
-            return 1;
-          case Constr_type_l:
-            return 1;
-          case Constr_type_lMarg:
-            return 1;
-          case Constr_type_lOff:
-            return 1;
-          case Constr_type_none:
-            return 1;
-          case Constr_type_primFontSz:
-          case Constr_type_secFontSz:
-            return 100 * Constr_font_scale;
-          case Constr_type_pyraAcctRatio:
-            return 1;
-          case Constr_type_r:
-            return 1;
-          case Constr_type_rMarg:
-            return 1;
-          case Constr_type_rOff:
-            return 1;
-          case Constr_type_secSibSp:
-            return 1;
-          case Constr_type_sibSp:
-            return 1;
-          case Constr_type_sp:
-            return 1;
-          case Constr_type_stemThick:
-            return 1;
-          case Constr_type_t:
-            return 1;
-          case Constr_type_tMarg:
-            return 1;
-          case Constr_type_tOff:
-            return 1;
-          case Constr_type_userA:
-            return 1;
-          case Constr_type_userB:
-            return 1;
-          case Constr_type_userC:
-            return 1;
-          case Constr_type_userD:
-            return 1;
-          case Constr_type_userE:
-            return 1;
-          case Constr_type_userF:
-            return 1;
-          case Constr_type_userG:
-            return 1;
-          case Constr_type_userH:
-            return 1;
-          case Constr_type_userI:
-            return 1;
-          case Constr_type_userJ:
-            return 1;
-          case Constr_type_userK:
-            return 1;
-          case Constr_type_userL:
-            return 1;
-          case Constr_type_userM:
-            return 1;
-          case Constr_type_userN:
-            return 1;
-          case Constr_type_userO:
-            return 1;
-          case Constr_type_userP:
-            return 1;
-          case Constr_type_userQ:
-            return 1;
-          case Constr_type_userR:
-            return 1;
-          case Constr_type_userS:
-            return 1;
-          case Constr_type_userT:
-            return 1;
-          case Constr_type_userU:
-            return 1;
-          case Constr_type_userV:
-            return 1;
-          case Constr_type_userW:
-            return 1;
-          case Constr_type_userX:
-            return 1;
-          case Constr_type_userY:
-            return 1;
-          case Constr_type_userZ:
-            return 1;
-          case Constr_type_wArH:
-            return 1;
-          case Constr_type_wOff:
-            return 1;
-          default:
-            return 1;
-        }
-      }
-    return 1;
-    };
-
-    Constr.prototype.getConstrVal = function (shape) {
-      var result;
-      if (this.val) {
-        result = this.val;
-        return;
-      } else {
-        if (shape) {
-          var constrType = this.refType;
-
-          switch (constrType) {
-            case Constr_type_alignOff:
-              break;
-            case Constr_type_b:
-              break;
-            case Constr_type_begMarg:
-              break;
-            case Constr_type_begPad:
-              break;
-            case Constr_type_bendDist:
-              break;
-            case Constr_type_bMarg:
-              break;
-            case Constr_type_bOff:
-              break;
-            case Constr_type_connDist:
-              break;
-            case Constr_type_ctrX:
-              break;
-            case Constr_type_ctrXOff:
-              break;
-            case Constr_type_ctrY:
-              break;
-            case Constr_type_ctrYOff:
-              break;
-            case Constr_type_diam:
-              break;
-            case Constr_type_endMarg:
-              break;
-            case Constr_type_endPad:
-              break;
-            case Constr_type_h:
-              //result = shape.extX;
-              break;
-            case Constr_type_hArH:
-              break;
-            case Constr_type_hOff: // TODO: add to constr type in x2t
-              break;
-            case Constr_type_l:
-              break;
-            case Constr_type_lMarg:
-              break;
-            case Constr_type_lOff:
-              break;
-            case Constr_type_none:
-              break;
-            case Constr_type_primFontSz:
-            case Constr_type_secFontSz:
-              if (shape.txBody && shape.txBody.content) {
-                result = shape.txBody.content.getFontSizeForConstr();
-              }
-              break;
-            case Constr_type_pyraAcctRatio:
-              break;
-            case Constr_type_r:
-              break;
-            case Constr_type_rMarg:
-              break;
-            case Constr_type_rOff:
-              break;
-            case Constr_type_secSibSp:
-              break;
-            case Constr_type_sibSp:
-              break;
-            case Constr_type_sp:
-              break;
-            case Constr_type_stemThick:
-              break;
-            case Constr_type_t:
-              break;
-            case Constr_type_tMarg:
-              break;
-            case Constr_type_tOff:
-              break;
-            case Constr_type_userA:
-              break;
-            case Constr_type_userB:
-              break;
-            case Constr_type_userC:
-              break;
-            case Constr_type_userD:
-              break;
-            case Constr_type_userE:
-              break;
-            case Constr_type_userF:
-              break;
-            case Constr_type_userG:
-              break;
-            case Constr_type_userH:
-              break;
-            case Constr_type_userI:
-              break;
-            case Constr_type_userJ:
-              break;
-            case Constr_type_userK:
-              break;
-            case Constr_type_userL:
-              break;
-            case Constr_type_userM:
-              break;
-            case Constr_type_userN:
-              break;
-            case Constr_type_userO:
-              break;
-            case Constr_type_userP:
-              break;
-            case Constr_type_userQ:
-              break;
-            case Constr_type_userR:
-              break;
-            case Constr_type_userS:
-              break;
-            case Constr_type_userT:
-              break;
-            case Constr_type_userU:
-              break;
-            case Constr_type_userV:
-              break;
-            case Constr_type_userW:
-              break;
-            case Constr_type_userX:
-              break;
-            case Constr_type_userY:
-              break;
-            case Constr_type_userZ:
-              break;
-            case Constr_type_w:
-              //result = shape.extY;
-              break;
-            case Constr_type_wArH:
-              break;
-            case Constr_type_wOff:
-              break;
-            default:
-              return;
-          }
-          if (typeof result === 'number' && !(result !== result)) {
-            result *= this.getFieldScale(constrType);
-          }
-        }
-      }
-      if (typeof result === 'number'&& !(result !== result)) {
-        var fact = Math.abs(this.fact ? this.fact : 1);
-        result *= fact;
-        return result;
-      }
-    };
-
-    Constr.prototype.getShapesFromAxis = function (transfer, isRef) {
-      var node = transfer && transfer.node && transfer.node.parent;
-      if (node) {
-        var axisNodes;
-        var shapes = [];
-        var fGetAxis = this.getAxisFromParent.bind(this, node);
-        var that = this;
-        axisNodes = isRef ? fGetAxis(this.refFor) : fGetAxis(this.for);
-        if (axisNodes && axisNodes.length !== 0) {
-          var ptType;
-          if (isRef) {
-            ptType = this.refPtType && this.refPtType.getVal();
-            shapes = axisNodes.reduce(function (acc, axisNode) {
-              if (that.refForName && ptType) {
-                return acc.concat(axisNode.getShape(that.refForName, ptType));
-              }
-              else if (that.refForName) {
-                return acc.concat(axisNode.getShape(that.refForName));
-              }
-              else if (ptType) {
-                return acc.concat(axisNode.getShape(transfer.name, ptType));
-              } else {
-                return acc.concat(axisNode.getShape(transfer.name));
-              }
-            }, []);
-          } else {
-            ptType = this.ptType && this.ptType.getVal();
-            shapes = axisNodes.reduce(function (acc, axisNode) {
-              if (that.forName && ptType) {
-                return acc.concat(axisNode.getShape(that.forName, ptType));
-              }
-              else if (that.forName) {
-                return acc.concat(axisNode.getShape(that.forName));
-              }
-              else if (ptType) {
-                return acc.concat(axisNode.getShape(undefined, ptType));
-              } else {
-                return acc.concat(axisNode.getShape());
-              }
-            }, []);
-          }
-        }
-        return shapes;
-      }
-    };
-
-    Constr.prototype.getAxisFromParent = function (node, constrAxisType) {
-      switch (constrAxisType) {
-        case Constr_for_ch:
-          return node.getAxis(AxisType_value_ch);
-        case Constr_for_des:
-          return node.getAxis(AxisType_value_des);
-        case Constr_for_self:
-          return node.getAxis(AxisType_value_self);
-        default:
-          return node.getAxis(AxisType_value_self);
-      }
-    };
-
-    Constr.prototype.setConstr = function (pointTree, transfer) {
-      // var node = transfer;
-      // var smartArt = pointTree && pointTree.parent;
-      // if (node) {
-      //   var shapes = this.getShapesFromAxis(node, false);
-      //   var refShape = this.getShapesFromAxis(node, true);
-      //   if (this.type === Constr_type_primFontSz || this.type === Constr_type_secFontSz) {
-      //     if (smartArt) {
-      //       smartArt.setTruthFontSizeInSmartArt(shapes);
-      //     }
-      //     return;
-      //   }
-      //
-      //   var that = this;
-      //   var value = refShape.reduce(function (acc, shape) {
-      //     var compute = that.getConstrVal(shape);
-      //     if (!acc && typeof compute === 'number') {
-      //       return compute;
-      //     } else if (typeof compute === 'number' && compute > acc) {
-      //       return compute;
-      //     }
-      //     return acc;
-      //   }, undefined);
-      //
-      //   if (typeof value === 'number' && !(value !== value)) {
-      //     value /= this.getFieldScale(this.type);
-      //     shapes.forEach(function (shape) {
-      //       var setter = that.getConstrSetter(shape);
-      //       if (setter) {
-      //         setter.call(shape, value);
-      //       }
-      //     });
-      //   }
-      // }
-    };
-
-    Constr.prototype.getConstrSetter = function (shape) {
-      if (shape) {
-        var constrType = this.type;
-        switch (constrType) {
-          case Constr_type_alignOff:
-            break;
-          case Constr_type_b:
-            break;
-          case Constr_type_begMarg:
-            break;
-          case Constr_type_begPad:
-            break;
-          case Constr_type_bendDist:
-            break;
-          case Constr_type_bMarg:
-            break;
-          case Constr_type_bOff:
-            break;
-          case Constr_type_connDist:
-            break;
-          case Constr_type_ctrX:
-            break;
-          case Constr_type_ctrXOff:
-            break;
-          case Constr_type_ctrY:
-            break;
-          case Constr_type_ctrYOff:
-            break;
-          case Constr_type_diam:
-            break;
-          case Constr_type_endMarg:
-            break;
-          case Constr_type_endPad:
-            break;
-          case Constr_type_h:
-            //return shape.setResizeHeightConstr;
-            break;
-          case Constr_type_hArH:
-            break;
-          case Constr_type_hOff: // TODO: add to constr type in x2t
-            break;
-          case Constr_type_l:
-            break;
-          case Constr_type_lMarg:
-            break;
-          case Constr_type_lOff:
-            break;
-          case Constr_type_none:
-            break;
-          case Constr_type_primFontSz:
-          case Constr_type_secFontSz:
-            //return shape.setFontSizeForAllContent;
-            break;
-          case Constr_type_pyraAcctRatio:
-            break;
-          case Constr_type_r:
-            break;
-          case Constr_type_rMarg:
-            break;
-          case Constr_type_rOff:
-            break;
-          case Constr_type_secSibSp:
-            break;
-          case Constr_type_sibSp:
-            break;
-          case Constr_type_sp:
-            break;
-          case Constr_type_stemThick:
-            break;
-          case Constr_type_t:
-            break;
-          case Constr_type_tMarg:
-            break;
-          case Constr_type_tOff:
-            break;
-          case Constr_type_userA:
-            break;
-          case Constr_type_userB:
-            break;
-          case Constr_type_userC:
-            break;
-          case Constr_type_userD:
-            break;
-          case Constr_type_userE:
-            break;
-          case Constr_type_userF:
-            break;
-          case Constr_type_userG:
-            break;
-          case Constr_type_userH:
-            break;
-          case Constr_type_userI:
-            break;
-          case Constr_type_userJ:
-            break;
-          case Constr_type_userK:
-            break;
-          case Constr_type_userL:
-            break;
-          case Constr_type_userM:
-            break;
-          case Constr_type_userN:
-            break;
-          case Constr_type_userO:
-            break;
-          case Constr_type_userP:
-            break;
-          case Constr_type_userQ:
-            break;
-          case Constr_type_userR:
-            break;
-          case Constr_type_userS:
-            break;
-          case Constr_type_userT:
-            break;
-          case Constr_type_userU:
-            break;
-          case Constr_type_userV:
-            break;
-          case Constr_type_userW:
-            break;
-          case Constr_type_userX:
-            break;
-          case Constr_type_userY:
-            break;
-          case Constr_type_userZ:
-            break;
-          case Constr_type_w:
-            //return shape.setResizeWidthConstr;
-            break;
-          case Constr_type_wArH:
-            break;
-          case Constr_type_wOff:
-            break;
-          default:
-            return;
-        }
-      }
-    };
-
     changesFactory[AscDFH.historyitem_PresOfExtLst] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_PresOfExtLst] = function (oClass, value) {
       oClass.extLst = value;
@@ -5960,7 +5566,7 @@ Because of this, the display is sometimes not correct.
     function Rule() {
       CBaseFormatObject.call(this);
       this.fact = null;
-      this.for = null;
+      this.for = AscFormat.Constr_for_self;
       this.forName = null;
       this.max = null;
       this.type = null;
@@ -6094,7 +5700,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_SShapeHideGeom] = CChangeBool;
     changesFactory[AscDFH.historyitem_SShapeLkTxEntry] = CChangeBool;
     changesFactory[AscDFH.historyitem_SShapeRot] = CChangeDouble2;
-    changesFactory[AscDFH.historyitem_SShapeType] = CChangeString;
+    changesFactory[AscDFH.historyitem_SShapeType] = CChangeLong;
     changesFactory[AscDFH.historyitem_SShapeZOrderOff] = CChangeLong;
     changesFactory[AscDFH.historyitem_SShapeAdjLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_SShapeExtLst] = CChangeObject;
@@ -6129,12 +5735,12 @@ Because of this, the display is sometimes not correct.
     function SShape() {
       CBaseFormatObject.call(this);
       this.blip = null;
-      this.blipPhldr = null;
-      this.hideGeom = null;
-      this.lkTxEntry = null;
-      this.rot = null;
-      this.type = null;
-      this.zOrderOff = null;
+      this.blipPhldr = false;
+      this.hideGeom = false;
+      this.lkTxEntry = false;
+      this.rot = 0;
+      this.type = LayoutShapeType_outputShapeType_none;
+      this.zOrderOff = 0;
       this.adjLst = null;
       this.extLst = null;
     }
@@ -6167,7 +5773,7 @@ Because of this, the display is sometimes not correct.
     }
 
     SShape.prototype.setType = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
       this.type = oPr;
     }
 
@@ -6246,7 +5852,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteBool2(3, this.lkTxEntry);
       pWriter._WriteDoubleReal2(4, this.rot);
       pWriter._WriteInt2(5, this.zOrderOff);
-      pWriter._WriteString2(6, this.type);
+      pWriter._WriteString2(6, AscCommon.To_XML_ST_LayoutShapeType(this.type));
 
     };
     SShape.prototype.writeChildren = function(pWriter) {
@@ -6259,8 +5865,8 @@ Because of this, the display is sometimes not correct.
       else if (2 === nType) this.setHideGeom(oStream.GetBool());
       else if (3 === nType) this.setLkTxEntry(oStream.GetBool());
       else if (4 === nType) this.setRot(oStream.GetDouble());
-      else if (5 === nType) this.setZOrderOff(oStream.GetULong());
-      else if (6 === nType) this.setType(oStream.GetString2());
+      else if (5 === nType) this.setZOrderOff(oStream.GetLong());
+      else if (6 === nType) this.setType(AscCommon.From_XML_ST_LayoutShapeType(oStream.GetString2()));
     };
     SShape.prototype.readChild = function(nType, pReader) {
       switch (nType) {
@@ -6402,6 +6008,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(VarLst, CBaseFormatObject, AscDFH.historyitem_type_VarLst);
 
+	  VarLst.prototype.getHierBranchValue = function () {
+		  return this.hierBranch && this.hierBranch.val;
+	  }
     VarLst.prototype.setAnimLvl = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
       this.animLvl = oPr;
@@ -6640,7 +6249,9 @@ Because of this, the display is sometimes not correct.
     };
     AnimLvl.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+			if (val !== null) {
+				this.setVal(val);
+			}
     };
     AnimLvl.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
@@ -6680,7 +6291,9 @@ Because of this, the display is sometimes not correct.
 
     AnimOne.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
     changesFactory[AscDFH.historyitem_BulletEnabledVal] = CChangeBool;
@@ -6713,7 +6326,9 @@ Because of this, the display is sometimes not correct.
 
     BulletEnabled.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(!!val);
+	    if (val !== null) {
+		    this.setVal(!!val);
+	    }
     };
 
     changesFactory[AscDFH.historyitem_ChMaxVal] = CChangeLong;
@@ -6795,7 +6410,7 @@ Because of this, the display is sometimes not correct.
 
     function DiagramDirection() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = DiagramDirection_val_norm;
     }
 
     InitClass(DiagramDirection, CBaseFormatObject, AscDFH.historyitem_type_DiagramDirection);
@@ -6819,7 +6434,9 @@ Because of this, the display is sometimes not correct.
 
     DiagramDirection.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
 
@@ -6830,7 +6447,7 @@ Because of this, the display is sometimes not correct.
 
     function HierBranch() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = AscFormat.HierBranch_val_std;
     }
 
     InitClass(HierBranch, CBaseFormatObject, AscDFH.historyitem_type_HierBranch);
@@ -6849,12 +6466,14 @@ Because of this, the display is sometimes not correct.
     };
 
     HierBranch.prototype.toPPTY = function (pWriter) {
-      pWriter.WriteByteToPPTY(this.getVal() || 0);
+      pWriter.WriteByteToPPTY(this.getVal());
     };
 
     HierBranch.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
 
@@ -6889,7 +6508,9 @@ Because of this, the display is sometimes not correct.
 
     OrgChart.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(!!val);
+	    if (val !== null) {
+		    this.setVal(!!val);
+	    }
     };
 
 
@@ -6925,7 +6546,9 @@ Because of this, the display is sometimes not correct.
 
     ResizeHandles.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
 
@@ -7104,16 +6727,6 @@ Because of this, the display is sometimes not correct.
       return [].concat(this.list);
     };
 
-    ForEach.prototype.startAlgorithm = function (pointTree, node) {
-      this.list.forEach(function (element) {
-        if (element instanceof AscFormat.ForEach || element instanceof AscFormat.LayoutNode || element instanceof AscFormat.Choose) {
-          element.startAlgorithm(pointTree, node);
-        }
-      });
-    };
-
-
-
     changesFactory[AscDFH.historyitem_SampDataUseDef] = CChangeBool;
     changesFactory[AscDFH.historyitem_SampDataDataModel] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_SampDataUseDef] = function (oClass, value) {
@@ -7185,80 +6798,6 @@ Because of this, the display is sometimes not correct.
       return [this.dataModel];
     };
 
-
-    changesFactory[AscDFH.historyitem_StyleDataUseDef] = CChangeBool;
-    changesFactory[AscDFH.historyitem_StyleDataDataModel] = CChangeObject;
-    drawingsChangesMap[AscDFH.historyitem_StyleDataUseDef] = function (oClass, value) {
-      oClass.useDef = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_StyleDataDataModel] = function (oClass, value) {
-      oClass.dataModel = value;
-    };
-
-    function StyleData() {
-      CBaseFormatObject.call(this);
-      this.useDef = null;
-      this.dataModel = null;
-    }
-
-    InitClass(StyleData, CBaseFormatObject, AscDFH.historyitem_type_StyleData);
-
-    StyleData.prototype.setUseDef = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
-      this.useDef = pr;
-    }
-
-    StyleData.prototype.setDataModel = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
-      this.dataModel = oPr;
-      this.setParentToChild(oPr);
-    }
-
-    StyleData.prototype.getUseDef = function () {
-      return this.useDef;
-    }
-
-    StyleData.prototype.getDataModel = function () {
-      return this.dataModel;
-    }
-
-    StyleData.prototype.fillObject = function (oCopy, oIdMap) {
-      oCopy.setUseDef(this.getUseDef());
-      if (this.getDataModel()) {
-        oCopy.setDataModel(this.getDataModel().createDuplicate(oIdMap));
-      }
-    }
-
-    StyleData.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteBool2(0, this.useDef);
-    };
-    StyleData.prototype.writeChildren = function(pWriter) {
-      this.writeRecord2(pWriter, 0, this.dataModel);
-    };
-    StyleData.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setUseDef(oStream.GetBool());
-    };
-    StyleData.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0: {
-          this.setDataModel(new DataModel());
-          this.dataModel.fromPPTY(pReader);
-          break;
-        }
-        default: {
-          s.SkipRecord();
-          break;
-        }
-      }
-    };
-    StyleData.prototype.getChildren = function() {
-      return [this.dataModel];
-    };
-
-
-
     changesFactory[AscDFH.historyitem_DiagramTitleLang] = CChangeString;
     changesFactory[AscDFH.historyitem_DiagramTitleVal] = CChangeString;
     drawingsChangesMap[AscDFH.historyitem_DiagramTitleLang] = function (oClass, value) {
@@ -7271,7 +6810,7 @@ Because of this, the display is sometimes not correct.
     function DiagramTitle() {
       CBaseFormatObject.call(this);
       this.lang = null;
-      this.val = null;
+      this.val = "";
     }
 
     InitClass(DiagramTitle, CBaseFormatObject, AscDFH.historyitem_type_DiagramTitle);
@@ -7676,8 +7215,8 @@ Because of this, the display is sometimes not correct.
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
         oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
-        delete this.styleLblByName[deleteObj[0].name];
+        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1)[0];
+        delete this.styleLblByName[deleteObj.name];
       }
     };
 
@@ -7751,7 +7290,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -7828,7 +7367,6 @@ Because of this, the display is sometimes not correct.
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
-
     ColorDefStyleLbl.prototype.setEffectClrLst = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
       this.effectClrLst = oPr;
@@ -7947,32 +7485,32 @@ Because of this, the display is sometimes not correct.
       var s = pReader.stream;
       switch (nType) {
         case 0: {
-          this.setEffectClrLst(new EffectClrLst());
+          this.setEffectClrLst(new ClrLst());
           this.effectClrLst.fromPPTY(pReader);
           break;
         }
         case 1: {
-          this.setFillClrLst(new FillClrLst());
+          this.setFillClrLst(new ClrLst());
           this.fillClrLst.fromPPTY(pReader);
           break;
         }
         case 2: {
-          this.setLinClrLst(new LinClrLst());
+          this.setLinClrLst(new ClrLst());
           this.linClrLst.fromPPTY(pReader);
           break;
         }
         case 3: {
-          this.setTxEffectClrLst(new TxEffectClrLst());
+          this.setTxEffectClrLst(new ClrLst());
           this.txEffectClrLst.fromPPTY(pReader);
           break;
         }
         case 4: {
-          this.setTxFillClrLst(new TxFillClrLst());
+          this.setTxFillClrLst(new ClrLst());
           this.txFillClrLst.fromPPTY(pReader);
           break;
         }
         case 5: {
-          this.setTxLinClrLst(new TxLinClrLst());
+          this.setTxLinClrLst(new ClrLst());
           this.txLinClrLst.fromPPTY(pReader);
           break;
         }
@@ -7985,98 +7523,81 @@ Because of this, the display is sometimes not correct.
     ColorDefStyleLbl.prototype.getChildren = function() {
       return [this.effectClrLst, this.fillClrLst, this.linClrLst, this.txEffectClrLst, this.txFillClrLst, this.txLinClrLst];
     };
+	  ColorDefStyleLbl.prototype.checkNoFill = function () {
+			switch (this.name) {
+				case "parChTrans1D1":
+					return true;
+				default:
+					return false;
+			}
+	  };
 
-    changesFactory[AscDFH.historyitem_CCommonDataClrListAdd] = CChangesContentNoId;
-    changesFactory[AscDFH.historyitem_CCommonDataClrListRemove] = CChangesContentNoId;
-    drawingConstructorsMap[AscDFH.historyitem_CCommonDataClrListAdd] = AscFormat.CUniColor;
-    drawingConstructorsMap[AscDFH.historyitem_CCommonDataClrListRemove] = AscFormat.CUniColor;
-    drawingContentChanges[AscDFH.historyitem_CCommonDataClrListAdd] = function (oClass) {
-      return oClass.list;
-    };
-    drawingContentChanges[AscDFH.historyitem_CCommonDataClrListRemove] = function (oClass) {
-      return oClass.list;
-    };
+	  ColorDefStyleLbl.prototype.checkNoLn = function () {
+		  switch (this.name) {
+			  case "sibTrans2D1":
+			  case "trBgShp":
+			  case "bgShp":
+			  case "dkBgShp":
+			  case "fgSibTrans2D1":
+			  case "revTx":
+					return true;
+			  default:
+				  return false;
+		  }
+	  };
+	  ColorDefStyleLbl.prototype.setShapeFill = function (shapes, parentObjects) {
+			if (shapes.length && this.fillClrLst && !this.checkNoFill()) {
+				const fillShapes = [];
+				for (let i = 0; i < shapes.length; i++) {
+					if (!(shapes[i].shape.hideGeom || shapes[i].type === AscFormat.LayoutShapeType_outputShapeType_conn)) {
+						fillShapes.push(shapes[i]);
+					}
+				}
+				const fills = this.fillClrLst.getCurColor(fillShapes.length, parentObjects);
+				if (fills) {
+					for (let i = 0; i < fills.length; i++) {
+						fillShapes[i].setFill(fills[i]);
+					}
+				}
+			}
+	  };
 
+	  ColorDefStyleLbl.prototype.getLineWidth = function (shadowShape) {
+		  switch (this.name) {
+			  case "trAlignAcc1":
+			  case "sibTrans1D1":
+				  return 6350;
+			  default:
+					return shadowShape.tailLnArrow || shadowShape.headLnArrow ? 6350 : 12700;
+		  }
+	  }
+	  ColorDefStyleLbl.prototype.setShapeLn = function (shapes, parentObjects) {
+		  if (shapes.length && this.linClrLst && !this.checkNoLn()) {
+				const fillShapes = [];
+				for (let i = 0; i < shapes.length; i += 1) {
+					const shadowShape = shapes[i];
+					if (!(shadowShape.shape.hideGeom ||
+						shadowShape.node.isParNode() && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn)) {
+						fillShapes.push(shadowShape);
+					}
+				}
+			  const fills = this.linClrLst.getCurColor(fillShapes.length, parentObjects);
+			  if (fills) {
+				  for (let i = 0; i < fills.length; i++) {
+					  const shadowShape = fillShapes[i];
+					  const ln = new AscFormat.CLn();
+					  ln.setW(this.getLineWidth(shadowShape));
+					  ln.setFill(fills[i]);
+					  shadowShape.setLn(ln);
+				  }
+			  }
+		  }
+	  };
 
-    function CCommonDataClrList(type, ind, item, isAdd) {
-      CBaseFormatObject.call(this, type, ind, item, isAdd);
-      this.list = [];
-      this.hueDir = null;
-      this.meth = null;
-    }
-
-    InitClass(CCommonDataClrList, CBaseFormatObject, AscDFH.historyitem_type_CCommonDataClrList);
-
-    CCommonDataClrList.prototype.setHueDir = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
-      this.hueDir = pr;
-    }
-
-    CCommonDataClrList.prototype.setMeth = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
-      this.meth = pr;
-    }
-
-    CCommonDataClrList.prototype.getHueDir = function () {
-      return this.hueDir;
-    }
-
-    CCommonDataClrList.prototype.getMeth = function () {
-      return this.meth;
-    }
-
-    CCommonDataClrList.prototype.addToLst = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
-      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
-    };
-
-    CCommonDataClrList.prototype.removeFromLst = function (nIdx) {
-      if (nIdx > -1 && nIdx < this.list.length) {
-        this.list[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
-        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
-      }
-    };
-
-    CCommonDataClrList.prototype.fillObject = function (oCopy, oIdMap) {
-      for (var nIdx = 0; nIdx < this.list.length; ++nIdx) {
-        oCopy.addToLst(nIdx, this.list[nIdx].createDuplicate(oIdMap));
-      }
-    };
-
-    CCommonDataClrList.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar2(0, this.hueDir);
-      pWriter._WriteUChar2(1, this.meth);
-    };
-    CCommonDataClrList.prototype.writeChildren = function(pWriter) {
-      for (var i = 0; i < this.list.length; i += 1) {
-        pWriter.WriteRecord2(0, this.list[i], pWriter.WriteUniColor);
-      }
-    };
-    CCommonDataClrList.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) this.setHueDir(oStream.GetUChar());
-      else if (1 === nType) this.setMeth(oStream.GetUChar());
-    };
-    CCommonDataClrList.prototype.readChild = function(nType, pReader) {
-      var s = pReader.stream;
-      switch (nType) {
-        case 0:
-          this.addToLst(this.list.length, pReader.ReadUniColor());
-          break;
-        default:
-          s.SkipRecord();
-          break;
-      }
-
-    };
-    CCommonDataClrList.prototype.getChildren = function() {
-      return [].concat(this.list);
-    };
-
-
-
+	  changesFactory[AscDFH.historyitem_ClrLstAdd] = CChangesContentNoId;
+	  changesFactory[AscDFH.historyitem_ClrLstRemove] = CChangesContentNoId;
+	  drawingConstructorsMap[AscDFH.historyitem_ClrLstAdd] = AscFormat.CUniColor;
+	  drawingConstructorsMap[AscDFH.historyitem_ClrLstRemove] = AscFormat.CUniColor;
     changesFactory[AscDFH.historyitem_ClrLstHueDir] = CChangeLong;
     changesFactory[AscDFH.historyitem_ClrLstMeth] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ClrLstHueDir] = function (oClass, value) {
@@ -8085,15 +7606,115 @@ Because of this, the display is sometimes not correct.
     drawingsChangesMap[AscDFH.historyitem_ClrLstMeth] = function (oClass, value) {
       oClass.meth = value;
     };
+	  drawingContentChanges[AscDFH.historyitem_ClrLstAdd] = function (oClass) {
+		  return oClass.list;
+	  };
+	  drawingContentChanges[AscDFH.historyitem_ClrLstRemove] = function (oClass) {
+		  return oClass.list;
+	  };
 
     function ClrLst() {
-      CCommonDataClrList.call(this);
-      this.hueDir = null;
-      this.meth = null;
+	    CBaseFormatObject.call(this);
+	    this.list = [];
+      this.hueDir = ClrLst_hueDir_cw;
+      this.meth = ClrLst_meth_span;
     }
+    InitClass(ClrLst, CBaseFormatObject, AscDFH.historyitem_type_ClrLst);
 
-    InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
+	  ClrLst.prototype.getCurColor = function (length, parentObjects) {
+			if (!length) {
+				return;
+			}
+			if (this.list.length === 0) {
+				return this.getNoFillColor(length);
+			}
 
+			if (this.meth === ClrLst_meth_repeat || this.list.length === 1) {
+				return this.getRepeatColor(length);
+			}
+
+		  const startColor = this.list[0];
+		  const endColor = this.list[1];
+		  startColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
+		  endColor.Calculate(parentObjects.theme, parentObjects.slide, parentObjects.layout, parentObjects.master);
+		  const startHSL = {};
+		  AscFormat.CColorModifiers.prototype.RGB2HSL(startColor.RGBA.R, startColor.RGBA.G, startColor.RGBA.B, startHSL);
+
+		  const endHSL = {};
+		  AscFormat.CColorModifiers.prototype.RGB2HSL(endColor.RGBA.R, endColor.RGBA.G, endColor.RGBA.B, endHSL);
+
+		  const diffHSL = {};
+		  if (this.hueDir === ClrLst_hueDir_ccw) {
+			  diffHSL.H = startHSL.H - endHSL.H;
+		  } else {
+			  diffHSL.H = endHSL.H - startHSL.H;
+		  }
+		  diffHSL.S = endHSL.S - startHSL.S;
+		  diffHSL.L = endHSL.L - startHSL.L;
+			diffHSL.A = endColor.RGBA.A - startColor.RGBA.A;
+		  if (this.meth === ClrLst_meth_cycle) {
+			  return this.getCycleColor(diffHSL, length);
+		  } else {
+				return this.getSpanColor(diffHSL, length);
+		  }
+	  };
+
+	  ClrLst.prototype.getNoFillColor = function (length) {
+		  const colors = [];
+		  for (let i = 0; i < length; i++) {
+			  colors.push(AscFormat.CreateNoFillUniFill());
+		  }
+		  return colors;
+	  };
+
+	  ClrLst.prototype.getRepeatColor = function (length) {
+			const colors = [];
+		  for (let i = 0; i < length; i++) {
+			  const truthIndex = i % this.list.length;
+			  const uniColor = this.list[truthIndex];
+				colors.push(AscFormat.CreateUniFillByUniColorCopy(uniColor));
+		  }
+
+			return colors;
+	  };
+	  ClrLst.prototype.getInterpolateStartColor = function (diffHSL, scale) {
+		  const startColor = this.list[0];
+
+		  const hueOff = diffHSL.H * scale;
+		  const satOff = diffHSL.S * scale;
+		  const lumOff = diffHSL.L * scale;
+		  const alphaOff = diffHSL.A * scale;
+		  const copyColor = startColor.createDuplicate();
+		  copyColor.addColorMod(new AscFormat.CColorMod("hueOff", ((hueOff / 255) * (360 * 60000)) >> 0));
+		  copyColor.addColorMod(new AscFormat.CColorMod("satOff", (satOff / 255 * 100000) >> 0));
+		  copyColor.addColorMod(new AscFormat.CColorMod("lumOff", (lumOff / 255 * 100000) >> 0));
+		  copyColor.addColorMod(new AscFormat.CColorMod("alphaOff", (alphaOff / 255 * 100000) >> 0));
+			return AscFormat.CreateUniFillByUniColor(copyColor);
+	  };
+		ClrLst.prototype.getCycleColor = function (diffHSL, length) {
+			if (!length) {
+				return;
+			}
+			const resultColors = [];
+
+			for (let i = 0; i < length; i++) {
+				const scale = (i * 2) / length;
+				resultColors.push(this.getInterpolateStartColor(diffHSL, scale > 1 ? 2 - scale : scale));
+			}
+			return resultColors;
+		};
+		ClrLst.prototype.getSpanColor = function (diffHSL, length) {
+			if (!length) {
+				return;
+			}
+
+			const resultColors = [];
+			for (let i = 0; i < length; i += 1) {
+				const scale = i / (length - 1);
+				resultColors.push(this.getInterpolateStartColor(diffHSL, scale));
+			}
+			return resultColors;
+		}
     ClrLst.prototype.setHueDir = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
       this.hueDir = pr;
@@ -8104,6 +7725,20 @@ Because of this, the display is sometimes not correct.
       this.meth = pr;
     }
 
+	  ClrLst.prototype.addToLst = function (nIdx, oPr) {
+		  var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
+		  oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_ClrLstAdd, nInsertIdx, [oPr], true));
+		  nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
+	  };
+
+	  ClrLst.prototype.removeFromLst = function (nIdx) {
+		  if (nIdx > -1 && nIdx < this.list.length) {
+			  this.list[nIdx].setParent(null);
+			  oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_ClrLstRemove, nIdx, [this.list[nIdx]], false));
+			  nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
+		  }
+	  };
+
     ClrLst.prototype.getHueDir = function () {
       return this.hueDir;
     }
@@ -8111,6 +7746,32 @@ Because of this, the display is sometimes not correct.
     ClrLst.prototype.getMeth = function () {
       return this.meth;
     }
+
+	  ClrLst.prototype.privateWriteAttributes = function(pWriter) {
+		  pWriter._WriteUChar2(0, this.hueDir);
+		  pWriter._WriteUChar2(1, this.meth);
+	  };
+	  ClrLst.prototype.writeChildren = function(pWriter) {
+		  for (var i = 0; i < this.list.length; i += 1) {
+			  pWriter.WriteRecord2(0, this.list[i], pWriter.WriteUniColor);
+		  }
+	  };
+	  ClrLst.prototype.readAttribute = function(nType, pReader) {
+		  var oStream = pReader.stream;
+		  if (0 === nType) this.setHueDir(oStream.GetUChar());
+		  else if (1 === nType) this.setMeth(oStream.GetUChar());
+	  };
+	  ClrLst.prototype.readChild = function(nType, pReader) {
+		  var s = pReader.stream;
+		  switch (nType) {
+			  case 0:
+				  this.addToLst(this.list.length, pReader.ReadUniColor());
+				  break;
+			  default:
+				  s.SkipRecord();
+				  break;
+		  }
+	  };
 
     ClrLst.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setHueDir(this.getHueDir());
@@ -8120,41 +7781,9 @@ Because of this, the display is sometimes not correct.
         oCopy.addToLst(nIdx, oColor);
       }
     }
-
-    function EffectClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(EffectClrLst, ClrLst, AscDFH.historyitem_type_EffectClrLst);
-
-    function FillClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(FillClrLst, ClrLst, AscDFH.historyitem_type_FillClrLst);
-
-    function LinClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(LinClrLst, ClrLst, AscDFH.historyitem_type_LinClrLst);
-    function TxEffectClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxEffectClrLst, ClrLst, AscDFH.historyitem_type_TxEffectClrLst);
-
-    function TxFillClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxFillClrLst, ClrLst, AscDFH.historyitem_type_TxFillClrLst);
-
-    function TxLinClrLst() {
-      ClrLst.call(this);
-    }
-
-    InitClass(TxLinClrLst, ClrLst, AscDFH.historyitem_type_TxLinClrLst);
+	  ClrLst.prototype.getChildren = function() {
+		  return [].concat(this.list);
+	  };
 
     function ColorsDefHdrLst() {
       CCommonDataList.call(this);
@@ -8316,8 +7945,8 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_StyleDefScene3d] = CChangeObject;
     changesFactory[AscDFH.historyitem_StyleDefTitle] = CChangeObject;
     changesFactory[AscDFH.historyitem_StyleDefDesc] = CChangeObject;
-    changesFactory[AscDFH.historyitem_StyleDefAddStyleLbl] = CChangeContent;
-    changesFactory[AscDFH.historyitem_StyleDefRemoveStyleLbl] = CChangeContent;
+    changesFactory[AscDFH.historyitem_StyleDefAddStyleLbl] = CChangesDrawingsContentStyleLbl;
+    changesFactory[AscDFH.historyitem_StyleDefRemoveStyleLbl] = CChangesDrawingsContentStyleLbl;
     drawingsChangesMap[AscDFH.historyitem_StyleDefMinVer] = function (oClass, value) {
       oClass.minVer = value;
     };
@@ -8356,6 +7985,7 @@ Because of this, the display is sometimes not correct.
       this.title = null;
       this.desc = null;
       this.styleLbl = [];
+			this.styleLblByName = {};
     }
 
     InitClass(StyleDef, CBaseFormatObject, AscDFH.historyitem_type_StyleDef);
@@ -8402,16 +8032,18 @@ Because of this, the display is sometimes not correct.
 
     StyleDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
       nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
+	    this.styleLblByName[oPr.name] = oPr;
     };
 
     StyleDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        const deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1)[0];
+	      delete this.styleLblByName[deleteObj.name];
       }
     };
 
@@ -8493,7 +8125,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setDesc(new Desc());
+          this.setDesc(new DiagramTitle());
           this.desc.fromPPTY(pReader);
           break;
         }
@@ -8683,6 +8315,14 @@ Because of this, the display is sometimes not correct.
 
     InitClass(StyleDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_StyleDefStyleLbl);
 
+	  StyleDefStyleLbl.prototype.setShapeStyle = function (shapes) {
+		  if (this.style) {
+			  for (let i = 0; i < shapes.length; i += 1) {
+				  const shape = shapes[i];
+					shape.setStyle(this.style.createDuplicate());
+			  }
+		  }
+	  }
     StyleDefStyleLbl.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
       this.name = pr;
@@ -9021,6 +8661,11 @@ Because of this, the display is sometimes not correct.
 
     InitClass(Drawing, CGroupShape, AscDFH.historyitem_type_SmartArtDrawing);
 
+		Drawing.prototype.recalcSmartArtConnections = function () {
+			if (this.group) {
+				this.group.recalcSmartArtConnections();
+			}
+		};
     Drawing.prototype.getObjectType = function () {
       return AscDFH.historyitem_type_SmartArtDrawing;
     }
@@ -10056,54 +9701,212 @@ Because of this, the display is sometimes not correct.
     }
 
 
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint] = CChangeObject;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoShapePoint] = CChangeObject;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint] = CChangeContent;
-    changesFactory[AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint] = CChangeContent;
-    drawingsChangesMap[AscDFH.historyitem_ShapeSmartArtInfoSpPrPoint] = function (oClass, value) {
-      oClass.spPrPoint = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ShapeSmartArtInfoShapePoint] = function (oClass, value) {
-      oClass.shapePoint = value;
-    };
-    drawingContentChanges[AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint] = function (oClass) {
-      return oClass.contentPoint;
-    };
-    drawingContentChanges[AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint] = function (oClass) {
-      return oClass.contentPoint;
-    };
-
     function ShapeSmartArtInfo() {
-      CBaseFormatObject.call(this);
+			this.shape = null;
       this.shapePoint = null;
       this.contentPoint = [];
       this.maxFontSize = null;
+			this.textConstraints = {};
+			this.params = {};
+			this.textConstraintRelations = [];
+			this.adaptFontSizeShapesInfo = null;
+	    this.secondaryFontSizeScale = null;
     }
-    InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
+	  ShapeSmartArtInfo.prototype.getContentFillingType = function (shapes) {
 
+			let res = 0x00;
+		  for (let i = 0; i < shapes.length; i += 1) {
+			  const shape = shapes[i];
+			  if (!shape.isCanFitFontSize()) {
+				  continue;
+			  }
+				const docContent = shape.getDocContent();
+				if (docContent) {
+					for (let j = 0; j < docContent.Content.length; j++) {
+						const item = docContent.Content[j];
+						if (item.PresentationPr && item.PresentationPr.Bullet && !item.PresentationPr.Bullet.IsNone()) {
+							res |= smartArtContentFillingType_onlyChildren;
+						} else {
+							res |= smartArtContentFillingType_onlyParent;
+						}
+						if (res === smartArtContentFillingType_parentWithChildren) {
+							return res;
+						}
+					}
+				}
+		  }
+			return res;
+	  };
+		ShapeSmartArtInfo.prototype.getSecondaryFontSizeCoefficient = function () {
+			if (this.secondaryFontSizeScale === null) {
+				const primaryConstr = this.textConstraints[AscFormat.Constr_type_primFontSz];
+				if (primaryConstr) {
+					const coefficient = primaryConstr.getSecondaryFontSizeCoefficient();
+					if (coefficient !== null) {
+						this.secondaryFontSizeScale = coefficient;
+						return coefficient;
+					}
+				}
+
+				const secondaryConstr = this.textConstraints[AscFormat.Constr_type_secFontSz];
+				if (secondaryConstr) {
+					const coefficient = secondaryConstr.getSecondaryFontSizeCoefficient();
+					if (coefficient !== null) {
+						this.secondaryFontSizeScale = coefficient;
+						return coefficient;
+					}
+				}
+
+				this.secondaryFontSizeScale = 0.78;
+			}
+			return this.secondaryFontSizeScale;
+		};
+		ShapeSmartArtInfo.prototype.getAdaptFontSizeInfo = function () {
+			if (this.adaptFontSizeShapesInfo === null) {
+				const checkShapes = {};
+
+				this.adaptFontSizeShapesInfo = {};
+				this.adaptFontSizeShapesInfo.shapes = [];
+				const res = this.adaptFontSizeShapesInfo.shapes;
+				const checkShapeSmartArtInfos = [this];
+				while (checkShapeSmartArtInfos.length) {
+					const smartArtInfo = checkShapeSmartArtInfos.pop();
+					const shape = smartArtInfo.shape;
+					if (!checkShapes[shape.GetId()]) {
+						res.push(shape);
+						checkShapes[shape.GetId()] = true;
+					}
+
+
+					const primFontConstraint = smartArtInfo.textConstraints[AscFormat.Constr_type_primFontSz];
+					if (primFontConstraint) {
+						primFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes);
+						primFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes, true);
+						primFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_none, checkShapeSmartArtInfos, checkShapes);
+						primFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_lte, checkShapeSmartArtInfos, checkShapes);
+					}
+					const secFontConstraint = smartArtInfo.textConstraints[AscFormat.Constr_type_secFontSz];
+					if (secFontConstraint) {
+						secFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes);
+						secFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_equ, checkShapeSmartArtInfos, checkShapes, true);
+						secFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_none, checkShapeSmartArtInfos, checkShapes);
+						secFontConstraint.collectShapeSmartArtInfo(AscFormat.Constr_op_lte, checkShapeSmartArtInfos, checkShapes);
+					}
+				}
+				this.adaptFontSizeShapesInfo.contentFillingType = this.getContentFillingType(res);
+			}
+
+			return this.adaptFontSizeShapesInfo;
+		};
+	  ShapeSmartArtInfo.prototype.getChildrenSpacingScale = function () {
+		  if (this.params[AscFormat.Param_type_lnSpAfChP] !== undefined) {
+			  return this.params[AscFormat.Param_type_lnSpAfChP];
+		  }
+		  return g_dKoef_pt_to_mm * 0.18;
+	  };
+	  ShapeSmartArtInfo.prototype.getParentSpacingScale = function () {
+		  if (this.params[AscFormat.Param_type_lnSpAfParP] !== undefined) {
+			  return this.params[AscFormat.Param_type_lnSpAfParP];
+		  }
+			return g_dKoef_pt_to_mm * 0.42;
+	  };
+	  ShapeSmartArtInfo.prototype.setShape = function (shape) {
+		  this.shape = shape;
+	  }
+		ShapeSmartArtInfo.prototype.getMarginFactors = function () {
+			const res = {};
+			res.bMarg = this.textConstraints[AscFormat.Constr_type_bMarg];
+			res.tMarg = this.textConstraints[AscFormat.Constr_type_tMarg];
+			res.rMarg = this.textConstraints[AscFormat.Constr_type_rMarg];
+			res.lMarg = this.textConstraints[AscFormat.Constr_type_lMarg];
+			return res;
+		};
+		ShapeSmartArtInfo.prototype.getRelFitFontSize = function (isUseChildrenCoefficient) {
+			const adaptInfo = this.getAdaptFontSizeInfo();
+			const shapes = adaptInfo.shapes;
+			let minFontSize = null;
+			for (let i = 0; i < shapes.length; i++) {
+				const shape = shapes[i];
+				const content = shape.getDocContent();
+				const shapeInfo = shape.getSmartArtInfo();
+				const isNotPlaceholder = content && !content.Is_Empty({SkipEnd: true, SkipPlcHldr: false}) && shapeInfo.contentPoint.some(function (node) {
+					const point = node.point;
+					return point && point.prSet && !point.prSet.custT && !point.prSet.phldr;
+				});
+				if (isNotPlaceholder) {
+
+					if (shapeInfo.maxFontSize === null) {
+						this.setMaxFontSize(shape.findFitFontSizeForSmartArt());
+					}
+					if (minFontSize === null || minFontSize > shapeInfo.maxFontSize) {
+						minFontSize = shapeInfo.maxFontSize;
+					}
+				}
+			if (minFontSize !== null && isUseChildrenCoefficient) {
+				const contentFillingType = this.getContentFillingType(shapes);
+				if (contentFillingType === smartArtContentFillingType_onlyChildren || contentFillingType === smartArtContentFillingType_parentWithChildren) {
+					return minFontSize;
+				} else if (contentFillingType === smartArtContentFillingType_onlyParent) {
+					return Math.round(minFontSize * shapeInfo.getSecondaryFontSizeCoefficient());
+				}
+			}
+			}
+			return minFontSize;
+		};
+		ShapeSmartArtInfo.prototype.getMaxConstrFontSize = function (isUseChildrenCoefficient) {
+			const fontSizes = [65];
+			const primTextConstr = this.textConstraints[AscFormat.Constr_type_primFontSz];
+			if (primTextConstr) {
+				fontSizes.push(primTextConstr.getMaxFontSize(isUseChildrenCoefficient));
+			}
+			const secTextConstr = this.textConstraints[AscFormat.Constr_type_secFontSz];
+			if (secTextConstr) {
+				fontSizes.push(secTextConstr.getMaxFontSize(isUseChildrenCoefficient));
+			}
+			return Math.min.apply(Math, fontSizes);
+		};
+	  ShapeSmartArtInfo.prototype.getMinConstrFontSize = function () {
+		  const fontSizes = [5];
+		  const primTextConstr = this.textConstraints[AscFormat.Constr_type_primFontSz];
+		  if (primTextConstr) {
+			  fontSizes.push(primTextConstr.getMinFontSize());
+		  }
+		  const secTextConstr = this.textConstraints[AscFormat.Constr_type_secFontSz];
+		  if (secTextConstr) {
+			  fontSizes.push(secTextConstr.getMinFontSize());
+		  }
+		  return Math.min.apply(Math, fontSizes);
+	  };
+		ShapeSmartArtInfo.prototype.getShape = function () {
+			return this.shape;
+		};
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
-      this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.addToLstContentPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.contentPoint.length, Math.max(0, nIdx));
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
       nInsertIdx === this.contentPoint.length ? this.contentPoint.push(oPr) : this.contentPoint.splice(nInsertIdx, 0, oPr);
-      this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.removeFromLstContentPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.contentPoint.length) {
-        this.contentPoint[nIdx].setParent(null);
-        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
         nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
     }
-    ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
-      this.maxFontSize = oPr;
-    }
+    ShapeSmartArtInfo.prototype.setMaxFontSize = function (nPr) {
+      this.maxFontSize = nPr;
+    };
+	  ShapeSmartArtInfo.prototype.collectTextConstraintRelations = function (array) {
+			array = array || [];
+		  for (let i = 0; i < this.textConstraintRelations.length; i += 1) {
+			  const presNodeArray = this.textConstraintRelations[i];
+			  if (!array.includes(presNodeArray)) {
+				  array.push(presNodeArray);
+			  }
+		  }
+			return array;
+	  };
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
     changesFactory[AscDFH.historyitem_SmartArtDrawing] = CChangeObject;
@@ -10120,6 +9923,8 @@ Because of this, the display is sometimes not correct.
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtDrawing] = function (oClass, value) {
       oClass.drawing = value;
+			oClass.isLocalDrawingPart = oClass.localDrawingId !== null ? oClass.localDrawingId === (value && value.Get_Id()) : false;
+			oClass.recalcSmartArtConnections();
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtLayoutDef] = function (oClass, value) {
       oClass.layoutDef = value;
@@ -10147,11 +9952,33 @@ Because of this, the display is sometimes not correct.
       this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
-      this.bFirstRecalculate = true;
+			this.isLocalDrawingPart = true;
+			this.localDrawingId = null;
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
-
+		SmartArt.prototype.generateDefaultStructures = function () {
+			if (!this.colorsDef) {
+				this.setColorsDef(AscFormat.generateDefaultSmartArtColors());
+			}
+			if (!this.layoutDef) {
+				this.setLayoutDef(AscFormat.generateDefaultSmartArtLayout());
+			}
+			if (!this.styleDef){
+				this.setStyleDef(AscFormat.generateDefaultSmartArtQuickStyle());
+			}
+		};
+	  SmartArt.prototype.recalcFitFontSize = function () {
+		  this.recalcInfo.fitFontSize = true;
+	  };
+	  SmartArt.prototype.recalcSmartArtConnections = function () {
+		  this.recalcInfo.reconnectSmartArtShapes = true;
+	  };
+		SmartArt.prototype.setRecalculateInfo = function () {
+			CGroupShape.prototype.setRecalculateInfo.call(this);
+			this.recalcInfo.fitFontSize = true;
+			this.recalcInfo.reconnectSmartArtShapes = true;
+		};
     SmartArt.prototype.getObjectType = function() {
       return AscDFH.historyitem_type_SmartArt;
     };
@@ -10159,6 +9986,235 @@ Because of this, the display is sometimes not correct.
       return 'SmartArt';
     };
 
+		SmartArt.prototype.isCanGenerateSmartArt = function () {
+			const smartartType = this.getTypeOfSmartArt();
+			switch (smartartType) {
+				case Asc.c_oAscSmartArtTypes.AlternatingHexagonList:
+				case Asc.c_oAscSmartArtTypes.AlternatingPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.ArrowRibbon:
+				case Asc.c_oAscSmartArtTypes.AscendingPictureAccentProcess:
+				case Asc.c_oAscSmartArtTypes.Balance:
+				case Asc.c_oAscSmartArtTypes.BasicBlockList:
+				case Asc.c_oAscSmartArtTypes.BasicCycle:
+				case Asc.c_oAscSmartArtTypes.BasicMatrix:
+				case Asc.c_oAscSmartArtTypes.BasicBendingProcess:
+				case Asc.c_oAscSmartArtTypes.BasicPie:
+				case Asc.c_oAscSmartArtTypes.BasicProcess:
+				case Asc.c_oAscSmartArtTypes.BasicPyramid:
+				case Asc.c_oAscSmartArtTypes.BasicRadial:
+				case Asc.c_oAscSmartArtTypes.BasicTarget:
+				case Asc.c_oAscSmartArtTypes.BasicVenn:
+				case Asc.c_oAscSmartArtTypes.BendingPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.BendingPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.BendingPictureCaptionList:
+				case Asc.c_oAscSmartArtTypes.BendingPictureCaption:
+				case Asc.c_oAscSmartArtTypes.BendingPictureSemiTransparentText:
+				case Asc.c_oAscSmartArtTypes.BlockCycle:
+				case Asc.c_oAscSmartArtTypes.CaptionedPictures:
+				case Asc.c_oAscSmartArtTypes.ChevronAccentProcess:
+				case Asc.c_oAscSmartArtTypes.CircleArrowProcess:
+				case Asc.c_oAscSmartArtTypes.CircleProcess:
+				case Asc.c_oAscSmartArtTypes.CircleRelationship:
+				case Asc.c_oAscSmartArtTypes.ClosedChevronProcess:
+				case Asc.c_oAscSmartArtTypes.ContinuousCycle:
+				case Asc.c_oAscSmartArtTypes.ConvergingArrows:
+				case Asc.c_oAscSmartArtTypes.ConvergingRadial:
+				case Asc.c_oAscSmartArtTypes.ConvergingText:
+				case Asc.c_oAscSmartArtTypes.CounterbalanceArrows:
+				case Asc.c_oAscSmartArtTypes.CycleMatrix:
+				case Asc.c_oAscSmartArtTypes.DescendingProcess:
+				case Asc.c_oAscSmartArtTypes.DivergingArrows:
+				case Asc.c_oAscSmartArtTypes.DivergingRadial:
+				case Asc.c_oAscSmartArtTypes.Equation:
+				case Asc.c_oAscSmartArtTypes.Funnel:
+				case Asc.c_oAscSmartArtTypes.Gear:
+				case Asc.c_oAscSmartArtTypes.GridMatrix:
+				case Asc.c_oAscSmartArtTypes.GroupedList:
+				case Asc.c_oAscSmartArtTypes.HexagonCluster:
+				case Asc.c_oAscSmartArtTypes.IncreasingCircleProcess:
+				case Asc.c_oAscSmartArtTypes.InterconnectedBlockProcess:
+				case Asc.c_oAscSmartArtTypes.InterconnectedRings:
+				case Asc.c_oAscSmartArtTypes.InvertedPyramid:
+				case Asc.c_oAscSmartArtTypes.LinearVenn:
+				case Asc.c_oAscSmartArtTypes.MultiDirectionalCycle:
+				case Asc.c_oAscSmartArtTypes.NestedTarget:
+				case Asc.c_oAscSmartArtTypes.NonDirectionalCycle:
+				case Asc.c_oAscSmartArtTypes.OpposingArrows:
+				case Asc.c_oAscSmartArtTypes.OpposingIdeas:
+				case Asc.c_oAscSmartArtTypes.PhasedProcess:
+				case Asc.c_oAscSmartArtTypes.PictureAccentProcess:
+				case Asc.c_oAscSmartArtTypes.PictureCaptionList:
+				case Asc.c_oAscSmartArtTypes.PictureFrame:
+				case Asc.c_oAscSmartArtTypes.PictureLineup:
+				case Asc.c_oAscSmartArtTypes.PictureOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.PictureStrips:
+				case Asc.c_oAscSmartArtTypes.PlusAndMinus:
+				case Asc.c_oAscSmartArtTypes.ProcessList:
+				case Asc.c_oAscSmartArtTypes.RadialCluster:
+				case Asc.c_oAscSmartArtTypes.RadialCycle:
+				case Asc.c_oAscSmartArtTypes.RadialList:
+				case Asc.c_oAscSmartArtTypes.RadialPictureList:
+				case Asc.c_oAscSmartArtTypes.RadialVenn:
+				case Asc.c_oAscSmartArtTypes.RepeatingBendingProcess:
+				case Asc.c_oAscSmartArtTypes.ReverseList:
+				case Asc.c_oAscSmartArtTypes.SegmentedCycle:
+				case Asc.c_oAscSmartArtTypes.SegmentedProcess:
+				case Asc.c_oAscSmartArtTypes.SegmentedPyramid:
+				case Asc.c_oAscSmartArtTypes.SpiralPicture:
+				case Asc.c_oAscSmartArtTypes.StackedVenn:
+				case Asc.c_oAscSmartArtTypes.StaggeredProcess:
+				case Asc.c_oAscSmartArtTypes.TabList:
+				case Asc.c_oAscSmartArtTypes.TabbedArc:
+				case Asc.c_oAscSmartArtTypes.TableList:
+				case Asc.c_oAscSmartArtTypes.TextCycle:
+				case Asc.c_oAscSmartArtTypes.ThemePictureAccent:
+				case Asc.c_oAscSmartArtTypes.ThemePictureAlternatingAccent:
+				case Asc.c_oAscSmartArtTypes.ThemePictureGrid:
+				case Asc.c_oAscSmartArtTypes.TitledMatrix:
+				case Asc.c_oAscSmartArtTypes.TitledPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.TitledPictureBlocks:
+				case Asc.c_oAscSmartArtTypes.TitlePictureLineup:
+				case Asc.c_oAscSmartArtTypes.TrapezoidList:
+				case Asc.c_oAscSmartArtTypes.UpwardArrow:
+				case Asc.c_oAscSmartArtTypes.VerticalPictureAccentList:
+				case Asc.c_oAscSmartArtTypes.VerticalPictureList:
+				case Asc.c_oAscSmartArtTypes.HorizontalOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.HalfCircleOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.StackedList:
+				case Asc.c_oAscSmartArtTypes.HorizontalHierarchy:
+				case Asc.c_oAscSmartArtTypes.HorizontalMultiLevelHierarchy:
+				case Asc.c_oAscSmartArtTypes.OrganizationChart:
+				case Asc.c_oAscSmartArtTypes.NameAndTitleOrganizationChart:
+				case Asc.c_oAscSmartArtTypes.CirclePictureHierarchy:
+				case Asc.c_oAscSmartArtTypes.HierarchyList:
+				case Asc.c_oAscSmartArtTypes.Hierarchy:
+					return true;
+				default:
+					return false;
+			}
+		};
+	  SmartArt.prototype.getSizes = function () {
+			const sizes = {width: 0, height: 0};
+			if (this.drawingBase) {
+				const drawingMetrics = this.drawingBase.getGraphicObjectMetrics();
+				sizes.width = drawingMetrics.extX;
+				sizes.height = drawingMetrics.extY;
+			} else {
+				sizes.width = this.spPr.xfrm.extX;
+				sizes.height = this.spPr.xfrm.extY;
+			}
+			return sizes;
+	  };
+		SmartArt.prototype.generateLocalDrawingPart = function () {
+			if (this.isLocalDrawingPart) {
+				if (!this.isCanGenerateSmartArt()) {
+					this.isLocalDrawingPart = false;
+					return;
+				}
+				AscFormat.ExecuteNoHistory(function () {
+					this.generateDrawingPart();
+					this.isLocalDrawingPart = true;
+					this.localDrawingId = this.drawing.Get_Id();
+				}, this, []);
+			}
+		};
+	  SmartArt.prototype.reconnectSmartArtShapes = function () {
+			if (!this.dataModel) {
+				return;
+			}
+		  this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
+			if (this.isCanGenerateSmartArt()) {
+				this.smartArtTree.startFromBegin();
+				this.smartArtTree.connectShapeSmartArtInfo();
+			} else {
+				this.setConnections2();
+			}
+	  };
+		SmartArt.prototype.checkDrawingPartWithHistory = function (handleShape) {
+			if (this.worksheet && this.isLocalDrawingPart && AscCommon.History.CanAddChanges()) {
+				this.isLocalDrawingPart = false;
+				const oldDrawing = this.drawing;
+				const mainGroup = this.getMainGroup();
+				const selectedObjects = mainGroup.selectedObjects;
+				const mapShapes = {};
+				for (let i = 0; i < oldDrawing.spTree.length; i += 1) {
+					const shape = oldDrawing.spTree[i];
+					mapShapes[shape.GetId()] = {index: i, state: null};
+					const docContent = shape.getDocContent();
+					if (docContent) {
+						mapShapes[shape.GetId()].state = docContent.GetSelectionState();
+					}
+				}
+
+				const copyDrawing = this.drawing.copy();
+				copyDrawing.setWorksheet(this.drawing.worksheet);
+				copyDrawing.setDrawingObjects(this.drawing.drawingObjects);
+				this.removeFromSpTreeByPos(0);
+				this.addToSpTree(0, copyDrawing);
+				this.setDrawing(copyDrawing);
+				this.reconnectSmartArtShapes();
+				copyDrawing.recalculate();
+				for (let i = 0; i < selectedObjects.length; i += 1) {
+					const shapeInfo = mapShapes[selectedObjects[i].Id];
+					if (shapeInfo) {
+						copyDrawing.spTree[shapeInfo.index].selectStartPage = selectedObjects[i].selectStartPage;
+						selectedObjects[i] = copyDrawing.spTree[shapeInfo.index];
+						selectedObjects[i].selected = true;
+						if (shapeInfo.state) {
+							const docContent = selectedObjects[i].getDocContent();
+							docContent && docContent.SetSelectionState(shapeInfo.state);
+						}
+					}
+				}
+				if (mainGroup.selection.textSelection) {
+					const info = mapShapes[mainGroup.selection.textSelection.GetId()];
+					if (info) {
+						mainGroup.selection.textSelection = copyDrawing.spTree[info.index];
+					}
+				}
+				if (handleShape) {
+					const info = mapShapes[handleShape.GetId()];
+					if (info) {
+						return copyDrawing.spTree[info.index];
+					}
+				}
+			}
+		};
+	  SmartArt.prototype.initDrawing = function () {
+			if (!this.drawing) {
+				this.drawing = new Drawing();
+				this.drawing.setBDeleted(false);
+				this.addToSpTree(0, this.drawing);
+				const spPr = new AscFormat.CSpPr();
+				this.drawing.setSpPr(spPr);
+				spPr.setParent(this.drawing);
+				const nvSpPr = new AscFormat.UniNvPr();
+				nvSpPr.cNvPr.setId(0);
+				this.drawing.setNvSpPr(nvSpPr);
+			}
+	  }
+    SmartArt.prototype.generateDrawingPart = function () {
+	    this.isLocalDrawingPart = false;
+			if (!this.isCanGenerateSmartArt()) {
+				return;
+			}
+			this.smartArtTree = new AscFormat.SmartArtAlgorithm(this);
+	    this.smartArtTree.startFromBegin();
+      const drawing = this.getDrawing();
+      const shapeLength = drawing.spTree.length;
+      for (let i = 0; i < shapeLength; i++) {
+        drawing.removeFromSpTreeByPos(0);
+      }
+      const shapes = this.smartArtTree.getShapes();
+      for (let i = shapes.length - 1; i >= 0; i -= 1) {
+        drawing.addToSpTree(0, shapes[i]);
+      }
+			this.recalcFitFontSize();
+    };
+	  SmartArt.prototype.generateSmartArtDrawingPart = SmartArt.prototype.generateDrawingPart;
+	  SmartArt.prototype.findConnector = function (x, y) {
+		  return null;
+	  };
 	  SmartArt.prototype.getAllRasterImages = function (arrImages)
 	  {
 			const oBgFormat = this.getBg();
@@ -10180,7 +10236,6 @@ Because of this, the display is sometimes not correct.
         arrShapes.forEach(function (oShape) {
           if (oShape.spPr) {
             if (oShape.spPr.Fill && oShape.spPr.Fill.fill && !(oShape.spPr.Fill.fill instanceof AscFormat.CNoFill)) {
-              let mods = null;
               const id = oShape.spPr.Fill.fill.color.color.id;
               let standardColor;
               if (id === 0) {
@@ -10192,7 +10247,7 @@ Because of this, the display is sometimes not correct.
               }
 
               if (oShape.spPr.Fill.fill.color.Mods) {
-                mods = oShape.spPr.Fill.fill.color.Mods.Apply(standardColor);
+                oShape.spPr.Fill.fill.color.Mods.Apply(standardColor);
               }
               const grayscaleValue = AscFormat.getGrayscaleValue(standardColor);
 
@@ -10226,11 +10281,15 @@ Because of this, the display is sometimes not correct.
         if (oldParaMarks) {
           editor.ShowParaMarks = false;
         }
+				if (this.recalcInfo.reconnectSmartArtShapes) {
+					this.recalcInfo.reconnectSmartArtShapes = false;
+					this.reconnectSmartArtShapes();
+				}
         CGroupShape.prototype.recalculate.call(this);
-        if (this.bFirstRecalculate) {
-          this.bFirstRecalculate = false;
-          this.fitFontSize();
-        }
+				if (this.recalcInfo.fitFontSize) {
+					this.recalcInfo.fitFontSize = false;
+					this.fitFontSize();
+				}
         if (oldParaMarks) {
           editor.ShowParaMarks = oldParaMarks;
         }
@@ -10266,6 +10325,7 @@ Because of this, the display is sometimes not correct.
 	      if (!bLoadOnlyDrawing)
 	      {
 		      pReader.stream = new AscCommon.FileStream(dataBin, dataBin.length);
+		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.readChild(pReader.stream.GetUChar(), pReader);
 		      this.readChild(pReader.stream.GetUChar(), pReader);
@@ -10343,13 +10403,6 @@ Because of this, the display is sometimes not correct.
       }
     };
 
-    SmartArt.prototype.startAlgorithm = function (pointTree) {
-      var layoutDef = this.getLayoutDef();
-      if (layoutDef) {
-        layoutDef.startAlgorithm(pointTree);
-      }
-    }
-
     SmartArt.prototype.getShapeMap = function () {
       var shapes = this.getDrawing() && this.getDrawing().spTree;
       var shapeMap = {};
@@ -10359,11 +10412,6 @@ Because of this, the display is sometimes not correct.
         });
         return shapeMap;
       }
-    }
-
-    SmartArt.prototype.recalculateSmartArt = function () {
-      var tree = this.createHierarchy();
-      this.startAlgorithm(tree);
     }
 
     SmartArt.prototype.getPtMap = function () {
@@ -10385,109 +10433,6 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.getCxnLst = function () {
       var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
       return dataModel && dataModel.getCxnLst() && dataModel.getCxnLst().list;
-    }
-
-    SmartArt.prototype.createDataForHierarchy = function () {
-      var shapeMap = this.getShapeMap();
-      var ptMap = this.getPtMap();
-      var ptLst = this.getPtLst();
-      var cxnLst = this.getCxnLst();
-      var elements = [];
-      var nodePoints = [];
-      var ptLstWithTypePres = [];
-      var docPoint;
-      if (cxnLst && ptLst) {
-        var connectionsParOf = cxnLst.filter(function (cxn) {return !cxn.type;});
-
-        ptLst.forEach(function (point) {
-          if (point.type === Point_type_pres) {
-            ptLstWithTypePres.push(point);
-          } else if (!point.type || point.type === Point_type_node || point.type === Point_type_asst) {
-            nodePoints.push(point);
-          } else if (point.type === Point_type_doc) {
-            docPoint = point;
-          }
-        });
-
-        for (var i = 0; i <= nodePoints.length; i += 1) {
-          var elem = new SmartArtNodeData();
-
-          if (i === nodePoints.length) {
-            var mPoint = docPoint;
-            elem.setDocPoint(mPoint);
-
-          } else {
-            mPoint = nodePoints[i];
-            if (!mPoint.type || mPoint.type === Point_type_node) {
-              elem.setNodePoint(mPoint);
-            } else if (mPoint.type === Point_type_asst) {
-              elem.setAsstPoint(mPoint);
-            }
-          }
-
-          connectionsParOf.forEach(function (cxn) {
-            if (cxn.destId === mPoint.modelId) {
-              elem.setCxn(cxn);
-              if (ptMap) {
-                elem.addToLstSibPoint(0, ptMap[cxn.sibTransId]);
-                elem.addToLstParPoint(0, ptMap[cxn.parTransId]);
-              }
-            }
-          });
-
-          ptLstWithTypePres.forEach(function (pointWithTypePres) {
-            var prSet = pointWithTypePres.prSet;
-            if (prSet && (prSet.presAssocID === mPoint.modelId || (elem.sibPoint && prSet.presAssocID === elem.sibPoint.modelId) || (elem.parPoint && prSet.presAssocID === elem.parPoint.modelId))) {
-              elem.addToLstPresPoint(elem.presPoint.length, pointWithTypePres);
-              if (shapeMap && shapeMap[pointWithTypePres.modelId]) {
-                elem.addToLstShapes(elem.shapes.length, shapeMap[pointWithTypePres.modelId]);
-              }
-            }
-          });
-          elements.push(elem);
-        }
-        return elements;
-      }
-    }
-
-    SmartArt.prototype.createHierarchy = function () {
-      var cxnLst = this.getCxnLst();
-
-      if (cxnLst) {
-        var cxnWithNoPres = cxnLst.filter(function (cxn) {return !cxn.type;});
-
-        var elements = this.createDataForHierarchy();
-
-        var root = elements.reduce(function (acc, next) {
-          if (next.docPoint) {
-            return next;
-          }
-          return acc;
-        }, undefined);
-
-        if (root) {
-          var rootInfo = root.docPoint.modelId;
-          var tree = new SmartArtTree(rootInfo, root, this);
-
-          cxnWithNoPres = cxnWithNoPres.sort(function (a, b) {
-            return parseInt(a.srcOrd) - parseInt(b.srcOrd);
-          });
-          for (var i = 0; i < cxnWithNoPres.length; i += 1) {
-            for (var j = 0; j < cxnWithNoPres.length; j += 1) {
-              var _cxn = cxnWithNoPres[j];
-              var childData = elements.reduce(function (acc, next) {
-                var nodePoint = next.nodePoint || next.asstPoint;
-                if (nodePoint && nodePoint.modelId === _cxn.destId) {
-                  return next;
-                }
-                return acc;
-              }, undefined);
-              tree.add(_cxn.destId, _cxn.srcId, childData);
-            }
-          }
-        }
-      }
-      return tree;
     }
 
     SmartArt.prototype.getDefColorsByName = function () {
@@ -10514,8 +10459,21 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
-      var shapePoint = shape && shape.getSmartArtShapePoint();
-      var defaultTxColorFromShape = shapePoint && this.getDefaultTxColorFromPoint(shapePoint);
+      const smartArtInfo = shape.getSmartArtInfo();
+			if (!smartArtInfo) {
+				return;
+			}
+			let textPoint;
+			if (this.isCanGenerateSmartArt()) {
+				const contentNodes = smartArtInfo.contentPoint;
+				if (contentNodes.length) {
+					const textNode = contentNodes[0].getTextNode();
+					textPoint = textNode && textNode.presPoint;
+				}
+			} else {
+				textPoint = smartArtInfo.shapePoint;
+			}
+      var defaultTxColorFromShape = textPoint && this.getDefaultTxColorFromPoint(textPoint);
       var defaultTxFill;
 
       if (defaultTxColorFromShape) {
@@ -10525,155 +10483,12 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.getTypeOfSmartArt = function () {
-      // Russian name -> type
-      //
-      //
-      // Акцентируемый рисунок -> AccentedPicture
-      // Баланс -> balance1
-      // Блоки рисунков с названиями -> TitledPictureBlocks
-      // Блоки со смещенными рисунками -> PictureAccentBlocks
-      // Блочный цикл -> cycle5
-      // Венна в столбик -> venn2
-      // Вертикальное уравнение -> equation2
-      // Вертикальный блочный список -> vList5
-      // Вертикальный ломаный процесс -> bProcess4
-      // Вертикальный маркированный список -> vList2
-      // Вертикальный нелинейный список -> VerticalCurvedList
-      // Вертикальный процесс -> process2
-      // Вертикальный список -> list1
-      // Вертикальный список рисунков -> vList4
-      // Вертикальный список с кругами -> VerticalCircleList
-      // Вертикальный список со смещенными рисунками -> vList3
-      // Вертикальный список со стрелкой -> vList6
-      // Вертикальный уголковый список -> chevron2
-      // Вертикальный уголковый список2 -> VerticalAccentList
-      // Вложенная целевая -> target2
-      // Воронка -> funnel1
-      // Восходящая стрелка -> arrow2
-      // Восходящая стрелка процесса -> IncreasingArrowsProcess
-      // Восходящий процесс -> StepUpProcess
-      // Выноска с круглыми рисунками -> CircularPictureCallout
-      // Горизонтальная иерархия -> hierarchy2
-      // Горизонтальная иерархия с подписями -> hierarchy5
-      // Горизонтальная многоуровневая иерархия -> HorizontalMultiLevelHierarchy
-      // Горизонтальная организационная диаграмма -> HorizontalOrganizationChart
-      // Горизонтальный маркированный список -> hList1
-      // Горизонтальный список рисунков -> pList2
-      // Закрытый уголковый процесс -> hChevron3
-      // Иерархический список -> hierarchy3
-      // Иерархия -> hierarchy1
-      // Иерархия с круглыми рисунками -> CirclePictureHierarchy
-      // Иерархия с подписями -> hierarchy6
-      // Инвертированная пирамида -> pyramid3
-      // Кластер шестиугольников -> HexagonCluster
-      // Круг связей -> CircleRelationship
-      // Круглая временная шкала -> CircleAccentTimeline
-      // Круглый ломаный процесс -> bProcess2
-      // Лента со стрелками -> arrow6
-      // Линейная Венна -> venn3
-      // Линия рисунков -> PictureLineup
-      // Линия рисунков с названиями -> TitlePictureLineup
-      // Ломаный список рисунков с подписями -> BendingPictureCaptionList
-      // Ломаный список со смещенными рисунками -> bList2
-      // Матрица с заголовками -> matrix1
-      // Нарастающий процесс с кругами -> IncreasingCircleProcess
-      // Нелинейные рисунки с блоками -> BendingPictureBlocks
-      // Нелинейные рисунки с подписями -> BendingPictureCaption
-      // Нелинейные рисунки с полупрозрачным текстом -> BendingPictureSemiTransparentText
-      // Ненаправленный цикл -> cycle6
-      // Непрерывный блочный процесс -> hProcess9
-      // Непрерывный список с рисунками -> hList7
-      // Непрерывный цикл -> cycle3
-      // Нисходящий блочный список -> BlockDescendingList
-      // Нисходящий процесс -> StepDownProcess
-      // Обратный список -> ReverseList
-      // Организационная диаграмма -> orgChart1
-      // Организационная диаграмма с именами и должностями -> NameandTitleOrganizationalChart
-      // Переменный поток -> hProcess4
-      // Пирамидальный список -> pyramid2
-      // Плюс и минус -> PlusandMinus
-      // Повторяющийся ломаный процесс -> bProcess3
-      // Подписанные рисунки -> CaptionedPictures
-      // Подробный процесс -> hProcess7
-      // Полосы рисунков -> PictureStrips
-      // Полукруглая организационная диаграмма -> HalfCircleOrganizationChart
-      // Поэтапный процесс -> PhasedProcess
-      // Простая Венна -> venn1
-      // Простая временная шкала -> hProcess11
-      // Простая круговая -> chart3
-      // Простая матрица -> matrix3
-      // Простая пирамида -> pyramid1
-      // Простая радиальная -> radial1
-      // Простая целевая -> target1
-      // Простой блочный список -> default
-      // Простой ломаный процесс -> process5
-      // Простой процесс -> process1
-      // Простой уголковый процесс -> chevron1
-      // Простой цикл -> cycle2
-      // Противоположные идеи -> OpposingIdeas
-      // Противостоящие стрелки -> arrow4
-      // Процесс от случайности к результату -> RandomtoResultProcess
-      // Процесс с вложенными шагами -> SubStepProcess
-      // Процесс с круговой диаграммой -> PieProcess
-      // Процесс со смещением -> process3
-      // Процесс со смещенными по возрастанию рисунками -> AscendingPictureAccentProcess
-      // Процесс со смещенными рисунками -> hProcess10
-      // Радиальная Венна -> radial3
-      // Радиальная циклическая -> radial6
-      // Радиальный кластер -> RadialCluster
-      // Радиальный список -> radial2
-      // Разнонаправленный цикл -> cycle7
-      // Расходящаяся радиальная -> radial5
-      // Расходящиеся стрелки -> arrow1
-      // Рисунок с текстом в рамке -> FramedTextPicture
-      // Сгруппированный список -> lProcess2
-      // Сегментированная пирамида -> pyramid4
-      // Сегментированный процесс -> process4
-      // Сегментированный цикл -> cycle8
-      // Сетка рисунков -> PictureGrid
-      // Сетчатая матрица -> matrix2
-      // Спираль рисунков -> SpiralPicture
-      // Список в столбик -> hList9
-      // Список названий рисунков -> pList1
-      // Список процессов -> lProcess1
-      // Список рисунков с выносками -> BubblePictureList
-      // Список с квадратиками -> SquareAccentList
-      // Список с линиями -> LinedList
-      // Список со смещенными рисунками -> hList2
-      // Список со смещенными рисунками и заголовком -> PictureAccentList
-      // Список со снимками -> SnapshotPictureList
-      // Стрелка непрерывного процесса -> hProcess3
-      // Стрелка процесса с кругами -> CircleArrowProcess
-      // Стрелки процесса -> hProcess6
-      // Ступенчатый процесс -> vProcess5
-      // Сходящаяся радиальная -> radial4
-      // Сходящиеся стрелки -> arrow5
-      // Табличная иерархия -> hierarchy4
-      // Табличный список -> hList3
-      // Текстовый цикл -> cycle1
-      // Трапецевидный список -> hList6
-      // Убывающий процесс -> DescendingProcess
-      // Уголковый список -> lProcess3
-      // Уравнение -> equation1
-      // Уравновешивающие стрелки -> arrow3
-      // Целевой список -> target3
-      // Циклическая матрица -> cycle4
-      // Чередующиеся блоки рисунков -> AlternatingPictureBlocks
-      // Чередующиеся круги рисунков -> AlternatingPictureCircles
-      // Чередующиеся шестиугольники -> AlternatingHexagons
-      // Шестеренки -> gear1
-      var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
-      var ptLst = dataModel.ptLst.list;
+	    const layoutDef = this.getLayoutDef();
       var type;
-      ptLst.forEach(function (point) {
-        if (point.type === Point_type_doc) {
-          if (point.prSet && point.prSet.loTypeId) {
-            var typeSplit = point.prSet.loTypeId.split('/');
-            type = typeSplit[typeSplit.length - 1];
-            type = type.split('#')[0];
-          }
-        }
-      });
+			if (layoutDef) {
+				var typeSplit = layoutDef.uniqueId.split('/');
+				type = typeSplit[typeSplit.length - 1].split('#')[0];
+			}
 
       switch (type) {
         case "AccentedPicture": {
@@ -11371,7 +11186,9 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.setColorsDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
       this.colorsDef = oPr;
-      oPr.setParent(this);
+			if (oPr) {
+				oPr.setParent(this);
+			}
     };
     SmartArt.prototype.setType = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
@@ -11379,23 +11196,31 @@ Because of this, the display is sometimes not correct.
     };
     SmartArt.prototype.setDrawing = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
-      this.drawing = oPr;
-      oPr.setParent(this);
+			this.drawing = oPr;
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setLayoutDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
       this.layoutDef = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setDataModel = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.setStyleDef = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
       this.styleDef = oPr;
-      oPr.setParent(this);
+	    if (oPr) {
+		    oPr.setParent(this);
+	    }
     };
     SmartArt.prototype.getColorsDef = function () {
       return this.colorsDef;
@@ -11435,6 +11260,64 @@ Because of this, the display is sometimes not correct.
       }
     };
 
+	  SmartArt.prototype.getRelationOfContent2 = function () {
+		  var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
+		  if (dataModel) {
+			  var connections = {byConnections: {}, custom: {}};
+				connections.byConnections[Cxn_type_presOf] = {};
+				connections.byConnections[Cxn_type_parOf] = {};
+				connections.byConnections[Cxn_type_presParOf] = {};
+				connections.custom.presParOfAssocId = {};
+				connections.custom.presChildParOf = {};
+			  var ptMap = this.getPtMap();
+			  var cxnLst = dataModel.cxnLst.list;
+
+			  cxnLst.forEach(function (cxn) {
+					switch (cxn.type) {
+						case Cxn_type_presOf: {
+							const point = ptMap[cxn.srcId];
+							connections.byConnections[Cxn_type_presOf][point.getModelId()] = ptMap[cxn.destId];
+							break;
+						}
+						case Cxn_type_parOf: {
+							if (!connections.byConnections[Cxn_type_parOf][cxn.srcId]) {
+								connections.byConnections[Cxn_type_parOf][cxn.srcId] = [];
+							}
+							connections.byConnections[Cxn_type_parOf][cxn.srcId].push({
+								point   : ptMap[cxn.destId],
+								sibPoint: ptMap[cxn.sibTransId],
+								parPoint: ptMap[cxn.parTransId],
+								index: parseInt(cxn.srcOrd, 10)
+							});
+							break;
+						}
+						case Cxn_type_presParOf: {
+							if (!connections.byConnections[Cxn_type_presParOf][cxn.srcId]) {
+								connections.byConnections[Cxn_type_presParOf][cxn.srcId] = {};
+							}
+							const presPoint = ptMap[cxn.destId];
+							connections.byConnections[Cxn_type_presParOf][cxn.srcId][cxn.srcOrd] = ptMap[cxn.destId];
+							const presAssocId = presPoint.getPresAssocID();
+							if (!connections.custom.presParOfAssocId[presAssocId]) {
+								connections.custom.presParOfAssocId[presAssocId] = [];
+							}
+							connections.custom.presParOfAssocId[presAssocId].push(presPoint);
+							connections.custom.presChildParOf[cxn.destId] = ptMap[cxn.srcId];
+							break;
+						}
+						default:
+							break;
+					}
+			  });
+				for (let id in connections.byConnections[Cxn_type_parOf]) {
+					connections.byConnections[Cxn_type_parOf][id].sort(function (a, b) {
+						return a.index - b.index;
+					});
+				}
+			  return connections;
+		  }
+	  };
+
     SmartArt.prototype.getRelationOfContent = function () {
       var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
       if (dataModel) {
@@ -11443,7 +11326,7 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var cxnLst = dataModel.cxnLst.list;
         var presCxnLst = cxnLst.filter(function (cxn) {
-          return cxn.type === 'presOf';
+          return cxn.type === Cxn_type_presOf;
         });
 
         presCxnLst.forEach(function (cxn) {
@@ -11481,7 +11364,7 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var cxnLst = dataModel.cxnLst.list;
         var presCxnLst = cxnLst.filter(function (cxn) {
-          return cxn.type === 'presOf' || cxn.type === 'presParOf';
+          return cxn.type === Cxn_type_presOf || cxn.type === Cxn_type_presParOf;
         });
 
         presCxnLst.forEach(function (cxn) {
@@ -11503,14 +11386,15 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var contentConnections = this.getRelationOfContent();
         var shapeConnections = this.getRelationOfShapes();
-
+				const contentNodeRelations = this.smartArtTree.getDataPointRelations();
         for (var modelId in shapeMap) {
           var shape = shapeMap[modelId];
           var smartArtInfo = new ShapeSmartArtInfo();
           shape.setShapeSmartArtInfo(smartArtInfo);
           if (contentConnections[modelId]) {
             contentConnections[modelId].forEach(function (el) {
-              smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length, el.point);
+							const contentNode = contentNodeRelations[el.point.getModelId()];
+              smartArtInfo.addToLstContentPoint(smartArtInfo.contentPoint.length, contentNode);
             });
           }
           if (shapeConnections[modelId]) {
@@ -11547,6 +11431,7 @@ Because of this, the display is sometimes not correct.
       switch (nType) {
         case 0: {
           this.setDrawing(new Drawing());
+					this.drawing.setBDeleted(false);
           pReader.ReadSmartArtGroup(this.drawing);
           this.drawing.setGroup(this);
           this.addToSpTree(0, this.drawing);
@@ -11555,7 +11440,6 @@ Because of this, the display is sometimes not correct.
         case 1: {
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
-          this.setConnections2();
           break;
         }
         case 2: {
@@ -11681,6 +11565,11 @@ Because of this, the display is sometimes not correct.
         editor.ShowParaMarks = false;
       }
 
+      if (graphics.animationDrawer) {
+        graphics.animationDrawer.drawObject(this, graphics);
+        return;
+      }
+
       if(this.calcGeometry) {
         graphics.SaveGrState();
         graphics.SetIntegerGrid(false);
@@ -11733,7 +11622,9 @@ Because of this, the display is sometimes not correct.
       var RGBA = {R: 0, G: 0, B: 0, A: 255};
       this.brush.calculate(oParents.theme, oParents.slide, oParents.layout, oParents.master, RGBA);
     };
-
+	  SmartArt.prototype.getCompiledFill = function () {
+			return null;
+	  };
     SmartArt.prototype.recalculatePen = function () {
       this.pen = null;
       var oWhole = this.getWhole();
@@ -11893,7 +11784,6 @@ Because of this, the display is sometimes not correct.
         copy.cachedPixW = this.cachedPixW;
       }
       copy.setLocks(this.locks);
-      copy.setConnections2();
       return copy;
     };
     SmartArt.prototype.handleUpdateFill = function() {
@@ -11934,1372 +11824,22 @@ Because of this, the display is sometimes not correct.
       }
     };
     SmartArt.prototype.checkNodePointsAfterRead = function(bReplaceAll) {
-      let tree = this.createHierarchy();
-      tree.traverseBF(function (node) {
-        let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
-        if (nodePoint) {
-          if (bReplaceAll) {
-            nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
-          } else {
-            const oPlaceholderText = nodePoint.getPhldrT();
-            if (typeof oPlaceholderText !== 'string') {
-              nodePoint.setPhldrT('');
-            }
-          }
-        }
-      });
+			//todo
+      // let tree = this.createHierarchy();
+      // tree.traverseBF(function (node) {
+      //   let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
+      //   if (nodePoint) {
+      //     if (bReplaceAll) {
+      //       nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+      //     } else {
+      //       const oPlaceholderText = nodePoint.getPhldrT();
+      //       if (typeof oPlaceholderText !== 'string') {
+      //         nodePoint.setPhldrT('');
+      //       }
+      //     }
+      //   }
+      // });
     };
-
-    function SmartArtTree(rootInfo, rootData, parent) {
-      CBaseFormatObject.call(this);
-      var child = new SmartArtNode();
-      if (rootInfo) {
-        child.setInfo(rootInfo);
-      }
-      if (rootData) {
-        child.setData(rootData);
-      }
-      child.setParent(this);
-      this.parent = parent;
-      child.depth = 0;
-      this.root = child;
-    }
-    InitClass(SmartArtTree, CBaseFormatObject, AscDFH.historyitem_type_SmartArtTree);
-
-    SmartArtTree.prototype.traverseDF = function (callback) {
-      (function recurse(currentNode) {
-        for (var i = 0; i < currentNode.children.length; i += 1) {
-          recurse(currentNode.children[i]);
-        }
-        callback(currentNode);
-      })(this.root);
-    }
-    SmartArtTree.prototype.setRoot = function (oPr) {
-      this.root = oPr;
-      oPr.setParent(this);
-    }
-
-    SmartArtTree.prototype.traverseBF = function (callback) {
-      var queue = [];
-      var currentTree = this.root;
-
-      while (currentTree) {
-        for (var i = 0; i < currentTree.children.length; i += 1) {
-          queue.push(currentTree.children[i]);
-        }
-        callback(currentTree);
-        currentTree = queue.shift();
-      }
-    }
-
-    SmartArtTree.prototype.findNodeByNameAndStyleLbl = function (name, styleLbl) {
-      var layoutNode = [];
-      function callback(node) {
-        if (node.data) {
-          if (name && styleLbl) {
-            var check = node.data.presPoint.some(function (point) {
-              if (point.prSet) {
-                return point.prSet.presName === name && point.prSet.styleLbl === styleLbl;
-              }
-            });
-            if (check) {
-              layoutNode.push(node.data);
-            }
-          } else if (name) {
-            var check = node.data.presPoint.some(function (point) {
-              if (point.prSet) {
-                return point.prSet.presName === name;
-              }
-            });
-            if (check) {
-              layoutNode.push(node.data);
-            }
-          } else if (styleLbl) {
-            var check = node.data.presPoint.some(function (point) {
-              if (point.prSet) {
-                return point.prSet.styleLbl === styleLbl;
-              }
-            });
-            if (check) {
-              layoutNode.push(node.data);
-            }
-          }
-        }
-      }
-      this.contains(callback, true);
-      return layoutNode;
-    }
-
-    SmartArtTree.prototype.contains = function (callback, isTraverseDF) {
-      var traverse = isTraverseDF ? this.traverseDF : this.traverseBF;
-      traverse.call(this, callback);
-    }
-
-    SmartArtTree.prototype.add = function (childInfo, parentInfo, childData, isTraverseDF) {
-      var traverse = isTraverseDF ? this.traverseDF : this.traverseBF;
-      var parent;
-
-      var callback = function (node) {
-        if (node.info === parentInfo) {
-          parent = node;
-        }
-      };
-      this.contains(callback, traverse === this.traverseDF);
-
-      if (parent) {
-        var parentHaveChild = parent.children.some(function (ch) {
-          return ch.info === childInfo;
-        });
-        if (!parentHaveChild) {
-          var child = new SmartArtNode();
-          if (childInfo) {
-            child.setInfo(childInfo);
-          }
-          if (childData) {
-            child.setData(childData);
-          }
-          parent.addToLstChildren(parent.children.length, child);
-        }
-      }
-    };
-
-    SmartArtTree.prototype.remove = function (node, parent) {
-
-    }
-
-    function SmartArtNode() {
-      CBaseFormatObject.call(this);
-      this.info = null;
-      this.data = null;
-      this.children = [];
-      this.depth = null;
-    }
-    InitClass(SmartArtNode, CBaseFormatObject, AscDFH.historyitem_type_SmartArtNode);
-
-    SmartArtNode.prototype.setInfo = function (oPr) {
-      this.info = oPr;
-    }
-
-    SmartArtNode.prototype.getInfo = function () {
-      return this.info;
-    }
-
-    SmartArtNode.prototype.setData = function (oPr) {
-      this.data = oPr;
-      oPr.setParent(this);
-    }
-
-    SmartArtNode.prototype.getData = function () {
-      return this.data;
-    }
-
-    SmartArtNode.prototype.addToLstChildren = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.children.length, Math.max(0, nIdx));
-      nInsertIdx === this.children.length ? this.children.push(oPr) : this.children.splice(nInsertIdx, 0, oPr);
-      oPr.depth = this.depth + 1;
-      oPr.setParent(this);
-    }
-
-    SmartArtNode.prototype.removeFromLstChildren = function (nIdx) {
-      if (nIdx > -1 && nIdx < this.children.length) {
-        this.children[nIdx].setParent(null);
-        nIdx === this.children.length - 1 ? this.children.pop() : this.children.splice(nIdx, 1);
-      }
-    }
-
-    SmartArtNode.prototype.getAxis = function (axisType) {
-      switch (axisType) {
-        case AxisType_value_ancst:
-          return this.getAncst();
-        case AxisType_value_ancstOrSelf:
-          return this.getAncstOrSelf();
-        case AxisType_value_ch:
-          return this.getCh();
-        case AxisType_value_des:
-          return this.getDes();
-        case AxisType_value_desOrSelf:
-          return this.getDesOrSelf();
-        case AxisType_value_follow:
-          return this.getFollow();
-        case AxisType_value_followSib:
-          return this.getFollowSib();
-        case AxisType_value_none:
-          return this.getNone();
-        case AxisType_value_par:
-          return this.getPar();
-        case AxisType_value_preced:
-          return this.getPreced();
-        case AxisType_value_precedSib:
-          return this.getPrecedSib();
-        case AxisType_value_root:
-          return this.getRoot();
-        case AxisType_value_self:
-          return this.getSelf();
-        default:
-          return;
-
-      }
-    }
-
-    SmartArtNode.prototype.getAncst = function () {
-      var ancestors = [];
-      var root = this;
-      while (!(root instanceof SmartArtTree)) {
-        if (root !== this) {
-          ancestors.unshift(root);
-        }
-        root = root.parent;
-      }
-      return ancestors;
-    }
-
-    SmartArtNode.prototype.getAncstOrSelf = function () {
-      return this.getAncst().concat(this.getSelf());
-    }
-
-    SmartArtNode.prototype.getCh = function () {
-      return this.children;
-    }
-
-    SmartArtNode.prototype.getDes = function () {
-      var descendant = [];
-      (function recurse(context) {
-        context.children.forEach(function (children) {
-          descendant.push(children);
-          recurse(children);
-        });
-      })(this);
-      return descendant;
-    }
-
-    SmartArtNode.prototype.getDesOrSelf = function () {
-      return this.getSelf().concat(this.getDes());
-    }
-
-    SmartArtNode.prototype.getFollow = function () {
-      if (this.parent instanceof SmartArtTree) {
-        return;
-      }
-      var follow = [];
-      var followSib = this.getFollowSib();
-      followSib.forEach(function (follower) {
-        follow = follow.concat(follower.getDesOrSelf());
-      });
-      return follow;
-    }
-
-    SmartArtNode.prototype.getFollowSib = function () {
-      if (this.parent instanceof SmartArtTree) {
-        return;
-      }
-      var followSib = [];
-      var isFollowSib;
-      var parent = this.parent;
-      var childs = parent.children;
-      for (var i = 0; i < childs.length; i += 1) {
-        var child = childs[i];
-        if (isFollowSib) {
-          followSib.push(child);
-        }
-        if (this === child) {
-          isFollowSib = true;
-        }
-      }
-      return followSib;
-    }
-
-    SmartArtNode.prototype.getNone = function () {
-      return [];
-    }
-
-    SmartArtNode.prototype.getPar = function () {
-      return [this.parent];
-    }
-
-    SmartArtNode.prototype.getPreced = function () {
-      if (this.parent instanceof SmartArtTree) {
-        return;
-      }
-      var preced = [];
-      var precedSib = this.getPrecedSib();
-      precedSib.forEach(function (preceder) {
-        preced = preced.concat(preceder.getDesOrSelf());
-      });
-      return preced;
-    }
-
-    SmartArtNode.prototype.getPrecedSib = function () {
-      if (this.parent instanceof SmartArtTree) {
-        return;
-      }
-      var precedSib = [];
-      var isPrecedSib;
-      var parent = this.parent;
-      var childs = parent.children;
-      for (var i = childs.length - 1; i >= 0; i -= 1) {
-        var child = childs[i];
-        if (isPrecedSib) {
-          precedSib.push(child);
-        }
-        if (this === child) {
-          isPrecedSib = true;
-        }
-      }
-      return precedSib;
-    }
-
-    SmartArtNode.prototype.getRoot = function () {
-      var root = this;
-      while (!(root instanceof SmartArtTree)) {
-        root = root.parent;
-      }
-      return [root.root];
-    }
-
-    SmartArtNode.prototype.getSelf = function () {
-      return [this];
-    }
-
-    SmartArtNode.prototype.getPoints = function (ptType, name) {
-      var points = [];
-      if (this.data) {
-        switch (ptType) {
-          case ElementType_value_all:
-            points = this.data.getAllPoints();
-            break;
-          case ElementType_value_asst:
-            points = this.data.getAsstPoint();
-            break;
-          case ElementType_value_node:
-            points = this.data.getNodePoint();
-            break;
-          case ElementType_value_doc:
-            points = this.data.getDocPoint();
-            break;
-          case ElementType_value_norm:
-            points = this.data.getNormPoint();
-            break;
-          case ElementType_value_nonAsst:
-            points = this.data.getNonAsstPoint();
-            break;
-          case ElementType_value_nonNorm:
-            points = this.data.getNonNormPoint();
-            break;
-          case ElementType_value_parTrans:
-            points = this.data.getParPoint();
-            break;
-          case ElementType_value_pres:
-            points = this.data.getPresPoint();
-            break;
-          case ElementType_value_sibTrans:
-            points = this.data.getSibPoint();
-            break;
-          default:
-            points = this.data.getAllPoints();
-            break;
-        }
-        if (name) {
-          return points.filter(function (point) {
-            return point && point.prSet && point.prSet.presName && point.prSet.presName === name;
-          });
-        }
-      }
-      return points;
-    }
-
-    SmartArtNode.prototype.getShape = function (name, ptType) {
-      var points;
-      if (ptType) {
-        points = this.getPoints(ptType, name);
-      } else {
-        points = this.getPoints(ElementType_value_all, name);
-      }
-      points = points.map(function (point) {
-        return point.getShape(name);
-      }).filter(function (shape) {
-        return !!shape;
-      });
-      return points;
-    }
-
-    function SmartArtNodeData() {
-      CBaseFormatObject.call(this);
-      this.cxn = null;
-      this.sibPoint = [];
-      this.parPoint = [];
-      this.docPoint = null;
-      this.nodePoint = null;
-      this.normPoint = [];
-      this.asstPoint = null;
-      this.presPoint = [];
-      this.shapes = [];
-    }
-    InitClass(SmartArtNodeData, CBaseFormatObject, AscDFH.historyitem_type_SmartArtNodeData);
-
-    SmartArtNodeData.prototype.setSibPoint = function (oPr) {
-      this.sibPoint = oPr;
-    }
-
-    SmartArtNodeData.prototype.addToLstSibPoint = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.sibPoint.length, Math.max(0, nIdx));
-      nInsertIdx === this.sibPoint.length ? this.sibPoint.push(oPr) : this.sibPoint.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.addToLstNormPoint = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.normPoint.length, Math.max(0, nIdx));
-      nInsertIdx === this.normPoint.length ? this.normPoint.push(oPr) : this.normPoint.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.addToLstParPoint = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.parPoint.length, Math.max(0, nIdx));
-      nInsertIdx === this.parPoint.length ? this.parPoint.push(oPr) : this.parPoint.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.setDocPoint = function (oPr) {
-      this.docPoint = oPr;
-    }
-
-    SmartArtNodeData.prototype.addToLstAsstPoint = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.asstPoint.length, Math.max(0, nIdx));
-      nInsertIdx === this.asstPoint.length ? this.asstPoint.push(oPr) : this.asstPoint.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.setAsstPoint = function (oPr) {
-      this.asstPoint = oPr;
-    }
-
-    SmartArtNodeData.prototype.setNodePoint = function (oPr) {
-      this.nodePoint = oPr;
-    }
-
-    SmartArtNodeData.prototype.getPresPoint = function () {
-      return this.presPoint;
-    }
-
-    SmartArtNodeData.prototype.getAllPoints = function () {
-      var typeOfPoints = ['sibPoint', 'parPoint', 'docPoint', 'normPoint', 'nodePoint', 'asstPoint', 'presPoint'];
-      var result = [];
-      var that = this;
-      typeOfPoints.forEach(function (pointType) {
-        result = result.concat(!!that[pointType] ? that[pointType] : []);
-      });
-      return result;
-    }
-
-    SmartArtNodeData.prototype.getDocPoint = function () {
-      return this.docPoint ? [this.docPoint] : [];
-    }
-
-    SmartArtNodeData.prototype.getNodePoint = function () {
-      return this.nodePoint ? [this.nodePoint] : [];
-    }
-
-    SmartArtNodeData.prototype.getAsstPoint = function () {
-      return this.asstPoint;
-    }
-
-    SmartArtNodeData.prototype.getNormPoint = function () {
-      return this.normPoint;
-    }
-
-    SmartArtNodeData.prototype.getParPoint = function () {
-      return this.parPoint;
-    }
-
-    SmartArtNodeData.prototype.getNonAsstPoint = function () {
-      return this.getAllPoints().filter(function (point) {
-        return point.type !== Point_type_asst;
-      });
-    }
-
-    SmartArtNodeData.prototype.getNonNormPoint = function () {
-      var typeOfPoints = ['sibPoint', 'parPoint', 'docPoint', 'nodePoint', 'asstPoint'];
-      var result = [];
-      var that = this;
-      typeOfPoints.forEach(function (pointType) {
-        result = result.concat(that[pointType]);
-      });
-      return result;
-    }
-
-    SmartArtNodeData.prototype.getSibPoint = function () {
-      return this.sibPoint;
-    }
-
-    SmartArtNodeData.prototype.setCxn = function (oPr) {
-      this.cxn = oPr;
-    }
-    SmartArtNodeData.prototype.getCxn = function () {
-      return this.cxn;
-    }
-
-    SmartArtNodeData.prototype.setParPoint = function (oPr) {
-      this.parPoint = oPr;
-    }
-
-    SmartArtNodeData.prototype.getParPoint = function () {
-      return this.parPoint;
-    }
-
-
-    SmartArtNodeData.prototype.addToLstShapes = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.shapes.length, Math.max(0, nIdx));
-      nInsertIdx === this.shapes.length ? this.shapes.push(oPr) : this.shapes.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.removeFromLstShapes = function (nIdx) {
-      if (nIdx > -1 && nIdx < this.shapes.length) {
-        this.shapes[nIdx].setParent(null);
-        nIdx === this.shapes.length - 1 ? this.shapes.pop() : this.shapes.splice(nIdx, 1);
-      }
-    }
-
-    SmartArtNodeData.prototype.addToLstPresPoint = function (nIdx, oPr) {
-      var nInsertIdx = Math.min(this.presPoint.length, Math.max(0, nIdx));
-      nInsertIdx === this.presPoint.length ? this.presPoint.push(oPr) : this.presPoint.splice(nInsertIdx, 0, oPr);
-    }
-
-    SmartArtNodeData.prototype.removeFromLstPresPoint = function (nIdx) {
-      if (nIdx > -1 && nIdx < this.presPoint.length) {
-        this.presPoint[nIdx].setParent(null);
-        nIdx === this.presPoint.length - 1 ? this.presPoint.pop() : this.presPoint.splice(nIdx, 1);
-      }
-    }
-
-    SmartArtNodeData.prototype.getPresByNameAndStyleLbl = function (name, styleLbl) {
-      var presValue;
-      this.presPoint.forEach(function (pres) {
-        if (pres.prSet) {
-          if (name && styleLbl) {
-            if (pres.prSet.presName === name && pres.prSet.styleLbl === styleLbl) {
-              presValue = pres;
-            }
-          } else if (name) {
-            if (pres.prSet.presName === name) {
-              presValue = pres;
-            }
-          } else if (styleLbl) {
-            if (pres.prSet.styleLbl === styleLbl) {
-              presValue = pres;
-            }
-          }
-        }
-      });
-      return presValue;
-    }
-
-    SmartArtNodeData.prototype.getPresWithVarLst = function () {
-      for (var i = 0; i < this.presPoint.length; i += 1) {
-        var pres = this.presPoint[i];
-        if (pres && pres.prSet && pres.prSet.presLayoutVars) {
-          return pres;
-        }
-      }
-    }
-
-    // Акцентируемый рисунок
-    function SmartArtAccentedPicture() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtAccentedPicture, SmartArt);
-
-    // Баланс
-    function SmartArtBalance1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBalance1, SmartArt);
-
-    // Блоки рисунков с названиями
-    function SmartArtTitledPictureBlocks() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtTitledPictureBlocks, SmartArt);
-
-    // Блоки со смещенными рисунками
-    function SmartArtPictureAccentBlocks() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPictureAccentBlocks, SmartArt);
-    // Блочный цикл
-    function SmartArtCycle5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle5, SmartArt);
-
-    // Венна в столбик
-    function SmartArtVenn2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVenn2, SmartArt);
-
-    // Вертикальное уравнение
-    function SmartArtEquation2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtEquation2, SmartArt);
-
-    // Вертикальный блочный список
-    function SmartArtVList5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVList5, SmartArt);
-
-    // Вертикальный ломаный процесс
-    function SmartArtBProcess4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBProcess4, SmartArt);
-
-    // Вертикальный маркированный список
-    function SmartArtVList2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVList2, SmartArt);
-
-    // Вертикальный нелинейный список
-    function SmartArtVerticalCurvedList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVerticalCurvedList, SmartArt);
-
-    // Вертикальный процесс
-    function SmartArtProcess2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtProcess2, SmartArt);
-
-    // Вертикальный список
-    function SmartArtList1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtList1, SmartArt);
-
-    // Вертикальный список рисунков
-    function SmartArtVList4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVList4, SmartArt);
-
-    // Вертикальный список с кругами
-    function SmartArtVerticalCircleList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVerticalCircleList, SmartArt);
-
-    // Вертикальный список со смещенными рисунками
-    function SmartArtVList3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVList3, SmartArt);
-
-    // Вертикальный список со стрелкой
-    function SmartArtVList6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVList6, SmartArt);
-
-    // Вертикальный уголковый список
-    function SmartArtChevron2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtChevron2, SmartArt);
-
-    // Вертикальный уголковый список2
-    function SmartArtVerticalAccentList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVerticalAccentList, SmartArt);
-
-    // Вложенная целевая
-    function SmartArtTarget2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtTarget2, SmartArt);
-
-    // Воронка
-    function SmartArtFunnel1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtFunnel1, SmartArt);
-
-    // Восходящая стрелка
-    function SmartArtArrow2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow2, SmartArt);
-
-    // Восходящая стрелка процесса
-    function SmartArtIncreasingArrowsProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtIncreasingArrowsProcess, SmartArt);
-
-    // Восходящий процесс
-    function SmartArtStepUpProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtStepUpProcess, SmartArt);
-
-    // Выноска с круглыми рисунками
-    function SmartArtCircularPictureCallout() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCircularPictureCallout, SmartArt);
-
-    // Горизонтальная иерархия
-    function SmartArtHierarchy2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy2, SmartArt);
-
-    // Горизонтальная иерархия с подписями
-    function SmartArtHierarchy5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy5, SmartArt);
-
-    // Горизонтальная многоуровневая иерархия
-    function SmartArtHorizontalMultiLevelHierarchy() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHorizontalMultiLevelHierarchy, SmartArt);
-
-    // Горизонтальная организационная диаграмма
-    function SmartArtHorizontalOrganizationChart() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHorizontalOrganizationChart, SmartArt);
-
-    // Горизонтальный маркированный список
-    function SmartArtHList1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList1, SmartArt);
-
-    // Горизонтальный список рисунков
-    function SmartArtPList2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPList2, SmartArt);
-
-    // Закрытый уголковый процесс
-    function SmartArtHChevron3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHChevron3, SmartArt);
-
-    // Иерархический список
-    function SmartArtHierarchy3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy3, SmartArt);
-
-    // Иерархия
-    function SmartArtHierarchy1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy1, SmartArt);
-
-    // Иерархия с круглыми рисунками
-    function SmartArtCirclePictureHierarchy() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCirclePictureHierarchy, SmartArt);
-
-    // Иерархия с подписями
-    function SmartArtHierarchy6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy6, SmartArt);
-
-    // Инвертированная пирамида
-    function SmartArtPyramid3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPyramid3, SmartArt);
-
-    // Кластер шестиугольников
-    function SmartArtHexagonCluster() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHexagonCluster, SmartArt);
-
-    // Круг связей
-    function SmartArtCircleRelationship() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCircleRelationship, SmartArt);
-
-    // Круглая временная шкала
-    function SmartArtCircleAccentTimeline() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCircleAccentTimeline, SmartArt);
-
-    // Круглый ломаный процесс
-    function SmartArtBProcess2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBProcess2, SmartArt);
-
-    // Лента со стрелками
-    function SmartArtArrow6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow6, SmartArt);
-
-    // Линейная Венна
-    function SmartArtVenn3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVenn3, SmartArt);
-
-    // Линия рисунков
-    function SmartArtPictureLineup() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPictureLineup, SmartArt);
-
-    // Линия рисунков с названиями
-    function SmartArtTitlePictureLineup() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtTitlePictureLineup, SmartArt);
-
-    // Ломаный список рисунков с подписями
-    function SmartArtBendingPictureCaptionList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBendingPictureCaptionList, SmartArt);
-
-    // Ломаный список со смещенными рисунками
-    function SmartArtBList2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBList2, SmartArt);
-
-    // Матрица с заголовками
-    function SmartArtMatrix1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtMatrix1, SmartArt);
-
-    // Нарастающий процесс с кругами
-    function SmartArtIncreasingCircleProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtIncreasingCircleProcess, SmartArt);
-
-    // Нелинейные рисунки с блоками
-    function SmartArtBendingPictureBlocks() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBendingPictureBlocks, SmartArt);
-
-    // Нелинейные рисунки с подписями
-    function SmartArtBendingPictureCaption() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBendingPictureCaption, SmartArt);
-
-    // Нелинейные рисунки с полупрозрачным текстом
-    function SmartArtBendingPictureSemiTransparentText() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBendingPictureSemiTransparentText, SmartArt);
-
-    // Ненаправленный цикл
-    function SmartArtCycle6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle6, SmartArt);
-
-    // Непрерывный блочный процесс
-    function SmartArtHProcess9() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess9, SmartArt);
-
-    // Непрерывный список с рисунками
-    function SmartArtHList7() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList7, SmartArt);
-
-    // Непрерывный цикл
-    function SmartArtCycle3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle3, SmartArt);
-
-    // Нисходящий блочный список
-    function SmartArtBlockDescendingList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBlockDescendingList, SmartArt);
-
-    // Нисходящий процесс
-    function SmartArtStepDownProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtStepDownProcess, SmartArt);
-
-    // Обратный список
-    function SmartArtReverseList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtReverseList, SmartArt);
-
-    // Организационная диаграмма
-    function SmartArtOrgChart1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtOrgChart1, SmartArt);
-
-    // Организационная диаграмма с именами и должностями
-    function SmartArtNameandTitleOrganizationalChart() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtNameandTitleOrganizationalChart, SmartArt);
-
-    // Переменный поток
-    function SmartArtHProcess4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess4, SmartArt);
-
-    // Пирамидальный список
-    function SmartArtPyramid2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPyramid2, SmartArt);
-
-    // Плюс и минус
-    function SmartArtPlusandMinus() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPlusandMinus, SmartArt);
-
-    // Повторяющийся ломаный процесс
-    function SmartArtBProcess3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBProcess3, SmartArt);
-
-    // Подписанные рисунки
-    function SmartArtCaptionedPictures() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCaptionedPictures, SmartArt);
-
-    // Подробный процесс
-    function SmartArtHProcess7() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess7, SmartArt);
-
-    // Полосы рисунков
-    function SmartArtPictureStrips() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPictureStrips, SmartArt);
-
-    // Полукруглая организационная диаграмма
-    function SmartArtHalfCircleOrganizationChart() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHalfCircleOrganizationChart, SmartArt);
-
-    // Поэтапный процесс
-    function SmartArtPhasedProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPhasedProcess, SmartArt);
-
-    // Простая Венна
-    function SmartArtVenn1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVenn1, SmartArt);
-
-    // Простая временная шкала
-    function SmartArtHProcess11() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess11, SmartArt);
-
-    // Простая круговая
-    function SmartArtChart3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtChart3, SmartArt);
-
-    // Простая матрица
-    function SmartArtMatrix3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtMatrix3, SmartArt);
-
-    // Простая пирамида
-    function SmartArtPyramid1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPyramid1, SmartArt);
-
-    // Простая радиальная
-    function SmartArtRadial1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial1, SmartArt);
-
-    // Простая целевая
-    function SmartArtTarget1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtTarget1, SmartArt);
-
-    // Простой блочный список
-    function SmartArtDefault() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtDefault, SmartArt);
-
-    // Простой ломаный процесс
-    function SmartArtProcess5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtProcess5, SmartArt);
-
-    // Простой процесс
-    function SmartArtProcess1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtProcess1, SmartArt);
-
-    // Простой уголковый процесс
-    function SmartArtChevron1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtChevron1, SmartArt);
-
-    // Простой цикл
-    function SmartArtCycle2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle2, SmartArt);
-
-    // Противоположные идеи
-    function SmartArtOpposingIdeas() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtOpposingIdeas, SmartArt);
-
-    // Противостоящие стрелки
-    function SmartArtArrow4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow4, SmartArt);
-
-    // Процесс от случайности к результату
-    function SmartArtRandomtoResultProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRandomtoResultProcess, SmartArt);
-
-    // Процесс с вложенными шагами
-    function SmartArtSubStepProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtSubStepProcess, SmartArt);
-
-    // Процесс с круговой диаграммой
-    function SmartArtPieProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPieProcess, SmartArt);
-
-    // Процесс со смещением
-    function SmartArtProcess3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtProcess3, SmartArt);
-
-    // Процесс со смещенными по возрастанию рисунками
-    function SmartArtAscendingPictureAccentProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtAscendingPictureAccentProcess, SmartArt);
-
-    // Процесс со смещенными рисунками
-    function SmartArtHProcess10() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess10, SmartArt);
-
-    // Радиальная Венна
-    function SmartArtRadial3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial3, SmartArt);
-
-    // Радиальная циклическая
-    function SmartArtRadial6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial6, SmartArt);
-
-    // Радиальный кластер
-    function SmartArtRadialCluster() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadialCluster, SmartArt);
-
-    // Радиальный список
-    function SmartArtRadial2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial2, SmartArt);
-
-    // Разнонаправленный цикл
-    function SmartArtCycle7() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle7, SmartArt);
-
-    // Расходящаяся радиальная
-    function SmartArtRadial5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial5, SmartArt);
-
-    // Расходящиеся стрелки
-    function SmartArtArrow1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow1, SmartArt);
-
-    // Рисунок с текстом в рамке
-    function SmartArtFramedTextPicture() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtFramedTextPicture, SmartArt);
-
-    // Сгруппированный список
-    function SmartArtLProcess2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtLProcess2, SmartArt);
-
-    // Сегментированная пирамида
-    function SmartArtPyramid4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPyramid4, SmartArt);
-
-    // Сегментированный процесс
-    function SmartArtProcess4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtProcess4, SmartArt);
-
-    // Сегментированный цикл
-    function SmartArtCycle8() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle8, SmartArt);
-
-    // Сетка рисунков
-    function SmartArtPictureGrid() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPictureGrid, SmartArt);
-
-    // Сетчатая матрица
-    function SmartArtMatrix2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtMatrix2, SmartArt);
-
-    // Спираль рисунков
-    function SmartArtSpiralPicture() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtSpiralPicture, SmartArt);
-
-    // Список в столбик
-    function SmartArtHList9() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList9, SmartArt);
-
-    // Список названий рисунков
-    function SmartArtPList1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPList1, SmartArt);
-
-    // Список процессов
-    function SmartArtLProcess1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtLProcess1, SmartArt);
-
-    // Список рисунков с выносками
-    function SmartArtBubblePictureList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtBubblePictureList, SmartArt);
-
-    // Список с квадратиками
-    function SmartArtSquareAccentList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtSquareAccentList, SmartArt);
-
-    // Список с линиями
-    function SmartArtLinedList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtLinedList, SmartArt);
-
-    // Список со смещенными рисунками
-    function SmartArtHList2() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList2, SmartArt);
-
-    // Список со смещенными рисунками и заголовком
-    function SmartArtPictureAccentList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtPictureAccentList, SmartArt);
-
-    // Список со снимками
-    function SmartArtSnapshotPictureList() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtSnapshotPictureList, SmartArt);
-
-    // Стрелка непрерывного процесса
-    function SmartArtHProcess3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess3, SmartArt);
-
-    // Стрелка процесса с кругами
-    function SmartArtCircleArrowProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCircleArrowProcess, SmartArt);
-
-    // Стрелки процесса
-    function SmartArtHProcess6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHProcess6, SmartArt);
-
-    // Ступенчатый процесс
-    function SmartArtVProcess5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtVProcess5, SmartArt);
-
-    // Сходящаяся радиальная
-    function SmartArtRadial4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtRadial4, SmartArt);
-
-    // Сходящиеся стрелки
-    function SmartArtArrow5() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow5, SmartArt);
-
-    // Табличная иерархия
-    function SmartArtHierarchy4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHierarchy4, SmartArt);
-
-    // Табличный список
-    function SmartArtHList3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList3, SmartArt);
-
-    // Текстовый цикл
-    function SmartArtCycle1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle1, SmartArt);
-
-    // Трапецевидный список
-    function SmartArtHList6() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtHList6, SmartArt);
-
-    // Убывающий процесс
-    function SmartArtDescendingProcess() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtDescendingProcess, SmartArt);
-
-    // Уголковый список
-    function SmartArtLProcess3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtLProcess3, SmartArt);
-
-    // Уравнение
-    function SmartArtEquation1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtEquation1, SmartArt);
-
-    // Уравновешивающие стрелки
-    function SmartArtArrow3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtArrow3, SmartArt);
-
-    // Целевой список
-    function SmartArtTarget3() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtTarget3, SmartArt);
-
-    // Циклическая матрица
-    function SmartArtCycle4() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtCycle4, SmartArt);
-
-    // Чередующиеся блоки рисунков
-    function SmartArtAlternatingPictureBlocks() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtAlternatingPictureBlocks, SmartArt);
-
-    // Чередующиеся круги рисунков
-    function SmartArtAlternatingPictureCircles() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtAlternatingPictureCircles, SmartArt);
-
-    // Чередующиеся шестиугольники
-    function SmartArtAlternatingHexagons() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtAlternatingHexagons, SmartArt);
-
-    // Шестеренки
-    function SmartArtGear1() {
-      SmartArt.call(this);
-    }
-    InitClassWithoutType(SmartArtGear1, SmartArt);
-
 
 
     window['AscFormat'] = window['AscFormat'] || {};
@@ -13318,8 +11858,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].LayoutDef              = LayoutDef;
     window['AscFormat'].CatLst                 = CatLst;
     window['AscFormat'].SCat                   = SCat;
-    window['AscFormat'].ClrData                = ClrData;
-    window['AscFormat'].Desc                   = Desc;
     window['AscFormat'].LayoutNode             = LayoutNode;
     window['AscFormat'].Alg                    = Alg;
     window['AscFormat'].Param                  = Param;
@@ -13351,12 +11889,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ColorsDef              = ColorsDef;
     window['AscFormat'].ColorDefStyleLbl       = ColorDefStyleLbl;
     window['AscFormat'].ClrLst                 = ClrLst;
-    window['AscFormat'].EffectClrLst           = EffectClrLst;
-    window['AscFormat'].FillClrLst             = FillClrLst;
-    window['AscFormat'].LinClrLst              = LinClrLst;
-    window['AscFormat'].TxEffectClrLst         = TxEffectClrLst;
-    window['AscFormat'].TxFillClrLst           = TxFillClrLst;
-    window['AscFormat'].TxLinClrLst            = TxLinClrLst;
     window['AscFormat'].ColorsDefHdr           = ColorsDefHdr;
     window['AscFormat'].ColorsDefHdrLst        = ColorsDefHdrLst;
     window['AscFormat'].StyleDef               = StyleDef;
@@ -13377,7 +11909,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].StyleDefHdrLst         = StyleDefHdrLst;
     window['AscFormat'].StyleDefHdr            = StyleDefHdr;
     window['AscFormat'].BackdropAnchor         = BackdropAnchor;
-    window['AscFormat'].StyleData              = StyleData;
     window['AscFormat'].SampData               = SampData;
     window['AscFormat'].ForEach                = ForEach;
     window['AscFormat'].ResizeHandles          = ResizeHandles;
@@ -13388,15 +11919,11 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ExtrusionClr           = ExtrusionClr;
     window['AscFormat'].ContourClr             = ContourClr;
     window['AscFormat'].SmartArt               = SmartArt;
-    window['AscFormat'].CCommonDataClrList     = CCommonDataClrList;
     window['AscFormat'].BuNone                 = BuNone;
     window['AscFormat'].Drawing                = Drawing;
     window['AscFormat'].DiagramData            = DiagramData;
     window['AscFormat'].FunctionValue          = FunctionValue;
     window['AscFormat'].ShapeSmartArtInfo      = ShapeSmartArtInfo;
-    window['AscFormat'].SmartArtTree           = SmartArtTree;
-    window['AscFormat'].SmartArtNode           = SmartArtNode;
-    window['AscFormat'].SmartArtNodeData       = SmartArtNodeData;
 
     window['AscFormat'].Point_type_asst = Point_type_asst;
     window['AscFormat'].Point_type_doc = Point_type_doc;
@@ -13512,11 +12039,6 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].If_op_lt = If_op_lt;
     window['AscFormat'].If_op_gte = If_op_gte;
     window['AscFormat'].If_op_lte = If_op_lte;
-
-    window['AscFormat'].boolOperator_none = boolOperator_none;
-    window['AscFormat'].boolOperator_equ = boolOperator_equ;
-    window['AscFormat'].boolOperator_gte = boolOperator_gte;
-    window['AscFormat'].boolOperator_lte = boolOperator_lte;
 
     window['AscFormat'].If_func_cnt = If_func_cnt;
     window['AscFormat'].If_func_depth = If_func_depth;
@@ -14000,10 +12522,10 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ParameterVal_connectorRouting_stra = ParameterVal_connectorRouting_stra;
     window['AscFormat'].ParameterVal_continueDirection_revDir = ParameterVal_continueDirection_revDir;
     window['AscFormat'].ParameterVal_continueDirection_sameDir = ParameterVal_continueDirection_sameDir;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_ctr = ParameterVal_diagramHorizontalAlignment_ctr;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_l = ParameterVal_diagramHorizontalAlignment_l;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_none = ParameterVal_diagramHorizontalAlignment_none;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_r = ParameterVal_diagramHorizontalAlignment_r;
+    window['AscFormat'].ParameterVal_horizontalAlignment_ctr = ParameterVal_horizontalAlignment_ctr;
+    window['AscFormat'].ParameterVal_horizontalAlignment_l = ParameterVal_horizontalAlignment_l;
+    window['AscFormat'].ParameterVal_horizontalAlignment_none = ParameterVal_horizontalAlignment_none;
+    window['AscFormat'].ParameterVal_horizontalAlignment_r = ParameterVal_horizontalAlignment_r;
     window['AscFormat'].ParameterVal_diagramTextAlignment_ctr = ParameterVal_diagramTextAlignment_ctr;
     window['AscFormat'].ParameterVal_diagramTextAlignment_l = ParameterVal_diagramTextAlignment_l;
     window['AscFormat'].ParameterVal_diagramTextAlignment_r = ParameterVal_diagramTextAlignment_r;
@@ -14065,7 +12587,7 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ParameterVal_textAnchorHorizontal_none = ParameterVal_textAnchorHorizontal_none;
     window['AscFormat'].ParameterVal_textAnchorVertical_b = ParameterVal_textAnchorVertical_b;
     window['AscFormat'].ParameterVal_textAnchorVertical_mid = ParameterVal_textAnchorVertical_mid;
-    window['AscFormat'].ParameterVal_textAnchorVertical_top = ParameterVal_textAnchorVertical_top;
+    window['AscFormat'].ParameterVal_textAnchorVertical_t = ParameterVal_textAnchorVertical_t;
     window['AscFormat'].ParameterVal_textBlockDirection_horz = ParameterVal_textBlockDirection_horz;
     window['AscFormat'].ParameterVal_textBlockDirection_vert = ParameterVal_textBlockDirection_vert;
     window['AscFormat'].ParameterVal_textDirection_fromB = ParameterVal_textDirection_fromB;
@@ -14100,5 +12622,9 @@ Because of this, the display is sometimes not correct.
 
     window['AscFormat'].EChOrder_chOrderB = EChOrder_chOrderB;
     window['AscFormat'].EChOrder_chOrderT = EChOrder_chOrderT;
+
+	  window['AscCommon'].smartArtContentFillingType_parentWithChildren = smartArtContentFillingType_parentWithChildren;
+	  window['AscCommon'].smartArtContentFillingType_onlyChildren = smartArtContentFillingType_onlyChildren;
+	  window['AscCommon'].smartArtContentFillingType_onlyParent = smartArtContentFillingType_onlyParent;
 
   })(window)

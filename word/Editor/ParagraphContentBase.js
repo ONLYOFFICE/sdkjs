@@ -248,7 +248,7 @@ CParagraphContentBase.prototype.UpdateBookmarks = function(oManager)
 {
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
+ * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentBase.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
@@ -4013,7 +4013,7 @@ CParagraphContentWithParagraphLikeContent.prototype.RestartSpellCheck = function
     }
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
+ * @param oSpellCheckerEngine {AscWord.CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)

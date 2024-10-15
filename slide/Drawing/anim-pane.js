@@ -358,16 +358,6 @@
 			this.parentControl.onChildUpdate(oBounds);
 		}
 	};
-	CControl.prototype.getCursorInfo = function (e, x, y) {
-		if (!this.hit(x, y)) {
-			return null;
-		} else {
-			return {
-				cursorType: "default",
-				tooltip: this.getTooltipText()
-			}
-		}
-	};
 	CControl.prototype.checkUpdateRect = function (oUpdateRect) {
 		var oBounds = this.getBounds();
 		if (oUpdateRect && oBounds) {
@@ -2266,49 +2256,20 @@
 			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", INDEX_LABEL_FONTSIZE, false, AscCommon.align_Center))
 		}
 
-		const images = getIconsForLoad();
-		// [clickEffectIcon, afterEffectIcon, entrEffectIcon, emphEffectIcon, exitEffectIcon, pathEffectIcon];
-
 		// Event type image
-		let eventImg = {};
-		if (this.effect.isClickEffect()) {
-			eventImg.src = images[0];
-			eventImg.width = 11 * AscCommon.g_dKoef_pix_to_mm;
-			eventImg.height = 16 * AscCommon.g_dKoef_pix_to_mm;
-		}
-		if (this.effect.isAfterEffect()) {
-			eventImg.src = images[1];
-			eventImg.width = 16 * AscCommon.g_dKoef_pix_to_mm;
-			eventImg.height = 16 * AscCommon.g_dKoef_pix_to_mm;
-		}
+		const eventImg = this.getEventImage();
 		this.eventTypeImage = this.addControl(new CImageControl(this, eventImg.src, eventImg.width, eventImg.height));
 
 		// Effect type image
-		let effectImg = {};
-		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_ENTR) {
-			effectImg.src = images[2];
-			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
-			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
-		}
-		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_EMPH) {
-			effectImg.src = images[3];
-			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
-			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
-		}
-		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_EXIT) {
-			effectImg.src = images[4];
-			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
-			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
-		}
-		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_PATH) {
-			effectImg.src = images[5];
-			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
-			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
-		}
+		const effectImg = this.getEffectImage();
 		this.effectTypeImage = this.addControl(new CImageControl(this, effectImg.src, effectImg.width, effectImg.height));
 
 		this.effectLabel = this.addControl(new CLabel(this, this.getEffectLabelText(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
-		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
+		this.contextMenuButton = this.addControl(new CButton(this, function (e, x, y) {
+			if (this.hit(x, y) && (e.Button === AscCommon.g_mouse_button_left)) {
+				this.pressedFlag = true;
+			}
+		}, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(
 			this.contextMenuButton,
 			AscCommon.GlobalSkin.type == 'light' ? menuButtonIcon_dark : menuButtonIcon_light,
@@ -2338,7 +2299,10 @@
 
 		function showContextMenu(e, x, y) {
 			if (this.hit(x, y) && !this.isHidden()) {
-				this.sendContextMenuEvent();
+				if (this.pressedFlag) {
+					this.sendContextMenuEvent();
+					this.pressedFlag = false;
+				}
 			}
 		}
 
@@ -2401,6 +2365,7 @@
 		if (this.indexLabel) this.indexLabel.setLayout(0, 0, INDEX_LABEL_WIDTH, ANIM_ITEM_HEIGHT)
 
 		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, 0, EVENT_TYPE_ICON_SIZE, EVENT_TYPE_ICON_SIZE);
+		this.effectTypeImage.src = this.getEffectImage().src;
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), 0, EFFECT_TYPE_ICON_SIZE, EFFECT_TYPE_ICON_SIZE);
 
 		const zeroPos = COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN + TIMELINE_SCROLL_BUTTON_SIZE;
@@ -2412,9 +2377,47 @@
 		const menuBtnLeft = this.getRight() - MENU_BUTTON_SIZE - menuBtnGap;
 		this.contextMenuButton.setLayout(menuBtnLeft, menuBtnGap, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
 
+		this.contextMenuButton.icon.src = AscCommon.GlobalSkin.type == 'light' ? menuButtonIcon_dark : menuButtonIcon_light;
 		this.contextMenuButton.icon.setLayout(0, 0, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
 	};
-
+	CAnimItem.prototype.getEventImage = function () {
+		let eventImg = {};
+		if (this.effect.isClickEffect()) {
+			eventImg.src = clickEffectIcon;
+			eventImg.width = 11 * AscCommon.g_dKoef_pix_to_mm;
+			eventImg.height = 16 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		if (this.effect.isAfterEffect()) {
+			eventImg.src = afterEffectIcon;
+			eventImg.width = 16 * AscCommon.g_dKoef_pix_to_mm;
+			eventImg.height = 16 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		return eventImg;
+	};
+	CAnimItem.prototype.getEffectImage = function () {
+		let effectImg = {};
+		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_ENTR) {
+			effectImg.src = entrEffectIcon;
+			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
+			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_EMPH) {
+			effectImg.src = emphEffectIcon;
+			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
+			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_EXIT) {
+			effectImg.src = exitEffectIcon;
+			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
+			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		if (this.effect.cTn.presetClass === AscFormat.PRESET_CLASS_PATH) {
+			effectImg.src = AscCommon.GlobalSkin.type === 'light' ? pathEffectIcon_dark : pathEffectIcon_light;
+			effectImg.width = 20 * AscCommon.g_dKoef_pix_to_mm;
+			effectImg.height = 20 * AscCommon.g_dKoef_pix_to_mm;
+		}
+		return effectImg;
+	};
 	CAnimItem.prototype.updateSelectState = function (event) {
 		const oThis = this;
 		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
@@ -2444,14 +2447,31 @@
 		animPane.sentMouseMoveData = mouseMoveData;
 	}
 	CAnimItem.prototype.getNewCursorType = function (x, y) {
+		const isVerticalDrag = null !== editor.WordControl.m_oAnimPaneApi.list.Control.seqList.nPressedSlot;
+		if (isVerticalDrag) {
+			return 'grabbing';
+		}
+
+		let draggingAnimItem;
+		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.forEachAnimItem(function (animItem) {
+			if (animItem.hitResult) {
+				draggingAnimItem = animItem;
+			}
+		});
+
+		const hitRes = draggingAnimItem
+			? draggingAnimItem.hitResult
+			: (this.hitResult || this.hitInEffectBar(x, y));
+
 		const cursorTypes = {
 			'left': 'col-resize',
 			'right': 'col-resize',
 			'partition': 'col-resize',
 			'center': 'ew-resize'
 		};
-		const hitRes = this.hitResult || this.hitInEffectBar(x, y);
-		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
+		const cursorType = hitRes
+			? cursorTypes[hitRes.type]
+			: this.contextMenuButton.hit(x, y) ? 'default' : 'ns-resize';
 		return cursorType;
 	};
 	CAnimItem.prototype.getMouseMoveData = function (x, y) {
@@ -2463,7 +2483,8 @@
 		mouseMoveData.X_abs = coords.X;
 		mouseMoveData.Y_abs = coords.Y;
 
-		if (!this.contextMenuButton.hit(x, y)) {
+		const isVerticalDrag = null !== editor.WordControl.m_oAnimPaneApi.list.Control.seqList.nPressedSlot;
+		if (!this.contextMenuButton.hit(x, y) && !isVerticalDrag) {
 			mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
 			const tooltipInfo = this.getInfoForTooltip(x, y);
 			if (typeof tooltipInfo === 'string') {
@@ -2766,9 +2787,13 @@
 		let oFillColor = new AscFormat.CShapeColor(oFillColorRGBA.R, oFillColorRGBA.G, oFillColorRGBA.B);
 		let oOutlineColor = new AscFormat.CShapeColor(oOutlineColorRGBA.R, oOutlineColorRGBA.G, oOutlineColorRGBA.B);
 
-		// change brightness of CShapeColor
-		oFillColor = this.isCurrentlyPlaying ? oFillColor.getColorData(-0.1) : oFillColor;
-		oOutlineColor = this.isCurrentlyPlaying ? oOutlineColor.getColorData(-0.1) : oOutlineColor;
+		// change brightness of CShapeColor during demo preview
+		if (Asc.editor.asc_IsStartedAnimationPreview()) {
+			if (!this.isCurrentlyPlaying) {
+				oFillColor = oFillColor.getColorData(0.4);
+				oOutlineColor = oOutlineColor.getColorData(0.4);
+			}
+		}
 
 		graphics.b_color1(oFillColor.r, oFillColor.g, oFillColor.b, 255);
 		graphics.p_color(oOutlineColor.r, oOutlineColor.g, oOutlineColor.b, 255);
@@ -2939,7 +2964,6 @@
 		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy, false);
 	};
 
-
 	CAnimItem.prototype.onMouseDown = function (e, x, y) {
 		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
 			return true;
@@ -3072,7 +3096,8 @@
 	const entrEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxyZWN0IHg9IjMiIHk9IjIiIHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiMwRThBMjYiLz4KPHJlY3QgeD0iMSIgeT0iNSIgd2lkdGg9IjQiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxMiIgd2lkdGg9IjMiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxNSIgd2lkdGg9IjIiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8L3N2Zz4K';
 	const emphEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik01Ljg5NDU4IDYuMTkzMzZMMi4zOTQ1OCAxLjY5MzM2TDEuNjA1MjIgMi4zMDczTDUuMTA1MjIgNi44MDczTDUuODk0NTggNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTEuODUzNTkgMTUuODUzOUw0LjM1MzU5IDEzLjM1MzlMMy42NDY0OCAxMi42NDY4TDEuMTQ2NDggMTUuMTQ2OEwxLjg1MzU5IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik0xNC4xNDY0IDYuMTkzMzZMMTcuNjQ2NCAxLjY5MzM2TDE4LjQzNTggMi4zMDczTDE0LjkzNTggNi44MDczTDE0LjE0NjQgNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTE4LjE4NzQgMTUuODUzOUwxNS42ODc0IDEzLjM1MzlMMTYuMzk0NSAxMi42NDY4TDE4Ljg5NDUgMTUuMTQ2OEwxOC4xODc0IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+Cjwvc3ZnPgo=';
 	const exitEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xMyAySDE3VjNIMTNWMloiIGZpbGw9IiNGMjNEM0QiLz4KPHBhdGggZD0iTTE1IDZWNUgxOVY2SDE1WiIgZmlsbD0iI0YyM0QzRCIvPgo8cGF0aCBkPSJNMTkgMTJIMTZWMTNIMTlWMTJaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xNyAxNUgxOVYxNkgxN1YxNVoiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
-	const pathEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTk2NzUgMS41MDAwMUw5Ljk5Njc1IDEuNTAwMDVMMTAuMDAzMiAxLjUwMDAxQzEwLjA1MjUgMS40OTk2OSAxMC4wOTcgMS41MTM4IDEwLjEzMDQgMS41MzY0QzEwLjE2MDUgMS41NTY3NSAxMC4xOTA1IDEuNTg5NjEgMTAuMjA5OCAxLjY0ODU4QzEwLjIwOTggMS42NDg3MiAxMC4yMDk5IDEuNjQ4ODYgMTAuMjA5OSAxLjY0ODk5TDEyLjE1MzMgNy42NzY4OUwxMi4xNTM3IDcuNjc3OTdDMTIuMjg3OSA4LjA5MDk3IDEyLjYyODYgOC4zOTM2OSAxMy4wMzg5IDguNDg3NDRMMTMuMDkzOSA4LjVIMTMuMTUwM0gxOC4yODNDMTguNDkxIDguNSAxOC41NzggOC43NjUwNCAxOC40MTE5IDguODg4NTFMMTMuODg0NyAxMi4wNzkzTDEzLjYwMzUgMTIuMjc3NEwxMy42ODgxIDEyLjYxMDlDMTMuNzM0OCAxMi43OTQ2IDEzLjc4OTQgMTIuOTg0NSAxMy44NTMyIDEzLjE4MDhMMTUuNDg3MiAxOC4yMDk3QzE1LjU1MTcgMTguNDA4NCAxNS4zMjQ0IDE4LjU3MzYgMTUuMTU1NCAxOC40NTA4TDE1LjE1NTQgMTguNDUwOEwxNS4xNDk1IDE4LjQ0NjZMMTAuMjg4IDE1LjAyMDJMMTAgMTQuODE3Mkw5LjcxMTk1IDE1LjAyMDJMNC44NTA0NyAxOC40NDY2TDQuODUwNDQgMTguNDQ2Nkw0Ljg0NDYyIDE4LjQ1MDhDNC42NzU2NCAxOC41NzM2IDQuNDQ4MjYgMTguNDA4NCA0LjUxMjgxIDE4LjIwOTdMNi4xNDY4MiAxMy4xODA4QzYuMjEwNTggMTIuOTg0NSA2LjI2NTI0IDEyLjc5NDYgNi4zMTE4NiAxMi42MTA5TDYuMzk2NDcgMTIuMjc3NEw2LjExNTI2IDEyLjA3OTNMMS41ODgxNSA4Ljg4ODUzQzEuNDIyIDguNzY1MDYgMS41MDg5OSA4LjUgMS43MTcgOC41SDYuODQ5NjlINi45MDYwOEw2Ljk2MTA1IDguNDg3NDRDNy4zNzE0MyA4LjM5MzY5IDcuNzEyMTMgOC4wOTA5NyA3Ljg0NjMyIDcuNjc3OTdMNy44NDY2NyA3LjY3Njg5TDkuNzkwMDcgMS42NDg5OUM5Ljc5MDExIDEuNjQ4ODYgOS43OTAxNSAxLjY0ODcyIDkuNzkwMiAxLjY0ODU5QzkuODA5NDUgMS41ODk2MSA5LjgzOTU0IDEuNTU2NzYgOS44Njk2MyAxLjUzNjRDOS45MDMwNSAxLjUxMzggOS45NDc1NCAxLjQ5OTY5IDkuOTk2NzUgMS41MDAwMVoiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEyIDNDMTIgNC4xMDQ1NyAxMS4xMDQ2IDUgMTAgNUM4Ljg5NTQzIDUgOCA0LjEwNDU3IDggM0M4IDEuODk1NDMgOC44OTU0MyAxIDEwIDFDMTEuMTA0NiAxIDEyIDEuODk1NDMgMTIgM1oiIGZpbGw9IiMwRThBMjYiLz4KPHBhdGggZD0iTTkgN0M5IDguMTA0NTcgOC4xMDQ1NyA5IDcgOUM1Ljg5NTQzIDkgNSA4LjEwNDU3IDUgN0M1IDUuODk1NDMgNS44OTU0MyA1IDcgNUM4LjEwNDU3IDUgOSA1Ljg5NTQzIDkgN1oiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
+	const pathEffectIcon_light = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTk2NzUgMS41MDAwMUw5Ljk5Njc1IDEuNTAwMDVMMTAuMDAzMiAxLjUwMDAxQzEwLjA1MjUgMS40OTk2OSAxMC4wOTcgMS41MTM4IDEwLjEzMDQgMS41MzY0QzEwLjE2MDUgMS41NTY3NSAxMC4xOTA1IDEuNTg5NjEgMTAuMjA5OCAxLjY0ODU4QzEwLjIwOTggMS42NDg3MiAxMC4yMDk5IDEuNjQ4ODYgMTAuMjA5OSAxLjY0ODk5TDEyLjE1MzMgNy42NzY4OUwxMi4xNTM3IDcuNjc3OTdDMTIuMjg3OSA4LjA5MDk3IDEyLjYyODYgOC4zOTM2OSAxMy4wMzg5IDguNDg3NDRMMTMuMDkzOSA4LjVIMTMuMTUwM0gxOC4yODNDMTguNDkxIDguNSAxOC41NzggOC43NjUwNCAxOC40MTE5IDguODg4NTFMMTMuODg0NyAxMi4wNzkzTDEzLjYwMzUgMTIuMjc3NEwxMy42ODgxIDEyLjYxMDlDMTMuNzM0OCAxMi43OTQ2IDEzLjc4OTQgMTIuOTg0NSAxMy44NTMyIDEzLjE4MDhMMTUuNDg3MiAxOC4yMDk3QzE1LjU1MTcgMTguNDA4NCAxNS4zMjQ0IDE4LjU3MzYgMTUuMTU1NCAxOC40NTA4TDE1LjE1NTQgMTguNDUwOEwxNS4xNDk1IDE4LjQ0NjZMMTAuMjg4IDE1LjAyMDJMMTAgMTQuODE3Mkw5LjcxMTk1IDE1LjAyMDJMNC44NTA0NyAxOC40NDY2TDQuODUwNDQgMTguNDQ2Nkw0Ljg0NDYyIDE4LjQ1MDhDNC42NzU2NCAxOC41NzM2IDQuNDQ4MjYgMTguNDA4NCA0LjUxMjgxIDE4LjIwOTdMNi4xNDY4MiAxMy4xODA4QzYuMjEwNTggMTIuOTg0NSA2LjI2NTI0IDEyLjc5NDYgNi4zMTE4NiAxMi42MTA5TDYuMzk2NDcgMTIuMjc3NEw2LjExNTI2IDEyLjA3OTNMMS41ODgxNSA4Ljg4ODUzQzEuNDIyIDguNzY1MDYgMS41MDg5OSA4LjUgMS43MTcgOC41SDYuODQ5NjlINi45MDYwOEw2Ljk2MTA1IDguNDg3NDRDNy4zNzE0MyA4LjM5MzY5IDcuNzEyMTMgOC4wOTA5NyA3Ljg0NjMyIDcuNjc3OTdMNy44NDY2NyA3LjY3Njg5TDkuNzkwMDcgMS42NDg5OUM5Ljc5MDExIDEuNjQ4ODYgOS43OTAxNSAxLjY0ODcyIDkuNzkwMiAxLjY0ODU5QzkuODA5NDUgMS41ODk2MSA5LjgzOTU0IDEuNTU2NzYgOS44Njk2MyAxLjUzNjRDOS45MDMwNSAxLjUxMzggOS45NDc1NCAxLjQ5OTY5IDkuOTk2NzUgMS41MDAwMVoiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEyIDNDMTIgNC4xMDQ1NyAxMS4xMDQ2IDUgMTAgNUM4Ljg5NTQzIDUgOCA0LjEwNDU3IDggM0M4IDEuODk1NDMgOC44OTU0MyAxIDEwIDFDMTEuMTA0NiAxIDEyIDEuODk1NDMgMTIgM1oiIGZpbGw9IiMzQUJENTkiLz4KPHBhdGggZD0iTTkgN0M5IDguMTA0NTcgOC4xMDQ1NyA5IDcgOUM1Ljg5NTQzIDkgNSA4LjEwNDU3IDUgN0M1IDUuODk1NDMgNS44OTU0MyA1IDcgNUM4LjEwNDU3IDUgOSA1Ljg5NTQzIDkgN1oiIGZpbGw9IiNGNTJDMkMiLz4KPC9zdmc+Cg==';
+	const pathEffectIcon_dark = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTk2NzUgMS41MDAwMUw5Ljk5Njc1IDEuNTAwMDVMMTAuMDAzMiAxLjUwMDAxQzEwLjA1MjUgMS40OTk2OSAxMC4wOTcgMS41MTM4IDEwLjEzMDQgMS41MzY0QzEwLjE2MDUgMS41NTY3NSAxMC4xOTA1IDEuNTg5NjEgMTAuMjA5OCAxLjY0ODU4QzEwLjIwOTggMS42NDg3MiAxMC4yMDk5IDEuNjQ4ODYgMTAuMjA5OSAxLjY0ODk5TDEyLjE1MzMgNy42NzY4OUwxMi4xNTM3IDcuNjc3OTdDMTIuMjg3OSA4LjA5MDk3IDEyLjYyODYgOC4zOTM2OSAxMy4wMzg5IDguNDg3NDRMMTMuMDkzOSA4LjVIMTMuMTUwM0gxOC4yODNDMTguNDkxIDguNSAxOC41NzggOC43NjUwNCAxOC40MTE5IDguODg4NTFMMTMuODg0NyAxMi4wNzkzTDEzLjYwMzUgMTIuMjc3NEwxMy42ODgxIDEyLjYxMDlDMTMuNzM0OCAxMi43OTQ2IDEzLjc4OTQgMTIuOTg0NSAxMy44NTMyIDEzLjE4MDhMMTUuNDg3MiAxOC4yMDk3QzE1LjU1MTcgMTguNDA4NCAxNS4zMjQ0IDE4LjU3MzYgMTUuMTU1NCAxOC40NTA4TDE1LjE1NTQgMTguNDUwOEwxNS4xNDk1IDE4LjQ0NjZMMTAuMjg4IDE1LjAyMDJMMTAgMTQuODE3Mkw5LjcxMTk1IDE1LjAyMDJMNC44NTA0NyAxOC40NDY2TDQuODUwNDQgMTguNDQ2Nkw0Ljg0NDYyIDE4LjQ1MDhDNC42NzU2NCAxOC41NzM2IDQuNDQ4MjYgMTguNDA4NCA0LjUxMjgxIDE4LjIwOTdMNi4xNDY4MiAxMy4xODA4QzYuMjEwNTggMTIuOTg0NSA2LjI2NTI0IDEyLjc5NDYgNi4zMTE4NiAxMi42MTA5TDYuMzk2NDcgMTIuMjc3NEw2LjExNTI2IDEyLjA3OTNMMS41ODgxNSA4Ljg4ODUzQzEuNDIyIDguNzY1MDYgMS41MDg5OSA4LjUgMS43MTcgOC41SDYuODQ5NjlINi45MDYwOEw2Ljk2MTA1IDguNDg3NDRDNy4zNzE0MyA4LjM5MzY5IDcuNzEyMTMgOC4wOTA5NyA3Ljg0NjMyIDcuNjc3OTdMNy44NDY2NyA3LjY3Njg5TDkuNzkwMDcgMS42NDg5OUM5Ljc5MDExIDEuNjQ4ODYgOS43OTAxNSAxLjY0ODcyIDkuNzkwMiAxLjY0ODU5QzkuODA5NDUgMS41ODk2MSA5LjgzOTU0IDEuNTU2NzYgOS44Njk2MyAxLjUzNjRDOS45MDMwNSAxLjUxMzggOS45NDc1NCAxLjQ5OTY5IDkuOTk2NzUgMS41MDAwMVoiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEyIDNDMTIgNC4xMDQ1NyAxMS4xMDQ2IDUgMTAgNUM4Ljg5NTQzIDUgOCA0LjEwNDU3IDggM0M4IDEuODk1NDMgOC44OTU0MyAxIDEwIDFDMTEuMTA0NiAxIDEyIDEuODk1NDMgMTIgM1oiIGZpbGw9IiMwRThBMjYiLz4KPHBhdGggZD0iTTkgN0M5IDguMTA0NTcgOC4xMDQ1NyA5IDcgOUM1Ljg5NTQzIDkgNSA4LjEwNDU3IDUgN0M1IDUuODk1NDMgNS44OTU0MyA1IDcgNUM4LjEwNDU3IDUgOSA1Ljg5NTQzIDkgN1oiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
 
 	const arrowUpIcon_dark = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iNyIgdmlld0JveD0iMCAwIDEyIDciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNS45OTk5NiAwLjI5Mjg1NUw1LjY0NjQxIDAuNjQ2NDA4TDAuMTQ2NDA4IDYuMTQ2NDFMMC44NTM1MTYgNi44NTM1MUw1Ljk5OTk2IDEuNzA3MDdMMTEuMTQ2NCA2Ljg1MzUyTDExLjg1MzUgNi4xNDY0MUw2LjM1MzUyIDAuNjQ2NDA5TDUuOTk5OTYgMC4yOTI4NTVaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';
 	const arrowUpIcon_light = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iNyIgdmlld0JveD0iMCAwIDEyIDciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNS45OTk5NiAwLjI5Mjg1NUw1LjY0NjQxIDAuNjQ2NDA4TDAuMTQ2NDA4IDYuMTQ2NDFMMC44NTM1MTYgNi44NTM1MUw1Ljk5OTk2IDEuNzA3MDdMMTEuMTQ2NCA2Ljg1MzUyTDExLjg1MzUgNi4xNDY0MUw2LjM1MzUyIDAuNjQ2NDA5TDUuOTk5OTYgMC4yOTI4NTVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
@@ -3099,7 +3124,8 @@
 	const getIconsForLoad = function () {
 		return [
 			clickEffectIcon, afterEffectIcon,
-			entrEffectIcon, emphEffectIcon, exitEffectIcon, pathEffectIcon,
+			entrEffectIcon, emphEffectIcon, exitEffectIcon,
+			pathEffectIcon_dark, pathEffectIcon_light,
 			playIcon_dark, playIcon_light,
 			stopIcon_dark, stopIcon_light,
 			arrowUpIcon_dark, arrowUpIcon_light, 

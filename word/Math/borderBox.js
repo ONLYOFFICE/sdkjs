@@ -47,6 +47,10 @@ CMathBreak.prototype.Set_FromObject = function(Obj)
             this.alnAt = Obj.alnAt;
     }
 };
+CMathBreak.prototype.IsEqual = function (oMathBrk)
+{
+	return oMathBrk && oMathBrk.alnAt === this.alnAt;
+}
 CMathBreak.prototype.Copy = function()
 {
     var NewMBreak = new CMathBreak();
@@ -119,17 +123,17 @@ CMathBreak.prototype.Read_FromBinary = function(Reader)
 };
 
 
-function CMathBorderBoxPr()
+function CMathBorderBoxPr(ctrPr)
 {
-    this.hideBot    = false;
-    this.hideLeft   = false;
-    this.hideRight  = false;
-    this.hideTop    = false;
-    this.strikeBLTR = false;
-    this.strikeH    = false;
-    this.strikeTLBR = false;
-    this.strikeV    = false;
-	this.ctrPr      = new CMathCtrlPr();
+	this.hideBot	= false;
+	this.hideLeft	= false;
+	this.hideRight	= false;
+	this.hideTop	= false;
+	this.strikeBLTR	= false;
+	this.strikeH	= false;
+	this.strikeTLBR	= false;
+	this.strikeV	= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathBorderBoxPr.prototype.GetRPr = function ()
 {
@@ -238,16 +242,12 @@ function CBorderBox(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.gapBrd = 0;
+	this.gapBrd = 0;
 
-    this.Pr = new CMathBorderBoxPr();
+	this.Pr = new CMathBorderBoxPr(this.CtrPrp);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
-
-	// согласно формату CtrPrp должен находится в BorderBoxPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
@@ -591,7 +591,7 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		let oPos = oMathText.Add(oBase, true);
+		let oPos = oMathText.Add(oBase, true, 1);
 		oMathText.AddBefore(oPos, new AscMath.MathText("\\rect", oMathText.GetStyleFromFirst()));
 	}
 	else
@@ -599,7 +599,7 @@ CBorderBox.prototype.GetTextOfElement = function(oMathText)
 		let oBoxStr = new AscMath.MathText("▭", this)
 		oMathText.AddText(oBoxStr);
 		oMathText.SetGlobalStyle(this, true);
-		oMathText.Add(oBase, true)
+		oMathText.Add(oBase, true, 2)
 	}
 
 	return oMathText;
@@ -679,14 +679,14 @@ CMathMenuBorderBox.prototype["put_HideTopRTL"] = CMathMenuBorderBox.prototype.pu
 
 
 
-function CMathBoxPr()
+function CMathBoxPr(ctrPr)
 {
-    this.brk     = undefined;
-    this.aln     = false;
-    this.diff    = false;
-    this.noBreak = false;
-    this.opEmu   = false;
-	this.ctrPr   = new CMathCtrlPr();
+	this.brk		= undefined;
+	this.aln		= false;
+	this.diff		= false;
+	this.noBreak	= false;
+	this.opEmu		= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathBoxPr.prototype.GetRPr = function ()
 {
@@ -844,16 +844,12 @@ function CBox(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathBoxPr();
+	this.Pr = new CMathBoxPr(this.CtrPrp);
 
-    this.baseContent = new CMathContent();
+	this.baseContent = new CMathContent();
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
-
-	// согласно формату CtrPrp должен находится в BoxPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
 	AscCommon.g_oTableId.Add( this, this.Id );
 }
@@ -1030,7 +1026,7 @@ CBox.prototype.GetTextOfElement = function(oMathText)
 	{
 		oMathText.AddText(new AscMath.MathText("□", this));
 		oMathText.SetGlobalStyle(this);
-		oMathText.Add(oBase, true);
+		oMathText.Add(oBase, true, 2);
 	}
 	return oMathText;
 };
@@ -1051,10 +1047,10 @@ CMathMenuBox.prototype = Object.create(CMathMenuBase.prototype);
 CMathMenuBox.prototype.constructor = CMathMenuBox;
 window["CMathMenuBox"] = CMathMenuBox;
 
-function CMathBarPr()
+function CMathBarPr(ctrPr)
 {
-	this.pos = LOCATION_BOT;
-	this.ctrPr   = new CMathCtrlPr();
+	this.pos	= LOCATION_BOT;
+	this.ctrPr	= new CMathCtrlPr(ctrPr);
 }
 CMathBarPr.prototype.GetRPr = function ()
 {
@@ -1105,16 +1101,12 @@ function CBar(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathBarPr();
+	this.Pr = new CMathBarPr(this.CtrPrp);
 
-    this.operator = new COperator(OPER_BAR);
+	this.operator = new COperator(OPER_BAR);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
-
-	// согласно формату CtrPrp должен находится в BarPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
 	AscCommon.g_oTableId.Add( this, this.Id );
 }
@@ -1198,13 +1190,13 @@ CBar.prototype.raw_SetLinePos = function(Value)
  */
 CBar.prototype.GetTextOfElement = function(oMathText)
 {
-	oMathText = new AscMath.MathTextAndStyles(oMathText);
+	oMathText	= new AscMath.MathTextAndStyles(oMathText);
 
-	let oBase       = this.getBase();
+	let oBase	= this.getBase();
 
 	if (oMathText.IsLaTeX())
 	{
-		let oBasePos = oMathText.Add(oBase, true, 1);
+		let oBasePos = oMathText.Add(oBase, true, 2);
 		oMathText.AddBefore(oBasePos, new AscMath.MathText((this.Pr.pos) ? "\\underline" : "\\overline", oMathText.GetStyleFromFirst()));
 	}
 	else
@@ -1370,3 +1362,8 @@ window['AscCommonWord'].CBar = CBar;
 window['AscCommonWord'].CBox = CBox;
 window['AscCommonWord'].CBorderBox = CBorderBox;
 window['AscCommonWord'].CPhantom = CPhantom;
+
+AscMath.Bar = CBar;
+AscMath.Box = CBox;
+AscMath.BorderBox = CBorderBox;
+AscMath.Phantom = CPhantom;

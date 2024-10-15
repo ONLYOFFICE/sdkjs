@@ -36,15 +36,15 @@
 //если не выставлено в настройках
 /////////////////////****//////////////////////////
 
-function CMathNaryPr()
+function CMathNaryPr(ctrPr)
 {
-    this.chr     = undefined;
-    this.chrType = undefined;
-    this.grow    = false;
-    this.limLoc  = undefined;
-    this.subHide = false;
-    this.supHide = false;
-	this.ctrPr   = new CMathCtrlPr();
+	this.chr		= undefined;
+	this.chrType	= undefined;
+	this.grow		= false;
+	this.limLoc		= undefined;
+	this.subHide	= false;
+	this.supHide	= false;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 
 CMathNaryPr.prototype.GetRPr = function ()
@@ -185,24 +185,20 @@ function CNary(props)
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Pr = new CMathNaryPr();
+	this.Pr = new CMathNaryPr(this.CtrPrp);
 
-    this.Base = null;
-    this.Sign = null;
-    this.LowerIterator = null;
-    this.UpperIterator = null;
-    this.Arg           = null;
+	this.Base = null;
+	this.Sign = null;
+	this.LowerIterator = null;
+	this.UpperIterator = null;
+	this.Arg           = null;
 
-    this.CurrentLimLoc = null;
+	this.CurrentLimLoc = null;
 
-    if(props !== null && props !== undefined)
-        this.init(props);
+	if(props !== null && props !== undefined)
+		this.init(props);
 
-	// согласно формату CtrPrp должен находится в NaryPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-	if (this.Pr.ctrPr.rPr)
-		this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CNary.prototype = Object.create(CMathBase.prototype);
 CNary.prototype.constructor = CNary;
@@ -853,13 +849,16 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 	if (oMathText.IsLaTeX())
 	{
-		strStartCode = AscMath.MathLiterals.nary.Unicode[String.fromCharCode(this.Pr.chr)];
+		strStartCode		= AscMath.MathLiterals.nary.Unicode[String.fromCharCode(this.Pr.chr)];
+		if (undefined === strStartCode)
+			strStartCode = '\\int';
+
+		oMathText.AddText(new AscMath.MathText(strStartCode, this));
 
 		if (oLower)
 		{
 			oMathText.SetGlobalStyle(oLower);
 			let oLowerPos	= oMathText.Add(oLower, true,  2);
-			oMathText.AddBefore(oLowerPos, new AscMath.MathText(strStartCode, oMathText.GetStyleFromFirst()));
 			oLowerPos		= oMathText.AddBefore(oLowerPos, new AscMath.MathText("_", oLower));
 		}
 
@@ -870,9 +869,6 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 
 			oMathText.SetGlobalStyle(oUpper);
 			oMathText.Add(oUpper, true, 2);
-
-			if (!oLower)
-				oMathText.AddBefore(oUpperPos, new AscMath.MathText(strStartCode, oUpper));
 		}
 
 		if (oBase)
@@ -883,7 +879,12 @@ CNary.prototype.GetTextOfElement = function(oMathText)
 	}
 	else
 	{
-		let oLastPos = oMathText.AddText(new AscMath.MathText(String.fromCharCode(this.Pr.chr), this));
+		if (undefined === this.Pr.chr)
+			strStartCode = '∫';
+		else
+			strStartCode = String.fromCharCode(this.Pr.chr);
+
+		let oLastPos = oMathText.AddText(new AscMath.MathText(strStartCode, this));
 
 		if (oLower)
 		{
@@ -2429,7 +2430,7 @@ CClosedPathIntegral.prototype.drawGlyph = function(parameters)
 
     this.Parent.Make_ShdColor(PDSE, this.Parent.Get_CompiledCtrPrp());
 
-    if(pGraphics.Start_Command)
+    if(pGraphics.isSupportTextOutline())
     {
         for(var i = 0; i < CircleLng; i++)
         {
@@ -2700,3 +2701,5 @@ CVolumeIntegral.prototype.calculateSizeGlyph = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CNary = CNary;
+
+AscMath.Nary = CNary;

@@ -572,7 +572,8 @@ var c_oSerImageType2 = {
 	DistBEmu: 32,
 	DistLEmu: 33,
 	DistREmu: 34,
-	DistTEmu: 35
+	DistTEmu: 35,
+	ChartEx: 36
 };
 var c_oSerEffectExtent = {
 	Left: 0,
@@ -1870,7 +1871,7 @@ function BinaryFileWriter(doc, bMailMergeDocx, bMailMergeHtml, isCompatible, opt
 				pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
 			}});
 		}
-		if (this.Document.CustomProperties) {
+		if (this.Document.CustomProperties && this.Document.CustomProperties.hasProperties()) {
 			this.WriteTable(c_oSerTableTypes.CustomProperties, {Write: function(){
 				var old = new AscCommon.CMemory(true);
 				pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
@@ -5679,6 +5680,13 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		this.bs.WriteItem(c_oSer_FldSimpleType.CharType, function() {
 			oThis.memory.WriteByte(fldChar.CharType);
 		});
+		
+		if (fldChar.ffData) {
+			this.bs.WriteItem(c_oSer_FldSimpleType.FFData, function () {
+				oThis.WriteFFData(fldChar.ffData);
+			});
+		}
+		
 		if (null !== fldChar.fldData) {
 			this.bs.WriteItem(c_oSer_FldSimpleType.PrivateData, function () {
 				oThis.memory.WriteString3(fldChar.fldData);
@@ -5701,141 +5709,136 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		//Content
 		this.bs.WriteItem(c_oSer_FldSimpleType.Content, fWriteContent);
     };
-	this.WriteFFData = function(oFFData) {
+	this.WriteFFData = function(ffData) {
 		var oThis = this;
-		if (null != oFFData.CalcOnExit) {
+		if (undefined !== ffData.calcOnExit) {
 			this.bs.WriteItem(c_oSerFFData.CalcOnExit, function() {
-				oThis.memory.WriteBool(oFFData.CalcOnExit);
+				oThis.memory.WriteBool(ffData.calcOnExit);
 			});
 		}
-		if (null != oFFData.CheckBox) {
+		if (undefined !== ffData.checkBox) {
 			this.bs.WriteItem(c_oSerFFData.CheckBox, function() {
-				oThis.WriteFFCheckBox(oFFData.CheckBox);
+				oThis.WriteFFCheckBox(ffData.checkBox);
 			});
 		}
-		if (null != oFFData.DDList) {
+		if (undefined !== ffData.ddList) {
 			this.bs.WriteItem(c_oSerFFData.DDList, function() {
-				oThis.WriteDDList(oFFData.DDList);
+				oThis.WriteFFDDList(ffData.ddList);
 			});
 		}
-		if (null != oFFData.Enabled) {
+		if (undefined !== ffData.enabled) {
 			this.bs.WriteItem(c_oSerFFData.Enabled, function() {
-				oThis.memory.WriteBool(oFFData.Enabled);
+				oThis.memory.WriteBool(ffData.enabled);
 			});
 		}
-		if (null != oFFData.EntryMacro) {
+		if (undefined !== ffData.entryMacro) {
 			this.memory.WriteByte(c_oSerFFData.EntryMacro);
-			this.memory.WriteString2(oFFData.EntryMacro);
+			this.memory.WriteString2(ffData.entryMacro);
 		}
-		if (null != oFFData.ExitMacro) {
+		if (undefined !== ffData.exitMacro) {
 			this.memory.WriteByte(c_oSerFFData.ExitMacro);
-			this.memory.WriteString2(oFFData.ExitMacro);
+			this.memory.WriteString2(ffData.exitMacro);
 		}
-		if (null != oFFData.HelpText) {
+		if (undefined !== ffData.helpText) {
 			this.bs.WriteItem(c_oSerFFData.HelpText, function() {
-				oThis.WriteFFHelpText(oFFData.HelpText);
+				oThis.WriteFFText(ffData.helpText);
 			});
 		}
-		if (null != oFFData.Label) {
+		if (undefined !== ffData.label) {
 			this.bs.WriteItem(c_oSerFFData.Label, function() {
-				oThis.memory.WriteLong(oFFData.Label);
+				oThis.memory.WriteLong(ffData.label);
 			});
 		}
-		if (null != oFFData.Name) {
+		if (undefined !== ffData.name) {
 			this.memory.WriteByte(c_oSerFFData.Name);
-			this.memory.WriteString2(oFFData.Name);
+			this.memory.WriteString2(ffData.name);
 		}
-		if (null != oFFData.StatusText) {
+		if (undefined !== ffData.statusText) {
 			this.bs.WriteItem(c_oSerFFData.StatusText, function() {
-				oThis.WriteFFHelpText(oFFData.StatusText);
+				oThis.WriteFFText(ffData.statusText);
 			});
 		}
-		if (null != oFFData.TabIndex) {
+		if (undefined !== ffData.tabIndex) {
 			this.bs.WriteItem(c_oSerFFData.TabIndex, function() {
-				oThis.memory.WriteLong(oFFData.TabIndex);
+				oThis.memory.WriteLong(ffData.tabIndex);
 			});
 		}
-		if (null != oFFData.TabIndex) {
-			this.bs.WriteItem(c_oSerFFData.TabIndex, function() {
-				oThis.memory.WriteLong(oFFData.TabIndex);
-			});
-		}
-		if (null != oFFData.TextInput) {
+		if (undefined !== ffData.textInput) {
 			this.bs.WriteItem(c_oSerFFData.TextInput, function() {
-				oThis.WriteTextInput(oFFData.TextInput);
+				oThis.WriteFFTextInput(ffData.textInput);
 			});
 		}
 	};
-	this.WriteFFCheckBox = function(oCheckBox) {
+	this.WriteFFCheckBox = function(checkBox) {
 		var oThis = this;
-		if (null != oCheckBox.CBChecked) {
+		if (undefined !== checkBox.checked) {
 			this.bs.WriteItem(c_oSerFFData.CBChecked, function() {
-				oThis.memory.WriteBool(oCheckBox.CBChecked);
+				oThis.memory.WriteBool(checkBox.checked);
 			});
 		}
-		if (null != oCheckBox.CBDefault) {
+		if (undefined !== checkBox.default) {
 			this.bs.WriteItem(c_oSerFFData.CBDefault, function() {
-				oThis.memory.WriteBool(oCheckBox.CBDefault);
+				oThis.memory.WriteBool(checkBox.default);
 			});
 		}
-		if (null != oCheckBox.CBSize) {
+		if (undefined !== checkBox.size) {
 			this.bs.WriteItem(c_oSerFFData.CBSize, function() {
-				oThis.memory.WriteLong(oCheckBox.CBSize);
+				oThis.memory.WriteLong(checkBox.size);
 			});
 		}
-		if (null != oCheckBox.CBSizeAuto) {
+		if (undefined !== checkBox.sizeAuto) {
 			this.bs.WriteItem(c_oSerFFData.CBSizeAuto, function() {
-				oThis.memory.WriteBool(oCheckBox.CBSizeAuto);
+				oThis.memory.WriteBool(checkBox.sizeAuto);
 			});
 		}
 	};
-	this.WriteDDList = function(oDDList) {
+	this.WriteFFDDList = function(ddList) {
 		var oThis = this;
-		if (null != oDDList.DLDefault) {
+		if (undefined !== ddList.default) {
 			this.bs.WriteItem(c_oSerFFData.DLDefault, function() {
-				oThis.memory.WriteLong(oDDList.DLDefault);
+				oThis.memory.WriteLong(ddList.default);
 			});
 		}
-		if (null != oDDList.DLResult) {
+		if (undefined !== ddList.result) {
 			this.bs.WriteItem(c_oSerFFData.DLResult, function() {
-				oThis.memory.WriteLong(oDDList.DLResult);
+				oThis.memory.WriteLong(ddList.result);
 			});
 		}
-		for (var i = 0; i < oDDList.DLListEntry.length; ++i) {
+		for (var i = 0; i < ddList.list.length; ++i) {
 			this.memory.WriteByte(c_oSerFFData.DLListEntry);
-			this.memory.WriteString2(oDDList.DLListEntry[i]);
+			this.memory.WriteString2(ddList.list[i]);
 		}
 	};
-	this.WriteFFHelpText = function(oHelpText) {
+	this.WriteFFText = function(ffText) {
 		var oThis = this;
-		if (null != oHelpText.HTType) {
+		if (undefined !== ffText.type) {
 			this.bs.WriteItem(c_oSerFFData.HTType, function() {
-				oThis.memory.WriteByte(oHelpText.HTType);
+				oThis.memory.WriteByte(ffText.type);
 			});
 		}
-		if (null != oHelpText.HTVal) {
+		if (undefined !== ffText.val) {
 			this.memory.WriteByte(c_oSerFFData.HTVal);
-			this.memory.WriteString2(oHelpText.HTVal);
+			this.memory.WriteString2(ffText.val);
 		}
 	};
-	this.WriteTextInput = function(oTextInput) {
+	this.WriteFFTextInput = function(textInput) {
 		var oThis = this;
-		if (null != oTextInput.TIDefault) {
+		if (undefined !== textInput.default) {
 			this.memory.WriteByte(c_oSerFFData.TIDefault);
-			this.memory.WriteString2(oTextInput.TIDefault);
+			this.memory.WriteString2(textInput.default);
 		}
-		if (null != oTextInput.TIFormat) {
+		if (undefined !== textInput.format) {
 			this.memory.WriteByte(c_oSerFFData.TIFormat);
-			this.memory.WriteString2(oTextInput.TIFormat);
+			this.memory.WriteString2(textInput.format);
 		}
-		if (null != oTextInput.TIMaxLength) {
+		if (undefined !== textInput.maxLength) {
 			this.bs.WriteItem(c_oSerFFData.TIMaxLength, function() {
-				oThis.memory.WriteLong(oTextInput.TIMaxLength);
+				oThis.memory.WriteLong(textInput.maxLength);
 			});
 		}
-		if (null != oTextInput.TIType) {
+		if (undefined !== textInput.type) {
 			this.bs.WriteItem(c_oSerFFData.TIType, function() {
-				oThis.memory.WriteByte(oTextInput.TIType);
+				oThis.memory.WriteByte(textInput.type);
 			});
 		}
 	};
@@ -6011,11 +6014,23 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			}
 			if(null != img.GraphicObj.chart)
 			{
-				this.memory.WriteByte(c_oSerImageType2.Chart2);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				
-				var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
-				this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartSpace(img.GraphicObj); });
+				if(img.GraphicObj.isChartEx())
+				{
+					this.memory.WriteByte(c_oSerImageType2.ChartEx);
+					this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+					var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
+					this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartExSpace(img.GraphicObj);});
+				}
+				else
+				{
+					this.memory.WriteByte(c_oSerImageType2.Chart2);
+					this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+					var oBinaryChartWriter = new AscCommon.BinaryChartWriter(this.memory);
+					this.bs.WriteItemWithLength(function () { oBinaryChartWriter.WriteCT_ChartSpace(img.GraphicObj); });
+				}
+
 			} else {
 				this.WriteGraphicObj(img.GraphicObj);
 			}
@@ -7886,7 +7901,6 @@ function BinaryFileReader(doc, openParams)
 				case c_oSerTableTypes.CustomProperties:
 					this.stream.Seek2(mtiOffBits);
 					fileStream = this.stream.ToFileStream();
-					this.Document.CustomProperties = new AscCommon.CCustomProperties();
 					this.Document.CustomProperties.fromStream(fileStream);
 					this.stream.FromFileStream(fileStream);
 					break;
@@ -8308,6 +8322,7 @@ function BinaryFileReader(doc, openParams)
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
 			var context = opt_xmlParserContext;
 			context.loadDataLinks();
+			context.GenerateSmartArts();
 		}
 
         this.Document.On_EndLoad();
@@ -8320,6 +8335,7 @@ function BinaryFileReader(doc, openParams)
 				api && api.asc_addRestriction(restrictionType);
 			}
 		}
+	    pptx_content_loader.Reader.GenerateSmartArts();
 		
 		//чтобы удалялся stream с бинарником
 		pptx_content_loader.Clear(true);
@@ -9233,6 +9249,10 @@ function Binary_pPrReader(doc, oReadResult, stream)
         {
             Border.Value = this.stream.GetUChar();
         }
+		else if ( c_oSerBorderType.ValueType === type )
+		{
+			Border.setValue(this.stream.GetULongLE());
+		}
 		else if( c_oSerBorderType.ColorTheme === type )
         {
 			var themeColor = {Auto: null, Color: null, Tint: null, Shade: null};
@@ -11599,9 +11619,16 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			this.oCurComments[commentId] += text;
 	};
 	this.ReadFldChar = function (type, length, paraField) {
+		let _t = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSer_FldSimpleType.CharType === type) {
 			paraField.Init(this.stream.GetUChar(), paraField.LogicDocument);
+		} else if (c_oSer_FldSimpleType.FFData === type) {
+			let ffData = new AscWord.FFData();
+			res = this.bcr.Read1(length, function (t, l) {
+				return _t.ReadFFData(t, l, ffData);
+			});
+			paraField.ffData = ffData;
 		} else if (c_oSer_FldSimpleType.PrivateData === type) {
 			paraField.fldData = this.stream.GetString2LE(length);
 		} else
@@ -11647,106 +11674,102 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
             res = c_oSerConstants.ReadUnknown;
         return res;
     }
-	this.ReadFFData = function(type, length, oFFData) {
+	this.ReadFFData = function(type, length, ffData) {
 		var res = c_oSerConstants.ReadOk;
 		var oThis = this;
 		if (c_oSerFFData.CalcOnExit === type) {
-			oFFData.CalcOnExit = this.stream.GetBool();
+			ffData.calcOnExit = this.stream.GetBool();
 		} else if (c_oSerFFData.CheckBox === type) {
-			oFFData.CheckBox = {};
+			let checkBox = ffData.initCheckBox();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFCheckBox(t, l, oFFData.CheckBox);
+				return oThis.ReadFFCheckBox(t, l, checkBox);
 			});
 		} else if (c_oSerFFData.DDList === type) {
-			oFFData.DDList = {DLListEntry: []};
+			let ddList = ffData.initDDList();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadDDList(t, l, oFFData.DDList);
+				return oThis.ReadDDList(t, l, ddList);
 			});
 		} else if (c_oSerFFData.Enabled === type) {
-			oFFData.Enabled = this.stream.GetBool();
+			ffData.enabled = this.stream.GetBool();
 		} else if (c_oSerFFData.EntryMacro === type) {
-			oFFData.EntryMacro = this.stream.GetString2LE(length);
+			ffData.entryMacro = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.ExitMacro === type) {
-			oFFData.ExitMacro = this.stream.GetString2LE(length);
+			ffData.exitMacro = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.HelpText === type) {
-			oFFData.HelpText = {};
+			let helpText = ffData.initHelpText();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFHelpText(t, l, oFFData.HelpText);
+				return oThis.ReadFFHelpText(t, l, helpText);
 			});
 		} else if (c_oSerFFData.Label === type) {
-			oFFData.Label = this.stream.GetLong();
+			ffData.label = this.stream.GetLong();
 		} else if (c_oSerFFData.Name === type) {
-			oFFData.Name = this.stream.GetString2LE(length);
+			ffData.name = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.StatusText === type) {
-			oFFData.StatusText = {};
+			let statusText = ffData.initStatusText();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadFFHelpText(t, l, oFFData.StatusText);
+				return oThis.ReadFFHelpText(t, l, statusText);
 			});
 		} else if (c_oSerFFData.TabIndex === type) {
-			oFFData.TabIndex = this.stream.GetLong();
+			ffData.tabIndex = this.stream.GetLong();
 		} else if (c_oSerFFData.TextInput === type) {
-			oFFData.TextInput = {};
+			let textInput = ffData.initTextInput();
 			res = this.bcr.Read1(length, function(t, l) {
-				return oThis.ReadTextInput(t, l, oFFData.TextInput);
+				return oThis.ReadTextInput(t, l, textInput);
 			});
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
-	this.ReadFFCheckBox = function(type, length, oFFCheckBox) {
+	this.ReadFFCheckBox = function(type, length, ffCheckBox) {
 		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
 		if (c_oSerFFData.CBChecked === type) {
-			oFFCheckBox.CBChecked = this.stream.GetBool();
+			ffCheckBox.checked = this.stream.GetBool();
 		} else if (c_oSerFFData.CBDefault === type) {
-			oFFCheckBox.CBDefault = this.stream.GetBool();
+			ffCheckBox.default = this.stream.GetBool();
 		} else if (c_oSerFFData.CBSize === type) {
-			oFFCheckBox.CBSize = this.stream.GetULongLE();
+			ffCheckBox.size = this.stream.GetULongLE();
 		} else if (c_oSerFFData.CBSizeAuto === type) {
-			oFFCheckBox.CBSizeAuto = this.stream.GetBool();
+			ffCheckBox.sizeAuto = this.stream.GetBool();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
-	this.ReadDDList = function(type, length, oDDList) {
+	this.ReadDDList = function(type, length, ddList) {
 		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
 		if (c_oSerFFData.DLDefault === type) {
-			oDDList.DLDefault = this.stream.GetULongLE();
+			ddList.default = this.stream.GetULongLE();
 		} else if (c_oSerFFData.DLResult === type) {
-			oDDList.DLResult = this.stream.GetULongLE();
+			ddList.result = this.stream.GetULongLE();
 		} else if (c_oSerFFData.DLListEntry === type) {
-			oDDList.DLListEntry.push(this.stream.GetString2LE(length));
+			ddList.list.push(this.stream.GetString2LE(length));
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
-	this.ReadFFHelpText = function(type, length, oHelpText) {
+	this.ReadFFHelpText = function(type, length, ffText) {
 		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
 		if (c_oSerFFData.HTType === type) {
-			oHelpText.HTType = this.stream.GetUChar();
+			ffText.type = this.stream.GetUChar();
 		} else if (c_oSerFFData.HTVal === type) {
-			oHelpText.HTVal = this.stream.GetString2LE(length);
+			ffText.val = this.stream.GetString2LE(length);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
 		return res;
 	};
-	this.ReadTextInput = function(type, length, oTextInput) {
+	this.ReadTextInput = function(type, length, textInput) {
 		var res = c_oSerConstants.ReadOk;
-		var oThis = this;
 		if (c_oSerFFData.TIDefault === type) {
-			oTextInput.TIDefault = this.stream.GetString2LE(length);
+			textInput.default = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.TIFormat === type) {
-			oTextInput.TIFormat = this.stream.GetString2LE(length);
+			textInput.format = this.stream.GetString2LE(length);
 		} else if (c_oSerFFData.TIMaxLength === type) {
-			oTextInput.TIMaxLength = this.stream.GetULongLE();
+			textInput.maxLength = this.stream.GetULongLE();
 		} else if (c_oSerFFData.TIType === type) {
-			oTextInput.TIType = this.stream.GetUChar();
+			textInput.type = this.stream.GetUChar();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -12208,12 +12231,19 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			else
 				res = c_oSerConstants.ReadUnknown;
 		}
-		else if( c_oSerImageType2.Chart2 === type )
+		else if( c_oSerImageType2.Chart2 === type || c_oSerImageType2.ChartEx === type)
         {
 			res = c_oSerConstants.ReadUnknown;
-			var oNewChartSpace = new AscFormat.CChartSpace();
-            var oBinaryChartReader = new AscCommon.BinaryChartReader(this.stream);
-            res = oBinaryChartReader.ExternalReadCT_ChartSpace(length, oNewChartSpace, this.Document);
+			let oNewChartSpace = new AscFormat.CChartSpace();
+            let oBinaryChartReader = new AscCommon.BinaryChartReader(this.stream);
+			if(c_oSerImageType2.ChartEx === type)
+			{
+				res = oBinaryChartReader.ExternalReadCT_ChartExSpace(length, oNewChartSpace, this.Document);
+			}
+			else
+			{
+				res = oBinaryChartReader.ExternalReadCT_ChartSpace(length, oNewChartSpace, this.Document);
+			}
 			if(oNewChartSpace.hasCharts())
 			{
 				oNewChartSpace.setBDeleted(false);

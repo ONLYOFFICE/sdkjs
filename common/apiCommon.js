@@ -1067,6 +1067,8 @@ function (window, undefined) {
 		this.depthAxes = [];
 
 		this.view3D = null;
+
+		this.displayTrendlinesEquation = false;
 	}
 
 	//TODO:remove this---------------------
@@ -1292,6 +1294,9 @@ function (window, undefined) {
 			return false;
 		}
 		if (this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+			return false;
+		}
+		if(this.displayTrendlinesEquation !== oPr.displayTrendlinesEquation) {
 			return false;
 		}
 		return true;
@@ -1656,6 +1661,12 @@ function (window, undefined) {
 		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
 		}
+	};
+	asc_ChartSettings.prototype.getDisplayTrendlinesEquation = function() {
+		return this.displayTrendlinesEquation;
+	};
+	asc_ChartSettings.prototype.putDisplayTrendlinesEquation = function(v) {
+		this.displayTrendlinesEquation = v;
 	};
 
 	/** @constructor */
@@ -4651,6 +4662,7 @@ function (window, undefined) {
 		this.IsWebOpening = false;
 		this.SupportsOnSaveDocument = false;
 		this.Wopi = null;
+		this.shardkey = null;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4815,6 +4827,12 @@ function (window, undefined) {
 	};
 	prot.get_Wopi = prot.asc_getWopi = function () {
 		return this.Wopi;
+	};
+	prot.put_Shardkey = prot.asc_putShardkey = function (v) {
+		this.shardkey = v;
+	};
+	prot.get_Shardkey = prot.asc_getShardkey = function () {
+		return this.shardkey;
 	};
 
 	function COpenProgress() {
@@ -6117,7 +6135,8 @@ function (window, undefined) {
 	prot["getView3d"] = prot.getView3d;
 	prot["putView3d"] = prot.putView3d;
 	prot["setView3d"] = prot.setView3d;
-
+	prot["getDisplayTrendlinesEquation"] = prot.getDisplayTrendlinesEquation;
+	prot["putDisplayTrendlinesEquation"] = prot.putDisplayTrendlinesEquation;
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;
@@ -6804,6 +6823,8 @@ function (window, undefined) {
 	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
 	prot["put_Wopi"] = prot["asc_putWopi"] = prot.asc_putWopi;
 	prot["get_Wopi"] = prot["asc_getWopi"] = prot.asc_getWopi;
+	prot["put_Shardkey"] = prot["asc_putShardkey"] = prot.asc_putShardkey;
+	prot["get_Shardkey"] = prot["asc_getShardkey"] = prot.asc_getShardkey;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

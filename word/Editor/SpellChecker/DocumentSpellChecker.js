@@ -271,8 +271,7 @@
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CDocumentSpellChecker = CDocumentSpellChecker;
+	AscWord.CDocumentSpellChecker = CDocumentSpellChecker;
 
 })(window);
 

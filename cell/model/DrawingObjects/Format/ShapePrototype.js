@@ -820,6 +820,11 @@ CShape.prototype.Get_Worksheet = function()
 {
     return this.worksheet;
 };
+CShape.prototype.checkDrawingPartWithHistory = function () {
+	if (this.isObjectInSmartArt()) {
+		return this.group.group.checkDrawingPartWithHistory(this);
+	}
+};
 
 
 

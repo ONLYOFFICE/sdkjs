@@ -441,6 +441,8 @@ CDocumentContentBase.prototype.MoveCursorToNearestPos = function(oNearestPos)
 		var oTopDocument = oParent.Is_TopDocument(true);
 		if (oTopDocument)
 			oTopDocument.RemoveSelection();
+		else
+			this.RemoveSelection();
 	}
 
 	oPara.Set_ParaContentPos(oNearestPos.ContentPos, true, -1, -1);
@@ -2537,6 +2539,25 @@ CDocumentContentBase.prototype.OnContentChange = function()
 		&& this.GetLogicDocument().IsDocumentEditor())
 	{
 		this.GetLogicDocument().CheckShapeAutoFit(shape);
+	}
+	else if (shape && shape.OnContentChange) {
+		shape.OnContentChange();
+	}
+};
+CDocumentContentBase.prototype.OnTextPrChange = function()
+{
+	if (this.Parent && this.Parent.OnTextPrChange)
+		this.Parent.OnTextPrChange();
+	
+	let shape = this.Is_DrawingShape(true);
+	if (shape
+		&& this.GetLogicDocument()
+		&& this.GetLogicDocument().IsDocumentEditor())
+	{
+		this.GetLogicDocument().CheckShapeAutoFit(shape);
+	}
+	else if (shape && shape.OnTextPrChange) {
+		shape.OnTextPrChange();
 	}
 };
 

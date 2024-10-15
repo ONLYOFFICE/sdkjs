@@ -428,11 +428,11 @@ CAccentBreve.prototype.drawPath = function(pGraphics, XX, YY)
     pGraphics._l(XX[22], YY[22]);
 };
 
-function CMathAccentPr()
+function CMathAccentPr(ctrPr)
 {
-    this.chr     = null;
-    this.chrType = null;
-	this.ctrPr   = new CMathCtrlPr();
+	this.chr		= null;
+	this.chrType	= null;
+	this.ctrPr		= new CMathCtrlPr(ctrPr);
 }
 CMathAccentPr.prototype.GetRPr = function ()
 {
@@ -500,25 +500,21 @@ function CAccent(props)
 {
 	CMathBase.call(this);
 
-    this.Id = AscCommon.g_oIdCounter.Get_NewId();
+	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    //// Properties
-    this.Pr = new CMathAccentPr();
+	//// Properties
+	this.Pr = new CMathAccentPr(this.CtrPrp);
 
-    this.gap = 0;
+	this.gap = 0;
 
-    /////////////////
+	/////////////////
 
-    this.operator = new COperator(OPER_ACCENT);
+	this.operator = new COperator(OPER_ACCENT);
 
-    if(props !== null && typeof(props) !== "undefined")
-        this.init(props);
+	if(props !== null && typeof(props) !== "undefined")
+		this.init(props);
 
-    // согласно формату CtrPrp должен находится в AccentPr, пока оставляем this.CtrPrp, но приравняем к значению из Pr
-    if (this.Pr.ctrPr.rPr)
-        this.CtrPrp = this.Pr.ctrPr.rPr;
-
-    AscCommon.g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 CAccent.prototype = Object.create(CMathBase.prototype);
 CAccent.prototype.constructor = CAccent;
@@ -786,3 +782,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CAccent = CAccent;
 
 window["CMathMenuAccent"] = CMathMenuAccent;
+
+AscMath.Accent = CAccent;

@@ -60,9 +60,10 @@ function (window, undefined)
 	CMobileDelegateEditorCell.prototype.constructor = CMobileDelegateEditorCell;
 	CMobileDelegateEditorCell.prototype.Resize = function()
 	{
-		var _element = document.getElementById("editor_sdk");
-		this.Offset.X = _element.offsetLeft;
-		this.Offset.Y = _element.offsetTop;
+		let _element = document.getElementById("editor_sdk");
+		let pos = AscCommon.UI.getBoundingClientRect(_element);
+		this.Offset.X = pos.x || pos.left;
+		this.Offset.Y = pos.y || pos.top;
 
 		this.Size.W = _element.offsetWidth;
 		this.Size.H = _element.offsetHeight;
@@ -161,7 +162,7 @@ function (window, undefined)
 	};
 	CMobileDelegateEditorCell.prototype.GetSelectionRectsBounds = function()
 	{
-		var _selection = this.WB.GetSelectionRectsBounds();
+		var _selection = this.WB.GetSelectionRectsBounds(true);
 
 		if (_selection)
 		{
@@ -201,31 +202,41 @@ function (window, undefined)
 		var pos;
 		var _api = this.WB;
 
+		let needInit = false;
+		let isSmoothScrolling = _api.getSmoothScrolling();
 		if ('v' === _scroll.directionLocked)
 		{
 			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			if (-_scroll.y >= -_scroll.maxScrollY) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollY(pos);
+			}
+			_api._onScrollY(pos, needInit);
 		}
 		else if ('h' === _scroll.directionLocked)
 		{
 			pos = -_scroll.x / _api.controller.settings.vscrollStep;
-			if (-_scroll.x >= -_scroll.maxScrollX)
+			if (-_scroll.x >= -_scroll.maxScrollX) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollX(pos);
+			}
+			_api._onScrollX(pos, needInit);
 		}
 		else if ('n' === _scroll.directionLocked)
 		{
 			pos = -_scroll.y / _api.controller.settings.hscrollStep;
-			if (-_scroll.y >= -_scroll.maxScrollY)
+			if (-_scroll.y >= -_scroll.maxScrollY) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollY(pos);
+			}
+			_api._onScrollY(pos, needInit);
 
 			pos = -_scroll.x / _api.controller.settings.vscrollStep;
-			if (-_scroll.x >= -_scroll.maxScrollX)
+			if (-_scroll.x >= -_scroll.maxScrollX) {
+				needInit = isSmoothScrolling;
 				pos += 1;
-			_api._onScrollX(pos);
+			}
+			_api._onScrollX(pos, needInit);
 		}
 	};
 	CMobileDelegateEditorCell.prototype.GetContextMenuType = function()
@@ -519,7 +530,7 @@ function (window, undefined)
 
 		this.iScroll = new window.IScrollMobile(_element, {
 			scrollbars: true,
-			mouseWheel: true,
+			mouseWheel: !this.isDesktopMode,
 			interactiveScrollbars: true,
 			shrinkScrollbars: 'scale',
 			fadeScrollbars: true,
@@ -527,7 +538,8 @@ function (window, undefined)
 			scroller_id : this.iScrollElement,
 			bounce : false,
 			eventsElement : this.eventsElement,
-			click : false
+			click : false,
+			transparentIndicators : this.isDesktopMode
 		});
 
 		this.delegate.Init();
@@ -1007,6 +1019,9 @@ function (window, undefined)
 	// отрисовка текстового селекта
 	CMobileTouchManager.prototype.CheckSelect = function(overlay, color, drDocument)
 	{
+		if (!this.desktopTouchState)
+			return;
+
 		if (!this.SelectEnabled)
 			return;
 

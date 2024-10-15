@@ -95,6 +95,15 @@
 			this.OnEnd();
 		}
 	};
+	CActionOnTimerBase.prototype.Stop = function()
+	{
+		this.Reset();
+		this.Start = false;
+	};
+	CActionOnTimerBase.prototype.IsInProgress = function()
+	{
+		return this.Start;
+	};
 	CActionOnTimerBase.prototype.Reset = function()
 	{
 		if (this.TimerId)

@@ -7772,7 +7772,7 @@ CDocumentContent.prototype.Load_LinkData = function(LinkData)
 	if ("undefined" != typeof(LinkData.Parent))
 		this.Parent = g_oTableId.Get_ById(LinkData.Parent);
 
-	if (this.Parent.getDrawingDocument)
+	if (this.Parent && this.Parent.getDrawingDocument)
 	{
 		this.DrawingDocument = this.Parent.getDrawingDocument();
 		for (var i = 0; i < this.Content.length; ++i)

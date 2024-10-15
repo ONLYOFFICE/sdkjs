@@ -299,6 +299,10 @@ ParaDrawing.prototype.canRotate = function()
 {
 	return AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.canRotate == "function" && this.GraphicObj.canRotate();
 };
+ParaDrawing.prototype.canResize = function()
+{
+	return AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.canResize == "function" && this.GraphicObj.canResize();
+};
 ParaDrawing.prototype.GetParagraph = function()
 {
 	return this.Get_ParentParagraph();
@@ -309,6 +313,7 @@ ParaDrawing.prototype.GetRun = function()
 };
 ParaDrawing.prototype.GetDocumentContent = function()
 {
+	// TODO: Check why do we need to skip BlockLevelSdt here. If it's not necessary then merge this method with GetParentDocumentContent
 	const oParagraph = this.GetParagraph();
 	let oDocumentContent = (oParagraph ? oParagraph.GetParent() : null);
 	if (oDocumentContent && oDocumentContent.IsBlockLevelSdtContent())
@@ -316,6 +321,11 @@ ParaDrawing.prototype.GetDocumentContent = function()
 		oDocumentContent = oDocumentContent.Parent.Parent;
 	}
 	return oDocumentContent;
+};
+ParaDrawing.prototype.GetParentDocumentContent = function()
+{
+	let para = this.GetParagraph();
+	return para ? para.GetParent() : null;
 };
 ParaDrawing.prototype.Get_Run = function()
 {
@@ -3179,6 +3189,7 @@ ParaDrawing.prototype.ConvertToMath = function(isUpdatePos)
 
 	// Коректируем формулу после конвертации
 	this.ParaMath.Correct_AfterConvertFromEquation();
+	this.ParaMath.ProcessingOldEquationConvert();
 
 	// Сначала удаляем Drawing из рана
 	oRun.RemoveFromContent(nBotElementPos, 1);

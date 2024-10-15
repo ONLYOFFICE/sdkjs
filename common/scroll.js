@@ -560,6 +560,13 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
         var mouseX = (((evt.clientX * AscBrowser.zoom) >> 0) - left + window.pageXOffset) * dPR;
         var mouseY = (((evt.clientY * AscBrowser.zoom) >> 0) - top + window.pageYOffset) * dPR;
 
+		let api = window.Asc.editor;
+		let wb = api && api.wb;
+		let ws = wb && wb.getWorksheet();
+		if (ws && ws.getRightToLeft()) {
+			mouseX = this.that.canvasW - mouseX;
+		}
+
 		return {
 			x:mouseX,
 			y:mouseY
@@ -1025,6 +1032,10 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 		that.context.beginPath();
 		var roundDPR = this._roundForScale(AscBrowser.retinaPixelRatio);
 		that.context.lineWidth = roundDPR;
+
+		let api = window.Asc.editor;
+		let wb = api && api.wb;
+		let ws = wb && wb.getWorksheet();
 
 		if (that.settings.isVerticalScroll) {
 			var _y = that.settings.showArrows ? that.arrowPosition : 0,
@@ -1629,7 +1640,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 				if ( that.settings.isVerticalScroll )
 					that.scrollByY( that.settings.vscrollStep );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( that.settings.hscrollStep );
+					that.scrollByX( that.settings.hscrollStep);
 
 				if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );
@@ -1647,7 +1658,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
 				if ( that.settings.isVerticalScroll )
 					that.scrollByY( -that.settings.vscrollStep );
 				else if ( that.settings.isHorizontalScroll )
-					that.scrollByX( -that.settings.hscrollStep );
+					that.scrollByX( -that.settings.hscrollStep);
 
                 if(that.mouseDown)
 				scrollTimeout = setTimeout( doScroll, isFirst ? that.settings.initialDelay : that.settings.arrowRepeatFreq );

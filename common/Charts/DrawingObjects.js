@@ -427,8 +427,16 @@ function asc_CChartBinary(chart) {
     this["binary"] = null;
     if (chart && chart.getObjectType() === AscDFH.historyitem_type_ChartSpace)
     {
+        this["IsChartEx"] = chart.isChartEx();
         var writer = new AscCommon.BinaryChartWriter(new AscCommon.CMemory(false)), pptx_writer;
-        writer.WriteCT_ChartSpace(chart);
+        if(this["IsChartEx"])
+        {
+            writer.WriteCT_ChartExSpace(chart);
+        }
+        else
+        {
+            writer.WriteCT_ChartSpace(chart);
+        }
         this["binary"] = writer.memory.pos + ";" + writer.memory.GetBase64Memory();
         if(chart.theme)
         {
@@ -462,6 +470,8 @@ asc_CChartBinary.prototype = {
     asc_setThemeBinary: function(val) { this["themeBinary"] = val; },
     asc_setColorMapBinary: function(val){this["colorMapBinary"] = val;},
     asc_getColorMapBinary: function(){return this["colorMapBinary"];},
+    asc_setIsChartEx: function(val){this["IsChartEx"] = val;},
+    asc_getIsChartEx: function(){return this["IsChartEx"];},
     getChartSpace: function(workSheet)
     {
         var binary = this["binary"];
@@ -470,7 +480,12 @@ asc_CChartBinary.prototype = {
         AscCommon.pptx_content_loader.Clear();
         var oNewChartSpace = Asc.editor.isPdfEditor() ? new AscPDF.CPdfChart() : new AscFormat.CChartSpace();
         var oBinaryChartReader = new AscCommon.BinaryChartReader(stream);
-        oBinaryChartReader.ExternalReadCT_ChartSpace(stream.size , oNewChartSpace, workSheet);
+        if(this["IsChartEx"]) {
+            oBinaryChartReader.ExternalReadCT_ChartExSpace(stream.size , oNewChartSpace, workSheet);
+        }
+        else {
+            oBinaryChartReader.ExternalReadCT_ChartSpace(stream.size , oNewChartSpace, workSheet);
+        }
         return oNewChartSpace;
     },
 
@@ -1370,12 +1385,21 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             {
                 if (this.worksheet) {
                     coordsFrom = this.getDrawingObjects().calculateCoords(_t.from);
-                    metrics.x = this.pxToMm( coordsFrom.x );
-                    metrics.y = this.pxToMm( coordsFrom.y );
+                    if (!this.worksheet.getRightToLeft()) {
+                        metrics.x = this.pxToMm( coordsFrom.x );
+                        metrics.y = this.pxToMm( coordsFrom.y );
+                        coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
+                        metrics.extX = this.pxToMm( coordsTo.x - coordsFrom.x );
+                        metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+                    } else {
+                        metrics.y = this.pxToMm( coordsFrom.y );
 
-                    coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
-                    metrics.extX = this.pxToMm( coordsTo.x - coordsFrom.x );
-                    metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+                        coordsTo = this.getDrawingObjects().calculateCoords(_t.to);
+                        metrics.extX = this.pxToMm(  coordsFrom.x - coordsTo.x );
+                        metrics.extY = this.pxToMm( coordsTo.y - coordsFrom.y );
+
+                        metrics.x = this.pxToMm( coordsTo.x );
+                    }
                 }
                 break;
             }
@@ -1428,6 +1452,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 ret.Pos.Y = _yc - _t.graphicObject.extX/2;
                 ret.ext.cx = _t.graphicObject.extY;
                 ret.ext.cy = _t.graphicObject.extX;
+            }
+
+            if (this.worksheet.getRightToLeft()) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
             }
 
             var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
@@ -1499,6 +1529,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 this.ext.cy = _t.graphicObject.extX;
             }
 
+            if (this.worksheet.getRightToLeft()) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
+            }
+
             var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
             var fromRowCell = this.worksheet.findCellByXY(fromX, fromY, true, true, false);
             var toColCell = this.worksheet.findCellByXY(toX, toY, true, false, true);
@@ -1534,6 +1570,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             if(toY < 0)
             {
                 toY = 0;
+            }
+
+            if (this.worksheet.getRightToLeft()) {
+                let temp = fromX;
+                fromX = toX;
+                toX = temp;
             }
 
             var fromColCell = this.worksheet.findCellByXY(fromX, fromY, true, false, true);
@@ -1998,6 +2040,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             oGraphic = drawingObject.graphicObject;
             oGraphic.setDrawingBase(drawingObject);
             oGraphic.setDrawingObjects(_this);
+						oGraphic.generateLocalDrawingPart();
             oGraphic.getAllRasterImages(aImagesSync);
         }
         aImagesSync = _this.checkImageBullets(currentSheet, aImagesSync);
@@ -2795,6 +2838,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             asc_chart_binary.asc_setBinary(chart["binary"]);
             asc_chart_binary.asc_setThemeBinary(chart["themeBinary"]);
             asc_chart_binary.asc_setColorMapBinary(chart["colorMapBinary"]);
+            asc_chart_binary.asc_setIsChartEx(chart["IsChartEx"]);
             var oNewChartSpace = asc_chart_binary.getChartSpace(model);
             var theme = asc_chart_binary.getTheme();
             if(theme)
@@ -4711,6 +4755,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			var resultColOff = cell.colOff > colWidth ? colWidth : cell.colOff;
 			coords.y = ws._getRowTop(cell.row) + ws.objectRender.convertMetric(resultRowOff, 3, 0) - ws._getRowTop(0);
 			coords.x = ws._getColLeft(cell.col) + ws.objectRender.convertMetric(resultColOff, 3, 0) - ws._getColLeft(0);
+            coords.x = ws.checkRtl(coords.x, undefined, undefined, true);
 		}
 		return coords;
 	};

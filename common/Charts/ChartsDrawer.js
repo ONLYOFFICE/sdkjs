@@ -80,7 +80,7 @@ var c_oChartBar3dFaces =
 
 var globalGapDepth = 150;
 var isTurnOn3DCharts = true;
-var standartMarginForCharts = 13;
+var standartMarginForCharts = 15;
 
 function arrReverse(arr) {
 	if(!arr || !arr.length)
@@ -214,16 +214,19 @@ CChartsDrawer.prototype =
 		this.charts = {};
 		switch (seria.layoutId) {
 			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
-				this.charts[null] = new drawHistogramChart(seria, this)
-				break
+				this.charts.chartEx = new drawHistogramChart(seria, this);
+				break;
 			case AscFormat.SERIES_LAYOUT_WATERFALL :
-				this.charts[null] = new drawWaterfallChart(seria, this)
-				break
+				this.charts.chartEx = new drawWaterfallChart(seria, this);
+				break;
 			case AscFormat.SERIES_LAYOUT_FUNNEL :
-				this.charts[null] = new drawFunnelChart(seria, this)
-				break
+				this.charts.chartEx = new drawFunnelChart(seria, this);
+				break;
+			case AscFormat.SERIES_LAYOUT_PARETO_LINE :
+				this.charts.chartEx = new drawParetoChart(seria, this);
+				break;
 			default :
-				this.charts[null] = null;
+				this.charts.chartEx = null;
 		}
 	},
 
@@ -242,9 +245,14 @@ CChartsDrawer.prototype =
 		let newChart;
 		if (plotArea.isChartEx()) {
 			const series = plotArea.plotAreaRegion.series;
+			let maxSeria = null;
+			// find the maximum seria, that will indicate the resulting chartExFormat
 			for (let i = 0; i < series.length; i++) {
-				this.createChartEx(series[i]);
+				if (maxSeria === null || maxSeria.layoutId < series[i].layoutId) {
+					maxSeria = series[i];
+				}
 			}
+			this.createChartEx(maxSeria);
 		} else {
 			for (let i = 0; i < plotArea.charts.length; i++) {
 				let chart = plotArea.charts[i];
@@ -683,8 +691,8 @@ CChartsDrawer.prototype =
 	{
 		let res = null;
 		if (obj.showChartExVal) {
-			if (this.charts && this.charts.null) {
-				res = this.charts.null._calculateDLbl(obj);
+			if (this.charts && this.charts.chartEx) {
+				res = this.charts.chartEx._calculateDLbl(obj);
 			}
 		} else {
 			var chartSpace = obj.chart;
@@ -1463,11 +1471,12 @@ CChartsDrawer.prototype =
 		//считаем маргины
 		this._calculateMarginsChart(chartSpace);
 
-		const isLayout = this.cChartSpace.isLayout();
-		// layour should not affect for circular charts
+		// check if diagmar size affected by layout
+		const isLayoutSizes = this.cChartSpace.isLayoutSizes();
 
+		// layour should not affect for circular charts
 		let isCircular = false;
-		if (isLayout && chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
+		if (isLayoutSizes && chartSpace && chartSpace.chart && chartSpace.chart.plotArea && Array.isArray(chartSpace.chart.plotArea.charts)) {
 			const charts = chartSpace.chart.plotArea.charts;
 			for (let i = 0; i < charts.length; i++) {
 				const typeChart = charts[0].getObjectType();
@@ -1475,7 +1484,7 @@ CChartsDrawer.prototype =
 			}
 		}
 		
-		if (isLayout && !isCircular) {
+		if (isLayoutSizes && !isCircular) {
 			this.calcProp.trueWidth = this.cChartSpace.chart.plotArea.extX * this.calcProp.pxToMM;
 			this.calcProp.trueHeight = this.cChartSpace.chart.plotArea.extY * this.calcProp.pxToMM;
 			this.calcProp.chartGutter._top = this.cChartSpace.chart.plotArea.y * this.calcProp.pxToMM;
@@ -2230,7 +2239,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			if (manualMax <= 0) {
+			if (AscFormat.isRealNumber(manualMax) && manualMax <= 0) {
 				arrayValues = [-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0];
 			} else {
 				arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
@@ -2323,8 +2332,15 @@ CChartsDrawer.prototype =
 					var firstDegreeStep = this._getFirstDegree(newStep);
 					var tempStep = this._getNextStep(firstDegreeStep.val);
 					newStep = tempStep * firstDegreeStep.numPow;
-					res = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
+					const newRes = this._getArrayDataValues(newStep, axisMin, axisMax, manualMin, manualMax);
 
+					//new array cannot be generated from broken data, example: step is NaN
+					if (!newRes) {
+						break;
+					}
+
+					//after we checked that newRes is working array substitute res
+					res = newRes;
 					if (res.length <= 2) {
 						break;
 					}
@@ -2353,7 +2369,7 @@ CChartsDrawer.prototype =
 
 	_getArrayDataValues: function (step, axisMin, axisMax, manualMin, manualMax, isRadarChart) {
 		if (!AscFormat.isRealNumber(axisMin) || !AscFormat.isRealNumber(axisMax) || !AscFormat.isRealNumber(step)) {
-			return [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+			return null;
 		}
 
 		var arrayValues;
@@ -2907,28 +2923,45 @@ CChartsDrawer.prototype =
 		this._chartExHandleBinning(type, cachedData.clusteredColumn, numArr, axisProperties);
 	},
 
-	_chartExHandleWaterfall: function (type, cachedData, numArr, axisProperties) {
-		if (type != AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !axisProperties || !cachedData) {
+	_chartExHandleWaterfall: function (type, cachedData, numArr, axisProperties, seria) {
+		if (type !== AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !axisProperties || !cachedData) {
 			return;
 		}
 
+		// prepare cached data
 		if (!cachedData.waterfall) {
-			cachedData.waterfall = [];
+			cachedData.waterfall = {data: []};
 		}
+		cachedData.waterfall.numArr = numArr;
 
 		axisProperties.val.min = 0;
 		axisProperties.val.max = 0;
 		let sum = 0;
+
+		// Check if any total values exist is in the array
+		let index = 0;
+		const subtotals = seria.layoutPr && seria.layoutPr.subtotals ? seria.layoutPr.subtotals.idx : [];
+		const checkIsTotal = function (idx) {
+			if (index < subtotals.length) {
+				if (subtotals[index] === idx) {
+					index += 1;
+					return true;
+				}
+			}
+			return false;
+		}
+
 		for (let i = 0; i < numArr.length; i++) {
-			cachedData.waterfall.push(numArr[i].val);
-			sum += numArr[i].val;
+			const isTotal = checkIsTotal(numArr[i].idx);
+			sum = isTotal ? numArr[i].val : sum + numArr[i].val;
+			cachedData.waterfall.data.push({val: sum, isTotal: isTotal});
 			this._chartExSetAxisMinAndMax(axisProperties.val, sum);
 			axisProperties.cat.scale.push(numArr[i].idx + 1);
 		}
 	},
 
 	_chartExHandleFunnel: function (type, cachedData, numArr, axisProperties) {
-		if (type != AscFormat.SERIES_LAYOUT_FUNNEL || !numArr || !axisProperties || !cachedData) {
+		if (type !== AscFormat.SERIES_LAYOUT_FUNNEL || !numArr || !axisProperties || !cachedData) {
 			return;
 		}
 
@@ -2955,15 +2988,15 @@ CChartsDrawer.prototype =
 
 		const plotArea = chartSpace.chart.plotArea;
 		const seria = plotArea.plotAreaRegion.series[0];
+		if (!seria) {
+			return;
+		}
 		const type = seria.layoutId;
 		const strCache = seria.getCatLit(type);
 		const numLit = seria.getValLit();
 
 		//createCache for storing information
 		const createCachedData = function (chart, seria) {
-			if (!chart || !seria) {
-				return;
-			}
 
 			chart.cachedData = {}
 
@@ -3015,7 +3048,7 @@ CChartsDrawer.prototype =
 
 				calculateExtremums(type, axisProperties, numArr, this);
 				this._chartExHandleClusteredColumn(type, plotArea.plotAreaRegion.cachedData, numArr, strArr, axisProperties);
-				this._chartExHandleWaterfall(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
+				this._chartExHandleWaterfall(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties, seria);
 				this._chartExHandleFunnel(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
 				this._chartExHandleAxesConfigurations(plotArea.axId, axisProperties);
 			}
@@ -3097,12 +3130,15 @@ CChartsDrawer.prototype =
 			this._calculateMarginsChart(chartSpace);
 		}
 
+		if (!this.calcProp.chartGutter.left && !this.calcProp.chartGutter.right && !this.calcProp.chartGutter._bottom && !this.calcProp.chartGutter.top) {
+			this._calculateMarginsChart(chartSpace);
+		}
+
 		var widthCanvas = chartSpace.extX;
 		var heightCanvas = chartSpace.extY;
 		
 		var w = widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right) / this.calcProp.pxToMM;
 		var h = heightCanvas - (this.calcProp.chartGutter._top + this.calcProp.chartGutter._bottom) / this.calcProp.pxToMM;
-		
 
         return {w: w , h: h , startX: this.calcProp.chartGutter._left / this.calcProp.pxToMM, startY: this.calcProp.chartGutter._top / this.calcProp.pxToMM};
 	},
@@ -7876,57 +7912,81 @@ drawHistogramChart.prototype = {
 	constructor: drawHistogramChart,
 
 	recalculate: function () {
-		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId || this.cChartSpace.chart.plotArea.axId.length < 2) {
+		const oDataInfo = this.getHistogramData();
+		this.recalculateHistogram(oDataInfo);
+	},
+
+	recalculateHistogram: function (oDataInfo, paretoLine) {
+		// need data, at least two axes, chartProp and chartGutter
+		if (!oDataInfo || !this.cChartSpace.chart.plotArea.axId || !Array.isArray(this.cChartSpace.chart.plotArea.axId) || this.cChartSpace.chart.plotArea.axId.length < 2 || !this.chartProp || !this.chartProp.chartGutter) {
 			return;
 		}
-		const cachedData = this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData;
-		if (cachedData && this.chartProp && this.chartProp.chartGutter && cachedData.clusteredColumn) {
-			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
-			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-			const catStart = this.chartProp.chartGutter._left;
-			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
-			const coeff = catAxis.scaling.gapWidth;
+		const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+		const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-			const isAggregation = cachedData.clusteredColumn.aggregation;
-			// two different ways of storing information, object and array, therefore convert object into array
-			const sections = isAggregation ? Object.values(cachedData.clusteredColumn.aggregation) : cachedData.clusteredColumn.results;
-			if (sections) {
-				// 1 px gap for each section length
-				const gapWidth = 0.5 / this.chartProp.pxToMM;
-				const gapNumber = sections.length;
-				//Each bar will have 2 gapWidth and 2 margins , on left and right sides
-				const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / sections.length;
-				const barWidth = (initialBarWidth / (1 + coeff));
-				const margin = (initialBarWidth - barWidth) / 2;
+		const catStart = this.chartProp.chartGutter._left;
+		let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+		const coeff = catAxis.scaling.gapWidth;
 
-				let start = (catStart + margin + gapWidth);
-				for (let i = 0; i < sections.length; i++) {
-					// aggregation object does not have field occurrence;
-					const val = isAggregation ? sections[i] : sections[i].occurrence;
-					const startY = this.cChartDrawer.getYPosition(val, valAxis, true);
-					const bW = i === 0 ? barWidth : barWidth - gapWidth;
-					if (this.chartProp && this.chartProp.pxToMM ) {
-						const height = valStart - (startY * this.chartProp.pxToMM);
-						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, bW, height);
-					}		
-					start += (bW + margin + gapWidth + gapWidth + margin);
-				}
+		// 1 px gap for each section length
+		const gapWidth = 0.5 / this.chartProp.pxToMM;
+		const gapNumber = oDataInfo.data.length;
+		//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+		const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / oDataInfo.data.length;
+		const barWidth = (initialBarWidth / (1 + coeff));
+		const margin = (initialBarWidth - barWidth) / 2;
+
+		let start = (catStart + margin + gapWidth);
+		// margin and gapwidth in the left and in the right;
+		const gap = 2 * (margin + gapWidth);
+
+		// save pareto line its beginning, and interval;
+		if (paretoLine) {
+			paretoLine.push(start + barWidth / 2);
+			paretoLine.push(gap + barWidth);
+		}
+
+		for (let i in oDataInfo.data) {
+			// aggregation object does not have field occurrence;
+			const val = oDataInfo.isAggregation ? oDataInfo.data[i] : oDataInfo.data[i].occurrence;
+			const startY = this.cChartDrawer.getYPosition(val, valAxis, true);
+			const bW = i === 0 ? barWidth : barWidth - gapWidth;
+			if (this.chartProp && this.chartProp.pxToMM ) {
+				const height = valStart - (startY * this.chartProp.pxToMM);
+				this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, bW, height);
 			}
-
+			start += (bW + gap);
 		}
 	},
 
+	getHistogramData : function () {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion
+			|| !this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData || !this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData.clusteredColumn) {
+			return null;
+		}
+		const clusteredColumn = this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData.clusteredColumn;
+		const isAggregation = clusteredColumn.aggregation;
+		// two different ways of storing information, object and array, therefore convert object into array
+		const data = isAggregation ? clusteredColumn.aggregation : clusteredColumn.results;
+		return data ? {data: data, isAggregation: isAggregation} : null;
+	},
+
 	draw: function () {
-		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
+		if (!this.cChartDrawer || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.chartProp || !this.chartProp.chartGutter) {
 			return;
 		}
+		this.startRect();
+		this.drawHistogram();
+		this.endRect();
+	},
 
+	startRect: function () {
 		// find chart starting coordinates, width and height;
-		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
-		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
-		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
-		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
+		let leftRect = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		let topRect = (this.chartProp.chartGutter._top) / this.chartProp.pxToMM;
+		let rightRect = this.chartProp.trueWidth / this.chartProp.pxToMM;
+		let bottomRect = (this.chartProp.trueHeight) / this.chartProp.pxToMM;
 
 		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
 			return
@@ -7934,8 +7994,9 @@ drawHistogramChart.prototype = {
 
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+	},
 
-
+	drawHistogram: function () {
 		//TODO !!!
 		//series color
 		/*<cx:plotArea>
@@ -7977,7 +8038,9 @@ drawHistogramChart.prototype = {
 				}
 			}
 		}
-		
+	},
+
+	endRect: function () {
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
 
@@ -8046,6 +8109,89 @@ drawHistogramChart.prototype = {
 	}
 };
 
+function drawParetoChart(seria, chartsDrawer) {
+	drawHistogramChart.call(this, seria, chartsDrawer);
+	this.linePath = null;
+	this.paretoLine = [];
+}
+
+AscFormat.InitClassWithoutType(drawParetoChart, drawHistogramChart);
+
+drawParetoChart.prototype.recalculate = function () {
+		const oDataInfo = this.getParetoData();
+		this.recalculateHistogram(oDataInfo, this.paretoLine);
+		this.recalculateLinePath(oDataInfo);
+};
+
+drawParetoChart.prototype.recalculateLinePath = function (oDataInfo) {
+	if (!oDataInfo || !this.cChartSpace.chart.plotArea.axId || !Array.isArray(this.cChartSpace.chart.plotArea.axId) || this.cChartSpace.chart.plotArea.axId.length < 3 || !this.chartProp && !this.chartProp.chartGutter) {
+		return null;
+	}
+	const valAxis = this.cChartSpace.chart.plotArea.axId[2];
+	const pathId = this.cChartSpace.AllocPath();
+	const path = this.cChartSpace.GetPath(pathId);
+
+	const pathH = this.chartProp.pathH;
+	const pathW = this.chartProp.pathW;
+	const pxToMm = this.chartProp.pxToMM;
+
+	// starting point
+	// interval
+	let percentage = 0;
+	for (let i = 0; i < oDataInfo.data.length; i++) {
+		const val = oDataInfo.isAggregation ? oDataInfo.data[i] : oDataInfo.data[i].occurrence;
+		percentage += (val / oDataInfo.total);
+		const yPos = this.cChartDrawer.getYPosition(percentage, valAxis, true);
+		const xPos = this.paretoLine[0] + i * this.paretoLine[1];
+		if (i === 0) {
+			path.moveTo((xPos / pxToMm) * pathW, yPos * pathH);
+		} else {
+			path.lnTo((xPos / pxToMm) * pathW, yPos * pathH);
+		}
+	}
+	this.linePath = pathId;
+};
+
+drawParetoChart.prototype.getParetoData = function () {
+		const oDataInfo = this.getHistogramData();
+		// calculate total amount of
+		if (oDataInfo) {
+			// calculate max number of occurrences
+			const getTotal = function (oDataInfo) {
+				let total = 0;
+				for (let i = 0; i < oDataInfo.data.length; i++) {
+					// aggregation object does not have field occurrence;
+					const val = oDataInfo.isAggregation ? oDataInfo.data[i] : oDataInfo.data[i].occurrence;
+					total += val;
+				}
+				return total;
+			}
+
+			oDataInfo.total = getTotal(oDataInfo);
+			return oDataInfo;
+		}
+};
+
+drawParetoChart.prototype.draw = function () {
+		if (!this.cChartDrawer || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.chartProp || !this.chartProp.chartGutter) {
+			return;
+		}
+		this.startRect();
+		this.drawHistogram();
+		this.drawParetoLine();
+		this.endRect();
+};
+
+drawParetoChart.prototype.drawParetoLine = function () {
+	if (!this.linePath) {
+		return;
+	}
+	const pen = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.axId && this.cChartSpace.chart.plotArea.axId[1] ? this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines : null;
+	if (pen) {
+		this.cChartDrawer.drawPath(this.linePath, pen);
+	}
+};
+
 /** @constructor */
 function drawWaterfallChart(chart, chartsDrawer) {
 	this.chartProp = chartsDrawer.calcProp;
@@ -8068,18 +8214,18 @@ drawWaterfallChart.prototype = {
 	constructor: drawWaterfallChart,
 
 	recalculate: function () {
-		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId) {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData || !this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData.waterfall || !this.cChartSpace.chart.plotArea.axId) {
 			return;
 		}
-		const seria = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0];
-		const numLit = seria.getValLit();
-		const data = numLit ? numLit.pts : null;
+		const data = this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData.waterfall.data;
+
 		if (data && data.length > 0 && this.chartProp && this.chartProp.chartGutter) {
 			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
 			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
 			const catStart = this.chartProp.chartGutter._left;
 			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			const zeroValStart = valStart;
 			if (AscFormat.isRealNumber(valStart)) {
 				const coeff = catAxis.scaling.gapWidth;
 				// 1 px gap for each section length
@@ -8090,16 +8236,15 @@ drawWaterfallChart.prototype = {
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
-				let sum = 0;
-				let start = (catStart + margin + gapWidth); 
+				let start = (catStart + margin + gapWidth);
+
 				for (let i = 0; i < data.length; i++) {
-					sum += data[i].val;
-					const valPos = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM; // calc roof of the current bar
+					const valPos = this.cChartDrawer.getYPosition(data[i].val, valAxis, true) * this.chartProp.pxToMM; // calc roof of the current bar
 					const next = start + (barWidth + margin + gapWidth + gapWidth + margin); // start of the next bar
 					if (this.chartProp && this.chartProp.pxToMM ) {
-						const height = valStart - valPos;
+						const height = data[i].isTotal && i !== 0 ? zeroValStart - valPos : valStart - valPos;
 						this.paths[i] = [];
-						this.paths[i].push(this.cChartDrawer._calculateRect(start, valStart, barWidth, height));
+						this.paths[i].push(this.cChartDrawer._calculateRect(start, data[i].isTotal ? zeroValStart : valStart, barWidth, height));
 						//dont need last connectorLine
 						if (i !== data.length - 1 && margin !== 0) {
 							//exclude gapWidth from connector line
@@ -8142,7 +8287,7 @@ drawWaterfallChart.prototype = {
 		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
 
 		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
-			return
+			return;
 		}
 
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
@@ -8202,7 +8347,7 @@ drawWaterfallChart.prototype = {
 		if (!this.paths || !this.chartProp) {
 			return;
 		}
-		const path = this.paths[compiledDlb.idx][0];
+		const path = this.paths[compiledDlb.idx] && Array.isArray(this.paths[compiledDlb.idx]) && this.paths[compiledDlb.idx].length > 0 ? this.paths[compiledDlb.idx][0] : null;
 
 		if (!AscFormat.isRealNumber(path)) {
 			return;
@@ -16622,9 +16767,9 @@ plotAreaChart.prototype =
 		var px = 1/this.chartProp.pxToMM;
 		var plotAreaPoints = this.cChartDrawer.getPlotAreaPoints();
 		var left = plotAreaPoints.left - px;
-		var right = plotAreaPoints.right - px;
+		var right = plotAreaPoints.right;
 		var top = plotAreaPoints.top - px;
-		var bottom = plotAreaPoints.bottom - px;
+		var bottom = plotAreaPoints.bottom;
 		
 		path.moveTo(left * pathW, bottom * pathH);
 		path.lnTo(right * pathW, bottom * pathH);

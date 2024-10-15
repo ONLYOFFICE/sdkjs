@@ -61,6 +61,9 @@ const AscTest = window.AscTest || {};
     TurnOff : function(){},
     TurnOn : function(){},
     init : function () {},
+    IsOn : function() {
+        return true;
+    }
   };
 
   AscCommon.g_oIdCounter.m_bLoad = false;

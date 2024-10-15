@@ -63,7 +63,9 @@ var AscBrowser = {
     chromeVersion : 70,
     iosVersion : 13,
     isAndroidNativeApp : false,
-	safariVersion : 17004001
+	safariVersion : 17004001,
+	isTelegramWebView : false,
+	maxTouchPoints : 0
 };
 
 // user agent lower case
@@ -144,6 +146,8 @@ if (AscBrowser.isAppleDevices)
 	AscBrowser.iosVersion = iosversion;
 }
 
+if (navigator.maxTouchPoints) AscBrowser.maxTouchPoints = navigator.maxTouchPoints;
+
 // android devices detect
 AscBrowser.isAndroid = (AscBrowser.userAgent.indexOf("android") > -1);
 
@@ -176,6 +180,8 @@ AscBrowser.isEmulateDevicePixelRatio = (AscBrowser.userAgent.indexOf("emulatedev
 AscBrowser.isNeedEmulateUpload = (AscBrowser.userAgent.indexOf("needemulateupload") > -1);
 
 AscBrowser.isAndroidNativeApp = (AscBrowser.userAgent.indexOf("ascandroidwebview") > -1);
+
+AscBrowser.isTelegramWebView = (typeof TelegramWebviewProxy === "object") ? true : false;
 
 AscBrowser.zoom = 1;
 
@@ -213,6 +219,13 @@ AscBrowser.checkZoom = function()
     AscCommon.correctApplicationScale(zoomValue);
 };
 
+AscBrowser.isOffsetUsedZoom = function()
+{
+	if (AscCommon.AscBrowser.isChrome && 128 <= AscCommon.AscBrowser.chromeVersion)
+		return (AscBrowser.zoom === 1) ? false : true;
+	return false;
+};
+
 AscBrowser.checkZoom();
 
 AscBrowser.convertToRetinaValue = function(value, isScale)
@@ -223,7 +236,42 @@ AscBrowser.convertToRetinaValue = function(value, isScale)
 		return ((value / AscBrowser.retinaPixelRatio) + 0.5) >> 0;
 };
 
+var UI = {
+	getBoundingClientRect : function(element)
+	{
+		let rect = element.getBoundingClientRect();
+		if (!AscBrowser.isOffsetUsedZoom())
+			return rect;
+
+		let koef = AscCommon.AscBrowser.zoom;
+		let newRect = {}
+		if (undefined !== rect.x)      newRect.x      = rect.x * koef;
+		if (undefined !== rect.y)      newRect.y      = rect.y * koef;
+		if (undefined !== rect.width)  newRect.width  = rect.width * koef;
+		if (undefined !== rect.height) newRect.height = rect.height * koef;
+
+		if (undefined !== rect.left)   newRect.left   = rect.left * koef;
+		if (undefined !== rect.top)    newRect.top    = rect.top * koef;
+		if (undefined !== rect.right)  newRect.right  = rect.right * koef;
+		if (undefined !== rect.bottom) newRect.bottom = rect.bottom * koef;
+		return newRect;
+	},
+
+	getOffsetLeft : function(element) {
+		if (!AscBrowser.isOffsetUsedZoom())
+			return element.offsetLeft;
+		return element.offsetLeft * AscBrowser.zoom;
+	},
+
+	getOffsetTop : function(element) {
+		if (!AscBrowser.isOffsetUsedZoom())
+			return element.offsetTop;
+		return element.offsetTop * AscBrowser.zoom;
+	}
+};
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
     window['AscCommon'].AscBrowser = AscBrowser;
+	window['AscCommon'].UI = UI;
 })(window);

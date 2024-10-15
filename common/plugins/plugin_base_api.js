@@ -464,6 +464,15 @@ window.startPluginApi = function() {
 	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onRemoveComment.js
 	 */
 
+	/**
+	 * Event: onSubmitForm
+	 * @event Plugin#onSubmitForm
+	 * @memberof Plugin
+	 * @typeofeditors ["CDE"]
+	 * @alias onSubmitForm
+	 * @description The function called when the user clicks "Complete & Submit" button.
+	 * @see office-js-api/Examples/Plugins/{Editor}/Plugin/Methods/onSubmitForm.js
+	 */
 
     var Plugin = window["Asc"]["plugin"];
 
