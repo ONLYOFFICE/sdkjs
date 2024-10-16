@@ -11857,11 +11857,11 @@
 				shortIdForeignSelect: shortIdForeignSelect
 			};
 			if(!oHyperlink) {
-				if (fromDoubleClickCall && t.traceDependentsManager && t.traceDependentsManager.isHaveData) {
+				if (t.traceDependentsManager && t.traceDependentsManager.isHaveData) {
 					/* we get the coordinates of all dependence lines and check whether the cursor hits */
 					let coordsArray = t.traceDependentsManager.tracesCoords;
 					if (coordsArray) {
-						function isClickOnLine(x, y, lineCoords, tolerance = 4) {
+						const isClickOnLine = function(x, y, lineCoords, tolerance = 4) {
 							const x1 = lineCoords.from.x;
 							const y1 = lineCoords.from.y;
 							const x2 = lineCoords.to.x;
@@ -11881,9 +11881,12 @@
 										cellCursor: cellCursor,
 										coordLineInfo: coordLineInfo
 									};
+								} else {
+									// set cursor to default and targetType to traceDependents
+									cellCursor.cursor = kCurDefault;
+									cellCursor.target = c_oTargetType.TraceDependents;
+									return cellCursor;
 								}
-								// set cursor to default
-								break
 							}
 						}
 					}

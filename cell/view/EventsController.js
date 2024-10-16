@@ -1817,6 +1817,9 @@
 					} else if (t.targetInfo.target === c_oTargetType.TableSelectionChange) {
 						this.handlers.trigger('onChangeTableSelection', t.targetInfo);
 						return;
+					} else if (t.targetInfo.target === c_oTargetType.TraceDependents) {
+						// if we do a single click on traces, do nothing
+						return;
 					}
 				}
 			} else {

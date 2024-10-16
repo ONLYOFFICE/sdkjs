@@ -1995,22 +1995,30 @@
     const ct = ws.getCursorTypeFromXY(x, y, true);
 
 	if (ct.target === c_oTargetType.TraceDependents && ct.coordLineInfo) {
-		// todo добавить обработку single клика(ничего не делать при нажатии на стрелку)
-		// todo менять курсор при наведении
-		// todo если selection на одной из связанных ячеек - ставим на противоположную
 		let fromCell = ct.coordLineInfo.from;
 		let toCell = ct.coordLineInfo.to;
 
 		/* external ref, open goto window */
 		if (ct.coordLineInfo.external) {
+			// todo create goto window
 			// console.log(ct.coordLineInfo.external);
 			return
 		}
 
 		let fromRange = fromCell.areaRange ? fromCell.areaRange : fromCell.cellRange; 
 		let toRange = toCell.areaRange ? toCell.areaRange : toCell.cellRange;
+		let selectedRange = ws.getSelectedRange();
 
-		// change selection to another cell or range depending on the trace connection
+		if (selectedRange && selectedRange.bbox) {
+			if (selectedRange.bbox.isEqual(fromRange)) {
+				ws.setSelection(toRange);
+			} else {
+				ws.setSelection(fromRange);
+			}
+			return
+		}
+		
+		// if we couldn't get the selected range, change the selection
 		ws.setSelection(fromRange);
 		return
 	} else if (ct.target === c_oTargetType.FillHandle) {
