@@ -117,7 +117,7 @@
             return;
         }
 
-        AscCommon.History.Add(new CChangesPDFFreeTextRotate(this, this._rotate, nAngle));
+        AscCommon.History.Add(new CChangesPDFAnnotRotate(this, this._rotate, nAngle));
 		
 		AscCommon.ExecuteNoHistory(function() {
 			let oBodyPr = oTxShape.txBody.bodyPr;

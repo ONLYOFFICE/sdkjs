@@ -324,6 +324,11 @@
 				_ret_value = -1;
 			}
 
+			// can resize only on corners
+			if ([1, 3, 5, 7].includes(_ret_value) && (object.IsAnnot && object.IsAnnot() && object.IsStamp()) && object.getNoChangeAspect()) {
+				return -1;
+			}
+
 			if (_min_dist < radius)
 				return _ret_value;
 

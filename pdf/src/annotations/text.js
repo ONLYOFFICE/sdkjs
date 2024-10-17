@@ -153,6 +153,7 @@
         return oAscCommData;
     };
 
+    CAnnotationText.prototype.SetIconType = function() {};
     CAnnotationText.prototype.GetIconType = function() {
         return this._noteIcon;
     };

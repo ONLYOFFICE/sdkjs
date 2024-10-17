@@ -261,7 +261,6 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (this._wasChanged !== isChanged && oViewer.IsOpenAnnotsInProgress == false) {
-            // AscCommon.History.Add(new CChangesPDFAnnotWasChanged(this, this.IsChanged(), isChanged));
             this._wasChanged = isChanged;
             this.SetDrawFromStream(!isChanged);
         }
@@ -322,6 +321,9 @@
         if (this._apIdx == -1)
             return null;
 
+        nPageW = Math.round(nPageW);
+        nPageH = Math.round(nPageH);
+
         let oViewer = editor.getDocumentRenderer();
         let oFile   = oViewer.file;
         
@@ -377,7 +379,7 @@
         return canvas;
     };
     /**
-     * Returns AP info of this field.
+     * Returns AP info of this annotation.
 	 * @memberof CAnnotationBase
 	 * @typeofeditors ["PDF"]
      * @returns {Object}
@@ -511,6 +513,9 @@
         return false;
     };
     CAnnotationBase.prototype.IsFreeText = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsStamp = function() {
         return false;
     };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
