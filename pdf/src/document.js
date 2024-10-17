@@ -4879,7 +4879,89 @@ var CPresentation = CPresentation || function(){};
 
         oFreeText.SetInTextBox(true);
     };
+    CPDFDoc.prototype.AddStampAnnot = function(nType, nPage, oImage) {
+        let oController = this.GetController();
+        let nRotAngle   = this.Viewer.getPageRotate(nPage);
+        let oFile       = this.Viewer.file;
+        let oViewRect   = this.Viewer.getViewingRect(nPage);
+        let oNativePage = oFile.pages[nPage];
+        let nPageW      = oNativePage.W;
+        let nPageH      = oNativePage.H;
+        let oUser       = Asc.editor.User;
 
+        let nExtX = 200;
+        let nExtY = 40;
+
+        if (oImage) {
+            nExtX   = Math.max(1, oImage.Image.width * g_dKoef_pix_to_mm);
+            nExtY   = Math.max(1, oImage.Image.height * g_dKoef_pix_to_mm);
+            nKoeff  = Math.min(1.0, 1.0 / Math.max(nExtX / nPageW, nExtY / nPageH));
+
+            nExtX = Math.max(5, nExtX * nKoeff); 
+            nExtY = Math.max(5, nExtY * nKoeff); 
+        }
+
+        let X1, Y1, X2, Y2;
+        switch (nRotAngle) {
+            case 0:
+                X1 = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                Y1 = nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                X2 = X1 + nExtX;
+                Y2 = Y1 + nExtY;
+                break;
+            case 90:
+                X1 = nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                Y1 = nPageH - nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                X2 = X1 + nExtY;
+                Y2 = Y1 + nExtX;
+                break;
+            case 180:
+                X1 = nPageW - nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                Y1 = nPageH - nPageH * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                X2 = X1 + nExtX;
+                Y2 = Y1 + nExtY;
+                break;
+            case 270:
+                X1 = nPageW - nPageW * ((oViewRect.y + oViewRect.b) / 2) - nExtY / 2;
+                Y1 = nPageH * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
+                X2 = X1 + nExtY;
+                Y2 = Y1 + nExtX;
+                break;
+        }
+
+        let nCurTime = new Date().getTime();
+
+        let oProps = {
+            rect:           [X1, Y1, X2, Y2],
+            page:           nPage,
+            name:           AscCommon.CreateGUID(),
+            type:           AscPDF.ANNOTATIONS_TYPES.Stamp,
+            author:         oUser.asc_getUserName(),
+            modDate:        nCurTime,
+            creationDate:   nCurTime,
+            contents:       '',
+            hidden:         false
+        }
+
+        let oStamp = this.AddAnnot(oProps);
+        oStamp.SetRotate(nRotAngle);
+        oStamp.SetWidth(1);
+
+        if (oImage) {
+            let oUniFill = new AscFormat.CUniFill();
+            let oBlipFill = new AscFormat.CBlipFill();
+            oUniFill.setFill(oBlipFill);
+			oBlipFill.setRasterImageId(AscFormat.checkRasterImageId(oImage.src));
+			oBlipFill.setStretch(true);
+			oStamp.setFill(oUniFill);
+        }
+        // oStamp.SetSubject('Text box');
+        // oStamp.SetIntent(nType);
+        
+        this.SetMouseDownObject(oStamp);
+        oStamp.selectStartPage = nPage;
+        oController.selectObject(oStamp, nPage);
+    };
     CPDFDoc.prototype.AddImages = function(arrImages) {
         let oViewer     = this.Viewer;
         let nCurPage    = oViewer.currentPage;
@@ -6166,6 +6248,9 @@ var CPresentation = CPresentation || function(){};
                 break;
             case AscPDF.ANNOTATIONS_TYPES.FreeText:
                 oAnnot = new AscPDF.CAnnotationFreeText(sName, nPageNum, aRect, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Stamp:
+                oAnnot = new AscPDF.CAnnotationStamp(sName, nPageNum, aRect, oPdfDoc);
                 break;
             default:
                 return null;

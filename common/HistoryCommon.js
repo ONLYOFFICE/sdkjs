@@ -1831,6 +1831,7 @@
 	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2228 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Drawing			= 2229 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Page				= 2230 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot_Stamp		= 2230 << 16;
 	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 
@@ -4345,7 +4346,7 @@
 	AscDFH.historyitem_Pdf_Annot_Opacity			= AscDFH.historyitem_type_Pdf_Annot | 16;
 	AscDFH.historyitem_Pdf_Annot_Quads				= AscDFH.historyitem_type_Pdf_Annot | 17;
 	AscDFH.historyitem_Pdf_Annot_Intent				= AscDFH.historyitem_type_Pdf_Annot | 18;
-	AscDFH.historyitem_Pdf_Annot_WasChanged			= AscDFH.historyitem_type_Pdf_Annot | 19;
+	AscDFH.historyitem_Pdf_Annot_Rotate				= AscDFH.historyitem_type_Pdf_Annot | 19;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4363,6 +4364,9 @@
 
 	// annot line
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Annot_Line | 1;
+	
+	// annot stamp
+	AscDFH.historyitem_Pdf_Stamp_Type			= AscDFH.historyitem_type_Pdf_Annot_Stamp | 1;
 	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF drawing prototype

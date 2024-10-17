@@ -366,6 +366,7 @@
 			"pdf/src/annotations/polygon.js",
 			"pdf/src/annotations/line.js",
 			"pdf/src/annotations/freeText.js",
+			"pdf/src/annotations/stamp.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
 			"pdf/src/annotations/textPrTrackHandler.js",

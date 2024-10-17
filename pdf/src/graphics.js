@@ -244,14 +244,28 @@ CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
         ctx.restore();
     }
 };
-CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy) {
-    let _x, _y;
+CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy, rot) {
     let tr = this.GetTransform();
 
-    _x = (tr.TransformPointX(dx,dy) >> 0);
-    _y = (tr.TransformPointY(dx,dy) >> 0);
+    let _x = Math.floor(tr.TransformPointX(dx, dy));
+    let _y = Math.floor(tr.TransformPointY(dx, dy));
 
-    this.m_oContext.drawImage(image, _x, _y);
+    let context = this.m_oContext;
+
+    context.save();
+    context.translate(_x, _y);
+
+    if (rot && rot !== 0) {
+        let W = image.width;
+        let H = image.height;
+
+        context.translate(Math.floor(W / 2), Math.floor(H / 2));
+        context.rotate(rot);
+        context.translate(Math.floor(-W / 2), Math.floor(-H / 2));
+    }
+
+    context.drawImage(image, 0, 0);
+    context.restore();
 };
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
     let ctx = this.GetContext();
