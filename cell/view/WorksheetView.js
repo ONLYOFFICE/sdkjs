@@ -6534,7 +6534,7 @@
 			let y1 = t._getRowTop(from.row) - offsetY + t._getRowHeight(from.row) / 2;
 			let arrowSize = 7 * zoom * customScale;
 
-			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop;
+			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop = true;
 			if (external) {
 				if (from.col < 2 && from.row < 3) {
 					// 1) Right down (+1r, +1c)
@@ -6548,7 +6548,6 @@
 					y2 = t._getRowTop(from.row - 1) - offsetY;
 					miniTableCol = from.col + 2;
 					miniTableRow = from.row - 2;
-					isTableTop = true;
 				} else if (from.col >= 2 && from.row < 3) {
 					// 3) Left down(+1r,-1c)
 					x2 = t._getColLeft(from.col - 1) - offsetX;
@@ -6563,7 +6562,6 @@
 					miniTableCol = from.col - 2;
 					miniTableRow = from.row - 2;
 					isTableLeft = true;
-					isTableTop = true;
 				}
 			} else {
 				x2 = t._getColLeft(to.col) - offsetX + t._getColumnWidth(to.col) / 4;
@@ -6617,8 +6615,8 @@
 			let arrowSize = 7 * zoom * customScale;
 			let fromCellIndex = AscCommonExcel.getCellIndex(from.row, from.col);
 
-			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop;
-			// reverse the line
+			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop = true;
+			// reverse the line and set tableTop flag to true(mini-table is always drawn above the dot)
 			x2 = x1;
 			y2 = y1;
 			if (from.col < 2 && from.row < 3) {
@@ -6633,7 +6631,6 @@
 				y1 = t._getRowTop(from.row - 1) - offsetY;
 				miniTableCol = from.col + 2;
 				miniTableRow = from.row - 2;
-				isTableTop = true;
 			} else if (from.col >= 2 && from.row < 3) {
 				// 3) Left down(+1r,-1c)
 				x1 = t._getColLeft(from.col - 1) - offsetX;
@@ -6648,7 +6645,6 @@
 				miniTableCol = from.col - 2;
 				miniTableRow = from.row - 2;
 				isTableLeft = true;
-				isTableTop = true
 			}
 			
 			// Angle and size for arrowhead
