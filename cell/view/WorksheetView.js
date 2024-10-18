@@ -10077,19 +10077,8 @@
 
         function findEOT() {
             var obr = t.objectRender ? t.objectRender.getMaxColRow() : new AscCommon.CellBase(-1, -1);
-            var maxCols = t.model.getColsCount();
-            var maxRows = t.model.getRowsCount();
-            var lastC = -1, lastR = -1;
-
-            for (var col = 0; col < maxCols; ++col) {
-                for (var row = 0; row < maxRows; ++row) {
-                    if (!t._isCellNullText(col, row)) {
-                        lastC = Math.max(lastC, col);
-                        lastR = Math.max(lastR, row);
-                    }
-                }
-            }
-            return {col: Math.max(lastC, obr.col), row: Math.max(lastR, obr.row)};
+            const eot = t.model.findEOT();
+            return {col: Math.max(eot.col, obr.col), row: Math.max(eot.row, obr.row)};
         }
 
         var eot = dc > +2.0001 && dc < +2.9999 && dr > +2.0001 && dr < +2.9999 ? findEOT() : null;

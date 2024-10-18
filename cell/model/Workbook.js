@@ -13425,6 +13425,37 @@
 		}
 	};
 
+	Worksheet.prototype.findEOT = function () {
+		var maxCols = this.getColsCount();
+		var maxRows = this.getRowsCount();
+		var lastC = -1, lastR = -1;
+
+		let t = this;
+		let _getCell = function (_col, _row) {
+			if (_col < 0 || _col > gc_nMaxCol0 || _row < 0 || _row > gc_nMaxRow0) {
+				return null;
+			}
+
+			return t.getCell3(row, col);
+		};
+		let _isCellNullText = function (_col, _row) {
+			var c = row !== undefined ? _getCell(_col, _row) : col;
+			return null === c || c.isNullText();
+		};
+
+		for (var col = 0; col < maxCols; ++col) {
+			for (var row = 0; row < maxRows; ++row) {
+				if (!_isCellNullText(col, row)) {
+					lastC = Math.max(lastC, col);
+					lastR = Math.max(lastR, row);
+				}
+			}
+		}
+
+		return new AscCommon.CellBase(lastR, lastC);
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;

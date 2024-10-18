@@ -8087,8 +8087,11 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetUsedRange.js
 	 */
 	ApiWorksheet.prototype.GetUsedRange = function () {
-		var rEnd = this.worksheet.getRowsCount() - 1;
-		var cEnd = this.worksheet.getColsCount() - 1;
+		const ws = this.worksheet;
+		const eot = ws.findEOT();
+		const rEnd = eot.row;
+		const cEnd = eot.col;
+
 		return new ApiRange(this.worksheet.getRange3(0, 0, (rEnd < 0) ? 0 : rEnd,
 			(cEnd < 0) ? 0 : cEnd));
 	};
