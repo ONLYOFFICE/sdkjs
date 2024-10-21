@@ -645,6 +645,132 @@
 		this._e();
 	};
 
+	/**
+	 * made with the use of:
+	 * http://html5tutorial.com/how-to-draw-n-grade-bezier-curve-with-canvas-api/
+	 * uses de Casteljau's algorithm
+	 * @param {{x: Number, y: Number, z? :Number}} startPoint
+	 * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+	 * @param {{x: Number, y: Number, z? :Number}} endPoint
+	 */
+	CGraphicsBase.prototype._cN = function(startPoint, controlPoints, endPoint)
+	{
+		function sumDistanceBetweenPoints(points)
+		{
+			function distance(a, b){
+				return Math.sqrt(Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
+			}
+			/**Compute the incremental step*/
+			let tLength = 0;
+			for(let i=0; i < points.length - 1; i++){
+				tLength += distance(points[i], points[i+1]);
+			}
+			return tLength;
+		}
+
+		function transformPoints(points, dpi)
+		{
+			let pointsCopy = Array(points.length);
+			let mmToIch = 0.03937007874;
+			for(let i=0; i < pointsCopy.length; i++){
+				pointsCopy[i] = {x: null, y: null};
+				// pointsCopy[i].x = transform.TransformPointX(points[i].x, points[i].y);
+				// pointsCopy[i].y = transform.TransformPointY(points[i].x, points[i].y);
+				pointsCopy[i].x = points[i].x * mmToIch * dpi;
+				pointsCopy[i].y = points[i].y * mmToIch * dpi;
+			}
+			return pointsCopy;
+		}
+
+		/** Computes a point's coordinates for a value of t
+		 * @param {Number} t - a value between o and 1
+		 * @param {{x: Number, y: Number, z? :Number}} startPoint
+		 * @param {{x: Number, y: Number, z? :Number}[]} controlPoints
+		 * @param {{x: Number, y: Number, z? :Number}} endPoint
+		 * @return {{x: Number, y: Number}} point
+		 **/
+		function computeBezierPoint(t, startPoint, controlPoints, endPoint)
+		{
+			/**Computes Bernstain
+			 *@param {Integer} i - the i-th index
+			 *@param {Integer} n - the total number of points
+			 *@param {Number} t - the value of parameter t , between 0 and 1
+			 **/
+			function computeBernstainCoef(i,n,t)
+			{
+				/**Computes factorial*/
+				function fact(k){
+					if(k==0 || k==1){
+						return 1;
+					}
+					else{
+						return k * fact(k-1);
+					}
+				}
+
+				//if(n < i) throw "Wrong";
+				return fact(n) / (fact(i) * fact(n-i))* Math.pow(t, i) * Math.pow(1-t, n-i);
+			}
+
+			var points = [].concat(startPoint, controlPoints, endPoint);
+			var r = {
+				x: 0,
+				y: 0
+			};
+			var n = points.length-1;
+			for(var i=0; i <= n; i++){
+				r.x += points[i].x * computeBernstainCoef(i, n, t);
+				r.y += points[i].y * computeBernstainCoef(i, n, t);
+			}
+			return r;
+		}
+
+		// to calculate points count curve length should be calculated in pixels (approximately)
+		// so arguments should be in mm units and graphics.transform should be applied already
+		let calculatePointsCount = false;
+
+		let interpolationPointsCount;
+		if (calculatePointsCount) {
+			// https://www.figma.com/file/FT0m9czNuvK34TK227cQ6e/pointsToCalculatePerOnePixelLengthUnit?type=design&node-id=0%3A1&mode=design&t=0S7e2nxkt2sbCHqw-1
+			// not integer more like precision coefficient. can be 0.3 for example
+			let pointsToCalculatePerOnePixelLengthUnit = 1;
+
+			let dpi = 96;
+
+			let bezierPoints = [].concat(startPoint, controlPoints, endPoint);
+
+			// this.m_oFullTransform doesn't exist in that Graphics
+			// convert length to pixels length units
+			// https://www.figma.com/file/FT0m9czNuvK34TK227cQ6e/pointsToCalculatePerOnePixelLengthUnit?type=design&node-id=41-49&mode=design&t=pH5bF1EvWeWjzkS0-0
+			// Canvas resize is not considered!
+			let bezierPointsCopy = transformPoints(bezierPoints, dpi);
+
+			// As we calculate length of a curve as sum of control points there might be performance issue with
+			// high order curves because they have many control points and so length will be considered
+			// as long and there will be many control points
+			// add + 1 to avoid divide by 0 later when calculating interpolation step which is 1/interpolationPointsCount
+			interpolationPointsCount = pointsToCalculatePerOnePixelLengthUnit *
+				sumDistanceBetweenPoints(bezierPointsCopy) + 1;
+		} else {
+			interpolationPointsCount = 1000;
+		}
+
+		// this.p_width(lineWidth);
+		// this._s(); // beginPath
+		// this._m(startPoint.x, startPoint.y);
+
+		// in fact real pointsCount is larger by 1 point. bcs if pointsCount = 2 t will be 0, 1/2 and 1 - 3 times total
+		for (let t = 0; t <= 1; t+= 1/interpolationPointsCount) {
+			let point = computeBezierPoint(t, startPoint, controlPoints, endPoint);
+			this._l(point.x, point.y);
+		}
+
+		// https://github.com/ONLYOFFICE/sdkjs/blob/ebcb7401438a8260151cd96f7568d521e04f91e9/word/Drawing/Graphics.js#L438
+		// this._z(); // close path
+		// this.ds(); // draw stroke
+		// this._e(); // beginPath
+	};
+
 	// FONT
 	CGraphicsBase.prototype.FreeFont = function()
 	{

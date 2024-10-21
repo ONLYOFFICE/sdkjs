@@ -875,8 +875,12 @@
 
 		this.SetSizeAndDpi = function (dSize, unHorDpi, unVerDpi)
 		{
+			// FIX huge text when DPI is 0 in comments
 			var dpiX = (unHorDpi + 0.5) >> 0;
+			// var dpiX = unHorDpi < 1 ? 1 : unHorDpi;
 			var dpiY = (unVerDpi + 0.5) >> 0;
+			// var dpiY = unVerDpi < 1 ? 1 : unVerDpi;
+
 
 			var dOldSize = this.m_fSize;
 			var dNewSize = dSize;

@@ -373,6 +373,231 @@
 		};
 
 
+		// Visio Extensions
+		function CClrSchemeExtLst() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * @type {CVariationClrScheme[]}
+			 */
+			this.variationClrSchemeLst = [];
+			/**
+			 * from vt:bkgnd tag. Not visible background but something else
+			 * @type {?CVarColor}
+			 */
+			this.background = null;
+			/**
+			 * attribute schemeEnum from vt:schemeID tag
+			 * @type {?string}
+			 */
+			this.schemeEnum = null;
+		}
+		InitClass(CClrSchemeExtLst, CBaseNoIdObject, 0);
+
+		/**
+		 * props container class
+		 * @constructor
+		 */
+		function CFontProps() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * number read as string
+			 * @type {?string}
+			 */
+			this.style = null;
+
+			/**
+			 * concrete props object
+			 * vt:color with a:schemeClr or something else
+			 * See CUniColor for color reference.
+			 * @type {{color: (CSchemeColor | CSysColor
+			 * | CPrstColor | CRGBColor | any)}}
+			 */
+			this.fontPropsObject = {
+				color: null
+			};
+		}
+		InitClass(CFontProps, CBaseNoIdObject, 0);
+		/**
+		 * @param [bSaveFormatting = false] - made by example false is set in other cases by default
+		 * @return {CFontProps}
+		 */
+		CFontProps.prototype.createDuplicate = function (bSaveFormatting) {
+			if (bSaveFormatting === undefined) {
+				bSaveFormatting = false;
+			}
+
+			var duplicate = new CFontProps();
+
+			duplicate.style = this.style;
+
+			if (null !== this.fontPropsObject.color) {
+				if (bSaveFormatting === true) {
+					duplicate.fontPropsObject.color = this.fontPropsObject.color.saveSourceFormatting();
+				} else {
+					duplicate.fontPropsObject.color = this.fontPropsObject.color.createDuplicate();
+				}
+			}
+
+			return duplicate;
+		};
+
+		/**
+		 * line props container class. child element of fmtConnectorSchemeLineStyles or fmtSchemeLineStyles.
+		 * see 2.3.4.2.20	CT_LineStyle
+		 * @constructor
+		 */
+		function CLineStyle() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * 2.3.4.2.19	CT_LineEx.
+			 * default is
+			 * <vt:lineEx rndg="0" start="0" startSize="2" end="0" endSize="2" pattern="1"/>
+			 * @type {Object}
+			 */
+			this.lineEx = {rndg: 0, start: 0, startSize: 2, end: 0, endSize: 2, pattern: 1};
+
+			/**
+			 * 2.3.4.2.25	CT_Sketch
+			 * @type {Object}
+			 */
+			this.sketch = {};
+		}
+		InitClass(CLineStyle, CBaseNoIdObject, 0);
+		/**
+		 * @param [bSaveFormatting = false] - made by example false is set in other cases by default
+		 * @return {CLineStyle}
+		 */
+		CLineStyle.prototype.createDuplicate = function (bSaveFormatting) {
+			if (bSaveFormatting === undefined) {
+				bSaveFormatting = false;
+			}
+
+			var duplicate = new CLineStyle();
+
+			if (null !== this.lineEx) {
+				// duplicate.lineEx = this.lineEx.createDuplicate();
+				duplicate.lineEx.rndg = this.lineEx.rndg;
+				duplicate.lineEx.start = this.lineEx.start;
+				duplicate.lineEx.startSize = this.lineEx.startSize;
+				duplicate.lineEx.end = this.lineEx.end;
+				duplicate.lineEx.endSize = this.lineEx.endSize;
+				duplicate.lineEx.pattern = this.lineEx.pattern;
+			}
+
+			if (null !== this.sketch) {
+				// 2.3.4.2.25	CT_Sketch
+				// duplicate.sketch = this.sketch.createDuplicate();
+				duplicate.sketch.lnAmp = this.sketch.lnAmp;
+				duplicate.sketch.fillAmp = this.sketch.fillAmp;
+				duplicate.sketch.lnWeight = this.sketch.lnWeight;
+				duplicate.sketch.numPts = this.sketch.numPts;
+			}
+
+			return duplicate;
+		};
+
+		function CVariationClrScheme() {
+			CBaseNoIdObject.call(this);
+			/**
+			 *
+			 * @type {*}
+			 */
+			this.monotone = null;
+			/**
+			 * read from varColor1, varColor2, varColor3, ...
+			 * @type {CVarColor[]}
+			 */
+			this.varColor = [];
+		}
+		InitClass(CVariationClrScheme, CBaseNoIdObject, 0);
+
+		function CVarColor() {
+			CBaseNoIdObject.call(this);
+			/**
+			 * @type {CUniColor}
+			 */
+			this.unicolor = null;
+		}
+		InitClass(CVarColor, CBaseNoIdObject, 0);
+
+		/**
+		 * General theme extensions. Tag inside themeElements.
+		 * @constructor
+		 */
+		function CThemeExt() {
+			CBaseNoIdObject.call(this);
+
+			/**
+			 * @type {?FmtScheme}
+			 */
+			this.fmtConnectorScheme = null;
+
+			/**
+			 * The only value from themeScheme tag
+			 * @type {?string}
+			 */
+			this.themeSchemeSchemeEnum = null;
+
+			/**
+			 * The only value from fmtSchemeEx tag
+			 * @type {?string}
+			 */
+			this.fmtSchemeExSchemeEnum = null;
+
+			/**
+			 * The only value from fmtConnectorSchemeEx tag
+			 * @type {?string}
+			 */
+			this.fmtConnectorSchemeExSchemeEnum = null;
+
+			/**
+			 * vt:fillStyles
+			 * @type {{pattern: number}[]}
+			 */
+			this.fillStyles = [];
+
+			/**
+			 * @type {{fmtConnectorSchemeLineStyles: CLineStyle[], fmtSchemeLineStyles: CLineStyle[] }}
+			 */
+			this.lineStyles = {
+				fmtConnectorSchemeLineStyles: [],
+				fmtSchemeLineStyles: []
+			};
+
+			/**
+			 * @type {{connectorFontStyles: CFontProps[], fontStyles: CFontProps[] }}
+			 */
+			this.fontStylesGroup = {
+				connectorFontStyles: [],
+				fontStyles: []
+			};
+			this.variationStyleSchemeLst = [];
+		}
+		InitClass(CThemeExt, CBaseNoIdObject, 0);
+
+		function CVariationStyleScheme() {
+			CBaseNoIdObject.call(this);
+
+			this.embellishment = null;
+			this.varStyle = [];
+		}
+		InitClass(CVariationStyleScheme, CBaseNoIdObject, 0);
+
+		function CVarStyle() {
+			CBaseNoIdObject.call(this);
+
+			this.fillIdx = null;
+			this.lineIdx = null;
+			this.effectIdx = null;
+			this.fontIdx = null;
+		}
+		InitClass(CVarStyle, CBaseNoIdObject, 0);
+		// Theme visio extensions end
+
+
 		function CT_Hyperlink() {
 			CBaseNoIdObject.call(this);
 			this.snd = null;
@@ -2371,7 +2596,7 @@
 			return duplicate;
 		};
 		CSchemeColor.prototype.Calculate = function (theme, slide, layout, masterSlide, RGBA, colorMap) {
-			if (theme.themeElements.clrScheme) {
+			if (theme && theme.themeElements && theme.themeElements.clrScheme) {
 				if (this.id === phClr) {
 					this.RGBA = RGBA;
 				} else {
@@ -2432,6 +2657,10 @@
 				return aColors[this.val % aColors.length];
 			}
 		};
+
+		/**
+		 * @constructor
+		 */
 		function CUniColor() {
 			CBaseNoIdObject.call(this);
 			this.color = null;
@@ -5070,6 +5299,7 @@
 			return null;
 		}
 
+		/** @constructor */
 		function CUniFill() {
 			CBaseNoIdObject.call(this);
 			this.fill = null;
@@ -5968,12 +6198,67 @@
 			ReverseTriangle:	7,
 			Butt:				8,
 			Square:				9,
-			Slash:				10
+			Slash:				10,
+
+			vsdxNone:						0 + 11,
+			vsdxOpen90Arrow: 				1 + 11,
+			vsdxFilled90Arrow: 				2 + 11,
+			vsdxOpenSharpArrow:				3 + 11,
+			vsdxFilledSharpArrow:			4 + 11,
+			vsdxIndentedFilledArrow:		5 + 11,
+			vsdxOutdentedFilledArrow:		6 + 11,
+			vsdxOpenFletch: 				7 + 11,
+			vsdxFilledFletch: 				8 + 11,
+			vsdxDimensionLine:				9 + 11,
+			vsdxFilledDot:					10 + 11,
+			vsdxFilledSquare:				11 + 11,
+			vsdxOpenASMEArrow:				12 + 11,
+			vsdxFilledASMEArrow:			13 + 11,
+			vsdxClosedASMEArrow:			14 + 11,
+			vsdxClosed90Arrow:				15 + 11,
+			vsdxClosedSharpArrow:			16 + 11,
+			vsdxIndentedClosedArrow:		17 + 11,
+			vsdxOutdentedClosedArrow:		18 + 11,
+			vsdxClosedFletch: 				19 + 11,
+			vsdxClosedDot:	 				20 + 11,
+			vsdxClosedSquare: 				21 + 11,
+			vsdxDiamond:	 				22 + 11,
+			vsdxBackslash:	 				23 + 11,
+			vsdxOpenOneDash: 				24 + 11,
+			vsdxOpenTwoDash:				25 + 11,
+			vsdxOpenThreeDash:				26 + 11,
+			vsdxFork:						27 + 11,
+			vsdxDashFork:					28 + 11,
+			vsdxClosedFork:					29 + 11,
+			vsdxClosedPlus:					30 + 11,
+			vsdxClosedOneDash:				31 + 11,
+			vsdxClosedTwoDash:				32 + 11,
+			vsdxClosedThreeDash:			33 + 11,
+			vsdxClosedDiamond:				34 + 11,
+			vsdxFilledOneDash:				35 + 11,
+			vsdxFilledTwoDash:				36 + 11,
+			vsdxFilledThreeDash:			37 + 11,
+			vsdxFilledDiamond:				38 + 11,
+			vsdxFilledDoubleArrow:			39 + 11,
+			vsdxClosedDoubleArrow:			40 + 11,
+			vsdxClosedNoDash:				41 + 11,
+			vsdxFilledNoDash:				42 + 11,
+			vsdxOpenDoubleArrow:			43 + 11,
+			vsdxOpenArrowSingleDash:		44 + 11,
+			vsdxOpenDoubleArrowSingleDash:	45 + 11
 		};
 		var LineEndSize = {
 			Large: 0,
 			Mid: 1,
-			Small: 2
+			Small: 2,
+
+			vsdxVerySmall : 3,
+			vsdxSmall: 		4,
+			vsdxMedium: 	5,
+			vsdxLarge:		6,
+			vsdxExtraLarge:	7,
+			vsdxJumbo:		8,
+			vsdxColossal:	9
 		};
 
 		var LineJoinType = {
@@ -6021,6 +6306,10 @@
 		EndArrow.prototype.GetWidth = function (_size, _max) {
 			var size = Math.max(_size, _max ? _max : 2);
 			var _ret = 3 * size;
+			let startSizeInch;
+			let lineWidthInfluenceCoef = 0.028;
+			let inchSize;
+
 			if (null != this.w) {
 				switch (this.w) {
 					case LineEndSize.Large:
@@ -6028,6 +6317,42 @@
 						break;
 					case LineEndSize.Small:
 						_ret = 2 * size;
+						break;
+
+					case LineEndSize.vsdxVerySmall:
+						startSizeInch = 0.0391;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxSmall:
+						startSizeInch = 0.0508;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxMedium:
+						startSizeInch = 0.0693;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxLarge:
+						startSizeInch = 0.0898;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxExtraLarge:
+						startSizeInch = 0.1094;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxJumbo:
+						startSizeInch = 0.2473;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxColossal:
+						startSizeInch = 0.499;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
 						break;
 					default:
 						break;
@@ -6038,6 +6363,10 @@
 		EndArrow.prototype.GetLen = function (_size, _max) {
 			var size = Math.max(_size, _max ? _max : 2);
 			var _ret = 3 * size;
+			let startSizeInch;
+			let lineWidthInfluenceCoef = 0.028;
+			let inchSize;
+
 			if (null != this.len) {
 				switch (this.len) {
 					case LineEndSize.Large:
@@ -6046,6 +6375,43 @@
 					case LineEndSize.Small:
 						_ret = 2 * size;
 						break;
+
+					case LineEndSize.vsdxVerySmall:
+						startSizeInch = 0.0391;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxSmall:
+						startSizeInch = 0.0508;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxMedium:
+						startSizeInch = 0.0693;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxLarge:
+						startSizeInch = 0.0898;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxExtraLarge:
+						startSizeInch = 0.1094;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxJumbo:
+						startSizeInch = 0.2473;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+					case LineEndSize.vsdxColossal:
+						startSizeInch = 0.499;
+						inchSize = startSizeInch + lineWidthInfluenceCoef * _size *  AscCommonWord.g_dKoef_mm_to_pt;
+						_ret = inchSize * AscCommonWord.g_dKoef_in_to_mm;
+						break;
+
 					default:
 						break;
 				}
@@ -6083,6 +6449,8 @@
 				case "sm": {
 					return LineEndSize.Small;
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return LineEndSize.Mid;
 		};
@@ -6099,6 +6467,8 @@
 				case LineEndSize.Small: {
 					return "sm";
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return "med";
 		};
@@ -6123,6 +6493,8 @@
 				case "triangle": {
 					return LineEndType.Triangle;
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return LineEndType.Arrow;
 		};
@@ -6148,6 +6520,8 @@
 				case LineEndType.Triangle: {
 					return "triangle";
 				}
+
+				// not used for visio end types. use types enum directly
 			}
 			return "arrow";
 		};
@@ -6264,6 +6638,10 @@
 			}
 			if (ln.Fill != null && ln.Fill.fill != null) {
 				this.setFill(ln.Fill.createDuplicate());
+			}
+
+			if (ln.Fill != null && ln.Fill.Fill != null && ln.Fill.Fill.fill != null) {
+				this.Fill = ln.Fill.Fill.createDuplicate()
 			}
 
 			if (ln.prstDash != null) {
@@ -6553,6 +6931,30 @@
 				case "sysDot": {
 					return 10;
 				}
+				case "vsdxTransparent": { return 11; }
+				case "vsdxSolid": { return 12; }
+				case "vsdxDash": { return 13; }
+				case "vsdxDot": { return 14; }
+				case "vsdxDashDot": { return 15; }
+				case "vsdxDashDotDot": { return 16; }
+				case "vsdxDashDashDot": { return 17; }
+				case "vsdxLongDashShortDash": { return 18; }
+				case "vsdxLongDashShortDashShortDash": { return 19; }
+				case "vsdxHalfDash": { return 20; }
+				case "vsdxHalfDot": { return 21; }
+				case "vsdxHalfDashDot": { return 22; }
+				case "vsdxHalfDashDotDot": { return 23; }
+				case "vsdxHalfDashDashDot": { return 24; }
+				case "vsdxHalfLongDashShortDash": { return 25; }
+				case "vsdxHalfLongDashShortDashShortDash": { return 26; }
+				case "vsdxDoubleDash": { return 27; }
+				case "vsdxDoubleDot": { return 28; }
+				case "vsdxDoubleDashDot": { return 29; }
+				case "vsdxDoubleDashDotDot": { return 30; }
+				case "vsdxDoubleDashDashDot": { return 31; }
+				case "vsdxDoubleLongDashShortDash": { return 32; }
+				case "vsdxDoubleLongDashShortDashShortDash": { return 33; }
+				case "vsdxHalfHalfDash": { return 34; }
 			}
 			return 6;
 		};
@@ -6591,6 +6993,30 @@
 				case 10 : {
 					return "sysDot";
 				}
+				case 11: { return "vsdxTransparent"; }
+				case 12: { return "vsdxSolid"; }
+				case 13: { return "vsdxDash"; }
+				case 14: { return "vsdxDot"; }
+				case 15: { return "vsdxDashDot"; }
+				case 16: { return "vsdxDashDotDot"; }
+				case 17: { return "vsdxDashDashDot"; }
+				case 18: { return "vsdxLongDashShortDash"; }
+				case 19: { return "vsdxLongDashShortDashShortDash"; }
+				case 20: { return "vsdxHalfDash"; }
+				case 21: { return "vsdxHalfDot"; }
+				case 22: { return "vsdxHalfDashDot"; }
+				case 23: { return "vsdxHalfDashDotDot"; }
+				case 24: { return "vsdxHalfDashDashDot"; }
+				case 25: { return "vsdxHalfLongDashShortDash"; }
+				case 26: { return "vsdxHalfLongDashShortDashShortDash"; }
+				case 27: { return "vsdxDoubleDash"; }
+				case 28: { return "vsdxDoubleDot"; }
+				case 29: { return "vsdxDoubleDashDot"; }
+				case 30: { return "vsdxDoubleDashDotDot"; }
+				case 31: { return "vsdxDoubleDashDashDot"; }
+				case 32: { return "vsdxDoubleLongDashShortDash"; }
+				case 33: { return "vsdxDoubleLongDashShortDashShortDash"; }
+				case 34: { return "vsdxHalfHalfDash"; }
 			}
 			return null;
 		};
@@ -8129,6 +8555,11 @@
 			CBaseNoIdObject.call(this);
 			this.name = "";
 			this.colors = [];
+			/**
+			 * Used to store xml extensions (e.g. visio variant colors)
+			 * set in sdkjs-ooxml/common/Drawings/Format.js ClrScheme.prototype.readChildXml
+			 */
+			this.clrSchemeExtLst = null;
 
 			for (var i = g_clr_MIN; i <= g_clr_MAX; i++)
 				this.colors[i] = null;
@@ -8550,6 +8981,11 @@
 				"minorEastAsia": undefined,
 				"minorHAnsi": undefined
 			};
+			/**
+			 * visio extension from tag vt:schemeID which is stored in a:extLst
+			 * @type {string | null}
+			 */
+			this.schemeEnum = null;
 		}
 
 		InitClass(FontScheme, CBaseNoIdObject, 0);
@@ -8832,10 +9268,20 @@
 			this.clrScheme = new ClrScheme();
 			this.fontScheme = new FontScheme();
 			this.fmtScheme = new FmtScheme();
+
+			/**
+			 *
+			 * @type {CThemeExt}
+			 */
+			this.themeExt = null;
 		}
 
 		InitClass(ThemeElements, CBaseNoIdObject, 0);
 
+		/**
+		 *
+		 * @constructor
+		 */
 		function CTheme() {
 			CBaseFormatObject.call(this);
 			this.name = "";
@@ -8930,6 +9376,84 @@
 			}
 			return new CLn();
 		};
+		/**
+		 * Made for visio editor
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @param unicolor
+		 * @param {Boolean} getConnectorStyle
+		 * @return {CFontProps}
+		 */
+		CTheme.prototype.getFontStyle = function (idx, unicolor, getConnectorStyle) {
+			if (idx === 0 || isNaN(idx)) {
+				console.log("idx getFontStyle argument is 0 or isNaN(idx) is true");
+				return AscFormat.CreateNoFillLine();
+			}
+			let fontProp;
+			if (getConnectorStyle) {
+				fontProp = this.themeElements.themeExt.fontStylesGroup.connectorFontStyles[idx - 1];
+			} else {
+				fontProp = this.themeElements.themeExt.fontStylesGroup.fontStyles[idx - 1];
+			}
+			if (fontProp) {
+				var ret = fontProp.createDuplicate();
+				if (ret.fontPropsObject.color) {
+					ret.fontPropsObject.color.checkPhColor(unicolor, false);
+				}
+				return ret;
+			}
+			console.log("no fontProp object found for idx. Return empty obj", idx);
+			return new CFontProps();
+		};
+		/**
+		 * Made for visio editor. Get line end props - lineStyles extension.
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @param {Boolean} getConnectorStyle
+		 * @return {CLineStyle} lineStyle
+		 */
+		CTheme.prototype.getLineEndStyle = function (idx, getConnectorStyle) {
+			if (idx === 0 || isNaN(idx)) {
+				console.log("idx getFontStyle argument is 0 or isNaN(idx) is true");
+				return new CLineStyle();
+			}
+			let lineEndProp;
+			// not using idx - 1. Seems like visio bug here. See file https://disk.yandex.ru/d/OQVR9m1U255B1Q
+			if (getConnectorStyle) {
+				lineEndProp = this.themeElements.themeExt.lineStyles.fmtConnectorSchemeLineStyles[idx];
+			} else {
+				lineEndProp = this.themeElements.themeExt.lineStyles.fmtSchemeLineStyles[idx];
+			}
+			if (lineEndProp) {
+				var ret = lineEndProp.createDuplicate();
+				return ret;
+			}
+			console.log("no fontProp object found for idx. Its ok sometimes." +
+				" Return new CLineStyle()", idx);
+			return new CLineStyle();
+		};
+
+		/**
+		 * Made for visio editor. Get fill pattern from <vt:fillStyles...
+		 * @memberof CTheme
+		 * @param {number} idx
+		 * @return {{pattern: number}} lineStyle
+		 */
+		CTheme.prototype.getFillProp = function (idx) {
+			if (idx === 0 || isNaN(idx)) {
+				console.log("idx getFillProp argument is 0 or isNaN(idx) is true");
+				return {pattern: 1}; // solid
+			}
+			let fillProp = this.themeElements.themeExt.fillStyles[idx - 1];
+			if (fillProp) {
+				var ret = {pattern: fillProp.pattern};
+				return ret;
+			}
+			console.log("no FillProp object found for idx. Its ok sometimes." +
+				" Return default FillProp", idx);
+			return {pattern: 1};
+		};
+
 		CTheme.prototype.getExtraClrScheme = function (sName) {
 			for (var i = 0; i < this.extraClrSchemeLst.length; ++i) {
 				if (this.extraClrSchemeLst[i].clrScheme && this.extraClrSchemeLst[i].clrScheme.name === sName) {
@@ -8979,6 +9503,9 @@
 		CTheme.prototype.setFontScheme = function (fontScheme) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ThemeSetFontScheme, this.themeElements.fontScheme, fontScheme));
 			this.themeElements.fontScheme = fontScheme;
+		};
+		CTheme.prototype.setThemeExt = function (themeExt) {
+			this.themeElements.themeExt = themeExt;
 		};
 		CTheme.prototype.changeFontScheme = function (fontScheme) {
 			this.setFontScheme(fontScheme);
@@ -9147,6 +9674,35 @@
 		};
 		CTheme.prototype.Read_FromBinary2 = function (r) {
 			this.Id = r.GetString2();
+		};
+		/**
+		 * @memberOf CTheme
+		 * @param variationIndex
+		 * @param colorIndex
+		 * @return {CUniColor|null}
+		 */
+		CTheme.prototype.getVariationClrSchemeColor = function (variationIndex, colorIndex) {
+			let clrScheme = this.themeElements.clrScheme;
+			if (clrScheme.clrSchemeExtLst) {
+				let variationClrSchemeLst = clrScheme.clrSchemeExtLst.variationClrSchemeLst;
+				if (variationClrSchemeLst) {
+					let variation = variationClrSchemeLst[variationIndex];
+					if (variation) {
+						let colorObj = variation.varColor[colorIndex];
+						if (colorObj) {
+							return colorObj.unicolor;
+						}
+					}
+				}
+			}
+			return null;
+		};
+		CTheme.prototype.getVariationStyleScheme = function (variationIndex, styleIndex) {
+			let themeExt = this.themeElements.themeExt;
+			if (themeExt && themeExt.variationStyleSchemeLst[variationIndex]) {
+				return themeExt.variationStyleSchemeLst[variationIndex].varStyle[styleIndex] || null;
+			}
+			return null;
 		};
 // ----------------------------------
 
@@ -15272,7 +15828,11 @@
 		}
 
 
-		/* Common Functions For Builder*/
+
+		/**
+		 * Common Functions For Builder
+		 * @return {CShape}
+		 */
 		function builder_CreateShape(sType, nWidth, nHeight, oFill, oStroke, oParent, oTheme, oDrawingDocument, bWord, worksheet) {
 			var oShapeTrack = new AscFormat.NewShapeTrack(sType, 0, 0, oTheme, null, null, null, 0);
 			oShapeTrack.track({}, nWidth, nHeight);
@@ -18792,5 +19352,15 @@
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
+
+		// Visio extensions export
+		window['AscFormat'].CClrSchemeExtLst = CClrSchemeExtLst;
+		window['AscFormat'].CVariationClrScheme = CVariationClrScheme;
+		window['AscFormat'].CVarColor = CVarColor;
+		window['AscFormat'].CThemeExt = CThemeExt;
+		window['AscFormat'].CVariationStyleScheme = CVariationStyleScheme;
+		window['AscFormat'].CVarStyle = CVarStyle;
+		window['AscFormat'].CFontProps = CFontProps;
+		window['AscFormat'].CLineStyle = CLineStyle;
 	})
 (window);

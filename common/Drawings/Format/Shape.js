@@ -3086,6 +3086,7 @@
 			if (isRealObject(parents.theme) && isRealObject(compiled_style) && isRealObject(compiled_style.lnRef)) {
 				//compiled_style.lnRef.Color.Calculate(parents.theme, parents.slide, parents.layout, parents.master, {R: 0, G: 0, B: 0, A:255});
 				//RGBA = compiled_style.lnRef.Color.RGBA;
+				// compiled_style is default style
 				this.pen = parents.theme.getLnStyle(compiled_style.lnRef.idx, compiled_style.lnRef.Color);
 				//if (isRealObject(this.pen)) {
 				//    if (isRealObject(compiled_style.lnRef.Color.color)
@@ -3104,6 +3105,7 @@
 				this.pen = null;
 			}
 
+			// compiled line is given line props object
 			var oCompiledLine = this.getCompiledLine();
 			if (oCompiledLine) {
 				if (!this.pen) {
@@ -3520,7 +3522,8 @@
 				}
 
 
-				if (this.checkAutofit && this.checkAutofit() && (!this.bWordShape || !this.group || this.bCheckAutoFitFlag) && !bNotesShape) {
+				if (this.checkAutofit && this.checkAutofit() &&
+					(!this.bWordShape || !this.group || this.bCheckAutoFitFlag) && !bNotesShape) {
 					var oBodyPr = this.getBodyPr();
 					if (this.bWordShape) {
 						if (this.recalcInfo.recalculateTxBoxContent) {
@@ -5346,6 +5349,9 @@
 			}
 		};
 
+		/**
+		 * @memberOf CShape
+		 */
 		CShape.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
 
 			if (this.checkNeedRecalculate && this.checkNeedRecalculate()) {

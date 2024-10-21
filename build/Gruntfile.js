@@ -93,6 +93,7 @@ module.exports = function(grunt) {
 		this.word = null;
 		this.cell = null;
 		this.slide = null;
+		this.draw = null;
 
 		this.append(pathConfigs);
 	}
@@ -132,9 +133,10 @@ module.exports = function(grunt) {
 		appendOption.call(this, 'word');
 		appendOption.call(this, 'cell');
 		appendOption.call(this, 'slide');
+		appendOption.call(this, 'draw');
 	};
 	CConfig.prototype.valid = function () {
-		return this.externs && this.word && this.cell && this.slide;
+		return this.externs && this.word && this.cell && this.slide && this.draw;
 	};
 
 	function getExterns(config) {
@@ -176,6 +178,7 @@ module.exports = function(grunt) {
 	const word = path.join(deploy, 'word');
 	const cell = path.join(deploy, 'cell');
 	const slide = path.join(deploy, 'slide');
+	const draw = path.join(deploy, 'draw');
 
 	const level = grunt.option('level') || 'ADVANCED';
 	const formatting = grunt.option('formatting') || '';
@@ -237,6 +240,7 @@ module.exports = function(grunt) {
 	const configWord = configs.word['sdk'];
 	const configCell = configs.cell['sdk'];
 	const configSlide = configs.slide['sdk'];
+	const configDraw = configs.draw['sdk'];
 
 	const compilerArgs = getExterns(configs.externs);
 	if (formatting) {
@@ -302,6 +306,10 @@ module.exports = function(grunt) {
 		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'sdk-all-min', 'sdk-all', 'slide', path.join(slide , '/')));
 		grunt.task.run('closure-compiler');
 	});
+	grunt.registerTask('compile-draw', 'Compile Draw SDK', function () {
+		grunt.initConfig(getCompileConfig(getFilesMin(configDraw), getFilesAll(configDraw), 'sdk-all-min', 'sdk-all', 'draw', path.join(draw , '/')));
+		grunt.task.run('closure-compiler');
+	});
 	grunt.registerTask('copy-maps', 'Copy maps from deploy to build', function() {
 		grunt.initConfig({
 			copy: {
@@ -352,6 +360,22 @@ module.exports = function(grunt) {
 							}
 						}
 					]
+				},
+				draw: {
+					files: [
+						{
+							expand: true,
+							cwd: draw,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'draw'));
+							}
+						}
+					]
 				}
 			},
 			clean: {
@@ -366,13 +390,15 @@ module.exports = function(grunt) {
 						path.join(cell, 'sdk-all.js.map'),
 						path.join(slide, 'sdk-all-min.js.map'),
 						path.join(slide, 'sdk-all.js.map'),
+						path.join(draw, 'sdk-all-min.js.map'),
+						path.join(draw, 'sdk-all.js.map'),
 					]
 				}
 			}
 		});
 		grunt.task.run('copy', 'clean');
 	});
-	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
+	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide', 'compile-draw']);
 	grunt.registerTask('clean-deploy', 'Clean deploy folder before deploying', function () {
 		grunt.initConfig({
 			clean: {
@@ -491,6 +517,7 @@ module.exports = function(grunt) {
 		writeScripts(configs.word['sdk'], 'word');
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
+		writeScripts(configs.draw['sdk'], 'draw');
 	});
 	const defaultTasks = ['clean-deploy', 'compile-sdk', 'copy-other'];
 	if (grunt.option('map')) {
