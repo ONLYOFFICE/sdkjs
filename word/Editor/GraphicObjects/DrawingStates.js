@@ -195,47 +195,44 @@ StartAddNewShape.prototype =
                 // рисование кистью
                 if (Asc.editor.isInkDrawerOn()) {
                     oLogicDocument.DoAction(function() {
-                        // добавлем path если рисование не закончено
-                        if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
-                            let aInkPath = [];
-                            for (let i = 0; i < oTrack.arrPoint.length; i++) {
-                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
-                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
-                            }
+                        // добавлем path если рисование не закончено (нужна доработка для ластика)
+                        // if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
+                        //     let aInkPath = [];
+                        //     for (let i = 0; i < oTrack.arrPoint.length; i++) {
+                        //         aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
+                        //         aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
+                        //     }
                             
-                            oLogicDocument.currInkInDrawingProcess.AddInkPath(aInkPath);
-                        }
-                        else {
-                            var bounds  = oTrack.getBounds();
-                            
-                            let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pt;
-                            let aRect   = [(bounds.min_x * g_dKoef_mm_to_pt - nLineW), (bounds.min_y * g_dKoef_mm_to_pt - nLineW), (bounds.max_x * g_dKoef_mm_to_pt + nLineW), (bounds.max_y * g_dKoef_mm_to_pt + nLineW)];
-        
-                            let oInkAnnot = oLogicDocument.AddAnnot({
-                                rect:       aRect,
-                                page:       this.pageIndex,
-                                contents:   null,
-                                type:       AscPDF.ANNOTATIONS_TYPES.Ink,
-                                creationDate:   (new Date().getTime()).toString(),
-                                modDate:        (new Date().getTime()).toString()
-                            });
-        
-                            let oRGBPen = oTrack.pen.Fill.getRGBAColor();
+                        //     oLogicDocument.currInkInDrawingProcess.AddInkPath(aInkPath);
+                        // }
+                        let bounds  = oTrack.getBounds();
+                        let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pt;
+                        let aRect   = [(bounds.min_x * g_dKoef_mm_to_pt - nLineW), (bounds.min_y * g_dKoef_mm_to_pt - nLineW), (bounds.max_x * g_dKoef_mm_to_pt + nLineW), (bounds.max_y * g_dKoef_mm_to_pt + nLineW)];
+    
+                        let oInkAnnot = oLogicDocument.AddAnnot({
+                            rect:       aRect,
+                            page:       this.pageIndex,
+                            contents:   null,
+                            type:       AscPDF.ANNOTATIONS_TYPES.Ink,
+                            creationDate:   (new Date().getTime()).toString(),
+                            modDate:        (new Date().getTime()).toString()
+                        });
+    
+                        let oRGBPen = oTrack.pen.Fill.getRGBAColor();
 
-                            let aInkPath = [];
-                            for (let i = 0; i < oTrack.arrPoint.length; i++) {
-                                aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
-                                aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
-                            }
-
-                            oInkAnnot.SetWidth(nLineW);
-                            oInkAnnot.AddInkPath(aInkPath);
-                            oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
-                            oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
-                            
-                            // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
-                            oLogicDocument.currInkInDrawingProcess = oInkAnnot;
+                        let aInkPath = [];
+                        for (let i = 0; i < oTrack.arrPoint.length; i++) {
+                            aInkPath.push(oTrack.arrPoint[i].x * g_dKoef_mm_to_pt);
+                            aInkPath.push(oTrack.arrPoint[i].y * g_dKoef_mm_to_pt);
                         }
+
+                        oInkAnnot.SetWidth(nLineW);
+                        oInkAnnot.AddInkPath(aInkPath);
+                        oInkAnnot.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
+                        oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
+                        
+                        // запомнили добавленную Ink фигуру, к ней будем добавлять новые path пока рисование не закончится
+                        oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                     }, AscDFH.historydescription_Pdf_AddAnnot, this);
                 }
                 else {
