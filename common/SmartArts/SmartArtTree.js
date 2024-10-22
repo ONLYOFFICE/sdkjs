@@ -60,7 +60,17 @@
 		enabled: 1,
 		disabled: 2
 	};
-
+	function getDefaultColorsStyleLbl() {
+		return AscFormat.ExecuteNoHistory(function () {
+			const styleLbl = new AscFormat.ColorDefStyleLbl();
+			styleLbl.setName("noName");
+			styleLbl.setFillClrLst(new AscFormat.ClrLst());
+			styleLbl.fillClrLst.addToLst(0, AscFormat.CreateUniColorRGB(0, 0, 0));
+			styleLbl.setLinClrLst(new AscFormat.ClrLst());
+			styleLbl.linClrLst.addToLst(0, AscFormat.CreateUniColorRGB(0, 0, 0));
+			return styleLbl;
+		});
+	}
 	function isClockwisePoints(centerPoint, edgePoint1, edgePoint2) {
 		const rectSum = (centerPoint.x - edgePoint1.x) * (edgePoint2.y - edgePoint1.y) -
 			(edgePoint2.x - edgePoint1.x) * (centerPoint.y - edgePoint1.y);
@@ -154,6 +164,7 @@
 		prSet.setPresStyleLbl(styleLbl || "node1");
 
 		point.setPrSet(prSet);
+		point.setModelId(AscCommon.CreateGUID());
 		return new PresNode(point, contentNode);
 	}
 
@@ -661,7 +672,7 @@
 			}
 		}
 		for (let styleLbl in shapesByStyleLbl) {
-			const colorLbl = colorLblsByName[styleLbl];
+			const colorLbl = colorLblsByName[styleLbl] || getDefaultColorsStyleLbl();
 			const shapes = shapesByStyleLbl[styleLbl];
 			if (colorLbl) {
 					colorLbl.setShapeFill(shapes, parentObjects);

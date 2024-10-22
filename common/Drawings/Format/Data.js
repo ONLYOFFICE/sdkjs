@@ -9957,14 +9957,23 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
+		SmartArt.prototype.isEmptyColors = function () {
+			return !this.colorsDef;
+		};
+	  SmartArt.prototype.isEmptyStyles = function () {
+		  return !(this.styleDef && this.styleDef.uniqueId && this.styleDef.styleLbl.length);
+	  };
+	  SmartArt.prototype.isEmptyLayout = function () {
+			return !(this.layoutDef && this.layoutDef.layoutNode && this.layoutDef.uniqueId);
+	  };
 		SmartArt.prototype.generateDefaultStructures = function () {
-			if (!this.colorsDef) {
+			if (this.isEmptyColors()) {
 				this.setColorsDef(AscFormat.generateDefaultSmartArtColors());
 			}
-			if (!this.layoutDef) {
+			if (this.isEmptyLayout()) {
 				this.setLayoutDef(AscFormat.generateDefaultSmartArtLayout());
 			}
-			if (!this.styleDef){
+			if (this.isEmptyStyles()){
 				this.setStyleDef(AscFormat.generateDefaultSmartArtQuickStyle());
 			}
 		};
