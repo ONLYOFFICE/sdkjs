@@ -3129,8 +3129,7 @@
 				nStartCharPos++;
 		}
 
-		let oDoc = private_GetLogicDocument();
-		oDoc.CheckRunContent(calcStartPos);
+		this.StartPos[0].Class.CheckRunContent(calcStartPos);
 		return nStartCharPos;
 	};
 
@@ -3184,8 +3183,7 @@
 				nEndCharPos++;
 		}
 
-		let oDoc = private_GetLogicDocument();
-		oDoc.CheckRunContent(calcEndPos);
+		this.EndPos[0].Class.CheckRunContent(calcEndPos);
 		return nEndCharPos;
 	};
 	
