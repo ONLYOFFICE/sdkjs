@@ -2870,6 +2870,13 @@ Because of this, the display is sometimes not correct.
 
     function LayoutNode() {
       CCommonDataList.call(this);
+			this.alg = null;
+			this.shape = null;
+			this.presOf = null;
+			this.constrLst = null;
+			this.ruleLst = null;
+			this.varLst = null;
+
       this.chOrder = null;
       this.moveWith = null;
       this.name = null;
@@ -2877,7 +2884,24 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(LayoutNode, CCommonDataList, AscDFH.historyitem_type_LayoutNode);
-
+	  LayoutNode.prototype.setAlg = function (pr) {
+		  this.alg = pr;
+	  }
+	  LayoutNode.prototype.setShape = function (pr) {
+		  this.shape = pr;
+	  }
+	  LayoutNode.prototype.setPresOf = function (pr) {
+		  this.presOf = pr;
+	  }
+	  LayoutNode.prototype.setConstrLst = function (pr) {
+		  this.constrLst = pr;
+	  }
+	  LayoutNode.prototype.setRuleLst = function (pr) {
+		  this.ruleLst = pr;
+	  }
+	  LayoutNode.prototype.setVarLst = function (pr) {
+		  this.varLst = pr;
+	  }
     LayoutNode.prototype.setChOrder = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
       this.chOrder = pr;
@@ -4203,11 +4227,31 @@ Because of this, the display is sometimes not correct.
 
     function Else() {
       CCommonDataList.call(this);
+	    this.alg = null;
+	    this.shape = null;
+	    this.presOf = null;
+	    this.constrLst = null;
+	    this.ruleLst = null;
+
       this.name = null;
     }
 
     InitClass(Else, CCommonDataList, AscDFH.historyitem_type_Else);
-
+	  Else.prototype.setAlg = function (pr) {
+		  this.alg = pr;
+	  }
+	  Else.prototype.setShape = function (pr) {
+		  this.shape = pr;
+	  }
+	  Else.prototype.setPresOf = function (pr) {
+		  this.presOf = pr;
+	  }
+	  Else.prototype.setConstrLst = function (pr) {
+		  this.constrLst = pr;
+	  }
+	  Else.prototype.setRuleLst = function (pr) {
+		  this.ruleLst = pr;
+	  }
     Else.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ElseName, this.getName(), pr));
       this.name = pr;
@@ -4900,6 +4944,12 @@ Because of this, the display is sometimes not correct.
 
     function If() {
       IteratorAttributes.call(this);
+			this.alg = null;
+			this.shape = null;
+			this.presOf = null;
+			this.constrLst = null;
+			this.ruleLst = null;
+
       this.arg = If_arg_none;
       this.func = null;
       this.name = null;
@@ -4910,6 +4960,21 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(If, IteratorAttributes, AscDFH.historyitem_type_If);
+	  If.prototype.setAlg = function (pr) {
+		  this.alg = pr;
+	  }
+	  If.prototype.setShape = function (pr) {
+		  this.shape = pr;
+	  }
+	  If.prototype.setPresOf = function (pr) {
+		  this.presOf = pr;
+	  }
+	  If.prototype.setConstrLst = function (pr) {
+		  this.constrLst = pr;
+	  }
+	  If.prototype.setRuleLst = function (pr) {
+		  this.ruleLst = pr;
+	  }
 		If.getArgEnum = function (arg) {
 			switch (arg) {
 				case 'animLvl':
@@ -6572,6 +6637,13 @@ Because of this, the display is sometimes not correct.
 
     function ForEach() {
       IteratorAttributes.call(this);
+	    this.alg = null;
+	    this.shape = null;
+	    this.presOf = null;
+	    this.constrLst = null;
+	    this.ruleLst = null;
+			this.varLst = null;
+
       this.name = null;
       this.ref = null;
       this.list = [];
@@ -6579,6 +6651,24 @@ Because of this, the display is sometimes not correct.
 
     InitClass(ForEach, IteratorAttributes, AscDFH.historyitem_type_ForEach);
 
+		ForEach.prototype.setAlg = function (pr) {
+			this.alg = pr;
+		}
+	  ForEach.prototype.setShape = function (pr) {
+		  this.shape = pr;
+	  }
+	  ForEach.prototype.setPresOf = function (pr) {
+		  this.presOf = pr;
+	  }
+	  ForEach.prototype.setConstrLst = function (pr) {
+		  this.constrLst = pr;
+	  }
+	  ForEach.prototype.setRuleLst = function (pr) {
+		  this.ruleLst = pr;
+	  }
+	  ForEach.prototype.setVarLst = function (pr) {
+		  this.varLst = pr;
+	  }
     ForEach.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachName, this.getName(), pr));
       this.name = pr;
@@ -6615,6 +6705,24 @@ Because of this, the display is sometimes not correct.
     ForEach.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setName(this.getName());
       oCopy.setRef(this.getRef());
+	    if (this.alg) {
+		    oCopy.setAlg(this.alg.createDuplicate());
+	    }
+	    if (this.shape) {
+		    oCopy.setShape(this.shape.createDuplicate());
+	    }
+	    if (this.presOf) {
+		    oCopy.setPresOf(this.presOf.createDuplicate());
+	    }
+	    if (this.constrLst) {
+		    oCopy.setConstrLst(this.constrLst.createDuplicate());
+	    }
+	    if (this.ruleLst) {
+		    oCopy.setRuleLst(this.ruleLst.createDuplicate());
+	    }
+	    if (this.varLst) {
+		    oCopy.setVarLst(this.varLst.createDuplicate());
+	    }
       for (var nIdx = 0; nIdx < this.list.length; ++nIdx) {
         oCopy.addToLstList(nIdx, this.list[nIdx].createDuplicate(oIdMap));
       }
@@ -6639,25 +6747,61 @@ Because of this, the display is sometimes not correct.
     }
 
     ForEach.prototype.readElement = function(pReader, nType) {
-      var oElement = null;
+      let oListElement = null;
       switch(nType) {
-        case 0xb1: oElement = new Alg(); break;
-        case 0xb2: oElement = new Choose(); break;
-        case 0xb3: oElement = new ConstrLst(); break;
-        case 0xb4: oElement = new ForEach(); break;
-        case 0xb5: oElement = new LayoutNode(); break;
-        case 0xb6: oElement = new PresOf(); break;
-        case 0xb7: oElement = new RuleLst(); break;
-        case 0xb8: oElement = new SShape(); break;
-        case 0xb9: oElement = new VarLst(); break;
+        case 0xb1: {
+	        const oElement = new Alg();
+	        oElement.fromPPTY(pReader);
+					this.setAlg(oElement);
+	        break;
+        }
+        case 0xb2:
+					oListElement = new Choose();
+					break;
+        case 0xb3: {
+	        const oElement = new ConstrLst();
+	        oElement.fromPPTY(pReader);
+					this.setConstrLst(oElement);
+	        break;
+        }
+        case 0xb4:
+					oListElement = new ForEach();
+					break;
+        case 0xb5:
+					oListElement = new LayoutNode();
+					break;
+        case 0xb6: {
+	        const oElement = new PresOf();
+	        oElement.fromPPTY(pReader);
+					this.setPresOf(oElement);
+	        break;
+        }
+        case 0xb7: {
+	        const oElement = new RuleLst();
+	        oElement.fromPPTY(pReader);
+					this.setRuleLst(oElement);
+	        break;
+        }
+        case 0xb8: {
+	        const oElement = new SShape();
+	        oElement.fromPPTY(pReader);
+					this.setShape(oElement);
+	        break;
+        }
+	      case 0xb9: {
+		      const oElement = new VarLst();
+		      oElement.fromPPTY(pReader);
+		      this.setVarLst(oElement);
+		      break;
+	      }
         default: {
           pReader.stream.SkipRecord();
           break;
         }
       }
-      if(oElement) {
-        oElement.fromPPTY(pReader);
-        this.addToLstList(this.list.length, oElement);
+      if(oListElement) {
+        oListElement.fromPPTY(pReader);
+        this.addToLstList(this.list.length, oListElement);
       }
     };
 
@@ -6684,6 +6828,24 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteString2(7, this.ref);
     };
     ForEach.prototype.writeChildren = function(pWriter) {
+	    if (this.alg) {
+				this.writeRecord2(pWriter, 0xb1, this.alg);
+	    }
+	    if (this.shape) {
+				this.writeRecord2(pWriter, 0xb8, this.shape);
+	    }
+	    if (this.presOf) {
+				this.writeRecord2(pWriter, 0xb6, this.presOf);
+	    }
+	    if (this.constrLst) {
+				this.writeRecord2(pWriter, 0xb3, this.constrLst);
+	    }
+	    if (this.ruleLst) {
+				this.writeRecord2(pWriter, 0xb7, this.ruleLst);
+	    }
+	    if (this.varLst) {
+				this.writeRecord2(pWriter, 0xb9, this.varLst);
+	    }
       for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
         var oElement = this.list[nIndex];
         switch (oElement.getObjectType()) {
@@ -6724,7 +6886,7 @@ Because of this, the display is sometimes not correct.
       this.readElement(pReader, nType);
     };
     ForEach.prototype.getChildren = function() {
-      return [].concat(this.list);
+      return [this.alg, this.shape, this.presOf, this.constrLst, this.ruleLst, this.varLst].concat(this.list);
     };
 
     changesFactory[AscDFH.historyitem_SampDataUseDef] = CChangeBool;
@@ -11270,29 +11432,31 @@ Because of this, the display is sometimes not correct.
     };
 
 	  SmartArt.prototype.getRelationOfContent2 = function () {
-		  var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
+		  const dataModel = this.getDataModel() && this.getDataModel().getDataModel();
 		  if (dataModel) {
-			  var connections = {byConnections: {}, custom: {}};
-				connections.byConnections[Cxn_type_presOf] = {};
-				connections.byConnections[Cxn_type_parOf] = {};
-				connections.byConnections[Cxn_type_presParOf] = {};
-				connections.custom.presParOfAssocId = {};
-				connections.custom.presChildParOf = {};
-			  var ptMap = this.getPtMap();
-			  var cxnLst = dataModel.cxnLst.list;
+			  const connections = {};
+				connections[Cxn_type_presOf] = {};
+				connections[Cxn_type_parOf] = {};
+				connections[Cxn_type_presParOf] = {};
+			  const ptMap = this.getPtMap();
+			  const cxnLst = dataModel.cxnLst.list;
 
 			  cxnLst.forEach(function (cxn) {
 					switch (cxn.type) {
 						case Cxn_type_presOf: {
 							const point = ptMap[cxn.srcId];
-							connections.byConnections[Cxn_type_presOf][point.getModelId()] = ptMap[cxn.destId];
+							if (!connections[Cxn_type_presOf][point.getModelId()]) {
+								connections[Cxn_type_presOf][point.getModelId()] = {};
+							}
+							const destPresPoint = ptMap[cxn.destId]
+							connections[Cxn_type_presOf][point.getModelId()][destPresPoint.getPresName()] = destPresPoint;
 							break;
 						}
 						case Cxn_type_parOf: {
-							if (!connections.byConnections[Cxn_type_parOf][cxn.srcId]) {
-								connections.byConnections[Cxn_type_parOf][cxn.srcId] = [];
+							if (!connections[Cxn_type_parOf][cxn.srcId]) {
+								connections[Cxn_type_parOf][cxn.srcId] = [];
 							}
-							connections.byConnections[Cxn_type_parOf][cxn.srcId].push({
+							connections[Cxn_type_parOf][cxn.srcId].push({
 								point   : ptMap[cxn.destId],
 								sibPoint: ptMap[cxn.sibTransId],
 								parPoint: ptMap[cxn.parTransId],
@@ -11301,28 +11465,22 @@ Because of this, the display is sometimes not correct.
 							break;
 						}
 						case Cxn_type_presParOf: {
-							if (!connections.byConnections[Cxn_type_presParOf][cxn.srcId]) {
-								connections.byConnections[Cxn_type_presParOf][cxn.srcId] = {};
+							if (!connections[Cxn_type_presParOf][cxn.srcId]) {
+								connections[Cxn_type_presParOf][cxn.srcId] = {};
 							}
-							const presPoint = ptMap[cxn.destId];
-							connections.byConnections[Cxn_type_presParOf][cxn.srcId][cxn.srcOrd] = ptMap[cxn.destId];
-							const presAssocId = presPoint.getPresAssocID();
-							if (!connections.custom.presParOfAssocId[presAssocId]) {
-								connections.custom.presParOfAssocId[presAssocId] = [];
-							}
-							connections.custom.presParOfAssocId[presAssocId].push(presPoint);
-							connections.custom.presChildParOf[cxn.destId] = ptMap[cxn.srcId];
+							connections[Cxn_type_presParOf][cxn.srcId][cxn.srcOrd] = ptMap[cxn.destId];
 							break;
 						}
 						default:
 							break;
 					}
 			  });
-				for (let id in connections.byConnections[Cxn_type_parOf]) {
-					connections.byConnections[Cxn_type_parOf][id].sort(function (a, b) {
-						return a.index - b.index;
-					});
-				}
+			  for (let id in connections[Cxn_type_parOf]) {
+				  const points = connections[Cxn_type_parOf][id];
+				  points.sort(function (a, b) {
+					  return a.index - b.index;
+				  });
+			  }
 			  return connections;
 		  }
 	  };
