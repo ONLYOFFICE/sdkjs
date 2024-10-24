@@ -17995,6 +17995,12 @@
 		let dynamicSelectionRange = null;
 		let isFormula = this._isFormula(val);
 		let newFP, parseResult;
+
+		if (!isNotHistory) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+		}
+
 		if (isFormula) {
 			let calculateResult = new AscCommonExcel.CalculateResult(true);
 			//перед созданием точки в истории, проверяю, валидная ли формула
@@ -18007,11 +18013,6 @@
 					return;
 				}
 			} else {
-
-				if (!isNotHistory) {
-					History.Create_NewPoint();
-					History.StartTransaction();
-				}
 
 				// we check for new links to external data
 				if (parseResult.externalReferenesNeedAdd) {
@@ -18076,10 +18077,6 @@
 			}
 		}
 
-		if (!isNotHistory) {
-			History.Create_NewPoint();
-			History.StartTransaction();
-		}
 		const pivotTable = c.worksheet.getPivotTable(c.bbox.c1, c.bbox.r1);
 		// if there is a formula use setValue, otherwise setValue2
 		if (isFormula) {
