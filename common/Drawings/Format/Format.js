@@ -1002,13 +1002,14 @@
 			const bIsRealObject = isRealObject(val);
 			w.WriteBool(bIsRealObject);
 			if (bIsRealObject) {
+				w.WriteLong(val.getObjectType());
 				val.Write_ToBinary(w);
 			}
 		}
 
-		function readObjectNoId(r, valConstructor) {
+		function readObjectNoId(r) {
 			if (r.GetBool()) {
-				const val = new valConstructor();
+				const val = AscCommon.g_oTableId.GetClassFromFactory(r.GetLong());
 				val.Read_FromBinary(r);
 				return val;
 			}
@@ -7588,7 +7589,7 @@
 			this.EffectLst = null;
 		}
 
-		InitClass(CEffectProperties, CBaseNoIdObject, 0);
+		InitClass(CEffectProperties, CBaseNoIdObject, AscDFH.historyitem_type_CEffectProperties);
 		CEffectProperties.prototype.createDuplicate = function () {
 			var oCopy = new CEffectProperties();
 			if (this.EffectDag) {
@@ -18474,6 +18475,8 @@
 		window['AscFormat'].readString = readString;
 		window['AscFormat'].writeObject = writeObject;
 		window['AscFormat'].readObject = readObject;
+		window['AscFormat'].readObjectNoId = readObjectNoId;
+		window['AscFormat'].writeObjectNoId = writeObjectNoId;
 		window['AscFormat'].checkThemeFonts = checkThemeFonts;
 		window['AscFormat'].ExecuteNoHistory = ExecuteNoHistory;
 		window['AscFormat'].CreatePresentationTableStyles = CreatePresentationTableStyles;

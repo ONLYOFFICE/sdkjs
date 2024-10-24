@@ -375,6 +375,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_DiagramData       ]     = AscFormat.DiagramData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_FunctionValue     ]     = AscFormat.FunctionValue;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CEffectProperties ]     = AscFormat.CEffectProperties;
 
 		if (window['AscCommonSlide'])
 		{

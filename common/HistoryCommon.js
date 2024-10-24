@@ -1834,6 +1834,8 @@
 	
 	window['AscDFH'].historyitem_type_CustomProperties      = 2301 << 16;
 
+	window['AscDFH'].historyitem_type_CEffectProperties      = 2302 << 16;
+
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3659,11 +3661,6 @@
 	AscDFH.historyitem_SCatPri = AscDFH.historyitem_type_SCat | 1;
 	AscDFH.historyitem_SCatType = AscDFH.historyitem_type_SCat | 2;
 
-	AscDFH.historyitem_LayoutNodeChOrder  = AscDFH.historyitem_type_LayoutNode | 1;
-	AscDFH.historyitem_LayoutNodeMoveWith = AscDFH.historyitem_type_LayoutNode | 2;
-	AscDFH.historyitem_LayoutNodeName     = AscDFH.historyitem_type_LayoutNode | 3;
-	AscDFH.historyitem_LayoutNodeStyleLbl = AscDFH.historyitem_type_LayoutNode | 4;
-
 	AscDFH.historyitem_AlgRev         = AscDFH.historyitem_type_Alg | 1;
 	AscDFH.historyitem_AlgType        = AscDFH.historyitem_type_Alg | 2;
 	AscDFH.historyitem_AlgExtLst      = AscDFH.historyitem_type_Alg | 3;
@@ -3677,20 +3674,6 @@
 	AscDFH.historyitem_ChooseElse            = AscDFH.historyitem_type_Choose | 2;
 	AscDFH.historyitem_ChooseAddToLstIf      = AscDFH.historyitem_type_Choose | 3;
 	AscDFH.historyitem_ChooseRemoveFromLstIf = AscDFH.historyitem_type_Choose | 4;
-
-
-	AscDFH.historyitem_IteratorAttributesAddAxis = AscDFH.historyitem_type_IteratorAttributes | 1;
-	AscDFH.historyitem_IteratorAttributesRemoveAxis = AscDFH.historyitem_type_IteratorAttributes | 2;
-	AscDFH.historyitem_IteratorAttributesAddCnt = AscDFH.historyitem_type_IteratorAttributes | 3;
-	AscDFH.historyitem_IteratorAttributesRemoveCnt = AscDFH.historyitem_type_IteratorAttributes | 4;
-	AscDFH.historyitem_IteratorAttributesAddHideLastTrans = AscDFH.historyitem_type_IteratorAttributes | 5;
-	AscDFH.historyitem_IteratorAttributesRemoveHideLastTrans = AscDFH.historyitem_type_IteratorAttributes | 6;
-	AscDFH.historyitem_IteratorAttributesAddPtType = AscDFH.historyitem_type_IteratorAttributes | 7;
-	AscDFH.historyitem_IteratorAttributesRemovePtType = AscDFH.historyitem_type_IteratorAttributes | 8;
-	AscDFH.historyitem_IteratorAttributesAddSt = AscDFH.historyitem_type_IteratorAttributes | 9;
-	AscDFH.historyitem_IteratorAttributesRemoveSt = AscDFH.historyitem_type_IteratorAttributes | 10;
-	AscDFH.historyitem_IteratorAttributesAddStep = AscDFH.historyitem_type_IteratorAttributes | 11;
-	AscDFH.historyitem_IteratorAttributesRemoveStep = AscDFH.historyitem_type_IteratorAttributes | 12;
 
 	AscDFH.historyitem_ElseName = AscDFH.historyitem_type_Else | 1;
 
