@@ -1383,6 +1383,11 @@
             }, 1000);
         }
 
+        if (this.isFormulaEditMode && this.isCellEditMode && this.cellEditor) {
+            /* set focus to the top formula entry line */
+            this.input.focus();
+        }
+
         asc_applyFunction(callback, d);
     };
 
@@ -2048,12 +2053,15 @@
     var selectionRange = ws.model.selectionRange && ws.model.selectionRange.clone();
 
     var activeWsModel = this.model.getActiveWs();
-    if (activeWsModel.inPivotTable(activeCellRange)) {
-		if (t.input.isFocused) {
-			t._blurCellEditor();
+	const pivot = activeWsModel.inPivotTable(activeCellRange);
+    if (pivot) {
+		if (!pivot.canEditCell(activeCellRange)) {
+			if (t.input.isFocused) {
+				t._blurCellEditor();
+			}
+			this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+			return;
 		}
-		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
-		return;
 	}
 
     var editFunction = function() {
@@ -2917,8 +2925,12 @@
 
         var isNotFunction = c_oAscPopUpSelectorType.Func !== type;
 
-        // Проверяем, открыт ли редактор
-        if (this.getCellEditMode()) {
+        let isCellEditMode =  this.getCellEditMode();	// is the editor open
+
+        if (isCellEditMode && autoComplete) {
+            /* if cell editor is open and we call autocomplete function - we should close the editor */
+            this.cellEditor.close(true);
+        } else if (isCellEditMode) {
             if (isNotFunction) {
                 this.skipHelpSelector = true;
             }
@@ -5388,14 +5400,17 @@
 
 										//add to history after updated formula
 										for (let listenerId in prepared.listeners) {
-											let f = prepared.listeners[listenerId];
-											let parent = f.parent;
+											let formula = prepared.listeners[listenerId];
+											let parent = formula.parent;
 											if (parent instanceof AscCommonExcel.CCellWithFormula) {
-												let cell = parent.ws && parent.ws.getCell3(parent.nRow, parent.nCol);
-												if (cell) {
+												let range = formula.ref 
+													? parent.ws.getRange3(formula.ref.r1, formula.ref.c1, formula.ref.r2, formula.ref.c2) 
+													: (parent.ws && parent.ws.getCell3(parent.nRow, parent.nCol));
+
+												if (range) {
 													let sF = prepared.listeners[listenerId].assemble();
 													if (sF) {
-														cell.setValue("=" + sF);
+														range.setValue("=" + sF, null, null, formula.ref);
 													}
 												}
 											}

@@ -245,11 +245,16 @@ function (window, undefined) {
 		oCopy.setHidden(this.hidden);
 	};
 
-	// initialize the ax position, 0 is horizontal and 1 is vertical
+	// initialize the ax position, 0 is horizontal 1 is vertical left, and 2 is vertical right
 	CAxis.prototype.initializeAxPos = function (isVertAxis) {
-		const axPos = isVertAxis ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+		const axPos = isVertAxis ? ((isVertAxis === 1) ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_R) : window['AscFormat'].AX_POS_B;
 		CAxisBase.prototype.setAxPos.call(this, axPos);
 	}
+
+	// rewrite isReversed method
+	CAxis.prototype.isReversedRepresentation = function () {
+		return (this.axPos === window['AscFormat'].AX_POS_R || this.axPos === window['AscFormat'].AX_POS_T);
+	};
 
 	CAxis.prototype.setUnits = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));

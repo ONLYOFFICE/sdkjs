@@ -3024,6 +3024,149 @@ $(function () {
 		clearData(0, 99, 0, 105);
 	});
 
+	/* for bug 61856 */
+	QUnit.test('Array of arguments check after calling the wizard for the function', function (assert) { 
+		let resArray;
+
+		ws.getRange2("D1").setValue("11");
+		ws.getRange2("D2").setValue("22");
+		ws.getRange2("D3").setValue("33");
+
+		api.wb.cellEditor =  {
+			data : {},
+			changeCellText: function () {},
+			getText: function () {
+				return "";
+			}
+		};
+
+		api.wb.wsActive = ws.getIndex();
+		api.wb.setCellEditMode(true);
+
+		wb.dependencyFormulas.addDefName("def", "Sheet1!$A$100:$A$102");
+
+		// api.asc_startWizard();
+		let formula = "SUM(D1"
+		let parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, ws);
+		let _parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(D1" formula');
+
+
+		formula = "SUM(D1,"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlOperandExpected, 'Error in parseResult for "SUM(D1," formula');
+
+
+		formula = "SUM(D1,D2"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,D2"');
+		assert.strictEqual(resArray[1], "D2", 'Second argument in "SUM(D1,D2"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(D1,D2" formula');
+
+
+		formula = "SUM(D1,D2)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1", 'First argument in "SUM(D1,D2)"');
+		assert.strictEqual(resArray[1], "D2", 'Second argument in "SUM(D1,D2)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1,D2)" formula');
+
+		
+		formula = "SUM(D1:D2)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1:D2", 'First argument in "SUM(D1:D2)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1:D2)" formula');
+
+
+		formula = "SUM(D1:D2,)"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "D1:D2", 'First argument in "SUM(D1:D2,)"');
+		assert.strictEqual(_parseResult.error, undefined, 'Error in parseResult for "SUM(D1:D2,)" formula');
+
+
+		formula = "SUM("
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "", 'First argument in "SUM("');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlOperandExpected, 'Error in parseResult for "SUM(" formula');
+
+
+		formula = "SUM(1"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1" formula');
+
+		formula = "SUM(1,D1"
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1,D1"');
+		assert.strictEqual(resArray[1], "D1", 'Second argument in "SUM(1,D1"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1,D1" formula');
+
+
+		formula = 'SUM(1,D1,"str",TRUE,def'
+		parser = new AscCommonExcel.parserFormula(formula, null, ws);
+		_parseResult = new AscCommonExcel.ParseResult([], []);
+
+		parser.parse(true, true, _parseResult, true);
+
+		resArray = _parseResult.getArgumentsValue(formula);
+		assert.strictEqual(resArray[0], "1", 'First argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[1], "D1", 'Second argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[2], "\"str\"", 'Third argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[3], "TRUE", 'Fourth argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(resArray[4], "def", 'Fifth argument in "SUM(1,D1,"str",TRUE,def"');
+		assert.strictEqual(_parseResult.error, c_oAscError.ID.FrmlParenthesesCorrectCount, 'Error in parseResult for "SUM(1,D1,"str",TRUE,def" formula');
+
+		// remove all created earlier defNames
+		wb.dependencyFormulas._foreachDefName(function(defName) {
+			wb.dependencyFormulas.removeDefName(undefined, defName.name);
+		});
+	});
+
 	QUnit.test('autoCompleteFormula', function (assert) {
 		let resCell, range, fillRange, autoCompleteRes;
 
@@ -3582,6 +3725,103 @@ $(function () {
 		assert.strictEqual(activeCell.col === supposedActiveCell.bbox.c1 && activeCell.row === supposedActiveCell.bbox.r1, true, "Active cell test. B20:B22(only text in range) autosum");
 
 		
+		ws.getRange2("A1:Z100").cleanAll();
+	});
+
+	/* for bug 69708 */
+	QUnit.test('Array formula ', function (assert) {
+		let array, cellWithFormula, fillRange;
+
+		ws.getRange2("A11").setNumFormat("@");
+		ws.getRange2("B12").setNumFormat("@");
+
+		ws.getRange2("A2").setValue("Jeans");
+		ws.getRange2("A3").setValue("Sweater");
+		ws.getRange2("A4").setValue("Shirt");
+
+		// set flags for CSE formula call
+		let flags = wsView._getCellFlags(9, 0);
+		flags.ctrlKey = true;
+		flags.shiftKey = true;
+
+		// set selection A10:B13
+		fillRange = ws.getRange2("A10:B12");
+		wsView.setSelection(fillRange.bbox);
+		wsView._initRowsCount();
+		wsView._initColsCount();
+		
+
+		let fragment = ws.getRange2("A10").getValueForEdit2();
+		fragment[0].setFragmentText("=SIN({1,2})");
+
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);		// calculate
+		resCell = ws.getRange2("A10");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A10:B12", "Selection after =SIN({1,2}) cse formula call");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "A10 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("A11");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "@", "A11 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("A12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.841470985", "Value in A12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in A12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "A12 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B10");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B10 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "B10 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B11");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B11 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "General", "B11 cellFormat after =SIN({1,2}) calculate");
+
+		resCell = ws.getRange2("B12");
+		assert.strictEqual(resCell.getValueWithFormat(), "0.909297427", "Value in B12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getValueForEdit(), "=SIN({1,2})", "Formula in B12 after =SIN({1,2}) calculate");
+		assert.strictEqual(resCell.getNumFormatStr(), "@", "B12 cellFormat after =SIN({1,2}) calculate");
+
+
+		fragment[0].setFragmentText('=HSTACK({"Red";"Blue";"Green"},A2:A4)');
+
+		wsView._saveCellValueAfterEdit(fillRange, fragment, flags, null, null);		// calculate
+		resCell = ws.getRange2("A10");
+		assert.strictEqual(wsView.model.selectionRange.getLast().getName(), "A10:B12", 'Selection after =HSTACK({"Red";"Blue";"Green"},A2:A4) cse formula call');
+		assert.strictEqual(resCell.getValueWithFormat(), "Red", 'Value in A10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'A10 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("A11");
+		assert.strictEqual(resCell.getValueWithFormat(), "Blue", 'Value in A11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "@", 'A11 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("A12");
+		assert.strictEqual(resCell.getValueWithFormat(), "Green", 'Value in A12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in A12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'A12 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B10");
+		assert.strictEqual(resCell.getValueWithFormat(), "Jeans", 'Value in B10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B10 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'B10 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B11");
+		assert.strictEqual(resCell.getValueWithFormat(), "Sweater", 'Value in B11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B11 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "General", 'B11 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+		resCell = ws.getRange2("B12");
+		assert.strictEqual(resCell.getValueWithFormat(), "Shirt", 'Value in B12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getValueForEdit(), '=HSTACK({\"Red\";\"Blue\";\"Green\"},A2:A4)', 'Formula in B12 after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+		assert.strictEqual(resCell.getNumFormatStr(), "@", 'B12 cellFormat after =HSTACK({"Red";"Blue";"Green"},A2:A4) calculate');
+
+
 		ws.getRange2("A1:Z100").cleanAll();
 	});
 

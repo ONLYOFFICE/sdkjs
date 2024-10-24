@@ -669,5 +669,106 @@ $(function() {
 			}, 'getGetPivotParamsByActiveCell');
 
 		});
+		QUnit.test('Test: change pivot headers and labels', function (assert) {
+			const file = Asc.PivotFieldNames;
+			const wb = openDocument(file);
+			const data = {
+				'General': {
+					'Editable': {
+						'A1': 'testName_A1',
+						'A4': 'testName_A4',
+						'C3': 'testName_C3',
+						'B4': 'testName_B4',
+						'C4': 'testName_C4',
+						'D4': 'testName_D4',
+						'E4': 'testName_E4',
+						'A5': 'testName_A5',
+						'B5': 'testName_B5',
+						'B6': 'testName_B6',
+						'B7': 'testName_B7',
+						'B8': 'testName_B8',
+						'B9': 'testName_B9',
+						'B10': 'testName_B10',
+						'B11': 'testName_B11',
+						'B12': 'testName_B12',
+						'B13': 'testName_B13',
+						'A16': 'testName_A16',
+						'B16': 'testName_B16',
+						'B17': 'testName_B17',
+						'B18': 'testName_B18',
+						'B19': 'testName_B19',
+						'B20': 'testName_B20',
+						'B21': 'testName_B21',
+						'B22': 'testName_B22',
+						'B23': 'testName_B23',
+						'B24': 'testName_B24'
+					}
+				},
+				'ValuesRow': {
+					'Editable': {
+						'A3': 'testName_A3',
+						'B3': 'testName_B3',
+						'A4': 'testName_A4',
+						'B4': 'testName_B4',
+						'B5': 'testName_B5',
+						'A6': 'testName_A6',
+						'B6': 'testName_B6',
+						'B7': 'testName_B7',
+					}
+				},
+				'DataOnly': {
+					'Editable': {
+						'A3': 'testName_A3',
+					}
+				},
+				'Default': {
+					'Editable': {
+						'A3': 'testName_A3',
+						'B3': 'testName_B3',
+						'A4': 'testName_A4',
+						'B4': 'testName_B4',
+						'C4': 'testName_C4',
+						'D4': 'testName_D4',
+						'A5': 'testName_A5',
+						'A6': 'testName_A6',
+						'A7': 'testName_A7',
+
+					}
+				}
+			}
+			ws = wb.getWorksheetByName('General');
+			let pivot = wb.getWorksheetByName('General').getPivotTable(0, 2);
+
+			const filterRange = Asc.Range(0, 0, 0, 0);
+			assert.equal(!!pivot.rangeMapper.getEditCellFunction(filterRange), !!data['General']['Editable']['A1'], 'General:A1');
+
+			for (let sheetName in data) {
+				ws = wb.getWorksheetByName(sheetName);
+				let pivot = wb.getWorksheetByName(sheetName).getPivotTable(0, 2);
+				const editable = data[sheetName]['Editable'];
+				const pivotRange = pivot.getRange();
+
+				const range = new AscCommonExcel.Range(ws, pivotRange.r1, pivotRange.c1, pivotRange.r2, pivotRange.c2);
+				range._foreach(function(cell, r, c, r1, c1) {
+					const eachRange = Asc.Range(c, r, c, r);
+					const name = eachRange.getName();
+					const func = pivot.rangeMapper.getEditCellFunction(eachRange);
+					assert.equal(!!func, !!editable[name], sheetName + ':' + name);
+				});
+				prepareTest(assert, wb);
+				for (let refName in editable) {
+					const wsRange = ws.getRange2(refName);
+					const bbox = ws.getRange2(refName).bbox;
+					const startValue = wsRange.getValue();
+					pivot = checkHistoryOperation(assert, pivot, startValue, editable[refName], sheetName + ':' + 'A1' + ':editing', function () {
+						const func = pivot.rangeMapper.getEditCellFunction(bbox);
+						func(editable[refName]);
+						pivot.asc_refresh(api);
+					}, function (assert, pivot, value, message) {
+						assert.equal(ws.getRange2(refName).getValue(), value, message);
+					});
+				}
+			}
+		});
 	}
 });

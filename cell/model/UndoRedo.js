@@ -492,6 +492,7 @@ function (window, undefined) {
 		this.RowColBreaks = 175;
 
 		this.LegacyDrawingHFDrawing = 180;
+		this.PivotFieldItem = 181;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -658,6 +659,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_RowColBreaks();
 				case this.LegacyDrawingHFDrawing:
 					return new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing();
+				case this.PivotFieldItem:
+					return new AscCommonExcel.UndoRedoData_PivotFieldItem();
 			}
 			return null;
 		};
@@ -1375,6 +1378,58 @@ function (window, undefined) {
 				break;
 			case this.Properties.index:
 				this.index = value;
+				break;
+			case this.Properties.from:
+				this.from = value;
+				break;
+			case this.Properties.to:
+				this.to = value;
+				break;
+		}
+	};
+
+	function UndoRedoData_PivotFieldItem(pivot, pivotIndex, itemIndex, from, to) {
+		this.pivot = pivot;
+		this.pivotIndex = pivotIndex;
+		this.itemIndex = itemIndex;
+		this.from = from;
+		this.to = to;
+	}
+
+	UndoRedoData_PivotFieldItem.prototype.Properties = {
+		pivot: 0, pivotIndex: 1, itemIndex: 2, from: 3, to: 4
+	};
+	UndoRedoData_PivotFieldItem.prototype.getType = function () {
+		return UndoRedoDataTypes.PivotFieldItem;
+	};
+	UndoRedoData_PivotFieldItem.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_PivotFieldItem.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.pivot:
+				return this.pivot;
+			case this.Properties.pivotIndex:
+				return this.pivotIndex;
+			case this.Properties.itemIndex:
+				return this.itemIndex;
+			case this.Properties.from:
+				return this.from;
+			case this.Properties.to:
+				return this.to;
+		}
+		return null;
+	};
+	UndoRedoData_PivotFieldItem.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.pivot:
+				this.pivot = value;
+				break;
+			case this.Properties.pivotIndex:
+				this.pivotIndex = value;
+				break;
+			case this.Properties.itemIndex:
+				this.itemIndex = value;
 				break;
 			case this.Properties.from:
 				this.from = value;
@@ -4107,6 +4162,15 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_SetName:
 				pivotTable.asc_setName(value);
 				break;
+			case AscCH.historyitem_PivotTable_SetRowHeaderCaption:
+				pivotTable.asc_setRowHeaderCaption(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetColHeaderCaption:
+				pivotTable.asc_setColHeaderCaption(value);
+				break;
+			case AscCH.historyitem_PivotTable_SetDataCaption:
+				pivotTable.asc_setDataCaption(value);
+				break;
 			case AscCH.historyitem_PivotTable_SetRowGrandTotals:
 				pivotTable.asc_setRowGrandTotals(value);
 				break;
@@ -4357,6 +4421,7 @@ function (window, undefined) {
 		pivotTable.stashCurReportRange();
 
 		var value = bUndo ? Data.from : Data.to;
+		var valueFrom = bUndo ? Data.to : Data.from;
 		switch (Type) {
 			case AscCH.historyitem_PivotTable_PivotFieldSetName:
 				field.asc_setName(value, pivotTable, index);
@@ -4413,6 +4478,45 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_DataFieldSetNumFormat:
 				field.setNumFormat(value, pivotTable, index);
+				break;
+			case AscCH.historyitem_PivotTable_PivotFieldMoveItem:
+				field.moveItem(pivotTable, index, valueFrom, value)
+				break;
+		}
+	};
+	function UndoRedoPivotFieldItems(wb) {
+		this.wb = wb;
+		this.nType = UndoRedoClassTypes.Add(function () {
+			return AscCommonExcel.g_oUndoRedoPivotFieldItems;
+		});
+	}
+
+	UndoRedoPivotFieldItems.prototype.getClassType = function () {
+		return this.nType;
+	};
+	UndoRedoPivotFieldItems.prototype.Undo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, true);
+	};
+	UndoRedoPivotFieldItems.prototype.Redo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, false);
+	};
+	UndoRedoPivotFieldItems.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
+		var ws = this.wb.getWorksheetById(nSheetId);
+		if (!ws) {
+			return;
+		}
+		var pivotTable = ws.getPivotTableById(Data.pivot);
+		if (!pivotTable) {
+			return;
+		}
+		var field = pivotTable.asc_getPivotFields()[Data.pivotIndex];
+		var pivotFieldItem = field.getItem(Data.itemIndex)
+		pivotTable.stashCurReportRange();
+
+		var value = bUndo ? Data.from : Data.to;
+		switch (Type) {
+			case AscCH.historyitem_PivotTable_PivotFieldItemSetName:
+				pivotFieldItem.asc_setName(value, pivotTable, Data.pivotIndex, Data.itemIndex);
 				break;
 		}
 	};
@@ -5150,6 +5254,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_PivotTable = UndoRedoData_PivotTable;
 	window['AscCommonExcel'].UndoRedoData_PivotTableRedo = UndoRedoData_PivotTableRedo;
 	window['AscCommonExcel'].UndoRedoData_PivotField = UndoRedoData_PivotField;
+	window['AscCommonExcel'].UndoRedoData_PivotFieldItem = UndoRedoData_PivotFieldItem;
 	window['AscCommonExcel'].UndoRedoData_Layout = UndoRedoData_Layout;
 	window['AscCommonExcel'].UndoRedoData_SheetAdd = UndoRedoData_SheetAdd;
 	window['AscCommonExcel'].UndoRedoData_SheetRemove = UndoRedoData_SheetRemove;
@@ -5182,6 +5287,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_BinaryWrapper2 = UndoRedoData_BinaryWrapper2;
 	window['AscCommonExcel'].UndoRedoPivotTables = UndoRedoPivotTables;
 	window['AscCommonExcel'].UndoRedoPivotFields = UndoRedoPivotFields;
+	window['AscCommonExcel'].UndoRedoPivotFieldItems = UndoRedoPivotFieldItems;
 	window['AscCommonExcel'].UndoRedoSlicer = UndoRedoSlicer;
 	window['AscCommonExcel'].UndoRedoCF = UndoRedoCF;
 	window['AscCommonExcel'].UndoRedoProtectedRange = UndoRedoProtectedRange;
@@ -5199,6 +5305,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].g_oUndoRedoSparklines = null;
 	window['AscCommonExcel'].g_oUndoRedoPivotTables = null;
 	window['AscCommonExcel'].g_oUndoRedoPivotFields = null;
+	window['AscCommonExcel'].g_oUndoRedoPivotFieldItems = null;
 	window['AscCommonExcel'].g_oUndoRedoSharedFormula = null;
 	window['AscCommonExcel'].g_oUndoRedoLayout = null;
 	window['AscCommonExcel'].g_UndoRedoArrayFormula = null;

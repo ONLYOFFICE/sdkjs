@@ -15889,7 +15889,7 @@
 						}
 					}
 					if (this.model._isPivotsIntersectRangeButNotInIt(_checkRange)) {
-						t.handlers.trigger("onErrorEvent", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+						t.handlers.trigger("onErrorEvent", c_oAscError.ID.PasteInPivot, c_oAscError.Level.NoCritical);
 						revertSelection();
 						return false;
 					}
@@ -17335,10 +17335,23 @@
         var r1 = 0, r2 = this.model.getRowsCount() - 1;
 		var ranges = [];
 		if (null !== col) {
+			//if col contains into selected range
+			let selectionRanges = this.model.selectionRange.ranges;
+			for (let i = 0; i < selectionRanges.length; ++i) {
+				if (!(selectionRanges[i].getType() === c_oAscSelectionType.RangeMax || selectionRanges[i].getType() === c_oAscSelectionType.RangeCol)) {
+					break;
+				}
+				if (selectionRanges[i].containsCol(col)) {
+					col = null;
+					break;
+				}
+			}
+		}
+		if (null !== col) {
 			ranges.push(new Asc.Range(col, r1, col, r2));
 		} else {
-			var selectionRanges = this.model.selectionRange.ranges;
-			for (var i = 0; i < selectionRanges.length; ++i) {
+			let selectionRanges = this.model.selectionRange.ranges;
+			for (let i = 0; i < selectionRanges.length; ++i) {
 				ranges.push(new Asc.Range(selectionRanges[i].c1, r1, selectionRanges[i].c2, r2));
 			}
 		}
@@ -17984,6 +17997,22 @@
 				}
 			} else {
 
+				if (!isNotHistory) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+				}
+
+				// we check for new links to external data
+				if (parseResult.externalReferenesNeedAdd) {
+					t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+					// then we parse the formula again to obtain the correct outStack and external link indexes
+					newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
+					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
+						this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+						return;
+					}
+				}
+
 				if (!applyByArray && AscCommonExcel.bIsSupportDynamicArrays) {
 					/* if we write not through cse, then check the formula for the presence of ref */
 					/* if ref exists, write the formula as an array formula and also find its dimensions for further expansion */
@@ -18040,9 +18069,13 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 		}
-
+		const pivotTable = c.worksheet.getPivotTable(c.bbox.c1, c.bbox.r1);
 		// if there is a formula use setValue, otherwise setValue2
 		if (isFormula) {
+			if (pivotTable) {
+				this.workbook.Api.sendEvent('asc_onError', Asc.c_oAscError.ID.FormulaInPivotFieldName, Asc.c_oAscError.Level.NoCritical);
+				return;
+			}
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
 			//***array-formula***
 			let ret = true;
@@ -18052,11 +18085,6 @@
 			let changedDynamicArraysList = AscCommonExcel.bIsSupportDynamicArrays ? ws.getChangedArrayList() : null;
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
-			}
-
-			//проверим, нет ли новых ссылок на внешние данные
-			if (parseResult.externalReferenesNeedAdd) {
-				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 			}
 
 			// before putting a value in the selected cell, need to check whether the given range concerns any of the arrays (daf) on the page
@@ -18148,9 +18176,12 @@
 				}
 			}
 
-			// set the value to the selected range 
-			c.setValue2(val, true);
-
+			// set the value to the selected range
+			if (pivotTable) {
+				pivotTable.editCell(c.bbox, AscCommonExcel.getFragmentsText(val));
+			} else {
+				c.setValue2(val, true);
+			}
 			// recalculate all volatile arrays on page
 			t.model.recalculateVolatileArrays();
 

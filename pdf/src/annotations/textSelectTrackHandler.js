@@ -45,10 +45,10 @@
 		this.EventHandler    = eventHandler;
 	}
 
-	CTextSelectTrackHandler.prototype.Update = function() {
-		this.OnChangePosition();
+	CTextSelectTrackHandler.prototype.Update = function(bCheckMouseUpPos) {
+		this.OnChangePosition(bCheckMouseUpPos);
 	};
-	CTextSelectTrackHandler.prototype.OnChangePosition = function() {
+	CTextSelectTrackHandler.prototype.OnChangePosition = function(bCheckMouseUpPos) {
 		let oFile = Asc.editor.getDocumentRenderer().file;
 		if (oFile.Selection.IsSelection || false === Asc.editor.NeedShowTextSelectPanel()) {
 			this.OnHide();
@@ -61,7 +61,7 @@
 			return;
 		}
 
-		this.OnShow(bounds);
+		this.OnShow(bounds, bCheckMouseUpPos);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,8 +134,22 @@
 	CTextSelectTrackHandler.prototype.OnHide = function() {
 		this.EventHandler.sendEvent("asc_onHideTextSelectTrack");
 	};
-	CTextSelectTrackHandler.prototype.OnShow = function(bounds) {
-		this.EventHandler.sendEvent("asc_onShowTextSelectTrack", bounds);
+	CTextSelectTrackHandler.prototype.OnShow = function(bounds, bCheckMouseUpPos) {
+		let isMouseUpOnTop;
+
+		if (bCheckMouseUpPos) {
+			let oViewer = Asc.editor.getDocumentRenderer();
+			let nRectH = bounds[3] - bounds[1];
+			
+			if (AscCommon.global_mouseEvent.Y - oViewer.y < bounds[1] + nRectH / 2) {
+				isMouseUpOnTop = true;
+			}
+			else {
+				isMouseUpOnTop = false;
+			}
+		}
+
+		this.EventHandler.sendEvent("asc_onShowTextSelectTrack", bounds, isMouseUpOnTop);
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------

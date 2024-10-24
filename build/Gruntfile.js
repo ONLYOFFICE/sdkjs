@@ -209,7 +209,8 @@ module.exports = function(grunt) {
 				'libfont/engine/*',
 				'spell/spell/*',
 				'hash/hash/*',
-				'zlib/engine/*'
+				'zlib/engine/*',
+				'serviceworker/*'
 			],
 			dest: path.join(deploy, 'common'),
 			name: 'common'

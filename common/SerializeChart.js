@@ -13485,11 +13485,14 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
                 const start = (oNewVal.axId.length > 1) ? i : i + 1;
                 axis.initializeAxPos(start);
             }
-            if (oNewVal.axId.length === 2) {
+            if (oNewVal.axId.length === 3) {
                 oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
                 oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-            }
-            if (oNewVal.axId.length === 1) {
+                oNewVal.axId[2].setCrossAx(oNewVal.axId[0]);
+            } else if (oNewVal.axId.length === 2) {
+                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
+                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
+            } else if (oNewVal.axId.length === 1) {
                 oNewVal.axId[0].setCrossAx(oNewVal.axId[0]);
             }
         }

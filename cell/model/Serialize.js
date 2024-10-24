@@ -13746,7 +13746,7 @@
                 newXf.XfId = XfIdTmp;
             }
 
-            if (0 == aCellXfs.length && !this.copyPasteObj.isCopyPaste) {
+            if (0 === aCellXfs.length && !this.copyPasteObj.isCopyPaste) {
                 firstXf = newXf;
             } else {
                 newXf = g_StyleCache.addXf(newXf);

@@ -163,6 +163,50 @@
         return dHeight;
     };
 
+    // function to find the maximum width of the text inside the rect, as each line contains different widths  
+    CDrawingDocContent.prototype.GetSummaryWidth =function () {
+        // width of single line label 
+        let width = 20000;
+        if (!this.Content || !Array.isArray(this.Content )) {
+            return width;
+        }
+        const lines = this.Content[0].Lines;
+        if (lines && Array.isArray(lines)) {
+            for (let i = 0; i < lines.length; i++) {
+                const newWidth = lines[i] && lines[i].Ranges && Array.isArray(lines[i].Ranges) && lines[i].Ranges.length > 0 ? lines[i].Ranges[0].W : null;
+                if (newWidth !== null && (i === 0 || width < newWidth)) {
+                    width = newWidth;
+                }
+            }
+        }
+
+        return width;
+    };
+
+    // function to find the width of the unfolded 2d array, simply add width of each line
+    CDrawingDocContent.prototype.getUnfoldedWidth = function (nLines) {
+        // width of single line label 
+        if (!this.Content || !Array.isArray(this.Content )) {
+            return 20000;
+        }
+        let width = 0;
+        const boxError = 0.1;
+        const lines = this.Content[0].Lines;
+        if (lines && Array.isArray(lines)) {
+            for (let i = 0; i < nLines; i++) {
+                if (lines.length < i) {
+                    break;
+                }
+                const newWidth = lines[i] && lines[i].Ranges && Array.isArray(lines[i].Ranges) && lines[i].Ranges.length > 0 ? lines[i].Ranges[0].W : null;
+                if (newWidth !== null) {
+                    width += newWidth;
+                }
+            }
+        }
+        
+        return width + boxError;
+    };
+
     CDrawingDocContent.prototype.Get_ColumnsCount = function(){
         var nColumnCount = 1;
         if(this.Parent.getBodyPr){

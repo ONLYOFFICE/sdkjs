@@ -874,6 +874,22 @@ $(function () {
 
 		oParser = new parserFormula("'[book.xlsx]Sheet1'!A1", cellWithFormula, ws);
 		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet 1'!A1");
+
+		// for bug 69677
+		oParser = new parserFormula("'[book.xlsx]Sheet1'!A1:B2", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet1'!A1:B2");
+		assert.strictEqual(oParser.calculate().type, AscCommonExcel.cElementType.error, 'Result before add reference');
+		assert.strictEqual(wb.externalReferences.length, 0, 'Reference length before add');
+
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'Reference length after add');
+		
+		oParser = new parserFormula("'[book.xlsx]Sheet1'!A1:B2", cellWithFormula, ws);
+		assert.ok(oParser.parse(true, null, parseResult), "'[book.xlsx]Sheet1'!A1:B2");
+		assert.strictEqual(oParser.calculate().type, AscCommonExcel.cElementType.cellsRange3D, 'Result after add reference');
+
+		// clear eR
+		wb.externalReferences.length = 0;
 	});
 
 	QUnit.test("Test: \"Change external reference tests\"", function (assert) {

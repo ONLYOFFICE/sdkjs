@@ -19165,6 +19165,26 @@
 	{
 		this.Sdt.MoveCursorOutsideForm(false === isAfter);
 	};
+
+	/**
+	 * Creates a copy of an block content control. Ignores comments, footnote references, complex fields.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiBlockLvlSdt}
+	 * @see office-js-api/Examples/{Editor}/ApiBlockLvlSdt/Methods/Copy.js
+	 */
+	ApiBlockLvlSdt.prototype.Copy = function()
+	{
+		let oInlineSdt = this.Sdt.Copy(false, undefined, {
+			SkipComments          : true,
+			SkipAnchors           : true,
+			SkipFootnoteReference : true,
+			SkipComplexFields     : true
+		});
+
+		return new ApiBlockLvlSdt(oInlineSdt);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase

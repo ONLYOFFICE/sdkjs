@@ -621,7 +621,7 @@ void main() {\n\
     CFile.prototype.onMouseUp = function()
     {
         this.Selection.IsSelection = false;
-        this.viewer.getPDFDoc().TextSelectTrackHandler.Update();
+        this.viewer.getPDFDoc().TextSelectTrackHandler.Update(true);
         this.onUpdateSelection();
         this.onUpdateOverlay();
 

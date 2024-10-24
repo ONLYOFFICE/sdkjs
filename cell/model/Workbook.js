@@ -14045,7 +14045,7 @@
 
 		var isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
 		var newFP = null;
-		if (false == bIsTextFormat) {
+		if (false == bIsTextFormat || (byRef && !isFirstArrayFormulaCell)) {
 			/*
 			 Устанавливаем значение в Range ячеек. При этом происходит проверка значения на формулу.
 			 Если значение является формулой, то проверяем содержиться ли в ячейке формула или нет, если "да" - то очищаем в графе зависимостей список, от которых зависит формула(masterNodes), позже будет построен новый. Затем выставляем флаг о необходимости дальнейшего пересчета, и заносим ячейку в список пересчитываемых ячеек.
@@ -15321,8 +15321,9 @@
 	};
 	Cell.prototype.getAlign=function(){
 		var xfs = this.getCompiledStyle();
-		if(null != xfs && null != xfs.align)
-			return xfs.align;
+		if (xfs) {
+			return xfs.align || g_oDefaultFormat.AlignAbs;
+		}
 		return g_oDefaultFormat.Align;
 	};
 	Cell.prototype._adjustCellFormat = function() {
@@ -18249,8 +18250,8 @@
 		var align = g_oDefaultFormat.Align;
 		this.worksheet._getCellNoEmpty(nRow, nCol, function(cell) {
 			var xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
-			if (null != xfs && null != xfs.align) {
-				align = xfs.align;
+			if (xfs) {
+				align = xfs.align || g_oDefaultFormat.AlignAbs;
 			}
 		});
 		return align;

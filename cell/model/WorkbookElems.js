@@ -4794,7 +4794,7 @@ var g_oFontProperties = {
     };
     CellXfs.prototype.getAlign2 = function () {
         // ToDo check this! Rename to getAlign
-        return this.align || g_oDefaultFormat.Align;
+        return this.align || g_oDefaultFormat.AlignAbs;
     };
     CellXfs.prototype.setAlign = function (val) {
         this.align = val;
@@ -5664,7 +5664,7 @@ StyleManager.prototype =
 	_initXfAlign: function(xfs){
 		xfs = xfs.clone();
 		if(null == xfs.align){
-			xfs.align = g_oDefaultFormat.Align;
+			xfs.align = g_oDefaultFormat.AlignAbs;
 		}
 		xfs.align = xfs.align.clone();
 		return xfs;
@@ -5724,7 +5724,8 @@ StyleManager.prototype =
 	_setAlignProperty : function(oItemWithXfs, val, prop, getFunc, setFunc)
 	{
 		var xfs = oItemWithXfs.xfs;
-		var oRes = {newVal: val, oldVal: xfs && xfs.align ? getFunc.call(xfs.align): getFunc.call(g_oDefaultFormat.Align)};
+		let oldAlign = xfs ? (xfs.align || g_oDefaultFormat.AlignAbs) : g_oDefaultFormat.Align;
+		var oRes = {newVal: val, oldVal: getFunc.call(oldAlign)};
 		xfs = this._initXf(oItemWithXfs);
 		var xfsOperationCache = xfs;
 		var newXf = xfs.getOperationCache(prop, val);
