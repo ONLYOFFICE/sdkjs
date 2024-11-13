@@ -8304,7 +8304,7 @@
 	};
 	Worksheet.prototype.getRowIterator=function(r1, c1, r2, c2, callback){
 		var it = new RowIterator();
-		it.init(this, r1, c1, r2, c2);
+		it.init(this, r1, c1, r2, c2, this.cellsByCol, this.cellsXfByCol);
 		callback(it);
 		it.release();
 	};
@@ -14152,25 +14152,27 @@
 			this._hasChanged = false;
 			var wb = this.ws.workbook;
 			var sheetMemory = this.ws.getColData(this.nCol);
-			sheetMemory.checkIndex(this.nRow);
 			var numberSave = 0;
 			var formulaSave = this.formulaParsed ? wb.workbookFormulas.add(this.formulaParsed).getIndexNumber() :  0;
-			var flagValue = 0;
-			if (null != this.number) {
-				flagValue = 1;
-				sheetMemory.setFloat64(this.nRow, g_nCellOffsetValue, this.number);
-			} else if (null != this.text) {
-				flagValue = 2;
-				numberSave = this.getTextIndex();
-				sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
-			} else if (null != this.multiText) {
-				flagValue = 3;
-				numberSave = this.getTextIndex();
-				sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
+			if (null != this.number || null != this.text || null != this.multiText || formulaSave > 0) {
+				sheetMemory.checkIndex(this.nRow);
+				var flagValue = 0;
+				if (null != this.number) {
+					flagValue = 1;
+					sheetMemory.setFloat64(this.nRow, g_nCellOffsetValue, this.number);
+				} else if (null != this.text) {
+					flagValue = 2;
+					numberSave = this.getTextIndex();
+					sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
+				} else if (null != this.multiText) {
+					flagValue = 3;
+					numberSave = this.getTextIndex();
+					sheetMemory.setUint32(this.nRow, g_nCellOffsetValue, numberSave);
+				}
+				sheetMemory.setUint8(this.nRow, g_nCellOffsetFlag, this._toFlags(flagValue));
+				// sheetMemory.setUint32(this.nRow, g_nCellOffsetXf, xfSave);
+				sheetMemory.setUint32(this.nRow, g_nCellOffsetFormula, formulaSave);
 			}
-			sheetMemory.setUint8(this.nRow, g_nCellOffsetFlag, this._toFlags(flagValue));
-			// sheetMemory.setUint32(this.nRow, g_nCellOffsetXf, xfSave);
-			sheetMemory.setUint32(this.nRow, g_nCellOffsetFormula, formulaSave);
 
 			let xfSave = this.xfs ? this.xfs.getIndexNumber() : 0;
 			let attrArray = this.ws.getColXf(this.nCol);
@@ -17427,8 +17429,68 @@
 		if (actionCell || actionRow) {
 			var itRow = new RowIterator();
 			if (actionCell) {
-				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2);
+				itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2, this.worksheet.cellsByCol, this.worksheet.cellsXfByCol);
 			}
+			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
+			var excludedCount = 0;
+			var tempCell;
+			var tempRow = new AscCommonExcel.Row(this.worksheet);
+			var allRow = this.worksheet.getAllRow();
+			var allRowHidden = allRow && allRow.getHidden();
+			for (i = oBBox.r1; i <= minR; i++) {
+				if (actionRow) {
+					if (tempRow.loadContent(i)) {
+						if (bExcludeHiddenRows && tempRow.getHidden()) {
+							excludedCount++;
+							continue;
+						}
+						oRes = actionRow(tempRow, excludedCount);
+						tempRow.saveContent(true);
+						if (null != oRes) {
+							if (actionCell) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					} else if (bExcludeHiddenRows && allRowHidden) {
+						excludedCount++;
+						continue;
+					}
+				} else if (bExcludeHiddenRows && this.worksheet.getRowHidden(i)) {
+					excludedCount++;
+					continue;
+				}
+				if (actionCell) {
+					itRow.setRow(i);
+					while (tempCell = itRow.next()) {
+						oRes = actionCell(tempCell, i, tempCell.nCol, oBBox.r1, oBBox.c1, excludedCount);
+						if (null != oRes) {
+							if (actionCell) {
+								itRow.release();
+							}
+							return oRes;
+						}
+					}
+				}
+			}
+			if (actionCell) {
+				itRow.release();
+			}
+		}
+	};
+	Range.prototype._foreachNoEmptyData = function(actionCell, actionRow, excludeHiddenRows) {
+		var oRes, i, oBBox = this.bbox ;
+		var minR = oBBox.r2;
+		var itRow;
+		if (actionCell) {
+			itRow = new RowIterator();
+			itRow.init(this.worksheet, this.bbox.r1, this.bbox.c1, this.bbox.r2, this.bbox.c2, this.worksheet.cellsByCol, null);
+			minR = Math.min(minR, itRow.iter.maxRow);
+		}
+		if (actionRow) {
+			minR = Math.min(minR, this.worksheet.rowsData.getMaxIndex());
+		}
+		if (actionCell || actionRow) {
 			var bExcludeHiddenRows = (this.worksheet.bExcludeHiddenRows || excludeHiddenRows);
 			var excludedCount = 0;
 			var tempCell;
@@ -21620,6 +21682,7 @@
 		this.col = -1;
 		this.sheetMemory = null;
 		this.xf = null;
+		this.maxRow = 0;
 
 		this.rowData = [];
 		this.rowDataIndex = 0;
@@ -21642,14 +21705,15 @@
 		for (let i = c1; i <= c2NoEmpty; i++) {
 			let data = {col: i, sheetMemory: null, xf: null};
 			let elemAddData, elemRemoveData, elemAddXf, elemRemoveXf;
-			let sheetMemory = this.cellsByCol[i];
+			let sheetMemory = this.cellsByCol && this.cellsByCol[i];
 			if (sheetMemory && r1 <= sheetMemory.getMaxIndex()) {
 				elemAddData = {col: i, index: Math.max(r1, sheetMemory.getMinIndex()), type: "addData", mod: sheetMemory, data: data};
 				this.events.push(elemAddData);
 				elemRemoveData = {col: i, index: sheetMemory.getMaxIndex() + 1, type: "removeData", data: data};
 				this.events.push(elemRemoveData);
+				this.maxRow = Math.max(this.maxRow, sheetMemory.getMaxIndex());
 			}
-			let colXf = this.xfsByCol[i];
+			let colXf = this.xfsByCol && this.xfsByCol[i];
 			let colXfIter = colXf && new AscCommonExcel.CAttrArrayIterator(colXf, r1, r2, true);
 			if (colXfIter) {
 				if (r1 <= colXfIter.getMaxIndex() && colXfIter.next()) {
@@ -21828,12 +21892,12 @@
 	function RowIterator() {
 	}
 
-	RowIterator.prototype.init = function (ws, r1, c1, r2, c2) {
+	RowIterator.prototype.init = function (ws, r1, c1, r2, c2, cellsByCol, cellsXfByCol) {
 		this.ws = ws;
 		this.cell = new Cell(ws);
 		this.ws.workbook.loadCells.push(this.cell);
 
-		this.iter = new SweepLineRowIterator(ws.cellsByCol, ws.cellsXfByCol, r1, c1, r2, c2);
+		this.iter = new SweepLineRowIterator(cellsByCol, cellsXfByCol, r1, c1, r2, c2);
 	};
 	RowIterator.prototype.release = function () {
 		this.cell.saveContent(true);

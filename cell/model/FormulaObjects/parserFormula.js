@@ -1355,7 +1355,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea.prototype.getMatrixNoEmpty = function () {
 		var arr = [], r = this.getRange(), res;
-		r._foreachNoEmpty(function (cell, i, j, r1, c1) {
+		r._foreachNoEmptyData(function (cell, i, j, r1, c1) {
 			if (!arr[i - r1]) {
 				arr[i - r1] = [];
 			}
@@ -1779,7 +1779,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		for (var k = 0; k < r.length; k++) {
 			arr[k] = [];
-			r[k]._foreachNoEmpty(function (cell, i, j, r1, c1) {
+			r[k]._foreachNoEmptyData(function (cell, i, j, r1, c1) {
 				if (!arr[k][i - r1]) {
 					arr[k][i - r1] = [];
 				}
