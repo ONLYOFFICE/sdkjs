@@ -3044,13 +3044,12 @@ CChartsDrawer.prototype =
 		// Transform strCache and numArr into a sunburst
 		const createSunburst = function (numArr, strCache, totalValue, lastLayer) {
 			const treeHead = [];
-			let layersCount = 0;
 			if (lastLayer != null) {
 				let head = treeHead;
 				let parent = null;
 				const strItIndexes = [0];
 				const numIndexes = [0];
-				const strRealIndexes = [];
+				const strRealIndexes = [0];
 				let realIndex = null;
 				let lastLayerIndex = 0;
 				let strArr = strCache[0].pts;
@@ -3077,8 +3076,47 @@ CChartsDrawer.prototype =
 					}
 
 					strArr = strCache[col].pts;
-					prevVal = (row < strArr.length && strArr[row].idx === strRealIndexes[col]) ? strArr[row].val : null;
-					row = prevVal !== null ? strItIndexes[col] : strItIndexes[col] - 1;
+					let nextRow = strItIndexes[col];
+
+					while (nextRow >= strArr.length) {
+						if (col !== lastLayer) {
+							strRealIndexes[col] = strRealIndexes[col - 1];
+							nullIndexes[col] = true;
+							col += 1;
+
+							if (col === strItIndexes.length) {
+								strItIndexes.push(0);
+								numIndexes.push(0);
+								strRealIndexes.push(0);
+								nullIndexes.push(true);
+							}
+
+							strArr = strCache[col].pts;
+							nextRow = strItIndexes[col];
+
+							if (col === strItIndexes.length) {
+								strItIndexes.push(0);
+								numIndexes.push(0);
+								strRealIndexes.push(0);
+								nullIndexes.push(true);
+							}
+						} else {
+							numIndexes[col] = realIndex;
+							col -= 1;
+							if (prevVal !== null) {
+								head = parent
+								parent = head.length > 0 ? head[head.length - 1].parent : null;
+							} else {
+								numIndexes[col] = Math.max(numIndexes[col], numIndexes[col + 1]);
+							}
+							strArr = strCache[col].pts;
+							nextRow = strItIndexes[col];
+							break;
+						}
+					}
+
+					prevVal = nextRow < strArr.length && strArr[nextRow].idx === strRealIndexes[col] ? strArr[nextRow].val : null;
+					row = prevVal !== null ? nextRow : nextRow - 1;
 				}
 
 				const getPercent = function (end) {
@@ -3100,23 +3138,21 @@ CChartsDrawer.prototype =
 						endIdx : realIndex,
 						idx : currIdx++,
 						name : prevVal,
-						percent : getPercent(realIndex),
+						pVal : getPercent(realIndex),
 						parent : parent,
 						children : [],
 					}
 				}
 
 				const updateNumIndexes = function () {
-					if (strArr[row].idx === lastLayerIndex) {
-						prevVal = strArr[strRow].val;
-					} else {
-						numIndexes[col] = numArr[numIndexes[col]].idx <= lastLayerIndex ? numIndexes[col] + 1  : numIndexes[col];
+					if (prevVal === null) {
+						numIndexes[col] = realIndex;
 					}
-					row = row >= 0 ? row - 1 : row;
-					lastLayerIndex += 1;
+					prevVal = row < strArr.length ? strArr[row].val : null;
 				}
 
 				const goBack = function () {
+					const currentCol = col;
 					col -= 1;
 					const lastIdx = strRealIndexes[col];
 
@@ -3125,24 +3161,35 @@ CChartsDrawer.prototype =
 						parent = head.length > 0 ? head[head.length - 1].parent : null;
 					}
 
+					numIndexes[col] = Math.max(numIndexes[col], numIndexes[currentCol]);
+
 					let index = col - 1;
 					while (index >= 0 && strRealIndexes[index] === lastIdx) {
-						if (!nullIndexes[col]) {
+						if (!nullIndexes[index]) {
 							head = parent
 							parent = head.length > 0 ? head[head.length - 1].parent : null;
 						}
+						numIndexes[index] = Math.max(numIndexes[index], numIndexes[currentCol]);
 						col -= 1;
+						index -= 1;
 					}
 
 					strArr = strCache[col].pts;
-					prevVal = (row < strArr.length && strArr[row].idx === strRealIndexes[col]) ? strArr[row].val : null;
-					row = prevVal !== null ? strItIndexes[col] : strItIndexes[col] - 1;
+					const prevRow = strItIndexes[col];
+					if (prevRow === strArr.length) {
+						row = prevRow;
+						return;
+					}
+					prevVal = (prevRow < strArr.length && strArr[prevRow].idx === strRealIndexes[col]) ? strArr[prevRow].val : null;
+					row = prevVal !== null ? prevRow : prevRow - 1;
 				}
 
-				const updateTree = function (cell) {
+				const updateTree = function (cell, isLastLayer) {
 					head.push(cell);
-					parent = head;
-					head = cell.children;
+					if (!isLastLayer) {
+						parent = head;
+						head = cell.children;
+					}
 				}
 
 				for (;row <= strArr.length; row++) {
@@ -3151,28 +3198,30 @@ CChartsDrawer.prototype =
 					const isLastLayer = col === lastLayer;
 					const isNewLabel = !isLastElem && strArr[row].val !== prevVal;
 
-					if (isLastElem || isNewLabel || isLastLayer) {
-						realIndex = isLastElem ? (col > 0 ? strRealIndexes[col - 1] : realIndex): strArr[row].idx;
+					if (isLastElem || isNewLabel || isLastLayer || isOutOfGroup) {
+						realIndex = ( isLastElem || isOutOfGroup )? (col > 0 ? strRealIndexes[col - 1] : strCache[col].ptCount): strArr[row].idx;
 						if (prevVal !== null) {
 							const cell = createCell();
-							updateTree(cell);
+							updateTree(cell, isLastLayer);
 						}
 						updateCurrent()
 						if (!isLastLayer) {
+							const prevCol = col;
 							goNext();
+							if (prevCol !== col) {
+								continue;
+							}
 						} else {
 							updateNumIndexes();
 						}
 					}
 
-					if (isOutOfGroup) {
+					if (isOutOfGroup || isLastElem) {
 						goBack();
-						continue;
 					}
 				}
 			} else {
 				const isStrCache = strCache.length > 0;
-				layersCount = 1;
 				let labelCounter = 0;
 				for (let i = 0; i < numArr.length; i++) {
 					// search label in strCache if found get name, and increase labelCounter
@@ -3180,10 +3229,45 @@ CChartsDrawer.prototype =
 					labelCounter = name !== null ? labelCounter + 1 : labelCounter;
 					treeHead.push({name: name, pVal: numArr[i].val / totalValue, start: i, end: i + 1, pos: i});
 				}
+			}
+			return {data : treeHead};
 
-				return {data : treeHead, layersCount : layersCount};
+		}
+
+		const sortSunburst = function (sunburst) {
+
+			const sortArr = function (arr) {
+				arr.sort(function(a, b) {
+					// sort by pVal;
+					return a.pVal - b.pVal;
+				});
 			}
 
+			let head = sunburst.data;
+			let indexesStack = [];
+			let i = 0;
+			let layersCount= 0;
+			while (i <= head.length) {
+				if (i === head.length) {
+					sortArr(head);
+					if (indexesStack.length !== 0) {
+						i = indexesStack.pop() + 1;
+						head = head[0].parent;
+					} else {
+						i++;
+					}
+				} else {
+					if (head[i].children.length > 0) {
+						indexesStack.push(i);
+						layersCount = Math.max(layersCount, indexesStack.length + 1);
+						head = head[i].children;
+						i = 0;
+					} else {
+						i++;
+					}
+				}
+			}
+			sunburst.layersCount = layersCount;
 		}
 
 		const lastLayer = getLastLayer(strCache);
@@ -3191,7 +3275,7 @@ CChartsDrawer.prototype =
 		const totalValue = getTotalValue(newNumArr);
 		// const layersCount = getLayersCount(strCache, lastLayer);
 		const sunburst = createSunburst(newNumArr, strCache, totalValue, lastLayer);
-		// sortSunburst(sunburst.data);
+		sortSunburst(sunburst);
 		// normalizeSunburst(sunburst.data, sunburst.layersCount);
 		console.log(sunburst);
 		cachedData.sunburst = sunburst;
@@ -8445,52 +8529,42 @@ drawSunburstChart.prototype = {
 			}
 
 			const ringWidth = diagramRadius / (sunburst.layersCount + 1);
-			let innerRadius = ringWidth;
-			let outerRadius = ringWidth * 2;
+
+			let head = sunburst.data;
+			let indexesStack = [];
+			let anglesStack = [];
 			let startingAngle = Math.PI / 2;
-			let elems = 0;
-			let nextLayer = 1;
-			let layersCounter = 0;
-			for (let i = 0; i < sunburst.data.length; i++) {
-				if (!this.paths[i]) {
-					this.paths[i] = [];
-				}
-				for (let j = 0; j < sunburst.data[i].length; j++) {
-					const angle = sunburst.data[i][j].pVal * Math.PI * 2;
-					if (sunburst.data[i][j].name !== null) {
-						this.paths[i].push(this._calculateSegment(startingAngle, angle, outerRadius, innerRadius, coords));
+			let i = 0;
+			let currentLayer= 1;
+			while (i <= head.length) {
+				if (i === head.length) {
+					if (indexesStack.length !== 0) {
+						i = indexesStack.pop() + 1;
+						startingAngle = anglesStack.pop();
+						head = head[0].parent;
+						currentLayer -= 1;
+					} else {
+						i++;
 					}
-					startingAngle += angle;
-					elems += 1;
-				}
-				nextLayer -= 1;
-				if (nextLayer === 0) {
-					layersCounter += 1;
-					if (layersCounter === sunburst.layersCount) {
-						break;
+				} else {
+					const angle = head[i].pVal * Math.PI * 2;
+					this.paths[head[i].idx] = this._calculateSegment(startingAngle, angle, ringWidth * currentLayer, ringWidth * (currentLayer + 1), coords);
+					if (head[i].children.length > 0) {
+						indexesStack.push(i);
+						currentLayer += 1;
+						anglesStack.push(startingAngle + angle);
+						head = head[i].children;
+						i = 0;
+					} else {
+						startingAngle += angle;
+						i++;
 					}
-					nextLayer = elems;
-					elems = 0;
-					innerRadius = outerRadius;
-					outerRadius = innerRadius + ringWidth;
 				}
 			}
-			// let j = 0;
-			// let totalAngle = Math.PI / 2;
-			// for (let i = 0; i < sunburst.data.length; i++) {
-			// 	if (i === sunburst.layersCount[j]) {
-			// 		innerRadius = outerRadius;
-			// 		outerRadius = innerRadius + ringWidth;
-			// 		j++;
-			// 	}
-			// 	const angle = (sunburst.data[i].pVal * Math.PI * 2);
-			// 	this.paths[i] = this._calculateSegment(totalAngle, angle,  outerRadius, innerRadius, coords);
-			// 	totalAngle += angle;
-			// }
 		}
 	},
 
-	_calculateSegment : function (stAngle, swAngle, outerRadius, innerRadius, coords) {
+	_calculateSegment : function (stAngle, swAngle, innerRadius, outerRadius, coords) {
 		if (!AscFormat.isRealNumber(stAngle) || !AscFormat.isRealNumber(swAngle) || !AscFormat.isRealNumber(outerRadius) || !AscFormat.isRealNumber(innerRadius) || !coords || !AscFormat.isRealNumber(coords.x) || !AscFormat.isRealNumber(coords.y)) {
 			return;
 		}
@@ -8541,16 +8615,14 @@ drawSunburstChart.prototype = {
 		if(oSeries) {
 			for (let i in this.paths) {
 				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
-					for (let j in this.paths[i]) {
-						let nPtIdx = parseInt(i);
-						let pen = oSeries.getPtPen(nPtIdx);
-						let brush = oSeries.getPtBrush(nPtIdx);
-						pen.Fill = brush.createDuplicate();
-						pen.Fill.fill.color.RGBA.B = 255;
-						pen.Fill.fill.color.RGBA.G = 255;
-						pen.Fill.fill.color.RGBA.R = 255;
-						this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
-					}
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					pen.Fill = brush.createDuplicate();
+					pen.Fill.fill.color.RGBA.B = 255;
+					pen.Fill.fill.color.RGBA.G = 255;
+					pen.Fill.fill.color.RGBA.R = 255;
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 				}
 			}
 		}

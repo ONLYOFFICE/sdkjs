@@ -4573,6 +4573,25 @@ function(window, undefined) {
 		return fRetLayout;
 	};
 	CChartSpace.prototype.calculateDLblsForChartEx = function () {
+		// data = cachedData
+		/*
+			createDLbls = function (pt) {
+				const compiled_dlb = new AscFormat.CDLbl();
+				const pt = {};
+				compiled_dlb.merge(default_lbl);
+				pt.compiledDlb = compiled_dlb;
+				pt.compiledDlb.chart = this;
+				pt.compiledDlb.series = seria;
+				pt.compiledDlb.pt = obtainData(cachedData, i);
+				pt.compiledDlb.setShowChartExVal(true);
+				pt.compiledDlb.recalculate();
+				if (cachedData.funnel && pt.compiledDlb.pt <= 0) {
+					pt.compiledDlb = default_lbl;
+				}
+				cachedData.compiledDlbs.push(pt);
+			}
+			data.forEach(createDLbls);
+		 */
 		const obtainData  = function (cachedData, key) {
 			if (!cachedData) {
 				return;
