@@ -6073,7 +6073,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - The x coordinate of the point.
 	 * @param {ApiRange | ApiName | number} arg2 - The y coordinate of the point.
-	 * @returns {numbern}
+	 * @returns {number}
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheetFunction/Methods/ATAN2.js
 	 */
 	ApiWorksheetFunction.prototype.ATAN2 = function (arg1, arg2) {
@@ -6742,26 +6742,13 @@
 	};
 
 	/**
-	 * The number 1-11 or 101-111 that specifies the function to use for the subtotal. 1-11 includes manually-hidden rows, while 101-111 excludes them; filtered-out cells are always excluded.
-	 * * <b>1 (101)</b> - AVERAGE.
-	 * * <b>2 (102)</b> - COUNT.
-	 * * <b>3 (103)</b> - COUNTA.
-	 * * <b>4 (104)</b> - MAX.
-	 * * <b>5 (105)</b> - MIN.
-	 * * <b>6 (106)</b> - PRODUCT.
-	 * * <b>7 (107)</b> - STDEV.
-	 * * <b>8 (108)</b> - STDEVP.
-	 * * <b>9 (109)</b> - SUM.
-	 * * <b>10 (110)</b> - VAR.
-	 * * <b>11 (111)</b> - VARP.
-	 * @typedef {(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111)} FunctionNumber
-	 * */
-
-	/**
 	 * Returns a subtotal in a list or database.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | ApiName | number} arg1 - The number 1-11 or 101-111 that specifies the function to use for the subtotal. 1-11 includes manually-hidden rows, while 101-111 excludes them;
+	 * @param {ApiRange | ApiName | number} arg1 - A numeric value that specifies which function to use for the subtotal: <b>1 (101)</b> - AVERAGE, <b>2 (102)</b> - COUNT,
+	 * <b>3 (103)</b> - COUNTA, <b>4 (104)</b> - MAX, <b>5 (105)</b> - MIN,
+	 * <b>6 (106)</b> - PRODUCT, <b>7 (107)</b> - STDEV, <b>8 (108)</b> - STDEVP, <b>9 (109)</b> - SUM, <b>10 (110)</b> - VAR, <b>11 (111)</b> - VARP.
+	 * 1-11 includes manually-hidden rows, while 101-111 excludes them;
 	 * filtered-out cells are always excluded.
 	 * @param {ApiRange | ApiName} args - Up to 255 ranges containing the values for which the subtotal will be returned. The first argument is required, subsequent arguments are optional.
 	 * @returns {number}
