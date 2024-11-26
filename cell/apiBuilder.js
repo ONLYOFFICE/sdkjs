@@ -1606,7 +1606,7 @@
 				result = new AscCommonExcel.cNumber(0);
 			}
 		} else if (AscCommonExcel.cElementType.array === result.type) {
-			result = result.toArray(true);
+			result = result.toArray(true, null, null, true);
 			isArray = true;
 		} else if (AscCommonExcel.cElementType.cellsRange === result.type || AscCommonExcel.cElementType.cellsRange3D === result.type) {
 			if (AscCommonExcel.cElementType.cellsRange === result.type) {
@@ -1616,8 +1616,12 @@
 			}
 		}
 
-		if (!isArray && result && result.getValue) {
-			result = result.getValue();
+		if (!isArray && result) {
+			if (result.type === AscCommonExcel.cElementType.bool) {
+				result = result.toBool();
+			} else if (result.getValue) {
+				result = result.getValue();
+			}
 		}
 
 		if (result == null) {
@@ -7328,7 +7332,7 @@
 		return this.private_calculateFunction("OR", arguments);
 	};
 	/**
-	 * Returns the <b>TRUE</b> logical value.
+	 * Returns the <b>true</b> logical value.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean}
