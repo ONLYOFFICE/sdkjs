@@ -3094,12 +3094,6 @@ CChartsDrawer.prototype =
 							strArr = strCache[col].pts;
 							nextRow = strItIndexes[col];
 
-							if (col === strItIndexes.length) {
-								strItIndexes.push(0);
-								numIndexes.push(0);
-								strRealIndexes.push(0);
-								nullIndexes.push(true);
-							}
 						} else {
 							numIndexes[col] = realIndex;
 							col -= 1;
@@ -3146,7 +3140,7 @@ CChartsDrawer.prototype =
 
 				const updateNumIndexes = function () {
 					if (prevVal === null) {
-						numIndexes[col] = realIndex;
+						numIndexes[col] = numIndexes[col] + 1;
 					}
 					prevVal = row < strArr.length ? strArr[row].val : null;
 				}
